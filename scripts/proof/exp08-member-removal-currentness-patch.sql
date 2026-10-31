@@ -7,6 +7,16 @@ DECLARE target regprocedure:=to_regprocedure('public.remove_solo_team_member(uui
  p pg_proc; prior_metadata jsonb; original text; changed text; definition text;
  anchor text:=$anchor$  -- Every owner is refused, which is what makes "the sole owner is never removable" true without$anchor$;
  target_anchor text:=$target_anchor$  -- Locked, and deliberately NOT filtered by status.$target_anchor$;
+ identity_guard text:=$identity_guard$  -- exp08_departure_identity_v1: serialize current identity before membership/profile locks.
+  PERFORM 1 FROM auth.users current_identity WHERE current_identity.id = _actor FOR SHARE;
+  IF NOT FOUND OR NOT EXISTS (SELECT 1 FROM auth.users current_identity
+    WHERE current_identity.id = _actor AND current_identity.deleted_at IS NULL
+      AND (current_identity.banned_until IS NULL OR current_identity.banned_until <= clock_timestamp())) THEN
+    RAISE EXCEPTION 'TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was removed'
+      USING ERRCODE = '42501';
+  END IF;
+
+$identity_guard$;
  delete_anchor text:=$delete_anchor$  DELETE FROM public.tenant_members WHERE id = _target.id;$delete_anchor$;
  protected_guard text:=$protected_guard$  -- exp08_departure_protected_v1: preserve the original platform-admin protection before writing.
   IF public.map_tenant_role_to_app_role(_target.role) = 'admin'::public.app_role
@@ -53,6 +63,11 @@ $ordered_locks$;
 
 $guard$;
 BEGIN
+ IF EXISTS(SELECT 1 FROM (VALUES ('id','uuid'),('deleted_at','timestamptz'),('banned_until','timestamptz')) c(name,kind)
+  WHERE NOT EXISTS(SELECT 1 FROM pg_attribute a WHERE a.attrelid=to_regclass('auth.users')
+   AND a.attname=c.name AND a.atttypid=to_regtype(c.kind) AND a.attnum>0 AND NOT a.attisdropped)) THEN
+  RAISE EXCEPTION 'EXP08 departure currentness original Auth columns missing or drifted';
+ END IF;
  SELECT * INTO p FROM pg_proc WHERE oid=target;
  IF NOT FOUND OR p.proowner<>'postgres'::regrole OR NOT p.prosecdef OR p.provolatile<>'v'
   OR p.proconfig IS DISTINCT FROM ARRAY['search_path=public, pg_temp']::text[]
@@ -66,10 +81,11 @@ BEGIN
  END IF;
  original:=p.prosrc;
  IF strpos(original,'exp08_departure_currentness_v1')>0 THEN
-  IF md5(replace(replace(replace(original,guard,''),ordered_locks,''),protected_guard,''))<>'d8c0eb6a8fdc3fef52eda7df4f9274e1'
+  IF md5(replace(replace(replace(replace(original,guard,''),ordered_locks,''),protected_guard,''),identity_guard,''))<>'d8c0eb6a8fdc3fef52eda7df4f9274e1'
    OR length(original)-length(replace(original,guard,''))<>length(guard)
    OR length(original)-length(replace(original,ordered_locks,''))<>length(ordered_locks)
-   OR length(original)-length(replace(original,protected_guard,''))<>length(protected_guard) THEN
+   OR length(original)-length(replace(original,protected_guard,''))<>length(protected_guard)
+   OR length(original)-length(replace(original,identity_guard,''))<>length(identity_guard) THEN
    RAISE EXCEPTION 'EXP08 departure currentness replay drift';
   END IF;
   RETURN;
@@ -81,8 +97,8 @@ BEGIN
   RAISE EXCEPTION 'EXP08 departure currentness source drift';
  END IF;
  prior_metadata:=to_jsonb(p)-'prosrc';
- changed:=replace(replace(replace(original,anchor,guard||anchor),target_anchor,ordered_locks||target_anchor),delete_anchor,protected_guard||delete_anchor);
- IF replace(replace(replace(changed,guard,''),ordered_locks,''),protected_guard,'') IS DISTINCT FROM original THEN
+ changed:=replace(replace(replace(original,anchor,guard||anchor),target_anchor,identity_guard||ordered_locks||target_anchor),delete_anchor,protected_guard||delete_anchor);
+ IF replace(replace(replace(replace(changed,guard,''),ordered_locks,''),protected_guard,''),identity_guard,'') IS DISTINCT FROM original THEN
   RAISE EXCEPTION 'EXP08 departure currentness inverse failed';
  END IF;
  definition:=pg_get_functiondef(target);

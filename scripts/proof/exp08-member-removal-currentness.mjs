@@ -9,9 +9,10 @@ assert.equal(process.env.EXP08_DISPOSABLE,'1','Explicit disposable proof opt-in 
 const host=process.env.PGHOST;
 assert(['127.0.0.1','localhost','::1'].includes(host),'Dedicated loopback proof only');
 assert.match(process.env.PGPORT??'',/^\d+$/,'Explicit local port required');
-const options=process.argv.slice(2),mutants=['scope','authority','pair-locks','protected'];
+const options=process.argv.slice(2),mutants=['scope','authority','pair-locks','protected','identity-check','identity-lock'];
 const protectedOnly=options.includes('--protected-only');
-assert(options.length<=1&&options.every(a=>a==='--baseline'||a==='--protected-only'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
+const identityOnly=options.includes('--identity-only');
+assert(options.length<=1&&options.every(a=>a==='--baseline'||a==='--protected-only'||a==='--identity-only'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
 const mutant=mutants.find(m=>options.includes('--mutant-'+m));
 const repo=fileURLToPath(new URL('../../',import.meta.url));
 // Reuse the shared fixture unchanged, preserving the original EXP08 loopback-host ABI.
@@ -30,6 +31,7 @@ const source=(file,name)=>{const s=readFileSync(join(repo,file),'utf8');const a=
 const candidatePatch=readFileSync(join(repo,'scripts/proof/exp08-member-removal-currentness-patch.sql'),'utf8').replace(/\r\n/g,'\n');
 const connections=[];
 const ids={tenant:'e8000000-0000-4000-8000-000000080010',other:'e8000000-0000-4000-8000-000000080020',actor:'e8000000-0000-4000-8000-000000080300',target:'e8000000-0000-4000-8000-000000080200'};
+const resetIdentities=()=>sql(`TRUNCATE auth.users;INSERT INTO auth.users(id,email) VALUES('${ids.actor}','test-actor@tests.invalid'),('${ids.target}','test-target@tests.invalid');`);
 const output=[];
 const business=()=>sql("SELECT jsonb_build_object('members',(SELECT jsonb_agg(to_jsonb(t) ORDER BY t.user_id) FROM public.tenant_members t),'profiles',(SELECT jsonb_agg(to_jsonb(p) ORDER BY p.user_id) FROM public.profiles p),'audits',(SELECT jsonb_agg(to_jsonb(a)) FROM public.audit_logs a))");
 const candidate=!process.argv.includes('--baseline');
@@ -44,6 +46,7 @@ try{
  CREATE TYPE public.tenant_role AS ENUM('owner','admin','member');
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$SELECT 'authenticated'::text$$;
+ CREATE TABLE auth.users(id uuid PRIMARY KEY,email text UNIQUE,deleted_at timestamptz,banned_until timestamptz);
  CREATE TABLE public.tenants(id uuid PRIMARY KEY);
  CREATE TABLE public.tenant_members(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,user_id uuid,status text,is_owner boolean,role public.tenant_role,joined_at timestamptz DEFAULT now(),UNIQUE(tenant_id,user_id));
  CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
@@ -71,6 +74,8 @@ try{
     authority:['IF NOT _caller_owner AND NOT EXISTS (\n    SELECT 1 FROM public.tenant_members current_actor','IF false AND NOT EXISTS (\n    SELECT 1 FROM public.tenant_members current_actor'],
     'pair-locks':['  PERFORM 1 FROM public.tenant_members departure_seat\n    WHERE departure_seat.tenant_id = _tenant AND departure_seat.user_id IN (_actor, _member_user_id)\n    ORDER BY departure_seat.user_id FOR UPDATE;','  PERFORM 1;'],
     protected:["IF public.map_tenant_role_to_app_role(_target.role) = 'admin'::public.app_role","IF false AND public.map_tenant_role_to_app_role(_target.role) = 'admin'::public.app_role"],
+    'identity-check':['IF NOT FOUND OR NOT EXISTS (SELECT 1 FROM auth.users current_identity','IF false AND NOT EXISTS (SELECT 1 FROM auth.users current_identity'],
+    'identity-lock':['PERFORM 1 FROM auth.users current_identity WHERE current_identity.id = _actor FOR SHARE;','PERFORM 1;'],
    };
    const [original,replacement]=edits[mutant];
    assert.equal(before.split(original).length,2,'mutant must alter exactly one actual source span: '+JSON.stringify(before.match(/IF NOT _caller_owner[\s\S]{0,130}/g)));
@@ -80,7 +85,6 @@ try{
  if(candidate){
   // Exercise the ORIGINAL role-sync and protected-role trigger, not a substitute refusal.
   sql(`CREATE TYPE public.app_role AS ENUM('user','admin','super_admin','platform_admin','developer');
-   CREATE TABLE auth.users(id uuid PRIMARY KEY,email text UNIQUE);
    CREATE TABLE public.app_settings_owner(owner_email text);
    CREATE TABLE public.user_roles(user_id uuid,role public.app_role,UNIQUE(user_id,role));`);
   sql(source('supabase/migrations/20270509000000_nothing_reads_the_retired_title_role.sql','map_tenant_role_to_app_role'));
@@ -94,7 +98,7 @@ try{
   }
   sql(`CREATE TRIGGER trg_sync_tenant_member_to_user_roles AFTER INSERT OR UPDATE OR DELETE ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public.sync_tenant_member_to_user_roles();
    CREATE TRIGGER protect_owner_admin BEFORE UPDATE OR DELETE ON public.user_roles FOR EACH ROW EXECUTE FUNCTION public.prevent_owner_admin_removal();`);
-  if(!mutant||mutant==='protected')for(const c of [
+  if((!mutant||mutant==='protected')&&!identityOnly)for(const c of [
    {name:'protected last admin',refused:true},
    {name:'protected other active admin',otherRole:'admin',success:true},
    {name:'protected other active owner',otherRole:'owner',success:true},
@@ -106,7 +110,7 @@ try{
   ]){
    sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants,public.user_roles,auth.users,public.app_settings_owner;
     INSERT INTO public.tenants VALUES('${ids.tenant}'),('${ids.other}');
-    INSERT INTO auth.users VALUES('${ids.actor}','test-owner@tests.invalid'),('${ids.target}','test-target@tests.invalid');
+    INSERT INTO auth.users(id,email) VALUES('${ids.actor}','test-owner@tests.invalid'),('${ids.target}','test-target@tests.invalid');
     INSERT INTO public.app_settings_owner VALUES('${c.ordinary?'different-person':'test-target'}@tests.invalid');
     INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
      ('${ids.tenant}','${ids.actor}','active',true,'owner'),('${ids.tenant}','${ids.target}','${c.targetStatus??'active'}',false,'${c.targetRole??'admin'}');
@@ -127,7 +131,90 @@ try{
   }
   sql('DROP TRIGGER trg_sync_tenant_member_to_user_roles ON public.tenant_members;DROP TRIGGER protect_owner_admin ON public.user_roles;TRUNCATE public.user_roles,auth.users,public.app_settings_owner;');
  }
- if(!protectedOnly)for(const change of ['unchanged','demoted','suspended','workspace']){
+ if(candidate&&(!mutant||mutant==='identity-check')&&!protectedOnly)for(const c of [
+  {name:'active actor',success:true},
+  {name:'banned actor',banned:true},
+  {name:'deleted actor',deleted:true},
+  {name:'missing actor identity',missing:true},
+  {name:'expired actor ban',expired:true,success:true},
+ ]){
+  sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants,auth.users;
+   INSERT INTO public.tenants VALUES('${ids.tenant}');
+   INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
+    ('${ids.tenant}','${ids.actor}','active',false,'admin'),('${ids.tenant}','${ids.target}','active',false,'member');
+   INSERT INTO public.profiles VALUES('${ids.actor}','${ids.tenant}'),('${ids.target}','${ids.tenant}');`);
+  if(!c.missing)sql(`INSERT INTO auth.users(id,email,deleted_at,banned_until) VALUES('${ids.actor}','test-actor@tests.invalid',${c.deleted?'now()':'NULL'},${c.banned?"now()+interval '1 hour'":c.expired?"now()-interval '1 hour'":'NULL'});`);
+  const before=business(),identities=sql('SELECT jsonb_agg(to_jsonb(u) ORDER BY id) FROM auth.users u');
+  const call=()=>sql(`BEGIN;SELECT set_config('request.jwt.claim.sub','${ids.actor}',true);SET LOCAL ROLE authenticated;SELECT public.remove_solo_team_member('${ids.target}','${ids.tenant}');COMMIT;`);
+  if(c.success){call();assert.equal(sql('SELECT count(*) FROM public.audit_logs'),'1');assert.equal(sql(`SELECT count(*) FROM public.tenant_members WHERE user_id='${ids.target}'`),'0');}
+  else{assert.throws(call,e=>e.code==='42501'&&e.message.includes('TEAM_MEMBER_IDENTITY_UNAVAILABLE'),'unavailable actor identity must refuse before the original removal effect');assert.equal(business(),before);}
+  assert.equal(sql('SELECT jsonb_agg(to_jsonb(u) ORDER BY id) FROM auth.users u'),identities,'identity admission never writes Auth');
+  output.push({change:c.name,success:!!c.success,authUnchanged:true});
+ }
+ if(candidate&&(!mutant||mutant==='identity-lock')&&!protectedOnly)for(const change of ['ban','delete','soft-delete'])for(const commit of [true,false]){
+  resetIdentities();
+  sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants;
+   INSERT INTO public.tenants VALUES('${ids.tenant}');
+   INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
+    ('${ids.tenant}','${ids.actor}','active',false,'admin'),('${ids.tenant}','${ids.target}','active',false,'member');
+   INSERT INTO public.profiles VALUES('${ids.actor}','${ids.tenant}'),('${ids.target}','${ids.tenant}');`);
+  const before=business();
+  const mutation=change==='delete'?`DELETE FROM auth.users WHERE id='${ids.actor}'`:
+   `UPDATE auth.users SET ${change==='ban'?"banned_until=clock_timestamp()+interval '1 hour'":'deleted_at=clock_timestamp()'} WHERE id='${ids.actor}'`;
+  const held=connection(`BEGIN;SET application_name='exp08_identity_holder';${mutation};SELECT 'held';`,true);
+  let waiting;
+  try{
+   for(let i=0;!held.read().includes('held')&&i<150;i++)await delay();
+   assert(held.read().includes('held'),'identity mutation transaction is held');
+   waiting=connection(`SET application_name='exp08_identity_waiter';SET statement_timeout='10s';SELECT set_config('request.jwt.claim.sub','${ids.actor}',false);SET ROLE authenticated;SELECT public.remove_solo_team_member('${ids.target}','${ids.tenant}');`);
+   let observed=false;
+   for(let i=0;i<150;i++){
+    if(sql("SELECT EXISTS(SELECT 1 FROM pg_stat_activity w WHERE w.application_name='exp08_identity_waiter' AND w.wait_event_type='Lock' AND EXISTS(SELECT 1 FROM pg_stat_activity h WHERE h.application_name='exp08_identity_holder' AND h.pid=ANY(pg_blocking_pids(w.pid))))")==='t'){observed=true;break;}
+    await delay();
+   }
+   assert(observed,'original removal must actually wait for the actor identity transaction');
+  }finally{held.p.stdin.end(commit?'COMMIT;\n':'ROLLBACK;\n');assert.equal((await held.done).code,0);}
+  const result=await waiting.done;
+  if(commit){assert.notEqual(result.code,0);assert(result.err.includes('TEAM_MEMBER_IDENTITY_UNAVAILABLE'),result.err);assert.equal(business(),before,'committed identity revocation leaves membership/profile/audit unchanged');}
+  else{assert.equal(result.code,0,result.err);assert.equal(sql('SELECT count(*) FROM public.audit_logs'),'1');assert.equal(sql(`SELECT count(*) FROM public.tenant_members WHERE user_id='${ids.target}'`),'0');}
+  assert(!/deadlock|statement timeout/i.test(result.err),'identity serialization must not depend on an abort');
+  output.push({change:'identity-first '+change,commit,actualIdentityLockWait:true,removed:!commit});
+ }
+ if(candidate&&!mutant&&!protectedOnly)for(const change of ['ban','delete','soft-delete']){
+  resetIdentities();
+  sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants;
+   INSERT INTO public.tenants VALUES('${ids.tenant}');
+   INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
+    ('${ids.tenant}','${ids.actor}','active',false,'admin'),('${ids.tenant}','${ids.target}','active',false,'member');
+   INSERT INTO public.profiles VALUES('${ids.actor}','${ids.tenant}'),('${ids.target}','${ids.tenant}');`);
+  const held=connection(`BEGIN;SET application_name='exp08_identity_target_holder';SELECT id FROM public.tenant_members WHERE user_id='${ids.target}' FOR UPDATE;SELECT 'held';`,true);
+  let removal,revocation;
+  const blockedBy=(waiter,holder)=>sql(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity w WHERE w.application_name='${waiter}' AND w.wait_event_type='Lock' AND EXISTS(SELECT 1 FROM pg_stat_activity h WHERE h.application_name='${holder}' AND h.pid=ANY(pg_blocking_pids(w.pid))))`)==='t';
+  try{
+   for(let i=0;!held.read().includes('held')&&i<150;i++)await delay();
+   assert(held.read().includes('held'));
+   removal=connection(`SET application_name='exp08_identity_remover_first';SET statement_timeout='10s';SELECT set_config('request.jwt.claim.sub','${ids.actor}',false);SET ROLE authenticated;SELECT public.remove_solo_team_member('${ids.target}','${ids.tenant}');`);
+   let observed=false;
+   for(let i=0;i<150;i++){if(blockedBy('exp08_identity_remover_first','exp08_identity_target_holder')){observed=true;break;}await delay();}
+   assert(observed,'remover acquired identity before waiting on the original target');
+   const mutation=change==='delete'?`DELETE FROM auth.users WHERE id='${ids.actor}'`:
+    `UPDATE auth.users SET ${change==='ban'?"banned_until=clock_timestamp()+interval '1 hour'":'deleted_at=clock_timestamp()'} WHERE id='${ids.actor}'`;
+   revocation=connection(`SET application_name='exp08_identity_revoker_second';SET statement_timeout='10s';${mutation};`);
+   observed=false;
+   for(let i=0;i<150;i++){if(blockedBy('exp08_identity_revoker_second','exp08_identity_remover_first')){observed=true;break;}await delay();}
+   assert(observed,'identity revocation must wait on the original remover identity lock');
+  }finally{held.p.stdin.end('COMMIT;\n');assert.equal((await held.done).code,0);}
+  const a=await removal.done,b=await revocation.done;
+  assert.equal(a.code,0,a.err);assert.equal(b.code,0,b.err);
+  assert(!/deadlock|statement timeout/i.test(a.err+b.err));
+  assert.equal(sql('SELECT count(*) FROM public.audit_logs'),'1');
+  assert.equal(sql(`SELECT count(*) FROM public.tenant_members WHERE user_id='${ids.target}'`),'0');
+  assert.equal(sql(`SELECT active_tenant_id IS NULL FROM public.profiles WHERE user_id='${ids.target}'`),'t');
+  assert.equal(sql(`SELECT EXISTS(SELECT 1 FROM auth.users WHERE id='${ids.actor}' AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<=clock_timestamp()))`),'f');
+  output.push({change:'removal-first '+change,actualTargetLockWait:true,actualIdentityLockWait:true,serialRemovalThenRevocation:true,audits:1});
+ }
+ if(!protectedOnly&&!identityOnly)for(const change of ['unchanged','demoted','suspended','workspace']){
+  resetIdentities();
   sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants;
    INSERT INTO public.tenants VALUES('${ids.tenant}'),('${ids.other}');
    INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
@@ -158,7 +245,8 @@ try{
   else if(candidate)assert(result.code!==0&&result.err.includes(change==='demoted'?'only an owner or an admin':'your active workspace changed')&&remaining==='1'&&audits==='0','candidate must refuse through the intended authority boundary without a membership or audit effect');
   else assert(accepted,'baseline stale-context counterexample must be demonstrated, not assumed');
  }
- if(candidate&&!protectedOnly){
+ if(candidate&&!protectedOnly&&!identityOnly){
+  resetIdentities();
   sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants;
    INSERT INTO public.tenants VALUES('${ids.tenant}'),('${ids.other}');
    INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
@@ -193,7 +281,7 @@ try{
   assert.equal(sql('SELECT count(*) FROM public.audit_logs'),'1');
   output.push({change:'opposing-departures',actualMembershipOrderWait:true,authorizedRemoval:true,revokedCallerRefused:true,deadlock:false,audits:1});
  }
- if(candidate&&!protectedOnly){
+ if(candidate&&!protectedOnly&&!identityOnly){
   for(const c of [
    {name:'self',self:true,error:'you cannot remove yourself'},
    {name:'wrong expected workspace',wrongWorkspace:true,error:'your active workspace changed'},
@@ -207,6 +295,7 @@ try{
    {name:'original company standing without actor seat',company:true,success:true},
    {name:'original missing-profile fallback',missingProfile:true,success:true},
   ]){
+   resetIdentities();
    sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants;
     INSERT INTO public.tenants VALUES('${ids.tenant}'),('${ids.other}');
     INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
@@ -234,7 +323,7 @@ try{
    output.push({change:'original boundary: '+c.name,success:c.success??false,businessEffects:c.success?1:0});
   }
  }
- if(candidate&&!protectedOnly){
+ if(candidate&&!protectedOnly&&!identityOnly){
   const signature='public.remove_solo_team_member(uuid,uuid)';
   const saved=sql(`SELECT pg_get_functiondef('${signature}'::regprocedure)`);
   const metadata=sql(`SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='${signature}'::regprocedure`);
@@ -261,16 +350,33 @@ try{
   }
  }
  if(candidate&&!mutant&&!protectedOnly){
+  const signature='public.remove_solo_team_member(uuid,uuid)';
+  const before=business(),definition=sql(`SELECT pg_get_functiondef('${signature}'::regprocedure)`);
+  const identities=sql('SELECT jsonb_agg(to_jsonb(u) ORDER BY id) FROM auth.users u');
+  for(const [column,type] of [['id','uuid'],['deleted_at','timestamptz'],['banned_until','timestamptz']]){
+   sql(`ALTER TABLE auth.users ALTER COLUMN ${column} TYPE text USING ${column}::text`);
+   try{
+    assert.throws(()=>sql(candidatePatch),/EXP08 departure currentness original Auth columns missing or drifted/,'Auth column type drift must refuse before source rewrite');
+    assert.equal(business(),before);
+    assert.equal(sql(`SELECT pg_get_functiondef('${signature}'::regprocedure)`),definition,'Auth schema refusal leaves original function untouched');
+   }finally{sql(`ALTER TABLE auth.users ALTER COLUMN ${column} TYPE ${type} USING ${column}::${type}`);}
+   assert.equal(sql('SELECT jsonb_agg(to_jsonb(u) ORDER BY id) FROM auth.users u'),identities,'restore only this disposable Auth fixture');
+   sql(candidatePatch);
+   output.push({change:'Auth schema: '+column,refused:true,functionUnchanged:true,fixtureRestored:true});
+  }
+ }
+ if(candidate&&!mutant&&!protectedOnly&&!identityOnly){
   for(const name of mutants){
    const child=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--mutant-'+name],{encoding:'utf8',windowsHide:true,timeout:60000,maxBuffer:4e6});
    if(child.error)throw child.error;
    assert.equal(child.status,1,'changed original source must fail its actual behavior control: '+name);
-   assert((child.stderr??'').includes(name==='protected'?'protected account must receive its authored pre-write refusal':name==='pair-locks'?'opposing departure uses the same original membership row order':'candidate must refuse through the intended authority boundary'),name+' must fail for the specific reintroduced behavior, not unrelated setup: '+child.stderr);
+   const expected={protected:'protected account must receive its authored pre-write refusal','pair-locks':'opposing departure uses the same original membership row order','identity-check':'unavailable actor identity must refuse before the original removal effect','identity-lock':'original removal must actually wait for the actor identity transaction'}[name]??'candidate must refuse through the intended authority boundary';
+   assert((child.stderr??'').includes(expected),name+' must fail for the specific reintroduced behavior, not unrelated setup: '+child.stderr);
    assert((child.stdout??'').includes('Disposed only the local proof database created by this run.'),name+' must dispose its own database before counting the mutation');
    output.push({change:'mutant: '+name,killed:true,actualBehaviorFailure:true});
   }
  }
- if(!mutant)assert.equal(output.length,protectedOnly?8:candidate?38:4,'Every intended control must execute');
+ if(!mutant)assert.equal(output.length,identityOnly?17:protectedOnly?8:candidate?57:4,'Every intended control must execute');
  console.log(JSON.stringify({scope:'isolated native original writer/helpers; minimal tables and Auth/platform ports, no customer or RLS proof',cases:output},null,2));
 }finally{
  db.run(`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${db.database}' AND pid<>pg_backend_pid()`,[],'postgres');

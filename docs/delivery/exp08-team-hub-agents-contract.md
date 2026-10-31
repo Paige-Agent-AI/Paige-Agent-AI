@@ -2191,3 +2191,45 @@ with original approval/design preserved and no live effects. Normal guarded carr
 current-main composition, exact review/CI/managed readback and authenticated/RLS/AT/
 native zoom/customer proof remain owed. Original recovery/co-owner/Setup/delegated
 management and all other original18+6/five-journey integrations remain STILL CODING.
+
+#### October31 same outcome4 — current account identity before departure
+
+The original inert removal patch locks the actor's existing Auth identity before
+ordered membership/profile locks, refuses missing/deleted/currently banned identity,
+and retains the later original workspace/owner/admin recheck. It never writes Auth,
+requires a new actor seat, grants a role, or replaces the original removal receipt.
+The baseline accepted a banned actor in the minimal fixture; that failing-first
+transcript is retained. This is a fixture counterexample, not a customer incident.
+
+The complete isolated departure proof passed **54 controls**, retaining the prior38,
+five identity availability cases, six actual identity-first commit/rollback lock waits,
+three reverse-order waits and two separately killed identity-check/identity-lock
+mutants. Transcript `exp08-member-identity-mutants.log` SHA256
+`668627703dea1e01fe5a66cc9871aebb2d664a73fa5fcc30b9937dbb2b59373c`.
+Own databases disposed/current cluster stopped. Non-author SOURCE review found no
+material source finding; reviewer executed no tests. Subsequent focused17-control run
+passed, including three new Auth-column type negatives, each refusing before source
+rewrite and restoring only the disposable fixture. Transcript
+`exp08-member-identity-schema.log` SHA256
+`a6ed2f4d45cc442822709591ea06da6f80491c5f924b3ee79f6928bd07d3b5c7`;
+own database disposed/current cluster stopped. Combined57 rerun remains owed; do not
+sum overlapping runs as independent acceptance. Actual Auth FK/trigger/other-writer
+lock order and privilege compatibility, normal parent proof, carrier/review/exact CI/
+managed ordering/readback and authorized customer/JWT/RLS proof remain owed. No new
+migration version/publication/application or full outcome acceptance follows.
+
+#### Complete working experience amendment — explicit incorporation
+
+Owner ANT147's October31 additive complete-working-experience amendment is received;
+explicit ACK is original comment `0b321657-3875-4fa4-ab9f-0a6d11b1e95b`.
+Every original18 matrix row, six earlier amendments and five journeys remain. Each
+applicable row must carry its original useful outcome, permitted source/version and
+actor context, editable scoped plan, original writer/deliverable, verified result and
+receipt, both-chat durable reopen/continuation and safe cancellation/UNKNOWN/revoke/
+concurrency recovery. Ground actual logic in canonical ALG wiring or state the gap;
+evaluate useful results and negative/repeated cases rather than promoting test totals.
+Explicit permitted private-context handoff and existing Trust standing authority stay
+independent of model prose, confidence and personality. No new Work/Memory/approval/
+runtime or held EXP19/desktop execution is activated. Full assignment STILL CODING.
+Primary remains originalrow4 departure/revocation; released3130 to EXP13 was the named
+prerequisite exception, not another discretionary outcome or full Team Hub acceptance.

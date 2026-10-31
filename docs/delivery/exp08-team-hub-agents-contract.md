@@ -2306,3 +2306,50 @@ owed. Identity rendering stays pending until resource headroom is adequate.
 Pinned Impeccable4.1.0 targeted detector for the two identity-copy files completed
 EXIT0/no findings. First unversioned `npx --no-install` attempt failed registry DNS
 lookup and is retained separately. Neither static detector result proves rendering.
+
+#### Mechanical lower-release record completed, same primary outcome retained
+
+Original docs-only3162 exactd863 passed all10 applicable exact check runs and both web
+statuses, zero review threads, with distinct non-author SOURCE review. Schema-free
+Supabase Preview SKIPPED is N.A., never schema proof. Normal actual merge
+`edec02d0d5be931e6c99006a426fca0d6309040b` tree
+`589f81bf559e37918ecdce70c9bce54f8fa7a66d` matches reviewed composition; parents
+actualmain17338 (original E05 notes3159) and own d863. Whole incoming Master/Brain
+and18,809 outside leaves conserved. Production
+`dpl_46gYfzFbJEujA6w2xuFSNZEH6EAN` READY/exactedec; both official origins version200
+buildedec-mvvz1887/customerUpdate:null, HTML200/observed bootstrapmain-D3-G2967.js200.
+Receipt originalPR comment6539697399. Native/Edge change N.A.; no recursive shipped-log
+row or customer announcement. This records prior3130 production receipt6539217377,
+already delivered EXP13; no new departure activation/customer/owner acceptance.
+
+Sequential same feature branch normally receives actualedec as2e46b2c6; exactly two
+incoming docs change49add/0del, both resulting document blobs equal currentmain and
+all product/proof inputs unchanged. New departure14 remains inert/unpublished/unapplied;
+ENOSPC full-native failure and rendered/managed/authenticated proof gaps remain explicit.
+Full original18+6/five-journey assignment STILL CODING, one integrated owner review later.
+
+#### Same outcome4 — actual identity-refusal rendering completed locally
+
+Identity scenario now completes **32/32 real-SoloApp browser cases /32 frames /0
+failures**, EXIT0, at2e46 feature product/proof source (subsequent record edits only).
+Two fictional contexts, light/dark, all1536/1366/1024/900 widths, PAIGE closed/open.
+Keyboard removal reaches the exact original alert; retry disabled/one attempt; original
+Escape/reopen and workspace switch close without automatic retry. Captured geometry
+and post-fold geometry are distinct; incumbent narrow PAIGE overlay is explicitly
+accounted for. Four frames visually inspected across all four widths/both contexts/
+themes: message, focus ring and footer fit. No product styling/renderer or global shell
+handler edit. Artifacts: `docs/evidence/ui-delivery/assets/exp08-identity-departure/`.
+Report SHA256 `e912cb56ce1f293493e81010d5109e3f6be02e6468734eaf7f18a1106a68692b`;
+terminal log `exp08-identity-render-same-context.log` SHA256
+`02a56ea9d0d40e23965eb617523115f3bfc66e4d7aa739e647b1d799e5471d4c`.
+Impeccable clarify/finish checks applied: exact factual copy, legible complete message,
+visible focus, existing disabled retry and non-destructive exits; no redesign.
+
+First missing browser executable, restricted loopback denial and separate-context
+connection timeout remain retained; final run used the already installed Chrome and
+same authorized loopback context for original mount and browser. All off-machine
+browser requests blocked. Browser closed in finally; own Vite10467/24676 stopped with
+terminal exit1 after deliberate stop, no peer process stopped. This is synthetic
+transport/render/keyboard proof, not authenticated/JWT/RLS/domain effect or full
+assistive-technology/native zoom/customer acceptance. Full-native ENOSPC failure
+remains open; this UI result does not waive it or clear the unpublished carrier.

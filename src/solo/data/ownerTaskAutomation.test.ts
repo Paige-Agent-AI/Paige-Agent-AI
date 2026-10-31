@@ -105,9 +105,9 @@ describe('original inactive task-purpose correction',()=>{
     proposal.config.title='Changed during admission';r.process.name='Changed during admission';r.updatedAt='2027-01-01T00:00:00Z';r.acts[1].config={title:'Changed sibling'};
     pending.resolve({data:{user:{id:'actor'}},error:null});expect((await operation).status).toBe('saved');
     const args=f.calls.find(c=>c.name==='control_owner_task_automation')!.args!;
-    expect(args._expected_updated_at).toBe(row.updated_at);expect((args._expected_process as any).name).toBe(row.name);
-    expect((args._expected_acts as any).revision.config.title).toBe('Original approved edit');
-    expect((args._expected_acts as any).reviewed_acts[1].config.title).toBe('Prepare onboarding');
+    expect(args._expected_updated_at).toBe(row.updated_at);expect(args._expected_process).toMatchObject({name:row.name});
+    expect(args._expected_acts).toMatchObject({revision:{config:{title:'Original approved edit'}},
+      reviewed_acts:[{},{config:{title:'Prepare onboarding'}}]});
   });
 });
 function fixture(fault = "") {

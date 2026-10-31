@@ -517,6 +517,24 @@ try {
       console.log(JSON.stringify({phase:'first-owner-history-column-drift',name,refused:true}));
     }
     const historyRun=patch=>sql(`BEGIN;\n${historyFixture}\n${patch}\nSELECT row_to_json(t) FROM proof.owner_history_cases() t;\nROLLBACK;`).split('\n').filter(Boolean).map(JSON.parse);
+    for(const name of ['_tenant_never_owned','_tenant_first_owner_history','_tenant_first_owner_history_guard']) {
+      const signature=`public.${name}(${name==='_tenant_never_owned'?'uuid':''})`;
+      const start=historyPatch.indexOf(`CREATE OR REPLACE FUNCTION public.${name}(`),end=historyPatch.indexOf('$$;',start);
+      assert.ok(start>=0&&end>start,'Original candidate helper declaration required');
+      const definition=historyPatch.slice(start,end+3);
+      for(const [drift,change] of [
+        ['body',definition.replace('AS $$',()=> 'AS $$\n-- unreviewed helper body\n')],
+        ['client execution',`GRANT EXECUTE ON FUNCTION ${signature} TO authenticated;`],
+        ['search path',`ALTER FUNCTION ${signature} SET search_path TO public;`],
+        ['security mode',`ALTER FUNCTION ${signature} SECURITY ${name==='_tenant_first_owner_history_guard'?'DEFINER':'INVOKER'};`],
+      ]) {
+        const unguarded=historyPatch.replace(/DO \$history_helpers\$[\s\S]*?\$history_helpers\$;/,'');
+        assert.notEqual(unguarded,historyPatch,'Helper admission control must remove actual guard');
+        sql(`BEGIN;\n${historyFixture}\n${unguarded}\n${change}\n${unguarded}\nROLLBACK;`);
+        sql(`BEGIN;\n${historyFixture}\n${historyPatch}\n${change}\n${historyPatch}\nROLLBACK;`,database,true,/EXP08 first owner history helper drift/);
+        console.log(JSON.stringify({phase:'first-owner-history-helper-drift',signature,drift,unguarded_accepted:true,refused:true}));
+      }
+    }
     const rows=historyRun(historyPatch);
     console.log(JSON.stringify({phase:'first-owner-history-component',cases:rows}));
     assert.equal(rows.length,22);assert.ok(rows.every(r=>r.passed),JSON.stringify(rows));

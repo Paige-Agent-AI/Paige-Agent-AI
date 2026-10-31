@@ -1977,3 +1977,59 @@ Original ANT50 and ANT164 received narrow source-contract requests; current shel
 Work/reminder/result writers remain with their existing owners. Agreement-to-Work integration and
 release-source recovery continue independently. Source, release, authenticated usability and owner
 acceptance remain separate; receiving this amendment is not implementation or full readiness.
+
+## October31 receiving incorporation: complete working-experience acceptance
+
+**Explicit receiving ACK / STILL CODING.** Read original [ANT-147](https://linear.app/paigeagentai/issue/ANT-147),
+“OWNER-APPROVED COMPLETE WORKING EXPERIENCE” (owner October30 local / October31 UTC), including all
+eight acceptance requirements and EXP00–19 applications. This applies to the SAME original cases
+1–18 and amendments1–6 above; no denominator, journey, persona or approved design is removed.
+Historical PR/head paragraphs remain dated history, not the current carrier or acceptance claim.
+
+Every applicable original row now owes: (1) useful goal, permitted source/version and current
+actor/delegation; (2) inspectable editable original plan, current step/dependencies and steering;
+(3) original authorized tools/writers and durable references shared by PAIGE and the SAME Hub
+specialists; (4) useful original editable result/revision/export where supported; (5) actual result
+and receipt readback, distinguishing prepared/attempted/saved/applied/external confirmation;
+(6) save/reload/reopen/continue in existing stores from BOTH chats with current authority;
+(7) cancellation/interruption/disconnect/partial/UNKNOWN, stale/ABA/concurrent/revoke recovery without
+blind replay or lost unsent revision; (8) actual logic, ALG wiring or an explicit supporting-algorithm
+gap, abstention, baseline/repeated/negative cases, useful verified result and controlled feedback.
+
+| Original cases retained | Complete-work application and producer → receiving owner | Current disposition / remaining evidence |
+|---|---|---|
+| 1 | Original Solo shell/Team Hub → EXP08 presentation of current goal/step/progress and steering | PARTIAL / MISSING workshop integration; source UI is not full device/reload/customer proof |
+| 2,3,4 | Original Team/Identity invitation and lifecycle writers; EXP01 Setup/provisioning, EXP10 custody → same Team/Hub admission | PARTIAL; local I2 history/invitation/reader candidates do not complete original recovery/Setup/I3–I5. Current Admin/delegated positive and revoked/foreign/stale negatives remain PROOF OWED |
+| 5,6,7 | Original Hub channels/DMs/threads/direct mentions and domain/Trust doors → same PAIGE/specialist identities and scoped activity | PARTIAL; preserve personalities/colors/icons and explicit private handoff; A2c/channel standing-authority and broader real specialist tools remain MISSING |
+| 8,9 | Original EXP05 Work/Harness task/plan/run/recovery and original domain results → both-chat shared work/approvals/results | PARTIAL; one original identity and current versions throughout; full durable progress/steering/resume/UNKNOWN reconciliation integration MISSING. A card or task ref alone is insufficient |
+| 10,11 | Original scoped Hub attachments + EXP13 Knowledge/document/artifact and EXP06/07 domain producers → same saved editable deliverable/workshop | PARTIAL / MISSING joined artifact integration; original provenance, authorized revision/export/reopen/revoke required. No detached copy, implicit private share or general runner |
+| 12 | Original EXP05 Work/Planning/Calendar/availability and absence/coverage → Hub coordination | PARTIAL; actual current constraints, permitted task handoff and verified outcome/recovery; no fabricated workload/hours or parallel scheduler |
+| 13,14 | Original EXP01 admission/Setup, EXP13 explicit Memory/Knowledge authority, EXP05 durable work and shared Fabric → both chats | PARTIAL; selected permitted facts rather than transcript copying, same original work/artifact references and current source/version checks. Eligible Live remains subject to its own consent/proof |
+| 15 | Original recruiting/onboarding/work-assignment/quality/offboarding writers and artifacts → human-reviewed shared work | MISSING integrated saved journeys; retain ALL five journeys. No consequential hiring/employment/pay automation, workforce score invention or prose-only completion |
+| 16 | Original server-resolved Solo classification/roles/configuration/provider consent → one reusable implementation | PARTIAL / PROOF OWED for existing/new Solo, authorized Admin/delegated member positives and unassigned/private/foreign/revoked/stale negatives; wrong workspace INVALID |
+| 17,18 | Original evidence/matrix, technical review/exact gates/release/source readback → one accessible integrated owner review | PROOF OWED; source/review/CI/merge/deploy/activation/authenticated result/owner acceptance remain distinct. Remaining coding prevents full readiness |
+| Amendments1–6 + approved bell/activity | EXP05 original adaptive plan/task/result and reminder producer, EXP01 shell/Trust sources, EXP13 artifacts, existing domain writers → EXP08 one workshop and permission-aware activity | PARTIAL / MISSING integration. Reminder occurrence/supplied-recipient consumer has bounded local source proof; authenticated notification fetch/read-state, producer extension and actual bell mounting remain owed. No algorithm maturity or authenticated usability inferred |
+
+For each outcome the existing matrix/evidence must identify permitted inputs → deterministic,
+retrieval or model logic → original output/writer → actual ALG ID/wiring, or **NO VERIFIED SUPPORTING
+ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED** → abstention → baseline/repeated/negative tests →
+real result/receipt/reopen/recovery → controlled feedback. Existing deterministic rules and justified
+N/A remain valid. Measure outcome quality/reliability, plus actual cost/latency per verified outcome
+where applicable; do not change routing/cohorts/cache policy from comparisons or token metrics.
+
+Joined milestone remains agreement upload → source/version-bound fact review and explicit Memory
+approval → original Setup CAS/readback and permitted Knowledge retrieval → editable grounded
+gameplan → authorized original EXP05 Work and EXP03 CRM handoffs → actual result/receipt → both-chat
+reload/reopen/continue. It is NOT READY without legitimate ordinary-customer proof. Never upload a
+private owner agreement, fabricate grants/accounts, or solicit per-PR founder testing to manufacture it.
+
+EXP08 remains sole collaboration/presentation/integration custodian. EXP05 retains Work/Harness,
+execution/finalization/recovery; EXP01 Setup/shared admission; EXP10 provider/Vault custody; EXP13
+Knowledge/explicit Memory/source artifacts; original specialists retain their writers. EXP19 general
+file/data/code/browser execution and PO25 are held dependencies. Desktop/local-folder/app bridging
+is a distinct UNVERIFIED architecture/product gap, not established by hosted/browser execution.
+No duplicate runtime, registry, Work/memory/meter, approval inbox, scheduler, provider client or clones.
+
+Receiving ACK, this original-matrix incorporation, canonical Google note readback, actual coding,
+integration, release, authenticated useful outcomes and final owner acceptance are separate evidence.
+One integrated owner evaluation remains; full assignment status is **STILL CODING**.

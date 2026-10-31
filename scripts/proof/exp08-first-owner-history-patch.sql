@@ -3,6 +3,34 @@
 -- IF NOT EXISTS alone admits a previously installed, incompatible column. Freeze its catalogue
 -- shape through admission and the backfill; a default/generated value must never invent history.
 LOCK TABLE public.tenants IN ACCESS EXCLUSIVE MODE;
+-- Fresh installation or exact replay only. Never silently overwrite an unrelated existing
+-- private helper or hide an unexpected client grant. Fingerprints normalize CRLF to LF only.
+DO $history_helpers$
+DECLARE expected record; existing pg_catalog.pg_proc;
+BEGIN
+  FOR expected IN SELECT * FROM (VALUES
+    ('public._tenant_never_owned(uuid)','8520cdcdb9e04d7277b07e65204b8edd','sql','s',true,'boolean','_tenant uuid'),
+    ('public._tenant_first_owner_history()','df738008d6fb12216f0eed70fbe3fe2e','plpgsql','v',true,'trigger',''),
+    ('public._tenant_first_owner_history_guard()','42a4b780d7d787926bf8f8c04b196b43','plpgsql','v',false,'trigger',''))
+    AS helpers(signature,body_hash,language_name,volatility,definer,return_name,arguments) LOOP
+    SELECT * INTO existing FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure(expected.signature);
+    IF NOT FOUND THEN CONTINUE; END IF;
+    IF md5(replace(existing.prosrc,E'\r\n',E'\n'))<>expected.body_hash
+      OR existing.proowner<>'postgres'::regrole OR existing.prosecdef<>expected.definer
+      OR existing.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname=expected.language_name)
+      OR existing.provolatile::text<>expected.volatility OR existing.prokind<>'f'
+      OR existing.proisstrict OR existing.proleakproof OR existing.proparallel<>'u' OR existing.proretset
+      OR existing.prorettype<>pg_catalog.to_regtype(expected.return_name)
+      OR pg_catalog.pg_get_function_arguments(existing.oid) IS DISTINCT FROM expected.arguments
+      OR existing.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
+      OR EXISTS (SELECT 1 FROM pg_catalog.aclexplode(coalesce(existing.proacl,pg_catalog.acldefault('f',existing.proowner))) a
+        WHERE a.grantee<>'postgres'::regrole OR a.grantor<>'postgres'::regrole
+          OR a.privilege_type<>'EXECUTE' OR a.is_grantable) THEN
+      RAISE EXCEPTION 'EXP08 first owner history helper drift: %',expected.signature;
+    END IF;
+  END LOOP;
+END
+$history_helpers$;
 DO $history_column$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_catalog.pg_attribute a

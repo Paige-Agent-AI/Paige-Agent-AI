@@ -2469,3 +2469,413 @@ with31 prerequisite negatives and10 FK cases explicitly nested. Final60/full-par
 new exact-head CI, managed application/readback/full-schema/trigger integration,
 production and authenticated outcomes remain owed. Local full-parent ENOSPC FAIL
 remains open; current low capacity prohibits another broad rerun, not safe source work.
+
+#### Same outcome4: inert Hub helper permission preflight repair
+
+Sequential local branch `codex/exp08-hub-identity-currentness-20261031` preserves
+published3164/exact2ac unchanged. Distinct source-only review found that the existing
+INERT three-helper patch rejected unexpected ACL entries but accepted an empty ACL.
+The new named missing-owner-EXECUTE control genuinely failed before repair:
+`exp08-hub-identity-owner-grant-before-named.log`, SHA256
+`73ee32fc1bb2f5f888f084a2f1068edc9c3fbc3a225869e7cb619f54d3191c4d`.
+Its own disposable database was removed. No customer or production defect reproduction.
+
+The guard now additionally requires the original non-grantable postgres EXECUTE
+entry on each helper; no environment grant or function body is changed by this repair.
+The original runner exposes a bounded `--only-hub-identity` development selection,
+calling the SAME lifted proof group. Mechanical inverse verification recovers every
+original identity assertion/race and the entire former runner exactly after removing
+only the declared selection, three missing-owner controls and progress messages.
+Normal CI still invokes the complete no-argument runner and all original groups.
+
+Selected native run EXIT0: original22 cases, eight causal mutants, all36 original
+metadata/source negatives plus three missing-owner refusals, replay/row/raw-metadata
+conservation and both original actual ban/admission waits. Log
+`exp08-hub-identity-owner-grant-after.log`, SHA256
+`448a393cdd6720d99a4abc59ab927aec50aaf1f108bf54e586088ee86a7bdb70`.
+Only its own database disposed; owned local server stopped. This is explicit minimal
+Auth/table-port evidence, not full-schema/JWT/RLS/customer proof or new-head whole CI.
+
+The reviewer also identified missing proof of lock-order composition: joined
+`FOR SHARE OF m,u` is not an explicit Auth-before-membership order. Actual original
+Hub-door/removal/Auth-delete/ban both-order races and later-effect revalidation remain
+required before publication. No native version reserved, managed apply or release
+of this helper patch; no Setup/Work/Auth writer takeover or provider activation.
+Original18+6/five journeys and full EXP08 remain STILL CODING.
+
+#### Same outcome4: original member-add currentness, local component checkpoint
+
+The original consumer is `useTeamHub.ts:addMembers`, called by the existing
+`TeamHubWorkspace.tsx` member picker. The writer remains
+`team_hub_add_members(uuid,uuid,uuid[])`, its original private-channel permission,
+membership store and `added` readback. A local native stale-actor failure was
+reproduced with actual source and actual membership readback; no production/customer
+incident or authenticated reproduction is claimed. Detailed mechanics stay in local
+proof. Original failure log `exp08-hub-member-add-current-actor-before-readback.log`
+SHA256 `761a76753cc6226a2057a547255f380f81282bd40c4b424fb4f78bf65f7e04f2`.
+
+NEW INERT `exp08-team-hub-member-add-currentness-patch.sql` changes only that original
+writer. It retains initial admission, target validation, original insertion/dedup and
+member/admin/owner permission. Ordered existing identity-parent holds, current actor
+and target eligibility, profile/workspace, private-channel and current membership
+rechecks protect the effect. Missing profiles retain the original membership fallback;
+the existing validated identity FK serializes later profile creation. No new role,
+authority engine, profile/Auth writer, grant, result store or migration version.
+Original body `25bac1def127e3998036368329e4c80d` reduces exactly from candidate
+`cb353daa578ca145243b2ac5b5dbad07`; original OID/all metadata/ACL and replay are conserved.
+
+The missing-profile source-review finding was independently reproduced and repaired:
+`exp08-hub-member-add-profile-insert-before.log` SHA256
+`d6ba5924d6f61f5af7c9b0f242da321df337dd88c1b4b0253e2ca03684ca43cd`.
+Selected both-order/rollback/causal controls passed afterward. Actual production
+catalogue confirms the existing FK and four active RI triggers, and the original
+definer's existing read/row-hold permissions; no production write occurred.
+
+Complete original departure CHILD (not the larger entity-owner parent) passed all60
+original outer entries before adding one separately counted28-control integration
+group: `exp08-departure-full-hub-composition.log` SHA256
+`055e6cc498396229ece4a85f1983225969c35456d5de460aebbabede5e93e822`.
+This precedes the final RI-preflight addition and is historical component evidence.
+Inactive checking-trigger refusal first genuinely failed, log
+`exp08-hub-member-add-ri-trigger-before.log` SHA256
+`87f12af18eb41e02cff40b7c8deb9772a7d79af7f6a03f546194be86ea711e2e`.
+The preflight now requires the original active RI behavior without rewriting it.
+Latest selected30 controls EXIT0, log `exp08-hub-member-add-ri-trigger-after.log`
+SHA256 `77382ed94e09d8b581094da26babfebcd85bc53ffea60ccbbece2fb623b5660b`.
+Refused drift restores every original trigger/writer field. Native14 removal body and
+applied carrier remain unchanged; this group is explicitly INERT/unpublished.
+
+Source-only non-author reviews cover the inspected code, not independent execution.
+All tables/Auth/role inputs remain explicit local ports. Remaining affected Hub doors,
+leave/archive/workspace and cross-writer/retirement concurrency, additional causal/ABI
+controls, current full-parent/carrier tests, managed/full-schema/JWT/RLS/authenticated
+privacy and useful receipt/reopen proofs remain owed before publication/acceptance.
+Existing ALG IDs and maturity are unchanged; these are deterministic engineering
+signals, not new model evaluation or a measured proactive capability. No source/CI/
+release/authenticated or owner-acceptance leg is promoted. Full EXP08 STILL CODING.
+
+#### Same outcome4: expanded state-currentness proof, unpublished
+
+The existing local integration group now retains its original30 controls and adds18
+workspace, actual leave/last-leave, archive, access/removal, commit/rollback,
+post-effect hold and causal-mutation controls. Selected native run passed all48;
+log `exp08-hub-member-add-state-currentness-current-source.log`, SHA256
+`7338bfd95642b8436d9d90fd74d787e3555982741e93a607db7e41d16c70b53c`.
+The original member-add candidate remains `cb353daa578ca145243b2ac5b5dbad07`;
+released removal remains `cc631b7a8e2f6dc0bb711118493e62ae`. This increment
+changes proof only. Current leave source is the agents migration's original writer;
+an older-source fixture setup failure is excluded from causal evidence. Source-only
+non-author review found no material issue; independent execution is not claimed.
+
+The subsequent full no-argument child attempt could not complete: local Node launch/
+log redirection reported insufficient disk space. Its short partial log is NOT a
+terminal report or PASS. Current full-child/full-parent assurance remains owed;
+the older61/28 run remains historical evidence only. Inspection found no disposable
+test databases left on this chat's port56489; this chat's server was then stopped.
+No peer server, cache, customer data or preserved branch was removed for space.
+
+The48 controls use explicit local Auth/table/state ports. They do not establish
+full-schema/JWT/RLS/authenticated customer behavior or release this inert patch.
+Other original doors, producer handoffs, useful receipts/reopen/recovery and the
+complete original18+6/five journeys remain open. Full EXP08: STILL CODING.
+
+#### Same outcome4: original message-admission currentness, inert checkpoint
+
+Original consumer remains `src/solo/team-hub/useTeamHub.ts`'s existing message RPC;
+writer remains the nine-argument `team_hub_post_message`, original messages/files,
+mentions and EXP04 source annotations. A local native currentness failure was
+reproduced with a successful attachment positive, actual database blocking and
+persisted result readback. It is not an authenticated or production incident.
+Detailed mechanics remain in local proof. Baseline log
+`exp08-post-currentness-before-native.log`, SHA256
+`4d565ab55b4fd26fb9dfb948d419e56f0d4b9442ee415b033e3beb89e87ff77d`.
+An initial fixture FK-reset failure is setup evidence only, excluded from causal RED.
+
+NEW INERT `scripts/proof/exp08-team-hub-post-currentness-patch.sql` changes only
+that original writer through an exact inverse/source guard. It re-resolves original
+actor/context/channel/membership authority before the effect, retains original
+private/team/DM permission, request deduplication, files and mentions, and orders
+existing DM identities before seat holds. No native version, production mutation,
+Auth/profile/Setup/Work/domain writer, grant, provider or independent engine.
+Original body `2b9e0270f28b6c17fd3adb37d5b554d8`; current candidate
+`ad54f00d716e48866f9be3fb02ea7dce`.
+
+The fixture uses actual original storage scope triggers and current serializer,
+including EXP04's exact incoming annotation composition; formatter production MD5
+`1876c9f943d5f51ddef29d4528e5e981` is required. Existing roles/Auth/schema/verdict
+inputs remain explicit local ports; no upload, model, domain fact or customer QA.
+
+Source-only review identified two additional guard gaps. Default argument values
+are now pinned, with an actual changed-default negative. Native diagnostic showed
+only serialized parser-location integers change during CREATE OR REPLACE. Every
+other metadata field is exact; the complete default AST is compared with only those
+location integers normalized, alongside unchanged canonical default expressions.
+No system-catalog write or metadata assertion removal. A complete-DM-identity
+review finding was independently reproduced and repaired; local before log
+`exp08-post-dm-pair-before.log`, SHA256
+`db6c1a9ab4ad6a8b270268b281c1db3dc019c27f8d5948759e9cf042635b18d1`.
+Selected5 passed afterward, `exp08-post-dm-pair-after.log`, SHA256
+`7d12ed004f0b8f288e78dd870b91a72768e784100fa501653cf1bbf241e76107`.
+Original OID/ACL/default semantics/other metadata and replay are conserved.
+
+Prior combined51 PASS (before complete-pair repair) is historical evidence:
+`exp08-hub-doors-post-composition.log`, SHA256
+`0c327d9d8d259b5c168a7d9bff6832255bab3e19b33faa1c01fa81c064143c10`.
+The proof retains original48 count before adding the new group, now53; original60
+outer assertion remains before integration. Current full no-argument child was
+started with measured disk headroom; no terminal result is claimed here.
+Opposing DM, lifecycle/file-cleanup/retirement composition, remaining original doors,
+full parent/managed/full-schema/JWT/RLS/customer receipt/reopen/recovery proof remain
+owed before publication. Source-only review is not independent execution. Existing
+ALG IDs/maturity unchanged; full18+6/five journeys and EXP08 remain STILL CODING.
+
+Current full original departure CHILD completed EXIT0 after resource recovery:
+`exp08-departure-full-post-currentness.log`, SHA256
+`7c212f45ac71361577beeae269885e3ce99d112dd3c60a6f088c88c5e368ec33`.
+It executes all60 original outer controls and then one separately counted53-control
+Hub integration group (61 outer entries); it is NOT the larger entity-owner parent.
+Readback removal `cc631b7a8e2f6dc0bb711118493e62ae`, member-add
+`cb353daa578ca145243b2ac5b5dbad07`, post `ad54f00d716e48866f9be3fb02ea7dce`,
+with original owners/ACLs/settings. The run disposed only its own databases; final
+owned-port catalogue contained postgres only and this chat's server was stopped.
+The earlier disk-interrupted attempt remains incomplete historical evidence.
+
+Current local composition `004e0fcbd1674747c603118d9c42abf50221c23b` normally merges
+original EXP03 closeout main215c into own29ec. Independent whole-tree comparison:
+all3 incoming documentation paths exactly equal215c; every other19,088 tracked
+leaf exactly equals29ec. The running proof's source bytes were unchanged. Final
+source-only reviewer found no new material issue after the two guard repairs;
+that is not independent execution or publication clearance. Native helper/member-add/
+post candidates remain unversioned/unpublished. All remaining gates above, actual
+both-chat producer consumers and full original assignment remain STILL CODING.
+
+#### Same outcome4: original create/join/agent-DM context, unpublished
+
+Actual production source pins were re-read: create `66c82c0a843b9bf98aa8e18f7ab4c2a2`,
+join `b28a684657c15f092295c9a3b9f124c5`, agent-DM
+`84c7aed2b04bf0098c77105f6e7ea1d8`. Each original writer has a separately reproduced
+local native current-context failure, with original positive, actual database wait
+and persisted effect readback. No authenticated or production incident is claimed.
+Detailed mechanics remain in the local proof. Before-log SHA256s:
+create `b7da0fe5935f9685dfa8adc96084eabdf236bb07ae3163003ff1f890e0212d93`;
+join `203500f34e17791ee0eed6d7b9f88b5f61bc7fd5aae5ef0ee616bce5cf96e934`;
+agent-DM `76dd141ee1c3794c73be0b9afcf13db1cc194427f2a47da1f8b96e95bfcf5a59`.
+
+Three new INERT original-writer-only patches use existing admission/identity/profile
+rows, whole-source inverse and original ABI/helper/FK/RI/ACL guards; no native version,
+Auth/profile/Setup/Work/domain writer, grant or separate authority engine. Each selected
+three-case run passes original positive/retry, committed/rollback context changes and
+exact OID/all metadata/replay conservation. Create body
+`b95333f9c5c1100b173f3e78503852a9`, after log SHA256
+`76b8855b3ad59f6d420931bce92bec67ce2197268063d0b75e4999931a9ed06e`.
+Join/agent initial candidate bodies `728bcd10a7fb7ed2cdc5bed76f097e79` /
+`6944823067b4e2d7a79e062d572835ba`, after SHA256s
+`2fb9cb4954dc3ff264613a40141d29da37dc1902a46b2a56eb68f26c77ec9f02` /
+`ed4f47d8442be21de841cad1c7f882580a745166cc9518194874729a7d259031`.
+
+Source-only review found no material create-source issue, but identified a cross-writer
+lock-order concern in the initial join/agent candidates. That finding remains OPEN;
+selected context PASS does not clear it. Actual original-removal composition in both
+orders and causal verification are required next. Current full-child run was started
+before that review and remains a bounded test, never publication clearance. Original
+53 retained before create3, then join3/agent3; outer60 assertion unchanged. Full parent,
+remaining identity/participant/drift/lifecycle/file/retirement concurrency, managed/
+full-schema/JWT/RLS and useful customer receipt/reopen/recovery remain owed. Every
+original18+6/five journeys and full EXP08 remain STILL CODING.
+
+The earlier full CHILD completed all60 original outer checks plus62 nested controls
+(EXIT0/61 outer entries), raw log `exp08-departure-full-context-doors.log`, SHA256
+`973fa82d13cf1c6a65e6b133c8ca5e9dccad3cd9c44ee10ca4c294607bf56537`.
+That run predates the new cross-writer control and does NOT clear its finding.
+
+The reviewer lock-order finding was independently reproduced in BOTH original
+join/removal and agent-DM/removal interleavings, actual native deadlock failures.
+Before-log SHA256s `5064018fd274c339d885d360d7d80bfd5b553f57d68809e10720f47760738332`
+and `6233b76fd930c4a36ef9152f17533865c4ae080fc431f2e1efdb4a1b096d13cb`.
+The inert writers now retain Auth -> original seat hold/refusal -> profile -> context,
+then join's channel hold. Whole original hold blocks remain inside the inverse guard.
+Initial post-fix runs completed both real writers in both orders, but the test's
+initial disposition expectation contradicted the actual b254 seat-ended trigger:
+team-channel membership history remains while admission refuses it; file-free agent
+DMs are deleted. The oracle was corrected to require those ORIGINAL dispositions,
+actual receipt/pointer cleanup and later original-door refusal with no new effect.
+No trigger or product-history behavior changed to satisfy that test.
+
+Final selected5 each passed. Join body `2d96d038cb2c44c4e2b033aa6a7ea586`, log
+`exp08-join-removal-native-disposition-after.log`, SHA256
+`05a7da5c8bb87a76fb731c705e43aa44cfb391e4535f8a99bea9b39248078bdb`.
+Agent-DM body `8af7dc934f2a37a10573b84093156737`, log
+`exp08-agent-removal-native-disposition-after.log`, SHA256
+`ab806e36e0c8d7f2c6540844b60b9b8a30592687e722cabafc4be351a4e0a31d`.
+Distinct source-only reviewer found the lock-order P2 resolved in source; no execution
+or publication clearance. Current full-child60+66 run started with measured headroom;
+no terminal current result claimed here. All other broader/integration/customer gates
+above remain owed, patches unversioned/unpublished, full EXP08 STILL CODING.
+
+Current full original departure CHILD now terminal EXIT0: all60 original outer controls
+then one separately counted66-control Hub integration group (61 outer entries).
+Raw log `exp08-departure-full-context-lock-order.log`, SHA256
+`0adf05b0863d26045302f9ab907152464a78a5671d5887d73fe6f81fb45de351`.
+Readback removalcc631/member-addcb353/postad54/createb953/join2d96/agent8af7 matches
+these guarded candidates. Both actual original-removal orders pass in this combined
+run. Exact final reviewer/source-only P2 disposition remains distinct from execution.
+Owned-port catalogue contained postgres only afterward; this chat's temporary server
+was stopped. Earlier native failures, wrong-oracle post-fix runs and historical62
+PASS remain retained with their original dispositions, not rewritten as current proof.
+
+This remains local native/component assurance with explicit Auth/table ports, not
+full entity-owner parent, linked-schema/JWT/RLS/customer proof or a released change.
+All currentness patches remain INERT/unversioned/unpublished. Human-DM late-context,
+remaining identity/participant/drift and cross-door/file/retirement proof, full-parent/
+managed/release and authenticated useful outcomes remain owed. Full EXP08 STILL CODING.
+
+#### Same outcome4: original human-DM current-context repair, inert
+
+Production original `team_hub_open_dm(uuid,uuid)` was independently re-read as
+`14363512d49614142c3886a17dea11f6`, postgres/definer/empty search path, original
+postgres+authenticated execute only. A local native late-context failure reproduced
+with original positive, actual identity wait and persisted channel/membership result.
+No production/customer incident or authenticated proof is claimed. Before log
+`exp08-human-dm-context-before.log`, SHA256
+`dcd6ce7b740d89e0f95341c2e3f58b5c93502d571fce11e7406a7eb78084b08f`.
+
+NEW INERT `exp08-team-hub-human-dm-currentness-patch.sql` changes only that original
+writer: ordered actor/peer identities, WHOLE original seat/refusal block, profile and
+current-context recheck. Original pair, permissions, inserts and retry are unchanged;
+exact inverse/source, ABI/helper/FK/RI/ACL/OID/all-metadata/replay guards remain.
+No migration version/apply, Auth/profile/Setup/Work/domain writer or new engine.
+
+Original14 non-mutant DM cases were mechanically lifted byte-exact from cc6a81188,
+with inverse verification. The original16 characterization cases including both
+helper-lock mutants still run before the layered human-DM writer patch. All14 are
+then rerun against the final candidate; its additional writer locks are not falsely
+claimed to leave helper-only mutants causal. The observed opposing-DM wait label
+is generic on the candidate while the published-door label is preserved. The
+removal-first port now holds original caller Auth before the ordered membership
+pair, matching the actual native writer's order rather than inventing a reverse hold.
+
+Selected19 passed (new positive/retry, committed/rollback context, BOTH actual removal
+orders, plus all14 original DM cases), candidate body
+`fecd14be9fdb66fa278a04cd279fe013`. Log `exp08-human-dm-context-after.log`, SHA256
+`8ffd7e25950fff52ca94e90ca1596cc09c6027a528d33e79f14674d2e152bde9`.
+Distinct source-only reviewer found no material issue; no independent execution or
+publication clearance claimed. The original66 count remains before the additional19,
+now85; original60 outer assertion is unchanged. Current FULL original entity-owner
+parent was started, including its existing complete departure child; no terminal
+whole-parent or fresh combined result is claimed yet. Remaining cross-door/file/
+retirement, drift, managed/full-schema/JWT/RLS and useful customer proof remain owed.
+All18+6/five journeys and full EXP08 remain STILL CODING.
+
+Full original parent attempt `exp08-full-lifecycle-human-dm.log` ended FAIL, raw SHA256
+`d91cb9e04f84fc420be391f6032b9903a27826a45eb9d98033b267165bfc3805`:
+its core report contains191 record entries, followed by successful original Billing
+advisory/contact authority-loss refusal controls, but its existing180000ms child
+ceiling produced ETIMEDOUT before the expanded departure child's terminal report.
+That is NOT full-parent PASS or a product-performance result. The exact owned child
+DB26516 left by forced termination was verified against the recorded process chain;
+no remaining client/process existed, and only that local database was removed.
+
+The UNCHANGED standalone child then completed EXIT0 in179.1296542 seconds: all60
+original outer entries then85 nested Hub controls (61 outer entries), own database
+disposed. Log `exp08-full-departure-human-dm-benchmark.log`, SHA256
+`4b3e269c5659b1a92e13e0978b1807ec40c9a8d998e061e8a993433a5a4cf45c`.
+Thus the old aggregate limit left less than0.9s measured headroom. The original
+parent's final child ceiling ONLY is renewed to600000ms with an evidence comment.
+Whole-file reverse substitution exactly reproduces the prior parent; every assertion,
+selector, individual SQL/wait/mutant bound and nonzero/error propagation is unchanged.
+Distinct source-only review found no material issue in this exact maintenance delta.
+No execution by reviewer, hosted CI allowance or product-latency waiver is claimed.
+A fresh normal full-parent pass and all normal release/customer gates remain owed.
+
+Current fresh FULL original lifecycle parent completed EXIT0 in460.5033886 seconds:
+`exp08-full-lifecycle-human-dm-renewed.log`, SHA256
+`a1bc34c19f59c6681323c55f2f2829bf58ebba7334a53c8fc7c1740302ee9900`.
+Actual full-selection core report has191 record entries; final original Billing
+advisory/contact authority-loss races pass, followed by normal original departure
+child60+85 (61 outer entries). Parent and child disposal receipts exist; authoritative
+owned-port catalogue contained postgres only. This pass covers tracked runtimee01,
+not the later file-proof module. Prior timed-out parent stays FAIL with its own hash.
+The e01 normal merge preserves the one incoming original E02 matrix path exactlyb0ec
+and all other19,094 tracked leaves exactlyown064c; runtime proof source unchanged.
+
+#### Same outcome4: original file post/cleanup composition, proof only
+
+New `exp08-team-hub-file-currentness.mjs` uses the SAME owning disposable fixture,
+actual post candidate and original discard/stale-claim writers (production hashes
+702b36 /4e47e1 re-read). No product SQL, scheduler, upload/StorageAPI or provider effect.
+Four actual wrong-role executions are denied by original function ACLs; foreign
+workspace/uploader refusals reveal no path or file change. Four both-order native
+post/discard and post/stale-claim races observe actual blocking and require original
+responses/path semantics, one winning state change, correct message/posted linkage.
+Storage objects are ONLY synthetic metadata ports, with no byte deletion claimed.
+The temporary explicit Auth-role port restores every original field in finally.
+
+Selected11 passed: original post default-ABI negative plus these10 file controls.
+The old85 assertion remains before appending10, now95. Distinct source-only review
+found no material issue in module/roles/wiring; no independent execution claimed.
+Fresh whole95 composition, broader retirement/drift/full-schema/Storage/Auth/customer
+and normal release gates remain owed. All currentness patches remain INERT/unversioned/
+unpublished. Original18+6/five journeys and full EXP08 remain STILL CODING.
+Selected11 log `exp08-file-cleanup-currentness.log`, SHA256
+`8349b860c1efa7e3f6f3c293e5b48c16d8f722a1a5674f0afd50fdeef9288caa`;
+actual original discard702b36/stale4e47e1 and postad54 readback, own database disposed.
+
+#### Same outcome4: original cancellation currentness, inert repair
+
+Original discard702b36 genuinely failed a local native file-wait/context-commit
+control after all original10 file controls and actual leave/own-cancellation positive.
+Log `exp08-discard-context-before.log`, SHA256
+`d2b5cf1f5504ea6393759a0b59f6dc0df23d13682c80d3f4256f5ed247c4e3c0`.
+No production/customer incident or Storage-byte effect is claimed.
+
+NEW INERT `exp08-team-hub-discard-currentness-patch.sql` changes ONLY original
+`team_hub_discard_file(uuid,uuid)`, after its own file-row wait. Ordered existing
+actor/seat/profile/current-context guards precede the original posted/state checks.
+No conversation-visibility requirement: actual original leave then own unposted
+cancellation remains allowed. Exact original inverse, ABI/helper/FK/RI/ACL/OID/all
+metadata and replay are guarded. No Auth/profile/Setup/Work writer, grant, provider,
+new authority engine, migration version or live apply.
+
+Selected16 passed: original setupABInegative1 plus file15 (original10, actual leave
+positive1, committed/rollback workspace2, BOTH actual removal orders2). Actual
+original removal receipt, profile clear, no-deadlock and correct file state verified.
+Log `exp08-discard-removal-composition.log`, SHA256
+`8d0b4c4000879110fc97dd173d88162e80de8634c6d3cd22e3b36fa8b5eb6c8b`.
+Final discard body `f59f67d3654fd40d319e8eb7adf4688a`; original stale-claim4e47e1
+and postad54 unchanged. Auth role-port restored, own database disposed. Original10,
+then13, then15 assertions remain; normal original85 before file15 now100. Distinct
+source-only review found no material issue, not independent execution/publication.
+Fresh whole100, remaining broader locking/retirement/drift/full-schema/Auth/RLS/
+Storage-byte/customer and normal release gates remain owed. Earlier full-parent85
+PASS remains bounded historical proof. Original18+6/five journeys/full EXP08 STILL CODING.
+
+### October31 — actual original Hub currentness carrier packaged, not released
+
+Under original ANT147 reservation5f43153a, new never-applied
+`20271126150008_exp08_team_hub_currentness.sql` composes the eight reviewed inert
+pieces into ONE transaction: three original private admission helpers and seven
+original public Hub writers. No table, data, grant, Auth/profile/Setup/Work/domain
+writer, provider or held activation. LF SHA256
+`014ac2dc6edfa18a9ae1112b1e91a74e98484d5e4525b468a73e5cef20ad13ea`.
+Original applied14/history remain intact. Official CLI2.109.1 generated the empty
+unpublished file; only that unpublished file was renumbered to the reserved slot.
+
+Actual focused102 PASS retains original100 controls before two carrier controls:
+exact ordered inner-piece conservation; all10 original function snapshots; late
+original-post default ABI drift refuses and rolls back early helper/member-add
+changes; native original-to-candidate application and replay conserve expected
+body/ACL/OID/allmetadata/rows. Defaults normalize only parser-location integers
+alongside exact canonical expression checks. Log `exp08-currentness-native-carrier.log`
+SHA256 `a4a28645a13fd5fe4a8a0d8364231c82d0eba7b432b6c84a013f41eed5ccdb86`.
+Distinct SOURCE-ONLY reviewer found no material issue; executed no tests or DB/UI.
+
+Original Team Hub10 files/401 tests and original departure UI41 tests PASS. All src
+remains byte-identical to releasede0b3; no new render/authenticated claim. New UI
+evidence record `docs/evidence/ui-delivery/exp08-hub-currentness-2026-10-31.md`
+records open gates. Full current parent pending: initial missing-opt-in refusal,
+sandbox socket refusal and authorized run interrupted by owned local PostgreSQL
+lock-file shutdown are retained, not counted PASS. Clean owned restart succeeded;
+fresh run is separate. No assertions weakened. Current managed preview, final
+review/exact-head CI, release/source readback, broader retirement/full-schema and
+actual authenticated result/receipt/reopen/recovery remain owed. Original full
+18+6/five journeys/full EXP08 **STILL CODING**, no owner review or acceptance.

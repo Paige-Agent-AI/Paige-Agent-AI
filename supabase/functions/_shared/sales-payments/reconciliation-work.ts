@@ -36,3 +36,7 @@ export async function reconcileSalesPaymentWork(admin:SalesPaymentAdmin,stripe:S
  }));
  return counts;
 }
+
+// Shared continuation seam only; the existing entry point does not invoke it.
+// Native carrier, signed-event admission and financial/UI integration remain gated.
+export {reconcileSalesProviderObservationWork} from './provider-observation-work.ts';

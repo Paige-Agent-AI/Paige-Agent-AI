@@ -5,6 +5,7 @@ import {randomUUID,createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 const [binary,port,user,expectedDirectory,mode]=process.argv.slice(2);
 if(!binary||!/^\d+$/.test(port??'')||!user||!expectedDirectory)throw Error('Explicit local cluster arguments required');
+if(process.argv.includes('--observation-work'))assert(process.argv.includes('--provider-observations'),'event work requires the original observation proof');
 let database='postgres';
 const args=()=>['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-v','ON_ERROR_STOP=1','-At'];
 const run=sql=>{const p=spawnSync(binary,args(),{input:sql,encoding:'utf8',maxBuffer:4e6,windowsHide:true});if(p.status!==0)throw Error(p.stderr);return p.stdout.trim();};
@@ -121,6 +122,7 @@ try {
    ADD COLUMN IF NOT EXISTS llm_trace_id uuid,ADD COLUMN IF NOT EXISTS release_id text,ADD COLUMN IF NOT EXISTS detail jsonb;`);
   run(rail+`REVOKE ALL ON FUNCTION public._record_workspace_rail_event(uuid,uuid,text,uuid,bigint,text,text,text,text,uuid,text,jsonb) FROM PUBLIC,anon,authenticated,service_role;`);
   run(read('supabase/tests/fixtures/exp04_provider_observation.sql'));
+  if(process.argv.includes('--observation-work'))run(read('supabase/tests/fixtures/exp04_provider_observation_work.sql'));
  }
  const first=randomUUID();
  // --baseline intentionally fails here on current-main: there is no asynchronous operation RPC.
@@ -480,12 +482,58 @@ try {
   assert.equal(run(`SELECT to_jsonb(p) FROM public.paige_invoice_payments p WHERE provider_operation_id='${paidOp}';`),paymentBefore,'concurrent observations preserve original payment');
   assert.equal(run(`SELECT to_jsonb(w) FROM public.paige_durable_work w JOIN public.paige_invoice_provider_operations p ON p.reconciliation_work_id=w.id WHERE p.id='${paidOp}';`),workBefore,'later observations never reopen or reset terminal settlement work');
   observationProof.concurrency_cases=2;
+  if(process.argv.includes('--observation-work')){
+   let workChecks=read('supabase/tests/fixtures/exp04_provider_observation_work_checks.sql');
+   workChecks='begin;\n'+[ ['operation',paidOp],['tenant',tenant],['merchant','acct_fixtureA'],['charge','ch_fixture'],['settlement','txn_fixture'] ].map(([key,value])=>`SELECT set_config('test.e04_work_${key}','${value}',true);`).join('\n')+'\n'+workChecks+'\nrollback;';
+   if(process.argv.includes('--observation-self-test')){
+    const definitionBefore=run("SELECT pg_get_functiondef('public.register_sales_provider_observation_work(uuid,uuid,text,text,text,text)'::regprocedure);");
+    const candidate=read('supabase/tests/fixtures/exp04_provider_observation_work.sql');
+    const mutant=candidate.replaceAll('create function','create or replace function').replace('or op.merchant_account_id is distinct from _merchant_account_id','');
+    assert.notEqual(mutant,candidate.replaceAll('create function','create or replace function'),'remove only incoming merchant binding control');
+    deny(workChecks.replace('begin;\n',()=> 'begin;\n'+mutant+'\n'),/FAIL: different merchant cannot register event work accepted/);
+    assert.equal(run("SELECT pg_get_functiondef('public.register_sales_provider_observation_work(uuid,uuid,text,text,text,text)'::regprocedure);"),definitionBefore,'negative-control connection restores exact original event writer');
+    console.log('SALES_PROVIDER_OBSERVATION_WORK_CONTROL_PASS: removing merchant binding caused the exact cross-merchant admission failure; rollback restored the original writer.');
+   }
+   const line=run(workChecks).split('\n').find(x=>x.startsWith('{')&&x.includes('E04_PROVIDER_OBSERVATION_WORK'));
+   assert(line,'native work proof summary');observationProof.work=JSON.parse(line);
+   assert.equal(observationProof.work.checks,39,'all native event-work controls executed');
+   const event='evt_workRealSessions';
+   const registerEvent=()=>service(`BEGIN;SELECT jsonb_build_object('backend',pg_backend_pid(),'result',public.register_sales_provider_observation_work('${tenant}','${paidOp}','${event}','acct_fixtureA','test','ch_fixture'));SELECT pg_sleep(0.1);COMMIT;`);
+   const registered=await Promise.all([execute(registerEvent()),execute(registerEvent())]);
+   assert(registered.every(r=>r.code===0),'both event-registration sessions return safely');
+   const registeredRows=registered.map(r=>JSON.parse(r.out.split('\n').find(x=>x.startsWith('{'))));
+   assert.notEqual(registeredRows[0].backend,registeredRows[1].backend,'two real event-registration sessions');
+   assert.equal(registeredRows[0].result.work_id,registeredRows[1].result.work_id,'one original event-work identity');
+   const jsonResult=out=>JSON.parse(out.split('\n').find(x=>x.startsWith('{')));
+   const batch=jsonResult(run(service('SELECT claim_sales_provider_observation_work(3);')));
+   assert.equal(batch.claims.length,1,'one event occurrence available for dispatch');
+   const c=batch.claims[0];assert.equal(c.work_id,registeredRows[0].result.work_id);
+   const context=jsonResult(run(service(`SELECT read_sales_provider_observation_work_context('${tenant}','${c.work_id}','${c.server_idempotency_key}',${c.attempt_count});`)));
+   const facts=structuredClone(snapshot);facts.refunds[0].id='re_workrace';
+   const completeEvent=()=>service(`BEGIN;SELECT jsonb_build_object('backend',pg_backend_pid(),'result',public.complete_sales_provider_observation_work('${tenant}','${c.work_id}','${c.server_idempotency_key}',${c.attempt_count},${context.observation_version},${literal(facts)}));SELECT pg_sleep(0.1);COMMIT;`);
+   const finished=await Promise.all([execute(completeEvent()),execute(completeEvent())]);
+   assert(finished.every(r=>r.code===0),'both same-work completion sessions recover safely');
+   const finishedRows=finished.map(r=>JSON.parse(r.out.split('\n').find(x=>x.startsWith('{'))));
+   assert.notEqual(finishedRows[0].backend,finishedRows[1].backend,'two real event-completion sessions');
+   assert.deepEqual(finishedRows.map(r=>r.result.replayed).sort(),[false,true],'one event completion and one lost-response replay');
+   assert.deepEqual(finishedRows[0].result.receipt,finishedRows[1].result.receipt,'one immutable journal receipt for both attempts');
+   assert.equal(Number(run(`SELECT provider_observation_version FROM public.paige_invoice_provider_operations WHERE id='${paidOp}';`)),context.observation_version+1,'event race records exactly one new source incarnation');
+   assert.equal(run(`SELECT count(*) FROM public.paige_workspace_events WHERE source_id='${c.work_id}' AND outcome='capability_succeeded';`),'1','one actual work completion Rail');
+   const terminalBefore=run(`SELECT to_jsonb(w) FROM public.paige_durable_work w WHERE id='${c.work_id}';`);
+   run(registerEvent());
+   assert.equal(run(`SELECT to_jsonb(w) FROM public.paige_durable_work w WHERE id='${c.work_id}';`),terminalBefore,'completed event redelivery never resets a terminal work row');
+   assert.equal(run(`SELECT to_jsonb(p) FROM public.paige_invoice_payments p WHERE provider_operation_id='${paidOp}';`),paymentBefore,'event races preserve captured payment exactly');
+   assert.equal(run(`SELECT to_jsonb(w) FROM public.paige_durable_work w JOIN public.paige_invoice_provider_operations p ON p.reconciliation_work_id=w.id WHERE p.id='${paidOp}';`),workBefore,'event races preserve original terminal settlement work exactly');
+   observationProof.work.concurrency_cases=1;
+   console.log('SALES_PROVIDER_OBSERVATION_WORK_PASS: '+JSON.stringify(observationProof.work));
+  }
   console.log('SALES_PROVIDER_OBSERVATION_CONCURRENCY_PASS: two actual-session cases; same facts commit once, changed facts refuse the stale incarnation; original payment and terminal settlement work unchanged.');
  }
  run(`UPDATE paige_invoices SET status='void' WHERE id='${invoice}';`);
  assert.equal(publicRequest(),null,'void invoice bearer refused');
  if(observationProof){
   const files=['scripts/sql/sales-provider-operation-proof.mjs','supabase/tests/fixtures/exp04_provider_observation.sql','supabase/tests/fixtures/exp04_provider_observation_checks.sql'];
+  if(process.argv.includes('--observation-work'))files.push('supabase/tests/fixtures/exp04_provider_observation_work.sql','supabase/tests/fixtures/exp04_provider_observation_work_checks.sql');
   const hashes=Object.fromEntries(files.map(file=>[file,createHash('sha256').update(read(file)).digest('hex')]));
   mkdirSync(new URL('../../work/',import.meta.url),{recursive:true});
   writeFileSync(new URL('../../work/sales-provider-observation-proof.json',import.meta.url),JSON.stringify({

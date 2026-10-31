@@ -1,0 +1,138 @@
+{
+  "proofClass": "SYNTHETIC_ORIGINAL_SETTINGS_PRESERVATION",
+  "sources": [
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c"
+    },
+    {
+      "path": "src/solo/SoloApp.tsx",
+      "sha256": "e602f845d2ff8167101a3ae64cbbfb67b6d657e949556686aaebe4aeda4106e9"
+    },
+    {
+      "path": "src/solo/SoloScreenBoundary.tsx",
+      "sha256": "084f56aaf783d098b55f8da3c95c4022db8bfbcebc52cb243b2318c77fcd05ef"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "sha256": "a13d385e06711b9410ea08cdd9341c4a9bbac04f4ad67cf8ff306174ca3ef270"
+    },
+    {
+      "path": "src/solo/settings.tsx",
+      "sha256": "bc68d474819250421f6619c25efb075952c88b3c2d76386654ca2845af44955f"
+    },
+    {
+      "path": "src/solo/settings-integrations.tsx",
+      "sha256": "7195f7e8dcafdc3ff1c42173ff2ba725f7d8339d50af01401025de31a0d9e1ec"
+    },
+    {
+      "path": "src/solo/settings-automations.tsx",
+      "sha256": "3d7ed1624f15a18e09cf4fd0afec1ae82e46e325ffdd2edeb8c1afbbbd6102db"
+    },
+    {
+      "path": "src/solo/owner-task-automations.tsx",
+      "sha256": "eb104fc3e251a6b62f079ba9b70dca78efc9a607cdb955ec44783c5afd4700f1"
+    },
+    {
+      "path": "src/solo/data/useOwnerTaskAutomations.ts",
+      "sha256": "00b3970f11e6cfc9c141546166f4b814f7d3d3104ed52d5899ab9cd74ba9adca"
+    },
+    {
+      "path": "src/solo/data/ownerTaskAutomation.ts",
+      "sha256": "fadcb66a83b511122a2286f23a2d647adcafef6ec632b365a915097d0cc5e38d"
+    },
+    {
+      "path": "src/solo/owner-task-purpose-editor.tsx",
+      "sha256": "c6251ab7c080fdea7ce0168ac792db6e4e5794396c1952392a73e7b1850ab297"
+    },
+    {
+      "path": "src/solo/owner-task-purpose-editor.css",
+      "sha256": "4168889fd8d23370b89cf792c7aa4dac0e341e3fd0dd001d4b7ece109e1740c6"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355"
+    },
+    {
+      "path": "src/solo/solo-paige-workspace.css",
+      "sha256": "102217d07536ce43e9eec9a258deb541ecb7ccb226f43752c3cc2d06fdd736aa"
+    },
+    {
+      "path": "src/solo/settings.css",
+      "sha256": "f8109880569e719bf13f8467c03346e6f8475a4892743adc1c4f8b620c8880db"
+    },
+    {
+      "path": "src/solo/settings-integrations.css",
+      "sha256": "da6904f7b252c9399bb74d82e11c8604db8ec3ac63644accdd537b78721d9a4d"
+    },
+    {
+      "path": "src/solo/__render__/owner-task-automations.render.test.tsx",
+      "sha256": "95790128d9ec2625e28e1c8899553e05b30b5d88ccbc6187f7845d7a0df9a94f"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "path": "src/solo/owner-task-process-history.tsx",
+      "sha256": "ebf4d1a87c1bf3ae7fbe0b1ab748afcc611e903f9ed06fbde7b3e145e0367d42"
+    },
+    {
+      "path": "src/solo/operations/OperationsRoute.tsx",
+      "sha256": "a4f449b0cc3d0dd9e6542f07444d4aed477aaa339d33afba0a9d5b79d144b7db"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkspace.tsx",
+      "sha256": "e4d49ba743f2aeacf4447d894cc5004756bba646bfdea201c06672f855c6a1c4"
+    },
+    {
+      "path": "src/solo/operations/OperationsPlaybooks.tsx",
+      "sha256": "377a91b3af627052cd5e3269d1e46a63b2921304c48de522dca5deb8396f9dbf"
+    },
+    {
+      "path": "src/solo/operations/operations-workspace.css",
+      "sha256": "991896fedb7b77e4cd620aa6e8dab443cad9536c31481cbe7adc6e9afbf23a72"
+    },
+    {
+      "path": "src/solo/operations/operations-views.css",
+      "sha256": "18c5139a5966de593d2ad6480f1cdb676b834f10e077fc7927d5203ccc8d5e5e"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-inspection.css",
+      "sha256": "db6fcc9717bcdb5a58a798c66342dbc0dcd40001b141be3c62248038b8fcedb1"
+    }
+  ],
+  "authenticatedQa": "UNVERIFIED",
+  "records": [
+    {
+      "name": "operations-2-light-1366x768-closed-unsupported-purpose.html",
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "scene": "unsupported-purpose",
+      "htmlSha256": "49fc9363051115461646313ac41311ba5097466bfcae6aedd0530df19bbafa84",
+      "simulatedControls": 0,
+      "realEffects": 0
+    },
+    {
+      "name": "operations-2-dark-390x844-closed-unsupported-purpose.html",
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "open": false,
+      "scene": "unsupported-purpose",
+      "htmlSha256": "7026aab914302d6049ad1053f6af6bfe92378d9145eda1c9d93fe7e55392745f",
+      "simulatedControls": 0,
+      "realEffects": 0
+    }
+  ]
+}

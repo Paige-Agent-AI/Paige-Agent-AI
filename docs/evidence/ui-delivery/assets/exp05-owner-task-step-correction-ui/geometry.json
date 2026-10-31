@@ -1,0 +1,2009 @@
+{
+  "boundary": "Serialized actual Operations UI/hook/caller with synthetic ports; not Auth, persistence, native modal focus-trap, zoom or AT proof.",
+  "captureProtocol": "Screenshots captured in the next tool call after navigation, viewport, font and focus/scroll observation. No resize or editing. First same-call images excluded and retained privately.",
+  "captures": [
+    {
+      "spec": {
+        "name": "operations-2-light-1536x770-closed-correction.html",
+        "theme": "light",
+        "width": 1536,
+        "height": 770,
+        "open": false,
+        "scene": "correction",
+        "focus": "Task title",
+        "htmlSha256": "ee0b9dc33b104710c15bc7349e49c1abe8ee8d571f16329340bc0351fded47f2",
+        "simulatedControls": 0,
+        "realEffects": 0
+      },
+      "name": "operations-2-light-1536x770-closed-correction.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": -89.30000305175781,
+              "height": 44,
+              "left": 1423.3375244140625,
+              "right": 1485.600025177002,
+              "top": -133.3000030517578,
+              "width": 62.26250076293945,
+              "x": 1423.3375244140625,
+              "y": -133.3000030517578
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 170.5,
+              "height": 44,
+              "left": 256.8000183105469,
+              "right": 375.3250198364258,
+              "top": 126.5,
+              "width": 118.5250015258789,
+              "x": 256.8000183105469,
+              "y": 126.5
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 599.7999877929688,
+              "height": 44,
+              "left": 272.8000183105469,
+              "right": 377.8750228881836,
+              "top": 555.7999877929688,
+              "width": 105.07500457763672,
+              "x": 272.8000183105469,
+              "y": 555.7999877929688
+            },
+            "text": "Save changes"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 599.7999877929688,
+              "height": 44,
+              "left": 387.875,
+              "right": 445.6875,
+              "top": 555.7999877929688,
+              "width": 57.8125,
+              "x": 387.875,
+              "y": 555.7999877929688
+            },
+            "text": "Cancel"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 786.3500366210938,
+              "height": 44,
+              "left": 256.8000183105469,
+              "right": 375.3250198364258,
+              "top": 742.3500366210938,
+              "width": 118.5250015258789,
+              "x": 256.8000183105469,
+              "y": 742.3500366210938
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 840.3500366210938,
+              "height": 44,
+              "left": 256.8000183105469,
+              "right": 373.6250228881836,
+              "top": 796.3500366210938,
+              "width": 116.82500457763672,
+              "x": 256.8000183105469,
+              "y": 796.3500366210938
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 894.3500366210938,
+              "height": 44,
+              "left": 256.8000183105469,
+              "right": 346.3000183105469,
+              "top": 850.3500366210938,
+              "width": 89.5,
+              "x": 256.8000183105469,
+              "y": 850.3500366210938
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 643,
+          "overflow": "auto",
+          "scroll": 1297,
+          "top": 420.7999877929687
+        },
+        "document": {
+          "client": 1536,
+          "scroll": 1536
+        },
+        "fields": 2,
+        "focus": "Save changes",
+        "fonts": "loaded",
+        "form": {
+          "bottom": 612.8000183105469,
+          "height": 423.3000183105469,
+          "left": 256.8000183105469,
+          "right": 1485.600067138672,
+          "top": 189.5,
+          "width": 1228.800048828125,
+          "x": 256.8000183105469,
+          "y": 189.5
+        },
+        "paige": "closed",
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "sha256": "3936133e109dda43c0cb4b48bd7e7b365b30bc943af3859fa0ea81ab3053129c",
+      "jpeg": {
+        "width": 1535,
+        "height": 770
+      },
+      "bridgeEdge": true
+    },
+    {
+      "spec": {
+        "name": "operations-2-light-1536x770-open-correction.html",
+        "theme": "light",
+        "width": 1536,
+        "height": 770,
+        "open": true,
+        "scene": "correction",
+        "focus": "Task title",
+        "htmlSha256": "88048e0691990e60795a9d58c851d1e8724711da528ba4d05a0e8a4a956bb090",
+        "simulatedControls": 0,
+        "realEffects": 0
+      },
+      "name": "operations-2-light-1536x770-open-correction.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": -129.3000030517578,
+              "height": 44,
+              "left": 901.1000366210938,
+              "right": 963.3625373840332,
+              "top": -173.3000030517578,
+              "width": 62.26250076293945,
+              "x": 901.1000366210938,
+              "y": -173.3000030517578
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 170.8000030517578,
+              "height": 44,
+              "left": 256.8000183105469,
+              "right": 375.3250198364258,
+              "top": 126.8000030517578,
+              "width": 118.5250015258789,
+              "x": 256.8000183105469,
+              "y": 126.8000030517578
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 600.1000366210938,
+              "height": 44,
+              "left": 272.8000183105469,
+              "right": 377.8750228881836,
+              "top": 556.1000366210938,
+              "width": 105.07500457763672,
+              "x": 272.8000183105469,
+              "y": 556.1000366210938
+            },
+            "text": "Save changes"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 600.1000366210938,
+              "height": 44,
+              "left": 387.875,
+              "right": 445.6875,
+              "top": 556.1000366210938,
+              "width": 57.8125,
+              "x": 387.875,
+              "y": 556.1000366210938
+            },
+            "text": "Cancel"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 786.6500244140625,
+              "height": 44,
+              "left": 256.8000183105469,
+              "right": 375.3250198364258,
+              "top": 742.6500244140625,
+              "width": 118.5250015258789,
+              "x": 256.8000183105469,
+              "y": 742.6500244140625
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 840.6500244140625,
+              "height": 44,
+              "left": 256.8000183105469,
+              "right": 373.6250228881836,
+              "top": 796.6500244140625,
+              "width": 116.82500457763672,
+              "x": 256.8000183105469,
+              "y": 796.6500244140625
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 894.6500244140625,
+              "height": 44,
+              "left": 256.8000183105469,
+              "right": 346.3000183105469,
+              "top": 850.6500244140625,
+              "width": 89.5,
+              "x": 256.8000183105469,
+              "y": 850.6500244140625
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 643,
+          "overflow": "auto",
+          "scroll": 1338,
+          "top": 460.7999877929687
+        },
+        "document": {
+          "client": 1536,
+          "scroll": 1536
+        },
+        "fields": 2,
+        "focus": "Save changes",
+        "fonts": "loaded",
+        "form": {
+          "bottom": 613.1000213623047,
+          "height": 423.3000183105469,
+          "left": 256.8000183105469,
+          "right": 963.3625183105468,
+          "top": 189.8000030517578,
+          "width": 706.5625,
+          "x": 256.8000183105469,
+          "y": 189.8000030517578
+        },
+        "paige": "open",
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "sha256": "a0d8b3b062d231b6677a94512c21372b062f67b039b9a331f48e931487879c82",
+      "jpeg": {
+        "width": 1535,
+        "height": 770
+      },
+      "bridgeEdge": true
+    },
+    {
+      "spec": {
+        "name": "operations-2-light-1366x768-closed-correction.html",
+        "theme": "light",
+        "width": 1366,
+        "height": 768,
+        "open": false,
+        "scene": "correction",
+        "focus": "Task title",
+        "htmlSha256": "5dc6f4666f91cb37b6c7a044be2b0f86a4447d5da40001792df2138a56d8c971",
+        "simulatedControls": 0,
+        "realEffects": 0
+      },
+      "name": "operations-2-light-1366x768-closed-correction.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": -90.90000915527344,
+              "height": 44,
+              "left": 1253.737548828125,
+              "right": 1316.0000495910645,
+              "top": -134.90000915527344,
+              "width": 62.26250076293945,
+              "x": 1253.737548828125,
+              "y": -134.90000915527344
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 168.9000015258789,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 124.9000015258789,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 124.9000015258789
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 598.2000122070312,
+              "height": 44,
+              "left": 128.8000030517578,
+              "right": 233.87500762939453,
+              "top": 554.2000122070312,
+              "width": 105.07500457763672,
+              "x": 128.8000030517578,
+              "y": 554.2000122070312
+            },
+            "text": "Save changes"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 598.2000122070312,
+              "height": 44,
+              "left": 243.875,
+              "right": 301.6875,
+              "top": 554.2000122070312,
+              "width": 57.8125,
+              "x": 243.875,
+              "y": 554.2000122070312
+            },
+            "text": "Cancel"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 784.75,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 740.75,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 740.75
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 838.75,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 229.62500762939453,
+              "top": 794.75,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 794.75
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 892.75,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 202.3000030517578,
+              "top": 848.75,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 848.75
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 641,
+          "overflow": "auto",
+          "scroll": 1297,
+          "top": 422.3999938964844
+        },
+        "document": {
+          "client": 1366,
+          "scroll": 1366
+        },
+        "fields": 2,
+        "focus": "Save changes",
+        "fonts": "loaded",
+        "form": {
+          "bottom": 611.2000274658203,
+          "height": 423.3000183105469,
+          "left": 112.8000030517578,
+          "right": 1316.0000762939453,
+          "top": 187.90000915527344,
+          "width": 1203.2000732421875,
+          "x": 112.8000030517578,
+          "y": 187.90000915527344
+        },
+        "paige": "closed",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "sha256": "2ffefaa949641458f3e78eb2d931c70f15090bd719d350a0182031d5d3154b19",
+      "jpeg": {
+        "width": 1366,
+        "height": 768
+      },
+      "bridgeEdge": false
+    },
+    {
+      "spec": {
+        "name": "operations-2-light-1366x768-open-correction.html",
+        "theme": "light",
+        "width": 1366,
+        "height": 768,
+        "open": true,
+        "scene": "correction",
+        "focus": "Task title",
+        "htmlSha256": "185a618e3c9cf251e40d4a154c6312e9b960caa3fe95b9fb9d89c2cc8a6924f6",
+        "simulatedControls": 0,
+        "realEffects": 0
+      },
+      "name": "operations-2-light-1366x768-open-correction.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": -130.90000915527344,
+              "height": 44,
+              "left": 789.1625366210938,
+              "right": 851.4250373840332,
+              "top": -174.90000915527344,
+              "width": 62.26250076293945,
+              "x": 789.1625366210938,
+              "y": -174.90000915527344
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 169.20000457763672,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 125.20000457763672,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 125.20000457763672
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 598.5,
+              "height": 44,
+              "left": 128.8000030517578,
+              "right": 233.87500762939453,
+              "top": 554.5,
+              "width": 105.07500457763672,
+              "x": 128.8000030517578,
+              "y": 554.5
+            },
+            "text": "Save changes"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 598.5,
+              "height": 44,
+              "left": 243.875,
+              "right": 301.6875,
+              "top": 554.5,
+              "width": 57.8125,
+              "x": 243.875,
+              "y": 554.5
+            },
+            "text": "Cancel"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 785.0499877929688,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 741.0499877929688,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 741.0499877929688
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 839.0499877929688,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 229.62500762939453,
+              "top": 795.0499877929688,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 795.0499877929688
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 893.0499877929688,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 202.3000030517578,
+              "top": 849.0499877929688,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 849.0499877929688
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 641,
+          "overflow": "auto",
+          "scroll": 1338,
+          "top": 462.3999938964844
+        },
+        "document": {
+          "client": 1366,
+          "scroll": 1366
+        },
+        "fields": 2,
+        "focus": "Save changes",
+        "fonts": "loaded",
+        "form": {
+          "bottom": 611.5000152587891,
+          "height": 423.3000183105469,
+          "left": 112.8000030517578,
+          "right": 851.4250030517578,
+          "top": 188.1999969482422,
+          "width": 738.625,
+          "x": 112.8000030517578,
+          "y": 188.1999969482422
+        },
+        "paige": "open",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "sha256": "20466c4be7789817e28fb1192e60392a56aad406bbb3a9a8513b4e8cfc44f6ec",
+      "jpeg": {
+        "width": 1366,
+        "height": 768
+      },
+      "bridgeEdge": false
+    },
+    {
+      "spec": {
+        "name": "operations-2-light-1024x768-closed-correction.html",
+        "theme": "light",
+        "width": 1024,
+        "height": 768,
+        "open": false,
+        "scene": "correction",
+        "focus": "Task title",
+        "htmlSha256": "ec68bc8c1c3bbe65ed9ccc23af6e73997698a0d478b3bdb7b300f0e7c844abd3",
+        "simulatedControls": 0,
+        "realEffects": 0
+      },
+      "name": "operations-2-light-1024x768-closed-correction.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": -130.90000915527344,
+              "height": 44,
+              "left": 911.3375244140624,
+              "right": 973.600025177002,
+              "top": -174.90000915527344,
+              "width": 62.26250076293945,
+              "x": 911.3375244140624,
+              "y": -174.90000915527344
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 169.20000457763672,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 125.20000457763672,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 125.20000457763672
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 598.5,
+              "height": 44,
+              "left": 128.8000030517578,
+              "right": 233.87500762939453,
+              "top": 554.5,
+              "width": 105.07500457763672,
+              "x": 128.8000030517578,
+              "y": 554.5
+            },
+            "text": "Save changes"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 598.5,
+              "height": 44,
+              "left": 243.875,
+              "right": 301.6875,
+              "top": 554.5,
+              "width": 57.8125,
+              "x": 243.875,
+              "y": 554.5
+            },
+            "text": "Cancel"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 785.0499877929688,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 741.0499877929688,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 741.0499877929688
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 839.0499877929688,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 229.62500762939453,
+              "top": 795.0499877929688,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 795.0499877929688
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 893.0499877929688,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 202.3000030517578,
+              "top": 849.0499877929688,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 849.0499877929688
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 641,
+          "overflow": "auto",
+          "scroll": 1338,
+          "top": 462.3999938964844
+        },
+        "document": {
+          "client": 1024,
+          "scroll": 1024
+        },
+        "fields": 2,
+        "focus": "Save changes",
+        "fonts": "loaded",
+        "form": {
+          "bottom": 611.5000152587891,
+          "height": 423.3000183105469,
+          "left": 112.8000030517578,
+          "right": 973.5999908447266,
+          "top": 188.1999969482422,
+          "width": 860.7999877929688,
+          "x": 112.8000030517578,
+          "y": 188.1999969482422
+        },
+        "paige": "closed",
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "sha256": "f020046f7f8222d1e8ce365fcf503db73bc0746e36e2c6ed3a880c44bd90a6b4",
+      "jpeg": {
+        "width": 1024,
+        "height": 768
+      },
+      "bridgeEdge": false
+    },
+    {
+      "spec": {
+        "name": "operations-2-light-1024x768-open-correction.html",
+        "theme": "light",
+        "width": 1024,
+        "height": 768,
+        "open": true,
+        "scene": "correction",
+        "focus": "Task title",
+        "htmlSha256": "f8a6ea73201e8bf6a7119c2e716178c4f6169d8b530cf2e4fb2b9ed6a4b4446b",
+        "simulatedControls": 0,
+        "realEffects": 0
+      },
+      "name": "operations-2-light-1024x768-open-correction.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 331.5,
+              "height": 44,
+              "left": 911.3375244140624,
+              "right": 973.600025177002,
+              "top": 287.5,
+              "width": 62.26250076293945,
+              "x": 911.3375244140624,
+              "y": 287.5
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 631.6000366210938,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 587.6000366210938,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 587.6000366210938
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 1060.9000244140625,
+              "height": 44,
+              "left": 128.8000030517578,
+              "right": 233.87500762939453,
+              "top": 1016.9000244140624,
+              "width": 105.07500457763672,
+              "x": 128.8000030517578,
+              "y": 1016.9000244140624
+            },
+            "text": "Save changes"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 1060.9000244140625,
+              "height": 44,
+              "left": 243.875,
+              "right": 301.6875,
+              "top": 1016.9000244140624,
+              "width": 57.8125,
+              "x": 243.875,
+              "y": 1016.9000244140624
+            },
+            "text": "Cancel"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1247.4500732421875,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 1203.4500732421875,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 1203.4500732421875
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1301.4500732421875,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 229.62500762939453,
+              "top": 1257.4500732421875,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 1257.4500732421875
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1355.4500732421875,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 202.3000030517578,
+              "top": 1311.4500732421875,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 1311.4500732421875
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 641,
+          "overflow": "auto",
+          "scroll": 1338,
+          "top": 0
+        },
+        "document": {
+          "client": 1024,
+          "scroll": 1024
+        },
+        "fields": 2,
+        "focus": "Document body",
+        "fonts": "loaded",
+        "form": {
+          "bottom": 1073.9000549316406,
+          "height": 423.3000183105469,
+          "left": 112.8000030517578,
+          "right": 973.5999908447266,
+          "top": 650.6000366210938,
+          "width": 860.7999877929688,
+          "x": 112.8000030517578,
+          "y": 650.6000366210938
+        },
+        "paige": "open",
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "sha256": "a532256832b170755a1e40f42d615973d74ec59a7be1057565c8a90c3fdfb5f3",
+      "jpeg": {
+        "width": 1024,
+        "height": 768
+      },
+      "bridgeEdge": false
+    },
+    {
+      "spec": {
+        "name": "operations-2-light-900x1000-closed-correction.html",
+        "theme": "light",
+        "width": 900,
+        "height": 1000,
+        "open": false,
+        "scene": "correction",
+        "focus": "Task title",
+        "htmlSha256": "5255acb5bf3dc8f221d3cb15240ccd0a7b914a09e34bf4843166d47efa5ce928",
+        "simulatedControls": 0,
+        "realEffects": 0
+      },
+      "name": "operations-2-light-900x1000-closed-correction.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": -14.900001525878906,
+              "height": 44,
+              "left": 787.3375244140625,
+              "right": 849.600025177002,
+              "top": -58.900001525878906,
+              "width": 62.26250076293945,
+              "x": 787.3375244140625,
+              "y": -58.900001525878906
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 285.1999969482422,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 241.1999969482422,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 241.1999969482422
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 714.5,
+              "height": 44,
+              "left": 128.8000030517578,
+              "right": 233.87500762939453,
+              "top": 670.5,
+              "width": 105.07500457763672,
+              "x": 128.8000030517578,
+              "y": 670.5
+            },
+            "text": "Save changes"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 714.5,
+              "height": 44,
+              "left": 243.875,
+              "right": 301.6875,
+              "top": 670.5,
+              "width": 57.8125,
+              "x": 243.875,
+              "y": 670.5
+            },
+            "text": "Cancel"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 901.0499877929688,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 857.0499877929688,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 857.0499877929688
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 955.0499877929688,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 229.62500762939453,
+              "top": 911.0499877929688,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 911.0499877929688
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1009.0499877929688,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 202.3000030517578,
+              "top": 965.0499877929688,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 965.0499877929688
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 873,
+          "overflow": "auto",
+          "scroll": 1338,
+          "top": 346.3999938964844
+        },
+        "document": {
+          "client": 900,
+          "scroll": 900
+        },
+        "fields": 2,
+        "focus": "Save changes",
+        "fonts": "loaded",
+        "form": {
+          "bottom": 727.5000305175781,
+          "height": 423.3000183105469,
+          "left": 112.8000030517578,
+          "right": 849.5999908447266,
+          "top": 304.20001220703125,
+          "width": 736.7999877929688,
+          "x": 112.8000030517578,
+          "y": 304.20001220703125
+        },
+        "paige": "closed",
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "sha256": "ef18ed5d840fe74b946b2241f99d63824b12d98e94141fda51c6e5d2732f68ff",
+      "jpeg": {
+        "width": 900,
+        "height": 1000
+      },
+      "bridgeEdge": false
+    },
+    {
+      "spec": {
+        "name": "operations-2-light-900x1000-open-correction.html",
+        "theme": "light",
+        "width": 900,
+        "height": 1000,
+        "open": true,
+        "scene": "correction",
+        "focus": "Task title",
+        "htmlSha256": "55c68728ef9e2d269738da3d4f282e0cff064a8d53a64cb0bc0c365eeeec54fe",
+        "simulatedControls": 0,
+        "realEffects": 0
+      },
+      "name": "operations-2-light-900x1000-open-correction.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 331.5,
+              "height": 44,
+              "left": 787.3375244140625,
+              "right": 849.600025177002,
+              "top": 287.5,
+              "width": 62.26250076293945,
+              "x": 787.3375244140625,
+              "y": 287.5
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 631.6000366210938,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 587.6000366210938,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 587.6000366210938
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 1060.9000244140625,
+              "height": 44,
+              "left": 128.8000030517578,
+              "right": 233.87500762939453,
+              "top": 1016.9000244140624,
+              "width": 105.07500457763672,
+              "x": 128.8000030517578,
+              "y": 1016.9000244140624
+            },
+            "text": "Save changes"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 1060.9000244140625,
+              "height": 44,
+              "left": 243.875,
+              "right": 301.6875,
+              "top": 1016.9000244140624,
+              "width": 57.8125,
+              "x": 243.875,
+              "y": 1016.9000244140624
+            },
+            "text": "Cancel"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1247.4500732421875,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 1203.4500732421875,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 1203.4500732421875
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1301.4500732421875,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 229.62500762939453,
+              "top": 1257.4500732421875,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 1257.4500732421875
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1355.4500732421875,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 202.3000030517578,
+              "top": 1311.4500732421875,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 1311.4500732421875
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 873,
+          "overflow": "auto",
+          "scroll": 1338,
+          "top": 0
+        },
+        "document": {
+          "client": 900,
+          "scroll": 900
+        },
+        "fields": 2,
+        "focus": "Document body",
+        "fonts": "loaded",
+        "form": {
+          "bottom": 1073.9000549316406,
+          "height": 423.3000183105469,
+          "left": 112.8000030517578,
+          "right": 849.5999908447266,
+          "top": 650.6000366210938,
+          "width": 736.7999877929688,
+          "x": 112.8000030517578,
+          "y": 650.6000366210938
+        },
+        "paige": "open",
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "sha256": "779e1ea6964775ca1c7db59cfcf14e401a74a59e538cccc56f37c4eed6e52d39",
+      "jpeg": {
+        "width": 900,
+        "height": 1000
+      },
+      "bridgeEdge": false
+    },
+    {
+      "spec": {
+        "name": "operations-2-light-390x844-closed-correction.html",
+        "theme": "light",
+        "width": 390,
+        "height": 844,
+        "open": false,
+        "scene": "correction",
+        "focus": "Task title",
+        "htmlSha256": "e634fa7c077c26572d8dc5f29165bcc1045943d87573c3ac0cbe2bf8eea2b4d3",
+        "simulatedControls": 0,
+        "realEffects": 0
+      },
+      "name": "operations-2-light-390x844-closed-correction.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": -252.20001220703125,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 165.0625038146973,
+              "top": -296.20001220703125,
+              "width": 62.26250076293945,
+              "x": 102.8000030517578,
+              "y": -296.20001220703125
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 223.5500030517578,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 221.32500457763672,
+              "top": 179.5500030517578,
+              "width": 118.5250015258789,
+              "x": 102.8000030517578,
+              "y": 179.5500030517578
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 689.4500122070312,
+              "height": 44,
+              "left": 118.8000030517578,
+              "right": 223.87500762939453,
+              "top": 645.4500122070312,
+              "width": 105.07500457763672,
+              "x": 118.8000030517578,
+              "y": 645.4500122070312
+            },
+            "text": "Save changes"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 689.4500122070312,
+              "height": 44,
+              "left": 233.875,
+              "right": 291.6875,
+              "top": 645.4500122070312,
+              "width": 57.8125,
+              "x": 233.875,
+              "y": 645.4500122070312
+            },
+            "text": "Cancel"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 912.6000366210938,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 221.32500457763672,
+              "top": 868.6000366210938,
+              "width": 118.5250015258789,
+              "x": 102.8000030517578,
+              "y": 868.6000366210938
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 966.6000366210938,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 219.62500762939453,
+              "top": 922.6000366210938,
+              "width": 116.82500457763672,
+              "x": 102.8000030517578,
+              "y": 922.6000366210938
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1020.6000366210938,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 192.3000030517578,
+              "top": 976.6000366210938,
+              "width": 89.5,
+              "x": 102.8000030517578,
+              "y": 976.6000366210938
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 648,
+          "overflow": "auto",
+          "scroll": 1679,
+          "top": 751.2000122070312
+        },
+        "document": {
+          "client": 390,
+          "scroll": 390
+        },
+        "fields": 2,
+        "focus": "Save changes",
+        "fonts": "loaded",
+        "form": {
+          "bottom": 702.4499969482422,
+          "height": 459.8999938964844,
+          "left": 102.8000030517578,
+          "right": 350,
+          "top": 242.5500030517578,
+          "width": 247.1999969482422,
+          "x": 102.8000030517578,
+          "y": 242.5500030517578
+        },
+        "paige": "closed",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      },
+      "sha256": "884bf74507a3c0120d60ee31f4d6e6579a69cd4c2bd3a94fe0feeebc7556a6be",
+      "jpeg": {
+        "width": 390,
+        "height": 843
+      },
+      "bridgeEdge": true
+    },
+    {
+      "spec": {
+        "name": "operations-2-dark-1366x768-closed-correction.html",
+        "theme": "dark",
+        "width": 1366,
+        "height": 768,
+        "open": false,
+        "scene": "correction",
+        "focus": "Task title",
+        "htmlSha256": "93ad9ee2ca49cb8c810f94353cb793dbafefc1c97101d1796651ee30ead0e8a1",
+        "simulatedControls": 0,
+        "realEffects": 0
+      },
+      "name": "operations-2-dark-1366x768-closed-correction.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": -90.90000915527344,
+              "height": 44,
+              "left": 1253.737548828125,
+              "right": 1316.0000495910645,
+              "top": -134.90000915527344,
+              "width": 62.26250076293945,
+              "x": 1253.737548828125,
+              "y": -134.90000915527344
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 168.9000015258789,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 124.9000015258789,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 124.9000015258789
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 598.2000122070312,
+              "height": 44,
+              "left": 128.8000030517578,
+              "right": 233.87500762939453,
+              "top": 554.2000122070312,
+              "width": 105.07500457763672,
+              "x": 128.8000030517578,
+              "y": 554.2000122070312
+            },
+            "text": "Save changes"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 598.2000122070312,
+              "height": 44,
+              "left": 243.875,
+              "right": 301.6875,
+              "top": 554.2000122070312,
+              "width": 57.8125,
+              "x": 243.875,
+              "y": 554.2000122070312
+            },
+            "text": "Cancel"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 784.75,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 740.75,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 740.75
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 838.75,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 229.62500762939453,
+              "top": 794.75,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 794.75
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 892.75,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 202.3000030517578,
+              "top": 848.75,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 848.75
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 641,
+          "overflow": "auto",
+          "scroll": 1297,
+          "top": 422.3999938964844
+        },
+        "document": {
+          "client": 1366,
+          "scroll": 1366
+        },
+        "fields": 2,
+        "focus": "Save changes",
+        "fonts": "loaded",
+        "form": {
+          "bottom": 611.2000274658203,
+          "height": 423.3000183105469,
+          "left": 112.8000030517578,
+          "right": 1316.0000762939453,
+          "top": 187.90000915527344,
+          "width": 1203.2000732421875,
+          "x": 112.8000030517578,
+          "y": 187.90000915527344
+        },
+        "paige": "closed",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "sha256": "335677458097c62bb24fd3180fc798a1cf485697950e3a7605afbbefa1698295",
+      "jpeg": {
+        "width": 1366,
+        "height": 768
+      },
+      "bridgeEdge": false
+    },
+    {
+      "spec": {
+        "name": "operations-2-dark-390x844-closed-correction.html",
+        "theme": "dark",
+        "width": 390,
+        "height": 844,
+        "open": false,
+        "scene": "correction",
+        "focus": "Task title",
+        "htmlSha256": "6164b477dea0bba8c628e38e2f27898572d52c2114c39cdcfd189315a620960e",
+        "simulatedControls": 0,
+        "realEffects": 0
+      },
+      "name": "operations-2-dark-390x844-closed-correction.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": -252.20001220703125,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 165.0625038146973,
+              "top": -296.20001220703125,
+              "width": 62.26250076293945,
+              "x": 102.8000030517578,
+              "y": -296.20001220703125
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 223.5500030517578,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 221.32500457763672,
+              "top": 179.5500030517578,
+              "width": 118.5250015258789,
+              "x": 102.8000030517578,
+              "y": 179.5500030517578
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 689.4500122070312,
+              "height": 44,
+              "left": 118.8000030517578,
+              "right": 223.87500762939453,
+              "top": 645.4500122070312,
+              "width": 105.07500457763672,
+              "x": 118.8000030517578,
+              "y": 645.4500122070312
+            },
+            "text": "Save changes"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 689.4500122070312,
+              "height": 44,
+              "left": 233.875,
+              "right": 291.6875,
+              "top": 645.4500122070312,
+              "width": 57.8125,
+              "x": 233.875,
+              "y": 645.4500122070312
+            },
+            "text": "Cancel"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 912.6000366210938,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 221.32500457763672,
+              "top": 868.6000366210938,
+              "width": 118.5250015258789,
+              "x": 102.8000030517578,
+              "y": 868.6000366210938
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 966.6000366210938,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 219.62500762939453,
+              "top": 922.6000366210938,
+              "width": 116.82500457763672,
+              "x": 102.8000030517578,
+              "y": 922.6000366210938
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1020.6000366210938,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 192.3000030517578,
+              "top": 976.6000366210938,
+              "width": 89.5,
+              "x": 102.8000030517578,
+              "y": 976.6000366210938
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 648,
+          "overflow": "auto",
+          "scroll": 1679,
+          "top": 751.2000122070312
+        },
+        "document": {
+          "client": 390,
+          "scroll": 390
+        },
+        "fields": 2,
+        "focus": "Save changes",
+        "fonts": "loaded",
+        "form": {
+          "bottom": 702.4499969482422,
+          "height": 459.8999938964844,
+          "left": 102.8000030517578,
+          "right": 350,
+          "top": 242.5500030517578,
+          "width": 247.1999969482422,
+          "x": 102.8000030517578,
+          "y": 242.5500030517578
+        },
+        "paige": "closed",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      },
+      "sha256": "0d41228464d7a4ca5e140f6b2e6d50311fb2d03084f9ff6d1a43c6afe10ab02c",
+      "jpeg": {
+        "width": 390,
+        "height": 843
+      },
+      "bridgeEdge": true
+    },
+    {
+      "spec": {
+        "name": "operations-2-light-1366x768-closed-correction-unknown.html",
+        "theme": "light",
+        "width": 1366,
+        "height": 768,
+        "open": false,
+        "scene": "correction-unknown",
+        "focus": "Refresh",
+        "htmlSha256": "52a6bb86f7ed0678ef86ccf5dcac9051862da9f6f4af4ca6a6161f4680c4d16d",
+        "simulatedControls": 1,
+        "realEffects": 0
+      },
+      "name": "operations-2-light-1366x768-closed-correction-unknown.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 331.5,
+              "height": 44,
+              "left": 1253.737548828125,
+              "right": 1316.0000495910645,
+              "top": 287.5,
+              "width": 62.26250076293945,
+              "x": 1253.737548828125,
+              "y": 287.5
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 664.9000244140625,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 620.9000244140625,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 620.9000244140625
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 838.4500122070312,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 231.32500457763672,
+              "top": 794.4500122070312,
+              "width": 118.5250015258789,
+              "x": 112.8000030517578,
+              "y": 794.4500122070312
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 946.4500122070312,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 229.62500762939453,
+              "top": 902.4500122070312,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 902.4500122070312
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1000.4500122070312,
+              "height": 44,
+              "left": 112.8000030517578,
+              "right": 202.3000030517578,
+              "top": 956.4500122070312,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 956.4500122070312
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 641,
+          "overflow": "auto",
+          "scroll": 983,
+          "top": 0
+        },
+        "document": {
+          "client": 1366,
+          "scroll": 1366
+        },
+        "fields": 0,
+        "focus": "Document body",
+        "fonts": "loaded",
+        "paige": "closed",
+        "status": "The outcome could not be confirmed. The process may have changed. Refresh before making another decision.",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "sha256": "3263f9b1c36dabc7b7d7f29365ce8786b1bb49c6db6386117e9c6eeaa1939b53",
+      "jpeg": {
+        "width": 1366,
+        "height": 768
+      },
+      "bridgeEdge": false
+    },
+    {
+      "spec": {
+        "name": "operations-2-light-390x844-closed-correction-unknown.html",
+        "theme": "light",
+        "width": 390,
+        "height": 844,
+        "open": false,
+        "scene": "correction-unknown",
+        "focus": "Refresh",
+        "htmlSha256": "3e8ecee843e6c4917d93f3ebc1e20d707a73d3b27f1ba5c1d4e8f4ec896767fa",
+        "simulatedControls": 1,
+        "realEffects": 0
+      },
+      "name": "operations-2-light-390x844-closed-correction-unknown.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 499,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 165.0625038146973,
+              "top": 455,
+              "width": 62.26250076293945,
+              "x": 102.8000030517578,
+              "y": 455
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1069.1500244140625,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 221.32500457763672,
+              "top": 1025.1500244140625,
+              "width": 118.5250015258789,
+              "x": 102.8000030517578,
+              "y": 1025.1500244140625
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1279.300048828125,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 221.32500457763672,
+              "top": 1235.300048828125,
+              "width": 118.5250015258789,
+              "x": 102.8000030517578,
+              "y": 1235.300048828125
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1387.300048828125,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 219.62500762939453,
+              "top": 1343.300048828125,
+              "width": 116.82500457763672,
+              "x": 102.8000030517578,
+              "y": 1343.300048828125
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1441.300048828125,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 192.3000030517578,
+              "top": 1397.300048828125,
+              "width": 89.5,
+              "x": 102.8000030517578,
+              "y": 1397.300048828125
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 648,
+          "overflow": "auto",
+          "scroll": 1349,
+          "top": 0
+        },
+        "document": {
+          "client": 390,
+          "scroll": 390
+        },
+        "fields": 0,
+        "focus": "Document body",
+        "fonts": "loaded",
+        "paige": "closed",
+        "status": "The outcome could not be confirmed. The process may have changed. Refresh before making another decision.",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      },
+      "sha256": "4493fbb21be78c6796fd6381e48193dbb9cf282aa4434b9e354ff6a62aeb7364",
+      "jpeg": {
+        "width": 390,
+        "height": 843
+      },
+      "bridgeEdge": true
+    },
+    {
+      "spec": {
+        "name": "operations-2-dark-390x844-closed-correction-unknown.html",
+        "theme": "dark",
+        "width": 390,
+        "height": 844,
+        "open": false,
+        "scene": "correction-unknown",
+        "focus": "Refresh",
+        "htmlSha256": "e062a7aa4b580fc0c9c92e2d2c6e2e4c0aaacd40ef9b95356912f824c97252cf",
+        "simulatedControls": 1,
+        "realEffects": 0
+      },
+      "name": "operations-2-dark-390x844-closed-correction-unknown.jpg",
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "bottom": 499,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 165.0625038146973,
+              "top": 455,
+              "width": 62.26250076293945,
+              "x": 102.8000030517578,
+              "y": 455
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1069.1500244140625,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 221.32500457763672,
+              "top": 1025.1500244140625,
+              "width": 118.5250015258789,
+              "x": 102.8000030517578,
+              "y": 1025.1500244140625
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1279.300048828125,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 221.32500457763672,
+              "top": 1235.300048828125,
+              "width": 118.5250015258789,
+              "x": 102.8000030517578,
+              "y": 1235.300048828125
+            },
+            "text": "Edit task purpose"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1387.300048828125,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 219.62500762939453,
+              "top": 1343.300048828125,
+              "width": 116.82500457763672,
+              "x": 102.8000030517578,
+              "y": 1343.300048828125
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "rect": {
+              "bottom": 1441.300048828125,
+              "height": 44,
+              "left": 102.8000030517578,
+              "right": 192.3000030517578,
+              "top": 1397.300048828125,
+              "width": 89.5,
+              "x": 102.8000030517578,
+              "y": 1397.300048828125
+            },
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 648,
+          "overflow": "auto",
+          "scroll": 1349,
+          "top": 0
+        },
+        "document": {
+          "client": 390,
+          "scroll": 390
+        },
+        "fields": 0,
+        "focus": "Document body",
+        "fonts": "loaded",
+        "paige": "closed",
+        "status": "The outcome could not be confirmed. The process may have changed. Refresh before making another decision.",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      },
+      "sha256": "4ebc8033faf29e45cf5477a0bf806d4ea5c3ff2d1f8e7f888358ba2426d80f30",
+      "jpeg": {
+        "width": 390,
+        "height": 843
+      },
+      "bridgeEdge": true
+    }
+  ]
+}

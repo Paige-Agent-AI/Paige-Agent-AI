@@ -3,9 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { controlOwnerTaskAutomation, readOwnerTaskAutomations, readOwnerTaskHistoryList, readOwnerTaskOutcome, type OwnerTaskCaller,
-  type OwnerTaskControl, type OwnerTaskHistoryInvoker, type OwnerTaskHistoryList, type OwnerTaskRead, type OwnerTaskReview, type OwnerTaskScope } from "./ownerTaskAutomation";
+  type OwnerTaskAction, type OwnerTaskControl, type OwnerTaskHistoryInvoker, type OwnerTaskHistoryList, type OwnerTaskRead, type OwnerTaskRevision, type OwnerTaskReview, type OwnerTaskScope } from "./ownerTaskAutomation";
 
-type Feedback = { result: OwnerTaskControl; action: "arm" | "pause" };
+type Feedback = { result: OwnerTaskControl; action: OwnerTaskAction };
 type Snapshot = { key: string; read: OwnerTaskRead; busy: boolean; needsRefresh: boolean; feedback: Feedback | null };
 type HistoryLocator = Readonly<Extract<OwnerTaskHistoryList, { status: "ready" }>["items"][number]>;
 type HistoryView = { status: "closed" } | { status: "loading" | "refused" | "unavailable"; processId: string }
@@ -152,7 +152,7 @@ export function useOwnerTaskAutomations() {
     publishHistory({ key, view: { ...view, selected: locator, outcome } });
   }, [current, publishHistory, retireRefusedAccess]);
 
-  const control = useCallback(async (review: OwnerTaskReview, action: "arm" | "pause"): Promise<OwnerTaskControl> => {
+  const control = useCallback(async (review: OwnerTaskReview, action: OwnerTaskAction, revision?: OwnerTaskRevision): Promise<OwnerTaskControl> => {
     if (flight.current) return { status: "busy" };
     const scope = current(), before = snapshotRef.current;
     if (!scope || before.key !== keyOf(scope) || before.read.status !== "ready" || before.needsRefresh
@@ -162,7 +162,8 @@ export function useOwnerTaskAutomations() {
     publish({ ...before, busy: true, feedback: null });
     try {
       let result: OwnerTaskControl;
-      try { result = await controlOwnerTaskAutomation(scope, review, action, caller, current); }
+      try { result = action === 'revise_step' ? await controlOwnerTaskAutomation(scope, review, action, caller, current, revision)
+        : await controlOwnerTaskAutomation(scope, review, action, caller, current); }
       catch { result = { status: "unknown" }; }
       if (!same(scope, current()) || flight.current !== token) return { status: "refused" };
       // Never replay and never patch the stored review with an invented version.

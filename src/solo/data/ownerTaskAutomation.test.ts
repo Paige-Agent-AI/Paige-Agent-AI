@@ -5,6 +5,111 @@ import { readOwnerTaskAutomations, controlOwnerTaskAutomation, type OwnerTaskCal
 const scope = { actorId: "actor", tenantId: "tenant", epoch: 1 };
 const row = { id: "process", tenant_id: "tenant", name: "New contact review", category: "general", trigger_key: "contact.created", trigger_config: {}, conditions: [], created_by: "actor", state: "draft", granted_lane: "confirm", owner_task_armed_at: null, updated_at: "2026-10-16T12:00:00.123456+00:00" };
 const step = { id: "step", automation_id: "process", position: 1, action_kind: "owner.task", tool_key: null, config: { title: "Review new contact", description: "Read the CRM record." } };
+const correctionAct = '11111111-1111-4111-8111-111111111111', correctionAudit = '22222222-2222-4222-8222-222222222222';
+function correctionReview(): OwnerTaskReview {
+  return { ...capturedReview(), acts: [{ ...capturedReview().acts[0], id: correctionAct },
+    { ...capturedReview().acts[0], id: '33333333-3333-4333-8333-333333333333', position: 2, config: { title: 'Prepare onboarding' } }] };
+}
+function correctionFixture(fault = '') {
+  const f = fixture(fault), rpc = f.caller.rpc.bind(f.caller);
+  f.caller.rpc = async (name, args) => {
+    if (name !== 'control_owner_task_automation' || args?._action !== 'revise_step') return rpc(name,args);
+    f.calls.push({name,args});
+    if (['40001','55P03','42501','22023'].includes(fault)) return {data:null,error:{code:fault}};
+    if (fault === 'throw') throw Error('lost acknowledgement');
+    const packet = args._expected_acts as {reviewed_acts: Record<string,unknown>[]; revision: {act_id:string;config:unknown}};
+    const changed = fault !== 'noop';
+    const acts = packet.reviewed_acts.map(a=>a.id===packet.revision.act_id?{...a,config:packet.revision.config}:a);
+    const originalProcess=args._expected_process as Record<string,unknown>;
+    const data: Record<string,unknown> = {automation_id:args._automation_id,state:originalProcess.state,granted_lane:originalProcess.granted_lane,armed_at:null,
+      updated_at:changed?'2026-10-16T13:00:00.123457+00:00':args._expected_updated_at,
+      changed,execution_started:false,future_events_only:true,process:args._expected_process,acts,configuration_audit_id:changed?correctionAudit:null};
+    if(fault==='wrong-audit')data.configuration_audit_id='unverified';
+    if(fault==='missing-audit')delete data.configuration_audit_id;
+    if(fault==='noop-audit'){data.changed=false;data.updated_at=args._expected_updated_at;}
+    if(fault==='same-version')data.updated_at=args._expected_updated_at;
+    if(fault==='wrong-config')data.acts=packet.reviewed_acts;
+    if(fault==='other-step')data.acts=acts.map((a,i)=>i===1?{...a,config:{title:'Unexpected sibling change'}}:a);
+    if(fault==='wrong-process')data.process={...args._expected_process as object,name:'Unexpected rename'};
+    if(fault==='activation')data.state='live';
+    if(fault==='effect')data.execution_started=true;
+    return {data,error:null};
+  };
+  return f;
+}
+
+describe('original inactive task-purpose correction',()=>{
+  // This specification calls the existing five-argument control, not a new writer.
+  const revise = (f: ReturnType<typeof correctionFixture>, review = correctionReview(), config = {title:'Review delivery scope',description:'Keep the original owner.'}) =>
+    controlOwnerTaskAutomation(scope,review,'revise_step',f.caller,f.current,{act_id:correctionAct,config});
+  it('saves one exact original step, verifies its configuration audit and preserves every sibling',async()=>{
+    const f=correctionFixture(),review=correctionReview();
+    expect(await revise(f,review)).toEqual({status:'saved',state:'draft',revision:{changed:true,configurationAuditId:correctionAudit,updatedAt:'2026-10-16T13:00:00.123457+00:00'}});
+    expect(f.calls.filter(c=>c.name==='control_owner_task_automation')).toEqual([{name:'control_owner_task_automation',args:{
+      _automation_id:review.id,_action:'revise_step',_expected_updated_at:review.updatedAt,_expected_process:review.process,
+      _expected_acts:{reviewed_acts:review.acts,revision:{act_id:correctionAct,config:{title:'Review delivery scope',description:'Keep the original owner.'}}}}}]);
+  });
+  it('preserves a genuine no-op without manufacturing an audit or version',async()=>{
+    const f=correctionFixture('noop'),review=correctionReview();
+    expect(await revise(f,review,review.acts[0].config as {title:string;description:string})).toEqual({status:'saved',state:'draft',revision:{changed:false,configurationAuditId:null,updatedAt:review.updatedAt}});
+  });
+  it('repairs the selected unresolved purpose while retaining an inactive paused state and exact authority lane',async()=>{
+    const f=correctionFixture(),r=correctionReview();r.process.state='paused';r.process.granted_lane='auto';r.acts[0].config={title:'{{unresolved}}'};
+    expect((await revise(f,r))).toEqual({status:'saved',state:'paused',revision:{changed:true,configurationAuditId:correctionAudit,updatedAt:'2026-10-16T13:00:00.123457+00:00'}});
+  });
+  it.each(['foreign-act','bad-sibling','duplicate-id','bad-order','extra-action','armed','trigger-settings','conditions'])('refuses unsupported original %s without invoking the writer',async fault=>{
+    const f=correctionFixture(),r=correctionReview();let revision={act_id:correctionAct,config:{title:'Review scope'}};
+    if(fault==='foreign-act')revision={...revision,act_id:'44444444-4444-4444-8444-444444444444'};
+    if(fault==='bad-sibling')r.acts[1].config={title:'{{unresolved}}'};
+    if(fault==='duplicate-id')r.acts[1].id=correctionAct;
+    if(fault==='bad-order')r.acts[1].position=3;
+    if(fault==='extra-action')r.acts[1].tool_key='external.send';
+    if(fault==='armed')r.process.owner_task_armed_at='2026-10-17T12:00:00Z';
+    if(fault==='trigger-settings')r.process.trigger_config={unreviewed:true};
+    if(fault==='conditions')r.process.conditions=[{unreviewed:true}];
+    expect((await controlOwnerTaskAutomation(scope,r,'revise_step',f.caller,f.current,revision)).status).toBe('unsupported');
+    expect(f.calls.filter(c=>c.name==='control_owner_task_automation')).toHaveLength(0);
+  });
+  it.each([{title:'Review scope',assignee_user_id:'original-owner'},{title:'Review scope',due_at:'2026-11-01T10:00:00Z'},['unreadable saved purpose'],
+    {title:'Review scope',description:{content:'unreadable'}},{title:{content:'unreadable'},description:'Original notes'},{title:'Review scope',description:null}].map(config=>({config})))('does not discard unsupported original settings through a purpose-only correction: %j',async({config:originalConfig})=>{
+    const f=correctionFixture(),r=correctionReview();r.acts[0].config=originalConfig;
+    expect((await revise(f,r)).status).toBe('unsupported');
+    expect(f.calls.filter(c=>c.name==='control_owner_task_automation')).toHaveLength(0);
+    expect(r.acts[0].config).toEqual(originalConfig);
+  });
+  it.each(['wrong-audit','missing-audit','noop-audit','same-version','wrong-config','other-step','wrong-process','activation','effect'])('keeps %s ambiguous and never repeats the original request',async fault=>{
+    const f=correctionFixture(fault);expect((await revise(f)).status).toBe('unknown');
+    expect(f.calls.filter(c=>c.name==='control_owner_task_automation')).toHaveLength(1);
+  });
+  it.each([['40001','stale'],['55P03','busy'],['42501','refused'],['22023','unsupported'],['throw','unknown']])('retains native %s recovery semantics',async(fault,status)=>{
+    const f=correctionFixture(fault);expect((await revise(f)).status).toBe(status);
+    expect(f.calls.filter(c=>c.name==='control_owner_task_automation')).toHaveLength(1);
+  });
+  it.each(['wrong-actor','wrong-tenant','member','inactive'])('does not dispatch without current %s authority',async fault=>{
+    const f=correctionFixture(fault);expect((await revise(f)).status).toBe('refused');
+    expect(f.calls.filter(c=>c.name==='control_owner_task_automation')).toHaveLength(0);
+  });
+  it.each(['live','invalid'])('cannot correct an active or invalid %s process',async state=>{
+    const f=correctionFixture(),r=correctionReview();r.process.state=state;
+    expect((await revise(f,r)).status).toBe('unsupported');expect(f.calls.filter(c=>c.name==='control_owner_task_automation')).toHaveLength(0);
+  });
+  it.each(['','{{contact.name}}','<% dynamic %>','hidden\u202etext','a'.repeat(501)])('rejects unsupported task titles before dispatch',async title=>{
+    const f=correctionFixture();expect((await revise(f,correctionReview(),{title,description:''})).status).toBe('unsupported');
+    expect(f.calls.filter(c=>c.name==='control_owner_task_automation')).toHaveLength(0);
+  });
+  it('captures the exact original review and proposal before asynchronous admission',async()=>{
+    const f=correctionFixture(),r=correctionReview(),pending=deferred<Awaited<ReturnType<OwnerTaskCaller['auth']['getUser']>>>();
+    const first=f.caller.auth.getUser;let count=0;f.caller.auth.getUser=()=>++count===1?pending.promise:first();
+    const proposal={act_id:correctionAct,config:{title:'Original approved edit',description:'Original notes'}};
+    const operation=controlOwnerTaskAutomation(scope,r,'revise_step',f.caller,f.current,proposal);
+    proposal.config.title='Changed during admission';r.process.name='Changed during admission';r.updatedAt='2027-01-01T00:00:00Z';r.acts[1].config={title:'Changed sibling'};
+    pending.resolve({data:{user:{id:'actor'}},error:null});expect((await operation).status).toBe('saved');
+    const args=f.calls.find(c=>c.name==='control_owner_task_automation')!.args!;
+    expect(args._expected_updated_at).toBe(row.updated_at);expect(args._expected_process).toMatchObject({name:row.name});
+    expect(args._expected_acts).toMatchObject({revision:{config:{title:'Original approved edit'}},
+      reviewed_acts:[{},{config:{title:'Prepare onboarding'}}]});
+  });
+});
 function fixture(fault = "") {
   let now: typeof scope | null = { ...scope };
   const calls: { name: string; args?: Record<string, unknown> }[] = [], queries: { table: string; filters: [string, unknown][] }[] = [];

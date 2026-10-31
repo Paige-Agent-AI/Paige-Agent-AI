@@ -1,0 +1,4 @@
+.sa-task-purpose-editor input,.sa-task-purpose-editor textarea{width:100%;min-width:0;border:1px solid var(--pg-line);border-radius:8px;background:var(--pg-surface);color:var(--pg-ink);padding:10px 12px;font:400 14px/1.5 var(--pg-font-ui);caret-color:var(--pg-ink);resize:vertical}
+.sa-task-purpose-editor input:focus-visible,.sa-task-purpose-editor textarea:focus-visible{outline:2px solid var(--pg-gold-core);outline-offset:2px}
+.sa-task-purpose-editor label{font-size:13px;font-weight:600}
+.sa-task-purpose-editor{flex-basis:100%;min-width:0}

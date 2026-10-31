@@ -2502,3 +2502,54 @@ Hub-door/removal/Auth-delete/ban both-order races and later-effect revalidation 
 required before publication. No native version reserved, managed apply or release
 of this helper patch; no Setup/Work/Auth writer takeover or provider activation.
 Original18+6/five journeys and full EXP08 remain STILL CODING.
+
+#### Same outcome4: original member-add currentness, local component checkpoint
+
+The original consumer is `useTeamHub.ts:addMembers`, called by the existing
+`TeamHubWorkspace.tsx` member picker. The writer remains
+`team_hub_add_members(uuid,uuid,uuid[])`, its original private-channel permission,
+membership store and `added` readback. A local native stale-actor failure was
+reproduced with actual source and actual membership readback; no production/customer
+incident or authenticated reproduction is claimed. Detailed mechanics stay in local
+proof. Original failure log `exp08-hub-member-add-current-actor-before-readback.log`
+SHA256 `761a76753cc6226a2057a547255f380f81282bd40c4b424fb4f78bf65f7e04f2`.
+
+NEW INERT `exp08-team-hub-member-add-currentness-patch.sql` changes only that original
+writer. It retains initial admission, target validation, original insertion/dedup and
+member/admin/owner permission. Ordered existing identity-parent holds, current actor
+and target eligibility, profile/workspace, private-channel and current membership
+rechecks protect the effect. Missing profiles retain the original membership fallback;
+the existing validated identity FK serializes later profile creation. No new role,
+authority engine, profile/Auth writer, grant, result store or migration version.
+Original body `25bac1def127e3998036368329e4c80d` reduces exactly from candidate
+`cb353daa578ca145243b2ac5b5dbad07`; original OID/all metadata/ACL and replay are conserved.
+
+The missing-profile source-review finding was independently reproduced and repaired:
+`exp08-hub-member-add-profile-insert-before.log` SHA256
+`d6ba5924d6f61f5af7c9b0f242da321df337dd88c1b4b0253e2ca03684ca43cd`.
+Selected both-order/rollback/causal controls passed afterward. Actual production
+catalogue confirms the existing FK and four active RI triggers, and the original
+definer's existing read/row-hold permissions; no production write occurred.
+
+Complete original departure CHILD (not the larger entity-owner parent) passed all60
+original outer entries before adding one separately counted28-control integration
+group: `exp08-departure-full-hub-composition.log` SHA256
+`055e6cc498396229ece4a85f1983225969c35456d5de460aebbabede5e93e822`.
+This precedes the final RI-preflight addition and is historical component evidence.
+Inactive checking-trigger refusal first genuinely failed, log
+`exp08-hub-member-add-ri-trigger-before.log` SHA256
+`87f12af18eb41e02cff40b7c8deb9772a7d79af7f6a03f546194be86ea711e2e`.
+The preflight now requires the original active RI behavior without rewriting it.
+Latest selected30 controls EXIT0, log `exp08-hub-member-add-ri-trigger-after.log`
+SHA256 `77382ed94e09d8b581094da26babfebcd85bc53ffea60ccbbece2fb623b5660b`.
+Refused drift restores every original trigger/writer field. Native14 removal body and
+applied carrier remain unchanged; this group is explicitly INERT/unpublished.
+
+Source-only non-author reviews cover the inspected code, not independent execution.
+All tables/Auth/role inputs remain explicit local ports. Remaining affected Hub doors,
+leave/archive/workspace and cross-writer/retirement concurrency, additional causal/ABI
+controls, current full-parent/carrier tests, managed/full-schema/JWT/RLS/authenticated
+privacy and useful receipt/reopen proofs remain owed before publication/acceptance.
+Existing ALG IDs and maturity are unchanged; these are deterministic engineering
+signals, not new model evaluation or a measured proactive capability. No source/CI/
+release/authenticated or owner-acceptance leg is promoted. Full EXP08 STILL CODING.

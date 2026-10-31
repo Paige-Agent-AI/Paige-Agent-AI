@@ -91,6 +91,28 @@ try{
    await page.screenshot({path:path.join(out,`${theme}-${recovery}.png`)});results.push({name:`${theme}-${recovery}`,pass:true,calls:(await calls(page)).length,proof:'fictional door boundary; no provider/authenticated or real Hub-host proof'});
   }finally{await context.close();}
  }
+ // Pointer setup selects the original conversation and opens its saved draft.
+ // From that entry, exercise editing/save/cancel/reopen/check/approve only by keyboard.
+ if(!process.argv.includes('--smoke'))for(const theme of ['light','dark']){
+  const context=await browser.newContext({viewport:{width:1366,height:768},reducedMotion:'reduce'});
+  await context.route('**/*',route=>{const u=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(u.hostname)||['data:','blob:'].includes(u.protocol))return route.continue();external.push(u.origin);return route.abort();});
+  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+  const tabTo=async selector=>{for(let i=0;i<100;i++){if(await page.evaluate(sel=>document.activeElement?.matches(sel),selector))return;await page.keyboard.press('Tab');}throw new Error('Keyboard target unreachable: '+selector);};
+  try{
+   await open(page,{theme,paige:'closed',door:'ok'});
+   const textSelector='[data-composer-writing-surface="true"] textarea',words='Keyboard preserves this saved reply.';
+   await tabTo(textSelector);await page.keyboard.press('ControlOrMeta+A');await page.keyboard.type(words);
+   const tabButton=async name=>{for(let i=0;i<100;i++){if(await page.evaluate(n=>document.activeElement?.tagName==='BUTTON'&&document.activeElement.textContent.trim()===n,name))return;await page.keyboard.press('Tab');}throw new Error('Keyboard button unreachable: '+name);};
+   await tabButton('Save draft');await page.keyboard.press('Enter');await page.getByText('Draft saved. Nothing sent.',{exact:false}).first().waitFor();
+   await tabButton('Cancel');await page.keyboard.press('Enter');await tabButton('Edit');await page.keyboard.press('Enter');
+   assert.equal(await page.locator(textSelector).inputValue(),words);assert.equal((await calls(page)).length,1);
+   await tabTo('[data-composer-send]');await page.keyboard.press('Enter');await page.locator('[data-strip-focus="confirm"]').waitFor();
+   await tabTo('[data-strip-focus="confirm"]');await page.keyboard.press('Enter');
+   await page.waitForFunction(()=>document.querySelector('[data-governed-reply-status]')?.textContent==='Accepted by the email service.');
+   assert.equal((await calls(page)).length,3);await page.screenshot({path:path.join(out,`${theme}-keyboard-saved-entry.png`)});
+   results.push({name:`${theme}-keyboard-saved-entry`,pass:true,pointerSetup:'original conversation selection and saved Edit entry',keyboard:'edit/save/cancel/reopen/check/approve',proof:'controlled workspace only; no authenticated/host/native zoom claim'});
+  }finally{await context.close();}
+ }
  assert.deepEqual(errors,[],'page errors');assert.deepEqual(external,[],'off-machine requests');
  console.log(JSON.stringify({cases:results.length,pageErrors:errors.length,offMachineRequests:external.length,out}));
 }catch(error){results.push({pass:false,error:String(error)});throw error;}

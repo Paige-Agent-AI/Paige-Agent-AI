@@ -340,11 +340,11 @@ $function$;
    CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),(nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub'))::uuid$$;
    CREATE OR REPLACE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('exp03.fixture_tenant',true),'')::uuid$$;
    CREATE FUNCTION public.is_tenant_admin(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT coalesce(nullif(current_setting('exp03.fixture_admin',true),''),'false')::boolean$$;
-   CREATE FUNCTION public.is_platform_owner() RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;`);
+   CREATE FUNCTION public.is_platform_owner() RETURNS boolean LANGUAGE sql STABLE AS $$SELECT coalesce(nullif(current_setting('exp03.fixture_platform',true),''),'false')::boolean$$;`);
   db.run(read('scripts/proof/fixtures/exp03-email-draft-content-before.sql'));
   assert.equal(db.run(`SELECT md5(pg_get_functiondef('public.read_message_content(uuid)'::regprocedure))`),'3940dd0f8d7a9b5ae668707a2513212a');checks++;
-  const contentRead=(over={})=>{const p={tenant,actor,admin:true,role:'authenticated',id:draft,...over};assert(['authenticated','anon','service_role'].includes(p.role));
-   const output=db.run(`SET request.jwt.claim.sub=${quote(p.actor)};SET exp03.fixture_tenant=${quote(p.tenant)};SET exp03.fixture_admin=${quote(String(p.admin))};SET ROLE ${p.role};SELECT coalesce(public.read_message_content(${quote(p.id)}),'null'::jsonb);`);
+  const contentRead=(over={})=>{const p={tenant,actor,admin:true,platform:false,role:'authenticated',id:draft,...over};assert(['authenticated','anon','service_role'].includes(p.role));
+   const output=db.run(`SET request.jwt.claim.sub=${quote(p.actor)};SET exp03.fixture_tenant=${quote(p.tenant)};SET exp03.fixture_admin=${quote(String(p.admin))};SET exp03.fixture_platform=${quote(String(p.platform))};SET ROLE ${p.role};SELECT coalesce(public.read_message_content(${quote(p.id)}),'null'::jsonb);`);
    return JSON.parse(output.split(/\r?\n/).find(x=>x.startsWith('{')||x==='null'));};
   const contentCandidate=read('scripts/proof/exp03-email-draft-content-patch.sql');
   refusePatch('GRANT EXECUTE ON FUNCTION public.read_message_content(uuid) TO service_role',contentCandidate,/original metadata drift/);
@@ -361,6 +361,7 @@ $function$;
   const refusedRead=contentRead({admin:false});assert.equal(refusedRead.code,'WORKSPACE_ROLE_REQUIRED');assert.equal(refusedRead.saved_email_draft,undefined);checks++;
   db.run(`UPDATE public.channel_connectors SET mailbox_class='personal',mailbox_owner_user_id='${otherActor}' WHERE id='${connector}'`);
   assert.equal(contentRead().code,'PERSONAL_MAILBOX_NOT_OWNER');
+  const privilegedOrdinary=contentRead({platform:true});assert.equal(privilegedOrdinary.ok,true);assert.equal(privilegedOrdinary.saved_email_draft,null,'legacy privileged ordinary read does not disclose complete personal draft context');checks++;
   db.run(`INSERT INTO public.tenant_members VALUES('${otherActor}','${tenant}','active','member');UPDATE public.profiles SET active_tenant_id='${tenant}' WHERE user_id='${otherActor}'`);
   assert.equal(contentRead({actor:otherActor}).ok,true);checks++;
   db.run(`UPDATE public.channel_connectors SET active=false WHERE id='${connector}'`);
@@ -375,6 +376,7 @@ $function$;
    `UPDATE public.messages SET body_text=repeat('a',10001) WHERE id='${draft}'`,
    `UPDATE public.messages SET body_html=repeat('a',100001) WHERE id='${draft}'`,
    `UPDATE public.messages SET contact_id=NULL WHERE id='${draft}'`,
+   `UPDATE public.messages SET connector_id=NULL WHERE id='${draft}'`,
   ]){inboundSeed();db.run(setup);const before=businessState();assert.equal(contentRead().saved_email_draft,null);assert.equal(businessState(),before,'read writes no message/action/approval/receipt/actor row');checks++;}
   inboundSeed();
   if(process.argv.includes('--whole-carrier')&&!process.argv.includes('--inbound-baseline')){

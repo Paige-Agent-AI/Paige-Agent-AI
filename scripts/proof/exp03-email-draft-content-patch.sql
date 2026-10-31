@@ -9,6 +9,10 @@ DECLARE target regprocedure:=to_regprocedure('public.read_message_content(uuid)'
     -- clipped body fields above remain exact. This is a source read, never approval.
     'saved_email_draft', case when v_msg.channel_type='email' and v_msg.direction='outbound'
       and v_msg.status='draft' and v_msg.provider_message_id is null and v_msg.contact_id is not null
+      -- Unknown mailbox provenance is not an editable source. Do not expand
+      -- legacy privileged ordinary reads into another person's complete draft.
+      and v_msg.connector_id is not null
+      and (v_class is distinct from 'personal' or v_owner=auth.uid())
       and v_msg.updated_at is not null
       and not (coalesce(v_msg.meta,'{}'::jsonb) ?| array['comms_email_binding','sales_invoice_binding','growth_sequence_binding','email_campaign_binding'])
       and coalesce(length(v_msg.body_text),0)<=10000 and coalesce(length(v_msg.body_html),0)<=100000

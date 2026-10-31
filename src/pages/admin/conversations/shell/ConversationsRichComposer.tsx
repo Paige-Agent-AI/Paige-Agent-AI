@@ -46,7 +46,7 @@ export function ConversationsRichComposer(model: ConversationsComposerModel) {
     signatureAvailable = false, appendSignature = true, onToggleSignature,
     scheduledFor, onSchedule,
     showDictation, dictationScopeEpoch, onDictate, onDictateError,
-    editingDraft = false, onCancelEdit,
+    editingDraft = false, onCancelEdit, onSaveDraft, savingDraft = false, saveUnconfirmed = false, draftSaveDisabled = false, draftSaveNote,
     dragOver = false, onDropFiles, onDragOverZone, onDragLeaveZone,
   } = model;
 
@@ -77,13 +77,17 @@ export function ConversationsRichComposer(model: ConversationsComposerModel) {
   const header = (
     <div className="space-y-2">
       {editingDraft && (
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <Pencil className="h-3 w-3" /> Editing Paige's draft — Send replaces and delivers it.
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          <Pencil className="h-3 w-3" /> {showSubject ? "Editing the saved email — review before sending." : "Editing Paige's draft — Send replaces and delivers it."}
           {onCancelEdit && (
-            <button type="button" className="ml-1 underline hover:text-foreground" onClick={onCancelEdit}>
+            <button type="button" className="ml-1 underline hover:text-foreground disabled:opacity-50" disabled={disabled || sending || checking || savingDraft || saveUnconfirmed} onClick={onCancelEdit}>
               Cancel
             </button>
           )}
+          {onSaveDraft && <Button type="button" variant="ghost" size="sm" disabled={draftSaveDisabled || savingDraft} aria-busy={savingDraft} onClick={onSaveDraft}>
+            {savingDraft ? "Saving…" : saveUnconfirmed ? "Check save status" : "Save draft"}
+          </Button>}
+          {draftSaveNote && <span>{draftSaveNote}</span>}
         </div>
       )}
 

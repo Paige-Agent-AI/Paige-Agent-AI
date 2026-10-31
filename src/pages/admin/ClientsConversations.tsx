@@ -42,7 +42,7 @@ import { voiceHistoryStatus } from "@/lib/voice/voiceCallSafety";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { ComposeThreadDialog } from "./conversations/ComposeThreadDialog";
 import { LeadReplyDrafts } from "./conversations/LeadReplyDrafts";
-import { useLeadReplyReview, canReplaceFollowupDraft, parseFollowupLocator } from "./conversations/useLeadReplyReview";
+import { useLeadReplyReview, canReplaceFollowupDraft, parseFollowupLocator, readSavedReplyApproval } from "./conversations/useLeadReplyReview";
 import { FirstRunOnboarding } from "./conversations/FirstRunOnboarding";
 import { ThreadRow } from "./conversations/ThreadRow";
 import { ThreadFilters, useLabelCatalog } from "./conversations/ThreadFilters";
@@ -61,6 +61,7 @@ import { MessageBubble as SharedMessageBubble } from "./conversations/MessageBub
 // EXP03 O12 piece 3 — an email reply is checked by the governed email door, inline, before it sends.
 import { useGovernedEmailReply } from "./conversations/useGovernedEmailReply";
 import { doorAnswered, governedReplyText, readDoorAnswer } from "./conversations/governedReply";
+import { parseCommsEmailDraftSource, type CommsEmailDraftSource } from "../../../supabase/functions/_shared/comms-email/draft-source.ts";
 import { SnoozeMenu } from "./conversations/SnoozeMenu";
 import { LabelPopover } from "./conversations/LabelPopover";
 import { QuickAddDialog } from "@/components/planning/QuickAddDialog";
@@ -245,7 +246,7 @@ function MessageBubble({
               className="h-8"
             >
               {approving ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-1.5 h-3.5 w-3.5" />}
-              Approve &amp; send
+              {m.channel_type === "email" ? "Review email" : "Approve & send"}
             </Button>
             <Button variant="outline" size="sm" onClick={() => onEdit(m)} disabled={approving} className="h-8">
               <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
@@ -480,6 +481,11 @@ export default function ClientsConversations() {
   const portalRequestIdsRef = useRef(createPortalRequestIds());
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
+  const [editingDraftSource, setEditingDraftSource] = useState<CommsEmailDraftSource | null>(null);
+  const [editingDraftApprovalId, setEditingDraftApprovalId] = useState<string | undefined>();
+  const savedDraftOpenSequence = useRef(0);
+  const [reviewDraftRequest, setReviewDraftRequest] = useState<{ id: string; epoch: AccountEpochToken } | null>(null);
+  const signatureBeforeDraft = useRef<boolean | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Composer depth state. Attachments run through the ONE shared upload seam (§18) — the
@@ -487,7 +493,7 @@ export default function ClientsConversations() {
   const tenantIdRef = useRef<string | null>(null);
   const {
     attachments, uploading, uploadFiles, removeAttachment,
-    reset: resetAttachments,
+    reset: resetAttachments, restore: restoreAttachments,
   } = useCommsAttachments(() => tenantIdRef.current);
   const [dragOver, setDragOver] = useState(false);
   const [scheduledFor, setScheduledFor] = useState<string | null>(null); // ISO | null
@@ -498,6 +504,12 @@ export default function ClientsConversations() {
   const [signatures, setSignatures] = useState<Signature[]>([]);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]); // ported email-template picker (§31)
   const [appendSignature, setAppendSignature] = useState(true); // email only, default on
+  useEffect(() => {
+    if (editingDraftId === null && signatureBeforeDraft.current !== null) {
+      setAppendSignature(signatureBeforeDraft.current); signatureBeforeDraft.current = null;
+    }
+    if (editingDraftId === null) { setEditingDraftSource(null); setEditingDraftApprovalId(undefined); }
+  }, [editingDraftId]);
 
   // "Draft with Paige" (#482 Phase-1): on-demand reply drafting via the subagent-email-composer
   // seam (§18 — the same seam the compose-new modal uses). Email-only for Phase-1 (the composer is an
@@ -967,6 +979,8 @@ export default function ClientsConversations() {
   // Which thread the composer was last set up for, and the channel it is on now — read by the
   // default-channel effect without re-running it on every channel pick.
   const composerThreadRef = useRef<string | null>(null);
+  const savedDraftComposerKey=JSON.stringify([selected?.key,activeUserId,activeTenantId,editingDraftId,subject,body,attachments,scheduledFor,uploading,leadReplyApprovalId]);
+  const savedDraftComposerRef=useRef(savedDraftComposerKey);savedDraftComposerRef.current=savedDraftComposerKey;
   const composeChannelRef = useRef<ChannelType | "">("");
   useEffect(() => { composeChannelRef.current = composeChannel; }, [composeChannel]);
 
@@ -1138,6 +1152,12 @@ export default function ClientsConversations() {
   const approveDraft = async (m: MessageRow) => {
     if (!selected) return;
     if (isSolo && !canSendInSolo(handlingMode, m.channel_type)) { toast.error("This handling mode or channel cannot send. Hand back to Human reply and use a ready email or SMS identity."); return; }
+    if (m.channel_type === "email") {
+      if (!await openSavedEmailDraft(m)) return;
+      setApprovingId(m.id);
+      setReviewDraftRequest({ id: m.id, epoch: accountEpochRef.current.capture() });
+      return;
+    }
     if (!selected.toAddress) {
       toast.error("No client address on this thread to send to.");
       return;
@@ -1177,7 +1197,54 @@ export default function ClientsConversations() {
     }
   };
 
+  const openSavedEmailDraft = async (m: MessageRow): Promise<boolean> => {
+    if (!selected || m.contact_id !== selected.contactId || m.thread_key !== selected.key
+      || m.channel_type !== "email" || m.direction !== "outbound" || m.status !== "draft" || governedSendView(m) !== null) {
+      toast.error("Reopen the original draft in its conversation before reviewing it."); return false;
+    }
+    if (governedReply.filesLocked || governedReply.blocksEditing || uploading) { toast.error("Finish the current email review first."); return false; }
+    if (editingDraftId === m.id) return true;
+    if (editingDraftId || subject.trim() || body.trim() || attachments.length || scheduledFor || leadReplyApprovalId) {
+      toast.error("Keep or clear your current reply before opening another draft."); return false;
+    }
+    if (!m.connector_id) {
+      toast.error("This draft's original mailbox cannot be verified. Its words are kept; check Connections before editing."); return false;
+    }
+    let source: CommsEmailDraftSource;
+    try { source = parseCommsEmailDraftSource({ message_id: m.id, updated_at: m.updated_at }); }
+    catch { toast.error("Reopen this draft before sending. Its saved version could not be checked."); void load(); return false; }
+    if (m.attachments != null && (!Array.isArray(m.attachments) || m.attachments.some(a => !a || typeof a !== "object"))) {
+      toast.error("Reopen this draft to check its saved files."); return false;
+    }
+    const sequence=++savedDraftOpenSequence.current,epoch=accountEpochRef.current.capture(),key=savedDraftComposerRef.current;
+    const current=()=>savedDraftOpenSequence.current===sequence && accountEpochRef.current.accept(epoch) && savedDraftComposerRef.current===key;
+    let approvalId:string|undefined;
+    if (m.action_id) {
+      if (!activeTenantId || !selected.contactId) return false;
+      const original=await readSavedReplyApproval({tenantId:activeTenantId,contactId:selected.contactId,actionId:m.action_id,messageId:m.id},current);
+      if (!current()) return false;
+      if (!original) { toast.error("This draft's original approval is unavailable or no longer pending. Reopen its recorded status."); return false; }
+      approvalId=original;
+    }
+    if (followupLocator.kind!=="none" && (followupLocator.kind!=="bound" || followupLocator.approvalId!==approvalId || followupLocator.contactId!==selected.contactId)) {
+      toast.error("Return to this draft's original approval before reviewing it."); return false;
+    }
+    if (!current()) return false;
+    signatureBeforeDraft.current = appendSignature;
+    setAppendSignature(false);
+    setEditingDraftSource(source); setEditingDraftId(m.id);
+    setEditingDraftApprovalId(approvalId);
+    setComposeChannel("email"); setComposeConnectorId(m.connector_id ?? "");
+    setSubject(m.subject ?? "");
+    setBody(m.body_text?.trim() ? m.body_text : readableMessageBody(m));
+    setScheduledFor(m.scheduled_for ?? null); restoreAttachments(m.attachments ?? []);
+    bottomRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "end" });
+    return true;
+  };
+
   const editDraft = (m: MessageRow) => {
+    if (m.channel_type === "email") { void openSavedEmailDraft(m); return; }
+    if (governedReply.filesLocked || governedReply.blocksEditing || (editingDraftId && composeChannel === "email")) { toast.error("Finish or cancel the email draft first."); return; }
     setEditingDraftId(m.id);
     setComposeChannel(m.channel_type);
     setSubject(m.subject ?? "");
@@ -1217,7 +1284,9 @@ export default function ClientsConversations() {
 
   const hasSignature = composeChannel === "email" && !!effectiveSignature();
 
+  const savedDraftToastRef = useRef<string | number | null>(null);
   const resetComposer = useCallback(() => {
+    if (savedDraftToastRef.current !== null) { toast.dismiss(savedDraftToastRef.current); savedDraftToastRef.current = null; }
     setBody(""); setSubject(""); resetAttachments();
     setScheduledFor(null); setEditingDraftId(null);
   }, [resetAttachments]);
@@ -1243,16 +1312,34 @@ export default function ClientsConversations() {
     connectorId: composeConnectorId, connectors: composerConnectors,
     subject, text: governedReplyText(body, replySignature ? resolveMergeVars(replySignature.html, mergeContext(selected, replySignature)) : null),
     attachments, scheduledFor, epoch: accountEpochRef.current, composerRef: composerWrapRef, settingsHref: connectionsHref,
+    draftSource: editingDraftId && composeChannel === "email" ? editingDraftSource : undefined,
+    draftApprovalId: editingDraftId && composeChannel === "email" ? editingDraftApprovalId : undefined,
+    onDraftSaved: ({source,attachments:savedFiles})=>{
+      if(source.message_id!==editingDraftId)return;
+      setEditingDraftSource(source);restoreAttachments(savedFiles);
+      savedDraftToastRef.current = toast.success("Draft saved. Nothing sent.", { id: savedDraftToastRef.current ?? undefined });void load();void loadThreads();
+    },
     onChooseSender: (id) => { setComposeConnectorId(id); setComposeChannel("email"); },
     onRecorded: ({ contactId }) => {
       resetComposer();
       // The governed row lands on the contact's own thread; open it if this was another key.
-      const key = activeTenantId ? `contact:${activeTenantId}:${contactId}` : null;
+      const key = editingDraftId ? selected?.key ?? null : activeTenantId ? `contact:${activeTenantId}:${contactId}` : null;
       if (key && key !== selected?.key) pendingSelectRef.current = key;
       void load(); void loadThreads();
     },
     onRefresh: () => { void load(); void loadThreads(); },
   });
+  const checkSavedDraft = governedReply.check;
+  useEffect(() => {
+    if (!reviewDraftRequest) return;
+    setReviewDraftRequest(null);
+    const ticket = reviewDraftRequest;
+    if (!accountEpochRef.current.accept(ticket.epoch) || editingDraftId !== ticket.id || composeChannel !== "email" || !editingDraftSource) {
+      if (accountEpochRef.current.accept(ticket.epoch)) setApprovingId(null);
+      return;
+    }
+    void checkSavedDraft().finally(() => { if (accountEpochRef.current.accept(ticket.epoch)) setApprovingId(null); });
+  }, [reviewDraftRequest, editingDraftId, editingDraftSource, composeChannel, checkSavedDraft]);
   useBeforeUnloadGuard(!!leadReplyApprovalId && (!!subject.trim() || !!body.trim() || leadReplyReview.blocksEditing));
   const cancelLeadReply=()=>{
     if(!leadReplyReview.reset())return;
@@ -1463,15 +1550,15 @@ export default function ClientsConversations() {
   // ── Send a fresh reply (or an edited draft) into the selected thread ──────────────
   const send = async () => {
     if (leadReplyApprovalId) { if(followupLocatorConflict){toast.error("Return to the original reply before approving it.");return;}await leadReplyReview.prepare(); return; }
-    if (followupLocator.kind !== "none") { toast.error("Open the selected original reply before sending. No replacement was selected."); return; }
+    if (followupLocator.kind !== "none" && !(editingDraftId && followupLocator.kind==="bound" && followupLocator.approvalId===editingDraftApprovalId && followupLocator.contactId===selected?.contactId)) { toast.error("Open the selected original reply before sending. No replacement was selected."); return; }
     if (!selected) return;
     if (isSolo && !canSendInSolo(handlingMode, composeChannel)) { toast.error("This handling mode or channel cannot send. Hand back to Human reply and use a ready email or SMS identity."); return; }
     if (isSolo && !selected.contactId) { toast.error("Associate this participant with a client before sending."); return; }
     if (composeChannel === "portal") { await sendPortal(); return; }
     if (!composeChannel) { toast.error("Connect a channel first — Paige needs a way to send."); return; }
     // An email reply goes through the governed door, which resolves the address itself and says so
-    // plainly when the contact card has none. Editing a drafted row ("Send edited") keeps send-message.
-    const governedEmail = composeChannel === "email" && !editingDraftId;
+    // plainly when the contact card has none. Saved email drafts use this SAME door.
+    const governedEmail = composeChannel === "email";
     if (!selected.toAddress && !governedEmail) { toast.error("No client address on this thread to send to."); return; }
     if (!body.trim()) { toast.error("Write a reply first."); return; }
     if (composeChannel === "email" && !subject.trim()) { toast.error("Add a subject for the email."); return; }
@@ -1751,7 +1838,7 @@ export default function ClientsConversations() {
       || (composeChannel === "email" && !subject.trim())
       || attachments.length > 10
       || suppressions.some((suppression) => suppression.channel === composeChannel)
-    ) || portalUnreachable || leadReplyReview.blocksSending || followupLocator.kind === "invalid" || (followupLocator.kind === "bound" && !leadReplyApprovalId),
+    ) || portalUnreachable || leadReplyReview.blocksSending || followupLocator.kind === "invalid" || (followupLocator.kind === "bound" && !leadReplyApprovalId && followupLocator.approvalId!==editingDraftApprovalId),
     sendOnEnter: isSolo,
     placeholder: portalMode
       ? `Message ${selected.name} in their client portal…`
@@ -1769,7 +1856,7 @@ export default function ClientsConversations() {
       // A governed email goes to the address the door resolves (the contact's main email); while the
       // check is open the strip names it, so the note says nothing that could contradict it.
       // The door sends only to the contact card's main email (the same primary address read here).
-      : composeChannel === "email" && !editingDraftId ? (governedReply.stripOpen ? undefined
+      : composeChannel === "email" ? (governedReply.stripOpen ? undefined
         : !selected.contactId ? "No contact on this thread yet."
         : selectedThread?.clients?.email ? `Goes to ${selected.name}'s main email.`
         : `${selected.name} has no email address on their contact card yet.`)
@@ -1788,6 +1875,10 @@ export default function ClientsConversations() {
     ],
     identityId: composeConnectorId,
     onIdentityChange: (id) => {
+      const requestedChannel = id === PORTAL_IDENTITY_ID ? "portal" : composerConnectors.find(c => c.id === id)?.channel_type;
+      if (editingDraftId && composeChannel === "email" && requestedChannel !== "email") {
+        toast.error("Finish or cancel this email draft before changing channel."); return;
+      }
       if (id === PORTAL_IDENTITY_ID) {
         // Never drop staged files out of sight: the portal carries text only.
         if (attachments.length) { toast.error("Portal messages are text only — remove the attachments first."); return; }
@@ -1833,6 +1924,11 @@ export default function ClientsConversations() {
     onDictateError: (msg) => toast.error(msg),
     editingDraft: !!editingDraftId,
     onCancelEdit: resetComposer,
+    onSaveDraft: editingDraftId && composeChannel==="email" && editingDraftSource ? ()=>{void governedReply.saveDraft();} : undefined,
+    savingDraft: governedReply.savingDraft,
+    saveUnconfirmed: governedReply.saveUnconfirmed,
+    draftSaveNote: governedReply.draftSaveNote,
+    draftSaveDisabled: !selected.contactId || uploading || drafting || governedReply.savingDraft || (!governedReply.saveUnconfirmed && governedReply.phase!=="composing") || (isSolo && handlingMode==="governed"),
     dragOver,
     onDropFiles: uploadComposerFiles,
     onDragOverZone: () => setDragOver(true),

@@ -1,0 +1,3182 @@
+{
+  "results": [
+    {
+      "name": "light-1536-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 803.90625,
+        "y": 453.953125,
+        "right": 879.15625,
+        "bottom": 489.953125,
+        "viewport": {
+          "w": 1536,
+          "h": 770
+        },
+        "scrollWidth": 1536,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "LIVE",
+            "ratio": 3.69,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(217,212,211)",
+            "size": "8px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 2.46,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Paige drafted — awaiting your approval",
+            "ratio": 4.47,
+            "color": "rgb(150, 98, 34)",
+            "bg": "rgb(244,238,225)",
+            "size": "11px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "PROFILE · LIVE",
+            "ratio": 4.37,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(238,230,215)",
+            "size": "8px",
+            "weight": "600"
+          }
+        ],
+        "textCount": 161,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 15.05,
+            "color": "rgb(32, 30, 35)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "c87148dc-38fc-4782-844c-ecb0f76b465c",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-1366-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 759.171875,
+        "y": 451.953125,
+        "right": 834.421875,
+        "bottom": 487.953125,
+        "viewport": {
+          "w": 1366,
+          "h": 768
+        },
+        "scrollWidth": 1366,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "LIVE",
+            "ratio": 3.69,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(217,212,211)",
+            "size": "8px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 2.46,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Paige drafted — awaiting your approval",
+            "ratio": 4.47,
+            "color": "rgb(150, 98, 34)",
+            "bg": "rgb(244,238,225)",
+            "size": "11px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "PROFILE · LIVE",
+            "ratio": 4.37,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(238,230,215)",
+            "size": "8px",
+            "weight": "600"
+          }
+        ],
+        "textCount": 161,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 15.05,
+            "color": "rgb(32, 30, 35)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "ef6e5526-e84e-49ad-b729-b3fa5580dd28",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-1024-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.171875,
+        "y": 411.953125,
+        "right": 744.421875,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1024,
+          "h": 768
+        },
+        "scrollWidth": 1024,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "LIVE",
+            "ratio": 3.69,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(217,212,211)",
+            "size": "8px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 2.46,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Paige drafted — awaiting your approval",
+            "ratio": 4.47,
+            "color": "rgb(150, 98, 34)",
+            "bg": "rgb(244,238,225)",
+            "size": "11px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "PROFILE · LIVE",
+            "ratio": 4.37,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(238,230,215)",
+            "size": "8px",
+            "weight": "600"
+          }
+        ],
+        "textCount": 159,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 15.05,
+            "color": "rgb(32, 30, 35)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "b5655eb8-f6ff-4d82-83e2-cbf584306e62",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-900-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 308.578125,
+        "y": 649,
+        "right": 383.828125,
+        "bottom": 685,
+        "viewport": {
+          "w": 900,
+          "h": 1000
+        },
+        "scrollWidth": 900,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "LIVE",
+            "ratio": 3.69,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(217,212,211)",
+            "size": "8px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 2.46,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Paige drafted — awaiting your approval",
+            "ratio": 4.47,
+            "color": "rgb(150, 98, 34)",
+            "bg": "rgb(244,238,225)",
+            "size": "11px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "PROFILE · LIVE",
+            "ratio": 4.37,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(238,230,215)",
+            "size": "8px",
+            "weight": "600"
+          }
+        ],
+        "textCount": 185,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 15.05,
+            "color": "rgb(32, 30, 35)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "0a85a4e7-03ee-4a76-b070-c2688d49bcf9",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-1536-open",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 698.8125,
+        "y": 413.953125,
+        "right": 774.0625,
+        "bottom": 449.953125,
+        "viewport": {
+          "w": 1536,
+          "h": 770
+        },
+        "scrollWidth": 1536,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "LIVE",
+            "ratio": 3.69,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(217,212,211)",
+            "size": "8px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 2.46,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Paige drafted — awaiting your approval",
+            "ratio": 4.47,
+            "color": "rgb(150, 98, 34)",
+            "bg": "rgb(244,238,225)",
+            "size": "11px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "PROFILE · LIVE",
+            "ratio": 4.37,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(238,230,215)",
+            "size": "8px",
+            "weight": "600"
+          }
+        ],
+        "textCount": 160,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 15.05,
+            "color": "rgb(32, 30, 35)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "585172c8-2165-43b0-b972-32eab82c1b0b",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-1366-open",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.703125,
+        "y": 411.953125,
+        "right": 744.953125,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1366,
+          "h": 768
+        },
+        "scrollWidth": 1366,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "LIVE",
+            "ratio": 3.69,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(217,212,211)",
+            "size": "8px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 2.46,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Paige drafted — awaiting your approval",
+            "ratio": 4.47,
+            "color": "rgb(150, 98, 34)",
+            "bg": "rgb(244,238,225)",
+            "size": "11px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "PROFILE · LIVE",
+            "ratio": 4.37,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(238,230,215)",
+            "size": "8px",
+            "weight": "600"
+          }
+        ],
+        "textCount": 159,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 15.05,
+            "color": "rgb(32, 30, 35)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "279b9964-b78d-40b0-ba93-5165bf31fb8c",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-1024-open",
+      "pass": true,
+      "overlay": {
+        "width": 410,
+        "height": 768,
+        "left": 614,
+        "top": 0,
+        "interiorHit": true,
+        "fixtureFolded": true,
+        "hostProof": false,
+        "backdrop": "not mounted by original harness"
+      },
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.171875,
+        "y": 411.953125,
+        "right": 744.421875,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1024,
+          "h": 768
+        },
+        "scrollWidth": 1024,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "LIVE",
+            "ratio": 3.69,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(217,212,211)",
+            "size": "8px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 2.46,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Paige drafted — awaiting your approval",
+            "ratio": 4.47,
+            "color": "rgb(150, 98, 34)",
+            "bg": "rgb(244,238,225)",
+            "size": "11px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "PROFILE · LIVE",
+            "ratio": 4.37,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(238,230,215)",
+            "size": "8px",
+            "weight": "600"
+          }
+        ],
+        "textCount": 159,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 15.05,
+            "color": "rgb(32, 30, 35)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "afae2d18-db99-4480-8fab-a48db8e67b53",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-900-open",
+      "pass": true,
+      "overlay": {
+        "width": 410,
+        "height": 1000,
+        "left": 490,
+        "top": 0,
+        "interiorHit": true,
+        "fixtureFolded": true,
+        "hostProof": false,
+        "backdrop": "not mounted by original harness"
+      },
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 308.578125,
+        "y": 649,
+        "right": 383.828125,
+        "bottom": 685,
+        "viewport": {
+          "w": 900,
+          "h": 1000
+        },
+        "scrollWidth": 900,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "LIVE",
+            "ratio": 3.69,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(217,212,211)",
+            "size": "8px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 2.46,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Paige drafted — awaiting your approval",
+            "ratio": 4.47,
+            "color": "rgb(150, 98, 34)",
+            "bg": "rgb(244,238,225)",
+            "size": "11px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "PROFILE · LIVE",
+            "ratio": 4.37,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(238,230,215)",
+            "size": "8px",
+            "weight": "600"
+          }
+        ],
+        "textCount": 185,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 15.05,
+            "color": "rgb(32, 30, 35)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "9767599c-9647-418b-a33d-5967f749dea5",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1536-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 803.90625,
+        "y": 453.953125,
+        "right": 879.15625,
+        "bottom": 489.953125,
+        "viewport": {
+          "w": 1536,
+          "h": 770
+        },
+        "scrollWidth": 1536,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 3.55,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(22, 19, 27)",
+            "size": "11px",
+            "weight": "400"
+          }
+        ],
+        "textCount": 161,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 16.47,
+            "color": "rgb(246, 242, 234)",
+            "bg": "rgb(22, 19, 26)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "e103cd7e-60a2-4e69-a212-2541484e7891",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1366-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 759.171875,
+        "y": 451.953125,
+        "right": 834.421875,
+        "bottom": 487.953125,
+        "viewport": {
+          "w": 1366,
+          "h": 768
+        },
+        "scrollWidth": 1366,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 3.55,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(22, 19, 27)",
+            "size": "11px",
+            "weight": "400"
+          }
+        ],
+        "textCount": 161,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 16.47,
+            "color": "rgb(246, 242, 234)",
+            "bg": "rgb(22, 19, 26)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "882522cf-1479-424d-862b-69937713322f",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1024-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.171875,
+        "y": 411.953125,
+        "right": 744.421875,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1024,
+          "h": 768
+        },
+        "scrollWidth": 1024,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 3.55,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(22, 19, 27)",
+            "size": "11px",
+            "weight": "400"
+          }
+        ],
+        "textCount": 159,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 16.47,
+            "color": "rgb(246, 242, 234)",
+            "bg": "rgb(22, 19, 26)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "b4047179-4729-4361-ac4b-b9c8d22f1792",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-900-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 308.578125,
+        "y": 649,
+        "right": 383.828125,
+        "bottom": 685,
+        "viewport": {
+          "w": 900,
+          "h": 1000
+        },
+        "scrollWidth": 900,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 3.55,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(22, 19, 27)",
+            "size": "11px",
+            "weight": "400"
+          }
+        ],
+        "textCount": 185,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 16.47,
+            "color": "rgb(246, 242, 234)",
+            "bg": "rgb(22, 19, 26)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "bba5c29d-f2c0-4bf8-8b8e-07f79b282613",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1536-open",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 698.8125,
+        "y": 413.953125,
+        "right": 774.0625,
+        "bottom": 449.953125,
+        "viewport": {
+          "w": 1536,
+          "h": 770
+        },
+        "scrollWidth": 1536,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 3.55,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(22, 19, 27)",
+            "size": "11px",
+            "weight": "400"
+          }
+        ],
+        "textCount": 160,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 16.47,
+            "color": "rgb(246, 242, 234)",
+            "bg": "rgb(22, 19, 26)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "6c11cbde-b849-4855-940c-25a149af5c39",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1366-open",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.703125,
+        "y": 411.953125,
+        "right": 744.953125,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1366,
+          "h": 768
+        },
+        "scrollWidth": 1366,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 3.55,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(22, 19, 27)",
+            "size": "11px",
+            "weight": "400"
+          }
+        ],
+        "textCount": 159,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 16.47,
+            "color": "rgb(246, 242, 234)",
+            "bg": "rgb(22, 19, 26)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "5e3b8f1c-520f-4856-b92a-e5f699ca2d24",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1024-open",
+      "pass": true,
+      "overlay": {
+        "width": 410,
+        "height": 768,
+        "left": 614,
+        "top": 0,
+        "interiorHit": true,
+        "fixtureFolded": true,
+        "hostProof": false,
+        "backdrop": "not mounted by original harness"
+      },
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.171875,
+        "y": 411.953125,
+        "right": 744.421875,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1024,
+          "h": 768
+        },
+        "scrollWidth": 1024,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 3.55,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(22, 19, 27)",
+            "size": "11px",
+            "weight": "400"
+          }
+        ],
+        "textCount": 159,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 16.47,
+            "color": "rgb(246, 242, 234)",
+            "bg": "rgb(22, 19, 26)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "dad490df-0fa7-44cf-94b0-66a0932e99b8",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-900-open",
+      "pass": true,
+      "overlay": {
+        "width": 410,
+        "height": 1000,
+        "left": 490,
+        "top": 0,
+        "interiorHit": true,
+        "fixtureFolded": true,
+        "hostProof": false,
+        "backdrop": "not mounted by original harness"
+      },
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 308.578125,
+        "y": 649,
+        "right": 383.828125,
+        "bottom": 685,
+        "viewport": {
+          "w": 900,
+          "h": 1000
+        },
+        "scrollWidth": 900,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 3.55,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(22, 19, 27)",
+            "size": "11px",
+            "weight": "400"
+          }
+        ],
+        "textCount": 185,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 16.47,
+            "color": "rgb(246, 242, 234)",
+            "bg": "rgb(22, 19, 26)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 7.52,
+            "color": "rgb(173, 167, 159)",
+            "bg": "rgb(24, 22, 29)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 18.26,
+            "color": "rgb(245, 245, 245)",
+            "bg": "rgb(12, 7, 18)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "BUTTON",
+          "inComposer": false,
+          "text": "Save draft"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "4de156db-09ac-43dc-b6d5-0ba1d755468e",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "draft_source": {
+                "message_id": "e0300000-0000-4000-8000-0000000f0001",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "attachments": [],
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+              "save_draft": true
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-save-unknown",
+      "pass": true,
+      "calls": 2,
+      "proof": "fictional door boundary; no provider/authenticated or real Hub-host proof"
+    },
+    {
+      "name": "light-save-refuse",
+      "pass": true,
+      "calls": 1,
+      "proof": "fictional door boundary; no provider/authenticated or real Hub-host proof"
+    },
+    {
+      "name": "light-accepted",
+      "pass": true,
+      "calls": 3,
+      "proof": "fictional door boundary; no provider/authenticated or real Hub-host proof"
+    },
+    {
+      "name": "dark-save-unknown",
+      "pass": true,
+      "calls": 2,
+      "proof": "fictional door boundary; no provider/authenticated or real Hub-host proof"
+    },
+    {
+      "name": "dark-save-refuse",
+      "pass": true,
+      "calls": 1,
+      "proof": "fictional door boundary; no provider/authenticated or real Hub-host proof"
+    },
+    {
+      "name": "dark-accepted",
+      "pass": true,
+      "calls": 3,
+      "proof": "fictional door boundary; no provider/authenticated or real Hub-host proof"
+    },
+    {
+      "name": "light-keyboard-saved-entry",
+      "pass": true,
+      "pointerSetup": "original conversation selection and saved Edit entry",
+      "keyboard": "edit/save/cancel/reopen/check/approve",
+      "proof": "controlled workspace only; no authenticated/host/native zoom claim"
+    },
+    {
+      "name": "dark-keyboard-saved-entry",
+      "pass": true,
+      "pointerSetup": "original conversation selection and saved Edit entry",
+      "keyboard": "edit/save/cancel/reopen/check/approve",
+      "proof": "controlled workspace only; no authenticated/host/native zoom claim"
+    },
+    {
+      "name": "light-reflow-review-focus",
+      "pass": true,
+      "focus": {
+        "text": "Edit",
+        "x": 238,
+        "y": 265.046875,
+        "right": 288.328125,
+        "bottom": 301.046875,
+        "w": 50.328125,
+        "h": 36,
+        "viewport": {
+          "w": 567,
+          "h": 381
+        },
+        "visible": true
+      },
+      "proof": "repeatable 567x381 CSS reflow; separate native zoom observation; no provider/authenticated/full host claim"
+    },
+    {
+      "name": "dark-reflow-review-focus",
+      "pass": true,
+      "focus": {
+        "text": "Edit",
+        "x": 238,
+        "y": 265.046875,
+        "right": 288.328125,
+        "bottom": 301.046875,
+        "w": 50.328125,
+        "h": 36,
+        "viewport": {
+          "w": 567,
+          "h": 381
+        },
+        "visible": true
+      },
+      "proof": "repeatable 567x381 CSS reflow; separate native zoom observation; no provider/authenticated/full host claim"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_WORKSPACE",
+  "voice": "UNEXERCISED",
+  "paige": "PLACEHOLDER",
+  "nativeBrowserZoom": "UNVERIFIED"
+}

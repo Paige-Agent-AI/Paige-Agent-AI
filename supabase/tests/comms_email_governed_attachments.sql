@@ -1,3 +1,5 @@
+-- 140003 saved-source extension: renew ONLY reviewed CURRENT body identities.
+-- Original behavior, ACL/metadata, historical replay and rollback assertions remain intact.
 -- ─────────────────────────────────────────────────────────────────────────────────────────────
 -- Files through the governed email door — rollback proof for 20271120000000_comms_email_governed_attachments.sql.
 --
@@ -9,7 +11,7 @@
 --
 -- Proves: the three new functions are service_role-only SECURITY DEFINER with a pinned search_path and
 -- the 15-argument prepare has no defaults; the 13- and 14-argument prepares and the actor check are
--- byte-identical; the manifest check admits only this tenant's and operation's governed copies, numbered
+-- pinned to reviewed current compositions (actor unchanged); the manifest admits only this tenant's and operation's governed copies, numbered
 -- in order, existing in storage at exactly their size, within the type and size limits; a prepare with
 -- files writes binding.attachments and messages.attachments in one update (immediate: a draft; scheduled:
 -- queued with its time); a replay with other (or no) files or another time is a mismatch; another
@@ -53,10 +55,10 @@ SELECT pg_temp.ok(2, (SELECT pronargdefaults=0 FROM pg_proc WHERE oid='public.pr
   'the prepare with files has no defaults (an email without files can never reach it)');
 SELECT pg_temp.ok(3, (SELECT count(*)=3 AND bool_and(md5(p.prosrc)=e.body) FROM (VALUES
    ('public._comms_email_actor(uuid,uuid)'::regprocedure,'c9850c30ae7885c23eee1da268c8c0e0'),
-   ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'8da3b64c24552123b973db96a74ab986'),
-   ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz)'::regprocedure,'432b0c8548b9e0c52a0b0a52acbee4c3')) e(f,body)
+   ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'f7fbbd2a430bf391f43dc6ca7e2692ee'),
+   ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz)'::regprocedure,'b814a323a2c319648888fe17bc5a7079')) e(f,body)
   JOIN pg_proc p ON p.oid=e.f),
-  'the actor check and the 13- and 14-argument prepares are byte-identical (no existing body replaced)');
+  'the actor check is unchanged; the original 13- and 14-argument prepares match their reviewed current source compositions');
 SELECT pg_temp.ok(4, (SELECT count(*)=3 AND bool_and(NOT p.polpermissive AND p.polroles=ARRAY[(SELECT oid FROM pg_roles WHERE rolname='authenticated')])
    AND string_agg(p.polcmd::text, '' ORDER BY p.polcmd)='adw'
   FROM pg_policy p WHERE p.polrelid='storage.objects'::regclass AND p.polname LIKE 'comms\_email\_governed\_files\_%\_boundary'),

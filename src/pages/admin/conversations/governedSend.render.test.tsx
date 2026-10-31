@@ -284,12 +284,14 @@ describe.each([
   ["Solo", "/solo/3855/clients/conversations"],
   ["the admin inbox", "/admin/clients/conversations"],
 ])("%s — a governed email is never an approvable draft", (_label, path) => {
-  it("a plain Paige draft still gets the approval card (unchanged)", async () => {
+  it("a plain Paige email draft remains reviewable without a direct-send approval", async () => {
     db.messages = [message({})];
     db.threads = [thread];
     const host = await mountInbox(path);
     expect(host.textContent).toContain("Paige drafted — awaiting your approval");
-    expect(buttons(host)).toContain("Approve & send");
+    expect(buttons(host)).toContain("Review email");
+    expect(buttons(host)).not.toContain("Approve & send");
+    expect(db.invokes).toEqual([]);
   });
 
   it("an outcome nobody could confirm: no Approve & send, no Edit, and it says don't resend", async () => {
@@ -752,7 +754,6 @@ describe("Conversations governed-send render harness", () => {
 // error = "delivery_unconfirmed". The inbox must say so — never "Failed", never an invitation to resend.
 describe("an email the service may have taken (its answer was lost)", () => {
   const UNCONFIRMED = { data: { status: "failed", outcome: "outcome_unknown", unconfirmed: true, error: "delivery_unconfirmed: sendgrid_503", reason: "delivery_unconfirmed: sendgrid_503", message_id: "m-1" }, error: null };
-  const COPY = "We couldn't confirm it was sent — it may already be with them. Don't send it again until you've asked them.";
 
   it("a row marked unconfirmed reads Couldn't confirm with the don't-resend line, never Failed", async () => {
     db.messages = [message({ status: "failed", error: "delivery_unconfirmed" })];
@@ -785,17 +786,21 @@ describe("an email the service may have taken (its answer was lost)", () => {
     expect(host.textContent).not.toContain("sendgrid_400");
   });
 
-  it("Approve & send whose answer was lost warns honestly instead of reporting a failure", async () => {
+  // The real uncertain saved-source confirm/edit/status recovery is mounted in
+  // governedReply.render.test.tsx. This old-cache boundary must never reach the
+  // legacy sender, even if that sender would return an uncertain provider answer.
+  it("a cached draft missing its saved version cannot fall back to the legacy sender", async () => {
     db.messages = [message({})];
     db.threads = [thread];
     db.sendAnswer = UNCONFIRMED;
     const host = await mountInbox("/admin/clients/conversations");
-    const approve = [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Approve & send")!;
+    const approve = [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Review email")!;
     expect(approve).toBeTruthy();
     await act(async () => { approve.click(); await flush(); });
-    expect(db.invokes).toEqual(["send-message"]);
-    expect(toast.warning).toHaveBeenCalledWith(COPY);
-    expect(toast.error).not.toHaveBeenCalled();
+    expect(db.invokes).toEqual([]);
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("saved version"));
+    expect(toast.warning).not.toHaveBeenCalled();
+    expect(host.textContent).toContain("Paige drafted — awaiting your approval");
   });
 
   // EXP03 O12 piece 3: the reply composer's email no longer goes through send-message's undo window. It is

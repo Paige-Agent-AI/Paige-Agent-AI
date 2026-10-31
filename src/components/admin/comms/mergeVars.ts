@@ -4,6 +4,33 @@
 // {{token}} is NEVER shipped into a sent signature/snippet.
 import DOMPurify from "dompurify";
 
+/** Review-only structural projection, never the HTML supplied to a sender.
+ * Reuses the original Comms sanitizer. No styles/resources/forms/active links
+ * enter the live page; destinations are ordinary text, not navigation targets.
+ * Already-resolved customer content must not go through merge expansion again.
+ */
+export function renderEmailReviewHtml(html: string): string {
+  const fragment = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ["p", "div", "span", "b", "strong", "i", "em", "u", "s", "ul", "ol", "li", "br", "h1", "h2", "h3", "h4", "h5", "h6", "table", "thead", "tbody", "tfoot", "tr", "td", "th", "blockquote", "pre", "code", "a", "hr"],
+    ALLOWED_ATTR: ["href"], ALLOW_DATA_ATTR: false, ALLOW_ARIA_ATTR: false,
+    RETURN_DOM_FRAGMENT: true,
+  });
+  for (const anchor of fragment.querySelectorAll("a")) {
+    const replacement = fragment.ownerDocument.createElement("span");
+    while (anchor.firstChild) replacement.appendChild(anchor.firstChild);
+    const destination = anchor.getAttribute("href");
+    if (destination) replacement.appendChild(fragment.ownerDocument.createTextNode(` (${destination})`));
+    anchor.replaceWith(replacement);
+  }
+  // Even allowed attributes belong only to the temporary parsing step above.
+  for (const element of fragment.querySelectorAll("*")) {
+    for (const attribute of [...element.attributes]) element.removeAttribute(attribute.name);
+  }
+  const container = fragment.ownerDocument.createElement("div");
+  container.appendChild(fragment);
+  return container.innerHTML;
+}
+
 const TOKEN_RE = /\{\{\s*[\w.]+\s*\}\}/g;
 
 /** Every unique {{token}} present in the text, in first-seen order. */

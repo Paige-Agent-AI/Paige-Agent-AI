@@ -531,3 +531,76 @@ without a duplicate ping. Next is explicit governed commercial disposition and t
 original payment/balance/action/customer surfaces, then cumulative exact-head review, required
 CI/release/readback and genuine merchant/Owner/client receipt/reload/recovery. O5 is sole primary,
 no secondary, all original twelve and integrated founder acceptance remain open.
+
+## October 31 C180–C181 — reviewed financial-decision adapter, not a live writer
+
+The intended usable outcome is an owner reviewing the exact treatment of an original provider
+payment, recording an authorized credit or retained debt, and recovering that same durable
+operation. This increment implements the closed command, original high/confirm Kit declaration,
+server-authored consequence binding and result fence in the existing invoice HTTP door. Its
+Spine row remains explicitly UNAVAILABLE, not self-described or Chat-exposed. No native writer,
+public financial projection, customer action, ledger, sender, payment engine or activation is
+added here. All earlier invoice actions retain their original paths.
+
+Credit requires the owner's explicit positive minor amount, bounded by the future native
+original-payment/obligation calculation. A refund failure can still leave the business owing a
+refund; neither provider success nor failure chooses a commercial credit. The original invoice,
+accepted document, provider cash and internal decision remain separate. Native before/after
+debt and refund payable are retained as separate facts; unpaid future installments and a refund
+liability may coexist. Unknown prior standing stays null/needs_review, never zero. This corrects
+the earlier private no-amount prototype proposal without rewriting its dated evidence.
+
+The existing approval retains the complete closed native review: original client/invoice and
+version, original payment and observation/version, prior decision version, exact requested
+credit, native balances and source hash. Missing or changed native facts refuse before an
+effect. Stored approval facts must match the current native preview, and only those stored
+facts enter original invoice governance. The result must name the same operation, invoice,
+tenant and expected versions, original receipt identity and explicit internal-only effect.
+Incomplete, contradictory, money-movement or notification claims remain outcome_unknown with
+the same recoverable operation. An unchanged label also requires genuinely unchanged native
+credit/debt/refund facts and a previously recorded decision.
+
+### Applicable orchestration contract
+
+1. Owner requests a financial treatment for an existing provider payment.
+2. Entry is the original Sales invoice review; production form mounting is still owed.
+3. Original invoice/provider payment/observation and invoice operation journal remain authoritative;
+   sales_invoice.record_provider_disposition is declared UNAVAILABLE.
+4. Reuse public.execute_sales_invoice_command and the original governed invoice adapter. No second
+   Layer C executor is created and no ordinary read is forced through event dispatch.
+5. Existing current user, server-resolved tenant and active owner/admin admission remain required;
+   actual native revalidation under original locks is still part of the unbuilt writer.
+6. High risk always clamps to the existing confirmation gate; auto preference is not approval.
+7. Original immutable invoice operation and real record_capability_run/Rail receipt are required;
+   the HTTP tests supply disclosed synthetic database/receipt ports, not real Rail evidence.
+8. No provider request occurs. Reuse retained original cash reconciliation and same-operation
+   readback; native atomic persistence, replay and duplicate prevention remain owed.
+9. Stale/missing review refuses; unverified result remains unknown. Recovery may not create a new
+   operation or claim payment, signing, client notice or amended signed terms.
+10. Display the exact native decision, original receipt and revised standing only after the real
+    writer/readback and paired original UI are implemented and verified.
+
+Actual HTTP, command, Kit and result tests first reproduced missing consequence/result fences.
+Four later unchanged-result counterexamples failed before their repair, and an unsafe next-version
+intent failed before its parser bound. Current focused source proof and exact final counts are
+recorded in the owning UI evidence; these are isolated tests, not authenticated financial proof.
+Strict checking uses the unchanged repository deno.lock and original pinned SDK graph. An initial
+check using the earlier Stripe-only private lock failed for a missing existing SDK entry; no lock,
+SDK, permission or assertion was weakened to obtain the canonical check.
+
+The private prototype has thirteen distinct completed interaction cases across two runs, including
+original review, keyboard, cancel retention, stale refusal and same-operation unknown recovery.
+It used the earlier mocked profile, not the final native contract. Its label and scenario-cleanup
+failures remain retained. Production UI and final paired rendering are still owed; C175's separate
+fourteen/eighteen layout limitation is unchanged. Functional, visual and authenticated acceptance
+must not be combined into a completed outcome claim.
+
+ANT163's October31 additional source-custody clearance for the ORIGINAL client payment-request
+financial projection/evidence header is received and acknowledged. Its scope/permission/legacy
+and release obligations remain intact; no Portal writer or UI takeover is implied. Next is the
+same native financial calculation and original obligation allocation, governed append-only
+decision/Rail/recovery, then paired Owner/client presentation and cumulative review/release proof.
+ALG-01/12 gain bounded local argument/currentness/result-refusal checks only; ALG-02/13 maturity,
+actual merchant TEST settlement, ordinary Owner/client evidence and founder acceptance remain
+unverified. Development only; no new PR, exact-head hosted CI, merge, deployment or activation.
+O5 remains the sole primary; all twelve original outcomes remain open.

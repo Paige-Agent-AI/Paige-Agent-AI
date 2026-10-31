@@ -14,6 +14,10 @@ const mutations = [
 ] as const;
 export const SALES_INVOICE_CAPABILITIES: readonly SpineCapability[] = [
  ...SALES_DRAFT_SPINE, SALES_COMMERCIAL_OFFERS_SPINE, SALES_COMMERCIAL_PACKAGE_SPINE,
+ {key:'sales_invoice.record_provider_disposition',selfDescribe:false,readiness:'none',domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',
+  action:{classification:'mutate',executor:'public.execute_sales_invoice_command',riskPolicyKey:'high',approvalAuthority:'chat-canonical',idempotency:'Original actor/tenant/invoice/payment/observation and prior decision versions, exact stored approval and immutable operation/Rail; ambiguous results recover the same operation.'},
+  outcome:{kinds:['financial_decision_recorded','financial_decision_unchanged','refused','outcome_unknown'],projector:'public.read_sales_invoice_command_result',railVisibility:'Internal reviewed financial disposition only; no refund, charge, customer notice or signed amendment. Native writer, consumer and authenticated proof remain unavailable.'},
+  chatBinding:'UNAVAILABLE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'UNAVAILABLE'},
  {key:'sales_invoice.payment_request',readiness:'sales_merchant',domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',
   action:{classification:'external_effect',executor:'public.prepare_sales_invoice_payment_request',chatTool:'sales_create_payment_request',riskPolicyKey:'high',approvalAuthority:'chat-canonical',idempotency:'Exact server-resolved tenant/customer/invoice/version/amount/currency/merchant/environment, immutable operation and one persisted dispatch claim; uncertain response only reconciles.'},
   outcome:{kinds:['prepared','dispatching','provider_accepted','customer_action_required','outcome_unknown','settled','failed','expired','cancelled','refused'],projector:'public.read_sales_invoice_payment_request',railVisibility:'Request/readback/verified settlement and allocation are distinct. Hosted request never claims payment. Authenticated provider acceptance is PROOF_OWED.'},
@@ -113,7 +117,14 @@ export const SALES_INVOICE_PREFERENCES_READ_CAPABILITY = defineCapability({
  input:objectInputSchema({properties:{},required:[]}),effect:'read',governance:{actionRiskKey:null,risk:'read_only',approval:'none',requiredPermission:ownerGrantablePermission('sales_invoice.preferences_read.execute')},
  tenantScope:INVOICE_SCOPE,availability:INVOICE_AVAILABILITY,providerBinding:{kind:'internal',operation:'public.read_sales_invoice_preferences',connectionResolver:null},idempotency:{mode:'not_applicable'},receipt:INVOICE_RECEIPT,outcome:{projector:'capability-record'},
 });
-export const SALES_INVOICE_KIT_CAPABILITIES = [SALES_INVOICE_SETTINGS_CAPABILITY,SALES_INVOICE_PUBLISH_CAPABILITY,SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,SALES_INVOICE_VOID_CAPABILITY,SALES_INVOICE_CREATE_LINK_CAPABILITY] as const;
+export const SALES_INVOICE_PROVIDER_DISPOSITION_CAPABILITY = defineCapability({
+ identity:{id:'sales_invoice.record_provider_disposition',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Record the owner’s exact credit or balance treatment for an original provider payment after reviewing current financial evidence. No money movement or signed amendment.'},
+ input:objectInputSchema({description:'Original record/version intent only. Credit requires the owner’s exact minor amount; native evidence and approval resolve its permitted scope and full consequence. No caller-authored merchant, provider outcome, snapshot or governance.',properties:{...INVOICE_INPUT,expected_version:{...INVOICE_INPUT.expected_version,maximum:9007199254740990},action:{type:'string',enum:['invoice.record_provider_disposition']},provider_operation_id:{type:'string',format:'uuid'},observation_id:{type:'string',format:'uuid'},observation_version:{type:'integer',minimum:1,maximum:9007199254740990},expected_disposition_version:{type:'integer',minimum:0,maximum:9007199254740990},decision:{type:'string',enum:['balance_due','credit_returned_principal']},credit_minor:{type:'integer',minimum:1,maximum:2147483647,description:'Required only for credit_returned_principal. Exact owner-selected credit against this original payment; the native source enforces its ceiling. Never infer a credit from refund success or failure.'},reason:{type:'string',minLength:1,maxLength:500}},required:['action','invoice_id','expected_version','provider_operation_id','observation_id','observation_version','expected_disposition_version','decision','reason']}),
+ effect:'mutation',governance:{actionRiskKey:'sales_record_provider_disposition',risk:'high',approval:'confirm',requiredPermission:ownerGrantablePermission('sales_invoice.record_provider_disposition.execute')},
+ tenantScope:INVOICE_SCOPE,availability:INVOICE_AVAILABILITY,providerBinding:{kind:'internal',operation:'public.execute_sales_invoice_command',connectionResolver:null},
+ idempotency:{mode:'required',key:'Exact original invoice/current observation/prior decision versions and retained approved command. Corrections append, never overwrite; lost acknowledgments recover the same operation.',readback:'public.read_sales_invoice_command_result',replay:'return_recorded_result'},receipt:INVOICE_RECEIPT,outcome:{projector:'capability-record'},
+});
+export const SALES_INVOICE_KIT_CAPABILITIES = [SALES_INVOICE_SETTINGS_CAPABILITY,SALES_INVOICE_PUBLISH_CAPABILITY,SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,SALES_INVOICE_VOID_CAPABILITY,SALES_INVOICE_CREATE_LINK_CAPABILITY,SALES_INVOICE_PROVIDER_DISPOSITION_CAPABILITY] as const;
 
 // Read and email declarations describe the existing authenticated read and governed delivery door.
 export const SALES_INVOICE_READ_CAPABILITY = defineCapability({
@@ -146,6 +157,7 @@ export const SALES_INVOICE_KIT_BY_ACTION = {
  sales_update_invoice_settings:SALES_INVOICE_SETTINGS_CAPABILITY,
  sales_publish_invoice:SALES_INVOICE_PUBLISH_CAPABILITY,
  sales_record_manual_payment:SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,
+ sales_record_provider_disposition:SALES_INVOICE_PROVIDER_DISPOSITION_CAPABILITY,
  sales_reverse_manual_payment:SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,
  sales_void_invoice:SALES_INVOICE_VOID_CAPABILITY,
  sales_create_invoice_link:SALES_INVOICE_CREATE_LINK_CAPABILITY,

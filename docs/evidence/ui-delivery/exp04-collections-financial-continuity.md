@@ -128,3 +128,47 @@ dark compact keyboard assertion remain unchanged. Paired commercial decision/act
 presentation, release and authentic proof are owed; do not interpret a private read as a live
 customer capability. All eight Solo visual modes and founder acceptance retain their prior
 applicable evidence limits.
+
+### C180–C181 explicit financial-decision contract — production UI not mounted
+
+The original invoice command door now binds a closed native financial review to the SAME
+canonical confirmation. It refuses changed/missing facts or approval and labels incomplete
+results unknown under the original operation ID. Credit is an explicit bounded owner amount,
+not inferred from a refund; native unpaid installments and refund payable remain separate.
+No native decision writer, canonical balance adoption, provider effect, customer notice or new
+production control is shipped in this increment. The new Spine capability stays UNAVAILABLE.
+The [existing delivery record](../../delivery/exp04-native-client-invoice-observation.md)
+contains the original-record, permission, receipt and ten-part orchestration boundaries.
+
+The private prototype completed thirteen DISTINCT cases across two runs, one overlapping case:
+four light/dark desktop/narrow happy paths, loading, empty, pending, forbidden, unavailable,
+retry, mismatched source, stale source and same-operation unknown recovery. Eight frames in the
+first successful functional run include original dialog review at 1366 and 390 in both themes.
+Actual Tab/Enter review and cancel/draft retention ran; unknown recovery recorded one simulated
+effect under one original identity. Earlier reason-label failures and the later scenario-cleanup
+stop are retained, not relabeled PASS. The explicit stable label repaired the first; cancelling
+the prior unapproved review before the next scenario resolved the second without clearing
+storage or bypassing recovery. Original initial frame filename reuse is disclosed; its first
+bytes are not claimed retained. These were isolated, headless, synthetic harness sessions.
+
+The prototype used the earlier profile and no-amount proposal. The final command requires an
+explicit credit amount and the closed native consequence. Therefore those frames prove only
+direction/interaction, not the new production UI, native arithmetic, Rail, genuine provider or
+signed-in Owner/client behavior. Production mounting, final-contract rendering, full required
+viewport/shell/keyboard/zoom/assistive checks and authentic reload/reopen/recovery remain owed.
+The owned prototype server stopped. No real browser session, payment, sign, message or account
+was used. C175's separate 14/18 compact-shell failure remains unresolved and material to the
+eventual affected UI release. Impeccable informed hierarchy, original tokens, field/focus
+repair and narrow review; author review is LOWER ASSURANCE, not founder acceptance.
+
+Final C181 isolated source proof: 245/245 tests in seven original/new suites PASS (64 original
+command,48 actual HTTP,32 original governance,38 financial intent,7 financial governance,36
+closed review and20 result cases). The four false-unchanged cases first failed, then passed
+after the result fence; the maximum-safe next-version case first failed, then passed after
+the new-action-only parser bound. Scoped lint and strict cached/frozen checking of the actual
+HTTP dependency graph PASS using unchanged repository deno.lock. The earlier Stripe-only
+private-lock check failed; it is excluded from PASS and neither lock nor pinned SDK was
+rewritten. The whole original action-risk table, old command parser, Spine/Kit declarations
+and invoice HTTP source are byte-exact after removing only the bounded new-action additions.
+No full-schema, hosted CI, release, real provider, real Rail or authenticated QA follows from
+these tests. Current native writer and production form remain unbuilt/unavailable.

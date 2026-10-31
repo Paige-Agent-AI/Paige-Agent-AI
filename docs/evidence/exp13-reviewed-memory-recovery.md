@@ -242,3 +242,21 @@ running in session37364 after observed free disk3.19GB. Its same handle remains
 live, currently selecting default shared buffers; no restart, old-cluster reuse,
 customer identity or native test PASS is inferred. CIM process inventory refused
 access; that refusal was not bypassed. Existing local proof logs are preserved.
+
+Atomic carrier native run completed: session38443 exit0, log
+`work/exp13-memory-atomic-carrier-native.log`. Full original publication and
+reviewed Memory save/lifecycle/access controls pass; all60 drift attempts across
+original8/4/3 and reviewed9/5/4 refused with exact definition/ACL rollback readback.
+Whole carrier repeat passed. Actual separate duplicate-save and same-intent
+inspection sessions waited on the held intent lock, returned the same committed
+Memory ID and left one row. Runner DROP DATABASE observed; own server fast stop
+completed. These are local original SQL tests with modeled Auth inputs, not live
+delegated-role/customer acceptance, retention proof, CI or deployment.
+
+Initial restricted localhost attempt failed10013 before SQL; authorized attempt
+then failed10061 because the short-lived server had ended. Both logs retained.
+Actual pg_ctl and process readback confirmed no server before restarting only
+this own cluster for the full test with finally-stop. Stale PID warning retained;
+no PID file deletion, peer termination or unknown cluster restart. Fresh read-only
+production code catalogue confirms original8/4/3 body hashes/defaults/config/ACL
+and original Knowledge actor/read dependencies, without reading customer data.

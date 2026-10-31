@@ -172,3 +172,31 @@ rewritten. The whole original action-risk table, old command parser, Spine/Kit d
 and invoice HTTP source are byte-exact after removing only the bounded new-action additions.
 No full-schema, hosted CI, release, real provider, real Rail or authenticated QA follows from
 these tests. Current native writer and production form remain unbuilt/unavailable.
+
+### C182–C186 native integration — final customer surface still owed
+
+The original invoice decision now has an INERT native implementation and actual journal/Rail
+readback, tested against the original retained accepted deposit/installment source. Version2
+review preserves unknown totals while another payment remains unresolved. Explicit credits,
+returned principal, future debt and refund payable remain distinct; no automatic refund,
+payment, signed amendment or client notice occurs. The new receipt carries only invoice
+identity/version and the reviewed consequence, excluding stale legacy paid/balance fields.
+Full source, failure history, source ownership and release holds are recorded in the
+[existing delivery report](../../delivery/exp04-native-client-invoice-observation.md).
+
+Actual isolated proof:55 native financial controls (30 original+12 accepted-plan+13 source/
+authority/result); original cash39+2 ACL;255 tests across seven HTTP/contract/Kit/review/result
+suites;14 actual retained native-value decoder checks. Scope includes genuine separate local
+database sessions, immutable original receipt preservation, partial-decision unknown standing,
+stale/cross-role refusal and explicit post-commit observation-fault recovery. Auth/signing/
+provider inputs and table types remain disclosed synthetic/reduced ports; no actual customer
+financial result, genuine signature or Stripe settlement is established. Strict unchanged
+frozen/cached dependency checking, scoped lint, whitespace and source-inverse checks pass.
+
+No product markup, form, layout, navigation, motion or new rendered evidence is claimed in this
+increment. The original prototype's earlier schema is not the final version2 native/UI contract.
+The earlier 13 prototype cases and 14/18 compact-shell result remain dated evidence with their
+limits; the unresolved keyboard case and final full required viewport/role/reload/recovery proof
+are still owed. Correct canonical read/write adoption and final paired rendering/authenticated
+QA are release holds. Spine/catalogue remains UNAVAILABLE; no deployment/activation/acceptance
+or complete-outcome promotion follows from the native tests. All twelve remain open, O5 only.

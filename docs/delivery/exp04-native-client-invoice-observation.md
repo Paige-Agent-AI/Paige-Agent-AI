@@ -604,3 +604,96 @@ ALG-01/12 gain bounded local argument/currentness/result-refusal checks only; AL
 actual merchant TEST settlement, ordinary Owner/client evidence and founder acceptance remain
 unverified. Development only; no new PR, exact-head hosted CI, merge, deployment or activation.
 O5 remains the sole primary; all twelve original outcomes remain open.
+
+## October 31 C182–C186 — original native decision, accepted allocations and recovery
+
+The INERT candidate now implements the internal financial decision through the ORIGINAL invoice
+preview, executor, immutable invoice operation journal, original Rail and result reader. It
+extends the existing native financial-position family: unchanged legacy seven/ten-field sources,
+one retained-cash source with exact per-payment attribution, then one actual-standing projection
+over the original accepted targets and manual-allocation evidence. No additional ledger, payment
+processor, approval channel, scheduler, execution store or provider action is introduced.
+
+The source can distinguish retained provider principal, an explicit owner credit, future unpaid
+obligations and a separate refund payable. A credit against the original deposit does not silently
+pay a future installment. The retained neutral $3,500/$500/ten-$300 source is exercised through
+the real original accepted-payload/effectuation readers and native payment doors. A $100 deposit
+credit with a failed refund leaves $3,000 in future obligations AND a $100 refund liability. Later
+installment cash/credit stays attached to its exact original target. TEST receipts/refund history
+never fulfill an actual obligation or acquire a real credit. Original terms, signing record,
+issued document and principal remain exact. Fixture signing/provider/identity metadata is
+synthetic; these are not genuine signatures, Stripe settlements or customer results.
+
+Unpublished review version2 adds an explicit after-standing state. Resolving one payment while
+another needs review is permitted, with unresolved before/after totals retained as null. It does
+not invent a final balance or require all decisions to happen in an unsupported batch. The
+native approved consequence, original invoice/client/payment/observation and prior decision
+versions remain bound to the existing confirmation. Real financial changes append a version;
+same-treatment reviews preserve it. Missing/currentness/permission evidence refuses, and a
+completion claim requires its original operation and actual Rail receipt. A pre-existing other-
+action receipt or success receipt missing its operation is refused before a new financial write.
+The generic shared Rail implementation is unchanged; this is not a global Rail concurrency audit.
+
+The new action's result deliberately returns only invoice identity/version in its row, alongside
+the exact reviewed financial consequence. A source-review counterexample first demonstrated
+that a legacy gross settlement/balance could otherwise accompany the revised standing. The
+decoder and native result now reject that mismatch. Paired UI must refresh authoritative current
+records rather than treating the receipt as a complete refreshed legacy invoice.
+
+### Actual bounded proof
+
+- The SAME original provider proof retains its entire default source inverse. All original
+  prepare/claim/settlement/observation/Work/Rail and real-session controls still execute; cash
+  attribution passes39 checks plus2 real ACL-drift controls. The missing attribution first
+  failed its exact native assertion before the cash-source repair.
+- New financial phase:55 native checks PASS —30 original financial controls,12 accepted-plan
+  controls and13 source/authority/result controls. The original30-case block remains byte-exact.
+  Actual distinct database sessions prove duplicate recovery and stale competing refusal. An
+  explicitly injected post-commit client-observation error recovers one original operation and
+  receipt. This is not a network/provider-crash or hosted-authentication claim.
+- Seven actual HTTP/contract/Kit/review/result suites pass255 checks. Review-v2 positives first
+  failed against the earlier schema. The false unchanged-result, unsafe next-version and stale
+  legacy-row counterexamples are retained from their respective earlier runs.
+- Three actual retained native commands/results, including the unresolved multi-payment result,
+  traverse the production decoder in14 read-only checks with zero provider/action calls.
+  Scoped lint, strict unchanged frozen/cached Deno graph and whitespace checks pass.
+
+Retained initial failures include SQL CASE parsing, a proof observer incorrectly reading a
+protected table (replaced with the ORIGINAL authorized context RPC, with no grant change), the
+qualified history-field repair after a recorded decision, the proof's raw-newline transport
+(fixed by reading the exact definition as JSON, without a source normalizer), and an async read
+in the private decoder bridge. The pre-existing receipt-identity control genuinely failed before
+the new writer fence. No required assertion or permission was loosened. Each owned database is
+removed by the original runner and the exact owned loopback cluster stops. Logs are unique per
+attempt; older current-status JSON snapshots can be superseded and are not falsely claimed as
+separately retained bytes. These are selected-schema proofs with disclosed reduced table/Auth/
+signing/provider ports, not full-schema, managed Preview, provider or customer acceptance.
+
+### Remaining O5 release holds
+
+The native source remains INERT/unversioned and the Spine capability remains UNAVAILABLE. No
+new public customer financial contract or production form is mounted. Before a useful release:
+
+1. Integrate the same actual-standing source into original invoice/payment-request prepare,
+   claim, allocation and read paths, including correct original accepted-target selection. Do
+   not activate this decision alongside a legacy gross-balance writer, paid label or checkout.
+   Full/unassigned or revised provider allocations require an explicit governed original-target
+   assignment; never invent FIFO, an automatic cross-installment offset or a second ledger.
+2. Finish original Owner/Collections/Chat and CLEARED EXP09 financial producer/consumer spans,
+   version negotiation, truthful paid/credited/refund/unknown states and original record links.
+   Native principal retained is not bank cash, fee accounting or a payment-completion claim.
+3. Mount the final exact-consequence form and receipt/reload/reopen/recovery flow, then inspect
+   the real desktop/narrow/full-shell/keyboard/accessibility states. Earlier prototype13 and
+   compact-shell14/18 evidence is historical, not the new version2 production UI.
+4. Complete cumulative exact-head review, required full-schema/CI, ordered compatible carrier,
+   normal release/readback and authorized actual merchant TEST plus ordinary Owner/client proof.
+
+The original additional Portal payment-request projection/header window is clear, with its
+existing permission/legacy/source boundaries preserved. No Portal, Work, shared host, provider
+custody or admission ownership is taken. This native integration uses the established governed
+invoice pathway; it does not create or activate another Layer C executor. Actual Chat/Live/
+Team Hub execution remains subject to its existing admission and availability gates.
+ALG-01/12 gain bounded native reconciliation/exception/recovery support only; ALG-02/13 maturity
+and genuine provider/customer verification are unchanged. Functional source is PARTIAL/local;
+Visual/Experiential remain incomplete; Founder Acceptance is OPEN. O5 sole primary, no secondary,
+all twelve original outcomes and the full professional Agreements destination remain required.

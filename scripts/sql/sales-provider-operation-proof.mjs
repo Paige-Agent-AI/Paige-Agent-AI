@@ -7,6 +7,7 @@ const [binary,port,user,expectedDirectory,mode]=process.argv.slice(2);
 if(!binary||!/^\d+$/.test(port??'')||!user||!expectedDirectory)throw Error('Explicit local cluster arguments required');
 if(process.argv.includes('--observation-work'))assert(process.argv.includes('--provider-observations'),'event work requires the original observation proof');
 if(process.argv.includes('--provider-cash-position'))assert(process.argv.includes('--observation-work'),'cash evidence requires the original observation/work proof');
+if(process.argv.includes('--provider-disposition'))assert(process.argv.includes('--provider-cash-position')&&process.argv.includes('--accepted-obligation-writers'),'financial disposition requires original cash and accepted-writer proof');
 let database='postgres';
 const args=()=>['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-v','ON_ERROR_STOP=1','-At'];
 const run=sql=>{const p=spawnSync(binary,args(),{input:sql,encoding:'utf8',maxBuffer:4e6,windowsHide:true});if(p.status!==0)throw Error(p.stderr);return p.stdout.trim();};
@@ -590,6 +591,13 @@ try {
    native_carrier:'UNPUBLISHED',activation:'UNMOUNTED',hosted_authentication:'UNVERIFIED',provider_settlement:'UNVERIFIED',customer_acceptance:'UNVERIFIED'
   },null,2)+'\n');
   console.log('SALES_PROVIDER_CASH_POSITION_PASS: '+JSON.stringify(cashProof));
+ }
+ if(process.argv.includes('--provider-disposition')){
+  const {proveProviderDisposition}=await import('./sales-provider-disposition-proof.mjs');
+  const result=await proveProviderDisposition({run,read,execute,actor,tenant,client,invoice,otherTenant,
+   baseline:process.argv.includes('--provider-disposition-baseline')});
+  writeFileSync(new URL('../../work/sales-provider-disposition-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+  console.log('SALES_PROVIDER_DISPOSITION_PASS: '+JSON.stringify({...result,samples:undefined}));
  }
  run(`UPDATE paige_invoices SET status='void' WHERE id='${invoice}';`);
  assert.equal(publicRequest(),null,'void invoice bearer refused');

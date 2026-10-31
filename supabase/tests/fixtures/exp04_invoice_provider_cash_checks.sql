@@ -72,8 +72,18 @@ INSERT INTO e04_cash_state SELECT 'dispute',jsonb_build_object('id','du_fixtureC
  'status','under_review','balance_transactions',jsonb_build_array(pg_temp.cash_balance('txn_disputeCash',-10000)));
 
 SELECT pg_temp.cash_check(pg_temp.cash()->>'provider_settled_net_minor'='50000' AND pg_temp.cash()->'commercial_review_required'='false','original native capture remains its recorded principal');
+SELECT pg_temp.cash_check(jsonb_array_length(pg_temp.cash()->'provider_payment_positions')=1
+ AND pg_temp.cash()#>>'{provider_payment_positions,0,provider_operation_id}'='e0447700-0000-4000-8000-000000000002'
+ AND pg_temp.cash()#>>'{provider_payment_positions,0,captured_minor}'='50000'
+ AND pg_temp.cash()#>>'{provider_payment_positions,0,retained_minor}'='50000'
+ AND pg_temp.cash()#>>'{provider_payment_positions,0,environment}'='live',
+ 'cash belongs to its exact original payment before any disposition');
 SELECT pg_temp.cash_observe(jsonb_set((SELECT value FROM e04_cash_state WHERE key='empty'),'{refunds}',jsonb_build_array((SELECT value FROM e04_cash_state WHERE key='refund'))));
 SELECT pg_temp.cash_check(pg_temp.cash()->>'provider_observed_net_minor'='40000','refund decreases retained provider principal exactly once');
+SELECT pg_temp.cash_check(pg_temp.cash()#>>'{provider_payment_positions,0,retained_minor}'='40000'
+ AND pg_temp.cash()#>>'{provider_payment_positions,0,returned_minor}'='10000'
+ AND pg_temp.cash()#>>'{provider_payment_positions,0,observation_version}'='1',
+ 'the original payment retains its own refund and exact observation');
 SELECT pg_temp.cash_check(pg_temp.cash()->>'provider_refunded_minor'='10000' AND pg_temp.cash()->>'provider_refund_cash_delta_minor'='-10000','refund completion and original cash debit stay separate facts');
 SELECT pg_temp.cash_check(pg_temp.cash()->>'receivable_remaining_minor'='300000' AND pg_temp.cash()->'commercial_review_required'='true','refund does not forgive or automatically reopen commercial debt');
 SELECT pg_temp.cash_check(pg_temp.cash()->>'provider_settled_net_minor'='40000' AND pg_temp.cash()->'provider_verification_pending'='false','completed available cash evidence has explicit settled principal');
@@ -83,6 +93,9 @@ SELECT pg_temp.cash_check(pg_temp.cash()->>'provider_observed_net_minor'='40000'
 SELECT pg_temp.cash_observe(jsonb_set((SELECT value FROM e04_cash_state WHERE key='empty'),'{refunds}',jsonb_build_array(
  jsonb_set(jsonb_set((SELECT value FROM e04_cash_state WHERE key='refund'),'{status}','"pending"'),'{balance_transaction}','null'))));
 SELECT pg_temp.cash_check(pg_temp.cash()->>'provider_refund_pending_minor'='10000' AND pg_temp.cash()->'provider_settled_net_minor'='null' AND pg_temp.cash()->'provider_verification_pending'='true','pending refund is verification pending rather than returned money');
+SELECT pg_temp.cash_check(pg_temp.cash()#>'{provider_payment_positions,0,retained_minor}'='null'
+ AND pg_temp.cash()#>'{provider_payment_positions,0,verification_pending}'='true',
+ 'pending original cash cannot become a usable payment disposition amount');
 SELECT pg_temp.cash_check(pg_temp.cash()->>'provider_refunded_minor'='0' AND pg_temp.cash()->>'provider_observed_net_minor'='50000','pending refund without debit does not fabricate a cash return');
 SELECT pg_temp.cash_observe(jsonb_set((SELECT value FROM e04_cash_state WHERE key='empty'),'{refunds}',jsonb_build_array(
  (SELECT value FROM e04_cash_state WHERE key='refund')||jsonb_build_object('status','failed','failure_balance_transaction',pg_temp.cash_balance('txn_refundFailedCash',10000)))));

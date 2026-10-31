@@ -10,16 +10,22 @@ DECLARE base record; payment public.paige_invoice_payments%rowtype;
  snapshot jsonb; item jsonb; movement jsonb; sources jsonb;
  refunded numeric; refund_pending numeric; refund_delta numeric; dispute_debit numeric; dispute_credit numeric;
  test_adjustments integer; pending boolean; review boolean; observed_net numeric;
+ payment_refunded numeric; payment_refund_pending numeric; payment_refund_delta numeric;
+ payment_dispute_debit numeric; payment_dispute_credit numeric; payment_test_adjustments integer;
+ payment_pending boolean; payment_review boolean; payment_net numeric; positions jsonb;
 BEGIN
  IF _tenant IS NULL OR _evidence_version IS DISTINCT FROM 3 THEN
   RAISE EXCEPTION 'Financial evidence version unavailable' USING ERRCODE='22023';
  END IF;
  FOR base IN SELECT b.* FROM public._sales_invoice_financial_position_rows(_tenant,_invoice) b LOOP
   refunded:=0;refund_pending:=0;refund_delta:=0;dispute_debit:=0;dispute_credit:=0;
-  test_adjustments:=0;pending:=false;review:=false;sources:='[]'::jsonb;
+  test_adjustments:=0;pending:=false;review:=false;sources:='[]'::jsonb;positions:='[]'::jsonb;
   FOR payment IN SELECT p.* FROM public.paige_invoice_payments p
    WHERE p.tenant_id=_tenant AND p.invoice_id=base.invoice_id AND p.evidence_kind='provider_verified'
    ORDER BY p.id LOOP
+   payment_refunded:=0;payment_refund_pending:=0;payment_refund_delta:=0;
+   payment_dispute_debit:=0;payment_dispute_credit:=0;payment_test_adjustments:=0;
+   payment_pending:=false;payment_review:=false;
    SELECT p.* INTO op FROM public.paige_invoice_provider_operations p WHERE p.id=payment.provider_operation_id;
    IF NOT FOUND OR payment.kind IS DISTINCT FROM 'receipt' OR op.state IS DISTINCT FROM 'settled'
     OR op.tenant_id IS DISTINCT FROM _tenant OR op.invoice_id IS DISTINCT FROM base.invoice_id
@@ -43,28 +49,28 @@ BEGIN
     sources:=sources||jsonb_build_array(jsonb_build_object('provider_operation_id',op.id,
      'observation_id',entry.id,'observation_version',op.provider_observation_version,'environment',op.environment));
     IF op.environment='test' THEN
-     test_adjustments:=test_adjustments+jsonb_array_length(snapshot->'refunds')+jsonb_array_length(snapshot->'disputes');
+     payment_test_adjustments:=jsonb_array_length(snapshot->'refunds')+jsonb_array_length(snapshot->'disputes');
     ELSE
-     review:=review OR jsonb_array_length(snapshot->'refunds')>0 OR jsonb_array_length(snapshot->'disputes')>0;
+     payment_review:=jsonb_array_length(snapshot->'refunds')>0 OR jsonb_array_length(snapshot->'disputes')>0;
      FOR item IN SELECT value FROM jsonb_array_elements(snapshot->'refunds') LOOP
-      IF item->>'status'='succeeded' THEN refunded:=refunded+(item->>'amount_minor')::numeric; END IF;
+      IF item->>'status'='succeeded' THEN payment_refunded:=payment_refunded+(item->>'amount_minor')::numeric; END IF;
       IF item->>'status' IN('pending','requires_action') THEN
-       refund_pending:=refund_pending+(item->>'amount_minor')::numeric;pending:=true;
+       payment_refund_pending:=payment_refund_pending+(item->>'amount_minor')::numeric;payment_pending:=true;
       END IF;
       FOR movement IN SELECT value FROM jsonb_array_elements(jsonb_build_array(item->'balance_transaction',item->'failure_balance_transaction')) WHERE value<>'null'::jsonb LOOP
-       refund_delta:=refund_delta+(movement->>'amount_minor')::numeric;
-       pending:=pending OR movement->>'status'<>'available';
+       payment_refund_delta:=payment_refund_delta+(movement->>'amount_minor')::numeric;
+       payment_pending:=payment_pending OR movement->>'status'<>'available';
       END LOOP;
      END LOOP;
      FOR item IN SELECT value FROM jsonb_array_elements(snapshot->'disputes') LOOP
       FOR movement IN SELECT value FROM jsonb_array_elements(item->'balance_transactions') LOOP
-       IF (movement->>'amount_minor')::numeric<0 THEN dispute_debit:=dispute_debit-(movement->>'amount_minor')::numeric;
-       ELSE dispute_credit:=dispute_credit+(movement->>'amount_minor')::numeric; END IF;
-       pending:=pending OR movement->>'status'<>'available';
+       IF (movement->>'amount_minor')::numeric<0 THEN payment_dispute_debit:=payment_dispute_debit-(movement->>'amount_minor')::numeric;
+       ELSE payment_dispute_credit:=payment_dispute_credit+(movement->>'amount_minor')::numeric; END IF;
+       payment_pending:=payment_pending OR movement->>'status'<>'available';
       END LOOP;
       -- A decision label is not money-movement evidence. An open or incompletely
       -- evidenced formal dispute stays unresolved, including won without return.
-      pending:=pending OR item->>'status' IN('needs_response','under_review')
+      payment_pending:=payment_pending OR item->>'status' IN('needs_response','under_review')
        OR (item->>'status'='lost' AND (jsonb_array_length(item->'balance_transactions')<>1
         OR NOT EXISTS(SELECT 1 FROM jsonb_array_elements(item->'balance_transactions') m WHERE (m->>'amount_minor')::numeric<0)))
        OR (item->>'status'='won' AND
@@ -76,8 +82,25 @@ BEGIN
    IF op.environment='live' AND EXISTS(SELECT 1 FROM public.paige_durable_work w
     WHERE w.tenant_id=_tenant AND w.work_kind='sales_provider_observation'
      AND w.request_payload->>'operation_id'=op.id::text AND w.status<>'succeeded') THEN
-    pending:=true;review:=true;
+    payment_pending:=true;payment_review:=true;
    END IF;
+   payment_net:=payment.amount_cents::numeric+payment_refund_delta-payment_dispute_debit+payment_dispute_credit;
+   IF payment_net<0 OR payment_net>payment.amount_cents THEN
+    payment_net:=NULL;payment_pending:=true;payment_review:=true;
+   END IF;
+   positions:=positions||jsonb_build_array(jsonb_build_object('provider_operation_id',op.id,'receipt_id',payment.id,
+    'environment',op.environment,'captured_minor',CASE WHEN op.environment='live' THEN payment.amount_cents ELSE 0 END,
+    'test_captured_minor',CASE WHEN op.environment='test' THEN payment.amount_cents ELSE 0 END,
+    'observed_minor',CASE WHEN op.environment='live' THEN payment_net ELSE 0 END,
+    'retained_minor',CASE WHEN op.environment='test' THEN 0 WHEN payment_pending THEN NULL ELSE payment_net END,
+    'returned_minor',CASE WHEN op.environment='test' THEN 0 WHEN payment_pending THEN NULL ELSE payment.amount_cents-payment_net END,
+    'verification_pending',payment_pending,'commercial_review_required',payment_review,
+    'observation_id',op.provider_observation_operation_id,'observation_version',op.provider_observation_version,
+    'obligation',op.command->'obligation'));
+   refunded:=refunded+payment_refunded;refund_pending:=refund_pending+payment_refund_pending;
+   refund_delta:=refund_delta+payment_refund_delta;dispute_debit:=dispute_debit+payment_dispute_debit;
+   dispute_credit:=dispute_credit+payment_dispute_credit;test_adjustments:=test_adjustments+payment_test_adjustments;
+   pending:=pending OR payment_pending;review:=review OR payment_review;
   END LOOP;
   observed_net:=base.live_provider_minor+refund_delta-dispute_debit+dispute_credit;
   IF observed_net<0 OR observed_net>base.live_provider_minor THEN
@@ -90,7 +113,7 @@ BEGIN
    'provider_dispute_reinstated_minor',dispute_credit,'provider_observed_net_minor',observed_net,
    'provider_settled_net_minor',CASE WHEN pending THEN NULL ELSE observed_net END,
    'provider_verification_pending',pending,'commercial_review_required',review,
-   'test_adjustment_count',test_adjustments,'provider_observation_sources',sources);
+   'test_adjustment_count',test_adjustments,'provider_observation_sources',sources,'provider_payment_positions',positions);
   RETURN NEXT;
  END LOOP;
 END $$;

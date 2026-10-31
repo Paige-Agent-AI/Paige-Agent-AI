@@ -252,7 +252,7 @@ describe('actual governed preferences handler',()=>{
 
 const financialCommand={action:'invoice.record_provider_disposition',invoice_id:command.invoice_id,expected_version:2,provider_operation_id:'e0448200-0000-4000-8000-000000000001',observation_id:'e0448200-0000-4000-8000-000000000002',observation_version:2,expected_disposition_version:0,decision:'credit_returned_principal',credit_minor:10000,reason:'Original reviewed credit'};
 
-const financialReview=()=>({review_version:1,financial_evidence_version:3,effect:'internal_financial_disposition_only',invoice_id:command.invoice_id,invoice_version:2,client_id:'e0448200-0000-4000-8000-000000000003',client_name:'Fixture client',currency:'usd',provider_operation_id:financialCommand.provider_operation_id,observation_id:financialCommand.observation_id,observation_version:2,disposition_version:0,decision:financialCommand.decision,captured_minor:50000,retained_minor:40000,returned_minor:10000,credit_before_minor:0,credit_after_minor:10000,standing_before:'needs_review',outstanding_before_minor:null,outstanding_after_minor:300000,refund_payable_before_minor:null,refund_payable_after_minor:0,source_hash:'a'.repeat(64)});
+const financialReview=()=>({review_version:2,financial_evidence_version:3,effect:'internal_financial_disposition_only',invoice_id:command.invoice_id,invoice_version:2,client_id:'e0448200-0000-4000-8000-000000000003',client_name:'Fixture client',currency:'usd',provider_operation_id:financialCommand.provider_operation_id,observation_id:financialCommand.observation_id,observation_version:2,disposition_version:0,decision:financialCommand.decision,captured_minor:50000,retained_minor:40000,returned_minor:10000,credit_before_minor:0,credit_after_minor:10000,standing_before:'needs_review',outstanding_before_minor:null,outstanding_after_minor:300000,refund_payable_before_minor:null,refund_payable_after_minor:0,standing_after:'recorded',source_hash:'a'.repeat(64)});
 
 const financialPreview=(review:unknown=financialReview())=>({eligible:true,invoice_number:'INV-1',currency:'usd',provider_disposition:review,summary:'Review original credit and balances'});
 
@@ -275,5 +275,18 @@ describe('original HTTP door binds the complete native financial consequence',()
  it('validates historical replay before treating it as a financial receipt',async()=>{const h=setup({replay:{...financialResult(),customer_notified:true}});const r=await h.request({command:financialCommand});expect(r.status).toBe(503);expect(r.body.code).toBe('INVOICE_FINANCIAL_RESULT_UNVERIFIED');expect(h.calls.some(c=>c.name==='execute_sales_invoice_command')).toBe(false);});
 
  it('cannot smuggle a native review through the request envelope',async()=>{const h=setup({preview:financialPreview()});const r=await h.request({command:financialCommand,provider_disposition_review:financialReview()});expect(r.status).toBe(400);});
+
+ it('records the selected decision while keeping an unresolved whole-invoice balance unknown',async()=>{
+  const review={...financialReview(),standing_after:'needs_review',outstanding_after_minor:null,refund_payable_after_minor:null};
+  const h=setup({preview:financialPreview(review),claimed:financialArgs(review),executeResult:{...financialResult(),provider_disposition_review:review}});
+  const r=await h.request({command:financialCommand,approved_fingerprint:'0123456789abcdef'});
+  expect(r.status).toBe(200);expect(r.body.provider_disposition_review).toMatchObject({standing_after:'needs_review',outstanding_after_minor:null,refund_payable_after_minor:null});
+ });
+ it('refuses the unpublished older review schema before issuing or using approval',async()=>{
+  const old={...financialReview(),review_version:1};
+  const h=setup({preview:financialPreview(old)});const r=await h.request({command:financialCommand});
+  expect(r.status).toBe(422);expect(r.body.code).toBe('INVOICE_FINANCIAL_REVIEW_UNAVAILABLE');
+  expect(h.calls.some(c=>c.name==='insert:paige_pending_confirmations'||c.name==='execute_sales_invoice_command')).toBe(false);
+ });
 
 });

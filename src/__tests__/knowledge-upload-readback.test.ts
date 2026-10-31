@@ -4,6 +4,10 @@ import {uploadKnowledgeFileOnce,inspectKnowledgeUploadedFile} from '@/lib/knowle
 const tenant='11111111-1111-4111-8111-111111111111';
 const source=()=>({path:tenant+'/source.pdf',bytes:new TextEncoder().encode('%PDF-1.4 test'),mime:'application/pdf'});
 const scope=()=>({tenantId:tenant,isCurrent:vi.fn(()=>true)});
+it.each([{name:'upload',run:uploadKnowledgeFileOnce,finalInnerCheck:5},{name:'inspect',run:inspectKnowledgeUploadedFile,finalInnerCheck:4}])('$name checks its own completion after inner readback scope retires',async({run,finalInnerCheck})=>{
+ let active=true,checks=0;const captured={tenantId:tenant,isCurrent:()=>{if(++checks===finalInnerCheck)queueMicrotask(()=>{active=false;});return active;}};
+ await expect(run(storage(),captured,source())).rejects.toMatchObject({code:'EXTRACTION_SCOPE_CHANGED'});
+});
 function storage(){return {upload:vi.fn().mockResolvedValue({data:{path:source().path},error:null}),download:vi.fn().mockResolvedValue({data:new Blob([source().bytes]),error:null})};}
 it('uploads once without overwrite then verifies actual bytes through the same permitted source',async()=>{const c=storage();expect(await uploadKnowledgeFileOnce(c,scope(),source())).toMatchObject({phase:'stored',path:source().path,byteSize:source().bytes.length});expect(c.upload).toHaveBeenCalledExactlyOnceWith(source().path,source().bytes,{contentType:'application/pdf',upsert:false});expect(c.download).toHaveBeenCalledExactlyOnceWith(source().path);});
 it('does not replay an unknown upload or pretend no file was stored',async()=>{const c=storage();c.upload.mockRejectedValue(new Error('lost acknowledgement'));expect(await uploadKnowledgeFileOnce(c,scope(),source())).toEqual({phase:'upload_unknown',path:source().path});expect(c.upload).toHaveBeenCalledTimes(1);expect(c.download).not.toHaveBeenCalled();});

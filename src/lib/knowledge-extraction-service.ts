@@ -195,14 +195,18 @@ export async function uploadKnowledgeFileOnce(storage: KnowledgeUploadStorage, s
   catch { assertScope(scope); return {phase: 'upload_unknown', path: source.path}; }
   assertScope(scope);
   if (!result || result.error) return {phase: 'upload_unknown', path: source.path};
-  return inspectUploadedSnapshot(storage, scope, source);
+  const inspected = await inspectUploadedSnapshot(storage, scope, source);
+  assertScope(scope, true);
+  return inspected;
 }
 /** Read-only recovery of that exact upload. Never interprets an inaccessible
  * object as absent, never overwrites it and never starts extraction implicitly.
  */
 export async function inspectKnowledgeUploadedFile(storage: KnowledgeUploadStorage, suppliedScope: ExtractionScope, suppliedSource: KnowledgeUploadSource): Promise<KnowledgeUploadResult> {
   const scope = capture(suppliedScope), source = uploadSnapshot(scope, suppliedSource);
-  return inspectUploadedSnapshot(storage, scope, source);
+  const inspected = await inspectUploadedSnapshot(storage, scope, source);
+  assertScope(scope);
+  return inspected;
 }
 function reference(scope: ExtractionScope, ref: ExtractionReadReference) {
   if (ref.tenantId !== scope.tenantId || ('intentId' in ref && !uuid(ref.intentId)) || !uuid(ref.documentId) || !uuid(ref.workId) || (ref.revision !== undefined && !integer(ref.revision))) invalid();
@@ -403,6 +407,7 @@ export async function listKnowledgePendingReviews(client: ExtractionClient, supp
   const scope = capture(suppliedScope);
   if (afterId !== null && !uuid(afterId)) invalid();
   const d = await read(client, scope, 'list_tenant_knowledge_pending', { p_expected_tenant: scope.tenantId, p_after_id: afterId, p_limit: 20 });
+  assertScope(scope);
   if (!object(d) || d.contract_version !== 1 || d.tenant_id !== scope.tenantId || !Array.isArray(d.items) || d.items.length > 20
     || !(d.next_cursor === null || uuid(d.next_cursor))) invalid();
   const items: KnowledgePendingReviewSummary[] = [];

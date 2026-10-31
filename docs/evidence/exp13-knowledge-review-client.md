@@ -34,3 +34,12 @@ keyboard/AT/reflow and legitimate customer reload/reopen are separate required
 consumer proof. Saved selected domain facts, separate Memory, editable Mission
 and actual admitted Work/CRM are still incomplete integrations. No readiness,
 algorithm maturity, provider activation or owner acceptance is asserted.
+
+Independent source review found a residual P2 at the new upload/inspect public
+wrappers and pending list. Three boundary-specific microtask tests actually
+FAILED before repair (stored/path/hash or pending rows returned after retirement).
+Wrappers now await inner readback and assert their captured scope; the upload
+continuation preserves uncertainty after its attempted effect. Pending list
+asserts immediately after awaiting the existing read helper. Six suites224 PASS;
+isolated source strict types PASS. This is modeled source proof, not a confirmed
+live privacy exposure. Final independent residual recheck remains required.

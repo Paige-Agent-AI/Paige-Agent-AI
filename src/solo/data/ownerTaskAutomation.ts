@@ -50,6 +50,11 @@ export function reviewedOwnerTaskRevision(review: OwnerTaskReview, revision: Own
     || p.trigger_key !== 'contact.created' || !object(p.trigger_config) || Object.keys(p.trigger_config).length
     || !Array.isArray(p.conditions) || p.conditions.length || !Array.isArray(review.acts)
     || !review.acts.some(a => a.id === revision.act_id)) return null;
+  // This consumer edits a task purpose, not an arbitrary complete config. Never
+  // drop unseen fields or copy them into a newly authorized configuration.
+  const original = review.acts.find(a => a.id === revision.act_id)!.config;
+  if (!object(original) || Object.keys(original).some(k => !['title','description'].includes(k))
+    || ['title','description'].some(k => Object.prototype.hasOwnProperty.call(original,k) && typeof original[k] !== 'string')) return null;
   const acts = review.acts.map(a => a.id === revision.act_id ? { ...a, config: revision.config } : a);
   if (acts.length < 1 || acts.length > 20 || new Set(acts.map(a => a.id)).size !== acts.length || acts.some((a,i) =>
     !uuid(a.id) || a.position !== i+1 || a.action_kind !== 'owner.task' || a.tool_key !== null

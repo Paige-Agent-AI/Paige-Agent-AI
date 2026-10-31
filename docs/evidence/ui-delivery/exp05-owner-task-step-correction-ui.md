@@ -7,15 +7,15 @@ MATERIAL_FLOW_CHANGE: YES: an eligible Owner/Admin can correct one original save
 FLOW_PROTOTYPE: PASS: private framework-native prototype preceded production code, using unchanged OperationsPlaybooks with explicitly proposed editor/closed data ports. Original ANT-11/991b0f15 records routing; the owner's October21 design greenlight and prelaunch policy apply. Desktop/narrow, cancel/Escape, guarded navigation, validation, simulated save/unknown and context concealment inspected; this is engineering review, not founder acceptance.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: equivalent eligible existing and future SOLO Owner/Admin corrects the purpose of one inactive internal task without replacing, enabling or executing the process.
 VISUAL_DIRECTION: PASS: Operate direction, original restrained working interface, compact field hierarchy, literal saved instructions and explicit Save/Cancel. Impeccable craft/harden and React component-quality checks applied; no decorative activity or unsupported visualization.
-AUTOMATED_EVIDENCE: PASS: six actual component/hook/caller/history/Playbooks suites275 tests, zero failed/pending. Extended original full-frame renderer5 tests, zero failed/pending,118 generated states: original104 plus14 correction/reentry states. A generated state is not a customer test. Causal caller68/24FAIL and hook58/1FAIL precede implementation; subsequent additional negatives pass. Original UI101/12FAIL preserved; a test-only selector that matched a heading was narrowed to actual fields without removing assertions.
+AUTOMATED_EVIDENCE: PASS: six actual component/hook/caller/history/Playbooks suites287 tests, zero failed/pending. Extended original full-frame renderer6 tests, zero failed/pending,120 generated states: original104 plus14 correction/reentry and two unsupported-setting states. A generated state is not a customer test. Causal caller68/24FAIL, hook58/1FAIL and original UI101/12FAIL precede implementation. Later purpose-intent checks reproduced6 failures at185 tests, then6 unreadable-value failures at191 tests before their correction. A test-only selector that matched a heading was narrowed to actual fields without removing assertions.
 STATIC_EVIDENCE: PASS: four production TypeScript/React sources ESLint zero errors; installed Impeccable detector exit0; unchanged evidence validator and whitespace checks required. Local clean-lock app compile, hosted exact-head CI and final release remain separate gates. No lint, baseline or compiler rule is disabled.
-RENDERED_EVIDENCE: PASS:14 raw separate-call settled JPEGs and geometry.json with27 pinned original source inputs in assets/exp05-owner-task-step-correction-ui. All eight required layouts plus narrow/dark correction and unknown reentry; source and frame hashes verified. Original eight required layouts have no document overflow; normal closed/wide-open layouts expose the actual Save/Cancel through the original department scroll. Existing narrow-open PAIGE overlay retains the background; close it to interact with Operations.
+RENDERED_EVIDENCE: PASS: original14 raw separate-call settled JPEGs retain their exact capture/source manifest. intent-correction-lineage.json proves all14 current admissible frames are byte-identical after removing only the exact synthetic greeting clock/random opening-greeting UUID; canonical business identifiers and geometry remain byte-exact. Two additional current-source unsupported-setting JPEGs/geometry and their27-input manifest verify no purpose editor. All eight required layouts plus narrow/dark/unknown states have no document overflow; normal closed/wide-open layouts expose actual Save/Cancel through original department scroll. Existing narrow-open PAIGE overlay is retained.
 BEHAVIORAL_EVIDENCE: PASS: original controls test exact source/proposal submission, missing-notes no-op, cancellation/Escape/source focus, guarded refresh/navigation, unsupported sibling/active state, private-context retirement and unknown proposal retention without replay. Original hook gates concurrent requests and deliberate refresh. Original caller checks current authority and exact returned configuration/audit/version; post-admission mutations cannot change the captured request. Browser prototype exercises the proposed live interaction; serialized production frames prove geometry and native field traversal only.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no ordinary customer configuration save, actual audit/record/reload, role/cohort or Chat/Live/Team Hub acceptance follows from these neutral fixtures. Native parent3145 and ordered production source/readback remain release prerequisites.
 KEYBOARD_FOCUS: PASS: prototype and original React tests initially focus the title and restore the original opener after Cancel/Escape. Original-host fixture focuses Refresh after ambiguous response. Settled native field traversal reaches visible Save in closed/wide-open layouts. Full authenticated application and native modal-focus/assistive-technology behavior remain owed.
 ZOOM_REFLOW: UNVERIFIED:390CSS-pixel narrow frames fit without document overflow; native200percent zoom and assistive technology remain separate proof obligations. Raw bridge JPEGs are1535x770 for1536CSS width and390x843 for390x844CSS; exact observed differences are recorded without image resizing or editing.
 REDUCED_MOTION: NOT_APPLICABLE: no animation, transition or preference behavior is introduced or changed.
-STATE_COVERAGE: PASS: original loading/empty/unavailable/refused states retained; draft/paused correction, valid/invalid input, no-op, saved, stale/busy/unsupported, not-started/unknown, concurrent request, source/role/context retirement, cancel/Escape, original read and no-repeat covered at their stated fixture boundaries.
+STATE_COVERAGE: PASS: original loading/empty/unavailable/refused states retained; draft/paused correction, valid/invalid input, no-op, saved, stale/busy/unsupported, not-started/unknown, concurrent request, source/role/context retirement, cancel/Escape, original read and no-repeat. Unknown original settings, array/unreadable values and nontext title/notes stay inspectable without destructive replacement through the narrow purpose editor.
 TRUTHFUL_STATE_LABELS: PASS: correcting configuration does not enable an automation, approve an occurrence, create a Task or finish work. A configuration audit is not a business Rail receipt. No catalogue or algorithm maturity is promoted.
 SOLO_UI: YES: existing Operations Playbooks/Automations and original Settings process surface, using the same tenant-neutral caller/hook/controller. No account allowlist or test-account implementation.
 UNVERIFIED: required exact-head CI/review, ordered parent/native merge/deployment/readback, clean-lock compile, ordinary authorized save/audit/reload/cohorts, full application keyboard/zoom/AT, Chat/Live correction admission, complete Builder/weekly/ZION/monitoring/proactivity and final full-Experience founder acceptance.
@@ -68,6 +68,12 @@ Builder lifecycle and an admitted Chat/Live correction tool remain unfinished.
 An unsupported process remains inspectable/pausable; no replacement draft is
 silently created. The original ten outcomes/E5 acceptance inventory is preserved.
 
+The purpose-only consumer requires an original object containing only readable
+title/description fields. It never silently discards unsupported assignment/date
+settings or unreadable saved values while editing visible text. Their legitimate
+canonical domain editor remains required; broader Builder field editing is still
+unfinished. The native complete-configuration operation and its grants are unchanged.
+
 ## Catalogue and algorithm support
 
 Original `workflow_design_draft` / Workflow Design Draft belongs to EXP05;
@@ -99,3 +105,15 @@ Private prototype screenshots and generated states are not real customer proof.
 Own local tabs are closed, overrides reset and servers stopped; peer/customer
 sessions are preserved. Native full-app zoom/AT and ordinary authorized cohorts
 remain unverified, and the founder evaluates the complete integrated Experience.
+
+The subsequent purpose-intent review reproduced unseen-setting loss in the
+unreleased consumer. Original review5719917538 is superseded for release; its
+history and failed cases remain. The current source preserves unsupported configs
+by refusing this narrow editor rather than silently dropping or copying fields.
+Fresh287-test and6-renderer-test passes cover the repair. Original14 image/source
+records remain intact; current27-input/14-frame lineage normalizes only the marked
+local greeting's random UUID and clock. The first exact comparison correctly
+rejected that volatile greeting identity before its specific classification; no
+business identity or content is normalized. Current-source denial images:
+[desktop](assets/exp05-owner-task-step-correction-ui/purpose-settings-preserved-desktop.jpg),
+[narrow Obsidian](assets/exp05-owner-task-step-correction-ui/purpose-settings-preserved-mobile.jpg).

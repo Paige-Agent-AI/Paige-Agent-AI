@@ -443,4 +443,9 @@ describe('correct one original inactive task purpose',()=>{
     type(field('title'),'Review the original scope');expect((screen.getByRole('button',{name:'Save changes'}) as HTMLButtonElement).disabled).toBe(false);
     expect(m.control).not.toHaveBeenCalled();fireEvent.click(screen.getByRole('button',{name:'Cancel'}));
   });
+  it.each([{title:'Review scope',assignee_user_id:'original-owner'},{title:'Review scope',due_at:'2026-11-01T10:00:00Z'},['unreadable saved purpose'],
+    {title:'Review scope',description:{content:'unreadable'}},{title:{content:'unreadable'},description:'Original notes'},{title:'Review scope',description:null}].map(config=>({config})))('keeps unsupported original settings inspectable without a destructive purpose editor: %j',({config})=>{
+    row.acts[0].config=config;view();expect(screen.queryByRole('button',{name:'Edit task purpose, step 1'})).toBeNull();
+    expect(screen.getByText('Inspect saved configuration')).toBeTruthy();expect(m.control).not.toHaveBeenCalled();expect(row.acts[0].config).toEqual(config);
+  });
 });

@@ -1,0 +1,27 @@
+{
+  "boundary": "Two current-source serialized original-host denial views; no Auth, provider, save, native persistence or acceptance.",
+  "captures": [
+    {
+      "editControls": 0,
+      "forms": 0,
+      "horizontalOverflow": false,
+      "inspection": true,
+      "settingsWarning": true,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "editControls": 0,
+      "forms": 0,
+      "horizontalOverflow": false,
+      "inspection": true,
+      "settingsWarning": true,
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ]
+}

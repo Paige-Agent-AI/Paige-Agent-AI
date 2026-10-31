@@ -70,6 +70,13 @@ describe('original inactive task-purpose correction',()=>{
     expect((await controlOwnerTaskAutomation(scope,r,'revise_step',f.caller,f.current,revision)).status).toBe('unsupported');
     expect(f.calls.filter(c=>c.name==='control_owner_task_automation')).toHaveLength(0);
   });
+  it.each([{title:'Review scope',assignee_user_id:'original-owner'},{title:'Review scope',due_at:'2026-11-01T10:00:00Z'},['unreadable saved purpose'],
+    {title:'Review scope',description:{content:'unreadable'}},{title:{content:'unreadable'},description:'Original notes'},{title:'Review scope',description:null}].map(config=>({config})))('does not discard unsupported original settings through a purpose-only correction: %j',async({config:originalConfig})=>{
+    const f=correctionFixture(),r=correctionReview();r.acts[0].config=originalConfig;
+    expect((await revise(f,r)).status).toBe('unsupported');
+    expect(f.calls.filter(c=>c.name==='control_owner_task_automation')).toHaveLength(0);
+    expect(r.acts[0].config).toEqual(originalConfig);
+  });
   it.each(['wrong-audit','missing-audit','noop-audit','same-version','wrong-config','other-step','wrong-process','activation','effect'])('keeps %s ambiguous and never repeats the original request',async fault=>{
     const f=correctionFixture(fault);expect((await revise(f)).status).toBe('unknown');
     expect(f.calls.filter(c=>c.name==='control_owner_task_automation')).toHaveLength(1);

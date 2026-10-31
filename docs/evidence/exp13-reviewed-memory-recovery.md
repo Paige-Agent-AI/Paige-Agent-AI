@@ -276,3 +276,8 @@ inspection lock waits pass; DROP DATABASE observed and only own server stopped.
 Log `work/exp13-memory-dependency-carrier-native.log`. Python compile/diff checks
 pass. Independent source review of this successor remains owed; no native version,
 publication/application, hosted CI/Preview or customer behavior claim.
+Actual bounded non-author successor source review received clear: direct
+Knowledge dependency preflight remains inside outer transaction and changes no
+helper; expanded volatility/grant/default controls retain rollback readbacks.
+Reviewer did not execute native tests. This supersedes pending successor source
+review only; version/order/CI/Preview/release and customer proof remain owed.

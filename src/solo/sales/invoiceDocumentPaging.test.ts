@@ -83,6 +83,24 @@ describe('original invoice document financial snapshot continuity', () => {
     expect((result?.payment_ledger as {rows: unknown[]}).rows).toHaveLength(2);
   });
 
+  it('requests the representation on each same scoped SDK read while trusting only the native response', async () => {
+    const headers: string[][] = [], calls: Record<string, unknown>[] = [];
+    // The old server ignores the header and returns its original legacy payload.
+    const pages = [page(1, true, 2), page(1, false, 2)];
+    const result = await collect({rpc: (name, args) => {
+      expect(name).toBe('client_portal_invoice_ledger');
+      calls.push(args);
+      return Object.assign(Promise.resolve({data: pages.shift(), error: null}), {setHeader(key: string, value: string) {headers.push([key, value]); return this;}});
+    }}, 'client_portal_invoice_ledger', {p_invoice_id: 'original-invoice', p_tenant_id: 'original-business'});
+    expect(headers).toEqual([['X-PAIGE-Invoice-Evidence-Version', '2'], ['X-PAIGE-Invoice-Evidence-Version', '2']]);
+    expect(calls).toEqual([
+      {p_invoice_id: 'original-invoice', p_tenant_id: 'original-business', _limit: 100, _cursor: null},
+      {p_invoice_id: 'original-invoice', p_tenant_id: 'original-business', _limit: 100, _cursor: {ordinal: 1}},
+    ]);
+    expect(result?.ledger_complete).toBe(true);
+    expect(result).not.toHaveProperty('payment_evidence_version');
+  });
+
   it.each([
     ['invoice identity', {invoice_id: 'another-invoice'}],
     ['original reference', {invoice_number: 'INV-2'}],

@@ -160,3 +160,55 @@ truth, while its predecessor's running totals include TEST. Correct explicit rep
 compatibility in that original ledger and renderer before adopting the new financial projection.
 EXP09's additional continuation/PaymentPanel financial window remains requested, not assumed.
 No new forward migration, provider call, approval, customer action or capability activation occurred.
+
+## October 31 C169 — native financial history into the original documents
+
+The test-only ledger candidate extends the original four-argument private wrapper. Its predecessor's
+document lock, order, invoice/version/cursor checks and original source body remain intact. No new
+ledger or renderer is created. Missing representation opt-in retains the complete legacy payload,
+even after the owner getter adopts actual balances. Explicit evidence version 2 adds native actual
+receipt/reversal totals and running amounts, retains the original gross history, and copies current
+balances from the canonical invoice read. Receipt identity, evidence class and TEST/LIVE environment
+remain original. The header is a format selection, never actor or payment authority.
+
+The existing document collector requests that format through the incumbent SDK's per-read header,
+retaining its original RPC, arguments and server cursor. An older transport/server still yields the
+legacy response. Only the native response marker establishes the new semantics. The original
+renderer accepts both representations; it validates the native financial facts, displays native
+running balances, separates TEST from actual payments, retains full manual-correction history and
+refuses contradictions. A real full payment can be settled despite historical TEST evidence. Voided
+new-format documents retain history while explaining that the voided invoice is not currently owed.
+Neither a TEST receipt nor a requested checkout becomes a real payment claim.
+
+Bounded native evidence now includes the original 13 position controls, 17 getter controls and
+20 original ledger controls. Ten complete/partial legacy payloads remain exact, as do original
+wrapper metadata and predecessor source. Empty history, three-page reconstruction, stale cursor,
+foreign invoice, malformed/future header, full LIVE settlement with retained TEST history,
+no-money-write, replay and rollback controls pass.
+All owned disposable databases were dropped and the owned local cluster stopped. The first
+restricted-loopback attempt executed no native assertions; the owned process was subsequently
+observed stopped. A later added empty-history control initially omitted its explicit version opt-in;
+that fixture failure was corrected without changing product SQL or weakening the assertion.
+
+The new document cases first reproduced 17 failures with seven negative controls passing. Final
+focused evidence is 104 passing tests in five original/new document suites, 12 incumbent delivery
+tests under their canonical delivery configuration, and 11 actual handler tests with network seams
+stubbed. A first default-config attempt did not select the delivery suite; it is not counted as
+delivery evidence. Strict Deno checks of both original document helpers, scoped lint and diff checks
+pass. App-wide compiler, full-schema API/role and exact-head hosted checks remain owed.
+
+Five actual selected-native ledger outputs flow through the actual collector and renderer into an
+isolated browser: ten desktop/narrow cases, four inspected frames, both existing frozen formats,
+correct native final amounts, no root overflow, no browser errors and no network requests. Narrow
+tables that need horizontal space accept keyboard focus and scroll. Existing document typography,
+palette, document content and layout are retained under Impeccable's refinement/craft-floor checks.
+The initial restricted headless launch failed before rendering; the same isolated offline proof then
+completed normally. Native zoom, assistive technology, actual PDF output, authenticated download,
+genuine provider evidence and durable customer reload/reopen are not established by those renders.
+
+These candidates remain local and unmounted. No forward migration was created/applied, no sender
+or provider was activated, and no financial or customer action occurred. EXP09's broader financial
+continuation/PaymentPanel window remains pending and untouched. Native actual/legacy history must
+still compose with accepted-obligation allocation, provider-adjustment/disposition, every affected
+financial consumer, ordered release/readback and correct merchant/Owner/client proof. O5 is the
+sole primary; all twelve original outcomes and integrated founder acceptance remain open.

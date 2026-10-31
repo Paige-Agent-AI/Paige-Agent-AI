@@ -48,3 +48,52 @@ it('unknown accepted payment recovery closes to its original trigger and retains
  await click('Close review');expect(document.activeElement).toBe(button('Check existing request'));
  expect(changed).not.toHaveBeenCalled();expect(sessionStorage.length).toBe(1);
 });
+
+const financialInvoice=(patch:Record<string,unknown>):Record<string,unknown>&{payments:Record<string,unknown>[]}=>({
+ ...invoiceLifecycleFixtureRow(id,'issued'),payment_evidence_version:2,
+ manual_recorded_cents:0,provider_verified_cents:0,allocated_cents:0,remaining_cents:20000,
+ test_provider_verified_cents:5000,
+ payments:[{...invoiceLifecycleFixtureRow(id,'issued').payments[0],method:'stripe',evidence_kind:'provider_verified',provider:'stripe',provider_verified_at:'2026-10-01T12:00:00Z',provider_environment:'test'}],
+ ...patch,
+});
+const readFinancialInvoice=(row:Record<string,unknown>)=>h.rpc.mockImplementation(async(name:string)=>({data:name==='read_sales_invoice'?row:name==='list_sales_invoice_payment_operations'?{rows:[]}:[],error:null}));
+const displayedAmount=(label:string)=>Array.from(host.querySelectorAll('dt')).find(term=>term.textContent===label)?.nextElementSibling?.textContent;
+it('shows TEST evidence separately while retaining the full actual business receivable',async()=>{
+ readFinancialInvoice(financialInvoice({}));await render();
+ expect(displayedAmount('Outstanding balance')).toBe('$200.00');
+ expect(displayedAmount('Less live provider-confirmed payments')).toBe('− $0.00');
+ expect(displayedAmount('TEST provider confirmations')).toBe('$50.00');
+ expect(host.textContent).toContain('Issued · outstanding');
+ expect(host.textContent).toContain('TEST provider confirmation · no customer funds');
+ expect(host.textContent).toContain('TEST confirmations do not reduce the business balance');
+ expect(host.textContent).not.toContain('Paid ·');
+ expect(button('Record received payment').disabled).toBe(false);
+ expect(Array.from(host.querySelectorAll('button')).some(b=>b.textContent==='Correct payment')).toBe(false);
+ expect(h.invoke).not.toHaveBeenCalled();expect(changed).not.toHaveBeenCalled();
+});
+it('uses native mixed business amounts without subtracting TEST a second time',async()=>{
+ const row=financialInvoice({manual_recorded_cents:5000,provider_verified_cents:2000,allocated_cents:7000,remaining_cents:13000});
+ const test=row.payments[0];
+ row.payments=[test,{...test,id:'55555555-5555-4555-8555-555555555556',amount_cents:2000,provider_environment:'live'},
+  {...test,id:'55555555-5555-4555-8555-555555555557',evidence_kind:'manual_recorded',method:'cash',provider:null,provider_environment:null,provider_verified_at:null}];
+ (row as Record<string,unknown>).payments_count=3;
+ readFinancialInvoice(row);await render(false);
+ expect(displayedAmount('Outstanding balance')).toBe('$130.00');
+ expect(displayedAmount('Less business-recorded payments')).toBe('− $50.00');
+ expect(displayedAmount('Less live provider-confirmed payments')).toBe('− $20.00');
+ expect(displayedAmount('TEST provider confirmations')).toBe('$50.00');
+ expect(host.textContent).toContain('Partially paid · outstanding');
+ expect(button('Record received payment').disabled).toBe(true);expect(h.invoke).not.toHaveBeenCalled();
+});
+it('keeps old provider records readable without claiming their unqualified balance is live collection',async()=>{
+ const row=financialInvoice({manual_recorded_cents:0,provider_verified_cents:20000,allocated_cents:20000,remaining_cents:0});
+ delete (row as Record<string,unknown>).payment_evidence_version;delete (row as Record<string,unknown>).test_provider_verified_cents;
+ delete (row.payments[0] as Record<string,unknown>).provider_environment;
+ readFinancialInvoice(row);await render();
+ expect(host.textContent).toContain('Issued · provider environment unverified');
+ expect(host.textContent).toContain('Provider payment record · environment unverified');
+ expect(displayedAmount('Recorded balance · verification pending')).toBe('$0.00');
+ expect(displayedAmount('Provider records · environment unverified')).toBe('$200.00');
+ expect(host.textContent).not.toContain('Paid · provider-confirmed');expect(host.textContent).not.toContain('TEST provider confirmations');
+ expect(h.invoke).not.toHaveBeenCalled();expect(changed).not.toHaveBeenCalled();
+});

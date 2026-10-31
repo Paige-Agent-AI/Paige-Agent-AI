@@ -45,3 +45,87 @@ Native1d4 job123565771267/run40907392432 confirms the protected-setting repair: 
 Full-schema Preview, exact final-head review and required checks, normal production deployment and native readback remain mandatory. No edit of an applied Preview migration is allowed; a later functional correction requires a reviewed forward.
 
 Functional: local source and bounded catalogue proof only. Visual/experiential: no changed mounted UI; public Billing contract remains compatible, original Portal integration and both-chat/reload proof owed. ALG01/12 source identity/refusal support only, ALG02 incomplete, ALG13 unverified; no maturity/catalogue promotion. Founder acceptance NOT_READY; all twelve original outcomes remain required.
+
+## October 31 C166 — O5 actual-receivable integration candidate
+
+The preceding dated implementation and failed-run records remain historical. The current primary
+outcome is **O5 Payment processing**, with no secondary outcome; all twelve original ANT-51 outcomes
+remain required. O11's original client financial query is a dependency of that same outcome.
+
+Production metadata was read without invoking a customer function or reading payment rows. The
+frontier remains `20271126080007`. Original private facts body `a307bf9e57e5b2ad692c74a329e683cd`
+and the original calendar entry `49a0aa9466e6e7a377bfce8c2c1dbca1` exist with their original
+owner/settings/ACLs. This does not establish authenticated financial behavior. No candidate below
+is deployed and no new forward migration has been created. Reserved `20271126170004` remains after
+the actual lower E08, E13 and E05 source chain.
+
+The candidate reuses one canonical native financial position. Its original seven-column adapter
+retains legacy TEST-inclusive values, while explicit actual-receivable and LIVE fields exclude
+TEST. The original invoice getter supplies those native values to the existing owner workspace,
+register and record inspection; original receipts retain their stored environment. Unqualified
+legacy provider evidence is displayed as unverified rather than promoted to live collection.
+These reads do not create a payment, correction, credit, refund or financial approval.
+
+The client query follows the same compatibility rule. Existing schema 1 means legacy UTC and
+schema 2 already means business-calendar-aware data. Neither can silently acquire new monetary
+semantics. The proposed schema 3 declares `payment_evidence_version: 2`; its remaining amount is
+actual business receivable and its provider total is LIVE, with TEST retained separately. One
+extended private query serves an exact old-caller adapter. Whole-query inverse and native
+complete-payload comparisons retain the original identity, due dates, cursor, source digest,
+counts, minimization and old monetary meanings. No second query engine or ledger is introduced.
+
+The same existing scoped public entry may negotiate only the representation through
+`X-PAIGE-Invoice-Evidence-Version: 2`. Original caller/business/client resolution runs first;
+the header grants no authority. Missing opt-in retains schema 2. Unsupported or malformed opt-in
+is refused. The SDK retains the same RPC arguments, captured authorization, business header,
+relationship, currentness and refusal checks, with no fallback to an unscoped read. New private
+functions reject unexpected non-owner execution grants; existing service execution on the owner
+invoice getter and authenticated execution on the original public entry remain unchanged.
+
+EXP09's original ANT-163 handoff returned only the named financial projection/parser/helper/test
+window. Its additional financial-version continuation fence is requested separately: a deployment
+between pages must not blend legacy simulated and actual-receivable rows. Original pagination,
+identity, frame and calendar controllers have **not** been edited under an assumed wider lease.
+This source-window acknowledgment is separate from implemented delivery or customer acceptance.
+
+Current bounded evidence is 13 native position controls, 17 original invoice-getter controls,
+18 original client-query controls, replay/rollback and exact original-source restoration, plus
+actual original-entry metadata retention. Unexpected default function-grant negatives refuse
+atomically. Five actual native invoice outputs passed the actual owner parser. The five focused
+Portal suites pass 77 tests, including retained legacy, relationship, calendar, refusal and
+stale-context assertions; owner suites previously passed 121 tests in five files. Scoped lint
+passes. These are selected-schema/native and source proofs, not full-schema authenticated RPC,
+Stripe settlement or customer acceptance. The 512/1024 MiB app-wide compiler attempts failed heap
+limits before diagnostics and are not typecheck passes.
+
+Original owner components have 19 local rendered cases across eight widths and both themes,
+with four inspected frames, review/cancel, retained input, focus return, denial and read-error
+recovery. Those renders use explicit synthetic ports; they do not prove the Portal's new native
+representation, production persistence, native zoom, assistive technology, current roles or
+provider operation. No whole-Experience premium finish or founder acceptance is claimed.
+
+The remaining O5 implementation includes mode-correct guarded requests and accepted-obligation
+allocation, every actual Owner/Finance/Collections/client consumer, provider adjustment and
+uncertain-outcome reconciliation, original durable work/Rail receipts, and authorized useful
+results with reload/reopen/recovery. TEST merchant readiness is an existing connection/custody
+prerequisite; it is not permission to use a different live merchant or activate a provider.
+
+Provider-reference review confirms that refund status, failed-refund reversal evidence and
+dispute balance transactions must be handled distinctly. The existing immutable provider receipt
+constraints admit receipts, while the original manual correction allows one reversal of its
+original receipt. They cannot be weakened into an unreviewed partial-refund mechanism. Refund
+allocation and any credit/reduction of accepted debt must extend the original invoice operations,
+financial writers and approval path while retaining the signed principal and original provider
+evidence. A cash observation alone is not a commercial amendment or debt forgiveness. Supporting
+references: [Refund object](https://docs.stripe.com/api/refunds/object),
+[Dispute object](https://docs.stripe.com/api/disputes/object),
+[credit-note distinction](https://docs.stripe.com/invoicing/dashboard/credit-notes).
+
+Orchestration remains explicit: ordinary original invoice reads use the established scoped
+reader/`sales_invoice.read` path without a new Layer C act; consequential financial requests and
+corrections retain their existing Trust/Harness approval and writer paths. The previously shipped
+provider-observation continuation remains unmounted until its original native carrier, currentness,
+reconciliation and release gates are satisfied. ALG-01/12 remain bounded local partial support,
+ALG-13 unverified and ALG-02 sequenced; no catalogue or maturity promotion. Exact review, CI,
+ordered native/web/Edge release/readback, ordinary owner/client/provider proof and final integrated
+founder acceptance remain open.

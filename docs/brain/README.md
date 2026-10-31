@@ -5611,3 +5611,12 @@ customer gates remain. No new grant, writer, provider or autonomous action.
 Original19/nine, catalogue and algorithm maturity remain unchanged. See existing
 [weekly evidence](../evidence/ui-delivery/e2-weekly-credit-code.md) and
 [Billing evidence](../evidence/ui-delivery/e2-billing-current-authority.md).
+
+## 2026-10-31 EXP13 — parser prerequisite release identity
+
+Original parser3124 source-only merge4c8c27249, exact public build identity and
+proof limits are recorded in [Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log)
+and the [existing parser evidence](../evidence/exp13-file-text-preparation.md).
+This is the same original Knowledge worker prerequisite; no mounted upload,
+confirmed fact/Memory, saved Mission, actual Work or full FLOW:KNOWLEDGE acceptance
+follows from this mechanical release pointer. No algorithm/availability promotion.

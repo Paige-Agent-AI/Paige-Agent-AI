@@ -16,26 +16,27 @@ import {InvoiceWorkspace} from './InvoiceWorkspace';
 import {CommercialPackageInspection} from './CommercialPackageInspection';
 import type {InvoiceRecord} from './invoiceLifecycleApi';
 import {InvoiceAppearanceWorkspace} from './InvoiceAppearanceWorkspace';
-import {invoiceDisplayNumber,invoicePaymentStatus} from './invoicePaymentCopy';
+import {invoiceDisplayNumber,invoicePaymentStatus,invoiceRecordAmountLabels} from './invoicePaymentCopy';
 import {useFocusedSalesInvoice} from './useFocusedSalesInvoice';
 const cash = (minor: number) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(minor / 100);
 const label = (kind: BillingDraftInput['kind']) => kind === 'recurring' ? 'Monthly recurring' : kind === 'deposit' ? 'Deposit and balance' : 'One-time';
 type Catalog = ReturnType<typeof useCatalogOffers>;
 type Store = ReturnType<typeof useSalesInvoiceDrafts>;
 const invoiceState = (row: InvoiceDraft) => (row as Partial<InvoiceRecord>).status ?? 'draft';
-function InvoiceRecordInspection({row,tenantId,canManage,canInspectAccepted,accountEpoch,open,onOpenChange,onChanged}:{row:InvoiceDraft|null;tenantId:string|null;canManage:boolean;canInspectAccepted:boolean;accountEpoch:string|null;open:boolean;onOpenChange(open:boolean):void;onChanged():void}) {
+export function InvoiceRecordInspection({row,tenantId,canManage,canInspectAccepted,accountEpoch,open,onOpenChange,onChanged}:{row:InvoiceDraft|null;tenantId:string|null;canManage:boolean;canInspectAccepted:boolean;accountEpoch:string|null;open:boolean;onOpenChange(open:boolean):void;onChanged():void}) {
  const record=row as InvoiceRecord|null;
+ const amountLabels=invoiceRecordAmountLabels(row?invoiceState(row):'draft');
  return <div className="sb-detail-grid"><section className="sb-panel"><header><h3>{row?'Invoice record':'Record details'}</h3></header><div className="sb-paper">{row?<>
   <h3>{row.snapshot.items.map(item=>item.item).join(', ')}</h3>{row.snapshot.items.map((item,index)=>item.description&&<p className="sb-line-description" key={index}>{item.description}</p>)}
   <p>Payment preferences: {row.snapshot.payment_method_intents.join(', ')||'None recorded'}</p>
-  <dl><dt>Reference</dt><dd className="sb-reference">{invoiceState(row)==='draft'?'Assigned when issued':invoiceDisplayNumber(row.number)}</dd><dt>Total obligation</dt><dd>{cash(row.totalMinor)}</dd><dt>Original requested amount</dt><dd>{cash(row.snapshot.due_now_minor)}</dd><dt>Original remaining schedule</dt><dd>{cash(row.snapshot.remainder_minor)}</dd>
-   {record&&Number.isSafeInteger(record.remainingMinor)&&<><dt>Outstanding balance</dt><dd>{cash(record.remainingMinor)}</dd></>}
+  <dl><dt>Reference</dt><dd className="sb-reference">{invoiceState(row)==='draft'?'Assigned when issued':invoiceDisplayNumber(row.number)}</dd><dt>{amountLabels.total}</dt><dd>{cash(row.totalMinor)}</dd><dt>{amountLabels.requested}</dt><dd>{cash(row.snapshot.due_now_minor)}</dd><dt>{amountLabels.schedule}</dt><dd>{cash(row.snapshot.remainder_minor)}</dd>
+   {record&&Number.isSafeInteger(record.remainingMinor)&&<><dt>{amountLabels.balance}</dt><dd>{cash(record.remainingMinor)}</dd></>}
    {record&&Number.isSafeInteger(record.providerVerifiedMinor)&&<><dt>Provider-verified payments</dt><dd>{cash(record.providerVerifiedMinor)}</dd></>}
    {record&&Number.isSafeInteger(record.manualRecordedMinor)&&<><dt>Manual payment records</dt><dd>{cash(record.manualRecordedMinor)}</dd></>}
    <dt>Version</dt><dd>{row.version}</dd></dl>
   <p>{invoiceState(row)==='draft'?'Not issued · no payment requested':invoiceState(row)==='void'?'Voided invoice · review its recorded history':'Immutable issued obligation'}</p>
   {tenantId&&<CommercialPackageInspection key={tenantId+row.id} tenantId={tenantId} invoiceId={row.id} version={row.version} accountEpoch={accountEpoch} canInspectAccepted={canInspectAccepted}/>}
- </>:<p>Select an invoice to inspect its saved facts.</p>}</div></section><section className="sb-panel"><header><h3>Invoice actions and payments</h3></header>{row&&tenantId?<InvoiceWorkspace key={tenantId+row.id} tenantId={tenantId} invoiceId={row.id} open={open} onOpenChange={onOpenChange} number={row.number} status={invoiceState(row)} version={row.version} canManage={canManage} onChanged={onChanged}/>:<p className="sb-paper">Select an invoice to review its actions.</p>}</section></div>;
+ </>:<p>Select an invoice to inspect its saved facts.</p>}</div></section><section className="sb-panel"><header><h3>Invoice actions and payments</h3></header>{row&&tenantId?<InvoiceWorkspace key={tenantId+row.id} tenantId={tenantId} invoiceId={row.id} open={open} onOpenChange={onOpenChange} number={row.number} status={invoiceState(row)} version={row.version} canManage={canManage} accountEpoch={accountEpoch} onChanged={onChanged}/>:<p className="sb-paper">Select an invoice to review its actions.</p>}</section></div>;
 }
 function DraftEditor({row, recurring, store, sources, catalog, browse, onSelection, onReferences, canManage, onClose}: {row:InvoiceDraft|null;recurring:boolean;store:Store;sources:ReturnType<typeof useInvoiceBillingSources>;catalog:Catalog;browse:InvoiceBrowseControls;onSelection(clientId:string,agreementId:string|null):void;onReferences(ids:string[]):void;canManage:boolean;onClose:()=>void}) {
  const [value,setValue]=React.useState<InvoiceSnapshotInput>(()=>row?snapshotEditInput(row.snapshot):{schema_version:2,client_id:'',items:[{price_id:null,item:'',unit_minor:null,quantity:1}],kind:recurring?'recurring':'one_time',deposit_basis_points:null,currency:'usd',cadence:recurring?'monthly':null,recipient_email:null,recipient_phone:null,email_source_method_id:null,phone_source_method_id:null,billing_address:null,agreement_id:null,processor_intent:null,payment_method_intents:[],delivery_channel_intents:[],due_date:null,memo:null});

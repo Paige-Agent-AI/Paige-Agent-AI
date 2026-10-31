@@ -1,0 +1,18 @@
+{
+  "sourceReset": {
+    "person": "",
+    "reviewOpen": false
+  },
+  "scopeReset": {
+    "oldTitle": false,
+    "path": "/solo/1702/operations/overview",
+    "reviewOpen": false
+  },
+  "scopeB": {
+    "documentWidth": 390,
+    "owner": "Morgan Lee",
+    "result": "1 h 30 min estimated / 4 h entered capacityKnown effort is within the budget, but missing estimates prevent a complete comparison.",
+    "viewport": 390
+  },
+  "boundary": "Synthetic scope/source transitions only; no authenticated authority proof"
+}

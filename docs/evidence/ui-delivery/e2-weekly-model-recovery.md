@@ -1,0 +1,135 @@
+# EXP02 weekly model acquisition repair
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: original weekly question -> canonical model acquisition -> original permitted business reads -> explanation -> existing Chat settlement/reload. Routing and bounded shared ownership: ANT50/8e8dd015 and E09 ANT161/ea0882f6, October30 18:35.
+PAIGE_UI_DESIGN: PASS: existing Executive/Chat presentation, controls, typography and responsive behavior retained; no JSX/CSS or new visual surface.
+MATERIAL_FLOW_CHANGE: NO: reliability repair inside the approved weekly read flow; no new customer step or permission.
+FLOW_PROTOTYPE: NOT_REQUIRED: no new or redesigned interaction.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized owner can obtain a sourced review when an incumbent provider proves failure before any semantic output; no automatic business action.
+VISUAL_DIRECTION: PASS: preserve the approved immersive Executive and shared Chat design.
+AUTOMATED_EVIDENCE: PASS: original Fabric172/0 and adapter99/0 baselines; failure-first Fabric177/8; current extended Fabric196/0 and adapter106/0. Synthetic recording ports, no provider effect. Final composed C0b/type/hosted checks remain owed.
+STATIC_EVIDENCE: PASS: whole incoming E09 Root inverse after exactly five signal fields; all18,555 incoming outside-owned leaves and original tests retained. Pre-pin source188a70aae41ec8489178c0520d67ac290c74f3b7, AUTHOR-REVIEW / LOWER ASSURANCE. Final-head review/CI remains required.
+RENDERED_EVIDENCE: UNVERIFIED: no layout change; a released repaired weekly answer and its existing rendered feedback remain proof owed. Finance rendering does not establish this model behavior.
+BEHAVIORAL_EVIDENCE: PASS: pre-header and authority-await cancellation now report actual abort/interrupted, never fallback. Failure-first194/2 Fabric and105/1 adapter controls now196/0 and106/0. Production weekly recovery remains unverified.
+AUTHENTICATED_RUNTIME: UNVERIFIED: earlier useful weekly answers and the latest interrupted request remain dated evidence; no automatic retry or new success is inferred.
+KEYBOARD_FOCUS: NOT_APPLICABLE: no control/focus code changes; new caller-cancellation source controls are automated, not physical keyboard acceptance.
+ZOOM_REFLOW: NOT_APPLICABLE: no markup, dimensions or styling change; no new viewport claim.
+REDUCED_MOTION: PASS: no motion change.
+STATE_COVERAGE: PASS: proven presemantic billing/rate/model/auth/provider errors; unknown/contradictory failure; semantic text, tool, refusal, reasoning and output embedded in envelopes; changed authority; already-aborted and pending-acquisition abort; open/parser abort race; fragmented CRLF; original two-attempt traces. Hosted customer interruption remains owed.
+TRUTHFUL_STATE_LABELS: PASS: an HTTP open/role/status frame is not a business answer; failed, interrupted and uncertain work never becomes completion. Nine analytics readiness and access remain unchanged.
+SOLO_UI: YES: existing PAIGE weekly review, no new UI implementation.
+UNVERIFIED: final C0b/type/exact-head checks, normal affected-Edge/source certification, actual weekly useful answer/settlement/links/reload, legitimate role/cohort/isolation/Live and full19/nine/founder acceptance.
+
+OWNER_INTENT: Complete the original AI COO experience through coherent releases; preserve source ownership and canonical capabilities.
+MUST_NOT_HAPPEN: No second parser, model runtime, provider client, retry queue, business reader/store, authority, approval or receipt engine; no provider/cohort/consumption-policy activation; no replay after semantic output, uncertainty, cancellation or authority refusal.
+MUST_PRESERVE: Existing class candidates/admission, provider classifier/mayFallback, each-attempt authority and metering, 120-second incumbent model deadline, one serialized parser, bounded backpressure, Chat-shaped SSE, original business tools and immutable source context.
+ACCEPTANCE_CRITERIA: Recognized terminal provider failure before semantic acquisition may use the existing fallback exactly once per remaining candidate after current authority; cancellation stops acquisition; any semantic or uncertain state prevents replay. Final reviewed source/pins/checks and original deployed-source proof precede authenticated weekly answer/reload/recovery acceptance.
+MOTION_PURPOSE: NONE: transport-only repair.
+PROTECTED_SEAMS: Five existing fabricChatStream option fields only in Root, verified against the actual call AST and whole-file inverse. E09 customer-context/lifetime islands, E08 branches, all domain writers, Knowledge/Memory and original approval/action controls retained.
+ALGORITHM_SUPPORT: Transport uses deterministic state/failure classification, not a business scoring or predictive algorithm. ALG03/06/11/12 remain Partial; ALG13 Unverified. No catalogue promotion from source tests.
+
+## Exact proof boundaries
+
+Original source can open HTTP200, receive only status metadata and a terminal
+provider error, then finish without useful answer or canonical fallback. The
+source counterexample is independent of the exact production-parent diagnosis,
+which remains unverified. This repair does not rewrite that historical failure.
+
+Additional unreleased-source probe on786aa confirms that cancellation before
+HTTP headers avoids fallback but is recorded as unknown/network rather than
+caller-aborted/interrupted. Original ANT50/fa8c91d6 and the private bounded probe
+retain that failed control. The corrective source now reports actual abort at
+both waits, preserves budget refusal and records an interrupted provider trace;
+new tests reproduce194/2 and105/1 before the correction, then196/0 and106/0.
+This resolves the local finding; final composed review/release proof is owed.
+
+The original full six-file C0b suite passes270/0 after the reviewed two dependency
+and29 enclosing-literal renewals. All128 current-main source pins and29 dispatches
+were reproduced before renewal; complete original checker inverse is exact.
+The first unrenewed run failed admission as expected and supplies no final PASS.
+This270/0 result supports786aa only; the cancellation correction still requires
+its own immutable review, changed hash renewal and final original controls.
+
+Current source188a70aa receives actual E09 mainaa0220a5. The one C0b conflict
+retains the complete incoming checker/pins/history and original dated E02 note;
+all131 incoming dependencies and29 dispatches reproduce before renewal. The
+whole Root inverse removes exactly five signal fields, retaining all E09
+customer-context/lifetime source. Current196/106 controls pass after composition.
+Renew only two changed dependency scalars and29 enclosing fingerprints; all
+other129 dependency pins and all metadata/validation/hostile controls stay exact.
+
+The incumbent parser reports acquisition to the incumbent Fabric. Ordinary role
+and status frames commit no answer. Text, tool, refusal, reasoning, unexpected
+events, malformed data or output within an envelope prevent another attempt.
+Only recognized terminal failure without those signals is eligible for the
+existing policy. No evidence or tool result is recomposed under a new tenant.
+
+Tests caught and corrected a candidate open/parser abort race (104/1 ->105/0)
+and embedded-output replay gap (192/2 ->194/0). Original direct-stream role,
+batching, backpressure, cancellation, trace and no-fabricated-finish controls
+continue to pass. No original assertion was removed or weakened.
+
+The request signal reaches all five original Root calls. The existing Anthropic
+gateway retains its incumbent acquisition/deadline contract; no new claim that
+its in-flight HTTP acquisition now supports immediate transport abort is made.
+The current-authority check still runs before its original provider dispatch.
+
+## Orchestration and continuity
+
+This is read-only model delivery, not an executable business workflow. PAIGE/VERA
+retain original actor/tenant context, business.operating_snapshot and Metric
+reads, Trust and original domain permissions. No new Layer C action, approval,
+domain write or business Rail receipt is created. Existing turn settlement and
+per-attempt traces remain the evidence of conversation delivery. A useful
+answer, original sources and later return must still be proved after release.
+
+INTERNAL_BUILD_IDENTITY: 188a70aae41ec8489178c0520d67ac290c74f3b7; supporting immutable pre-pin source; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original resolver affected functions, source certificate and readback); evidence=ANT50/8aa9e1d4.
+RELEASE_CHANNEL: development: source candidate, not deployed recovery.
+RELEASE_CLASSIFICATION: internal-only: bounded existing-path repair.
+CUSTOMER_RELEASE_IDENTITY: none: no customer announcement.
+RELEASE_NOTE_REQUIRED: no: no complete Experience release claim.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: source controls do not establish production-parent cause or authenticated recovery.
+RELEASE_RECOVERY: position=reviewed forward fix preserving original turn and source; reference=ANT50/8aa9e1d4.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no new visual source; repaired customer answer owed.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: repaired customer answer/reload owed.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no new render claim.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no new render claim.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no new render claim.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no new render claim.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no new render claim.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no new render claim.
+
+## October30 verified release closeout — original failed result retained
+
+This dated receipt supersedes only the preceding anticipated release fields.
+PR [3132](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3132)
+merged as `72b6188779018c3a4dca550727e1cda2eeafcc64`, tree
+`c45584ec3407e90aa769cba888fd7ead9b712460`, after exact reviewed head
+`07166c4f72c8aabc77aaa34ecf7724051ca071dd`, separate sequential
+AUTHOR-REVIEW / LOWER ASSURANCE5718087126, all11 exact checks, managed Preview
+and both web statuses SUCCESS. The full incoming union and original controls
+were conserved. Own native migrations: NOT_APPLICABLE.
+
+Production web `dpl_4hLtk8UiH87gcBMmDBVCt6Su4r4c` was READY/exact72b;
+both official origins served `72b6188779018c3a4dca550727e1cda2eeafcc64-mvvgc68t`
+with customerUpdate:null. Original Edge41127010230 attempt1 source failure is
+retained. One unchanged-source normal retry, attempt2/job124310590002, succeeded.
+Artifact13011327721/SHA256
+`486ea2645b7514db792d82ceae40bc49e779b6372924c291c27f48eea63d5746`
+independently matches all original selected source/config inputs: Chat603,
+DeepResearch134, orchestrator176 and STT169. Hosted compiler execution is not
+an independently rerun local compiler; scratch cleanup permission debt is separate.
+
+Functional source release PASS; the subsequent fresh authorized weekly customer
+question still FAILED. Its original interrupted request/result survived reload;
+no retry or useful-answer acceptance was claimed. Visual implementation remained
+unchanged; bounded conversation retention passed while useful completion failed.
+Founder Acceptance/all19/nine remain OPEN. The exact credit-code follow-up and
+its later useful case have their own [receipt](e2-weekly-credit-code.md).
+ALG03/06/11/12 Partial, ALG13 Unverified and catalogue readiness are unchanged.
+Read-only conversation settlement creates no business action or Rail completion.
+
+Release channel: production; internal-only, no customer release identity or
+announcement. Recovery remains the normal reviewed forward correction preserving
+the original request and authority, never replay of uncertain business work.
+[Actual release and failed-customer receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3132#issuecomment-6533544737).

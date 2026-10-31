@@ -1,3 +1,4 @@
+import {customerInvoicesTerminalSource} from "../../supabase/functions/_shared/client-portal-invoices-context";
 import {readFileSync} from "node:fs";
 import ts from "typescript";
 import {z} from "zod";
@@ -5,6 +6,7 @@ import {describe,expect,it,vi} from "vitest";
 import {readCustomerAssistantContext,customerProgramMessages,customerTerminalSource,embedCustomerQuery} from "../../supabase/functions/_shared/client-portal-assistant-context";
 import {readCustomerProgressContext,customerProgressMessages,customerProgressTerminalSource} from "../../supabase/functions/_shared/client-portal-progress-context";
 import {customerFilesTerminalSource} from "../../supabase/functions/_shared/client-portal-files-context";
+import {customerPublicLinkTerminalSource} from "../../supabase/functions/_shared/client-portal-public-link";
 import {buildClientPortalPersonaMessages} from "../../supabase/functions/_shared/client-portal-persona";
 
 // Execute the actual narrow handler closures. Do not copy their implementations
@@ -42,7 +44,7 @@ async function guard(){
  }
  const create=new Function("env",compile(`let tenantKnowledgeScopeRevoked=false;const customerPortal=true;
   const {supabaseClient,customerCaller,user,payloadThreadId,validatedData,customerAssistant,customerPersona,customerProgressContext,customerSessionsContext,readCustomerAssistantContext,readCustomerProgressContext,readCustomerSessionsContext}=env;
-  const customerFilesContext=null;
+  const customerInvoicesContext=null,customerFilesContext=null,customerPublicLinkContext=null;const customerPublicLinkCall=null,customerPublicLinkTool=null;
   const ${guardDeclaration};
   return {check:revalidateTenantKnowledgeScope,retired:()=>tenantKnowledgeScopeRevoked};`));
  const actual=create({supabaseClient,customerCaller:supabaseClient,user:{id:actor},payloadThreadId:thread,validatedData:{requestIntentId:intent},customerAssistant:captured.data,customerPersona:captured.data!.persona,customerProgressContext:capturedProgress.data,customerSessionsContext:capturedSessions.data,readCustomerAssistantContext,readCustomerProgressContext,readCustomerSessionsContext});
@@ -75,13 +77,13 @@ describe("actual customer provider/output lifetime source fence",()=>{
 describe("actual customer handler integration",()=>{
  it("the actual customer begin cannot borrow the original owner caller",async()=>{
   const ownerRpc=vi.fn(async(..._args:unknown[])=>({data:{status:"accepted"},error:null})),customerRpc=vi.fn(async(..._args:unknown[])=>({data:{status:"accepted"},error:null}));
-  const make=new Function("supabaseClient","customerCaller","customerPortal","validatedData","interactiveInput","userText","customerQuery",compile(`const customerFileIds=null;const ${declaration("beginTurn").getText(ast)};return beginTurn;`));
+  const make=new Function("supabaseClient","customerCaller","customerPortal","validatedData","interactiveInput","userText","customerQuery",compile(`const customerInvoicesSelected=false;const customerFileIds=null,customerPublicLink=null;const ${declaration("beginTurn").getText(ast)};return beginTurn;`));
   const begin=make({rpc:ownerRpc},{rpc:customerRpc},true,{threadId:thread,requestIntentId:intent},{kind:"message"},"Question",null);
   await begin(false);expect(ownerRpc).not.toHaveBeenCalled();expect(customerRpc).toHaveBeenCalledTimes(1);expect(customerRpc.mock.calls[0][0]).toBe("client_portal_assistant_begin_sessions");
  });
  it("uses the customer-only native admission adapter while preserving workspace begin arguments",async()=>{
   const rpc=vi.fn(async(..._args:unknown[])=>({data:{status:"accepted"},error:null}));
-  const make=new Function("supabaseClient","customerCaller","customerPortal","validatedData","interactiveInput","userText","customerQuery",compile(`const customerFileIds=null;const ${declaration("beginTurn").getText(ast)};return beginTurn;`));
+  const make=new Function("supabaseClient","customerCaller","customerPortal","validatedData","interactiveInput","userText","customerQuery",compile(`const customerInvoicesSelected=false;const customerFileIds=null,customerPublicLink=null;const ${declaration("beginTurn").getText(ast)};return beginTurn;`));
   const vector=Array.from({length:1024},()=>0.5);
   for(const customerPortal of [false,true]){
    const begin=make({rpc},{rpc},customerPortal,{threadId:thread,requestIntentId:intent},{kind:"message"},"Question",customerPortal?{embedding:vector,degraded:false}:null);
@@ -103,7 +105,7 @@ describe("actual customer handler integration",()=>{
   const block=node((n):n is ts.IfStatement=>ts.isIfStatement(n)&&n.expression.getText(ast)==="customerPortal && customerPersona && customerAssistant");
   // The statement's client-seat else-branch awaits the persona read, so it compiles as an async body.
   const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor as FunctionConstructor;
-  const run=new AsyncFunction("customerPortal","customerPersona","customerAssistant","aiMessages","messages","toolDefs","buildClientPortalPersonaMessages","customerProgramMessages","customerQuery","customerProgressMessages",compile("const customerProgressContext=null;const customerSessionsContext=null;const customerFilesContext=null;"+block.getText(ast)));
+  const run=new AsyncFunction("customerPortal","customerPersona","customerAssistant","aiMessages","messages","toolDefs","buildClientPortalPersonaMessages","customerProgramMessages","customerQuery","customerProgressMessages",compile("const customerProgressContext=null;const customerSessionsContext=null;const customerInvoicesContext=null,customerFilesContext=null,customerPublicLinkContext=null;const customerPublicLinkCall=null,customerPublicLinkTool=null;"+block.getText(ast)));
   const aiMessages:unknown[]=[{role:"system",content:"OWNER PRIVATE"}],tools:unknown[]=[{function:{name:"owner_only_write"}}];
   await run(true,context.persona,context,aiMessages,[...context.history,{role:"user",content:"Current question"}],tools,buildClientPortalPersonaMessages,customerProgramMessages,{embedding:null,degraded:false},customerProgressMessages);
   expect(tools).toEqual([]);expect(JSON.stringify(aiMessages)).not.toContain("OWNER PRIVATE");
@@ -136,8 +138,8 @@ describe("actual customer handler integration",()=>{
  });
  it("passes exact native source metadata to settlement and strips withdrawn metadata during empty cleanup",async()=>{
   const captured:Array<[string,Record<string,unknown>]>=[];const supabase={rpc:async(name:string,args:Record<string,unknown>)=>{captured.push([name,args]);return{data:client,error:null}}};
-  const create=new Function("supabase","supabaseClient","user","interactiveReceiptScope","customerSourceSnapshot","customerTerminalSource","z","customerProgressSnapshot","customerProgressTerminalSource","customerSessionsSnapshot","customerSessionsTerminalSource","customerFilesTerminalSource",compile(`const customerFilesSnapshot=null;const ${declaration("appendAssistant").getText(ast)};return appendAssistant;`));
-  const snapshot=fixture().snapshot;const append=create(supabase,{rpc:vi.fn()},{id:actor},{thread,tenant,intent},snapshot,customerTerminalSource,z,null,customerProgressTerminalSource,null,customerSessionsTerminalSource,customerFilesTerminalSource);
+  const create=new Function("supabase","supabaseClient","user","interactiveReceiptScope","customerSourceSnapshot","customerTerminalSource","z","customerProgressSnapshot","customerProgressTerminalSource","customerSessionsSnapshot","customerSessionsTerminalSource","customerFilesTerminalSource","customerPublicLinkTerminalSource","customerInvoicesTerminalSource",compile(`const customerFilesSnapshot=null,customerPublicLinkSnapshot=null,customerInvoicesSnapshot=null;const customerPortal=true;const ${declaration("appendAssistant").getText(ast)};return appendAssistant;`));
+  const snapshot=fixture().snapshot;const append=create(supabase,{rpc:vi.fn()},{id:actor},{thread,tenant,intent},snapshot,customerTerminalSource,z,null,customerProgressTerminalSource,null,customerSessionsTerminalSource,customerFilesTerminalSource,customerPublicLinkTerminalSource,customerInvoicesTerminalSource);
   const args={p_thread_id:thread,p_role:"assistant",p_content:"Authorized answer",p_bundle_ref:{turn_state:{state:"FINAL"}}};
   await append(args);expect(captured[0][0]).toBe("paige_chat_interactive_settle");expect((captured[0][1].p_bundle_ref as Record<string,unknown>).customer_knowledge).toEqual(snapshot);
   await append({...args,p_content:"Must be withheld",p_bundle_ref:{customer_knowledge:snapshot,turn_state:{state:"WITHHELD"}}});

@@ -1,3 +1,140 @@
+## October30 19:39UTC — native reminder released; editor integration next
+
+Original #3127/5bfe6354 passed all13 exact-head checks/managed Preview and both
+web checks, received final AUTHOR-REVIEW / LOWER ASSURANCE5717729953, and merged
+1515a9ffdf3e86733e41d5dde9b58bde27d35b98. Normal migration41116346469 succeeded;
+production75005 is present once/db-live1515. Actual base function body69755a72
+inverts exactly once to reviewed original9e57d9e3; wrapper body73f3a1af,
+OID/owner/definer/search-path/ACLs remain preserved. Preview's other guarded body
+variant is not asserted as production. Verceldpl_BKJt55rvyEDdioc9AUPZASVpNduu is
+READY/exact; both official builds and actual assets were read at1515-mvvdg7m8
+19:38:54UTC. No Edge source changed in this repair; edge-liveaa is incoming CURA
+source, not a claimed Chat upgrade. Actual Admin reminder save/Rail/reload and
+dependent #3131 editor release remain owed. Original ANT11/249eb3d9 and receiving
+ANT51/e6ed650d record native-order clearance before each peer's own release.
+
+Review of unpublished multi-step source found that new1–20 support also needs
+the canonical SOLO classification. Corrected candidate now restricts NEW multi-
+step arm/capture to top-level standalone and NOT original is_company_workspace;
+one-step incumbent behavior remains unchanged for other existing departments.
+The original company classifier body is reused in the disposable native proof.
+Causal Agency denial failed before correction; all28 selected native cases now
+pass, including child/company/system-workspace refusal, reclassification before
+the pending effect, preserved landed receipts and exact replay/source guards.
+Original137/full56 evidence below belongs to its older checkpoint; full corrected
+regression/full-schema/review/CI/customer proof remain owed. No live activation.
+
+Local type ratchet returned FAIL with three missing-RealtimeKit diagnostics in
+unchanged LiveRoom. The existing linked dependency store lacks all four locked
+RealtimeKit packages; no type error was reported in the changed EXP05 files.
+Restore the exact committed dependency tree in an owned isolated install,
+preserving the old store, source/lockfile and baseline, then rerun verification.
+This is local dependency recovery, not an EXP01 source change or waived gate.
+Fullten/E5/same ZION/both chats/cohorts/founder acceptance remain OPEN.
+
+## October30 19:20UTC — source releases and per-step automation recovery
+
+Full O01–O10 and E5-CV1–CV9 remain OPEN: STILL CODING / NOT_READY / NOT_ACCEPTED.
+This checkpoint adds bounded evidence to the existing matrix, not a new inventory.
+
+- Task-effort UI #3103, reviewed03ab50de, merged66cd3820; Planning Task receipt
+  #3121, reviewedbb814533, mergedaca47567. Required exact-head checks/reviews
+  cleared. Production70005 applied once with original function body2f2ceac5,
+  OID/owner/definer/empty-path/authenticated-only authority preserved. Normal
+  native41109843494 and Edge41109843772 succeeded; actual db-live/edge-liveaca.
+  Original certificate13002357663 independently verifies selected Chat599/JWTtrue,
+  all322 immutable source links and original runtime closure. Both official web
+  origins were read at buildaca-mvvbrd3r with the actual Task-effort artifact.
+  These are source/deployment proofs; authenticated saved effort, exact approval,
+  original record/Rail/reload, cohorts and complete weekly planning remain owed.
+- Original Google Delivery Evidence Register Program I7/J7 and Assignment Locks
+  F5 note were updated/read back19:01:21UTC, preserving prior text/notes, unrelated
+  rows and authenticated/founder columns. Original ANT11/87553428 records exact
+  release and Google references. E08's shared Master§4.0/BrainREADME custody
+  clarification remains requested at ANT11/7bede4ef; those files stay untouched.
+- Native reminder #3127 is main-based5bfe6354 with its three original native
+  implementation blobs conserved. Twelve of13 observed checks, managed Preview
+  and both web statuses pass; final verify is still running. Production75005
+  remains unapplied. Dependent editor #3131/e6e9 remains DRAFT and cannot release
+  ahead of the native dependency, current-main composition and its own gates.
+- Existing internal owner.task automation locally supports a reviewed literal
+  chain of1–20 steps, retaining original contact.created/confirm-only control.
+  The original second-act hold failed OWNER_TASK_SOURCE_CHANGED because the
+  native hold/readback selected acts[0]. Guarded forward140005 now selects the
+  exact original act by BOTH ID and position. Complete-chain source binding,
+  separate exact approvals/claims, native CRM Task writer and Rails stay intact;
+  position alone creates no dependency ordering or authority for another step.
+- Actual isolated PostgreSQL run137 controls passes, including distinct and
+  identical-argument Tasks, separate original receipts, lost acknowledgments,
+  pause/later-step edit, cross-step correlation refusal, malformed/over-limit
+  chains, twenty-step configuration with zero execution, exact forward replay,
+  source/definer drift refusal and original function identity/default/ACL
+  conservation. Existing engine/C5 tests run through real native SQL; structured
+  results explicitly confirm BOTH original single-step and new two-step cases
+  passed. All fixtures use the original disposable harness; peripheral Auth,
+  authority and Realtime ports remain synthetic. Full-schema/Auth/PostgREST,
+  eligible existing/new cohorts and ordinary customer proof are NOT supplied by
+  this selected-native run. The first drift test's missing SQL separator is
+  retained as a failed test-construction attempt; corrected run passes unchanged
+  source guards. Only the owned disposable PostgreSQL server was stopped.
+- This multi-step source is LOCAL/unpublished, not independently reviewed,
+  hosted-CI-verified, merged, deployed, activated or customer accepted. Existing
+  UI still refuses multi-step enablement until the native release and its own
+  complete review flow are verified. Broader trigger/condition/dependency,
+  provider, recurring and cross-domain automation limitations remain explicit.
+
+Orchestration: original native event → LayerC registry/Gateway/Harness → separate
+Trust companion approvals/dispatch claims → existing execute_owner_task_act →
+canonical CRM Task/result and Rail → original per-act reader/replay. No new
+engine, ledger, scheduler, approval service or provider activation. ALG01 uses
+original identity/CAS/receipts/recovery; ALG08 does not infer reserved capacity or
+dependency scheduling; ALG12/13 retain evidence-based refusal/unknown handling,
+not broad anomaly or recommendation maturity. Same ZION/both conversational
+surfaces and original E01/E04/E08 technical handoffs remain unresolved separately.
+Next: reminder native/editor release after actual gates, full-schema multi-step
+proof/review, existing Automation review UI, then remaining O02/O05/O07/O09.
+
+## October29 — weekly workload and Calendar review released; O02 remains open
+
+Original O02/O03 inputs and E5-CV1/CV2/CV5/CV9: #3091 reviewed ebb0fc7e6,
+lower-assurance review5703813142, merged19dded728/treea7415d89. #3093 reviewed
+b8f8a6ff8, lower-assurance review5704689335, mergedc7564183/tree2f110e56.
+Each passed all10 exact required checks/two web statuses; schema-free Preview
+correctly SKIPPED. Both actual merges preserve reviewed source and incoming
+peer implementations. Both normal Vercel releases READY; both official origins
+returned the exact respective versions and declared Operations modules.
+[Workload production receipt](../evidence/exp05-weekly-workload-production.json)
+and [Calendar production receipt](../evidence/exp05-weekly-calendar-production.json).
+No database migration, Edge source upload or capability activation is introduced.
+
+Functional: dated original Work effort can be compared with a selected person's
+explicit temporary net work-capacity input; unknown/undated work stays separate.
+An explicit Calendar read adds genuine native commitments/recorded overlaps,
+with original refresh/freshness, per-host business-week boundaries and withheld
+stale/refused results. Entered capacity is unchanged; no provider free/busy,
+actual working hours, feasible saved schedule or dependency optimization claimed.
+
+Visual: original workload source-bound responsive/theme/keyboard/native200%
+evidence and new Calendar20-frame responsive/interaction evidence retain their
+individual scope. New Calendar native200%/AT remains UNVERIFIED.
+
+Experiential: protected ANT52/c8eeddbf records bounded authorized ordinary-owner
+workload disclosure/person/engineering-only8h input, original Task read, stable
+Operations→Overview navigation and loaded-reload reset PASS. This is not actual
+business capacity, a saved edit or a second cohort. The fresh Calendar check
+redirected to a different active workspace: INVALID designated-account proof;
+closed only the owned tab before interaction. No account switch, message,
+approval, work/booking write or provider effect. Calendar customer proof is not
+borrowed from the parent workload check.
+
+Remaining O02: canonical effort correction/save/reopen; genuine deadlines,
+dependencies, availability and feasible alternatives; same ZION in both chats;
+current/new SOLO/role/RLS/revocation and original records/receipts/recovery.
+operations.department/catalogue and ALG-01/08/13 maturity remain PARTIAL, other
+algorithms unchanged. O05 Builder→O07 monitoring→O09 permitted updates remain
+the next owner-prioritized outcomes; all original ten and E5-CV1–E5-CV9 stay in
+scope. Founder NOT_ACCEPTED; STILL CODING / NOT_READY; one integrated evaluation.
+
 ## October29 — original automation draft preview source released
 
 Outcome05 / E5-CV1,CV5,CV9: the original stored automation draft now shows its
@@ -157,7 +294,7 @@ PAIGE coordination adds a route and never forces a PAIGE intermediary.
 | Original outcome / E5 cases | PAIGE Chat / original source and current boundary | Team Hub gap, receiving owner and terminal proof |
 | --- | --- | --- |
 | 01 Responsibilities / CV3,4,9 | PARTIAL R1: `plan_list`, `crm_list_tasks`, exact `crm_get_task`, original Calendar/weekly reads. | EXP08 A2 original permitted reads; private Work in asker DM. E05 exact record/coverage references. Compare both chats with actual authorized sources. |
-| 02 Plan week / CV1,2,5,9 | PARTIAL R1/R2/R8; capacity/dependency correction remains missing. Held2961 is a read-preview, never execution. | E05 original correction loop; EXP08 consumes same plan/result. Prove changed context, zone, correction, save and reopen without another plan engine. |
+| 02 Plan week / CV1,2,5,9 | PARTIAL R1/R2/R8; released3091 reviews explicit net capacity and temporary effort corrections. Dependency handling and durable correction/save/reopen remain owed. Held2961 is a read-preview, never execution. | E05 original correction loop; EXP08 consumes same plan/result. Prove changed context, zone, correction, save and reopen without another plan engine. |
 | 03 Manage work / CV4,5,6 | PARTIAL R3: original `crm_create_task`/`crm_update_task`, `plan_create`/`plan_add_milestone`/`plan_assign_task`/`plan_update_item`, exact stored arguments/current version. | EXP08 A2 original Task admission/authority presentation; E05 original writer/assignee contract. Suggest/Prepare/Execute follows current original policy and goal scope; obtain exact approval when required. Private results stay permitted-recipient scoped. Same domain record/readback/Rail, no duplicate. |
 | 04 Calendar/reminders / CV2,5,7 | PARTIAL R2/R5: `read_calendar_agenda`, `read_calendar_booking`, `plan_set_reminder`, `read_weekly_commitment_status`; recurrence proof still owed. | EXP08 original private reads/actions under real scope; E05 original zone/DST/schedule/result. E03/09 retain customer bookings. No new scheduler/recurrence activation. |
 | 05 Build automations / CV1,5,9 | PARTIAL R4/R7: `automation_draft`/`weekly_commitment_draft` only prepare/save. Full multi-step clarification/correction Builder remains missing. | E05 original definitions/goal and dependency plan; EXP08 permitted preview/correction and original authority/approval presentation. Saved draft is not authorized/enabled/executed work. |
@@ -877,6 +1014,514 @@ operations.department stays PARTIAL; canonical ALG01/08/11/12/13 maturity is
 unchanged. Same ZION/personality in both chats, weekly execution/full Builder
 lifecycle/proactive/recovery, all ten outcomes/E5-CV1–9 and one complete founder
 evaluation remain OPEN. Founder NOT_ACCEPTED; STILL CODING / NOT_READY.
+
+## October29 — original ZION Planning foundation released; host still separate
+
+Outcomes01/02/08/10 inputs only: #3086 reviewed e944 merged7a30/tree39ef69e7
+after all11 required checks/managed Preview/two web contexts SUCCESS, zero
+threads and final AUTHOR-REVIEW / LOWER ASSURANCE5701770567. Source103 local
+tests/strict0-to0 retained; clean composition preserves E04 Master history.
+Vercel dpl_2uLPHLTkzNpqcZVi27qCxd8kxyL3 READY/exact. BOTH production origins
+17:03:20–21UTC200/build7a30-mvtsj03g/customerUpdate:null; original Operations
+240,965byte chunk and all8 recovery signatures preserved. Original Edge
+40917238093/job123600617357 SUCCESS: no affected runtime function, upload and
+source certification correctly SKIPPED, certified9da baseline not advanced.
+No schema, activation or new customer result/receipt is claimed.
+
+[Original production evidence](../evidence/exp05-zion-planning-foundation-production.json).
+The same ZION Planning host is separate DRAFT#3087/6f5e9071,115 local tests;
+E04 native admission/source-version/history and receiving review still required,
+current guard excludes ZION. operations.department PARTIAL; both-chat/private
+record/Rail/reload/cohort/native/negative/full ten/E5/founder proof remains owed.
+Functional source/web verified; Visual original source preserved, no new rendered
+flow claim; Experiential incomplete; Founder NOT_ACCEPTED. STILL CODING / NOT_READY.
+
+## October30 — original Planning task receipt projection, review preparation
+
+O02/O03/O08/O10 foundation, not full-outcome closure. Shared coordination is
+ANT161/51d8c74d; EXP01 retains its frozen base Planning writers/Root/resume,
+EXP08 retains A2c proposal/claim/current-context/settlement and Team Hub source,
+EXP04 retains private Planning observation. No duplicate execution path is added.
+
+Forward `20271126070005_planning_task_receipt_projection.sql` extends only the
+installed `plan_assign_task_scoped` acknowledgment with the original writer's
+`railRecorded`, `receipt_status`, `receipt_run_id`. Current source MD5
+`6117c2fba66658677ead7a457d83479e` and unique source/inverse guards protect every
+incumbent precondition. OID/owner/ACL/security/config/defaults remain unchanged;
+metadata compares resolved defaults rather than parser source offsets. Repeat
+application preserves the exact definition; drift/partial projection refuses.
+This forward follows already-published E09 `20271126060009`, preserving the
+existing E08 `40008` → Task `50005` → E09 `60009` release order. No peer migration
+or applied history is renamed, inserted below, reset or rewritten.
+
+The existing caller-JWT `writeScopedPlanning` adapter returns optional
+`nativeReceipt` only from a complete recorded native acknowledgment AND exact
+original actor/tenant/record/current-scope/RLS readback. Legacy acknowledgments
+without those fields keep their exact record-only DTO. Explicit incomplete or
+unrecorded receipts remain unverified with no automatic retry. An arbitrary
+nested receipt or unknown fields cannot become server evidence. The original
+operationIdentity is still an upstream identity, not a claim or idempotency key.
+
+Engineering: 45 original adapter/create-suite tests PASS after eight causal RED
+tests; existing PostgreSQL Planning runner 117 checks PASS, plus exact replay,
+metadata preservation and two source-drift refusal assertions. The same native
+task/audit/Rail identity and actual adapter lost-acknowledgment behavior are
+checked (one original task/receipt, unverified result, no retry). Original permission, tenant, stale-version,
+concurrency, rollback and interruption negatives stay intact. These local SQL
+ports are synthetic and do not establish production/customer authentication.
+The original full-schema rollback test adds same-create receipt correlation;
+its required hosted execution remains owed.
+
+Orchestration: canonical `planning.assign_task` → `plan_assign_task` domain
+writer remains unchanged. No new Layer C, stored approval, claim, sender, job,
+receipt store or recovery executor. Team Hub's original Planning DoorFamily /
+proposal / claim / resume / settlement integration is still missing. This
+projection does not authorize calling a non-idempotent writer again after an
+unknown outcome; original-operation reconciliation must come from that shared
+contract. Native receipt evidence is not customer completion or acceptance.
+
+Functional SOURCE/PREPARED, not merged/deployed/activated. Visual N/A: no UI,
+rendered entry, styling, keyboard or navigation change. Experiential INCOMPLETE:
+no new mounted caller, authenticated approval/record/Rail/reload or both-chat
+proof. ALG-01/12/13 maturity and operations.department/Task Prioritization
+Review/Weekly Priorities Plan remain PARTIAL; no catalogue Live promotion.
+Full review, exact-head CI/Preview, production readback, eligible new/existing
+SOLO/role/revocation and all ten/E5-CV1–9 acceptance remain owed. Original Admin
+reminder repair is separate pending EXP01's frozen-writer disposition. Founder
+NOT_ACCEPTED; STILL CODING / NOT_READY; one complete integrated evaluation.
+
+### October30 — native reminder Admin repair (O03/O04/O08)
+
+Continue original ten outcomes and E5-CV1–E5-CV9; no closure count changes.
+The previously inferred blanket native-source hold was too broad: ANT50's
+actual freeze protects the five Planning registry/admission bindings. Narrow
+predicate repair is recorded at ANT50/dfa434c4, preserving those bindings and
+shared Root/resume custody. Forward20271126075005 follows published70005;
+native-first release precedes the separately reviewed existing editor correction.
+
+Current local PostgreSQL result: 138 behavior checks PASS, plus exact two-function
+metadata/source conservation, replay, two source-drift refusals and authority
+metadata refusal. A non-owner current-tenant Admin can move another person's
+active reminder time without a global-role fixture row. No Task/milestone/mixed
+field authority is added; held Agency/parent/company classes, wrong actor/tenant,
+revoked seat, stale source, closed work, invalid time, concurrency and unknown
+acknowledgments remain bounded. Full-schema rollback coverage is added to the
+original Operations test but its hosted result is still owed. No existing role
+sync trigger is disabled and no real account/permission is manufactured.
+
+Exact native/evidence boundary is docs/evidence/ui-delivery/exp05-reminder-admin-native.md.
+Source is PREPARED, not merged/deployed/activated/authenticated/accepted. Visual
+unchanged; original UI still withholds the Admin-only control until its separate
+native-dependent child. Experiential record/Rail/reload, current/new SOLO cohorts,
+both chats, full automation lifecycle, ZION, monitoring/recovery and founder
+acceptance remain open. ALG-01/08/12/13 remain PARTIAL; no capability Live promotion.
+
+## October29 — safe saved-effort producer, review branch only
+
+O02/O03 and CV1/2/5/9: extend only original `task.update` in
+`execute_crm_command_reversible` with nullable integer `estimated_minutes`.
+Set/zero/clear preserve unrelated Task metadata. Simultaneous whole-metadata
+replacement is refused; existing explicit metadata replacement stays unchanged.
+Native actor/tenant locks, CAS, replay, receipt transaction, ACL and function
+identity remain original. All source outside the Task update branch is exact.
+The existing generated Task patch schema derives this field from native SQL;
+no new task writer, approval, scheduler, provider or registry is introduced.
+
+Source reservation: ANT-161/51d8c74d. Tentative NEVER-APPLIED migration
+20271126010012 remains held behind E04 reserved10 and E09 tentative11.
+Do not open a migration-applying Preview ahead of that coordinated frontier.
+Production structural read showed native09, executor OID289875/service-only
+ACL and no scalar support. No production schema/data write has occurred.
+
+Local verification: 20 actual-executor PostgreSQL16 component checks pass,
+including baseline refusal, metadata preservation, whole-number/zero/upper
+bound/clear, malformed source, stale version, replay and receipt rollback.
+These use explicit peripheral fixture ports; they do NOT prove original
+Auth/RLS/Trust, canonical Rail or full-schema concurrency. Original governed
+CRM pgTAP suite retains its194 cases and adds31 effort cases (225 total),
+including native actor/tenant/workspace/version denials and original receipt
+failure. Those full-schema cases remain UNRUN. Original generator negative
+controls plus cross-domain conservation pass15/15. UTF8/diff checks pass.
+
+Orchestration: existing governed CRM direct command, `crm_update_task`, original
+Task readback/correlation and recovery. `crm_clients.task_read` remains the
+original read capability. No static Spine write key was found for this Task
+tool; do not claim a new Layer C/Spine write integration. ALG-01 native
+reconciliation support is extended locally; ALG-08 saved inputs and ALG-13
+weekly explanation still require the correction UI and integrated proof.
+
+Functional LOCAL / NOT_MERGED / NOT_DEPLOYED. Visual N/A: no UI change.
+Experiential INCOMPLETE: original effort editor, exact approval, saved readback,
+reload/recovery, eligible existing/new SOLO cohorts and both-chat proof owed.
+`operations.department` and catalogue stay PARTIAL; no Live promotion.
+All ten outcomes/E5 cases remain open for integrated verification.
+Founder NOT_ACCEPTED; STILL CODING / NOT_READY.
+
+## October29 — effort correction UI, reviewed local checkpoint
+
+Dependent source83d97fb1e/tree d3217465 adds the effort field to the ORIGINAL
+Task editor/review/command consumer. One scalar command retains raw native
+version, original approval fingerprint and operation key. Native metadata
+readback must match, then the independently scoped Work read must agree.
+Unknown/reload recovers that same operation; clear is unknown, zero is recorded.
+Stage targets cannot masquerade as effort proposals. Refusal focus now returns
+to Back to details instead of the disabled action. No new approval or writer.
+
+117 assertions/seven original suites PASS, including exact Task focus and
+SoloApp retention. The two original selector families changed only to match
+the expanded accessible labels; all positive/negative assertions remain.
+Full application TypeScript has nine unchanged-file diagnostics, zero changed;
+the empty root-solution result is excluded. Focused lint/UTF8/diff and pinned
+Impeccable pass (zero anti-patterns, three inherited type-size advisories).
+15 final rendered frames/121 product input hashes verify desktop and narrow
+states with explicit offline ports; native/AT/full-shell dock matrix owed.
+[Exact flow and proof boundary](../evidence/ui-delivery/exp05-task-effort-review.md).
+
+Reusable native-writer lesson: existing Task metadata update is a WHOLE
+replacement. Never send a partial effort object through it. Extend the original
+scalar contract with CAS and key-preserving mutation, retain the explicit
+replacement semantics, and verify both executor and independent native read.
+
+Separately, released workload3091 has bounded ordinary-owner production proof
+in protected ANT-52/c8eeddbf: current work/roster, truthful undated exclusions,
+temporary engineering capacity input, loaded reload reset, original Task read
+and stable sidebar Operations→Overview. No business write, dated/over-capacity
+case or new effort-save proof is inferred. Earlier wrong-active-context attempt
+remains INVALID. Browser custody was returned without touching peer tabs.
+
+Source/UI LOCAL, native12 NOT_APPLIED, full-schema/required CI/merge/deployment
+and actual saved/receipt/cohort/both-chat proof remain owed. E04/E09 migration
+order is a pending receiving handoff; E04 original ZION Planning ABI remains
+separate. All ten outcomes/E5-CV1–9 and one integrated founder evaluation remain
+OPEN. Catalogue/operations.department PARTIAL; founder NOT_ACCEPTED/NOT_READY.
+
+## October30 UTC — saved-design source release and Task producer continuation
+
+Earlier source-only checkpoints above remain historical. #3097 closed the original
+3091/3093 Master rows and merged7b33ff3d after all10 exact checks/BOTH web statuses,
+schema-free PreviewSKIP and lower review5705422755. Its editing window returned
+to E04 then E02; no concurrent new Master edit is authorized by this packet.
+
+#3098 saved-design inspection mergedb696ea038b6e26b43c8d1787dc65c59da5c89b86
+from reviewed9bf995467 after all10 exact checks/BOTH web statuses/zero threads,
+PreviewSKIP and AUTHOR-REVIEW / LOWER ASSURANCE5705572872. Original203 assertions,
+16 frames/139 input pins and unchanged one-step guard retained. Vercel exact
+b696 READY; BOTH public origins00:02:40–42UTC serve buildb696-mvu7ftrs and the
+actual static module settings-integrations-CaOH2jQG.js, SHA256
+6bca20fa7e5d85cc331d052e4d7247a5a5d83311e58504e81fdbd78a3a463d01/all4 markers.
+GH3098/6511496787 retains source readback. This is source/web verified, NOT
+authenticated saved-design/full lifecycle/Rail/new-existing SOLO acceptance.
+
+The original native-order hold is resolved: E04#3099/native10 and E09#3100/native11
+are merged/published and production9/10/11eachONCE/frontier11,12ABSENT. Original
+Task executor OID289875/MD5bbcae6a52f1967ac78128ddb125491bb/service-onlyACL remains.
+Own native candidate normally composes mainb696 into26a08338; migration12 remains
+NEVER-APPLIED, exact source preserved. No applied history rewrite or activation.
+
+The newly advertised Task effort field exposed a pre-publication exact-approval
+gap in the actual original CRM handler. Bounded Task-only validation/summary now
+shows set35/zero/one/max/clear-to-unknown and combined original status/title,
+refusing malformed input or metadata replacement conflict before proposal. Actual
+handler104 cases, original CRM47 contracts/four suites and generator15 controls
+PASS. Native20 component checks/three actual two-connection races retain explicit
+synthetic peripheral Auth/access/hash/receipt ports; they are not native RLS/Rail.
+Full-schema225 pgTAP cases, hosted required exact-head CI/Preview/review and native
+deployment remain owed. Dependent original Operations editor stays separately
+preserved, not shipped ahead of native support. No new writer/approval/registry.
+
+This backend-visible-flow change has an explicit Visible-Flow-Impact trailer and
+[original approval evidence](../evidence/ui-delivery/exp05-task-effort-native.md).
+Four neutral unchanged-card frames prove bounded layout/focus, not authenticated
+stored approvals, full SOLO shell, native200%, AT or customer records. Native12
+and affected original Edge deployment/readback must precede production claims.
+All ten outcomes/E5-CV1–9, same ZION/both chats, O02 feasible saved plan then full
+O05/O07/O09, current/new SOLO/customer/founder acceptance remain OPEN. Catalogue
+and algorithms remain PARTIAL. STILL CODING / NOT_READY; no founder test request.
+
+## October30 UTC — original effort editor composed with native3102
+
+Original42b editor normally composes exact3102/fdc313d21 and mainb696 to f5a5720d6.
+The single own packet append/append conflict retains both dated sections intact;
+all original peer product/contracts and historical screenshots are preserved.
+Seven actual original suites now125PASS/0FAIL/0skip on the composed source.
+Rebuilt original Operations fixture binds125 current product inputs/nine explicit
+synthetic ports and seven valid desktop/narrow frames, with five incoming graph
+changes disclosed relative to original83d97/121 inputs. Exact30-minute review,
+synthetic approval→fixture reread→reload/reopen, keyboard and Cancel were observed.
+A transition-time stale clear-review image is INVALID and excluded; actual
+accessibility wording and current clear tests remain separate semantic evidence.
+No real customer approval/record/Rail, full shell/native zoom/AT/cohort claim.
+Native3102 managed Preview is SUCCESS; required broad/database CI and native12/
+affected original Edge release/readback remain owed. UI cannot release ahead of
+that dependency. Same original fullten/E5/ZION/both-chat/founder obligations,
+O02→O05→O07→O09 priority and existing source ownership remain. STILL CODING.
+
+## October30 04:40UTC — forward publication before safe Task release
+
+Original3102/fdc now has all13 observed checks/managedPreview and BOTH web statuses
+SUCCESS; original3103/3151 has all applicable checks green at its temporary
+native-parent base. Neither is merged. Currentmain3f37c5b72/production15 advances
+past unapplied12, so original deploy-migrations.yml would correctly refuse it.
+The SAME original Task function is forwarded to20271126050005 after published
+E08native40008; no --include-all, production ledger repair or peer source edit.
+Normal main composition082eb3b0 preserves all18191 outside-owned leaves. Native
+body/text, handler summary104 and all five rendered card inputs remain exact;
+generator15/field check and whitespace PASS. Fresh new-head review/CI/managed
+Preview/native225 are mandatory; historical green evidence is not transferred.
+The owned no-data/nonpersistent Preview12 source/catalogue proof is retained
+before supported disposable-environment recreation. No production schema/data,
+provider or business action occurred. Dependent UI remains DRAFT/preserved;
+retarget/final exact CI/release follows its verified native/Edge dependency.
+E04financial15, E09tentative16 and E08native/Root/host/card/record-link leases,
+same ZION/personality, both Chat/Team Hub and fullten/E5 remain preserved. This is
+routine engineering reconciliation, not founder approval or outcome closure.
+
+### October30 — native release and composed receipt/reminder checkpoint
+
+All ten outcomes/E5-CV1–E5-CV9 remain controlling; no closure count is inferred.
+Task producer3102 merged571f after required checks/review and its50005 normal
+migration/source/ACL readback passed. crm-command matched deployed571f, but
+full selected Edge certification failed on two other incumbent paths; one
+original failed-job recovery is pending, no verifier bypass or business replay.
+Editor3103 now targetsmain at03ab50de0, exact lower5716351476; all11 original
+source/test blobs preserved, rebuilt126-input/eight-valid-frame evidence and
+165 assertions/10 distinct files. One stale screenshot is retained INVALID and
+replaced; no customer, original approval/Rail or full-shell claim is borrowed.
+
+Receipt3121 now composesmain571f asbb8145339, same original six-file225/4 delta,
+all18,473 outside main leaves/five owned non-packet files exact, both packet
+appendices conserved. Lower review5716380977; new required CI/Preview remains
+owed and production70005 still follows original published E09native60009.
+Native reminder3127 composes this same parent: four non-packet product/test/
+evidence files remain exact tobacb, full-schema native SQL passed in the actual
+managed Preview with all fixtures rolled back and post-counts0Auth/0Work/0Tasks.
+Its prior hosted CI failed before reviewed changes because the old chain lacked
+released40008 grants; this current-main reconciliation fixes that source drift,
+without weakening hashes/authority or calling the failed run green. New clean
+CI/composed Preview, production75005 and separate mounted Admin editor remain
+owed. Full lifecycle/automation/ZION/monitoring/recovery, both chats, eligible
+current/new SOLO, founder acceptance and final source-log closeout stay open.
+
+### October30 18:18UTC — current-tenant reminder editor and dependency readback
+
+E09 original3118 independently observed merged7a1e16a55; actual production60009
+read back after40008/50005. Receipt70005 then native reminder75005 still require
+ordinary exact-head release/readback. Editor3103/03ab and receipt/reminder
+bb814/d44 clean database-contract/Preview checks are green; verify still running.
+No pending gate is relabelled PASS and no UI precedes its native prerequisite.
+
+Current-tenant reminder editor localef8b removes only redundant global role labels
+after original current-business Admin, actor and loading evidence.126 assertions
+across3 suites PASS; five original Workspace/inspector captures demonstrate
+1366/320 light/dark, native keyboard/discard, assignee/loading/stale denial and
+return-to-original-card. These are network-disabled neutral fixture observations,
+not customer authorization, records, receipts, native200% or full-shell proof.
+The original writer/version/readback/unknown handling is retained. Separate
+AUTHOR-REVIEW / LOWER ASSURANCE, exact-head CI and release remain required.
+
+Owner recordkeeping0ba344ff received in original ANT11/3a4e31da. Existing Google
+Assignment LocksF5/ProgramI7 checkpoint NOTES updated/read back18:15UTC; original
+values/prior notes/format/peer history preserved. E08 current Master/Brain lease
+respected. Same ZION, both chats, all ten outcomes/E5-CV1–9, algorithm maturity,
+full Builder/monitoring/permitted updates and authenticated cohorts remain OPEN.
+Next order O02→O05→O07→O09; STILL CODING / NOT_READY / NOT_ACCEPTED.
+### Forward parent received by original editor
+
+Dependent UI now normally composes nativec5d0/main3f37 intoe78ac4f56, retaining
+both complete packet append sections and all18203 outside-owned incoming leaves.
+All11 original product/test paths,125 rendered inputs/nine fixture sources and
+package/lockfile remain exact. Actual seven suites again125PASS/0FAIL/0skip;
+original seven bounded composed frames retain their original proof scope.
+Replacement managed Preview yalqqd is SUCCESS:50005ONCE/old12ABSENT/native body
+MD5caea59ab335ecaf295391c41a1a0522f/service-onlyACL exact. Earlier retirement-time
+failure is retained; replacement success is independently read, not assumed.
+Native wholeCI/production migration+Edge readback and dependent final main
+retarget/review/CI remain owed. No customer effect, full outcome or owner acceptance.
+
+### October30 20:29UTC — full native per-act automation proof and safe publication order
+
+Preserved original multi-step native source normally composes main05519c969 as
+8d2f8b3fc. Actual production source observation confirms four original target
+OIDs/guarded bodies/owners/ACLs and frontier20271126080004; candidate absent.
+Unpublished140005 is reconciled to80005, immediately after actual E04 80004 and
+before already-published E08 80008/90008/100008/110008 and E03 proposed120003.
+Exact SQL text is unchanged; only own proof path references change. No deployed
+migration history, original source hash/ACL guard or peer migration is rewritten.
+Original receiving notice ANT11/97bd196d records this BEFORE the path change.
+
+Final-path FULL original native run-d3bc7v completed143 controls and actual
+engine/C5 JSON56PASS/0FAIL/0PENDING, including the named two-step native case.
+The owned disposable PG server stopped normally. New shared rollback-only SQL
+checks literal1/2/20 positives, malformed/dynamic/external/21-step negatives and
+original public/private ACLs without Auth/business fixtures or effects. Extended
+SAME selected native mode run-eCShoI completed29PASS, including that SQL; it is
+NOT another full regression count and does NOT establish full Supabase schema.
+Original full143 result and selected29/SQL result remain distinct evidence.
+
+Native complete-schema managed Preview, true caller/cohort authority, final
+review/requiredCI/migration/source readback and actual customer multi-step
+review/execution/receipts/reload remain owed. Source is a reusable native
+foundation, not a claim that the unchanged single-step UI already supplies the
+complete Workflow Automation Builder. No provider, trigger, recurrence, real
+Task or approval is activated by the proof. Fullten/E5, same ZION/both chats,
+remaining weekly execution/monitoring/proactive outcomes and founder evaluation
+remain OPEN. No new framework, scheduler, registry, Task store or ledger.
+
+### October30 20:38UTC — actual complete-schema per-act lifecycle
+
+Original3137/812 managed no-data Preview4844b175/projectwwnbsywgmylkhhizdwob
+applied80005 and the exact literal/private-ACL SQL passed. New original lifecycle
+SQL then passed on the real rebuilt schema: two synthetic owner/admin businesses,
+real Auth/profile/membership triggers and native control/event/record/approval/
+claim/CRM Task/result/Rail/recovery calls. Each step's original approval is
+separate, two original Tasks and returned receipt IDs remain distinct, exactly
+one Rail per canonical receipt and no-repeat recovery verified. The full fixture
+rolled back; independent final0Auth users/0CRM Tasks/0Processes. This is genuine
+schema/native integration with explicit SQL-role/clock fixtures, NOT ordinary
+Auth/JWT, production business effects or universally accepted customer cohorts.
+
+Initial fixture enum type error, valid temporal refusal from transaction-start
+now() versus arm clock_timestamp, and wrong input-versus-returned receipt-key
+assertion were diagnosed from original schema/source. Test-only enum/clock/input
+construction corrected; exact production function/guard bodies remain unchanged.
+Final unwrapped SQL completed all assertions and explicit post-rollback PASS;
+earlier failures retained. Actual customer event timing/role/cohort/record-Rail-
+reload, native full-schema concurrency, mounted multi-step review and both-chat
+full Experience/founder acceptance remain owed. New test/evidence head needs
+renewed review/exactCI; no live automation/event/provider or customer task enabled.
+
+### October30 21:10UTC — complete internal-task chain review
+
+O05/O06, E5-CV1/4/5: the existing process card now reviews every supported
+original literal Task in a1–20step chain before exact deliberate enablement.
+Each later occurrence still needs its own original approval and Task/result/
+Rail. Recorded order is not dependency scheduling. Original single-step flow,
+unsupported design inspection, native whole-chain/source/version checks,
+history and uncertain-result no-repeat recovery remain.
+
+Causal8RED/80retained controls became final285PASS/five original component,
+hook, caller, complete-read and history suites. Original rendered fixture
+2tests passed/84states including20new multistep states; eleven raw settled
+frames and source/style hashes are in the existing UI evidence
+[record](../evidence/ui-delivery/exp05-owner-task-multistep-review.md).
+Original main/PAIGE scroll and responsive overlay retained; native200percent
+zoom/AT and ordinary authenticated acceptance remain owed. Initial skipped
+asset run, current-frame pin mismatch and new selector error remain historical;
+only fixture setup/expected current source was corrected.
+
+Native3137/fd0 remains the mandatory production prerequisite; its complete
+schema/native proof is not live customer authorization. This child adds no
+writer, scheduler, provider, approval engine or specialist. Workflow Design
+Draft stays draft-only and operations.department remains PARTIAL.
+ALG-01 bounded state/receipt/replay support remains distinct from incomplete
+ALG-08 scheduling/capacity, ALG-12 monitoring and ALG-13 recommendation coverage.
+Allten/E5, same ZION through both chats, weekly execution, full automation
+lifecycle, permitted proactivity, new/existing SOLO cohorts and one integrated
+founder evaluation remain OPEN; this is not complete Experience acceptance.
+### October30 19:50UTC — native reminder released; composed editor proof
+
+Original3127/5b passed all13 exact-head checks/Preview and both web statuses,
+review5717729953, merged1515a9ff. Normal migration41116346469 succeeded;
+production75005ONCE/db-live1515. Original base body69755a72 inverses exactly once
+to guarded9e57d9e3; wrapper73f3a1af/OIDs/owner/definers/paths/ACLs preserved.
+Both official1515-mvvdg7m8 builds/assets were actually read19:38:54UTC. Native-only
+change has no Edge delta; edge-liveaa is incoming CURA source. This clears the
+child's native dependency without a reminder/cron/customer/provider invocation.
+
+Child3131 normally composes currentmain1515 to f30e2e88c: all18,564 incoming
+outside-owned leaves and all10 own non-packet blobs conserved; one packet conflict
+removed only markers, retaining BOTH full histories as ordered-line subsequences.
+Current editor41/Workspace63 plus separately executed adapter22 all PASS; lint and
+fresh original-Workspace125-input build PASS. Five incoming Task-effort/CSS inputs
+changed, so historical five frames are retained separately from the new manifest.
+Fresh composed browser render is requested in original ANT11/704c450e; no peer
+tab/viewport or customer session taken. Exact-head review/CI/public editor release
+and authenticated Admin Work/audit/Rail/reload remain owed.
+
+Original Google Delivery Evidence Register Program I7/J7 and LockF5 note were
+updated and explicitly read back19:50:28UTC; prior text/notes, original LockF5
+value, formatting and authenticated/founder columns are unchanged. Original
+ANT11/249eb3d9 and E04 receiving ANT51/e6ed650d retain the source/native handoff.
+Shared Master/Brain custody remains requested, not silently taken. Local type
+check's three missing-RealtimeKit diagnostics and failed isolated ENOSPC install
+remain recorded; only that verified own partial install was removed, preserving
+the original store/source/lock/baseline. Clean-install hosted CI stays required.
+
+Catalogue remains PARTIAL: original planning.list is read-only; manual versioned
+reminder correction is not a new advertised Chat/Live write binding. Operations
+planning/draft skills are unchanged and imply no execution. Same original manual
+writer/audit/Rail/CAS/recovery, ALG01/08 boundaries, fullten/E5, same ZION/both
+chats, eligible current/new SOLO and one complete founder evaluation remain OPEN.
+
+### October30 20:16UTC — reminder editor current-main verification / automation proof
+
+Original3131 now normally composes E04adb84 and E03main055 to f7281451.
+Original editor/test blobs unchanged; fresh126 assertions across allthree actual
+suites, lint and structural evidence guard PASS. A first obsolete minWorkers CLI
+argument was refused before tests; supported maxWorkers-only invocation then
+completed126/0failure/0skip. Both transcripts preserved; no implementation or
+assertion change. All125 compiled product input hashes match the current source.
+
+Actual offline original Workspace/inspector passed Admin1366/320 light/dark,
+assignee-only/loading/stale-actor refusal, native keyboard date change, discard,
+Tab and Escape/original-card focus. Six confirmed frames/current geometry are
+attached. Three immediate stale board captures are retained privately EXCLUDED;
+settled recaptures were inspected. No Save, account or business action occurred.
+Own loopback tab/server closed, viewport reset; receiving browser return is
+ANT11/c5c8e08f. Final exact-head review, required CI, editor deployment and genuine
+customer original record/audit/Rail/reload remain separate owed evidence.
+
+The preserved unpublished native multistep branch c1c6c19e separately completed
+FULL143 actual PostgreSQL control cases and56 actual native engine/C5 tests;
+owned disposable server stopped. This includes original one-step and two-step
+execution/readback/replay, exact company/SOLO classification, per-act receipts,
+source/version/claim/refusal and concurrency controls. Earlier137/28 results are
+historical. Full-schema/authenticated-caller/cohort proof, final review/CI/native
+release and the customer multistep review UI remain owed; no production activation.
+
+Same O02→O05→O07→O09, allten/E5-CV1–9, same ZION through both chats and universal
+eligible existing/new SOLO implementation remain the assignment. No complete
+outcome or founder acceptance is claimed. Shared Master/Brain queue is re-grounded
+against E02's explicit returned edit slot; preserve incoming unmerged rows and
+obtain/record the exact bounded source custody before its closeout update.
+
+### October30 21:48UTC — actual Operations-host proof and release-log closeout
+
+Original mechanical log3136 is MERGED78df259a1f60f29334bda3622aa612c3c4afa34e,
+reviewed7853eac490845810831fcb542fb80fca1285509d/lower5718565671. Allten applicable
+checks and both web statuses passed; schema-free Preview was SKIPPED. Actual
+merge parents277/7853 and tree0e36709a exactly match the checked union, preserving
+all18,648 incoming outside-owned leaves and the two candidate documents. Actual
+production dpl_831FUEmddH3hFmbhUgZmKqFacW9b is READY/exact78; both official
+origins returned78df259a1f60f29334bda3622aa612c3c4afa34e-mvvi1nn8 at21:48:06UTC,
+HTML/version/actualmain-B6yY0uOq.js200 with identical SHA33dfe36a. Documentation
+only; no migration/Edge/activation/customer acceptance or recursive log row.
+
+Original multistep child3139 now proves actual OperationsRoute→Workspace→
+Playbooks→original task hook/caller in the SAME renderer. Four tests PASS,
+including held Procedures/Work navigation and Cancel/source-focus restoration
+with zero simulated controls.104 generated states retain84 Settings states and
+add20 Operations states; frame counts are not test/customer acceptance counts.
+Eleven new raw settled Operations JPEGs and25 current listed source/style hashes
+join the existing historical Settings evidence without rewriting it. Initial
+24-input frames omitted operations-views.css and are excluded; corrected
+canonical CSS fixture rerun passed. A direct-locator-focus recovery image is
+also excluded in favor of the natural initial state. Native full-application
+keyboard/scroll/zoom/AT, ordinary authenticated enable→separate approvals→Tasks/
+Rails→reload, equivalent new/existing cohorts and both chats remain owed.
+
+Native3137 exacte79 remains UNMERGED; original144 native +56 engine/C5 proof,
+full-schema Preview/lifecycle and source review are retained. Its new required
+verify is still live, not restarted or waived. Actual production frontier80004,
+candidate80005 ABSENT; allfour original guarded function identities/body hashes/
+owners/definers/paths/ACLs match. E02 proposed80006 Billing post-wait repair has
+explicit E05 no-conflict/order ACK ANT138/d9104117 AFTER published80005 and BEFORE
+E08 published80008; this does not grant global custody, release or live effects.
+
+Allten/E5, O02→O05→O07→O09, original ZION through PAIGE Chat and Team Hub, ALG
+inputs/maturity, Capabilities PARTIAL, weekly execution/full Builder/monitoring/
+permitted proactivity/recovery and one complete founder evaluation remain OPEN.
+
 
 ## October29 — ZION Planning host review branch; native release dependency OPEN
 

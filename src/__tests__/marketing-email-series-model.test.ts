@@ -35,12 +35,12 @@ describe("states and the approval summary", () => {
     expect(seriesState("blocked").label).toBe("Needs attention");
     expect(seriesState("pending_approval").label).toBe("Waiting for approval");
   });
-  it("says who it reaches, from whom, and the shared daily limit", () => {
-    expect(startSummary({ name: "Win back", emails: 3, mode: "matching", matching: 42, from: "a@b.c", cap: 500, change: false }))
-      .toBe("Start “Win back”: 3 emails to the 42 people who match today, and anyone who matches later. From a@b.c. Up to 500 emails a day across all your marketing email.");
-    expect(startSummary({ name: "Welcome", emails: 1, mode: "new_contacts", matching: null, from: "a@b.c", cap: 500, change: false }))
+  it("says who it reaches and from whom, and names no daily limit (owner ruling 2026-10-27)", () => {
+    expect(startSummary({ name: "Win back", emails: 3, mode: "matching", matching: 4200, from: "a@b.c", change: false }))
+      .toBe("Start “Win back”: 3 emails to the 4200 people who match today, and anyone who matches later. From a@b.c.");
+    expect(startSummary({ name: "Welcome", emails: 1, mode: "new_contacts", matching: null, from: "a@b.c", change: false }))
       .toContain("1 email to new contacts as they arrive.");
-    expect(startSummary({ name: "Welcome", emails: 2, mode: "new_contacts", matching: null, from: "a@b.c", cap: 500, change: true }))
+    expect(startSummary({ name: "Welcome", emails: 2, mode: "new_contacts", matching: null, from: "a@b.c", change: true }))
       .toContain("carry on with the new emails from where they are");
   });
 });

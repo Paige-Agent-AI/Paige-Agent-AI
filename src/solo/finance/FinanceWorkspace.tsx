@@ -2,10 +2,12 @@ import React from "react";
 import { resolveDepartmentSpecialist } from "@/lib/paige/vpDepartments";
 import { useOptionalTenantContext } from "@/hooks/useTenantContext";
 import { useTheme } from "next-themes";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
 import { RefreshCw, ArrowUpRight, Landmark, Wallet, Sparkles } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
+import { subtabByKey, subtabPath } from "@/lib/routing/tierBranches";
+import { routeLinkTarget } from "@/lib/links/workspaceLinks";
 import { useSalesPerformanceMetrics } from "../sales/performance/useSalesPerformanceMetrics";
 import type { SalesMetricBundle, SalesPerformancePhase, SalesPerformanceRangeKey } from "../sales/performance/types";
 import { formatMetricMoney, performanceDate, chartRatio, chartMaximum } from "../sales/performance/format";
@@ -45,11 +47,45 @@ function financeMetricReviewContext(metric: SalesMetricBundle | undefined, range
 /** Addressable Finance consumer. The Sales server owns records and every financial aggregate. */
 export function FinanceWorkspace({ epoch }: { epoch?: string | null }) {
  const { resolvedTheme } = useTheme();
- const [tab, setTab] = useSubtabRoute("solo", "finance", "overview");
- const [range, setRange] = React.useState<SalesPerformanceRangeKey>("month");
+ const navigate = useNavigate(), location = useLocation();
+ const { account } = useParams();
+ const context = useOptionalTenantContext();
+ const viewScope = context?.activeUserId && epoch && account ? `${context.activeUserId}:${epoch}:${account}` : null;
+ const savedScope = location.state?.financeRangeScope;
+ const foreignView = typeof savedScope === "string" && savedScope !== viewScope;
+ const [tab, setInlineTab] = useSubtabRoute("solo", "finance", "overview");
+ const [inlineRange, setInlineRange] = React.useState<SalesPerformanceRangeKey>("month");
+ // A view filter, never tenant or source authority. Derive it before any read
+ // so Back/reload cannot briefly request the previous window under a new label.
+ const requestedRanges = new URLSearchParams(location.search).getAll("range");
+ const range: SalesPerformanceRangeKey = !account ? inlineRange
+  : !foreignView && requestedRanges.length === 1 && PERIODS.includes(requestedRanges[0] as SalesPerformanceRangeKey)
+   ? requestedRanges[0] as SalesPerformanceRangeKey : "month";
+ const setRange = (next: SalesPerformanceRangeKey) => {
+  if (!PERIODS.includes(next)) return;
+  if (!account) { setInlineRange(next); return; }
+  const search = new URLSearchParams(location.search);
+  search.set("range", next);
+  navigate({ pathname: location.pathname, search: search.toString(), hash: location.hash },
+   { replace: true, state: { ...location.state, financeRangeScope: viewScope }, preventScrollReset: true });
+ };
+ const setTab = (key: string) => {
+  const slug = subtabByKey("solo", "finance", key)?.slug;
+  if (!account || !slug) { setInlineTab(key); return; }
+  navigate({ pathname: subtabPath("solo", account, "finance", slug), search: location.search, hash: location.hash }, { state: location.state });
+ };
+ React.useEffect(() => {
+  // Retain the shell's actor/business reset. This history marker scopes only a
+  // view preference; original readers still resolve every permission themselves.
+  if (!foreignView || !viewScope) return;
+  const search = new URLSearchParams(location.search);
+  search.delete("range");
+  const { financeRangeScope: _oldScope, ...state } = location.state;
+  navigate({ pathname: location.pathname, search: search.toString(), hash: location.hash },
+   { replace: true, state, preventScrollReset: true });
+ }, [foreignView, viewScope, location.pathname, location.search, location.hash, location.state, navigate]);
  const metrics = useSalesPerformanceMetrics(epoch, range);
  const invoices = useFinanceInvoices(epoch);
- const context = useOptionalTenantContext();
  const targetActor = context && !context.loading && context.accountContextStatus === "ready" && context.activeTenantId === epoch ? context.activeUserId : null;
  const reviewTab = tab === "banking" || tab === "forecast";
  const bankingRead = useBusinessReview((tab === "banking" || tab === "forecast" && targetActor) && metrics.phase !== "denied" && invoices.phase !== "denied" ? epoch : null,
@@ -57,8 +93,19 @@ export function FinanceWorkspace({ epoch }: { epoch?: string | null }) {
  const [filter, setFilter] = React.useState("issued");
  const [search, setSearch] = React.useState("");
  const [detail, setDetail] = React.useState<{ epoch: string; range: string; readIdentity: string; value: SalesMetricBundle | InvoiceRecord } | null>(null);
- const navigate = useNavigate(), location = useLocation();
  const refs = React.useRef<Array<HTMLButtonElement | null>>([]);
+ const navigationType = useNavigationType();
+ const focusScope = React.useRef(epoch);
+ React.useLayoutEffect(() => {
+  const sameWorkspace = focusScope.current === epoch;
+  focusScope.current = epoch;
+  if (!sameWorkspace || navigationType !== "POP") return;
+  // History updates selection without the click/key handler. Follow it only
+  // while this tab strip owns focus; leave Chat, forms and source sheets alone.
+  const focused = refs.current.find(node => node && node === document.activeElement);
+  const selected = refs.current.find(node => node?.getAttribute("aria-selected") === "true");
+  if (focused && selected && focused !== selected) selected.focus();
+ }, [epoch, tab, navigationType]);
  const evidenceReturn = React.useRef<{ element: HTMLButtonElement; epoch: string; range: SalesPerformanceRangeKey } | null>(null);
  const prefix = location.pathname.match(/^\/solo\/[^/]+/)?.[0];
  const openOwner = (path: string) => { if (prefix) navigate(`${prefix}/${path}`); };
@@ -71,6 +118,8 @@ export function FinanceWorkspace({ epoch }: { epoch?: string | null }) {
   ? metrics.phase === "ready" ? metrics.metrics.find(metric => metric.metric_key === (detail.value as SalesMetricBundle).metric_key && metric.evidence_ref === (detail.value as SalesMetricBundle).evidence_ref && Date.parse(metric.reference_expires_at ?? "") > Date.now()) ?? null : null
   : invoices.phase === "ready" && detail.readIdentity === invoices.identity ? invoices.rows.find(row => row.id === (detail.value as InvoiceRecord).id) ?? null : null;
  React.useEffect(() => { if (detail && !shown) setDetail(null); }, [detail, shown]);
+ const invoiceTarget = shown && !("metric_key" in shown)
+  ? routeLinkTarget({ destination: "sales_invoices", record_id: shown.id }, "solo", account) : null;
  React.useEffect(() => { evidenceReturn.current = null; setDetail(null); }, [tab]);
  React.useEffect(() => { setDetail(null); setFilter("issued"); setSearch(""); }, [epoch]);
  const currentRows = invoices.rows.filter(row => (filter === "all" || row.status === filter) && `${row.number} ${row.snapshot.memo ?? ""}`.toLowerCase().includes(search.toLowerCase()));
@@ -110,5 +159,5 @@ export function FinanceWorkspace({ epoch }: { epoch?: string | null }) {
  else if (approvedTab === "profitability") body = <><div className="finance-source-layout"><section><div className="finance-report-context"><h2>Income statement</h2><span>Statement unavailable</span></div><Readiness title="Statement coverage" rows={[["Reporting basis", "Not supplied"], ["Accounting period", "Not supplied by company books"], ["Recognized revenue", "Accounting source needed"], ["Direct and operating costs", "Complete expense coverage needed"], ["Profit and supported margins", "Not calculated"]]}/><section className="finance-boundary"><h2>Sales context, kept separate</h2><FinanceMetric label="Invoice face value issued" metric={get(KEYS.issued)} phase={metrics.phase} onInspect={inspect}/><p>This selected invoice cohort is not an income statement or recognized revenue.</p></section></section></div></>;
  else if (approvedTab === "forecast") body = <><div className="finance-source-layout"><section><FinancePlayTargets review={bankingRead} tenantId={epoch} actorId={targetActor} account={prefix?.split("/")[2]} metricKeys={Object.values(KEYS)}/><Readiness title="Forecast inputs" rows={[["Opening company cash", "Verified bank balance needed"], ["Expected collections", "Sales timing assumptions need confirmation"], ["Bills and spending schedule", "Company obligations needed"], ["Budget versus actuals", "Durable budget and accounting sources needed"]]}/><section className="finance-boundary"><h2>Assumptions to review</h2><p>Receipt timing, payment dates and the company’s cash floor must be explicit. No forecast curve or shortfall estimate is generated until the inputs are supported.</p></section></section></div></>;
  else body = null;
- return <div className="finance-workspace"><nav className="finance-tabs" role="tablist" aria-label="Finance departments">{FINANCE_TABS.map(([key, label], index) => <button key={key} ref={node => { refs.current[index] = node; }} role="tab" id={`finance-tab-${key}`} aria-selected={approvedTab === key} aria-controls="finance-panel" tabIndex={approvedTab === key ? 0 : -1} onClick={() => setTab(key)} onKeyDown={event => { if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return; event.preventDefault(); const next = event.key === "Home" ? 0 : event.key === "End" ? FINANCE_TABS.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + FINANCE_TABS.length) % FINANCE_TABS.length; refs.current[next]?.click(); refs.current[next]?.focus(); }}>{label}</button>)}</nav>{approvedTab !== "debt" && <div className="finance-toolbar">{metrics.phase !== "denied" && invoices.phase !== "denied" && (<><button className="finance-primary" onClick={() => ask(approvedTab === "forecast" ? undefined : get(approvedTab === "profitability" ? KEYS.issued : KEYS.outstanding))}><Sparkles size={17}/>Review with {financeSpecialist.name.toUpperCase()}</button>{approvedTab === "receivables" && <button onClick={() => openOwner("sales/payments?view=collections")}>Open Sales Collections <ArrowUpRight size={15}/></button>}</>)}{["overview", "receivables", "profitability"].includes(approvedTab) && <label>Sales evidence period<select value={range} onChange={event => setRange(event.target.value as SalesPerformanceRangeKey)}>{PERIODS.map(value => <option key={value} value={value}>Last {value === "week" ? "7" : value === "month" ? "30" : value === "quarter" ? "90" : "365"} completed UTC days</option>)}</select></label>}<button onClick={() => { setDetail(null); if (reviewTab) bankingRead.refresh(); else { metrics.retry(); invoices.retry(); } }} disabled={reviewTab ? bankingRead.state === "loading" : metrics.phase === "loading" || invoices.phase === "loading"}><RefreshCw size={14}/>{(reviewTab ? bankingRead.state === "loading" : metrics.phase === "loading") ? "Loading" : "Refresh sources"}</button></div>}<div className="finance-content" id="finance-panel" role="tabpanel" aria-labelledby={`finance-tab-${approvedTab}`}>{body}</div><Sheet open={!!shown} onOpenChange={open => { if (!open) setDetail(null); }}><SheetContent data-pg={resolvedTheme === "light" ? "light" : "dark"} className="finance-evidence" onCloseAutoFocus={restoreEvidenceFocus}><SheetHeader><SheetTitle>Financial source evidence</SheetTitle><SheetDescription>Original source facts, coverage and limitations.</SheetDescription></SheetHeader>{shown && ("metric_key" in shown ? <><h2>{shown.label}</h2><span className="finance-status">{Date.parse(shown.reference_expires_at ?? "") <= Date.now() ? "Expired · refresh sources" : shown.truth_state}</span><p>{shown.definition}</p><dl><dt>Basis</dt><dd>{shown.range.semantics}</dd><dt>Period</dt><dd>{performanceDate(shown.range.start)} to {performanceDate(shown.range.end)} exclusive</dd><dt>As of</dt><dd>{performanceDate(shown.as_of)}</dd><dt>Coverage</dt><dd>{shown.coverage.contributing_count} contributing; {shown.coverage.excluded_count} excluded</dd></dl><h3>Limitations</h3><ul>{shown.caveats.map(caveat => <li key={caveat}>{caveat}</li>)}{shown.exclusions.map(item => <li key={item.reason}>{item.reason}: {item.count}</li>)}</ul><p>Source: {shown.source_refs.join(", ")}</p></> : <><h2>{shown.number}</h2><dl><dt>Status</dt><dd>{shown.status}</dd><dt>Source amount</dt><dd>{money(shown.totalMinor, shown.snapshot.currency)}</dd><dt>Outstanding</dt><dd>{shown.status === "issued" ? money(shown.remainingMinor, shown.snapshot.currency) : "Not an issued obligation"}</dd><dt>Recorded manually</dt><dd>{money(shown.manualRecordedMinor, shown.snapshot.currency)}</dd><dt>Provider allocations</dt><dd>{money(shown.providerVerifiedMinor, shown.snapshot.currency)} · includes TEST where recorded; not bank cash</dd></dl><h3>Invoice lines · original source wording</h3>{shown.snapshot.items.map((item, index) => <p key={index}>{item.item} · {item.quantity} × {money(item.unit_minor, shown.snapshot.currency)}</p>)}<h3>Receipt evidence</h3>{shown.payments.map(receipt => <p key={receipt.id}>{receipt.kind} · {money(receipt.amount_cents, shown.snapshot.currency)} · {receipt.evidence_kind ?? "manual_recorded"} · {performanceDate(receipt.received_at)}</p>)}{shown.paymentsHasMore && <p>Receipt history is partial. Open Sales for the complete ledger.</p>}<button onClick={() => openOwner("sales/payments?view=invoices")}>Open canonical Sales invoices</button></>)}</SheetContent></Sheet></div>;
+ return <div className="finance-workspace"><nav className="finance-tabs" role="tablist" aria-label="Finance departments">{FINANCE_TABS.map(([key, label], index) => <button key={key} ref={node => { refs.current[index] = node; }} role="tab" id={`finance-tab-${key}`} aria-selected={approvedTab === key} aria-controls="finance-panel" tabIndex={approvedTab === key ? 0 : -1} onClick={() => setTab(key)} onKeyDown={event => { if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return; event.preventDefault(); const next = event.key === "Home" ? 0 : event.key === "End" ? FINANCE_TABS.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + FINANCE_TABS.length) % FINANCE_TABS.length; refs.current[next]?.click(); refs.current[next]?.focus(); }}>{label}</button>)}</nav>{approvedTab !== "debt" && <div className="finance-toolbar">{metrics.phase !== "denied" && invoices.phase !== "denied" && (<><button className="finance-primary" onClick={() => ask(approvedTab === "forecast" ? undefined : get(approvedTab === "profitability" ? KEYS.issued : KEYS.outstanding))}><Sparkles size={17}/>Review with {financeSpecialist.name.toUpperCase()}</button>{approvedTab === "receivables" && <button onClick={() => openOwner("sales/payments?view=collections")}>Open Sales Collections <ArrowUpRight size={15}/></button>}</>)}{["overview", "receivables", "profitability"].includes(approvedTab) && <label>Sales evidence period<select value={range} onChange={event => setRange(event.target.value as SalesPerformanceRangeKey)}>{PERIODS.map(value => <option key={value} value={value}>Last {value === "week" ? "7" : value === "month" ? "30" : value === "quarter" ? "90" : "365"} completed UTC days</option>)}</select></label>}<button onClick={() => { setDetail(null); if (reviewTab) bankingRead.refresh(); else { metrics.retry(); invoices.retry(); } }} disabled={reviewTab ? bankingRead.state === "loading" : metrics.phase === "loading" || invoices.phase === "loading"}><RefreshCw size={14}/>{(reviewTab ? bankingRead.state === "loading" : metrics.phase === "loading") ? "Loading" : "Refresh sources"}</button></div>}<div className="finance-content" id="finance-panel" role="tabpanel" aria-labelledby={`finance-tab-${approvedTab}`}>{body}</div><Sheet open={!!shown} onOpenChange={open => { if (!open) setDetail(null); }}><SheetContent data-pg={resolvedTheme === "light" ? "light" : "dark"} className="finance-evidence" onCloseAutoFocus={restoreEvidenceFocus}><SheetHeader><SheetTitle>Financial source evidence</SheetTitle><SheetDescription>Original source facts, coverage and limitations.</SheetDescription></SheetHeader>{shown && ("metric_key" in shown ? <><h2>{shown.label}</h2><span className="finance-status">{Date.parse(shown.reference_expires_at ?? "") <= Date.now() ? "Expired · refresh sources" : shown.truth_state}</span><p>{shown.definition}</p><dl><dt>Basis</dt><dd>{shown.range.semantics}</dd><dt>Period</dt><dd>{performanceDate(shown.range.start)} to {performanceDate(shown.range.end)} exclusive</dd><dt>As of</dt><dd>{performanceDate(shown.as_of)}</dd><dt>Coverage</dt><dd>{shown.coverage.contributing_count} contributing; {shown.coverage.excluded_count} excluded</dd></dl><h3>Limitations</h3><ul>{shown.caveats.map(caveat => <li key={caveat}>{caveat}</li>)}{shown.exclusions.map(item => <li key={item.reason}>{item.reason}: {item.count}</li>)}</ul><p>Source: {shown.source_refs.join(", ")}</p></> : <><h2>{shown.number}</h2><dl><dt>Status</dt><dd>{shown.status}</dd><dt>Source amount</dt><dd>{money(shown.totalMinor, shown.snapshot.currency)}</dd><dt>Outstanding</dt><dd>{shown.status === "issued" ? money(shown.remainingMinor, shown.snapshot.currency) : "Not an issued obligation"}</dd><dt>Recorded manually</dt><dd>{money(shown.manualRecordedMinor, shown.snapshot.currency)}</dd><dt>Provider allocations</dt><dd>{money(shown.providerVerifiedMinor, shown.snapshot.currency)} · includes TEST where recorded; not bank cash</dd></dl><h3>Invoice lines · original source wording</h3>{shown.snapshot.items.map((item, index) => <p key={index}>{item.item} · {item.quantity} × {money(item.unit_minor, shown.snapshot.currency)}</p>)}<h3>Receipt evidence</h3>{shown.payments.map(receipt => <p key={receipt.id}>{receipt.kind} · {money(receipt.amount_cents, shown.snapshot.currency)} · {receipt.evidence_kind ?? "manual_recorded"} · {performanceDate(receipt.received_at)}</p>)}{shown.paymentsHasMore && <p>Receipt history is partial. Open Sales for the complete ledger.</p>}{invoiceTarget && <button onClick={() => navigate(invoiceTarget.to)}>{invoiceTarget.label}</button>}</>)}</SheetContent></Sheet></div>;
 }

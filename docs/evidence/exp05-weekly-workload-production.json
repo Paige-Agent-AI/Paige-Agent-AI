@@ -1,0 +1,130 @@
+{
+  "schema": 1,
+  "pr": 3091,
+  "reviewedHead": "ebb0fc7e6cc311b0fdbd97e42ee4477c0bd2642e",
+  "merge": "19dded7284bb76c55750651a777e53316e10100a",
+  "tree": "a7415d890ecd4d499e395a345f5905f1c39c7c61",
+  "releaseClass": "internal-only production web increment; complete EXP05 acceptance remains open",
+  "review": {
+    "final": 5703813142,
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE"
+  },
+  "ci": {
+    "webContexts": 2,
+    "unresolvedReviewThreads": 0,
+    "managedPreview": "SKIPPED: schema-free",
+    "requiredChecks": 10,
+    "webResult": "SUCCESS",
+    "result": "SUCCESS"
+  },
+  "deployment": {
+    "status": "READY",
+    "id": "dpl_9NAfR9WzWWksKnz5mb4su5nRt79d",
+    "commit": "19dded7284bb76c55750651a777e53316e10100a"
+  },
+  "publicReadback": [
+    {
+      "origin": "https://paigeagent.ai",
+      "at": "2026-10-29T20:42:16.809Z",
+      "expectedMerge": "19dded7284bb76c55750651a777e53316e10100a",
+      "version": {
+        "buildId": "19dded7284bb76c55750651a777e53316e10100a-mvu0bhwj",
+        "customerUpdate": null
+      },
+      "exactExpectedBuild": true,
+      "versionMeta": {
+        "path": "/version.json",
+        "status": 200,
+        "bytes": 86,
+        "sha256": "c4c4e595f433cfb2f412ff439529e5ba58bc32fe50069bec4d110401c857925a"
+      },
+      "moduleGraph": [
+        {
+          "path": "/assets/main-D3SBiq4N.js",
+          "status": 200,
+          "bytes": 1568,
+          "sha256": "fe51118871bd8088a91839139b3734b5158a68a3b6ba8db88fea495ed9e34422"
+        },
+        {
+          "path": "/assets/main-CVaQPY1C.js",
+          "status": 200,
+          "bytes": 1177773,
+          "sha256": "777f73df360ae8855aa3e3558677174e5aac7fc1571ee75c97869d42c141f30e"
+        },
+        {
+          "path": "/assets/SoloEntry-dGu5s1HL.js",
+          "status": 200,
+          "bytes": 403134,
+          "sha256": "ceda2d0b1ddaeb147a6a193763fa62c40e4395fc26f197df264b48d0e7dff36b"
+        }
+      ],
+      "operations": {
+        "path": "/assets/OperationsRoute-DvtoE3K9.js",
+        "status": 200,
+        "bytes": 247199,
+        "sha256": "5e89ef4585abbd205dfb28df39bcce2c3b01527285552c769bdb1feeca529523",
+        "signatures": {
+          "Review weekly workload": true,
+          "Hours available for this work": true,
+          "Reset review inputs": true,
+          "No time has been reserved or action authorized.": true
+        }
+      },
+      "boundary": "Public source/version only. No authenticated customer, role/RLS, domain execution, receipt or founder acceptance inferred."
+    },
+    {
+      "origin": "https://app.paigeagent.ai",
+      "at": "2026-10-29T20:42:17.484Z",
+      "expectedMerge": "19dded7284bb76c55750651a777e53316e10100a",
+      "version": {
+        "buildId": "19dded7284bb76c55750651a777e53316e10100a-mvu0bhwj",
+        "customerUpdate": null
+      },
+      "exactExpectedBuild": true,
+      "versionMeta": {
+        "path": "/version.json",
+        "status": 200,
+        "bytes": 86,
+        "sha256": "c4c4e595f433cfb2f412ff439529e5ba58bc32fe50069bec4d110401c857925a"
+      },
+      "moduleGraph": [
+        {
+          "path": "/assets/main-D3SBiq4N.js",
+          "status": 200,
+          "bytes": 1568,
+          "sha256": "fe51118871bd8088a91839139b3734b5158a68a3b6ba8db88fea495ed9e34422"
+        },
+        {
+          "path": "/assets/main-CVaQPY1C.js",
+          "status": 200,
+          "bytes": 1177773,
+          "sha256": "777f73df360ae8855aa3e3558677174e5aac7fc1571ee75c97869d42c141f30e"
+        },
+        {
+          "path": "/assets/SoloEntry-dGu5s1HL.js",
+          "status": 200,
+          "bytes": 403134,
+          "sha256": "ceda2d0b1ddaeb147a6a193763fa62c40e4395fc26f197df264b48d0e7dff36b"
+        }
+      ],
+      "operations": {
+        "path": "/assets/OperationsRoute-DvtoE3K9.js",
+        "status": 200,
+        "bytes": 247199,
+        "sha256": "5e89ef4585abbd205dfb28df39bcce2c3b01527285552c769bdb1feeca529523",
+        "signatures": {
+          "Review weekly workload": true,
+          "Hours available for this work": true,
+          "Reset review inputs": true,
+          "No time has been reserved or action authorized.": true
+        }
+      },
+      "boundary": "Public source/version only. No authenticated customer, role/RLS, domain execution, receipt or founder acceptance inferred."
+    }
+  ],
+  "nativeSchema": "NOT_APPLICABLE",
+  "edge": "NOT_APPLICABLE: no function source change or upload claimed",
+  "activation": "NONE",
+  "authenticatedProof": "BOUNDED READ-ONLY PASS: original authorized owner Work review, original Task inspection, navigation and loaded-reload input reset; protected ANT-52/c8eeddbf. Temporary 8h is an engineering input, not actual business capacity. Positive saved effort/cohort/roles/RLS/full outcome remain owed.",
+  "acceptance": "PROOF_OWED: feasible saved plan, dependencies, same ZION in PAIGE Chat/Team Hub, original domain/Rail recovery, equivalent existing/new SOLO and all ten outcomes/E5-CV1-CV9. Founder NOT_ACCEPTED."
+}

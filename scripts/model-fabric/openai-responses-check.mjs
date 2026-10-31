@@ -587,5 +587,80 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
     "9.15 cancellation wakes a full-buffer pump, cancels its one reader, and never records success or retries");
 }
 
+// Acquisition is observed by Fabric, without changing the direct SSE consumer
+// contract or making a second provider/parser responsible for these events.
+{
+  const message = { messages: [{ role: 'user', content: 'Synthetic read-only review.' }] };
+  const created = { type: 'response.created', response: { status: 'in_progress' } };
+  const failure = { type: 'response.failed', response: { status: 'failed', error: { code: 'insufficient_quota', message: 'Synthetic failure.' } } };
+  const from = traceCount();
+  const failed = await ad.responsesStream(message, { model: 'gpt-6.1-sol',
+    fetchImpl: transport(() => sse([created, failure])),
+  }, TRACE);
+  const acquired = await failed.acquisition;
+  const wire = await drain(failed.body);
+  const [failedTrace] = await tracesSince(from);
+  ok(acquired?.ok === false && acquired.failureClass === 'billing' && wire.endsWith('data: [DONE]\n\n'),
+    '10.1 acquisition exposes a typed failure without inventing a finished answer');
+  ok(traceCount() === from + 1 && failedTrace?.status === 'error' && failedTrace?.error_class === 'response_failed',
+    '10.1 the failed original attempt still emits exactly one error trace');
+
+  for (const [code, expected] of [['credit_balance_exhausted', 'billing'], ['credit_balance_exhausted_extra', 'unknown'], [null, 'unknown']]) {
+    const start = traceCount();
+    const terminal = { type: 'response.failed', response: { status: 'failed', error: {
+      code, message: 'You have no credits remaining. Add credits to continue using the API.',
+    } } };
+    const r = await ad.responsesStream(message, { model: 'gpt-6.1-sol',
+      fetchImpl: transport(() => sse([created, terminal])),
+    }, TRACE);
+    const acquisition = await r.acquisition;
+    const wire = await drain(r.body);
+    const [row] = await tracesSince(start);
+    ok(!acquisition.ok && acquisition.failureClass === expected && !wire.includes('"finish_reason":"stop"')
+      && traceCount() === start + 1 && row?.status === 'error',
+      `10.1 exact terminal credit code ${String(code)} preserves error truth and closed classification`);
+  }
+
+  const ctrl = new AbortController(); let upstreamCancelled = 0, fetchSignal;
+  const cancelFrom = traceCount();
+  const pending = await ad.responsesStream(message, { model: 'gpt-6.1-sol', signal: ctrl.signal,
+    fetchImpl: async (_url, init) => {
+      fetchSignal = init.signal;
+      return new Response(new ReadableStream({
+        start(c) { c.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(created)}\n\n`)); },
+        cancel() { upstreamCancelled++; },
+      }));
+    },
+  }, TRACE);
+  const reader = pending.body.getReader();
+  const first = await reader.read();
+  ok(new TextDecoder().decode(first.value).includes('"role":"assistant"'), '10.2 direct consumers still receive the immediate role frame');
+  ctrl.abort();
+  const cancelled = await pending.acquisition;
+  let rejected = false; try { await reader.read(); } catch { rejected = true; }
+  const [cancelledTrace] = await tracesSince(cancelFrom);
+  ok(cancelled?.aborted && !cancelled.ok && fetchSignal.aborted && upstreamCancelled === 1 && rejected,
+    '10.2 caller abort cancels the original transport/body while acquisition is pending');
+  ok(cancelledTrace?.status === 'error' && traceCount() === cancelFrom + 1,
+    '10.2 interrupted acquisition records exactly one error and no successful finish');
+
+  const race = new AbortController(), raceFrom = traceCount();
+  const raced = await ad.responsesStream(message, { model: 'gpt-6.1-sol', signal: race.signal,
+    fetchImpl: async () => { race.abort(); return sse([created]); },
+  }, TRACE);
+  const raceAcquisition = await raced.acquisition;
+  try { await drain(raced.body); } catch { /* expected caller interruption */ }
+  const [raceTrace] = await tracesSince(raceFrom);
+  ok(raceAcquisition?.aborted && raceTrace?.status === 'error' && traceCount() === raceFrom + 1,
+    '10.3 cancellation between HTTP open and parser start cannot lose the original attempt trace');
+
+  const preHeader = new AbortController(), preHeaderFrom = traceCount();
+  const stopped = await ad.responsesStream(message, { model: 'gpt-6.1-sol', signal: preHeader.signal,
+    fetchImpl: async () => { preHeader.abort(); throw new DOMException('Synthetic cancellation.', 'AbortError'); },
+  }, TRACE);
+  const [preHeaderTrace] = await tracesSince(preHeaderFrom);
+  ok(!stopped.ok && !stopped.body && preHeaderTrace?.error_class === 'stream_interrupted'
+    && traceCount() === preHeaderFrom + 1, '10.4 pre-header caller cancellation retains one interrupted trace, not a provider network incident');
+}
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

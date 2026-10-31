@@ -14,7 +14,7 @@ import {
 const writable = (schema: unknown): Record<string, unknown> => JSON.parse(JSON.stringify(schema));
 export const EMAIL_CAMPAIGN_TOOLS = [
   {type:'function',function:{name:'read_email_campaigns',description:'Read this business\'s email campaigns (newest first), or pass campaign_id for one campaign\'s current version: its words, audience, schedule, goal, sender, approval state, and the audience choices (stages, sources, tags) its contacts carry. Read before changing a campaign. Shows no recipient names or addresses.',parameters:EMAIL_CAMPAIGNS_READ_CAPABILITY.input}},
-  {type:'function',function:{name:'read_email_campaign_audience',description:'Count who one email campaign would reach today, and how many are left out because they have no address, opted out, are suppressed, or (for a newsletter) never subscribed. Counts only. Also reports today\'s sending limit and whether the business postal address is set.',parameters:EMAIL_CAMPAIGN_AUDIENCE_READ_CAPABILITY.input}},
+  {type:'function',function:{name:'read_email_campaign_audience',description:'Count who one email campaign would reach today, and how many are left out because they have no address, opted out, are suppressed, or (for a newsletter) never subscribed. Counts only. Also reports whether the business postal address is set.',parameters:EMAIL_CAMPAIGN_AUDIENCE_READ_CAPABILITY.input}},
   {type:'function',function:{name:'email_campaign_draft',description:'Write a new email campaign draft (omit campaign_id) or change the current draft of one (pass campaign_id from read_email_campaigns). Only include fields you are setting. Write the body in plain marks, one per line: "# Heading", "- item", "[link text](https://...)", "[[Button text|https://...]]", blank line between paragraphs. Do not invent links, offers, dates or names; ask for any you need. The audience is a rule over the stages, sources and tags read_email_campaigns lists (empty means everyone who can be emailed), plus inactive_days for contacts not emailed in that many days, plus portal:"active" for only the customers whose portal access is open, or a saved segment_id. A promotion or announcement never reaches a portal customer, current or former, who has not turned on updates and offers. Setting audience replaces the whole rule and any saved segment, so read the campaign first and include what should stay. Give send_at with the owner\'s UTC offset (ask their time zone if unknown), or leave it out. The sender is the business\'s connected email first; the owner changes it in the editor. A draft sends nothing. This saves the email into Marketing > Email; draft_marketing_content is only for words to paste somewhere else. A campaign awaiting approval, approved or sent cannot be changed here; the owner uses Make changes or Edit and send again in Marketing > Email.',parameters:writable(EMAIL_CAMPAIGN_DRAFT_CAPABILITY.input)}},
   {type:'function',function:{name:'email_campaign_request_approval',description:'File one campaign\'s current draft for the owner\'s approval. This freezes that version and counts its recipients; it does NOT approve or send. Only the owner or an admin approves and sends, in Marketing > Email or Approvals. Needs a subject, a body, the business postal address, a working sender and at least one person who can receive it.',parameters:writable(EMAIL_CAMPAIGN_REQUEST_APPROVAL_CAPABILITY.input)}},
 ] as const;
@@ -56,7 +56,6 @@ const REFUSALS: Record<string, string> = {
   body_required: 'The campaign needs a message before it can be filed for approval.',
   postal_address_missing: 'The business postal address is not set, and every marketing email must carry it. Add it in Settings › Connections › Registration, then file again.',
   no_eligible_recipients: 'Nobody in this audience can receive email today. I can count who is left out and why.',
-  over_daily_cap: 'This audience is larger than today\'s sending limit. Narrow the audience or split it into two campaigns.',
   sender_not_found: 'The chosen sender is no longer connected. The owner can pick another in the editor\'s From.',
   sender_needs_attention: 'The sender needs attention before it can send. The owner can reconnect it or pick another in the editor\'s From.',
 };
@@ -192,7 +191,7 @@ export async function dispatchEmailCampaignChat(ctx: EmailCampaignChatContext, d
         left_out: { no_address: count(d.no_address), opted_out: count(d.opted_out), suppressed: count(d.suppressed), not_subscribed_to_newsletter: count(d.no_consent) },
         newsletter_subscribers_only: d.newsletter_subscribers_only === true, segment_name: text(d.segment_name, 200),
         recipients_when_filed: count(d.frozen_recipients),
-        daily_limit: count(d.daily_cap), sent_last_24h: count(d.used_last_24h), remaining_today: count(d.remaining_today),
+        sent_last_24h: count(d.used_last_24h),
         postal_address_set: d.postal_address_set === true,
         note: 'These are counts for today. The exact list is frozen when the draft is filed for approval.',
       } };

@@ -40,7 +40,7 @@ type CampaignRead = {
   segments: { id: string; name: string; rule: Rule }[];
   choices: Choices;
 };
-type Preview = { matched: number; eligible: number; no_address: number; opted_out: number; suppressed: number; no_consent: number; daily_cap: number; remaining_today: number; postal_address_set: boolean };
+type Preview = { matched: number; eligible: number; no_address: number; opted_out: number; suppressed: number; no_consent: number; postal_address_set: boolean };
 
 /** What an RPC refusal means, in the owner's words. */
 export function errorWords(error: { message?: string; details?: string } | null): string {
@@ -52,7 +52,6 @@ export function errorWords(error: { message?: string; details?: string } | null)
     body_required: "Write the email first.",
     postal_address_missing: "Add your business's postal address in Settings first. Every marketing email shows it.",
     no_eligible_recipients: "Nobody in this audience can be emailed: no address, opted out, or already reached by this campaign.",
-    over_daily_cap: `This audience is larger than today's sending limit. ${error?.details ?? ""}`.trim(),
     schedule_in_past: "The send time has passed. Choose a later time.",
     sender_not_found: "That sender no longer exists. Choose another.",
     sender_needs_attention: "This sender needs attention in Settings › Connections before it can send.",
@@ -157,7 +156,6 @@ export function Reach({ preview, newsletter, updates = false }: { preview: { pha
   return <div className="me-reach" aria-live="polite" aria-busy={preview.phase === "loading"}>
     <strong>{p.eligible.toLocaleString()}</strong><span> {p.eligible === 1 ? "person" : "people"} can receive it</span>
     {out.length > 0 && <small>Left out: {out.join(", ")}.</small>}
-    {p.eligible > p.remaining_today && <small className="is-warn">Today’s limit leaves room for {p.remaining_today.toLocaleString()}. Narrow the audience or send tomorrow.</small>}
   </div>;
 }
 
@@ -421,7 +419,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
               <strong>{s.from_name ? `${s.from_name} <${s.from_address}>` : s.from_address ?? "No address"}</strong><small>{s.healthy ? `Your ${words(s.provider ?? "email")} connection` : "Needs attention in Connections"}</small></button>)}
             <button type="button" role="radio" aria-checked={draft.sender.mode === "managed"} tabIndex={tabStop(draft.sender.mode === "managed")} disabled={!data.managed_sender.ok} onClick={() => change({ sender: { mode: "managed" } })}>
               <strong>{data.managed_sender.ok ? (data.managed_sender.from_name ? `${data.managed_sender.from_name} <${data.managed_sender.from_address}>` : data.managed_sender.from_address) : "PAIGE’s sender"}</strong>
-              <small>{data.managed_sender.ok ? "PAIGE’s sender · up to 500 a day · opens and clicks reported" : "Not set up for this business yet"}</small></button>
+              <small>{data.managed_sender.ok ? "PAIGE’s sender · opens and clicks reported" : "Not set up for this business yet"}</small></button>
           </div> : <p className="me-reach"><span>{fromLine}</span></p>}
         </section>
 

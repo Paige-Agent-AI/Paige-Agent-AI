@@ -1,0 +1,342 @@
+{
+  "label": "harness render · not live",
+  "records": [
+    {
+      "name": "dark-1536-closed",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "rect": {
+        "x": 527,
+        "y": 345.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": true,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "dark-1536-open",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "rect": {
+        "x": 507,
+        "y": 345.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": false,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "dark-1366-closed",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "rect": {
+        "x": 383,
+        "y": 343.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": true,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "dark-1366-open",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "rect": {
+        "x": 363,
+        "y": 343.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": false,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "dark-1024-closed",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "rect": {
+        "x": 363,
+        "y": 343.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": true,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "dark-1024-open",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "rect": {
+        "x": 363,
+        "y": 343.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": true,
+      "disabled": false,
+      "focused": false,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "dark-900-closed",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "rect": {
+        "x": 363,
+        "y": 492.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": true,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "dark-900-open",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "rect": {
+        "x": 363,
+        "y": 492.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": true,
+      "disabled": false,
+      "focused": false,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "light-1536-closed",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "rect": {
+        "x": 527,
+        "y": 345.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": true,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "light-1536-open",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "rect": {
+        "x": 507,
+        "y": 345.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": false,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "light-1366-closed",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "rect": {
+        "x": 383,
+        "y": 343.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": true,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "light-1366-open",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "rect": {
+        "x": 363,
+        "y": 343.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": false,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "light-1024-closed",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "rect": {
+        "x": 363,
+        "y": 343.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": true,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "light-1024-open",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "rect": {
+        "x": 363,
+        "y": 343.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": true,
+      "disabled": false,
+      "focused": false,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "light-900-closed",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "rect": {
+        "x": 363,
+        "y": 492.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": false,
+      "disabled": false,
+      "focused": true,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "light-900-open",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "rect": {
+        "x": 363,
+        "y": 492.75,
+        "w": 66.53125,
+        "h": 32
+      },
+      "visible": true,
+      "covered": true,
+      "disabled": false,
+      "focused": false,
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    }
+  ],
+  "failures": []
+}

@@ -1,0 +1,709 @@
+{
+  "boundary": "Actual current SoloApp/Operations/Overview/Week and candidate review; neutral synthetic read/Auth/Chat ports; no live customer/permission/provider proof",
+  "frames": [
+    {
+      "name": "light-1536-closed",
+      "document": {
+        "height": 770,
+        "width": 1536
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 606.4000244140625
+        },
+        {
+          "height": 44,
+          "width": 606.4000244140625
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 0,
+        "x": 0
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 1224.800048828125,
+        "x": 258.8000183105469,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    },
+    {
+      "name": "light-1366-closed",
+      "document": {
+        "height": 768,
+        "width": 1366
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 521.6000366210938
+        },
+        {
+          "height": 44,
+          "width": 521.6000366210938
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 0,
+        "x": 0
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 1055.2000732421875,
+        "x": 258.8000183105469,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    },
+    {
+      "name": "light-1024-closed",
+      "document": {
+        "height": 768,
+        "width": 1024
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 422.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 422.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 0,
+        "x": 0
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 856.7999877929688,
+        "x": 114.8000030517578,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    },
+    {
+      "name": "light-900-closed",
+      "document": {
+        "height": 1000,
+        "width": 900
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 360.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 360.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 0,
+        "x": 0
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 732.7999877929688,
+        "x": 114.8000030517578,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      }
+    },
+    {
+      "name": "light-1536-open",
+      "document": {
+        "height": 770,
+        "width": 1536
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 345.2749938964844
+        },
+        {
+          "height": 44,
+          "width": 345.2875061035156
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 522.2374877929688,
+        "x": 1013.7625122070312
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 702.5625,
+        "x": 258.8000183105469,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    },
+    {
+      "name": "light-1366-open",
+      "document": {
+        "height": 768,
+        "width": 1366
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 289.3125
+        },
+        {
+          "height": 44,
+          "width": 289.3125
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 464.5750122070313,
+        "x": 901.8250122070312
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 590.625,
+        "x": 258.8000183105469,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    },
+    {
+      "name": "light-1024-open",
+      "document": {
+        "height": 768,
+        "width": 1024
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 422.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 422.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 410,
+        "x": 614
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 856.7999877929688,
+        "x": 114.8000030517578,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    },
+    {
+      "name": "light-900-open",
+      "document": {
+        "height": 1000,
+        "width": 900
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 360.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 360.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 410,
+        "x": 490
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 732.7999877929688,
+        "x": 114.8000030517578,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      }
+    },
+    {
+      "name": "dark-1536-closed",
+      "document": {
+        "height": 770,
+        "width": 1536
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 606.4000244140625
+        },
+        {
+          "height": 44,
+          "width": 606.4000244140625
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 0,
+        "x": 0
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 1224.800048828125,
+        "x": 258.8000183105469,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    },
+    {
+      "name": "dark-1366-closed",
+      "document": {
+        "height": 768,
+        "width": 1366
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 521.6000366210938
+        },
+        {
+          "height": 44,
+          "width": 521.6000366210938
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 0,
+        "x": 0
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 1055.2000732421875,
+        "x": 258.8000183105469,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    },
+    {
+      "name": "dark-1024-closed",
+      "document": {
+        "height": 768,
+        "width": 1024
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 422.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 422.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 0,
+        "x": 0
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 856.7999877929688,
+        "x": 114.8000030517578,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    },
+    {
+      "name": "dark-900-closed",
+      "document": {
+        "height": 1000,
+        "width": 900
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 360.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 360.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 0,
+        "x": 0
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 732.7999877929688,
+        "x": 114.8000030517578,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      }
+    },
+    {
+      "name": "dark-1536-open",
+      "document": {
+        "height": 770,
+        "width": 1536
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 345.2749938964844
+        },
+        {
+          "height": 44,
+          "width": 345.2875061035156
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 522.2374877929688,
+        "x": 1013.7625122070312
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 702.5625,
+        "x": 258.8000183105469,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    },
+    {
+      "name": "dark-1366-open",
+      "document": {
+        "height": 768,
+        "width": 1366
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 289.3125
+        },
+        {
+          "height": 44,
+          "width": 289.3125
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 464.5750122070313,
+        "x": 901.8250122070312
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 590.625,
+        "x": 258.8000183105469,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    },
+    {
+      "name": "dark-1024-open",
+      "document": {
+        "height": 768,
+        "width": 1024
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 422.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 422.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 410,
+        "x": 614
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 856.7999877929688,
+        "x": 114.8000030517578,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    },
+    {
+      "name": "dark-900-open",
+      "document": {
+        "height": 1000,
+        "width": 900
+      },
+      "fields": [
+        {
+          "height": 44,
+          "width": 360.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 360.3999938964844
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        },
+        {
+          "height": 44,
+          "width": 140
+        }
+      ],
+      "paigeRect": {
+        "width": 410,
+        "x": 490
+      },
+      "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+      "reviewRect": {
+        "width": 732.7999877929688,
+        "x": 114.8000030517578,
+        "y": 331.3999938964844
+      },
+      "theme": null,
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      }
+    }
+  ]
+}

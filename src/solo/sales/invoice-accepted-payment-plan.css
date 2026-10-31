@@ -1,0 +1,25 @@
+.sb-accepted-plan{min-width:0;margin-block-start:24px;padding-block-start:24px;border-block-start:1px solid var(--line);container-type:inline-size;container-name:invoice-payment-plan}
+.sb-accepted-plan header,.sb-accepted-plan-actions{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.sb-accepted-plan h4{font-size:18px}.sb-accepted-plan .sb-accepted-plan-kicker{font-size:12px;margin:0 0 6px;color:var(--ink-2)}
+.sb-accepted-plan p{margin-block:12px}.sb-accepted-plan .btn{min-height:44px;height:auto;white-space:normal;padding-block:9px}
+.sb-accepted-plan-source{padding-block:16px;margin-block:20px;border-block:1px solid var(--line-soft);overflow-wrap:anywhere}
+.sb-accepted-plan-source strong{font-size:16px;font-variant-numeric:tabular-nums}.sb-accepted-plan-source small,.sb-accepted-plan-rows small{color:var(--ink-2);font-size:12px}
+.sb-accepted-plan-hold{padding:12px 14px;border:1px solid var(--line);background:var(--warn-tint);border-radius:var(--r-s)}
+.sb-accepted-plan-rows{list-style:none;padding:0;margin:20px 0}.sb-accepted-plan-rows>li{display:grid;grid-template-columns:minmax(100px,1fr) auto;align-items:center;gap:12px;padding-block:14px;border-block-end:1px solid var(--line-soft);min-width:0}.sb-accepted-plan-rows>li>.btn{grid-column:1/-1;width:100%}
+.sb-accepted-plan-rows>li[data-selected=true]{background:var(--violet-tint);box-shadow:0 0 0 6px var(--violet-tint);border-radius:var(--r-s)}
+.sb-accepted-plan-rows time{display:block;font-size:13px;color:var(--ink-2);margin-top:4px}.sb-accepted-plan-money{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.sb-accepted-plan-money small{display:block;margin-bottom:4px}
+.sb-accepted-plan-selection{grid-column:1/-1;padding:16px;margin-block:8px;background:var(--surface);border:1px solid var(--violet-line);border-radius:var(--r-m)}.sb-accepted-plan-selection strong{font-variant-numeric:tabular-nums}.sb-accepted-plan-selection .sb-accepted-plan-actions{justify-content:flex-start}
+.sb-accepted-plan details{margin-block:16px}.sb-accepted-plan summary{min-height:44px;align-content:center;cursor:pointer;color:var(--violet);font-weight:600}.sb-accepted-plan summary:hover{text-decoration:underline;text-underline-offset:3px}
+.sb-accepted-plan pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.65;margin-block:12px;max-width:70ch}.sb-accepted-plan :focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+.sb-accepted-plan-selection .btn{flex:1 1 160px}
+.sb-accepted-plan-rows .sb-manual-assignment-input{grid-column:1/-1;max-width:100%;margin:0}
+.sb-manual-assignment-input input{width:100%;max-width:240px;display:block;font-variant-numeric:tabular-nums}
+.sb-invoice-actions .sb-manual-assignment-choice{display:flex;align-items:center;gap:12px;min-height:44px}
+.sb-invoice-actions .sb-manual-assignment-choice input{width:24px;height:24px;margin:0;flex:none}
+.sb-receipt-assignments{margin-block:16px;padding-block:12px;border-block:1px solid var(--line-soft);min-width:0}
+.sb-receipt-assignments .btn{min-height:44px;height:auto;white-space:normal;margin:4px 8px 4px 0}
+.sb-receipt-assignments li{margin-block:12px;overflow-wrap:anywhere}
+.sb-receipt-assignments p{margin-block:8px;max-width:70ch}
+.sb-receipt-assignments :focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+@container invoice-payment-plan (min-width:560px){.sb-accepted-plan-rows>li{grid-template-columns:minmax(110px,1fr) minmax(80px,.65fr) minmax(80px,.65fr) auto}.sb-accepted-plan-rows>li>.btn{grid-column:auto;width:auto}}
+@media(max-width:520px){.sb-accepted-plan header>.sb-accepted-plan-actions{width:100%}.sb-accepted-plan header>.sb-accepted-plan-actions>.btn{flex:1 1 120px}.sb-accepted-plan-selection{padding:12px}.sb-accepted-plan-selection .btn{width:100%}.sb-accepted-plan dl{grid-template-columns:1fr;gap:4px}.sb-accepted-plan dd{text-align:start;margin-block-end:12px}}

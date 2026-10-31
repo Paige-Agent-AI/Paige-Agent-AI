@@ -231,41 +231,43 @@ export async function runPreSend(
   const cid = contactId && UUID_RE.test(contactId) ? contactId : null;
   const normalized = normalizeAddress(channel, to);
 
-  // --- One up-front read of the client row (DND fields + timezone) — powers 1 & 5. ---
+  // --- Initial client DND read; SMS recipient timezone is read at step5. ---
   let clientDndActive = false;
   let clientDndUntil: string | null = null;
   let clientDndReason: string | null = null;
-  let clientTz: string | null = null;
   if (cid) {
     const { data: client, error } = await admin
       .from("clients")
-      .select("dnd_active, dnd_until, dnd_reason, timezone")
+      .select("dnd_active, dnd_until, dnd_reason")
       .eq("id", cid)
       .eq("tenant_id", tenantId)
       .maybeSingle();
     if (error) {
-      // Soft hold: a client-row read fault must not wedge all sends — fail open, log.
+      // Existing email behavior is unchanged. SMS cannot use an unread recipient's timezone:
+      // step5 below refuses an unknown zone instead of substituting the business's location.
       console.warn(`[pre-send] client read failed (step1/5 soft): ${String(error.message ?? error)}`);
     } else if (client) {
       clientDndActive = client.dnd_active === true;
       clientDndUntil = client.dnd_until ?? null;
       clientDndReason = client.dnd_reason ?? null;
-      clientTz = client.timezone ?? null;
     }
   }
 
   // ─── STEP 1 — Client DND (block, overridable) ──────────────────────────────
-  if (cid && clientDndActive) {
-    const holdLive = !clientDndUntil || new Date(clientDndUntil).getTime() > now.getTime();
-    if (holdLive && overrideClientDnd !== true) {
+  const clientHold = (active: boolean, until: string | null, reason: string | null): PreSendResult | null => {
+    const holdLive = active && (!until || new Date(until).getTime() > now.getTime());
+    if (cid && holdLive && overrideClientDnd !== true) {
       return {
         proceed: false,
         outcome: "blocked_client_dnd",
-        reason: clientDndReason || "This contact is on a do-not-disturb hold.",
+        reason: reason || "This contact is on a do-not-disturb hold.",
         queueUntil: null,
       };
     }
-  }
+    return null;
+  };
+  const initialHold = clientHold(clientDndActive, clientDndUntil, clientDndReason);
+  if (initialHold) return initialHold;
 
   // ─── STEP 2 — Suppression (block, NOT overridable) — applies to EVERY channel ──
   {
@@ -336,8 +338,7 @@ export async function runPreSend(
   }
 
   // ─── STEPS 4 & 5 — queue checks (both evaluated; more-restrictive-wins) ─────
-  // We need tenant preferences for step 4 AND for the step-5 tz fallback.
-  let prefsTz: string | null = null;
+  // Tenant preferences describe the business's DND window, never the recipient's location.
   const queueCandidates: { outcome: "queued_tenant_dnd" | "queued_quiet_hours"; untilMs: number; reason: string }[] = [];
 
   {
@@ -349,7 +350,6 @@ export async function runPreSend(
     if (error) {
       console.warn(`[pre-send] tenant prefs read failed (step4 soft): ${String(error.message ?? error)}`);
     } else if (prefs) {
-      prefsTz = prefs.autosend_dnd_timezone ?? null;
       const channels = prefs.autosend_dnd_channels;
       const gated = Array.isArray(channels) && channels.includes(channel);
       if (prefs.autosend_dnd_enabled === true && gated) {
@@ -370,7 +370,29 @@ export async function runPreSend(
 
   // STEP 5 — TCPA quiet-hours, SMS ONLY.
   if (channel === "sms") {
-    const tz = safeTz(clientTz ?? prefsTz);
+    // This is only the existing quiet-hours check, not all-state legal eligibility. Missing,
+    // malformed or unread recipient location must not become a permissive tenant/default zone.
+    // Keep suppression/consent precedence and the existing non-proceed wire contract; no
+    // guessed next-send timestamp and no automatic retry while location is unresolved.
+    let tz: string;
+    try {
+      // Consent/preferences above may have awaited a changed contact. Read the original
+      // tenant-scoped recipient again at THIS decision; neither its location nor DND snapshot
+      // remains current across those awaits. Reuse the SAME hold/override disposition above.
+      if (!cid) throw new Error("missing_recipient_contact");
+      const { data: recipient, error } = await admin.from("clients").select("timezone,timezone_verified,dnd_active,dnd_until,dnd_reason")
+        .eq("id", cid).eq("tenant_id", tenantId).maybeSingle();
+      if (error || !recipient) throw new Error("missing_recipient_zone");
+      const currentHold = clientHold(recipient.dnd_active === true, recipient.dnd_until ?? null, recipient.dnd_reason ?? null);
+      if (currentHold) return currentHold;
+      if (recipient.timezone_verified !== true || typeof recipient.timezone !== "string" || !recipient.timezone.trim()) throw new Error("missing_recipient_zone");
+      tz = recipient.timezone.trim();
+      // Fixed offsets and abbreviations do not identify a recipient location or its DST rules.
+      if (!tz.includes("/") || tz.startsWith("Etc/")) throw new Error("nonregional_recipient_zone");
+      new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    } catch {
+      return { proceed: false, outcome: "error", reason: "Couldn't verify the recipient's time zone. Confirm their current location before sending this text.", queueUntil: null };
+    }
     if (inWindow(now, tz, QUIET_HOURS_START, QUIET_HOURS_END)) {
       const untilIso = nextLocalBoundaryUtc(now, tz, QUIET_HOURS_END);
       queueCandidates.push({

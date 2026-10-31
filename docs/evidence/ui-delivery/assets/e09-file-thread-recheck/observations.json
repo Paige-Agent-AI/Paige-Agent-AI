@@ -1,0 +1,133 @@
+{
+  "observedAt": "2026-10-31T00:56:02.495Z",
+  "scope": "Actual ReactDOM PaigeChat host renders with explicitly synthetic native/history/attachment ports. Not an authenticated or native file-picker result.",
+  "implementation": "3d77ed26843cf13720ce5abda2aacb33c3cde07b",
+  "base": "e0c2d936e1cb1615099161f2b53f219a847e8639",
+  "failingFirst": {
+    "total": 71,
+    "pass": 68,
+    "fail": 3
+  },
+  "host": {
+    "total": 71,
+    "pass": 71,
+    "fail": 0,
+    "cases": [
+      {
+        "title": "retains the verified private-file thread while same-customer history is checked again",
+        "status": "passed"
+      },
+      {
+        "title": "withholds file admission after a failed history recheck without retiring the same verified thread",
+        "status": "passed"
+      },
+      {
+        "title": "replaces the file scope when the original history reader returns a different private thread",
+        "status": "passed"
+      },
+      {
+        "title": "starts with no file thread after a real customer business change, including return to the prior scope",
+        "status": "passed"
+      },
+      {
+        "title": "starts with no file thread after a real customer contact change, including return to the prior scope",
+        "status": "passed"
+      },
+      {
+        "title": "starts with no file thread after a real customer actor change, including return to the prior scope",
+        "status": "passed"
+      }
+    ]
+  },
+  "regression": {
+    "files": 12,
+    "total": 256,
+    "pass": 256,
+    "fail": 0,
+    "hostCasesIncluded": true
+  },
+  "focusedTypes": "PASS, exit0",
+  "lint": {
+    "errors": 0,
+    "unchangedHostWarnings": 3
+  },
+  "visualSource": {
+    "observedAt": "2026-10-31T00:56:02.312Z",
+    "base": "e0c2d936e1cb1615099161f2b53f219a847e8639",
+    "implementation": "3d77ed26843cf13720ce5abda2aacb33c3cde07b",
+    "source": "src/components/app/PaigeChat.tsx",
+    "renderedJsxNodes": 85,
+    "allOriginalJsxByteExact": true,
+    "originalHostInverse": "PASS; only unconditional thread reset replaced with explanatory comments",
+    "incumbentRenderSource": "docs/evidence/ui-delivery/assets/e09-private-picker-recheck/source-provenance.json",
+    "pinChecks": [
+      {
+        "path": "src/hooks/useCustomerChatAttachments.ts",
+        "expected": "33dc2da03dc99bc0df6f71a6fe4ad32afd9d2bda14f622a57dcc1327584a6c31",
+        "actual": "33dc2da03dc99bc0df6f71a6fe4ad32afd9d2bda14f622a57dcc1327584a6c31",
+        "matches": true
+      },
+      {
+        "path": "src/components/chat/CustomerChatAttachments.tsx",
+        "expected": "eae2a21043d9fbde97b688cbd195a19f870ce8fd535e1dfef5b1fb16988b9b9b",
+        "actual": "eae2a21043d9fbde97b688cbd195a19f870ce8fd535e1dfef5b1fb16988b9b9b",
+        "matches": true
+      },
+      {
+        "path": "src/components/app/PaigeChat.tsx",
+        "expected": "48ce7d8b15e47bcb5389c533102cab69903f9c867394551f8fcac9d67555b3e6",
+        "actual": "3e933f21574ba9b3c90dc829c2da40b75766cb27e222e1081fde096d5a4f98c6",
+        "matches": false
+      },
+      {
+        "path": "src/index.css",
+        "expected": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482",
+        "actual": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482",
+        "matches": true
+      },
+      {
+        "path": "scripts/live-drive/harness/cura-picker-recheck/main.tsx",
+        "expected": "7fc4266227ee7b1a7f7fb7280c535d965a07440bf15e9f87b1110240f57ef019",
+        "actual": "7fc4266227ee7b1a7f7fb7280c535d965a07440bf15e9f87b1110240f57ef019",
+        "matches": true
+      },
+      {
+        "path": "scripts/live-drive/harness/cura-picker-recheck/ports.ts",
+        "expected": "92bb3b5912856f870360a76d3379be4b8abe2db8ed3e98fb938a69e5484a1f56",
+        "actual": "92bb3b5912856f870360a76d3379be4b8abe2db8ed3e98fb938a69e5484a1f56",
+        "matches": true
+      },
+      {
+        "path": "scripts/live-drive/harness/cura-picker-recheck/unused-paste-ports.ts",
+        "expected": "8aa3fd5d6489d922203d45fa09148e6c474f601c7d1f4ffecaf16e3494afd3d1",
+        "actual": "8aa3fd5d6489d922203d45fa09148e6c474f601c7d1f4ffecaf16e3494afd3d1",
+        "matches": true
+      },
+      {
+        "path": "scripts/live-drive/harness/cura-picker-recheck/vite.config.mts",
+        "expected": "7b66f4090204a94a1b4b951188c6bc52c84548982a7dfaa6eb29b33353c73fb4",
+        "actual": "7b66f4090204a94a1b4b951188c6bc52c84548982a7dfaa6eb29b33353c73fb4",
+        "matches": true
+      },
+      {
+        "path": "scripts/live-drive/harness/cura-picker-recheck/index.html",
+        "expected": "e0047a76586bb475a186568692b666c5794d9ef2829f74a6d45a5e257dc4e7c6",
+        "actual": "e0047a76586bb475a186568692b666c5794d9ef2829f74a6d45a5e257dc4e7c6",
+        "matches": true
+      }
+    ],
+    "protectedSourcesUnchanged": [
+      "src/hooks/useClientDocuments.ts",
+      "src/hooks/useCustomerChatAttachments.ts",
+      "src/components/chat/CustomerChatAttachments.tsx",
+      "src/hooks/useChatDocumentUpload.ts",
+      "src/components/app/CustomerAccessGate.tsx",
+      "src/hooks/useClientPortalFrame.ts"
+    ],
+    "scope": "Visual-source conservation and original source-pin comparison only. New host behavior is covered by actual-component DOM tests; no new desktop/narrow raster or repaired customer proof claimed."
+  },
+  "nativeCustomerBaseline": "Two verified neutral PDFs chosen once; no selected file rows after same-customer recheck, no Chat Send. Protected original QA retains actual observation and automation limits.",
+  "newDesktopNarrowRaster": "NOT CAPTURED; incumbent selector/hook/style/harness eight pins unchanged, all85 host JSX nodes byte-exact. Prior five original-source frames are explicitly incumbent reference only.",
+  "repairedCustomerUploadReadReload": "PROOF OWED until normal reviewed green-CI release and actual ordinary-customer drive",
+  "fullExperience": "STILL CODING; all42/seven pillars and one final founder evaluation remain"
+}

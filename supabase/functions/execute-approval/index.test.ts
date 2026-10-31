@@ -305,7 +305,7 @@ describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never q
 
   it("SMS quiet hours in the contact's own time zone: HELD, never sent at night", async () => {
     vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(NIGHT);
-    const smsContact = { ...contact, timezone: "America/New_York", client_contact_methods: [{ kind: "phone", value: "+15555550123", is_primary: true, position: 0 }] };
+    const smsContact = { ...contact, timezone: "America/New_York", timezone_verified: true, client_contact_methods: [{ kind: "phone", value: "+15555550123", is_primary: true, position: 0 }] };
     const db = fakeDb({ paige_pending_approvals: [pending({ category: "sms", draft_content: { channel: "sms", body: "hi" } })], clients: [smsContact],
       paige_consent_events: [{ tenant_id: T, channel: "sms", action: "granted", created_at: "2026-01-01T00:00:00Z" }] });
     await load(db);
@@ -884,7 +884,7 @@ describe("execute-approval: original held-SMS identity and uncertain cancellatio
 
   it("a pre-send hold cannot clear a replacement held-SMS claim", async () => {
     const replacement = "2026-10-14T16:01:00Z", otherActor = "70000000-0000-4000-8000-000000000002";
-    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], messages: [message()],
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [{ ...contact, timezone: "America/New_York", timezone_verified: true }], messages: [message()],
       paige_consent_events: [{ tenant_id: T, channel: "sms", action: "granted", created_at: "2026-10-14T01:00:00Z" }],
       tenant_comms_preferences: [{ tenant_id: T, autosend_dnd_enabled: true, autosend_dnd_start: "00:00:00", autosend_dnd_end: "23:59:59", autosend_dnd_timezone: "UTC", autosend_dnd_channels: ["sms"] }] });
     onRead = table => { if (table === "tenant_comms_preferences") Object.assign(db.tables.paige_pending_approvals[0], { claimed_at: replacement, reviewed_by_user_id: otherActor }); };

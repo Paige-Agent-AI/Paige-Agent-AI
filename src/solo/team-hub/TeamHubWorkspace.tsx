@@ -1,8 +1,10 @@
 import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type KeyboardEvent as ReactKeyboardEvent, type MutableRefObject, type ReactNode, type RefObject } from "react";
-import { Link, useInRouterContext } from "react-router-dom";
+import { Link, useInRouterContext, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Radio, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
 import { workspaceLinkTarget } from "@/lib/links/workspaceLinks";
+import { createComposerScopeIdentity } from "@/lib/paigeComposerScopeState";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
 import { clearPaigePublicPresenceScope } from "@/solo/paigePublicPresenceScope";
@@ -10,6 +12,7 @@ import { workStatusLabel } from "@/solo/operations/operations-presentation";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import {
   bodyProblem,
+  parseTeamHubReferenceSearch,
   commandMatches,
   commandQuery,
   commandRemainder,
@@ -68,7 +71,7 @@ import {
   type TeamHubFile,
 } from "./team-hub-contract";
 import { agentTurnKey, attachmentScope, teamHubNavigation, useTeamHub, type AgentTurn, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub, type TurnStateRead } from "./useTeamHub";
-import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
+import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, dmRequestPrefill, endsWithRedirect, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
 import { AgentDmEmpty, AgentDmNote, AgentFailRow, AgentGlyph, AgentPlate, AgentProfilePanel, AgentTag, AgentTyping, BringInRow, PrivateNote, PrivateOthersNote } from "./TeamHubAgents";
 import { TeamHubApprovalCard, type TeamHubApprovalAct } from "./TeamHubApproval";
 import "./team-hub.css";
@@ -99,12 +102,21 @@ import "./team-hub.css";
  * omitted, not shown dead.
  */
 /**
- * EXP08 A2: what an approval card's buttons do. Absent (the Solo shell today, because the A2 backend
- * is not built), every card refuses honestly instead of offering a control that would do nothing.
+ * EXP08 A2: what an approval card's buttons do. A2b: absent (the Solo shell), the hub's own
+ * `actOnCard` redeems the card through `paige-ai-chat`; a host passes one only to replace that.
  */
 export type TeamHubApprovalHandler = (message: TeamHubMessage, act: TeamHubApprovalAct) => void;
 
-export function TeamHubWorkspace({ onOpenTeamSettings, openPaige, onApprovalAct }: { onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler }) {
+type TeamHubWorkspaceProps = { onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler };
+export function TeamHubWorkspace(props: TeamHubWorkspaceProps) {
+  return useInRouterContext() ? <RoutedHubEntry {...props} /> : <HubEntry {...props} />;
+}
+function RoutedHubEntry(props: TeamHubWorkspaceProps) {
+  const location = useLocation();
+  return <HubEntry {...props} referenceSearch={location.search} referenceKey={location.key} />;
+}
+function HubEntry({ onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch = "", referenceKey = "" }:
+  TeamHubWorkspaceProps & { referenceSearch?: string; referenceKey?: string }) {
   const { activeTenant, activeUserId, loading, accountContextStatus, refresh } = useTenantContext();
   if (loading || accountContextStatus === "resolving") return <HubSkeleton />;
   const tenantId = activeTenant?.id ?? null;
@@ -115,11 +127,13 @@ export function TeamHubWorkspace({ onOpenTeamSettings, openPaige, onApprovalAct 
   }
   // Remount per actor and workspace: a switch clears every conversation, draft and pending send.
   return <ScopedTeamHub key={`${activeUserId}:${tenantId}`} tenantId={tenantId} onTenantRefresh={refresh}
-    onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct} />;
+    onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct}
+    referenceSearch={referenceSearch} referenceKey={referenceKey} />;
 }
 
-function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaige, onApprovalAct }: {
+function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
   tenantId: string; onTenantRefresh?: () => unknown; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
+  referenceSearch: string; referenceKey: string;
 }) {
   const [announcement, setAnnouncement] = useState("");
   // One polite region, one write per frame. Everything said before the next frame paints (a pick
@@ -159,7 +173,7 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
     // conversations switch is off. Not "couldn't load", and not "no longer on this team".
     return <div className="th-hub th-hub--state" data-state="conversations-off"><CenterState icon={<MessageSquareOff aria-hidden="true" />} title="Team conversations are off for you" role="status"
       action={<button type="button" className="th-btn" onClick={() => void hub.retryLoad()}>Check again</button>}>
-      In this workspace you work on what you're assigned without Team Hub, so channels, direct messages and shared files aren't open to you. Your tasks, the clients you're assigned and your permission are unchanged. To join team conversations, ask an owner or admin.
+      In this workspace you work on what you're assigned without Team Hub, so channels, direct messages and shared files aren't open to you. Your tasks, the clients you're assigned and your permissions are unchanged. To join team conversations, ask an owner or admin.
     </CenterState></div>;
   }
   if (hub.status === "scope_changed") {
@@ -178,7 +192,8 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
     }
     return <HubSkeleton />;
   }
-  return <ReadyHub hub={hub} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct} />;
+  return <ReadyHub hub={hub} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct}
+    referenceSearch={referenceSearch} referenceKey={referenceKey} />;
 }
 
 /** Several messages for the one live region, read as sentences in the order they were said. */
@@ -257,12 +272,15 @@ const localDay = (instant: string | null) => {
   return Number.isNaN(date.getTime()) ? "" : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
-function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, onApprovalAct }: {
+function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
   hub: TeamHub; announce: (text: string) => void; announcement: string; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
+  referenceSearch: string; referenceKey: string;
 }) {
   const overview = hub.overview!;
   const people = overview.people;
   const meId = overview.me.user_id;
+  const pendingPaigeHandoff = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => () => { pendingPaigeHandoff.current?.(); }, []);
   const me = people.find((person) => person.user_id === meId) ?? null;
   const teammates = people.filter((person) => person.user_id !== meId);
   // A1b: PAIGE and her agents, only where the tier has them (§60); the server still decides what runs.
@@ -270,6 +288,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
   const agentsOn = has("team_hub_agents");
   const canInvite = Boolean(onOpenTeamSettings) && (me?.permission === "owner" || me?.permission === "admin");
   const [search, setSearch] = useState("");
+  // A2b: an act on a card that didn't go through, said under that card (review fix 2).
+  const [cardNotices, setCardNotices] = useState<Record<string, string>>({});
   const [form, setForm] = useState<Form>(null);
   const [mobileView, setMobileView] = useState<"list" | "conv">("list");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -288,6 +308,12 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
   const hubRef = useRef<HTMLDivElement>(null);
   const { layout, workOverlays } = useHubLayout(hubRef);
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [referenceFocus, setReferenceFocus] = useState<{ rootId: string; messageId: string } | null>(null);
+  const consumedReference = useRef("");
+  const referenceGeneration = useRef(0);
+  const referenceBlocked = form !== null || preview !== null;
+  const referenceBlockedNow = useRef(referenceBlocked);
+  referenceBlockedNow.current = referenceBlocked;
   const [workOpen, setWorkOpen] = useState(false);
   // A1b: the agent profile shares the thread's slot; only one of thread, Team work and profile is open.
   const [profile, setProfile] = useState<TeamHubAgentKey | null>(null);
@@ -323,11 +349,13 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
   // Open the first conversation once, so a wide screen never starts on an empty pane. In one
   // column the list is what is on screen, so nothing is opened (or marked read) behind it.
   useEffect(() => {
+    // An explicit source intent owns initial navigation, including slow metadata reads.
+    if (parseTeamHubReferenceSearch(referenceSearch).kind !== "none") return;
     if (!multiColumn || opened.current || hub.activeId || !conversations.length) return;
     opened.current = true;
     const first = conversations.find((conversation) => conversation.joined) ?? conversations[0];
     void hub.openConversation(first.id);
-  }, [multiColumn, conversations, hub]);
+  }, [multiColumn, conversations, hub, referenceSearch]);
 
   // A conversation that disappears from the list (left, removed from a private channel) closes.
   useEffect(() => {
@@ -448,11 +476,14 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     const open = previewRef.current;
     if (!open || open.kind === "task" || open.busy || !openPaige) return;
     const conversation = conversations.find((item) => item.id === open.channelId);
-    handOffPaigePrompt(paigeHandoffDraft(open.kind, open.ask, {
+    const targetScope = createComposerScopeIdentity({ tenantId: overview.tenant_id, userId: meId });
+    if (!targetScope) return;
+    pendingPaigeHandoff.current?.();
+    pendingPaigeHandoff.current = handOffPaigePrompt(paigeHandoffDraft(open.kind, open.ask, {
       conversation: conversation ? conversationTitle(conversation, people) : "Team Hub conversation",
       channel_id: open.channelId,
       message_id: null,
-    }));
+    }), { scope: targetScope });
     // The words went to PAIGE's composer; they don't also stay here.
     setDrafts((current) => ({ ...current, [open.channelId]: "" }));
     setPreview(null);
@@ -537,6 +568,32 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
   const openRootRef = useRef<string | null>(null);
   openRootRef.current = hub.thread?.rootId ?? null;
   const heldReplies = useRef<Record<string, string>>({});
+  const unsentReplies = useRef<Record<string, { text: string; picked: PickedMention[]; error: string | null }>>({});
+  const replyDraftOwner = useRef<string | null>(null);
+  const replyDraftNow = useRef({ rootId: replyDraftOwner.current, text: threadDraft, picked: threadPicked, error: threadError });
+  // Ownership follows the prepared draft, including the loading/closed interval when no
+  // thread is drawn. A transient null thread must not discard or reassign an unsent reply.
+  replyDraftNow.current = { rootId: replyDraftOwner.current, text: threadDraft, picked: threadPicked, error: threadError };
+  const prepareThreadDraft = useCallback((rootId: string) => {
+    const previous = replyDraftNow.current;
+    if (previous.rootId === rootId) {
+      const refused = heldReplies.current[rootId]; delete heldReplies.current[rootId];
+      if (refused && !previous.text) {
+        setThreadDraft(refused); setThreadPicked([]); setThreadError(null);
+        replyDraftNow.current = { rootId, text: refused, picked: [], error: null };
+      }
+      return;
+    }
+    if (previous.rootId && (previous.text || previous.picked.length || previous.error)) {
+      unsentReplies.current[previous.rootId] = { text: previous.text, picked: [...previous.picked], error: previous.error };
+    }
+    const saved = unsentReplies.current[rootId], refused = heldReplies.current[rootId];
+    delete unsentReplies.current[rootId]; delete heldReplies.current[rootId];
+    const text = saved?.text || refused || "", picked = saved?.text ? saved.picked : [], error = saved?.text ? saved.error : null;
+    setThreadDraft(text); setThreadPicked(picked); setThreadError(error);
+    replyDraftOwner.current = rootId;
+    replyDraftNow.current = { rootId, text, picked, error };
+  }, []);
   const restoreReply = (rootId: string, body: string, message: string) => {
     if (openRootRef.current === rootId) {
       setThreadDraft((current) => current || body);
@@ -631,11 +688,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     if (workOpen) closeWork(false);
     setProfile(null);
     threadReturn.current = trigger;
-    const held = heldReplies.current[rootId];
-    delete heldReplies.current[rootId];
-    setThreadDraft(held ?? "");
-    setThreadPicked([]);
-    setThreadError(null);
+    prepareThreadDraft(rootId);
     // The reply box exists only once the thread has loaded; focus moves there then, not before.
     focusThreadWhenReady.current = true;
     hub.openThread(rootId);
@@ -653,6 +706,54 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     threadReturn.current = null;
     window.requestAnimationFrame(() => (target?.isConnected ? target : composerRef.current)?.focus());
   }, [hub]);
+
+  const { openMessageReference, cancelReferenceNavigation } = hub;
+  useEffect(() => {
+    const key = `${referenceKey}:${referenceSearch}`;
+    const generation = ++referenceGeneration.current;
+    const parsed = parseTeamHubReferenceSearch(referenceSearch);
+    setReferenceFocus(null);
+    if (parsed.kind === "none" || consumedReference.current === key) return;
+    if (parsed.kind === "invalid") {
+      consumedReference.current = key;
+      announce("This message link isn't valid. Open the original source and try again.");
+      return;
+    }
+    if (referenceBlocked) {
+      announce("Close the current form to open the original message.");
+      return;
+    }
+    let retired = false;
+    void openMessageReference(parsed.id, reference => prepareThreadDraft(reference.rootId)).then(result => {
+      if (retired || referenceGeneration.current !== generation || referenceBlockedNow.current) return;
+      consumedReference.current = key;
+      if (result.kind !== "ok") {
+        announce(result.kind === "refused" && result.code === "not_found"
+          ? "This message isn't available to you." : "That source couldn't be opened. Try its link again.");
+        return;
+      }
+      closeWork(false); setProfile(null); setMobileView("conv");
+      threadReturn.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      setReferenceFocus({ rootId: result.value.rootId, messageId: result.value.messageId });
+    });
+    return () => { retired = true; referenceGeneration.current += 1; cancelReferenceNavigation(); };
+    // Layout and already-visible conversation state do not restart an accepted URL intent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [referenceSearch, referenceKey, referenceBlocked, openMessageReference, cancelReferenceNavigation, prepareThreadDraft, announce]);
+  useEffect(() => {
+    if (!referenceFocus) return;
+    const thread = hub.thread;
+    if (!thread || thread.rootId !== referenceFocus.rootId) { setReferenceFocus(null); return; }
+    if (thread.status === "loading") return;
+    if (thread.status !== "ready" || ![thread.root, ...thread.replies].some(m => m?.id === referenceFocus.messageId)) {
+      setReferenceFocus(null); announce("This message isn't available to you."); return;
+    }
+    const element = hubRef.current?.querySelector<HTMLElement>(`aside[aria-label="Thread"] #th-msg-${referenceFocus.messageId}`);
+    setReferenceFocus(null);
+    window.requestAnimationFrame(() => {
+      if (!referenceBlockedNow.current && element?.isConnected) { element.scrollIntoView?.({ block: "center" }); element.focus(); }
+    });
+  }, [referenceFocus, hub.thread, announce]);
 
   // Esc closes the thread from anywhere in the hub. It is handled here, inside React, and marked
   // handled, so the shell's own window-level Esc (which folds PAIGE) leaves it alone. Controls
@@ -734,14 +835,53 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     announce(`The mention for ${agentName(agent)} is in your message box. Send it to bring them in.`);
   };
 
+  // A2b: the hub redeems a card itself (`{ teamHubCardAct }`); a host may still pass its own seam.
+  // A turned-down act is said in words through the hub's live region, never left silent (verifier fix 5),
+  // and an act that didn't go through says so under the card too, where a sighted person is looking
+  // (review fix 2). Approve and Not now leave the card when it settles, so focus goes to the card's own
+  // message row instead of falling to the page (review fix 3); focus a person moved elsewhere stays there.
+  const actOnCardHere: TeamHubApprovalHandler = (message, act) => {
+    const active = document.activeElement;
+    const row = active instanceof HTMLElement ? active.closest<HTMLElement>(".th-msg") : null;
+    const keepFocus = () => window.requestAnimationFrame(() => {
+      const now = document.activeElement;
+      if (row?.isConnected && (!now || now === document.body)) row.focus({ preventScroll: true });
+    });
+    setCardNotices((current) => {
+      if (!(message.id in current)) return current;
+      const next = { ...current };
+      delete next[message.id];
+      return next;
+    });
+    keepFocus();
+    void hub.actOnCard(message, act).then((report) => {
+      keepFocus();
+      if (!report?.line) return;
+      announce(report.line);
+      if (report.outcome === "could_not_start") setCardNotices((current) => ({ ...current, [message.id]: report.line! }));
+    });
+  };
+
+  /** A message on screen now, in the conversation or the open thread; never a fetch. */
+  const findLoadedMessage = (id: string): TeamHubMessage | null =>
+    hub.stream?.messages.find((message) => message.id === id)
+    ?? (hub.thread?.root?.id === id ? hub.thread.root : hub.thread?.replies.find((message) => message.id === id))
+    ?? null;
+
   const agentProps: AgentView = {
     on: agentsOn, turns: hub.agentTurns, states: hub.turnStates, online: hub.online, meId,
     onProfile: openProfile,
     onOpenDm: (agent) => void openAgent(agent),
+    onOpenDmWithRequest: (agent, sourceMessageId) => {
+      const source = sourceMessageId ? findLoadedMessage(sourceMessageId) : null;
+      const prefill = source && source.agent_key == null && source.author_user_id === meId ? dmRequestPrefill(source.body, agent) : null;
+      void openAgent(agent, prefill ?? undefined);
+    },
     onAskAgain: (request) => void hub.askAgain(request),
     onCheck: (request) => void hub.checkTurn(request),
     onBringIn: bringIn,
-    onApprovalAct,
+    onApprovalAct: onApprovalAct ?? actOnCardHere,
+    cardNotices,
   };
 
   const closeForm = (returnTo: "channel" | "dm") => {
@@ -1451,12 +1591,16 @@ type AgentView = {
   meId: string;
   onProfile: (agent: TeamHubAgentKey, trigger: HTMLElement | null) => void;
   onOpenDm: (agent: TeamHubAgentKey) => void;
+  /** A2b: the channel redirect's "Open DM": the DM opens with the asker's own request in its box, unsent. */
+  onOpenDmWithRequest?: (agent: TeamHubAgentKey, sourceMessageId: string | null) => void;
   onAskAgain: (request: AgentTurn["request"]) => void;
   /** Check again for an unknown state: re-read the turn's state, never start a turn. */
   onCheck: (request: AgentTurn["request"]) => void;
   onBringIn: (reply: TeamHubMessage, prefill: string, agent: TeamHubAgentKey) => void;
-  /** A2: absent until a seam redeems the card (the card then refuses rather than offering Approve). */
+  /** A2: what redeems a card: the host's seam, or (A2b) the hub's own `actOnCard`. */
   onApprovalAct?: TeamHubApprovalHandler;
+  /** A2b: what the last act on a card came to, by message id, where the card itself can't say it. */
+  cardNotices?: Record<string, string>;
 };
 
 /** Where a row sits: the rows around it (the stream, or a thread's root and replies) and its kind of place. */
@@ -1589,6 +1733,7 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
   message: TeamHubMessage; agentKey: TeamHubAgentKey; people: TeamHubPerson[]; meId: string;
   onOpenThread?: (rootId: string, trigger: HTMLElement) => void; agent?: AgentView; place?: RowPlace;
 }) {
+  const { activeTenant } = useTenantContext();
   const name = agentName(agentKey);
   const profile = TEAM_HUB_AGENT_PROFILES[agentKey];
   const asker = people.find((person) => person.user_id === message.author_user_id) ?? null;
@@ -1633,6 +1778,8 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
       </div>
       {text && <p className="th-text">{agentRuns(text, "all").map((part, index) => part.agent
         ? <AgentChip key={index} agent={part.agent} /> : <span key={index}>{part.text}</span>)}</p>}
+      {place?.agentDm && isAsker && message.source_backed_read && !!message.record_links?.length
+        && <PaigeRecordLinks links={message.record_links} account={activeTenant} />}
       {privatePart && !place?.agentDm && <p className="th-text th-text--fixed">{FIXED_PRIVATE_LINE}</p>}
       {privatePart && isAsker && privateStatus && agent && message.asked_in_message_id && <PrivateNote agent={agentKey} status={privateStatus} online={agent.online}
         onOpenDm={() => agent.onOpenDm(agentKey)}
@@ -1640,11 +1787,22 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
           ?? { conversationId: place?.conversationId ?? "", sourceMessageId: message.asked_in_message_id!, threadRootId: message.parent_message_id, agent: agentKey, privateFollowUp: true })}
         onCheck={() => agent.onCheck({ conversationId: place?.conversationId ?? "", sourceMessageId: message.asked_in_message_id!, threadRootId: message.parent_message_id, agent: agentKey })} />}
       {othersLine && <PrivateOthersNote agent={agentKey} askerName={askerShort} state={othersLine} />}
+      {/* A2b: an act asked in a shared conversation is offered in the asker's DM with this agent; the
+          agent's reply ends with the server's line saying so. The asker gets the way there, read from
+          that line, so it is still here after a reload. Everyone else has nothing to press. */}
+      {agent?.on && isAsker && !place?.agentDm && endsWithRedirect(message.body) && <div className="th-ag-bring">
+        <button type="button" className="th-btn th-ag-bring-btn" data-ag={agentKey}
+          onClick={() => agent.onOpenDmWithRequest ? agent.onOpenDmWithRequest(agentKey, message.asked_in_message_id ?? null) : agent.onOpenDm(agentKey)}>
+          <AgentPlate agent={agentKey} size="sm" />Open DM with {name}</button>
+      </div>}
       {message.files.length > 0 && <MessageFiles files={message.files} />}
       {message.approval && <TeamHubApprovalCard approval={message.approval} agent={agentKey} meId={meId}
         askerName={approvalAsker(message.approval.asker_user_id, people, askerShort)}
         decidedLabel={message.approval.decided_at ? timeLabel(message.approval.decided_at) : null} online={agent?.online ?? true}
         onAct={agent?.onApprovalAct ? (act) => agent.onApprovalAct?.(message, act) : undefined} />}
+      {message.approval && agent?.cardNotices?.[message.id] && <div className="th-fail">{agent.cardNotices[message.id]}</div>}
+      {message.approval?.state === "done" && message.approval_result_reference
+        && <PaigeRecordLinks links={[message.approval_result_reference]} account={activeTenant} />}
       {bring.length > 0 && agent && <BringInRow agents={bring.map((item) => item.agent)} askerName={askerShort} isAsker={isAsker}
         onBring={(key) => { const item = bring.find((entry) => entry.agent === key); if (item) agent.onBringIn(message, item.prefill, key); }} />}
       {onOpenThread && message.reply_count > 0 && <button type="button" className="th-replies"
@@ -2103,20 +2261,19 @@ function assigneeLabel(userId: string | null, people: TeamHubPerson[], meId: str
  * RLS doesn't return is said to be out of sight — its status is never guessed.
  *
  * EXP08 A2 slice 1: the card reopens its work in Operations, by reference. A Team Hub task is a
- * Planning item, and Operations has no address for one Planning item: `?task=` opens a CRM task and
- * `?weeklySource=planning_item&item=` says the work came from a weekly check. So the link opens
- * Operations → Work, where the same record is listed under the reader's own permissions — never
- * `record_id: id`, which would address a different (CRM) record. The address is built from the
- * account on screen now, through the shared route map; it fails closed outside SOLO, and is not
- * offered to someone who cannot see the task there.
+ * Planning item, so its typed reference uses Operations' original Planning inspector and fresh
+ * authorized read, never a CRM task or weekly-check attribution. The shared route map builds the
+ * address from the account on screen now. Only an exact address is offered; an unreadable task,
+ * malformed identity or unsupported account cannot turn into a misleading surface-only link.
  */
 export function TaskCard({ id, read, people, meId }: { id: string; read: TeamHubTaskRead | undefined; people: TeamHubPerson[]; meId: string }) {
   const short = id.slice(0, 8);
   const state = read?.state ?? "loading";
   const { activeTenant } = useTenantContext();
   const inRouter = useInRouterContext();
-  const open = read && (read.state === "read" || read.state === "failed")
-    ? workspaceLinkTarget({ destination: "operations_work", record_id: null }, activeTenant) : null;
+  const target = read && (read.state === "read" || read.state === "failed")
+    ? workspaceLinkTarget({ destination: "operations_work", record_id: id, record_kind: "planning_item" }, activeTenant) : null;
+  const open = target?.status === "exact" ? { ...target, label: "Open delivery work" } : null;
   return <div className="th-src" role="group" aria-label={`Task in Operations, record ${short}`}>
     <div className="th-src-top"><ClipboardList aria-hidden="true" /><span className="th-src-kind">Task in Operations</span>
       <span className="th-src-id" title={id}>{short}</span></div>

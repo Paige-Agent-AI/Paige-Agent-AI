@@ -1,3 +1,424 @@
+# C144 - original received-payment assignments and retained corrections
+
+Status: LOCAL source preparation, not merged/deployed/activated or accepted. Same full O1-O12; O1-O4 first, O5/O9 next, then O6-O8/O10-O12.
+
+Reuses original immutable invoice command, accepted signing/terms, receipt/reversal/operation and Rail. Explicit split/partial assignments validate current native remaining facts under the existing invoice/actor locks. Same-operation replay precedes eligibility. A full manual correction restores ONLY the original receipt assignments and preserves history; provider payments stay with provider reconciliation. No FIFO, new ledger, approval, calculator or sender.
+
+Original Sales form, HIGH review, assigned receipt inspection and existing PAIGE/MERIT invoice read share closed transport/decoder. Existing read opts into an exact manual_payment_id from original bounded history, caller JWT only. Original Portal/Work/Root and financial DTOs are unchanged. Native echo is required before approval mint; no new Chat admission or availability promotion.
+
+Local proof: original43 within93 PostgreSQL checks, real three-session permission-lock serialization, exact replay/full correction/original-receipt readback/ACL/guard/rollback controls. Original391 payment cases; invoice/UI/HTTP187 and separate Chat/history90 (15 overlap), focused857 types0 and frozenDeno. Synthetic Auth/table/preview/Rail ports are not full-schema, actual provider or customer evidence. Actual desktop review/keyboard return/discard plus current390-frame corrected receipt/keyboard footer are bounded source proof; native200/AT/full shell/two cohorts and actual financial acceptance remain owed. [Evidence](../evidence/ui-delivery/e04-manual-payment-assignments.md).
+
+Separate deployed3116 Owner QA now PASS, protected ANT52/60f4d7f5: original chooser, same saved draft/new labels/refusal advice, keyboard return/close focus, full reload/version1/zero receipts and actual loaded source match. No issue/approval/sign/send/payment/provider. Current9e6b mainCI41082134346 also completedSUCCESS. This does not accept the new allocation source or all O4.
+
+Native candidate20271126080004 is unapplied; actual production frontier35008 and four original body pins rechecked. Preserve published40008 ->50005 ->60009 ->70005 prerequisites and release/readback before new financial Owner QA. Required exact review/CI/Preview/native+all affected Edge source readback and CentralQA remain owed. No founder signoff per routine slice; final full Experience acceptance remains OPEN.
+
+---
+
+# C143 — invoice repair released; explicit original receipt allocation is next
+
+Same MERIT and full O1–O12. Connected O1–O4 first, O5/O9 next, then the remaining
+onboarding/delivery/completion/self-service outcomes. All integrated customer,
+Central QA and founder acceptance remains open.
+
+## Released O4 increment
+
+[#3116](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3116) reviewed
+`3e95d649a84881f27a598f6a4421c1779aab2ae6`, sequential AUTHOR-REVIEW / LOWER
+ASSURANCE5713801389, all ten applicable checks and both web contexts SUCCESS,
+schema-free Preview SKIPPED and zero unresolved threads. Normal merge
+`9e6b2514a0a59153097cbb4602065167fbca7987`, tree
+`7a9f006cae29aa6df23f893ec5f9688c49bf2dd2`, is the exact inspected union of
+maina54 and reviewed3e95; outside-owned leaves remain unchanged. Original main
+CI41072179082's ONE unchanged normal retry passed before merge. Its first
+failure remains evidence, not a waived test or a claimed root cause.
+
+Vercel `dpl_FesBRzEHfTQazb25T4Z9yifGaV52` is READY/exact. Canonical public build
+`9e6b2514a0a59153097cbb4602065167fbca7987-mvv4x3rg`, root, seven linked assets and
+actual bootstrap→application→SOLO→Sales imports return200. Served Sales source
+`growth2-4pvbjHHw.js` SHA256
+`7f110274de1e2b7a600e670e2351de110f74192bdd9935ee1c0d0bf152efab08`
+contains all six lifecycle amount labels and the exact typed-refusal correction
+advice. No native/Edge/workflow source delta or new activation.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3116#issuecomment-6526852004).
+
+Actual separately authorized read-only Admin invoice/agreement empty states,
+reload and return navigation work. That cohort has no saved invoice, so this
+does not exercise the repaired record labels/refusal. The intended Owner route
+opened the other authorized read-only context: INVALID for Owner repair proof,
+stopped without domain actions or an account/workspace change. Protected details
+stay in ANT-52. Prior Owner draft/history/preparation proof remains historical;
+corrected saved-record/review, client/staff/provider and Central QA proof is owed.
+
+## LOCAL, incomplete explicit manual receipt allocation
+
+The original invoice command now validates optional explicit accepted-obligation
+splits using the SAME canonical obligation decoder and money bounds. Unique
+references must identify one accepted signing/source, positive splits must fit
+the captured remaining amounts and sum exactly to the reported receipt. Input
+order is retained; absence preserves the old manual command exactly. A reversal
+does not accept a caller-authored replacement allocation. Parsing is transport,
+not currentness, authorization, money movement or fulfillment evidence.
+
+Initial three causal failures with60 controls preceded implementation. A separate
+adversarial sparse-array reproduction then failed with63 controls, and was repaired
+without skipping unchecked slots. Final93 command/endpoint tests pass; the original
+391 payment tests/17 suites separately pass. Focused original-config types, lint
+and frozen Deno checks are supporting source proof; the actual native writer,
+Kit declaration, UI and release are NOT yet extended. Do not publish or activate
+this partial transport as a completed capability.
+
+Next, extend ONLY the original private manual executor and its preview under exact
+source/metadata guards. Re-read the original accepted source and remaining targets
+after the existing invoice lock; preserve actor/version/approval/idempotency order.
+Store the reviewed instruction in the existing immutable
+`paige_invoice_operations.command`, beside the SAME original manual receipt.
+The accepted-obligation reader must derive assigned amounts from those original
+operations/receipts, and derive correction effects from the original full reversal.
+No allocation table, duplicate receipt, FIFO, new approval or financial engine.
+Unassigned historical receipts remain held; fully reversed historical amounts
+must retain their original zero-net behavior. Human-recorded and provider-verified
+evidence remain distinct; TEST evidence never fulfills an actual obligation.
+
+Require exact old-source inverses and old-consumer controls, new native positive
+split/partial/reversal proofs, malformed/mixed/duplicate/stale/over-allocation
+refusals, role/tenant/revocation, original replay/concurrency and receipt/Rail
+rollback. Then mount explicit selection and inspectable history in the original
+manual-payment/review surface with real rendered/recovery proof. Preserve the
+legitimate E08 through40008→E05 50005→E09 60009 dependency chain. A new forward
+carrier has NOT been named, applied or published; reconcile actual frontier before
+release. Do not rename applied history or use an isolated Preview to waive peers.
+
+Historical#2913 guard SQL is whole-file exact to the current21131204 forward,
+SHA256 `3bbc17a4597968faa0a91b99ca659b916b2476499cc949105d3defbbfa5a43db`,
+also present in merged#2971/9c05. Production21131204/21131304 each appear once;
+current amount-basis/evidence helpers matcha7c2887f/86404f3e. Reuse the evolved
+accepted deposit/custom-quote and recurring semantics; do not remerge the old
+candidate or recreate its agreement/collection engine.
+
+Owner ALL50/every-call-text and delegated-management directives are incorporated
+in the original ANT-51 matrix. EXP03 retains the canonical final dispatch gate and
+state-source matrix; E04 consumes its original hold/result contract. No50-state
+compliance or delegated-member grant is inferred. ALG01/12 remain PARTIAL,
+ALG02/13 UNVERIFIED and capability maturity unchanged. Full12 work continues.
+
+---
+
+# C133 — Forward financial authority source after the actual database frontier
+
+Original #3110/f0324c004f938015a44ea2f8aa01d2eae5667e8e received sequential
+AUTHOR-REVIEW / LOWER ASSURANCE and managed Preview15 SUCCESS. Actual full
+`customer_portal_payments.sql`248 PASS at database job123857165350/step102.
+That WHOLE job FAILED: existing source pins and two pause-race stand-ins still
+inspected the former wrapper body. No overall green or release is inferred.
+Adapt only the five original SQL fixture files: pin the exact delegated wrapper
+AND the complete inverse of its canonical core, retaining the original hashes,
+assertion IDs/counts, role/lifecycle expectations and unrelated source bytes.
+Move rolled-back race injection/restoration to that same factored resolver, with
+an explicit failure if the stand-in replacement changes nothing. Keep the
+positive stale-read and all locked-refusal controls; no vacuous race PASS.
+Five whole-file inverses verify all other bytes and plans. Migration15 is now
+durably Preview-applied and stays immutable; no runtime or permission edit.
+Renew exact-head review and full CI before any ordinary source release.
+
+The renewed8dd whole database job still FAILED at exactly the two E04 status
+proofs; all repaired Portal fixture steps passed. Its historical04 replay
+correctly refuses the later15 billing-wrapper source. Keep both applied
+migrations immutable. In the existing isolated replay fixture only, capture
+all twelve complete final function records, restore the exact original
+billing body through its already-verified inverse, run unchanged04 and ALL
+eight original replay/calendar checks, then restore the exact final wrapper
+definition and require twelve-record conservation. Original eight-check body
+is byte-exact. The observed8dd refusal is retained as the genuine negative;
+this positive replay is explicitly under historical compatible inputs, not
+a claim that old04 accepts changed current prerequisites. No production
+execution, migration ledger or workflow relaxation. New full CI still owed.
+
+The connected O1–O4 outcome is unchanged. Production advanced through EXP03
+#3105/b763e1937366376dd35a7fe1d1f21da6652f0b27 to migration
+20271126010014 while original E05 Task12 and this factor13 remained absent.
+The current migration guard correctly rejects both older additions. The proposed
+12→13 dependent review was stopped before any composed push or durable Preview.
+No `--include-all`, applied-history rewrite, schema reset or marker change is used.
+
+Preserve original published factor64e2137970d4eadfa3e8f691b3f903762ed1f299
+and local composedc00a40e246e21357821e40805255911d11f1d122. This successor
+starts at actual mainb763 and carries ONLY the original three E04 paths. Rename
+the NEVER-applied factor to forward20271126010015; apart from this explanatory
+header its SQL is byte-exact. The original private executable ABI, original
+Auth-bound wrappers, authority predicates, source guards and negative controls
+remain unchanged. No E05 Task12 source is adopted; its original owner retains
+the applied Preview and legitimate forward-release reconciliation.
+
+This is infrastructure for trusted original native financial context, not an
+activated financial Chat reader. Full native248 (original211 plus37 controls),
+exact-head review/CI, managed Preview, ordinary release and production source
+readback remain required. Prior reduced61 proof is bounded local engineering
+evidence. Actual customer financial read/reload, second cohort, client/staff,
+provider outcomes, all12 integrated acceptance and founder acceptance stay OPEN.
+E09 receiving source must follow the current15 reservation and actual frontier;
+already-live14 cannot be reused. No public/service grant, caller impersonation,
+financial calculation, ledger, provider, customer action or Master edit changes.
+
+# C132 — invoice selector released; original financial actor contract in progress (2026-10-30 UTC)
+
+Same full O1–O12 assignment and sequence. **No full outcome/founder acceptance.**
+
+## Released connected O3/O4 increment
+
+[#3104](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3104) is merged
+`e54840398a51913671476328ebadc6de74f99a2e`, tree
+`84e8025509da67fe1458cab9f75991c9a46b8eba`: exact inspected union of mainb696
+and reviewed `2aa4745807b52424c962d542892957d1def829b2`. Final sequential
+AUTHOR-REVIEW / LOWER ASSURANCE5706902461, twelve exact check runs and two web
+statuses SUCCESS, zero unresolved threads. Initial CSS scanner failure is retained;
+same full ten-file detector verified the two neutral-rule repair without exclusions.
+
+Vercel `dpl_CfHvsakb4mpebd5XyZXX2bTEfDDg` READY/exacte548; canonical public
+`e54840398a51913671476328ebadc6de74f99a2e-mvuaw6jq`/customerUpdate:null and the actual
+bootstrap→app→SoloEntry→Sales chain read back200. New selector source SHA256
+`88bff5f32c044cc8acfeae2f782201c374ec3a47130c87229eca6ad6987fc44e`;
+actual corrected CSS
+`d1d5bdd4fa7f3300284d425a6b9dce06d4cfb014a62b7c2d467b47b3a502f6b9`.
+[Source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3104#issuecomment-6513114468).
+
+SQL release N/A. Normal Edge40986733839/job123839389417 has zero affected
+entrypoints: upload, downloaded-source verification and marker steps correctly
+SKIPPED. No new Edge deployment/marker or native13 is implied. Native10/11 and the
+original invoice gate remain prerequisites. Master3092/3099 closeout is on main;
+the promised E02→queuedE05/E09 document window is returned.
+
+Final-current-style rendering and signed-in financial/customer/all-role proof remain
+OWED after bounded browser attach/reset failures. Original exact-source local
+renders do not substitute. No payment, signature, message, provider or capability
+activation occurred.
+
+## Local financial actor factor — supports O11, not a new permission engine
+
+Native13 mechanically factors the actual canonical relationship resolver, SHARE-lock
+resolver and stricter financial client authority. Complete source inverses guard every
+original predicate. Original Auth-bound wrappers retain their OIDs, signatures,
+defaults (including lock DEFAULT 'share'), owner/configuration and ACL. Auth null,
+deleted/banned and platform checks keep their original position before business-header
+parsing; ambiguity, portal state, tenant/client locks and same-business staff exclusion
+remain authoritative. Original explicit-actor platform predicates are proven equivalent
+to the old Auth-bound forms before reuse.
+
+The final PRIVATE INVOKER seam is:
+
+```text
+public._client_portal_financial_actor_current(
+  p_actor_id uuid, p_tenant_id uuid, p_expected_client_id uuid
+) -> boolean
+```
+
+Only the original trusted native consumer may call it after accepting the actual
+requester/tenant/client/thread context. It is **not** a service/PostgREST RPC,
+read-any-customer API, financial observation, receipt or final-publication proof.
+All anon/authenticated/service EXECUTE grants are absent. Null/denied scope
+withholds; original Auth exceptions remain refusals. E09 must additionally retain its
+accepted-context lifetime/cancellation, original invoice facts/identity and final
+native publication recheck. Owner/team financial reads keep their original separate
+owner authorization; an owner is not impersonated as a customer.
+
+Internal factors reuse that same predicate in two contexts: the old Auth-bound
+wrapper parses its original narrowing header at the original point; the PRIVATE
+native consumer uses its already admitted explicit business/client context without
+pretending a service JWT is the customer. No function sets Auth/JWT/GUC values.
+
+Valid reduced-schema component RED17/old24PASS preceded implementation; current
+candidate61PASS includes old result/error/default equivalence, wrong business/client,
+staff/platform/deleted/banned/paused/null scope, selected relationships, no API-role
+grants, outside-source conservation and no fixture-data effect. Synthetic Auth/table
+ports are explicit: this is not full-schema RLS, hosted identity, client publication,
+concurrency or customer acceptance.
+
+Original customer_portal_payments.sql now prepares248 assertions: original211 retained,
+37 actor/currentness/lifecycle assertions added, only the legitimate delegated billing
+wrapper body pin renewed. Full-schema execution/review/exact-head CI/managed Preview
+and release remain OWED. Native13 is not durably applied. Preserve original published
+E05Task12/source and legitimate12→13 order; no managed history skip or peer merge.
+
+Verified fixture lesson: client timeout can leave CREATE DATABASE outcome uncertain.
+A provisional zero read is insufficient while the command may still complete.
+The one late EMPTY owned local database was positively identified by original cluster,
+exact task prefix/owner/zero user objects and reconciled; subsequent DB0/stopped was
+verified. Setup timeouts/temp-schema/dollar-quote errors are excluded from causal proof.
+Production records/accounts were never involved.
+
+Next remains the complete commercial journey: finish this native contract through
+ordinary gates, exact canonical money display and accepted allocation/split/correction/
+revision lifecycle; initial conversational target discovery remains missing, followed
+by O5/O9 and O6–O8/O10–O12 integration and final authenticated/founder acceptance.
+No algorithm/catalogue maturity promotion follows from local proof.
+
+---
+
+# C131 — accepted payment-plan selection in the original invoice workspace (2026-10-30 UTC)
+
+**Release correction:** first CI full-file Impeccable scan rejected the new CSS side-tab. Initial local scan had omitted CSS; same full ten-file scan reproduced it. Two neutral-border rules repair the finding, full scan0; no gate exclusion. Actual post-refinement rendering is UNVERIFIED after three browser attach/recovery timeouts/reset. Earlier exact product-source renders remain bounded evidence; final style/authenticated proof remains owed.
+
+**Implementation/local proof; not released or customer accepted.** Same complete O1–O12 destination and owner-recalibrated sequence: connected O1–O4, O5/O9, then O6–O8/O10–O12. No new agent, platform lane, financial authority or activation.
+
+The owner can inspect native accepted economics, dated deposit/installments and original remaining allocations, select one exact positive obligation and continue through the existing HIGH invoice review. No caller amount or due date replaces its immutable reference. The original operation list blocks a competing request; Cancel retains source/selection and restores focus after that list rereads. Pending/expired account review now has a focused return without forgetting an uncertain operation. Scope/actor/role/version changes retire the local accepted source. The caller-JWT SDK consumer reuses the retained decoder and distinct native10 owner admission; no permission logic is copied.
+
+The new selector is mounted by the original SalesBillingWorkspace→InvoiceWorkspace→InvoiceLifecycleActions chain for eligible existing and future SOLO tenants; no hard-coded customer dispatch, tenant backfill, provisioning change or new schema is required by this consumer. Neutral UUIDs are confined to test/render ports. Existing/new-account authenticated evidence remains owed. Original agreement, principal, invoice, payment operations/claims, HIGH approval, provider, Rail and native history stay authoritative.
+
+Local 150 assertions/10 suites pass, including all original retained-reader/inspection and invoice cases plus source/selector/composite regressions. Full canonical type ratchet: baseline10/current6, no new error; baseline unchanged. Strict scoped lint and pinned Impeccable checks pass. Initial genuine type errors and a corrected test-port expectation remain in private diagnostics, not waived. Actual component desktop and narrow source→selection→exact original review→keyboard Cancel/return, loading/cancel, source-held/TEST/stale/error, denied/signed-out/session-retirement paths are rendered with explicit synthetic SDK ports and network-denying CSP. This is NOT signed-in/native/provider or Central QA acceptance. See [bounded UI proof](../evidence/ui-delivery/e04-accepted-payment-plan-workspace.md).
+
+The original #3099 native10 release now has production source/configuration proof after one unchanged normal Edge retry; #3092 bounded MERIT source navigation/reload proof remains separate. Their single additive Master closeout preserves all original history. Normal received main includes E09 native11 and E05 source/docs releases; preserve E05 Task12 and original E04 private financial-currentness13. EXP09's native11 producer handoff is received; private service-actor currentness factor13 and canonical exact-string amount formatting remain unbuilt producer dependencies for the next connected financial increment. No E09 Portal source takeover or relaxed Progress authority.
+
+**Not complete O3/O4:** manual/split/correction/reversal allocations, schedule amendments and initial conversational target discovery/schema are still missing. Legacy generic full/partial requests remain their original separate paths and are not represented as accepted installment targeting. Complete signed-to-obligation/client/merchant/provider behavior, production selector read/approval/recovery, two cohorts/all roles and remaining twelve outcomes remain open. No request initiated here is a settlement or completed service. Next: final scoped source review/exact-head CI/normal release/readback, then canonical allocation/revision and financial-currentness contracts before moving through O5/O9.
+
+---
+
+# C130 — accepted-obligation foundation released; invoice consumer next (2026-10-29 UTC)
+
+The original O3/O4 foundation [#3099](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3099)
+is normally merged at `218c7fd9e3e4662df3d5813991623a5ab944bec1`, reviewed head
+`5533abc346c69b777c378cfd03402227f3874b52`, final AUTHOR-REVIEW / LOWER ASSURANCE
+`5706079173`. All 13 exact check runs and both web statuses passed. Actual merge
+tree `137633b89c66dc14526612eac97232ddc37ffc75` equals the inspected receiving
+union; all 28 reviewed leaves and 18,033 incoming outside-owned leaves are exact.
+
+Normal migration workflow `40970247517` / job `123785126946` succeeded. Production
+read-only catalogue observes `20271126010010` exactly once/frontier10; eight relevant
+function bodies, owner, security, search path, defaults and ACL match reviewed
+source. Original accepted-reader/native billing and relationship authority remain intact.
+
+Normal Edge workflow `40970247500` first uploaded but correctly held its marker:
+one importer still had older source. The supported API read confirmed that upload
+acknowledgment was insufficient. ONE unchanged normal failed-job retry, attempt2 /
+job `123790025308`, succeeded. Independently downloaded artifact `12940657290`
+has ZIP SHA256 `9e28c58f4a0bb40783903c81226d4e94449bc07925353f907be73569418f9dc5`;
+all 11 selected functions and their actual configuration match. Chat592/JWTtrue
+has 309 raw/emitted leaves; invoice-command217/JWTtrue and orchestrator169/JWTtrue
+are verified. Current selected metadata matches. Original scratch-cleanup permission
+warning and failed attempt/artifact are retained; no manual marker or privilege change.
+The ordinary db-live and edge-live tags both advanced through their original gates.
+
+Web `dpl_4wc2qKWMAUbHCoJf4CiKzBwZJuXZ` is READY/exact218c. Canonical public build
+`218c7fd9e3e4662df3d5813991623a5ab944bec1-mvu5ezf1`, app and seven root assets
+return200/customerUpdate:null. Actual Sales-imported `growth2-CroyC1N0.js`
+(`706b726db7a626bd24d89bc53cde9e491f2b055fe23ee634121152e272a27fab`)
+contains the original recovery, accepted-selector parser and async-ready contract.
+The ordinary Vercel alias requires existing Authentication for anonymous reads;
+no both-origin200 or bypass claim. Initial guessed wrapper locations and a bounded
+incomplete graph are excluded; source was located through the actual Sales imports.
+
+This is source/native/web/Edge delivery, **not a completed installment lifecycle**.
+No signing, sending, money movement, provider activation or service acceptance occurred.
+Native11 remains EXP09's original consumer, native12 EXP05's Task work; the
+acknowledged private financial-currentness factor13 is still unbuilt.
+
+## Next connected invoice consumer — LOCAL, unmounted
+
+Same full O1–O12 and calibrated sequence. The next original caller-JWT consumer
+uses native10's distinct admission and the SAME extracted retained-record decoder.
+Its old owner RPC/name/closed DTO/digest validation is preserved; the entire original
+validation tail is byte-exact. Exact source/selector/date/amount plus current
+invoice/client/lifecycle/draft/issued context must match. Native remaining amounts
+are retained; no schedule, allocation or date arithmetic is added.
+
+Thirteen causal new cases first failed while all 19 incumbent reader cases passed;
+the completed transport now passes all63 old/new cases. The original accepted
+inspection/package UI's 23 cases, strict frozen Deno2.9.8 and scoped lint also pass.
+These are local synthetic tests, not native/provider or customer acceptance.
+
+Before product UI, the throwaway framework-native flow exercises inline plan
+inspection, an adjacent selected-row consequence and the existing invoice approval
+modal. Actual local source/TEST/allocation holds, failures, role/allocated variants,
+keyboard review, exact consequence, interruption recovery and return focus were
+observed. The viewport-control attempt stalled and is INVALID/EXCLUDED; narrow,
+full-shell/native/AT/real-role proof is still owed. No new schedule-selection UI is
+mounted or claimed released yet.
+
+Learning retained in the original packet: provider acknowledgment cannot replace
+original complete-source readback; preserve the first failure and repeat only the
+unchanged normal path after diagnosis. Public wrapper names do not identify the
+changed component's chunk; inspect the actual mounted import chain. Do not promote
+these delivery observations into payment, capability, algorithm or full Experience acceptance.
+
+# C129 — accepted-obligation source and same-operation recovery (2026-10-29 UTC)
+
+Keep the owner's calibrated order below. MERIT #3092 is now merged at
+`a0ba8016618a68bd4ef93a5f92a7550c850bafbb`, with exact-head checks, lower-assurance
+author review and normal source-verified web/Edge release. The first source mismatch
+held its release marker; one unchanged normal retry verified all 308 source and
+emitted leaves. Fresh authorized Owner production read, original agreement link,
+same document reload and explicit original-DM reopen passed. Protected identities
+and screenshots remain in ANT-52; this is not full twelve-outcome acceptance.
+
+The next **LOCAL, UNRELEASED** O3/O4 increment composes the ORIGINAL signed/effective
+payload, canonical invoice balance, immutable provider operation and approval gate.
+Native `20271126010010` follows released E09 `20271126010009`; it has not been applied
+to a durable Preview or production. Its unique owner admission
+`read_sales_accepted_invoice_obligations` leaves the old three-argument accepted
+reader's OID/body/ACL/DTO unchanged. The command service's distinct
+`read_sales_invoice_payment_obligation` reuses the original explicit-actor and
+service-only guards; no caller-JWT impersonation or new permission system.
+
+The exact accepted target survives initial review, canonical Chat approval resume,
+historical operation recovery, and the original owner's operation-list projection.
+Preparation and dispatch repeat the same target/source/remaining-amount check under
+their existing locks. The review consequence names the accepted sequence, due date
+and terms revision. The original recovery control keeps its operation ID and returns
+keyboard focus after its asynchronous list reload. Unknown remains unknown;
+malformed targets use the existing read-failure/retry state. No extra invoice,
+principal, sender, provider adapter, scheduler or financial store was introduced.
+
+Current proof: 391 payment checks/17 suites; 202 adjacent Chat/endpoint/ledger checks;
+28 existing review/recovery UI checks; 43 reduced-schema PostgreSQL checks using
+tracked original functions; the ENTIRE original provider/role/claim/allocation/Rail
+proof also passes with the extended writers. Genuine provider facts are simulated
+in those native tests. Strict Deno 2.9.8, original Kit/risk and definer/version guards
+pass. Actual original-component desktop and 390px rendered recovery, keyboard exit,
+reload/reopen and invalid-source refusal are synthetic-port evidence; full shell,
+real payment/signing/provider/cohort verification and founder acceptance remain owed.
+
+**Next, not silently omitted:** mount accepted schedule selection/inspection through
+the existing invoice workspace and authorized conversation source; add explicit
+original receipt/split allocation and correction/reversal binding; prove schedule
+revision integrity and full-schema/concurrent caller behavior. Unassigned manual
+receipts are held rather than guessed FIFO. TEST receipts never establish actual
+commercial fulfillment. No target-creation UI or new Chat capability is claimed Live.
+
+E09 calendar consumer retains never-applied native11 and its original billing
+authority. E05 retains native12 Task work. The acknowledged E04 private financial
+currentness factor will use a distinct legitimate forward above those reservations;
+it is still unbuilt and must preserve original billing/relationship semantics.
+ALG-01/02/12/13, capability catalogue and Binding Ledger maturity are unchanged.
+The existing registered `sales_invoice.payment_request` uses its legitimate governed
+direct command path: original actor/tenant/role, HIGH approval/fingerprint, immutable
+operation/claim, GET-only uncertain reconciliation and canonical Rail. Source reads
+and calculations are not forced into Layer C, and source proof does not activate it.
+
+# C128 — connected commercial outcome first (2026-10-29 UTC)
+
+Owner recalibration: finish the current original MERIT release; then close the connected O1–O4 agreement → authorized signing/exact effective terms → deposit/installments → original invoice lifecycle. Next O5/O9 payment/reconciliation/Collections; then O6–O8/O10–O12 onboarding, actual delivery/client decisions, completion, self-service and standing. No new platform stream or agent. Native ZION observation stays an explicit later/unbuilt delivery dependency, not an assumed capability. All original twelve outcomes and one integrated founder evaluation remain mandatory.
+
+## Next original O3/O4 boundary — local, not released
+
+1. Owner outcome: inspect the accepted $3,500 principal, $500 initial obligation and ten dated $300 installments; prepare a review for the correct remaining accepted obligation, inspect its original invoice/payment result, recover the same operation and reload the same facts.
+2. Owner/source: EXP04 original Sales/Finance/Agreements. Extend existing invoice inspectors/payment review and canonical writers, not another ledger. Preserve EXP09 Portal and EXP05 Work/Planning/Calendar/E08 collaboration ownership.
+3. Harness/Gateway: original sales-invoice-command and canonical Trust gate; original bounded payment preparation/dispatch/reconciliation. Missing native target contract must refuse before a provider request.
+4. Spine: existing sales_create_payment_request / invoice.payment_request and original agreement/accepted-commercial reads. A targeted dated-obligation adapter is still UNBUILT; current purpose=installment plus an amount does not establish allocation to an accepted date.
+5. Provider: existing Stripe-first merchant binding and genuine readiness/settlement evidence; listed/TEST is not live collected money. No provider or payments activated by this work.
+6. Authority: exact accepted signing/terms/source digest, tenant/client/invoice/draft/issued/lifecycle versions, original HIGH approval/fingerprint and native locks. A signature does not authorize a charge; source transport parsing is not authority.
+7. Durable work: original invoice/provider operations and existing reconciliation work only. One pending request per invoice, original claim/idempotency/replay before current eligibility. No second scheduler, financial store or execution stream.
+8. Evidence: retained accepted payload already contains the canonical dated schedule; reuse it and _sales_collection_accepted_total_evidence. Original paige_invoices/paige_invoice_payments remain money truth. Explicit allocation references belong to original immutable operations/receipts, never a guessed FIFO or fabricated extra payments.
+9. Surface: existing Sales invoice/payment review and accepted-commercial inspection; sales.department remains PROOF_OWED. Show accepted obligations, allocation uncertainty, exact review, pending/settled/failed/recovery states and original record links. Do not hide missing manual/provider allocation behind an invoice-level paid total.
+10. Proof: original $500 + ten $300 schedule, revision/source drift, original receipt split allocation and reversal, no duplicate principal/effect, currentness/role/tenant isolation, concurrent lock/replay, provider uncertainty and normal reload. Safe source/native/render proof first; actual signing/payment effects and final acceptance keep their original authorization gates.
+
+Actual production source was re-grounded with read-only catalogue access: frontier20271126010004; accepted payload235026b3, accepted-total evidence86404f3e, accepted owner readerffc77952, original preparef613c538/claimfa5f6d0f/verified allocationd68a90d2. No schema or customer data changed. E09 native26010009 is already applied in its Preview; a genuine forward must reconcile above that before publication, never rename an applied migration or edit history.
+
+Original read_sales_commercial_package has a closed DTO and must not acquire surprise fields. Prefer an explicit opt-in extension of the existing accepted-agreement owner read, keeping the original three-argument call, its authorization and exact document parser unchanged; any final native overload/helper must be fully proved before adoption. Service-context reads must not impersonate caller-JWT authority. No new reader is claimed available here.
+
+Local first binding preserves the exact accepted target in intent/immutable command and rejects wrong scope/source/amount/already allocated targets. Original operation recovery now reconstructs that accepted selector instead of changing it into a free-form amount, and remains ahead of present balance/provider eligibility. The initial accepted obligation can retain the owner's explicit deposit intent; a later row cannot be mislabeled as the initial deposit. Sixteen original payment suites376PASS, original eight adjacent Chat/C4/permission suites168PASS, and strict Deno2.9.8 actual handler/Chat/parser PASS. Causal original Chat target loss was RED in both stored and pinned approval paths before the shared-helper repair. Original Kit288of296 remains valid; no C0b source pin is changed (the modified adapter/helper are not in its original source-pin list). Native target read/writer/allocations and invoice UI remain incomplete; this WIP is not deployed or customer-accepted.
+
+ALG01/12 existing duplicate/exception mechanisms PARTIAL; ALG02 actual onboarding progression incomplete; ALG13 source-backed recommendations UNVERIFIED. Binding Ledger/catalogue and activation are not promoted. Current original MERIT backend #3089 is independently released; its retained four-file UI completion and truthful navigation wording forward are #3092, with separate exact review/CI/release/customer proof.
+
+---
+
 # C87 — migration-chain receiving and actual Preview resource return (2026-10-28 UTC)
 
 Same full O1–O12/approved Agreements journey and MERIT remain. Actual original ANT51/147/161/163/52 and live Owner North Star leading amendments were read at the four-hour check. Received I1 CLEAR6f6bd279/ANT511ce1117c: original3016 merged4400de573, deploy40609950230 SUCCESS is independently reported/verified; actual production metadata now20010008, own six pending carriers applied0. Existing all11 observed CODE checks for published2971/29 are SUCCESS; native Preview is separately SKIPPED/unassociated. No code check is a customer acceptance or gate waiver.
@@ -4280,3 +4701,415 @@ REPAIR the two incumbent Sales callbacks to retain initialization; preserve all 
 Failing-first tests: unchanged code produced three causal failures with36 original controls passing. After correction,39/2 owning tests PASS5.83s and162/7 adjacent Sales/Analytics tests PASS13.58s. Scoped ESLint, whole-source inverse and the unchanged UI-record validator PASS. This is synthetic/static source evidence. The first local build failed dependency realpath EPERM; actual machine free RAM later fell to144MiB and a shell failed initialization out-of-memory. The local type check and unchanged build retry were stopped to recover memory; neither is green. Required hosted exact-head checks, fresh final review, rendered browser lifecycle, release/readback and protected independent ordinary-role original-reference acceptance remain incomplete.
 
 The original customer interface and every noninitial auth invalidation remain intact. The owner October24 clarification makes small PRs a review-efficiency preference, not a size cap: keep these two inseparable duplicate-issuance causes and their negative controls together. No peer implementation assignment. ALG01/12 remain bounded PARTIAL; no capability maturity or founder acceptance is promoted. Shipped Log N/A while this source increment has not reached main. Evidence: docs/evidence/ui-delivery/e04-sales-metric-initial-session.md.
+
+### C136 — Original accepted-plan discovery and exact Chat target — October30
+
+Same sole EXP04/MERIT lead and full O1–O12. Continue the owner-calibrated
+agreement/signing/dated obligations/invoice closure first. This is REPAIR of a
+missing declared selector and EXTEND of the original invoice read, not a new
+financial, authorization, execution or orchestration system.
+
+The original native writer, request parser, approved-operation replay and owner
+Payments UI already support an exact accepted obligation reference. The original
+Kit/Chat declaration omitted that field, and the original invoice Chat read did
+not expose the accepted plan. Nineteen causal failing cases with58 old/control
+passes establish the source gap. A preceding Windows temporary-file rename error
+ran no tests and is excluded from the causal result.
+
+The original read_sales_invoice gains an optional include_accepted_payment_plan
+boolean. Omitted or false preserves the exact original result and one RPC.
+Explicit inspection derives invoice/client/agreement/currency/revision coordinates
+only from the original caller-JWT invoice read, then uses the SAME
+readAcceptedInvoicePaymentPlan and retained signed-payload decoder. There is no
+new query, schedule/date calculation, financial amount calculation, FIFO allocation,
+permission predicate, document reader, provider call or model-authored context.
+The closed result contains accepted principal, original recorded completion/receipt,
+exact dated references and native scheduled/remaining amounts. Agreement words,
+private document/seal material, customer contact data and credentials are omitted.
+Refused, unverified, stale and the original seven native held states expose no
+eligible targets. Unissued/void invoices do not trigger accepted-plan reads.
+
+The exact reference schema is colocated with its ORIGINAL parser and projected
+through the existing sales_invoice.payment_request Kit declaration. The existing
+parser still rejects caller amounts alongside references, unsupported purposes,
+later payments mislabeled as deposits and extra authority/source fields. A read
+supplies no payment approval. The original server resolves the amount and rechecks
+accepted source, allocations, actor, invoice and merchant under the existing
+prepare/claim locks. Stored and pinned approvals retain the SAME original target
+and operation; unknown results never mint a fresh request.
+
+Orchestration contract and pre-edit routing (ANT-51/161 C136):
+1. Event/request: inspect one original accepted invoice plan and propose its exact
+   dated deposit/installment target; no automatic schedule or charge.
+2. Entry: existing owner Sales/PAIGE/MERIT Chat tool surface; no Root, C0b,
+   Team Hub, renderer, Live, Portal host or shared specialist change.
+3. Original records/capabilities: canonical invoice, immutable signing/terms and
+   allocations; existing sales_invoice.read and sales_invoice.payment_request.
+4. Path: existing authenticated read + governed sales-invoice-command. Layer C is
+   unnecessary for an ordinary read/proposal; no new ActionAdapter/runtime.
+5. Authority: original caller-JWT tenant/actor/owner-financial native admission;
+   all client/signing/version coordinates are server-read, never tool arguments.
+6. Risk: read_only/no approval for inspection; external_effect/HIGH/CONFIRM and
+   original owner-grantable permission/canonical gate for a payment request.
+7. Durable identity: existing payment operation/dispatch claim/atomic Rail only;
+   no scheduler, event, receipt store or extra execution identity.
+8. Provider/readback: no provider for inspection; unchanged Stripe-first merchant
+   readiness and original request/readback/verified settlement at actual execution.
+9. Recovery: original withheld states/version/source checks and same-operation
+   uncertain recovery; no signing, settlement, file availability or service claim.
+10. Result: bounded plan/source facts and the existing Needs your OK proposal.
+
+Verification at this source checkpoint: original actual read/Chat/declaration
+entry tests pass142/5 suites, including one discovered target reaching the SAME
+approval endpoint without a caller amount, original stored/pinned approval
+regressions, source/tenant/version/refusal/held/transport/redaction controls.
+These are isolated original-adapter fixtures, not authenticated model, RLS,
+provider, customer persistence, Rail or full financial acceptance. Exact final
+review, CI, normal affected-importer deployment/source readback and authenticated
+owner/staff/client QA remain owed. sales.department remains PROOF_OWED and existing
+capability maturity is unchanged. ALG01/12 bounded validation/recovery PARTIAL;
+ALG02/13 and usefulness remain UNVERIFIED. No provider, Chat admission, financial
+effect or customer communication is activated. Founder Acceptance and all12 remain
+OPEN; follow with actual invoice usability/payment reconciliation/Collections,
+then original onboarding/delivery/client decision/completion/self-service work.
+
+Final local source verification:142/5 original suites PASS again after normal
+composition of released money repair3112; focused ORIGINAL tsconfig/Vite ambient
+graph694 files/0 diagnostics, scoped ESLint0, frozen Deno2.9.8 actual Chat module,
+canonical registry245/declaration232-of233 baseline and zero source disagreements,
+Solo paritySP1–SP5 plus its COMPLETE original negative/legitimate controls PASS.
+Original Chat handler check passes through its unchanged canonical knowledge-scope
+loader, including DRAINING/no effect/claim and original admitted-read receipts.
+Its first direct Node strip-only invocation failed at an existing parameter
+property before the handler proof; it is INVALID_SETUP, not a product regression
+or passing test. Original entire mutation/approval/replay/readback tail and all
+accepted-reference parser implementations remain byte-exact.
+
+Availability boundary: original DRAINING admission does not offer read_sales_invoice
+among its admitted reads. This domain adapter/declaration change does not activate
+that tool or consequential Chat. Current owner Payments workspace uses its
+legitimate existing native path independently. Signed-in model/Spine admission,
+all-role/provider/accepted-target execution and complete Experience proof remain
+OPEN; no synthetic adapter injection is described as that acceptance.
+
+### C137 — Actual draft persistence and truthful lifecycle amounts — October30
+
+Same sole MERIT lead/full12/O1–O4-first. Private financial-currentness3110 is
+normally merged92621b8018f7beda6fb97945ee9c66c6131487a4 and production15 applied
+ONCE through41002315232/job123889462539. Twelve actual catalogue identities,
+three complete old-source inverses and private INVOKER ACL readback PASS.
+Exact money presentation3112 is merged3f37c5b72a140dff56b6a1c05de00938ddf8e045,
+Verceldpl_GkHd3pUMEMcSeYphMFZdw5tpRavW READY/exact; normal Edge41003567195/
+job123893260018 and downloaded report12954207496/digest2154b226 PASS,
+Chat594/JWTtrue/all310 source-runtime matches. Scratch cleanup warning remains
+separate. These are source releases, not financial/client/founder acceptance.
+
+Original accepted-plan Chat handoff3114/b2decb7c/lower5708218840 remains separately
+frozen in exact-head CI. It does not activate the invoice tool under DRAINING.
+The current UI correction is a local successor; no duplicate native work or
+premature parent release, shared-host change or new agent is introduced.
+
+Actual ordinary-owner engineering verification saved ONE clearly labeled
+internal UNISSUED draft, then full reload and edit/reopen retained its sampled
+date, item, amount, note and version1. Protected evidence lives only in existing
+ANT-52/60f4d7f5; no private screenshots/identity data are committed here. This is
+bounded author engineering persistence evidence, not CentralQA, a signed contract,
+issued obligation, provider payment or completed O4. Initial control loading and
+generic date-fill driver failures were not declared product access/date defects.
+Native keyboard date entry and the missing-date refusal were genuinely observed.
+
+That drive exposed an owning presentation defect: unissued draft amounts were
+labeled Total obligation/Outstanding balance. REPAIR the original display-only
+invoicePaymentCopy module and SAME Sales record/action panels. Draft labels now
+say planned/unissued amounts, issued labels stay original, and voided amounts
+are clearly recorded audit values. Exact native amounts, lifecycle, receipt
+calculations, parsers, permissions, approvals and effectful paths are unchanged.
+The complete DraftEditor/save/selection/navigation tail and lifecycle effects/
+action prefix/complete approval-and-receipt suffix are byte-exact to the parent.
+
+Four causal draft/void failures with52 baseline/control passes preceded the fix;
+final60/3 original component suites PASS. A new test initially assumed the issued
+fixture's150 amount for the original draft fixture's200; corrected only that
+fixture expectation, with no changed money calculation. Focused original-config
+graph831 files/0 diagnostics, scoped lint0 and full seven-code-path pinned
+Impeccable4.1.0 scan0 anti-patterns PASS. Two original synthetic-document color
+advisories remain unsuppressed. Eight actual original focused-record/draft-dialog
+rendered captures cover desktop1280 and320/390 CSS frames, both themes, exact
+label states, zero document horizontal overflow and keyboard close/return focus.
+The20-direct-input manifest is explicit about its incomplete transitive/full-shell
+scope; raw JPEG dimensions/digests/UTC captures are verified. Existing dev-only
+ports/CSP and original components are reused; no QA engine or competing pane.
+
+Orchestration: ordinary owner inspection through original sales_invoice.read and
+canonical lifecycle records; no LayerC act, provider, new event/job, approval,
+execution, receipt or authority. All existing review/publish/financial actions
+stay governed by their original native writers. Current-state label copy cannot
+establish settlement, refund, accepted service or a signed agreement.
+
+Functional: source/component/type/lint verified; exact final review/CI/release
+and corrected authenticated readback remain owed. Visual: original tokens/layout,
+eight bounded captures and truthful format/viewport limits; no full-shell/native
+zoom/AT proof. Experiential: original keyboard flow works and prior draft values
+persist; ordinary staff/client/provider/full12 and Founder Acceptance remain OPEN.
+ALG01/12 PARTIAL,02/13 UNVERIFIED and sales.department PROOF_OWED unchanged. Same
+existing Master document windows/peer source leases; no activation or extra agent.
+
+C138 parent source release:3114/b2decb7c/lower5708218840 passed ALL12 check-runs
+and2 web statuses with0 unresolved review threads, then normally merged
+915c977fed6d87a3570d2a5008faddcd8b22489f at05:40:33UTC. Actual tree7d42d0a8
+matches the inspected6d4+b2de union, with every outside-owned leaf preserved.
+Normal Edge/web deployment and authoritative source readback are tracked
+separately; no DRAINING availability/effect or customer acceptance is promoted.
+The UI successor normally composes that source and original EXP03 conversation
+release; ALL20 direct rendered source pins remain exact, no peer content lost.
+Original paritySP1–SP5 and COMPLETE hostile/legitimate self-test PASS on this UI
+candidate; the evidence-record validator PASS covers3 UI files/1 record only.
+
+Latest original ANT-161 receiving: E05 reserves native50005 AFTER the published
+E08 20008→30008→35008→40008 chain. E09 records an automatic-approval hold on its
+proposed native financial context/publication adaptation; its16 file/reservation
+was NOT created. Native15 producer is satisfied; that specific downstream owner/
+security decision remains separate, with no E04 bypass or duplicate permission
+writer. These current source/activation boundaries do not block this owning
+display correction or other safe commercial work. All12/founder remain OPEN.
+
+### C139–C140 — Original records, production recovery and actionable review — October30
+
+Same sole MERIT/full12/O1–O4-first. Original3114 now has exact production source
+proof: normal41009746030 attempt1 failed two shared declaration identities,
+marker held; ONE unchanged attempt2/job124096717778 succeeds. Independently
+downloaded artifact12981658847 SHA2561b46e43e6baa3ea7d1ace839104a7a428249c461db6e12c0ae5eac2422339043
+matches provider digest; all11 source/runtime/config matches, Chat595/JWTtrue/
+315source+315emitted. Normal certified marker915, no manual tag. Original scratch
+cleanup warning remains. Exact webdpl_4qi4fUojK59TiiquzxYFsBvMCoMC/canonical
+915c977fed6d87a3570d2a5008faddcd8b22489f-mvujnn3s/root+8assets200. Source receipt
+is3114/6524417679. DRAINING invoice read remains unadmitted; no activation.
+
+Actual authorized ordinary Owner reopened the original internal unissued invoice
+and retained unsigned agreement, not new customer records. Invoice refused review
+Cancel/Close/fullreload preserves version1 and draft state; date/amount reopen
+without editing. Agreement current wording2, retained wording1/2, return and full
+reload remain distinguishable and unsigned. Original PDF preparation6/one assigned
+field and saved signing-request review are genuinely mounted; readback confirms
+saved source/recipient/field match. No words/fields/signers/sender changed, complete
+request approved, invitation sent, signature performed, invoice issued or money
+recorded. Listed sender identity does not establish provider readiness. Protected
+evidence stays in ANT52/60f4d7f5; these are author engineering subsets, not CentralQA.
+
+Parent draft/void label repair3116/c74 stays independently frozen through required
+CI/release. Its next bounded local follow-up repairs the original publication
+review itself: typed SALES_INVOICE_INELIGIBLE gives a useful saved-version/amount/
+due-date/payment-method correction path, without pretending to know the specific
+missing field. Its preview uses the same original Unissued draft amount copy.
+Unknown-operation precedence/storage, other native messages, immutable command,
+approval and receipt logic remain unchanged. Two actual causal failures with16
+controls preceded the repair. Final76/3 original suites PASS, focused753types0,
+lint0, official pinned4.1.0 wrapper empty findings. Four actual original-component
+desktop/320/390/Mineral/Obsidian frames,21 direct source pins, raw JPEG metadata,
+keyboard Cancel/Close/visible-focus proof are recorded in
+[original review evidence](../evidence/ui-delivery/e04-invoice-review-recovery.md).
+No synthetic approval was clicked. Final review/CI/release/corrected signed-in proof
+remain owed. This is not another workflow, authority system or financial engine.
+
+OWNER delegated-management directive ANT51/cb2b86d0-fd48-49da-a2a8-0cd32775e7af
+is read and explicitly incorporated across ALL O1–O12/native app/PAIGE/same MERIT
+in both chats. Effective scoped role/resource/action/delegation authority must
+support authorized management without globally promoting members or overriding
+personal signer consent/private context/genuine owner-only actions. Original
+invoice edge/native guards admit active owner/admin IN SOURCE; actual Admin
+action and authorized management-member coverage remain OWED. A hard-coded role
+gate is a source gap candidate pending the original canonical Holder/delegation
+contract and reproduction, not a confirmed regression. EXP01/EXP08 retain shared
+Auth/RBAC/TeamHub definitions; no copied permission logic or new grant is introduced.
+Required positives/negatives include delegated Admin/management, unassigned member,
+foreign tenant, revoked/expired delegation and escalation through original writers.
+
+Original allocation/manual/split/reversal/schedule-revision integration remains
+next feature work through canonical invoice payments/operations, never a second
+ledger. Preserve current E08 native20008→30008→35008→40008 then E05forward50005,
+and E09 automatic-approval-held native consumer/no file/reservation. Existing
+Master source windows remain; four original closeout rows are privately prepared,
+not concurrently inserted. Functional/visual/experiential/role/provider/full12/
+founder acceptance remain separate. ALG01/12 PARTIAL,02/13 UNVERIFIED/catalogue
+unchanged; no new specialist identity, agent, provider or business activation.
+
+C141 coherent release preparation: keep the original record/action amounts,
+publication preview and refused-review recovery in ONE existing3116 correction.
+Oldc74/source60 evidence remains historical and was never released. This is an
+ordinary fast-forward continuation, no duplicate PR or history rewrite. Current
+source normally composes E08 releasee984db704bc4a6517a4e5fa471b169f8005c7cd2,
+preserving every outside-owned leaf and all21 current rendered-source pins. Fresh
+composed76/3 and focused753types0 pass. Original paritySP1–SP5 plus COMPLETE
+hostile/legitimate controls pass. Initial evidence grammar failure was corrected
+with an explicit release position/reference and accurate uncertain-recovery
+wording; unchanged attestation validator now passes6UI/2records, not runtime proof.
+
+The three original record/action/copy product modules remain byte-exact toc74.
+Their earlier8captures remain historical:19of20 direct inputs are unchanged; the
+only changed fixture input adds a conditional draft-publication response. Its
+complete old-file inverse is exact. Current4actual review captures pin that new
+port and same components; no blanket20-of20 or whole-transitive claim. All exact
+final review/hosted gates, normal release/readback and corrected ordinary-user
+proof must be renewed before readiness. Shared40008→E05forward50005 order, E09
+held financial consumer and delegated-management assessment remain separate.
+
+### C150 — Original provider refund/dispute readback — October30
+
+Same sole EXP04/MERIT/full12. Parent3129 remains frozen at reviewed
+f5a7f251cb130892448c3f29108f70435add50ca, all13 check-runs+both web SUCCESS,
+READY/not merged. Production70005 is observed; original E05 published75005 must
+normally precede own immutable80004. No peer merge or native/activation bypass.
+
+LOCAL REUSE+EXTEND: GET-only methods on the SAME pinned Stripe17.5 client and
+original stripe-hosted.ts, requiring the original verified capture, operation,
+merchant/environment, invoice/intent metadata and available capture balance.
+Complete bounded refund/dispute pagination refuses duplicate, truncated, stale,
+inconsistent or unsupported facts. The final full capture/metadata fingerprint
+refuses a changed source. Original settlement/create/read bodies are retained;
+no refund POST, new client, balance ledger, scheduler or invoice calculation.
+
+Refund success/pending/action-required/failure/cancellation and actual debit/
+failure-credit entries stay distinct. Dispute status never substitutes for actual
+withdrawal/reinstatement entries. Raw provider/customer/error content is excluded.
+All391 original+55 new assertions PASS in18 suites. Original17 test files and
+hosted implementation inverse remain exact. The new-contract41 missing-function
+failures are not a production incident. Initial syntax failure is excluded; three
+NEW positive fixture aggregates were corrected, without weakening any assertion
+or guard. A separate causal final-metadata-fence failure/53 controls preceded its
+repair. Final446 PASS, lint3paths0, actual pinned SDK Deno2.9.8 check plus private
+lock/frozen check PASS; lock SHA256
+451e4cea176b18f0909312eccedec14a816a87700ec14a4b6020a93693faa821.
+
+This helper remains UNMOUNTED/LOCAL. Native context/authority, append-only original
+adjustment receipts, exact event location/idempotency, settled-work recovery,
+canonical balance/Collections hold, owner/Chat/private-Portal readback and actual
+provider/customer proof are still OWED. A provider refund does not forgive signed
+debt or authorize more collection. PAIGE's invoice remains the receivable; any
+commercial credit/amendment is a separate reviewed original-record decision.
+
+Existing sales_invoice.read/payment_request stay PARTIAL; refund/credit execution
+is UNAVAILABLE. Reuse original signed ingress/native work/Harness/Trust/Rail; E02
+reads/E03 Communications/E05 Work/E08 shared Chat/E09 Portal retain their writers.
+ALG01/12 bounded LOCAL comparison/abstention only;02/13/maturity unchanged. No new
+UI, hosted financial acceptance, CentralQA or founder completion is claimed.
+
+Primary sources: [refund objects](https://docs.stripe.com/api/refunds/object),
+[refund pagination](https://docs.stripe.com/api/refunds/list),
+[disputes](https://docs.stripe.com/api/disputes/object),
+[dispute pagination](https://docs.stripe.com/api/disputes/list), and
+[credit versus refund](https://docs.stripe.com/invoicing/integration/programmatic-credit-notes).
+Newer documentation does not upgrade the existing API pin or activate a provider.
+
+### C153 — Source-bound provider observations, reviewed foundation
+
+The original O3/O4 allocation/correction parent3129 is now mergedadb84deceb2d52787c2bf49364e712bf7893cdaf.
+Normal native80004 follows75005 exactly once; all eight changed functions and
+the unchanged original actor have matching production source/ACL readback.
+Webdpl_85MTmsLBwe3ZW2d5GFy94wYGmx6r is READY with canonical200/exactadb84-mvvdp0n1.
+Original Edge41117267588 first failed on a stale approval package; one diagnosed
+normal attempt2/job124279501843 passes all11 source/configuration closures.
+Artifact13006908295 ZIP SHA25686c4e80ab235f811052fa2e60501d5ed49b2c71102f96447a8f8dcf2146f1df7
+and normal db-live/edge-liveadb84 are verified. Scratch cleanup permission debt
+remains explicit. This is source release, not authenticated financial acceptance.
+
+This next O5 foundation normally composes that complete main into the existing
+provider-readback branch: original three own code/test blobs and all18,576
+outside-owned incoming leaves were exact; original main journey text recovered
+by the exact inverse of the datedC150 appendix. No source history was restarted.
+Sequential source review then proved and fixed two strict status-shape refusals
+and one mutable-source fingerprint refusal in this NEW, UNMOUNTED reader.
+Malformed array statuses cannot become a won dispute or a verified balance;
+the first validated capture fingerprint is retained before asynchronous reads.
+The unchanged new negatives failed2/57 then1/58 before their respective repairs.
+No production defect or independent non-author review is inferred.
+
+Final local source checks:449 assertions/18 suites PASS, retaining all391
+incumbent assertions and55 prior new cases plus3 causal controls. All17 incumbent
+test files and the original hosted implementation inverse remain exact; only
+erased import/binding annotations differ before the new helper. Three-path lint0,
+actual pinned Stripe17.5/API2024-11-20.acacia Deno2.9.8 frozen check PASS; original
+private lock451e4cea176b18f0909312eccedec14a816a87700ec14a4b6020a93693faa821 unchanged.
+An earlier root src-only configuration ran0 tests and is INVALID, not evidence.
+The final run uses the original CI sales-payments/vitest.config.ts unchanged.
+
+Orchestration Contract for this internal-only increment:
+
+1. Intended outcome: reconcile actual post-settlement refund/dispute evidence
+   for the original payment. Current scope only supplies a GET-only reader.
+2. Entry surface: none mounted. Sales/PAIGE/MERIT/Live/Portal availability is
+   unchanged; no customer action, model call or new specialist registry.
+3. Original records: existing invoice, provider operation, verified capture and
+   tenant merchant binding. Existing sales_invoice.read/payment_request remain
+   their bounded capabilities; refund/credit execution is UNAVAILABLE.
+4. Execution path: same pinned Stripe client, selected original connected
+   account and exact charge. No new ActionAdapter, charge/refund POST or sender.
+5. Authorization: this helper grants none. Future mounting must derive context
+   from the original service-only native reader and current merchant binding;
+   callers cannot nominate another tenant, customer, charge or environment.
+6. Risk/approval: observation only. Financial, credit, commercial and collection
+   decisions still require their original Trust/domain permissions and review.
+7. Durable work/Rail: none created here. Later integration extends original
+   Sales wrappers in paige_durable_work with finite event occurrences; never
+   resets terminal settlement work or introduces another queue/scheduler.
+8. Readback/reconciliation: full bounded pagination and repeated immutable-source
+   comparison; normalized success/pending/failure/cash facts remain distinct.
+   Native persistence, original Rail and financial allocation are still owed.
+9. Failure/uncertainty: malformed, unsupported, incomplete, changed, duplicate or
+   late source returns PROVIDER_ADJUSTMENT_READBACK_REQUIRED; no inferred money,
+   automatic retry of a business effect or optimistic account balance.
+10. Customer result: none newly exposed. Original owner/Chat/private-Portal UI,
+    Collections holds and eventual approved credit/refund disposition must be
+    integrated and proven before describing the complete outcome as available.
+
+The private C151 full-schema context/CAS/journal prototype passed21 controls and
+three causal guard-removal negatives, with all fixtures/DDL rolled back. It is
+not included in this source release, a financial writer or an adopted Portal
+contract. Its remaining single-snapshot, metadata/pointer/guard and finite-work
+requirements must be resolved before mounting; its old disposable Preview was
+retired normally after3129 merged. No unsafe reuse, applied-history rewrite,
+new permanent QA business or provider activation is authorized.
+
+Functional: source foundation only, required new-head review/CI/release owed.
+Visual: no UI/interaction/style change; no prior render borrowed as new proof.
+Experiential: original financial and service journey remains incomplete.
+Acceptance: new3129 Owner QA is UNVERIFIED while browser page access fails;
+prior bounded unsigned-document/PDF/history/reload observations stay source-scoped.
+CentralQA/all roles/current-new SOLO/full O1–O12/founder acceptance remain OPEN.
+ALG01/12 retain bounded local comparison/abstention; ALG02/13 and maturity unchanged.
+
+Source coordination correction: NO active E04 Master/Brain edit. Original
+Coordinator906463c6 receiving4256aaa7 returns the current slot to E02's ONE3122
+row, followed by existing E05/E09/E13 queued rows. An unmerged E08 PR is incoming
+work to preserve, not an indefinite exclusive edit. E04's prepared closeout rows
+remain private until the actual source is returned; no competing ledger or hold.
+
+
+### C156 — Original provider observation integrity proof (2026-10-30 UTC)
+
+Same MERIT / full O1–O12; this is a prerequisite for O5 payment exceptions and O9 Collections, not an accepted refund workflow. #3135 source-only Stripe GET adapter is merged at60fe883ee4dce82f88937b366fa763243ed10da9 and its normal44-function source/configuration certificate passed; no financial or provider activation follows from that release.
+
+The original Sales provider PostgreSQL runner now has a test-only observation mode. It installs an UNVERSIONED/UNPUBLISHED native candidate before the ENTIRE incumbent prepare/claim/settlement/Rail/recovery suite, then tests36 additional source/CAS/immutable-pointer/history/receipt/role controls. A transaction-scoped removal of the pointer trigger must produce the exact causal failure; connection rollback restores the schema before the positive cases. Controlled Rail failure rolls back the new journal, pointer, observation version and invoice source version. The original captured payment and canonical balance remain exact. The same existing Sales Collections CI step retains its old flags and gains this mode; a separate CI test artifact retains the bounded source-pinned proof JSON while the original Collections receipt keeps its exact archive path. No new test engine, authority, ledger, provider client, scheduler or account.
+
+Local real PostgreSQL16.14 checks have passed with36 new controls and the unchanged incumbent lifecycle, including the guard-removal causal negative. Two actual PostgreSQL-session cases additionally prove one retained observation for identical facts, exact40001 refusal for a conflicting source incarnation, and unchanged original payment/terminal settlement work. The source-pinned proof JSON is generated only after every incumbent check finishes; a new run first clears any stale PASS with NOT_COMPLETED. These are REDUCED TABLES and a TEST AUTH seam with original tracked writer bodies; they are not full-schema/hosted/provider/customer evidence. Earlier23 actual managed full-schema context/CAS checks remain separately dated; the intended43 C154 full-schema controls were NOT executed after their confirmation expired and the original Preview retired. No count or assurance is borrowed across these proofs. Exact-final-head review/CI/source release and final proof-artifact readback remain pending for this source increment.
+
+Production native carrier, full metadata/idempotent forward guards, actual source ordering behind the already-published E08 forwards, finite original C4 work, financial refund/reversal/credit/refund-payable/overpayment disposition, canonical balance/Collections/UI integration and real Stripe TEST/authenticated role/reload/recovery proof remain OPEN. Ordinary Owner and authorized Admin read-only invoice/empty/time-zone-hold navigation are bounded supporting proof, not financial acceptance. No Chat capability, binding state, algorithm maturity or provider activation is promoted. ALG01/12 remain PARTIAL; ALG02/13 progression and recommendation gaps remain. The original ANT51 twelve-outcome matrix, protected ANT52 and ANT163 producer/consumer contract remain the acceptance homes; founder integrated evaluation stays NOT_READY.
+
+
+### C157 — Existing full-schema native proof path (2026-10-30)
+
+The same provider-observation test candidate now also has a rollback-only full-schema proof in the existing `database-contract` job. It includes the original commercial metadata and provider candidate fixtures rather than copying either contract. Intended43 controls exercise current native allocation, provider context, source-version CAS, immutable journal/pointer integrity, original Rail rollback/retry and role refusals. Synthetic signing/issued metadata remains explicitly synthetic. The first direct Preview submissions expired without executing; zero-residue readback is not a43-control pass. Hosted execution/readback is still owed at this source checkpoint. No deployable migration, provider request, financial adjustment, new engine, secret or customer UI is added.
+
+The original Collections download retains its original `sql-proof-result.txt` archive path. Provider-observation test evidence uses a separate workflow artifact in that same existing job. This fixes an observed artifact-layout regression without changing product receipts or creating a second execution record. The E05#3145 Operations proof insertion occupies a separate workflow span and must be preserved on composition. Full O1–O12 and all customer/provider acceptance remain open.
+
+
+### C158 — Later provider evidence through original C4 (2026-10-31)
+
+LOCAL continuation from frozen3144/f045: the same original provider proof now exercises a test-only native event-work candidate. It uses paige_durable_work original immutable identity/payload, leases, transitions and25-attempt ceiling. One signed-event identity creates one bounded occurrence; retries never reopen the original terminal settlement work. Completion binds the original capture and CAS journal plus actual atomic Rail, and observed evidence never authorizes a charge, refund, credit or forgiven debt. Native carrier and signed ingress remain UNAVAILABLE/unmounted.
+
+Actual selected-schema native39 controls pass, including wrong tenant/merchant/environment/charge, retry delay, stale attempt, unknown/exhausted outcomes, terminal replay, original payment/balance/settlement-work retention and actual work-Rail failure rollback/recovery. A controlled missing-merchant-binding mutation produces the exact expected admission failure and restores the original definition. The first added concurrency attempt failed only on parsing psql command tags; it is retained as an INVALID completion proof, corrected without weakening assertions. Actual two-session completion proof and refreshed common-body result are reported separately after execution.
+
+The unmounted continuation module uses the original pinned Stripe GET-only reader and original service RPCs. It validates native work/current capture, heartbeats before and after reads, retains the original pre-read source incarnation, and reports observed/pending/unverified counts only. Initial focused type checking caught an unknown environment assignment; constructing it from the already-validated canonical operation corrected it. All473 source cases across19 suites and scoped lint/type0 pass. No entry point invokes the continuation or requests a provider action.
+
+Integration debt remains explicit: early refund/dispute events can precede initial allocation; the original settlement projection refuses already-adjusted charge flags. Do not acknowledge that ordering as a completed payment. Safe combined original capture/adjustment reconciliation, financial reversal/credit/refund-payable/overpayment treatment in canonical billing, Collections suppression and owner/client history still need implementation and genuine provider/role QA. This is engineering work within O5/O9, not a reason to reduce all12 or invent another financial engine. ALG01/12 retain PARTIAL; ALG02/13/customer usefulness, CentralQA and founder acceptance remain OPEN.
+
+Final local common-body/native result: all39 controls and a real two-session same-event registration/completion case PASS (one commit/one retained replay). The exact merchant-binding removal control fails as expected; native definitions restore after rollback. Original payment, balance and terminal settlement work stay exact; owned test database removed and cluster stopped. The source-pinned JSON records39 work controls/one work race separately from36 observation controls/two source races. Full-schema conditional now reuses this SAME common native check body and original settlement writers; hosted execution remains owed. No native carrier/provider/financial/UI activation.

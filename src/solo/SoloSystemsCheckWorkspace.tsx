@@ -87,6 +87,7 @@ const PRESENTATION_SAFE_EVIDENCE = new Set([
   // "No presentation-safe evidence fields are available" on a check that now fails for real tenants,
   // so the owner is told something is wrong and shown nothing that says why (§70).
   "live_won_stages", "archived_won_stages", "deal_count",
+  "calling_account_configured", "primary_voice_capable",
 ]);
 
 const evidenceValue = (value: unknown): string | null => {
@@ -101,6 +102,8 @@ const projectEvidence = (evidence: SystemsCheckFinding["evidence"]) => {
   if (!evidence) return { rows: [] as Array<[string, string]>, hasSuppressed: false };
   const rows = Object.entries(evidence).flatMap(([key, value]) => {
     if (!PRESENTATION_SAFE_EVIDENCE.has(key)) return [];
+    // Stored calling configuration is a boolean fact, never a free-form readiness claim.
+    if (["calling_account_configured", "primary_voice_capable"].includes(key) && typeof value !== "boolean") return [];
     const rendered = evidenceValue(value);
     return rendered === null ? [] : [[key, rendered] as [string, string]];
   });
@@ -1168,7 +1171,13 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
             <div className="sc-evidence-meta"><Proof tone={isResolved(selected) ? "resolved" : selected.status === "pass" ? "live" : "attention"}>{isResolved(selected) ? "Resolved" : label(selected.status)}</Proof><span>Recorded {new Date(selected.created_at).toLocaleString()}</span></div>
             <section><h3>{selectedIsHistorical ? "Recorded result" : "Signal"}</h3><p>{findingTitle(selected)} · {selectedIsHistorical ? label(selected.status) : evidenceStateLabel(evidenceFilter(selected))}</p></section>
             <section><h3>Evidence and provenance</h3><p>Persisted finding {selected.id} from Systems Check run {selected.run_id}.</p>{selectedEvidence.rows.length ? <dl>{selectedEvidence.rows.map(([key, value]) => <React.Fragment key={key}><dt>{label(key)}</dt><dd>{value}</dd></React.Fragment>)}</dl> : <p>No presentation-safe evidence fields are available.</p>}{selectedEvidence.hasSuppressed && <p>Additional evidence is retained but not displayed here.</p>}</section>
-            <section><h3>Impact</h3><p>{selected.paige_interpretation || "No PAIGE interpretation is attached to this persisted finding."}</p></section>
+            <section>
+              <h3>{selected.check_id === "comms_configured" ? "Recorded setup" : "Impact"}</h3>
+              <p>{selected.check_id === "comms_configured" && selected.status === "pass"
+                ? "Email and phone setup was recorded at the time of this check."
+                : selected.paige_interpretation || "No PAIGE interpretation is attached to this persisted finding."}</p>
+              {selected.check_id === "comms_configured" && <p>This check does not test live calling, message delivery or current provider readiness.</p>}
+            </section>
             {selectedIsHistorical || !selectedIsCurrent
               ? <section><h3>Read-only recorded evidence</h3><p>Inspect the latest reading before deciding what to do next. This record does not authorize a repair or approval.</p><button type="button" className="sc-button sc-button--quiet" onClick={closeFinding}>Back to original source</button></section>
               : isResolved(selected)

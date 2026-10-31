@@ -1,4 +1,4 @@
-import {useEffect, useId, useRef} from "react";
+import {useEffect, useId, useRef, type ReactNode} from "react";
 import {Check, FileText, Loader2, Paperclip, X} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {CUSTOMER_CHAT_FILE_LIMIT, type CustomerChatFileSelection} from "@/lib/customer-chat-files";
@@ -13,10 +13,12 @@ type Props = {
   notice: string;
   upload: {id: string | null; kind: string};
   onSelect: (files: File[]) => void;
+  onBeginSelection?: () => ((files: File[]) => void) | null;
   onRemove: (id: string) => void;
   onCheck: (id: string) => void;
   onResume: (id: string) => void;
   onStop: () => void;
+  secondaryAction?: ReactNode;
 };
 const NO_FILES: readonly CustomerAttachmentDraft[] = [];
 
@@ -30,6 +32,7 @@ function size(bytes: number) {
  */
 export function CustomerChatAttachments(props: Props) {
   const input = useRef<HTMLInputElement>(null), help = useId();
+  const pickerChoice = useRef<((files: File[]) => void) | null>(null);
   const add = useRef<HTMLButtonElement>(null), actions = useRef(new Map<string, HTMLButtonElement>());
   const recoveryFocus = useRef<{id:string;from:HTMLElement}|null>(null);
   const removal = useRef<{id: string; next: string | null; from: HTMLButtonElement} | null>(null);
@@ -55,19 +58,26 @@ export function CustomerChatAttachments(props: Props) {
   }, [files, props.enabled, props.busy]);
   return <section aria-label="Files for this message" aria-busy={props.enabled && props.busy} className="min-w-0 space-y-1.5">
     <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+      <div className="flex min-w-0 flex-wrap items-center gap-1">
       <Button ref={add} type="button" variant="ghost" className="min-h-11 shrink-0 gap-2 px-2 text-sm"
         disabled={!props.enabled || props.locked || props.busy || uncertain || files.length >= CUSTOMER_CHAT_FILE_LIMIT}
         aria-describedby={help} onClick={() => input.current?.click()}>
         <Paperclip aria-hidden="true" className="h-4 w-4"/>Add files
       </Button>
+      {props.secondaryAction}
+      </div>
       {files.length > 0 && <span className="text-xs text-muted-foreground">{files.length} of {CUSTOMER_CHAT_FILE_LIMIT} files</span>}
       <input ref={input} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.docx" tabIndex={-1}
         aria-label="Choose private files for this message" className="sr-only"
         disabled={!props.enabled || props.locked || props.busy || uncertain || files.length >= CUSTOMER_CHAT_FILE_LIMIT}
+        onClick={() => {pickerChoice.current = props.onBeginSelection?.() ?? null;}}
         onChange={event => {
           const selected = Array.from(event.currentTarget.files ?? []);
+          const receive = pickerChoice.current; pickerChoice.current = null;
           event.currentTarget.value = "";
-          if (props.enabled && !props.locked && !props.busy && !uncertain && selected.length) props.onSelect(selected);
+          if (!selected.length) return;
+          if (receive) receive(selected);
+          else if (!props.onBeginSelection && props.enabled && !props.locked && !props.busy && !uncertain) props.onSelect(selected);
         }}/>
     </div>
     {files.length > 0 && <ul className="max-h-32 overflow-y-auto overscroll-contain rounded-lg border border-border bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"

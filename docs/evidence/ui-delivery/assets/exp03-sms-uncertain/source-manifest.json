@@ -1,0 +1,14 @@
+{
+  "proof": "Actual original dialog, injected fictional response. Separate actual backend handler tests; no provider/customer/fullshell/PAIGE or saved-thread proof.",
+  "files": {
+    "src/pages/admin/conversations/ComposeThreadDialog.tsx": "1d9761a3e9c315b6d204f421073480f47dadce2a40e2a5946bddb2dcccd07e41",
+    "src/pages/admin/conversations/inbox-shared.ts": "d6b844b5ff1616f0c97108b177de3eb06f7647bb66735a03d65480960a021a35",
+    "src/pages/admin/conversations/messageReading.ts": "4511737573a132e960b4e9dfe05fd5bae5f748c11f82104638b7991eb2713661",
+    "supabase/functions/send-message/index.ts": "0732f08360533607440b52bdb0089235afbd06c6d013b8daae529d17af886e36",
+    "scripts/live-drive/harness/exp03-sms-uncertain-mount/index.html": "abcfb4b574fdaa8f23ccc730baf31587a89f0340f788f522b9e34948de4700b1",
+    "scripts/live-drive/harness/exp03-sms-uncertain-mount/main.tsx": "64d9be2355dea81c54e95a665ad28cda8f0ec287dcd55b39e2a86b4b61383277",
+    "scripts/live-drive/harness/exp03-sms-uncertain-mount/stubs.ts": "77214cf9f2caec19c91ae0f8466f7b7be819dfe760412b1b063bac5bd9e9e18f",
+    "scripts/live-drive/harness/exp03-sms-uncertain-mount/vite.config.ts": "a0235c080787fb99042452d71ad7dc1a4226729a12782286818a54444c75f8ee",
+    "scripts/live-drive/harness/exp03-sms-uncertain-mount/drive.mjs": "51845d78b6b43206fe043e0aaad80e2fd70a2c212f423928c2b4494774eed0c6"
+  }
+}

@@ -120,24 +120,38 @@ function newId(): string {
 }
 
 function parseMessage(raw: unknown): PortalMessage | null {
-  if (!raw || typeof raw !== "object") return null;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const r = raw as Record<string, unknown>;
-  if (typeof r.id !== "string" || typeof r.body !== "string" || typeof r.created_at !== "string") return null;
+  if (typeof r.id !== "string" || !r.id.trim() || typeof r.body !== "string"
+    || typeof r.created_at !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(r.created_at)
+    || !Number.isFinite(Date.parse(r.created_at))) return null;
   if (r.author !== "customer" && r.author !== "business") return null;
-  const m: PortalMessage = { id: r.id, author: r.author, kind: r.kind === "help" ? "help" : "message", body: r.body, created_at: r.created_at };
+  if (r.kind !== "message" && r.kind !== "help") return null;
+  const m: PortalMessage = { id: r.id, author: r.author, kind: r.kind, body: r.body, created_at: r.created_at };
   if (r.author === "customer" && typeof r.request_id === "string") m.request_id = r.request_id;
   return m;
 }
 
 function parseConversation(data: unknown): ConversationPayload | null {
-  if (data === null || data === undefined) return null;
-  if (typeof data !== "object") throw new Error("Unexpected conversation response");
+  // Only the native null result means no relationship. A damaged envelope or row is
+  // a failed read, never an empty/partial history or evidence that an outbox item saved.
+  if (data === null) return null;
+  if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Unexpected conversation response");
   const d = data as Record<string, unknown>;
-  const list = Array.isArray(d.messages) ? d.messages : [];
+  if (typeof d.tenant_id !== "string" || !d.tenant_id.trim()
+    || !Array.isArray(d.messages) || typeof d.has_more !== "boolean") throw new Error("Unexpected conversation response");
+  const messages: PortalMessage[] = [];
+  const seen = new Set<string>();
+  for (const raw of d.messages) {
+    const message = parseMessage(raw);
+    if (!message || seen.has(message.id)) throw new Error("Unexpected conversation message");
+    seen.add(message.id);
+    messages.push(message);
+  }
   return {
-    tenant_id: typeof d.tenant_id === "string" ? d.tenant_id : null,
-    messages: list.map(parseMessage).filter((m): m is PortalMessage => m !== null),
-    has_more: d.has_more === true,
+    tenant_id: d.tenant_id,
+    messages,
+    has_more: d.has_more,
   };
 }
 

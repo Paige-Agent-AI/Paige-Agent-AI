@@ -16,6 +16,8 @@ import {
   parseConversationList,
   parseFinished,
   parseMessagePage,
+  parseTeamHubMessageReference,
+  parseTeamHubReferenceSearch,
   parsePosted,
   parseTaskReads,
   parseTaskRequested,
@@ -40,9 +42,11 @@ import {
   type TeamHubAgentKey,
 } from "./team-hub-contract";
 import {
-  agentTurnBody, askingMessageIds, parseAgentTurn, parseTurnStates,
-  type AgentLineOutcome, type AgentTurnAnswer, type AgentTurnRequest, type BringInSuggestion, type ServerTurnState,
+  agentTurnBody, askingMessageIds, cardActBody, cardActLine, cardMessageIds, cardResultReference, parseAgentTurn, parseCardAct, parseCardStates, parseTurnStates,
+  type AgentLineOutcome, type AgentTurnAnswer, type AgentTurnRequest, type BringInSuggestion, type CardActAnswer, type CardActRequest,
+  type CardActOutcome, type CardRead, type ServerTurnState,
 } from "./team-hub-agents";
+import type { TeamHubApprovalAct } from "./TeamHubApproval";
 
 /**
  * EXP08 Team Hub data hook. Every call goes through `supabase.rpc` with the
@@ -101,6 +105,14 @@ export const REFRESH_INTERVAL_MS = 15_000;
 export const AGENT_WRITING_POLL_MS = 3_000;
 export const AGENT_WRITING_POLL_MAX_MS = 120_000;
 export const AGENT_WRITING_IDLE_RESET_MS = 60_000;
+/**
+ * A2b: while a card in the open conversation (or its thread) is `working` (approved, its act running),
+ * its state is re-read this often, for at most CARD_WORKING_POLL_MAX_MS from when it began working,
+ * and only while the tab is visible. When it settles the conversation is read again, so the agent's
+ * outcome message appears. After the cap the 15 s refresh carries on as before.
+ */
+export const CARD_WORKING_POLL_MS = 3_000;
+export const CARD_WORKING_POLL_MAX_MS = 120_000;
 const PAGE_SIZE = 50;
 const THREAD_PAGE_SIZE = 50;
 
@@ -141,6 +153,8 @@ export interface ThreadState {
   listedNewest?: TeamHubMessage | null;
   /** As on StreamState: where the next older page starts. */
   olderCursor?: TeamHubPageCursor | null;
+  /** An explicit old-source window stays anchored until normal thread navigation replaces it. */
+  referenceWindow?: { messageId: string; cursor: TeamHubPageCursor };
 }
 
 /** What a task request asks Operations for; kept with the attempt so Retry sends the same thing. */
@@ -194,6 +208,19 @@ export interface AgentTurn {
  * says nothing it cannot know, and offers Check again instead of a failure.
  */
 export interface TurnStateRead { read: "ready" | "unavailable"; states: Record<string, ServerTurnState> }
+
+/**
+ * A2b: what the member-safe card read (`team_hub_card_states`) said, per conversation, keyed by the
+ * agent message the card belongs to. `unavailable` when the read failed: the cards already read are kept.
+ */
+export interface CardStateRead { read: "ready" | "unavailable"; cards: Record<string, CardRead> }
+
+/** A2b: what one Approve / Not now came to: the server's outcome and the line the hub says for it. */
+export interface CardActReport { outcome: CardActOutcome | "no_answer"; line: string | null }
+
+/** The card as it stands, without its binding: the approved card then draws its own refusal, never Approve. */
+const unbound = (card: CardRead): CardRead => ({ ...card, approval: { ...card.approval,
+  actions: card.approval.actions.map(({ fingerprint: _fingerprint, ...rest }) => rest) } });
 
 export const agentTurnKey = (sourceMessageId: string, agent: TeamHubAgentKey) => `${sourceMessageId}:${agent}`;
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -286,7 +313,24 @@ function listedIn(overview: TeamHubOverview | null | undefined, id: string | nul
   return overview.conversations.find((item) => item.id === id) ?? overview.agent_dms.find((item) => item.id === id) ?? null;
 }
 
+/** A2b: the messages with each card put on the agent message it belongs to; the same list when none changes. */
+function withCards(messages: TeamHubMessage[], cards: Record<string, CardRead> | undefined, resultReadReady: boolean): TeamHubMessage[] {
+  if (!cards) return messages;
+  let changed = false;
+  const out = messages.map((message) => {
+    const card = message.author_kind === "agent" ? cards[message.id] : undefined;
+    if (!card) return message;
+    const reference = resultReadReady ? cardResultReference(card) : undefined;
+    if (message.approval === card.approval && message.approval_result_reference?.record_id === reference?.record_id) return message;
+    changed = true;
+    return { ...message, approval: card.approval, approval_result_reference: reference };
+  });
+  return changed ? out : messages;
+}
+
 export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => unknown; onIncoming?: (announcement: string) => void; onAttachment?: (announcement: string) => void } = {}) {
+  const navigationEpoch = useRef(0);
+  const threadReadEpoch = useRef(0);
   const [status, setStatus] = useState<HubStatus>("loading");
   const [overview, setOverview] = useState<TeamHubOverview | null>(null);
   const [refreshFailed, setRefreshFailed] = useState(false);
@@ -300,14 +344,17 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   const [attachments, setAttachments] = useState<Record<string, AttachmentChip[]>>({});
   const [agentTurns, setAgentTurns] = useState<Record<string, AgentTurn>>({});
   const [turnStates, setTurnStates] = useState<Record<string, TurnStateRead>>({});
+  const [cardReads, setCardReads] = useState<Record<string, CardStateRead>>({});
+  // Bumped every 3 s while a card in the open conversation is working (CARD_WORKING_POLL_MS).
+  const [cardTick, setCardTick] = useState(0);
   // Bumped by the same focus, reconnect and 15 s ticks that refresh the hub, so a turn's state is read
   // again even when no message changed (a turn that ended elsewhere without posting).
   const [statesTick, setStatesTick] = useState(0);
 
   // Latest values for async continuations; a response for a conversation that is no
   // longer open is dropped instead of painted over the one that is.
-  const live = useRef({ activeId, stream, thread, overview, status, work, taskReads, attachments, agentTurns });
-  live.current = { activeId, stream, thread, overview, status, work, taskReads, attachments, agentTurns };
+  const live = useRef({ activeId, stream, thread, overview, status, work, taskReads, attachments, agentTurns, cardReads });
+  live.current = { activeId, stream, thread, overview, status, work, taskReads, attachments, agentTurns, cardReads };
   const alive = useRef(true);
   // Set on every setup, not only at creation: React StrictMode runs setup, cleanup, setup in
   // development, and a ref left false after that first cleanup would drop every response.
@@ -341,7 +388,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   /** Refusals that end the whole hub are handled here, for every call alike. */
   const settle = useCallback(<T,>(result: TeamHubResult<T>): TeamHubResult<T> => {
     if (!alive.current || result.kind !== "refused") return result;
-    const clear = () => { setOverview(null); setStream(null); setThread(null); setPending([]); setWork({ status: "idle", items: [] }); setTaskReads({}); setAttachments({}); setAgentTurns({}); setTurnStates({}); };
+    const clear = () => { setOverview(null); setStream(null); setThread(null); setPending([]); setWork({ status: "idle", items: [] }); setTaskReads({}); setAttachments({}); setAgentTurns({}); setTurnStates({}); setCardReads({}); };
     if (result.code === "unavailable" && !unavailableRetried.current) {
       // The account type may have been read from a stale workspace context. Re-read it once and ask
       // again before settling on "not available for this account type".
@@ -444,22 +491,31 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     return result;
   }, [call, settle]);
 
-  const loadThread = useCallback(async (channelId: string, rootId: string, mode: "open" | "refresh" | "older"): Promise<number> => {
-    if (mode === "open") setThread({ channelId, rootId, status: "loading", root: null, replies: [], hasMore: false, loadingOlder: false, olderFailed: false });
+  const loadThread = useCallback(async (channelId: string, rootId: string, mode: "open" | "refresh" | "older", referenceWindow?: ThreadState["referenceWindow"]): Promise<number> => {
+    const readEpoch = mode === "open" ? ++threadReadEpoch.current : threadReadEpoch.current;
+    const pinned = mode === "open" ? referenceWindow : live.current.thread?.referenceWindow;
+    if (mode === "open") setThread({ channelId, rootId, status: "loading", root: null, replies: [], hasMore: false, loadingOlder: false, olderFailed: false,
+      ...(pinned ? { referenceWindow: pinned } : {}) });
     if (mode === "older") setThread((current) => current && current.rootId === rootId ? { ...current, loadingOlder: true, olderFailed: false } : current);
-    const cursor = cursorBefore(mode === "older" ? live.current.thread?.olderCursor ?? live.current.thread?.replies[0] : undefined);
+    const cursor = cursorBefore(mode === "older" ? live.current.thread?.olderCursor ?? live.current.thread?.replies[0] : pinned?.cursor);
     const answer = await call("team_hub_list_messages", { p_channel_id: channelId, p_thread_root: rootId, ...cursor, p_limit: THREAD_PAGE_SIZE });
     const result = settle(parseThreadPage(answer.data, answer.error, channelId, rootId));
-    if (!alive.current || live.current.thread?.rootId !== rootId) return 0;
+    if (!alive.current || threadReadEpoch.current !== readEpoch || live.current.thread?.rootId !== rootId
+      || live.current.thread.channelId !== channelId) return 0;
     if (result.kind === "refused" && ENDS_HUB.has(result.code)) return 0;
     const meId = live.current.overview?.me.user_id ?? "";
     const heldIds = new Set((live.current.thread?.replies ?? []).map((reply) => reply.id));
     const incoming = mode === "refresh" && result.kind === "ok"
       ? result.value.replies.filter((reply) => !heldIds.has(reply.id) && byOther(reply, meId)).length : 0;
     setThread((current) => {
-      if (!current || current.rootId !== rootId) return current;
+      if (!current || threadReadEpoch.current !== readEpoch || current.rootId !== rootId || current.channelId !== channelId) return current;
       if (result.kind === "ok") {
         const page = result.value;
+        // The exact source is the newest row before its exclusive native boundary. If
+        // it is absent on a fresh anchored read, never retain its deleted cached body.
+        if (pinned && mode !== "older" && !page.replies.some(reply => reply.id === pinned.messageId)) {
+          return { ...current, status: "not_found", root: null, replies: [], loadingOlder: false };
+        }
         const held = mode === "open" ? [] : current.replies;
         // Same rule as the stream: a newest page that can't be joined to the held replies replaces them.
         const anchor = mode === "open" ? null : current.listedNewest ?? null;
@@ -471,6 +527,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? anchor : newestOf([...(anchor ? [anchor] : []), ...page.replies]) ?? null;
         return {
           channelId, rootId, status: "ready", root: page.root, replies, listedNewest,
+          ...(pinned ? { referenceWindow: pinned } : {}),
           olderCursor: mode === "refresh" && !gap ? current.olderCursor ?? page.oldest ?? null : mode === "older" ? page.oldest ?? current.olderCursor ?? null : page.oldest ?? null,
           // A refresh that joins the held replies decides nothing about what lies above them.
           hasMore: gap ? true : mode === "refresh" ? current.hasMore : page.has_more,
@@ -608,13 +665,14 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     };
   }, []);
 
-  const openConversation = useCallback(async (channelId: string) => {
+  const openConversation = useCallback(async (channelId: string, markVisibleRead = true) => {
+    navigationEpoch.current += 1;
     const conversation = listedIn(live.current.overview, channelId);
     setActiveId(channelId);
     live.current.activeId = channelId;
     setThread(null);
     const { result, newestId } = await loadStream(channelId, "open", conversation?.unread ?? 0);
-    if (result.kind === "ok" && result.value.channel.joined && newestId && alive.current && live.current.activeId === channelId && streamVisible.current) {
+    if (markVisibleRead && result.kind === "ok" && result.value.channel.joined && newestId && alive.current && live.current.activeId === channelId && streamVisible.current) {
       void markRead(channelId, newestId);
     }
   }, [loadStream, markRead]);
@@ -637,6 +695,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   }, [markRead]);
 
   const clearConversation = useCallback(() => {
+    navigationEpoch.current += 1;
     setActiveId(null);
     live.current.activeId = null;
     setStream(null);
@@ -650,6 +709,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   }, [loadStream]);
 
   const openThread = useCallback((rootId: string) => {
+    navigationEpoch.current += 1;
     const channelId = live.current.activeId;
     if (!channelId) return;
     live.current.thread = { channelId, rootId, status: "loading", root: null, replies: [], hasMore: false, loadingOlder: false, olderFailed: false };
@@ -662,7 +722,36 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     await loadThread(current.channelId, current.rootId, "older");
   }, [loadThread]);
 
-  const closeThread = useCallback(() => { setThread(null); live.current.thread = null; }, []);
+  const closeThread = useCallback(() => { navigationEpoch.current += 1; setThread(null); live.current.thread = null; }, []);
+
+  /** Original-message navigation: metadata resolution grants nothing; list_messages reads afresh. */
+  const openMessageReference = useCallback(async (messageId: string, beforeOpen?: (reference: { channelId: string; rootId: string; messageId: string }) => void) => {
+    const unavailable = { kind: "unavailable" as const };
+    if (parseTeamHubReferenceSearch(new URLSearchParams({ message: messageId }).toString()).kind !== "reference") return unavailable;
+    const epoch = ++navigationEpoch.current;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let answer: RpcAnswer;
+    try {
+      answer = await Promise.race([call("team_hub_message_reference", { p_message_id: messageId }),
+        new Promise<RpcAnswer>(resolve => { timer = setTimeout(() => resolve({ data: null, error: new Error("Reference read timed out") }), 5000); })]);
+    } finally { if (timer !== undefined) clearTimeout(timer); }
+    if (!alive.current || navigationEpoch.current !== epoch) return unavailable;
+    const result = settle(parseTeamHubMessageReference(answer.data, answer.error, messageId));
+    if (result.kind !== "ok") return result;
+    const reference = result.value;
+    // Prepare the destination's composer while the previous thread still owns its draft.
+    try { beforeOpen?.(reference); } catch { return unavailable; }
+    // Opening an old source must not mark the newest hidden channel messages read.
+    await openConversation(reference.channelId, false);
+    if (!alive.current || navigationEpoch.current !== epoch + 1 || live.current.activeId !== reference.channelId) return unavailable;
+    live.current.thread = { channelId: reference.channelId, rootId: reference.rootId, status: "loading", root: null,
+      replies: [], hasMore: false, loadingOlder: false, olderFailed: false };
+    await loadThread(reference.channelId, reference.rootId, "open", reference.cursor
+      ? { messageId: reference.messageId, cursor: reference.cursor } : undefined);
+    if (!alive.current || navigationEpoch.current !== epoch + 1) return unavailable;
+    return result;
+  }, [call, settle, openConversation, loadThread]);
+  const cancelReferenceNavigation = useCallback(() => { navigationEpoch.current += 1; }, []);
 
   // ── Attachments (increment 3) ──
   const removedChips = useRef(new Set<string>());
@@ -955,6 +1044,32 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     if (unread.length) void readTaskStatuses(unread);
   }, [shownWorkIds, readTaskStatuses]);
 
+  // ── A2b: cards ──
+
+  // A card this tab is acting on right now: a read never overrides it, since the act's own answer is
+  // the newer fact (a read issued before the click would otherwise put Approve back under it).
+  const actingCards = useRef(new Set<string>());
+
+  /**
+   * The member-safe card read for one conversation's agent messages: where each card stands, who may
+   * act on it (the binding goes only to its asker, only while it waits), and never its arguments.
+   */
+  const readCardStates = useCallback(async (conversationId: string, ids: string[]) => {
+    if (!ids.length) return true;
+    const answer = await call("team_hub_card_states", { p_channel_id: conversationId, p_message_ids: ids });
+    if (!alive.current) return true;
+    const cards = parseCardStates(answer.data, answer.error);
+    setCardReads((current) => {
+      const before = current[conversationId];
+      if (!cards) return { ...current, [conversationId]: { read: "unavailable", cards: before?.cards ?? {} } };
+      const asked = new Set(ids);
+      const kept = Object.fromEntries(Object.entries(before?.cards ?? {}).filter(([id]) => !asked.has(id) || actingCards.current.has(id)));
+      const fresh = Object.fromEntries(Object.entries(cards).filter(([id]) => asked.has(id) && !actingCards.current.has(id)));
+      return { ...current, [conversationId]: { read: "ready", cards: { ...kept, ...fresh } } };
+    });
+    return Boolean(cards);
+  }, [call]);
+
   // ── A1b: agent turns ──
 
   /** One agent turn through `paige-ai-chat`, under this person's session. Never throws. */
@@ -1214,6 +1329,145 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     return () => window.clearInterval(timer);
   }, [openChannel, writingKeys]);
 
+  // ── A2b: the cards in the open agent DM ──
+
+  // Read when the open agent DM (or a thread in it) opens, when its agent messages change, on the hub's
+  // focus / reconnect / 15 s ticks, and every 3 s while one of its cards is working. A2b makes cards in
+  // agent DMs only, so a channel or a person DM is never read for them.
+  const streamCards = stream && stream.status === "ready" && agentDmIds.has(stream.channelId) ? cardMessageIds(stream.messages).join(",") : "";
+  const threadCards = thread && thread.status === "ready" && agentDmIds.has(thread.channelId)
+    ? cardMessageIds([...(thread.root ? [thread.root] : []), ...thread.replies]).join(",") : "";
+  useEffect(() => {
+    if (stream && streamCards) void readCardStates(stream.channelId, streamCards.split(","));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- read on a new conversation, new agent messages or a tick, not on every stream edit
+  }, [stream?.channelId, streamCards, statesTick, cardTick, readCardStates]);
+  useEffect(() => {
+    if (thread && threadCards) void readCardStates(thread.channelId, threadCards.split(","));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- as above, for the open thread
+  }, [thread?.channelId, threadCards, statesTick, cardTick, readCardStates]);
+
+  // The cards shown now that are working: `${conversationId}:${messageId}`.
+  const workingCards = [...new Set([stream && streamCards ? stream.channelId : null, thread && threadCards ? thread.channelId : null])]
+    .flatMap((conversationId) => {
+      if (!conversationId) return [];
+      const shown = new Set([...(conversationId === stream?.channelId ? streamCards.split(",") : []), ...(conversationId === thread?.channelId ? threadCards.split(",") : [])]);
+      return Object.entries(cardReads[conversationId]?.cards ?? {})
+        .filter(([id, card]) => shown.has(id) && card.approval.state === "working").map(([id]) => `${conversationId}:${id}`);
+    }).sort().join(",");
+  // A card that stops working has settled: the conversation is read again, so its outcome message shows.
+  const wasWorking = useRef("");
+  useEffect(() => {
+    const before = wasWorking.current;
+    wasWorking.current = workingCards;
+    if (!before) return;
+    const settledNow = before.split(",").some((key) => {
+      const [conversationId, id] = key.split(":");
+      const card = live.current.cardReads[conversationId]?.cards[id];
+      return card !== undefined && card.approval.state !== "working";
+    });
+    if (settledNow) void refreshRef.current();
+  }, [workingCards]);
+  // While anything is working, every 3 s, for at most 2 minutes from when it began (a second card
+  // starting does not restart the cap; it restarts once nothing is working).
+  const cardPollStarted = useRef<number | null>(null);
+  useEffect(() => {
+    if (!workingCards) { cardPollStarted.current = null; return; }
+    const started = cardPollStarted.current ?? Date.now();
+    cardPollStarted.current = started;
+    if (Date.now() - started >= CARD_WORKING_POLL_MAX_MS) return;
+    const timer = window.setInterval(() => {
+      if (Date.now() - started >= CARD_WORKING_POLL_MAX_MS) { window.clearInterval(timer); return; }
+      if (document.visibilityState === "visible") setCardTick((n) => n + 1);
+    }, CARD_WORKING_POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [workingCards]);
+
+  /** One card act through `paige-ai-chat`, under this person's session. Never throws. */
+  const invokeCardAct = useCallback(async (request: CardActRequest): Promise<CardActAnswer> => {
+    try {
+      const answer = await supabase.functions.invoke("paige-ai-chat", { body: cardActBody(request) });
+      return parseCardAct(answer?.data, answer?.error ?? (answer ? null : new Error("no answer")), request);
+    } catch {
+      return { outcome: "no_answer" };
+    }
+  }, []);
+
+  const putCard = useCallback((conversationId: string, messageId: string, card: CardRead) => {
+    setCardReads((current) => ({ ...current, [conversationId]: {
+      read: current[conversationId]?.read ?? "ready", cards: { ...(current[conversationId]?.cards ?? {}), [messageId]: card } } }));
+  }, []);
+
+  /**
+   * Approve / Not now on a card, by its asker: `{ teamHubCardAct }` to `paige-ai-chat`, the way the hub
+   * asks its agents, under this person's session. The server decides, runs the proposal through the
+   * door that owns it, records the outcome and posts the agent's outcome message; no model runs. While
+   * an approved act runs the card reads Running; nothing is ever shown as done unless the server says so.
+   * A second click while one is on its way is ignored, so one card is never acted on twice from here.
+   * Resolves to the outcome and the line to announce (cardActLine; null when the card itself says it,
+   * verifier fix 5), or null when nothing was sent.
+   *
+   * A refusal that leaves the card waiting is never left looking approvable (A2b review fix 2): when the
+   * server says this person can't decide it (not theirs, not visible, conversations off), the card goes
+   * back without its binding, so the approved card shows its own refusal instead of a live Approve.
+   * `could_not_start` keeps the binding, because trying again is the right next step; the screen says so.
+   */
+  const actOnCard = useCallback(async (message: TeamHubMessage, act: TeamHubApprovalAct): Promise<CardActReport | null> => {
+    // Pause is A2c's (a standing permission). No A2b read draws a standing card, so nothing offers it.
+    if (act.kind === "pause") return null;
+    const fingerprint = act.fingerprints[0];
+    const { cardReads: reads, stream: openStream, thread: openThread } = live.current;
+    // The conversation the card was read in, else the one it is shown in: the server decides either way,
+    // so an Approve on screen always reaches the one door that can say whether it is a card.
+    const readIn = Object.keys(reads).find((id) => reads[id].cards[message.id]) ?? null;
+    const shownIn = openStream?.messages.some((item) => item.id === message.id) ? openStream.channelId
+      : openThread && (openThread.root?.id === message.id || openThread.replies.some((item) => item.id === message.id)) ? openThread.channelId : null;
+    const conversationId = readIn ?? shownIn;
+    const prior: CardRead | undefined = readIn ? reads[readIn].cards[message.id]
+      : message.approval ? { approval: message.approval, outcomeMessageId: null, record: null, expiresAt: null } : undefined;
+    if (!conversationId || !prior || !fingerprint || actingCards.current.has(message.id)) return null;
+    actingCards.current.add(message.id);
+    // The card as the server would now draw it in `state`: the binding and the expiry go with the wait.
+    const settledAs = (state: CardRead["approval"]["state"]): CardRead => ({ ...prior, approval: { ...prior.approval, state, can_resume: false,
+      actions: prior.approval.actions.map(({ summary, state: own }) => ({ summary, ...(own ? { state: own } : {}) })) } });
+    if (act.kind === "approve") putCard(conversationId, message.id, settledAs("working"));
+    const answer = await invokeCardAct({ conversationId, messageId: message.id, act: act.kind, fingerprint })
+      .finally(() => actingCards.current.delete(message.id));
+    if (!alive.current) return null;
+    if (answer.outcome === "no_answer") {
+      // It may or may not have happened, so the card says what the server knows now. When even that can't
+      // be read, an approved act is "couldn't confirm it ran" and a Not now is left as it was.
+      const read = await readCardStates(conversationId, [message.id]);
+      if (!read && alive.current) putCard(conversationId, message.id, act.kind === "approve" ? settledAs("unconfirmed") : prior);
+      return { outcome: "no_answer", line: cardActLine("no_answer") };
+    }
+    if (answer.card) putCard(conversationId, message.id, answer.card);
+    else if (answer.outcome === "done" || answer.outcome === "failed" || answer.outcome === "unconfirmed"
+      || answer.outcome === "declined" || answer.outcome === "expired") putCard(conversationId, message.id, settledAs(answer.outcome));
+    else if (answer.outcome === "not_yours" || answer.outcome === "not_visible" || answer.outcome === "conversations_off")
+      putCard(conversationId, message.id, unbound(prior));
+    else putCard(conversationId, message.id, prior);
+    if (answer.outcomeMessage) placeReply(answer.outcomeMessage, conversationId, false);
+    void readCardStates(conversationId, [message.id]);
+    // The hub settles what the answer means for everyone (Team conversations off, the DM gone), and the
+    // conversation is read again so the outcome message is in place.
+    void refreshAfterAction.current();
+    return { outcome: answer.outcome, line: cardActLine(answer.outcome) };
+  }, [invokeCardAct, placeReply, putCard, readCardStates]);
+
+  // Each card goes onto the agent message it belongs to, as the approval the approved card draws.
+  const shownStream = useMemo(() => {
+    if (!stream) return stream;
+    const messages = withCards(stream.messages, cardReads[stream.channelId]?.cards, cardReads[stream.channelId]?.read === "ready");
+    return messages === stream.messages ? stream : { ...stream, messages };
+  }, [stream, cardReads]);
+  const shownThread = useMemo(() => {
+    if (!thread) return thread;
+    const cards = cardReads[thread.channelId]?.cards;
+    const replies = withCards(thread.replies, cards, cardReads[thread.channelId]?.read === "ready");
+    const [root] = thread.root ? withCards([thread.root], cards, cardReads[thread.channelId]?.read === "ready") : [null];
+    return replies === thread.replies && root === thread.root ? thread : { ...thread, replies, root };
+  }, [thread, cardReads]);
+
   /** A person's DM with one agent: the listed one, or opened (made once) through its own door. */
   const openAgentDm = useCallback(async (agent: TeamHubAgentKey): Promise<ActionOutcome<string>> => {
     const existing = live.current.overview?.agent_dms.find((dm) => dm.agent_key === agent);
@@ -1327,8 +1581,9 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     activeId,
     activeConversation,
     activeAgentDm,
-    stream,
-    thread,
+    // A2b: each with its cards on the agent messages they belong to.
+    stream: shownStream,
+    thread: shownThread,
     pending,
     refresh,
     retryLoad,
@@ -1338,6 +1593,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     loadOlder,
     setStreamVisible,
     openThread,
+    openMessageReference,
+    cancelReferenceNavigation,
     loadEarlierReplies,
     closeThread,
     send,
@@ -1365,6 +1622,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     askAgain,
     checkTurn,
     openAgentDm,
+    actOnCard,
   };
 }
 

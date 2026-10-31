@@ -14,7 +14,9 @@ for (const [label, mutate] of [
   ["CRM scope memo no longer reset", s => s.replace("callerOwnTenantMemo = null;", "/* stale memo */")],
   ["missing tenant refusal removed", s => s.replace("CRM_SERVICE_TOOLS.has(tc.function.name) && !crmTenantId", "false")],
   ["deals tenant filter replaced", s => inBranch(s, "crm_list_deals", '.eq("tenant_id", crmTenantId)', '.eq("tenant_id", args.tenant_id)')],
-  ["task write injected", s => inBranch(s, "crm_list_tasks", 'const limit =', 'await admin.from("tasks").delete(); const limit =')],
+  ["task write injected", s => inBranch(s, "crm_list_tasks", 'let assigneeUserId:', 'await admin.from("tasks").delete(); let assigneeUserId:')],
+  ["task list handed a foreign tenant", s => inBranch(s, "crm_list_tasks", 'listCrmTasks(admin, crmTenantId!,', 'listCrmTasks(admin, args.tenant_id,')],
+  ["task list handed the caller client", s => inBranch(s, "crm_list_tasks", 'listCrmTasks(admin,', 'listCrmTasks(supabaseClient,')],
   ["provider call injected", s => inBranch(s, "crm_pipeline_summary", 'const sevenDaysAgo =', 'await fetch("https://invalid.local"); const sevenDaysAgo =')],
   ["parenthesized foreign receiver", s => inBranch(s, "crm_pipeline_summary", 'const sevenDaysAgo =', 'await (evil).find(() => 1); const sevenDaysAgo =')],
   ["service client shadowed", s => inBranch(s, "crm_list_deals", 'const limit =', 'const admin = evil; const limit =')],
@@ -63,10 +65,27 @@ test("summary caller must remain the authenticated JWT SDK instance", () => {
   assert.ok(validateCrmReadBindings(changed).findings.length > 0);
 });
 test("called helper cannot hide provider I/O", () => {
-  const files = ["contact-search.ts", "client-ref.ts", "contact-methods.ts", "crm-command/deal-relationship-integrity.ts", "pipelineWorkspaceRead.ts"];
+  const files = ["contact-search.ts", "client-ref.ts", "contact-methods.ts", "crm-command/deal-relationship-integrity.ts", "pipelineWorkspaceRead.ts", "crm-reads/list-tasks.ts"];
   const sources = Object.fromEntries(files.map(file => [file, readFileSync(new URL(`../../supabase/functions/_shared/${file}`, import.meta.url), "utf8")]));
   sources["contact-search.ts"] = sources["contact-search.ts"].replace('const byToken =', 'await fetch("https://invalid.local"); const byToken =');
   assert.ok(validateCrmReadBindings(chat, sources).findings.length > 0);
+});
+const taskListFiles = ["contact-search.ts", "client-ref.ts", "contact-methods.ts", "crm-command/deal-relationship-integrity.ts", "pipelineWorkspaceRead.ts", "crm-reads/list-tasks.ts"];
+const taskListSources = () => Object.fromEntries(taskListFiles.map(file => [file, readFileSync(new URL(`../../supabase/functions/_shared/${file}`, import.meta.url), "utf8")]));
+test("the extracted task list is verified as it stands", () => assert.deepEqual(validateCrmReadBindings(chat, taskListSources()).findings, []));
+for (const [label, from, to] of [
+  ["tenant pin removed", '.eq("tenant_id", tenantId);', ';'],
+  ["tenant pin replaced", '.eq("tenant_id", tenantId);', '.eq("tenant_id", args.tenant_id);'],
+  ["write injected", 'if (error) throw error;', 'if (error) throw error; await admin.from("tasks").delete();'],
+  ["provider call injected", 'if (error) throw error;', 'if (error) throw error; await fetch("https://invalid.local");'],
+  ["columns widened", '"id, title, status, due_date, track, user_id, biz_id, deal_id, source_thread_id, updated_at, created_at"', '"*"'],
+  ["tenant reassigned", 'const limit =', 'tenantId = args.tenant_id; const limit ='],
+  ["second table read", 'if (error) throw error;', 'if (error) throw error; await admin.from("clients").select("id").eq("tenant_id", tenantId);'],
+]) test(`extracted task list rejects ${label}`, () => {
+  const sources = taskListSources();
+  const changed = sources["crm-reads/list-tasks.ts"].replace(from, to);
+  assert.notEqual(changed, sources["crm-reads/list-tasks.ts"]);
+  assert.ok(validateCrmReadBindings(chat, { ...sources, "crm-reads/list-tasks.ts": changed }).findings.length > 0);
 });
 test("malformed binding source refuses safely", () => assert.ok(validateCrmReadBindings("const broken = (").findings.length));
 const pipelineSql = readFileSync(new URL("../../supabase/migrations/20260901045935_pipeline_identity_catalogue.sql", import.meta.url), "utf8")

@@ -617,6 +617,8 @@
 .me-review{border-color:var(--violet-line)}
 .me-review.is-blocked{border-color:color-mix(in srgb,var(--bad) 35%,var(--line))}
 .me-facts,.me-results{margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+/* A review card with three facts (the series' Who enters · Emails · From) spans them across the card. */
+.me-facts.is-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .me-results{grid-template-columns:repeat(5,minmax(0,1fr))}
 .me-facts>div,.me-results>div{display:grid;gap:3px;min-width:0}
 .me-facts dt,.me-results dt{font-size:11.6px;color:var(--ink-2)}
@@ -764,7 +766,7 @@
 .paige-solo .me .me-starters strong{font-size:13px;font-weight:620}
 .paige-solo .me .me-title h2,.paige-solo .me .me-drawer-head h2{font-weight:650}
 @container (max-width:1180px){.me-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.me-grid-b{grid-template-columns:repeat(2,minmax(0,1fr))}.me-grid-b>.mo-panel:first-child{grid-column:1/-1}}
-@container (max-width:1000px){.me-grid-a{grid-template-columns:minmax(0,1fr)}.me-compose{grid-template-columns:minmax(0,1fr)}.me-preview{position:static}.me-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.me-results{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container (max-width:1000px){.me-grid-a{grid-template-columns:minmax(0,1fr)}.me-compose{grid-template-columns:minmax(0,1fr)}.me-preview{position:static}.me-facts,.me-facts.is-3{grid-template-columns:repeat(2,minmax(0,1fr))}.me-results{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @container (max-width:720px){.me-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.me-grid-b{grid-template-columns:minmax(0,1fr)}.me-starters{grid-template-columns:repeat(2,minmax(0,1fr))}.me-editor-head{grid-template-columns:minmax(0,1fr)}.me-editor-acts{justify-content:flex-start}.me-cap{text-align:left}}
 @container (max-width:460px){.me-stats{grid-template-columns:minmax(0,1fr)}.me-results{grid-template-columns:repeat(2,minmax(0,1fr))}.me-warn{grid-template-columns:minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){.me .me-starters button,.me .me-chip,.me .me-senders button,.me .me-segments button,.me-frame,.me-progress i{transition:none}.me .me-starters button:hover:not(:disabled){transform:none}.me-drawer{animation:none}}

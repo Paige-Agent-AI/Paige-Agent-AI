@@ -47,6 +47,15 @@ const messages: Record<string, Row[]> = {
   "c-dm-priya": [msg({ id: "p1", author_user_id: "u-priya", body: "Can we move our 1:1 to 3pm?", created_at: today(8, 12) })],
 };
 
+// Opt-in fictional original-message fixture, isolated from existing shell evidence states.
+const SOURCE_CHANNEL = "e8000000-0000-4000-8000-0000000c0001";
+const SOURCE_ROOT = "e8000000-0000-4000-8000-0000000b0001";
+const SOURCE_REPLY = "e8000000-0000-4000-8000-0000000a0001";
+if (params.has("message")) {
+  conversations.push(conv({ id: SOURCE_CHANNEL, name: "handover-notes", unread: 3 }));
+  messages[SOURCE_CHANNEL] = [msg({ id: SOURCE_ROOT, author_user_id: "u-priya", body: "Original onboarding handover notes", created_at: today(9, 0), reply_count: 120 })];
+}
+
 function turnStates(p: Row) {
   const all = messages[String(p.p_channel_id)] ?? [];
   const states: Row[] = [];
@@ -61,6 +70,26 @@ function turnStates(p: Row) {
   return { ok: true, states };
 }
 
+// Opt-in synthetic recovery presentation; it grants no writer or live connection.
+if (params.get("recovery") === "ready") {
+  const card=messages["c-daily"].find(m=>m.id==="a-zion-dm1")!;
+  card.body="Your task cancellation approval was recorded. You can resume it here.";
+  card.approval={ ...(card.approval as Row), kind:"Task cancel",state:"working",can_resume:true,
+    actions:[{summary:"ZION wants to cancel the task “Prepare the onboarding packet”.",fingerprint:"a1b2c3d4e5f60718"}],decided_by_name:"Morgan Reyes",decided_at:today(9,59) };
+}
+
+// Original result navigation only: a separate native card read, never a raw message link.
+const RESULT_DM = "e8000000-0000-4000-8000-0000000c0002";
+const RESULT_MESSAGE = "e8000000-0000-4000-8000-0000000b0002";
+if (params.has("result")) {
+  conversations.push(conv({ id: RESULT_DM, name: null, kind: "agent_dm", agent_key: "zion", visibility: "private",
+    member_count: 1, member_ids: [viewer] }));
+  messages[RESULT_DM] = [msg({ id: "result-ask", author_user_id: viewer, body: "Cancel the onboarding packet task.", created_at: today(9, 58) }),
+    msg({ id: RESULT_MESSAGE, author_user_id: viewer, author_kind: "agent", agent_key: "zion", asked_in_message_id: "result-ask",
+      body: "Check the original task for its current state.", created_at: today(9, 59),
+      ...(params.get("result") === "forged" ? { approval_result_reference: { destination: "operations_work", record_id: TASK_ID } } : {}) })];
+}
+
 const harness = { calls: [] as string[] };
 (window as unknown as { __harnessCalls: typeof harness }).__harnessCalls = harness;
 
@@ -68,10 +97,25 @@ function teamHub(name: string, p: Row) {
   const tenant = harnessActiveTenant().id;
   if (p.p_expected_tenant !== tenant) return { ok: false, code: "scope_changed" };
   if (name === "team_hub_list_conversations") return { ok: true, tenant_id: tenant, me: { user_id: viewer }, people, conversations };
+  if (name === "team_hub_message_reference") return params.get("source") === "refused" || p.p_message_id !== SOURCE_REPLY
+    ? { ok: false, code: "not_found" } : { ok: true, channel_id: SOURCE_CHANNEL, thread_root_id: SOURCE_ROOT,
+      message_id: SOURCE_REPLY, cursor: { created_at: "2026-10-20T09:10:11.123456+00:00", id: "e8000000-0000-4000-8000-0000000a0002" } };
   if (name === "team_hub_mark_read") return { ok: true };
+  if (name === "team_hub_card_states" && params.has("result") && p.p_channel_id === RESULT_DM) {
+    if (params.get("result") === "refused") return { ok: false, code: "not_found" };
+    if (params.get("result") === "forged") return { ok: true, cards: [] };
+    return { ok: true, cards: [{ message_id: RESULT_MESSAGE, card: {
+      state: params.get("result") === "unknown" ? "unconfirmed" : "done", kind: "task_cancel", asker_user_id: viewer,
+      decided_by_name: "Morgan Reyes", decided_at: today(9, 59), expires_at: today(10, 29),
+      actions: [{ summary: "ZION wants to cancel the task “Prepare the onboarding packet”.", note: "“Prepare the onboarding packet” is cancelled." }] },
+      outcome_message_id: null, record: { destination: "operations_work", record_id: TASK_ID } }] };
+  }
   if (name === "team_hub_list_messages") {
     const c = conversations.find((item) => item.id === p.p_channel_id);
     if (!c) return { ok: false, code: "not_found" };
+    if (p.p_thread_root === SOURCE_ROOT && c.id === SOURCE_CHANNEL) return { ok: true,
+      channel: { id: c.id, kind: c.kind, name: c.name, visibility: c.visibility, joined: c.joined }, root: messages[SOURCE_CHANNEL][0],
+      messages: [msg({ id: SOURCE_REPLY, parent_message_id: SOURCE_ROOT, author_user_id: "u-jordan", body: "The welcome packet is ready for the original review. Reopen this handover here.", created_at: "2026-10-20T09:10:11.123456+00:00" })], has_more: true };
     if (p.p_thread_root) return { ok: false, code: "not_found" };
     return { ok: true, channel: { id: c.id, kind: c.kind, name: c.name, visibility: c.visibility, joined: c.joined }, messages: [...(messages[String(c.id)] ?? [])].reverse(), has_more: false };
   }

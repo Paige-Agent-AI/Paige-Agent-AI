@@ -412,3 +412,37 @@ describe("Series view", () => {
     expect(text()).toContain("This series no longer exists");
   });
 });
+
+// Owner ruling 2026-10-27: PAIGE imposes no sending stop (migration 20271121140003). The database still
+// reports its old 500 display figure; no series screen may present it as a limit.
+const NO_LIMIT = /a day|-a-day|daily|limit|send tomorrow|used up/i;
+describe("Email series name no daily sending limit", () => {
+  it("the Automations panel does not say series share a daily limit", async () => {
+    await mount();
+    expect(text()).toContain("Automations");
+    expect(text()).not.toMatch(NO_LIMIT);
+  });
+
+  it("the series waiting for approval has no Daily limit row and its summary ends with the sender", async () => {
+    await openSeries(seriesRead({ status: "pending_approval", state: "locked" }));
+    expect(text()).toContain("Start “Welcome series”: 3 emails to new contacts as they arrive. From ");
+    expect(text()).not.toMatch(NO_LIMIT);
+    // Three facts now, and the grid is the three-column one (no empty quarter on the right).
+    const facts = host.querySelector("#ms-review-h")!.closest("section")!.querySelector("dl.me-facts")!;
+    expect([...facts.querySelectorAll("dt")].map((d) => d.textContent)).toEqual(["Who enters", "Emails", "From"]);
+    expect(facts.classList.contains("is-3")).toBe(true);
+  });
+
+  it("a running series with the old figure at zero says nothing is used up and nothing waits for tomorrow", async () => {
+    const read = seriesRead({ status: "active", state: "approved", live: true });
+    await openSeries({ ...read, sending: { daily_cap: 500, used_last_24h: 500, remaining_today: 0 } });
+    expect(text()).toContain("In it now");
+    expect(text()).not.toMatch(NO_LIMIT);
+  });
+
+  it("the series editor's sender choice does not promise a number a day", async () => {
+    await openSeries(seriesRead());
+    expect(text()).toContain("PAIGE’s sender · opens and clicks reported");
+    expect(text()).not.toMatch(NO_LIMIT);
+  });
+});

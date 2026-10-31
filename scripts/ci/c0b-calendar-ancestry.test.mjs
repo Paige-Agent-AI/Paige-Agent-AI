@@ -24,6 +24,8 @@ const [tool, spec] = baseline.tools.entries().next().value;
 const capability = { key: spec.key, action: { ...spec, chatTool: tool }, selfDescribe: spec.selfDescribe,
   readiness: spec.readiness, chatBinding: 'LIVE', mindBinding: 'UNAVAILABLE', maturity: 'PARTIAL' };
 const changes = [
+  ['customer selected-link relationship', 'supabase/functions/_shared/client-portal-public-link.ts', 'snapshot.contact_id !== contact', 'false'],
+  ['customer selected-link closed public purpose', 'supabase/functions/_shared/client-portal-public-link.ts', 'args.purpose === CUSTOMER_PUBLIC_LINK_PURPOSE', 'true'],
   ['original automation draft nonexecuting summary', automationSummaryPath, 'Draft only. No task is created or process enabled by saving this draft.', 'Tasks are created automatically.'],
   ['draft elapsed and current-request fence', weeklyDeadlinePath, 'if (!current() || performance.now() >= expires)', 'if (false)'],
   ['weekly draft requires exact confirmation', weeklyDeclarationsPath, 'actionRiskKey: "weekly_commitment_draft", risk: "ordinary", approval: "confirm"', 'actionRiskKey: "weekly_commitment_draft", risk: "ordinary", approval: "none"'],
@@ -56,7 +58,11 @@ const changes = [
 ];
 
 test('reviewed Calendar, Task, email, reminder and read-receipt context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 127);
+  assert.equal(incumbentSourcePaths.length, 131);
+  for (const path of ['supabase/functions/_shared/client-portal-invoices-context.ts', 'supabase/functions/_shared/client-engagement/chat.ts', 'supabase/functions/_shared/client-engagement/money.ts']) {
+    assert.ok(incumbentSourcePaths.includes(path), 'invoice source and original exact-string commercial presentation remain restrictive inputs');
+  }
+  assert.ok(incumbentSourcePaths.includes('supabase/functions/_shared/client-portal-public-link.ts'), 'reviewed customer selected-link authority must remain a restrictive input alongside all original127 sources');
   assert.ok(incumbentSourcePaths.includes(automationSummaryPath), 'the reviewed draft-only summary must remain a restrictive ancestry input');
   assert.ok(incumbentSourcePaths.includes(weeklyDeadlinePath), 'the shared elapsed-stage fence must remain a restrictive ancestry input');
   assert.ok(incumbentSourcePaths.includes(weeklyDeclarationsPath), 'the weekly draft declaration must remain a restrictive ancestry input');

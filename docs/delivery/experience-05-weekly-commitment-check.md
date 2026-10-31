@@ -1101,6 +1101,28 @@ unchanged. Same ZION/personality in both chats, weekly execution/full Builder
 lifecycle/proactive/recovery, all ten outcomes/E5-CV1–9 and one complete founder
 evaluation remain OPEN. Founder NOT_ACCEPTED; STILL CODING / NOT_READY.
 
+## October29 — original ZION Planning foundation released; host still separate
+
+Outcomes01/02/08/10 inputs only: #3086 reviewed e944 merged7a30/tree39ef69e7
+after all11 required checks/managed Preview/two web contexts SUCCESS, zero
+threads and final AUTHOR-REVIEW / LOWER ASSURANCE5701770567. Source103 local
+tests/strict0-to0 retained; clean composition preserves E04 Master history.
+Vercel dpl_2uLPHLTkzNpqcZVi27qCxd8kxyL3 READY/exact. BOTH production origins
+17:03:20–21UTC200/build7a30-mvtsj03g/customerUpdate:null; original Operations
+240,965byte chunk and all8 recovery signatures preserved. Original Edge
+40917238093/job123600617357 SUCCESS: no affected runtime function, upload and
+source certification correctly SKIPPED, certified9da baseline not advanced.
+No schema, activation or new customer result/receipt is claimed.
+
+[Original production evidence](../evidence/exp05-zion-planning-foundation-production.json).
+The same ZION Planning host is separate DRAFT#3087/6f5e9071,115 local tests;
+E04 native admission/source-version/history and receiving review still required,
+current guard excludes ZION. operations.department PARTIAL; both-chat/private
+record/Rail/reload/cohort/native/negative/full ten/E5/founder proof remains owed.
+Functional source/web verified; Visual original source preserved, no new rendered
+flow claim; Experiential incomplete; Founder NOT_ACCEPTED. STILL CODING / NOT_READY.
+
+
 ## October29 — ZION Planning host review branch; native release dependency OPEN
 
 The owner explicitly approved bounded review-branch implementation after the

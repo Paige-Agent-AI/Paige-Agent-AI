@@ -26,8 +26,19 @@ export type Dashboard = {
   audience: { contacts: number; with_email: number; new_leads: number; customers: number; inactive_90: number; newsletter_subscribers: number };
   segment_count: number; segments: SegmentRow[];
   activity: ActivityRow[];
-  sending: { daily_cap: number; used_last_24h: number; remaining_today: number; postal_address_set: boolean };
+  // The database also returns daily_cap / remaining_today, a display figure nothing enforces since
+  // 20271121140003 (owner ruling 2026-10-27: no PAIGE-imposed sending stop). The screen reads only the real count.
+  sending: { used_last_24h: number; postal_address_set: boolean };
 };
+
+/**
+ * The business's real marketing email count for the last 24 hours, as `_email_used_today` counts it: every
+ * recipient sent in the last 24 hours, every one leased and in flight now, and every one whose hand-off got no
+ * answer (`outcome_unknown`) in the last 24 hours — it may have been delivered. Hence "sent or sending".
+ */
+export function sentLast24h(n: number): string {
+  return `${n.toLocaleString()} marketing ${n === 1 ? "email" : "emails"} sent or sending in the last 24 hours.`;
+}
 
 export type Delta = { change: number; percent: number | null } | null;
 const countDelta = (now: number, before: number, comparable: boolean): Delta =>

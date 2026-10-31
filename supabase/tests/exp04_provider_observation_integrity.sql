@@ -6,6 +6,9 @@ set local lock_timeout='2s';
 set local statement_timeout='10s';
 set local idle_in_transaction_session_timeout='10s';
 \ir fixtures/exp04_provider_observation.sql
+\if :{?e04_observation_work}
+\ir fixtures/exp04_provider_observation_work.sql
+\endif
 
 
 create temp table e04_commercial_fixture(data jsonb not null);
@@ -319,4 +322,19 @@ reset role;
 select pg_temp.check_true((select count(*)=43 from e04_observation_checks),'all43 intended observation controls executed');
 select jsonb_build_object('proof','E04_PROVIDER_CONTEXT_CAS_JOURNAL','status','PASS','checks',(select count(*) from e04_observation_checks),
  'scope','Synthetic original commercial/dispatch/provider-readback metadata, actual native allocation/context/CAS/journal and DB roles; actual observation Rail; no provider, hosted Auth, financial adjustment or customer acceptance') as evidence;
+
+\if :{?e04_observation_work}
+-- Establish the ORIGINAL terminal settlement work through its real writers.
+select set_config('request.jwt.claim.sub','',true);
+set local role service_role;
+select public.register_sales_payment_reconciliation_work((data->>'tenant_id')::uuid,'e4a10000-0000-4000-8000-000000000001') from e04_commercial_fixture;
+select public.settle_sales_payment_reconciliation_work((data->>'tenant_id')::uuid,'e4a10000-0000-4000-8000-000000000001') from e04_commercial_fixture;
+reset role;
+select set_config('test.e04_work_operation','e4a10000-0000-4000-8000-000000000001',true);
+select set_config('test.e04_work_tenant',(data->>'tenant_id'),true) from e04_commercial_fixture;
+select set_config('test.e04_work_merchant','acct_e4observation',true);
+select set_config('test.e04_work_charge','ch_e4source',true);
+select set_config('test.e04_work_settlement','txn_e4capture',true);
+\ir fixtures/exp04_provider_observation_work_checks.sql
+\endif
 rollback;

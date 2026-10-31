@@ -478,7 +478,7 @@ jobs:
       # shared composer over that exact read, asserted against the hand-worked fixture ledger.
       - name: Experience 04 provider observation integrity and recovery (rolled back)
         if: ${{ !cancelled() }}
-        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp04_provider_observation_integrity.sql
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -v e04_observation_work=1 -f supabase/tests/exp04_provider_observation_integrity.sql
 
       - name: Experience 04 client status read, scope refusals and ledger parity (rolled back)
         if: ${{ !cancelled() }}

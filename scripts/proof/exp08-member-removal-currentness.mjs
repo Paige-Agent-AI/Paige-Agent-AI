@@ -16,11 +16,12 @@ const prerequisitesOnly=options.includes('--prerequisites-only');
 const hubDoorsOnly=options.includes('--hub-doors-only');
 const hubPostOnly=options.includes('--hub-post-only');
 const hubCreateOnly=options.includes('--hub-create-only');
+const fileOnly=options.includes('--hub-files-only');
 const contextDoorOnly=options.includes('--hub-join-only')?'join':options.includes('--hub-agent-only')?'agent':options.includes('--hub-dm-only')?'dm':null;
-const protectedOnly=options.includes('--protected-only')||prerequisitesOnly||hubDoorsOnly||hubPostOnly||hubCreateOnly||Boolean(contextDoorOnly);
+const protectedOnly=options.includes('--protected-only')||prerequisitesOnly||hubDoorsOnly||hubPostOnly||hubCreateOnly||fileOnly||Boolean(contextDoorOnly);
 const identityFkOnly=options.includes('--identity-fk-only');
 const identityOnly=options.includes('--identity-only')||identityFkOnly;
-assert(options.length<=1&&options.every(a=>a==='--baseline'||a==='--protected-only'||a==='--prerequisites-only'||a==='--identity-only'||a==='--identity-fk-only'||a==='--hub-doors-only'||a==='--hub-post-only'||a==='--hub-create-only'||a==='--hub-join-only'||a==='--hub-agent-only'||a==='--hub-dm-only'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
+assert(options.length<=1&&options.every(a=>a==='--baseline'||a==='--protected-only'||a==='--prerequisites-only'||a==='--identity-only'||a==='--identity-fk-only'||a==='--hub-doors-only'||a==='--hub-post-only'||a==='--hub-create-only'||a==='--hub-join-only'||a==='--hub-agent-only'||a==='--hub-dm-only'||a==='--hub-files-only'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
 const mutant=mutants.find(m=>options.includes('--mutant-'+m));
 const repo=fileURLToPath(new URL('../../',import.meta.url));
 // Reuse the shared fixture unchanged, preserving the original EXP08 loopback-host ABI.
@@ -120,7 +121,7 @@ try{
   applyCandidate();
   sql(`CREATE TRIGGER trg_sync_tenant_member_to_user_roles AFTER INSERT OR UPDATE OR DELETE ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public.sync_tenant_member_to_user_roles();
    CREATE TRIGGER protect_owner_admin BEFORE UPDATE OR DELETE ON public.user_roles FOR EACH ROW EXECUTE FUNCTION public.prevent_owner_admin_removal();`);
-  if((!mutant||mutant==='protected')&&!identityOnly&&!prerequisitesOnly&&!hubDoorsOnly&&!hubPostOnly&&!hubCreateOnly&&!contextDoorOnly)for(const c of [
+  if((!mutant||mutant==='protected')&&!identityOnly&&!prerequisitesOnly&&!hubDoorsOnly&&!hubPostOnly&&!hubCreateOnly&&!contextDoorOnly&&!fileOnly)for(const c of [
    {name:'protected last admin',refused:true},
    {name:'protected other active admin',otherRole:'admin',success:true},
    {name:'protected other active owner',otherRole:'owner',success:true},
@@ -503,11 +504,11 @@ try{
   assert.equal(report.cases.length,10,'all original profile FK cases must execute');
   output.push({change:'original profile FK suite',controls:report.cases,disposed:true});
  }
- if(!mutant)assert.equal(output.length,(hubDoorsOnly||hubPostOnly||hubCreateOnly||contextDoorOnly)?0:prerequisitesOnly?2:identityFkOnly?10:identityOnly?17:protectedOnly?8:candidate?60:4,'Every intended control must execute');
+ if(!mutant)assert.equal(output.length,(hubDoorsOnly||hubPostOnly||hubCreateOnly||contextDoorOnly||fileOnly)?0:prerequisitesOnly?2:identityFkOnly?10:identityOnly?17:protectedOnly?8:candidate?60:4,'Every intended control must execute');
  // Retain the exact original 60-entry assertion BEFORE adding this distinct integration group.
- if(candidate&&!mutant&&(hubDoorsOnly||hubPostOnly||hubCreateOnly||contextDoorOnly||options.length===0)){
-  const {controls,catalogue}=await verifyHubDoorDeparture({repo,sql,connection,ids,database:db.database,postOnly:hubPostOnly,createOnly:hubCreateOnly,contextDoorOnly});
-  assert.equal(controls.length,contextDoorOnly==='dm'?19:contextDoorOnly?5:hubCreateOnly?3:hubPostOnly?5:85,'Every original Hub-door/departure integration control must execute');
+ if(candidate&&!mutant&&(hubDoorsOnly||hubPostOnly||hubCreateOnly||contextDoorOnly||fileOnly||options.length===0)){
+  const {controls,catalogue}=await verifyHubDoorDeparture({repo,sql,connection,ids,database:db.database,postOnly:hubPostOnly,createOnly:hubCreateOnly,contextDoorOnly,fileOnly});
+  assert.equal(controls.length,fileOnly?11:contextDoorOnly==='dm'?19:contextDoorOnly?5:hubCreateOnly?3:hubPostOnly?5:95,'Every original Hub-door/departure integration control must execute');
   output.push({change:'original Hub DM and departure integration',candidateState:'INERT/unpublished original Hub admission/currentness patches; not part of versioned removal carrier',catalogue,controls});
  }
  const catalogue=JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'md5',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE p.oid='public.remove_solo_team_member(uuid,uuid)'::regprocedure"));

@@ -2786,3 +2786,36 @@ selector, individual SQL/wait/mutant bound and nonzero/error propagation is unch
 Distinct source-only review found no material issue in this exact maintenance delta.
 No execution by reviewer, hosted CI allowance or product-latency waiver is claimed.
 A fresh normal full-parent pass and all normal release/customer gates remain owed.
+
+Current fresh FULL original lifecycle parent completed EXIT0 in460.5033886 seconds:
+`exp08-full-lifecycle-human-dm-renewed.log`, SHA256
+`a1bc34c19f59c6681323c55f2f2829bf58ebba7334a53c8fc7c1740302ee9900`.
+Actual full-selection core report has191 record entries; final original Billing
+advisory/contact authority-loss races pass, followed by normal original departure
+child60+85 (61 outer entries). Parent and child disposal receipts exist; authoritative
+owned-port catalogue contained postgres only. This pass covers tracked runtimee01,
+not the later file-proof module. Prior timed-out parent stays FAIL with its own hash.
+The e01 normal merge preserves the one incoming original E02 matrix path exactlyb0ec
+and all other19,094 tracked leaves exactlyown064c; runtime proof source unchanged.
+
+#### Same outcome4: original file post/cleanup composition, proof only
+
+New `exp08-team-hub-file-currentness.mjs` uses the SAME owning disposable fixture,
+actual post candidate and original discard/stale-claim writers (production hashes
+702b36 /4e47e1 re-read). No product SQL, scheduler, upload/StorageAPI or provider effect.
+Four actual wrong-role executions are denied by original function ACLs; foreign
+workspace/uploader refusals reveal no path or file change. Four both-order native
+post/discard and post/stale-claim races observe actual blocking and require original
+responses/path semantics, one winning state change, correct message/posted linkage.
+Storage objects are ONLY synthetic metadata ports, with no byte deletion claimed.
+The temporary explicit Auth-role port restores every original field in finally.
+
+Selected11 passed: original post default-ABI negative plus these10 file controls.
+The old85 assertion remains before appending10, now95. Distinct source-only review
+found no material issue in module/roles/wiring; no independent execution claimed.
+Fresh whole95 composition, broader retirement/drift/full-schema/Storage/Auth/customer
+and normal release gates remain owed. All currentness patches remain INERT/unversioned/
+unpublished. Original18+6/five journeys and full EXP08 remain STILL CODING.
+Selected11 log `exp08-file-cleanup-currentness.log`, SHA256
+`8349b860c1efa7e3f6f3c293e5b48c16d8f722a1a5674f0afd50fdeef9288caa`;
+actual original discard702b36/stale4e47e1 and postad54 readback, own database disposed.

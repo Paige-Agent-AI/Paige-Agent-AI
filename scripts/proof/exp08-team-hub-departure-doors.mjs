@@ -4,8 +4,9 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
+import {verifyHubFileCurrentness} from './exp08-team-hub-file-currentness.mjs';
 
-export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,postOnly=false,createOnly=false,contextDoorOnly=null}){
+export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,postOnly=false,createOnly=false,contextDoorOnly=null,fileOnly=false}){
  const results=[];
  const files={core:'20271113850008_exp08_team_hub_collaboration.sql',lifecycle:'20271115040008_exp08_team_lifecycle.sql',agents:'20271117010008_exp08_team_hub_agents.sql',files:'20271114160008_exp08_team_hub_files.sql'};
  const text=name=>readFileSync(join(repo,'supabase/migrations',files[name]),'utf8');
@@ -51,6 +52,8 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
   CREATE TRIGGER team_hub_seat_started AFTER INSERT OR UPDATE OF status ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._team_hub_seat_started();`);
  const extraResetTables=[];
  let postCatalogue;
+ let postContext;
+ const fileCatalogue=()=>JSON.parse(sql("SELECT jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'acl',p.proacl) ORDER BY p.proname) FROM pg_proc p WHERE p.oid IN ('public.team_hub_discard_file(uuid,uuid)'::regprocedure,'public.team_hub_claim_stale_files(uuid)'::regprocedure)"));
  const reset=()=>sql(`TRUNCATE ${extraResetTables.map(name=>'public.'+name+',').join('')}public.team_hub_channel_members,public.team_hub_message_mentions,public.team_hub_files,public.team_hub_agent_turns,public.team_hub_messages,public.team_hub_channels,public.tenant_members,public.profiles,public.audit_logs,public.user_roles,auth.users,public.tenants,public.app_settings_owner;
   INSERT INTO public.tenants(id) VALUES('${ids.tenant}'),('${ids.other}');
   INSERT INTO auth.users(id,email) VALUES('${ids.actor}','test-actor@tests.invalid'),('${ids.target}','test-target@tests.invalid');
@@ -92,7 +95,7 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
    await Promise.allSettled([first.done,...(second?[second.done]:[])]);
   }
  }
- async function postAttachmentCurrentness(){
+ async function postAttachmentCurrentness(setupOnly=false){
   // Extend this same disposable fixture with the ORIGINAL storage backstops and
   // serializer, including EXP04's incoming annotations. No provider/upload runs.
   files.a1c='20271120020008_exp08_team_hub_a1c_writing_and_broadcast.sql';
@@ -152,6 +155,8 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
     VALUES('${file}','${ids.tenant}','${channel}','${ids.actor}','${request}','${ids.tenant}/team-hub/${file}','proof.txt','text/plain',1,'ready',now());`);
   };
   const post=`SELECT set_config('request.jwt.claim.sub','${ids.actor}',true); SET LOCAL ROLE authenticated; SELECT public.team_hub_post_message('${ids.tenant}','${channel}','proof','${request}',NULL,'{}',ARRAY['${file}'::uuid],'{}',NULL);`;
+  postContext={sql,connection,ids,prepare,post,file,original,ready,blocked,parsed};
+  if(setupOnly)return;
   prepare();const positive=parsed(sql('BEGIN;'+post+'COMMIT;'));
   assert.equal(positive?.ok,true,'Original attachment post must actually succeed before testing currentness');
   assert.equal(positive.message?.files?.[0]?.id,file);
@@ -279,6 +284,7 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
   }
   return JSON.parse(sql(`SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc)) FROM pg_proc p WHERE oid='${signature}'::regprocedure`));
  }
+ if(fileOnly){await postAttachmentCurrentness(true);results.push(...await verifyHubFileCurrentness(postContext));assert.equal(results.length,11);return {controls:results,catalogue:{post:postCatalogue,files:fileCatalogue()}};}
  if(contextDoorOnly){const catalogue=await contextDoorCurrentness(contextDoorOnly);if(contextDoorOnly==='dm')await originalDmCases(true);return {controls:results,catalogue};}
  if(createOnly){const catalogue=await createChannelCurrentness();return {controls:results,catalogue};}
  if(postOnly){await postAttachmentCurrentness();return {controls:results,catalogue:postCatalogue};}
@@ -485,6 +491,8 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
  const dmCatalogue=await contextDoorCurrentness('dm');
  await originalDmCases(true);
  assert.equal(results.length,85);
+ results.push(...await verifyHubFileCurrentness(postContext));
+ assert.equal(results.length,95);
  const catalogue=JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE p.oid='public.team_hub_add_members(uuid,uuid,uuid[])'::regprocedure"));
- return {controls:results,catalogue:{...catalogue,post:postCatalogue,create:createCatalogue,join:joinCatalogue,agent:agentCatalogue,dm:dmCatalogue}};
+ return {controls:results,catalogue:{...catalogue,post:postCatalogue,create:createCatalogue,join:joinCatalogue,agent:agentCatalogue,dm:dmCatalogue,files:fileCatalogue()}};
 }

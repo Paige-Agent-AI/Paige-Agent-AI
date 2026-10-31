@@ -7,6 +7,23 @@ DECLARE target regprocedure:=to_regprocedure('public.remove_solo_team_member(uui
  p pg_proc; prior_metadata jsonb; original text; changed text; definition text;
  anchor text:=$anchor$  -- Every owner is refused, which is what makes "the sole owner is never removable" true without$anchor$;
  target_anchor text:=$target_anchor$  -- Locked, and deliberately NOT filtered by status.$target_anchor$;
+ delete_anchor text:=$delete_anchor$  DELETE FROM public.tenant_members WHERE id = _target.id;$delete_anchor$;
+ protected_guard text:=$protected_guard$  -- exp08_departure_protected_v1: preserve the original platform-admin protection before writing.
+  IF public.map_tenant_role_to_app_role(_target.role) = 'admin'::public.app_role
+     AND EXISTS (SELECT 1 FROM public.user_roles protected_role
+       WHERE protected_role.user_id = _member_user_id AND protected_role.role = 'admin'::public.app_role)
+     AND EXISTS (SELECT 1 FROM auth.users protected_user
+       WHERE protected_user.id = _member_user_id
+         AND protected_user.email = (SELECT configured.owner_email FROM public.app_settings_owner configured LIMIT 1))
+     AND NOT EXISTS (SELECT 1 FROM public.tenant_members other_seat
+       WHERE other_seat.user_id = _member_user_id AND other_seat.id <> _target.id
+         AND other_seat.status = 'active'
+         AND public.map_tenant_role_to_app_role(other_seat.role) = 'admin'::public.app_role) THEN
+    RAISE EXCEPTION 'TEAM_MEMBER_PROTECTED: this Paige account is protected; nothing was changed'
+      USING ERRCODE = '42501';
+  END IF;
+
+$protected_guard$;
  ordered_locks text:=$ordered_locks$  -- exp08_departure_pair_locks_v1: opposing departures take the same membership lock order.
   -- The existing authority check still precedes every target lookup or lock.
   PERFORM 1 FROM public.tenant_members departure_seat
@@ -49,21 +66,23 @@ BEGIN
  END IF;
  original:=p.prosrc;
  IF strpos(original,'exp08_departure_currentness_v1')>0 THEN
-  IF md5(replace(replace(original,guard,''),ordered_locks,''))<>'d8c0eb6a8fdc3fef52eda7df4f9274e1'
+  IF md5(replace(replace(replace(original,guard,''),ordered_locks,''),protected_guard,''))<>'d8c0eb6a8fdc3fef52eda7df4f9274e1'
    OR length(original)-length(replace(original,guard,''))<>length(guard)
-   OR length(original)-length(replace(original,ordered_locks,''))<>length(ordered_locks) THEN
+   OR length(original)-length(replace(original,ordered_locks,''))<>length(ordered_locks)
+   OR length(original)-length(replace(original,protected_guard,''))<>length(protected_guard) THEN
    RAISE EXCEPTION 'EXP08 departure currentness replay drift';
   END IF;
   RETURN;
  END IF;
  IF md5(original)<>'d8c0eb6a8fdc3fef52eda7df4f9274e1'
   OR length(original)-length(replace(original,anchor,''))<>length(anchor)
-  OR length(original)-length(replace(original,target_anchor,''))<>length(target_anchor) THEN
+  OR length(original)-length(replace(original,target_anchor,''))<>length(target_anchor)
+  OR length(original)-length(replace(original,delete_anchor,''))<>length(delete_anchor) THEN
   RAISE EXCEPTION 'EXP08 departure currentness source drift';
  END IF;
  prior_metadata:=to_jsonb(p)-'prosrc';
- changed:=replace(replace(original,anchor,guard||anchor),target_anchor,ordered_locks||target_anchor);
- IF replace(replace(changed,guard,''),ordered_locks,'') IS DISTINCT FROM original THEN
+ changed:=replace(replace(replace(original,anchor,guard||anchor),target_anchor,ordered_locks||target_anchor),delete_anchor,protected_guard||delete_anchor);
+ IF replace(replace(replace(changed,guard,''),ordered_locks,''),protected_guard,'') IS DISTINCT FROM original THEN
   RAISE EXCEPTION 'EXP08 departure currentness inverse failed';
  END IF;
  definition:=pg_get_functiondef(target);

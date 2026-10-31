@@ -2142,3 +2142,22 @@ The capacity audit also found an older `pg-exp08/native-data` server still idle 
 two retained original fixture databases. That server and its material were preserved;
 stopped-cluster statements above concern the current run, not every historical server.
 No peer data, unknown cache, source branch or legacy cloud work was retired.
+
+#### Same original outcome4: protected-account departure refusal, October31
+
+The same inert original removal patch now adds the approved §4.10/§5.4 pre-write
+protected-account refusal. It reads the original configured owner match, actual global
+Admin role and original other-active-seat mapping; role-sync/protection writers remain
+unchanged. No founder identity or global role grant/revocation is introduced. Source
+review caught an overbroad refusal for a suspended Admin with no global Admin role;
+the final guard and an explicit positive case preserve that original permitted removal.
+
+Fresh unchanged source run: **38 native controls PASS**, retaining all prior29,
+eight actual-original-trigger cases and the new causal protection mutant. Own databases
+disposed/current cluster cleanly stopped. Original UI removal suite **37/37 PASS** after
+its new exact-code copy control failed first. Details, source blobs and transcript hash
+are in the original Settings/Team lifecycle evidence packet. Failed/mixed intermediate
+runs remain excluded from final proof. Final exact UI/source review, full original parent
+runner on this new delta, rendered/AT and managed carrier/customer proof remain owed.
+Local free disk fell to about468MB; no broad rerun or peer cleanup was attempted.
+Frozen3130/00f is unchanged; no new version/publication/apply or row4/full acceptance.

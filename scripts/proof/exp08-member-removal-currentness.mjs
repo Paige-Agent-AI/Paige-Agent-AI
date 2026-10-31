@@ -9,8 +9,9 @@ assert.equal(process.env.EXP08_DISPOSABLE,'1','Explicit disposable proof opt-in 
 const host=process.env.PGHOST;
 assert(['127.0.0.1','localhost','::1'].includes(host),'Dedicated loopback proof only');
 assert.match(process.env.PGPORT??'',/^\d+$/,'Explicit local port required');
-const options=process.argv.slice(2),mutants=['scope','authority','pair-locks'];
-assert(options.length<=1&&options.every(a=>a==='--baseline'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
+const options=process.argv.slice(2),mutants=['scope','authority','pair-locks','protected'];
+const protectedOnly=options.includes('--protected-only');
+assert(options.length<=1&&options.every(a=>a==='--baseline'||a==='--protected-only'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
 const mutant=mutants.find(m=>options.includes('--mutant-'+m));
 const repo=fileURLToPath(new URL('../../',import.meta.url));
 // Reuse the shared fixture unchanged, preserving the original EXP08 loopback-host ABI.
@@ -69,13 +70,64 @@ try{
     scope:['IF public.current_user_tenant_id() IS DISTINCT FROM _tenant THEN','IF false THEN'],
     authority:['IF NOT _caller_owner AND NOT EXISTS (\n    SELECT 1 FROM public.tenant_members current_actor','IF false AND NOT EXISTS (\n    SELECT 1 FROM public.tenant_members current_actor'],
     'pair-locks':['  PERFORM 1 FROM public.tenant_members departure_seat\n    WHERE departure_seat.tenant_id = _tenant AND departure_seat.user_id IN (_actor, _member_user_id)\n    ORDER BY departure_seat.user_id FOR UPDATE;','  PERFORM 1;'],
+    protected:["IF public.map_tenant_role_to_app_role(_target.role) = 'admin'::public.app_role","IF false AND public.map_tenant_role_to_app_role(_target.role) = 'admin'::public.app_role"],
    };
    const [original,replacement]=edits[mutant];
    assert.equal(before.split(original).length,2,'mutant must alter exactly one actual source span: '+JSON.stringify(before.match(/IF NOT _caller_owner[\s\S]{0,130}/g)));
    sql(before.replace(original,replacement));
   }
  }
- for(const change of ['unchanged','demoted','suspended','workspace']){
+ if(candidate){
+  // Exercise the ORIGINAL role-sync and protected-role trigger, not a substitute refusal.
+  sql(`CREATE TYPE public.app_role AS ENUM('user','admin','super_admin','platform_admin','developer');
+   CREATE TABLE auth.users(id uuid PRIMARY KEY,email text UNIQUE);
+   CREATE TABLE public.app_settings_owner(owner_email text);
+   CREATE TABLE public.user_roles(user_id uuid,role public.app_role,UNIQUE(user_id,role));`);
+  sql(source('supabase/migrations/20270509000000_nothing_reads_the_retired_title_role.sql','map_tenant_role_to_app_role'));
+  sql(source('supabase/migrations/20271115040008_exp08_team_lifecycle.sql','sync_tenant_member_to_user_roles'));
+  const originalProtection=readFileSync(join(repo,'supabase/migrations/20251020145501_8b37061e-d124-4d12-9907-7b62f110979b.sql'),'utf8');
+  const start=originalProtection.indexOf('create or replace function public.prevent_owner_admin_removal()');
+  const end=originalProtection.indexOf('$$;',start);
+  assert(start>=0&&end>start);sql(originalProtection.slice(start,end+3));
+  for(const [name,md5] of [['map_tenant_role_to_app_role','60dfcc70ea811ca2ac255d9e19c20714'],['sync_tenant_member_to_user_roles','be8cc66ffe2f226a62a0d34c11303023'],['prevent_owner_admin_removal','daeb1b91408969a62224140148a99414']]){
+   assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE proname='${name}'`),md5,'original production role writer/guard source must match');
+  }
+  sql(`CREATE TRIGGER trg_sync_tenant_member_to_user_roles AFTER INSERT OR UPDATE OR DELETE ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public.sync_tenant_member_to_user_roles();
+   CREATE TRIGGER protect_owner_admin BEFORE UPDATE OR DELETE ON public.user_roles FOR EACH ROW EXECUTE FUNCTION public.prevent_owner_admin_removal();`);
+  if(!mutant||mutant==='protected')for(const c of [
+   {name:'protected last admin',refused:true},
+   {name:'protected other active admin',otherRole:'admin',success:true},
+   {name:'protected other active owner',otherRole:'owner',success:true},
+   {name:'protected inactive admin',otherRole:'admin',otherStatus:'suspended',refused:true},
+   {name:'protected other active member',otherRole:'member',refused:true},
+   {name:'ordinary admin',ordinary:true,success:true},
+   {name:'protected member',targetRole:'member',success:true},
+   {name:'protected suspended admin without global admin',targetStatus:'suspended',success:true},
+  ]){
+   sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants,public.user_roles,auth.users,public.app_settings_owner;
+    INSERT INTO public.tenants VALUES('${ids.tenant}'),('${ids.other}');
+    INSERT INTO auth.users VALUES('${ids.actor}','test-owner@tests.invalid'),('${ids.target}','test-target@tests.invalid');
+    INSERT INTO public.app_settings_owner VALUES('${c.ordinary?'different-person':'test-target'}@tests.invalid');
+    INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
+     ('${ids.tenant}','${ids.actor}','active',true,'owner'),('${ids.tenant}','${ids.target}','${c.targetStatus??'active'}',false,'${c.targetRole??'admin'}');
+    INSERT INTO public.profiles VALUES('${ids.actor}','${ids.tenant}'),('${ids.target}','${ids.tenant}');`);
+   if(c.otherRole)sql(`INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES('${ids.other}','${ids.target}','${c.otherStatus??'active'}',${c.otherRole==='owner'},'${c.otherRole}');`);
+   const before=business(),rolesBefore=sql('SELECT jsonb_agg(to_jsonb(r) ORDER BY user_id,role) FROM public.user_roles r');
+   const call=()=>sql(`BEGIN;SELECT set_config('request.jwt.claim.sub','${ids.actor}',true);SET LOCAL ROLE authenticated;SELECT public.remove_solo_team_member('${ids.target}','${ids.tenant}');COMMIT;`);
+   if(c.refused){
+    assert.throws(call,e=>e.code==='42501'&&e.message.includes('TEAM_MEMBER_PROTECTED'),'protected account must receive its authored pre-write refusal');
+    assert.equal(business(),before);assert.equal(sql('SELECT jsonb_agg(to_jsonb(r) ORDER BY user_id,role) FROM public.user_roles r'),rolesBefore);
+   }else{
+    call();assert.equal(sql(`SELECT count(*) FROM public.tenant_members WHERE tenant_id='${ids.tenant}' AND user_id='${ids.target}'`),'0');
+    assert.equal(sql('SELECT count(*) FROM public.audit_logs'),'1');
+    const retained=c.otherRole==='admin'||c.otherRole==='owner';
+    assert.equal(sql(`SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id='${ids.target}' AND role='admin')`),retained?'t':'f');
+   }
+   output.push({change:c.name,authoredPreWriteRefusal:!!c.refused,originalRoleSync:true,success:!!c.success});
+  }
+  sql('DROP TRIGGER trg_sync_tenant_member_to_user_roles ON public.tenant_members;DROP TRIGGER protect_owner_admin ON public.user_roles;TRUNCATE public.user_roles,auth.users,public.app_settings_owner;');
+ }
+ if(!protectedOnly)for(const change of ['unchanged','demoted','suspended','workspace']){
   sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants;
    INSERT INTO public.tenants VALUES('${ids.tenant}'),('${ids.other}');
    INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
@@ -106,7 +158,7 @@ try{
   else if(candidate)assert(result.code!==0&&result.err.includes(change==='demoted'?'only an owner or an admin':'your active workspace changed')&&remaining==='1'&&audits==='0','candidate must refuse through the intended authority boundary without a membership or audit effect');
   else assert(accepted,'baseline stale-context counterexample must be demonstrated, not assumed');
  }
- if(candidate){
+ if(candidate&&!protectedOnly){
   sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants;
    INSERT INTO public.tenants VALUES('${ids.tenant}'),('${ids.other}');
    INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
@@ -141,7 +193,7 @@ try{
   assert.equal(sql('SELECT count(*) FROM public.audit_logs'),'1');
   output.push({change:'opposing-departures',actualMembershipOrderWait:true,authorizedRemoval:true,revokedCallerRefused:true,deadlock:false,audits:1});
  }
- if(candidate){
+ if(candidate&&!protectedOnly){
   for(const c of [
    {name:'self',self:true,error:'you cannot remove yourself'},
    {name:'wrong expected workspace',wrongWorkspace:true,error:'your active workspace changed'},
@@ -182,7 +234,7 @@ try{
    output.push({change:'original boundary: '+c.name,success:c.success??false,businessEffects:c.success?1:0});
   }
  }
- if(candidate){
+ if(candidate&&!protectedOnly){
   const signature='public.remove_solo_team_member(uuid,uuid)';
   const saved=sql(`SELECT pg_get_functiondef('${signature}'::regprocedure)`);
   const metadata=sql(`SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='${signature}'::regprocedure`);
@@ -208,17 +260,17 @@ try{
    output.push({change:'drift: '+name,refused:true,businessUnchanged:true,metadataRestored:true});
   }
  }
- if(candidate&&!mutant){
+ if(candidate&&!mutant&&!protectedOnly){
   for(const name of mutants){
    const child=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--mutant-'+name],{encoding:'utf8',windowsHide:true,timeout:60000,maxBuffer:4e6});
    if(child.error)throw child.error;
    assert.equal(child.status,1,'changed original source must fail its actual behavior control: '+name);
-   assert((child.stderr??'').includes(name==='pair-locks'?'opposing departure uses the same original membership row order':'candidate must refuse through the intended authority boundary'),name+' must fail for the specific reintroduced behavior, not unrelated setup: '+child.stderr);
+   assert((child.stderr??'').includes(name==='protected'?'protected account must receive its authored pre-write refusal':name==='pair-locks'?'opposing departure uses the same original membership row order':'candidate must refuse through the intended authority boundary'),name+' must fail for the specific reintroduced behavior, not unrelated setup: '+child.stderr);
    assert((child.stdout??'').includes('Disposed only the local proof database created by this run.'),name+' must dispose its own database before counting the mutation');
    output.push({change:'mutant: '+name,killed:true,actualBehaviorFailure:true});
   }
  }
- if(!mutant)assert.equal(output.length,candidate?29:4,'Every intended control must execute');
+ if(!mutant)assert.equal(output.length,protectedOnly?8:candidate?38:4,'Every intended control must execute');
  console.log(JSON.stringify({scope:'isolated native original writer/helpers; minimal tables and Auth/platform ports, no customer or RLS proof',cases:output},null,2));
 }finally{
  db.run(`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${db.database}' AND pid<>pg_backend_pid()`,[],'postgres');

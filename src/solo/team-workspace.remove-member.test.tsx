@@ -557,6 +557,14 @@ describe("the refusal vocabulary itself", () => {
     expect(refusal.retryable).toBe(false);
   });
 
+  it("translates the authored protected-account refusal without offering another removal", () => {
+    expect(removalRefusal("TEAM_MEMBER_PROTECTED: this Paige account is protected; nothing was changed", "Dana Reyes", "Example Team")).toEqual({
+      message: "Dana Reyes's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+      retryable: false,
+      reconciled: false,
+    });
+  });
+
   it("still offers a retry for a transport failure, and calls a server-decided timeout what it is", () => {
     for (const transient of ["TypeError: Failed to fetch", "NetworkError when attempting to fetch", "request timed out"]) {
       expect(removalRefusal(transient, "Dana Reyes", "Example Team").retryable, transient).toBe(true);

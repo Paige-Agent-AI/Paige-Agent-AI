@@ -190,6 +190,7 @@ export function removalRefusal(raw: string | null | undefined, personName: strin
     // One sentence that is true of both, rather than a guess at which.
     [/authentication required/, { message: "This did not run, and nothing was removed. Reopen Team — or sign in again if you have been signed out.", retryable: false, reconciled: false }],
     [/not on this workspace/, { message: `${personName} is no longer on this team. Nothing further was changed.`, retryable: false, reconciled: true }],
+    [/^team_member_protected:/, { message: `${personName}'s Paige account is protected, so they can't be removed from the business here. Nothing changed.`, retryable: false, reconciled: false }],
     [/cannot remove admin role from platform owner/, { message: `${personName} holds a platform role that can't be given up here, so nothing was changed.`, retryable: false, reconciled: false }],
   ];
   for (const [pattern, refusal] of known) if (pattern.test(text)) return refusal;

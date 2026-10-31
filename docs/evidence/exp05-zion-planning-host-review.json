@@ -104,7 +104,9 @@
   "current_main_reconciliation": {
     "owner_date": "2026-10-30 America/New_York",
     "product_commit": "ad9c5c0427252bc43f4667232e857ef70ca48709",
-    "main": "fdff29d4e19d0b95921607643d3bb80725202861",
+    "main": "4c8c2724941ed233229a289ce54b4eb45c0cc113",
+    "composition_commit": "674111ee27820c3e9904a5c5054aa5da2b204508",
+    "latest_main_delta": "Original EXP13 #3124 extraction/parser/CI changes composed normally with no host or owned-path conflict; source hashes below unchanged.",
     "historical_head": "c19df005f6a2e3604878c727a7bedad4e48cf2a8",
     "historical_root_boundary": "The original root source/test/static evidence is retained as its dated supporting snapshot; this section identifies the current composition, not a retrospective update to that proof.",
     "foundation": "3086 merged 7a30d3d503d6ad0723eeceb226727687bce74fd9",
@@ -117,7 +119,7 @@
     "compatibility": "Strict read-or-card mode plus exact stored tool, current owner/admin/SOLO/private DM and native stage; mode is not authority.",
     "conservation": "All15 current imports and six protected authority/private-read declarations exact. All429 original assertion predicates retained among495; one old mentor-only failure message and explicit Member fixture correctly reconcile the approved ZION reuse.",
     "raw_eslint": { "main_errors": [2, 31], "candidate_errors": [2, 31], "new_diagnostics": 0, "raw_exit": 1 },
-    "strict_types": "Current exact-head compiler proof owed; old6-to6 supporting snapshot is not reused as current verification.",
+    "strict_types": { "main_diagnostics": 6, "candidate_diagnostics": 6, "new_diagnostics": 0, "boundary": "Fresh strict host/test compiler comparison against main4c8, not a clean full-app compile or hosted CI. Old root snapshot remains historical." },
     "remaining": "E04 native source-stage/version/publication/history receiving contract; final review/CI, compatible rendered and ordinary customer proof, both chats/cohorts and full O01/ten/E5 acceptance. No merge/deployment/activation."
   }
 }

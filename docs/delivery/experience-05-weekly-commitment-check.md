@@ -2,13 +2,16 @@
 
 ## October30 Eastern — ONE primary O01 ZION compatibility reconciliation
 
-Existing host3087 locally composes currentmainfdff in productad9c5c0427252bc43f4667232e857ef70ca48709.
+Existing host3087 has productad9c5c0427252bc43f4667232e857ef70ca48709 and
+currentmain4c8c2724941ed233229a289ce54b4eb45c0cc113 composed in674111ee.
 Current approved global ZION v2/card already contains plan_list. Strict read/card
 compatibility preserves exact tool/current actor/tenant/owner-admin/SOLO/private
 DM, native staging before model and original receipts/recovery; no authority or
 registry change. Current host/reader157PASS/0skipped follows causal v2 test
 155PASS/2FAIL. Current shared declarations/assertion predicates are conserved;
-raw baseline/candidate ESLint2+31 errors unchanged, current compiler proof owed.
+raw baseline/candidate ESLint2+31 errors unchanged. Fresh strict host/test
+compiler comparison has six inherited diagnostics in both versions, no added
+diagnostic; this is not a clean full-app compile.
 Foundation3086 is actually merged; E04 native source-version/stage/publication/
 history and receiving review still HOLD release. No hosted CI/deployment/customer
 claim. Full first responsibilities outcome and all ten/E5/both chats/cohorts/

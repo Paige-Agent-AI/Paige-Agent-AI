@@ -1,6 +1,7 @@
 ## October30 Eastern — ONE primary O01 / existing ZION host reconciled locally
 
-Original3087 is reconciled with mainfdff in local productad9c5c0427252bc43f4667232e857ef70ca48709.
+Original3087 is reconciled in productad9c5c0427252bc43f4667232e857ef70ca48709,
+then currentmain4c8c2724941ed233229a289ce54b4eb45c0cc113 in composition674111ee.
 Current global ZION v2/card scope already permits plan_list; the old read-only-mode
 test incorrectly withheld it. The original host now accepts strict read/card
 configuration with the SAME exact tool/current actor/tenant/owner-admin/SOLO/DM
@@ -9,7 +10,9 @@ All157 current host/reader cases pass, including causal155PASS/2FAIL→157PASS
 v2 Owner/Admin controls and retained malformed/foreign/member/stage/replay cases.
 Current authority/card/MERIT/CURA/Mentor/Nexus declarations and original assertion
 predicates are conserved; raw scoped lint has the same2+31 inherited errors.
-Current compiler/exact-head CI and review are owed. Native E04 version/stage/
+Fresh strict host/test comparison has six inherited diagnostics in both versions
+and no additions; this is not a clean full-app compile. Hosted CI and review
+are owed. Native E04 version/stage/
 publication/history receiving contract remains a REAL release hold, not source
 completion or customer proof. [Current/historical evidence](../evidence/exp05-zion-planning-host-review.json).
 Full O01 and all ten/E5 remain OPEN; other outcomes are queued, not discretionary

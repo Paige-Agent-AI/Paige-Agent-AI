@@ -143,6 +143,9 @@ on:
       - "scripts/proof/mcp-gateway-tools-action.mjs"
       # Experience 04 E4-S1 — where this client stands (source read + composer parity).
       - "supabase/tests/exp04_client_engagement_status.sql"
+      - "supabase/tests/exp04_provider_observation_integrity.sql"
+      - "supabase/tests/fixtures/exp04_provider_observation.sql"
+      - "supabase/tests/fixtures/exp04_reviewed_commercial_native.sql"
       - "supabase/tests/pgcrypto_search_path_signing.sql"
       - "scripts/proof/exp04-client-status-parity.mjs"
       - "supabase/functions/_shared/client-engagement/**"
@@ -473,6 +476,10 @@ jobs:
       # Experience 04 E4-S1: one client's terms, signing, invoice balances by evidence class,
       # open payment requests and delivery work — owner/admin only, foreign scope refused — then the
       # shared composer over that exact read, asserted against the hand-worked fixture ledger.
+      - name: Experience 04 provider observation integrity and recovery (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp04_provider_observation_integrity.sql
+
       - name: Experience 04 client status read, scope refusals and ledger parity (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp04_client_engagement_status.sql

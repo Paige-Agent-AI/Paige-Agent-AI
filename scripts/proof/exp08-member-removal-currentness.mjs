@@ -16,11 +16,11 @@ const prerequisitesOnly=options.includes('--prerequisites-only');
 const hubDoorsOnly=options.includes('--hub-doors-only');
 const hubPostOnly=options.includes('--hub-post-only');
 const hubCreateOnly=options.includes('--hub-create-only');
-const contextDoorOnly=options.includes('--hub-join-only')?'join':options.includes('--hub-agent-only')?'agent':null;
+const contextDoorOnly=options.includes('--hub-join-only')?'join':options.includes('--hub-agent-only')?'agent':options.includes('--hub-dm-only')?'dm':null;
 const protectedOnly=options.includes('--protected-only')||prerequisitesOnly||hubDoorsOnly||hubPostOnly||hubCreateOnly||Boolean(contextDoorOnly);
 const identityFkOnly=options.includes('--identity-fk-only');
 const identityOnly=options.includes('--identity-only')||identityFkOnly;
-assert(options.length<=1&&options.every(a=>a==='--baseline'||a==='--protected-only'||a==='--prerequisites-only'||a==='--identity-only'||a==='--identity-fk-only'||a==='--hub-doors-only'||a==='--hub-post-only'||a==='--hub-create-only'||a==='--hub-join-only'||a==='--hub-agent-only'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
+assert(options.length<=1&&options.every(a=>a==='--baseline'||a==='--protected-only'||a==='--prerequisites-only'||a==='--identity-only'||a==='--identity-fk-only'||a==='--hub-doors-only'||a==='--hub-post-only'||a==='--hub-create-only'||a==='--hub-join-only'||a==='--hub-agent-only'||a==='--hub-dm-only'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
 const mutant=mutants.find(m=>options.includes('--mutant-'+m));
 const repo=fileURLToPath(new URL('../../',import.meta.url));
 // Reuse the shared fixture unchanged, preserving the original EXP08 loopback-host ABI.
@@ -507,7 +507,7 @@ try{
  // Retain the exact original 60-entry assertion BEFORE adding this distinct integration group.
  if(candidate&&!mutant&&(hubDoorsOnly||hubPostOnly||hubCreateOnly||contextDoorOnly||options.length===0)){
   const {controls,catalogue}=await verifyHubDoorDeparture({repo,sql,connection,ids,database:db.database,postOnly:hubPostOnly,createOnly:hubCreateOnly,contextDoorOnly});
-  assert.equal(controls.length,contextDoorOnly?5:hubCreateOnly?3:hubPostOnly?5:66,'Every original Hub-door/departure integration control must execute');
+  assert.equal(controls.length,contextDoorOnly==='dm'?19:contextDoorOnly?5:hubCreateOnly?3:hubPostOnly?5:85,'Every original Hub-door/departure integration control must execute');
   output.push({change:'original Hub DM and departure integration',candidateState:'INERT/unpublished original Hub admission/currentness patches; not part of versioned removal carrier',catalogue,controls});
  }
  const catalogue=JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'md5',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE p.oid='public.remove_solo_team_member(uuid,uuid)'::regprocedure"));

@@ -2728,3 +2728,40 @@ full entity-owner parent, linked-schema/JWT/RLS/customer proof or a released cha
 All currentness patches remain INERT/unversioned/unpublished. Human-DM late-context,
 remaining identity/participant/drift and cross-door/file/retirement proof, full-parent/
 managed/release and authenticated useful outcomes remain owed. Full EXP08 STILL CODING.
+
+#### Same outcome4: original human-DM current-context repair, inert
+
+Production original `team_hub_open_dm(uuid,uuid)` was independently re-read as
+`14363512d49614142c3886a17dea11f6`, postgres/definer/empty search path, original
+postgres+authenticated execute only. A local native late-context failure reproduced
+with original positive, actual identity wait and persisted channel/membership result.
+No production/customer incident or authenticated proof is claimed. Before log
+`exp08-human-dm-context-before.log`, SHA256
+`dcd6ce7b740d89e0f95341c2e3f58b5c93502d571fce11e7406a7eb78084b08f`.
+
+NEW INERT `exp08-team-hub-human-dm-currentness-patch.sql` changes only that original
+writer: ordered actor/peer identities, WHOLE original seat/refusal block, profile and
+current-context recheck. Original pair, permissions, inserts and retry are unchanged;
+exact inverse/source, ABI/helper/FK/RI/ACL/OID/all-metadata/replay guards remain.
+No migration version/apply, Auth/profile/Setup/Work/domain writer or new engine.
+
+Original14 non-mutant DM cases were mechanically lifted byte-exact from cc6a81188,
+with inverse verification. The original16 characterization cases including both
+helper-lock mutants still run before the layered human-DM writer patch. All14 are
+then rerun against the final candidate; its additional writer locks are not falsely
+claimed to leave helper-only mutants causal. The observed opposing-DM wait label
+is generic on the candidate while the published-door label is preserved. The
+removal-first port now holds original caller Auth before the ordered membership
+pair, matching the actual native writer's order rather than inventing a reverse hold.
+
+Selected19 passed (new positive/retry, committed/rollback context, BOTH actual removal
+orders, plus all14 original DM cases), candidate body
+`fecd14be9fdb66fa278a04cd279fe013`. Log `exp08-human-dm-context-after.log`, SHA256
+`8ffd7e25950fff52ca94e90ca1596cc09c6027a528d33e79f14674d2e152bde9`.
+Distinct source-only reviewer found no material issue; no independent execution or
+publication clearance claimed. The original66 count remains before the additional19,
+now85; original60 outer assertion is unchanged. Current FULL original entity-owner
+parent was started, including its existing complete departure child; no terminal
+whole-parent or fresh combined result is claimed yet. Remaining cross-door/file/
+retirement, drift, managed/full-schema/JWT/RLS and useful customer proof remain owed.
+All18+6/five journeys and full EXP08 remain STILL CODING.

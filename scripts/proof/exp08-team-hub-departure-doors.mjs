@@ -218,25 +218,25 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
   return JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc)) FROM pg_proc p WHERE oid='public.team_hub_create_channel(uuid,text,text,uuid[],uuid)'::regprocedure"));
  }
  async function contextDoorCurrentness(door){
-  const agent=door==='agent',channel='e8000000-0000-4000-8000-000000080821';
-  assert(['join','agent'].includes(door));
-  original(agent?'agents':'core',agent?'team_hub_open_agent_dm':'team_hub_join_channel',agent?'uuid,text':'uuid,uuid',agent?'84c7aed2b04bf0098c77105f6e7ea1d8':'b28a684657c15f092295c9a3b9f124c5',true);
+  const agent=door==='agent',dm=door==='dm',channel='e8000000-0000-4000-8000-000000080821';
+  assert(['join','agent','dm'].includes(door));
+  original(agent?'agents':dm?'lifecycle':'core',agent?'team_hub_open_agent_dm':dm?'team_hub_open_dm':'team_hub_join_channel',agent?'uuid,text':'uuid,uuid',agent?'84c7aed2b04bf0098c77105f6e7ea1d8':dm?'14363512d49614142c3886a17dea11f6':'b28a684657c15f092295c9a3b9f124c5',true);
   if(agent){
    const source=text('agents'),a=source.indexOf('ALTER TABLE public.team_hub_channels ADD COLUMN IF NOT EXISTS agent_key'),b=source.indexOf('-- ── C.',a);
    assert(a>0&&b>a);sql(source.slice(a,b));
   }
   const prepare=()=>{reset();sql(`INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES('${ids.other}','${ids.actor}','active',false,'member');`);
-   if(!agent)sql(`INSERT INTO public.team_hub_channels(id,tenant_id,kind,name,visibility,created_by) VALUES('${channel}','${ids.tenant}','channel','proof-join','team','${ids.target}');`);
+   if(!agent&&!dm)sql(`INSERT INTO public.team_hub_channels(id,tenant_id,kind,name,visibility,created_by) VALUES('${channel}','${ids.tenant}','channel','proof-join','team','${ids.target}');`);
   };
-  const signature=agent?'public.team_hub_open_agent_dm(uuid,text)':'public.team_hub_join_channel(uuid,uuid)';
+  const signature=agent?'public.team_hub_open_agent_dm(uuid,text)':dm?'public.team_hub_open_dm(uuid,uuid)':'public.team_hub_join_channel(uuid,uuid)';
   const metadata=sql(`SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='${signature}'::regprocedure`);
-  const patch=readFileSync(join(repo,'scripts/proof/exp08-team-hub-'+(agent?'agent-dm':'join')+'-currentness-patch.sql'),'utf8').replace(/\r\n/g,'\n');
+  const patch=readFileSync(join(repo,'scripts/proof/exp08-team-hub-'+(agent?'agent-dm':dm?'human-dm':'join')+'-currentness-patch.sql'),'utf8').replace(/\r\n/g,'\n');
   sql(patch);sql(patch);
   assert.equal(sql(`SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='${signature}'::regprocedure`),metadata,'Original '+door+' OID/ACL/all metadata conserved on patch/replay');
-  const invokeDoor=`SELECT set_config('request.jwt.claim.sub','${ids.actor}',true); SET LOCAL ROLE authenticated; SELECT ${agent?`public.team_hub_open_agent_dm('${ids.tenant}','paige')`:`public.team_hub_join_channel('${ids.tenant}','${channel}')`};`;
+  const invokeDoor=`SELECT set_config('request.jwt.claim.sub','${ids.actor}',true); SET LOCAL ROLE authenticated; SELECT ${agent?`public.team_hub_open_agent_dm('${ids.tenant}','paige')`:dm?`public.team_hub_open_dm('${ids.tenant}','${ids.target}')`:`public.team_hub_join_channel('${ids.tenant}','${channel}')`};`;
   prepare();const positive=parsed(sql('BEGIN;'+invokeDoor+'COMMIT;'));assert.equal(positive?.ok,true,'Original '+door+' positive must succeed');
   assert.deepEqual(parsed(sql('BEGIN;'+invokeDoor+'COMMIT;')),positive,'Original '+door+' retry must preserve its outcome');
-  assert.deepEqual(shape(),{channels:1,members:1,audits:0});results.push({change:'original '+door+' positive',originalWriter:true,sameOutcomeRetry:true});
+  assert.deepEqual(shape(),{channels:1,members:dm?2:1,audits:0});results.push({change:'original '+door+' positive',originalWriter:true,sameOutcomeRetry:true});
   for(const commit of [true,false]){
    prepare();const holder=connection(`BEGIN; SET application_name='exp08_hub_door_first'; SELECT id FROM auth.users WHERE id='${ids.actor}' FOR UPDATE;\n\\echo EXP08_HUB_DOOR_READY`,true);let caller;
    try{
@@ -246,7 +246,7 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
     holder.p.stdin.end('COMMIT;\n\\q\n');const a=await holder.done,b=await caller.done;assert.equal(a.code,0,a.err);assert.equal(b.code,0,b.err);
     const response=parsed(b.out),readback=shape();console.log(JSON.stringify({phase:'original-'+door+'-context-readback',actualIdentityWait:true,workspaceChangeCommitted:commit,response,readback}));
     assert.equal(response?.ok,!commit,'Committed workspace change during original '+door+' wait must refuse before membership effect');
-    assert.deepEqual(readback,{channels:agent&&commit?0:1,members:commit?0:1,audits:0});
+    assert.deepEqual(readback,{channels:(agent||dm)&&commit?0:1,members:commit?0:dm?2:1,audits:0});
     results.push({change:door+' context during actual identity wait',committed:commit,actualWait:true,currentContextControlsEffect:true});
    }finally{if(holder.p.exitCode===null&&!holder.p.stdin.writableEnded)holder.p.stdin.end('ROLLBACK;\n\\q\n');await Promise.allSettled([holder.done,...(caller?[caller.done]:[])]);}
   }
@@ -254,7 +254,7 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
    prepare();sql(`UPDATE public.tenant_members SET is_owner=false,role='member' WHERE tenant_id='${ids.tenant}' AND user_id='${ids.actor}'; UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE tenant_id='${ids.tenant}' AND user_id='${ids.target}';`);
    const removeInvoke=`SELECT set_config('request.jwt.claim.sub','${ids.target}',true); SET LOCAL ROLE authenticated; SELECT public.remove_solo_team_member('${ids.actor}','${ids.tenant}');`;
    // Removal-first holds the very seat the ORIGINAL removal orders before its target-profile update.
-   const firstSql=doorFirst?invokeDoor:`SELECT id FROM public.tenant_members WHERE tenant_id='${ids.tenant}' AND user_id='${ids.actor}' FOR UPDATE;`;
+   const firstSql=doorFirst?invokeDoor:`SELECT id FROM auth.users WHERE id='${ids.target}' FOR SHARE; SELECT user_id FROM public.tenant_members WHERE tenant_id='${ids.tenant}' AND user_id IN ('${ids.actor}','${ids.target}') ORDER BY user_id FOR UPDATE;`;
    const holder=connection(`BEGIN; SET application_name='exp08_hub_door_first'; SET statement_timeout='20s'; ${firstSql}\n\\echo EXP08_HUB_DOOR_READY`,true);let second;
    try{
     await ready(holder);if(doorFirst)assert.equal(parsed(holder.read())?.ok,true,'Original door must finish before holding its transaction');
@@ -270,7 +270,7 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
     assert.equal(sql(`SELECT active_tenant_id IS NULL FROM public.profiles WHERE user_id='${ids.actor}'`),'t');
     // Native seat-ended deletes private memberships and file-free agent DMs;
     // team-channel membership history stays, but admission must still refuse it.
-    const expected={channels:agent?0:1,members:!agent&&doorFirst?1:0,audits:1};
+    const expected={channels:agent?0:dm&&!doorFirst?0:1,members:!agent&&doorFirst?1:0,audits:1};
     assert.deepEqual(shape(),expected,'Original seat-ended disposition and removal receipt must be conserved');
     assert.equal(parsed(sql('BEGIN;'+invokeDoor+'COMMIT;'))?.ok,false,'Removed actor must be refused even if a team-channel history row remains');
     assert.deepEqual(shape(),expected,'Refusal must create no new Hub effect');
@@ -279,9 +279,11 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
   }
   return JSON.parse(sql(`SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc)) FROM pg_proc p WHERE oid='${signature}'::regprocedure`));
  }
- if(contextDoorOnly){const catalogue=await contextDoorCurrentness(contextDoorOnly);return {controls:results,catalogue};}
+ if(contextDoorOnly){const catalogue=await contextDoorCurrentness(contextDoorOnly);if(contextDoorOnly==='dm')await originalDmCases(true);return {controls:results,catalogue};}
  if(createOnly){const catalogue=await createChannelCurrentness();return {controls:results,catalogue};}
  if(postOnly){await postAttachmentCurrentness();return {controls:results,catalogue:postCatalogue};}
+ async function originalDmCases(candidate=false){
+ const countBefore=results.length;
  reset();const positive=call();assert.equal(positive.ok,true);assert.deepEqual(shape(),{channels:1,members:2,audits:0});results.push({change:'original DM positive',originalChannel:positive.channel_id});
  for(const change of ['ban','delete'])for(const person of [ids.actor,ids.target])for(const first of [true,false])await race(change,first,person);
  for(const first of [true,false])await race('remove',first);
@@ -291,11 +293,14 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
   await ready(first);second=connection(`BEGIN;SET application_name='exp08_hub_door_second';SET statement_timeout='20s';${invoke(ids.target,ids.actor)}COMMIT;`);
   assert(await blocked(second,first),'Opposing original DM creation must wait for the same unique pair');
   first.p.stdin.end('COMMIT;\n\\q\n');const a=await first.done,b=await second.done;assert.equal(a.code,0,a.err);assert.equal(b.code,0,b.err);
-  assert.equal(parsed(a.out)?.channel_id,parsed(b.out)?.channel_id);assert.deepEqual(shape(),{channels:1,members:2,audits:0});results.push({change:'opposing original DMs',actualUniquePairWait:true,oneOriginalChannel:true});
+  assert.equal(parsed(a.out)?.channel_id,parsed(b.out)?.channel_id);assert.deepEqual(shape(),{channels:1,members:2,audits:0});results.push({change:'opposing original DMs',...(candidate?{actualTransactionWait:true}:{actualUniquePairWait:true}),oneOriginalChannel:true});
  }finally{if(first.p.exitCode===null&&!first.p.stdin.writableEnded)first.p.stdin.end('ROLLBACK;\n\\q\n');await Promise.allSettled([first.done,...(second?[second.done]:[])]);}
  reset();sql(`INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES('${ids.other}','${ids.actor}','active',false,'member');UPDATE public.profiles SET active_tenant_id='${ids.other}' WHERE user_id='${ids.actor}';`);
  assert.equal(call().code,'scope_changed');assert.deepEqual(shape(),{channels:0,members:0,audits:0});results.push({change:'actual resolver workspace switch',refused:true});
  reset();sql(`UPDATE public.tenant_members SET tenant_id='${ids.other}' WHERE user_id='${ids.target}';`);assert.equal(call().code,'invalid');assert.deepEqual(shape(),{channels:0,members:0,audits:0});results.push({change:'foreign DM target',refused:true});
+ assert.equal(results.length-countBefore,14,'Every original non-mutant DM case must execute');
+ }
+ await originalDmCases();
  const saved=sql("SELECT pg_get_functiondef('public._team_hub_hold_seats(uuid,uuid[])'::regprocedure)").replace(/\r\n/g,'\n');
  for(const [name,replace,change] of [['Auth lock removed','FOR SHARE OF m','ban'],['membership lock removed','FOR SHARE OF u','remove']]){
   try{
@@ -477,6 +482,9 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
  assert.equal(results.length,56);
  const joinCatalogue=await contextDoorCurrentness('join'),agentCatalogue=await contextDoorCurrentness('agent');
  assert.equal(results.length,66);
+ const dmCatalogue=await contextDoorCurrentness('dm');
+ await originalDmCases(true);
+ assert.equal(results.length,85);
  const catalogue=JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE p.oid='public.team_hub_add_members(uuid,uuid,uuid[])'::regprocedure"));
- return {controls:results,catalogue:{...catalogue,post:postCatalogue,create:createCatalogue,join:joinCatalogue,agent:agentCatalogue}};
+ return {controls:results,catalogue:{...catalogue,post:postCatalogue,create:createCatalogue,join:joinCatalogue,agent:agentCatalogue,dm:dmCatalogue}};
 }

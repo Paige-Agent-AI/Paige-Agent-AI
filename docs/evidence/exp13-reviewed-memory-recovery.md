@@ -212,3 +212,21 @@ Distinct bounded source review found no material issue in the first guards and
 15-control runner; final expanded-runner/evidence source recheck also found no
 material findings. Reviewer did not run native tests. This remains an unversioned LOCAL candidate,
 not a production carrier, applied migration or customer Memory capability.
+
+## Local atomic carrier preparation
+
+On refreshed main144674b7b, a separate local branch adds a deterministic builder
+and UNVERSIONED `reviewed-memory-carrier.sql`. One outer transaction encloses
+original8/4/3 source/metadata/ACL/default preflight, the original get4 plus its
+already-reviewed source predicate, and the exact reviewed9/5/4 definitions and
+guards. No version reserved, migration published, SQL executed or deployment.
+Generated carrier SHA256:
+8f3736d45889fe44559512f9d87a32a3ce45a7366df48ee1447adc6299c810d0.
+
+All three reviewed function definitions are byte-exact in the generated carrier;
+one BEGIN/COMMIT verified. Initial conservation probe's regex selected old get4
+through new get5 and failed; corrected probe checks each complete original
+candidate definition occurs exactly once. This was probe setup, not native proof.
+Default rendering, full native install/replay/refused-drift/atomic rollback,
+dependency source metadata guards, independent review and normal release gates
+remain owed. No stopped disposable cluster was restarted or presumed present.

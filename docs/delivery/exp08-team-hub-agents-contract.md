@@ -2033,3 +2033,439 @@ No duplicate runtime, registry, Work/memory/meter, approval inbox, scheduler, pr
 Receiving ACK, this original-matrix incorporation, canonical Google note readback, actual coding,
 integration, release, authenticated useful outcomes and final owner acceptance are separate evidence.
 One integrated owner evaluation remains; full assignment status is **STILL CODING**.
+<!-- EXP08 outcome-sequence receiving checkpoint; prior history preserved. -->
+## October31 owner sequencing: finish original outcome4
+
+Receiving ACK: original ANT147/5b88ccc9-4bc0-4fab-9f69-f4278437edfa.
+The primary original matrix outcome is **4, least privilege and departure/revocation**:
+an authorized owner ends a member or owner seat, reopens an accurate roster, and
+the former participant loses access while the original recovery path is preserved.
+All original18 cases, six amendments and five lifecycle journeys remain required.
+
+The frozen lower repair in original PR3130/ff7 is the named prerequisite exception
+for EXP13's original source-evidence/130013 outcome. Its managed Preview and actual
+source/ACL readback passed; database-contract41160479697 passed. General verify
+41160479734 is still running. Merge, production deployment/readback and the actual
+EXP13 predecessor receipt remain owed. This is not outcome4 acceptance.
+
+Then complete outcome4's remaining original Setup guard, owner/recovery/projection
+and interface integration, current tenant/role/privacy negatives, actual revocation,
+reload/reopen and recovery proof. The original E01 Setup request b618c8ac remains
+pending; no shared-writer takeover. Current source already withdraws the cached
+roster and captured controls after a native NULL or authority refusal; historical
+notes describing that source repair as missing do not override the current code.
+Existing notification/workshop work is preserved without starting another
+discretionary outcome. **STILL CODING**; one full integrated owner review remains owed.
+
+### Outcome4 continuing engineering: original departure currentness
+
+A bounded isolated-native counterexample was confirmed against the actual original
+`remove_solo_team_member` source; this is not a confirmed production exposure or
+authenticated customer result. The same successor's inert
+`scripts/proof/exp08-member-removal-currentness-patch.sql` preserves the original
+writer, helper authority, target protections, deletion, pointer cleanup and audit.
+It adds post-wait current-context validation and holds existing actor source rows.
+No original permission is replaced by an invented seat requirement.
+
+Initial local evidence: one unchanged authorized control succeeds, three changed
+context cases refuse without a membership or audit effect, exact original source
+inverse and all function metadata/ACLs are conserved, and replay passes. A distinct
+non-author source-only review found no confirmed material defect; it executed no
+tests. Opposing-call lock ordering, further role/tenant/identity negatives, drift
+controls, mutants, original-runner integration and normal release remain owed.
+The first local startup observation timeout and its stopped test cluster are retained.
+No native version is reserved, published or applied; frozen PR3130 is unchanged.
+Full owner removal/recovery, protected-account and customer proof remain unfinished.
+
+Continuing the SAME departure candidate: ordered actor/target membership prelocks
+now prevent the opposing-call cycle. The new repository proof reuses the original
+`OperatorPostgresFixture`, requires explicit disposable loopback scope and disposes
+only its own created database. Current local15 controls pass: the original positive
+and three context changes, the actual opposing-call blocking graph with one removal,
+one refusal and one audit without deadlock/timeout, and ten source/security/metadata
+drift refusals with unchanged business rows. Original before-repair controls remain.
+Both inserted source spans have exact inverses; two applications conserve the whole
+original function metadata and ACL. The first portable-fixture quoting failure is
+retained; its database was disposed before the corrected successful run. All owned
+proof clusters are stopped. The distinct reviewer found no material source finding
+in the revised patch and runner, with SOURCE-ONLY assurance and no test execution.
+Mutants, broader company/agency/Auth/protected-account and other-writer interactions,
+original full-runner/CI registration and managed deployment are still owed. This
+unversioned successor candidate does not alter frozen3130/833 or complete outcome4.
+
+The same proof now passes29 intended controls, including11 additive original
+role/tenant/refusal and compatibility cases plus three causal mutants. A mutation
+counts only after an actual child run fails the specific behavior assertion and
+disposes its own database; setup failures cannot qualify. The first authority
+mutation failed its exact-span setup check and was retained, not counted killed.
+Its diagnostic confirmed Windows psql LF-to-CRLF rendering. Only the transport copy
+and never-applied candidate use canonical Git/LF; actual database hash guards are
+unchanged. Each repaired negative leaves the full membership/profile/audit snapshot
+unchanged, and positive controls retain the original effects. Original company
+standing without an actor seat, suspended-target removal and missing-profile
+fallback remain usable under their original contracts. The final29-control run
+exited0 and stopped its owned cluster. Non-author SOURCE-ONLY review found no
+material finding; the reviewer ran no tests. Actual Auth/RLS/agency/protected-account,
+other-writer integration, full CI/native carrier and customer proof remain owed.
+
+The original no-argument native runner now invokes this same departure proof after
+its original database disposal; component selectors remain bounded selections. The
+existing CI step retains its command/environment and only names the added coverage.
+The combined local run is **FAIL**, with actual PostgreSQL ENOSPC/checkpoint failure
+before the child proof. Its failed cleanup and subsequent normal recovery/drop
+readback are preserved; this partial run supplies no full-suite clearance. Only four
+known stopped generated sibling clusters were retired after their logs and target
+provenance were preserved; no peer or unknown work was removed.
+
+A non-author review found a loopback-host compatibility P2 in the new child. The
+child now preserves the original `127.0.0.1` / `localhost` / `::1` contract through a
+narrow argument override of the unchanged shared fixture. Four selected original
+controls passed on each host, with own database disposal and clean cluster stop.
+These are host-compatibility checks, not a replacement for the failed full run or
+the earlier29-control candidate evidence. Review cleared the host fix in SOURCE
+only; it executed no tests. Full current native integration remains owed when local
+capacity permits. Frozen3130/833 and all original outcome4 obligations are retained.
+
+After independently observed free space improved to about1.9GiB, one justified full
+rerun on exact `c4c27f3af94b9b1432ec336cd788f44fcb77c8ab` completed **EXIT0**:
+the original no-argument native suite, final original Billing authority controls,
+then all29 departure controls through the new full-runner tail, with `PGHOST=::1`.
+Parent and child test databases were disposed and the current QOF cluster stopped
+cleanly. The retry transcript SHA256 is
+`286123858a90015164ba4fdd1a28ceb34ed6530f0768ffa9eab96ee4d939c729`.
+The earlier ENOSPC failure remains evidence; no assertion or test selector was
+removed to obtain this later result. This clears that local integration-proof gap,
+not actual Auth/RLS/agency/protected-account/other-writer or customer acceptance.
+The guarded candidate remains inert/unversioned/unapplied and separate from3130.
+
+The capacity audit also found an older `pg-exp08/native-data` server still idle with
+two retained original fixture databases. That server and its material were preserved;
+stopped-cluster statements above concern the current run, not every historical server.
+No peer data, unknown cache, source branch or legacy cloud work was retired.
+
+#### Same original outcome4: protected-account departure refusal, October31
+
+The same inert original removal patch now adds the approved §4.10/§5.4 pre-write
+protected-account refusal. It reads the original configured owner match, actual global
+Admin role and original other-active-seat mapping; role-sync/protection writers remain
+unchanged. No founder identity or global role grant/revocation is introduced. Source
+review caught an overbroad refusal for a suspended Admin with no global Admin role;
+the final guard and an explicit positive case preserve that original permitted removal.
+
+Fresh unchanged source run: **38 native controls PASS**, retaining all prior29,
+eight actual-original-trigger cases and the new causal protection mutant. Own databases
+disposed/current cluster cleanly stopped. Original UI removal suite **37/37 PASS** after
+its new exact-code copy control failed first. Details, source blobs and transcript hash
+are in the original Settings/Team lifecycle evidence packet. Failed/mixed intermediate
+runs remain excluded from final proof. Final exact UI/source review, full original parent
+runner on this new delta, rendered/AT and managed carrier/customer proof remain owed.
+Local free disk fell to about468MB; no broad rerun or peer cleanup was attempted.
+Frozen3130/00f is unchanged; no new version/publication/apply or row4/full acceptance.
+
+#### October31 actual release and same-row4 full native verification
+
+Original3130 is normally released as `21da54c8988743e63ebf9caadfdf8583abf30251`
+after all13 exact00f check runs, both web successes, zero threads and non-author
+SOURCE review. Production four lower migrations, eight exact catalogue/permission
+readbacks, three inverses, normal Chat606 source certificate and both public build
+identities were independently verified. Full receipt is original PR comment6539217377
+and original EXP13 receiving thread ANT21/4d81acdd. This is a bounded source release;
+original matrix4/13/16/18 remain PARTIAL/PROOF OWED for their stated full outcomes.
+
+EXP13 subsequently returned its original3154/130013 native receipt; independent
+production read confirms frontier20271126130013/count1 and own140008count0. It
+clears only that named ordering dependency, never remaining own coding/review/CI or
+worker/Memory/Work/customer activation. Preserve all incoming peer source/CI tests.
+
+Same primaryrow4 successor `cfd49ddbef3d9b6032f0233a3e417ee855cde62e` now completes
+the NORMAL no-argument original native runner, including its original final Billing
+advisory/contact authority waits and NEW38-control departure tail: **EXIT0**.
+Transcript `exp08-full-native-protected-final.log` SHA256
+`550afabcd46e761e65742c16b7a0ee73b87c981b977f8e18f6d6304234394f75`.
+Parent and child own test databases disposed; controller cleanly stopped current QOF
+cluster and its PID marker is absent. Original old idle server remains preserved.
+This clears the local combined-native gap on this delta. Earlier failures remain.
+
+The same delta has40 removal UI tests and32 real-SoloApp browser cases/frames PASS,
+with original approval/design preserved and no live effects. Normal guarded carrier,
+current-main composition, exact review/CI/managed readback and authenticated/RLS/AT/
+native zoom/customer proof remain owed. Original recovery/co-owner/Setup/delegated
+management and all other original18+6/five-journey integrations remain STILL CODING.
+
+#### October31 same outcome4 — current account identity before departure
+
+The original inert removal patch locks the actor's existing Auth identity before
+ordered membership/profile locks, refuses missing/deleted/currently banned identity,
+and retains the later original workspace/owner/admin recheck. It never writes Auth,
+requires a new actor seat, grants a role, or replaces the original removal receipt.
+The baseline accepted a banned actor in the minimal fixture; that failing-first
+transcript is retained. This is a fixture counterexample, not a customer incident.
+
+The complete isolated departure proof passed **54 controls**, retaining the prior38,
+five identity availability cases, six actual identity-first commit/rollback lock waits,
+three reverse-order waits and two separately killed identity-check/identity-lock
+mutants. Transcript `exp08-member-identity-mutants.log` SHA256
+`668627703dea1e01fe5a66cc9871aebb2d664a73fa5fcc30b9937dbb2b59373c`.
+Own databases disposed/current cluster stopped. Non-author SOURCE review found no
+material source finding; reviewer executed no tests. Subsequent focused17-control run
+passed, including three new Auth-column type negatives, each refusing before source
+rewrite and restoring only the disposable fixture. Transcript
+`exp08-member-identity-schema.log` SHA256
+`a6ed2f4d45cc442822709591ea06da6f80491c5f924b3ee79f6928bd07d3b5c7`;
+own database disposed/current cluster stopped. Combined57 rerun remains owed; do not
+sum overlapping runs as independent acceptance. Actual Auth FK/trigger/other-writer
+lock order and privilege compatibility, normal parent proof, carrier/review/exact CI/
+managed ordering/readback and authorized customer/JWT/RLS proof remain owed. No new
+migration version/publication/application or full outcome acceptance follows.
+
+#### Complete working experience amendment — explicit incorporation
+
+Owner ANT147's October31 additive complete-working-experience amendment is received;
+explicit ACK is original comment `0b321657-3875-4fa4-ab9f-0a6d11b1e95b`.
+Every original18 matrix row, six earlier amendments and five journeys remain. Each
+applicable row must carry its original useful outcome, permitted source/version and
+actor context, editable scoped plan, original writer/deliverable, verified result and
+receipt, both-chat durable reopen/continuation and safe cancellation/UNKNOWN/revoke/
+concurrency recovery. Ground actual logic in canonical ALG wiring or state the gap;
+evaluate useful results and negative/repeated cases rather than promoting test totals.
+Explicit permitted private-context handoff and existing Trust standing authority stay
+independent of model prose, confidence and personality. No new Work/Memory/approval/
+runtime or held EXP19/desktop execution is activated. Full assignment STILL CODING.
+Primary remains originalrow4 departure/revocation; released3130 to EXP13 was the named
+prerequisite exception, not another discretionary outcome or full Team Hub acceptance.
+
+Same-row4 identity-refusal copy now consumes only the anchored authored error code in
+the original `removalRefusal` vocabulary. It states that account access could not be
+confirmed, that nothing was removed, and asks the user to check access before reopening
+Team. No guessed cause, new dialog/state, retry or false reconciliation. Owning removal
+suite baseline40PASS/1FAIL becomes **41/41 PASS**; focused ESLint/whitespace PASS.
+Transcript `exp08-identity-copy-after.log` SHA256
+`b89ec3902c3098fa61c3cb7087efe6e233a6b7ef711f661062bb0cc38e2fe21c`.
+Non-author SOURCE review found no material finding and executed no tests/rendering.
+Impeccable clarify checks applied: plain factual cause uncertainty, clear next step,
+no backend jargon and existing refusal semantics. Identity-message rendered/keyboard/
+AT/zoom and actual customer proof remain owed; prior protected-message32 frames do not
+prove this new message. First CLI attempt failed on unsupported `--minWorkers`; retained
+separately, not counted as the behavior baseline or PASS.
+
+Current production catalog read independently confirms original removal bodyd8c0,
+postgres/definer/pathpublicpgtemp, required Auth SELECT/UPDATE privileges and actual
+id/deleted_at/banned_until types. Catalog lists profiles.user_id Auth CASCADE and
+profiles.suspended_by NO ACTION, no tenant_members Auth FK.22 original profile/member
+UPDATE/DELETE trigger bodies inspected; no direct opposing Auth write lock found.
+`admin-delete-user` uses separate requests, not a cross-request transaction. Transitive
+callees, actual FK interactions/both lock orders and full-schema managed proof remain
+owed. These are catalog/source facts, never full runtime or RLS clearance.
+
+Subsequent complete combined departure runner at unchanged proof source1ca1baa (copy
+successorceb8 changes no SQL/proof input) passed **57/57 controls**, EXIT0.
+Transcript `exp08-member-identity-57.log` SHA256
+`4f9c7e64bb0cc8876926964a11a7cfa1f0908e576f2746cdcf10a401462eb000`.
+Own proof databases disposed/current QOF cluster cleanly stopped/PID marker absent.
+This supersedes only the combined57 pending statement above. Real FK/transitive
+lock interactions, parent full proof, rendered copy and all stated carrier/customer
+gates remain owed. No production mutation or outcome-acceptance promotion.
+
+#### Same outcome4 — original profile foreign-key compatibility
+
+The same disposable proof now has an explicit `--identity-fk-only` selection modeling
+the actual catalog's profiles.user_id CASCADE and profiles.suspended_by NO ACTION
+constraints. **10/10 native cases PASS**, EXIT0: nine actual identity/removal waits in
+both orders plus a restriction refusal/rolled-back cascade followed by authorized
+team removal. Only a committed original Auth deletion may delete the actor profile;
+target membership/profile and audit consequences remain attributed to their writers.
+Transcript `exp08-member-identity-fk.log` SHA256
+`64a7feb6aa6a774b3098b3a37cb989efd2f691e6b23c7f58d8b5b5744dfb7721`.
+Own database disposed/current cluster stopped. The no-argument departure runner now
+requires this child to exit successfully, dispose its own database and return all10
+cases:58 outer checks = prior57 plus one explicitly nested10-case suite. Complete
+original parent native runner is LIVE at this checkpoint, not PASS. Original source,
+role/context/opposing/replay/drift/mutant controls remain retained.
+
+Non-author SOURCE review of the proof and local harness delta found no material
+finding; no reviewer execution. Local original Team-departure mount adds an identity
+scenario with separate output directory; protected default and earlier frames remain.
+New identity rendering is pending. Constraints alone are not the complete managed
+schema, actual trigger graph, JWT/RLS or authenticated-customer proof. Finite catalog
+inspection additionally covers relationship refresh/legal-profile/connector-cancel
+callees without direct Auth write-lock findings; that inspection is source evidence,
+not execution of those transitive paths. Carrier and full outcome gates remain owed.
+
+The complete original parent run is subsequently **FAIL / EXIT1** before the new
+departure child: PostgreSQL could not extend `base/48945/2608` (ENOSPC) during original
+`identityRestore`, after a genuine original Billing authority wait. Transcript
+`exp08-full-native-identity-fk.log` SHA256
+`3f3a4afa5d3ad046221371cf02c0fd2a502981a3dfbab7711e267b085168068f`.
+Own database disposed/current QOF cluster cleanly stopped/PID marker absent. Its1.5GiB
+preflight passed initially; free capacity later fell sharply. Inspection saw own
+database about8.7MB/WAL32MB; no cause attribution to another process is established.
+No timeout/assertion waiver, peer cleanup or immediate broad retry. Original57 and
+focusedFK10 remain bounded historical evidence; final58/full-parent result remains
+owed. Identity rendering stays pending until resource headroom is adequate.
+
+Pinned Impeccable4.1.0 targeted detector for the two identity-copy files completed
+EXIT0/no findings. First unversioned `npx --no-install` attempt failed registry DNS
+lookup and is retained separately. Neither static detector result proves rendering.
+
+#### Mechanical lower-release record completed, same primary outcome retained
+
+Original docs-only3162 exactd863 passed all10 applicable exact check runs and both web
+statuses, zero review threads, with distinct non-author SOURCE review. Schema-free
+Supabase Preview SKIPPED is N.A., never schema proof. Normal actual merge
+`edec02d0d5be931e6c99006a426fca0d6309040b` tree
+`589f81bf559e37918ecdce70c9bce54f8fa7a66d` matches reviewed composition; parents
+actualmain17338 (original E05 notes3159) and own d863. Whole incoming Master/Brain
+and18,809 outside leaves conserved. Production
+`dpl_46gYfzFbJEujA6w2xuFSNZEH6EAN` READY/exactedec; both official origins version200
+buildedec-mvvz1887/customerUpdate:null, HTML200/observed bootstrapmain-D3-G2967.js200.
+Receipt originalPR comment6539697399. Native/Edge change N.A.; no recursive shipped-log
+row or customer announcement. This records prior3130 production receipt6539217377,
+already delivered EXP13; no new departure activation/customer/owner acceptance.
+
+Sequential same feature branch normally receives actualedec as2e46b2c6; exactly two
+incoming docs change49add/0del, both resulting document blobs equal currentmain and
+all product/proof inputs unchanged. New departure14 remains inert/unpublished/unapplied;
+ENOSPC full-native failure and rendered/managed/authenticated proof gaps remain explicit.
+Full original18+6/five-journey assignment STILL CODING, one integrated owner review later.
+
+#### Same outcome4 — actual identity-refusal rendering completed locally
+
+Identity scenario now completes **32/32 real-SoloApp browser cases /32 frames /0
+failures**, EXIT0, at2e46 feature product/proof source (subsequent record edits only).
+Two fictional contexts, light/dark, all1536/1366/1024/900 widths, PAIGE closed/open.
+Keyboard removal reaches the exact original alert; retry disabled/one attempt; original
+Escape/reopen and workspace switch close without automatic retry. Captured geometry
+and post-fold geometry are distinct; incumbent narrow PAIGE overlay is explicitly
+accounted for. Four frames visually inspected across all four widths/both contexts/
+themes: message, focus ring and footer fit. No product styling/renderer or global shell
+handler edit. Artifacts: `docs/evidence/ui-delivery/assets/exp08-identity-departure/`.
+Report SHA256 `e912cb56ce1f293493e81010d5109e3f6be02e6468734eaf7f18a1106a68692b`;
+terminal log `exp08-identity-render-same-context.log` SHA256
+`02a56ea9d0d40e23965eb617523115f3bfc66e4d7aa739e647b1d799e5471d4c`.
+Impeccable clarify/finish checks applied: exact factual copy, legible complete message,
+visible focus, existing disabled retry and non-destructive exits; no redesign.
+
+First missing browser executable, restricted loopback denial and separate-context
+connection timeout remain retained; final run used the already installed Chrome and
+same authorized loopback context for original mount and browser. All off-machine
+browser requests blocked. Browser closed in finally; own Vite10467/24676 stopped with
+terminal exit1 after deliberate stop, no peer process stopped. This is synthetic
+transport/render/keyboard proof, not authenticated/JWT/RLS/domain effect or full
+assistive-technology/native zoom/customer acceptance. Full-native ENOSPC failure
+remains open; this UI result does not waive it or clear the unpublished carrier.
+
+#### Same outcome4 — sequential departure release carrier prepared
+
+Original successor branch `codex/exp08-owner-recovery-20261030` remains preserved at
+ed99d734. Sequential `codex/exp08-departure-release-20261031` begins at that source;
+c8fed764 restores ONLY the earlier unmounted reminder-null consumer delta to actual
+main for this release. That work remains on original branch/commit579d97ee9, not lost
+or reassigned. No parallel coder/worktree or EXP05 producer edit.
+
+New LOCAL_ONLY `20271126140008_exp08_departure_currentness.sql` affects exactly the
+original `remove_solo_team_member(uuid,uuid)`. Earlier provisional Hub admission/helper
+work remains inert and is not silently included in this carrier. Fresh actual floor
+130013/own14count0, original bodyd8c0 and three original role-helper pins/metadata/ACLs
+were read before preparation. Coordinator routed the revised one-function contract to
+E03/E13; renewed published manifests show140003/PR3163,150003/PR3115 and160005/PR3145.
+All3163 pages230 paths and3115 pages118 paths were read, not just their first100.
+Normal source publication, actual floor/order, review/exact CI/managed/readback remain
+separate gates; no promise to hold peers or await an uncreated17/18.
+
+Carrier SQL and inert reference are LF-identical after their first comment. Actual
+carrier LF SHA256 `e3aa08fb4ac74c2ff642513ab12223da8ed4481e82b74b6761cfd09b51a6c8ec`.
+The runner requires that carrier BEFORE database construction; explicit missing-file
+negative refuses without opening a database, then restores the exact file. No inert
+fallback. Metadata guards now pin the original role mapping/sync/protection bodies,
+owner/security/config/language/volatility, grants and calling/return ABI/strictness/
+leakproof/parallel/default/shape fields; dependencies are never rewritten by migration.
+Non-author SOURCE reviewer found a return-ABI gap and fallback gap; both resolved in
+source, no new material finding, reviewer executed no tests.
+
+Final prerequisite selection **31 drift controls PASS**, EXIT0, including same-body
+mapping RETURNS text refusal. All30 ALTER-only controls restore exact full pg_proc;
+the necessary DROP/recreate return-type control excludes ONLY that helper's recreated
+OID and restores every other field. Log `exp08-departure-prerequisites-abi.log` SHA256
+`c8af3cb50cef0da2f425ad7a3559381a31cea2dada0a2b6a38eed899b1e14e06`.
+Actual-carrier protected8 and profile-FK10 selections also PASS; final catalogue body
+`cc631b7a8e2f6dc0bb711118493e62ae`, postgres/definer/volatile/original path and
+postgres+authenticated-only execute. Logs `exp08-departure-carrier-abi-protected.log`
+SHA256 `d4886ee6872b5c458d9a6e3db90e2adfc244ae0c7b3c31c893893aba85d9b006` and
+`exp08-departure-carrier-abi-fk.log` SHA256
+`a028c5885b874663c0b869997c67d96fbb472c64cc444baa82393c380e91799b`.
+Own databases disposed/current cluster stopped. Initial prerequisite syntax and fixture
+ACL-order failures retained; parentheses corrected and fixture grants matched actual
+catalogue, no assertion removed. Original source inverse/metadata/replay checks stay.
+
+No-argument departure runner now has59 outer entries: prior57 plus nested10-case FK
+suite and nested31-case prerequisite group. Full final59/normal-parent result remains
+OWED; earlier original-parent ENOSPC FAIL is not cleared by these selections. New
+staged carrier version-collision1546, definer-grant and managed-schema lint PASS.
+Managed full-schema/JWT/RLS/authenticated result/receipt/reopen/recovery and all original
+outcome acceptance remain owed. This carrier is preparation, not an applied release.
+
+#### Departure carrier publication and original-record capacity disposition
+
+Original draftPR3164 publishes native140008 from product/native/proof source28bc9786;
+this is source publication only, not production apply or outcome acceptance. The full
+published peer manifests were renewed before publication and actual production still
+read130013/own14absent. Distinct whole-head non-author SOURCE review6539838483 found
+no new material issue after the two P2 repairs; no reviewer execution. Normal exact
+CI, genuine managed full schema/current floor/readback and release gates remain.
+
+Exact28bc UI-evidence124459792256 FAIL required an ADDED non-template record, rather
+than a modified historical one. Evidence-only successor19d47e2d adds the new original
+dated departure record; original validator unchanged/local full gate PASS. Source/doc
+review clear/no execution. All product/native/proof/UI/harness blobs remain28bc;
+new exact hosted checks are required, prior head results remain historical. Original
+full-parent ENOSPC FAIL remains open; selected passes are not a substitute.
+
+Managed no-data Preview1d96145f-730e-4635-9306-bdf44313fdec/projectvgmvycmzftnnmhekjjiq
+was observed CREATING_PROJECT, not ready/applied. No production data copy, manual
+production SQL, reset/history rewrite or held/provider activation. All proof statuses
+stay separate; original row4/full Experience remain incomplete.
+
+ANT161 capacity: additive update exceeded250000 characters; automatic approval review
+rejected replacing an older status paragraph because coordination history could be
+lost. Original/peer history remains intact, with no replacement/deletion/restructure
+or alternate-account/newissue workaround. Coordinator's disposition received and
+explicitly ACKed original ANT147/8f19d721-7512-461b-8256-632dafcabd4a: continue original
+full matrix/repository evidence, existing ANT147 and canonical Google own notes with
+readback; chats supplement those records. Capacity is not product/release clearance.
+
+#### Actual managed helper-ACL compatibility repair
+
+No-data Preview1d96145f/projectvgmvycmzftnnmhekjjiq was ACTIVE_HEALTHY but branch still
+CREATING_PROJECT. Read-only catalogue proved floor130013/own14absent/originald8c0.
+Helper bodies/security/config/typed ABI match production, but mapping ACL is NULL
+(original PUBLIC+postgres defaults), and both trigger helpers are postgres-only.
+Production has redundant explicit mapping grants and optional service trigger grants.
+The first count/service-required guard would incorrectly reject this actual rebuild.
+No Preview/production GRANT, metadata normalization or manual migration apply occurred.
+
+The new carrier preflight preserves either observed permission form verbatim: require
+postgres execute; require mapping PUBLIC execute; allow only the original mapping
+grantees and private postgres/service grantees; refuse grant options, other privilege
+kinds and unexpected/browser grantees on private helpers. Source/typed ABI/security/
+inverse guards remain. Missing-grant negatives now remove ESSENTIAL mapping PUBLIC
+or private owner grants; redundant/optional service absence is not a policy breach.
+This is evidence-grounded compatibility, not deletion of negative assertions.
+
+Focused native selection EXIT0: all31 prerequisite negatives retained plus one managed
+ACL-variant entry proving actual NULL/default mapping and owner-only trigger forms,
+exact helper raw-metadata conservation on patch/replay and two forbidden browser-grant
+refusals. Only disposable fixture restoration changes grants. Log
+`exp08-departure-managed-acl.log` SHA256
+`c593dd58c4de9feed7885c02bb06b0de0433b768c93a9282fe6901a48ec4abfb`.
+Own database disposed/current cluster stopped. Carrier LF SHA256 is now
+`1f40c0b087d9fdf4b8bfdc108ccf8e20d102b2492714484f8a482aac0a43d3a7`;
+removal function body remains EXACTcc631b7a with original metadata/ACL. Earlier e3aa
+carrier selections remain historical, not new-head whole-run proof. Actual Preview
+14count0/d8c0 was renewed immediately before this unapplied carrier edit.
+
+Distinct non-author SOURCE review found no material ACL-safety issue, no execution.
+No-argument departure suite now60 outer entries (prior59 plus managed-variant entry),
+with31 prerequisite negatives and10 FK cases explicitly nested. Final60/full-parent,
+new exact-head CI, managed application/readback/full-schema/trigger integration,
+production and authenticated outcomes remain owed. Local full-parent ENOSPC FAIL
+remains open; current low capacity prohibits another broad rerun, not safe source work.

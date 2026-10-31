@@ -1,0 +1,8 @@
+{
+  "scope": "real SoloApp / synthetic transport / not authenticated / no membership effect",
+  "scenario": "identity",
+  "records": [],
+  "failures": [
+    "Error: page.goto: net::ERR_NETWORK_ACCESS_DENIED at http://127.0.0.1:5298/solo/3855/settings/team?theme=light&tenant=a&departure=identity\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:5298/solo/3855/settings/team?theme=light&tenant=a&departure=identity\", waiting until \"domcontentloaded\"\u001b[22m\n"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "scope": "real SoloApp / synthetic transport / not authenticated / no membership effect",
+  "records": [],
+  "failures": [
+    "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.stw-drawer').getByText('Priya Nair holds nothing to hand over', { exact: true }) to be visible\u001b[22m\n"
+  ]
+}

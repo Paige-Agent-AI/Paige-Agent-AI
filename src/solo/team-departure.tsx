@@ -148,8 +148,12 @@ export function DepartureReview({ member, workspace, viewerId, members, contextB
   useLayoutEffect(() => { blockedRef.current = blocked; }, [blocked]);
   const switchedAway = () => Boolean(activeTenantRef.current) && activeTenantRef.current !== opened.current.tenantId;
   const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
+  useEffect(() => {
+    alive.current = true;
+    return () => { alive.current = false; };
+  }, []);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const removalAlertRef = useRef<HTMLDivElement>(null);
 
   const [stage, setStage] = useState<"loading" | "failed" | "unavailable" | "ready">("loading");
   const [loadMessage, setLoadMessage] = useState<string>("");
@@ -209,6 +213,7 @@ export function DepartureReview({ member, workspace, viewerId, members, contextB
   useEffect(() => { void load(); // eslint-disable-next-line react-hooks/exhaustive-deps -- once per open
   }, []);
   useEffect(() => { titleRef.current?.focus(); }, [stage, step]);
+  useEffect(() => { if (removeError) removalAlertRef.current?.focus(); }, [removeError]);
 
   const groups = useMemo(() => holdings ? HOLDING_KINDS.filter((k) => holdings.items[k].length).map((k) => ({ kind: k, items: holdings.items[k] })) : [], [holdings]);
   const movable = useMemo(() => groups.flatMap((g) => g.items.filter(isMovable)), [groups]);
@@ -393,7 +398,7 @@ export function DepartureReview({ member, workspace, viewerId, members, contextB
   const removeButton = (label = `Remove ${name}`) => <button type="button" className="stw-btn danger" disabled={blocked || busy || removeError?.retryable === false} aria-busy={removing || undefined} onClick={remove}>
     {removing ? "Removing…" : removeError ? "Try again" : label}</button>;
   const removalStatus = <>
-    {removeError && <div className="stw-alert" role="alert" tabIndex={-1}><AlertTriangle aria-hidden="true" /><p>{removeError.message}</p></div>}
+    {removeError && <div ref={removalAlertRef} className="stw-alert" role="alert" tabIndex={-1}><AlertTriangle aria-hidden="true" /><p>{removeError.message}</p></div>}
     {removing && <p className="stw-status" role="status" tabIndex={-1}><Loader2 className="stw-spin" aria-hidden="true" />Removing {first}…</p>}
   </>;
 

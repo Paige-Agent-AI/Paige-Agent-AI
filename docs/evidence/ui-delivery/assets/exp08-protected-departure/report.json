@@ -1,0 +1,774 @@
+{
+  "scope": "real SoloApp / synthetic transport / not authenticated / no membership effect",
+  "records": [
+    {
+      "label": "a-light-1536-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-light-1536-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-light-1366-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-light-1366-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-light-1024-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-light-1024-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": true,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-light-900-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-light-900-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": true,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-dark-1536-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-dark-1536-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-dark-1366-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-dark-1366-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-dark-1024-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-dark-1024-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": true,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-dark-900-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "a-dark-900-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": true,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Priya Nair's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-light-1536-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-light-1536-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-light-1366-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-light-1366-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-light-1024-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-light-1024-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": true,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-light-900-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-light-900-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": true,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-dark-1536-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-dark-1536-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-dark-1366-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-dark-1366-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-dark-1024-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-dark-1024-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": true,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-dark-900-closed",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "overlayPermitted": false,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    },
+    {
+      "label": "b-dark-900-open",
+      "capturedGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "open"
+      },
+      "overlayPermitted": true,
+      "restoredGeometry": {
+        "width": 523,
+        "height": 64,
+        "overflow": 0,
+        "text": "Rowan Parker's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+        "covered": false,
+        "paige": "closed"
+      },
+      "keyboardActionSequence": true,
+      "reopenedWithoutRetry": true,
+      "workspaceSwitchClosed": true,
+      "errors": []
+    }
+  ],
+  "failures": []
+}

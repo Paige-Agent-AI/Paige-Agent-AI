@@ -29,7 +29,7 @@ export type SoloPlanningReminderRead = { kind: "verified"; item: PlanItem } | { 
  * The caller must separately admit the original notification recipient/read-state row.
  * This consumer creates no notification, scheduler, permission, task or read-state writer.
  */
-export async function readSoloPlanningReminder(metadata: unknown,
+async function readSoloPlanningReminder(metadata: unknown,
   scope: { actorId: string; tenantId: string }, isCurrent: () => boolean): Promise<SoloPlanningReminderRead> {
   const unavailable: SoloPlanningReminderRead = { kind: "unavailable" };
   const origin = { ...scope };
@@ -56,5 +56,30 @@ export async function readSoloPlanningReminder(metadata: unknown,
     // claim_source_version is claim-stage only; later legitimate bookkeeping can change updated_at.
     // Private title/summary come exclusively from the original current authorized resource read.
     return { kind: "verified", item };
+  } catch { return unavailable; }
+}
+
+export type SoloPlanningNotificationRead = { kind: "verified"; notificationId: string;
+  isRead: boolean; readAt: string | null; item: PlanItem } | { kind: "unavailable" };
+
+/** Project an original authenticated notification row without trusting its private prose.
+ * Fetching and marking the original notification still belong to the original notification path.
+ * Metadata alone is intentionally not a public admission entry point.
+ */
+export async function readSoloPlanningNotification(notification: unknown,
+  scope: { actorId: string; tenantId: string }, isCurrent: () => boolean): Promise<SoloPlanningNotificationRead> {
+  const unavailable: SoloPlanningNotificationRead = { kind: "unavailable" };
+  const origin = { ...scope };
+  try {
+    if (!isCurrent() || !notification || typeof notification !== "object" || Array.isArray(notification)) return unavailable;
+    const row = notification as Record<string, unknown>;
+    if (!uuid(row.id) || !uuid(row.user_id) || !uuid(origin.actorId)
+      || row.user_id.toLowerCase() !== origin.actorId.toLowerCase() || row.type !== "task_reminder"
+      || typeof row.is_read !== "boolean" || instant(row.created_at) === null
+      || (row.read_at !== null && instant(row.read_at) === null)) return unavailable;
+    const notificationId = row.id.toLowerCase(), isRead = row.is_read, readAt = row.read_at as string | null;
+    const result = await readSoloPlanningReminder(row.metadata, origin, isCurrent);
+    if (!isCurrent() || result.kind !== "verified") return unavailable;
+    return { kind: "verified", notificationId, isRead, readAt, item: result.item };
   } catch { return unavailable; }
 }

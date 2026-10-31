@@ -230,3 +230,15 @@ candidate definition occurs exactly once. This was probe setup, not native proof
 Default rendering, full native install/replay/refused-drift/atomic rollback,
 dependency source metadata guards, independent review and normal release gates
 remain owed. No stopped disposable cluster was restarted or presumed present.
+Original publication runner now accepts the local atomic carrier as one install
+instead of pre-installing the reader separately. Existing candidate controls
+remain default; atomic mode repeats the entire carrier and extends drift targets
+to original8/4/3 as well as reviewed9/5/4. Legacy get4 is already STABLE and legacy
+service execute is legitimate, so those mutation controls use VOLATILE and revoke
+service respectively rather than falsely calling an unchanged setting drift.
+Python compile and diff checks pass; native outcomes remain UNVERIFIED.
+A new own disposable `work/pg-knowledge/memory-carrier-data` initialization is
+running in session37364 after observed free disk3.19GB. Its same handle remains
+live, currently selecting default shared buffers; no restart, old-cluster reuse,
+customer identity or native test PASS is inferred. CIM process inventory refused
+access; that refusal was not bypassed. Existing local proof logs are preserved.

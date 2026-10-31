@@ -1,6 +1,7 @@
 import argparse,hashlib,json,pathlib,re,subprocess,time,uuid
 p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql')
-p.add_argument('--memory-review-baseline',action='store_true'); p.add_argument('--memory-review-candidate',action='store_true'); p.add_argument('--memory-install-guards',action='store_true'); p.add_argument('--memory-review-candidate-file',default='scripts/knowledge-service/reviewed-memory-candidate.sql'); a=p.parse_args()
+p.add_argument('--memory-review-baseline',action='store_true'); p.add_argument('--memory-review-candidate',action='store_true'); p.add_argument('--memory-install-guards',action='store_true'); p.add_argument('--memory-review-candidate-file',default='scripts/knowledge-service/reviewed-memory-candidate.sql'); p.add_argument('--memory-review-carrier-file'); a=p.parse_args()
+if a.memory_review_carrier_file and not a.memory_review_candidate: p.error('Memory carrier requires native reviewed candidate controls')
 if a.memory_install_guards and not a.memory_review_candidate: p.error('Memory install guards require the native reviewed candidate')
 if (a.memory_review_baseline or a.memory_review_candidate) and not a.expected_data_directory: p.error('Memory proof requires a verified disposable data directory')
 root=pathlib.Path(__file__).resolve().parents[2]; db='knowledge_publish_test_'+uuid.uuid4().hex
@@ -42,13 +43,18 @@ try:
    predicate=(root/'scripts/knowledge-service/reviewed-memory-context-predicate.sql').read_text(encoding='utf-8')
    context_source=original.replace(needle,predicate+needle,1)
    if hashlib.md5(context_source.split('$function$')[1].encode('utf-8')).hexdigest()!='6f815ab77dac205aa2fef761716f8e30': raise RuntimeError('Reviewed Memory context source drifted')
-   result=subprocess.run(base+['-d',db,'-c',"SET client_encoding='UTF8'",'-f','-'],input=context_source,cwd=root,text=True,capture_output=True,encoding='utf-8')
-   print(result.stdout);print(result.stderr)
-   if result.returncode: raise RuntimeError('Reviewed Memory context source installation failed')
-   run(['-d',db,'-f',a.memory_review_candidate_file])
-   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-lifecycle-candidate.sql'])
+   if a.memory_review_carrier_file:
+    run(['-d',db,'-f',a.memory_review_carrier_file])
+   else:
+    result=subprocess.run(base+['-d',db,'-c',"SET client_encoding='UTF8'",'-f','-'],input=context_source,cwd=root,text=True,capture_output=True,encoding='utf-8')
+    print(result.stdout);print(result.stderr)
+    if result.returncode: raise RuntimeError('Reviewed Memory context source installation failed')
+    run(['-d',db,'-f',a.memory_review_candidate_file])
+    run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-lifecycle-candidate.sql'])
    if a.memory_install_guards:
     carriers=[(a.memory_review_candidate_file,['record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid,jsonb)']),('scripts/knowledge-service/reviewed-memory-lifecycle-candidate.sql',['get_paige_memory(text[],integer,uuid,uuid,jsonb)','forget_paige_memory(uuid,uuid,uuid,jsonb)'])]
+    if a.memory_review_carrier_file:
+     carriers=[(a.memory_review_carrier_file,[signature for _,signatures in carriers for signature in signatures]+['record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid)','get_paige_memory(text[],integer,uuid,uuid)','forget_paige_memory(uuid,uuid,uuid)'])]
     for path,signatures in carriers:
      run(['-d',db,'-f',path]) # exact known installation must replay safely
      carrier=(root/path).read_text(encoding='utf-8')
@@ -56,6 +62,9 @@ try:
      body=carrier.split('BEGIN;',1)[1].rsplit('COMMIT;',1)[0]
      for signature in signatures:
       mutations=['ALTER FUNCTION public.'+signature+' SECURITY INVOKER;', 'ALTER FUNCTION public.'+signature+' STABLE;', 'ALTER FUNCTION public.'+signature+' PARALLEL SAFE;', 'ALTER FUNCTION public.'+signature+' STRICT;', 'ALTER FUNCTION public.'+signature+' OWNER TO authenticated;', 'ALTER FUNCTION public.'+signature+' SET search_path TO public,pg_temp;', 'GRANT EXECUTE ON FUNCTION public.'+signature+' TO anon;', 'GRANT EXECUTE ON FUNCTION public.'+signature+' TO service_role;', 'GRANT EXECUTE ON FUNCTION public.'+signature+' TO authenticated WITH GRANT OPTION;']
+      if signature=='get_paige_memory(text[],integer,uuid,uuid)': mutations[1]='ALTER FUNCTION public.'+signature+' VOLATILE;'
+      if signature in ['record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid)','get_paige_memory(text[],integer,uuid,uuid)','forget_paige_memory(uuid,uuid,uuid)']:
+       mutations[7]='REVOKE EXECUTE ON FUNCTION public.'+signature+' FROM service_role;'
       mutations.append("DO $mutate$ DECLARE f record; BEGIN SELECT oid,prosrc INTO STRICT f FROM pg_proc WHERE oid='public."+signature+"'::regprocedure; EXECUTE replace(pg_get_functiondef(f.oid),f.prosrc,f.prosrc||E'\\n-- unexpected source drift\\n'); END $mutate$;")
       snapshot_sql="SELECT jsonb_build_object('definition',pg_get_functiondef(oid),'acl',proacl::text) FROM pg_proc WHERE oid='public."+signature+"'::regprocedure"
       snapshot=subprocess.check_output(base+['-d',db,'-Atc',snapshot_sql],text=True,encoding='utf-8')

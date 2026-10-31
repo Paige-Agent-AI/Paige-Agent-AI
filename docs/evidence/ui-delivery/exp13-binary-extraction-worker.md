@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: Local modeled Auth/RPC/parser ports and synth
 KEYBOARD_FOCUS: NOT_APPLICABLE: No controls or focus behavior changed; mounted consumer proof remains owed.
 ZOOM_REFLOW: NOT_APPLICABLE: No renderer/geometry changed; consumer proof remains owed.
 REDUCED_MOTION: NOT_APPLICABLE: No transition/animation changed.
-STATE_COVERAGE: PASS: Original admission refusal, raw identity change, missing/changed binary evidence, exact completion readback and unknown-effect settlement controls retained. Real browser interruption/cancel/reload/current-role and source-to-actual-Work cases remain owed.
+STATE_COVERAGE: UNVERIFIED: Mounted browser interruption/cancel/reload/current-role and source-to-actual-Work cases are not established because this local worker increment has no deployed binary consumer; source controls are listed separately under automated evidence.
 TRUTHFUL_STATE_LABELS: PASS: awaiting_review/extraction completion is source preparation only, not approved business facts, Memory, Mission, task delivery or agreement acceptance. Partial PDF coverage and unavailable/unknown effects remain explicit.
 SOLO_UI: NO: Original backend producer only; all eligible existing/future tenants use original scope checks without account-specific product code.
 UNVERIFIED: Native130013 production-before-worker order, normal managed Preview/current source, final review/CI/merge/Edge deployment and packaging/readback, client/BULK mounting, real source/index/readback, selected domain facts/Memory, saved Mission and authorized original Work/CRM with reload/recovery and owner acceptance remain required.
@@ -25,7 +25,7 @@ MUST_NOT_HAPPEN: No credit-report fabrication/write, caller/RLS bypass, service 
 MUST_PRESERVE: Original Knowledge source resolver/actor/tenant/work/lease/attempt/revision/CAS/receipt/recovery and original text/document generation/provider dispatch. Old consumers remain compatible; no worker/recurring/provider activation is changed.
 PROTECTED_SEAMS: Original caller submission scope and existing native worker authority are reused; raw source bytes and parsed-text SHA256 are distinct. Setup/domain confirmation, Mission and Planning admission/claims, CRM dispatch, Vault and private client publication retain their owners and current gates.
 
-INTERNAL_BUILD_IDENTITY: c0ec430f527f59309dd66da3c38fa1c2dcc4e0b1; deployment=LOCAL_ONLY; environment=development; migrations=PROOF_OWED(prerequisite20271126130013 must be applied before worker); edge=NOT_DEPLOYED(kb-extract-submit,paige-document-worker); evidence=docs/evidence/exp13-file-text-preparation.md
+INTERNAL_BUILD_IDENTITY: c0ec430f527f59309dd66da3c38fa1c2dcc4e0b1; deployment=LOCAL_ONLY; environment=development; migrations=PROOF_OWED(prerequisite20271126130013 must be applied before worker); edge=PROOF_OWED(undeployed kb-extract-submit and paige-document-worker); evidence=docs/evidence/exp13-file-text-preparation.md
 RELEASE_CHANNEL: development: local original worker integration only; no customer activation or release announcement.
 RELEASE_CLASSIFICATION: internal-only: original producer integration prerequisite to the ONE primary customer flow.
 CUSTOMER_RELEASE_IDENTITY: none: complete usable agreement-to-working-plan outcome remains unfinished.
@@ -34,6 +34,11 @@ RELEASE_TRUTH_BOUNDARY: PROOF OWED: source/runtime fixtures and compiler graphs 
 RELEASE_RECOVERY: position=forward-fix preserving original source/work identities, receipts and unknown-effect inspection; reference=docs/evidence/exp13-file-text-preparation.md
 
 ## Retained verification failures and boundaries
+
+Initial evidence guard25be rejected an unsupported Edge state grammar and the
+overbroad PASS state-coverage field. Edge uses the required concrete PROOF_OWED
+form; full mounted state coverage is UNVERIFIED, with local tests kept separate.
+The guard and original assertions are unchanged.
 
 The first broader Node run44150 reports84PASS/4FAIL because the existing fake-Deno
 handler harness cannot resolve Deno npm: imports. That is a test-runtime boundary,

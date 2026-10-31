@@ -99,6 +99,8 @@ export interface GovernedReplyDraft {
   paths: string[];
   /** Undefined = fresh reply; null = saved draft missing its required raw version. */
   source?: CommsEmailDraftSource | null;
+  /** Original action's approval, resolved through the caller's existing queue reader. */
+  approvalId?: string;
 }
 
 /**
@@ -108,6 +110,7 @@ export interface GovernedReplyDraft {
 export function governedReplyScope(d: GovernedReplyDraft): string {
   const fields: unknown[] = [d.tenantId, d.contactId, d.connectorId, d.subject, d.text, d.sendAt ?? null, d.paths];
   if (d.source !== undefined) fields.push(d.source);
+  if (d.approvalId !== undefined) fields.push(d.approvalId);
   return JSON.stringify(fields);
 }
 
@@ -125,6 +128,7 @@ export type GovernedReplyRequest = {
   attachments?: { path: string }[];
   approved_fingerprint?: string;
   draft_source?: CommsEmailDraftSource;
+  approval_id?: string;
 };
 
 /**
@@ -140,6 +144,7 @@ export function buildGovernedReplyRequest(d: GovernedReplyDraft, operationId: st
   if (d.source !== undefined) {
     try { source = parseCommsEmailDraftSource(d.source); } catch { return { ok: false, problem: "source" }; }
   }
+  if (d.approvalId !== undefined && (!source || !UUID.test(d.approvalId))) return { ok: false, problem: "source" };
   const command = { action: COMMS_EMAIL_ACTION, contact_id: d.contactId, connector_id: d.connectorId || null, subject: d.subject, body: d.text };
   try { parseCommsEmailCommand(command); }
   catch (e) {
@@ -153,6 +158,7 @@ export function buildGovernedReplyRequest(d: GovernedReplyDraft, operationId: st
       ...(d.sendAt ? { send_at: d.sendAt } : {}),
       ...(d.paths.length ? { attachments: d.paths.map((path) => ({ path })) } : {}),
       ...(source ? { draft_source: source, attachments: d.paths.map((path) => ({ path })) } : {}),
+      ...(d.approvalId !== undefined ? { approval_id: d.approvalId } : {}),
       ...(fingerprint ? { approved_fingerprint: fingerprint } : {}),
     },
   };
@@ -430,7 +436,9 @@ export function classifyDoorAnswer(answer: DoorAnswer, stage: "check" | "confirm
   }
   if (b.ok === true && outcome === "provider_accepted") {
     const already = stage !== "confirm" || replayed;
-    return { kind: "recorded", outcome, already, say: already ? "Already sent. Accepted by the email service." : "Accepted by the email service." };
+    const accepted=already ? "Already sent. Accepted by the email service." : "Accepted by the email service.";
+    const recordPending=request.approval_id!==undefined && (b.approval_id!==request.approval_id || b.record_status!=="recorded");
+    return { kind: "recorded", outcome, already, say: accepted+(recordPending?" The original approval record is still unconfirmed. Don't resend.":"") };
   }
   if (b.ok === true && outcome === "scheduled") {
     const sendAt = typeof b.send_at === "string" ? b.send_at : undefined;

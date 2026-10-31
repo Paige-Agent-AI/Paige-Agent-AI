@@ -3,10 +3,33 @@ import { supabase } from "@/integrations/supabase/client";
 import { PaigeConfirmCard, type ConfirmActionState } from "@/components/chat/PaigeConfirmCard";
 import { parseConfirmPreview, type ConfirmEmailPreview } from "@/components/chat/confirmPreview";
 import { Button } from "@/components/ui/button";
-import { parseCommsEmailCommand, commsEmailBodyHtml, normalizeCommsEmailAddress, FINGERPRINT, UUID, type CommsEmailCommand } from "../../../../supabase/functions/_shared/comms-email/contract";
+import { parseCommsEmailCommand, commsEmailBodyHtml, normalizeCommsEmailAddress, canonicalCommsEmailSendAt, FINGERPRINT, UUID, type CommsEmailCommand } from "../../../../supabase/functions/_shared/comms-email/contract";
+import { parseCommsEmailDraftSource, type CommsEmailDraftSource } from "../../../../supabase/functions/_shared/comms-email/draft-source";
+import { parseCommsEmailAttachmentManifest, commsEmailAttachmentPreview, type CommsEmailAttachmentManifest } from "../../../../supabase/functions/_shared/comms-email/attachments";
 import { GOVERNED_SEND_COLS } from "./governedSend";
 
 export const isFollowupEmailKind = (kind: unknown) => kind === "owner.lead_followup" || kind === "client.followup" || kind === "owner.followup_email";
+/** Locate the saved action's ORIGINAL pending queue entry with the caller's JWT. This is
+ * navigation context only; the command door and native writer re-prove authority. */
+export async function readSavedReplyApproval(context: {tenantId:string;contactId:string;actionId:string}, current:()=>boolean): Promise<string|null> {
+  const {tenantId,contactId,actionId}=context;
+  if (![tenantId,contactId,actionId].every(id=>UUID.test(id)) || !current()) return null;
+  try {
+    const actionRead=await supabase.from("paige_actions").select("id,tenant_id,contact_id,approval_id,action_kind")
+      .eq("id",actionId).eq("tenant_id",tenantId).eq("contact_id",contactId).limit(2);
+    if (!current() || actionRead.error || !Array.isArray(actionRead.data) || actionRead.data.length!==1) return null;
+    const action=object(actionRead.data[0]);
+    if (!action || action.id!==actionId || action.tenant_id!==tenantId || action.contact_id!==contactId
+      || !isFollowupEmailKind(action.action_kind) || typeof action.approval_id!=="string" || !UUID.test(action.approval_id)) return null;
+    const approvalId=action.approval_id;
+    const approvalRead=await supabase.from("paige_approval_queue_v").select("id,tenant_id,contact_id,status,metadata")
+      .eq("id",approvalId).eq("tenant_id",tenantId).limit(2);
+    if (!current() || approvalRead.error || !Array.isArray(approvalRead.data) || approvalRead.data.length!==1) return null;
+    const approval=object(approvalRead.data[0]);
+    return approval?.id===approvalId && approval.tenant_id===tenantId && approval.status==="pending"
+      && (approval.contact_id==null || approval.contact_id===contactId) && object(approval.metadata)?.action_id===actionId ? approvalId : null;
+  } catch { return null; }
+}
 export type FollowupLocator = { kind:"none" } | {kind:"invalid"} | {kind:"bound";contactId:string;approvalId:string};
 /** Navigation claim only. The original-JWT exact queue/door reads remain authority. */
 export function parseFollowupLocator(search: URLSearchParams): FollowupLocator {
@@ -66,8 +89,9 @@ const object = (value: unknown): Record<string, unknown> | null =>
 
 type OriginalContext = Pick<Input,"actorId"|"tenantId"|"contactId"|"threadKey"|"approvalId">;
 type OriginalReplyRecord = { call:Call; messageId:string; actionId:string; kind:string; actorId:string; threadKey:string; recorded:boolean; deliveryConfirmed:boolean;
-  approvedFingerprint:string; connectorId:string; recipient:string; sender:string; providerReceipt:string; preview:ConfirmEmailPreview };
-export const ORIGINAL_REPLY_COLS=`id,tenant_id,contact_id,thread_key,connector_id,channel_type,direction,status,provider_message_id,sender,recipients,subject,body_text,body_html,original_binding:meta->comms_email_binding,lead_reply_approval_id:meta->comms_email_binding->>approval_id,${GOVERNED_SEND_COLS}`;
+  approvedFingerprint:string; connectorId:string; recipient:string; sender:string; providerReceipt:string; preview:ConfirmEmailPreview;
+  draftSource?:CommsEmailDraftSource;draftAttachments?:CommsEmailAttachmentManifest;contentDigest:string };
+export const ORIGINAL_REPLY_COLS=`id,tenant_id,contact_id,thread_key,connector_id,channel_type,direction,status,provider_message_id,sender,recipients,subject,body_text,body_html,attachments,original_binding:meta->comms_email_binding,lead_reply_approval_id:meta->comms_email_binding->>approval_id,${GOVERNED_SEND_COLS}`;
 /** A protected original read is historical evidence, never a new approval token. */
 export function parseOriginalReplyRecord(value:unknown,context:OriginalContext):OriginalReplyRecord|null {
   try{
@@ -88,16 +112,32 @@ export function parseOriginalReplyRecord(value:unknown,context:OriginalContext):
     const prior=object(object(ap.metadata)?.governed_send),recorded=ap.status==="approved";
     if(recorded&&(prior?.operation_id!==operation||prior.message_id!==id||prior.state!=="provider_accepted"))return null;
     const command=parseCommsEmailCommand(b.command),sender=normalizeCommsEmailAddress(b.from_address),recipient=normalizeCommsEmailAddress(b.recipient);
+    let draftSource:CommsEmailDraftSource|undefined,draftAttachments:CommsEmailAttachmentManifest|undefined,sendAt:string|undefined;
+    if(Object.prototype.hasOwnProperty.call(g,"draft_source")){
+      draftSource=parseCommsEmailDraftSource(g.draft_source);if(draftSource.message_id!==id)return null;
+      if(typeof b.body_html!=="string"||!b.body_html||b.body_html.length>100000||b.body_html.includes("\0"))return null;
+      if(b.attachments!=null){
+        const manifest=parseCommsEmailAttachmentManifest(b.attachments,tenant!,operation);if(!manifest)return null;
+        if(!Array.isArray(m.attachments)||m.attachments.length!==manifest.length||m.attachments.some((raw,i)=>{
+          const file=object(raw),bound=manifest[i];return !file||file.url!==bound.path||file.name!==bound.name||file.mime!==bound.mime||file.size!==bound.size;
+        }))return null;
+        draftAttachments=manifest;
+      }else if(m.attachments!=null&&(!Array.isArray(m.attachments)||m.attachments.length!==0))return null;
+      if(b.send_at!=null){sendAt=canonicalCommsEmailSendAt(b.send_at);if(sendAt!==b.send_at)return null;}
+    }
     const parties=Array.isArray(m.recipients)?m.recipients:null;
     if(command.contact_id!==contact||(command.connector_id!==null&&command.connector_id!==connector)||command.subject!==m.subject||command.subject!==b.subject
-      ||command.body!==m.body_text||command.body!==b.body_text||m.body_html!==b.body_html||m.body_html!==commsEmailBodyHtml(command.body)
+      ||command.body!==m.body_text||command.body!==b.body_text||m.body_html!==b.body_html||(!draftSource&&m.body_html!==commsEmailBodyHtml(command.body))
       ||!sender||!recipient||b.from_address!==sender||b.recipient!==recipient||object(m.sender)?.address!==sender||parties?.length!==1||object(parties[0])?.address!==recipient
       ||typeof b.content_digest!=="string"||!/^[0-9a-f]{64}$/.test(b.content_digest)
       ||g.actor_user_id!==actor||g.tenant_id!==tenant||g.tool!=="comms_send_email"||g.action!=="comms.email_send"||g.approval_channel!=="operator_card"
       ||g.decision_receipt_recorded!==true||g.approval_id!==approval||typeof g.approved_fingerprint!=="string"||!FINGERPRINT.test(g.approved_fingerprint))return null;
+    const preview=parseConfirmPreview({kind:"email",to_address:recipient,from_address:sender,subject:command.subject,body_text:command.body,
+      ...(draftSource?{body_html:b.body_html}:{}),...(draftAttachments?{attachments:commsEmailAttachmentPreview(draftAttachments)}:{}),...(sendAt?{send_at:sendAt}:{})});
+    if(!preview)return null;
     return {call:{expected_tenant_id:tenant!,operation_id:operation,approval_id:approval!,command},messageId:id,actionId:action,kind:a.action_kind as string,actorId:actor!,threadKey:context.threadKey,recorded,deliveryConfirmed:m.status==="delivered",
       approvedFingerprint:g.approved_fingerprint,connectorId:connector,recipient,sender,providerReceipt:m.provider_message_id,
-      preview:{kind:"email",to_address:recipient,from_address:sender,subject:command.subject,body_text:command.body}};
+      preview,contentDigest:b.content_digest,...(draftSource?{draftSource}:{}),...(draftAttachments?{draftAttachments}:{})};
   }catch{return null;}
 }
 /** Exact existing records only. Callers provide their captured current-scope await fence. */

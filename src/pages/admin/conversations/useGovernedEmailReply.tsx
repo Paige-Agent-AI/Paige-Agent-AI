@@ -44,6 +44,7 @@ export interface GovernedEmailReplyInput {
   scheduledFor: string | null;
   /** Saved source only. Null refuses locally; absence retains the fresh-reply path. */
   draftSource?: CommsEmailDraftSource | null;
+  draftApprovalId?: string;
   epoch: { capture: () => AccountEpochToken; accept: (t: AccountEpochToken) => boolean };
   /** The element around the composer: focus targets are found inside it. */
   composerRef: RefObject<HTMLElement | null>;
@@ -101,7 +102,8 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
       sendAt = at.sendAt;
     }
     return { draft: { tenantId: i.activeTenantId, contactId: i.contactId, connectorId: i.connectorId, subject: i.subject.trim(), text: i.text, ...(sendAt ? { sendAt } : {}), paths: files.paths,
-      ...(i.draftSource !== undefined ? { source: i.draftSource } : {}) } };
+      ...(i.draftSource !== undefined ? { source: i.draftSource } : {}),
+      ...(i.draftApprovalId !== undefined ? { approvalId: i.draftApprovalId } : {}) } };
   }, []);
 
   // The scope of what is on screen right now. A strip is only ever about the scope it was raised for.
@@ -109,8 +111,9 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     const d = currentDraft();
     const local: unknown[] = [input.activeTenantId, input.contactId, input.connectorId, input.subject.trim(), input.text, input.scheduledFor, input.attachments.map((a) => a.url ?? a.name)];
     if (input.draftSource !== undefined) local.push(input.draftSource);
+    if (input.draftApprovalId !== undefined) local.push(input.draftApprovalId);
     return "draft" in d ? governedReplyScope(d.draft) : `local:${JSON.stringify(local)}`;
-  }, [currentDraft, input.activeTenantId, input.contactId, input.connectorId, input.subject, input.text, input.scheduledFor, input.attachments, input.draftSource]);
+  }, [currentDraft, input.activeTenantId, input.contactId, input.connectorId, input.subject, input.text, input.scheduledFor, input.attachments, input.draftSource, input.draftApprovalId]);
   const stripScopeRef = useRef<string | null>(null);
   const liveScopeRef = useRef(liveScope);
   liveScopeRef.current = liveScope;

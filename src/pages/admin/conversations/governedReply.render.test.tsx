@@ -26,6 +26,8 @@ const DRAFT_ID="8a1b2c3d-4e5f-4a60-8b7c-9d0e1f2a3b4c",DRAFT_VERSION="2026-10-30T
 
 const db = vi.hoisted(() => ({
   messages: [] as Array<Record<string, unknown>>,
+  actions: [] as Array<Record<string, unknown>>,
+  approvals: [] as Array<Record<string, unknown>>,
   threads: [] as Array<Record<string, unknown>>,
   signatures: [] as Array<Record<string, unknown>>,
   connectors: [] as Array<Record<string, unknown>>,
@@ -46,6 +48,7 @@ vi.mock("@/integrations/supabase/client", () => {
   const builder = (table: string) => {
     db.reads.push(table);
     const rows = () => table === "messages" ? db.messages : table === "threads" ? db.threads
+      : table === "paige_actions" ? db.actions : table === "paige_approval_queue_v" ? db.approvals
       : table === "channel_connectors" ? db.connectors : table === "signatures" ? db.signatures : [];
     const result = () => ({ data: rows(), error: null, count: rows().length });
     const proxy: Record<string, unknown> = new Proxy({}, {
@@ -164,6 +167,7 @@ const tree = (path: string) => <MemoryRouter initialEntries={[path]}><ClientsCon
 beforeEach(() => {
   vi.clearAllMocks();
   db.messages = [message()]; db.threads = [thread]; db.signatures = [];
+  db.actions=[];db.approvals=[];
   db.connectors = [emailConnector(CONN, "Northlight Advisory", "jordan@northlightadvisory.example")];
   db.invokes = []; db.sendBodies = []; db.doorBodies = []; db.door = []; db.cancellations = []; db.reads = [];
   db.tenant = TENANT; db.rpcTenant = TENANT; db.reduce = true;
@@ -874,9 +878,22 @@ describe("everything else keeps its own path", () => {
     const host=await mount();await write(host);const words=textarea(host).value;
     await click(buttonByText(host,"Review email"));expect(textarea(host).value).toBe(words);expect(db.invokes).toEqual([]);
   });
-  it("action-owned original drafts cannot enter the generic saved-email path",async()=>{
+  it("action-owned drafts without their original approval never reach either sender",async()=>{
     db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original action reply.",action_id:CONTACT})];
     const host=await mount();await click(buttonByText(host,"Review email"));expect(db.invokes).toEqual([]);expect(db.sendBodies).toEqual([]);
     expect(vi.mocked(toast.error).mock.calls.some(([text])=>String(text).includes("original approval"))).toBe(true);
+  });
+  it("an action-owned saved draft reviews and sends with its original approval through one inline check",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original action reply.",action_id:CONTACT})];
+    db.actions=[{id:CONTACT,tenant_id:TENANT,contact_id:CONTACT,approval_id:CONN_2,action_kind:"client.followup"}];
+    db.approvals=[{id:CONN_2,tenant_id:TENANT,contact_id:CONTACT,status:"pending",metadata:{action_id:CONTACT}}];
+    const host=await mount();await click(buttonByText(host,"Review email"));
+    expect(db.doorBodies).toHaveLength(1);
+    expect(db.doorBodies[0]).toMatchObject({approval_id:CONN_2,draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION},attachments:[]});
+    expect(host.querySelectorAll("[data-governed-reply-strip]").length).toBeLessThanOrEqual(1);
+    db.door.push(accepted({message_id:DRAFT_ID,approval_id:CONN_2,record_status:"recorded"}));
+    await click(buttonByText(host,"Send now"));
+    expect(db.doorBodies[1]).toMatchObject({approval_id:CONN_2,operation_id:db.doorBodies[0].operation_id,approved_fingerprint:FP});
+    expect(db.sendBodies).toEqual([]);
   });
 });

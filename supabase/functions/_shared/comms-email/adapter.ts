@@ -293,6 +293,7 @@ export interface ScheduledCommsEmailBinding {
   draftSource?: CommsEmailDraftSource;
   draftCommand?: CommsEmailCommand;
   draftAttachments?: CommsEmailAttachmentManifest;
+  approvalId?: string;
 }
 
 /** The stored binding of a SCHEDULED governed email (one carrying a canonical send_at), or null. */
@@ -313,6 +314,7 @@ export function parseScheduledCommsEmailBinding(value: unknown): ScheduledCommsE
   let draftCommand: CommsEmailCommand | undefined;
   let draftAttachments: CommsEmailAttachmentManifest | undefined;
   const governance = object(b.governance);
+  let approvalId:string|undefined;
   if (governance && Object.prototype.hasOwnProperty.call(governance, "draft_source")) {
     try { draftSource = parseCommsEmailDraftSource(governance.draft_source); } catch { return null; }
     if ((b.body_html as string).length > 100000 || (b.body_html as string).includes("\0")) return null;
@@ -324,13 +326,17 @@ export function parseScheduledCommsEmailBinding(value: unknown): ScheduledCommsE
       if (!manifest) return null;
       draftAttachments = manifest;
     }
+    if (b.approval_id!==undefined && b.approval_id!==null) {
+      if (typeof b.approval_id!=="string" || !UUID.test(b.approval_id) || governance.approval_id!==b.approval_id) return null;
+      approvalId=b.approval_id;
+    } else if (governance.approval_id!==undefined && governance.approval_id!==null) return null;
   }
   return {
     operationId: b.operation_id as string, tenantId: b.tenant_id as string, actorUserId: b.actor_user_id as string,
     contactId: b.contact_id as string, connectorId: b.connector_id as string, recipient: b.recipient as string,
     fromAddress: b.from_address as string, subject: b.subject as string, bodyText: b.body_text as string,
     bodyHtml: b.body_html as string, contentDigest: b.content_digest, sendAt, state: b.state as string,
-    ...(draftSource ? { draftSource, draftCommand, ...(draftAttachments ? { draftAttachments } : {}) } : {}),
+    ...(draftSource ? { draftSource, draftCommand, ...(draftAttachments ? { draftAttachments } : {}), ...(approvalId?{approvalId}:{}) } : {}),
   };
 }
 
@@ -357,11 +363,13 @@ export interface ScheduledReleaseDependencies {
   closeRefused(input: { messageId: string; operationId: string; reason: string }): Promise<boolean>;
   /** Best-effort: the thread's support case (if any) now awaits the customer. Never blocks. */
   markSupportCase(messageId: string): Promise<void>;
+  /** Original approval bookkeeping only, after accepted readback. Never sends. */
+  recordAccepted?(input:{approvalId:string;operationId:string;actorUserId:string}):Promise<"recorded"|"pending_record">;
 }
 
 export type ScheduledReleaseResult =
   /** The email service accepted it (never "delivered"). */
-  | { result: "released" }
+  | { result: "released"; record_status?:"recorded"|"pending_record" }
   /** Closed as refused with this code: nothing went out. */
   | { result: "refused"; reason: string }
   /** Nothing written; the next lease (or a person) decides. `reason` says why, for the drain's log. */
@@ -409,6 +417,7 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
   const binding = parseScheduledCommsEmailBinding(rawBinding);
   if (!binding || typeof messageId !== "string" || !UUID.test(messageId)) return { result: "invalid" };
   if (binding.draftSource && binding.draftSource.message_id !== messageId.toLowerCase()) return { result: "invalid" };
+  if (binding.approvalId && !d.recordAccepted) return {result:"left",reason:"approval_recorder_unavailable"};
   const refuse = async (reason: string): Promise<ScheduledReleaseResult> =>
     await d.closeRefused({ messageId, operationId: binding.operationId, reason }).catch(() => false)
       ? { result: "refused", reason } : { result: "left", reason: `close_unrecorded:${reason}` };
@@ -476,8 +485,16 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
     const after = await read();
     if (after === "seat_gone" || !after) return { result: "left", reason: "readback_unavailable" };
     if (after.state === "provider_accepted") {
+      let recordStatus:"recorded"|"pending_record"|undefined;
+      if (binding.approvalId) {
+        const accepted=parseScheduledCommsEmailBinding(after);
+        if (!accepted || JSON.stringify({...accepted,state:binding.state})!==JSON.stringify(binding)) return {result:"left",reason:"accepted_binding_moved"};
+        recordStatus="pending_record";
+        try { recordStatus=await d.recordAccepted!({approvalId:binding.approvalId,operationId:binding.operationId,actorUserId:binding.actorUserId}); }
+        catch { /* Accepted stays accepted; original operation can repair only its record. */ }
+      }
       try { await d.markSupportCase(messageId); } catch { /* the next inbound re-syncs the case */ }
-      return { result: "released" };
+      return { result: "released",...(recordStatus?{record_status:recordStatus}:{}) };
     }
     if (after.state !== "prepared") return { result: "settled" };
     // Still prepared: no claim admitted it. Only an ANSWERED send-message proves that; an unanswered

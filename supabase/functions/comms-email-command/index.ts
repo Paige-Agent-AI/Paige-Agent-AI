@@ -74,11 +74,13 @@ Deno.serve(async req => {
         try { sendAt = parsed.approved_fingerprint === undefined ? parseCommsEmailSendAt(parsed.send_at, Date.now()) : canonicalCommsEmailSendAt(parsed.send_at); }
         catch { return refusedBeforeDispatch(400, "COMMS_EMAIL_SEND_AT_INVALID"); }
       }
-      // A drafted lead reply is answered now; its one-send-per-approval record is not scheduled.
-      if (sendAt !== undefined && parsed.approval_id !== undefined) return refusedBeforeDispatch(400, "COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED");
-      // Files ride as a top-level key too (the command and its content digest are unchanged), and never
-      // with a drafted lead reply, whose send is recorded against its approval exactly as drafted.
-      if (parsed.attachments !== undefined && parsed.approval_id !== undefined) return refusedBeforeDispatch(400, "COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED");
+      // Only the original source-bound path has scheduled approval bookkeeping in the
+      // incumbent drainer. Legacy unbound approval replies retain their restriction.
+      if (sendAt !== undefined && parsed.approval_id !== undefined && !draftSource) return refusedBeforeDispatch(400, "COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED");
+      // A saved source (including an explicit empty list removing its files) uses the original
+      // source/approval reader and the same fingerprinted file verification below. Unbound legacy
+      // lead replies retain their original restriction; a source locator grants no authority.
+      if (parsed.attachments !== undefined && parsed.approval_id !== undefined && !draftSource) return refusedBeforeDispatch(400, "COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED");
       // The binding, the unique index and send-message all compare the operation id as lowercase
       // text; an uppercase id from a direct caller would otherwise never match its own binding.
       const { send_at: _requestedSendAt, ...rest } = parsed;

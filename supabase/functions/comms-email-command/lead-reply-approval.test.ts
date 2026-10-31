@@ -123,7 +123,7 @@ function scenario(w: World) {
         const original = source ? w.messages.find(m => m.id === source.message_id) : null;
         const prepared = { tenant_id: T, [BINDING_APPROVAL]: approval, operation_id: args._operation_id, state: "prepared", binding };
         if (original) Object.assign(original, prepared); else w.messages.push(prepared);
-        return { data: { ok: true, replayed: false, state: "prepared", message_id: MSG }, error: null };
+        return { data: { ok: true, replayed: false, state: "prepared", message_id: MSG, ...(args._send_at?{send_at:args._send_at}:{}) }, error: null };
       }),
       read_comms_email_send_binding: rpc("read_comms_email_send_binding", () => ({ data: w.messages.find(m => m.binding)?.binding ?? { message_id: MSG, operation_id: OP, approval_id: w.bindingApproval }, error: null })),
       lead_reply_record_send_service: rpc("lead_reply_record_send_service", () => { if (typeof w.recordResult === "function") return w.recordResult(); return w.recordResult; }),
@@ -185,6 +185,39 @@ test("an action-owned saved reply uses its original verified approval and origin
  const prepared=w.rpcCalls.find(c=>c.name==="prepare_comms_email_send");
  assert.equal((prepared?.args._governance as Row).approval_id,AP);assert.deepEqual(prepared?.args._draft_source,DRAFT_SOURCE);
  assert.equal(w.rpcCalls.filter(c=>c.name==="lead_reply_record_send_service").length,1);
+});
+test("an action-owned saved reply accepts its explicit empty file list and records only the original operation",async()=>{
+ const w=withOriginalDraft({action_id:ACT});
+ const request={draft_source:DRAFT_SOURCE,approval_id:AP,attachments:[]};
+ const p=await call(w,request);
+ assert.equal(p.status,202,JSON.stringify(p.body));assert.equal(w.fetches.length,0);
+ const r=await call(w,{...request,approved_fingerprint:p.body.fingerprint});
+ assert.equal(r.body.outcome,"provider_accepted",JSON.stringify(r.body));
+ assert.equal(r.body.record_status,"recorded");assert.equal(w.messages.length,1);
+ assert.equal(w.rpcCalls.filter(c=>c.name==="lead_reply_record_send_service").length,1);
+ const replay=await call(w,request);assert.equal(replay.body.outcome,"provider_accepted");assert.equal(w.fetches.length,1);
+});
+test("source-bound approval files still reject foreign paths before proposing or sending",async()=>{
+ const w=withOriginalDraft({action_id:ACT});
+ const r=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP,attachments:[{path:`${T2}/uploads/foreign.pdf`}]});
+ assert.equal(r.body.code,"COMMS_EMAIL_ATTACHMENTS_INVALID",JSON.stringify(r.body));
+ assert.equal(w.proposals.length,0);assertNoSend(w);
+});
+test("legacy unbound approval files keep their original refusal",async()=>{
+ const w=world();const r=await call(w,{approval_id:AP,attachments:[]});
+ assert.equal(r.body.code,"COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED");assert.equal(w.proposals.length,0);assertNoSend(w);
+});
+test("a saved action reply can approve a later send without prematurely recording acceptance",async()=>{
+ const w=withOriginalDraft({action_id:ACT});
+ const send_at=new Date(Math.floor((Date.now()+60*60_000)/60_000)*60_000).toISOString();
+ const request={draft_source:DRAFT_SOURCE,approval_id:AP,attachments:[],send_at};
+ const p=await call(w,request);assert.equal(p.status,202,JSON.stringify(p.body));
+ assert.equal((p.body.preview as Row).send_at,send_at);
+ const r=await call(w,{...request,approved_fingerprint:p.body.fingerprint});
+ assert.equal(r.body.outcome,"scheduled",JSON.stringify(r.body));
+ assert.equal(w.fetches.length,0);assert.ok(!rpcNames(w).includes("lead_reply_record_send_service"));
+ const prepared=w.rpcCalls.find(c=>c.name==="prepare_comms_email_send");
+ assert.equal(prepared?.args._send_at,send_at);assert.equal((prepared?.args._governance as Row).approval_id,AP);
 });
 test("an action-owned source cannot borrow another otherwise valid approval or omit its owner",async()=>{
  for(const extra of [{draft_source:DRAFT_SOURCE},{draft_source:DRAFT_SOURCE,approval_id:AP2}]){

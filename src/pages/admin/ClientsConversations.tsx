@@ -42,7 +42,7 @@ import { voiceHistoryStatus } from "@/lib/voice/voiceCallSafety";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { ComposeThreadDialog } from "./conversations/ComposeThreadDialog";
 import { LeadReplyDrafts } from "./conversations/LeadReplyDrafts";
-import { useLeadReplyReview, canReplaceFollowupDraft, parseFollowupLocator } from "./conversations/useLeadReplyReview";
+import { useLeadReplyReview, canReplaceFollowupDraft, parseFollowupLocator, readSavedReplyApproval } from "./conversations/useLeadReplyReview";
 import { FirstRunOnboarding } from "./conversations/FirstRunOnboarding";
 import { ThreadRow } from "./conversations/ThreadRow";
 import { ThreadFilters, useLabelCatalog } from "./conversations/ThreadFilters";
@@ -482,6 +482,8 @@ export default function ClientsConversations() {
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [editingDraftSource, setEditingDraftSource] = useState<CommsEmailDraftSource | null>(null);
+  const [editingDraftApprovalId, setEditingDraftApprovalId] = useState<string | undefined>();
+  const savedDraftOpenSequence = useRef(0);
   const [reviewDraftRequest, setReviewDraftRequest] = useState<{ id: string; epoch: AccountEpochToken } | null>(null);
   const signatureBeforeDraft = useRef<boolean | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -506,7 +508,7 @@ export default function ClientsConversations() {
     if (editingDraftId === null && signatureBeforeDraft.current !== null) {
       setAppendSignature(signatureBeforeDraft.current); signatureBeforeDraft.current = null;
     }
-    if (editingDraftId === null) setEditingDraftSource(null);
+    if (editingDraftId === null) { setEditingDraftSource(null); setEditingDraftApprovalId(undefined); }
   }, [editingDraftId]);
 
   // "Draft with Paige" (#482 Phase-1): on-demand reply drafting via the subagent-email-composer
@@ -977,6 +979,8 @@ export default function ClientsConversations() {
   // Which thread the composer was last set up for, and the channel it is on now — read by the
   // default-channel effect without re-running it on every channel pick.
   const composerThreadRef = useRef<string | null>(null);
+  const savedDraftComposerKey=JSON.stringify([selected?.key,activeUserId,activeTenantId,editingDraftId,subject,body,attachments,scheduledFor,uploading,leadReplyApprovalId]);
+  const savedDraftComposerRef=useRef(savedDraftComposerKey);savedDraftComposerRef.current=savedDraftComposerKey;
   const composeChannelRef = useRef<ChannelType | "">("");
   useEffect(() => { composeChannelRef.current = composeChannel; }, [composeChannel]);
 
@@ -1149,7 +1153,7 @@ export default function ClientsConversations() {
     if (!selected) return;
     if (isSolo && !canSendInSolo(handlingMode, m.channel_type)) { toast.error("This handling mode or channel cannot send. Hand back to Human reply and use a ready email or SMS identity."); return; }
     if (m.channel_type === "email") {
-      if (!openSavedEmailDraft(m)) return;
+      if (!await openSavedEmailDraft(m)) return;
       setApprovingId(m.id);
       setReviewDraftRequest({ id: m.id, epoch: accountEpochRef.current.capture() });
       return;
@@ -1193,26 +1197,40 @@ export default function ClientsConversations() {
     }
   };
 
-  const openSavedEmailDraft = (m: MessageRow): boolean => {
+  const openSavedEmailDraft = async (m: MessageRow): Promise<boolean> => {
     if (!selected || m.contact_id !== selected.contactId || m.thread_key !== selected.key
       || m.channel_type !== "email" || m.direction !== "outbound" || m.status !== "draft" || governedSendView(m) !== null) {
       toast.error("Reopen the original draft in its conversation before reviewing it."); return false;
     }
     if (governedReply.filesLocked || governedReply.blocksEditing || uploading) { toast.error("Finish the current email review first."); return false; }
     if (editingDraftId === m.id) return true;
-    if (editingDraftId || subject.trim() || body.trim() || attachments.length || scheduledFor) {
+    if (editingDraftId || subject.trim() || body.trim() || attachments.length || scheduledFor || leadReplyApprovalId) {
       toast.error("Keep or clear your current reply before opening another draft."); return false;
     }
-    if (m.action_id) { toast.error("Review this reply through its original approval."); return false; }
     let source: CommsEmailDraftSource;
     try { source = parseCommsEmailDraftSource({ message_id: m.id, updated_at: m.updated_at }); }
     catch { toast.error("Reopen this draft before sending. Its saved version could not be checked."); void load(); return false; }
     if (m.attachments != null && (!Array.isArray(m.attachments) || m.attachments.some(a => !a || typeof a !== "object"))) {
       toast.error("Reopen this draft to check its saved files."); return false;
     }
+    const sequence=++savedDraftOpenSequence.current,epoch=accountEpochRef.current.capture(),key=savedDraftComposerRef.current;
+    const current=()=>savedDraftOpenSequence.current===sequence && accountEpochRef.current.accept(epoch) && savedDraftComposerRef.current===key;
+    let approvalId:string|undefined;
+    if (m.action_id) {
+      if (!activeTenantId || !selected.contactId) return false;
+      const original=await readSavedReplyApproval({tenantId:activeTenantId,contactId:selected.contactId,actionId:m.action_id},current);
+      if (!current()) return false;
+      if (!original) { toast.error("This draft's original approval is unavailable or no longer pending. Reopen its recorded status."); return false; }
+      approvalId=original;
+    }
+    if (followupLocator.kind!=="none" && (followupLocator.kind!=="bound" || followupLocator.approvalId!==approvalId || followupLocator.contactId!==selected.contactId)) {
+      toast.error("Return to this draft's original approval before reviewing it."); return false;
+    }
+    if (!current()) return false;
     signatureBeforeDraft.current = appendSignature;
     setAppendSignature(false);
     setEditingDraftSource(source); setEditingDraftId(m.id);
+    setEditingDraftApprovalId(approvalId);
     setComposeChannel("email"); setComposeConnectorId(m.connector_id ?? "");
     setSubject(m.subject ?? "");
     setBody(m.body_text?.trim() ? m.body_text : readableMessageBody(m));
@@ -1222,7 +1240,7 @@ export default function ClientsConversations() {
   };
 
   const editDraft = (m: MessageRow) => {
-    if (m.channel_type === "email") { openSavedEmailDraft(m); return; }
+    if (m.channel_type === "email") { void openSavedEmailDraft(m); return; }
     if (governedReply.filesLocked || governedReply.blocksEditing || (editingDraftId && composeChannel === "email")) { toast.error("Finish or cancel the email draft first."); return; }
     setEditingDraftId(m.id);
     setComposeChannel(m.channel_type);
@@ -1290,6 +1308,7 @@ export default function ClientsConversations() {
     subject, text: governedReplyText(body, replySignature ? resolveMergeVars(replySignature.html, mergeContext(selected, replySignature)) : null),
     attachments, scheduledFor, epoch: accountEpochRef.current, composerRef: composerWrapRef, settingsHref: connectionsHref,
     draftSource: editingDraftId && composeChannel === "email" ? editingDraftSource : undefined,
+    draftApprovalId: editingDraftId && composeChannel === "email" ? editingDraftApprovalId : undefined,
     onChooseSender: (id) => { setComposeConnectorId(id); setComposeChannel("email"); },
     onRecorded: ({ contactId }) => {
       resetComposer();
@@ -1521,7 +1540,7 @@ export default function ClientsConversations() {
   // ── Send a fresh reply (or an edited draft) into the selected thread ──────────────
   const send = async () => {
     if (leadReplyApprovalId) { if(followupLocatorConflict){toast.error("Return to the original reply before approving it.");return;}await leadReplyReview.prepare(); return; }
-    if (followupLocator.kind !== "none") { toast.error("Open the selected original reply before sending. No replacement was selected."); return; }
+    if (followupLocator.kind !== "none" && !(editingDraftId && followupLocator.kind==="bound" && followupLocator.approvalId===editingDraftApprovalId && followupLocator.contactId===selected?.contactId)) { toast.error("Open the selected original reply before sending. No replacement was selected."); return; }
     if (!selected) return;
     if (isSolo && !canSendInSolo(handlingMode, composeChannel)) { toast.error("This handling mode or channel cannot send. Hand back to Human reply and use a ready email or SMS identity."); return; }
     if (isSolo && !selected.contactId) { toast.error("Associate this participant with a client before sending."); return; }

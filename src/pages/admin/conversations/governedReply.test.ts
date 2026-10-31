@@ -22,6 +22,13 @@ const ready = (over: Record<string, unknown> = {}, preview: Record<string, unkno
 });
 
 describe("the words the governed email carries", () => {
+  it("saved-source approval is included in the original request and exact review scope",()=>{
+    const d=draft({source:SOURCE,approvalId:OP});
+    expect(buildGovernedReplyRequest(d,OP)).toMatchObject({ok:true,request:{approval_id:OP,draft_source:SOURCE,attachments:[]}});
+    expect(governedReplyScope(d)).not.toBe(governedReplyScope(draft({source:SOURCE})));
+    expect(buildGovernedReplyRequest(draft({approvalId:OP}),OP)).toMatchObject({ok:false});
+    expect(buildGovernedReplyRequest(draft({source:SOURCE,approvalId:"bad"}),OP)).toMatchObject({ok:false});
+  });
   it("saved drafts carry the original raw source and an explicit file selection, never browser HTML",()=>{
     const result=buildGovernedReplyRequest(draft({source:SOURCE}),OP);
     expect(result.ok&&result.request).toMatchObject({draft_source:SOURCE,attachments:[]});

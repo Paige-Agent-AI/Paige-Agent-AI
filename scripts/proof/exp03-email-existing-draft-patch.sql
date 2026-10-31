@@ -1,6 +1,7 @@
 -- INERT EXP03 original saved-draft binding candidate, NOT a published migration.
 -- One atomic DO repairs ONLY original13's opt-in source branch and adds SAME writer overload16.
--- Original actor/governance/14/15 and agreement branch stay exact; no accounts/provider effect.
+-- Original actor/governance and agreement branch stay exact. Original14/15 only allow
+-- schedule/files for the source-bound approval re-proved by13. No accounts/provider effect.
 DO $exp03_saved_draft$
 DECLARE item record; target regprocedure; original text; revised text; inverse text;
  target16 regprocedure:=to_regprocedure('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz,jsonb,jsonb)');
@@ -9,8 +10,8 @@ BEGIN
 ('_comms_email_actor(uuid,uuid)','ff1a928247c3d00c8641b639dacb7fb9','ff1a928247c3d00c8641b639dacb7fb9'),
 ('_comms_email_governance(uuid,uuid,jsonb)','eb2f2b6e3f58a4843bc330cfad17c25e','eb2f2b6e3f58a4843bc330cfad17c25e'),
 ('prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)','44040e47f20c4a285177b09ea9f5a717','41cb53161afde5aa03d17013509f15f5'),
-('prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamp with time zone)','3e228c9e0298724b6f3b6de2eca892ca','3e228c9e0298724b6f3b6de2eca892ca'),
-('prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamp with time zone,jsonb)','9dd86fac153138c0639d969dbecd6bad','9dd86fac153138c0639d969dbecd6bad')
+('prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamp with time zone)','3e228c9e0298724b6f3b6de2eca892ca','910674fc5c623564b46b4bb8f0f9258d'),
+('prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamp with time zone,jsonb)','9dd86fac153138c0639d969dbecd6bad','1b3d7bf95f82d6cfddcb635ff61b3f2b')
  ) AS expected(signature,before_md5,after_md5)
  LOOP
   target:=to_regprocedure('public.'||item.signature);
@@ -213,5 +214,31 @@ $function$;$e03_create16$;
   AND p.proconfig=ARRAY['search_path=pg_catalog, public']::text[]
   AND p.proacl::text='{postgres=X/postgres,service_role=X/postgres}')
  THEN RAISE EXCEPTION 'EXP03 saved draft overload readback mismatch';END IF;
+ target:=to_regprocedure('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz,jsonb)');
+ original:=pg_get_functiondef(target);
+ IF md5(original)='9dd86fac153138c0639d969dbecd6bad' THEN
+  revised:=replace(original,$old_files$OR coalesce(btrim(_governance->>'approval_id'),'')<>'' THEN$old_files$,
+    $new_files$OR (coalesce(btrim(_governance->>'approval_id'),'')<>'' AND NOT (_governance ? 'draft_source')) THEN$new_files$);
+  inverse:=replace(revised,$new_files$OR (coalesce(btrim(_governance->>'approval_id'),'')<>'' AND NOT (_governance ? 'draft_source')) THEN$new_files$,
+    $old_files$OR coalesce(btrim(_governance->>'approval_id'),'')<>'' THEN$old_files$);
+  IF inverse IS DISTINCT FROM original OR md5(revised)<>'1b3d7bf95f82d6cfddcb635ff61b3f2b' THEN
+   RAISE EXCEPTION 'EXP03 saved draft files inverse mismatch';END IF;
+  EXECUTE revised;
+ END IF;
+ IF md5(pg_get_functiondef(target))<>'1b3d7bf95f82d6cfddcb635ff61b3f2b' THEN
+  RAISE EXCEPTION 'EXP03 saved draft files readback mismatch';END IF;
+ target:=to_regprocedure('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz)');
+ original:=pg_get_functiondef(target);
+ IF md5(original)='3e228c9e0298724b6f3b6de2eca892ca' THEN
+  revised:=replace(original,$old_schedule$OR coalesce(btrim(_governance->>'approval_id'),'')<>'' THEN$old_schedule$,
+    $new_schedule$OR (coalesce(btrim(_governance->>'approval_id'),'')<>'' AND NOT (_governance ? 'draft_source')) THEN$new_schedule$);
+  inverse:=replace(revised,$new_schedule$OR (coalesce(btrim(_governance->>'approval_id'),'')<>'' AND NOT (_governance ? 'draft_source')) THEN$new_schedule$,
+    $old_schedule$OR coalesce(btrim(_governance->>'approval_id'),'')<>'' THEN$old_schedule$);
+  IF inverse IS DISTINCT FROM original OR md5(revised)<>'910674fc5c623564b46b4bb8f0f9258d' THEN
+   RAISE EXCEPTION 'EXP03 saved draft schedule inverse mismatch';END IF;
+  EXECUTE revised;
+ END IF;
+ IF md5(pg_get_functiondef(target))<>'910674fc5c623564b46b4bb8f0f9258d' THEN
+  RAISE EXCEPTION 'EXP03 saved draft schedule readback mismatch';END IF;
 END;
 $exp03_saved_draft$;

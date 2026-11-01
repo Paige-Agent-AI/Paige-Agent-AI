@@ -133,7 +133,7 @@ function useTeamWorkspace(search: string, permission: string, viewerId: string |
   };
 }
 
-export function MemberEditor({ member, workspace, onClose, onSaved, onContactDirtyChange, canRemove, onRequestRemoval, viewerId = null, isCurrent = () => true }: { member: TeamMemberRecord; workspace: TeamWorkspaceRecord; onClose: () => void; onSaved: (saved?: { job_title: string; responsibilities: string }) => void | Promise<void>; /** Raised while contact edits are unsaved: a roster reload must not take them. */ onContactDirtyChange?: (dirty: boolean) => void; /** The viewer may remove this person (canActOn); the drawer is opened by the parent. */ canRemove?: boolean; onRequestRemoval?: () => void; viewerId?: string | null; /** Negative-only original host context guard. */ isCurrent?: () => boolean }) {
+export function MemberEditor({ member, workspace, onClose, onSaved, onContactDirtyChange, canRemove, onRequestRemoval, viewerId = null, isCurrent = () => true }: { member: TeamMemberRecord; workspace: TeamWorkspaceRecord; onClose: (needsReconcile?: boolean) => void; onSaved: (saved?: { job_title: string; responsibilities: string }) => void | Promise<void>; /** Raised while contact edits are unsaved: a roster reload must not take them. */ onContactDirtyChange?: (dirty: boolean) => void; /** The viewer may remove this person (canActOn); the drawer is opened by the parent. */ canRemove?: boolean; onRequestRemoval?: () => void; viewerId?: string | null; /** Negative-only original host context guard. */ isCurrent?: () => boolean }) {
   const [title, setTitle] = useState(member.job_title ?? "");
   const [responsibilities, setResponsibilities] = useState(member.responsibilities ?? "");
   const [savedTitle, setSavedTitle] = useState(member.job_title ?? "");
@@ -145,6 +145,7 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
   const ownerReadOnly = (member.is_owner || member.permission === "owner") && !canEdit;
   const ownerExplanation = ownerWorkProfileExplanation(member, workspace);
   const [saveNeedsReopen, setSaveNeedsReopen] = useState(false);
+  const close = () => onClose(saveNeedsReopen);
   const writeInFlight = useRef(false);
   const lifetime = useRef(0);
   const currentGuard = useRef(isCurrent);
@@ -245,7 +246,8 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
   return <Modal title={identity.primary} description={`${member.email ?? "Email unavailable"} · ${suspended ? "Suspended" : "Active"}`}
     wide
     initialFocusTitle={ownerReadOnly}
-    onClose={onClose}>
+    busy={saving}
+    onClose={close}>
     <div className="stw-modal-body">
       <div className="stw-person-summary"><span className="stw-avatar" data-hue={avatarHue(member)}>{initials(member)}</span><div><strong>{identity.primary}</strong>{identity.secondary && <span>{identity.secondary}</span>}</div><span className="stw-perm" data-tone={permissionTone(member.permission, member.is_owner)}>{permission.label}</span></div>
       <TeamMemberContact member={member} workspace={workspace} onDirtyChange={reportContactDirty}/>
@@ -260,7 +262,7 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
           {permissionDraft && permissionDraft !== member.permission && <div className="stw-confirm"><p>Change access from {permission.label} to {permissionPresentation(permissionDraft, false).label}? This changes authorization, not the title.</p><button type="button" className="stw-btn secondary" onClick={() => setPermissionDraft(null)}>Cancel</button><button type="button" className="stw-btn primary" disabled={saving} onClick={changePermission}>Confirm access change</button></div>}</div>
         : <div className="stw-permission-change"><div className="stw-fieldlabel">Permission</div><p className="stw-perm-ro"><span className="stw-perm" data-tone={permissionTone(member.permission, member.is_owner)}>{permission.label}</span><span className="stw-muted">{member.is_owner || member.permission === "owner" ? "Owner access is protected here." : suspended && workspace.can_change_permissions && permission.mutable ? `Reinstate ${firstName} before changing their permission.` : !permission.mutable ? "This access level isn't changed from Team settings." : "Only the owner changes permissions."}</span></p></div>}
     </div>
-    <footer className="stw-modal-actions">{canRemove && onRequestRemoval && <button type="button" className="stw-quiet stw-danger-link" disabled={saving} onClick={onRequestRemoval}>Remove from team…</button>}<button type="button" className="stw-btn secondary" onClick={onClose}>{dirty || contactDirty ? "Cancel" : "Close"}</button>{canEdit && <button type="button" className="stw-btn primary" disabled={saving || saveNeedsReopen || !dirty || Object.keys(errors).length > 0} onClick={save}>{saving ? "Saving…" : "Save work details"}</button>}</footer>
+    <footer className="stw-modal-actions">{canRemove && onRequestRemoval && <button type="button" className="stw-quiet stw-danger-link" disabled={saving} onClick={onRequestRemoval}>Remove from team…</button>}<button type="button" className="stw-btn secondary" disabled={saving} onClick={close}>{dirty || contactDirty ? "Cancel" : "Close"}</button>{canEdit && <button type="button" className="stw-btn primary" disabled={saving || saveNeedsReopen || !dirty || Object.keys(errors).length > 0} onClick={save}>{saving ? "Saving…" : "Save work details"}</button>}</footer>
   </Modal>;
 }
 
@@ -594,7 +596,12 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
   const conversations = useConversationAccess(workspace, viewerId);
   // The last known roster, so the editor can outlive the null flash of a refetch.
   const lastWorkspace = useRef<TeamWorkspaceRecord | null>(null);
-  const closeEditor = useCallback(() => setSelected(null), []);
+  const closeEditor = (needsReconcile = false) => {
+    setSelected(null);
+    // An unconfirmed write must not reopen from the old selected/roster snapshot.
+    // The existing scoped loader withdraws rows until its actual read completes.
+    if (needsReconcile && mayPublish(currentScope)) void team.refresh();
+  };
   const openEditor = (member: TeamMemberRecord) => { setNotice(null); setSelected(member); };
   // Applied to the snapshot BEFORE the refresh is started, so the editor remounts onto the saved
   // values rather than the ones they replaced (the save flow the owner hit on production).

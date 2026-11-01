@@ -75,6 +75,15 @@ $scope_body$;
     RAISE EXCEPTION 'TEAM_OWNER_PROFILE_FORBIDDEN: only the account holder or this owner may edit these work details'
       USING ERRCODE='42501';
   END IF;
+  -- A lost reply may be retried. Reconcile the already-locked permitted state before
+  -- the original effect: identical normalized fields produce no second update/audit.
+  -- Identity, current scope, live seat and owner authority were proved above.
+  IF _row.id IS NOT NULL
+    AND _row.job_title IS NOT DISTINCT FROM NULLIF(trim(_job_title),'')
+    AND _row.responsibilities IS NOT DISTINCT FROM NULLIF(trim(_responsibilities),'') THEN
+    RETURN jsonb_build_object('membership_id',_row.id,'job_title',_row.job_title,
+      'responsibilities',_row.responsibilities);
+  END IF;
 
 $guard$;
 BEGIN

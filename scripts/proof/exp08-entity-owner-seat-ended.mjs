@@ -570,7 +570,8 @@ async function workProfileWait(name,scoped=false) {
  INSERT INTO public.profiles VALUES('${actor}','${tenant}'),('${target}','${tenant}');`);
  if(name==='holder changed')sql(`UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE tenant_id='${tenant}' AND user_id IN ('${actor}','${target}'); UPDATE public.tenants SET owner_user_id='${actor}' WHERE id='${tenant}';`);
  const scopeArgs=scoped?`, '${tenant}', 'e8000000-0000-4000-8000-000000061001'`:'';
- const blocker=name==='identity changed'?`SELECT 1 FROM auth.users WHERE id='${actor}' FOR UPDATE;`:name==='workspace changed'?`SELECT 1 FROM public.profiles WHERE user_id='${actor}' FOR UPDATE;`:`SELECT 1 FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}' FOR UPDATE;`;
+ const reconciling=['same result committed','same result rolled back'].includes(name);
+ const blocker=reconciling?`SELECT set_config('request.jwt.claim.sub','${actor}',false); SET ROLE authenticated; SELECT public.set_solo_team_member_work_profile('${target}','After wait','Permitted work'); RESET ROLE;`:name==='identity changed'?`SELECT 1 FROM auth.users WHERE id='${actor}' FOR UPDATE;`:name==='workspace changed'?`SELECT 1 FROM public.profiles WHERE user_id='${actor}' FOR UPDATE;`:`SELECT 1 FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}' FOR UPDATE;`;
  const first=spawn(executable,connectionArgs(database),{env:process.env,stdio:['pipe','pipe','pipe']});
  let ready='',firstErrors='',errors='',second,secondDone,timer;
  first.stdout.on('data',b=>ready+=b);first.stderr.on('data',b=>firstErrors+=b);
@@ -592,10 +593,10 @@ async function workProfileWait(name,scoped=false) {
   }
   assert.ok(waited,`${name}: actual database lock wait required`);
   const change=name==='identity changed'?`UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id='${actor}';`:name==='workspace changed'?`UPDATE public.profiles SET active_tenant_id='e8000000-0000-4000-8000-000000060020' WHERE user_id='${actor}';`:name==='role lost'?`UPDATE public.tenant_members SET role='member' WHERE user_id='${actor}';`:name==='target became owner'?`UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE user_id='${target}';`:name==='holder changed'?`UPDATE public.tenants SET owner_user_id='${target}' WHERE id='${tenant}';`:name==='membership replaced'?`DELETE FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}'; INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status) VALUES('e8000000-0000-4000-8000-000000061007','${tenant}','${target}',false,'member','active');`:'';
-  first.stdin.end(`${change} COMMIT;\n\\q\n`);assert.equal(await firstDone,0,firstErrors);
+  first.stdin.end(`${change} ${name==='same result rolled back'?'ROLLBACK':'COMMIT'};\n\\q\n`);assert.equal(await firstDone,0,firstErrors);
   const exit=await secondDone;
   const state=JSON.parse(sql(`SELECT json_build_object('changed',(SELECT job_title='After wait' FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}'),'audits',(SELECT count(*) FROM public.audit_logs));`));
-  const allowed=name==='permitted wait';assert.equal(exit,allowed?0:3,errors);
+  const allowed=name==='permitted wait'||reconciling;assert.equal(exit,allowed?0:3,errors);
   assert.equal(state.changed===true,allowed);assert.equal(state.audits,allowed?1:0);
   if(!allowed)assert.match(errors,name==='identity changed'?/TEAM_MEMBER_IDENTITY_UNAVAILABLE/:name==='workspace changed'?/active workspace changed/:name==='role lost'?/only an owner or admin/:name==='membership replaced'?/this team membership changed/:/TEAM_OWNER_PROFILE_FORBIDDEN/);
   console.log(JSON.stringify({phase:'owner-work-profile-actual-wait',name,scoped,wait_observed:true,exit,state}));
@@ -632,6 +633,8 @@ try {
     assert.equal(scoped.length,7);assert.ok(scoped.every(r=>r.passed),JSON.stringify(scoped));
     const scopedOriginal=JSON.parse(sql('SELECT json_agg(t) FROM proof.work_profile_cases(true) t;'));assert.equal(scopedOriginal.length,19);assert.ok(scopedOriginal.every(r=>r.passed));
     console.log(JSON.stringify({phase:'owner-work-profile-scoped-boundary',cases:scoped,original_matrix_cases:19}));
+    const recovery=JSON.parse(sql('SELECT json_agg(t) FROM proof.work_profile_recovery_cases() t;'));
+    console.log(JSON.stringify({phase:'owner-work-profile-unknown-recovery',cases:recovery}));assert.equal(recovery.length,4);assert.ok(recovery.every(r=>r.passed),JSON.stringify(recovery));
 
     assert.equal(after.length,19);assert.ok(after.every(r=>r.passed),JSON.stringify(after));
     assert.equal(sql("SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;"),metadata);
@@ -692,6 +695,7 @@ try {
     }
     for(const name of ['role lost','target became owner','identity changed','workspace changed','holder changed','permitted wait'])await workProfileWait(name);
     for(const name of ['role lost','target became owner','identity changed','workspace changed','holder changed','membership replaced','permitted wait'])await workProfileWait(name,true);
+    for(const name of ['same result committed','same result rolled back'])await workProfileWait(name,true);
     console.log('Selected owner work-profile component only; NOT native/customer proof.');
   }
   else if(onlyHubIdentity){

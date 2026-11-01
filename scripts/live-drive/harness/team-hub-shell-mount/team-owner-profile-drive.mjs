@@ -6,6 +6,7 @@ import {freemem} from 'node:os';
 import {resolvePlaywright,resolveExecutablePath} from '../../live-drive.mjs';
 const disk=statfsSync(process.cwd());assert(disk.bavail*disk.bsize>=768*1024*1024,'Insufficient headroom; no browser launched');
 assert(freemem()>=1536*1024*1024,'Insufficient available memory for real-SoloApp browser proof; no server/browser launched');
+const recoveryOnly=process.argv.includes('--recovery-only');assert(process.argv.slice(2).every(arg=>arg==='--recovery-only'));
 const out='docs/evidence/ui-delivery/assets/exp08-owner-work-profile';mkdirSync(out,{recursive:true});
 const report={scope:'real SoloApp / synthetic local transport / no customer/Auth/provider proof',geometry:[],states:[],failures:[],offMachineRequests:0};
 const server=await createServer({configFile:new URL('./team-owner-profile-config.ts',import.meta.url).pathname.replace(/^\/([A-Za-z]:)/,'$1'),logLevel:'error'});
@@ -28,7 +29,7 @@ async function open(tenant,theme,mode,width=1366,height=768){
 }
 try{
  browser=await chromium.launch({headless:true,...(resolveExecutablePath()?{executablePath:resolveExecutablePath()}:{}),args:['--no-proxy-server']});
- for(const tenant of ['a','b'])for(const theme of ['light','dark'])for(const [width,height] of [[1536,770],[1366,768],[1024,768],[900,1000]])for(const paige of ['closed','open']){
+ for(const tenant of (recoveryOnly?[]:['a','b']))for(const theme of ['light','dark'])for(const [width,height] of [[1536,770],[1366,768],[1024,768],[900,1000]])for(const paige of ['closed','open']){
   const{page,dialog,errors,shell,name}=await open(tenant,theme,'other',width,height);
   assert(await dialog.getByRole('textbox',{name:'Title',exact:true}).getAttribute('readonly')!==null);
   assert.equal(await dialog.getByRole('button',{name:'Save work details',exact:true}).count(),0);
@@ -49,7 +50,7 @@ try{
   assert.equal(await page.evaluate(()=>window.__ownerProfileEvidence.attempts.length),0);assert.equal(errors.length,0,errors.join('\n'));
   report.geometry.push({label,geometry,keyboardClose:true,returnFocus:true,syntheticWrites:0,errors});await page.close();
  }
- for(const mode of ['holder','self','unknown','missing','foreign','transport','refusal']){
+ for(const mode of (recoveryOnly?['committed-unknown']:['holder','self','unknown','missing','foreign','transport','refusal','committed-unknown'])){
   const{page,dialog,errors}=await open('a','dark',mode);
   const save=dialog.getByRole('button',{name:'Save work details',exact:true});
   if(mode==='unknown'){assert.equal(await save.count(),0);report.states.push({mode,readOnly:true});await page.close();continue;}
@@ -61,10 +62,17 @@ try{
    await page.getByText(/Reopen Team/).first().waitFor();assert.equal(await dialog.getByRole('textbox',{name:'Title',exact:true}).inputValue(),'Verified delivery lead');
    if(mode!=='refusal')assert(await save.isDisabled(),'Unknown outcome requires reconcile before repeat');
   }
+  if(mode==='committed-unknown'){
+   await dialog.locator('.stw-modal-actions').getByRole('button',{name:'Cancel',exact:true}).click();await dialog.waitFor({state:'detached'});
+   const row=page.getByRole('button',{name:'Taylor Reed, edit details',exact:true});await row.waitFor();await row.click();await dialog.waitFor();
+   assert.equal(await dialog.getByRole('textbox',{name:'Title',exact:true}).inputValue(),'Verified delivery lead');
+   assert(await dialog.getByRole('button',{name:'Save work details',exact:true}).isDisabled(),'Actual original roster reopens committed values without a duplicate save');
+   await page.screenshot({path:`${out}/committed-unknown-reopened.png`});
+  }
   assert.equal(await page.evaluate(()=>window.__ownerProfileEvidence.attempts.length),1);assert.equal(errors.length,0,errors.join('\n'));
   report.states.push({mode,attempts:1,errors});await page.close();
  }
- assert.equal(report.geometry.length,32);assert.equal(report.states.length,7);
+ assert.equal(report.geometry.length,recoveryOnly?0:32);assert.equal(report.states.length,recoveryOnly?1:8);
 }catch(error){report.failures.push(String(error));console.error(String(error));throw error;}
-finally{writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2)+'\n');if(browser)await browser.close();await server.close();}
+finally{writeFileSync(`${out}/${recoveryOnly?'recovery-report.json':'report.json'}`,JSON.stringify(report,null,2)+'\n');if(browser)await browser.close();await server.close();}
 console.log(JSON.stringify({geometry:report.geometry.length,states:report.states.length,failures:report.failures,scope:report.scope}));

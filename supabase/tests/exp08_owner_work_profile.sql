@@ -129,3 +129,43 @@ BEGIN
   END IF;
  END LOOP;
 END $$;
+
+-- Lost-response retries are state reconciliation, not another independent personnel event.
+CREATE FUNCTION proof.work_profile_recovery_cases() RETURNS TABLE(case_name text,passed boolean,detail text) LANGUAGE plpgsql AS $$
+DECLARE actor uuid:='e8000000-0000-4000-8000-000000060300'; target uuid:='e8000000-0000-4000-8000-000000060100';
+ t uuid:='e8000000-0000-4000-8000-000000060010'; seat uuid:='e8000000-0000-4000-8000-000000061001'; r jsonb; first_receipt jsonb; refused boolean;
+BEGIN
+ PERFORM proof.reset_rows(); TRUNCATE public.profiles,public.audit_logs;
+ UPDATE public.tenants SET owner_user_id=target WHERE id=t;
+ UPDATE public.tenant_members SET is_owner=false,role='member',business_owner_id=NULL WHERE user_id=target;
+ INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status) VALUES('e8000000-0000-4000-8000-000000061003',t,actor,false,'admin','active');
+ INSERT INTO public.profiles VALUES(actor,t),(target,t);
+ PERFORM set_config('request.jwt.claim.sub',actor::text,true);
+ SET LOCAL ROLE authenticated;
+ first_receipt:=public.set_solo_team_member_work_profile(target,' Recovery lead ',' Coordinate ',t,seat);
+ r:=public.set_solo_team_member_work_profile(target,'Recovery lead','Coordinate');
+ r:=public.set_solo_team_member_work_profile(target,' Recovery lead ',' Coordinate ',t,seat);
+ RESET ROLE;
+ RETURN QUERY SELECT 'same normalized lost-response retry',r=first_receipt AND (SELECT count(*)=1 FROM public.audit_logs),'original persisted values and audit read back';
+ SET LOCAL ROLE authenticated;
+ r:=public.set_solo_team_member_work_profile(target,'Recovery lead','Changed scope',t,seat);
+ RESET ROLE;
+ RETURN QUERY SELECT 'different authorized details still save',r->>'responsibilities'='Changed scope' AND (SELECT count(*)=2 FROM public.audit_logs),'original effect writer audit';
+ UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE user_id=target;
+ refused:=false;
+ BEGIN
+  SET LOCAL ROLE authenticated;
+  PERFORM public.set_solo_team_member_work_profile(target,'Recovery lead','Changed scope',t,seat);
+ EXCEPTION WHEN SQLSTATE '42501' THEN refused:=SQLERRM LIKE 'TEAM_OWNER_PROFILE_FORBIDDEN:%';
+ END;
+ RESET ROLE;
+ RETURN QUERY SELECT 'same values cannot bypass owner authority',refused AND (SELECT count(*)=2 FROM public.audit_logs),'owner restriction checked before current-value receipt';
+ refused:=false;
+ BEGIN
+  SET LOCAL ROLE authenticated;
+  PERFORM public.set_solo_team_member_work_profile('e8000000-0000-4000-8000-000000069999','','');
+ EXCEPTION WHEN OTHERS THEN refused:=SQLERRM='team member not found in this workspace';
+ END;
+ RESET ROLE;
+ RETURN QUERY SELECT 'empty missing target is not an unchanged receipt',refused AND (SELECT count(*)=2 FROM public.audit_logs),'original missing-member refusal preserved';
+END $$;

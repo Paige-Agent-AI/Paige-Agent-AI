@@ -2,7 +2,7 @@
 -- Original owner work-profile actual-schema integration. ONE rollback; synthetic rows only.
 -- Does not prove Auth SDK, customer cohorts or provider availability.
 BEGIN;
-SELECT plan(26);
+SELECT plan(28);
 SELECT set_config('request.jwt.claim.sub','',true);
 SELECT set_config('request.jwt.claims','{}',true);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at) VALUES
@@ -28,7 +28,7 @@ CREATE TEMP TABLE exp08_profile_metadata AS SELECT oid,to_jsonb(p)-'prosrc' AS m
  WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure),
  '1d99e171c55d259c18961068a7829fea','actual original writer source matches guarded prerequisite');
--- CANONICAL original scoped profile SHA256 10c7e99c622cbcf772f63827e6a0addb8fe4caef78929363880c3cfed35c4e1f
+-- CANONICAL original scoped profile SHA256 f5ca4cd8ba6d25f8c6f9873cb9174ad08923540cdb40b717a41251b2cfa0af6f
 -- INERT EXP08 original I2 owner work-profile authority candidate.
 -- No managed version, independent effect writer, approval or activation. Scoped execution stays authenticated-only.
 DO $profile_patch$
@@ -105,6 +105,15 @@ $scope_body$;
     AND NOT public.is_tenant_account_holder(_actor,_tenant) THEN
     RAISE EXCEPTION 'TEAM_OWNER_PROFILE_FORBIDDEN: only the account holder or this owner may edit these work details'
       USING ERRCODE='42501';
+  END IF;
+  -- A lost reply may be retried. Reconcile the already-locked permitted state before
+  -- the original effect: identical normalized fields produce no second update/audit.
+  -- Identity, current scope, live seat and owner authority were proved above.
+  IF _row.id IS NOT NULL
+    AND _row.job_title IS NOT DISTINCT FROM NULLIF(trim(_job_title),'')
+    AND _row.responsibilities IS NOT DISTINCT FROM NULLIF(trim(_responsibilities),'') THEN
+    RETURN jsonb_build_object('membership_id',_row.id,'job_title',_row.job_title,
+      'responsibilities',_row.responsibilities);
   END IF;
 
 $guard$;
@@ -244,7 +253,7 @@ SELECT throws_ok($$SELECT public.set_solo_team_member_work_profile(NULL,NULL,NUL
 RESET ROLE;
 CREATE TEMP TABLE exp08_profile_before_replay AS SELECT jsonb_agg(to_jsonb(p) ORDER BY oid) AS metadata FROM pg_proc p
  WHERE oid IN('public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure,'public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)'::regprocedure);
--- CANONICAL original scoped profile SHA256 10c7e99c622cbcf772f63827e6a0addb8fe4caef78929363880c3cfed35c4e1f
+-- CANONICAL original scoped profile SHA256 f5ca4cd8ba6d25f8c6f9873cb9174ad08923540cdb40b717a41251b2cfa0af6f
 -- INERT EXP08 original I2 owner work-profile authority candidate.
 -- No managed version, independent effect writer, approval or activation. Scoped execution stays authenticated-only.
 DO $profile_patch$
@@ -322,6 +331,15 @@ $scope_body$;
     RAISE EXCEPTION 'TEAM_OWNER_PROFILE_FORBIDDEN: only the account holder or this owner may edit these work details'
       USING ERRCODE='42501';
   END IF;
+  -- A lost reply may be retried. Reconcile the already-locked permitted state before
+  -- the original effect: identical normalized fields produce no second update/audit.
+  -- Identity, current scope, live seat and owner authority were proved above.
+  IF _row.id IS NOT NULL
+    AND _row.job_title IS NOT DISTINCT FROM NULLIF(trim(_job_title),'')
+    AND _row.responsibilities IS NOT DISTINCT FROM NULLIF(trim(_responsibilities),'') THEN
+    RETURN jsonb_build_object('membership_id',_row.id,'job_title',_row.job_title,
+      'responsibilities',_row.responsibilities);
+  END IF;
 
 $guard$;
 BEGIN
@@ -383,5 +401,14 @@ SELECT is((SELECT jsonb_agg(to_jsonb(p) ORDER BY oid) FROM pg_proc p WHERE oid I
 SELECT is((SELECT job_title FROM public.tenant_members WHERE id='e8d00000-0000-4000-8000-000000000103'),'Self lead','native readback returns the actual final owner value');
 SELECT is((SELECT count(*) FROM public.audit_logs WHERE action='work_profile_updated' AND entity_id='e8d00000-0000-4000-8000-000000000103'),2::bigint,
  'holder and self calls use original audit path exactly once each');
+SELECT set_config('request.jwt.claim.sub','e8d00000-0000-4000-8000-000000000003',true);
+SELECT set_config('request.jwt.claims','{"sub":"e8d00000-0000-4000-8000-000000000003","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT is(public.set_solo_team_member_work_profile('e8d00000-0000-4000-8000-000000000003',' Self lead ',' Coordinate ','e8d00000-0000-4000-8000-000000000010','e8d00000-0000-4000-8000-000000000103'),
+ public.set_solo_team_member_work_profile('e8d00000-0000-4000-8000-000000000003','Self lead','Coordinate'),
+ 'original and scoped retries reconcile the same normalized native receipt');
+RESET ROLE;
+SELECT is((SELECT count(*) FROM public.audit_logs WHERE action='work_profile_updated' AND entity_id='e8d00000-0000-4000-8000-000000000103'),2::bigint,
+ 'reconciled identical state adds no duplicate native update audit');
 SELECT * FROM finish();
 ROLLBACK;

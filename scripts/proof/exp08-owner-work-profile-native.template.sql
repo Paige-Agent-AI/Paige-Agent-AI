@@ -1,7 +1,7 @@
 -- Original owner work-profile actual-schema integration. ONE rollback; synthetic rows only.
 -- Does not prove Auth SDK, customer cohorts or provider availability.
 BEGIN;
-SELECT plan(26);
+SELECT plan(28);
 SELECT set_config('request.jwt.claim.sub','',true);
 SELECT set_config('request.jwt.claims','{}',true);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at) VALUES
@@ -116,5 +116,14 @@ SELECT is((SELECT jsonb_agg(to_jsonb(p) ORDER BY oid) FROM pg_proc p WHERE oid I
 SELECT is((SELECT job_title FROM public.tenant_members WHERE id='e8d00000-0000-4000-8000-000000000103'),'Self lead','native readback returns the actual final owner value');
 SELECT is((SELECT count(*) FROM public.audit_logs WHERE action='work_profile_updated' AND entity_id='e8d00000-0000-4000-8000-000000000103'),2::bigint,
  'holder and self calls use original audit path exactly once each');
+SELECT set_config('request.jwt.claim.sub','e8d00000-0000-4000-8000-000000000003',true);
+SELECT set_config('request.jwt.claims','{"sub":"e8d00000-0000-4000-8000-000000000003","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT is(public.set_solo_team_member_work_profile('e8d00000-0000-4000-8000-000000000003',' Self lead ',' Coordinate ','e8d00000-0000-4000-8000-000000000010','e8d00000-0000-4000-8000-000000000103'),
+ public.set_solo_team_member_work_profile('e8d00000-0000-4000-8000-000000000003','Self lead','Coordinate'),
+ 'original and scoped retries reconcile the same normalized native receipt');
+RESET ROLE;
+SELECT is((SELECT count(*) FROM public.audit_logs WHERE action='work_profile_updated' AND entity_id='e8d00000-0000-4000-8000-000000000103'),2::bigint,
+ 'reconciled identical state adds no duplicate native update audit');
 SELECT * FROM finish();
 ROLLBACK;

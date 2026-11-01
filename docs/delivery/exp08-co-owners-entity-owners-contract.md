@@ -2926,3 +2926,64 @@ the own native lifecycle step87 SUCCESS. Exact test-count log extraction is
 not yet available (job still runs; log endpoint returned404). This is a step
 result, not whole database-contract/CI/Preview or production clearance. The
 managed Preview remains FAIL for the recorded update-function502.
+
+
+First-owner native integration preparation (separate follow-up, NOT APPLIED):
+`supabase/tests/exp08_first_owner_history_native.sql` plans31 assertions using the
+existing inert history/invitation patches inside ONE rollback. It exercises the
+original actual mint/accept writers and their current guards/ACLs, existing-seat
+and original-audit history, excluded injected-parent corrections, original R16
+platform revocation, a previously minted historical token refusing without seat
+or token effects, a genuine first-owner recipient/seat/pointer/profile/token
+result, immutable history and unchanged tenant/token data on candidate replay.
+It is not Auth SDK, new customer account, delivery or production proof. Existing
+recovery39 assertions and every earlier CI step remain unchanged; the original
+Spine workflow adds exactly one own path and one two-line own test step. Its byte
+inverse recovers the complete incoming workflow. Actual native31 is PENDING;
+static plan/count and diff checks do not establish execution.
+
+Fresh production catalogue reconfirmed both original guarded source prerequisites
+and their full owner/security/path/ACL, with history column/helpers absent. No
+migration identity or managed apply is assigned by this test. Before the later
+native carrier, trigger drift/admission and trigger identity conservation on replay
+still require explicit assessment: the current inert history component recreates
+its named triggers. Do not infer that the tenant/token replay assertion establishes
+trigger identity or accepts an unknown installed trigger. First-owner backfill,
+Setup receiving custody, approved UI and actual role/cohort/reload proof remain
+unfinished original row4 work. Current3190 release gates belong to its published
+head; this uncommitted follow-up does not change or clear them.
+
+
+### Same-row first-owner trigger replay repair — November 1, pending freeze
+
+A newly added complete `pg_trigger` replay comparison first FAILED against the
+inert candidate: tenant rows were unchanged but trigger metadata changed. The
+candidate now admits exact installed triggers before backfill, creates only absent
+triggers and checks the installed shape afterward. Original helper bodies and
+applied recovery carrier remain unchanged. The original structural mutant that
+omits tenant moves now refuses at this precise trigger admission boundary; its
+owning control requires that exact refusal instead of accepting arbitrary errors.
+Eight additional installed-trigger drift controls cover disabled/replica, event,
+columns, condition, arguments, wrong helper and immutable-trigger suspension.
+The original component/invitation assertions and concurrency controls remain.
+The full-schema first-owner proof is now plan32, adding complete trigger-object
+replay conservation. It is NOT YET EXECUTED in full schema; prior plan31 wording
+above is the preparation history, not a PASS or current denominator. No native
+version, managed apply, customer account or production activation is introduced.
+
+
+The corrected owning PostgreSQL16 component run completed exit0 on November1.
+All22 history and13 repaired invitation cases PASS; the pre-repair baseline
+retains exactly its six expected admission failures. All4 column,12 helper and8
+trigger drift controls refuse, all6 history and4 invitation semantic/structural
+mutants are killed, both two-token races and17 observed invitation waits pass,
+and the remaining6 wait/authority/mint mutant controls are killed. Exact replay
+conserves rows AND complete trigger metadata. The runner reports disposal only
+of its own database. Log SHA256:
+`b90550f01048b2ae8543db4f9f084b79b203c7c42f718a121b04c0ad44c8a767`.
+These are isolated component/ported-writer tests, not the pending32 full-schema
+run or customer/Auth SDK proof. Original helper definitions are byte-identical
+to published3190 headb2; the exact three-line workflow inverse recovers the whole
+incoming file. Sequential AUTHOR-REVIEW / LOWER ASSURANCE only; hosted proof,
+normal release and authenticated/cohort outcomes remain owed. Applied recovery
+migration bytes are unchanged. Full18+6/five-journey EXP08 remains STILL CODING.

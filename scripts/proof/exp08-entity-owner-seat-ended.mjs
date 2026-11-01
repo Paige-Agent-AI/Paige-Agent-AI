@@ -608,6 +608,20 @@ try {
     const rows=historyRun(historyPatch);
     console.log(JSON.stringify({phase:'first-owner-history-component',cases:rows}));
     assert.equal(rows.length,22);assert.ok(rows.every(r=>r.passed),JSON.stringify(rows));
+    for(const [name,change,trigger] of [
+      ['disabled','ALTER TABLE public.tenant_members DISABLE TRIGGER trg_tenant_first_owner_history','trg_tenant_first_owner_history'],
+      ['replica-only','ALTER TABLE public.tenant_members ENABLE REPLICA TRIGGER trg_tenant_first_owner_history','trg_tenant_first_owner_history'],
+      ['wrong event','DROP TRIGGER trg_tenant_first_owner_history ON public.tenant_members; CREATE TRIGGER trg_tenant_first_owner_history AFTER UPDATE OF is_owner,role,tenant_id ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history()','trg_tenant_first_owner_history'],
+      ['wrong columns','DROP TRIGGER trg_tenant_first_owner_history ON public.tenant_members; CREATE TRIGGER trg_tenant_first_owner_history AFTER INSERT OR UPDATE OF is_owner,role ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history()','trg_tenant_first_owner_history'],
+      ['conditional','DROP TRIGGER trg_tenant_first_owner_history ON public.tenant_members; CREATE TRIGGER trg_tenant_first_owner_history AFTER INSERT OR UPDATE OF is_owner,role,tenant_id ON public.tenant_members FOR EACH ROW WHEN (NEW.is_owner) EXECUTE FUNCTION public._tenant_first_owner_history()','trg_tenant_first_owner_history'],
+      ['arguments',"DROP TRIGGER trg_tenant_first_owner_history ON public.tenant_members; CREATE TRIGGER trg_tenant_first_owner_history AFTER INSERT OR UPDATE OF is_owner,role,tenant_id ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history('unexpected')",'trg_tenant_first_owner_history'],
+      ['wrong function','DROP TRIGGER trg_tenant_first_owner_history ON public.tenant_members; CREATE TRIGGER trg_tenant_first_owner_history AFTER INSERT OR UPDATE OF is_owner,role,tenant_id ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history_guard()','trg_tenant_first_owner_history'],
+      ['immutable disabled','ALTER TABLE public.tenants DISABLE TRIGGER trg_tenant_first_owner_history_immutable','trg_tenant_first_owner_history_immutable'],
+    ]) {
+      sql(`BEGIN;\n${historyFixture}\n${historyPatch}\n${change};\n${historyPatch}\nROLLBACK;`,database,true,
+        new RegExp(`ERROR:  EXP08 first owner history trigger drift: ${trigger}(?:\\r?\\n|$)`));
+      console.log(JSON.stringify({phase:'first-owner-history-trigger-drift',name,refused:true}));
+    }
     for(const [name,from,to] of [
       ['owner role evidence removed',"m.is_owner OR m.role='owner'::public.tenant_role",'m.is_owner'],
       ['injected parent counted as child owner',"'tenant:subaccount_owner_established','tenant:grant_co_owner'","'tenant:deleted_injected_owner','tenant:subaccount_owner_established','tenant:grant_co_owner'"],
@@ -617,13 +631,21 @@ try {
       ['initial history write admission removed',"AND current_user<>'postgres'",'AND false'],
     ]){
       const mutated=historyPatch.replaceAll(from,to);assert.notEqual(mutated,historyPatch,name);
+      if(name==='owner tenant move forgotten') {
+        // The exact trigger contract now kills this structural mutant before row cases run.
+        // Require this one precise refusal; all other errors still fail the harness.
+        sql(`BEGIN;\n${historyFixture}\n${mutated}\nROLLBACK;`,database,true,
+          /ERROR:  EXP08 first owner history trigger drift: trg_tenant_first_owner_history(?:\r?\n|$)/);
+        console.log(JSON.stringify({phase:'first-owner-history-mutant',name,killed_by:['exact trigger admission']}));
+        continue;
+      }
       const failed=historyRun(mutated).filter(r=>!r.passed).map(r=>r.case_name);
       assert.ok(failed.length,`${name}: survived`);
       console.log(JSON.stringify({phase:'first-owner-history-mutant',name,killed_by:failed}));
     }
-    const replay=sql(`BEGIN;\n${historyFixture}\n${historyPatch}\nCREATE TEMP TABLE history_before AS SELECT jsonb_agg(to_jsonb(t) ORDER BY id) AS rows FROM public.tenants t;\n${historyPatch}\nSELECT jsonb_build_object('rows_unchanged',(SELECT rows FROM history_before)=(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.tenants t));\nROLLBACK;`);
-    assert.deepEqual(JSON.parse(replay),{rows_unchanged:true});
-    console.log(JSON.stringify({phase:'first-owner-history-replay',rows_unchanged:true}));
+    const replay=sql(`BEGIN;\n${historyFixture}\n${historyPatch}\nCREATE TEMP TABLE history_before AS SELECT jsonb_agg(to_jsonb(t) ORDER BY id) AS rows FROM public.tenants t;\nCREATE TEMP TABLE history_trigger_before AS SELECT jsonb_agg(to_jsonb(t) ORDER BY tgname) AS triggers FROM pg_trigger t WHERE tgname IN ('trg_tenant_first_owner_history','trg_tenant_first_owner_history_immutable');\n${historyPatch}\nSELECT jsonb_build_object('rows_unchanged',(SELECT rows FROM history_before)=(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.tenants t),'trigger_metadata_unchanged',(SELECT triggers FROM history_trigger_before)=(SELECT jsonb_agg(to_jsonb(t) ORDER BY tgname) FROM pg_trigger t WHERE tgname IN ('trg_tenant_first_owner_history','trg_tenant_first_owner_history_immutable')));\nROLLBACK;`);
+    assert.deepEqual(JSON.parse(replay),{rows_unchanged:true,trigger_metadata_unchanged:true});
+    console.log(JSON.stringify({phase:'first-owner-history-replay',rows_unchanged:true,trigger_metadata_unchanged:true}));
     const invitationFixture=readFileSync(new URL('../../supabase/tests/exp08_first_owner_invitations.sql',import.meta.url),'utf8');
     const invitationBodies=['create_tenant_invite_token','accept_tenant_invite'].map(name=>originalFunction(invitationSource,name)).join('\n');
     // Exact live original ACLs, including the incumbent public mint EXECUTE: preserve, never widen.

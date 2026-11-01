@@ -5,7 +5,7 @@ SET LOCAL lock_timeout='2s';
 DO $revoke_kernel$
 DECLARE
  p pg_proc; original_body text; kernel_body text; definition text; before_metadata jsonb;
- wrapper constant text:=E'\nBEGIN\n  PERFORM public._exp08_revoke_co_owner(_tenant,_user,NULL);\nEND;\n';
+ wrapper constant text:=E'\nBEGIN\n  PERFORM public._exp08_prepare_owner_change(_tenant,_user,''revoke_owner'',false);\n  PERFORM public._exp08_revoke_co_owner(_tenant,_user,NULL);\nEND;\n';
  old_platform constant text:='_is_platform boolean := public.is_platform_owner();';
  new_platform constant text:='_is_platform boolean := public.is_platform_owner() AND NOT public._solo_shell_tenant(_tenant);';
  old_begin constant text:=E'BEGIN\n  IF _caller IS NULL THEN';

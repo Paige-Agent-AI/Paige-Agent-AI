@@ -2408,3 +2408,50 @@ complete metadata/retention/privileged-writer/full-native/entity/lifecycle races
 public wrapper/detail host/bell and E03 email remain required coding/integration.
 Consumer proof is not PR3173 CI/merge/release or full R9/customer acceptance.
 All original18+6/five journeys/full assignment remain **STILL CODING**.
+
+### November1 — original owner-door current context, private preparation
+
+The intended outcome remains legitimate owner changes and recovery with current
+identity/workspace authority, original domain effects and truthful durable results.
+The new private mechanical prelude reuses the existing holder/owner/super-admin
+predicates; no new authority engine, provider action, approval or result store.
+Ordinary public grant/revoke now enter it; new private recovery enters before the
+four frozen E02-bound helpers, whose bodies remain unchanged. Non-SOLO original
+behavior remains unchanged. Snapshot admission precedes sorted Auth UPDATE,
+membership UPDATE, ordinary actor profile SHARE and tenant UPDATE locks, with
+the original retirement-compatible table gate first. Snapshot/identity/context/
+authority changes refuse before effects. Full opposing-writer assurance is owed.
+
+The preserved grant door genuinely accepted a grant with its holder's active
+workspace elsewhere: causal baseline FAIL, raw SHA256
+`ad158d0bc49398265a55119913896da97205b83c7750e9458443317a0302613c`.
+The earlier revoke comparison already refused via original Billing
+`no_active_workspace`; its error-wording mismatch is NOT a demonstrated stale-
+workspace bypass. A first current concurrency run failed because its unprivileged
+observer could not see another backend's wait detail. Only the observer was
+corrected; the actual owner operation still runs as `authenticated`.
+
+Final author local138/0 PASS, raw `exp08-owner-context-observer-corrected.log`
+SHA256 `ecdceaf59484584ab18fc67afb60af0e314653c988044c47b24a1fbad0b62b39`;
+writer `f07666c30344eae873692c858f4309b529686d4c3e1d2a5b8f4ac0b3ac89a4c0`,
+revoke `0a5f49d6dc03033d08ab2f16537a954a558f13b3cdb5438edcdc0cc808cf8a52`.
+Includes wrong workspace/live ban/soft deletion/archive refusal and actual
+workspace/identity commit-during-wait refusal, with ownership and original Billing
+contacts unchanged. Each run disposed only its own disposable local database.
+This remains a ported local proof, not managed/full-schema/authenticated evidence.
+
+E02 separately reports independent execution of immutable5b20b26's original131
+controls from its byte-verified snapshot, same raw5fcdd055, with independent
+disposal readback. That is separate receiving execution, not execution of this
+new delta or approval of privacy/release/customer readiness. E02 successor3173
+cbb4dd50 remains draft/unmerged at read; its source/workflow custody is preserved.
+Fresh main794d6e394 includes peer Knowledge releases; composition/readback pending.
+Coordinator reconfirmed original ANT50 Setup protection request ae0d19d7/b618
+unanswered, original E01 owner accountable, no verified new incumbent or handback.
+Do not infer shared-source custody or duplicate that pending request.
+
+Remaining: full metadata/retention/privileged-writer and entity/lifecycle/native
+composition, public recovery/receipt/detail and notification presentation, original
+email receiver and Setup protection, normal exact-head review/CI/Preview/release
+and authenticated outcome/reopen/recovery. Full original18+6/five journeys,
+both-chat workshop/goals/proactivity/standing authority remain **STILL CODING**.

@@ -7,7 +7,7 @@ import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 assert.equal(process.env.EXP08_DISPOSABLE,'1');
 assert.ok(['127.0.0.1','localhost','::1'].includes(process.env.PGHOST));
 assert.match(process.env.PGPORT??'',/^\d+$/);
-assert.ok(process.argv.slice(2).every(x=>['--baseline-02126','--baseline-notice-order','--baseline-revoke'].includes(x))&&process.argv.length<=3,'Unknown proof option');
+assert.ok(process.argv.slice(2).every(x=>['--baseline-02126','--baseline-notice-order','--baseline-revoke','--baseline-owner-context'].includes(x))&&process.argv.length<=3,'Unknown proof option');
 const baseline=process.argv.includes('--baseline-02126');
 const historical=baseline?spawnSync('git',['show','02126ee52:scripts/proof/exp08-owner-recovery-writers.sql'],{encoding:'utf8',windowsHide:true}):null;
 if(historical)assert.equal(historical.status,0,historical.stderr);
@@ -652,6 +652,58 @@ try{
  LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$BEGIN RETURN '{}';END;$$`);
  await denied('changed E02 private cleanup source refuses composition rather than being trusted or overwritten',()=>db.exec(revokeSource),/EXP08 original E02 private cleanup unavailable/);
  db.run(cleanupDefinition);await db.exec(revokeSource);
+ // Causal comparison uses the preserved public doors, never a weakened assertion.
+ if(process.argv.includes('--baseline-owner-context')){
+  db.run(`CREATE OR REPLACE FUNCTION public.grant_co_owner(_tenant uuid,_user uuid) RETURNS void
+   LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$BEGIN PERFORM public._exp08_grant_co_owner(_tenant,_user,false);END;$$;
+   CREATE OR REPLACE FUNCTION public.revoke_co_owner(_tenant uuid,_user uuid) RETURNS void
+   LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$BEGIN PERFORM public._exp08_revoke_co_owner(_tenant,_user,NULL);END;$$;`);
+ }
+ revokeFixture();
+ await db.exec(`SELECT public._exp08_apply_owner_recovery('${tenant}','set_account_holder','${remaining}','${reason}','e8000000-0000-4000-8000-000000094001')`);
+ db.run(`UPDATE public.tenant_members SET is_owner=false,role='member' WHERE tenant_id='${tenant}' AND user_id='${holder}';
+  UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${remaining}'`);
+ db.actor=remaining;db.role='authenticated';
+ await denied('original public grant refuses holder in another active workspace',()=>db.exec(`SELECT public.grant_co_owner('${tenant}','${holder}')`),/CO_OWNER_FORBIDDEN/);
+ db.role='';db.actor=actor;
+ assert.equal(scalar(`SELECT is_owner FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'f');
+ const ordinaryRevoke=()=>db.exec(`SELECT public.revoke_co_owner('${tenant}','${holder}')`);
+ for(const [label,change,pattern] of [
+  ['wrong active workspace',`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${holder}'`,/CO_OWNER_FORBIDDEN/],
+  ['current ban',`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${holder}'`,/CO_OWNER_IDENTITY_UNAVAILABLE/],
+  ['soft deletion',`UPDATE auth.users SET deleted_at=now() WHERE id='${holder}'`,/CO_OWNER_IDENTITY_UNAVAILABLE/],
+  ['archived workspace',`UPDATE public.tenants SET archived_at=now() WHERE id='${tenant}'`,/CO_OWNER_FORBIDDEN/]
+ ]){
+  revokeFixture();putContact();db.run(change);db.actor=holder;db.role='authenticated';
+  await denied('ordinary original self-step-down refuses '+label,ordinaryRevoke,pattern);
+  db.role='';db.actor=actor;
+  assert.equal(scalar(`SELECT is_owner FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
+  assert.equal(scalar(`SELECT revoked_at IS NULL FROM public.platform_billing_contacts WHERE id='${contact}'`),'t');
+ }
+ for(const [label,change,pattern] of [
+  ['workspace switch',`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${holder}'`,/CO_OWNER_SCOPE_CHANGED/],
+  ['identity ban',`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${holder}'`,/CO_OWNER_IDENTITY_UNAVAILABLE/]
+ ]){
+  revokeFixture();putContact();db.actor=holder;db.role='authenticated';
+  const name='exp08_owner_context_'+Date.now(),first=session(`BEGIN;${change};SELECT 'context_change_held';`);let second;
+  try{
+   await until(()=>first.out().includes('context_change_held'));
+   second=session(`SET application_name='${name}';SET statement_timeout='15s';${db.prefix()}SELECT public.revoke_co_owner('${tenant}','${holder}');`);second.p.stdin.end();
+    // Only the observer uses postgres. The operation session already has the real
+    // authenticated role; PostgreSQL hides its wait details from that unprivileged observer.
+    db.role='';
+   await until(()=>scalar(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='${name}' AND wait_event_type='Lock' AND cardinality(pg_blocking_pids(pid))>0)`)==='t');
+   first.p.stdin.end('COMMIT;\n');assert.equal((await first.done).code,0);
+   const r=await second.done;assert.notEqual(r.code,0);assert.match(r.err,pattern);
+   results.push({case:'ordinary original owner door revalidates '+label+' committed during actual lock wait',passed:true});
+  }finally{
+   if(!first.p.stdin.destroyed)first.p.stdin.end('ROLLBACK;\n');await first.done;
+   if(second){if(!second.p.stdin.destroyed)second.p.stdin.end();await second.done;}
+   db.role='';db.actor=actor;
+  }
+  assert.equal(scalar(`SELECT is_owner FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
+  assert.equal(scalar(`SELECT revoked_at IS NULL FROM public.platform_billing_contacts WHERE id='${contact}'`),'t');
+ }
  console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private recovery with original grant/revoke/Billing, audit/in-app notices and detail; public RPC, mounted UI and email NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));

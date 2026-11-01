@@ -2,6 +2,67 @@
 -- The original holder-state and eligibility helpers are reused, never reimplemented here.
 -- The first private lock step alone produces no effect, audit, notification or receipt.
 -- The later private R12 effect is incomplete until composed into the original recovery transaction.
+-- Mechanical context/lock prelude for the original owner doors, not another authority resolver.
+CREATE OR REPLACE FUNCTION public._exp08_prepare_owner_change(_tenant uuid,_target uuid,_act text,_recovery boolean)
+RETURNS void LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $function$
+DECLARE actor uuid:=auth.uid(); seats uuid[]; old_holder uuid; allowed boolean;
+BEGIN
+  IF _tenant IS NULL OR _recovery IS NULL OR _act IS NULL
+    OR _act NOT IN ('grant_owner','revoke_owner','set_account_holder') THEN
+    RAISE EXCEPTION 'CO_OWNER_BAD_ARGS' USING ERRCODE='22023';
+  END IF;
+  IF NOT _recovery AND public._solo_shell_tenant(_tenant) IS DISTINCT FROM true THEN RETURN;END IF;
+  IF actor IS NULL OR NOT EXISTS(SELECT 1 FROM auth.users WHERE id=actor AND deleted_at IS NULL
+    AND (banned_until IS NULL OR banned_until<=statement_timestamp())) THEN
+    RAISE EXCEPTION 'CO_OWNER_IDENTITY_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  IF _recovery THEN
+    allowed:=public.is_super_admin(actor) AND public._solo_shell_tenant(_tenant)
+      AND public._tenant_account_holder_state(_tenant)='none';
+  ELSE
+    allowed:=EXISTS(SELECT 1 FROM public.profiles WHERE user_id=actor AND active_tenant_id=_tenant)
+      AND (public.is_tenant_account_holder(actor,_tenant)
+        OR (_act='revoke_owner' AND actor=_target AND public.is_tenant_owner(actor,_tenant)));
+  END IF;
+  IF allowed IS DISTINCT FROM true OR NOT EXISTS(SELECT 1 FROM public.tenants WHERE id=_tenant AND archived_at IS NULL) THEN
+    RAISE EXCEPTION 'CO_OWNER_FORBIDDEN: current owner context required' USING ERRCODE='42501';
+  END IF;
+  SELECT owner_user_id INTO old_holder FROM public.tenants WHERE id=_tenant;
+  SELECT coalesce(array_agg(user_id ORDER BY user_id),'{}'::uuid[]) INTO seats FROM public.tenant_members WHERE tenant_id=_tenant;
+  -- Match the original retirement table gate before taking row locks. Ordinary DML remains compatible.
+  LOCK TABLE public.tenants IN ROW EXCLUSIVE MODE;
+  -- Match original Hub identity locks BEFORE membership/profile locks, including notice recipients.
+  PERFORM 1 FROM auth.users WHERE id=ANY(array_remove(seats||ARRAY[actor,old_holder],NULL)) ORDER BY id FOR UPDATE;
+  PERFORM 1 FROM public.tenant_members WHERE tenant_id=_tenant AND user_id=ANY(seats) ORDER BY user_id FOR UPDATE;
+  IF NOT _recovery THEN
+    PERFORM 1 FROM public.profiles WHERE user_id=actor AND active_tenant_id=_tenant FOR SHARE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'CO_OWNER_SCOPE_CHANGED' USING ERRCODE='42501';END IF;
+  END IF;
+  PERFORM 1 FROM public.tenants WHERE id=_tenant AND archived_at IS NULL FOR UPDATE;
+  IF NOT FOUND OR old_holder IS DISTINCT FROM (SELECT owner_user_id FROM public.tenants WHERE id=_tenant)
+    OR seats IS DISTINCT FROM (SELECT coalesce(array_agg(user_id ORDER BY user_id),'{}'::uuid[]) FROM public.tenant_members WHERE tenant_id=_tenant) THEN
+    RAISE EXCEPTION 'CO_OWNER_SCOPE_CHANGED' USING ERRCODE='42501';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM auth.users WHERE id=actor AND deleted_at IS NULL
+    AND (banned_until IS NULL OR banned_until<=statement_timestamp())) THEN
+    RAISE EXCEPTION 'CO_OWNER_IDENTITY_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  IF _recovery THEN
+    allowed:=public.is_super_admin(actor) AND public._tenant_account_holder_state(_tenant)='none';
+  ELSE
+    allowed:=public.is_tenant_account_holder(actor,_tenant)
+      OR (_act='revoke_owner' AND actor=_target AND public.is_tenant_owner(actor,_tenant));
+  END IF;
+  IF allowed IS DISTINCT FROM true THEN RAISE EXCEPTION 'CO_OWNER_FORBIDDEN' USING ERRCODE='42501';END IF;
+  IF _act='grant_owner' AND NOT EXISTS(SELECT 1 FROM auth.users WHERE id=_target AND deleted_at IS NULL
+    AND (banned_until IS NULL OR banned_until<=statement_timestamp())) THEN
+    RAISE EXCEPTION 'CO_OWNER_TARGET_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._exp08_prepare_owner_change(uuid,uuid,text,boolean) FROM PUBLIC,anon,authenticated,service_role;
+
 CREATE OR REPLACE FUNCTION public._exp08_lock_recovery_actor()
 RETURNS uuid LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
 AS $function$
@@ -110,7 +171,7 @@ DECLARE
   original_body text;
   kernel_body text;
   before_metadata jsonb;
-  wrapper constant text := E'\nBEGIN\n  PERFORM public._exp08_grant_co_owner(_tenant,_user,false);\nEND;\n';
+  wrapper constant text := E'\nBEGIN\n  PERFORM public._exp08_prepare_owner_change(_tenant,_user,''grant_owner'',false);\n  PERFORM public._exp08_grant_co_owner(_tenant,_user,false);\nEND;\n';
   old_platform constant text := '_is_platform boolean := public.is_platform_owner();';
   new_platform constant text := '_is_platform boolean := public.is_platform_owner() AND NOT public._solo_shell_tenant(_tenant);';
   old_begin constant text := E'BEGIN\n  IF _caller IS NULL THEN';
@@ -364,7 +425,7 @@ CREATE OR REPLACE FUNCTION public._exp08_apply_owner_recovery(
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
 AS $function$
 DECLARE
-  actor uuid := public._exp08_lock_recovery_actor();
+  actor uuid := auth.uid();
   reason text := btrim(_reason);
   previous_holder uuid;
   a public.paige_audit_log%ROWTYPE;
@@ -375,10 +436,10 @@ BEGIN
     OR reason IS NULL OR char_length(reason) NOT BETWEEN 10 AND 500 THEN
     RAISE EXCEPTION 'OWNER_RECOVERY_BAD_REQUEST' USING ERRCODE='22023';
   END IF;
-  PERFORM pg_advisory_xact_lock(hashtextextended('exp08_owner_recovery_request:'||_request::text,0));
-  IF public._exp08_lock_recovery_actor() IS DISTINCT FROM actor THEN
+  IF actor IS NULL OR NOT public.is_super_admin(actor) THEN
     RAISE EXCEPTION 'OWNER_RECOVERY_FORBIDDEN' USING ERRCODE='42501';
   END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended('exp08_owner_recovery_request:'||_request::text,0));
   SELECT * INTO a FROM public.paige_audit_log WHERE id=_request;
   IF FOUND THEN
     IF a.actor_user_id IS DISTINCT FROM actor OR a.tenant_id IS DISTINCT FROM _tenant
@@ -389,6 +450,8 @@ BEGIN
     -- Post-act working state is valid receipt/replay, not a new recovery admission.
     RETURN public._exp08_read_owner_recovery(_tenant,_request);
   END IF;
+  PERFORM public._exp08_prepare_owner_change(_tenant,_user,_act,true);
+  actor:=public._exp08_lock_recovery_actor();
   previous_holder := public._exp08_lock_owner_recovery(_tenant);
   -- Reserve the native identity BEFORE effects, in this same transaction/backend.
   -- A dependent private domain writer can bind to this actual row, never caller JSON/GUC.

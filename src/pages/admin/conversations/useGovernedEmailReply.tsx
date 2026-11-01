@@ -24,7 +24,7 @@ import {
   type DoorAnswer, type DoorView, type GovernedReplyDraft, type GovernedReplyRequest, type ReadyCheck, type StripAction,
 } from "./governedReply";
 import { GovernedReplyStrip, type GovernedStripState } from "./GovernedReplyStrip";
-import { parseCommsEmailDraftSource, type CommsEmailDraftSource } from "../../../../supabase/functions/_shared/comms-email/draft-source.ts";
+import { parseCommsEmailDraftSource, parseCommsEmailActionDraftSource, type CommsEmailActionDraftSource, type CommsEmailDraftSource } from "../../../../supabase/functions/_shared/comms-email/draft-source.ts";
 
 export interface GovernedReplyConnector { id: string; display_name: string | null; from_address: string | null }
 
@@ -45,6 +45,8 @@ export interface GovernedEmailReplyInput {
   /** Saved source only. Null refuses locally; absence retains the fresh-reply path. */
   draftSource?: CommsEmailDraftSource | null;
   draftApprovalId?: string;
+  /** First unsent save of the original pending action, never a send credential. */
+  actionDraftSource?:CommsEmailActionDraftSource;
   epoch: { capture: () => AccountEpochToken; accept: (t: AccountEpochToken) => boolean };
   /** The element around the composer: focus targets are found inside it. */
   composerRef: RefObject<HTMLElement | null>;
@@ -61,7 +63,7 @@ export interface GovernedEmailReplyInput {
 
 type Phase = "composing" | "checking" | "check" | "sending" | "choose" | "cant" | "expired";
 type Held = { scope: string; draft: GovernedReplyDraft; request: GovernedReplyRequest };
-type Focus = "confirm" | "edit" | "first-option" | "recheck" | "settings" | "body" | "send";
+type Focus = "confirm" | "edit" | "first-option" | "recheck" | "settings" | "body" | "send" | "save";
 
 const OPEN: ReadonlySet<Phase> = new Set(["check", "sending", "choose", "cant", "expired"]);
 
@@ -83,10 +85,10 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
   const idsRef = useRef(createGovernedOperationIds());
   const inputRef = useRef(input);
   inputRef.current = input;
-  type SaveAttempt={identity:string;epoch:AccountEpochToken;request:GovernedReplyRequest & {save_draft:true};busy:boolean;uncertain:boolean};
+  type SaveAttempt={identity:string;epoch:AccountEpochToken;request:GovernedReplyRequest & {save_draft:true;action_draft_source?:CommsEmailActionDraftSource};busy:boolean;uncertain:boolean};
   const saveRef=useRef<SaveAttempt|null>(null);
   const [saveState,setSaveState]=useState<{attempt:SaveAttempt;busy:boolean;uncertain:boolean}|null>(null);
-  const saveIdentity=JSON.stringify([input.activeTenantId,input.threadKey,input.draftSource?.message_id,input.epoch.capture()]);
+  const saveIdentity=JSON.stringify([input.activeTenantId,input.threadKey,input.draftSource?.message_id,input.actionDraftSource,input.epoch.capture()]);
   const saveIdentityRef=useRef(saveIdentity);saveIdentityRef.current=saveIdentity;
   const activeSave=saveState?.attempt.identity===saveIdentity?saveState:null;
   const [saveNotice,setSaveNotice]=useState<{identity:string;scope:string;text:string}|null>(null);
@@ -116,16 +118,21 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
 
   const saveDraft=async()=>{
     const i=inputRef.current;
-    if(!i.onDraftSaved||!i.draftSource||phaseRef.current!=="composing")return;
+    if(!i.onDraftSaved||(!i.draftSource&&!i.actionDraftSource)||phaseRef.current!=="composing")return;
     let attempt=saveRef.current?.identity===saveIdentityRef.current?saveRef.current:null;
     if(attempt?.busy)return;
     if(!attempt){
       const built=currentDraft();
-      if(!("draft" in built)||!built.draft.source){say("Check the subject, message, files and time before saving this draft.");return;}
+      if(!("draft" in built)||(!built.draft.source&&!i.actionDraftSource)){say("Check the subject, message, files and time before saving this draft.");return;}
       if(idsRef.current.isUnknown(governedReplyScope(built.draft),governedReplySourceKey(built.draft))){say("Check this draft's sending status before saving changes.");return;}
-      const request=buildGovernedReplyRequest(built.draft,crypto.randomUUID());
+      // An action's first Save uses its pending approval version. It cannot be
+      // passed to the send builder as though it were already a Messages source.
+      const request=buildGovernedReplyRequest(i.actionDraftSource?{...built.draft,approvalId:undefined}:built.draft,crypto.randomUUID());
       if(isFailed(request)){say("Reopen this draft before saving changes.");return;}
-      attempt={identity:saveIdentityRef.current,epoch:i.epoch.capture(),request:{...request.request,save_draft:true},busy:false,uncertain:false};
+      let origin:CommsEmailActionDraftSource|undefined;
+      try{if(i.actionDraftSource)origin=parseCommsEmailActionDraftSource(i.actionDraftSource);}catch{say("Reopen this reply before saving changes.");return;}
+      attempt={identity:saveIdentityRef.current,epoch:i.epoch.capture(),request:{...request.request,save_draft:true,
+        ...(origin?{action_draft_source:origin,approval_id:origin.approval_id}: {})},busy:false,uncertain:false};
       saveRef.current=attempt;
     }
     const held=attempt,current=()=>saveRef.current===held&&saveIdentityRef.current===held.identity&&inputRef.current.epoch.accept(held.epoch);
@@ -139,7 +146,7 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     if(b?.ok===true&&b.outcome==="draft_saved"&&b.operation_id===held.request.operation_id){
       try{
         const source=parseCommsEmailDraftSource(b.draft_source);
-        if(source.message_id!==held.request.draft_source?.message_id||!Array.isArray(b.attachments))throw Error("save_receipt_changed");
+        if((held.request.draft_source&&source.message_id!==held.request.draft_source.message_id)||!Array.isArray(b.attachments))throw Error("save_receipt_changed");
         const files:Attachment[]=b.attachments.map(raw=>{
           const a=raw as Record<string,unknown>;
           if(!a||typeof a.url!=="string"||typeof a.name!=="string"||typeof a.mime!=="string"||typeof a.size!=="number"||!Number.isFinite(a.size))throw Error("save_files_changed");
@@ -147,18 +154,18 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
         });
         const checked=governedReplyFiles(held.request.expected_tenant_id,files);
         if(isFailed(checked)||JSON.stringify(checked.paths)!==JSON.stringify((held.request.attachments??[]).map(a=>a.path)))throw Error("save_files_changed");
-        saveRef.current=null;setSaveState(null);say("Draft saved. Nothing sent.");
+        saveRef.current=null;setSaveState(null);focusRef.current="body";say("Draft saved. Nothing sent.");
         inputRef.current.onDraftSaved?.({source,attachments:files});return;
       }catch{/* An unreadable receipt never clears the original save operation. */}
     }
     if(b?.outcome==="refused"&&!held.uncertain){
       saveRef.current=null;setSaveState(null);
       const text="The draft wasn't saved. Your edits are kept; reopen its current version before trying again.";
-      setSaveNotice({identity:held.identity,scope:liveScopeRef.current,text});say(text);return;
+      focusRef.current="body";setSaveNotice({identity:held.identity,scope:liveScopeRef.current,text});say(text);return;
     }
     held.uncertain=true;setSaveState({attempt:held,busy:false,uncertain:true});
     const text="Couldn't confirm the draft was saved. Check save status before sending.";
-    setSaveNotice({identity:held.identity,scope:liveScopeRef.current,text});say(text);
+    focusRef.current="save";setSaveNotice({identity:held.identity,scope:liveScopeRef.current,text});say(text);
   };
 
   // The scope of what is on screen right now. A strip is only ever about the scope it was raised for.
@@ -370,7 +377,7 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
       if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
       return;
     }
-    const el = target === "send" ? root.querySelector<HTMLElement>("[data-composer-send]") : root.querySelector<HTMLElement>(`[data-strip-focus="${target}"]`);
+    const el = target === "send" ? root.querySelector<HTMLElement>("[data-composer-send]") : target==="save" ? root.querySelector<HTMLElement>("[data-comms-draft-save]") : root.querySelector<HTMLElement>(`[data-strip-focus="${target}"]`);
     el?.focus();
   });
 

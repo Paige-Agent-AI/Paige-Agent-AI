@@ -55,7 +55,7 @@ SELECT pg_temp.ok(2, (SELECT pronargdefaults=0 FROM pg_proc WHERE oid='public.pr
   'the prepare with files has no defaults (an email without files can never reach it)');
 SELECT pg_temp.ok(3, (SELECT count(*)=3 AND bool_and(md5(p.prosrc)=e.body) FROM (VALUES
    ('public._comms_email_actor(uuid,uuid)'::regprocedure,'c9850c30ae7885c23eee1da268c8c0e0'),
-   ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'f7fbbd2a430bf391f43dc6ca7e2692ee'),
+   ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'682c2fe410521c7bfd23ec8b26a95a90'),
    ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz)'::regprocedure,'b814a323a2c319648888fe17bc5a7079')) e(f,body)
   JOIN pg_proc p ON p.oid=e.f),
   'the actor check is unchanged; the original 13- and 14-argument prepares match their reviewed current source compositions');

@@ -2,6 +2,28 @@
 
 ### Continued authority/full-schema preparation — November 1
 
+Continued local proof is now 39 checks: both same-request concurrency and a
+receipt waiting behind an actual original manual Setup save were observed via
+`pg_blocking_pids`; the latter refuses stale CAS with no approval audit and
+preserves the manual value. Source-only currentness loss remains separately
+covered. Removing the save-time source check still fails the expected assertion.
+First full-schema c995 execution FAILED before SQL: shallow checkout lacked the
+pinned original E13 object. Exact immutable-object fetching is now implemented;
+no source pin/helper/grant/test was substituted. Full-schema remains UNVERIFIED.
+
+New isolated `src/solo/data/reviewed-setup-client.ts` prepares the same stage6 /
+save8 / inspect3 ABI, without changing any existing hook or host. Explicit selected
+approval requires verified staging and returns only after original native
+inspection. A lost/contradictory save or failed readback requires same-identity
+inspection; absent-at-read never auto-repeats, and an explicit retry retains the
+same captured request/selection. Current actor/tenant and the host's negative
+incarnation fence are checked around every asynchronous continuation. Historical
+receipts stay ineligible; mismatched actor/source/value/revision/purpose refuses.
+Errors expose no raw response body. Twenty-six isolated client controls PASS;
+strict TypeScript5.8.3 with actual ES2020/bundler options PASS. Ports are modeled,
+not installed-SDK or mounted customer evidence. Native authority, original host
+durable request-reference recovery, UI approval and receiver mounting remain owed.
+
 Main `17e74cefc3382d0a67d240dd7a1005ec0bf56547` incorporated without
 rewriting incoming E04 work. E04's coherent native deployment and E13's higher
 forward source-validator release remain independently verified release gates.

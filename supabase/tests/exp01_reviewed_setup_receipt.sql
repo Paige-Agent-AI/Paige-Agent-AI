@@ -57,6 +57,8 @@ CREATE FUNCTION pg_temp.e01_as(actor uuid) RETURNS void LANGUAGE plpgsql AS $$BE
 END$$;
 CREATE FUNCTION pg_temp.e01_error(statement text) RETURNS text LANGUAGE plpgsql SECURITY INVOKER AS $$BEGIN
  EXECUTE statement;RETURN 'NO_ERROR';EXCEPTION WHEN OTHERS THEN RETURN SQLSTATE;END$$;
+CREATE FUNCTION pg_temp.e01_affected(statement text) RETURNS integer LANGUAGE plpgsql SECURITY INVOKER AS $$DECLARE affected integer;BEGIN
+ EXECUTE statement;GET DIAGNOSTICS affected=ROW_COUNT;RETURN affected;END$$;
 CREATE FUNCTION pg_temp.e01_facts() RETURNS jsonb LANGUAGE sql SECURITY INVOKER AS $$
  SELECT jsonb_build_array(jsonb_build_object('field','offers','value','Advisory','reference',
  jsonb_build_object('contractVersion',1,'tenantId',d.tenant_id,'documentId',d.id,'revision',d.revision,
@@ -106,6 +108,8 @@ SELECT is(public.get_solo_business_context()->'businessOwners',(SELECT value FRO
 SELECT is(pg_temp.e01_save('e0100400-0000-4000-8000-000000000002','e0100500-0000-4000-8000-000000000001')->>'receiptId',
  (SELECT value->>'receiptId' FROM e01_state WHERE name='saved'),'same-request replay returns the original durable receipt');
 SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_save('e0100400-0000-4000-8000-000000000002','e0100500-0000-4000-8000-000000000001','["industry"]')$$),'40001','same request cannot be reused with changed selected fields');
+SELECT is(pg_temp.e01_affected($$UPDATE public.paige_audit_log SET payload='{}' WHERE tenant_id='e0100200-0000-4000-8000-000000000001' AND action='solo_setup.reviewed_facts_approved'$$),0,'browser cannot alter the original server approval event');
+SELECT is(pg_temp.e01_affected($$DELETE FROM public.paige_audit_log WHERE tenant_id='e0100200-0000-4000-8000-000000000001' AND action='solo_setup.reviewed_facts_approved'$$),0,'browser cannot delete the original server approval event');
 RESET ROLE;
 SELECT is((SELECT count(*)::integer FROM public.paige_audit_log WHERE tenant_id='e0100200-0000-4000-8000-000000000001' AND action='solo_setup.reviewed_facts_approved'),1,'one immutable original approval receipt audit exists');
 SELECT ok(NOT EXISTS(SELECT 1 FROM public.paige_audit_log WHERE tenant_id='e0100200-0000-4000-8000-000000000001' AND payload::text LIKE '%Advisory%'),'private selected values/quotations are absent from audit payloads');

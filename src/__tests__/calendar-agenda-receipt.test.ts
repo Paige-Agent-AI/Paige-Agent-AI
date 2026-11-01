@@ -9,25 +9,29 @@ import { recordCapabilityRun, stableRunId } from "../../supabase/functions/_shar
 // and RPC ports. This is handler integration, not a database/Auth/customer test.
 const source = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 const ast = ts.createSourceFile("chat.ts", source, ts.ScriptTarget.Latest, true);
-const branches: ts.Block[] = [];
-function visit(node: ts.Node) {
-  if (ts.isIfStatement(node) && node.expression.getText(ast) === 'tc.function.name === "read_calendar_agenda"'
-    && ts.isBlock(node.thenStatement)) branches.push(node.thenStatement);
-  ts.forEachChild(node, visit);
+function compileCase(toolName: string) {
+  const branches: ts.Block[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isIfStatement(node) && node.expression.getText(ast) === 'tc.function.name === "' + toolName + '"'
+      && ts.isBlock(node.thenStatement)) branches.push(node.thenStatement);
+    ts.forEachChild(node, visit);
+  }
+  visit(ast);
+  if (branches.length !== 1) throw new Error("Exactly one original Calendar handler required: " + toolName);
+  const js = ts.transpileModule(`async function execute(p) {
+    const {user,turnScopeTenantId,calendarBookingRole,calendarBookingAccountShape,scopedClientId,payloadThreadId,
+      validatedData,req,tenantKnowledgeScopeRevoked,customerPortal,callerTier,personaCtx,readCalendarAgenda,readCalendarBooking,
+      supabaseClient,revalidateTenantKnowledgeScope,recordCapabilityRun,supabase,stableRunId,tc,calendarAgendaForModel}=p;
+    const toolResults=[],readRecordLinkSource=new Map();
+    ${branches[0].getText(ast)}
+    return {model:JSON.parse(toolResults[0].content),links:[...readRecordLinkSource.values()]};
+  }`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
+  const execute = new Function(`${js}\nreturn execute;`)() as (p: Record<string, unknown>) => Promise<{
+    model: Record<string, unknown>; links: unknown[];
+  }>;
+  return execute;
 }
-visit(ast);
-if (branches.length !== 1) throw new Error("Exactly one original Calendar agenda handler required");
-const js = ts.transpileModule(`async function execute(p) {
-  const {user,turnScopeTenantId,calendarBookingRole,calendarBookingAccountShape,scopedClientId,payloadThreadId,
-    validatedData,req,tenantKnowledgeScopeRevoked,customerPortal,callerTier,personaCtx,readCalendarAgenda,
-    supabaseClient,revalidateTenantKnowledgeScope,recordCapabilityRun,supabase,stableRunId,tc,calendarAgendaForModel}=p;
-  const toolResults=[],readRecordLinkSource=new Map();
-  ${branches[0].getText(ast)}
-  return {model:JSON.parse(toolResults[0].content),links:[...readRecordLinkSource.values()]};
-}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
-const execute = new Function(`${js}\nreturn execute;`)() as (p: Record<string, unknown>) => Promise<{
-  model: Record<string, unknown>; links: unknown[];
-}>;
+const execute = compileCase("read_calendar_agenda"), executeBooking = compileCase("read_calendar_booking");
 
 type Agenda = Awaited<ReturnType<typeof readCalendarAgenda>>;
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -62,6 +66,40 @@ function harness(result = available(), receipt: "native" | "error" | "throw" = "
   return { run: () => execute(p), p, reader, rpc, writes };
 }
 afterEach(() => vi.restoreAllMocks());
+
+function bookingHarness(found = true, receipt: "native" | "error" | "throw" = "native") {
+  const h = harness(available(), receipt), data = available();
+  if (data.status !== "available") throw Error("Available fixture required");
+  const reader = vi.fn(async () => ({ status: "available", found,
+    booking: found ? { ...data.bookings[0], guest_name: "PRIVATE fixture guest" } : null,
+    read_at: data.read_at, message: "Original exact Calendar read" }));
+  h.p.tc.function.name = "read_calendar_booking"; h.p.tc.function.arguments = JSON.stringify({ booking_id: id(3) });
+  return { ...h, run: () => executeBooking({ ...h.p, readCalendarBooking: reader }) };
+}
+
+describe("original exact booking result and canonical receipt", () => {
+  it("keeps the original native key, actor/business and confirmed record/link", async () => {
+    const h = bookingHarness(), answer = await h.run();
+    expect(answer.model.status).toBe("available"); expect(answer.model.found).toBe(true);
+    expect(h.rpc.mock.calls[0][1]).toMatchObject({ _tenant_id: id(2), _actor_id: id(1), _capability_key: "read_calendar_booking" });
+    expect(answer.links).toEqual([[{ destination: "calendar", record_id: null }]]);
+  });
+  it.each(["error", "throw"] as const)("withholds exact private data/navigation on receipt %s", async mode => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const h = bookingHarness(true, mode), answer = await h.run();
+    expect(answer.model.status).toBe("unavailable"); expect(answer.links).toEqual([]);
+    expect(JSON.stringify(answer)).not.toContain("PRIVATE"); expect(h.writes.size).toBe(0);
+  });
+  it("still receipts a confirmed visible-empty lookup without manufacturing a link", async () => {
+    const h = bookingHarness(false), answer = await h.run();
+    expect(answer.model.status).toBe("available"); expect(answer.model.found).toBe(false);
+    expect(answer.model.booking).toBeNull(); expect(answer.links).toEqual([]); expect(h.writes.size).toBe(1);
+  });
+  it("reuses the same original receipt identity for the same exact lookup", async () => {
+    const h = bookingHarness(); await h.run(); await h.run();
+    expect(h.writes.size).toBe(1); expect(h.rpc.mock.calls[0][1]._run_id).toBe(h.rpc.mock.calls[1][1]._run_id);
+  });
+});
 
 describe("original Calendar agenda result and canonical receipt", () => {
   it("records the original tool key with exact actor/business before exposing the actual read", async () => {

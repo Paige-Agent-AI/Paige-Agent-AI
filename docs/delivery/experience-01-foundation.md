@@ -1,5 +1,142 @@
 # Experience 01 foundation — ANT-50
 
+## November 1 sole-successor incorporation — STILL CODING
+
+Owner explicitly replaced the exhausted zCod lead with one Codex successor.
+Actual receiving ACK: ANT-50/63c7eecf-6886-4744-aa88-c8b67d60209e; producer
+assessment: ANT-50/c4137452-12a3-467e-99a2-599faeaebfdf. Both were read back.
+The full original ten outcomes/23 cases and every approved amendment remain
+assigned; earlier PR1–PR7 releases are reused. This additive reconciliation does
+not overwrite the historical packets or equate issue Done with acceptance.
+Live remains NOT ACTIVATED; full EXP01 is NOT READY FOR OWNER REVIEW.
+
+Primary outcome: agreement → original editable Knowledge review → selected-fact
+approval → original Setup CAS/receipt → E02 saved editable Mission → separately
+authorized E05 Work/appropriate E03 CRM → original result/receipt → both-chat
+reload/reopen/recovery. E13 owns Knowledge/Memory; E08 owns Team Hub presentation.
+No peer Codex messages, recurring timer, alternate ledger/runtime or new account.
+
+### Source-bound producer preparation, not a released receipt
+
+Grounded main `fdf40a646`; production catalogue frontier `20271126200003`.
+Original stage4 body `863b4e232b7feee4d06cd6c328c7d020`, Setup4 body
+`d70cdc664b5c703395e4f077a30fdbd8`, business-context12 body
+`7e27552bf7a07ec4d71ff2536469e41e` and scope body
+`0ec77d9d549daf94263e57848a00f5a6` were read, without customer rows/effects.
+The current provenance/proposal has no source-bound approval receipt.
+Original private E13 `lock_knowledge_source_evidence(uuid,uuid,jsonb,jsonb)`
+and UTF16 helper are absent in production. Preserve #3182/210013's applied
+Preview history; E04's coherent native release then E13's reviewed higher forward
+carrier precede any E01 native carrier. No migration number is reserved here.
+
+Original `settings-setup-contract.ts` now has additive closed input types and a
+rejecting parser. It preserves raw CAS and exact field/value/reference/UTF16
+quotation selection; it is not authority. Existing manual Setup remains unchanged.
+`scripts/proof/exp01-reviewed-setup-candidate.sql` is UNVERSIONED/INERT and
+unmounted. Its candidate APIs are:
+
+* `stage_solo_reviewed_business_facts(uuid,uuid,uuid,text,bigint,jsonb)`:
+  expected tenant/actor, review UUID, raw brief CAS, context revision, facts.
+* `save_solo_reviewed_business_facts(uuid,uuid,uuid,uuid,text,bigint,jsonb,text)`:
+  same scope/review, request UUID, both CAS values, selected field names,
+  exact purpose `setup_business_facts`.
+* `inspect_solo_reviewed_business_facts(uuid,uuid,uuid)`: same scope/request.
+  Returns absent-at-read or recorded/current vs historical; no save replay.
+
+Each fact is `{field,value,reference:{contractVersion:1,tenantId,documentId,
+revision,contentSha256},excerpts:[{start,end,text}]}`. Source binding is the E13
+ABI, not a client approval token. Source literal validation stays in its original
+private native helper in the writer transaction. Stage is not approval. Save
+requires the captured review, selected fields, current authority and both CAS
+values, merges into the authoritative brief, preserves the actual owner list,
+and calls the original `save_solo_setup_context`. Current review/approval lives
+in the original private Setup meta row; original audit UUID supplies the durable
+receipt, with hashes/IDs only in audit. Private quotes never enter brand/audit.
+The receipt carries exact selected facts, original source binding and resulting
+Setup revision/readback. A client JSON, timestamp or receipt UUID grants nothing.
+
+E02 must validate the original current receipt/source/selection in its own native
+Mission transaction, require separate Mission intent and retain PROPOSED status.
+E05 must independently authorize its original stored proposal/claim/writer/
+finalizer and verify original Work/result/Rail. A receipt is not idempotency for
+those effects. Receiving ACK, incorporation, implementation and acceptance are
+separate; none is claimed for this proposed ABI.
+
+### Original scope reconciliation and sequence
+
+The original 23-case table and ten-outcome matrix remain in the original
+[integrated packet](../evidence/experience-01-foundation/integrated-readiness-2026-10-17.md).
+The new additive reconciliation there records source, remaining build/integration,
+proof/dependencies and next delivery without replacing historical dispositions.
+
+Sequence: (1) source-bound Setup producer/native proof and receiver contract;
+(2) same-outcome Chat explicit Knowledge Save + durable original references and
+single/BULK mounting with E13/E08; (3) E02/E05/E03 joins and both-chat continuation;
+(4) remaining original entry/interview/recommendation/recovery/delegation/cohort
+and legal-owner/notification amendments; (5) full released integrated owner
+evaluation. Live consent/bidirectional audio and activation remain distinct.
+Original #3177 UI FLOW_PROTOTYPE/browser/AT/finish hold is not waived.
+
+Known source gaps are not hidden: current Setup scope only distinguishes
+owner_full/admin_operational/read_only, so legitimately delegated member
+management remains an original authority-integration obligation. Do not invent a
+global member grant or claim that title/responsibilities authorize work. Original
+legal-owner seated/vacant/live-invitation protection remains a distinct repair;
+this candidate passes the unchanged authoritative owner list, never omits it.
+E08 personal recovery notice entry is bounded personal access, not workspace choice.
+
+ALG-01 applies to CAS/reconciliation/current-source/no-repeat; ALG-02 to confirmed
+first value; ALG-13 to grounded useful recommendations; ALG-11 to original shared
+Model Fabric and quality/cost; ALG-12 to truthful failures/UNKNOWN handling.
+Parser/native tests are bounded deterministic proof, not measured algorithm
+effectiveness. Baseline/repeated/changed-source/revoked/concurrency and useful
+result/receipt/reopen/feedback evidence stay separate; no maturity is promoted.
+
+### First native preparation proof and review disposition
+
+PASS: `node --experimental-strip-types --test
+scripts/proof/exp01-reviewed-setup-contract.test.mjs` — 23 focused input/manual
+compatibility tests. These are NOT the original 23 authenticated acceptance cases.
+PASS: original SOLO parity guard SP1–SP5 and all its mutation/legitimate-eligibility
+controls; script syntax and diff whitespace checks. Full app compiler/build and
+hosted exact-head CI are not established by these focused checks.
+
+Local native command: `EXP01_SOURCE_VALIDATOR_REF=7955df03da6873286f290d4148c1f0fcda77c91e
+node scripts/proof/exp01-reviewed-setup-postgres.mjs 55461` (set the environment
+variable using the host shell). It uses a dedicated disposable localhost database,
+extracts the ORIGINAL Setup brief/wrapper/scope and E13 validator function bodies,
+and asserts Setup wrapper body matches production `d70cdc664b5c703395e4f077a30fdbd8`.
+The 26 native selected-save/CAS/changed-source/receipt/inspection/revocation checks pass;
+two actual native connections observe `pg_blocking_pids` before committing and
+confirm one same-request receipt and one revision increment. Identity/Setup
+getter/Knowledge reader dependencies are MODELS, not full-schema/production proof.
+The original E13 source candidate is read from the pinned local Git object, not
+copied into a production migration or released out of order.
+
+CAUSAL NEGATIVE: the fixture-only `--without-save-source-check` counterfactual
+removes only transaction-time save revalidation; the actual stale-source assertion
+fails with Missing expected exception / KNOWLEDGE_SOURCE_CHANGED. The real source
+check remains intact. Earlier fixture search-path mismatch and second-session
+output-parser failure were corrected; neither was a product/native PASS.
+The later lock-order run correctly refused a switched workspace through the
+original Setup 40001 error before the E13 scope error; the test now asserts that
+exact canonical refusal and SQLSTATE rather than the former ordering's label.
+Initial restricted local cluster bootstrap stalled and was stopped; a separate ordinary
+disposable cluster initialized successfully. No production database was modified.
+
+Sequential AUTHOR-REVIEW / LOWER ASSURANCE: inspected exact closed input shape,
+current authority/source/CAS locks, original-writer use, minimized audit/private
+receipt, duplicate request binding and UNKNOWN readback. Corrected nullable native
+field admission, eliminated shared-to-exclusive receipt lock upgrades by using
+the original Setup selection/tenant serialization first, and removed meta-row
+insertion from inspection. No independent non-author review is claimed.
+HOLD RELEASE: full native schema/actual getter and legal-owner regressions,
+legitimate delegated-management integration, cross-API/multi-actor concurrency,
+closed install/source/ABI/ACL replay guards, source-validator ordered release,
+native consumer revalidation, host review/mounting, final exact-head CI/normal
+release/native readback and authenticated result/reload remain required.
+This unversioned preparation is not a deployed receipt or ready Experience.
+
 **2026-10-17 Day-Two integrated readiness packet (zCod):** the consolidated ten-outcome evidence matrix (seven truth levels per outcome), the Live usage/budget/cost/provider-readiness audit (LLM spend budget-gated via the canonical chat path; Live STT/TTS seam deliberately unpersisted — platform budget-lane decision, admission gate is the structural ceiling), and the 23-case acceptance package (11 ANT-52 cases verbatim + 12 derived interview cases, every disposition OWNER WINDOW / PROOF OWED, no PASS claims) with the production entry route and proposed owner walkthrough: [integrated-readiness-2026-10-17.md](../evidence/experience-01-foundation/integrated-readiness-2026-10-17.md). Plus one hardening test pinning the owner-scoped interview return link on the People & email subtab (forged-pointer and read-only negatives; Setup suite 63/63).
 
 **2026-10-17 E01 Live server timing observation RELEASED (zCod):** PR [#2277](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2277), independent non-author review CLEAN (0 P1/P2, 5 P3 dispositioned, comment 6237172371) -> head `dac4553a3` (composed main `4def6ce77`; runtime byte-identical to reviewed `41c23f0e`) -> merged `f0dd73428`. ALL 11 exact-head checks SUCCESS incl. required verify + Preview. Deploy run `39054164930`: paige-live-relay deployed, **deployed-source verification SUCCESS**, retained-verification SUCCESS; live probe HTTP 426 expected_websocket = ACTIVE. Readback comment 6238324860 + supersession correction 6239197994. Optional UsageSink timing seam (3 closed numeric phases), observer-failure isolation, clock-anomaly suppression; no admission/billing/websocket/voice/UI change. Global edge certification was independently blocked by a latent Sales cross-root import, fixed by the Sales lane (`6e9b97a98`) — zCod's parallel repair #2310 withdrawn superseded; edge recovery run `39060979318` SUCCESS, edge-live certified at main `0f495d29`. Actual provider p50/p95, Live barge-in and all authenticated cases remain owed. [Live-phase manifest](../evidence/experience-01-foundation/progressive-read-aloud-2026-10-16/live-phase-source-manifest.json).

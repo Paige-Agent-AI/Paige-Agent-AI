@@ -3,6 +3,70 @@ export type SetupFactConfidence = "confirmed" | "observed" | "unknown";
 export type SetupAccessScope = "owner_full" | "admin_operational" | "read_only";
 export type SetupSourceDecision = "adopt" | "override";
 
+/** A reviewed selection is input, never authority. The original native Setup
+ * transaction must resolve the actor, lock/revalidate Knowledge and save by CAS.
+ * This additive contract does not alter ordinary manual Setup provenance. */
+export const REVIEWED_SETUP_FACT_FIELDS = [
+  "legalName", "publicName", "dbaName", "website", "address", "phone", "industry", "naicsCode", "sicCode",
+  "offers", "deliveryModel", "idealCustomer", "customerSegments", "serviceArea", "currentPriority", "goals90Day",
+  "annualDirection", "successDefinition", "constraints", "brandVoice", "operatingPreferences", "doNotAssume",
+] as const;
+export type ReviewedSetupFactField = (typeof REVIEWED_SETUP_FACT_FIELDS)[number];
+export type ReviewedSetupFact = {
+  field: ReviewedSetupFactField;
+  value: string;
+  reference: { contractVersion: 1; tenantId: string; documentId: string; revision: number; contentSha256: string };
+  excerpts: { start: number; end: number; text: string }[];
+};
+export type ReviewedSetupSelection = {
+  schemaVersion: 1;
+  actorId: string;
+  tenantId: string;
+  reviewId: string;
+  expectedUpdatedAt: string | null;
+  expectedContextRevision: number;
+  facts: ReviewedSetupFact[];
+};
+
+/** Reject, never repair, evidence. Offsets use the original Knowledge UTF16
+ * convention. Literal matching and current source/permission are server duties.
+ * A detached deep copy prevents mutation while an original RPC is awaiting. */
+export function parseReviewedSetupSelection(input: unknown): ReviewedSetupSelection {
+  const record = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
+  const exact = (v: unknown, keys: readonly string[]): v is Record<string, unknown> => record(v)
+    && Object.keys(v).length === keys.length && keys.every(k => Object.prototype.hasOwnProperty.call(v, k));
+  const uuid = (v: unknown): v is string => typeof v === "string"
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(v);
+  const invalid = (): never => { throw new Error("SETUP_REVIEW_INVALID"); };
+  if (!exact(input, ["schemaVersion", "actorId", "tenantId", "reviewId", "expectedUpdatedAt", "expectedContextRevision", "facts"])
+    || input.schemaVersion !== 1 || !uuid(input.actorId) || !uuid(input.tenantId) || !uuid(input.reviewId)
+    || !(input.expectedUpdatedAt === null || (typeof input.expectedUpdatedAt === "string"
+      && input.expectedUpdatedAt.length < 64 && Number.isFinite(Date.parse(input.expectedUpdatedAt))))
+    || !Number.isSafeInteger(input.expectedContextRevision) || Number(input.expectedContextRevision) < 0
+    || !Array.isArray(input.facts) || input.facts.length < 1 || input.facts.length > REVIEWED_SETUP_FACT_FIELDS.length) return invalid();
+  const fields = new Set<string>();
+  let units = 0;
+  for (const fact of input.facts) {
+    if (!exact(fact, ["field", "value", "reference", "excerpts"])
+      || typeof fact.field !== "string" || !REVIEWED_SETUP_FACT_FIELDS.includes(fact.field as ReviewedSetupFactField)
+      || fields.has(fact.field) || typeof fact.value !== "string" || !fact.value || fact.value !== fact.value.trim()
+      || fact.value.length > 4000 || !exact(fact.reference, ["contractVersion", "tenantId", "documentId", "revision", "contentSha256"])
+      || fact.reference.contractVersion !== 1 || fact.reference.tenantId !== input.tenantId || !uuid(fact.reference.documentId)
+      || !Number.isSafeInteger(fact.reference.revision) || Number(fact.reference.revision) < 1 || Number(fact.reference.revision) > 2147483647
+      || typeof fact.reference.contentSha256 !== "string" || !/^[0-9a-f]{64}$/.test(fact.reference.contentSha256)
+      || !Array.isArray(fact.excerpts) || fact.excerpts.length < 1 || fact.excerpts.length > 20) return invalid();
+    fields.add(fact.field);
+    for (const excerpt of fact.excerpts) {
+      if (!exact(excerpt, ["start", "end", "text"]) || !Number.isSafeInteger(excerpt.start) || !Number.isSafeInteger(excerpt.end)
+        || Number(excerpt.start) < 0 || Number(excerpt.end) > 480000 || Number(excerpt.end) <= Number(excerpt.start)
+        || typeof excerpt.text !== "string" || excerpt.text.length !== Number(excerpt.end) - Number(excerpt.start)) return invalid();
+      units += excerpt.text.length;
+      if (units > 12000) return invalid();
+    }
+  }
+  return JSON.parse(JSON.stringify(input)) as ReviewedSetupSelection;
+}
+
 export type SoloBusinessOwner = {
   id: string;
   ownerKind: "individual" | "company" | "trust" | "other_legal_person";

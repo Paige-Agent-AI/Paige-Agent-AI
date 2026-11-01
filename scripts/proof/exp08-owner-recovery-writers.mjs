@@ -7,7 +7,7 @@ import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 assert.equal(process.env.EXP08_DISPOSABLE,'1');
 assert.ok(['127.0.0.1','localhost','::1'].includes(process.env.PGHOST));
 assert.match(process.env.PGPORT??'',/^\d+$/);
-assert.ok(process.argv.slice(2).every(x=>['--baseline-02126','--baseline-notice-order','--baseline-revoke','--baseline-owner-context'].includes(x))&&process.argv.length<=3,'Unknown proof option');
+assert.ok(process.argv.slice(2).every(x=>['--baseline-02126','--baseline-notice-order','--baseline-revoke','--baseline-owner-context','--baseline-door-metadata'].includes(x))&&process.argv.length<=3,'Unknown proof option');
 const baseline=process.argv.includes('--baseline-02126');
 const historical=baseline?spawnSync('git',['show','02126ee52:scripts/proof/exp08-owner-recovery-writers.sql'],{encoding:'utf8',windowsHide:true}):null;
 if(historical)assert.equal(historical.status,0,historical.stderr);
@@ -705,8 +705,17 @@ try{
   assert.equal(scalar(`SELECT revoked_at IS NULL FROM public.platform_billing_contacts WHERE id='${contact}'`),'t');
  }
  // Local mount of the original recovery door, never managed/public activation.
- const publicSource=readFileSync(new URL('./exp08-owner-recovery-doors.sql',import.meta.url),'utf8');
+ const historicalDoors=process.argv.includes('--baseline-door-metadata')?spawnSync('git',['show','e44f8f8b0:scripts/proof/exp08-owner-recovery-doors.sql'],{encoding:'utf8',windowsHide:true}):null;
+ if(historicalDoors){if(historicalDoors.error)throw historicalDoors.error;assert.equal(historicalDoors.status,0,historicalDoors.stderr);}
+ const publicSource=historicalDoors?.stdout??readFileSync(new URL('./exp08-owner-recovery-doors.sql',import.meta.url),'utf8');
  await denied('public recovery has no callable door before its explicit installer',()=>db.exec(`SELECT public.platform_owner_recovery('${tenant}','set_account_holder','${remaining}','${reason}','e8000000-0000-4000-8000-000000094020')`),/does not exist/);
+ if(!process.argv.includes('--baseline-door-metadata'))for(const inheritedRole of ['anon','service_role']){
+  db.run(`GRANT authenticated TO ${inheritedRole}`);
+  try{
+   await denied('first public recovery installation refuses inherited '+inheritedRole+' access atomically',()=>db.exec(publicSource),/EXP08 original recovery public door drift/);
+   assert.equal(scalar("SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN('platform_owner_recovery','platform_owner_recovery_receipt','get_owner_recovery_notice')"),'0');
+  }finally{db.run(`REVOKE authenticated FROM ${inheritedRole}`);}
+ }
  await db.exec(publicSource);revokeFixture();
  const publicRequest='e8000000-0000-4000-8000-000000094020';
  const publicApply=`SELECT public.platform_owner_recovery('${tenant}','set_account_holder','${remaining}','${reason}','${publicRequest}')`;
@@ -742,6 +751,36 @@ try{
  db.run(nativeApplyDefinition.replace('BEGIN','BEGIN\n PERFORM 1;'));
  await denied('changed native transaction refuses public door admission',()=>db.exec(publicSource),/EXP08 original recovery door prerequisite drift/);
  db.run(nativeApplyDefinition);await db.exec(publicSource);
+ const publicSignature='public.platform_owner_recovery(uuid,text,uuid,text,uuid)';
+ const publicDefinition=JSON.parse(scalar(`SELECT to_json(pg_get_functiondef('${publicSignature}'::regprocedure))`));
+ try{
+  const withDefault=publicDefinition.replace('_request uuid)','_request uuid DEFAULT NULL::uuid)');assert.notEqual(withDefault,publicDefinition);
+  db.run(withDefault);
+  await denied('public recovery default-argument drift refuses before omitted-request resolution changes',()=>db.exec(publicSource),/EXP08 original recovery public door drift/);
+  assert.equal(scalar(`SELECT pronargdefaults FROM pg_proc WHERE oid='${publicSignature}'::regprocedure`),'1');
+ }finally{
+  // PostgreSQL cannot remove defaults with CREATE OR REPLACE; replace ONLY this
+  // disposable proof's new function, retaining its native body and explicit ACL.
+  db.role='';db.run(`DROP FUNCTION ${publicSignature};${publicDefinition};REVOKE ALL ON FUNCTION ${publicSignature} FROM PUBLIC,anon,service_role;GRANT EXECUTE ON FUNCTION ${publicSignature} TO authenticated`);
+ }
+ for(const [name,change,restore,column,expected] of [
+  ['strictness','STRICT','CALLED ON NULL INPUT','proisstrict','t'],
+  ['parallel mode','PARALLEL SAFE','PARALLEL UNSAFE','proparallel','s'],
+  ['execution cost','COST 5','COST 100','procost','5']
+ ]){
+  db.run(`ALTER FUNCTION ${publicSignature} ${change}`);
+  await denied('public recovery '+name+' drift refuses without normalization',()=>db.exec(publicSource),/EXP08 original recovery public door drift/);
+  assert.equal(scalar(`SELECT ${column} FROM pg_proc WHERE oid='${publicSignature}'::regprocedure`),expected);
+  db.run(`ALTER FUNCTION ${publicSignature} ${restore}`);
+ }
+ db.run('ALTER FUNCTION public._exp08_read_owner_recovery(uuid,uuid) STRICT');
+ await denied('private receipt execution-metadata drift refuses public admission',()=>db.exec(publicSource),/EXP08 original recovery door prerequisite drift/);
+ assert.equal(scalar("SELECT proisstrict FROM pg_proc WHERE oid='public._exp08_read_owner_recovery(uuid,uuid)'::regprocedure"),'t');
+ db.run('ALTER FUNCTION public._exp08_read_owner_recovery(uuid,uuid) CALLED ON NULL INPUT');
+ db.run(`CREATE FUNCTION public.platform_owner_recovery(_tenant uuid,_act text,_user uuid,_reason text,_request uuid,_unexpected integer) RETURNS jsonb LANGUAGE plpgsql AS $$BEGIN RETURN '{}';END;$$`);
+ await denied('unsupported original recovery overload refuses installation',()=>db.exec(publicSource),/EXP08 original recovery unsupported overload/);
+ assert.equal(scalar("SELECT to_regprocedure('public.platform_owner_recovery(uuid,text,uuid,text,uuid,integer)') IS NOT NULL"),'t');
+ db.run('DROP FUNCTION public.platform_owner_recovery(uuid,text,uuid,text,uuid,integer)');await db.exec(publicSource);
  // Compose the released original entity lifecycle and its original FK/CHECK/seat
  // constraints into this same recovery transaction, not a copied vacancy writer.
  revokeFixture();putContact();

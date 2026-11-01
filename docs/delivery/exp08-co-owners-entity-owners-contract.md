@@ -2504,3 +2504,43 @@ installer metadata must additionally pin argument defaults/names, function shape
 language and execution flags, and reject unsupported overloads. Repair/regression
 required before publication/release; initial PASS is not clearance. All remaining
 full-native/privacy/retirement/UI/email/Setup/full-assignment gates remain open.
+
+### November1 — recovery-door review repairs and final165 local controls
+
+The initial e44f8f8b0 installer genuinely accepted default-argument drift; causal
+baseline FAIL `exp08-recovery-door-metadata-baseline.log`, raw SHA256
+`06b2feb4a77cc7caa74042b9d36e63bdbac6d1d745bf98e010f6e963eab8612d`.
+The repair pins language, scalar function kind/result, argument names/modes/defaults,
+strictness, parallel/leakproof/support/body/configuration and cost/rows flags for
+the original native prerequisites and public doors; unsupported overloads refuse.
+The original audit foundation is validated before creating any public entry.
+A second source P2 found effective-permission checks only on replay; fixed by ONE
+common post-create-or-inspect validation. Fresh inherited anon/service access now
+refuses atomically with zero endpoints created. Fixture role membership is restored
+in finally; no production roles changed. Changed source/ACL/default/STRICT/parallel/
+cost/private-reader flags and unsupported overload remain altered on refusal.
+
+Final165/0 author local PASS, all earlier157 controls retained; own database disposed.
+Raw `exp08-recovery-door-metadata-repaired.log` SHA256
+`69d862754809be26b27f8d6e9a57be4de7a24bd685a41318e1d32c8b87592138`;
+door installer `7776f43e7e23d88f037455aeba84ab2ec6ae88b6d6a87c5a4a340fd8e89d54e8`;
+proof `5eb48a076d051c5dde56aadc91423abb3288e14b804a067fe7577a2db3939c15`.
+Source-only repair reviews clear; exact committed review renewal remains required.
+No independent execution of165, managed/private namespace installation, mounted
+customer/operator UI, email, production release or authenticated acceptance.
+
+READ-ONLY actual production inventory: all91 function-source mentions captured,
+82 direct mutation functions;85 VALUES entries statically classified,75 simple
+literal actions. This is a heuristic inventory, NOT exhaustive SQL interpretation.
+Remaining cases include fixed-domain expressions, two service-only parameterized
+actions and original operator retirement. Original audit actor/tenant FKs use
+ON DELETE SET NULL, before-insert stamp fills only a NULL tenant, and retirement
+preserves audit rows while detaching tenant and marking server-only. No directly
+named scheduled audit-retention job; indirect/dynamic/Edge inventory still owed.
+Current protected-prefix count0 and public/private recovery doors ABSENT verified
+from actual production catalogue. No row contents, service action or DDL performed.
+Preserve R16 archive/delete authority; do not make retention a blanket deletion hold.
+Complete bootstrap/replay/privileged-writer and lifecycle/retirement composition,
+versioned normal release, UI/notifications/email/Setup and full original experience
+remain **STILL CODING**. The scoped public source is PARTIAL; customer results are
+PROOF OWED, never promoted from local tests or a source-only review.

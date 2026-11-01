@@ -1,3 +1,4 @@
+import {withInvoiceFinancialFixture} from '../../../scripts/live-drive/harness/sales-invoice-lifecycle/fixture';
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
@@ -5,7 +6,7 @@ import { SalesBillingWorkspace } from './SalesBillingWorkspace';
 import { normalizeInvoiceSnapshot } from './invoiceDraftSnapshot';
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const h = vi.hoisted(() => ({ tenant: '11111111-1111-4111-8111-111111111111', phase: 'ready', save: vi.fn(), invoke:vi.fn(), rpc:vi.fn(), actor:'66666666-6666-4666-8666-666666666666', catalogOptions:vi.fn(), catalogRetry:vi.fn(), catalogMore:false, termsVersion:2, rows: [] as unknown[], offers: [] as unknown[], canManage: true, clients: [] as { id: string; name: string; primaryEmail?: string | null }[] }));
-vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:h.rpc,functions:{invoke:h.invoke},auth:{getSession:async()=>({data:{session:{user:{id:h.actor}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})}}}));
+vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:(name:string,args:Record<string,unknown>)=>Promise.resolve(h.rpc(name,args)).then(r=>({...r,data:name==='read_sales_invoice'?withInvoiceFinancialFixture(r.data):r.data})),functions:{invoke:h.invoke},auth:{getSession:async()=>({data:{session:{user:{id:h.actor}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})}}}));
 vi.mock('../useSalesInvoiceDrafts', () => ({ useSalesInvoiceDrafts: () => ({ tenantId: h.tenant, phase: h.phase, rows: h.rows.map((value)=>{const r=value as {facts:Record<string,unknown>;totalMinor:number;dueNowMinor:number;remainderMinor:number};return ({...r,snapshot:normalizeInvoiceSnapshot({...r.facts,due_now_minor:r.dueNowMinor,remainder_minor:r.remainderMinor,price_snapshot:r.facts.price_id?{price_id:r.facts.price_id,product_id:'66666666-6666-4666-8666-666666666666',product_name:r.facts.item,unit_minor:r.facts.unit_minor,currency:'usd',billing_interval:'one_time',interval_count:null}:null},r.totalMinor)})}), hasMore: false, nextCursor: null, message: '', save: h.save, retry: vi.fn() }) }));
 vi.mock('../useSoloCommercialTerms', () => ({ useSoloCommercialTerms: () => ({ tenantId: h.tenant, phase: 'ready', clientsReadable: true, canManage: h.canManage, clients: h.clients }) }));
 vi.mock('../useCatalogOffers', () => ({ useCatalogOffers: (options:unknown) => {h.catalogOptions(options);return ({ tenantId: h.tenant, phase: 'ready', offers: h.offers, referencedOffers: [], hasMore:h.catalogMore,retry:h.catalogRetry })} }));
@@ -32,12 +33,12 @@ function reopenCatalog(currentUnit = 15000) {
 }
 it.each(['draft','issued','void'] as const)('keeps %s record amounts distinct from a current issued debt',status=>{
  reopenCatalog();click('Back to records');
- Object.assign(h.rows[0] as Record<string,unknown>,{status,number:status==='draft'?'DRAFT-44444444-4444-4444-8444-444444444444':'INV-1042',remainingMinor:20000,manualRecordedMinor:0,providerVerifiedMinor:0});
+ Object.assign(h.rows[0] as Record<string,unknown>,{status,number:status==='draft'?'DRAFT-44444444-4444-4444-8444-444444444444':'INV-1042',remainingMinor:20000,manualRecordedMinor:0,providerVerifiedMinor:0,financial:status==='issued'?{schema_version:3,invoice_id:'44444444-4444-4444-8444-444444444444',invoice_version:3,currency:'usd',standing:'recorded',outstanding_minor:20000,refund_payable_minor:0,credit_minor:0,manual_recorded_minor:0,provider_confirmed_minor:0,provider_net_minor:0,test_provider_minor:0,source_hash:'b'.repeat(64)}:undefined});
  act(()=>root.render(<SalesBillingWorkspace view="invoices"/>));
  const paper=host.querySelector('.sb-detail-grid .sb-paper')!;
  const terms=Array.from(paper.querySelectorAll('dt')).map(el=>el.textContent);
  expect(terms).toContain(status==='draft'?'Draft total':status==='void'?'Original invoice total':'Total obligation');
- expect(terms).toContain(status==='draft'?'Unissued draft amount':status==='void'?'Recorded balance (voided)':'Outstanding balance');
+ if(status==='issued')expect(terms).toContain('Current outstanding');else expect(terms).not.toContain('Current outstanding');
  if(status!=='issued'){expect(terms).not.toContain('Total obligation');expect(terms).not.toContain('Outstanding balance');expect(paper.textContent).not.toContain('Paid');}
  expect(paper.textContent).toContain('$200.00');expect(paper.textContent).toContain('Version3');
  expect(h.save).not.toHaveBeenCalled();expect(h.invoke).not.toHaveBeenCalled();

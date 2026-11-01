@@ -5,9 +5,16 @@ begin;
 set local lock_timeout='2s';
 set local statement_timeout='10s';
 set local idle_in_transaction_session_timeout='10s';
+-- Use the real installed carrier when present; historical baseline still
+-- installs only the original rollback fixture. ALL43+39 assertions below run.
+select to_regprocedure('public._sales_invoice_financial_read_version()') is not null as e04_financial_native \gset
+\if :e04_financial_native
+-- Native migration52-contract postcondition and original behavior controls apply.
+\else
 \ir fixtures/exp04_provider_observation.sql
 \if :{?e04_observation_work}
 \ir fixtures/exp04_provider_observation_work.sql
+\endif
 \endif
 
 
@@ -83,6 +90,14 @@ create function pg_temp.observation_refused(_sql text,_code text,_label text) re
 begin perform pg_temp.refused(_sql,_code,_label);insert into e04_observation_checks values(_label);end $$;
 grant execute on function pg_temp.observation_check(boolean,text),pg_temp.observation_refused(text,text,text),pg_temp.check_true(boolean,text),pg_temp.refused(text,text,text) to authenticated,service_role,anon;
 grant select,insert on e04_observation_checks to anon;
+
+-- The retained neutral commercial fixture is PAUSED by design. Reuse the
+-- same original authenticated status writer as the full-schema manual proof
+-- before actual current financial allocation; never bypass accepted-term guards.
+select set_config('request.jwt.claim.sub',(select data->>'actor_id' from e04_commercial_fixture),true);
+set local role authenticated;
+select public.set_client_agreement_status((data->>'tenant_id')::uuid,(data#>>'{effective,commercial_terms_id}')::uuid,'active',null) from e04_commercial_fixture;
+reset role;
 do $seed$declare f jsonb;i public.paige_invoices%rowtype;command jsonb;
 begin
  select data into strict f from e04_commercial_fixture;

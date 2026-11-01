@@ -68,3 +68,27 @@ export function parsePaymentObligationContext(value:unknown):PaymentObligationCo
    obligation:parsePaymentObligationEvidence(value.obligation)};
  }catch{return invalid();}
 }
+
+/** Versioned result from the ORIGINAL service-only obligation reader. Amounts
+ * are native facts; this parser neither calculates debt nor offsets a refund. */
+export type InvoicePaymentFinancialContext=Readonly<{
+ financial_evidence_version:3;tenant_id:string;client_id:string;invoice_id:string;
+ invoice_version:number;issued_snapshot_version:number;status:'issued';currency:string;
+ financial_standing:'recorded';actual_outstanding_minor:number;refund_payable_minor:number;
+ source_hash:string;obligation:PaymentObligationEvidence|null;
+}>;
+export function parseInvoicePaymentFinancialContext(value:unknown):InvoicePaymentFinancialContext{
+ try{
+  if(!object(value))return invalid();
+  only(value,['financial_evidence_version','tenant_id','client_id','invoice_id','invoice_version','issued_snapshot_version',
+   'status','currency','financial_standing','actual_outstanding_minor','refund_payable_minor','source_hash','obligation']);
+  if(value.financial_evidence_version!==3||value.status!=='issued'||value.financial_standing!=='recorded'
+   ||typeof value.currency!=='string'||!/^[a-z]{3}$/.test(value.currency)
+   ||typeof value.source_hash!=='string'||!/^[a-f0-9]{64}$/.test(value.source_hash))return invalid();
+  return {financial_evidence_version:3,tenant_id:id(value.tenant_id),client_id:id(value.client_id),invoice_id:id(value.invoice_id),
+   invoice_version:integer(value.invoice_version,1,Number.MAX_SAFE_INTEGER),issued_snapshot_version:integer(value.issued_snapshot_version,1,Number.MAX_SAFE_INTEGER),
+   status:'issued',currency:value.currency,financial_standing:'recorded',actual_outstanding_minor:integer(value.actual_outstanding_minor,0,MAX_MINOR),
+   refund_payable_minor:integer(value.refund_payable_minor,0,MAX_MINOR),source_hash:value.source_hash,
+   obligation:value.obligation===null?null:parsePaymentObligationEvidence(value.obligation)};
+ }catch{return invalid();}
+}

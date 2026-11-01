@@ -146,6 +146,7 @@ on:
       # Experience 04 E4-S1 — where this client stands (source read + composer parity).
       - "supabase/tests/exp04_client_engagement_status.sql"
       - "supabase/tests/exp04_provider_observation_integrity.sql"
+      - "supabase/tests/exp04_manual_payment_allocations.sql"
       - "supabase/tests/fixtures/exp04_provider_observation.sql"
       - "supabase/tests/fixtures/exp04_reviewed_commercial_native.sql"
       - "supabase/tests/pgcrypto_search_path_signing.sql"
@@ -488,6 +489,10 @@ jobs:
       - name: Experience 04 provider observation integrity and recovery (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -v e04_observation_work=1 -f supabase/tests/exp04_provider_observation_integrity.sql
+
+      - name: Experience 04 original manual receipt and current financial full-schema proof (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp04_manual_payment_allocations.sql
 
       - name: Experience 04 client status read, scope refusals and ledger parity (rolled back)
         if: ${{ !cancelled() }}
@@ -1084,7 +1089,7 @@ jobs:
       # 5c6a8a0ab: without roles/tables every assertion errors, and only ON_ERROR_STOP
       # converts that into a red). ON_ERROR_STOP is set at the step level, as here.
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/systems_check_runner_read_grants.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
-      - name: Systems Check saved-source integrity (36 assertions; rolled back)
+      - name: Systems Check saved-source integrity (47 assertions; rolled back)
         run: supabase test db supabase/tests/systems_check_source_integrity.sql
       # There must be exactly ONE public.record_capability_run (migration 20270411090000).
       # 20270107000000 added four trailing params as a NEW signature instead of replacing the

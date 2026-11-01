@@ -11,7 +11,8 @@ const require=createRequire(import.meta.url),here=path.dirname(fileURLToPath(imp
 const actionEntry=process.argv.includes('--action-entry');
 const legacyQueue=process.argv.includes('--legacy-queue');
 const openingFeedback=process.argv.includes('--opening-feedback');
-const out=path.join(repo,'docs/evidence/ui-delivery/assets',openingFeedback?'exp03-saved-reply-opening':legacyQueue?'exp03-legacy-reply-version':actionEntry?'exp03-saved-email-action-entry':'exp03-saved-email-outcome',new Date().toISOString().replaceAll(':','-'));
+const fullShell=process.argv.includes('--full-shell');
+const out=path.join(repo,'docs/evidence/ui-delivery/assets',fullShell?'exp03-saved-reply-full-shell':openingFeedback?'exp03-saved-reply-opening':legacyQueue?'exp03-legacy-reply-version':actionEntry?'exp03-saved-email-action-entry':'exp03-saved-email-outcome',new Date().toISOString().replaceAll(':','-'));
 fs.mkdirSync(out,{recursive:true});
 const port=5227,results=[],errors=[],external=[];let server,browser,log='';
 // Reuse the original metric implementation; only expose one extra result projection
@@ -45,6 +46,37 @@ try{
  server=spawn(process.execPath,[vite,'--config',path.join(here,'vite.config.ts'),'--host','127.0.0.1','--port',String(port),'--strictPort'],{cwd:repo,windowsHide:true,stdio:['ignore','pipe','pipe']});
  await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(Error('Owned Vite startup timeout: '+log.slice(-2000))),60000);const data=b=>{log+=String(b);if(log.includes('ready in')){clearTimeout(timeout);resolve();}};server.stdout.on('data',data);server.stderr.on('data',data);server.on('error',reject);server.on('exit',c=>{clearTimeout(timeout);reject(Error('Owned Vite exited '+c+': '+log.slice(-2000)));});});
  const {chromium}=await resolvePlaywright();browser=await chromium.launch(buildLaunchOptions());
+ if(fullShell)for(const theme of ['light','dark'])for(const[width,height]of (process.argv.includes('--smoke')?[[1366,768]]:[[1536,770],[1366,768],[1024,768],[900,1000]]))for(const paige of ['closed','open']){
+  const context=await browser.newContext({viewport:{width,height},reducedMotion:'reduce'});
+  const blockedFontStyles=[];
+  await context.route('**/*',route=>{const u=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(u.hostname)||['data:','blob:'].includes(u.protocol))return route.continue();if(u.hostname==='fonts.googleapis.com'){blockedFontStyles.push(u.origin);return route.fulfill({status:200,contentType:'text/css',body:'/* External font stylesheet withheld; existing local fixture fonts only. */'});}external.push(u.origin);return route.abort();});
+  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+  const diagnostics=[];page.on('console',m=>{if(m.type()==='error')diagnostics.push(m.text().slice(0,500));});page.on('response',r=>{if(r.status()>=400)diagnostics.push(`${r.status()} ${r.url()}`);});
+  try{
+   await page.goto(`http://127.0.0.1:${port}/solo/42/clients/conversations?${new URLSearchParams({theme,shell:'real',opening:'hold'})}`,{timeout:180000});
+   await page.locator('[data-canonical-conversations]').waitFor({timeout:60000});await page.evaluate(()=>document.fonts.ready);
+   if(await page.locator('[data-tenant-shell]').getAttribute('data-paige')==='open')await page.locator('#tenant-paige-workspace').getByRole('button',{name:'Fold PAIGE conversation',exact:true}).click();
+   await page.locator('[data-thread-key]').filter({hasText:'Jordan Rivera'}).first().click();
+   const edit=page.getByRole('button',{name:'Edit',exact:true}).first();await edit.focus();await edit.press('Space');
+   const pending=page.getByRole('status').filter({hasText:'Opening saved reply…'});await pending.waitFor();assert(await edit.isDisabled());
+   const textarea=page.locator('[data-composer-writing-surface="true"] textarea');
+   if(paige==='open'){
+    await page.getByRole('button',{name:'Direct PAIGE',exact:true}).click();await page.locator('#tenant-paige-workspace').waitFor({state:'visible'});
+   }else await pending.scrollIntoViewIfNeeded();
+   await labelMock(page);await page.screenshot({path:path.join(out,`${theme}-${width}-${paige}-pending.png`)});
+   const geometry=await page.evaluate(()=>{const shell=document.querySelector('[data-tenant-shell]'),status=[...document.querySelectorAll('[role="status"]')].find(e=>e.textContent==='Opening saved reply…'),r=status.getBoundingClientRect(),dock=document.querySelector('#tenant-paige-workspace'),d=dock.getBoundingClientRect();return{shellTheme:shell.getAttribute('data-pg'),shellPaige:shell.getAttribute('data-paige'),rootScrollWidth:document.documentElement.scrollWidth,viewport:innerWidth,status:{x:r.x,y:r.y,right:r.right,bottom:r.bottom},dock:{x:d.x,y:d.y,width:d.width,height:d.height},placeholder:!!document.querySelector('[aria-label="PAIGE dock (harness placeholder)"]')};});
+   assert.equal(geometry.shellTheme,theme);assert.equal(geometry.shellPaige,paige);assert.equal(geometry.placeholder,false);assert(geometry.rootScrollWidth<=width+1,'no document horizontal scroll');
+   await page.evaluate(()=>window.__harness.releaseOpeningRead());await page.getByRole('button',{name:'Save draft',exact:true}).waitFor({state:'attached'});assert.equal(await textarea.inputValue(),'Saved original reply words.');
+   if(paige==='open'){
+    assert.equal(await textarea.evaluate(el=>document.activeElement===el),false,'opening source must not steal focus from PAIGE');
+    await page.locator('#tenant-paige-workspace').getByRole('button',{name:'Fold PAIGE conversation',exact:true}).click();
+   }else assert(await textarea.evaluate(el=>document.activeElement===el),'initiating keyboard focus returns to original editor');
+   await textarea.scrollIntoViewIfNeeded();const focusBounds=await textarea.evaluate(el=>{const r=el.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:innerWidth,height:innerHeight};});
+   assert(focusBounds.left>=0&&focusBounds.right<=width+1&&focusBounds.top>=0&&focusBounds.bottom<=height+1,'original editor reachable after fold');
+   assert.equal((await calls(page)).length,0);await page.screenshot({path:path.join(out,`${theme}-${width}-${paige}-settled.png`)});
+   results.push({name:`${theme}-${width}-${paige}`,pass:true,geometry,focusBounds,blockedFontStyles,writerCalls:0,proof:'original shell and PAIGE renderer; fictional ports/local fixture fonts, not authenticated/second-tenant/native-zoom proof'});
+  }catch(error){await page.screenshot({path:path.join(out,`${theme}-${width}-${paige}-failure.png`)});results.push({pass:false,diagnostics,serverLog:log.slice(-5000),visibleText:(await page.locator('body').innerText()).slice(0,2000)});throw error;}finally{await context.close();}
+ }
  if(openingFeedback)for(const theme of ['light','dark'])for(const width of [1366,900])for(const how of ['keyboard','other-focus','newer-words']){
   const context=await browser.newContext({viewport:{width,height:width===900?1000:768},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const u=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(u.hostname)||['data:','blob:'].includes(u.protocol))return route.continue();external.push(u.origin);return route.abort();});
@@ -74,7 +106,7 @@ try{
    results.push({name:`${theme}-${width}-${how}`,pass:true,openingVisible:true,writerCalls:0,proof:'controlled original workspace; fictional source; not authenticated/provider/Hub proof'});
   }finally{await context.close();}
  }
- const variants=openingFeedback?[]:legacyQueue?['light','dark'].flatMap(theme=>['missing','invalid'].map(queueVersion=>({theme,queueVersion,paige:'closed',w:1366,h:768}))):(process.argv.includes('--accepted-only')||process.argv.includes('--reflow-only'))?[]:process.argv.includes('--smoke')?[{theme:'light',paige:'closed',w:1366,h:768}]:['light','dark'].flatMap(theme=>['closed','open'].flatMap(paige=>[[1536,770],[1366,768],[1024,768],[900,1000]].map(([w,h])=>({theme,paige,w,h}))));
+ const variants=(openingFeedback||fullShell)?[]:legacyQueue?['light','dark'].flatMap(theme=>['missing','invalid'].map(queueVersion=>({theme,queueVersion,paige:'closed',w:1366,h:768}))):(process.argv.includes('--accepted-only')||process.argv.includes('--reflow-only'))?[]:process.argv.includes('--smoke')?[{theme:'light',paige:'closed',w:1366,h:768}]:['light','dark'].flatMap(theme=>['closed','open'].flatMap(paige=>[[1536,770],[1366,768],[1024,768],[900,1000]].map(([w,h])=>({theme,paige,w,h}))));
  for(const variant of variants){
   const context=await browser.newContext({viewport:{width:variant.w,height:variant.h},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const url=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(url.hostname)||['data:','blob:'].includes(url.protocol))return route.continue();external.push(url.origin);return route.abort();});
@@ -107,7 +139,7 @@ try{
    const name=`${variant.theme}-${variant.w}-${variant.paige}`;await page.screenshot({path:path.join(out,name+'.png')});results.push({name,pass:true,overlay,measurement,originalMetrics,saveCalls:1,reopenWords:true,proof:'controlled original workspace; not authenticated/provider/Hub-host proof'});
   }finally{await context.close();}
  }
- if(!openingFeedback&&!legacyQueue&&!process.argv.includes('--smoke')&&!process.argv.includes('--reflow-only'))for(const theme of ['light','dark'])for(const recovery of (process.argv.includes('--accepted-only')?['accepted']:['save-unknown','save-refuse','accepted'])){
+ if(!fullShell&&!openingFeedback&&!legacyQueue&&!process.argv.includes('--smoke')&&!process.argv.includes('--reflow-only'))for(const theme of ['light','dark'])for(const recovery of (process.argv.includes('--accepted-only')?['accepted']:['save-unknown','save-refuse','accepted'])){
   const context=await browser.newContext({viewport:{width:1366,height:768},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const u=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(u.hostname)||['data:','blob:'].includes(u.protocol))return route.continue();external.push(u.origin);return route.abort();});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
@@ -140,7 +172,7 @@ try{
  }
  // Pointer setup selects the original conversation and opens its saved draft.
  // From that entry, exercise editing/save/cancel/reopen/check/approve only by keyboard.
- if(!openingFeedback&&!legacyQueue&&!process.argv.includes('--smoke')&&!process.argv.includes('--accepted-only')&&!process.argv.includes('--reflow-only'))for(const theme of ['light','dark']){
+ if(!fullShell&&!openingFeedback&&!legacyQueue&&!process.argv.includes('--smoke')&&!process.argv.includes('--accepted-only')&&!process.argv.includes('--reflow-only'))for(const theme of ['light','dark']){
   const context=await browser.newContext({viewport:{width:1366,height:768},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const u=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(u.hostname)||['data:','blob:'].includes(u.protocol))return route.continue();external.push(u.origin);return route.abort();});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
@@ -162,7 +194,7 @@ try{
  }
  // CSS viewport observed during the separate native 200% Chrome drive (1134x762 -> 567x381).
  // This repeatable viewport check is not itself native browser zoom or authenticated-host proof.
- if(!openingFeedback&&!legacyQueue&&!process.argv.includes('--smoke')&&!process.argv.includes('--accepted-only'))for(const theme of ['light','dark']){
+ if(!fullShell&&!openingFeedback&&!legacyQueue&&!process.argv.includes('--smoke')&&!process.argv.includes('--accepted-only'))for(const theme of ['light','dark']){
   const context=await browser.newContext({viewport:{width:567,height:381},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const u=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(u.hostname)||['data:','blob:'].includes(u.protocol))return route.continue();external.push(u.origin);return route.abort();});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
@@ -182,6 +214,6 @@ try{
  console.log(JSON.stringify({cases:results.length,pageErrors:errors.length,offMachineRequests:external.length,out}));
 }catch(error){results.push({pass:false,error:String(error)});throw error;}
 finally{
- fs.writeFileSync(path.join(out,'results.json'),JSON.stringify({results,errors,external,proof:'LOCAL_CONTROLLED_WORKSPACE',voice:'UNEXERCISED',paige:'PLACEHOLDER',nativeBrowserZoom:'UNVERIFIED'},null,2));
+ fs.writeFileSync(path.join(out,'results.json'),JSON.stringify({results,errors,external,proof:'LOCAL_CONTROLLED_WORKSPACE',voice:'UNEXERCISED',paige:fullShell?'ORIGINAL_SHELL_AND_WORKSPACE_FICTIONAL_PORTS':'PLACEHOLDER',nativeBrowserZoom:'UNVERIFIED'},null,2));
  try{await browser?.close();}finally{if(server&&server.exitCode===null){if(process.platform==='win32')spawnSync('taskkill.exe',['/PID',String(server.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});else server.kill('SIGTERM');}}
 }

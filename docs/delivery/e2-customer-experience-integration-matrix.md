@@ -1,5 +1,38 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October31 — O06 existing source-integrity proof gate (development)
+
+The same PRIMARY O06 retains its original saved-finding/run/source/reopen and
+ordinary-role/cohort acceptance. Its existing
+`supabase/tests/systems_check_source_integrity.sql` originally declared35 native
+assertions but was not invoked by the rebuilt-database workflow. Its first hosted
+run passed27 assertions, then correctly refused the legacy coach-fixture member;
+eight later assertions were not reached. The approved role-retirement contract
+`20270504000000_retire_title_role_from_functions.sql` grants no coach-title
+authority. The corrected fixture adds an explicit member-refusal assertion and
+uses the existing authorized admin for the original positive source-bound action.
+All original business/security assertions remain; plan35 becomes36. No production
+permission, function, grant, UI or action behavior changes. The existing canonical
+`supabase test db`/pg_prove runner and main-push path are reused.
+
+Functional: corrected36-assertion full-schema execution,
+exact-head review/CI and release remain **PROOF OWED**. Visual: unchanged.
+Experiential: ordinary customer role/foreign/revoked/current-context and second
+authorized SOLO/reload/recovery proof remain owed; native fixtures do not replace
+them. Founder Acceptance: OPEN, one complete integrated Experience review.
+ALG12 remains partial: source-integrity/permission checks are deterministic
+contract evidence, not new anomaly detection or a maturity promotion. No new
+Spine verb, Harness, approval channel, worker, scan or provider activation.
+The original test is rolled back in the existing isolated CI database.
+
+Named E08 Billing prerequisite remains separate: frozen3173 current-main
+successor `cbb4dd50e955f9de1da145216a772ed512e36abf` retains its three original
+files; required CI/release are pending. E02 executed the existing immutable E08
+`5b20b26d608425d0f5bc7a5f3172a157f7361689` local receiving proof:131 controls
+passed and its random database was disposed. Explicit minimal Auth/context/table
+ports are not hosted/customer proof or recovery activation. All original19/nine,
+original first-briefing9PASS/0FAIL and prior histories below remain unchanged.
+
 ## October31 — one primary outcome: O06 saved Systems Check inspection
 
 **Still coding; no completed-outcome or founder-acceptance claim.** The customer

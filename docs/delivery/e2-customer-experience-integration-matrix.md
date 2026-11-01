@@ -46,6 +46,14 @@ activation and all nine catalogue states are unchanged. This analytical/source
 read proof does not run a new check, approve a correction or prove an effect.
 All original19 definitions and historical acceptance denominators below remain.
 
+The same O06 follow-up reproduced a payment-finding navigation limitation:
+legacy Marketing/Sales links land on Sales Overview. A LOCAL correction sends
+only those two findings to the original Sales payment records and explicitly
+discloses that payment setup cannot be changed there; the existing declaration
+writer/consumer remains EXP04-owned. Original128 focused controls pass; repaired
+source review/CI/release and live navigation/legibility remain PROOF OWED.
+[Bounded evidence](../evidence/ui-delivery/e2-systems-payment-destinations.md).
+
 Safe prelaunch releases require proportionate engineering verification, separate
 technical review and genuine exact-head CI. Browser/prototype/AT/zoom or a second
 session are not prerequisites for an otherwise safe merge/deploy. Verify LIVE

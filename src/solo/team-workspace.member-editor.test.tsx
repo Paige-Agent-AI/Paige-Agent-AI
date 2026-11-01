@@ -142,6 +142,8 @@ describe("Solo Team member work-details dialog", () => {
       _member_user_id: member.user_id,
       _job_title: "Operations Lead",
       _responsibilities: "Owns delivery and weekly planning.",
+      _expected_tenant_id: workspace.tenant_id,
+      _expected_membership_id: member.membership_id,
     });
     expect(mocks.rpc).not.toHaveBeenCalledWith("set_solo_team_member_permission", expect.anything());
     expect(title.value).toBe("Operations Lead");
@@ -271,5 +273,21 @@ describe("original work-profile unknown and current-context recovery",()=>{
     const {root,saved,save}=await edit(()=>live);await act(async()=>save.click());live=false;
     await act(async()=>resolve({data:{membership_id:member.membership_id,job_title:'Delivery Lead',responsibilities:member.responsibilities},error:null}));
     expect(mocks.success).not.toHaveBeenCalled();expect(saved).not.toHaveBeenCalled();await act(async()=>root.unmount());
+  });
+});
+
+
+describe("original scoped membership refusal",()=>{
+  beforeEach(()=>{document.body.innerHTML="";mocks.rpc.mockReset();mocks.success.mockReset();mocks.error.mockReset();});
+  it("retains the draft, requires a fresh Team read and never retries a replaced membership",async()=>{
+    mocks.rpc.mockResolvedValueOnce({data:null,error:{message:'this team membership changed before this could run; nothing was changed'}});
+    const host=document.createElement('div');document.body.append(host);const root=createRoot(host);const saved=vi.fn();
+    await act(async()=>root.render(<MemberEditor member={member} workspace={workspace} onClose={vi.fn()} onSaved={saved}/>));
+    await act(async()=>setValue(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!,'Delivery Lead'));
+    const save=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Save work details')!;
+    await act(async()=>save.click());expect(save.disabled).toBe(true);expect(mocks.error).toHaveBeenCalledWith("This person's team membership changed. Reopen Team before trying again.");
+    expect(mocks.rpc).toHaveBeenCalledWith('set_solo_team_member_work_profile',expect.objectContaining({_expected_tenant_id:workspace.tenant_id,_expected_membership_id:member.membership_id}));
+    expect(mocks.success).not.toHaveBeenCalled();expect(saved).not.toHaveBeenCalled();await act(async()=>save.click());expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    expect(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.value).toBe('Delivery Lead');await act(async()=>root.unmount());
   });
 });

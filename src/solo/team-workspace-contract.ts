@@ -157,6 +157,7 @@ export function workProfileRefusal(message: string | undefined, ownerExplanation
   if (message?.startsWith("TEAM_MEMBER_IDENTITY_UNAVAILABLE:")) return "Your account access could not be confirmed. Reopen Team before trying again.";
   if (message === "authentication required in an active workspace" || message === "only an owner or admin may update work details") return "Your access to these work details could not be confirmed. Reopen Team to check your access.";
   if (message === "team member not found in this workspace") return "This person is no longer on the current team. Reopen Team to see the current roster.";
+  if (message === "this team membership changed before this could run; nothing was changed") return "This person's team membership changed. Reopen Team before trying again.";
   if (message === "your active workspace changed before this could run; nothing was changed") return "Your workspace changed. Reopen Team before trying again.";
   if (message === "job title must be 120 characters or fewer" || message === "responsibilities must be 2000 characters or fewer" || message === "Work details could not be saved.") return message;
   return "The save could not be confirmed. Reopen Team to check the current work details before trying again.";

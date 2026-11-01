@@ -3100,3 +3100,45 @@ those incoming files are composed normally. Unfinished work-profile/UI follow-up
 remains separate and unpublished. Full original18+6/five journeys STILL CODING.
 
 Final selected ACL replay log SHA256: `d7cdec7c00461dd8e3a151ae98d448dceb0122e13a4846025ee07257cfcd9362`.
+
+
+### Original work-profile captured scope/seat — local November1 integration
+
+Fresh production has ONLY original3arg work-profile/body1d99; no managed scoped
+overload exists. Local negative proof confirms the legacy current-workspace API
+cannot receive the prior reviewed workspace or target seat. A4arg prototype
+closed the workspace boundary but left3 membership-incarnation cases failing.
+It was never versioned, published or applied. The final inert overload is
+`set_solo_team_member_work_profile(_member_user_id uuid,_job_title text,
+_responsibilities text,_expected_tenant_id uuid,_expected_membership_id uuid)`.
+Both expected values are refusal-only: actual current tenant+user selects the
+locked target; supplied membership UUID only compares against it. Auth, current
+role, sorted seats, profile and tenant are held/re-resolved before delegating all
+effects to the SAME original3arg writer/audit/receipt. No second effect writer,
+store/approval/runtime/service impersonation. Original3arg ABI/legitimate callers
+remain; no scoped-to-unscoped fallback. New5arg execution is authenticated-only,
+postgres/SECURITY DEFINER/empty path; exact body/metadata/ACL replay is admitted,
+unknown drift refused without repair. No4arg installation history exists to alter.
+
+Final selected component exits0: original19 cases through BOTH doors,7 captured
+scope/seat controls, complete both-overload metadata replay,5 additional scoped
+body/ACL/grant-option/path/security refusals,2 direct anon/service role denials,
+6 original plus7 scoped actual database waits. Workspace switch, same person in
+both workspaces, missing/foreign capture and membership replacement refuse with
+no profile/audit effect; permitted original writer produces one original audit.
+Earlier original5 drift/4 mutants and all original controls remain. Initial
+Python quoting and SQL fixture-separator errors are setup failures, not product
+proof. This is disposable Auth/scope-port engineering evidence, not full-schema,
+SDK/RLS/customer/cohort or production proof. Only the created database is disposed.
+
+Mounted MemberEditor now submits BOTH captured fields, verifies the same original
+receipt and requires fresh Team after a stale membership refusal. Causal client
+expectation1FAIL→updated integration; all11 neighboring suites181/181 PASS.
+Scoped local transport follows the same declared shape. Original shared Team
+Chat/C0b consumer still needs its named receiving contract/custody and native
+roster membership_id producer; no shared Chat edit/takeover was made. Original
+native carrier/title baseline, owner projection, real browser/AT/type/native/Auth
+proof and all other I2/I3/I4/I5 integration remain owed. Render/resource holds
+are not cleared by these component tests. Full18+6/five journeys STILL CODING.
+
+Scoped component log SHA256: `f35fbb00a97a32b27c696f002ff8d7fece0a04405b582440d9b5da0825196dfc`.

@@ -11,7 +11,7 @@ CREATE FUNCTION public.is_tenant_admin(t uuid) RETURNS boolean LANGUAGE sql STAB
  AND status='active' AND (is_owner OR role IN ('owner','admin'))) $$;
 GRANT USAGE ON SCHEMA auth TO authenticated,anon;
 GRANT SELECT ON public.profiles,public.tenant_members TO authenticated;
-CREATE FUNCTION proof.work_profile_cases() RETURNS TABLE(case_name text,passed boolean,detail text) LANGUAGE plpgsql AS $$
+CREATE FUNCTION proof.work_profile_cases(_scoped boolean DEFAULT false) RETURNS TABLE(case_name text,passed boolean,detail text) LANGUAGE plpgsql AS $$
 DECLARE n text; actor uuid; target uuid; expected boolean; succeeded boolean; result jsonb; err text;
  t uuid:='e8000000-0000-4000-8000-000000060010';
  holder uuid:='e8000000-0000-4000-8000-000000060100'; other uuid:='e8000000-0000-4000-8000-000000060300';
@@ -59,8 +59,13 @@ BEGIN
   succeeded:=false;err:='';
   BEGIN
    SET LOCAL ROLE authenticated;
+   IF _scoped THEN
+    result:=public.set_solo_team_member_work_profile(target,CASE WHEN n='title limit' THEN repeat('x',121) ELSE '  Team lead  ' END,
+      CASE WHEN n='responsibility limit' THEN repeat('x',2001) WHEN n='trim and null' THEN '   ' ELSE '  Coordinate delivery  ' END,t,(SELECT id FROM public.tenant_members WHERE tenant_id=t AND user_id=target));
+   ELSE
    result:=public.set_solo_team_member_work_profile(target,CASE WHEN n='title limit' THEN repeat('x',121) ELSE '  Team lead  ' END,
      CASE WHEN n='responsibility limit' THEN repeat('x',2001) WHEN n='trim and null' THEN '   ' ELSE '  Coordinate delivery  ' END);
+   END IF;
    succeeded:=true;
   EXCEPTION WHEN OTHERS THEN err:=SQLSTATE||'/'||SQLERRM;
   END;
@@ -77,6 +82,50 @@ BEGIN
       ELSE true END
     AND before_rows=(SELECT jsonb_agg(to_jsonb(m) ORDER BY id) FROM public.tenant_members m)
     AND (SELECT count(*)=before_audit FROM public.audit_logs),err;
+  END IF;
+ END LOOP;
+END $$;
+
+
+CREATE FUNCTION proof.work_profile_scope_cases(_scoped boolean) RETURNS TABLE(case_name text,passed boolean,detail text) LANGUAGE plpgsql AS $$
+DECLARE n text; a uuid:='e8000000-0000-4000-8000-000000060010';b uuid:='e8000000-0000-4000-8000-000000060020';
+ actor uuid:='e8000000-0000-4000-8000-000000060300';target uuid:='e8000000-0000-4000-8000-000000060100';
+ expected uuid; expected_member uuid; result jsonb; succeeded boolean; err text; before_rows jsonb;
+BEGIN
+ FOREACH n IN ARRAY ARRAY['same person in both workspaces','caller cannot select another workspace','missing expected workspace','membership replaced','missing captured membership','caller cannot select another membership','permitted captured workspace'] LOOP
+  PERFORM proof.reset_rows();TRUNCATE public.profiles,public.audit_logs;
+  UPDATE public.tenant_members SET is_owner=false,role='member',business_owner_id=NULL WHERE tenant_id=a AND user_id=target;
+  INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status) VALUES
+   ('e8000000-0000-4000-8000-000000061004',a,actor,false,'admin','active'),
+   ('e8000000-0000-4000-8000-000000061005',b,target,false,'member','active'),
+   ('e8000000-0000-4000-8000-000000061006',b,actor,false,'admin','active');
+  INSERT INTO public.profiles VALUES(actor,CASE WHEN n='same person in both workspaces' THEN b ELSE a END);
+  expected:=CASE WHEN n='caller cannot select another workspace' THEN b WHEN n='missing expected workspace' THEN NULL ELSE a END;
+  expected_member:=CASE WHEN n='missing captured membership' THEN NULL WHEN n='caller cannot select another membership' THEN 'e8000000-0000-4000-8000-000000061005'::uuid ELSE 'e8000000-0000-4000-8000-000000061001'::uuid END;
+  IF n='membership replaced' THEN
+   DELETE FROM public.tenant_members WHERE tenant_id=a AND user_id=target;
+   INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status) VALUES('e8000000-0000-4000-8000-000000061007',a,target,false,'member','active');
+  END IF;
+  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
+  SELECT jsonb_agg(to_jsonb(m) ORDER BY id) INTO before_rows FROM public.tenant_members m;
+  succeeded:=false;err:='';
+  BEGIN
+   SET LOCAL ROLE authenticated;
+   IF _scoped THEN result:=public.set_solo_team_member_work_profile(target,'Captured team title','Same original work details',expected,expected_member);
+   ELSE result:=public.set_solo_team_member_work_profile(target,'Captured team title','Same original work details');END IF;
+   succeeded:=true;
+  EXCEPTION WHEN OTHERS THEN err:=SQLSTATE||'/'||SQLERRM;
+  END;
+  RESET ROLE;
+  IF n='permitted captured workspace' THEN
+   RETURN QUERY SELECT n,succeeded AND result->>'membership_id'='e8000000-0000-4000-8000-000000061001'
+    AND EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id=a AND user_id=target AND job_title='Captured team title')
+    AND EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id=b AND user_id=target AND job_title IS NULL)
+    AND (SELECT count(*)=1 AND bool_and(data->>'tenant_id'=a::text) FROM public.audit_logs),coalesce(result::text,err);
+  ELSE
+   RETURN QUERY SELECT n,NOT succeeded AND CASE WHEN n IN ('membership replaced','missing captured membership','caller cannot select another membership') THEN err LIKE '42501/this team membership changed%' ELSE err LIKE '42501/your active workspace changed%' END
+    AND before_rows=(SELECT jsonb_agg(to_jsonb(m) ORDER BY id) FROM public.tenant_members m)
+    AND (SELECT count(*)=0 FROM public.audit_logs),CASE WHEN succeeded THEN 'legacy call wrote to its then-current workspace' ELSE err END;
   END IF;
  END LOOP;
 END $$;

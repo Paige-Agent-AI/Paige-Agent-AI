@@ -19,7 +19,8 @@ export const supabase={...incumbent,rpc:async(name:string,args:Record<string,unk
   if(mode==="refusal")return{data:null,error:{code:"42501",message:"TEAM_OWNER_PROFILE_FORBIDDEN: synthetic authority change"}};
   if(mode==="missing")return{data:null,error:null};
   const target=rows().find(row=>row.user_id===args._member_user_id);
-  if(!target)return{data:null,error:{code:"42501",message:"team member not found in this workspace"}};
+  if(args._expected_tenant_id!==tenant.id)return{data:null,error:{code:"42501",message:"your active workspace changed before this could run; nothing was changed"}};
+  if(!target||args._expected_membership_id!==target.membership_id)return{data:null,error:{code:"42501",message:"this team membership changed before this could run; nothing was changed"}};
   const canonical=(v:unknown)=>String(v??"").replace(/^ +| +$/g,"")||null;
   if(mode==="foreign")return{data:{membership_id:"other-seat",job_title:canonical(args._job_title),responsibilities:canonical(args._responsibilities)},error:null};
   const result={job_title:canonical(args._job_title),responsibilities:canonical(args._responsibilities)};

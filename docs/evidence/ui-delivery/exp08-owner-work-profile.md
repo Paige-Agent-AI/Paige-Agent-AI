@@ -99,3 +99,18 @@ workspace race's effect. Preserve existing legitimate callers and original sole
 writer; reconcile a scoped original-door overload/current consumer contract before
 releasing this local UI. No real wrong-workspace write was attempted or claimed.
 This remaining coding work prevents full EXP08 readiness.
+
+
+## Captured workspace and membership source integration
+
+The remaining intent fence named above is now BUILT LOCALLY as an inert5arg
+overload of the ORIGINAL RPC. The unchanged3arg writer owns all effects; the
+new entry accepts required refusal-only expected tenant AND membership UUIDs.
+The4arg prototype was never published/applied. Actual local7 scope/seat controls
+and13 observed waits pass, with original19 cases through each door and strict
+scoped role/metadata negatives. Actual native/caller/production proof remains owed.
+MemberEditor now always sends its captured roster tenant_id/membership_id, with
+no unscoped fallback. New exact call expectation first FAILED, then original
+neighboring11 suites181/181 PASS, including stale-membership draft retention,
+no false success/auto retry and fresh-Team recovery. Shared Team Chat/C0b native
+producer/consumer receiving remains pending; full Team Hub is not ready.

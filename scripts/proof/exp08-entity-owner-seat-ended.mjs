@@ -561,7 +561,7 @@ async function hubIdentityChecks(holderSnapshot) {
   await identityAdmissionRace(false);await identityAdmissionRace(true);
   records.push({phase:'original-identity-final-metadata',metadata:JSON.parse(sql(`select json_agg(json_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'path',p.proconfig,'acl',p.proacl::text) order by p.oid) from pg_proc p where p.oid in (${identitySignatures.map(s=>`'${s}'::regprocedure`).join(',')});`))});
 }
-async function workProfileWait(name) {
+async function workProfileWait(name,scoped=false) {
  const actor='e8000000-0000-4000-8000-000000060300',target='e8000000-0000-4000-8000-000000060100',tenant='e8000000-0000-4000-8000-000000060010';
  sql(`SELECT proof.reset_rows(); TRUNCATE public.profiles,public.audit_logs;
  UPDATE public.tenants SET owner_user_id='${target}' WHERE id='${tenant}';
@@ -569,6 +569,7 @@ async function workProfileWait(name) {
  INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status) VALUES('e8000000-0000-4000-8000-000000061003','${tenant}','${actor}',false,'admin','active');
  INSERT INTO public.profiles VALUES('${actor}','${tenant}'),('${target}','${tenant}');`);
  if(name==='holder changed')sql(`UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE tenant_id='${tenant}' AND user_id IN ('${actor}','${target}'); UPDATE public.tenants SET owner_user_id='${actor}' WHERE id='${tenant}';`);
+ const scopeArgs=scoped?`, '${tenant}', 'e8000000-0000-4000-8000-000000061001'`:'';
  const blocker=name==='identity changed'?`SELECT 1 FROM auth.users WHERE id='${actor}' FOR UPDATE;`:name==='workspace changed'?`SELECT 1 FROM public.profiles WHERE user_id='${actor}' FOR UPDATE;`:`SELECT 1 FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}' FOR UPDATE;`;
  const first=spawn(executable,connectionArgs(database),{env:process.env,stdio:['pipe','pipe','pipe']});
  let ready='',firstErrors='',errors='',second,secondDone,timer;
@@ -583,21 +584,21 @@ async function workProfileWait(name) {
   second=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:app},stdio:['pipe','pipe','pipe']});
   second.stdout.resume();second.stderr.on('data',b=>errors+=b);
   secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
-  second.stdin.end(`SELECT set_config('request.jwt.claim.sub','${actor}',false); SET ROLE authenticated; SELECT public.set_solo_team_member_work_profile('${target}','After wait','Permitted work');\n`);
+  second.stdin.end(`SELECT set_config('request.jwt.claim.sub','${actor}',false); SET ROLE authenticated; SELECT public.set_solo_team_member_work_profile('${target}','After wait','Permitted work'${scopeArgs});\n`);
   let waited=false;
   for(let i=0;i<60;i++){
    waited=sql(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname='${database}' AND application_name='${app}' AND wait_event_type='Lock');`)==='t';
    if(waited)break;await new Promise(resolve=>setTimeout(resolve,50));
   }
   assert.ok(waited,`${name}: actual database lock wait required`);
-  const change=name==='identity changed'?`UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id='${actor}';`:name==='workspace changed'?`UPDATE public.profiles SET active_tenant_id='e8000000-0000-4000-8000-000000060020' WHERE user_id='${actor}';`:name==='role lost'?`UPDATE public.tenant_members SET role='member' WHERE user_id='${actor}';`:name==='target became owner'?`UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE user_id='${target}';`:name==='holder changed'?`UPDATE public.tenants SET owner_user_id='${target}' WHERE id='${tenant}';`:'';
+  const change=name==='identity changed'?`UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id='${actor}';`:name==='workspace changed'?`UPDATE public.profiles SET active_tenant_id='e8000000-0000-4000-8000-000000060020' WHERE user_id='${actor}';`:name==='role lost'?`UPDATE public.tenant_members SET role='member' WHERE user_id='${actor}';`:name==='target became owner'?`UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE user_id='${target}';`:name==='holder changed'?`UPDATE public.tenants SET owner_user_id='${target}' WHERE id='${tenant}';`:name==='membership replaced'?`DELETE FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}'; INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status) VALUES('e8000000-0000-4000-8000-000000061007','${tenant}','${target}',false,'member','active');`:'';
   first.stdin.end(`${change} COMMIT;\n\\q\n`);assert.equal(await firstDone,0,firstErrors);
   const exit=await secondDone;
   const state=JSON.parse(sql(`SELECT json_build_object('changed',(SELECT job_title='After wait' FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}'),'audits',(SELECT count(*) FROM public.audit_logs));`));
   const allowed=name==='permitted wait';assert.equal(exit,allowed?0:3,errors);
   assert.equal(state.changed===true,allowed);assert.equal(state.audits,allowed?1:0);
-  if(!allowed)assert.match(errors,name==='identity changed'?/TEAM_MEMBER_IDENTITY_UNAVAILABLE/:name==='workspace changed'?/active workspace changed/:name==='role lost'?/only an owner or admin/:/TEAM_OWNER_PROFILE_FORBIDDEN/);
-  console.log(JSON.stringify({phase:'owner-work-profile-actual-wait',name,wait_observed:true,exit,state}));
+  if(!allowed)assert.match(errors,name==='identity changed'?/TEAM_MEMBER_IDENTITY_UNAVAILABLE/:name==='workspace changed'?/active workspace changed/:name==='role lost'?/only an owner or admin/:name==='membership replaced'?/this team membership changed/:/TEAM_OWNER_PROFILE_FORBIDDEN/);
+  console.log(JSON.stringify({phase:'owner-work-profile-actual-wait',name,scoped,wait_observed:true,exit,state}));
  }finally{
   clearTimeout(timer);if(first.exitCode===null)first.stdin.end('ROLLBACK;\n\\q\n');if(second&&second.exitCode===null)second.kill();
   await Promise.allSettled([firstDone,...(secondDone?[secondDone]:[])]);
@@ -624,6 +625,14 @@ try {
     const patch=readFileSync(new URL('./exp08-owner-work-profile-patch.sql',import.meta.url),'utf8');
     const metadata=sql("SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;");
     sql(patch);const after=cases();console.log(JSON.stringify({phase:'owner-work-profile-after',cases:after}));
+    const legacyScope=JSON.parse(sql('SELECT json_agg(t) FROM proof.work_profile_scope_cases(false) t;'));
+    assert.deepEqual(legacyScope.filter(r=>!r.passed).map(r=>r.case_name),['same person in both workspaces','caller cannot select another workspace','missing expected workspace','membership replaced','missing captured membership','caller cannot select another membership']);
+    console.log(JSON.stringify({phase:'owner-work-profile-legacy-intent-boundary',cases:legacyScope}));
+    const scoped=JSON.parse(sql('SELECT json_agg(t) FROM proof.work_profile_scope_cases(true) t;'));
+    assert.equal(scoped.length,7);assert.ok(scoped.every(r=>r.passed),JSON.stringify(scoped));
+    const scopedOriginal=JSON.parse(sql('SELECT json_agg(t) FROM proof.work_profile_cases(true) t;'));assert.equal(scopedOriginal.length,19);assert.ok(scopedOriginal.every(r=>r.passed));
+    console.log(JSON.stringify({phase:'owner-work-profile-scoped-boundary',cases:scoped,original_matrix_cases:19}));
+
     assert.equal(after.length,19);assert.ok(after.every(r=>r.passed),JSON.stringify(after));
     assert.equal(sql("SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;"),metadata);
     sql(patch);assert.ok(cases().every(r=>r.passed));
@@ -660,7 +669,29 @@ try {
 
   }
   if(onlyWorkProfile){
+    const signature='public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)';
+    const patch=readFileSync(new URL('./exp08-owner-work-profile-patch.sql',import.meta.url),'utf8');
+    const definition=sql(`SELECT pg_get_functiondef('${signature}'::regprocedure);`);
+    const metadata=()=>sql("SELECT jsonb_agg(to_jsonb(p) ORDER BY p.oid)::text FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='set_solo_team_member_work_profile';");
+    const before=metadata();sql(patch);assert.equal(metadata(),before);
+    console.log(JSON.stringify({phase:'owner-work-profile-scoped-replay',full_metadata_unchanged:true}));
+    for(const [name,change] of [
+      ['source',definition.replace('DECLARE','DECLARE\n-- unreviewed scoped body\n')],
+      ['anon grant',`GRANT EXECUTE ON FUNCTION ${signature} TO anon;`],
+      ['grant option',`GRANT EXECUTE ON FUNCTION ${signature} TO authenticated WITH GRANT OPTION;`],
+      ['path',`ALTER FUNCTION ${signature} SET search_path=public;`],
+      ['security',`ALTER FUNCTION ${signature} SECURITY INVOKER;`],
+    ]) {
+      sql(change);const prior=metadata();sql(patch,database,true,/EXP08 scoped work profile original door drift/);assert.equal(metadata(),prior);
+      sql(`${definition};\nREVOKE ALL ON FUNCTION ${signature} FROM PUBLIC,anon,authenticated,service_role; GRANT EXECUTE ON FUNCTION ${signature} TO authenticated;`);
+      console.log(JSON.stringify({phase:'owner-work-profile-scoped-drift',name,refused:true,metadata_not_rewritten:true}));
+    }
+    for(const role of ['anon','service_role']){
+      sql(`SET ROLE ${role}; SELECT public.set_solo_team_member_work_profile(NULL,NULL,NULL,NULL,NULL);`,database,true,/permission denied for function set_solo_team_member_work_profile/);
+      console.log(JSON.stringify({phase:'owner-work-profile-scoped-role',role,refused:true}));
+    }
     for(const name of ['role lost','target became owner','identity changed','workspace changed','holder changed','permitted wait'])await workProfileWait(name);
+    for(const name of ['role lost','target became owner','identity changed','workspace changed','holder changed','membership replaced','permitted wait'])await workProfileWait(name,true);
     console.log('Selected owner work-profile component only; NOT native/customer proof.');
   }
   else if(onlyHubIdentity){

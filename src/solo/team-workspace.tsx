@@ -144,7 +144,7 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
   const canEdit = canEditWorkProfile(member, workspace, viewerId);
   const ownerReadOnly = (member.is_owner || member.permission === "owner") && !canEdit;
   const ownerExplanation = ownerWorkProfileExplanation(member, workspace);
-  const [saveUnknown, setSaveUnknown] = useState(false);
+  const [saveNeedsReopen, setSaveNeedsReopen] = useState(false);
   const writeInFlight = useRef(false);
   const lifetime = useRef(0);
   const currentGuard = useRef(isCurrent);
@@ -161,7 +161,7 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
   useBeforeUnloadGuard(dirty || contactDirty || saving || permissionDraft !== null);
 
   const save = async () => {
-    if (!canEdit || saveUnknown || writeInFlight.current || !dirty || Object.keys(errors).length || !currentGuard.current()) return;
+    if (!canEdit || saveNeedsReopen || writeInFlight.current || !dirty || Object.keys(errors).length || !currentGuard.current()) return;
     writeInFlight.current = true;
     const requestLifetime = lifetime.current;
     setSaving(true);
@@ -176,6 +176,8 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
         _member_user_id: member.user_id,
         _job_title: title,
         _responsibilities: responsibilities,
+        _expected_tenant_id: workspace.tenant_id,
+        _expected_membership_id: member.membership_id,
       }));
     } catch (thrown) {
       transportUnknown = true;
@@ -186,13 +188,13 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
     setSaving(false);
     if (error) {
       const message = workProfileRefusal(error.message, ownerExplanation);
-      if (transportUnknown || message.startsWith("The save could not be confirmed.")) setSaveUnknown(true);
+      if (transportUnknown || message.includes("Reopen Team")) setSaveNeedsReopen(true);
       toast.error(message);
       return;
     }
     const receipt = verifiedWorkProfileReceipt(data, member.membership_id, title, responsibilities);
     if (!receipt) {
-      setSaveUnknown(true);
+      setSaveNeedsReopen(true);
       toast.error("The save could not be confirmed. Reopen Team to check the current work details before trying again.");
       return;
     }
@@ -258,7 +260,7 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
           {permissionDraft && permissionDraft !== member.permission && <div className="stw-confirm"><p>Change access from {permission.label} to {permissionPresentation(permissionDraft, false).label}? This changes authorization, not the title.</p><button type="button" className="stw-btn secondary" onClick={() => setPermissionDraft(null)}>Cancel</button><button type="button" className="stw-btn primary" disabled={saving} onClick={changePermission}>Confirm access change</button></div>}</div>
         : <div className="stw-permission-change"><div className="stw-fieldlabel">Permission</div><p className="stw-perm-ro"><span className="stw-perm" data-tone={permissionTone(member.permission, member.is_owner)}>{permission.label}</span><span className="stw-muted">{member.is_owner || member.permission === "owner" ? "Owner access is protected here." : suspended && workspace.can_change_permissions && permission.mutable ? `Reinstate ${firstName} before changing their permission.` : !permission.mutable ? "This access level isn't changed from Team settings." : "Only the owner changes permissions."}</span></p></div>}
     </div>
-    <footer className="stw-modal-actions">{canRemove && onRequestRemoval && <button type="button" className="stw-quiet stw-danger-link" disabled={saving} onClick={onRequestRemoval}>Remove from team…</button>}<button type="button" className="stw-btn secondary" onClick={onClose}>{dirty || contactDirty ? "Cancel" : "Close"}</button>{canEdit && <button type="button" className="stw-btn primary" disabled={saving || saveUnknown || !dirty || Object.keys(errors).length > 0} onClick={save}>{saving ? "Saving…" : "Save work details"}</button>}</footer>
+    <footer className="stw-modal-actions">{canRemove && onRequestRemoval && <button type="button" className="stw-quiet stw-danger-link" disabled={saving} onClick={onRequestRemoval}>Remove from team…</button>}<button type="button" className="stw-btn secondary" onClick={onClose}>{dirty || contactDirty ? "Cancel" : "Close"}</button>{canEdit && <button type="button" className="stw-btn primary" disabled={saving || saveNeedsReopen || !dirty || Object.keys(errors).length > 0} onClick={save}>{saving ? "Saving…" : "Save work details"}</button>}</footer>
   </Modal>;
 }
 

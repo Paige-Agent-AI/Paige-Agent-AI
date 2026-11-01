@@ -1,0 +1,534 @@
+{
+  "schema": 1,
+  "base": "e9445b8ab92fd0a2f3e8e11acd48d71bbcedd118",
+  "branch": "feat/exp05-zion-plan-read-host-20261029",
+  "source": {
+    "supabase/functions/_shared/team-hub/agent-turn.ts": "6e065d4b8ac31f44dc8767ca34a0c618b7c3abc7f9f282b6fbfc93027fbd2136",
+    "supabase/functions/_shared/team-hub/agent-turn.test.ts": "7cd595eafdcce57aec5b8b7c8829965f6db46c5448c797900d58ac54491c83ee"
+  },
+  "authority": "Human explicitly approved bounded review-branch implementation after automatic rejection; no live activation/business effects/native bypass authorized.",
+  "flow": "Same ZION, owner/admin-only original private Team Hub DM, genuine Planning read and truthful original publication.",
+  "capability": "planning.list / plan_list; existing definition/readMentorPlan/caller-JWT RPC; no writer or Layer C effect.",
+  "contracts": {
+    "scope": "Fresh original persona, DM visibility, current owner/admin authority, original SOLO classification and unchanged read-only roster before read/provider/post.",
+    "budget": "One total maximum-three private Planning reads for this turn; original five-second per-read elapsed continuation deadline.",
+    "receipt": "Original plan_list read marker before domain RPC; original turn/token native stage before any private rows reach model; original post/readback/recovery/Rail.",
+    "native": "E04 forward guard, source-version/currentness/history and reviewed composition STILL REQUIRED; existing guard excludes ZION. No non-null invented Work links.",
+    "provider": "Original Model Fabric routing and budget; no activation, paid provider, external send, recurrence or new router."
+  },
+  "preserved": [
+    "supabase/functions/_shared/team-hub/mentor-plan-read.ts",
+    "supabase/functions/_shared/team-hub/mentor-plan-read.test.ts",
+    "supabase/functions/_shared/team-hub/nexus-connection-read.ts",
+    "supabase/functions/_shared/team-hub/zion-planning-read.ts",
+    "supabase/functions/paige-ai-chat/index.ts",
+    "src/components/chat/PaigeConfirmCard.tsx",
+    "scripts/ci/c0b-incumbent-resource-binding.mjs",
+    ".github/workflows/ci.yml"
+  ],
+  "peerChecks": [
+    {
+      "start": "const MENTOR_PLAN_TOOL =",
+      "pass": true
+    },
+    {
+      "start": "  const nexusConnection =",
+      "pass": true
+    },
+    {
+      "start": "      // EXP01 (MENTOR) plan read: bounded per turn,",
+      "pass": true
+    },
+    {
+      "start": "  // 8. The post, under the asker",
+      "pass": true
+    }
+  ],
+  "tests": {
+    "originalAndFoundation": 103,
+    "hostAdded": 12,
+    "pass": 115,
+    "fail": 0,
+    "skip": 0,
+    "testFirst": "Local test-only WIP 10abb: six expected-red host behaviors; new specification, not claimed production regression.",
+    "malformedMutation": "Removing only the new object guard causes actual unexpected plan_list read (1 versus 0). Production source was not rewritten.",
+    "strict": {
+      "base": "e9445b8ab92fd0a2f3e8e11acd48d71bbcedd118",
+      "baseline": 6,
+      "candidate": 6,
+      "added": []
+    },
+    "lint": [
+      {
+        "file": "supabase/functions/_shared/team-hub/agent-turn.ts",
+        "baseline": 2,
+        "candidate": 2,
+        "added": []
+      },
+      {
+        "file": "supabase/functions/_shared/team-hub/agent-turn.test.ts",
+        "baseline": 19,
+        "candidate": 19,
+        "added": []
+      }
+    ],
+    "kit": "PASS 288/296 original path+symbol entries; no new bypass",
+    "artifacts": {
+      "work/zion-planning-host-green.tap": "a06019db49ae3600f8da9f2c6678ad91e8ad576b56b818b0ac66685f61de873a",
+      "work/zion-planning-host-red.tap": "a049beb38df6f7ae3b94cb68e351e3a1662e5d280804e7d370255a5a9d3d673e",
+      "work/zion-planning-host-malformed-red.tap": "7eb7af692c43108aa2be508e9ca53287cae2181c3a89721252257b7cd401a4ff",
+      "work/zion-planning-host-types.json": "b940cdf4652eb2225a077e0bff01ba6a0b2cfd2ef35eb7149c3e18e93b0a3ed4",
+      "work/zion-planning-host-lint-ratchet.json": "bf9a30ae2a433de5aee17b0ba5f4180539fbcc7a201eb075ae73de3bc77119c9"
+    }
+  },
+  "review": "Sequential specification/security/recovery review: AUTHOR-REVIEW / LOWER ASSURANCE. E04 exact native/host receiving review remains mandatory.",
+  "ui": "Original approved Team Hub DM, identity, personality, colors, reply/recovery UI reused unchanged; no screen/control/style edits. Actual customer/rendered integration not established by Node ports.",
+  "catalogue": "operations.department PARTIAL; ZION Team Hub Planning remains UNAVAILABLE/UNVERIFIED pending native release and authenticated proof. No status promotion.",
+  "algorithms": "ALG-01 original reconciliation/no-repeat; ALG-08 source inputs only; ALG-11 original routing; ALG-12/13 honest limitations, no new maturity. ALG-02/03 unchanged.",
+  "release": {
+    "source": "REVIEW BRANCH",
+    "requiredCI": "NOT_YET_RUN",
+    "merged": false,
+    "deployed": false,
+    "activated": false,
+    "authenticated": "UNVERIFIED",
+    "founder": "NOT_ACCEPTED"
+  },
+  "remaining": [
+    "Foundation #3086 must clear exact CI/merge and be composed against latest main.",
+    "E04 forward native scope/version/history contract, original role/revoke/reload proof and receiving review; preserve MERIT/CURA/MENTOR/NEXUS/E08 spans.",
+    "Exact-head required CI and safe production readback, no activation inferred.",
+    "Same ZION in both chats, existing/new eligible SOLO, actual original record/Rail/reopen and negative auth proof.",
+    "Full ten outcomes/E5-CV1–9, weekly execution, Automation Builder lifecycle, proactive follow-through and founder evaluation."
+  ],
+  "current_main_reconciliation": {
+    "owner_date": "2026-10-30 America/New_York",
+    "product_commit": "ad9c5c0427252bc43f4667232e857ef70ca48709",
+    "main": "4c8c2724941ed233229a289ce54b4eb45c0cc113",
+    "composition_commit": "674111ee27820c3e9904a5c5054aa5da2b204508",
+    "latest_main_delta": "Original EXP13 #3124 extraction/parser/CI changes composed normally with no host or owned-path conflict; source hashes below unchanged.",
+    "historical_head": "c19df005f6a2e3604878c727a7bedad4e48cf2a8",
+    "historical_root_boundary": "The original root source/test/static evidence is retained as its dated supporting snapshot; this section identifies the current composition, not a retrospective update to that proof.",
+    "foundation": "3086 merged 7a30d3d503d6ad0723eeceb226727687bce74fd9",
+    "source": {
+      "supabase/functions/_shared/team-hub/agent-turn.ts": "c3de7b7155cd7fe031b99a3aa7df5e0adbf12214cd50b41d0a949023f305a973",
+      "supabase/functions/_shared/team-hub/agent-turn.test.ts": "18094c38bc7468f42ea98dd8f8502ded374ec0244a28e70878e511164499c080"
+    },
+    "local_tests": {
+      "passed": 157,
+      "failed": 0,
+      "skipped": 0,
+      "causal_v2_before": {
+        "passed": 155,
+        "failed": 2
+      }
+    },
+    "current_native_roster_read": "Existing global ZION scope v2/access card explicitly includes plan_list; no roster or permission was changed.",
+    "compatibility": "Strict read-or-card mode plus exact stored tool, current owner/admin/SOLO/private DM and native stage; mode is not authority.",
+    "conservation": "All15 current imports and six protected authority/private-read declarations exact. All429 original assertion predicates retained among495; one old mentor-only failure message and explicit Member fixture correctly reconcile the approved ZION reuse.",
+    "raw_eslint": {
+      "main_errors": [
+        2,
+        31
+      ],
+      "candidate_errors": [
+        2,
+        31
+      ],
+      "new_diagnostics": 0,
+      "raw_exit": 1
+    },
+    "strict_types": {
+      "main_diagnostics": 6,
+      "candidate_diagnostics": 6,
+      "new_diagnostics": 0,
+      "boundary": "Fresh strict host/test compiler comparison against main4c8, not a clean full-app compile or hosted CI. Old root snapshot remains historical."
+    },
+    "remaining": "E04 native source-stage/version/publication/history receiving contract; final review/CI, compatible rendered and ordinary customer proof, both chats/cohorts and full O01/ten/E5 acceptance. No merge/deployment/activation."
+  },
+  "source_currentness_reconciliation": {
+    "owner_date": "2026-10-31 America/New_York",
+    "main": "17338f6fb807c1a44fd481d1111fff9a3e77a0e5",
+    "composition": "cf364527a3f331e36dcb16af87c2aae6b37f230b",
+    "product": "43380c7344b7ec7f7f9be63652dc31375599fc19",
+    "prior_reviewed_head": "6a985bc2ef6f690572ffa39173efa67518e0193c",
+    "prior_CI": "All11 prior exact-head gates SUCCESS; supporting only, not successor clearance",
+    "source": {
+      "supabase/functions/_shared/team-hub/agent-turn.ts": "0717435781888d202ee620b556f2c22f4834e9b5a3ac26cf0cf9950b621debc6",
+      "supabase/functions/_shared/team-hub/agent-turn.test.ts": "df0df81f977db87191b1f724ff7ed1bef1d8f2763316b46f709defe3e4f93bb1",
+      "supabase/functions/_shared/team-hub/zion-planning-read.ts": "65638a7bbf4363f6624ca2e10056b35d696f1041c75b6f15627309be2caec724",
+      "supabase/functions/_shared/team-hub/zion-planning-read.test.ts": "56f8de650b63b4c3d81b1e2d56ad03e1acec845ec68de841644579ac0b920a5d"
+    },
+    "local": {
+      "tests": 164,
+      "passed": 164,
+      "failed": 0,
+      "skipped": 0,
+      "causal_reader_before": {
+        "passed": 14,
+        "failed": 3
+      },
+      "initial_host_integration": {
+        "passed": 155,
+        "failed": 5,
+        "disposition": "Own fixtures explicitly reconciled initial vs final source checks; no incumbent assertion removed"
+      },
+      "strict": {
+        "baseline": 6,
+        "candidate": 6,
+        "added": 0
+      },
+      "lint": [
+        {
+          "path": "supabase/functions/_shared/team-hub/agent-turn.ts",
+          "baselineErrors": 2,
+          "candidateErrors": 2,
+          "newDiagnostics": 0
+        },
+        {
+          "path": "supabase/functions/_shared/team-hub/agent-turn.test.ts",
+          "baselineErrors": 31,
+          "candidateErrors": 31,
+          "newDiagnostics": 0
+        },
+        {
+          "path": "supabase/functions/_shared/team-hub/zion-planning-read.ts",
+          "baselineErrors": 0,
+          "candidateErrors": 0,
+          "newDiagnostics": 0
+        },
+        {
+          "path": "supabase/functions/_shared/team-hub/zion-planning-read.test.ts",
+          "baselineErrors": 0,
+          "candidateErrors": 0,
+          "newDiagnostics": 0
+        }
+      ],
+      "conservation": "Original15 imports/protected6 declarations/429 host assertion predicates retained;509 current host assertions"
+    },
+    "original_native_reader": "Production plan_list OID306631/body702f2b52fc0d4e5c615fde7ec906b840 returns only original plans/loose_items. Raw versions and nested facts compared; no observation field excluded.",
+    "contract": "Same original caller-JWT reader/arguments under one elapsed5s budget per observation, immutable source snapshot, original stable read marker and same accepted-turn native stage. Final current-source mismatch/refusal/uncertain/timeout prevents post; lost post acknowledgment does not repeat source verification. Three requested tool reads retain three operation IDs.",
+    "native_boundary": "E04 original Planning admission/publication/history and receiving review remain a material release hold. Source observation comparison does not prove an atomic native source-version/post/history contract.",
+    "release": "DRAFT; new exact-head review/CI/compatible rendered/native/authenticated/reload/both-chat/cohort proof owed. No merge/deployment/activation/full O01 or founder acceptance."
+  },
+  "planning_native_source_candidate": {
+    "status": "UNVERSIONED_INERT / DRAFT / NOT_READY",
+    "currentMain": "2125057ed1fade8688f1801bd643f33082101536",
+    "originalComposition": "591bf3d97000361e2071f2db5d777b438f35b762",
+    "authority": [
+      "ANT51/58ca8d6b-7084-4963-9e8f-54fa19c0cc75",
+      "ANT11/510f194f-2378-4f04-82ee-6a2f7e222bac",
+      "ANT11/62e26c80-cc79-4e47-a25a-f705c95fb344"
+    ],
+    "source": {
+      "supabase/functions/_shared/team-hub/agent-turn.ts": "7f5d8c162f2dd5baf61e121685754fe41ccf4c299db3f5ad43e418d5e99539e1",
+      "supabase/functions/_shared/team-hub/agent-turn.test.ts": "7c2f134c2041df00572bcec01d0d858772e7b225e7a2f81813389aae5024a553",
+      "supabase/functions/_shared/team-hub/zion-planning-read.ts": "b25d0a5dfb7ba7948ad633b109460c17269cee91b15339c92d47f6d10ec35f0b",
+      "supabase/functions/_shared/team-hub/zion-planning-read.test.ts": "ddad91973a816d5db3d164e1ce3ca890f32d25eec34f1c88dfd8bd834f8d01bf",
+      "supabase/functions/_shared/team-hub/zion-planning-source.ts": "3ecc898e21707b46b54a6e33e6fb56674be5b7afe5ade84dd6f62d41641d56c7",
+      "supabase/functions/_shared/team-hub/zion-planning-source.test.ts": "b9847b592bc3cc24f3ce4f785d1347ea9b25f84196c3cb34d04576caf747728e",
+      "scripts/proof/exp05-zion-planning-read-candidate.sql": "8244cedcce27de6526645a39b4d46dcda9a9b24a44d183a48024174cf62544ed",
+      "scripts/proof/exp05-zion-planning-read.mjs": "a04f76374440243e7f0a2b40e2045e7493513dcf659ebdf6950a651e8402a76c",
+      "supabase/tests/exp05_zion_planning_read.sql": "12563014364d5e122882236f130e40dc20b0386df8aa2bcc84b44f0545d93d71",
+      "supabase/tests/fixtures/exp05-zion-planning-original.sql": "42f7b90ac7f08ea2235d13b2164c3e7203738e4d80db0ea7b4f9ba216c3aa175",
+      ".github/workflows/ci.yml": "7b66a47852e2af9a3a6e60cecc72059bc0ae834e448c900b5951596741482ecb",
+      "scripts/proof/exp05-zion-planning-concurrency.mjs": "185353cf379cd99ae3093554fc6653b1d23da981a646d86e7a8916f371f18b47",
+      "scripts/proof/exp05-zion-planning-full-schema.mjs": "1d6f4521ea2a233755761a5f53efcf9d882caee2ba6e84d08edd5f6c62464a71",
+      ".github/workflows/paige-spine-contract.yml": "43b85d65e281fb0de503f864b6fc5db7a9b21c17a36b312221ee4f9a0d70c5f4"
+    },
+    "abi": "Same service-only team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb); closed plan_list/version1 source descriptor; no public RPC or added grant",
+    "contract": "Original caller-JWT read/versions -> same accepted-token native stage before model -> current original source guard -> original post/readback/history. Typed Planning-item Work references only; mixed CRM staging retains the same source binding. Same-operation rearm uses the new original token, never expired evidence. Original Search final bounded-hit projection excludes newly source-unavailable Planning replies; default20/ABI/config/ACL and complete non-Planning body conserved.",
+    "local": {
+      "host": {
+        "pass": 178,
+        "fail": 0,
+        "skip": 0
+      },
+      "types": "Changed host and both Planning modules PASS under pinned Deno dependency cache; isolated non-network cache miss retained separately, no changed dependency",
+      "native": "Existing E08 A2b full assertions/16 mutants/P1/uncapped suite unchanged, followed by native additive source/metadata/ACL/replay,20 differential queries,12 malformed envelopes and current-source/refusal/rearm/history checks. Reduced-schema synthetic role ports; not full-schema or customer proof",
+      "nativeEvidence": "work/planning-native-proof/run-1793544604148/result.json; exit0; both exact original reader variants/20 query projections each, semantic-drift refusal, four observed blocking pairs; separate final fixture/client counts0; own server stopped",
+      "causalRed": "Native missing-contract baseline fails before candidate; exact original Search negative fails on newly source-revoked Planning result. Initial Windows transport/fixture/SQL correction attempts retained in private run evidence",
+      "nativeContract": [
+        {
+          "acl": [
+            "postgres=X/postgres",
+            "service_role=X/postgres"
+          ],
+          "body": "27202521ef9750d3246ee5e5e11018aa",
+          "owner": "postgres",
+          "config": [
+            "search_path=pg_catalog, public"
+          ],
+          "definer": true,
+          "signature": "_sales_invoice_actor(uuid,uuid)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "c0f1fc1451a8bc871b3c0b11c54b6091",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": false,
+          "signature": "_team_hub_agent_read_annotations(uuid)",
+          "volatility": "s"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "b92f4236bb2ef1e4bb01c584d0645ba7",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "_team_hub_assert_agent_read_scope(team_hub_agent_turns)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "06e75ab8306ecb1434727f2fca152e74",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "_team_hub_assert_planning_read(team_hub_agent_turns)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "1876c9f943d5f51ddef29d4528e5e981",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": false,
+          "signature": "_team_hub_message_json(team_hub_messages)",
+          "volatility": "s"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "c6cdad338235bb39ac2d0b8609a45aa3",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "_team_hub_planning_read_annotations(team_hub_agent_turns)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "ffca375a8ea2d90fc306664ddfff6a85",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "_team_hub_planning_read_source(team_hub_agent_turns,jsonb)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "4bd168e06324f49e4eb75efc3efd7dd5",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": false,
+          "signature": "_team_hub_planning_source_versions(jsonb)",
+          "volatility": "s"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "e9a48add1b7c7ce9a74518337f45d24d",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "_team_hub_stage_planning_read(team_hub_agent_turns,jsonb)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres",
+            "service_role=X/postgres",
+            "authenticated=X/postgres"
+          ],
+          "body": "702f2b52fc0d4e5c615fde7ec906b840",
+          "owner": "postgres",
+          "config": [
+            "search_path=public"
+          ],
+          "definer": true,
+          "signature": "plan_list(text,uuid,text,uuid,date,date,integer,uuid,uuid,boolean,boolean)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres",
+            "service_role=X/postgres",
+            "authenticated=X/postgres"
+          ],
+          "body": "425c6d84055788cc651001b8fe13199d",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "team_hub_list_messages(uuid,uuid,uuid,timestamp with time zone,uuid,integer)",
+          "volatility": "s"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres",
+            "authenticated=X/postgres"
+          ],
+          "body": "bd0e68f3c3e88976786d716dc4a870a6",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean,uuid,text,jsonb,text)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres",
+            "authenticated=X/postgres"
+          ],
+          "body": "db3ed89d921582e12b664dc85b652bf0",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\"",
+            "plan_cache_mode=force_custom_plan"
+          ],
+          "definer": true,
+          "signature": "team_hub_search(uuid,text,integer)",
+          "volatility": "s"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres",
+            "service_role=X/postgres"
+          ],
+          "body": "5ca11bdb927e4d4a571f1936f608d2b5",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)",
+          "volatility": "v"
+        }
+      ],
+      "neighbor": {
+        "pass": 15,
+        "fail": 0,
+        "skip": 0,
+        "paths": [
+          "team-hub/agent-turn-wiring.test.ts",
+          "team-hub/mentor-plan-read.test.ts",
+          "paige-turn/record-links.test.ts"
+        ]
+      },
+      "typeEvidence": "work/planning-agent-check-final.txt; exact final changed host/source modules; --cached-only exit0 in same pinned dependency environment",
+      "initialFailures": [
+        "Sandbox local TCP disallowed; rerun in authorized isolated native environment",
+        "Original Linux sed and nested include paths required literal Windows transport, retaining exact SQL/mutants",
+        "Fixture initially duplicated existing Planning tables and attempted a named-parameter role helper replacement; corrected to original table/role ports",
+        "New source projection SQL alias and a write/read same-statement snapshot assertion were corrected; no original assertion removed",
+        "Whitespace check corrected new trailing blank lines; no native source body rewritten",
+        "Concurrency fixture helper definitions were originally rolled back; exact committed bodies moved outside scenario rollback by literal slicing after replacement-string delimiter expansion failed",
+        "Opaque test token and required explicit null parent were matched to the original fixture/writer ABI; no native product function changed"
+      ],
+      "causalSearch": "run-1793541738611 --search-red: restore ONLY exact original Search d71b872a, then fail revoked Planning assertion; normal final run1793541800073 PASS",
+      "workflow": "Both additive hunks invert to complete current-main ci.yml; valid YAML with no empty step; peer3190 recovery spans not touched",
+      "concurrency": {
+        "scope": "Same original E08 disposable fixture, committed synthetic records, actual original post and source/role changes in two independent PostgreSQL sessions; no full-schema/customer claim",
+        "cases": [
+          {
+            "change": "source",
+            "order": "publication-first",
+            "actualBlockingPair": true,
+            "originalMessages": 1
+          },
+          {
+            "change": "source",
+            "order": "change-first",
+            "actualBlockingPair": true,
+            "originalMessages": 0
+          },
+          {
+            "change": "role",
+            "order": "publication-first",
+            "actualBlockingPair": true,
+            "originalMessages": 1
+          },
+          {
+            "change": "role",
+            "order": "change-first",
+            "actualBlockingPair": true,
+            "originalMessages": 0
+          }
+        ],
+        "exit": 0
+      },
+      "fullSchema": {
+        "status": "FIRST_EXACT77_RUN_9_PASS_1_FAIL / PRECISE_COMPATIBILITY_CORRECTION_LOCAL_PASS / FRESH_FULL_SCHEMA_RUN_REQUIRED",
+        "script": "scripts/proof/exp05-zion-planning-full-schema.mjs",
+        "scope": "Existing local Supabase54322 only; exact inert candidate embedded twice in one rollback-only pgTAP transaction;10 native source/ABI/permission/replay assertions; no business fixture, remote DDL or migration-ledger write",
+        "workflow": "One own push-path and one test step in existing database-contract job; both preserve all incumbent source and E08 reserved insertion anchors",
+        "initialFailure": "124877867209 on77: actual replay plan_list bodya8c0a676cdd686bc17d5dbbb7d605ecc differs from live702f solely by TWO exact explanatory comments inherited from immutable20260712040000. No query/role/ABI difference. New native causal test fails before fix (run1793544565041), passes after fix (run1793544604148); retain the failed gate.",
+        "sourceConservation": "Both WHOLE original reader fingerprints pinned; independent original-file/comment reconstruction matches both exact MD5s. Actual full-schema assertion still requires the complete existing reader to remain unchanged. No generic normalization/source relaxation or applied-file edit."
+      }
+    },
+    "review": "Sequential AUTHOR-REVIEW / LOWER ASSURANCE: complete eight-path correction diff reviewed separately after implementation. Exactly two complete original bodies admitted, missing/unknown/semantic-drift rejected, unchanged original reader and four shared transforms, 20 query projections per variant and actual original four lock pairs PASS; no new permission/actor/tenant/model/effect path. New full-schema/exact-head CI and ordinary release/customer gates remain required; no non-author independence or merge approval claimed.",
+    "releaseHolds": [
+      "Actual lower-owner native ordering then genuinely free forward carrier; no speculative slot",
+      "Full-schema/managed proof; four bounded native concurrency pairs now PASS; exact final source review/required CI; deployment/production readback",
+      "Ordinary authorized useful both-chat result, original records/receipts/reload/recovery and equivalent existing/new SOLO proof"
+    ],
+    "sourceReader": "Original caller-JWT plan_list unchanged: live702f2b52fc0d4e5c615fde7ec906b840; immutable replaya8c0a676cdd686bc17d5dbbb7d605ecc differs only by two exact explanatory comments. Both complete source fingerprints pinned;20 filter/version parity checks per variant, genuine tenant-query mutant refused. Private helper projects IDs/versions only; no service plan_list or domain effects.",
+    "capabilities": "Existing catalogue status unchanged; no Live or algorithm maturity promotion",
+    "outcomes": "O01 PRIMARY, O02 NEXT; all ten outcomes/E5-CV1–9 preserved;0/10 fully complete; founder NOT_ACCEPTED",
+    "resolvedScope": [
+      "Actual E04 handback58ca8d6b/E08 original guard-stage-necessary-history ACK510f194f",
+      "Actual E08 shared-CI custody returna0eb3bb8; final bounded Search hunk and nonoverlapping CI additions received under existing scopee43e0b68",
+      "Red Search privacy finding corrected in source and causally verified; no extra founder/peer signoff invented"
+    ],
+    "infrastructure": {
+      "b5": "Supabase Preview124871817388 FAILED function update502; preserved, not waived",
+      "f3": "Identical-tree retryf3b212b4; database-contract124873002424 baseline project-status read FAILED api.supabase.com origin502 before local stack startup; downstream missing-stack results not domain test verdicts",
+      "nativeReadback": "Actual readonly production and original no-data Preview reads recovered at frontier20271126200003; no Planning candidate applied. Earlier Internal errors remain historical.",
+      "response": "Normal safe recovery and fresh exact-head gates only; no reset/new branch/project/secret or status override",
+      "recovered": "Exact422 Supabase Preview SUCCESS, native postgres-authority SUCCESS; actual readonly MCP production frontier20271126200003 recovered. Remaining exact required gates still running at next proof slice; previous502 failures retained."
+    },
+    "currentComposition": "74df1ec20e95b003ce7490baa2b35edaae7fd286",
+    "releaseOrder": {
+      "status": "RECEIVING_SOURCE_RECONCILIATION_PENDING / NO_MIGRATION_ID_RESERVED",
+      "proposal": "Original ANT51/d05db22d and sharedANT147/0f7d4025 propose genuinely free never-applied20271126200005 ahead of unrelated higher native chain; fresh frontier must be reread before any carrier.",
+      "exp08": "Actual ea5bb946-d93b-4b15-bf48-9f3c3e0a1b32 confirms NO semantic source/slot conflict; original recovery does not pin changed Planning functions. Managed rebase/source/ACL/ledger proof remains distinct.",
+      "remaining": "E04/E13 original source/order disposition remains pending. Preserve all immutable Preview histories; no reset, blind include-all or silent lower insertion."
+    }
+  }
+}

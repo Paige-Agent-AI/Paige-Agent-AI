@@ -1,0 +1,14 @@
+{
+  "results": [
+    {
+      "pass": false,
+      "error": "TimeoutError: locator.waitFor: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-canonical-conversations]') to be visible\u001b[22m\n"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_WORKSPACE",
+  "voice": "UNEXERCISED",
+  "paige": "ORIGINAL_SHELL_AND_WORKSPACE_FICTIONAL_PORTS",
+  "nativeBrowserZoom": "UNVERIFIED"
+}

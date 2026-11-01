@@ -21,6 +21,13 @@ async function click(text: string) { const b=[...container.querySelectorAll("but
 beforeEach(()=>{ Object.assign(identity,{activeUserId:'actor-a',activeTenantId:'test-tenant-a',loading:false,accountContextStatus:'ready'});state.flow.mockReset(); (globalThis as {IS_REACT_ACT_ENVIRONMENT?:boolean}).IS_REACT_ACT_ENVIRONMENT=true; container=document.createElement("div"); document.body.append(container);root=createRoot(container);state.docs=[doc];state.loading=false;state.error=null;state.hasMore=false;state.read.mockReset().mockResolvedValue([doc]);state.remove.mockReset();state.confirm.mockReset().mockResolvedValue(true); });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 describe("Settings canonical Knowledge library",()=>{
+  it('has one Knowledge intake button and no separate Link entry',async()=>{
+    await render();
+    const actions=container.querySelector('.knowledge-library__actions');
+    expect(actions?.querySelectorAll('button')).toHaveLength(1);
+    expect(actions?.querySelector('button')?.textContent?.trim()).toBe('Knowledge');
+    expect(actions?.querySelector('[aria-label="Add a web link"]')).toBeNull();
+  });
   it('opens correction only from current exact content and freezes its original revision', async()=>{
     await render(); await click('Intake guide'); await click('Correct content');
     const flow=state.flow.mock.lastCall![0];

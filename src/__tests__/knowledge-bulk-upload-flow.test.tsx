@@ -9,12 +9,25 @@ vi.mock('@/lib/knowledge-extraction-service',async(original)=>({...await origina
 vi.mock('@/solo/knowledge/AddKnowledgeFlow',()=>({AddKnowledgeFlow:({onPublished,onClose,onPublicationVerified,replacementTarget,sourceLifetime}:{onPublished:()=>void;onClose:()=>void;replacementTarget:{id:string;revision:number};sourceLifetime:()=>boolean}&KnowledgeFlowObservers)=><><button onClick={()=>{onPublicationVerified?.(Object.freeze({tenantId:tenant,documentId:replacementTarget.id,revision:replacementTarget.revision+1,workId:'published-'+replacementTarget.id,generationId:'published-'+replacementTarget.id,outcome:'capability_succeeded'}),{isCurrent:sourceLifetime});onPublished();}}>Verified original publication</button><button onClick={onClose}>Return to files</button></>}));
 import {BulkKnowledgeUploadFlow} from '@/solo/knowledge/BulkKnowledgeUploadFlow';
 import {Dialog} from '@/components/ui/dialog';
+import {KnowledgeDialogFrame} from '@/components/knowledge/KnowledgeDialogFrame';
 let root:Root,host:HTMLDivElement;
 const rows=()=>['Agreement.pdf','Notes.txt'].map((name,i)=>({phase:'prepared',name,intentId:`intent-${i}`,source:{path:tenant+`/source-${i}`,bytes:new Uint8Array([i]),mime:'text/plain'}}));
 beforeEach(()=>{host=document.createElement('div');document.body.append(host);root=createRoot(host);api.prepare.mockResolvedValue(rows());api.upload.mockImplementation(async(_c,_s,source)=>({phase:'stored',path:source.path}));api.inspect.mockImplementation(async(_c,_s,source)=>({phase:'stored',path:source.path}));api.submit.mockResolvedValue({reference:{tenantId:tenant,documentId:'doc',workId:'work'},status:'claimed'});});
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.resetAllMocks();});
 const click=async(text:string)=>{const b=[...document.body.querySelectorAll('button')].find(b=>b.textContent===text);expect(b).toBeTruthy();await act(async()=>b!.click());};
-const render=async(onPublished?:()=>void,observers:KnowledgeFlowObservers={})=>{await act(async()=>root.render(<Dialog open><BulkKnowledgeUploadFlow tenantId={tenant} onClose={()=>{}} onBack={()=>{}} onPublished={onPublished} {...observers}/></Dialog>));};
+const render=async(onPublished?:()=>void,observers:KnowledgeFlowObservers={},embedded=false)=>{const flow=<BulkKnowledgeUploadFlow embedded={embedded} tenantId={tenant} onClose={()=>{}} onBack={()=>{}} onPublished={onPublished} {...observers}/>;await act(async()=>root.render(<Dialog open>{embedded?<KnowledgeDialogFrame title="Knowledge" description="Original embedded source review.">{flow}</KnowledgeDialogFrame>:flow}</Dialog>));};
+it.each([false,true])('returns keyboard focus to the same file after closing its original review (published=%s)',async(published)=>{
+  const intent='30000000-0000-4000-8000-000000000001',documentId='40000000-0000-4000-8000-000000000001',workId='50000000-0000-4000-8000-000000000001';
+  api.prepare.mockResolvedValue([{phase:'prepared',name:'Notes.txt',intentId:intent,source:{path:`${tenant}/22222222-2222-4222-8222-222222222222/${intent}.txt`,bytes:new TextEncoder().encode('Source'),mime:'text/plain'}}]);
+  api.submit.mockResolvedValue({reference:{tenantId:tenant,documentId,workId,intentId:intent,revision:1},status:'claimed',replayed:false});
+  api.review.mockResolvedValue({revision:2,record_state:'draft',pending_review:{}});
+  api.restore.mockResolvedValue({id:documentId,tenant_id:tenant,revision:2,title:'Reviewed',content:'Source',tags:[]});
+  await render(undefined,{},true);await choose([new File(['Source'],'Notes.txt')]);await click('Upload and read files');
+  const opener=Array.from(document.body.querySelectorAll('button')).find(b=>b.textContent==='Open reading')!;
+  opener.focus();await click('Open reading');if(published)await click('Verified original publication');await click('Return to files');
+  const restored=published?document.body.querySelector('li'):Array.from(document.body.querySelectorAll('button')).find(b=>b.textContent==='Open reading');
+  expect(restored).toBeTruthy();expect(document.activeElement).toBe(restored);
+});
 async function choose(files=[new File(['one'],'Agreement.pdf'),new File(['two'],'Notes.txt')]){const input=document.body.querySelector('input[type="file"]')!;Object.defineProperty(input,'files',{configurable:true,value:files});await act(async()=>{input.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,25));});}
 it.each([
   ['claimed','requested · open to check progress'],

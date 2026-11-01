@@ -1,7 +1,7 @@
 import {useLayoutEffect,useRef,useState} from 'react';
 import {supabase} from '@/integrations/supabase/client';
 import {useTenantContext} from '@/hooks/useTenantContext';
-import {DialogContent,DialogDescription,DialogHeader,DialogTitle} from '@/components/ui/dialog';
+import {KnowledgeDialogFrame} from '@/components/knowledge/KnowledgeDialogFrame';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
@@ -18,18 +18,19 @@ type Row=Omit<KnowledgeUploadSelectionRow,'phase'>&{phase:Phase;input?:Extractio
  * isCurrent must remain false after that incarnation departs, including A→B→A.
  */
 export type KnowledgeAttachedSelection=Readonly<{actorId:string;tenantId:string;files:readonly File[];isCurrent:()=>boolean}>;
-type Props=KnowledgeFlowObservers&{tenantId:string;onClose:()=>void;onBack:()=>void;onPublished?:()=>void;returnFocus?:()=>HTMLElement|null;attachedSelection?:KnowledgeAttachedSelection;sourceLifetime?:()=>boolean};
+type Props=KnowledgeFlowObservers&{tenantId:string;onClose:()=>void;onBack:()=>void;onPublished?:()=>void;returnFocus?:()=>HTMLElement|null;attachedSelection?:KnowledgeAttachedSelection;sourceLifetime?:()=>boolean;embedded?:boolean;onInteractionStart?:()=>void};
 const labels:Record<Phase,string>={prepared:'Ready to upload',duplicate:'Duplicate in this selection · skipped',refused:'Unsupported or invalid file · not uploaded',uploading:'Uploading and verifying source',upload_unknown:'Upload unconfirmed · inspect original',read_unavailable:'Source readback unavailable',source_changed:'Stored bytes differ · reading refused',stored:'Stored source · not yet read',submission_unknown:'Reading submission unconfirmed',submitted:'Reading status unavailable · inspect original',published:'Reviewed text published',not_started:'Not started'};
 const readingLabels:Record<ExtractionSubmission['status'],string>={claimed:'requested · open to check progress',succeeded:'finished · review required',failed:'failed · inspect original',blocked:'paused · inspect original',cancelled:'cancelled · inspect original',expired:'needs recovery · inspect original',outcome_unknown:'unconfirmed · inspect original'};
 /** A finite attended transfer loop. Original Storage, extraction work, reviews
  * and publication own all durable effects; this component stores no batch ledger.
  */
-export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,returnFocus,attachedSelection,sourceLifetime,onExtractionAcknowledged,onPublicationVerified}:Props){
+export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,returnFocus,attachedSelection,sourceLifetime,onExtractionAcknowledged,onPublicationVerified,embedded,onInteractionStart}:Props){
   const identity=useTenantContext();
   const observers=useRef({onExtractionAcknowledged,onPublicationVerified});
   const notifiedExtractions=useRef(new Set<string>()),notifiedPublications=useRef(new Set<string>());
   const [rows,setRows]=useState<Row[]>([]),[busy,setBusy]=useState(false),[notice,setNotice]=useState<string|null>(null),[target,setTarget]=useState<KnowledgeReviewTarget|null>(null);
   const currentRows=useRef<Row[]>([]),live=useRef(true),stopping=useRef(false),running=useRef(false),selectedIndex=useRef<number|null>(null);
+  const fileRows=useRef(new Map<number,HTMLLIElement>()),returningToFile=useRef(false);
   const actor=useRef(identity.activeUserId),scopeToken=useRef({tenantId,actor:identity.activeUserId});
   const initialSelection=useRef(attachedSelection),selectionPrepared=useRef(false),selectionRetired=useRef(false);
   const parentLifetime=useRef(sourceLifetime);
@@ -49,6 +50,13 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
   const scope=()=>({tenantId,isCurrent:current});
   const client=supabase as unknown as ExtractionClient;
   useLayoutEffect(()=>{live.current=true;return()=>{live.current=false;stopping.current=true;};},[]);
+  useLayoutEffect(()=>{
+    if(target||!returningToFile.current)return;
+    returningToFile.current=false;
+    if(!current()||selectedIndex.current===null)return;
+    const row=fileRows.current.get(selectedIndex.current);
+    (row?.querySelector<HTMLButtonElement>('button:not([disabled])')??row)?.focus();
+  });
   const replace=(next:Row[])=>{currentRows.current=next;if(current())setRows(next);};
   const patch=(index:number,next:Partial<Row>)=>replace(currentRows.current.map((row,i)=>i===index?{...row,...next}:row));
   const close=()=>{stopping.current=true;live.current=false;onClose();};
@@ -111,6 +119,7 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
   };
   const run=async(index?:number,action:'upload'|'inspect'|'submit'='upload')=>{
     if(running.current||!current())return;
+    onInteractionStart?.();
     running.current=true;stopping.current=false;setBusy(true);setNotice(null);
     try{
       if(index!==undefined){if(action==='submit')await submit(index);else await transfer(index,action==='inspect');}
@@ -133,9 +142,9 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
     }catch{if(current())setNotice('This reading changed or could not be read. Open its current record under Unfinished documents. No new reading was started.');}
     finally{running.current=false;if(current())setBusy(false);}
   };
-  if(!current())return <DialogContent><DialogHeader><DialogTitle>Workspace changed</DialogTitle><DialogDescription>Reopen Knowledge in your current workspace to inspect the original files.</DialogDescription></DialogHeader><Button onClick={close}>Close</Button></DialogContent>;
+  if(!current())return <KnowledgeDialogFrame embedded={embedded} title="Workspace changed" description="Reopen Knowledge in your current workspace to inspect the original files."><Button onClick={close}>Close</Button></KnowledgeDialogFrame>;
   const reviewIndex=selectedIndex.current;
-  if(target)return <AddKnowledgeFlow tenantId={tenantId} replacementTarget={target} sourceLifetime={current} onClose={()=>setTarget(null)} onPublicationVerified={(value,context)=>{
+  if(target)return <AddKnowledgeFlow embedded={embedded} tenantId={tenantId} replacementTarget={target} sourceLifetime={current} onClose={()=>{if(current()){returningToFile.current=true;setTarget(null);}}} onPublicationVerified={(value,context)=>{
     if(!context.isCurrent()||!current()||value.tenantId!==tenantId||value.documentId!==target.id||notifiedPublications.current.has(value.workId))return;
     notifiedPublications.current.add(value.workId);
     notifyKnowledgeObserver(observers.current.onPublicationVerified,value,{isCurrent:()=>context.isCurrent()&&current(),...(reviewIndex===null?{}:{selectionIndex:reviewIndex})});
@@ -147,17 +156,16 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
     if(currentRows.current.every(row=>['published','refused','duplicate'].includes(row.phase)))onPublished?.();
   }}/>;
   const started=rows.some(r=>!['prepared','duplicate','refused'].includes(r.phase));
-  return <DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto" onCloseAutoFocus={event=>{if(returnFocus){event.preventDefault();returnFocus()?.focus();}}}>
-    <DialogHeader><DialogTitle>Add files to Knowledge</DialogTitle><DialogDescription>PDF, DOCX and text. Each file keeps its own source and review. Scanned or encrypted files may not provide readable text; OCR is not available here.</DialogDescription></DialogHeader>
+  return <KnowledgeDialogFrame embedded={embedded} title={embedded?undefined:'Add files to Knowledge'} description="PDF, DOCX and text. Each file keeps its own source and review. Scanned or encrypted files may not provide readable text; OCR is not available here." className="max-w-xl max-h-[90dvh] overflow-y-auto" onCloseAutoFocus={event=>{if(returnFocus){event.preventDefault();returnFocus()?.focus();}}}>
     <div className="space-y-1.5"><Label htmlFor="knowledge-bulk-files">Files · 2 MB each, 20 files and 20 MB per selection</Label><Input id="knowledge-bulk-files" type="file" multiple accept=".pdf,.docx,.txt,.md,.markdown,.csv,.json" disabled={busy||started||!!attachedSelection} onChange={event=>void choose(event.target.files)}/></div>
     {notice&&<p role="status" className="text-sm">{notice}</p>}
-    <ul className="divide-y" aria-label="Selected files">{rows.map((row,index)=><li key={index} className="py-3 space-y-2"><p className="font-medium break-words">{row.name}</p><p className="text-sm" role="status">{row.phase==='submitted'&&row.submission?`Last confirmed reading: ${readingLabels[row.submission.status]}`:labels[row.phase]}</p><div className="flex flex-wrap gap-2">
+    <ul className="divide-y" aria-label="Selected files">{rows.map((row,index)=><li key={index} ref={node=>{if(node)fileRows.current.set(index,node);else fileRows.current.delete(index);}} tabIndex={-1} className="py-3 space-y-2"><p className="font-medium break-words">{row.name}</p><p className="text-sm" role="status">{row.phase==='submitted'&&row.submission?`Last confirmed reading: ${readingLabels[row.submission.status]}`:labels[row.phase]}</p><div className="flex flex-wrap gap-2">
       {['upload_unknown','read_unavailable'].includes(row.phase)&&<Button variant="outline" disabled={busy} onClick={()=>void run(index,'inspect')}>Inspect original</Button>}
       {row.phase==='stored'&&<Button disabled={busy} onClick={()=>void run(index,'submit')}>Read stored source</Button>}
       {row.phase==='submission_unknown'&&<Button disabled={busy} onClick={()=>void run(index,'submit')}>Reconcile same reading</Button>}
       {row.phase==='submitted'&&<Button variant="outline" disabled={busy} onClick={()=>void open(index)}>Open reading</Button>}
     </div></li>)}</ul>
     <p className="text-sm">Closing stops the next upload. A transfer already started may still finish. Reopen unfinished documents, or reselect the same files with the same names and types to inspect their original paths.</p>
-    <div className="flex flex-wrap justify-end gap-2">{!started&&!attachedSelection&&<Button variant="outline" disabled={busy} onClick={onBack}>Pasted text</Button>}<Button variant="outline" onClick={close}>Close</Button>{busy?<Button variant="outline" onClick={()=>{stopping.current=true;}}>Stop remaining uploads</Button>:rows.some(r=>r.phase==='prepared')&&<Button onClick={()=>void run()}>Upload and read files</Button>}</div>
-  </DialogContent>;
+    <div className="flex flex-wrap justify-end gap-2">{!embedded&&!started&&!attachedSelection&&<Button variant="outline" disabled={busy} onClick={onBack}>Pasted text</Button>}<Button variant="outline" onClick={close}>Close</Button>{busy?<Button variant="outline" onClick={()=>{stopping.current=true;}}>Stop remaining uploads</Button>:rows.some(r=>r.phase==='prepared')&&<Button onClick={()=>void run()}>Upload and read files</Button>}</div>
+  </KnowledgeDialogFrame>;
 }

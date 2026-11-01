@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
+import { KnowledgeDialogFrame } from "@/components/knowledge/KnowledgeDialogFrame";
 import { supabase } from "@/integrations/supabase/client";
-import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +31,8 @@ type Props = KnowledgeFlowObservers & {
   /** Negative-only parent incarnation fence; never substitutes for native authority. */
   sourceLifetime?: () => boolean;
   returnFocus?: () => HTMLElement | null;
+  embedded?: boolean;
+  onInteractionStart?: () => void;
 };
 
 /** The governed add flow: submit a source, review what Paige extracted, publish the exact
@@ -60,10 +62,10 @@ export function AddKnowledgeFlow(props: Props) {
   if (source && (props.replacementTarget || source.actorId !== identity.activeUserId || identity.activeTenantId !== source.tenantId
     || source.tenantId !== props.tenantId || identity.loading || identity.accountContextStatus !== "ready" || !source.files.length)) initial.current.retired = true;
   if (!guardedLifetime.current()) {
-    return <DialogContent><DialogHeader><DialogTitle>Source changed</DialogTitle><DialogDescription>Close this review and reopen the original attachment in your current workspace.</DialogDescription></DialogHeader><Button onClick={props.onClose}>Close</Button></DialogContent>;
+    return <KnowledgeDialogFrame embedded={props.embedded} title="Source changed" description="Close this review and reopen the original attachment in your current workspace."><Button onClick={props.onClose}>Close</Button></KnowledgeDialogFrame>;
   }
   if (identity.loading || identity.accountContextStatus !== "ready" || !identity.activeUserId || identity.activeTenantId !== props.tenantId) {
-    return <DialogContent><DialogHeader><DialogTitle>Workspace changed</DialogTitle><DialogDescription>Close this review and reopen Knowledge in your current workspace.</DialogDescription></DialogHeader><Button onClick={props.onClose}>Close</Button></DialogContent>;
+    return <KnowledgeDialogFrame embedded={props.embedded} title="Workspace changed" description="Close this review and reopen Knowledge in your current workspace."><Button onClick={props.onClose}>Close</Button></KnowledgeDialogFrame>;
   }
   // An observed actor/workspace or target change disposes the whole local incarnation,
   // including polling closures. Returning to A must never revive A's retired write.
@@ -71,8 +73,10 @@ export function AddKnowledgeFlow(props: Props) {
   return <KnowledgeFlowSession key={`${props.tenantId}:${identity.activeUserId}:${target?.id ?? "new"}:${target?.revision ?? "new"}`} {...props} attachedSelection={source} sourceLifetime={guardedLifetime.current} />;
 }
 
-function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarget, returnFocus, attachedSelection, sourceLifetime, onExtractionAcknowledged, onPublicationVerified }: Props) {
+function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarget, returnFocus, attachedSelection, sourceLifetime, onExtractionAcknowledged, onPublicationVerified, embedded, onInteractionStart }: Props) {
   const identity = useTenantContext();
+  const fieldPrefix = useId();
+  const fieldId = (name: string) => embedded ? `${fieldPrefix}-${name}` : name;
   const observers = useRef({onExtractionAcknowledged, onPublicationVerified});
   const notifiedExtractions = useRef(new Set<string>()), notifiedPublications = useRef(new Set<string>());
   const [target] = useState(() => replacementTarget ? { ...replacementTarget, tags: [...(replacementTarget.tags ?? [])] } : null);
@@ -242,6 +246,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
     if (mode === "file" && !file) { setNotice("Choose a PDF, DOCX or text file for Paige to read."); return; }
     if (mode === "file" && file && !/\.(pdf|docx|txt|md|markdown|csv|json)$/i.test(file.name)) { setNotice("Choose a PDF, DOCX or supported text file. Scanned or encrypted files may not yield readable text."); return; }
     if (mode === "file" && file && file.size > 2097152) { setNotice("Choose a file up to 2 MB — try a smaller one."); return; }
+    onInteractionStart?.();
     busy.current = true; setHalt(null); setNotice("Sending to Paige…"); setStep("extracting");
     try {
       if (!extractIntent.current) extractIntent.current = crypto.randomUUID();
@@ -441,12 +446,11 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
   }
   const uploadPhase = step === "extracting" && mode === "file" && submittedInput.current === null;
   if (!targetValid) {
-    return <DialogContent onCloseAutoFocus={restoreFocus}><DialogHeader><DialogTitle>Source unavailable</DialogTitle><DialogDescription>Read the current document in this workspace before correcting its content.</DialogDescription></DialogHeader><Button onClick={close}>Close</Button></DialogContent>;
+    return <KnowledgeDialogFrame embedded={embedded} onCloseAutoFocus={restoreFocus} title="Source unavailable" description="Read the current document in this workspace before correcting its content."><Button onClick={close}>Close</Button></KnowledgeDialogFrame>;
   }
-  return <DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto" onCloseAutoFocus={restoreFocus}>
-    <DialogHeader>
-      <DialogTitle>{uploadPhase ? halt ? "Check original upload" : "Uploading source" : step === "done" ? "Published to Knowledge" : step === "publishing" ? "Publishing" : step === "ready" ? "Publish to Knowledge" : step === "review" ? "Review what Paige read" : step === "extracting" ? "Paige is reading" : target ? "Correct Knowledge content" : "Add Knowledge"}</DialogTitle>
-      <DialogDescription>
+  return <KnowledgeDialogFrame embedded={embedded} className="max-w-xl max-h-[90dvh] overflow-y-auto" onCloseAutoFocus={restoreFocus}
+      title={embedded && step === "choose" ? undefined : uploadPhase ? halt ? "Check original upload" : "Uploading source" : step === "done" ? "Published to Knowledge" : step === "publishing" ? "Publishing" : step === "ready" ? "Publish to Knowledge" : step === "review" ? "Review what Paige read" : step === "extracting" ? "Paige is reading" : target ? "Correct Knowledge content" : "Add Knowledge"}
+      description={<>
         {step === "checking" && (halt ? "Check this document's current state before continuing." : "Checking the saved reading for this document.")}
         {step === "choose" && (target ? `Correct revision ${target.revision} of this document. Its published text stays in use until you review and publish the replacement.` : "Paige reads the source first; you review the exact text, then publish it to Knowledge.")}
         {step === "extracting" && (uploadPhase ? "Reading starts after the original uploaded bytes are verified." : "The reading continues even if you close this.")}
@@ -454,8 +458,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
         {step === "ready" && "Your review is saved. Publishing makes the exact reviewed text searchable and usable for this business."}
         {step === "publishing" && "Publishing continues even if you close this."}
         {step === "done" && "The reviewed text is now part of Knowledge for this business."}
-      </DialogDescription>
-    </DialogHeader>
+      </>}>
     {halt ? <div role="alert" className="space-y-3">
       <p className="font-medium">{halt.title}</p>
       <p className="text-sm">{halt.message}</p>
@@ -473,20 +476,20 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       {notice && <p role="status" className="text-sm">{notice}</p>}
       {step === "checking" && <div className="flex justify-end"><Button variant="outline" onClick={close}>Close</Button></div>}
       {(step === "choose" || step === "extracting") && <>
-        <div className="space-y-1.5"><Label>Source type</Label>
+        {(!embedded || target) && <div className="space-y-1.5"><Label>Source type</Label>
           <div className="flex gap-2" role="group" aria-label="Source type">
             {(["paste", "file"] as const).map(value => <Button key={value} type="button" variant={mode === value ? "default" : "outline"} aria-pressed={mode === value} disabled={step === "extracting"} onClick={() => setMode(value)}>{value === "paste" ? "Pasted text" : target ? "File" : "Files"}</Button>)}
           </div>
-        </div>
-        <div className="space-y-1.5"><Label htmlFor="knowledge-add-title">Title</Label>
-          <Input id="knowledge-add-title" value={title} onChange={event => setTitle(event.target.value)} disabled={step === "extracting"} maxLength={300} placeholder="e.g. Discovery call script" />
+        </div>}
+        <div className="space-y-1.5"><Label htmlFor={fieldId("knowledge-add-title")}>Title</Label>
+          <Input id={fieldId("knowledge-add-title")} value={title} onChange={event => setTitle(event.target.value)} disabled={step === "extracting"} maxLength={300} placeholder="e.g. Discovery call script" />
         </div>
         {mode === "paste"
-          ? <div className="space-y-1.5"><Label htmlFor="knowledge-add-content">Text for Paige to read</Label>
-              <Textarea id="knowledge-add-content" value={content} onChange={event => setContent(event.target.value)} disabled={step === "extracting"} rows={8} placeholder="Paste the exact text Paige should learn from." />
+          ? <div className="space-y-1.5"><Label htmlFor={fieldId("knowledge-add-content")}>Text for Paige to read</Label>
+              <Textarea id={fieldId("knowledge-add-content")} value={content} onChange={event => setContent(event.target.value)} disabled={step === "extracting"} rows={8} placeholder="Paste the exact text Paige should learn from." />
             </div>
-          : <div className="space-y-1.5"><Label htmlFor="knowledge-add-file">File (.pdf, .docx, .txt, .md, .markdown, .csv, .json)</Label>
-              <Input id="knowledge-add-file" type="file" accept=".pdf,.docx,.txt,.md,.markdown,.csv,.json" onChange={event => setFile(event.target.files?.[0] ?? null)} disabled={step === "extracting"} />
+          : <div className="space-y-1.5"><Label htmlFor={fieldId("knowledge-add-file")}>File (.pdf, .docx, .txt, .md, .markdown, .csv, .json)</Label>
+              <Input id={fieldId("knowledge-add-file")} type="file" accept=".pdf,.docx,.txt,.md,.markdown,.csv,.json" onChange={event => setFile(event.target.files?.[0] ?? null)} disabled={step === "extracting"} />
             </div>}
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="outline" onClick={close} disabled={step === "extracting"}>Close</Button>
@@ -496,20 +499,20 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       {(step === "review" || step === "ready") && review.current && <KnowledgeSourceEvidencePanel client={client} scope={extractionScope()}
         review={{...review.current, revision: step === "ready" ? savedRevision.current ?? review.current.revision : review.current.revision}} />}
       {step === "review" && <>
-        <div className="space-y-1.5"><Label htmlFor="knowledge-review-content">Reviewed text — this exact text becomes the source</Label>
-          <Textarea id="knowledge-review-content" value={reviewContent} onChange={event => setReviewContent(event.target.value)} rows={10} maxLength={480000} />
+        <div className="space-y-1.5"><Label htmlFor={fieldId("knowledge-review-content")}>Reviewed text — this exact text becomes the source</Label>
+          <Textarea id={fieldId("knowledge-review-content")} value={reviewContent} onChange={event => setReviewContent(event.target.value)} rows={10} maxLength={480000} />
         </div>
-        <div className="space-y-1.5"><Label htmlFor="knowledge-review-title">Title</Label>
-          <Input id="knowledge-review-title" value={title} onChange={event => setTitle(event.target.value)} maxLength={300} />
+        <div className="space-y-1.5"><Label htmlFor={fieldId("knowledge-review-title")}>Title</Label>
+          <Input id={fieldId("knowledge-review-title")} value={title} onChange={event => setTitle(event.target.value)} maxLength={300} />
         </div>
-        <div className="space-y-1.5"><Label htmlFor="knowledge-review-summary">Summary</Label>
-          <Textarea id="knowledge-review-summary" value={summary} onChange={event => setSummary(event.target.value)} maxLength={2000} />
+        <div className="space-y-1.5"><Label htmlFor={fieldId("knowledge-review-summary")}>Summary</Label>
+          <Textarea id={fieldId("knowledge-review-summary")} value={summary} onChange={event => setSummary(event.target.value)} maxLength={2000} />
         </div>
-        <div className="space-y-1.5"><Label htmlFor="knowledge-review-category">Category</Label>
-          <Input id="knowledge-review-category" value={category} onChange={event => setCategory(event.target.value)} maxLength={100} />
+        <div className="space-y-1.5"><Label htmlFor={fieldId("knowledge-review-category")}>Category</Label>
+          <Input id={fieldId("knowledge-review-category")} value={category} onChange={event => setCategory(event.target.value)} maxLength={100} />
         </div>
-        <div className="space-y-1.5"><Label htmlFor="knowledge-review-tags">Tags, separated by commas</Label>
-          <Input id="knowledge-review-tags" value={tags} onChange={event => setTags(event.target.value)} />
+        <div className="space-y-1.5"><Label htmlFor={fieldId("knowledge-review-tags")}>Tags, separated by commas</Label>
+          <Input id={fieldId("knowledge-review-tags")} value={tags} onChange={event => setTags(event.target.value)} />
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="outline" onClick={close}>Close</Button>
@@ -529,7 +532,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
         {step === "done" && <Button onClick={close}>Done</Button>}
       </div>}
     </div>}
-  </DialogContent>;
+  </KnowledgeDialogFrame>;
 }
 
 function plainRefusal(error: unknown): string {

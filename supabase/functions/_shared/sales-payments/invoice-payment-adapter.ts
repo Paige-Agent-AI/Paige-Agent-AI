@@ -8,6 +8,7 @@ import {databaseAnswered} from '../approval-outcome.ts';
 import {verifiedSettlementInput} from './settlement-readback.ts';
 import type {ClaimedPayment} from './request-execution.ts';
 import type {HostedPaymentReadback} from './stripe-hosted.ts';
+import {parseInvoicePaymentFinancialContext,type InvoicePaymentFinancialContext} from './accepted-obligation.ts';
 const object=(v:unknown):Record<string,unknown>|null=>v!==null&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:null;
 export interface PaymentCaller {tenantId:string;actorId:string;operationId:string;stillCurrent:()=>Promise<boolean>}
 export async function persistProviderPaymentReadback(admin:SalesPaymentAdmin,claim:ClaimedPayment,result:HostedPaymentReadback,reference:string):Promise<void> {
@@ -27,23 +28,32 @@ export async function preparePaymentReview(admin:SalesPaymentAdmin,caller:Paymen
  const intent=parsePaymentRequestIntent(value);
  if(intent.provider!=='stripe')throw new Error('PAYPAL_MERCHANT_PERMISSION_REQUIRED');
  const [invoiceRow,invoiceFacts,merchantRow]=await Promise.all([
-  admin.from('paige_invoices').select('id,tenant_id,contact_id').eq('tenant_id',caller.tenantId).eq('id',intent.invoice_id).maybeSingle(),
-  admin.rpc('_sales_invoice_read',{_tenant:caller.tenantId,_invoice:intent.invoice_id}),
+  admin.from('paige_invoices').select('id,tenant_id,contact_id,billing_lifecycle_version,billing_issued_snapshot_version,status,currency').eq('tenant_id',caller.tenantId).eq('id',intent.invoice_id).maybeSingle(),
+  admin.rpc('read_sales_invoice_payment_obligation',{_actor_user_id:caller.actorId,_expected_tenant_id:caller.tenantId,
+   _invoice_id:intent.invoice_id,_reference:{financial_evidence_version:3,reference:intent.obligation_reference??null}}),
   admin.from('tenant_stripe_accounts').select('stripe_account_id,binding_version,provider_environment,country,default_currency,requirements').eq('tenant_id',caller.tenantId).maybeSingle(),
  ]);
- const row=object(invoiceRow.data),facts=object(invoiceFacts.data),merchant=object(merchantRow.data);
- if(invoiceRow.error||invoiceFacts.error||merchantRow.error||!row||!facts||!merchant||row.tenant_id!==caller.tenantId||facts.tenant_id!==caller.tenantId||row.id!==facts.id||typeof row.contact_id!=='string')throw new Error('PAYMENT_CONTEXT_UNAVAILABLE');
- const invoice={id:String(facts.id),tenant_id:caller.tenantId,client_id:row.contact_id,
-  lifecycle_version:Number(facts.version),issued_snapshot_version:Number(facts.issued_snapshot_version),
-  status:String(facts.status),currency:String(facts.currency),outstanding_minor:Number(facts.remaining_cents)};
+ const row=object(invoiceRow.data),merchant=object(merchantRow.data);
+ if(invoiceRow.error||invoiceFacts.error||merchantRow.error||!row||!merchant)throw new Error('PAYMENT_CONTEXT_UNAVAILABLE');
+ let facts:InvoicePaymentFinancialContext;
+ try{facts=parseInvoicePaymentFinancialContext(invoiceFacts.data);}catch{throw new Error('PAYMENT_CONTEXT_UNAVAILABLE');}
+ if(row.tenant_id!==caller.tenantId||row.id!==intent.invoice_id||facts.tenant_id!==caller.tenantId||facts.invoice_id!==intent.invoice_id
+  ||row.contact_id!==facts.client_id||row.billing_lifecycle_version!==facts.invoice_version||facts.invoice_version!==intent.expected_version
+  ||row.billing_issued_snapshot_version!==facts.issued_snapshot_version||row.status!==facts.status
+  ||typeof row.currency!=='string'||row.currency.toLowerCase()!==facts.currency)throw new Error('PAYMENT_CONTEXT_CHANGED');
+ const invoice={id:facts.invoice_id,tenant_id:facts.tenant_id,client_id:facts.client_id,
+  lifecycle_version:facts.invoice_version,issued_snapshot_version:facts.issued_snapshot_version,
+  status:facts.status,currency:facts.currency,outstanding_minor:facts.actual_outstanding_minor};
  let obligationSource:unknown;
  if(intent.obligation_reference){
-  const accepted=await admin.rpc('read_sales_invoice_payment_obligation',{_actor_user_id:caller.actorId,
-   _expected_tenant_id:caller.tenantId,_invoice_id:intent.invoice_id,_reference:intent.obligation_reference});
-  if(accepted.error||!accepted.data)throw new Error('PAYMENT_OBLIGATION_UNAVAILABLE');
-  obligationSource=accepted.data;
+  obligationSource={tenant_id:facts.tenant_id,client_id:facts.client_id,invoice_id:facts.invoice_id,
+   invoice_version:facts.invoice_version,issued_snapshot_version:facts.issued_snapshot_version,obligation:facts.obligation};
+ }else if(facts.obligation!==null){
+  throw new Error('PAYMENT_CONTEXT_CHANGED');
  }
- paymentObligationForRequest(intent,invoice,obligationSource);
+ const obligation=paymentObligationForRequest(intent,invoice,obligationSource);
+ const requested=obligation?.remaining_minor??(intent.purpose==='full'?invoice.outstanding_minor:intent.amount_minor!);
+ if(invoice.outstanding_minor<=0||requested>invoice.outstanding_minor)throw new Error('PAYMENT_CONTEXT_UNAVAILABLE');
  if(!await caller.stillCurrent())throw new Error('WORKSPACE_CHANGED');
  const client=salesStripeClient(secret);
  if(merchant.provider_environment!==client.environment||typeof merchant.stripe_account_id!=='string'||!Number.isSafeInteger(merchant.binding_version))throw new Error('MERCHANT_BINDING_UNAVAILABLE');
@@ -59,15 +69,31 @@ export async function preparePaymentReview(admin:SalesPaymentAdmin,caller:Paymen
 export function paymentExecutionPorts(admin:SalesPaymentAdmin,caller:PaymentCaller,secret:string,origin:string):PaymentExecutionPorts {
  const scope={_expected_tenant_id:caller.tenantId,_operation_id:caller.operationId};
  const checked=(value:unknown)=>parseClaimedPayment(value,caller.tenantId,caller.actorId,caller.operationId);
+ const readInternal=async()=>{const r=await admin.rpc('read_sales_invoice_payment_dispatch',scope);if(r.error)throw new Error('PAYMENT_READBACK_UNAVAILABLE');return checked(r.data);};
  return {stillCurrent:caller.stillCurrent,stripe:salesStripeClient(secret),publicOrigin:origin,
   claim:async()=>{
    const result=await admin.rpc('claim_sales_invoice_payment_request',{...scope,_claim_token:crypto.randomUUID()});
+   if(result.error?.code==='40001'){
+    // Revalidate the original owner/operation BEFORE closing anything. The
+    // native cancellation repeats its locked no-dispatch fence; a race to a
+    // claimed or uncertain provider operation must remain GET-only recovery.
+    const original=await readInternal();
+    if(original.operation.state!=='prepared')return null;
+    if(!await caller.stillCurrent())throw new Error('WORKSPACE_CHANGED');
+    const cancelled=await admin.rpc('cancel_prepared_sales_invoice_payment_request',{...scope,_reason:'invoice_changed'});
+    const row=object(cancelled.data);
+    if(cancelled.error||!row||row.state!=='cancelled'||row.dispatch_started_at!==null||row.provider_object_id!==null
+     ||Object.prototype.hasOwnProperty.call(row,'dispatch_claim_token')||row.provider_status!=='not_dispatched'
+     ||!['merchant_changed','readiness_unavailable','invoice_changed','recovery_abandoned'].includes(String(row.cancellation_reason)))throw new Error('PAYMENT_RECOVERY_UNAVAILABLE');
+    checked({...row,dispatch_claim_token:null});
+    return null;
+   }
    if(result.error?.code==='55000')return null;
    if(result.error)throw new Error('PAYMENT_CLAIM_UNAVAILABLE');
    const work=await admin.rpc('register_sales_payment_reconciliation_work',scope);if(work.error)throw new Error('PAYMENT_RECOVERY_UNAVAILABLE');
    return checked(result.data);
   },
-  readInternal:async()=>{const r=await admin.rpc('read_sales_invoice_payment_dispatch',scope);if(r.error)throw new Error('PAYMENT_READBACK_UNAVAILABLE');return checked(r.data);},
+  readInternal,
   persist:(claim,result)=>persistProviderPaymentReadback(admin,claim,result,`stripe-read-${result.provider_object_id??claim.operation.id}`),
   readSafe:async()=>{const r=await admin.rpc('read_sales_invoice_payment_request',{...scope,_actor_user_id:caller.actorId});if(r.error)throw new Error('PAYMENT_READBACK_UNAVAILABLE');return safePaymentOperation(r.data);},
  };

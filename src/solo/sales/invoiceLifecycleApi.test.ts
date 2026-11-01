@@ -10,3 +10,69 @@ it('fails entire page for foreign projection and uses canonical page reader',asy
 
 it('reads provider allocation without promoting manual receipts into provider evidence',()=>expect(readInvoiceRecord(row({manual_recorded_cents:100,provider_verified_cents:300,allocated_cents:400,remaining_cents:600}),tenant)).toMatchObject({manualRecordedMinor:100,providerVerifiedMinor:300,allocatedMinor:400,remainingMinor:600}));
 it.each([{manual_recorded_cents:100,provider_verified_cents:300,allocated_cents:399},{provider_verified_cents:-1},{provider_verified_cents:300},{provider_verified_cents:300,allocated_cents:700,remaining_cents:601}])('refuses inconsistent split balance %j',patch=>expect(readInvoiceRecord(row(patch),tenant)).toBeNull());
+
+const providerReceipt={id:'55555555-5555-4555-8555-555555555555',kind:'receipt',amount_cents:500,method:'stripe',received_at:'2026-01-01T00:00:00Z',actor_user_id:'33333333-3333-4333-8333-333333333333',reference:null,notes:null,reverses_payment_id:null,reason:null,evidence_kind:'provider_verified',provider:'stripe',provider_verified_at:'2026-01-01T00:00:00Z',provider_environment:'test'};
+const evidenceRow=(patch:Record<string,unknown>={})=>row({payment_evidence_version:2,test_provider_verified_cents:500,manual_recorded_cents:0,provider_verified_cents:0,allocated_cents:0,remaining_cents:1000,payments:[providerReceipt],payments_count:1,payments_has_more:false,...patch});
+it('retains native TEST verification without reducing business debt or claiming live cash',()=>{
+ const actual=readInvoiceRecord(evidenceRow(),tenant);
+ expect(actual).toMatchObject({paymentEvidenceVersion:2,testProviderVerifiedMinor:500,manualRecordedMinor:0,providerVerifiedMinor:0,allocatedMinor:0,remainingMinor:1000,payments:[{provider_environment:'test',evidence_kind:'provider_verified'}]});
+});
+it('retains the native business projection on a paginated read without summing its visible receipts',()=>{
+ expect(readInvoiceRecord(evidenceRow({manual_recorded_cents:100,provider_verified_cents:300,allocated_cents:400,remaining_cents:600,payments:[],payments_count:3,payments_has_more:true}),tenant)).toMatchObject({manualRecordedMinor:100,providerVerifiedMinor:300,testProviderVerifiedMinor:500,allocatedMinor:400,remainingMinor:600});
+});
+it('preserves historical receipt environment when the current merchant mode differs',()=>{
+ expect(readInvoiceRecord(evidenceRow({payments:[{...providerReceipt,provider_environment:'live'}],provider_verified_cents:500,test_provider_verified_cents:0,allocated_cents:500,remaining_cents:500}),tenant)).toMatchObject({providerVerifiedMinor:500,testProviderVerifiedMinor:0,payments:[{provider_environment:'live'}]});
+});
+it.each([{payment_evidence_version:3},{payment_evidence_version:'2'},{test_provider_verified_cents:undefined},{test_provider_verified_cents:null},{test_provider_verified_cents:-1},{test_provider_verified_cents:0.5},{test_provider_verified_cents:Number.MAX_SAFE_INTEGER+1},{test_provider_verified_cents:NaN}])('refuses unsupported or incomplete native environment evidence %j',patch=>expect(readInvoiceRecord(evidenceRow(patch),tenant)).toBeNull());
+it('refuses a TEST total without its declared native projection version',()=>expect(readInvoiceRecord(row({test_provider_verified_cents:500}),tenant)).toBeNull());
+it.each([undefined,null,'TEST','production',['test'],['live'],{environment:'test'}])('requires an exact persisted environment on v2 provider receipts: %s',environment=>expect(readInvoiceRecord(evidenceRow({payments:[{...providerReceipt,provider_environment:environment}]}),tenant)).toBeNull());
+it.each([undefined,['provider_verified'],['manual_recorded'],{}])('requires the exact v2 evidence class instead of guessing from the method: %j',evidence=>expect(readInvoiceRecord(evidenceRow({payments:[{...providerReceipt,evidence_kind:evidence}]}),tenant)).toBeNull());
+it('preserves human recorded evidence with no claimed provider environment',()=>{
+ const manual={...providerReceipt,evidence_kind:'manual_recorded',method:'cash',provider:null,provider_environment:null,provider_verified_at:null};
+ expect(readInvoiceRecord(evidenceRow({manual_recorded_cents:500,allocated_cents:500,remaining_cents:500,test_provider_verified_cents:0,payments:[manual]}),tenant)).toMatchObject({manualRecordedMinor:500,providerVerifiedMinor:0,payments:[{evidence_kind:'manual_recorded',provider_environment:null}]});
+ expect(readInvoiceRecord(evidenceRow({payments:[{...manual,provider_environment:'live'}]}),tenant)).toBeNull();
+});
+it('does not manufacture v2 authority or a zero TEST total for legacy records',()=>{
+ const actual=readInvoiceRecord(row(),tenant);
+ expect(actual).not.toHaveProperty('paymentEvidenceVersion');expect(actual).not.toHaveProperty('testProviderVerifiedMinor');
+});
+
+// Actual financial standing is a closed native projection, independent of gross
+// receipt totals after refunds/re-collection. No client-side netting or repricing.
+const financialSummary=(patch:Record<string,unknown>={})=>({schema_version:3,invoice_id:id,invoice_version:2,currency:'usd',
+ standing:'recorded',outstanding_minor:400,refund_payable_minor:100,credit_minor:100,
+ manual_recorded_minor:400,provider_confirmed_minor:600,provider_net_minor:200,test_provider_minor:500,source_hash:'b'.repeat(64),...patch});
+const financialRow=(summary:unknown=financialSummary(),patch:Record<string,unknown>={})=>evidenceRow({financial_evidence_version:3,financial_summary:summary,
+ manual_recorded_cents:400,provider_verified_cents:600,allocated_cents:1000,remaining_cents:0,payments:[],payments_count:3,payments_has_more:true,...patch});
+it('reads native actual debt and separate refund rather than a stale gross Paid balance',()=>{
+ expect(readInvoiceRecord(financialRow(),tenant)).toMatchObject({remainingMinor:400,financial:{standing:'recorded',outstanding_minor:400,refund_payable_minor:100,credit_minor:100}});
+});
+it('allows original gross receipts above principal after genuine re-collection without recomputing current debt',()=>{
+ const f=financialSummary({provider_confirmed_minor:1600,provider_net_minor:200});
+ expect(readInvoiceRecord(financialRow(f,{provider_verified_cents:1600,allocated_cents:2000,remaining_cents:-1000}),tenant)).toMatchObject({remainingMinor:400,providerVerifiedMinor:1600,financial:f});
+});
+it.each(['needs_review','allocation_required','unavailable'])('preserves unknown %s as null rather than zero or Paid',standing=>{
+ const f=financialSummary({standing,outstanding_minor:null,refund_payable_minor:null,credit_minor:null,provider_net_minor:null,source_hash:standing==='unavailable'?null:'b'.repeat(64)});
+ expect(readInvoiceRecord(financialRow(f),tenant)).toMatchObject({remainingMinor:null,financial:f});
+});
+it.each([
+ {schema_version:2},{invoice_id:tenant},{invoice_version:3},{currency:'eur'},{standing:'paid'},
+ {outstanding_minor:null},{outstanding_minor:-1},{refund_payable_minor:null},{credit_minor:null},
+ {manual_recorded_minor:0},{provider_confirmed_minor:0},{test_provider_minor:0},
+ {source_hash:null},{source_hash:'unknown'},{outstanding_minor:'400'},{provider_net_minor:Infinity},
+ {customer_notified:true},{provider_called:true},
+])('refuses stale, contradictory or extended actual financial summary %j',patch=>{
+ expect(readInvoiceRecord(financialRow(financialSummary(patch)),tenant)).toBeNull();
+});
+it('refuses a fabricated zero under an unknown financial standing',()=>{
+ expect(readInvoiceRecord(financialRow(financialSummary({standing:'needs_review',outstanding_minor:0,refund_payable_minor:null,credit_minor:null,provider_net_minor:null})),tenant)).toBeNull();
+});
+it('refuses unmarked, unsupported or incomplete financial negotiation',()=>{
+ for(const patch of [{financial_evidence_version:undefined},{financial_evidence_version:2},{financial_evidence_version:'3'},{financial_summary:undefined}])expect(readInvoiceRecord(financialRow(financialSummary(),patch),tenant)).toBeNull();
+});
+it('copies and freezes the exact actual summary rather than retaining mutable caller evidence',()=>{
+ const f=financialSummary(),parsed=readInvoiceRecord(financialRow(f),tenant);expect(parsed?.financial).not.toBe(f);expect(Object.isFrozen(parsed?.financial)).toBe(true);
+ f.outstanding_minor=0;expect(parsed?.remainingMinor).toBe(400);
+});
+
+it('does not coerce a gross allocation string into authoritative current financial evidence',()=>{expect(readInvoiceRecord(financialRow(financialSummary(),{allocated_cents:'1000'}),tenant)).toBeNull();});

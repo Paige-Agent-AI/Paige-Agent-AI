@@ -27,3 +27,40 @@ it("an invalid current scope never begins renderer, PDF or payment work",async()
 it("an interrupted renderer times out with explicit recovery",async()=>{vi.useFakeTimers({toFake:['setTimeout','clearTimeout']});network.mockReturnValue(new Promise(()=>{}));await render();await act(async()=>{vi.advanceTimersByTime(20_001);await flush();});expect(host.textContent).toContain("We couldn't open the invoice document");expect(Array.from(host.querySelectorAll('button')).some(x=>x.textContent==='Try again')).toBe(true);expect(host.querySelector('iframe')).toBeNull();});
 
 it("an interrupted PDF Auth check finishes with recovery and cannot dispatch a late PDF",async()=>{vi.useFakeTimers({toFake:["setTimeout","clearTimeout"]});await render();const old=pending<{data:{user:{id:string}};error:null}>();f.user.mockReturnValue(old.promise);const button=Array.from(host.querySelectorAll("button")).find(x=>x.textContent?.includes("Download PDF"))!;await act(async()=>{button.click();await flush();});await act(async()=>{vi.advanceTimersByTime(20_001);await flush();});expect(host.textContent).toContain("The PDF couldn't be opened");expect(f.pdf).not.toHaveBeenCalled();old.resolve({data:{user:{id:actor}},error:null});await act(flush);expect(f.pdf).not.toHaveBeenCalled();expect(f.download).not.toHaveBeenCalled();});
+
+const actualInvoice=(patch:Partial<ClientPortalInvoicesState['invoices'][number]>={})=>{f.state={...f.state,invoices:[{...f.state.invoices[0],payment_evidence_version:2,issued_snapshot_version:1,...patch}]};};
+it('legacy payment balance cannot turn an actual TEST-only outstanding invoice into a settlement',async()=>{
+ actualInvoice({test_provider_minor:2000});f.payment.mockResolvedValue({...ready(),remainingMinor:0,testProviderMinor:2000,request:null});
+ await render();expect(host.querySelector('[data-testid=payment-owed]')?.textContent).toContain('20.00');expect(host.querySelector('[data-testid=payment-test-settled]')).toBeNull();expect(host.querySelector('[data-testid=payment-paid]')).toBeNull();expect(host.querySelector('[data-testid=pay-now]')).toBeNull();
+ expect(host.textContent).toContain("couldn't check for a payment link");expect(f.state.refresh).toHaveBeenCalledTimes(1);
+});
+it('fully LIVE-paid actual invoice remains paid despite historical TEST evidence',async()=>{
+ actualInvoice({remaining_minor:0,provider_verified_minor:2000,test_provider_minor:2000,payable:false});await render();
+ expect(host.querySelector('[data-testid=payment-paid]')).not.toBeNull();expect(host.querySelector('[data-testid=payment-test-settled]')).toBeNull();expect(host.textContent).toContain('payment provider');expect(host.textContent).toContain('did not reduce');expect(f.payment).not.toHaveBeenCalled();
+});
+it('a current native actual payment request keeps the correct amount and original hosted destination',async()=>{
+ actualInvoice({remaining_minor:1000,provider_verified_minor:1000,test_provider_minor:500});f.payment.mockResolvedValue({...ready(),paymentEvidenceVersion:2,remainingMinor:1000,testProviderMinor:500,environment:'live',request:{...ready().request,amountMinor:1000,remainingMinor:1000}});
+ await render();expect(host.querySelector('[data-testid=payment-owed]')?.textContent).toContain('10.00');expect(host.querySelector('[data-testid=pay-now]')?.getAttribute('href')).toContain('cs_test_scope');expect(host.querySelector('[data-testid=test-link]')).toBeNull();expect(f.state.refresh).not.toHaveBeenCalled();
+});
+it.each([
+ {remainingMinor:0,testProviderMinor:0,request:null},
+ {remainingMinor:1000,testProviderMinor:0,request:{...ready().request,remainingMinor:1000}},
+ {remainingMinor:2000,testProviderMinor:10,request:ready().request},
+ {remainingMinor:2000,testProviderMinor:0,request:{...ready().request,currency:'eur'}},
+])('a conflicting actual request cannot override current invoice money or expose a stale link',async patch=>{
+ actualInvoice();f.payment.mockResolvedValue({...ready(),paymentEvidenceVersion:2,...patch});await render();
+ expect(host.querySelector('[data-testid=payment-owed]')?.textContent).toContain('20.00');expect(host.querySelector('[data-testid=pay-now]')).toBeNull();expect(host.querySelector('[data-testid=payment-paid]')).toBeNull();expect(host.textContent).toContain("couldn't check for a payment link");expect(f.state.refresh).toHaveBeenCalledTimes(1);
+});
+it('new actual payment evidence cannot silently reinterpret a legacy list balance',async()=>{
+ f.payment.mockResolvedValue({...ready(),paymentEvidenceVersion:2});await render();expect(host.querySelector('[data-testid=pay-now]')).toBeNull();expect(host.textContent).toContain("couldn't check for a payment link");expect(f.state.refresh).toHaveBeenCalledTimes(1);
+});
+it('representation changes re-read the original payment request even if amount and link flag are unchanged',async()=>{
+ await render();expect(f.payment).toHaveBeenCalledTimes(1);actualInvoice();f.payment.mockResolvedValue({...ready(),paymentEvidenceVersion:2});await render();expect(f.payment).toHaveBeenCalledTimes(2);expect(host.querySelector('[data-testid=pay-now]')).not.toBeNull();
+});
+it('voided actual invoices preserve the original refusal to collect even with TEST and stale request evidence',async()=>{
+ actualInvoice({status:'void',test_provider_minor:2000,payable:false});await render();expect(host.querySelector('[data-testid=payment-void]')).not.toBeNull();expect(host.querySelector('[data-testid=pay-now]')).toBeNull();expect(f.payment).not.toHaveBeenCalled();
+});
+it('an actual manual correction reopens the native amount rather than the historical TEST settlement',async()=>{
+ actualInvoice({test_provider_minor:2000});f.payment.mockResolvedValue({...ready(),paymentEvidenceVersion:2,remainingMinor:2000,testProviderMinor:2000,request:{...ready().request,state:'settled',url:null}});await render();
+ expect(host.querySelector('[data-testid=payment-owed]')?.textContent).toContain('20.00');expect(host.querySelector('[data-testid=payment-test-settled]')).toBeNull();expect(host.querySelector('[data-testid=payment-paid]')).toBeNull();expect(host.textContent).toContain('moved no money');
+});

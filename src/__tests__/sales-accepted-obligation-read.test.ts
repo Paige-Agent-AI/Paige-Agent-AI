@@ -12,7 +12,7 @@ async function makeFixture(){
  if(schedule.state!=='ready')throw Error('Synthetic schedule unavailable');
  const treatment={state:'not_applicable',charges:[],source:'Synthetic recorded decision',policy:'No additional charge'},body='Synthetic retained commercial record.';
  const p=await prepareCommercialPresentation({schema_version:2,engagement:{starts_on:'2026-10-15',ends_on:null,price_basis:'negotiated'},source:{tenant_id:tenant,client_id:client,offer_id:id(3),agreement_id:agreement,agreement_version:4,agreement_updated_at:'2026-10-14T18:00:00Z',body_source:'tenant_template',status:'draft',content_sha256:null,terms_id:terms,terms_version:3,terms_updated_at:'2026-10-14T18:00:00Z',invoice_id:invoice,invoice_version:1,invoice_draft_version:1,invoice_updated_at:'2026-10-14T18:00:00Z'},title:'Synthetic agreement',body_markdown:body,principal_minor:350000,currency:'usd',collection_terms:schedule.terms,conditions:{schema_version:1,tax:treatment,fees:treatment},lines:[{unit_minor:350000,quantity:1}]});
- return {schema_version:1,state:'recorded',tenant_id:tenant,invoice_id:invoice,agreement_id:agreement,receipt_id:id(7),completed_at:'2026-10-15T00:00:00Z',payload:p.payload,payload_digest:p.payload_digest,body_markdown:body,presented_body_markdown:commercialPresentationText(body,p),document_sha256:'a'.repeat(64),sealed_sha256:'b'.repeat(64),payment_obligations:{schema_version:1,state:'available',tenant_id:tenant,client_id:client,invoice_id:invoice,invoice_version:2,invoice_draft_version:1,issued_snapshot_version:1,obligations:p.payload.obligations.filter(r=>r.amount_cents>0).map(r=>({reference:{commercial_terms_id:terms,signing_id:agreement,signing_version:4,terms_version:3,sequence:r.sequence},source_digest:p.payload_digest,due_date:r.due_date,scheduled_minor:r.amount_cents,remaining_minor:r.amount_cents}))}};
+ return {schema_version:1,state:'recorded',tenant_id:tenant,invoice_id:invoice,agreement_id:agreement,receipt_id:id(7),completed_at:'2026-10-15T00:00:00Z',payload:p.payload,payload_digest:p.payload_digest,body_markdown:body,presented_body_markdown:commercialPresentationText(body,p),document_sha256:'a'.repeat(64),sealed_sha256:'b'.repeat(64),payment_obligations:{schema_version:2,financial_evidence_version:3,state:'available',tenant_id:tenant,client_id:client,invoice_id:invoice,invoice_version:2,invoice_draft_version:1,issued_snapshot_version:1,obligations:p.payload.obligations.filter(r=>r.amount_cents>0).map(r=>({reference:{commercial_terms_id:terms,signing_id:agreement,signing_version:4,terms_version:3,sequence:r.sequence},source_digest:p.payload_digest,due_date:r.due_date,scheduled_minor:r.amount_cents,remaining_minor:r.amount_cents}))}};
 }
 type Fixture=Awaited<ReturnType<typeof makeFixture>>;
 const seed=makeFixture(),fixture=async()=>structuredClone(await seed);
@@ -149,4 +149,25 @@ it('keeps an accepted-plan transport failure separate from the already scoped in
 it.each([{include_accepted_payment_plan:'true'},{include_accepted_payment_plan:null},{agreement_id:agreement},{client_id:client},{approved:true}])('rejects model-authored plan context or malformed opt-in before any read: %o',async change=>{
  const {result,rpc}=await chatRead(await fixture(),invoiceRow(),{...chatContext.args,...change});
  expect(result.content.success).toBe(false);expect(rpc).not.toHaveBeenCalled();
+});
+
+const actualFixture=async()=>{const data=await fixture();return {...data,payment_obligations:{...data.payment_obligations,schema_version:2,financial_evidence_version:3}};};
+it('current target inspection requires the native financial representation rather than accepting legacy gross zero',async()=>{
+ const data=await fixture();const legacy={...data,payment_obligations:{...data.payment_obligations,schema_version:1,financial_evidence_version:undefined}};legacy.payment_obligations.obligations[0].remaining_minor=0;
+ expect(await read(legacy)).toEqual({state:'refused'});
+});
+it('keeps a refunded original target collectible from exact native remaining evidence without reconstructing the schedule',async()=>{
+ const data=await actualFixture();data.payment_obligations.obligations[0].remaining_minor=10000;
+ const result=await read(data);expect(result.state).toBe('available');if(result.state==='available')expect(result.obligations[0]).toMatchObject({reference:{sequence:1},scheduled_minor:50000,remaining_minor:10000});
+ if(result.state==='available'){expect(result.obligations).toHaveLength(11);expect(result.accepted.presentation.payload_digest).toBe(data.payload_digest);}
+});
+it.each(['financial_review_required','financial_evidence_unavailable'])('withholds all selectable targets for native %s',async reason=>{
+ const data=await actualFixture();expect(await read({...data,payment_obligations:{...data.payment_obligations,state:'held',reason,obligations:[]}})).toEqual({state:'held',reason});
+});
+it('negotiates current financial target evidence on the original caller JWT read',async()=>{
+ const data=await actualFixture(),headers:unknown[]=[];const response=Promise.resolve({data,error:null});const rpc=vi.fn(()=>Object.assign(response,{setHeader(name:string,value:string){headers.push([name,value]);return response;}}));
+ expect((await readAcceptedInvoicePaymentPlan(tenant,input,{rpc})).state).toBe('available');expect(headers).toEqual([['x-paige-invoice-evidence-version','3']]);expect(rpc).toHaveBeenCalledExactlyOnceWith('read_sales_accepted_invoice_obligations',{_expected_tenant_id:tenant,_invoice_id:invoice,_agreement_id:agreement});
+});
+it('does not expose the immutable source-only target as an available monetary result',async()=>{
+ const data=await actualFixture();expect(await read({...data,payment_obligations:{...data.payment_obligations,financial_source_only:true}})).toEqual({state:'refused'});
 });

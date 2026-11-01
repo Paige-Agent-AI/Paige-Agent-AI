@@ -4,7 +4,7 @@ const h=vi.hoisted(()=>({read:vi.fn(),persist:vi.fn()}));
 vi.mock('./stripe-client.ts',()=>({salesStripeClient:()=>({environment:'test'})}));
 vi.mock('./stripe-hosted.ts',()=>({readStripeHostedRequest:h.read}));
 vi.mock('./invoice-payment-adapter.ts',()=>({persistProviderPaymentReadback:h.persist}));
-import {routeVerifiedSalesStripeEvent} from './stripe-event-adapter.ts';
+import {routeVerifiedSalesStripeEvent,registerVerifiedSalesStripeAdjustmentEvent} from './stripe-event-adapter.ts';
 const id='11111111-1111-4111-8111-111111111111',tenant='22222222-2222-4222-8222-222222222222',actor='33333333-3333-4333-8333-333333333333';
 const command={action:'invoice.payment_request',invoice_id:id,expected_version:3,provider:'stripe',purpose:'partial',issued_snapshot_version:1,client_id:actor,amount_minor:50000,currency:'usd',merchant_account_id:'acct_A',merchant_binding_version:1,environment:'test'};
 const row={id,tenant_id:tenant,actor_user_id:actor,invoice_id:id,client_id:actor,invoice_version:3,issued_snapshot_version:1,provider:'stripe',merchant_account_id:'acct_A',merchant_binding_version:1,environment:'test',amount_minor:50000,currency:'usd',purpose:'partial',command,idempotency_key:`sales-payment-${id}`,state:'provider_accepted',provider_object_id:'cs_test_fixture',dispatch_claim_token:'44444444-4444-4444-8444-444444444444',dispatch_started_at:'2026-10-05T12:00:00Z',reconciliation_status:'blocked',reconciliation_reason:'reconciliation_exhausted'};
@@ -16,3 +16,31 @@ it('event replay with no unchecked operations has no additional provider readbac
 it('ambiguous provider result is retryable and never marks availability checked',async()=>{const f=fixture();h.read.mockResolvedValue({state:'outcome_unknown'});expect((await routeVerifiedSalesStripeEvent(f.admin,event,'legacy','unused')).status).toBe(503);expect(f.rpc.mock.calls.some(([n])=>n==='complete_sales_balance_event_readback')).toBe(false);});
 it('event environment mismatch refuses without provider reads',async()=>{const f=fixture();expect((await routeVerifiedSalesStripeEvent(f.admin,{...event,livemode:true},'legacy','unused')).status).toBe(400);expect(h.read).not.toHaveBeenCalled();});
 it('a larger event batch remains retryable so admission progresses',async()=>{const f=fixture([row],true);expect((await routeVerifiedSalesStripeEvent(f.admin,event,'legacy','unused')).status).toBe(503);expect(h.persist).toHaveBeenCalledTimes(1);});
+
+// The new export is intentionally NOT wired into the existing live ingress.
+// These ports establish signal routing only, never genuine Stripe verification.
+const registered={state:'registered',work:{work_id:'55555555-5555-4555-8555-555555555555',work_status:'claimed',attempt_count:1,max_attempts:25}};
+const refundEvent={type:'refund.created',id:'evt_refund',account:'acct_A',livemode:false,data:{object:{object:'refund',id:'re_fixture',charge:'ch_fixture',amount:1,status:'succeeded',metadata:{tenant_id:'untrusted',paige_operation_id:'untrusted'}}}};
+function adjustmentFixture(data:unknown=registered,error:unknown=null){
+ const rpc=vi.fn(async()=>({data,error}));return {rpc,admin:{rpc,from:vi.fn(()=>{throw Error('No table or provider lookup at this port');})} as unknown as SalesPaymentAdmin};
+}
+it.each(['charge.refunded','charge.refund.updated','refund.created','refund.updated','refund.failed','charge.dispute.created','charge.dispute.updated','charge.dispute.closed','charge.dispute.funds_withdrawn','charge.dispute.funds_reinstated'])('registers only the original charge reference for %s, without trusting event economics',async type=>{
+ const kind=type==='charge.refunded'?'charge':type.includes('dispute')?'dispute':'refund';
+ const value={...refundEvent,type,data:{object:{...refundEvent.data.object,object:kind,id:kind==='charge'?'ch_fixture':kind==='dispute'?'du_fixture':'re_fixture'}}};
+ const f=adjustmentFixture();expect(await registerVerifiedSalesStripeAdjustmentEvent(f.admin,value,'legacy','test')).toEqual({handled:true,status:200,code:'PROVIDER_OBSERVATION_REGISTERED'});
+ expect(f.rpc).toHaveBeenCalledExactlyOnceWith('register_sales_provider_observation_event',{_event_id:'evt_refund',_event_type:type,_merchant_account_id:'acct_A',_environment:'test',_provider_transaction_id:'ch_fixture'});
+ expect(h.read).not.toHaveBeenCalled();expect(h.persist).not.toHaveBeenCalled();expect(f.admin.from).not.toHaveBeenCalled();
+});
+it.each(['charge.updated','__proto__','constructor','toString'])('keeps unsupported %s outside the closed observation route',async type=>{const f=adjustmentFixture();expect(await registerVerifiedSalesStripeAdjustmentEvent(f.admin,{...refundEvent,type},'legacy','test')).toEqual({handled:false,status:200,code:'OTHER_DOMAIN'});expect(f.rpc).not.toHaveBeenCalled();});
+it.each([
+ {...refundEvent,id:'not_an_event'}, {...refundEvent,account:'acct_other!'}, {...refundEvent,livemode:true},
+ {...refundEvent,data:{object:{...refundEvent.data.object,object:'charge'}}},
+ {...refundEvent,data:{object:{...refundEvent.data.object,charge:{id:'ch_fixture'}}}},
+ {...refundEvent,data:{object:{...refundEvent.data.object,livemode:true}}},
+])('refuses malformed or mismatched signed-event scope before native registration',async value=>{const f=adjustmentFixture();expect((await registerVerifiedSalesStripeAdjustmentEvent(f.admin,value,'legacy','test')).status).toBe(400);expect(f.rpc).not.toHaveBeenCalled();});
+it('does not reuse the other platform signature or environment',async()=>{const f=adjustmentFixture();expect((await registerVerifiedSalesStripeAdjustmentEvent(f.admin,refundEvent,'v2','test')).status).toBe(400);expect((await registerVerifiedSalesStripeAdjustmentEvent(f.admin,refundEvent,'legacy','invalid' as 'test')).status).toBe(400);expect(f.rpc).not.toHaveBeenCalled();});
+it('leaves an early unlinked event retryable and uses the SAME original event identity when later linked',async()=>{const f=adjustmentFixture();f.rpc.mockResolvedValueOnce({data:{state:'verification_pending'},error:null});expect((await registerVerifiedSalesStripeAdjustmentEvent(f.admin,refundEvent,'legacy','test')).status).toBe(503);expect((await registerVerifiedSalesStripeAdjustmentEvent(f.admin,refundEvent,'legacy','test')).code).toBe('PROVIDER_OBSERVATION_REGISTERED');expect(f.rpc).toHaveBeenCalledTimes(2);expect(f.rpc.mock.calls[0]).toEqual(f.rpc.mock.calls[1]);});
+it('preserves other-domain routing from native scope without provider reads',async()=>{const f=adjustmentFixture({state:'other_domain'});expect((await registerVerifiedSalesStripeAdjustmentEvent(f.admin,refundEvent,'legacy','test')).handled).toBe(false);expect(h.read).not.toHaveBeenCalled();});
+it.each([null,{state:'observed'},{state:'registered',work:{...registered.work,attempt_count:26}},{state:'registered',work:{...registered.work,work_id:'bad'}},{state:'registered',work:{...registered.work,max_attempts:26}}])('keeps missing or malformed native registration acknowledgment uncertain',async data=>{const f=adjustmentFixture(data);expect((await registerVerifiedSalesStripeAdjustmentEvent(f.admin,refundEvent,'legacy','test')).status).toBe(503);expect(f.rpc).toHaveBeenCalledTimes(1);});
+it('does not retry an uncertain native effect inside the adapter',async()=>{const f=adjustmentFixture(null,{code:'synthetic_lost_ack'});expect((await registerVerifiedSalesStripeAdjustmentEvent(f.admin,refundEvent,'legacy','test')).status).toBe(503);expect(f.rpc).toHaveBeenCalledTimes(1);expect(h.persist).not.toHaveBeenCalled();});
+it('retained blocked work is registration only, never claimed to be reconciled',async()=>{const f=adjustmentFixture({state:'registered',work:{...registered.work,work_status:'blocked',attempt_count:25}});expect((await registerVerifiedSalesStripeAdjustmentEvent(f.admin,refundEvent,'legacy','test')).code).toBe('PROVIDER_OBSERVATION_REGISTERED');expect(h.persist).not.toHaveBeenCalled();});

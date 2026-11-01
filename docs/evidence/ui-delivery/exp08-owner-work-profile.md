@@ -13,11 +13,11 @@ MUST_PRESERVE: Original three-argument Team RPC/audit, contact editor and its se
 ACCEPTANCE_CRITERIA: Holder/self can edit/save/reopen native values; Admin/co-owner can inspect another owner's read-only fields and Close; native refusal/unknown preserves draft and cannot claim success; tenant/actor/unmount invalidates stale completion
 MOTION_PURPOSE: NONE: retain existing reduced-motion-aware dialog transition; no new animation
 PROTECTED_SEAMS: Affected: scoped roster presentation, owner edit authority, original work-profile readback, dialog focus/accessibility and responsive geometry. Unaffected: Auth/account choice writers, entitlement/paywall/provisioning/Billing, shared approval/Trust/Harness/Spine runtime, Rail/Memory writers, Chat transcripts/stream/popout/history, Live, Vault/credentials, providers/sends, durable scheduler and all domain writers. Server authority remains independent of presentation.
-AUTOMATED_EVIDENCE: PASS: current11 selected Team/contact/lifecycle/profile suites184/184 and overlapping3 focused suites60/60; older181/180 populations and failing-first evidence retained below, never summed
-STATIC_EVIDENCE: UNVERIFIED: current four changed UI/contract/test/transport files ESLint exit0; title-authority guard and SOLO parity guard plus parity mutation self-test PASS; whole-app compiler previously resource-stopped, no current clean type result
-RENDERED_EVIDENCE: PASS: current real SoloApp controlled-browser32 captures, two fictional contexts, both themes, four viewports with PAIGE open/closed; geometry/focus only, no authenticated customer claim
-BEHAVIORAL_EVIDENCE: PASS: current11 suites181 cases and original controlled-browser7 states; synthetic transport only, native/authenticated persistence and context recovery remain owed
-AUTHENTICATED_RUNTIME: UNVERIFIED: inert native work-profile candidate not released; actual original Team/Spine/cohort results remain owed
+AUTOMATED_EVIDENCE: PASS: unchanged original12 Team/contact/lifecycle suites230PASS; exact source0d599b50. Supporting composed5658 full-schema first-owner/profile/permission/atomic/notice steps90-94 actualSUCCESS. Replacement release exact full engineering gates still owed, no totals aggregated.
+STATIC_EVIDENCE: UNVERIFIED: original unchanged6 UI/contract/test files scoped ESLint exit0; exact current-main union conserved. Old local whole-app compiler straddled composition and was retired; its wrapper exit0 is INVALID, not compiler proof. Required final hosted compiler remains owed; no baseline changed.
+RENDERED_EVIDENCE: PASS: historical controlled real-SoloApp32 captures with fictional contexts/themes/four viewports/PAIGE open and closed, geometry/focus only. Current production/native integration and authenticated rendered proof remain UNVERIFIED.
+BEHAVIORAL_EVIDENCE: PASS: original12 mounted suites230 and prior controlled recovery/permission states cover exact receipts, draft retention, scoped refusal and explicit reopen. Fictional transport/isolated SQL are not customer persistence proof.
+AUTHENTICATED_RUNTIME: UNVERIFIED: guarded native plus UI production release and actual authorized save/access/result/reopen/recovery remain owed. Isolated managed Preview is engineering proof only.
 KEYBOARD_FOCUS: PASS: all32 controlled-browser contexts prove read-only heading initial focus, keyboard Close reachability, Escape and original Team-row focus return; actual AT remains owed
 ZOOM_REFLOW: UNVERIFIED: local 200percent/reflow and native zoom proof separate
 REDUCED_MOTION: PASS: existing dialog rendered under reduced-motion preference in the controlled-browser32frames/7states; no new motion
@@ -32,9 +32,9 @@ SOLO_1024X768_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus
 SOLO_1024X768_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
 SOLO_900X1000_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
 SOLO_900X1000_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
-UNVERIFIED: Full-schema/current native carrier, real authenticated role/cohort/save/reload/refusal, actual AT/native zoom and production release remain owed; isolated tests never close them
-INTERNAL_BUILD_IDENTITY: 0d599b50d10e244b4f579588ca51d3aa39182a53; joined editor and verified context-loss recovery source; deployment=none; environment=local; migrations=PROOF_OWED(20271128010008_exp08_team_details_notice_state requires ordered managed review and normal native release); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp08-owner-work-profile.md
-RELEASE_CHANNEL: development: same original outcome4, not deployed
+UNVERIFIED: Replacement exact-head engineering CI/review, native plus UI production release, legitimate existing-account role/cohort save/result/reload/reopen/recovery, actual AT/native zoom remain owed; no outcome or owner acceptance claim.
+INTERNAL_BUILD_IDENTITY: source=d950e5133ebee8a4aa5c93eb5d2ad57201e8894b; original_editor=0d599b50d10e244b4f579588ca51d3aa39182a53; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(unchanged20271128010008 normal production release); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp08-owner-work-profile.md
+RELEASE_CHANNEL: development: single teammate-details release composition, not production
 RELEASE_CLASSIFICATION: internal-only: integration increment of the full EXP08 assignment
 CUSTOMER_RELEASE_IDENTITY: none: full Team Hub integration and one owner review remain unfinished
 RELEASE_NOTE_REQUIRED: no: no standalone customer release or announcement
@@ -314,3 +314,46 @@ Preview normally before release. No applied migration/history rewrite. QA custod
 request ANT147/3f19953c is pending; do not borrow another agent's tab/authority.
 Outcome remains UNFINISHED until actual native+UI release and useful LIVE
 save/result/reopen/recovery verification. No next outcome is authorized meanwhile.
+
+
+### Current selected outcome and release custody — November 1, 21:30UTC
+
+Finish ONLY teammate details: authorized work-detail/member-admin change, exact
+original result, close/reopen/reload and interruption recovery without duplicate
+writes. Report the completed useful result to owner, original Linear and
+Coordinator, then STOP for explicit next-outcome approval. Full18+6/five journeys
+remain pending; this subflow does not close the broader original lifecycle row.
+
+Actual original ANT21/65939179 owner instruction20:40 holds EXP13 native3204 for
+a later outcome, DRAFT/no active future lease. Team details has NO functional
+reference to its private source validator. The earlier assumed E13-before-E08
+release order (including inert carrier comment/history above) is superseded by
+that controlling scope: do not activate held unrelated work merely to release
+Team details. Original E13 branch/PR/applied Preview/source remain unchanged;
+future version reconciliation belongs to its original owner when authorized.
+
+Original3212/5658 and localf41 preserve the attempted peer composition and actual
+mixed-record gateFAIL as engineering history; DO NOT RELEASE those heads because
+they include held source. Replacement composition d950e513 receives actual
+main d7596d97 normally from original own3f7, with ALL61 own paths byte-exact,
+ALL19,653 outside-own main leaves exact and BOTH shared workflows exactmain.
+The held E13 carrier is absent. No peer writer/evidence/checker edit, copy of a
+runtime, production reset, applied migration rewrite or new implementation.
+Original E08 migration28010008 remains BYTE-EXACT SHA25670caa72050f1c60d8a1b06d9cf51bb185143be971f3d6c53a23bc4768827eb51.
+The active E01 native27040001/2 release still needs its original normal handback
+while it is being completed; no E01 source/merge takeover. Actual final frontier,
+reservations and current-main compatibility must be rechecked before release.
+
+Supporting actual5658 native job124980419377 steps90-94 passed ALL original E08
+first-owner/profile/permission/atomic/notice checks. Joined isolated Preview had
+all7 own bodies/owner/restricted ACL exact even after peer carriers; this does
+not authorize held peer activation or count as production/customer proof.
+Original28/32 pin repair retains exact old and exact reviewed installed bodies;
+8 real disposable baseline/current/body-mutant controls PASS. Earlier source
+release3203/96b1 and both public aliases remain prerequisite source evidence.
+
+No E13metadata amendment is now needed. Original proposald9487383 was privately
+tested but never applied, then withdrawn. Existing QA custody/eligible target
+request ANT147/3f19953c remains pending. No tab/session authority was borrowed,
+new QA account/login/role grant made or owner review requested. Actual useful
+LIVE save/access/result/reopen/recovery verification follows safe release.

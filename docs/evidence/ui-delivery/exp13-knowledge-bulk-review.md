@@ -4,13 +4,13 @@ UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: Original ANT21/12fea7ea FLOW:KNOWLEDGE matrix and exact own UI lease preserve the full agreement-to-reviewed-facts/Memory-to-saved-plan-to-authorized-original-Work outcome. This is its existing Knowledge upload/review consumer, not the completed joined workflow.
 PAIGE_UI_DESIGN: PASS: Existing project skill and routed protected-seam/layout/accessibility requirements read; original Library and Add dialog retained. No new menu, parallel workspace or layout redesign.
 MATERIAL_FLOW_CHANGE: YES: Owner-directed one Knowledge button replaces separate Link/Add entries. Its Paste text, From a link and Upload files tabs reuse original reviewed text, secure URL and native single/BULK file producers, with one dialog focus trap.
-FLOW_PROTOTYPE: UNVERIFIED: Prior actual component prototypes exercised original Add/Bulk/Pending and source panel on synthetic ports; current source composition requires renewed rendered/state/finish evidence before release. No routine owner design question is pending.
+FLOW_PROTOTYPE: UNVERIFIED: Prior component prototypes exercised original Add/Bulk/Pending and source panel on synthetic ports; current rendered/state/finish evidence has not been collected. Verify live after safe engineering review, required CI and release.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Eligible existing and future SOLO operators upload permitted single or bulk PDF/DOCX/text, inspect original source/coverage, edit the Knowledge review and reopen unfinished records. No upload implies contractual acceptance, business-fact/Memory confirmation or Work authorization.
 VISUAL_DIRECTION: PASS: Owner screenshot request controls the existing Knowledge entry/dialog structure. Preserve SOLO tokens, page layout and original producers; no new menu. Current rendered finish is still owed.
-AUTOMATED_EVIDENCE: PASS: Current owner-consolidation code passes fourteen actual focused suites360 tests plus two distinct original review-service/ingest-scope suites58 tests (418 total across sixteen suites), including three-tab keyboard/draft/unknown/current-workspace and original review/source/selection recovery. Synthetic ports are not authenticated or deployed persistence.
+AUTOMATED_EVIDENCE: PASS: Renewed current-composition COMPLETE Knowledge filename regression set passes35 suites733 tests, including all8 changed component suites, native-shaped source/readback/review/recovery and ingestion scope. Earlier418 controls used a different manifest; do not add overlapping counts. Synthetic ports are not authenticated or deployed persistence.
 STATIC_EVIDENCE: PASS: Ten owning source/test roots retain strict project-option baseline8-to-8 identical inherited diagnostic parity, zero new/added-file diagnostics. Ten-file ESLint, diff check and pinned Impeccable detector[] pass. Not whole-app strict or rendered finish proof.
 RENDERED_EVIDENCE: UNVERIFIED: Renew current actual-component and complete SOLO shell four required sizes/both themes/PAIGE open and closed/cohort proof; previous dated partial fixtures do not certify this head.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: Automated component cases cover separate per-file paths, pending reopening, source disclosure and focus return. Current real browser interruption/selection/cancel/late response/reload and later-session source/index/fact/plan/Work proof remains required under the existing usage-review hold.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: Automated component cases cover separate per-file paths, pending reopening, source disclosure and focus return. Current live browser interruption/selection/cancel/late response/reload and later-session source/index/fact/plan/Work proof remains owed; browser access limitations do not establish customer success.
 AUTHENTICATED_RUNTIME: UNVERIFIED: No customer agreement, credentials, QA account, impersonation, provider effect or authenticated source mutation used. Existing designated ordinary customer proof remains owed.
 KEYBOARD_FOCUS: UNVERIFIED: Automated actual-Radix tab navigation and embedded file-review focus return pass, including a published-row fallback. Full browser keyboard, assistive technology and final dialog/pagination path remain owed.
 ZOOM_REFLOW: UNVERIFIED: Current browser zoom/reflow and real scroll-owner/clipping/reachability proof owed.
@@ -26,7 +26,7 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Current complete tablet shell and source
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Current tablet shell with PAIGE open, reflow and clipping evidence held by the existing browser usage review.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Current narrow complete shell, themes, keyboard and state evidence held; prior component geometry is historical only.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Current narrow shell with PAIGE open, zoom/reflow/focus/recovery evidence held by the existing browser usage review.
-UNVERIFIED: Worker3161 and client3174 production source releases are verified separately; this UI remains DRAFT3177. Current prototype/finish/exact CI/release/authenticated reopen and the full joined fact/Memory/plan/actual Work integrations remain owed. FLOW_PROTOTYPE stays UNVERIFIED and its required gate remains failed until actual proof; no owner waiver or browser workaround is inferred.
+UNVERIFIED: Worker3161 and client3174 production source releases are verified separately; this UI remains DRAFT3177. Current exact engineering CI/review/release and the full joined fact/Memory/plan/actual Work integrations remain owed. Live prototype/finish/authenticated reopen proof stays UNVERIFIED until exercised after safe release; no browser permission workaround or fabricated proof.
 
 INTERNAL_BUILD_IDENTITY: source=d15afa0a29ce16abc9052903ae13c3fffc3e69c5; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp13-knowledge-bulk-review.md
 RELEASE_CHANNEL: development: local consumer composition only, not customer availability.
@@ -376,8 +376,8 @@ The same read-only prototype was extended before product edits with three tabs
 and existing interruption/recovery states. It has NOT been rendered/traversed
 at this head under the original automatic browser usage-review hold. Browser,
 prototype/finish, full-shell geometry, themes/AT/customer proof remain UNVERIFIED;
-FLOW_PROTOTYPE must continue to fail its required gate. No alternate tool,
-sub-agent/browser path, test-only login or owner waiver is used. Original3177
+No alternate tool, sub-agent/browser path, test-only login or fabricated proof
+is used. Original3177
 remains DRAFT, not merged or usable-customer readiness. The original agreement
 to reviewed facts/Memory to saved E02 game plan to actual authorized E05 tasks
 and appropriate E03 records is still NOT READY; all full lifecycle/research/
@@ -409,3 +409,33 @@ The360+58 test results apply to identical owning source/test blobs at this pure
 composition, not borrowed hosted CI; fresh exact-head CI remains required.
 The embedded-focus failing-first log SHA256 is
 21768d14d5793858518ec3088b11d12d57f3ed583fe1eac624b137976f8f44ab.
+
+## November 1 current policy and incoming-source composition
+
+Normal incoming actualmaina65 plus SAME original owner-authorized policy3207/c556
+compose into this existing3177 branch; no policy fork. All17 original owning
+code/test blobs remain EXACT990c/d15; only this owning evidence record changes.
+All incoming E01/E08/E05/E13 source, private boundaries, workflows and records
+are retained. Obsolete active statements requiring prototype/render/finish
+BEFORE release and keeping FLOW_PROTOTYPE failed until browser proof are
+LITERALLY DELETED above. Actual historical failures and unrun evidence remain
+truthful. Sourcepolicy3207 requires its own normal review/CI/merge before3177
+merge; no fake waiver, fabricatedPASS or browser permission workaround.
+
+Renewed18 focused suites319PASS and the complete35-file Knowledge set733PASS
+are overlapping runs, not1052 distinct controls. Complete run covers all35
+original knowledge-*.test.ts/tsx files, including native-shaped producer/review/
+source/readback/pending/deletion/consumer boundaries. These are source models,
+not a real ordinary customer session, domain approval or task result. Current
+ten-root strict comparison against originale2c is8-to-8 identical inherited
+diagnostics/new0/added-file0; ten-file ESLint/diff pass. Original pinned
+Impeccable source detection[] applies to byte-identical UI code; exact hosted
+checks remain required. No source/static result certifies live geometry/AT.
+
+Owner's explicit November1 release direction is technical checks/review/genuine
+CI then safe normal merge/deploy, followed by LIVE verification. Current active
+prototype/browser/AT/geometry/cohort evidence remains UNVERIFIED. Source linking,
+reviewed domain facts and separate Memory, saved original E02 Mission, exactly
+authorized actual E05 Work/appropriate E03 CRM and durable receipts/reload remain
+joined integration obligations. Full original EXP13+BULK NOT READY, no customer
+release identity or owner acceptance. Four-hour timer remains deleted/off.

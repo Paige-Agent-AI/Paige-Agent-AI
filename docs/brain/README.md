@@ -5657,3 +5657,25 @@ and the [existing parser evidence](../evidence/exp13-file-text-preparation.md).
 This is the same original Knowledge worker prerequisite; no mounted upload,
 confirmed fact/Memory, saved Mission, actual Work or full FLOW:KNOWLEDGE acceptance
 follows from this mechanical release pointer. No algorithm/availability promotion.
+
+## 2026-10-31 EXP13 - original binary-source native release identity
+
+Verified original3154/eb60 native13, exact managed/production function and ACL
+readback, db-live and web identity are recorded in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse original raw-byte versus extracted-text hashes and opt-in evidence;
+source publication never confirms business facts or Memory. This prerequisite
+clears native-before-worker only. Same single/BULK agreement-to-saved-Mission
+and actual original Work/CRM receipt/reopen remains unfinished; no new store,
+writer, activation, algorithm maturity or customer-readiness claim.
+
+## 2026-11-01 UTC EXP13 - original binary-worker release identity
+
+Original3161/8374 worker source, normal Edge release, all45 production source
+files/configuration and both public web build identities are verified in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the original Knowledge-only callback and immutable source/work identity;
+keep parser imports off unrelated document routes. The native3154 prerequisite
+and worker release are distinct from mounted single/BULK/Chat review, approved
+facts/separate Memory, saved Mission and actual Work/CRM/reopen proof. No new
+runtime, writer, automatic approval or complete customer-outcome claim follows.

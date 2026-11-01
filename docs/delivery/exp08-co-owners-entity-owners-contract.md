@@ -2544,3 +2544,53 @@ Complete bootstrap/replay/privileged-writer and lifecycle/retirement composition
 versioned normal release, UI/notifications/email/Setup and full original experience
 remain **STILL CODING**. The scoped public source is PARTIAL; customer results are
 PROOF OWED, never promoted from local tests or a source-only review.
+
+### November1 — one atomic original recovery bundle, ported bootstrap proof
+
+Build-only `exp08-owner-recovery-bundle.mjs` composes the SAME five original
+provenance/base/E02/revoke/public components in one outer transaction. It strictly
+removes their known outer wrappers and pins received E02 bytes; it is neither a
+runtime nor a new registry/writer. All10 statically declared private helpers are
+admitted BEFORE CREATE OR REPLACE can normalize drift. Original public owner doors
+and both private kernels also receive full ABI/execution admission; unsupported
+owned overloads and partial installations refuse. Original component source/body/
+ACL guards remain intact. No versioned carrier or managed application yet.
+
+Counterfactual local composition WITHOUT the preflight genuinely normalizes a
+changed private helper; the guarded bundle refuses the same alteration unchanged.
+Partial state and original/kernel STRICT flags refuse without repairing metadata.
+A separate schema-only clone of the OWN ported native fixture restores actual
+original2a751 grant/7d62 revoke/f8fa Billing writers and removes ONLY candidates
+from that empty clone. A late original Billing source failure rolls back ALL new
+functions/policies/triggers. Fresh install/replay, authenticated-role original
+revoke→Billing/entity vacancy→R12 restoration, durable receipt replay after working
+post-state and unchanged whole-bundle replay after native rows pass.
+
+Two failed runs remain evidence: large Windows stdin early-error pipe EOF
+raw87f3ec56be20abd1468a0618de4e607c1a14c79f54b86eabaf2ada53f3f1eb61;
+then a real original Billing scope refusal raw
+e7f8e15ea5496d5f99b4ac2d17ddaac9a4eedafdea15fc633701a6b404a0518d.
+Actual diagnostic showed Windows dump CRLF changed scope body to92c0c4df;
+canonical LF restores EXACT original3d33a31f. Guard and E02 source unchanged.
+Owned SQL-file transport fixes early-pipe observation; clone LF normalization is
+checked against EVERY original function body and portable ABI/execution/privilege
+descriptor before any candidate removal. Raw CRLF clone retained, SHA256
+adec782986fbaee09e4d8115ad63571d15bb90acca946c45dec68f38a0e4dace.
+
+Final174/0 author local PASS, all prior165 retained; raw
+`exp08-recovery-atomic-bundle-canonical.log` SHA256
+`df1423e03f3639d49ef1fb6c855be1d311030256aca8a7f183284e3f9eef8bdf`;
+compiler a3cf77400ab93770942826ae40b51a9d0138cd2bde58a7dd242983d90d3e4707;
+bundle proof41f047310ba06e3889e2dd2b29acc52dc23a6ce987c3fb205461fd1251ec94b6;
+main proof8273803c67d946509c1f3a4043478c63c77c457494c5bb7f1af425e943122f87.
+Both owned fixture databases disposed; no managed/full-production-schema or
+authenticated customer proof. Source-only reviews clear pending exact commit
+renewal; wider privileged/indirect writers, retention/retirement/lifecycle, public
+UI/email/Setup and normal release/full original experience remain open.
+
+E02 original3173 now normally merged8ead539c/cbb4dd50, inert source only;
+producer reports READY production source readback, NOT native activation. Its
+three received files remain exact and its frozen helper ABI unchanged. Original
+EXP13 new Knowledge producer packet received for later bounded host inspection;
+receipt ACK is not source/host integration or a broad Chat/Root writer lease.
+Original18+6/five journeys/full assignment remain **STILL CODING**.

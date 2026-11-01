@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {spawn,spawnSync} from 'node:child_process';
 import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
+import {verifyOwnerRecoveryBundle} from './exp08-owner-recovery-bundle-proof.mjs';
 assert.equal(process.env.EXP08_DISPOSABLE,'1');
 assert.ok(['127.0.0.1','localhost','::1'].includes(process.env.PGHOST));
 assert.match(process.env.PGPORT??'',/^\d+$/);
@@ -562,6 +563,7 @@ try{
  assert.equal(scalar("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.revoke_co_owner(uuid,uuid)'::regprocedure"),'7d62c3fac37e2af0b6f2a3029d892752');
  const originalRevokeMetadata=scalar("SELECT to_jsonb(p)-'prosrc' FROM pg_proc p WHERE oid='public.revoke_co_owner(uuid,uuid)'::regprocedure");
  const originalRevokeBody=JSON.parse(scalar("SELECT to_json(prosrc) FROM pg_proc WHERE oid='public.revoke_co_owner(uuid,uuid)'::regprocedure"));
+ const originalBillingDefinition=JSON.parse(scalar("SELECT to_json(pg_get_functiondef('public.platform_billing_contact_revoke(uuid)'::regprocedure))"));
  await db.exec(readFileSync(new URL('./exp02-billing-recovery.sql',import.meta.url),'utf8'));
  const revokeSource=readFileSync(new URL('./exp08-owner-recovery-revoke.sql',import.meta.url),'utf8');
  if(!process.argv.includes('--baseline-revoke'))await db.exec(revokeSource);
@@ -814,7 +816,10 @@ try{
  assert.deepEqual(JSON.parse(scalar(apply(entityRequest,'revoke_owner'))),entityResult);
  assert.equal(scalar(`SELECT to_jsonb(b) FROM public.tenant_business_owners b WHERE id='${entity}'`),entityAfter);
  results.push({case:'original entity lifecycle/FK/CHECK/unique seat composes with original revoke, Billing, receipt and duplicate-safe recovery',passed:true});
- console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL original recovery/public doors with grant/revoke/Billing/entity lifecycle, audit/in-app notices and detail; managed activation, mounted UI and email NOT implemented',
+ results.push(...await verifyOwnerRecoveryBundle(db,{
+  originalGrantDefinition:original('20271116020008_exp08_co_owner_authority.sql','grant_co_owner'),
+  originalRevokeDefinition:original('20271116020008_exp08_co_owner_authority.sql','revoke_co_owner').replace(linkOld,linkNew),originalBillingDefinition}));
+ console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL original recovery/public doors and atomic bundle bootstrap with grant/revoke/Billing/entity lifecycle, audit/in-app notices and detail; managed/full-production-schema activation, mounted UI and email NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));
 }finally{

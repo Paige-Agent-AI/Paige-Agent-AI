@@ -3143,3 +3143,25 @@ with local DOM184 and controlled32+7+1 evidence scoped as recorded. No frontend
 5arg caller is released before its native door/reader integration. All original
 18+6/five journeys/standing authority/goals/workshop/ALG/cohort proof remain
 STILL CODING; no complete owner review or acceptance claim.
+
+
+### Original profile native28 fixture reconciliation - November1
+
+3200/be20c737205dc9f6531d28b03eeb0ab2fb599fc2 actual full-schema job
+124919582696 step90 FAILED at17:23:56UTC: generated native line15 violated
+`tenants_one_toplevel_per_owner`; both synthetic top-level businesses named
+holder...0001. Zero of28 assertions ran. This is our fixture/schema defect,
+not infrastructure, a product authorization verdict or native success. Preceding
+canonical parity, recovery39 and first-owner32 steps completed SUCCESS.
+The still-live job continued later original peer suites; it was not restarted.
+Live log API returned404; the actual rendered GitHub step exposed the exact
+constraint/error/test summary, and the owned inspection tab was closed.
+
+The original template now gives workspace B its existing synthetic owner...0003
+with matching ownerseat...0113. Admin...0002 and target...0004 remain members of
+BOTH workspaces, so the original captured-tenant and replaced-seat negatives
+remain meaningful. All28 assertions, patch/writer bodies, original unique
+constraint and applied migration history are unchanged. Regenerated artifact,
+canonical check and packaging negative controls PASS; actual native28 remains
+UNVERIFIED until the fresh exact-head job executes. No assertion waiver, UI
+mount, new carrier/version/provider or authenticated outcome is included.

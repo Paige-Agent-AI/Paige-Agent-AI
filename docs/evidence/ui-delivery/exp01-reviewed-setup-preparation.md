@@ -17,7 +17,15 @@ ZOOM_REFLOW: NOT_APPLICABLE: No layout or renderable component changed; future m
 REDUCED_MOTION: NOT_APPLICABLE: No animation, timing or CSS changed.
 STATE_COVERAGE: PASS: Focused source/native preparation covers absent review, selected field mismatch, stale source, duplicate same request, reused payload, historical receipt, revoked membership and switched workspace. Full schema, role/cohort, multi-actor/cross-API and actual host states remain unverified.
 TRUTHFUL_STATE_LABELS: PASS: All new records label the candidate UNVERSIONED/INERT/DRAFT and full EXP01 STILL CODING; source/native/helper/test results do not establish a released receipt, Live activation, receiving ACK or acceptance.
-SOLO_UI: NO: This exact change is unmounted producer/contract preparation. It does not alter a Solo screen; the eventual Setup/Knowledge/Chat surface remains subject to all eight geometry/theme, keyboard, AT and customer gates.
+SOLO_UI: YES: The recognized Solo Setup contract path is affected by unmounted producer preparation. No screen changed; all actual mounted geometry/theme, keyboard, AT and customer gates remain owed.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: No rendered customer host for this producer was mounted or exercised.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: No rendered customer host for this producer was mounted or exercised.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: No rendered customer host for this producer was mounted or exercised.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: No rendered customer host for this producer was mounted or exercised.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: No rendered customer host for this producer was mounted or exercised.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: No rendered customer host for this producer was mounted or exercised.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: No rendered customer host for this producer was mounted or exercised.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: No rendered customer host for this producer was mounted or exercised.
 UNVERIFIED: Full-schema/actual getter, legal-owner protection, legitimately delegated management, multi-actor/cross-API concurrency, full install/source/ABI/ACL guards, actual ordered E04→E13 dependency release, native consumer/host implementation, final exact CI/deployment/native readback and ordinary result/receipt/reload/recovery remain owed.
 
 OWNER_INTENT: Finish the original agreement-to-working-plan outcome by providing source-bound selected-fact Setup approval/CAS receipts, while inheriting the complete original EXP01 ten outcomes and23 cases.
@@ -43,3 +51,6 @@ than changing the guard or claiming unrun proof. This addendum changes no produc
 or native candidate bytes. Renew exact-head review/CI after publication.
 Original sequential review remains AUTHOR-REVIEW / LOWER ASSURANCE / HOLD RELEASE.
 No new UI, browser proof, release waiver or source-validator activation is implied.
+The first local record check also refused SOLO_UI:NO for that recognized path;
+the corrected record explicitly includes all eight unrun geometry cases as
+UNVERIFIED. Schema completeness does not clear their actual proof obligations.

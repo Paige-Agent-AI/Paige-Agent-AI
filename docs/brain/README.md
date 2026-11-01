@@ -1,3 +1,18 @@
+## EXP03 November1 — original prepared email first Save source release
+
+Original3172/native19 and3175/native20 source, permissions, normal deployment and
+both public build identities are verified in [Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log)
+and [original journey14.55](../delivery/exp03-grow-my-business-journey.md#1455--original-saved-email200003-production-source-release-customer-proof-remains-owed).
+Reuse ONE Messages draft/action/approval/audit receipt and original Save/prepare
+writers. Missing optional source versions withhold Save while preserving the
+original governed review. Lost acknowledgments require original receipt/source
+inspection, not blind replay. Local direct-source hashes and vendor-emitted
+JavaScript require their distinct original certificate comparisons; a certificate
+parser failure is not a deployed-source mismatch. Original failed comparators and
+corrections remain in the journey. No new runtime/store/permission/provider effect.
+Authenticated full reload/reopen/receipt/role/cohort and actual E08 Hub consumer
+remain separate unfinished proof/integration; full EXP03 remains STILL CODING.
+
 ## EXP05 October30 — preserve the original reminder occurrence
 
 Verified [#3156/9f9da129](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3156)

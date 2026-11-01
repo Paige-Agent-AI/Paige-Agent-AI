@@ -186,3 +186,38 @@ increment does not establish native deployment, authenticated source retrieval,
 facts/Memory approval, saved game plan, actual Task/deal result or later-session
 recovery. Research/lifecycle/artifact/export obligations and all original consumer
 owners remain. Full agreement-to-working-plan and owner acceptance are NOT READY.
+
+## November 1 ordered native forward candidate
+
+The original lower E05 migration/Edge release is now actually verified at58d8f8d2
+(ANT147/ae5472ed, actual E13 receiving ACK/e31d96b3). Independent production
+metadata confirms27030005 and ALL4 original E05 carriers; original4 Knowledge
+dependency bodies/full metadata/ACL remain unchanged, both private helpers absent.
+Fresh COMPLETE manifests of ALL57 open PR heads plus actualmain58d (58/58) have
+maximum27030005. No earlier applied carrier or Preview history is rewritten.
+
+The normal CLI-created empty local20261101194204 is prospectively numbered
+20271128000013 before any publication/application. SAME original builder output
+supplies the two postgres-private validators, unchanged executable SQL and private
+ACLs. Existing CI changes only its original Knowledge proof carrier path from the
+unversioned installer to the new file; reversing that path restores whole incoming
+58d workflow. All7 original source/proof blobs remain exact. Original3182/795 and
+applied210013 and all4 E05 applied Preview carriers stay IMMUTABLE. No new public
+RPC, writer, capability, store, approval, provider, executor or automatic learning.
+
+Fresh original local PostgreSQL16 absence control genuinely fails at the missing
+quotation function. Exact versioned carrier joint proof exits0/426 PASS-labelled
+observations (not distinct outcomes),16 install faults with all6 complete function
+snapshots restored and2 observed competing source/member lock waits followed by
+stale/revoked refusal. Cleanup0 fixtureDB/0 other clients/serverSTOPPED. The SAME
+owning native UI-evidence record contains hashes and preserves earlier setup and
+20s scale-fixture timeout failures; no original test/time limit was altered.
+
+This is still a development candidate. Final exact review, ALL required CI,
+genuine managed Preview, normal ordered merge/plain migration release and actual
+native source/metadata/readback are owed before E01/E02 can use these helpers.
+Original source and explicit confirmation approval are distinct: no source JSON
+authorizes Setup, Memory, saved Mission or actual Work. User-requested Chat/Bucket
+editable single+BULK and actual saved-plan-to-Tasks usability remain unfinished;
+original3177 browser/AT/prototype hold is retained. Full original lifecycle,
+research, retention/revocation/deletion, version/conflict and artifact scope remain.

@@ -12,6 +12,14 @@ import {
 } from "./team-workspace-contract";
 
 describe("Solo Team workspace contract", () => {
+  it.each([0,1,3])('uses only the native full-set active owner count %s, not a page total', count=>{
+    const result=normalizeTeamWorkspace({tenant_id:'test-tenant',viewer_permission:'owner',members:[],invitations:[],total_members:999,active_owner_count:count})!;
+    expect(result.active_owner_count).toBe(count);
+  });
+  it.each([undefined,null,-1,0.5,Number.MAX_SAFE_INTEGER+1,Infinity,NaN,'1',true,[],{}])('keeps absent or malformed owner-floor data unknown %#', count=>{
+    const result=normalizeTeamWorkspace({tenant_id:'test-tenant',viewer_permission:'owner',members:[],invitations:[],total_members:999,active_owner_count:count})!;
+    expect(result.active_owner_count).toBeNull();
+  });
   it('retains only named server ownership metadata for the existing Team consumer', () => {
     const id='e8000000-0000-4000-8000-000000060001';
     const business={id,kind:'company',display_name:'Test entity',ownership_interest:73,legal_name:'PRIVATE'};

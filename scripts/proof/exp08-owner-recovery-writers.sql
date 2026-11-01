@@ -12,7 +12,9 @@ BEGIN
     RAISE EXCEPTION 'OWNER_RECOVERY_FORBIDDEN' USING ERRCODE='42501';
   END IF;
   -- Hold the actual live identity and role records, rather than trusting JWT role claims.
-  PERFORM 1 FROM auth.users WHERE id=actor FOR KEY SHARE;
+  -- SHARE also conflicts with a ban/soft-delete update of this existing identity.
+  PERFORM 1 FROM auth.users WHERE id=actor AND deleted_at IS NULL
+    AND (banned_until IS NULL OR banned_until<=statement_timestamp()) FOR SHARE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'OWNER_RECOVERY_FORBIDDEN' USING ERRCODE='42501';
   END IF;
@@ -33,7 +35,8 @@ BEGIN
   -- Every earlier wait may have changed the tenant or its authority. Re-read now.
   IF auth.uid() IS DISTINCT FROM actor
     OR NOT public.is_super_admin(actor)
-    OR NOT EXISTS(SELECT 1 FROM auth.users WHERE id=actor)
+    OR NOT EXISTS(SELECT 1 FROM auth.users WHERE id=actor AND deleted_at IS NULL
+      AND (banned_until IS NULL OR banned_until<=statement_timestamp()))
     OR public._solo_shell_tenant(_tenant) IS DISTINCT FROM true
     OR public._tenant_account_holder_state(_tenant) IS DISTINCT FROM 'none' THEN
     RAISE EXCEPTION 'OWNER_RECOVERY_FORBIDDEN' USING ERRCODE='42501';

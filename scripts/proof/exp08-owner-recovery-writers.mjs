@@ -2,12 +2,16 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {spawn} from 'node:child_process';
+import {spawn,spawnSync} from 'node:child_process';
 import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 assert.equal(process.env.EXP08_DISPOSABLE,'1');
 assert.ok(['127.0.0.1','localhost','::1'].includes(process.env.PGHOST));
 assert.match(process.env.PGPORT??'',/^\d+$/);
-const candidate=readFileSync(new URL('./exp08-owner-recovery-writers.sql',import.meta.url),'utf8');
+assert.ok(process.argv.slice(2).every(x=>x==='--baseline-02126')&&process.argv.length<=3,'Unknown proof option');
+const baseline=process.argv.includes('--baseline-02126');
+const historical=baseline?spawnSync('git',['show','02126ee52:scripts/proof/exp08-owner-recovery-writers.sql'],{encoding:'utf8',windowsHide:true}):null;
+if(historical)assert.equal(historical.status,0,historical.stderr);
+const candidate=historical?.stdout??readFileSync(new URL('./exp08-owner-recovery-writers.sql',import.meta.url),'utf8');
 const source=name=>readFileSync(new URL('../../supabase/migrations/'+name,import.meta.url),'utf8');
 function original(file,name,argumentPrefix=''){
  const s=source(file),a=s.indexOf('CREATE OR REPLACE FUNCTION public.'+name+'('+argumentPrefix);
@@ -27,7 +31,7 @@ async function denied(label,fn=call,pattern=/OWNER_RECOVERY_FORBIDDEN|permission
 function reset(){
  db.role='';db.actor=actor;
  db.run(`TRUNCATE auth.users,public.user_roles,public.tenant_members,public.tenants;
- INSERT INTO auth.users VALUES('${actor}'),('${holder}');
+ INSERT INTO auth.users(id) VALUES('${actor}'),('${holder}');
  INSERT INTO public.user_roles VALUES('${actor}','super_admin');
  INSERT INTO public.tenants(id,account_type) VALUES('${tenant}','standalone');`);
 }
@@ -62,6 +66,22 @@ async function tenantWait(label,change,commit){
   if(second){if(!second.p.stdin.destroyed)second.p.stdin.end();await second.done;}
  }
 }
+async function identityUpdateWait(label,change){
+ reset();const name='exp08_recovery_identity_'+Date.now();
+ const first=session(`BEGIN;${db.prefix()}SELECT public._exp08_lock_owner_recovery('${tenant}');SELECT 'exp08_recovery_identity_locked';`);
+ let second;
+ try{
+  await until(()=>first.out().includes('exp08_recovery_identity_locked'));
+  second=session(`SET application_name='${name}';${change};`);second.p.stdin.end();
+  await until(()=>scalar(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='${name}' AND wait_event_type='Lock' AND cardinality(pg_blocking_pids(pid))>0)`)==='t');
+  first.p.stdin.end('ROLLBACK;\n');assert.equal((await first.done).code,0);
+  const r=await second.done;assert.equal(r.code,0,r.err);
+  await denied(label+' then refuses subsequent admission');
+ }finally{
+  if(!first.p.stdin.destroyed)first.p.stdin.end('ROLLBACK;\n');await first.done;
+  if(second){if(!second.p.stdin.destroyed)second.p.stdin.end();await second.done;}
+ }
+}
 try{
  await db.exec(`DO $$BEGIN
   IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated NOLOGIN;END IF;
@@ -71,7 +91,7 @@ try{
  CREATE SCHEMA auth;
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('test.actor',true),'')::uuid$$;
  CREATE TYPE public.app_role AS ENUM('super_admin','platform_admin','admin');
- CREATE TABLE auth.users(id uuid PRIMARY KEY);
+ CREATE TABLE auth.users(id uuid PRIMARY KEY,deleted_at timestamptz,banned_until timestamptz);
  CREATE TABLE public.user_roles(user_id uuid,role public.app_role,PRIMARY KEY(user_id,role));
  CREATE TABLE public.tenants(id uuid PRIMARY KEY,owner_user_id uuid,account_type text,archived_at timestamptz,company boolean DEFAULT false);
  CREATE TABLE public.tenant_members(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,user_id uuid,is_owner boolean,status text);
@@ -94,6 +114,10 @@ try{
  db.run(`DELETE FROM public.user_roles`);await denied('revoked actual super_admin role refused');reset();
  db.run(`UPDATE public.user_roles SET role='platform_admin'`);await denied('platform_admin is not recovery authority');reset();
  db.run(`DELETE FROM auth.users WHERE id='${actor}'`);await denied('deleted identity with surviving role refused');reset();
+ db.run(`UPDATE auth.users SET deleted_at=now() WHERE id='${actor}'`);await denied('soft-deleted identity with surviving role refused');reset();
+ db.run(`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${actor}'`);await denied('currently banned identity refused');reset();
+ db.run(`UPDATE auth.users SET banned_until=now()-interval '1 hour' WHERE id='${actor}'`);await call();
+ results.push({case:'expired ban does not deny otherwise legitimate recovery admission',passed:true});reset();
  db.run(`UPDATE public.tenants SET account_type='agency'`);await denied('agency excluded');reset();
  db.run(`UPDATE public.tenants SET company=true`);await denied('company workspace excluded');reset();
  db.run(`UPDATE public.tenants SET archived_at=now()`);await denied('archived holderless business excluded');reset();
@@ -112,7 +136,13 @@ try{
  await tenantWait('paused holder committed during actual tenant wait is refused',`UPDATE public.tenants SET owner_user_id='${holder}' WHERE id='${tenant}';INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status) VALUES('${tenant}','${holder}',true,'suspended')`,true);
  await tenantWait('archiving committed during actual tenant wait is refused',`UPDATE public.tenants SET archived_at=now() WHERE id='${tenant}'`,true);
  await tenantWait('rolled-back competing holder change leaves legitimate recovery admission',`UPDATE public.tenants SET owner_user_id='${holder}' WHERE id='${tenant}';INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status) VALUES('${tenant}','${holder}',true,'active')`,false);
- console.log(JSON.stringify({scope:'LOCAL private lock preparation; effect/audit/receipt/notices/public RPC NOT implemented',
+ await tenantWait('soft deletion committed before identity lock is refused',`UPDATE auth.users SET deleted_at=now() WHERE id='${actor}'`,true);
+ await tenantWait('ban committed before identity lock is refused',`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${actor}'`,true);
+ await tenantWait('rolled-back soft deletion retains legitimate admission',`UPDATE auth.users SET deleted_at=now() WHERE id='${actor}'`,false);
+ await tenantWait('rolled-back ban retains legitimate admission',`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${actor}'`,false);
+ await identityUpdateWait('admission identity lock blocks competing ban',`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${actor}'`);
+ await identityUpdateWait('admission identity lock blocks competing soft deletion',`UPDATE auth.users SET deleted_at=now() WHERE id='${actor}'`);
+ console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private lock preparation; effect/audit/receipt/notices/public RPC NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));
 }finally{

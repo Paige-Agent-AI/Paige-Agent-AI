@@ -2102,3 +2102,23 @@ Original public writer bodies/ACL, self-step-down, entity link and Billing behav
 are unchanged by this private preparation. Full source review, native metadata/
 replay guards, authorized effect/result/no-duplicate recovery and original-suite
 integration remain owed. The full assignment remains **STILL CODING**.
+
+Distinct SOURCE-ONLY review of02126 found one P2: live identity existence alone
+did not exclude an active ban or soft deletion, and KEY SHARE did not block those
+updates. This is a local inert preparation finding, not a production incident.
+Actual Auth catalogue confirms deleted_at/banned_until timestamptz columns. The
+candidate now checks both current fields under FOR SHARE, and repeats those checks
+after waits. The original21 controls stay before nine additions: soft deletion,
+current/expired ban, four actual change-before-lock commit/rollback races, and two
+actual lock-before-change waits followed by denied subsequent admission.
+
+Final30 controls PASS; candidate SHA256
+`b725827e179518fb1681f7e1a96debc47fc69a2a420199d741e9da0f0be975bd`.
+Raw `exp08-owner-recovery-writers-auth-final.log` SHA256
+`044fda5cde05e2f9e9fd7330fa609073e9201b2f2ee7c59dcb2e3241aebbb768`.
+The same new regression genuinely fails against preserved02126 source at the
+soft-deleted identity refusal (historical baseline option, no source overwrite);
+raw3a6e5f8e retained FAIL. Both fixtures disposed, final native client catalogue
+empty. Review renewal is required before considering this repaired source clear.
+The earlier21 PASS remains historical subset evidence, not proof of Auth
+availability. No effects/public endpoint/native migration/release claim changed.

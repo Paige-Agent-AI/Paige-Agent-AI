@@ -269,7 +269,7 @@ try{
   // Preserve the original component proofs; exercise the ACTUAL forward carrier too.
   const zonePatch=read('scripts/proof/exp03-contact-recipient-timezone-patch.sql').replaceAll('\r\n','\n');
   const numberPatch=read('scripts/proof/exp03-number-current-authority-patch.sql').replaceAll('\r\n','\n');
-  const migration=read('supabase/migrations/20271126150003_exp03_contact_number_current_authority.sql').replaceAll('\r\n','\n');
+  const migration=read('supabase/migrations/20271126190003_exp03_contact_number_current_authority.sql').replaceAll('\r\n','\n');
   const numberSignatures=['public.tenant_phone_number_rename(uuid,text,uuid)','public.tenant_phone_number_set_primary(uuid,uuid)'];
   db.run(`CREATE TABLE public.tenant_phone_numbers(id uuid PRIMARY KEY,tenant_id uuid,friendly_name text,status text,is_primary boolean DEFAULT false,updated_at timestamptz DEFAULT now());
    CREATE UNIQUE INDEX uq_tenant_phone_numbers_primary ON public.tenant_phone_numbers(tenant_id) WHERE is_primary;
@@ -307,7 +307,7 @@ try{
   const after=definitions();db.run(migration);
   assert.deepEqual(definitions(),after);assert.equal(businessState(),beforeBusiness);checks++;
  }
- console.log(JSON.stringify({checks,scope:'actual original native writers/current authority helpers; optional combined proof exercises forward migration150003; contact methods unexercised; no UI/both-chat/delegation/jurisdiction/managed-apply/production proof'}));
+ console.log(JSON.stringify({checks,scope:'actual original native writers/current authority helpers; optional combined proof exercises forward migration190003 (original Preview150003 retained separately); contact methods unexercised; no UI/both-chat/delegation/jurisdiction/managed-apply/production proof'}));
 }finally{
  const r=spawnSync(db.psql,db.args('postgres'),{input:`DROP DATABASE ${db.database} WITH (FORCE);`,encoding:'utf8',timeout:60000});
  if(r.status!==0)throw new Error('Owned disposable database cleanup failed');

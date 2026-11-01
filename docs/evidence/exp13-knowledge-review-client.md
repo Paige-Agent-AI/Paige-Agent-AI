@@ -65,3 +65,21 @@ The shared Chat receiver/retained source-reference contract and its narrow lease
 remain with original E01/E08 owners; no caller mount or approval handback is
 implied. Domain-fact/Memory review and saved Mission/actual Work remain separate.
 No real account identifier, private screenshot or agreement is copied here.
+
+November1 UTC normal current-main compositionaca438063: actual worker3161 is
+merged8374f806581227aba142f6c0f4a329a13041337e/treeab8e3468, all11 exact checks
+and both web statuses SUCCESS, normal Edge41263422402/job124721140067 SUCCESS.
+Actual submit27/worker88/configuration and all6+39 production source files match
+8374; both public origins full8374-mvx6p742/version/root/actual bootstrap200.
+Exact source/proof boundaries: original PR3161 receipt6552141883. This clears
+the worker prerequisite, not the client/UI or useful authenticated outcome.
+
+All seven own service/test blobs remain EXACT78ed/f20; eight-file source cut
+only, no cumulative worker/UI/CURA wrapper. Fresh same six suites224PASS at
+aca438063, raw log SHA256159c5340dcba57dfdddce4a3dd229ce6b3f3e66efe333f68178fd5e3058b02d9;
+focused seven-file lint/diff PASS. Final composition source review and exact
+hosted checks still required. Existing eligible actors keep native authority;
+source/preparation/inspection/publication/approved fact/Memory are distinct.
+The separately reviewed attachedSelection/nested-lifetime UI bridgecc523 is
+not included or mounted by this client release. Full agreement-to-saved-Mission
+and actual original Work/CRM/receipts/reopen remains NOT READY/NOT ACCEPTED.

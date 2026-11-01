@@ -18,7 +18,7 @@ insert into e04_work_state select 'original_settlement_work',to_jsonb(w) from pu
  join public.paige_invoice_provider_operations p on p.reconciliation_work_id=w.id where p.id=current_setting('test.e04_work_operation')::uuid;
 insert into e04_work_state select 'original_balance',to_jsonb(b) from public._sales_invoice_balance_rows(current_setting('test.e04_work_tenant')::uuid,
  (select invoice_id from public.paige_invoice_provider_operations where id=current_setting('test.e04_work_operation')::uuid)) b;
-select set_config('test.actor','',true);
+select set_config('test.actor','',true);select set_config('request.jwt.claim.sub','',true);
 set local role service_role;
 do $initial$declare one jsonb;again jsonb;claim jsonb;context jsonb;snapshot jsonb;
 begin
@@ -205,8 +205,12 @@ reset role;set local role anon;
 select pg_temp.work_refused($q$select public.register_sales_provider_observation_event('evt_anon','refund.created','acct_fixtureA','test','ch_fixture')$q$,'42501','anonymous role cannot register private signed-provider event');
 reset role;set local role service_role;
 select set_config('test.actor',(value->>'actor_user_id'),true) from e04_work_state where key='original_operation';
+-- Full Supabase Auth reads the original JWT subject; reduced fixture Auth reads test.actor.
+-- Assert BOTH ports contain the same actor so the refusal cannot pass under an empty identity.
+select set_config('request.jwt.claim.sub',(value->>'actor_user_id'),true) from e04_work_state where key='original_operation';
+do $actor$ begin if auth.uid() is distinct from (select (value->>'actor_user_id')::uuid from e04_work_state where key='original_operation') then raise exception 'Provider work refusal actor fixture unavailable';end if;end $actor$;
 select pg_temp.work_refused($q$select public.register_sales_provider_observation_event('evt_asserted','refund.created','acct_fixtureA','test','ch_fixture')$q$,'42501','service port cannot assert an ordinary actor to register an event');
-select set_config('test.actor','',true);reset role;
+select set_config('test.actor','',true);select set_config('request.jwt.claim.sub','',true);reset role;
 update public.tenant_stripe_accounts set binding_version=binding_version+1,stripe_account_id='acct_replacement'
  where tenant_id=current_setting('test.e04_work_tenant')::uuid;
 set local role service_role;

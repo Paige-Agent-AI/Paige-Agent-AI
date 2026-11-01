@@ -161,7 +161,7 @@ async function scopedBillingRpc(name: string, args: Record<string, unknown>, con
     // Representation negotiation only: the original RPC, actor, relationship
     // and native permission checks remain authority. Older servers return v2.
     const result = await (name === "client_portal_invoices_calendar_scoped"
-      ? selected.setHeader("X-PAIGE-Invoice-Evidence-Version", "2") : selected);
+      ? selected.setHeader("X-PAIGE-Invoice-Evidence-Version", "2") : selected); // customer-identity-exempt: original technical representation header, never customer-facing assistant identity.
     check();
     const [captured, actual] = await Promise.all([supabase.auth.getUser(authorization.slice(7)), supabase.auth.getUser()]);
     check();

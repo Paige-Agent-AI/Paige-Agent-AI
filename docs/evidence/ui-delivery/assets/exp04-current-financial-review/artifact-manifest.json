@@ -20,8 +20,26 @@
       "source": "e04-c191-1793506845269-financial-review-dark-390-open.png",
       "target": "financial-review-mobile.png",
       "sha256": "d22e212a74d35f39d3c549e18b2e1d5912a040a3cdab25bea5c97aa093f15d53"
+    },
+    {
+      "source": "e04-c192-1793509367812-plan-1366-closed.png",
+      "target": "accepted-plan-desktop.png",
+      "sha256": "91fc724eef31595084494883ea7324f73f902930ce97b92d3f1517bcd8d366df"
+    },
+    {
+      "source": "e04-c192-1793509367812-plan-390-closed.png",
+      "target": "accepted-plan-mobile.png",
+      "sha256": "d7d93cecdd704f0bc71ec2e525fe59b09d55c16154c6630b77f1f4ee7c4372b6"
+    },
+    {
+      "source": "e04-c192-1793509367812-held-financial_review_required.png",
+      "target": "accepted-plan-held-mobile.png",
+      "sha256": "7f2dc7b14d2b1364f4baaec079239964cd4e126caf7d23c2b1984f9558d18479"
     }
   ],
   "productionAcceptance": "UNVERIFIED",
-  "sourceFreeze": "Rendered final component sources; native candidate SQL hashes retained in original proof record."
+  "sourceFreeze": "Rendered final component sources; native candidate SQL hashes retained in original proof record.",
+  "acceptedTargetChecks": 21,
+  "acceptedTargetRenderedPaths": 15,
+  "acceptedTargetBoundary": "Native exact amounts with synthetic identity/document/SDK ports. Original signature and template content not legal or provider/customer acceptance."
 }

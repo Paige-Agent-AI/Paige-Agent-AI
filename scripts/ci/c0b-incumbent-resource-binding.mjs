@@ -1317,7 +1317,7 @@ const SOURCES = {
   // ("Business-recorded payments") and the box says when its totals are after corrections. Owner and
   // bearer output unchanged: 240 fixtures byte-identical to the round-2 renderer and 60,000 random
   // projections (24,489 rendered, 10,829 of them void) byte-identical to base dbb8a8842.
-  "supabase/functions/_shared/sales-invoice-document.ts": "45aaba0f4bb62b9d275a96935c5f39adaad3d31967767cecee7e90120646f9fa",
+  "supabase/functions/_shared/sales-invoice-document.ts": "770880fad47e861baad40b1a5220f9cc83d5e686f1ff2e3dbcaf09afc152639a",
   "supabase/functions/_shared/document-pdf.ts": "e88f697d5d79af5feb0d6952fc5029633d488434b232798bc42fffd0fccd9a8e",
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
   // EXP03 Resend retirement (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: one fact's source key changes,

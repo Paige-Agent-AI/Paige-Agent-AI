@@ -308,3 +308,55 @@ Current metadata above uses the governed status grammar and keeps local, native 
 > RELEASE_TRUTH_BOUNDARY: PARTIAL controlled implementation/proof; PROOF OWED for full integrated financial outcome and release/customer acceptance; no new LIVE claim
 
 The original Spine registry correctly rejected an unbound mutation. The unfinished public Spine entry is removed; its original Owner UI Capability Kit declaration remains high/confirm on the existing invoice executor. No validator was relaxed and no LIVE binding was fabricated. Genuine Chat registration/execution remains O5 integration work.
+
+
+### November 1 — current accepted payment targets and remaining CI repairs
+
+The existing Owner invoice workspace now inspects the same eleven original dated
+accepted obligations with remaining amounts copied from the canonical actual-position
+engine. The original public caller RPC keeps its signature, OID, actor checks, ACL,
+signed payload and original Rail receipt. The explicit header selects financial
+representation3; older safely held callers keep their held result. Unknown/pending
+provider evidence withholds all targets. No schedule, financial ledger or approval
+engine is introduced. Zero debt reads **No amount due**, without implying settlement
+or accepted services.
+
+- Native original-reader proof: **21 PASS**, including exact references, dates,
+  all eleven current amounts, signed-source retention, pending evidence, foreign/
+  retired/anonymous/service denials, metadata drift and replay. Prior55 decision,
+  39 collectibility/context,27 manual and31 current-read controls also pass in the
+  same owned run. Synthetic schema/identity/signing/provider ports remain disclosed;
+  the uniquely created test database was dropped and exact loopback cluster stopped.
+- Original reader/Chat/accepted-plan/parent interaction suites: **142 PASS /0 FAIL**.
+  A causal zero-label failure was preserved before the copy repair; existing
+  cancellation, stale identity/invoice, role retirement and exact request tests remain.
+- Original Sales shell/workspace rendered: **15 PASS**, including1536×770,
+  1366×768,1024×768,900×1000 and390×844 with PAIGE closed/open plus five held/
+  recovery states. Canonical narrow PAIGE overlay was folded through its existing
+  control before invoice interaction. Keyboard selection, clear/close focus and
+  absence of root overflow passed. Original selected-row desktop/mobile pixels were
+  inspected; these are synthetic local evidence, not authenticated Owner QA.
+- Images: [desktop](assets/exp04-current-financial-review/accepted-plan-desktop.png),
+  [mobile](assets/exp04-current-financial-review/accepted-plan-mobile.png),
+  [pending evidence](assets/exp04-current-financial-review/accepted-plan-held-mobile.png).
+
+Hosted2fa CI failures remain recorded: missing autonomy/receipt declarations, a
+technical header flagged as customer identity, unsupported Object.hasOwn on the
+original TS floor, and a full-schema provider-work refusal fixture that set only
+reduced test.actor. Repairs preserve the guards, use the canonical catalogue extension,
+declare the actual native Rail, label the technical header exemption, use equivalent
+hasOwnProperty.call and populate/assert both original Auth fixture inputs. The new
+unapplied21 catalogue is governance metadata; it does not install or activate the
+financial engine or Chat binding. Exact final-head CI, ordered financial carrier,
+deployment/readback, Stripe evidence, signed-in Owner QA and founder acceptance
+remain **PROOF OWED**. Same O5 sole primary, full twelve outcomes, zero accepted.
+
+
+The existing catalogue guard rejected a copied partial declaration before publication.
+The final source uses the same guarded predecessor-extension pattern already used by
+the canonical catalogue: every old body byte and its OID are retained privately, with
+the original public signature/defaults/owner/settings/ACL and one added review row.
+Native metadata/replay/hostile authority-drift proof: **16 PASS**. This does not invoke
+or verify the inherited catalogue's customer execution dependencies. The old receipt
+refusal remains unchanged; both original JWT-subject and reduced actor fixture ports
+are populated and their actual Auth identity is asserted. Same full native chain passes.

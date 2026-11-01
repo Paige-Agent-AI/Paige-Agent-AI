@@ -11,6 +11,8 @@ if(process.argv.includes('--provider-disposition'))assert(process.argv.includes(
 if(process.argv.includes('--financial-collectibility'))assert(process.argv.includes('--provider-disposition'),'financial collectibility requires the original decision proof');
 if(process.argv.includes('--manual-financial'))assert(process.argv.includes('--financial-collectibility'),'manual financial proof requires the original current financial context');
 if(process.argv.includes('--actual-financial-read'))assert(process.argv.includes('--manual-financial'),'actual financial read proof requires the original manual/current financial proof');
+if(process.argv.includes('--actual-accepted-read'))assert(process.argv.includes('--actual-financial-read'),'actual accepted read proof requires original current financial read proof');
+if(process.argv.includes('--financial-catalogue'))assert(process.argv.includes('--actual-accepted-read'),'catalogue proof requires original accepted target proof');
 let database='postgres';
 const args=()=>['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-v','ON_ERROR_STOP=1','-At'];
 const run=sql=>{const p=spawnSync(binary,args(),{input:sql,encoding:'utf8',maxBuffer:4e6,windowsHide:true});if(p.status!==0)throw Error(p.stderr);return p.stdout.trim();};
@@ -620,6 +622,18 @@ if(process.argv.includes('--actual-financial-read')){
  const result=proveActualFinancialRead({run,read,actor,tenant,client,invoice,otherTenant});
  writeFileSync(new URL('../../work/sales-actual-financial-read-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
  console.log('SALES_ACTUAL_FINANCIAL_READ_PASS: '+JSON.stringify({...result,samples:undefined}));
+}
+if(process.argv.includes('--actual-accepted-read')){
+ const {proveActualAcceptedRead}=await import('./sales-actual-accepted-read-proof.mjs');
+ const result=proveActualAcceptedRead({run,read,otherTenant});
+ writeFileSync(new URL('../../work/sales-actual-accepted-read-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_ACTUAL_ACCEPTED_READ_PASS: '+JSON.stringify({...result,sample:undefined}));
+}
+if(process.argv.includes('--financial-catalogue')){
+ const {proveFinancialCatalogue}=await import('./sales-financial-catalogue-proof.mjs');
+ const result=proveFinancialCatalogue({run,read});
+ writeFileSync(new URL('../../work/sales-financial-catalogue-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_FINANCIAL_CATALOGUE_PASS: '+JSON.stringify(result));
 }
  run(`UPDATE paige_invoices SET status='void' WHERE id='${invoice}';`);
  assert.equal(publicRequest(),null,'void invoice bearer refused');

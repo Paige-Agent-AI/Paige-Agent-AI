@@ -29,7 +29,7 @@ function portalTestEvidence(value: ObjectValue, verified: number): {test: number
   return {test: value.test_provider_cents};
 }
 function financialEvidence(value: ObjectValue, verified: number): {test: number; actual: boolean; portal: boolean} | false {
-  if (!Object.hasOwn(value, 'payment_evidence_version')) {
+  if (!Object.prototype.hasOwnProperty.call(value, 'payment_evidence_version')) {
     const legacy = portalTestEvidence(value, verified);
     return legacy === false ? false : {test: legacy?.test ?? 0, actual: false, portal: !!legacy};
   }

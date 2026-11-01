@@ -244,3 +244,32 @@ describe("original approved owner work-profile admission and truthful receipt", 
     expect(mocks.success).not.toHaveBeenCalled();expect(saved).not.toHaveBeenCalled();
   });
 });
+
+
+describe("original work-profile unknown and current-context recovery",()=>{
+  beforeEach(()=>{document.body.innerHTML="";mocks.rpc.mockReset();mocks.success.mockReset();mocks.error.mockReset();});
+  async function edit(isCurrent=()=>true){
+    const host=document.createElement('div');document.body.append(host);const root=createRoot(host);const saved=vi.fn();
+    await act(async()=>root.render(<MemberEditor member={member} workspace={workspace} isCurrent={isCurrent} onClose={vi.fn()} onSaved={saved}/>));
+    await act(async()=>setValue(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!,'Delivery Lead'));
+    const save=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Save work details')!;
+    return{host,root,saved,save};
+  }
+  it("requires reconciliation after a transport rejection and preserves the draft",async()=>{
+    mocks.rpc.mockRejectedValueOnce(new Error('private backend detail'));
+    const {host,root,saved,save}=await edit();await act(async()=>save.click());
+    expect(save.disabled).toBe(true);expect(mocks.error).toHaveBeenCalledWith(expect.stringMatching(/Reopen Team/));
+    expect(mocks.error.mock.calls.flat().join(' ')).not.toContain('private backend detail');
+    expect(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.value).toBe('Delivery Lead');
+    await act(async()=>save.click());expect(mocks.rpc).toHaveBeenCalledTimes(1);expect(saved).not.toHaveBeenCalled();await act(async()=>root.unmount());
+  });
+  it("refuses the write when the original host context has departed",async()=>{
+    const {root,save}=await edit(()=>false);await act(async()=>save.click());expect(mocks.rpc).not.toHaveBeenCalled();await act(async()=>root.unmount());
+  });
+  it("does not publish an in-flight result after the host context has departed",async()=>{
+    let live=true;let resolve!:(value:unknown)=>void;mocks.rpc.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+    const {root,saved,save}=await edit(()=>live);await act(async()=>save.click());live=false;
+    await act(async()=>resolve({data:{membership_id:member.membership_id,job_title:'Delivery Lead',responsibilities:member.responsibilities},error:null}));
+    expect(mocks.success).not.toHaveBeenCalled();expect(saved).not.toHaveBeenCalled();await act(async()=>root.unmount());
+  });
+});

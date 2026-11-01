@@ -13,8 +13,8 @@ MUST_PRESERVE: Original three-argument Team RPC/audit, contact editor and its se
 ACCEPTANCE_CRITERIA: Holder/self can edit/save/reopen native values; Admin/co-owner can inspect another owner's read-only fields and Close; native refusal/unknown preserves draft and cannot claim success; tenant/actor/unmount invalidates stale completion
 MOTION_PURPOSE: NONE: retain existing reduced-motion-aware dialog transition; no new animation
 PROTECTED_SEAMS: Affected: scoped roster presentation, owner edit authority, original work-profile readback, dialog focus/accessibility and responsive geometry. Unaffected: Auth/account choice writers, entitlement/paywall/provisioning/Billing, shared approval/Trust/Harness/Spine runtime, Rail/Memory writers, Chat transcripts/stream/popout/history, Live, Vault/credentials, providers/sends, durable scheduler and all domain writers. Server authority remains independent of presentation.
-AUTOMATED_EVIDENCE: UNVERIFIED: new regressions and original neighboring tests pending execution
-STATIC_EVIDENCE: UNVERIFIED: focused lint/types/design detector and evidence gate pending
+AUTOMATED_EVIDENCE: PASS: original11 neighboring Team/contact/departure/modal and new profile suites180/180; initial5FAIL/7PASS source controls, fixture1FAIL/176PASS and mock-reset2FAIL retained; no assertions removed
+STATIC_EVIDENCE: UNVERIFIED: initial focused5-file lint exit0; final new fixture/harness checks pending; whole-app compiler stopped after actual13MB free memory, no completed type result
 RENDERED_EVIDENCE: UNVERIFIED: actual local dialog geometry/themes pending; no authenticated customer claim
 BEHAVIORAL_EVIDENCE: UNVERIFIED: focused DOM and controlled-browser pathways pending
 AUTHENTICATED_RUNTIME: UNVERIFIED: inert native work-profile candidate not released; actual original Team/Spine/cohort results remain owed
@@ -68,3 +68,34 @@ Variants: holder/self edit; other owner/Admin read-only; unknown metadata refuse
 | Read-only | inspect/Close | holder/self not established | original roster | contact writer remains independent |
 
 No new permission, task, approval, provider, memory, scheduler or result ledger.
+
+
+## Current bounded results and unfinished integration
+
+Original neighboring run:176PASS/1FAIL; the failing selected-row test's mock
+omitted membership_id, which the native writer always returns. The new receipt
+consumer correctly refused that incomplete result and did not refresh the roster;
+this was an unchanged open dialog, not an established native re-opening defect.
+Three successful-save stubs now return the original producer field, with every
+existing selection/contact assertion retained. Final11 suites180/180 PASS.
+Explicit missing/foreign/transport/current-context cases continue to refuse;
+unknown results keep drafts, do not emit Saved and cannot automatically resend.
+
+Local real-SoloApp render attempts produced0frames/0states, not a UI PASS.
+The first cleanup failed to persist its cause; the diagnostic drive now writes
+failure evidence before cleanup. Second attempt timed out waiting for initial
+DOM content. A host observation measured13MB free physical memory out of16050MB;
+only the exact verified owned broad compiler PID47280 was stopped to relieve
+pressure. Its typecheck exited1 after termination, not a source/compiler failure
+or baseline PASS. Other agent processes and actual browser/account sessions were
+untouched. No alternative authenticated proof, raised timeout or production
+workaround was used. Native/AT/authenticated/geometry claims remain UNVERIFIED.
+
+Source assessment still owes an explicit original work-profile intent fence:
+the legacy three-argument RPC derives the then-current workspace but receives no
+refusal-only expected workspace from this dialog. The matching receipt prevents
+a false Saved on a foreign membership, but cannot by itself prevent a pre-dispatch
+workspace race's effect. Preserve existing legitimate callers and original sole
+writer; reconcile a scoped original-door overload/current consumer contract before
+releasing this local UI. No real wrong-workspace write was attempted or claimed.
+This remaining coding work prevents full EXP08 readiness.

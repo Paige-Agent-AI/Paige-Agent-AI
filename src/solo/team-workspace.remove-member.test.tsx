@@ -647,7 +647,7 @@ describe("a selection that stops being live", () => {
     let rosterCall = 0;
     route({
       get_solo_team_workspace: () => { rosterCall += 1; return { data: page(rosterCall === 2 || rosterCall === 4 ? [dana] : [owner]), error: null }; },
-      set_solo_team_member_work_profile: () => ({ data: { job_title: "Changed", responsibilities: "Owns client handoffs." }, error: null }),
+      set_solo_team_member_work_profile: () => ({ data: { membership_id: dana.membership_id, job_title: "Changed", responsibilities: "Owns client handoffs." }, error: null }),
     });
     await openScreen();
     await act(async () => byText("Load more (1 remaining)")!.click());
@@ -678,7 +678,7 @@ describe("what the owner hit on production — a save that reports success and r
     let saved: { _job_title?: string } | null = null;
     mocks.rpc.mockImplementation((name: string, args: { _job_title?: string }) => {
       if (name === "get_solo_team_workspace") return new Promise((res) => setTimeout(() => res({ data: withTitle(), error: null }), 300));
-      if (name === "set_solo_team_member_work_profile") { saved = args; return Promise.resolve({ data: { job_title: args._job_title, responsibilities: "" }, error: null }); }
+      if (name === "set_solo_team_member_work_profile") { saved = args; return Promise.resolve({ data: { membership_id: dana.membership_id, job_title: args._job_title, responsibilities: "" }, error: null }); }
       return new Promise(() => {});
     });
     const { render } = mount(<SoloTeamWorkspace />);

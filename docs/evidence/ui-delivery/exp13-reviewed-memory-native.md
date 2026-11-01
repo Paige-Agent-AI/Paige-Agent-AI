@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: Candidate unapplied; no ordinary customer ses
 KEYBOARD_FOCUS: NOT_APPLICABLE: No controls or focus changes; later consumer keyboard/accessibility proof required.
 ZOOM_REFLOW: NOT_APPLICABLE: No renderer or geometry changes.
 REDUCED_MOTION: NOT_APPLICABLE: No motion or transition changes.
-STATE_COVERAGE: PASS: Original source/actor/tenant/private audience/current version, explicit selected correction, absent/present/retired/stale/unknown, repeat and actual concurrency controls. Complete mounted continuation and customer permission proof remain owed.
+STATE_COVERAGE: UNVERIFIED: Original local SQL covers source/actor/tenant/private audience/version, selected correction, absent/present/retired/stale/unknown, repetition and actual concurrency. Full mounted review and authenticated continuation cannot be tested because the new native producer is not deployed to production and its consumer is unmounted.
 TRUTHFUL_STATE_LABELS: PASS: Proposed/session context is not approved Memory. Source storage/publication is not domain fact approval; logical Memory retirement is not physical source deletion. No successful save from UUID or HTTP status alone.
 SOLO_UI: NO: Native-only producer prerequisite for every eligible existing/future SOLO account; no account-specific branch or mounted customer UI.
 UNVERIFIED: Final candidate review, exact CI/managed Preview, lower published migration reconciliation, ordered merge/deploy/native readback, compatible client/UI mounting and authenticated useful result/reopen/recovery. First joined workflow NOT READY; full original EXP13 remains coding.
@@ -51,3 +51,11 @@ bounded stale/refused/unknown detection. These are source-partial components,
 not global algorithm maturity. ALG-13 useful saved plan/actual Work outcome is
 still a joined integration gap; ALG-11 remains the existing shared Model Fabric.
 No new algorithm, evaluation registry or automatic feedback learning is added.
+
+Original exact733a8 required UI evidence124701475003 FAILED: STATE_COVERAGE
+mixed a bounded local PASS with unverified whole-flow claims. Correct its scope
+to UNVERIFIED, retaining all local controls and explicit missing production and
+consumer evidence. The original guard is unchanged; no status or assertion is
+waived. Initial local guard invocation ran in the separate closeout checkout
+and failed ENOENT; switching to the actual Memory branch reproduced the real
+field refusal before this correction. This is an evidence correction only.

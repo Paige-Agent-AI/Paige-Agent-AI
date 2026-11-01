@@ -83,3 +83,10 @@ source/preparation/inspection/publication/approved fact/Memory are distinct.
 The separately reviewed attachedSelection/nested-lifetime UI bridgecc523 is
 not included or mounted by this client release. Full agreement-to-saved-Mission
 and actual original Work/CRM/receipts/reopen remains NOT READY/NOT ACCEPTED.
+
+Visible-Flow-Impact: yes. This non-UI client changes source admission and
+recovery inputs used by the existing review; its effect is review-routed under
+AGENTS rather than inferred from the automatic native/UI path detector.
+NON-AUTHOR exact42fb composition review is clear: all seven service/test blobs
+and every incoming outside path conserved. This declaration adds no source
+behavior, gate waiver or runtime claim; final exact hosted checks remain owed.

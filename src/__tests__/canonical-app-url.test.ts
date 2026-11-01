@@ -10,6 +10,19 @@ import { SOLO_BRANCHES } from "@/lib/routing/tierBranches";
 import { SOLO_SETUP_TABS } from "@/solo/settings-business-context-contract";
 
 describe("canonical externally emitted app destinations", () => {
+  it("focuses internal Knowledge on its existing Setup reader without reusing CURA or unmounted tiers", () => {
+    const input = { actor: "account", tier: "solo", account: "1234567", destination: "business_knowledge" } as const;
+    const id = "b3b60300-0000-4000-8000-000000000001";
+    expect(resolveCanonicalRecordLink({ ...input, recordId: id })).toEqual({
+      path: `/solo/1234567/settings/setup/knowledge-bucket?knowledge=${id}`, status: "exact",
+    });
+    expect(resolveCanonicalRecordLink({ ...input, recordId: "../foreign" })).toEqual({
+      path: "/solo/1234567/settings/setup/knowledge-bucket", status: "surface_only",
+    });
+    for (const tier of ["sub_account", "agency", "enterprise", "operator"] as const)
+      expect(resolveCanonicalRecordLink({ ...input, tier, recordId: id })).toBeNull();
+    expect(resolveCanonicalAppPath({ ...input, account: "../foreign" })).toBeNull();
+  });
   it("addresses original Planning work separately from CRM without creating another destination", () => {
     const input = { actor: "account", tier: "solo", account: "123", destination: "operations_work" } as const;
     const id = "e5000000-0000-4000-8000-000000000001";

@@ -1,3 +1,12 @@
+// EXP13 internal Knowledge reference preparation, 2026-11-01.
+// Immutable pre-renewal cf19c67a3/code20af07050; NON-AUTHOR source review
+// 6561518651 and composed-source/two-digest review6561622793 precede renewal.
+// Actual incoming2ca5ab579 reproduces131 dependencies/all29 dispatches;
+// ONLY canonical-app-url and record-links digests change for the reviewed
+// unmounted internal target. Other129 pins, whole Root, all29 fingerprints,
+// metadata, inspector/extractor, validators and hostile controls stay exact.
+// No producer mount, authority, native effect or3177 prototype-hold clearance.
+// Original required cf19c contract FAIL is retained; fresh exact gates owed.
 // EXP05 original Booking receipt confirmation, 2026-11-01.
 // Pre-renewal immutable source520f511d2d85012f49a2466bd18609ba1585ca6b;
 // separate AUTHOR-REVIEW / LOWER ASSURANCE in original ANT11/f711783c.
@@ -1387,7 +1396,7 @@ const SOURCES = {
  // Restoring main8e97's route helper reproduces old636e digest, all120 sources
  // and all29 dispatches. Renew this reviewed helper only; extractor, metadata,
  // dispatch scalars and other119 accepted dependency pins remain unchanged.
- "supabase/functions/_shared/canonical-app-url.ts": "41ef99964d4bf2d8c76e3cddf2c602320a4ad438daf753b73c9292381fc971d5",
+ "supabase/functions/_shared/canonical-app-url.ts": "a3d293063f09179639eb4e04867ac1b6b2815424a46b5b8dc8387e7d40c53d1a",
   "supabase/functions/_shared/gmail.ts": "78f697e312d18eb9d73ff2a3802142003a843b109f5e2a956182befb5d6160ff",
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",
@@ -1537,7 +1546,7 @@ const ANCESTRY_SOURCES = {
  // stay exact. Restoring main8e97's helper reproduces old8465 digest, all120 source
  // pins and all29 dispatches. Renew this inspected helper only; no extractor,
  // metadata, dispatch scalar or other dependency changes. Hostile controls retained.
- "supabase/functions/_shared/paige-turn/record-links.ts": "099fbfdf3d42338d10429fba33caaf64dc7905b45ea37a07e0ef0d1b806a1abe",
+ "supabase/functions/_shared/paige-turn/record-links.ts": "070fcf83ef4aae32af76d63bf873854999677316df78ccedea8bb48391e23cff",
  // Original extraction input/acknowledgment validation remains authoritative.
  // EXP13 October31: exact0b5a helper independently reviewed before this renewal.
  // Original-main458e reproduced; only this source input changed across131

@@ -64,3 +64,29 @@ it('shows current refund and credit separately from original gross receipt histo
  const base=financialInvoice();fixture.invoices=[{...base,status:'issued',record_kind:'managed',provenance:'canonical_record',provider_verified_cents:10000,allocated_cents:10000,remaining_cents:9000,financial_evidence_version:3,financial:{schema_version:3,invoice_id:base.id,invoice_version:1,currency:'usd',standing:'recorded',outstanding_minor:9000,refund_payable_minor:1000,credit_minor:0,manual_recorded_minor:0,provider_confirmed_minor:10000,provider_net_minor:9000,test_provider_minor:5000,source_hash:'a'.repeat(64)}}];
  await render();await click('Open');expect(document.body.textContent).toContain('Refund owed: $10.00');expect(document.body.textContent).toContain('Credits recorded: $0.00');expect(document.body.textContent).toContain('Provider net after verified adjustments: $90.00');expect(document.body.textContent).toContain('Gross receipt history: $100.00');
 });
+
+it('never presents an unissued managed draft as an original payment obligation',async()=>{
+ const base=financialInvoice();fixture.invoices=[{...base,status:'draft',record_kind:'managed',provenance:'canonical_record',invoice_number:'DRAFT-'+base.id,amount_cents:350000,remaining_cents:null,collection_required:false}];
+ await render();await click('Open');
+ const detail=document.querySelector('.sc-detail-total');
+ expect(detail?.textContent).toContain('Draft total');expect(detail?.textContent).toContain('$3,500.00');
+ expect(detail?.textContent).toContain('This draft has no issued payment obligation.');
+ expect(detail?.textContent).not.toContain('Original obligation');expect(detail?.textContent).not.toContain('Current outstanding');
+ expect(detail?.textContent).not.toContain('Refund owed');expect(detail?.textContent).not.toContain('Provider net');
+});
+it('marks a saved draft as not issued in the original collection balance column',async()=>{
+ const base=financialInvoice();fixture.invoices=[{...base,status:'draft',record_kind:'managed',provenance:'canonical_record',remaining_cents:null,collection_required:false}];
+ await render();expect(host.querySelector('.sc-register-row strong')?.textContent).toBe('Not issued');
+ expect([...host.querySelectorAll('.sc-facts article')].find(x=>x.textContent?.startsWith('Outstanding'))?.textContent).toContain('$0.00');
+});
+it('retains the original voided invoice amount without calling it an active obligation',async()=>{
+ const base=financialInvoice();fixture.invoices=[{...base,status:'void',record_kind:'managed',provenance:'canonical_record',collection_required:false}];
+ await render();await click('Open');const detail=document.querySelector('.sc-detail-total');
+ expect(detail?.textContent).toContain('Original invoice total');expect(detail?.textContent).toContain('$100.00');expect(detail?.textContent).not.toContain('Original obligation');
+ expect(detail?.textContent).toContain('Provider confirmed: $0.00');expect(detail?.textContent).toContain('Test payments: $50.00');
+});
+
+it('returns focus to the original collection opener when its detail closes',async()=>{
+ fixture.invoices=[financialInvoice()];await render();await click('Open');await click('Close');
+ await vi.waitFor(()=>expect(document.activeElement?.textContent).toBe('Open'));
+});

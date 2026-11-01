@@ -5799,3 +5799,16 @@ Preserve immutable3182/795/applied210013 history and actual lower native order
 before any future reviewed higher carrier/managed Preview/native source readback.
 Held3177 UI, selected facts/separate Memory, saved Mission and actual Work/CRM
 receipt/reopen/full lifecycle remain unfinished; full EXP13+BULK is not customer-ready.
+
+## 2026-11-01 UTC EXP13 - original internal Knowledge reference release
+
+Original3201/c467 source, exact web release and19-function Edge certificate are
+recorded in [Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the SAME record decoder/canonical map/current-account Knowledge Bucket;
+business_knowledge is an address reference, separate from CURA portal_knowledge.
+No producer/host is mounted and no source or action authority comes from a link.
+Original destination readback and source-version approval must remain separate.
+Initial contract/Edge failures and scratch-cleanup warning remain historical evidence.
+Normal reviewed recovery passed source/configuration, not business execution.
+Held3177 UI, Chat binding, selected facts/separate Memory, saved Mission and actual
+Work/CRM receipt/reopen/full lifecycle remain unfinished; full EXP13+BULK is not ready.

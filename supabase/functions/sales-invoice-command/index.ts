@@ -12,6 +12,7 @@ import { databaseAnswered } from "../_shared/approval-outcome.ts";
 import { mintSignerToken, sha256Hex } from "../_shared/agreements/token.ts";
 import { FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand } from "../_shared/sales-invoice-command/contract.ts";
 import { manualAllocationReviewMatches } from "../_shared/sales-invoice-command/manual-allocation.ts";
+import {readProviderDispositionReview,providerDispositionReviewsEqual,providerDispositionResultMatches} from '../_shared/sales-invoice-command/provider-disposition.ts';
 import { executeSalesInvoiceDelivery } from "../_shared/sales-invoice-delivery/adapter.ts";
 import { readInvoiceDeliveryReadiness, type InvoiceReadinessAdmin } from "../_shared/sales-invoice-delivery/readiness-reader.ts";
 
@@ -93,7 +94,10 @@ Deno.serve(async req => {
   const { data: replay, error: replayError } = paymentAction ? {data:null,error:null} : await admin.rpc(emailAction ? "read_sales_invoice_delivery_result" : "read_sales_invoice_command_result", rpcArgs);
   if (replayError) return response(409, { ok: false, outcome: "refused", code: "SALES_INVOICE_REPLAY_UNAVAILABLE" });
   const preparedRecovery = preparedPaymentRecovery || (emailAction && object(replay)?.outcome === "prepared");
-  if (object(replay) && !preparedRecovery) return response(200, { ...object(replay)!, replayed: true, capability, ...(command.action === "invoice.link_create" ? { link_recovery_required: true } : {}) });
+  if (object(replay) && !preparedRecovery) {
+    if(command.action==='invoice.record_provider_disposition'&&!providerDispositionResultMatches(replay,command,String(body.operation_id),tenantId))return response(503,{ok:false,outcome:'outcome_unknown',code:'INVOICE_FINANCIAL_RESULT_UNVERIFIED',operation_id:body.operation_id});
+    return response(200, { ...object(replay)!, replayed: true, capability, ...(command.action === "invoice.link_create" ? { link_recovery_required: true } : {}) });
+  }
 
   if (emailAction && !invoicePublicOriginReady(PAIGE_APP_ORIGIN)) return response(422, { ok:false, outcome:"needs_setup", code:"INVOICE_PUBLIC_ORIGIN_UNAVAILABLE" });
   let paymentInvoicePreview:Record<string,unknown>|null=null;
@@ -110,6 +114,9 @@ Deno.serve(async req => {
   const { data: previewData, error: previewError } = paymentAction ? {data:{eligible:true,client_name:paymentInvoicePreview?.client_name,invoice_number:paymentInvoicePreview?.invoice_number,remaining_cents:paymentInvoicePreview?.remaining_cents,summary:paymentRequestReviewSummary(command),invoice_id:command.invoice_id,amount_minor:command.amount_minor,currency:command.currency,client_id:command.client_id,provider:command.provider,merchant_account_id:command.merchant_account_id,environment:command.environment},error:null} : await admin.rpc(emailAction ? "preview_sales_invoice_delivery_command" : "preview_sales_invoice_command", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _command: command });
   const preview = object(previewData);
   if (previewError || !preview || preview.eligible !== true) return response(422, { ok: false, outcome: "refused", code: "SALES_INVOICE_INELIGIBLE", ...(preview ? { preview } : {}) });
+  const financialReview=command.action==='invoice.record_provider_disposition'?readProviderDispositionReview(preview.provider_disposition,command):null;
+  if(command.action==='invoice.record_provider_disposition'&&!financialReview)return response(422,{ok:false,outcome:'refused',code:'INVOICE_FINANCIAL_REVIEW_UNAVAILABLE',operation_id:body.operation_id});
+  if(financialReview)requestArgs.provider_disposition_review=financialReview;
   if(command.action==='invoice.record_manual_payment'&&command.allocations!==undefined
     &&!manualAllocationReviewMatches(command.allocations,Number(command.amount_cents),preview.manual_allocations)){
     return response(422,{ok:false,outcome:'refused',code:'INVOICE_ALLOCATION_REVIEW_UNAVAILABLE',
@@ -198,12 +205,15 @@ Deno.serve(async req => {
   try { decided = parseStoredCommand(args?.command); } catch { return response(403, { ok: false, code: "APPROVAL_CLAIM_INVALID" }); }
   if (args?.expected_tenant_id !== tenantId || typeof args.operation_id !== "string" || !UUID.test(args.operation_id) || SALES_INVOICE_ACTIONS[decided.action] !== capability) return response(403, { ok: false, code: "APPROVAL_CLAIM_INVALID" });
   if (preparedRecovery && (args.operation_id !== body.operation_id || JSON.stringify(decided) !== JSON.stringify(command) || typeof args.approval_cycle_nonce !== "string" || !UUID.test(args.approval_cycle_nonce))) return response(403, { ok:false, outcome:"prepared", code:"APPROVAL_CYCLE_INVALID" });
+  const approvedFinancialReview=decided.action==='invoice.record_provider_disposition'?readProviderDispositionReview(args.provider_disposition_review,decided):null;
+  if(decided.action==='invoice.record_provider_disposition'&&(!approvedFinancialReview||!financialReview||!providerDispositionReviewsEqual(approvedFinancialReview,financialReview)))return response(409,{ok:false,outcome:'refused',code:'INVOICE_FINANCIAL_APPROVAL_CHANGED',operation_id:args.operation_id});
   if (!(await stillCurrent())) return response(409, { ok: false, code: "WORKSPACE_CHANGED" });
   const token = decided.action === "invoice.link_create" ? mintSignerToken() : null;
   const governance = { actor_user_id: user.id, tenant_id: tenantId, tool: capability, action: decided.action,
     approval_channel: decision.audit.laneEffective === "confirm" ? "operator_card" : "standing_autonomy_setting",
     approved_fingerprint: decision.audit.laneEffective === "confirm" ? body.approved_fingerprint : null,
     decision_receipt_recorded: true,
+    ...(approvedFinancialReview?{approved_financial_review:approvedFinancialReview}:{}),
     ...(token ? { generated_link: { token_hash: await sha256Hex(token), grant_id: crypto.randomUUID() } } : {}),
   };
   if (decided.action === "invoice.email_send" || decided.action === "invoice.sms_send") {
@@ -239,6 +249,7 @@ Deno.serve(async req => {
     outcome: databaseAnswered(executeError) ? "refused" : "outcome_unknown", code: "SALES_INVOICE_COMMAND_FAILED",
     message: databaseAnswered(executeError) ? "The invoice action could not complete. Reload its current state before trying again." : "The result is unknown. Recover this operation before starting another.", operation_id: args.operation_id });
   const resultObject = object(result);
+  if(decided.action==='invoice.record_provider_disposition'&&!providerDispositionResultMatches(result,decided,args.operation_id,tenantId,approvedFinancialReview??undefined))return response(503,{ok:false,outcome:'outcome_unknown',code:'INVOICE_FINANCIAL_RESULT_UNVERIFIED',operation_id:args.operation_id});
   if (!resultObject || resultObject.ok !== true) return response(503, { ok: false, outcome: "outcome_unknown", code: "SALES_INVOICE_READBACK_INVALID", operation_id: args.operation_id });
   // Only the human endpoint receives the one-time secret; no database/audit/tool result stores it.
   return response(200, { ...resultObject, capability, ...(token && resultObject.replayed !== true ? { access_token: token } : {}), ...(token && resultObject.replayed === true ? { link_recovery_required: true } : {}) });

@@ -25,3 +25,23 @@ export const supabase={
 
 export function useTenantContext(){return {activeTenantId:tenantId,accountContextLoading:false};}
 export function useOptionalTenantContext(){return useTenantContext();}
+
+/** Synthetic current-read port for UI tests; amounts are explicit fixture facts, never provider proof. */
+export function withInvoiceFinancialFixture(value:unknown):unknown{
+ if(!value||typeof value!=='object'||Array.isArray(value))return value;
+ const row=value as Record<string,unknown>;
+ if(!row.billing_draft||row.financial_evidence_version===3)return value;
+ // Preserve deliberately unqualified old provider fixtures so current reads refuse them.
+ if(Number(row.provider_verified_cents)>0&&row.payment_evidence_version!==2)return value;
+ const applicable=row.status==='issued';
+ return {...row,payment_evidence_version:2,financial_evidence_version:3,
+  provider_verified_cents:row.provider_verified_cents??0,test_provider_verified_cents:row.test_provider_verified_cents??0,
+  allocated_cents:row.allocated_cents??row.manual_recorded_cents,
+  financial_summary:{schema_version:3,invoice_id:row.id,invoice_version:row.version,
+   currency:(row.billing_draft as Record<string,unknown>).currency,standing:applicable?'recorded':'not_applicable',
+   outstanding_minor:applicable?row.remaining_cents:null,refund_payable_minor:applicable?0:null,credit_minor:applicable?0:null,
+   manual_recorded_minor:row.manual_recorded_cents,provider_confirmed_minor:row.provider_verified_cents??0,
+   provider_net_minor:applicable?row.provider_verified_cents??0:null,test_provider_minor:row.test_provider_verified_cents??0,
+   source_hash:applicable?'b'.repeat(64):null},
+  payments:Array.isArray(row.payments)?row.payments.map(value=>{const p=value as Record<string,unknown>;return {...p,evidence_kind:p.evidence_kind??'manual_recorded',provider_environment:p.provider_environment??null,financial_review:null};}):row.payments};
+}

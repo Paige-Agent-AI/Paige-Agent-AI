@@ -1,0 +1,195 @@
+{
+  "parentHead": "6d6115eac51e65361517d6d3d9a960e57fa86107",
+  "scope": "Actual original client invoice component/hook and original customer navigation primitives; synthetic identity/transport. Native captured financial fields, except explicitly synthetic creditzero/mismatch/error ports. Original PAIGE Chat and AppShell session gate not mounted. Document-unavailable state is explicit; no current document acceptance.",
+  "sourceHashes": {
+    "src/hooks/useClientPortalInvoices.ts": "cfa2cc25828d8f5c104ede503bc6a44664007bbf7a90e9ae7b21815280340766",
+    "src/pages/app/BillingInvoice.tsx": "aaabb79aad7ba4eaaf5b708dca3eddf06624cb3022d62bc46778ca414c550f8c"
+  },
+  "images": {
+    "portal-financial-desktop.png": "cd6e1f7919f4fdaece3afb286541969ff0ad578ed1218c2d898f1ee82523841d",
+    "portal-financial-held-mobile.png": "b2495a14a38173ce83d15ecdf44bf4dee9681263211f561634609fb592d15a14",
+    "portal-financial-credit-mobile.png": "5c2fe8d8f9921a03cea87777ceb3bfa76684dfee9a174be17f23175bd93d9545"
+  },
+  "cases": [
+    {
+      "scenario": "refund",
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "rootWidth": 1536,
+      "paidClaim": false,
+      "pay": false,
+      "pending": false,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "refund",
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "rootWidth": 1536,
+      "paidClaim": false,
+      "pay": false,
+      "pending": false,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "refund",
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "rootWidth": 1366,
+      "paidClaim": false,
+      "pay": false,
+      "pending": false,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "refund",
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "rootWidth": 1366,
+      "paidClaim": false,
+      "pay": false,
+      "pending": false,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "refund",
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "rootWidth": 1024,
+      "paidClaim": false,
+      "pay": false,
+      "pending": false,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "refund",
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "rootWidth": 1024,
+      "paidClaim": false,
+      "pay": false,
+      "pending": false,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "refund",
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "rootWidth": 900,
+      "paidClaim": false,
+      "pay": false,
+      "pending": false,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "refund",
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "rootWidth": 900,
+      "paidClaim": false,
+      "pay": false,
+      "pending": false,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "refund",
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "rootWidth": 390,
+      "paidClaim": false,
+      "pay": false,
+      "pending": false,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "refund",
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "rootWidth": 390,
+      "paidClaim": false,
+      "pay": false,
+      "pending": false,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "held",
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "rootWidth": 390,
+      "paidClaim": false,
+      "pay": false,
+      "pending": true,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "creditzero",
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "rootWidth": 390,
+      "paidClaim": false,
+      "pay": false,
+      "pending": false,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "error",
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "rootWidth": 390,
+      "paidClaim": false,
+      "pay": false,
+      "pending": true,
+      "sends": 0,
+      "documentUnavailable": true
+    },
+    {
+      "scenario": "mismatch",
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "rootWidth": 390,
+      "paidClaim": false,
+      "pay": false,
+      "pending": true,
+      "sends": 0,
+      "documentUnavailable": true,
+      "recovery": {
+        "active": true,
+        "height": 44,
+        "ring": "rgba(12, 7, 18, 0.682) 0px 0px 0px 1.36712px, rgba(92, 38, 217, 0.682) 0px 0px 0px 2.73423px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "originalReadRecovered": true
+      }
+    }
+  ],
+  "nativeControls": 35,
+  "pairedTests": 198,
+  "authAcceptance": "UNVERIFIED",
+  "documentIntegration": "PROOF OWED",
+  "dashboardFinancialSpan": "PENDING existing custody request; source unedited",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE"
+}

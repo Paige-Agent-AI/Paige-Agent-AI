@@ -51,3 +51,42 @@ export async function routeVerifiedSalesStripeEvent(admin:SalesPaymentAdmin,even
   return {handled:true,status:body.has_more||unknown?503:200,code:body.has_more||unknown?'PAYMENT_READBACK_REQUIRED':'PAYMENT_EVENT_RECONCILED'};
  }catch {return {handled:true,status:503,code:'PAYMENT_READBACK_REQUIRED'};}
 }
+
+const adjustmentEvents:Readonly<Record<string,'charge'|'refund'|'dispute'>>={
+ 'charge.refunded':'charge','charge.refund.updated':'refund',
+ 'refund.created':'refund','refund.updated':'refund','refund.failed':'refund',
+ 'charge.dispute.created':'dispute','charge.dispute.updated':'dispute','charge.dispute.closed':'dispute',
+ 'charge.dispute.funds_withdrawn':'dispute','charge.dispute.funds_reinstated':'dispute',
+};
+/** UNMOUNTED candidate in the SAME adapter. The existing ingress must verify the
+ * signature first. Payload metadata, amount and status are never financial truth;
+ * native scope resolves the original receipt and registers its existing C4 work.
+ * No provider call, refund/credit, balance write or new settlement dispatch. */
+export async function registerVerifiedSalesStripeAdjustmentEvent(admin:SalesPaymentAdmin,event:unknown,
+ verifiedPlatform:'legacy'|'v2',environment:'test'|'live'):Promise<{handled:boolean;status:number;code:string}>{
+ const value=object(event),kind=typeof value?.type==='string'&&Object.hasOwn(adjustmentEvents,value.type)?adjustmentEvents[value.type]:undefined;
+ if(!kind)return {handled:false,status:200,code:'OTHER_DOMAIN'};
+ const payload=object(object(value?.data)?.object),charge=kind==='charge'?payload?.id:payload?.charge;
+ const prefix=kind==='charge'?'ch':kind==='refund'?'re':'du';
+ if(verifiedPlatform!=='legacy'||!value||typeof value.id!=='string'||!/^evt_[A-Za-z0-9]{1,124}$/.test(value.id)
+  ||typeof value.account!=='string'||!/^acct_[A-Za-z0-9]{1,123}$/.test(value.account)||typeof value.livemode!=='boolean'
+  ||!['test','live'].includes(environment)||value.livemode!==(environment==='live')||!payload||payload.object!==kind
+  ||typeof payload.id!=='string'||!new RegExp('^'+prefix+'_[A-Za-z0-9]{1,125}$').test(payload.id)
+  ||typeof charge!=='string'||!/^ch_[A-Za-z0-9]{1,125}$/.test(charge)
+  ||(payload.livemode!==undefined&&payload.livemode!==value.livemode))return {handled:true,status:400,code:'PAYMENT_EVENT_SCOPE_REFUSED'};
+ try{
+  const response=await admin.rpc('register_sales_provider_observation_event',{_event_id:value.id,_event_type:value.type,
+   _merchant_account_id:value.account,_environment:environment,_provider_transaction_id:charge});
+  const result=object(response.data);
+  if(response.error||!result)throw Error('PROVIDER_OBSERVATION_READBACK_REQUIRED');
+  if(result.state==='other_domain')return {handled:false,status:200,code:'OTHER_DOMAIN'};
+  if(result.state==='verification_pending')return {handled:true,status:503,code:'PROVIDER_OBSERVATION_READBACK_REQUIRED'};
+  const work=object(result.work);
+  if(result.state!=='registered'||!work||typeof work.work_id!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(work.work_id)
+   ||typeof work.work_status!=='string'||!/^[a-z_]{1,40}$/.test(work.work_status)||work.max_attempts!==25
+   ||!Number.isSafeInteger(work.attempt_count)||Number(work.attempt_count)<1||Number(work.attempt_count)>25)throw Error('PROVIDER_OBSERVATION_READBACK_REQUIRED');
+  // Registration/replay proves only that the original event occurrence exists.
+  // It does not assert that a blocked/terminal work item will run or money moved.
+  return {handled:true,status:200,code:'PROVIDER_OBSERVATION_REGISTERED'};
+ }catch{return {handled:true,status:503,code:'PROVIDER_OBSERVATION_READBACK_REQUIRED'};}
+}

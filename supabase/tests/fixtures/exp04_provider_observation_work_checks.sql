@@ -16,9 +16,14 @@ insert into e04_work_state select 'original_operation',to_jsonb(p) from public.p
 insert into e04_work_state select 'original_payment',to_jsonb(p) from public.paige_invoice_payments p where provider_operation_id=current_setting('test.e04_work_operation')::uuid;
 insert into e04_work_state select 'original_settlement_work',to_jsonb(w) from public.paige_durable_work w
  join public.paige_invoice_provider_operations p on p.reconciliation_work_id=w.id where p.id=current_setting('test.e04_work_operation')::uuid;
+-- The full-schema caller already has verified observation history. Retain it;
+-- a complete provider read cannot erase earlier refund/dispute IDs.
+insert into e04_work_state select 'original_observation_snapshot',coalesce((select h.command->'snapshot'
+ from public.paige_invoice_provider_operations p join public.paige_invoice_operations h on h.id=p.provider_observation_operation_id
+ where p.id=current_setting('test.e04_work_operation')::uuid),'{}'::jsonb);
 insert into e04_work_state select 'original_balance',to_jsonb(b) from public._sales_invoice_balance_rows(current_setting('test.e04_work_tenant')::uuid,
  (select invoice_id from public.paige_invoice_provider_operations where id=current_setting('test.e04_work_operation')::uuid)) b;
-select set_config('test.actor','',true);
+select set_config('test.actor','',true);select set_config('request.jwt.claim.sub','',true);
 set local role service_role;
 do $initial$declare one jsonb;again jsonb;claim jsonb;context jsonb;snapshot jsonb;
 begin
@@ -42,9 +47,9 @@ begin
  perform pg_temp.work_refused(format('select public.read_sales_provider_observation_work_context(%L,%L,%L,1)',current_setting('test.e04_work_tenant')::uuid,claim->>'work_id','wrong'),'42501','different server key cannot read or heartbeat the work');
  perform pg_temp.work_refused(format('select public.read_sales_provider_observation_work_context(%L,%L,%L,2)',current_setting('test.e04_work_tenant')::uuid,claim->>'work_id',claim->>'server_idempotency_key'),'42501','different attempt cannot read or heartbeat work');
  snapshot:=jsonb_build_object('state','observed','provider_transaction_id',current_setting('test.e04_work_charge'),'provider_settlement_id',current_setting('test.e04_work_settlement'),
-  'refunds',jsonb_build_array(jsonb_build_object('id','re_work','amount_minor',10000,'currency','usd',
+  'refunds',coalesce((select value->'refunds' from e04_work_state where key='original_observation_snapshot'),'[]'::jsonb)||jsonb_build_array(jsonb_build_object('id','re_work','amount_minor',10000,'currency','usd',
    'created_at',to_char((now()-interval '1 minute') at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
-   'status','pending','balance_transaction',null,'failure_balance_transaction',null)),'disputes','[]'::jsonb);
+   'status','pending','balance_transaction',null,'failure_balance_transaction',null)),'disputes',coalesce((select value->'disputes' from e04_work_state where key='original_observation_snapshot'),'[]'::jsonb));
  insert into e04_work_state values('snapshot',snapshot),('version',context->'observation_version');
  again:=public.complete_sales_provider_observation_work(current_setting('test.e04_work_tenant')::uuid,(claim->>'work_id')::uuid,claim->>'server_idempotency_key',1,null,null);
  perform pg_temp.work_check(again->>'work_status'='blocked' and again->>'blocked_reason'='provider_observation_unknown','unknown provider evidence stays blocked rather than becoming a payment or success');
@@ -72,7 +77,7 @@ begin
  again:=public.complete_sales_provider_observation_work(current_setting('test.e04_work_tenant')::uuid,(c->>'work_id')::uuid,c->>'server_idempotency_key',2,v,snapshot);
  perform pg_temp.work_check(again->'receipt'=result->'receipt' and again->'replayed'='true'::jsonb,'lost completion response replays the same immutable receipt');
  perform pg_temp.work_refused(format('select public.complete_sales_provider_observation_work(%L,%L,%L,2,%L,%L::jsonb)',
-  current_setting('test.e04_work_tenant')::uuid,c->>'work_id',c->>'server_idempotency_key',v,jsonb_set(snapshot,'{refunds,0,status}','"failed"')),'55000','terminal event cannot adopt later changed evidence');
+  current_setting('test.e04_work_tenant')::uuid,c->>'work_id',c->>'server_idempotency_key',v,jsonb_set(snapshot,ARRAY['refunds',(jsonb_array_length(snapshot->'refunds')-1)::text,'status'],'"failed"')),'55000','terminal event cannot adopt later changed evidence');
  again:=public.register_sales_provider_observation_work(current_setting('test.e04_work_tenant')::uuid,current_setting('test.e04_work_operation')::uuid,'evt_workA',current_setting('test.e04_work_merchant'),'test',current_setting('test.e04_work_charge'));
  perform pg_temp.work_check(again->>'work_status'='succeeded' and again->>'attempt_count'='2','re-delivered completed event never reopens terminal work');
  perform pg_temp.work_check(public.claim_sales_provider_observation_work(3)->'claims'='[]'::jsonb,'terminal observation work never re-enters the queue');
@@ -161,5 +166,71 @@ select pg_temp.work_check((select to_jsonb(b)=s.value from public._sales_invoice
  (select invoice_id from public.paige_invoice_provider_operations where id=current_setting('test.e04_work_operation')::uuid)) b,e04_work_state s where s.key='original_balance'),
  'provider observations do not forgive debt or alter canonical financial allocation');
 do $count$begin if (select count(*) from e04_work_checks)<>39 then raise exception 'Missing native work controls';end if;end $count$;
+
+-- Keep the complete incumbent39/guard above. Extend the SAME proof only after
+-- those pass. Event metadata/economics never become balance or action authority.
+set local role service_role;
+do $ingress$declare kind text;one jsonb;again jsonb;direct jsonb;seen uuid[]:='{}';
+begin
+ foreach kind in array array['charge.refunded','charge.refund.updated','refund.created','refund.updated','refund.failed',
+  'charge.dispute.created','charge.dispute.updated','charge.dispute.closed','charge.dispute.funds_withdrawn','charge.dispute.funds_reinstated'] loop
+  one:=public.register_sales_provider_observation_event('evt_ingress'||replace(replace(kind,'.',''),'_',''),kind,
+   current_setting('test.e04_work_merchant'),'test',current_setting('test.e04_work_charge'));
+  if one->>'state'<>'registered' or one#>>'{work,max_attempts}'<>'25' or one#>>'{work,attempt_count}'<>'1'
+   or (one#>>'{work,work_id}')::uuid=any(seen) then raise exception 'Finite native signal registration failed';end if;
+  seen:=array_append(seen,(one#>>'{work,work_id}')::uuid);
+ end loop;
+ perform pg_temp.work_check(cardinality(seen)=10,'all closed refund/dispute signals register distinct original event occurrences');
+ one:=public.register_sales_provider_observation_event('evt_ingressReplay','refund.updated',current_setting('test.e04_work_merchant'),'test',current_setting('test.e04_work_charge'));
+ again:=public.register_sales_provider_observation_event('evt_ingressReplay','refund.updated',current_setting('test.e04_work_merchant'),'test',current_setting('test.e04_work_charge'));
+ perform pg_temp.work_check(one=again and one#>>'{work,attempt_count}'='1','signed-event replay preserves the same original work without an extra attempt');
+ direct:=public.register_sales_provider_observation_work(current_setting('test.e04_work_tenant')::uuid,current_setting('test.e04_work_operation')::uuid,
+  'evt_ingressReplay',current_setting('test.e04_work_merchant'),'test',current_setting('test.e04_work_charge'));
+ perform pg_temp.work_check(one->'work'=direct,'ingress and original operation writer share one event occurrence and identity');
+ perform pg_temp.work_refused($q$select public.register_sales_provider_observation_event('evt_invalid','charge.updated',current_setting('test.e04_work_merchant'),'test',current_setting('test.e04_work_charge'))$q$,'22023','unsupported native event cannot create generic execution');
+ perform pg_temp.work_refused($q$select public.register_sales_provider_observation_event('evt_invalid','refund.created',current_setting('test.e04_work_merchant'),'test','not-a-charge')$q$,'22023','malformed native charge reference is refused before registration');
+ perform pg_temp.work_refused($q$select public.register_sales_provider_observation_event('not-an-event','refund.created',current_setting('test.e04_work_merchant'),'test',current_setting('test.e04_work_charge'))$q$,'22023','malformed native event identity is refused before registration');
+ perform pg_temp.work_check(public.register_sales_provider_observation_event('evt_other','refund.created','acct_unrelated','test',current_setting('test.e04_work_charge'))->>'state'='other_domain','unrelated merchant cannot acquire original payment work');
+ perform pg_temp.work_check(public.register_sales_provider_observation_event('evt_other','refund.created',current_setting('test.e04_work_merchant'),'live',current_setting('test.e04_work_charge'))->>'state'='other_domain','different merchant environment cannot acquire original payment work');
+ one:=public.register_sales_provider_observation_event('evt_unlinked','refund.created',current_setting('test.e04_work_merchant'),'test','ch_notYetLinked');
+ insert into e04_work_state values('unlinked_ingress',one);
+ -- The SAME event/charge first ran before the original allocator in the owning
+ -- runner. It was pending then; original capture now exists, without any rewrite
+ -- of event identity, charge reference, payment or terminal settlement work.
+ perform pg_temp.work_check(public.register_sales_provider_observation_event('evt_earlyCapture','refund.created',current_setting('test.e04_work_merchant'),'test',current_setting('test.e04_work_charge'))->>'state'='registered',
+  'same early event registers after original capture without changed event or charge');
+end $ingress$;
+reset role;
+select pg_temp.work_check((select value->>'state'='verification_pending' from e04_work_state where key='unlinked_ingress')
+ and not exists(select 1 from public.paige_durable_work where work_kind='sales_provider_observation' and request_payload->>'event_id'='evt_unlinked'),
+ 'not-yet-linked event stays pending without invented payment or work');
+set local role authenticated;
+select pg_temp.work_refused($q$select public.register_sales_provider_observation_event('evt_browser','refund.created','acct_fixtureA','test','ch_fixture')$q$,'42501','ordinary browser cannot register private signed-provider event');
+reset role;set local role anon;
+select pg_temp.work_refused($q$select public.register_sales_provider_observation_event('evt_anon','refund.created','acct_fixtureA','test','ch_fixture')$q$,'42501','anonymous role cannot register private signed-provider event');
+reset role;set local role service_role;
+select set_config('test.actor',(value->>'actor_user_id'),true) from e04_work_state where key='original_operation';
+-- Full Supabase Auth reads the original JWT subject; reduced fixture Auth reads test.actor.
+-- Assert BOTH ports contain the same actor so the refusal cannot pass under an empty identity.
+select set_config('request.jwt.claim.sub',(value->>'actor_user_id'),true) from e04_work_state where key='original_operation';
+do $actor$ begin if auth.uid() is distinct from (select (value->>'actor_user_id')::uuid from e04_work_state where key='original_operation') then raise exception 'Provider work refusal actor fixture unavailable';end if;end $actor$;
+select pg_temp.work_refused($q$select public.register_sales_provider_observation_event('evt_asserted','refund.created','acct_fixtureA','test','ch_fixture')$q$,'42501','service port cannot assert an ordinary actor to register an event');
+select set_config('test.actor','',true);select set_config('request.jwt.claim.sub','',true);reset role;
+update public.tenant_stripe_accounts set binding_version=binding_version+1,stripe_account_id='acct_replacement'
+ where tenant_id=current_setting('test.e04_work_tenant')::uuid;
+set local role service_role;
+select pg_temp.work_refused($q$select public.register_sales_provider_observation_event('evt_retired','refund.created',current_setting('test.e04_work_merchant'),'test',current_setting('test.e04_work_charge'))$q$,'42501',
+ 'known original payment with retired merchant scope is refused rather than silently ignored');
+reset role;
+update public.tenant_stripe_accounts m set binding_version=(s.value->>'merchant_binding_version')::bigint,
+ stripe_account_id=s.value->>'merchant_account_id'
+ from e04_work_state s where m.tenant_id=current_setting('test.e04_work_tenant')::uuid and s.key='original_operation';
+select pg_temp.work_check((select to_jsonb(p)=s.value from public.paige_invoice_payments p,e04_work_state s
+ where p.provider_operation_id=current_setting('test.e04_work_operation')::uuid and s.key='original_payment')
+ and (select to_jsonb(w)=s.value from public.paige_durable_work w,e04_work_state s where s.key='original_settlement_work' and w.id=(s.value->>'id')::uuid)
+ and (select to_jsonb(b)=s.value from public._sales_invoice_balance_rows(current_setting('test.e04_work_tenant')::uuid,
+ (select invoice_id from public.paige_invoice_provider_operations where id=current_setting('test.e04_work_operation')::uuid)) b,e04_work_state s where s.key='original_balance'),
+ 'all signed-event registration leaves original money balances and terminal settlement work exact');
+do $ingress_count$begin if (select count(*) from e04_work_checks)<>54 then raise exception 'Missing signed-event ingress controls';end if;end $ingress_count$;
 select jsonb_build_object('proof','E04_PROVIDER_OBSERVATION_WORK','checks',(select count(*) from e04_work_checks),
  'boundary','Original C4 envelope leases transitions journal and Rail; selected tables/test Auth; no Stripe or financial adjustment') as evidence;

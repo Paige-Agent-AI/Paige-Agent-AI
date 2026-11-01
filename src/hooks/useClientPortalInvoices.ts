@@ -24,8 +24,16 @@ import { formatPaymentMinor, readCustomerPaymentRequest, type CustomerPaymentReq
  */
 
 export type PortalInvoiceStatus = "issued" | "void";
+export type PortalFinancialStanding = "recorded" | "needs_review" | "allocation_required" | "unavailable" | "not_applicable";
+type PortalCurrentFinancial = {
+  financial_evidence_version?: 3;
+  financial_standing?: PortalFinancialStanding;
+  refund_payable_minor?: number | null;
+  credit_minor?: number | null;
+  provider_net_minor?: number | null;
+};
 
-export interface PortalInvoice {
+export interface PortalInvoice extends PortalCurrentFinancial {
   id: string;
   invoice_number: string | null;
   status: PortalInvoiceStatus;
@@ -34,23 +42,30 @@ export interface PortalInvoice {
   /** Calendar date (YYYY-MM-DD) or null. */
   due_date: string | null;
   amount_minor: number;
-  remaining_minor: number;
+  remaining_minor: number | null;
   provider_verified_minor: number;
   manual_recorded_minor: number;
   test_provider_minor: number;
+  /** Native real-receivable representation; absent on compatible legacy TEST simulation. */
+  payment_evidence_version?: 2;
   /** The business has sent a payment link that is usable right now. The link is not in the list. */
   payable: boolean;
   past_due: boolean | null;
   /** Original immutable issued version, present only in the calendar-aware projection. */
   issued_snapshot_version?: number | null;
+  /** Opaque original financial source identity, never an access credential. */
+  financial_revision?: string | null;
+  /** The original all-invoice snapshot used for this loaded row. */
+  financial_page_revision?: string;
 }
 
-export interface PortalInvoiceBalance {
+export interface PortalInvoiceBalance extends PortalCurrentFinancial {
   currency: string;
-  remaining_minor: number;
+  remaining_minor: number | null;
   provider_verified_minor: number;
   manual_recorded_minor: number;
   test_provider_minor: number;
+  payment_evidence_version?: 2;
 }
 
 export interface PortalInvoiceCursor { issued_at: string; id: string }
@@ -72,41 +87,62 @@ export interface PortalInvoicePage {
   /** Per currency, over every non-void invoice, across all pages. */
   balances: PortalInvoiceBalance[];
   /** Issued invoices with something still owed, across all pages. */
-  open_count: number;
+  open_count: number | null;
   read_at: string;
   /** Absent on the compatible legacy UTC reader. Never derived from the viewer's clock. */
   calendar?: PortalInvoiceCalendar;
+  /** Retain the native representation even when this page has no invoice rows. */
+  payment_evidence_version?: 2;
+  financial_evidence_version?: 3;
+  financial_revision?: string;
 }
 
 /**
  * The customer's own words for where an invoice stands. Whether anything is still owed comes from the
- * balance, as on the owner side; whether money was RECEIVED counts only money that moved. A test payment
+ * balance, as on the owner side; whether money was RECEIVED counts only money that moved. In the retained
+ * legacy v1/v2 representation, a test payment
  * is allocated on the business's books (so nothing more is asked for), but it is never told to the
  * customer as a payment: an invoice it settled is "test_settled", and one it only part-settled is still
  * open or past due unless real money also arrived. An invoice settled by real money AND test money is
  * "partially_paid": the real money paid part of it; the rest was a test that moved nothing.
+ * The explicitly versioned v3 representation instead carries native actual business remaining and
+ * LIVE provider amounts: separate TEST evidence never reduces that debt or gets subtracted twice.
  */
-export type PortalInvoiceDisplay = "open" | "past_due" | "partially_paid" | "paid" | "test_settled" | "voided";
+export type PortalInvoiceDisplay = "open" | "past_due" | "partially_paid" | "paid" | "test_settled" | "voided" | "verification_pending" | "no_amount_due" | "refund_owed";
 
-/** Provider-confirmed money that actually moved: provider-verified receipts minus test-mode ones. */
-export function liveProviderMinor(i: Pick<PortalInvoice, "provider_verified_minor" | "test_provider_minor">): number {
+/** v3 already contains native LIVE money; older representations include TEST in their provider total. */
+export function liveProviderMinor(i: Pick<PortalInvoice, "provider_verified_minor" | "test_provider_minor" | "payment_evidence_version">): number {
+  if (i.payment_evidence_version === 2) return i.provider_verified_minor;
   return Math.max(0, i.provider_verified_minor - i.test_provider_minor);
 }
 
 export function invoiceDisplayState(i: PortalInvoice): PortalInvoiceDisplay {
   if (i.status === "void") return "voided";
+  if (i.financial_evidence_version === 3) {
+    if (i.financial_standing !== "recorded" || i.remaining_minor === null) return "verification_pending";
+    if ((i.refund_payable_minor ?? 0) > 0) return "refund_owed";
+    if (i.remaining_minor === 0) return "no_amount_due";
+    if (i.past_due) return "past_due";
+    return i.manual_recorded_minor > 0 || (i.provider_net_minor ?? 0) > 0 ? "partially_paid" : "open";
+  }
+  if (i.payment_evidence_version === 2) {
+    if (i.remaining_minor === 0) return "paid";
+    if (i.past_due) return "past_due";
+    return i.manual_recorded_minor > 0 || i.provider_verified_minor > 0 ? "partially_paid" : "open";
+  }
   if (i.remaining_minor === 0) {
     if (i.test_provider_minor === 0) return "paid";
     return i.amount_minor - i.test_provider_minor > 0 ? "partially_paid" : "test_settled";
   }
   if (i.past_due) return "past_due";
   // Part-paid only if something other than test money brought the balance down.
-  if (i.amount_minor - i.remaining_minor - i.test_provider_minor > 0) return "partially_paid";
+  if (i.remaining_minor !== null && i.amount_minor - i.remaining_minor - i.test_provider_minor > 0) return "partially_paid";
   return "open";
 }
 
 export const INVOICE_DISPLAY_LABEL: Record<PortalInvoiceDisplay, string> = {
   open: "Open", past_due: "Past due", partially_paid: "Partially paid", paid: "Paid", test_settled: "Test payment", voided: "Voided",
+  verification_pending: "Verification pending", no_amount_due: "No amount due", refund_owed: "Refund due",
 };
 
 export const PORTAL_INVOICES_PAGE = 20;
@@ -116,6 +152,7 @@ const PAGE_KEYS = ["schema_version", "tenant_id", "business_name", "invoices", "
 const INVOICE_KEYS = ["id", "invoice_number", "status", "currency", "issued_at", "due_date", "amount_minor", "remaining_minor",
   "provider_verified_minor", "manual_recorded_minor", "test_provider_minor", "payable", "past_due"];
 const BALANCE_KEYS = ["currency", "remaining_minor", "provider_verified_minor", "manual_recorded_minor", "test_provider_minor"];
+const CURRENT_FINANCIAL_KEYS = ["financial_standing", "refund_payable_minor", "credit_minor", "provider_net_minor"];
 const CURSOR_KEYS = ["issued_at", "id"];
 
 type RpcResult = { data: unknown; error: unknown };
@@ -132,7 +169,7 @@ export type PortalBillingReadContext = {scope: PortalBillingScope; current: () =
 export class PortalBillingAccessFailure extends Error {}
 type BillingRequest = PromiseLike<RpcResult> & {setHeader(name: string, value: string): BillingRequest};
 /** One bounded original SDK read. Native Auth/CRM/commercial functions remain authority. */
-async function scopedBillingRpc(name: string, args: Record<string, unknown>, context: PortalBillingReadContext): Promise<RpcResult> {
+async function scopedBillingRpc(name: string, args: Record<string, unknown>, context: PortalBillingReadContext, financialVersion?: 3): Promise<RpcResult> {
   let active = true, timer: ReturnType<typeof setTimeout> | undefined;
   const current = () => active && context.current();
   const check = () => {if (!current()) throw new PortalBillingAccessFailure("Customer context changed");};
@@ -143,7 +180,11 @@ async function scopedBillingRpc(name: string, args: Record<string, unknown>, con
     catch {throw new PortalBillingAccessFailure("Customer session could not be checked");}
     check();
     const query = supabase.rpc(name as never, {...args, p_tenant_id: context.scope.tenantId, p_expected_client_id: context.scope.clientId} as never) as unknown as BillingRequest;
-    const result = await withClientPortalBusiness(query, context.scope.tenantId).setHeader("Authorization", authorization);
+    const selected = withClientPortalBusiness(query, context.scope.tenantId).setHeader("Authorization", authorization);
+    // Representation negotiation only: the original RPC, actor, relationship
+    // and native permission checks remain authority. Older servers return v2.
+    const result = await (financialVersion === 3 || name === "client_portal_invoices_calendar_scoped"
+      ? selected.setHeader("X-PAIGE-Invoice-Evidence-Version", financialVersion === 3 ? "3" : "2") : selected); // customer-identity-exempt: original technical representation header, never customer-facing assistant identity.
     check();
     const [captured, actual] = await Promise.all([supabase.auth.getUser(authorization.slice(7)), supabase.auth.getUser()]);
     check();
@@ -188,6 +229,7 @@ const isCalendarDate = (v: unknown): v is string => typeof v === "string" && /^\
 const isCount = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v) && v >= 0;
 const isCurrency = (v: unknown): v is string => typeof v === "string" && /^[a-z]{3}$/.test(v);
 const isId = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f-]{36}$/i.test(v);
+const isRevision = (v: unknown): v is string => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
 /** Money arrives as a decimal string of minor units (bigint-safe on the server); refuse anything else. */
 function minor(v: unknown): number {
   if (typeof v !== "string" || !/^\d{1,15}$/.test(v)) throw new Error("Unexpected invoice amount");
@@ -206,24 +248,54 @@ function remainingMinor(v: unknown): number {
   return minor(v);
 }
 
-function parseInvoice(raw: unknown, calendar?: PortalInvoiceCalendar): PortalInvoice {
-  if (!isObject(raw) || !exactKeys(raw, calendar ? [...INVOICE_KEYS, "issued_snapshot_version"] : INVOICE_KEYS)) throw new Error("Unexpected invoice");
+/** Decode the existing native facts only; no allocation or refund math belongs here. */
+function currentFinancial(raw: Record<string, unknown>, numeric = false): Required<PortalCurrentFinancial> & {remaining_minor: number | null} {
+  const standing = raw.financial_standing;
+  if (!["recorded", "needs_review", "allocation_required", "unavailable", "not_applicable"].includes(String(standing))) throw new Error("Unexpected financial standing");
+  const decode = (value: unknown, signed = false): number => {
+    if (numeric) {
+      if (!Number.isSafeInteger(value) || (!signed && Number(value) < 0)) throw new Error("Unexpected financial amount");
+      return Number(value);
+    }
+    if (signed && typeof value === "string" && /^-\d{1,15}$/.test(value)) return -minor(value.slice(1));
+    return minor(value);
+  };
+  const names = ["remaining_minor", "refund_payable_minor", "credit_minor", "provider_net_minor"];
+  const amounts = names.map((key) => {
+    if (standing === "recorded") return decode(raw[key], key === "provider_net_minor");
+    if (raw[key] !== null) throw new Error("Unexpected unresolved financial amount");
+    return null;
+  });
+  return {financial_evidence_version: 3, financial_standing: standing as PortalFinancialStanding,
+    remaining_minor: amounts[0], refund_payable_minor: amounts[1], credit_minor: amounts[2], provider_net_minor: amounts[3]};
+}
+
+function parseInvoice(raw: unknown, calendar?: PortalInvoiceCalendar, paymentEvidenceVersion?: 2, financialVersion?: 3, pageRevision?: string): PortalInvoice {
+  const keys = calendar ? [...INVOICE_KEYS, "issued_snapshot_version"] : INVOICE_KEYS;
+  if (!isObject(raw) || !exactKeys(raw, financialVersion ? [...keys, ...CURRENT_FINANCIAL_KEYS, "financial_revision"] : keys)) throw new Error("Unexpected invoice");
   const { id, invoice_number, status, currency, issued_at, due_date, payable, past_due } = raw;
   if (!isId(id) || (invoice_number !== null && typeof invoice_number !== "string") || (status !== "issued" && status !== "void")
     || !isCurrency(currency) || !isInstant(issued_at) || (due_date !== null && !isCalendarDate(due_date))
     || typeof payable !== "boolean" || (typeof past_due !== "boolean" && !(calendar && past_due === null))) {
     throw new Error("Unexpected invoice");
   }
-  const amount = minor(raw.amount_minor), remaining = remainingMinor(raw.remaining_minor);
-  if (remaining > amount) throw new Error("Unexpected invoice");
+  const financial = financialVersion ? currentFinancial(raw) : undefined;
+  if (financial && (!isRevision(pageRevision) || !(raw.financial_revision === null && financial.financial_standing !== "recorded") && !isRevision(raw.financial_revision))) throw new Error("Unexpected financial revision");
+  const amount = minor(raw.amount_minor), remaining = financial ? financial.remaining_minor : remainingMinor(raw.remaining_minor);
+  if (!financial && remaining !== null && remaining > amount) throw new Error("Unexpected invoice");
+  if (financial && (status === "void" ? financial.financial_standing !== "not_applicable" : financial.financial_standing === "not_applicable")) throw new Error("Unexpected financial standing");
+  const held = status === "issued" && !!financial && financial.financial_standing !== "recorded";
+  if (held && (payable || past_due !== null)) throw new Error("Unexpected unresolved invoice");
   // A voided invoice is never payable or past due; an invoice with nothing owed cannot be either.
   if ((status === "void" || remaining === 0) && (payable || past_due)) throw new Error("Unexpected invoice");
   if (calendar) {
     if (raw.issued_snapshot_version !== null && (!Number.isSafeInteger(raw.issued_snapshot_version) || Number(raw.issued_snapshot_version) < 1)) throw new Error("Unexpected invoice version");
-    if (calendar.state === "configured") {
+    if (held) {
+      if (past_due !== null) throw new Error("Unexpected invoice date state");
+    } else if (calendar.state === "configured") {
       if (past_due === null) throw new Error("Unexpected invoice date state");
     } else {
-      const unknown = status === "issued" && remaining > 0 && due_date !== null;
+      const unknown = status === "issued" && remaining !== null && remaining > 0 && due_date !== null;
       if (unknown ? past_due !== null : past_due !== false) throw new Error("Unexpected invoice date state");
     }
   }
@@ -237,27 +309,38 @@ function parseInvoice(raw: unknown, calendar?: PortalInvoiceCalendar): PortalInv
     manual_recorded_minor: minor(raw.manual_recorded_minor),
     test_provider_minor: minor(raw.test_provider_minor),
     ...(calendar ? {issued_snapshot_version: raw.issued_snapshot_version as number | null} : {}),
+    ...(paymentEvidenceVersion ? {payment_evidence_version: paymentEvidenceVersion} : {}),
+    ...financial,
+    ...(financial ? {financial_revision: raw.financial_revision as string | null, financial_page_revision: pageRevision} : {}),
   };
 }
 
-function parseBalance(raw: unknown): PortalInvoiceBalance {
-  if (!isObject(raw) || !exactKeys(raw, BALANCE_KEYS) || !isCurrency(raw.currency)) throw new Error("Unexpected balance");
+function parseBalance(raw: unknown, paymentEvidenceVersion?: 2, financialVersion?: 3): PortalInvoiceBalance {
+  if (!isObject(raw) || !exactKeys(raw, financialVersion ? [...BALANCE_KEYS, ...CURRENT_FINANCIAL_KEYS] : BALANCE_KEYS) || !isCurrency(raw.currency)) throw new Error("Unexpected balance");
+  const financial = financialVersion ? currentFinancial(raw) : undefined;
+  if (financial && !["recorded", "needs_review"].includes(financial.financial_standing)) throw new Error("Unexpected aggregate financial standing");
   return {
     currency: raw.currency,
-    remaining_minor: remainingMinor(raw.remaining_minor),
+    remaining_minor: financial ? financial.remaining_minor : remainingMinor(raw.remaining_minor),
     provider_verified_minor: minor(raw.provider_verified_minor),
     manual_recorded_minor: minor(raw.manual_recorded_minor),
     test_provider_minor: minor(raw.test_provider_minor),
+    ...(paymentEvidenceVersion ? {payment_evidence_version: paymentEvidenceVersion} : {}),
+    ...financial,
   };
 }
 
 /** Null = no customer relationship. Throws on any payload outside the promised shape. */
 export function parseInvoicePage(data: unknown): PortalInvoicePage | null {
   if (data === null || data === undefined) return null;
-  if (!isObject(data) || (data.schema_version !== 1 && data.schema_version !== 2)
-    || !exactKeys(data, data.schema_version === 2 ? [...PAGE_KEYS, "calendar"] : PAGE_KEYS)) throw new Error("Unexpected invoices response");
+  if (!isObject(data) || ![1,2,3,4].includes(Number(data.schema_version)) || typeof data.schema_version !== "number") throw new Error("Unexpected invoices response");
+  const financialVersion = data.schema_version === 4 ? 3 : undefined;
+  const paymentEvidenceVersion = data.schema_version === 3 || financialVersion ? 2 : undefined;
+  const calendarAware = data.schema_version !== 1;
+  const keys = financialVersion ? [...PAGE_KEYS, "calendar", "payment_evidence_version", "financial_evidence_version", "financial_revision"] : paymentEvidenceVersion ? [...PAGE_KEYS, "calendar", "payment_evidence_version"] : calendarAware ? [...PAGE_KEYS, "calendar"] : PAGE_KEYS;
+  if (!exactKeys(data, keys) || (paymentEvidenceVersion && data.payment_evidence_version !== paymentEvidenceVersion) || (financialVersion && (data.financial_evidence_version !== 3 || !isRevision(data.financial_revision)))) throw new Error("Unexpected invoices response");
   let calendar: PortalInvoiceCalendar | undefined;
-  if (data.schema_version === 2) {
+  if (calendarAware) {
     const c = data.calendar;
     if (!isObject(c) || !exactKeys(c, ["state", "zone", "local_date"]) || !["configured", "missing", "invalid"].includes(String(c.state))) throw new Error("Unexpected invoice calendar");
     if (c.state === "configured") {
@@ -269,7 +352,7 @@ export function parseInvoicePage(data: unknown): PortalInvoicePage | null {
   const { tenant_id, business_name, invoices, invoice_count, has_more, next_cursor, balances, open_count, read_at } = data;
   if (!isId(tenant_id) || (business_name !== null && typeof business_name !== "string") || !Array.isArray(invoices)
     || invoices.length > PORTAL_INVOICES_MAX_PAGE || !isCount(invoice_count) || typeof has_more !== "boolean"
-    || !Array.isArray(balances) || !isCount(open_count) || open_count > invoice_count || !isInstant(read_at)) {
+    || !Array.isArray(balances) || (!(financialVersion && open_count === null) && (!isCount(open_count) || open_count > invoice_count)) || !isInstant(read_at)) {
     throw new Error("Unexpected invoices response");
   }
   let cursor: PortalInvoiceCursor | null = null;
@@ -281,30 +364,35 @@ export function parseInvoicePage(data: unknown): PortalInvoicePage | null {
   }
   // A page that says there is more must say where it continues, and only then.
   if (has_more !== (cursor !== null)) throw new Error("Unexpected invoices response");
-  const parsed = invoices.map((invoice) => parseInvoice(invoice, calendar));
+  const parsed = invoices.map((invoice) => parseInvoice(invoice, calendar, paymentEvidenceVersion, financialVersion, data.financial_revision as string | undefined));
   if (new Set(parsed.map((i) => i.id)).size !== parsed.length) throw new Error("Unexpected invoices response");
-  const parsedBalances = balances.map(parseBalance);
+  const parsedBalances = balances.map((balance) => parseBalance(balance, paymentEvidenceVersion, financialVersion));
   if (new Set(parsedBalances.map((b) => b.currency)).size !== parsedBalances.length) throw new Error("Unexpected invoices response");
+  if (financialVersion && (open_count === null) !== parsedBalances.some((b) => b.financial_standing !== "recorded")) throw new Error("Unexpected aggregate financial standing");
   return {
-    tenant_id, has_more, invoice_count, open_count, read_at,
+    tenant_id, has_more, invoice_count, open_count: open_count as number | null, read_at,
     business_name: typeof business_name === "string" && business_name.trim() ? business_name.trim() : null,
     invoices: parsed,
     next_cursor: cursor,
     balances: parsedBalances,
     ...(calendar ? {calendar} : {}),
+    ...(paymentEvidenceVersion ? {payment_evidence_version: paymentEvidenceVersion} : {}),
+    ...(financialVersion ? {financial_evidence_version: financialVersion, financial_revision: data.financial_revision as string} : {}),
   };
 }
 
 /** One read of the caller's invoices. Null = no customer relationship. Throws on a failed read. */
-export async function readPortalInvoices(args: { tenantId?: string | null; limit?: number; after?: PortalInvoiceCursor | null; context?: PortalBillingReadContext } = {}): Promise<PortalInvoicePage | null> {
+export async function readPortalInvoices(args: { tenantId?: string | null; limit?: number; after?: PortalInvoiceCursor | null; context?: PortalBillingReadContext; financialVersion?: 3 } = {}): Promise<PortalInvoicePage | null> {
   const params = {
     p_tenant_id: args.tenantId ?? null,
     p_limit: args.limit ?? PORTAL_INVOICES_PAGE,
     p_after: args.after ?? null,
   };
-  const {data, error} = await (args.context ? scopedBillingRpc("client_portal_invoices_calendar_scoped", params, args.context) : portalRpc("client_portal_invoices", params));
+  if (args.financialVersion && !args.context) throw new Error("Current financial read requires the original customer context");
+  const {data, error} = await (args.context ? scopedBillingRpc("client_portal_invoices_calendar_scoped", params, args.context, args.financialVersion) : portalRpc("client_portal_invoices", params));
   if (error) throw error;
-  if (data !== null && data !== undefined && (!isObject(data) || data.schema_version !== (args.context ? 2 : 1))) throw new Error("Unexpected invoices response");
+  if (data !== null && data !== undefined && (!isObject(data) || (args.context ? ![2,3,4].includes(Number(data.schema_version)) : data.schema_version !== 1)
+    || args.financialVersion === 3 && (data.schema_version !== 4 || data.financial_evidence_version !== 3))) throw new Error("Unexpected invoices response");
   const page = parseInvoicePage(data);
   if (args.context && (!page || page.tenant_id !== args.context.scope.tenantId)) throw new PortalBillingAccessFailure("Customer financial scope changed");
   return page;
@@ -314,7 +402,7 @@ export async function readPortalInvoices(args: { tenantId?: string | null; limit
 /** Recheck the exact original invoice/customer through EXP04's unchanged ledger projection.
  * Used before and after the existing document renderer; no bearer grant, ledger write or new renderer. */
 export async function verifyPortalInvoiceAccess(invoiceId: string, context: PortalBillingReadContext): Promise<void> {
-  const reply = await scopedBillingRpc("client_portal_invoice_ledger_scoped", {p_invoice_id: invoiceId, _limit: 1, _cursor: null}, context);
+  const reply = await scopedBillingRpc("client_portal_invoice_ledger_scoped", {p_invoice_id: invoiceId, _limit: 1, _cursor: null}, context, 3);
   if (reply.error || !isObject(reply.data) || reply.data.invoice_id !== invoiceId)
     throw new PortalBillingAccessFailure("Customer invoice access unavailable");
 }
@@ -325,7 +413,8 @@ export type PortalPaymentRead =
    * request. `environment` is the request's provider environment: "test" means paying moves no money;
    * null when there is no request or the value is not one the contract names (never assumed live).
    */
-  | { state: "ready"; request: CustomerPaymentRequest | null; remainingMinor: number; testProviderMinor: number; environment: "test" | "live" | null }
+  | { state: "ready"; request: CustomerPaymentRequest | null; remainingMinor: number | null; testProviderMinor: number; environment: "test" | "live" | null; paymentEvidenceVersion?: 2;
+      financialEvidenceVersion?: 3; financialStanding?: PortalFinancialStanding; refundPayableMinor?: number | null; creditMinor?: number | null; providerNetMinor?: number | null; financialRevision?: string | null }
   /** Not this customer's invoice, not issued (voided), or gone. */
   | { state: "unavailable" };
 
@@ -333,34 +422,51 @@ export type PortalPaymentRead =
  * The payment request the business sent for one issued invoice, read-only. Never creates or dispatches
  * anything. The top-level shape is what readCustomerPaymentRequest already parses for the bearer page.
  */
-export async function readPortalInvoicePayment(args: { invoiceId: string; tenantId: string | null; context?: PortalBillingReadContext }): Promise<PortalPaymentRead> {
+export async function readPortalInvoicePayment(args: { invoiceId: string; tenantId: string | null; context?: PortalBillingReadContext; financialVersion?: 3 }): Promise<PortalPaymentRead> {
   const params = {p_invoice_id: args.invoiceId, p_tenant_id: args.tenantId};
-  const {data, error} = await (args.context ? scopedBillingRpc("client_portal_invoice_payment_request_scoped", params, args.context) : portalRpc("client_portal_invoice_payment_request", params));
+  if (args.financialVersion && !args.context) throw new Error("Current financial read requires the original customer context");
+  const {data, error} = await (args.context ? scopedBillingRpc("client_portal_invoice_payment_request_scoped", params, args.context, args.financialVersion) : portalRpc("client_portal_invoice_payment_request", params));
   if (error) {
     if (isInvoiceUnavailable(error)) return { state: "unavailable" };
     throw error;
   }
   // Null = the caller has no customer relationship (any more): nothing here is theirs to pay.
   if (data === null || data === undefined) return { state: "unavailable" };
-  if (!isObject(data) || data.invoice_id !== args.invoiceId || !Number.isSafeInteger(data.remaining_cents) || Number(data.remaining_cents) < 0) {
+  if (!isObject(data) || data.invoice_id !== args.invoiceId) {
     throw new Error("Unexpected payment response");
   }
+  const current = data.financial_evidence_version === 3;
+  if (args.financialVersion === 3 && !current || data.financial_evidence_version !== undefined && !current) throw new Error("Unexpected payment representation");
+  let financial: Pick<Extract<PortalPaymentRead, {state: "ready"}>, "financialEvidenceVersion" | "financialStanding" | "refundPayableMinor" | "creditMinor" | "providerNetMinor" | "financialRevision"> = {};
+  if (current) {
+    if (!exactKeys(data, ["invoice_id", "invoice_number", "remaining_cents", "test_provider_cents", "payment_request", "payment_evidence_version", "financial_evidence_version", "financial_revision", ...CURRENT_FINANCIAL_KEYS])
+      || data.payment_evidence_version !== 2 || data.invoice_number !== null && typeof data.invoice_number !== "string") throw new Error("Unexpected payment response");
+    const facts = currentFinancial({...data, remaining_minor: data.remaining_cents}, true);
+    if (!(data.financial_revision === null && facts.financial_standing !== "recorded") && !isRevision(data.financial_revision)) throw new Error("Unexpected financial revision");
+    if (facts.financial_standing === "not_applicable" || (facts.financial_standing !== "recorded" || facts.remaining_minor === 0) && data.payment_request !== null) throw new Error("Unexpected current payment request");
+    financial = {financialEvidenceVersion: 3, financialStanding: facts.financial_standing, refundPayableMinor: facts.refund_payable_minor, creditMinor: facts.credit_minor, providerNetMinor: facts.provider_net_minor, financialRevision: data.financial_revision as string | null};
+  } else if (!Number.isSafeInteger(data.remaining_cents) || Number(data.remaining_cents) < 0) throw new Error("Unexpected payment response");
   const testCents = data.test_provider_cents;
+  const evidenceVersion = data.payment_evidence_version;
+  if (evidenceVersion !== undefined && (evidenceVersion !== 2 || !Number.isSafeInteger(testCents) || Number(testCents) < 0)) {
+    throw new Error("Unexpected payment representation");
+  }
+  const evidence = evidenceVersion === 2 ? {paymentEvidenceVersion: 2 as const} : {};
   const testProviderMinor = Number.isSafeInteger(testCents) && Number(testCents) >= 0 ? Number(testCents) : 0;
-  if (data.payment_request === null) return { state: "ready", request: null, remainingMinor: Number(data.remaining_cents), testProviderMinor, environment: null };
+  if (data.payment_request === null) return { state: "ready", request: null, remainingMinor: data.remaining_cents === null ? null : Number(data.remaining_cents), testProviderMinor, environment: null, ...evidence, ...financial };
   const request = readCustomerPaymentRequest(data);
   // A request the parser cannot read is never shown as "no request": that would hide a link the business sent.
   if (!request) throw new Error("Unexpected payment response");
   const env = isObject(data.payment_request) ? data.payment_request.environment : null;
   const environment = env === "test" || env === "live" ? env : null;
-  return { state: "ready", request, remainingMinor: request.remainingMinor, testProviderMinor, environment };
+  return { state: "ready", request, remainingMinor: request.remainingMinor, testProviderMinor, environment, ...evidence, ...financial };
 }
 
 export interface ClientPortalInvoicesState {
   /** Newest first; older pages appended by loadMore. */
   invoices: PortalInvoice[];
   balances: PortalInvoiceBalance[];
-  openCount: number;
+  openCount: number | null;
   /**
    * Past-due invoices among those loaded. The server sends no all-page past-due count, so this is the
    * whole figure only once every page is loaded (hasMore false); the page shows it only then.
@@ -420,7 +526,7 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
   [requestedActor, requestedTenant, requestedClient, scopeCurrent]);
   const [invoices, setInvoices] = useState<PortalInvoice[]>([]);
   const [balances, setBalances] = useState<PortalInvoiceBalance[]>([]);
-  const [openCount, setOpenCount] = useState(0);
+  const [openCount, setOpenCount] = useState<number | null>(0);
   const [invoiceCount, setInvoiceCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [businessName, setBusinessName] = useState<string | null>(null);
@@ -434,6 +540,7 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
   const [loaded, setLoaded] = useState(false);
   const [calendar, setCalendar] = useState<PortalInvoiceCalendar>();
   const calendarRef = useRef<PortalInvoiceCalendar | undefined>(undefined);
+  const financialVersionRef = useRef<string | undefined>(undefined);
 
   // Mirrors for async callbacks; each async result is applied only if its epoch is current.
   const epoch = useRef(0);
@@ -461,6 +568,7 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
     setLoaded(false);
     setCalendar(undefined);
     calendarRef.current = undefined;
+    financialVersionRef.current = undefined;
   }, []);
 
   const resetScope = useCallback(() => {
@@ -491,6 +599,7 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
     setHasMore(page.has_more);
     setCalendar(page.calendar);
     calendarRef.current = page.calendar;
+    financialVersionRef.current = `${page.payment_evidence_version ?? "legacy"}:${page.financial_evidence_version ?? "legacy"}:${page.financial_revision ?? "legacy"}`;
     setInvoices((prev) => {
       if (!append) { countRef.current = page.invoices.length; return page.invoices; }
       const seen = new Set(prev.map((i) => i.id));
@@ -527,7 +636,7 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
     // the customer just opened, unless they had opened more than one page holds.
     const limit = Math.min(PORTAL_INVOICES_MAX_PAGE, Math.max(initialLimit, countRef.current));
     try {
-      const page = await readPortalInvoices({ tenantId: requestContext?.scope.tenantId ?? pinned, limit, context: requestContext });
+      const page = await readPortalInvoices({ tenantId: requestContext?.scope.tenantId ?? pinned, limit, context: requestContext, ...(requestContext ? {financialVersion: 3 as const} : {}) });
       if (!current()) return;
       if (!page) {
         clearData(); dataGeneration.current = generation;
@@ -557,12 +666,13 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
     const current = () => alive.current && scopeCurrent() && myEpoch === epoch.current && seq === readSeq.current;
     setLoadingMore(true);
     try {
-      const page = await readPortalInvoices({ tenantId: pinned, after, context: requestContext });
+      const page = await readPortalInvoices({ tenantId: pinned, after, context: requestContext, ...(requestContext ? {financialVersion: 3 as const} : {}) });
       if (!current()) return;
       if (!page || page.tenant_id !== pinned) throw new Error("Invoice business changed");
       // Never blend invoice-date states from different original business days.
       // This is a fresh read, not a retry of any financial or provider action.
-      if (JSON.stringify(page.calendar) !== JSON.stringify(calendarRef.current)) {
+      if (JSON.stringify(page.calendar) !== JSON.stringify(calendarRef.current)
+        || `${page.payment_evidence_version ?? "legacy"}:${page.financial_evidence_version ?? "legacy"}:${page.financial_revision ?? "legacy"}` !== financialVersionRef.current) {
         clearData();
         setLoading(true);
         await refresh();
@@ -661,6 +771,7 @@ export function usePortalInvoicesGlance(enabled = true): PortalInvoicesGlance {
   if (!enabled || source.unavailable || source.multipleBusinesses) return {state: "unavailable"};
   if (source.error) return {state: "error"};
   if (source.loading || !source.loaded) return {state: "loading"};
+  if (source.openCount === null || source.balances.some((balance) => balance.remaining_minor === null)) return {state: "error"};
   return {state: "ready", openCount: source.openCount, balances: source.balances, pastDue: source.hasMore || source.pastDueKnown === false ? null : source.pastDueCount};
 }
 
@@ -685,7 +796,8 @@ export const PAYMENTS_MESSAGE_HREF = "/app/messages?topic=payments";
 
 /** "$1,250.00 and €300.00": every currency with something still owed, or null when nothing is. */
 export function owedPhrase(balances: PortalInvoiceBalance[]): string | null {
-  const owed = balances.filter((b) => b.remaining_minor > 0).map((b) => formatPaymentMinor(b.remaining_minor, b.currency));
+  if (balances.some((b) => b.remaining_minor === null)) return "Balance awaiting verification";
+  const owed = balances.flatMap((b) => b.remaining_minor !== null && b.remaining_minor > 0 ? [formatPaymentMinor(b.remaining_minor, b.currency)] : []);
   if (owed.length === 0) return null;
   return owed.length === 1 ? owed[0] : `${owed.slice(0, -1).join(", ")} and ${owed[owed.length - 1]}`;
 }

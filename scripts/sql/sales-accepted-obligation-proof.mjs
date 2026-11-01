@@ -50,8 +50,10 @@ const definitions=Object.fromEntries(Object.entries(files).map(([name,file])=>[n
 const manualMode=process.argv.includes('--manual-allocations');
 const manualBaseline=process.argv.includes('--manual-baseline');
 const allocationBaseline=process.argv.includes('--allocation-baseline');
+const actualReceivableMode=process.argv.includes('--actual-receivable');
+assert(!actualReceivableMode||(manualMode&&!manualBaseline&&!allocationBaseline),'actual receivable proof extends the unchanged manual phase');
 const financial=Object.entries(definitions).map(([identity,definition])=>({identity:identity+'(',definition}));
-let activeDatabase='postgres',created=false,passes=0,manualSourceHash=null;const log=[];
+let activeDatabase='postgres',created=false,passes=0,manualSourceHash=null,actualSourceHash=null,actualProofSummary=null,actualSamples=null;const log=[];
 const literal=v=>"'"+JSON.stringify(v).replaceAll("'","''")+"'::jsonb";
 function run(sql){const r=cp.spawnSync(binary,['-X','-w','-h','127.0.0.1','-p',port,'-U',user,'-d',activeDatabase,'-v','ON_ERROR_STOP=1','-qAt'],{input:sql,encoding:'utf8',windowsHide:true,timeout:20000,maxBuffer:16e6});if(r.status!==0)throw Error(r.stderr||r.error?.message||'local SQL refused');return r.stdout.trim();}
 function check(label,value){assert.equal(value,true,label);passes++;log.push('PASS '+label);}
@@ -343,10 +345,147 @@ try{
   ])deniedSql('BEGIN;'+sql+manualForward,/reconcile before applying/,label);
   const guardedHistory=inspectReceipt(first,version());
   check('failed hostile guard attempts leave original owner history and source state exact',JSON.stringify(observe())===state&&guardedHistory.state==='assigned'&&guardedHistory.reversal_payment_id===correction&&JSON.stringify(guardedHistory.allocations)===JSON.stringify(firstCommand.allocations));
+  if(actualReceivableMode){
+   const originalPasses=passes;
+   const actualBefore=observe(),testPayment=crypto.randomUUID(),testOperation=crypto.randomUUID();
+   check('actual-receivable extension starts from original available manual state',actualBefore.state==='available'&&actualBefore.obligations.length===11);
+   const owed=actualBefore.obligations.reduce((sum,row)=>sum+row.remaining_minor,0);
+   const testCommand={action:'invoice.payment_request',invoice_id:fixture.effective.invoice_id,client_id:fixture.client_id,
+    expected_version:version(),issued_snapshot_version:1,provider:'stripe',purpose:'full',amount_minor:owed,currency:'usd',
+    merchant_account_id:'acct_fixture',merchant_binding_version:1,environment:'test'};
+   // Same explicit simulated provider-metadata seam as the ORIGINAL receipt
+   // controls above. No Stripe call, guarded provider write or payment is proved.
+   const testOp={id:testOperation,tenant_id:fixture.tenant_id,invoice_id:fixture.effective.invoice_id,client_id:fixture.client_id,
+    actor_user_id:fixture.actor_id,state:'settled',allocation_payment_id:testPayment,amount_minor:owed,currency:'usd',
+    environment:'test',provider:'stripe',command:testCommand,verified_readback:{scope:'Simulated TEST metadata only; no money'}};
+   const testRow={id:testPayment,tenant_id:fixture.tenant_id,invoice_id:fixture.effective.invoice_id,kind:'receipt',amount_cents:owed,
+    currency:'usd',evidence_kind:'provider_verified',provider:'stripe',provider_operation_id:testOperation,provider_environment:'test'};
+   run(`INSERT INTO paige_invoice_provider_operations SELECT * FROM jsonb_populate_record(NULL::paige_invoice_provider_operations,${literal(testOp)});
+    INSERT INTO paige_invoice_payments SELECT * FROM jsonb_populate_record(NULL::paige_invoice_payments,${literal(testRow)});
+    UPDATE paige_invoices SET billing_lifecycle_version=billing_lifecycle_version+1;`);
+   check('BASELINE original presence-only TEST hold hides still-owed accepted targets',observe().reason==='test_payment_evidence');
+   check('BASELINE original legacy position calls the simulated TEST balance settled',run(`SELECT remaining_minor=0 FROM public._sales_invoice_balance_rows('${fixture.tenant_id}','${fixture.effective.invoice_id}');`)==='t');
+   expectRefusal(crypto.randomUUID(),manualCommand(1000),'BASELINE original writer refuses genuine manual receipt after a TEST-only settlement');
+   const core=read('supabase/tests/fixtures/exp04_invoice_financial_position.sql');
+   const repair=read('supabase/tests/fixtures/exp04_invoice_actual_obligations.sql');
+   actualSourceHash=crypto.createHash('sha256').update(repair).digest('hex');
+   const identities=['public._sales_invoice_accepted_obligations(public.paige_invoices,uuid)','public._sales_invoice_prior_execute(uuid,uuid,uuid,jsonb,jsonb)'];
+   const patchedMetadata=()=>run(`SELECT jsonb_agg((to_jsonb(p)-'prosrc') ORDER BY oid) FROM pg_proc p WHERE oid IN (${identities.map(s=>`'${s}'::regprocedure`).join(',')});`);
+   const metadataBefore=patchedMetadata();
+   const unchangedIdentities=['public._sales_invoice_actor(uuid,uuid)','public._sales_invoice_governance(uuid,uuid,text,text,jsonb)',
+    'public._sales_invoice_require_accepted_obligation(public.paige_invoices,jsonb)','public._sales_invoice_require_manual_allocations(public.paige_invoices,jsonb)',
+    'public._sales_invoice_manual_allocations(public.paige_invoices)','public._sales_invoice_manual_receipt_allocations(public.paige_invoices,public.paige_invoice_payments)',
+    'public.read_sales_accepted_invoice_obligations(uuid,uuid,uuid)','public.read_sales_invoice_payment_obligation(uuid,uuid,uuid,jsonb)',
+    'public.prepare_sales_invoice_payment_request(uuid,uuid,uuid,jsonb,jsonb)','public.claim_sales_invoice_payment_request(uuid,uuid,uuid)'];
+   const unchangedSources=()=>run(`SELECT jsonb_agg(to_jsonb(p) ORDER BY oid) FROM pg_proc p WHERE oid IN (${unchangedIdentities.map(s=>`'${s}'::regprocedure`).join(',')});`);
+   const originalSources=unchangedSources();
+   run(core);run(repair);
+   check('same original two function OIDs ABI owner ACL settings and security retained',patchedMetadata()===metadataBefore);
+   let actual=observe();
+   check('TEST cannot fulfill or hide any actual original accepted obligation',actual.state==='available'&&JSON.stringify(actual.obligations)===JSON.stringify(actualBefore.obligations));
+   check('same original3500 principal500 deposit ten300 schedule remains',actual.obligations[0].scheduled_minor===50000&&actual.obligations.slice(1).every(row=>row.scheduled_minor===30000)&&actual.obligations.reduce((sum,row)=>sum+row.scheduled_minor,0)===350000);
+   const position=()=>JSON.parse(run(`SELECT to_jsonb(b) FROM public._sales_invoice_financial_position_rows('${fixture.tenant_id}','${fixture.effective.invoice_id}') b;`));
+   check('native plan totals match canonical actual receivable while TEST stays separate',position().receivable_remaining_minor===owed&&position().test_provider_minor===owed&&position().remaining_minor===0);
+   // Extend this SAME reduced fixture with the real retained-agreement read graph.
+   // Retire only the explicitly synthetic two-argument result port above. Loading
+   // immutable originals (and only their package-reader patches) prevents a fake
+   // package projection from making the public Owner decoder appear to work.
+   check('retired result port is the explicitly synthetic fixture only',run("SELECT prosrc FROM pg_proc WHERE oid='public._sales_invoice_read(uuid,uuid)'::regprocedure;").includes("'scope','Synthetic projection port only'"));
+   run(`DROP FUNCTION public._sales_invoice_read(uuid,uuid);
+    ALTER TABLE public.profiles ADD COLUMN full_name text;
+    CREATE TABLE public.clients(id uuid PRIMARY KEY,tenant_id uuid NOT NULL);
+    CREATE TABLE public.tenant_products(id uuid PRIMARY KEY,tenant_id uuid NOT NULL);
+    INSERT INTO public.clients VALUES('${fixture.client_id}','${fixture.tenant_id}');
+    INSERT INTO public.tenant_products VALUES('${fixture.effective.offer_id}','${fixture.tenant_id}');`);
+   run(original('20270543000000_sales_invoice_lifecycle.sql','_sales_invoice_read')
+    .replace('public._sales_invoice_read(','public._sales_invoice_read_before_provider('));
+   check('original frozen invoice reader is byte exact',run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_invoice_read_before_provider(uuid,uuid,integer)'::regprocedure;")==='1d5f5ed876cc95722dc0ef72cb1090f6');
+   run(read('supabase/tests/fixtures/exp04_invoice_environment_read.sql'));
+   for(const [file,name]of [
+    ['20270547000000_sales_collections.sql','_sales_collection_validate_terms'],
+    ['20270601000009_sales_commercial_conditions.sql','_sales_validate_commercial_conditions'],
+    ['20270601000013_sales_invoice_terms_reference.sql','_sales_invoice_terms_reference_shape'],
+    ['20270598000001_sales_commercial_package_read.sql','read_sales_commercial_package'],
+   ])run(original(file,name));
+   for(const [file,count]of [['20270601000009_sales_commercial_conditions.sql',1],['20270601000013_sales_invoice_terms_reference.sql',2]]){
+    const patches=[...read('supabase/migrations/'+file).matchAll(/DO \$\$[\s\S]*?END \$\$;/g)]
+     .filter(match=>match[0].includes("body:=pg_get_functiondef('public.read_sales_commercial_package(uuid,uuid)'::regprocedure)"));
+    assert.equal(patches.length,count,'only original commercial-package patches '+file);
+    for(const patch of patches)run(patch[0]);
+   }
+   check('complete original commercial-package read body matches actual catalog',run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.read_sales_commercial_package(uuid,uuid)'::regprocedure;")==='d909de5729a47809119455d54952a5ef');
+   run(`REVOKE ALL ON FUNCTION public._sales_invoice_read_before_provider(uuid,uuid,integer),public._sales_invoice_read(uuid,uuid,integer),public._sales_collection_validate_terms(jsonb),public._sales_invoice_terms_reference_shape(jsonb) FROM PUBLIC,anon,authenticated,service_role;
+    REVOKE ALL ON FUNCTION public._sales_validate_commercial_conditions(jsonb,jsonb) FROM PUBLIC,anon,authenticated;
+    GRANT EXECUTE ON FUNCTION public._sales_validate_commercial_conditions(jsonb,jsonb) TO service_role;
+    REVOKE ALL ON FUNCTION public.read_sales_commercial_package(uuid,uuid) FROM PUBLIC,anon,service_role;
+    GRANT EXECUTE ON FUNCTION public.read_sales_commercial_package(uuid,uuid) TO authenticated;`);
+   check('package read retains the original authenticated-only entry grant',run("SELECT proacl::text='{postgres=X/postgres,authenticated=X/postgres}' FROM pg_proc WHERE oid='public.read_sales_commercial_package(uuid,uuid)'::regprocedure;")==='t');
+   const samples=[];
+   const captureOwner=stage=>{
+    const payload=JSON.parse(run(asOwner(`public.read_sales_accepted_invoice_obligations('${fixture.tenant_id}','${fixture.effective.invoice_id}','${fixture.effective.signing_id}')`)).split('\n').find(s=>s.startsWith('{')));
+    check('original Owner RPC returns exact actual accepted plan at '+stage,payload.state==='recorded'&&payload.payment_obligations.state==='available'
+     &&JSON.stringify(payload.payment_obligations.obligations)===JSON.stringify(observe().obligations));
+    samples.push({stage,tenant:fixture.tenant_id,args:{invoice_id:fixture.effective.invoice_id,agreement_id:fixture.effective.signing_id,
+     client_id:fixture.client_id,invoice_version:version(),invoice_draft_version:1,issued_snapshot_version:1,currency:'usd'},
+     expectedRemaining:observe().obligations.reduce((sum,row)=>sum+row.remaining_minor,0),payload});
+   };
+   captureOwner('after_test');
+   const serviceTarget=JSON.parse(run('SET ROLE service_role;'+serviceRead(actual.obligations[0].reference)));
+   check('original service target returns the unchanged exact still-owed deposit',JSON.stringify(serviceTarget.obligation)===JSON.stringify(actual.obligations[0])&&serviceTarget.invoice_version===version());
+   const exactRequest={...targetCommand(actual.obligations[0]),expected_version:version()};
+   check('original final accepted-request guard admits exact actual target',targetCheck(exactRequest)==='');
+   refuseTarget({...exactRequest,amount_minor:exactRequest.amount_minor-1},'40001','actual target still refuses changed reviewed amount');
+   const realManual=crypto.randomUUID(),realCommand=manualCommand(30000,[{obligation:actual.obligations[0],amount_cents:30000}]);
+   const review=JSON.parse(run(`SET ROLE service_role;SELECT preview_sales_invoice_command('${fixture.actor_id}','${fixture.tenant_id}',${literal(realCommand)});RESET ROLE;`).split('\n').find(s=>s.startsWith('{')));
+   check('original preview wrapper retains exact allocation echo after TEST history',JSON.stringify(review.manual_allocations)===JSON.stringify(realCommand.allocations));
+   const recorded=JSON.parse(run(native(realManual,realCommand)).split('\n').find(s=>s.startsWith('{')));actual=observe();
+   check('same original manual writer assigns actual deposit after TEST balance',actual.state==='available'&&actual.obligations[0].remaining_minor===20000&&position().receivable_remaining_minor===owed-30000);
+   captureOwner('after_manual');
+   check('the TEST original receipt and operation remain exact and singular',run(`SELECT (SELECT count(*) FROM paige_invoice_payments WHERE id='${testPayment}' AND evidence_kind='provider_verified' AND provider_environment='test' AND amount_cents=${owed})=1 AND (SELECT count(*) FROM paige_invoice_provider_operations WHERE id='${testOperation}' AND command=${literal(testCommand)})=1;`)==='t');
+   const assigned=inspectReceipt(realManual,version());
+   check('original assigned receipt reader reopens exact actual operation and target',assigned.state==='assigned'&&assigned.payment_id===realManual&&JSON.stringify(assigned.allocations)===JSON.stringify(realCommand.allocations));
+   const afterRecordVersion=version(),recovered=JSON.parse(run(native(realManual,realCommand)).split('\n').find(s=>s.startsWith('{')));
+   check('original operation replay adds no duplicate actual receipt or allocation',JSON.stringify(recovered)===JSON.stringify(recorded)&&version()===afterRecordVersion&&run(`SELECT count(*) FROM paige_invoice_payments WHERE id='${realManual}';`)==='1');
+   expectRefusal(crypto.randomUUID(),manualCommand(position().receivable_remaining_minor+1),'actual writer still refuses more than the real outstanding balance');
+   const invalidCorrection={id:crypto.randomUUID(),tenant_id:fixture.tenant_id,invoice_id:fixture.effective.invoice_id,kind:'reversal',
+    amount_cents:position().receivable_allocated_minor+1000,currency:'usd',evidence_kind:'manual_recorded'};
+   expectRefusal(crypto.randomUUID(),manualCommand(1000),'negative corrupt native history cannot authorize a new real receipt',
+    `INSERT INTO paige_invoice_payments SELECT * FROM jsonb_populate_record(NULL::paige_invoice_payments,${literal(invalidCorrection)});`);
+   const unapproved=manualCommand(1000),unapprovedGovernance={...governance(unapproved.action),decision_receipt_recorded:false};
+   deniedSql(`SET ROLE service_role;SELECT public.execute_sales_invoice_command('${fixture.actor_id}','${fixture.tenant_id}','${crypto.randomUUID()}',${literal(unapproved)},${literal(unapprovedGovernance)});`,
+    /Canonical invoice governance required/,'actual receipt still requires the original canonical approval decision');
+   expectRefusal(crypto.randomUUID(),manualCommand(1000,[{obligation:actualBefore.obligations[0],amount_cents:1000}]),'stale accepted remaining amount still refuses after actual receipt','','40001');
+   expectRefusal(crypto.randomUUID(),manualCommand(1000),'actual write still refuses revoked membership after TEST history',"UPDATE tenant_members SET status='inactive';",'42501');
+   expectRefusal(crypto.randomUUID(),manualCommand(1000),'actual write still refuses unassigned member after TEST history',"UPDATE tenant_members SET role='member';",'42501');
+   expectRefusal(crypto.randomUUID(),reverse(testPayment),'manual correction still cannot reverse the TEST provider receipt');
+   withPatch('UPDATE paige_agreement_signers SET esign_consent_at=NULL;','accepted_source_changed','actual plan still requires original electronic consent evidence');
+   withPatch('DELETE FROM paige_workspace_events;','accepted_source_changed','actual plan still requires original effectuation evidence');
+   await authorityRace('actual balance writer retains serialized actor revocation during invoice wait','paige_invoices',manualCommand(1000));
+   actual=observe();
+   await authorityRace('actual allocation writer retains actor lock during accepted-source wait','paige_agreements',manualCommand(1000,[{obligation:actual.obligations[3],amount_cents:1000}]));
+   const actualCorrection=crypto.randomUUID();run(native(actualCorrection,reverse(realManual)));actual=observe();
+   check('original full manual correction restores only actual assignment with TEST retained',actual.state==='available'&&JSON.stringify(actual.obligations)===JSON.stringify(actualBefore.obligations)&&position().receivable_remaining_minor===owed&&position().test_provider_minor===owed);
+   captureOwner('after_correction');
+   const corrected=inspectReceipt(realManual,version());
+   check('reopened actual correction retains original assignments and reversal identity',corrected.reversal_payment_id===actualCorrection&&JSON.stringify(corrected.allocations)===JSON.stringify(realCommand.allocations));
+   const beforeReplay=JSON.stringify(observe());run(repair);
+   check('actual repair replay preserves the full original observation and metadata',JSON.stringify(observe())===beforeReplay&&patchedMetadata()===metadataBefore);
+   for(const [patch,label]of [
+    ['ALTER FUNCTION public._sales_invoice_accepted_obligations(public.paige_invoices,uuid) SECURITY DEFINER;','actual repair refuses changed original invoker boundary'],
+    ['GRANT EXECUTE ON FUNCTION public._sales_invoice_prior_execute(uuid,uuid,uuid,jsonb,jsonb) TO authenticated;','actual repair refuses a widened private financial writer'],
+    ['GRANT EXECUTE ON FUNCTION public._sales_invoice_financial_position_rows(uuid,uuid) TO authenticated;','actual repair refuses a widened canonical financial position'],
+   ])deniedSql('BEGIN;'+patch+repair,/reconcile before applying/,label);
+   check('all original signed-source reader actor approval and financial dispatch functions remain byte exact',unchangedSources()===originalSources);
+   check('original invoice principal and invoice count are unchanged by actual allocation',run('SELECT count(*)=1 AND min(amount_total_cents)=350000 FROM public.paige_invoices;')==='t');
+   actualProofSummary={originalPasses,additionalPasses:passes-originalPasses,baselineCounterexamples:3,scope:'original native writes with Test Auth/synthetic provider-preview-Rail ports'};
+   actualSamples={scope:'Original native Owner RPC with neutral synthetic signing/issued metadata and Test Auth; not hosted acceptance',samples};
+   log.push('ACTUAL POSITION BOUNDARY: original writer/source/operation/lock/correction paths with reduced tables and Test Auth/synthetic provider/preview/Rail ports; no full-schema/provider/hosted customer or UI acceptance.');
+  }
   log.push('MANUAL BOUNDARY: original tracked actor/governance/executor/replay and actual bounded three-session authority-lock characterization; reduced tables/Test Auth/synthetic result-preview-Rail ports. Full-schema RLS/other races/actual Rail/provider/customer/authenticated UI proof remain owed.');
  }
  log.push('BOUNDARY: minimal-table original-source composition and simulated provider metadata only; full-schema writer/role/concurrency/provider/customer proof owed.');
- console.log(JSON.stringify({passes,scope:'isolated original-source PostgreSQL composition',database,sourceHash:crypto.createHash('sha256').update(migration).digest('hex'),...(manualMode?{manualSourceHash}:{})}));
+ console.log(JSON.stringify({passes,scope:'isolated original-source PostgreSQL composition',database,sourceHash:crypto.createHash('sha256').update(migration).digest('hex'),...(manualMode?{manualSourceHash}:{}),...(actualReceivableMode?{actualSourceHash,actualProofSummary}:{})}));
+ if(actualSamples&&process.argv.includes('--actual-samples'))console.log('E04_ACTUAL_RECEIVABLE_SAMPLES '+JSON.stringify(actualSamples));
 }catch(e){log.push('FAIL '+e.stack);console.error(e.message);process.exitCode=1;}
 finally{
  if(created){activeDatabase='postgres';try{run('DROP DATABASE '+database+';');log.push('Disposable database removed.');}catch(e){log.push('CLEANUP FAILED '+e.message);process.exitCode=1;}}

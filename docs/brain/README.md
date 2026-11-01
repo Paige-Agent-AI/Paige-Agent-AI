@@ -1,3 +1,18 @@
+## EXP03 November1 — original prepared email first Save source release
+
+Original3172/native19 and3175/native20 source, permissions, normal deployment and
+both public build identities are verified in [Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log)
+and [original journey14.55](../delivery/exp03-grow-my-business-journey.md#1455--original-saved-email200003-production-source-release-customer-proof-remains-owed).
+Reuse ONE Messages draft/action/approval/audit receipt and original Save/prepare
+writers. Missing optional source versions withhold Save while preserving the
+original governed review. Lost acknowledgments require original receipt/source
+inspection, not blind replay. Local direct-source hashes and vendor-emitted
+JavaScript require their distinct original certificate comparisons; a certificate
+parser failure is not a deployed-source mismatch. Original failed comparators and
+corrections remain in the journey. No new runtime/store/permission/provider effect.
+Authenticated full reload/reopen/receipt/role/cohort and actual E08 Hub consumer
+remain separate unfinished proof/integration; full EXP03 remains STILL CODING.
+
 ## EXP05 October30 — preserve the original reminder occurrence
 
 Verified [#3156/9f9da129](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3156)
@@ -5732,3 +5747,15 @@ Unknown effects require same-intent inspection, never automatic replay.
 Source publication is not business-fact, Memory or consequential-work approval.
 Consumer mounting, selected Setup facts, saved Mission and actual Work/CRM
 receipt/reopen remain unfinished; no automatic learning or readiness promotion.
+
+## 2026-11-01 UTC EXP13 - original source-read continuation release identity
+
+Original3188/30e source and both public build identities are recorded in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the original Knowledge read projection and status reader with their
+captured negative-only incarnation check after the inner RPC settles.
+Do not substitute tenant equality for the original caller lifetime or authority.
+Source/consumer tests and web delivery are distinct from authenticated behavior;
+this repair adds no writer, retry, store, approval or provider effect.
+Single/BULK/Chat review, selected facts/separate Memory, saved Mission and actual
+Work/CRM receipt/reopen remain unfinished; full EXP13 is not customer-ready.

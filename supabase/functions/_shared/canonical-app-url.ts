@@ -39,6 +39,7 @@ export type CanonicalDestination =
   | "business_game_plan"
   | "trust_compass"
   | "mind"
+  | "business_knowledge"
   | "portal_knowledge"
   | "marketplace"
   | "marketplace_submissions"
@@ -85,6 +86,7 @@ const ROUTES: Record<MountedTier, Partial<Record<CanonicalDestination, string>>>
     business_game_plan: "/solo/{account}/command-center/business-game-plan",
     trust_compass: "/solo/{account}/command-center/trust-compass",
     mind: "/solo/{account}/command-center/mind",
+    business_knowledge: "/solo/{account}/settings/setup/knowledge-bucket",
     portal_knowledge: "/solo/{account}/clients/portal?view=knowledge",
     billing: "/solo/{account}/settings/billing",
     security: "/solo/{account}/settings/security-data",
@@ -175,7 +177,7 @@ export type CanonicalRecordLink = { path: string; status: "exact" | "surface_onl
 /** The focus parameters the mounted surfaces already read (UUIDs only). */
 const RECORD_FOCUS: Record<MountedTier, Partial<Record<CanonicalDestination, string>>> = {
   operator: {},
-  solo: { contacts: "person", pipeline: "deal", sales_agreements: "agreement", sales_invoices: "invoice", tasks: "task", operations_work: "task", team_hub: "message", business_game_plan: "play", portal_knowledge: "source", systems_check: "finding" },
+  solo: { contacts: "person", pipeline: "deal", sales_agreements: "agreement", sales_invoices: "invoice", tasks: "task", operations_work: "task", team_hub: "message", business_game_plan: "play", business_knowledge: "knowledge", portal_knowledge: "source", systems_check: "finding" },
   sub_account: {},
   agency: {},
 };

@@ -124,7 +124,12 @@ BEGIN
     SELECT prosrc INTO kernel_body FROM pg_proc
       WHERE oid=to_regprocedure('public._exp08_grant_co_owner(uuid,uuid,boolean)');
     original_body:=replace(replace(replace(kernel_body,new_platform,old_platform),new_begin,old_begin),new_target,old_target);
-    IF md5(original_body) IS DISTINCT FROM '2a75180de63325dd7e328a73e494e6dc' THEN
+    IF md5(original_body) IS DISTINCT FROM '2a75180de63325dd7e328a73e494e6dc'
+      OR (length(kernel_body)-length(replace(kernel_body,new_platform,'')))/length(new_platform)<>1
+      OR (length(kernel_body)-length(replace(kernel_body,new_begin,'')))/length(new_begin)<>1
+      OR (length(kernel_body)-length(replace(kernel_body,new_target,'')))/length(new_target)<>1
+      OR kernel_body IS DISTINCT FROM replace(replace(replace(original_body,
+        old_platform,new_platform),old_begin,new_begin),old_target,new_target) THEN
       RAISE EXCEPTION 'EXP08 recovery grant kernel replay drift';
     END IF;
   ELSE

@@ -2188,3 +2188,21 @@ Revoke/Billing kernel integration, target/competing-writer broader lock composit
 public recovery reason/audit/notice/receipt/replay and E03 receiver remain required
 coding work. No stand-alone private effect is customer-ready; no released policy,
 provider effect, full R9/R12 acceptance or ALG maturity promotion is claimed.
+
+Distinct SOURCE-ONLY review of1de9 found P2 in replay: the inverse hash alone
+also accepted the exact original body or an individually reverted new span.
+The new regression genuinely reproduced missing refusal against that candidate
+(raw `exp08-owner-recovery-grant-replay-baseline.log`, SHA256
+`00ba22d001e699ad9acac491cf7cd6e59beb8cf592f222c596d6fd448735b4a8`).
+Initial test-literal polymorphic-type failure42804/e407c501 is retained separately,
+not counted as the product reproduction. All fixtures disposed.
+
+Replay now requires all three new spans exactly once AND exact equality to the
+deterministic forward transformation of the pinned original body. Original55
+controls remain before four native reversion negatives; all59 PASS, preserving
+each altered body and business rows on refusal. Final raw
+`exp08-owner-recovery-grant-replay-final.log` SHA256
+`4272a00deea1a0446e42a74e401268e23de663bb3507307c641a232b8e56b5d3`;
+candidate SHA256 `3b848bfb004ba5f3a2f53358c2665bd578c2660454e97724bb1d3be191798842`.
+The earlier55 PASS is historical and does not prove this replay property. Renewed
+source review remains required; no native release/public recovery/effect acceptance.

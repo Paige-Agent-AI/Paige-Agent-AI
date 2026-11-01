@@ -114,6 +114,7 @@ try{
  ${original('20271120010008_exp08_owner_invitations.sql','_solo_shell_tenant')}
  ${original('20271120010008_exp08_owner_invitations.sql','_tenant_account_holder_state')}`);
  assert.equal(scalar("SELECT to_regprocedure('public._exp08_lock_owner_recovery(uuid)') IS NULL"),'t');
+ const originalGrantBody=JSON.parse(scalar("SELECT to_json(prosrc) FROM pg_proc WHERE oid='public.grant_co_owner(uuid,uuid)'::regprocedure"));
  results.push({case:'baseline private recovery lock step absent; not a production defect claim',passed:true});
  await db.exec(candidate);reset();await call();
  results.push({case:'live native super_admin may lock eligible holderless SOLO without changing it',passed:true});
@@ -251,6 +252,21 @@ try{
  await denied('changed private kernel source refuses without overwriting it',()=>db.exec(candidate),/EXP08 recovery grant kernel replay drift/);
  assert.equal(scalar("SELECT prosrc FROM pg_proc WHERE oid='public._exp08_grant_co_owner(uuid,uuid,boolean)'::regprocedure"),'BEGIN RETURN;END;');
  db.run(kernelDefinition);await db.exec(candidate);assert.equal(state(),beforeDrift);
+ const originalKernelBody=JSON.parse(scalar("SELECT to_json(prosrc) FROM pg_proc WHERE oid='public._exp08_grant_co_owner(uuid,uuid,boolean)'::regprocedure"));
+ const constant=name=>{
+  const match=candidate.match(new RegExp(name+" constant text := (E?'(?:''|[^'])*');"));
+  assert.ok(match,name);return JSON.parse(scalar(`SELECT to_json((${match[1]})::text)`));
+ };
+ const reversions=[['entire original grant body restored',originalGrantBody],
+  ...['platform','begin','target'].map(name=>['individual '+name+' recovery span reverted',originalKernelBody.replace(constant('new_'+name),constant('old_'+name))])];
+ for(const [label,body] of reversions){
+  assert.notEqual(body,originalKernelBody,label);
+  db.run(kernelDefinition.replace(originalKernelBody,body));
+  await denied(label+' refuses replay',()=>db.exec(candidate),/EXP08 recovery grant kernel replay drift/);
+  assert.equal(JSON.parse(scalar("SELECT to_json(prosrc) FROM pg_proc WHERE oid='public._exp08_grant_co_owner(uuid,uuid,boolean)'::regprocedure")),body);
+  assert.equal(state(),beforeDrift);db.run(kernelDefinition);
+ }
+ await db.exec(candidate);
  console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private admission and R12 effect with original I1 audit; public recovery RPC/recovery receipt/notices NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));

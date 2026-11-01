@@ -3,14 +3,18 @@
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {dirname,isAbsolute,join} from 'node:path';
-import {mkdtempSync,writeFileSync,unlinkSync,rmdirSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,readFileSync,unlinkSync,rmdirSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 import {buildOwnerRecoveryBundle} from './exp08-owner-recovery-bundle.mjs';
+import {ownerRecoveryCarrier} from './exp08-owner-recovery-carrier.mjs';
 export async function verifyOwnerRecoveryBundle(db,{originalGrantDefinition,originalRevokeDefinition,originalBillingDefinition}){
  assert.equal(process.env.EXP08_DISPOSABLE,'1');assert.ok(['127.0.0.1','localhost','::1'].includes(process.env.PGHOST));
  assert.match(db.database,/^operator_account_lifecycle_proof_\d+_\d+$/);assert.equal(db.role,'');
- const {sql:bundle,privateSpecifications}=buildOwnerRecoveryBundle(),cases=[];
+ const {privateSpecifications}=buildOwnerRecoveryBundle(),cases=[];
+ const bundle=readFileSync(new URL('../../supabase/migrations/20271126230008_exp08_owner_recovery_native.sql',import.meta.url),'utf8').replace(/\r\n/g,'\n');
+ assert.equal(bundle,ownerRecoveryCarrier(),'Actual prospective carrier must equal all original reviewed components');
+ cases.push({case:'actual prospective native carrier equals the reviewed original atomic components before first-apply proof',passed:true});
  async function sqlFile(c,sql){
   const directory=mkdtempSync(join(tmpdir(),'exp08-recovery-bundle-')),file=join(directory,'owned-proof.sql');
   try{

@@ -2735,3 +2735,64 @@ A fresh EXP08-only Supabase preview creation confirmation expired without
 creating a branch. No peer branch, production mutation, cost bypass or native
 activation was used. Full-schema/retirement/UI/email/Setup and all original
 full-assignment coding/integration and release gates remain **STILL CODING**.
+
+### November 1 — prospective native carrier and original CI integration
+
+CLI2.109.1 created the empty scaffold; only that unapplied EXP08 file was
+renumbered to `20271126230008_exp08_owner_recovery_native.sql`. No applied history
+was changed. The deterministic builder's --write-once refuses populated files;
+--check compares the whole actual artifact with the original atomic components.
+Carrier SHA256 b910f0b9d86da9900a7010a6f50a35f67c102e3ab85f91ce0a242e26be9ce83f.
+Embedded original preparation comments retain provenance; the top header makes
+this prospective carrier's state explicit. It is NOT applied or release-cleared.
+
+Actual production catalogue reconfirmed original grant2a75180de63325dd7e328a73e494e6dc,
+revoke7d62c3fac37e2af0b6f2a3029d892752 and Billing revoke
+f8fa3a425f70d301f47b5b5750c57ad3, with original ownership/path/ACL. New recovery
+and delivery endpoints remain absent. Latest queried native frontier was19;
+actual published Communications20 and proposed Knowledge21/commercial22 must be
+reconciled with current main/ledger/order before merge. Slot23 imposes no peer
+hold; renumber this OWN unapplied carrier if actual serialized order requires it.
+
+The existing comms-provider-boundary disposable PostgreSQL job gains one additive
+EXP08 step beside its original entity-lifecycle proof: carrier equality plus the
+original recovery integration proof. The existing database-contract job gains
+one own test path and one rollback-only full-schema test after original SOLO
+parity. No incumbent assertion, test, workflow, filter or peer source was removed.
+These finite CI source windows are returned at freeze; no lease through checks.
+
+The new `supabase/tests/exp08_owner_recovery_native.sql` declares28 assertions
+against the full replayed schema with its original functions/triggers/RLS. It
+uses synthetic Auth/business records solely inside one rollback transaction,
+never a new customer QA account. It covers role ACLs, original R12/audit/result,
+same-ID recovery/reopen, protected audit visibility, working-holder refusal,
+generic original notices, former-holder personal detail without a workspace,
+wrong recipient/scoped/service refusals, current service eligibility, ban,
+reentry snapshot change, archive refusal and no duplicate/no-email claims.
+It is NOT YET EXECUTED. In-transaction SQL readback is not durable post-commit
+customer/delivery proof. Hosted/full-schema and Preview compatibility remain
+PROOF OWED; existing local211 is a separate completed evidence population.
+
+The bundle bootstrap proof now tests the actual generated migration, rather than
+only unversioned compiler output, and adds a carrier-equality assertion. Its new
+local run is pending; do not label it212PASS before terminal output. Non-author
+source-only review found no material finding but explicitly holds release pending
+full schema/CI, order/Preview and lifecycle/privacy assurance. No managed apply,
+provider action, customer verification or full Team Hub completion is claimed.
+
+Native-carrier local run completed212 PASS/0 FAIL, terminal exit0; raw
+`exp08-prospective-carrier-local.log` SHA256
+fc5a45197aaff08e0674857154e05ac7791f35b3c09a34b7d0bd0200d0524df9.
+This adds only the actual-carrier equality control to prior211 and tests its
+first application/replay in the OWN ported-schema clone. It does not execute the
+new full-schema28 or prove managed Preview compatibility. Both owned databases
+are disposed through the original fixture/clone finally paths.
+
+Current normal composition e60c515275f51b02fb26c19fc85e2047632c0659 preserves all
+19,381 incoming leaves outside eleven E08-owned paths against main9a254104;
+all eleven own leaves match frozen94d88c54. Complete git-tree comparison has zero
+mismatches. The two edited workflows also have byte-exact additive inverses (8+3
+lines only). The first text-mode inverse verifier used Windows' default locale
+and failed on existing Unicode; byte comparison corrected the verifier, with
+no workflow/source edit or assertion removal. Shared source windows RETURNED
+at this freeze, irrespective of pending hosted checks.

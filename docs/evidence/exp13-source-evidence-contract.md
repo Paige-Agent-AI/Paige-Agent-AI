@@ -271,3 +271,21 @@ remain owed. E02 must call this private source validator in ITS original writer
 transaction and separately enforce the E01 selected-fact/domain-confirmation
 receipt and current action/CAS. Source evidence alone is never fact/Memory or
 task authority. SAME full original/BULK primary and all other scope remain open.
+
+Normally composed actual released main3eeb/Memory18 at1db1acaf3, resolving only
+the original publication-runner header/proof additions. Removing the original
+source flags/checks/blocks restores the ENTIRE incoming Memory/binary/publication
+runner exactly; no incoming assertion or test registration is changed. Both
+private candidate bodies/generated installer remain byte-identical to dcb.
+Fresh JOINT native34921 exits0 with original Memory84 drift refusals +binary
+controls, duplicate-save/unknown-inspection REAL intent-lock waits/same committed
+record, original source/member REAL waits, quotation/ICU/binding controls and
+private-source16 drift refusals/complete rollback snapshots. Native DB DROPPED,
+own server STOPPED. Joint rawSHA256
+561122fac5d949252a1989e0e0b87d2bd011effbb222cbc9b8c51b0164ab0e37.
+This is compatibility/synthetic proof, not domain-fact approval or a customer
+Mission/Task effect. Original reviewed Memory3169 now has actual normal native
+and web release receipt6553509101; PRIVATE source validators here still have
+NO production carrier/application. E02 returned contract-level receiving ACK,
+requesting frozen full source identity for actual inspection; no source/native
+acceptance is inferred from that receiving message.

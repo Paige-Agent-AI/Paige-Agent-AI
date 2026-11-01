@@ -25,6 +25,22 @@ const db=new OperatorPostgresFixture(port);let checks=0;
 const caller=`SELECT set_config('test.actor','${actor}',false);SET ROLE authenticated;`;
 const scalar=sql=>db.run(sql).split('\n').at(-1);
 const denied=(sql,pattern)=>{assert.throws(()=>db.run(sql),pattern);checks++;};
+async function raceHeld(first,second,application) {
+ const held=await db.holdArchive(first,[],{manualRelease:true});
+ const process=spawn(db.psql,db.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});let out='',error='';
+ process.stdout.on('data',b=>{out+=b;});process.stderr.on('data',b=>{error+=b;});
+ const done=new Promise((resolve,reject)=>{process.on('error',reject);process.on('close',resolve);});
+ process.stdin.end(`SET application_name='${application}';${second};`);
+ try {
+  const deadline=Date.now()+5000;let blocked=false;
+  while(Date.now()<deadline){
+   blocked=scalar(`SELECT count(*) FROM pg_stat_activity WHERE application_name='${application}' AND cardinality(pg_blocking_pids(pid))>0`)==='1';
+   if(blocked)break;await new Promise(r=>setTimeout(r,30));
+  }
+  assert.ok(blocked,application+' actually blocks on competing transaction');checks++;
+ }finally{held.release();await held.completed;}
+ return {status:await done,out,error};
+}
 try{
  db.run(`CREATE SCHEMA auth;CREATE SCHEMA extensions;CREATE EXTENSION pgcrypto WITH SCHEMA extensions;
  DO $$BEGIN CREATE ROLE authenticated;EXCEPTION WHEN duplicate_object THEN NULL;END$$;
@@ -179,6 +195,24 @@ try{
  assert.equal(scalar("SELECT brand#>>'{business_brief,offers}' FROM tenants"),'Manual current');checks++;
  assert.equal(scalar(`SELECT count(*) FROM paige_audit_log WHERE action='solo_setup.reviewed_facts_approved' AND payload->>'requestId'='${request3}'`),'0');checks++;
  assert.equal(JSON.parse(scalar(caller+inspect.replace(request,request2))).reason,'setup_changed');checks++;
+ // Both observed serializations of membership revocation vs actual approval.
+ // Fixture authority storage is modeled; the lock/recheck functions are original.
+ const current=JSON.parse(scalar(caller+'SELECT public.get_solo_business_context()'));
+ const review4='30000000-0000-4000-8000-000000000004',request4='50000000-0000-4000-8000-000000000004';
+ const stage4=stage.replace(review,review4).replace('2026-11-01T12:00:00.123456Z',current.brief.updatedAt).replace(',0,',',2,');
+ const save4=save.replace(review,review4).replace(request,request4).replace('2026-11-01T12:00:00.123456Z',current.brief.updatedAt).replace(',0,',',2,');
+ db.run(caller+stage4);
+ const revoke="UPDATE public.tenant_members SET status='suspended'";
+ const revokeFirst=await raceHeld(revoke,caller+save4,'exp01_revoke_then_receipt');
+ assert.notEqual(revokeFirst.status,0);assert.match(revokeFirst.error,/SETUP_REVIEW_SCOPE_CHANGED/);checks++;
+ assert.equal(scalar(`SELECT count(*) FROM paige_audit_log WHERE action='solo_setup.reviewed_facts_approved' AND payload->>'requestId'='${request4}'`),'0');checks++;
+ assert.equal(scalar("SELECT brand#>>'{business_brief,offers}' FROM tenants"),'Manual current');checks++;
+ db.run("UPDATE public.tenant_members SET status='active'");
+ const saveFirst=await raceHeld(caller+save4,revoke,'exp01_receipt_then_revoke');
+ assert.equal(saveFirst.status,0,saveFirst.error);checks++;
+ assert.equal(scalar(`SELECT count(*) FROM paige_audit_log WHERE action='solo_setup.reviewed_facts_approved' AND payload->>'requestId'='${request4}'`),'1');checks++;
+ denied(caller+inspect.replace(request,request4),/SETUP_REVIEW_SCOPE_CHANGED/);
+ db.run("UPDATE public.tenant_members SET status='active'");
  denied(caller+save.replace('setup_business_facts','execute_work'),/SETUP_REVIEW_INVALID/);
  denied(caller+save.replace("'[\"offers\"]'","'[\"offers\",\"offers\"]'"),/SETUP_REVIEW_INVALID/);
  db.run('UPDATE tenant_knowledge_docs SET revision=2');

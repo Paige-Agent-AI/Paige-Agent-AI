@@ -46,6 +46,11 @@ if(process.argv.includes('--emit-only')){
   if(status.status!==0)throw Error('Existing local Supabase stack unavailable; no remote fallback');
   const config=JSON.parse(status.stdout);const url=new URL(config.DB_URL);
   assert.ok(['127.0.0.1','localhost','[::1]'].includes(url.hostname)&&url.port==='54322','only existing CI loopback54322');
+  const causal=spawnSync(process.execPath,['scripts/proof/exp01-reviewed-setup-postgres.mjs','54322'],{
+   stdio:'inherit',timeout:60000,env:{...process.env,EXP01_SOURCE_VALIDATOR_REF:originalSourceRef},
+  });
+  if(causal.error)throw causal.error;
+  if(causal.status!==0)throw Error('Original EXP01 disposable concurrency/authority proof failed');
   const run=spawnSync('supabase',['test','db',output],{stdio:'inherit',timeout:180000});
   if(run.error)throw run.error;process.exitCode=run.status??1;
  }finally{rmSync(output,{force:true});}

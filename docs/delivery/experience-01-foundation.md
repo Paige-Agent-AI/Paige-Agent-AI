@@ -2,6 +2,24 @@
 
 ### Continued authority/full-schema preparation — November 1
 
+First actual full-schema authority step SUCCESS on
+`3a59be3a6a2e8071a3dc38cca46f9e5ff4a17336`, existing Spine run41321995720 /
+job124893986291 / step143. This uses the actual schema/getters/writer/authority
+and rollback-only synthetic fixtures, not an authenticated customer. Final-head
+CI remains required. Local native proof now has47 PASS checks, including both
+observed serializations of revocation vs approval; after a winning save the
+revocation still removes inspection eligibility. The existing runner now includes
+that disposable concurrency proof as well as49 focused input/client checks.
+No independent remote runner or production fixture is created.
+
+ACTUAL E13 source ABI receiving ACK ANT-50/a0f0063c was personally read and
+incorporated: canonical reference1/UTF16 excerpts accepted, native/current-authority
+and downstream scope remain separate. E02 original receiver packet
+ANT-138/b0719bb1 and E05 ANT-11/c6f108fa delivered and read back; their receiving
+ACK/incorporation remains unverified. E13 now names E08's existing230008 before
+its higher forward source carrier; no E01 migration number is reserved, and no
+old applied Preview file is rewritten. Full10/original23/amendments remain active.
+
 Continued local proof is now 39 checks: both same-request concurrency and a
 receipt waiting behind an actual original manual Setup save were observed via
 `pg_blocking_pids`; the latter refuses stale CAS with no approval audit and

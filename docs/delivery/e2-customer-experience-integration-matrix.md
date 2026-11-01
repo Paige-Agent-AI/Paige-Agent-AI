@@ -1,8 +1,8 @@
 # Experience 02 — Customer Experience Integration Matrix
 
-## November1 — O06 saved-source row authorization proof (development)
+## November1 — O06 saved-source proof released; live acceptance remains open
 
-O06 remains the ONE PRIMARY; no secondary starts. The existing native
+O06 remains the ONE PRIMARY. The existing native
 `systems_check_source_integrity.sql` adds11 actual authenticated row-read cases
 to its original36 assertions. They exercise original run/finding RLS, historical
 and resolved evidence, foreign/operator exclusion, eligible Admin and member
@@ -18,7 +18,18 @@ a direct active-status flip; the original EXP08 suspension contract correctly
 requires its governed reinstatement writer. The correction uses the EXISTING
 owner-authorized suspend/reinstate functions and restores only the selected-
 workspace fixture afterward. No product guard is weakened; the failed run stays
-in history. Corrected-head full-schema execution/review/CI/release are PROOF OWED.
+in history. Corrected source #3192, reviewed
+`3e5032c9783dc7fa460d732659e6a513eac00bff`, passed all47 full-schema
+assertions and all11 exact-head checks with both web statuses. Normal merge
+`be2244d4c567725a2cae8906d2b3a56abb4365d7` and production deployment
+`dpl_HDUM8avs4RPqkBH1GDT13qWa5Lf7` were actually read back on both official
+origins. [Original release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3192#issuecomment-6560187458).
+The required Master closeout #3196 normally merged
+`c77bd7c82512580896b7f86e1842ca4613eaef19`, with all applicable exact-head
+checks and both web statuses successful; production
+`dpl_CoCNpYB5BXeyErnh7upCJr14ZtHs` and both official build/source reads
+were verified. [Closeout receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3196#issuecomment-6561256661).
+Native/Edge behavior and activation were unchanged by these proof/document releases.
 
 Visual: unchanged. Experiential: after the earlier browser-storage write failure,
 a later bounded chooser read and authorized Owner entry succeeded. Original
@@ -27,11 +38,31 @@ Escape returned to the original invoker, with the existing refresh fallback
 after direct reload. This is one ordinary SOLO Owner case, not role/cohort or
 complete Experience acceptance. The chooser still lists only the already tested
 workspace; the original second-SOLO handoff remains pending through Coordinator.
+Later ordinary-session access returned to sign-in, so earlier authenticated proof
+is historical, not a claim of current session availability.
 No browser storage, role, provider, scan or approval change was made. Founder Acceptance:
 OPEN, one complete Experience review. ALG12 remains Partial; orchestration,
 activation and all nine catalogue states are unchanged. This analytical/source
 read proof does not run a new check, approve a correction or prove an effect.
 All original19 definitions and historical acceptance denominators below remain.
+
+Safe prelaunch releases require proportionate engineering verification, separate
+technical review and genuine exact-head CI. Browser/prototype/AT/zoom or a second
+session are not prerequisites for an otherwise safe merge/deploy. Verify LIVE
+afterward; unrun customer proof remains UNVERIFIED/PROOF OWED and outcome/founder
+acceptance stays OPEN. Material security, privacy, tenant, approval and functional
+defects, failed engineering checks, native ordering and consequential-action
+authorization remain binding. Older dated observations remain history, not active
+browser-only release requirements.
+
+Exactly ONE bounded secondary O04 is recorded while the original O06 QA handoff
+is pending. Original Finance summary metrics still read the legacy balance
+projection while invoice detail consumes financial3. An unchanged-source native
+counterexample reproduced a TEST-allocation difference; this is a source-confirmed
+integration gap, not an authenticated customer-money finding. Original producer
+contract/custody request ANT147/157a7042 remains pending through Coordinator before
+shared source/version edits. No replacement calculation, issuer, store or native
+identity is introduced. Return to O06 when its authorized proof can proceed.
 
 ## October31 — O06 existing source-integrity proof gate (development)
 

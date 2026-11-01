@@ -45,7 +45,7 @@ const immutable=readFileSync(join(repo,'supabase/migrations/20260712040000_plan_
 assert(immutable.includes(comments+anchor));assert.equal(live.split(anchor).length,2);
 assert.equal(createHash('md5').update(live).digest('hex'),'702f2b52fc0d4e5c615fde7ec906b840');
 assert.equal(createHash('md5').update(live.replace(anchor,comments+anchor)).digest('hex'),'a8c0a676cdd686bc17d5dbbb7d605ecc');
-const sql=`BEGIN;
+let sql=`BEGIN;
 SELECT plan(13);
 CREATE FUNCTION pg_temp.e5_metadata(p pg_proc) RETURNS jsonb LANGUAGE sql AS $$
  SELECT CASE WHEN p.proname='team_hub_search' THEN jsonb_set(to_jsonb(p)-'prosrc','{proargdefaults}',
@@ -104,12 +104,82 @@ SELECT ok(NOT EXISTS(SELECT 1 FROM e5_installed b FULL JOIN pg_proc p USING(oid)
 SELECT * FROM finish();
 ROLLBACK;
 `;
+const calendarMode=process.argv.includes('--calendar');
+if(calendarMode){
+ const calendar=readFileSync(join(repo,'scripts/proof/exp05-zion-calendar-read-candidate.sql'),'utf8').replace(/\r\n/g,'\n');
+ const calendarCarrier=readFileSync(join(repo,'supabase/migrations/20271129000005_exp05_zion_calendar_source_binding.sql'),'utf8').replace(/\r\n/g,'\n');
+ assert.equal(calendarCarrier.slice(calendarCarrier.indexOf('-- INERT EXP05 Calendar admission preparation,')),calendar,
+  'The Calendar forward retains the ENTIRE candidate exercised by native proofs');
+ const latest=unwrap(calendar);
+ const original=JSON.parse(readFileSync(join(repo,'supabase/tests/fixtures/exp05-zion-calendar-original-native.json'),'utf8'));
+ const changes=[...calendar.matchAll(/\('([^']+)','([a-f0-9]{32})',\$source\$([\s\S]*?)\$source\$\)/g)];
+ assert.equal(changes.length,4,'Exactly four guarded incumbent body changes');
+ const inverse=[];
+ for(const [,sig,old,replacement] of changes){
+  const name=sig.slice('public.'.length,sig.indexOf('('));
+  const snapshot=original[name]; assert(snapshot,'Whole predecessor source retained');
+  const prefix='AS $function$';
+  const source=snapshot.definition.slice(snapshot.definition.indexOf(prefix)+prefix.length,snapshot.definition.lastIndexOf('$function$'));
+  assert.equal(createHash('md5').update(source).digest('hex'),old,'Independent complete predecessor body pin');
+  assert.equal(snapshot.md5,old);
+  inverse.push(`('${sig}',$current$${replacement}$current$,$previous$${source}$previous$)`);
+ }
+ const rewind=`CREATE TEMP TABLE e5_calendar_entry AS SELECT oid,to_jsonb(p) full_metadata FROM pg_proc p WHERE pronamespace='public'::regnamespace;
+DO $inverse$
+DECLARE sig text; expected text; previous text; p pg_proc; metadata jsonb;
+BEGIN
+ FOR sig,expected,previous IN SELECT * FROM (VALUES ${inverse.join(',\n')}) v(sig,expected,previous) LOOP
+  SELECT * INTO p FROM pg_proc WHERE oid=to_regprocedure(sig);
+  IF p.prosrc IS DISTINCT FROM expected THEN RAISE EXCEPTION 'Calendar full-schema source is not installed: %',sig; END IF;
+  metadata:=to_jsonb(p)-'prosrc';
+  EXECUTE replace(pg_get_functiondef(p.oid),p.prosrc,previous);
+  IF metadata IS DISTINCT FROM (SELECT to_jsonb(r)-'prosrc' FROM pg_proc r WHERE r.oid=p.oid) THEN
+   RAISE EXCEPTION 'Calendar proof inverse changed native metadata'; END IF;
+ END LOOP;
+END $inverse$;
+`;
+ // Preserve ALL thirteen original assertions, literal source and inverse checks.
+ // Rewind only the four known bodies within this rollback-only test, exercise
+ // the original latest Planning carrier, then restore/replay the actual latest
+ // Calendar forward. Never reapply superseded source to production or a ledger.
+ const extra=`${latest}
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.list_team_bookings(timestamptz,timestamptz,uuid[],uuid,uuid)'::regprocedure),
+ '6ec4ba377abfe348192cdf17bb973869','Original canonical Calendar reader is unchanged');
+SELECT ok((SELECT count(*)=3 FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN
+ ('_team_hub_calendar_read_source','_team_hub_assert_calendar_read','_team_hub_stage_calendar_read'))
+ AND NOT EXISTS(SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(p.proacl) a WHERE p.proname IN
+ ('_team_hub_calendar_read_source','_team_hub_assert_calendar_read','_team_hub_stage_calendar_read') AND a.grantee<>p.proowner),
+ 'Calendar validators stay private with no browser/service grant');
+SELECT ok(NOT EXISTS(SELECT 1 FROM e5_calendar_entry b FULL JOIN pg_proc p USING(oid)
+ WHERE (b.oid IS NOT NULL OR p.pronamespace='public'::regnamespace) AND b.full_metadata IS DISTINCT FROM to_jsonb(p)),
+ 'Restoring latest Calendar preserves every whole native body/OID/ABI/owner/ACL/config/default');
+${latest}
+SELECT ok(NOT EXISTS(SELECT 1 FROM e5_calendar_entry b FULL JOIN pg_proc p USING(oid)
+ WHERE (b.oid IS NOT NULL OR p.pronamespace='public'::regnamespace) AND b.full_metadata IS DISTINCT FROM to_jsonb(p)),
+ 'Latest Calendar exact replay preserves the full installed catalog');
+SELECT ok((SELECT provolatile='s' FROM pg_proc WHERE oid='public._team_hub_planning_read_annotations(public.team_hub_agent_turns)'::regprocedure)
+ AND (SELECT NOT prosrc LIKE '%FOR SHARE%' AND NOT prosrc LIKE '%FOR UPDATE%' FROM pg_proc
+  WHERE oid='public._team_hub_planning_read_annotations(public.team_hub_agent_turns)'::regprocedure),
+ 'Composed Calendar/Planning historical projection remains genuinely read-only');
+SELECT ok((SELECT prosrc LIKE '%octet_length(t.read_context::text)>8192%' AND prosrc LIKE '%context_limit%'
+ FROM pg_proc WHERE oid='public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)'::regprocedure),
+ 'Original bounded context has a known pre-update no-change capacity refusal');
+`;
+ const prior=sql;
+ assert.equal(prior.split('SELECT plan(13);').length,2);
+ assert.equal(prior.split('SELECT * FROM finish();').length,2);
+ // SQL contains literal dollar/apostrophe regex anchors: callback replacements
+ // preserve the bytes rather than interpreting JavaScript replacement tokens.
+ sql=prior.replace('SELECT plan(13);',()=>`SELECT plan(19);\n${rewind}`).replace('SELECT * FROM finish();',()=>`${extra}SELECT * FROM finish();`);
+ assert(sql.includes(prior.slice(prior.indexOf('CREATE FUNCTION pg_temp.e5_metadata'),prior.indexOf('SELECT * FROM finish();'))),
+  'All original thirteen assertions, setup and inverse checks retained byte-exact');
+}
 if(process.argv.includes('--self-test')){
- assert(sql.startsWith('BEGIN;\nSELECT plan(13);'));assert(sql.endsWith('ROLLBACK;\n'));
+ assert(sql.startsWith(`BEGIN;\nSELECT plan(${calendarMode?19:13});`));assert(sql.endsWith('ROLLBACK;\n'));
  assert.equal((sql.match(/^BEGIN;$/gm)??[]).length,1);assert.equal((sql.match(/^COMMIT;$/gm)??[]).length,0);
  assert.equal(sql.split(body).length,3,'Exact candidate bytes embedded twice without transaction wrappers');
  assert(!/INSERT INTO (public|auth)\./i.test(sql));
- console.log('PASS: all four exact carriers verified; latest forward twice inside one rollback-only test;13 assertions; no business fixture/ledger');
+ console.log(`PASS: ${calendarMode?'five':'four'} exact carriers verified; latest forward twice inside one rollback-only test;${calendarMode?19:13} assertions; no business fixture/ledger`);
 }else{
  const cli=process.env.SUPABASE_BIN??'supabase';
  const state=spawnSync(cli,['status','-o','json'],{cwd:repo,encoding:'utf8',timeout:30000});

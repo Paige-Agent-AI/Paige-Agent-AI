@@ -71,6 +71,8 @@ import { readCalendarAccountShape, type CalendarBookingReadCaller } from "../cal
 import { mergeRecordLinks, type ReadRecordLink } from "../paige-turn/record-links.ts";
 import { readZionPlans, zionPlanReadTools, type ZionPlanningDeps, type ZionPlanningScope } from "./zion-planning-read.ts";
 import { zionPlanningRecordLinks } from "./zion-planning-source.ts";
+import { readZionCalendar, zionCalendarReadTools, type ZionCalendarDeps, type ZionCalendarScope } from "./zion-calendar-read.ts";
+import type { ContextIdentity } from "../paige-context/mod.ts";
 import { createWeeklyDraftDeadline } from "../paige-orchestration/weekly-draft-deadline.ts";
 
 // ---------------------------------------------------------------- the request
@@ -808,7 +810,11 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   // reach the model. The forward native guard/history contract is a release
   // dependency; this host never substitutes roster presence for that authority.
   let zionReadsUsed = 0;
-  const zionScope: ZionPlanningScope | null = agent === "zion" && whereKind === "agent_dm" && storedDm?.includes("plan_list")
+  const zionReadTools = new Set<string>();
+  const zionStagedTools = new Set<string>();
+  let zionIdentity: ContextIdentity | null = null;
+  const zionScope: ZionPlanningScope | null = agent === "zion" && whereKind === "agent_dm"
+    && (storedDm?.includes("plan_list") || storedDm?.includes("read_calendar_agenda"))
     ? Object.freeze({ agent: "zion", where: "agent_dm", tenantId, actorId: userId, storedTools: Object.freeze([...storedDm]) }) : null;
   const currentZionScope = async (): Promise<boolean> => {
     if (!zionScope || deps.signal?.aborted) return false;
@@ -829,22 +835,27 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
         const scopeAccess = object(config?.capability_scope)?.access;
         const permission = authority.status === "available"
           ? authority.rows.filter(r => r.fact_key === "viewer_permission" && r.status === "available" && r.tenant_id === tenantId) : [];
-        return !deps.signal?.aborted && uuid(persona?.tenant_id) === tenantId && shape.status === "available"
+        const allowed = !deps.signal?.aborted && uuid(persona?.tenant_id) === tenantId && shape.status === "available"
           && row?.data?.slug === "zion" && (scopeAccess === "read" || scopeAccess === "card")
           && freshTools !== null && JSON.stringify(freshTools) === JSON.stringify(zionScope.storedTools)
           && !!freshNames && "people" in freshNames && freshNames.people.has(userId)
           && freshNames.conversation?.kind === "agent_dm" && freshNames.conversation.agent_key === "zion"
           && permission.length === 1 && (permission[0].value === "owner" || permission[0].value === "admin");
+        zionIdentity = allowed ? Object.freeze({ actorId: userId, tenantId, workspaceId: tenantId,
+          role: permission[0].value, accountShape: "solo", actAsClientId: null, scopeEpoch: `${turnId}:${hash}` }) : null;
+        return allowed;
       }) === true;
-    } catch { return false; }
+    } catch { zionIdentity = null; return false; }
+  };
+  const zionLimit = (tool: string) => zionReadsUsed >= MAX_PRIVATE_READS
+    || (!zionReadTools.has(tool) && cardReadTools.size + zionReadTools.size >= MAX_PRIVATE_READS);
+  const takeZionRead = (tool: string) => {
+    if (zionLimit(tool)) return false;
+    zionReadsUsed += 1; zionReadTools.add(tool); return true;
   };
   const zionReadDeps: ZionPlanningDeps = {
     caller, signal: deps.signal, isCurrent: currentZionScope,
-    takeRead: () => {
-      if (zionReadsUsed >= MAX_PRIVATE_READS || (!zionReadsUsed && cardReadTools.size >= MAX_PRIVATE_READS)) return false;
-      zionReadsUsed += 1;
-      return true;
-    },
+    takeRead: () => takeZionRead("plan_list"),
     recordRead: async (tool: "plan_list") => {
       try {
         return await recordCapabilityRun(service, { tenantId, actorId: userId, capabilityKey: tool, outcome: "capability_succeeded",
@@ -856,10 +867,54 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
       const staged = await rpcSafe(service, "team_hub_stage_agent_read_context", {
         p_turn_id: turnId, p_token_hash: hash, p_read_tools: [source], p_record_links: zionPlanningRecordLinks(source),
       });
-      return !!staged && !staged.error && object(staged.data)?.ok === true;
+      const ok = !!staged && !staged.error && object(staged.data)?.ok === true;
+      if (ok) zionStagedTools.add("plan_list");
+      return ok;
     },
   };
-  const zionReads = zionScope ? await zionPlanReadTools(zionScope, zionReadDeps) : [];
+  const currentZionIdentity = (): ContextIdentity | null => zionIdentity;
+  const calendarIdentity = zionScope && await currentZionScope() ? currentZionIdentity() : null;
+  const zionCalendarScope: ZionCalendarScope | null = zionScope && calendarIdentity
+    ? Object.freeze({ ...zionScope, ...calendarIdentity, agent: "zion", where: "agent_dm" }) : null;
+  const zionCalendarDeps: ZionCalendarDeps = {
+    caller: caller as unknown as CalendarBookingReadCaller, signal: deps.signal,
+    isCurrent: currentZionScope, currentIdentity: currentZionIdentity,
+    takeRead: () => takeZionRead("read_calendar_agenda"),
+    recordRead: async tool => {
+      try {
+        return await recordCapabilityRun(service, { tenantId, actorId: userId, capabilityKey: tool, outcome: "capability_succeeded",
+          runId: await stableRunId([tool, tenantId, userId, `team_hub_agent:${turnId}:${hash}:zion:${zionReadsUsed}`]),
+          detail: { channel: "team_hub_agent", tool, read_only: true } });
+      } catch { return false; }
+    },
+    stageReadContext: async (_scope, source) => {
+      const staged = await rpcSafe(service, "team_hub_stage_agent_read_context", {
+        p_turn_id: turnId, p_token_hash: hash, p_read_tools: [source], p_record_links: [{ destination: "calendar", record_id: null }],
+      });
+      if (staged && !staged.error && object(staged.data)?.ok === false && object(staged.data)?.code === "context_limit") return "context_limit";
+      const ok = !!staged && !staged.error && object(staged.data)?.ok === true;
+      if (ok) zionStagedTools.add("read_calendar_agenda");
+      return ok;
+    },
+  };
+  const zionReads = [
+    ...(zionScope ? await zionPlanReadTools(zionScope, zionReadDeps) : []),
+    ...(zionCalendarScope ? await zionCalendarReadTools(zionCalendarScope, zionCalendarDeps) : []),
+  ];
+  const currentZionModelScope = async (): Promise<boolean> => {
+    const within = createWeeklyDraftDeadline(5000, () => !deps.signal?.aborted);
+    try {
+      if (await within(currentZionScope) !== true) return false;
+      if (!zionStagedTools.size) return true;
+      // Every actual provider attempt rechecks the original native sources,
+      // including a provider's internal retry after a source-access change.
+      // Reuse the SAME turn/context; no new domain query, budget or receipt.
+      const staged = await within(() => rpcSafe(service, "team_hub_stage_agent_read_context", {
+        p_turn_id: turnId, p_token_hash: hash, p_read_tools: [...zionStagedTools], p_record_links: [],
+      }));
+      return !deps.signal?.aborted && !!staged && !staged.error && object(staged.data)?.ok === true;
+    } catch { return false; }
+  };
   const zionRevalidations: Array<() => Promise<boolean>> = [];
   let privateScope: MeritServiceScope = { agent, where: whereKind, audience: "business_team", tenantId,
     actorId: userId, workspaceAdmin: false, storedTools: storedDm };
@@ -969,7 +1024,8 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   const baseTools = effectiveAgentTools(
     whereKind === "agent_dm" ? storedDm : storedShared,
     whereKind === "agent_dm" ? "agent_dm" : "shared",
-    mentorReads.length || zionReads.length ? new Set([...EXECUTABLE_AGENT_TOOLS, MENTOR_PLAN_TOOL]) : EXECUTABLE_AGENT_TOOLS,
+    mentorReads.length || zionReads.length
+      ? new Set([...EXECUTABLE_AGENT_TOOLS, MENTOR_PLAN_TOOL, ...zionReads.map(t => t.function.name)]) : EXECUTABLE_AGENT_TOOLS,
     authority,
   );
   // EXP10 NEXUS connection read (ANT-164, directive 385a54eb; contract efa6d22f on ANT-161): the one
@@ -1034,7 +1090,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
       result = await deps.complete({ cognitive_class: "operational", job: "team_hub_agent_turn", messages, tools: toolDefs.length ? toolDefs : undefined,
         response_format: { type: "json_object" }, max_tokens: 900 },
         { trace, signal: deps.signal, beforeProviderAttempt: async () => !deps.signal?.aborted && (!cardReadTools.size || await currentCardReadScope()) && (!mentorReadsUsed || await currentMentorScope())
-          && (!domainChecks.length || await currentPrivateScope(privateScope)) && (!zionReads.length || await currentZionScope()) });
+          && (!domainChecks.length || await currentPrivateScope(privateScope)) && (!zionReads.length || await currentZionModelScope()) });
     } catch { return endedWithoutPost("no_reply"); }
     const choice = object((object(result?.response)?.choices as unknown[] | undefined)?.[0]);
     const message = object(choice?.message);
@@ -1078,7 +1134,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
         // A2b: the chat's own read from its one home, under this person's authority in this workspace.
         if (!await currentCardReadScope()) return endedWithoutPost("no_reply");
         // The existing native read-context protocol admits at most three distinct private sources.
-        if (!cardReadTools.has(name) && cardReadTools.size + (zionReadsUsed ? 1 : 0) >= MAX_PRIVATE_READS) {
+        if (!cardReadTools.has(name) && cardReadTools.size + zionReadTools.size >= MAX_PRIVATE_READS) {
           messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ status: "unavailable",
             message: "This turn reached its private read limit. No further records were read. Ask for a follow-up if needed." }) });
           continue;
@@ -1171,18 +1227,20 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
       }
       if (zionScope && zionReads.some(t => t.function.name === name)) {
         if (typeof call.function.arguments !== "string" || !call.function.arguments || !validObjectArgs) {
-          messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ status: "needs_input", message: "The Planning request must be a JSON object. Nothing was read or changed. Correct the request before trying again." }) });
+          messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ status: "needs_input", message: "The Operations read request must be a JSON object. Nothing was read or changed. Correct the request before trying again." }) });
           continue;
         }
-        if (zionReadsUsed >= MAX_PRIVATE_READS || (!zionReadsUsed && cardReadTools.size >= MAX_PRIVATE_READS)) {
-          messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ status: "unavailable", message: "This turn reached its three-read limit. No further plans were read. Explain the limit and ask for a follow-up if needed." }) });
+        if (zionLimit(name)) {
+          messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ status: "unavailable", message: "This turn reached its three-read limit. No further records were read. Explain the limit and ask for a follow-up if needed." }) });
           continue;
         }
-        const read = await readZionPlans(zionScope, zionReadDeps, name, args);
+        const read = name === "read_calendar_agenda" && zionCalendarScope
+          ? await readZionCalendar(zionCalendarScope, zionCalendarDeps, name, args)
+          : await readZionPlans(zionScope, zionReadDeps, name, args);
         // Refused/unknown native stage never releases its private result, starts
         // another model attempt or posts an answer based on unverified rows.
-        if (read.model.success !== true && read.model.status !== "needs_input") return endedWithoutPost("no_reply");
-        if (read.model.success === true) zionRevalidations.push(read.revalidate);
+        if (read.model.success !== true && !["available", "needs_input", "limited"].includes(String(read.model.status))) return endedWithoutPost("no_reply");
+        if (read.model.success === true || read.model.status === "available") zionRevalidations.push(read.revalidate);
         messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(read.model) });
         continue;
       }

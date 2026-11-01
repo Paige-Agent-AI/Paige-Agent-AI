@@ -20,7 +20,7 @@ function materialize(path){
  if(path===join(repo,'supabase/tests/exp08_team_hub_a2b_cards.sql')){
   const anchor="RESET ROLE;\n\\c postgres\nDROP DATABASE exp08_team_hub_a2b_proof;\n\\echo 'PASS: EXP08 Team Hub agents A2b proof complete; disposable database dropped'";
   assert.equal(sql.split(anchor).length,2,'Exactly one final disposable cleanup');
-  sql=sql.replace(anchor,`\\ir '${join(repo,'supabase/tests/exp05_zion_planning_read.sql').replaceAll('\\','/')}'\n\\if :{?exp05_concurrent}\n\\echo 'EXP05 retained original disposable fixture only for concurrent probes'\n\\else\n${anchor}\n\\endif`);
+  sql=sql.replace(anchor,`\\ir '${join(repo,'supabase/tests/exp05_zion_planning_read.sql').replaceAll('\\','/')}'\n${process.argv.includes('--calendar') ? `\\ir '${join(repo,'supabase/tests/exp05_zion_calendar_read.sql').replaceAll('\\','/')}'\n` : ''}\\if :{?exp05_concurrent}\n\\echo 'EXP05 retained original disposable fixture only for concurrent probes'\n\\else\n${anchor}\n\\endif`);
  }
  // Incumbent sed commands extract SQL text only. Feed the exact same ranges
  // through SQL literals on Windows; preserve every original drift/mutant probe.

@@ -18,6 +18,9 @@ export type ZionCalendarSource = Readonly<{
   source: Readonly<Pick<CalendarModel, "source_shown_count" | "source_has_more" |
     "shown_count" | "omitted_from_model" | "has_more"> & {
       bookings: readonly Readonly<CalendarModel["bookings"][number]>[];
+      // ALL original returned rows, including those omitted from the bounded
+      // preview. References are not row versions or authority to disclose them.
+      source_ids: readonly string[];
     }>;
 }>;
 export type ZionCalendarDeps = CalendarBookingReadDeps & {
@@ -27,7 +30,7 @@ export type ZionCalendarDeps = CalendarBookingReadDeps & {
   takeRead: () => boolean;
   recordRead: (tool: "read_calendar_agenda") => Promise<boolean>;
   // Proposed native integration port; a fake/absent stage is never authority.
-  stageReadContext: (scope: Readonly<ZionCalendarScope>, source: ZionCalendarSource) => Promise<boolean>;
+  stageReadContext: (scope: Readonly<ZionCalendarScope>, source: ZionCalendarSource) => Promise<boolean | "context_limit">;
 };
 export type ZionCalendarRead = { model: Readonly<Record<string, unknown>>; revalidate: () => Promise<boolean> };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -69,13 +72,14 @@ export async function zionCalendarReadTools(scope: ZionCalendarScope, deps: Zion
   try { return await current(snapshot, deps, within) ? [...CALENDAR_AGENDA_READ_TOOLS] : []; }
   catch { return []; } finally { retired = true; }
 }
-function observe(scope: Readonly<ZionCalendarScope>, model: CalendarModel): ZionCalendarSource {
+function observe(scope: Readonly<ZionCalendarScope>, model: CalendarModel, sourceIds: readonly string[]): ZionCalendarSource {
   // Reuse the exact canonical preview and its disclosed omissions; no full title,
   // invented updated_at, provider availability or hidden source facts are added.
   const bookings = model.bookings.map(row => Object.freeze({ ...row }));
   return Object.freeze({ tool: "read_calendar_agenda", version: 1,
     arguments: Object.freeze({ ...model.window, view: model.view }), roster_tools: scope.storedTools,
     source: Object.freeze({ bookings: Object.freeze(bookings),
+      source_ids: Object.freeze([...sourceIds]),
       source_shown_count: model.source_shown_count, source_has_more: model.source_has_more,
       shown_count: model.shown_count, omitted_from_model: model.omitted_from_model, has_more: model.has_more }) });
 }
@@ -102,10 +106,21 @@ export async function readZionCalendar(scope: ZionCalendarScope, deps: ZionCalen
       // Snapshot synchronously BEFORE any receipt/stage await can mutate input.
       const preview = calendarAgendaForModel(result);
       if (preview.status !== "available") return { model: preview, identity: null };
-      const model = structuredClone(preview), source = observe(snapshot, model), identity = JSON.stringify(source);
+      const model = structuredClone(preview);
+      // Capture synchronously before any receipt/stage await, preserving the
+      // original reader's 50-row bound. The 51st has-more probe is not returned.
+      const source = observe(snapshot, model, result.status === "available" ? result.bookings.map(row => String(row.id)) : []);
+      const identity = JSON.stringify(source);
       if (expected !== undefined && identity !== expected || !await isCurrent()) return null;
-      if (initial && await within(() => deps.recordRead("read_calendar_agenda")) !== true || !await isCurrent() ||
-        await within(() => deps.stageReadContext(snapshot, source)) !== true || !await isCurrent()) return null;
+      if (initial && await within(() => deps.recordRead("read_calendar_agenda")) !== true || !await isCurrent()) return null;
+      const staged = await within(() => deps.stageReadContext(snapshot, source));
+      if (!await isCurrent()) return null;
+      // Only the native pre-update capacity refusal is recoverable here. It
+      // guarantees the previous context was untouched; it releases no new facts.
+      // An absent/refused/uncertain acknowledgment still retires the whole read.
+      if (staged === "context_limit") return { model: Object.freeze({ status: "limited",
+        message: "This review reached its saved source-context limit. No Calendar details were added. Keep only already verified results and ask for a narrower follow-up." }), identity: null };
+      if (staged !== true) return null;
       return { model: Object.freeze({ ...model, window: Object.freeze({ ...model.window }), bookings: source.source.bookings }), identity };
     } catch { return null; }
     finally { retired = true; stop(); deps.signal?.removeEventListener("abort", stop); }

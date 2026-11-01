@@ -26,7 +26,7 @@ class Query implements PromiseLike<Reply> {
 function ports() {
   const origin = scope(), events: string[] = [], sources: ZionCalendarSource[] = [];
   let live = { ...origin }, roster = [...origin.storedTools], active = true, receipt: boolean | "throw" = true;
-  let stage: boolean | "throw" = true, spent = 0, rows = [booking()], readError: unknown = null;
+  let stage: boolean | "throw" | "context_limit" = true, spent = 0, rows = [booking()], readError: unknown = null;
   let onReceipt = () => {}, onStage = () => {};
   const caller = {
     auth: { getUser: async () => { events.push("auth"); return { data: { user: { id: id(1) } }, error: null }; } },
@@ -47,11 +47,40 @@ function ports() {
     run: (input: unknown = window) => readZionCalendar(origin, deps, "read_calendar_agenda", input),
     change: { active: (v: boolean) => active = v, identity: (v: Partial<ZionCalendarScope>) => live = { ...live, ...v },
       roster: (v: string[]) => roster = v, receipt: (v: boolean | "throw") => receipt = v,
-      stage: (v: boolean | "throw") => stage = v, spent: (v: number) => spent = v,
+      stage: (v: boolean | "throw" | "context_limit") => stage = v, spent: (v: number) => spent = v,
       rows: (v: ReturnType<typeof booking>[]) => rows = v, error: (v: unknown) => readError = v,
       onReceipt: (v: () => void) => onReceipt = v, onStage: (v: () => void) => onStage = v } };
 }
 describe("unmounted same-ZION Calendar composition", () => {
+  it("returns no Calendar facts on the known native no-change capacity refusal", async () => {
+    const p = ports(); p.change.stage("context_limit");
+    const read = await p.run(); assert.equal(read.model.status, "limited");
+    assert.equal(JSON.stringify(read.model).includes("Original saved"), false);
+    assert.equal("bookings" in read.model, false); assert.equal(await read.revalidate(), false);
+    assert.equal(p.sources.length, 1); assert.equal(p.spent, 1);
+  });
+  it("binds every original shown ID even when the model preview omits rows", async () => {
+    const p = ports();
+    p.change.rows(Array.from({ length: 51 }, (_, n) => ({ ...booking(n + 10), title: "💼".repeat(120) })));
+    const read = await p.run();
+    assert.equal(read.model.status, "available");
+    assert.ok(Number(read.model.omitted_from_model) > 0);
+    const source = p.sources[0];
+    assert.deepEqual((source.source as unknown as { source_ids: string[] }).source_ids,
+      Array.from({ length: 50 }, (_, n) => id(n + 10)), "all original returned rows, excluding the undisclosed probe");
+  });
+  it("does not revalidate a changed original ID hidden by the preview byte limit", async () => {
+    const p = ports();
+    const rows = Array.from({ length: 51 }, (_, n) => ({ ...booking(n + 10), title: "💼".repeat(120) }));
+    p.change.rows(rows);
+    const read = await p.run();
+    assert.equal(read.model.status, "available");
+    assert.ok(Number(read.model.omitted_from_model) > 0);
+    p.change.rows(rows.map((r, n) => n === 49 ? { ...r, id: id(90) } : n === 50 ? { ...r, id: id(91) } : r));
+    assert.equal(await read.revalidate(), false, "original source references cannot silently change outside the preview");
+    assert.equal(p.sources.length, 1, "changed source is refused before restaging");
+    assert.equal(p.events.filter(e => e.startsWith("receipt:")).length, 1);
+  });
   it("offers ONLY the original definition after actual same-scope checks", async () => {
     const p = ports(); assert.deepEqual(await zionCalendarReadTools(p.origin, p.deps), CALENDAR_AGENDA_READ_TOOLS);
     assert.equal(p.events.length, 0); assert.equal(p.spent, 0);

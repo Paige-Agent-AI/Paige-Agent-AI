@@ -3,6 +3,13 @@
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
+for(const args of [
+ ['scripts/proof/build-exp01-reviewed-setup-guards.mjs','--check'],
+ ['--experimental-strip-types','--test','scripts/proof/exp01-reviewed-setup-contract.test.mjs','scripts/proof/exp01-reviewed-setup-client.test.mjs'],
+]) {
+ const run=spawnSync(process.execPath,args,{stdio:'inherit',timeout:30000});
+ if(run.status!==0)throw Error('Original EXP01 receipt preparation proof failed');
+}
 const originalSourceRef='7955df03da6873286f290d4148c1f0fcda77c91e';
 const sourcePath='supabase/migrations/20271126210013_knowledge_source_writer_validation.sql';
 const read=p=>readFileSync(p,'utf8').replaceAll('\r\n','\n');

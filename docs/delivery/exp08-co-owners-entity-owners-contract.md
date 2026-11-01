@@ -3494,3 +3494,44 @@ and six-line command step only: removing these9 lines restores ENTIRE actual
 steps. No workflow policy/runner/provider/auth source changed. Canonical checks
 and negative controls still exit0; hosted execution remains UNVERIFIED pending
 publication and exact-head CI. Source window returned after this finite change.
+
+
+### Original I3 owner-floor metadata and recipient execution proof preparation
+
+The approved owner-details/step-down reasons require a full native owner count,
+not the filtered/paginated roster. Fresh production catalog read confirmed original
+Team/PAIGE reader MD5s ded4ae3cb9d57f2c1ed0cef52493590b /623d712d745867ed8f7d29374e3a6078;
+neither inert projection nor count was applied. Six added projection lines expose
+active_owner_count only under the ORIGINAL private owner/admin admission, using
+EXACT original revoke_co_owner tenant/is_owner=true/status=active set. No writer,
+authority, ownership definition or applied history changes. Missing/invalid count
+normalizes to null; zero remains zero. This metadata cannot authorize revocation.
+
+Failing-first consumer14FAIL/10originalPASS ->24PASS. Original native selected
+reader proof before implementation failed for missing count. Final same runner
+6503 exits0,37candidate cases retain ALL32original plus5floor/filter/suspended/
+role-label/foreign/zero cases. Four new floor mutants change BOTH readers and
+are killed by their named semantic cases, not merely by disagreement. Original
+privacy/ACL/replay/drift/native-wait/race-mutant coverage remains;57records.
+Final log exp08-owner-floor-native-mutants-final.log SHA256
+96c4bcc962979ed5bec1c255961593ad9ff137de7b6610d31ce19ac50c2a2417.
+Earlier53record run73695 also terminal0 is supporting history. Atomic13 controls
+remainPASS (bundle log SHA f4ac66f476a6633c55c6c97fa91be14b94d96021b1e635a8e1953153f5fc614c).
+New unversioned atomic bundle SHA256
+0709a1aac2f0cfc91a2b4c34d467003da762b4c8b8fc292c0a29235cba3ddbb8;
+profile/permission components unchanged, original projection component now
+3d7cb26d757bcbf909e293a4f8d1d80c6a9cc5df2b442e5e7f9673c5a457ee41.
+Canonical atomic16/check/negative controls and focused lint PASS; NEW full-schema
+execution, actual native carrier, mounted approved I3 states and Auth cohorts
+remain UNVERIFIED. The earlier542 atomic16 does not clear this changed projection.
+
+Personal read-state native packet expands from16 installation controls to67:
+SAME original16 + ENTIRE READ-ONLY original recovery native39 fixture/assertions
++12 actual recipient execution/repeated-value/native-tuple/foreign/refusal/GET/
+zero-seat-no-business-access controls. It reuses the ORIGINAL four fictional SQL
+Auth rows and one rollback fixture business; adds no QA accounts. Compiler checks
+16/39/12 and total67, exact transaction shell, source preservation and literal
+replacement/negative controls. Native67 canonical write/check/self-test PASS;
+actual hosted67 is UNVERIFIED, not borrowed from earlier542/native16SUCCESS.
+No new runtime, notice/receipt ledger, host, provider or version/apply. SAME3203
+is the sole next source integration; full18+6/five journeys STILL CODING.

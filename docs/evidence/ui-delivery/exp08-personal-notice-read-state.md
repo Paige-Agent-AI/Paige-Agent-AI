@@ -44,3 +44,14 @@ exp08-notice-state-after-trigger-final.log (SHA256
 d08021b8bc328beb59e08317c1f9ea7495c4e1ea0281c453541be0415b2d75d4).
 Client96, bounded strict compilation and existing scope remain unchanged.
 No mounted, managed/full-schema, production or genuine customer proof added.
+
+
+Native proof expansion for the SAME eligible recipient flow: original installer16
+plus preserved ENTIRE native39 recovery fixture/assertions and12 actual personal
+read/unread, repeated-state/no-new-tuple, foreign refusal, original GET and no-seat/
+workspace-grant checks compose one rollback-only native67 packet. Original39 file
+is READ ONLY; its four original SQL Auth rows are reused, no additional QA account.
+Canonical compiler checks16/39/12/67, literal replacements and strict transaction
+conservation; packaging/negative controls PASS. Hosted67 is UNVERIFIED pending the
+new exact-head schema job; earlier542 installation16SUCCESS is bounded history.
+No mounted UI/native version/apply or authenticated customer proof is supplied.

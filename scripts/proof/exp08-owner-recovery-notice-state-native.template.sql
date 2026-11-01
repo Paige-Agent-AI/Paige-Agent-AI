@@ -1,7 +1,7 @@
 -- Original personal notice read-state installation on the actual replayed schema.
 -- Rollback-only; no Auth users, customer rows, provider or business effects.
 BEGIN;
-SELECT plan(16);
+SELECT plan(67);
 CREATE TEMP TABLE exp08_notice_original_private AS
 SELECT p.oid,to_jsonb(p) AS metadata FROM pg_catalog.pg_proc p
 WHERE p.oid IN (to_regprocedure('public._exp08_read_my_recovery_notice(uuid)'),to_regprocedure('public._exp08_read_recovery_notice_for_recipient(uuid,uuid,uuid,boolean)'),to_regprocedure('public._exp08_require_recovery_audit()'));
@@ -46,5 +46,8 @@ SELECT set_config('request.jwt.claims','{}',true);
 SET LOCAL ROLE authenticated;
 SELECT throws_ok($$SELECT public.set_my_owner_recovery_notice_read(NULL,true)$$,'42501','OWNER_RECOVERY_NOTICE_UNAVAILABLE','an authenticated SQL role without actual Auth identity is refused');
 RESET ROLE;
+CREATE TEMP TABLE exp08_notice_read_state_probe(kind text PRIMARY KEY,value jsonb);
+GRANT SELECT,INSERT ON exp08_notice_read_state_probe TO authenticated;
+-- EXP08_ORIGINAL_RECOVERY_NATIVE
 SELECT * FROM finish();
 ROLLBACK;

@@ -20,7 +20,7 @@ Publish exact PR/head, non-author review, required CI, merge SHA, production web
 
 1. Every software assignment starts by reading the installed Flow-by-Flow skill completely and following every routed reference.
 2. Before designing or implementing any visible-interface change, read `.agents/skills/paige-ui-design/SKILL.md` completely and follow every routed reference. Visible interface includes product screens, settings, modals, drawers, forms, onboarding, funnels, landing pages, dashboards, tabs, empty states, responsive/mobile layouts, interaction states, motion, and visual styling.
-3. A new or materially changed user flow also requires the installed Flow Prototype skill before production implementation. This includes forms, signup/onboarding, funnels, drawers, modals, settings, payments, connections, destructive actions, and any flow with multiple states or exits.
+3. For a new or materially changed user flow, consult the installed Flow Prototype skill. Record unrun prototype/browser proof as `UNVERIFIED`; safe implementation, technical review and genuine engineering CI precede normal merge/deploy, then live verification. This includes forms, signup/onboarding, funnels, drawers, modals, settings, payments, connections, destructive actions, and multi-state flows. Security, tenant isolation, approval/effect authority and functional checks remain binding.
 4. **Impeccable is MANDATORY for every UI/UX design, redesign, visual-polish, or interaction task.** Before design or implementation, read the installed Impeccable skill and cite it (canonical upstream source: `https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md`); report which of its checks were applied and their results. If the skill is not available in your environment, STOP and report it — never silently skip Impeccable. The finish-review is still required before delivery.
 
 Do not begin design or implementation until the applicable skills have been read. A wrapper, summary, checkbox, fixture, or rendered screenshot is not a substitute.
@@ -100,7 +100,7 @@ Design around the user's actual job, real data contracts, permissions, and compl
 
 **Owner UI principle — performance and interaction quality over wording.** Cut redundant banner and intro copy; do not repeat context the user already has from where they are. Prefer usable space for the real work over decorative headers. Motion must be purposeful and performant — animate `transform`/`opacity` only, and be reduced-motion safe (honor `prefers-reduced-motion`).
 
-Interface authority is `CLAUDE.md` §00 (owner ruling, 2026-09-22): Claude Code owns the interface, executed as Flow-by-Flow first, then Impeccable, and the owner approves the design before it ships. Claude Design is out of the loop; a prior design pack is reference material, not an authority that outranks Impeccable's craft floor. (This line previously said agents "faithfully port the approved Claude Design pack"; §00 voids that and it is struck here, as it was in `.agents/skills/paige-ui-design/SKILL.md` on 2026-09-24.)
+Interface authority is `CLAUDE.md` §00: Claude Code owns the interface, executed as Flow-by-Flow first, then Impeccable; the owner directs intended function and retains final acceptance of the live experience. Claude Design is out of the loop; a prior design pack is reference material, not an authority that outranks Impeccable's craft floor. (The earlier pack-first direction was removed by the 2026-09-22 owner ruling.)
 
 All states must be honest:
 

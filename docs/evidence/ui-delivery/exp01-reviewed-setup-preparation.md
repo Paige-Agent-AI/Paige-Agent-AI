@@ -1,5 +1,14 @@
 # EXP01 reviewed Setup producer preparation — unmounted draft
 
+Current controlling delivery scope: ONE original durable Chat→Knowledge writer release
+for E13, then report/STOP for owner approval. All Setup-native/other work paused;
+original full assignment/history retained. Prospective NEVER-APPLIED27040001 Chat
+carrier is exact058 candidate after first comment, original runner enforces equality.
+CLI first created EMPTY20261101204030, explicitly prospectively renamed before content
+or any application; complete61 manifests/productionfrontier27030005 verified absent.
+No dependency on E13's private Setup-source validator, no Setup-native payload included.
+Full-schema/managed Preview/review/exact CI/normal ordered release/readback pending.
+
 November1 current additive checkpoint:3194 is source-released at355bc7ef781722859aad39dd4b32916f2fd5284b,
 all six exact2dd workflows/both web statuses SUCCESS, actual58 full-schema/58 focused/65 modeled-native
 PASS, lower-assurance review5729399630 and actual automated P2 resolved4436963629. Both official

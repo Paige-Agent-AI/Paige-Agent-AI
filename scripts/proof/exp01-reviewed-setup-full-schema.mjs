@@ -37,7 +37,11 @@ assert.equal(test.split('-- EXP01_REPLAY_CANDIDATE').length,2);
 const receiptSql=test.replace('-- EXP01_INSTALL_CANDIDATE',()=>body(source.stdout.replaceAll('\r\n','\n'))+'\n'+candidate)
  .replace('-- EXP01_REPLAY_CANDIDATE',()=>candidate);
 assert.equal(receiptSql.split(candidate).length,3,'both candidate inserts are byte-exact, including dollar-quoted SQL');
-const hostCandidate=body(read('scripts/proof/exp01-chat-knowledge-candidate.sql'));
+const hostCandidateSource=read('scripts/proof/exp01-chat-knowledge-candidate.sql');
+const hostCarrierSource=read('supabase/migrations/20271127040001_exp01_chat_knowledge_links.sql');
+assert.equal(hostCarrierSource.slice(hostCarrierSource.indexOf('\n')),hostCandidateSource.slice(hostCandidateSource.indexOf('\n')),
+ 'released carrier is byte-exact original Chat candidate after its first descriptive comment');
+const hostCandidate=body(hostCandidateSource);
 const hostTest=read('supabase/tests/exp01_chat_knowledge_link.sql');
 assert.equal(hostTest.split('-- EXP01_CHAT_INSTALL_CANDIDATE').length,2);
 assert.equal(hostTest.split('-- EXP01_CHAT_REPLAY_CANDIDATE').length,2);

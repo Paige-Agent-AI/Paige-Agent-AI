@@ -1,5 +1,23 @@
 # Experience 01 foundation — ANT-50
 
+### November 1 owner-selected ONE outcome — Chat source writer release
+
+Only active delivery: original durable Chat→Knowledge writer for E13, including
+authoritative source-link save/inspect/list, safe reopen and same-intent UNKNOWN
+recovery, normal reviewed release and native readback. Report this result then STOP
+for the owner's next-outcome approval. Full original10/23/amendments are preserved;
+Setup receipt native release and all other implementation are paused, not dropped.
+
+Fresh actualmaina65 plus ALL60 published open heads' complete61 migration manifests
+and productionfrontier27030005 show prospective27040001 absent. New CLI-created empty
+20261101204030 file was explicitly prospectively renamed BEFORE population/application
+to20271127040001_exp01_chat_knowledge_links.sql; no applied/Preview history changed.
+Carrier is EXACT original058 candidate after its first descriptive comment, enforced
+by the original proof runner. Chat does not depend on E13's private Setup-source
+validator; this lower release precedes pending E13 28000013/E05 29000005, with fresh
+frontier/order checks before merge. No Setup writer/helper is included in the carrier.
+Actual full-schema/managed Preview/exact-head CI/native release/readback remain owed.
+
 ### November 1 producer continuation — original full assignment active
 
 Source preparation3194 actually merged355bc7ef781722859aad39dd4b32916f2fd5284b;

@@ -2,6 +2,7 @@ import {parsePaymentRequestIntent} from '../sales-payments/request-command.ts';
 import {parseManualPaymentAllocations} from './manual-allocation.ts';
 export const SALES_INVOICE_ACTIONS = {
   "invoice.payment_request": "sales_create_payment_request",
+  "invoice.record_provider_disposition": "sales_record_provider_disposition",
   "invoice.settings_update": "sales_update_invoice_settings",
   "invoice.publish": "sales_publish_invoice",
   "invoice.record_manual_payment": "sales_record_manual_payment",
@@ -72,6 +73,20 @@ export function parseSalesInvoiceCommand(value: unknown): SalesInvoiceCommand {
       allowed.add('allocations');
       try{out.allocations=parseManualPaymentAllocations(v.allocations,v.amount_cents as number);}catch{return invalid();}
     }
+  } else if (action === "invoice.record_provider_disposition") {
+    for(const key of ['provider_operation_id','observation_id','observation_version','expected_disposition_version','decision'])allowed.add(key);
+    if(Number(v.expected_version)>=Number.MAX_SAFE_INTEGER
+      ||typeof v.provider_operation_id!=='string'||!UUID.test(v.provider_operation_id)||typeof v.observation_id!=='string'||!UUID.test(v.observation_id)
+      ||!Number.isSafeInteger(v.observation_version)||Number(v.observation_version)<1||Number(v.observation_version)>=Number.MAX_SAFE_INTEGER
+      ||!Number.isSafeInteger(v.expected_disposition_version)||Number(v.expected_disposition_version)<0||Number(v.expected_disposition_version)>=Number.MAX_SAFE_INTEGER
+      ||(v.decision!=='balance_due'&&v.decision!=='credit_returned_principal'))return invalid();
+    if(v.decision==='credit_returned_principal'){
+      allowed.add('credit_minor');
+      if(!Number.isSafeInteger(v.credit_minor)||Number(v.credit_minor)<1||Number(v.credit_minor)>2147483647)return invalid();
+      out.credit_minor=v.credit_minor;
+    }
+    Object.assign(out,{provider_operation_id:v.provider_operation_id.toLowerCase(),observation_id:v.observation_id.toLowerCase(),
+      observation_version:v.observation_version,expected_disposition_version:v.expected_disposition_version,decision:v.decision,reason:text('reason',500,true)});
   } else if (action === "invoice.reverse_manual_payment") {
     allowed.add("payment_id");
     if (typeof v.payment_id !== "string" || !UUID.test(v.payment_id)) return invalid();

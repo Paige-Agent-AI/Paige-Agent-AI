@@ -1264,6 +1264,12 @@
       "risk": "high",
       "receipt": "emits",
       "evidence": "paige-ai-chat dispatch (the TEAM_LIFECYCLE branch, last in the chain) records the run via recordCapabilityRun after _shared/team-lifecycle/chat.ts runTeamLifecycleWrite returns, for every outcome: capability_succeeded only when public.plan_update_item_versioned (ok, item_id, tenant_id, actor_id) (caller JWT) acknowledges the exact update for this person and the server tenant AND reading public.plan_items back on the same caller session shows that item, in the server tenant, assigned to the requested receiver (the acknowledgement carries no assignee, so it never proves the hand-over alone); capability_refused for a request refused before any call (workspace mismatch, a Live turn, no claimed operator card, malformed arguments) or a refusal the definer answered with a SQLSTATE (mapped to a plain sentence); capability_outcome_unknown when the call threw, answered without a SQLSTATE, answered without confirming the change, or the read-back failed, found no visible row, or showed anyone other than the requested receiver. With no persona workspace there is no tenant to record against, so that refusal (no_workspace) writes no receipt; recordCapabilityRun returns early by design. The detail never carries a name, a title or an item."
+    },
+    {
+      "tool": "sales_record_provider_disposition",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "The original Sales Owner UI invoice.record_provider_disposition path uses the existing sales-invoice-command approval fingerprint and original paige_invoice_operations identity. Native _sales_invoice_record_provider_disposition atomically retains the exact decision, original observation/source versions and canonical _record_workspace_rail_event; missing/suppressed Rail rolls back the decision and invoice version, and replay requires the same retained Rail. The UI checks the original operation, receipt and reviewed consequences before reporting an internal financial decision. Source candidate remains inert until its ordered guarded migration, exact-head CI and deployment/readback; this declaration grants no Chat binding, money movement or customer notification. Native controls: scripts/sql/sales-provider-disposition-proof.mjs and supabase/tests/fixtures/exp04_invoice_provider_disposition.sql."
     }
   ]
 }

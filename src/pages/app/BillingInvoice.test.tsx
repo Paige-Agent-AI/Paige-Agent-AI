@@ -304,3 +304,40 @@ it("money still owed with a test payment in it says which part moved nothing", a
   await render();
   expect($("[data-testid=test-caution]")?.textContent).toBe("Includes a test payment of $500.00. The test payment moved no money.");
 });
+
+
+// Original component, explicit synthetic current financial transport; no real customer/provider proof.
+const currentInvoice = (patch: Partial<PortalInvoice> = {}): PortalInvoice => inv({
+ payment_evidence_version:2, financial_evidence_version:3, financial_revision:'a'.repeat(64), financial_page_revision:'b'.repeat(64), financial_standing:'recorded',
+ refund_payable_minor:0,credit_minor:0,provider_net_minor:0,...patch,
+});
+const currentPayment = (patch: Record<string, unknown> = {}): PortalPaymentRead => ({
+ state:'ready',request:null,remainingMinor:125000,testProviderMinor:0,environment:null,
+ paymentEvidenceVersion:2,financialEvidenceVersion:3,financialRevision:'a'.repeat(64),financialStanding:'recorded',
+ refundPayableMinor:0,creditMinor:0,providerNetMinor:0,...patch,
+} as PortalPaymentRead);
+it('current zero after credit says no amount due and never paid in full',async()=>{
+ f.state.invoices=[currentInvoice({remaining_minor:0,credit_minor:125000})];
+ f.payment.mockResolvedValue(currentPayment({remainingMinor:0,creditMinor:125000}));await render();
+ expect(text()).toContain('No amount due');expect(text()).toContain('Credit applied');expect(text()).not.toContain('Paid in full');expect($('[data-testid=pay-now]')).toBeNull();
+});
+it('held current facts show verification pending with no zero, paid or checkout claim',async()=>{
+ f.state.invoices=[currentInvoice({remaining_minor:null,financial_standing:'allocation_required',refund_payable_minor:null,credit_minor:null,provider_net_minor:null,past_due:null})];
+ f.payment.mockResolvedValue(currentPayment({remainingMinor:null,financialStanding:'allocation_required',refundPayableMinor:null,creditMinor:null,providerNetMinor:null}));await render();
+ expect($('[data-testid=payment-financial-pending]')).not.toBeNull();expect(text()).toContain('Verification pending');expect(text()).not.toMatch(/Paid in full|\$0[.]00 due|No amount due/);expect($('[data-testid=pay-now]')).toBeNull();
+});
+it('current refund liability stays separate from debt and does not claim a completed refund',async()=>{
+ f.state.invoices=[currentInvoice({remaining_minor:75000,refund_payable_minor:15000,credit_minor:20000,provider_net_minor:30000})];
+ f.payment.mockResolvedValue(currentPayment({remainingMinor:75000,refundPayableMinor:15000,creditMinor:20000,providerNetMinor:30000}));await render();
+ expect($('[data-testid=payment-owed]')?.textContent).toContain('$750.00 due');expect($('[data-testid=payment-refund-due]')?.textContent).toContain('$150.00');
+ expect(text()).toContain('Credit applied');expect(text()).not.toMatch(/Refund completed|Paid in full/);
+});
+it.each(['refundPayableMinor','creditMinor','providerNetMinor'])('same debt but changed %s retires payment result before showing a checkout',async field=>{
+ f.state.invoices=[currentInvoice()];f.payment.mockResolvedValue({...currentPayment(),[field]:5000,request:{amountMinor:125000,currency:'usd',state:'customer_action_required',url:LINK,remainingMinor:125000,expiresAt:Date.now()+3600000},environment:'live'});await render();
+ expect($('[data-testid=pay-now]')).toBeNull();expect(text()).toContain('Financial information changed');expect(f.state.refresh).toHaveBeenCalled();
+});
+
+it('an equal-amount payment response with another financial source revision cannot expose checkout',async()=>{
+ f.state.invoices=[currentInvoice()];f.payment.mockResolvedValue({...currentPayment(),financialRevision:'c'.repeat(64),request:{amountMinor:125000,currency:'usd',state:'customer_action_required',url:LINK,remainingMinor:125000,expiresAt:Date.now()+3600000},environment:'live'});await render();
+ expect($('[data-testid=pay-now]')).toBeNull();expect(text()).toContain('Financial information changed');expect(f.state.refresh).toHaveBeenCalled();
+});

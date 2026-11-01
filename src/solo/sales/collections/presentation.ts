@@ -11,4 +11,4 @@ export function minorInput(value:string,currency:string,allowZero=false):number|
  const digits=currencyDigits(currency);if(digits===null)return null;const pattern=digits===0?/^\d+$/:new RegExp(`^\\d+(\\.\\d{1,${digits}})?$`);if(!pattern.test(value))return null;
  const [whole,fraction='']=value.split('.'),scale=10**digits,total=Number(whole)*scale+Number(fraction.padEnd(digits,'0'));return Number.isSafeInteger(total)&&total>=(allowZero?0:1)?total:null;
 }
-export const collectionMoney=(n:number,currency='usd')=>{const digits=currencyDigits(currency);if(digits===null)return `Amount unavailable (${currency.toUpperCase()})`;return new Intl.NumberFormat(undefined,{style:'currency',currency:currency.toUpperCase()}).format(n/10**digits)};
+export const collectionMoney=(n:number|null,currency='usd')=>{if(n===null)return 'Verification pending';const digits=currencyDigits(currency);if(digits===null)return `Amount unavailable (${currency.toUpperCase()})`;return new Intl.NumberFormat(undefined,{style:'currency',currency:currency.toUpperCase()}).format(n/10**digits)};

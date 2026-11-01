@@ -47,7 +47,7 @@ it("requests the versioned calendar admission using the same verified actor and 
  const p=await readPortalInvoices({context});expect(p).toMatchObject({calendar:page().calendar});
  expect(f.calls).toHaveLength(1);expect(f.calls[0]).toEqual({name:"client_portal_invoices_calendar_scoped",
   args:{p_tenant_id:tenant,p_expected_client_id:client,p_limit:20,p_after:null},
-  headers:{"x-client-portal-business":tenant,Authorization:"Bearer synthetic-invoice-calendar"}});
+  headers:{"x-client-portal-business":tenant,Authorization:"Bearer synthetic-invoice-calendar","X-PAIGE-Invoice-Evidence-Version":"2"}});
 });
 it("never falls back to UTC or another unscoped request when the opt-in contract is missing",async()=>{
  f.reply.mockResolvedValue({data:null,error:{code:"42883",message:"Missing contract"}});

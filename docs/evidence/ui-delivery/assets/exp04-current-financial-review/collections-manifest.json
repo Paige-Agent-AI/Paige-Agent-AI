@@ -1,0 +1,148 @@
+{
+  "status": "LOCAL_RENDERED_NOT_AUTHENTICATED",
+  "sourceParent": "a0635232271508000ef68e5603349516ea216027",
+  "renderCases": [
+    {
+      "width": 1536,
+      "height": 770,
+      "paige": "closed",
+      "currentDebt": true,
+      "separateRefundCredit": true,
+      "keyboardOpenEscape": true,
+      "noRootOverflow": true
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "paige": "open",
+      "currentDebt": true,
+      "separateRefundCredit": true,
+      "keyboardOpenEscape": true,
+      "noRootOverflow": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "paige": "closed",
+      "currentDebt": true,
+      "separateRefundCredit": true,
+      "keyboardOpenEscape": true,
+      "noRootOverflow": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "paige": "open",
+      "currentDebt": true,
+      "separateRefundCredit": true,
+      "keyboardOpenEscape": true,
+      "noRootOverflow": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "paige": "closed",
+      "currentDebt": true,
+      "separateRefundCredit": true,
+      "keyboardOpenEscape": true,
+      "noRootOverflow": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "paige": "open",
+      "currentDebt": true,
+      "separateRefundCredit": true,
+      "keyboardOpenEscape": true,
+      "noRootOverflow": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "paige": "closed",
+      "currentDebt": true,
+      "separateRefundCredit": true,
+      "keyboardOpenEscape": true,
+      "noRootOverflow": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "paige": "open",
+      "currentDebt": true,
+      "separateRefundCredit": true,
+      "keyboardOpenEscape": true,
+      "noRootOverflow": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "paige": "closed",
+      "currentDebt": true,
+      "separateRefundCredit": true,
+      "keyboardOpenEscape": true,
+      "noRootOverflow": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "paige": "open",
+      "currentDebt": true,
+      "separateRefundCredit": true,
+      "keyboardOpenEscape": true,
+      "noRootOverflow": true
+    },
+    {
+      "state": "needs_review",
+      "truthful": true
+    },
+    {
+      "state": "zero",
+      "truthful": true
+    },
+    {
+      "state": "error",
+      "truthful": true
+    },
+    {
+      "state": "denied",
+      "truthful": true
+    },
+    {
+      "state": "loading",
+      "truthful": true
+    }
+  ],
+  "images": [
+    {
+      "path": "collections-desktop.png",
+      "sha256": "b4352d288101bf4ff0049bff4dac0e8e185a88902d72a0c2e4fa23d129d0a314"
+    },
+    {
+      "path": "collections-mobile.png",
+      "sha256": "a2419d2528a8f4e916ccac950d984bb11b4fd0b3e48074a6fc115321e3ea224a"
+    },
+    {
+      "path": "collections-held-mobile.png",
+      "sha256": "0fc0d57b9c5a38dc33679532035a37a84c3439f6d5c8127538c9bca53f8cac11"
+    }
+  ],
+  "sourceHashes": {
+    "src/solo/sales/collections/CollectionsWorkspace.tsx": "10a5d9fca5c62992aa76a277a0a0e7a5a4ec073365336e0ecf2e8d9d67a44298",
+    "src/solo/sales/collections/ImportedReceiptActions.tsx": "ce8be90d1a26b45bc9ec325e5045e73354d4b3adec4a3d96ee004ac1ce2bec54",
+    "src/solo/sales/collections/api.ts": "33f5b6ae3b0805df2804adf4c7582f80d226c22df0401462e8834da22b2ea0da",
+    "src/solo/sales/collections/presentation.ts": "3eb820a2e5364d7062b1730420c7014c2649cd26866dc2096cfe3d3ce0821a95",
+    "src/solo/sales/collections/useCollections.ts": "36c6237b37036f8d5946c46e0ea1e8bdc6542bdef52e434cde18bd325854cf25",
+    "supabase/functions/_shared/sales-collections-chat.ts": "819f5ea65780070d44a644355781fdc0e2a3397356116419aded35fdcd299f00",
+    "supabase/tests/fixtures/exp04_collections_actual_financial_read.sql": "0dfec40407452b1148b84c4251bbf8461ab5bbf9e445c46972f84c7537190826",
+    "scripts/sql/sales-actual-collections-read-proof.mjs": "46474543215cfb0ae7549bc34e0b0879982839cbd7bf05d8e296b465575f53be"
+  },
+  "nativeChecks": 22,
+  "limits": [
+    "Synthetic identity, membership, calendar, document and transport ports",
+    "Original native current financial engine and exact public projection source; no authenticated snapshot/paging acceptance",
+    "No actual provider payment/refund/customer send/signature",
+    "Fonts intercepted; physical device, zoom and assistive technology not verified",
+    "Not merged/deployed/Owner-accepted; app must be paired with original ordered native carrier"
+  ]
+}

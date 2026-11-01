@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LeadReplyDrafts } from "./LeadReplyDrafts";
-import {parseFollowupLocator,canReplaceFollowupDraft} from "./useLeadReplyReview";
+import {parseFollowupLocator,canReplaceFollowupDraft,readSavedActionEmailDraft} from "./useLeadReplyReview";
 import { ComposeThreadDialog } from "./ComposeThreadDialog";
 import { MemoryRouter } from "react-router-dom";
 vi.mock("@/components/paige/CustomerSelector",()=>({CustomerSelector:()=>null}));
@@ -30,7 +30,40 @@ beforeEach(async()=>{db.items=[pending()];db.filters=[];db.read.mockReset().mock
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
 
 const legacyComposer = () => ({ok:true,draft:{subject:"Your inquiry",body_text:"Hello <Dana>, thanks for asking.",body_html:"<p>Different untrusted HTML</p>"},recipient:{email:"untrusted@example.test"},summary:"Untrusted composer summary"});
+describe("saved action email caller-RLS source reader",()=>{
+  function sourcePorts(){
+    const message={id:operation,tenant_id:tenant,contact_id:contact,thread_key:`contact:${tenant}:${contact}`,action_id:contact,connector_id:"33333333-3333-4333-8333-333333333333",channel_type:"email",direction:"outbound",status:"draft",updated_at:"2026-10-31T20:00:00.123456Z",subject:"Saved subject",body_text:"Saved current words.",body_html:null,attachments:[],scheduled_for:null,provider_message_id:null,meta:{source:"original-action-email-draft"}};
+    const ap={...pending(),metadata:{action_id:contact,comms_email_draft:{message_id:operation}}};
+    const action={id:contact,tenant_id:tenant,contact_id:contact,approval_id:approval,action_kind:"client.followup",status:"pending_approval"};
+    db.read.mockImplementation(async table=>({data:table==="messages"?[message]:table==="paige_actions"?[action]:table==="paige_approval_queue_v"?[ap]:[],error:null}));
+    return{message,ap,action};
+  }
+  const context={tenantId:tenant,contactId:contact,approvalId:approval,messageId:operation};
+  it("reads exact saved words and source without invoking a writer",async()=>{sourcePorts();expect(await readSavedActionEmailDraft(context,()=>true)).toMatchObject({body:"Saved current words.",source:{message_id:operation}});expect(db.invoke).not.toHaveBeenCalled();expect(db.filters).toContainEqual(["eq","tenant_id",tenant]);});
+  it.each(["tenant","contact","thread","sent","provider","binding","files","version","approval-backlink","approval-status","action-backlink"])("refuses changed or unavailable %s",async kind=>{
+    const {message,ap,action}=sourcePorts();
+    if(kind==="tenant")message.tenant_id=contact;if(kind==="contact")message.contact_id=tenant;if(kind==="thread")message.thread_key="other";
+    if(kind==="sent")message.status="sent";if(kind==="provider")Object.assign(message,{provider_message_id:"provider-receipt"});
+    if(kind==="binding")Object.assign(message.meta,{comms_email_binding:{}});if(kind==="files")Object.assign(message,{attachments:[{url:"https://foreign.example/file",name:"File",mime:"text/plain",size:10}]});
+    if(kind==="version")message.updated_at="invalid";if(kind==="approval-backlink")ap.metadata.comms_email_draft.message_id=contact;
+    if(kind==="approval-status")ap.status="approved";if(kind==="action-backlink")action.approval_id=operation;
+    expect(await readSavedActionEmailDraft(context,()=>true)).toBeNull();expect(db.invoke).not.toHaveBeenCalled();
+  });
+  it.each(["messages","paige_actions","paige_approval_queue_v"])("discards a late %s result after scope retirement",async table=>{
+    sourcePorts();const ordinary=db.read.getMockImplementation()!;let active=true;
+    db.read.mockImplementation(async name=>{const result=await ordinary(name);if(name===table)active=false;return result;});
+    expect(await readSavedActionEmailDraft(context,()=>active)).toBeNull();expect(db.invoke).not.toHaveBeenCalled();
+  });
+});
 describe("historical composer draft compatibility",()=>{
+  it("opens a saved original Messages reply without reusing old approval words or fetching private body content",async()=>{
+    const original={...pending(),metadata:{action_id:contact,comms_email_draft:{message_id:operation}}};
+    db.items=[original];await render();
+    const open=[...host.querySelectorAll("button")].find(b=>b.textContent==="Open saved reply");
+    expect(open).toBeTruthy();expect(host.textContent).not.toContain("Your inquiry");
+    await act(async()=>{open!.click();await flush();});
+    expect(edit).toHaveBeenCalledWith(original,{subject:"",body:""});expect(db.invoke).not.toHaveBeenCalled();
+  });
   it("reviews the intended email inside the historical model fence, not the JSON wrapper",async()=>{
     const body="```json\n"+JSON.stringify({subject:"The actual reviewed subject",body:"Hello <Dana>,\n\nYour next step is ready."})+"\n```";
     const original={...pending(),category:"client.followup",draft_content:{ok:true,draft:{subject:"Following up",body_text:body,body_html:"<p>Stale wrapper HTML</p>"},recipient:{email:"untrusted@example.test"}}};
@@ -275,6 +308,29 @@ describe("the existing no-thread conversation composer",()=>{
     db.invoke.mockImplementation(async(_name:string,options:{body:Record<string,unknown>})=>({data:{ok:false,outcome:"approval_required",operation_id:options.body.operation_id,fingerprint:"abcdef0123456789",summary:"Email this contact",expires_at:new Date(Date.now()+60000).toISOString(),preview:{kind:"email",to_address:"lead@example.test",from_address:"hello@business.example",subject:"Your inquiry",body_text:"Thanks for asking."}},error:null}));
   }
   function recoveredPorts(){ports();const ordinary=db.read.getMockImplementation()!;const value=persistedReply();const original=db.read.getMockImplementation()!;db.read.mockImplementation(table=>["clients","profiles"].includes(table)?ordinary(table):original(table));return value;}
+  it("bound dialog saves the original prepared email before reviewing its saved source",async()=>{
+    ports();const ordinary=db.read.getMockImplementation()!,version="2026-10-31T20:00:00.123456Z";
+    db.read.mockImplementation(async table=>table==="paige_approval_queue_v"?{data:[{...pending(),updated_at:version,metadata:{action_id:contact}}],error:null}:ordinary(table));
+    await mount(approval,{isSolo:true,activeTenantId:tenant});await press("Edit and review reply");
+    expect(action("Save draft")).toBeTruthy();
+    await mount(approval,{isSolo:true,activeTenantId:tenant,locatorConflicted:true});
+    expect(action("Save draft")?.disabled).toBe(true);await press("Save draft");expect(db.invoke).not.toHaveBeenCalled();
+    await mount(approval,{isSolo:true,activeTenantId:tenant,locatorConflicted:false});
+    db.invoke.mockImplementationOnce(async(_name,opts)=>({data:{ok:true,outcome:"draft_saved",operation_id:opts.body.operation_id,draft_source:{message_id:operation,updated_at:version},attachments:[],receipt_id:operation},error:null}));
+    await press("Save draft");expect(db.invoke.mock.calls[0][1].body).toMatchObject({save_draft:true,approval_id:approval,action_draft_source:{approval_id:approval,updated_at:version}});
+    expect(sent).not.toHaveBeenCalled();expect(closed).not.toHaveBeenCalled();
+    await press("Review reply");expect(db.invoke.mock.calls[1][1].body).toMatchObject({draft_source:{message_id:operation,updated_at:version},approval_id:approval});
+    expect(db.invoke.mock.calls[1][1].body).not.toHaveProperty("action_draft_source");expect(sent).not.toHaveBeenCalled();
+  });
+  it("bound dialog loads the saved reply instead of empty or stale approval words",async()=>{
+    ports();const ordinary=db.read.getMockImplementation()!,version="2026-10-31T20:00:00.123456Z";
+    const ap={...pending(),updated_at:version,metadata:{action_id:contact,comms_email_draft:{message_id:operation}}};
+    db.read.mockImplementation(async table=>table==="paige_approval_queue_v"?{data:[ap],error:null}:ordinary(table));
+    await mount(approval,{isSolo:true,activeTenantId:tenant});expect(action("Open saved reply")).toBeTruthy();
+    db.read.mockImplementation(async table=>table==="messages"?{data:[{id:operation,tenant_id:tenant,contact_id:contact,thread_key:`contact:${tenant}:${contact}`,action_id:contact,connector_id:connector,channel_type:"email",direction:"outbound",status:"draft",updated_at:version,subject:"Saved subject",body_text:"Saved current words.",body_html:null,attachments:[],scheduled_for:null,provider_message_id:null,meta:{source:"original-action-email-draft"}}],error:null}:table==="paige_actions"?{data:[{id:contact,tenant_id:tenant,contact_id:contact,approval_id:approval,action_kind:"client.followup",status:"pending_approval"}],error:null}:table==="paige_approval_queue_v"?{data:[ap],error:null}:ordinary(table));
+    await press("Open saved reply");expect(document.querySelector<HTMLTextAreaElement>('[role="dialog"] textarea')?.value).toBe("Saved current words.");
+    expect(document.querySelector<HTMLInputElement>('[role="dialog"] input[placeholder="Subject"]')?.value).toBe("Saved subject");expect(db.invoke).not.toHaveBeenCalled();
+  });
   it.each(["loading","accountContextLoading","accountContextStatus:not-ready"])("historical dialog held click cannot record during %s",async()=>{recoveredPorts();await mount(approval,{isSolo:true,recordDisabled:true});await press("Finish recording reply");expect(db.role.mock.calls.filter(([name])=>name==="lead_reply_record_send")).toHaveLength(0);expect(db.invoke).not.toHaveBeenCalled();});
   it.each(["loading","accountContextLoading","accountContextStatus:not-ready"])("historical dialog readiness holds and restores the same original for %s",async gate=>{recoveredPorts();await mount(approval,{isSolo:true});expect(action("Finish recording reply")?.disabled).toBe(false);await mount(approval,{isSolo:true,recordDisabled:true});expect(action("Finish recording reply")?.disabled,gate).toBe(true);expect(action("Check sending status")?.disabled,gate).toBe(true);await press("Finish recording reply");expect(db.role.mock.calls.filter(([name])=>name==="lead_reply_record_send")).toHaveLength(0);await mount(approval,{isSolo:true,recordDisabled:false});expect(action("Finish recording reply")?.disabled).toBe(false);await press("Finish recording reply");expect(db.role.mock.calls.filter(([name])=>name==="lead_reply_record_send").map(([,args])=>args)).toEqual([{_approval_id:approval,_operation_id:operation}]);expect(db.invoke).not.toHaveBeenCalled();});
   it.each(["loading","accountContextLoading","accountContextStatus:not-ready"].flatMap(gate=>["actor-read","tenant-read"].map(read=>({gate,read}))))("historical dialog readiness $gate during $read retires its old request without stranding the original",async({read})=>{recoveredPorts();await mount(approval,{isSolo:true});let finish!:(v:unknown)=>void;if(read==="actor-read")db.getUser.mockReturnValueOnce(new Promise(done=>{finish=done;}));else db.role.mockReturnValueOnce(new Promise(done=>{finish=done;}));await act(async()=>{action("Finish recording reply")!.click();for(let i=0;i<8;i++)await Promise.resolve();});await mount(approval,{isSolo:true,recordDisabled:true});await mount(approval,{isSolo:true,recordDisabled:false});await act(async()=>{finish(read==="actor-read"?{data:{user:{id:actor}},error:null}:{data:tenant,error:null});await flush();});expect(db.role.mock.calls.filter(([name])=>name==="lead_reply_record_send")).toHaveLength(0);expect(action("Finish recording reply")?.disabled).toBe(false);await press("Finish recording reply");expect(db.role.mock.calls.filter(([name])=>name==="lead_reply_record_send").map(([,args])=>args)).toEqual([{_approval_id:approval,_operation_id:operation}]);expect(db.invoke).not.toHaveBeenCalled();});

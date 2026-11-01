@@ -5720,3 +5720,15 @@ Memory and legacy callers. Source publication is not Memory or domain approval.
 Consumer mounting, explicit review, selected Setup facts, saved Mission, actual
 Work/CRM receipt/reopen and customer acceptance remain separate unfinished proof.
 No automatic learning, copied store/runtime or algorithm/readiness promotion.
+
+## 2026-11-01 UTC EXP13 - original reviewed Memory client release identity
+
+Original3185/cbc technical source release is recorded in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the original native9/5/4 selected-save/read/retirement adapter in the
+[existing client](../../src/lib/paige-memory-review-service.ts)
+with original authority resolution, negative-only scope and exact version CAS.
+Unknown effects require same-intent inspection, never automatic replay.
+Source publication is not business-fact, Memory or consequential-work approval.
+Consumer mounting, selected Setup facts, saved Mission and actual Work/CRM
+receipt/reopen remain unfinished; no automatic learning or readiness promotion.

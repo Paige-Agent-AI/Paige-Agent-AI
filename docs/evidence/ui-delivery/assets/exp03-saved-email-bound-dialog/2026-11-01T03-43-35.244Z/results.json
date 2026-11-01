@@ -1,0 +1,13 @@
+{
+  "results": [
+    {
+      "pass": false,
+      "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('dialog').getByRole('button', { name: 'Review reply', exact: true })\u001b[22m\n\u001b[2m    - waiting for navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://127.0.0.1:5227/solo/42/clients/conversations?entry=action&surface=bound-dialog&theme=light&contact=e0300000-0000-4000-8000-0000000c0001&approval=e0300000-0000-4000-8000-0000000b0002\"\u001b[22m\n\u001b[2m    - locator resolved to <button disabled data-composer-send=\"\" class=\"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm ring-offset-background transition-[transform,box-shadow,background-color,color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:translate-y-0 bg-gradient-gold text-accent-foreground font-semibold sh…>…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    50 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_ORIGINAL_WORKSPACE_DIALOG",
+  "nativeZoom": "UNVERIFIED",
+  "hub": "UNEXERCISED"
+}

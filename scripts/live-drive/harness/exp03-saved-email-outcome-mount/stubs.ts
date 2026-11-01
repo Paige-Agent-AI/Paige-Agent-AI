@@ -24,6 +24,8 @@ import {commsEmailBodyHtml} from "../../../../supabase/functions/_shared/comms-e
 
 const params = new URLSearchParams(window.location.search);
 const door = params.get("door") ?? "ok";
+const actionEntry=params.get("entry")==="action";
+const dialogEntry=params.get("surface")==="bound-dialog";
 
 export const TENANT = "e0300000-0000-4000-8000-00000000b003";
 const OWNER = "e0300000-0000-4000-8000-00000000a003";
@@ -69,10 +71,15 @@ const savedDraft:Record<string,unknown>={...J,id:MESSAGE,tenant_id:TENANT,channe
  sender:{address:STUDIO},recipients:[{address:JORDAN_EMAIL}],subject:"Re: Kitchen refresh — scope questions",
  body_text:"Saved original reply words.",body_html:"<p>Saved original reply words.</p>",attachments:[],
  action_id:ACTION,source:"comms-draft-reply",meta:{source:"comms-draft-reply"},updated_at:"2026-10-31T04:00:00.123456Z",created_at:ago(2),sent_at:null};
-const actions=[{id:ACTION,tenant_id:TENANT,contact_id:JORDAN,approval_id:APPROVAL,action_kind:"comms-draft-reply",status:"pending_approval",channel_type:"email"}];
-const approvals=[{id:APPROVAL,tenant_id:TENANT,contact_id:JORDAN,status:"pending",category:"comms-draft-reply",metadata:{action_id:ACTION}}];
+if(actionEntry){savedDraft.source="original-action-email-draft";savedDraft.meta={source:"original-action-email-draft"};}
+const actions=[{id:ACTION,tenant_id:TENANT,contact_id:JORDAN,approval_id:APPROVAL,action_kind:actionEntry?"owner.followup_email":"comms-draft-reply",status:"pending_approval",channel_type:"email"}];
+const approvals:Array<Record<string,unknown>>=[{id:APPROVAL,tenant_id:TENANT,contact_id:JORDAN,status:"pending",category:actionEntry?"owner.followup_email":"comms-draft-reply",metadata:{action_id:ACTION},
+ ...(actionEntry?{updated_at:savedDraft.updated_at,draft_content:{channel:"email",subject:savedDraft.subject,body:savedDraft.body_text}}:{})}];
+// Rolling-view compatibility: legacy replies remain reviewable, never first-Save authority.
+if(actionEntry&&params.get("queueVersion")==="missing")delete approvals[0].updated_at;
+if(actionEntry&&params.get("queueVersion")==="invalid")approvals[0].updated_at="unreadable-version";
 const savedResults=new Map<string,{request:string;result:Record<string,unknown>}>();let saveCount=0;
-const jordanMessages: Array<Record<string, unknown>> = [jordanIn,savedDraft];
+const jordanMessages: Array<Record<string, unknown>> = [jordanIn,...actionEntry?[]:[savedDraft]];
 
 const P = msgBase(PRIYA, "Priya", "Okafor", "priya.okafor@example.com");
 const priyaEmail = {
@@ -103,7 +110,7 @@ export const harnessLog: { rpc: Array<{ name: string; args: unknown }>; tables: 
 (window as unknown as { __harness: typeof harnessLog }).__harness = harnessLog;
 
 const tableRows = (table: string): unknown[] =>
-  table === "paige_actions" ? actions : table === "paige_approval_queue_v" ? approvals : table === "messages" ? messages() : table === "threads" ? threads() : table === "channel_connectors" ? connectors : [];
+  table === "clients"&&dialogEntry ? [{...clientRow(JORDAN,"Jordan","Rivera",jordanCardEmail),tenant_id:TENANT}] : table === "paige_actions" ? actions : table === "paige_approval_queue_v" ? approvals : table === "messages" ? messages() : table === "threads" ? threads().filter(t=>!dialogEntry||t.contact_id!==JORDAN) : table === "channel_connectors" ? connectors : [];
 
 // ?supp=bounce|complaint|optout — EXP03 20271120120003: Jordan's do-not-send rows. A governed email's hard bounce is
 // this business's row for the normalised ADDRESS (no contact); a spam report and an opt-out are on the contact.
@@ -120,13 +127,15 @@ function builder(table: string) {
   const filters: Array<[string, unknown]> = [];
   const rowsFor = () => table === "paige_suppressions"
     ? suppressionRows.filter((r) => filters.every(([col, v]) => (r as Record<string, unknown>)[col] === v)).map(({ channel: ch, reason }) => ({ channel: ch, reason }))
-    : tableRows(table);
+    : actionEntry&&table==="messages"&&filters.some(([col])=>col==="meta->comms_email_binding->>approval_id")
+      ?jordanMessages.filter(m=>((m.meta as Record<string,unknown>|undefined)?.comms_email_binding as Record<string,unknown>|undefined)?.approval_id===APPROVAL)
+      :dialogEntry?tableRows(table).filter(row=>filters.every(([col,v])=>col.includes("->")||((row as Record<string,unknown>)[col]??null)===v)):tableRows(table);
   const result = () => ({ data: rowsFor(), error: null, count: rowsFor().length });
   const proxy: Record<string, unknown> = new Proxy({}, {
     get(_t, prop) {
       if (prop === "then") return (ok: (v: unknown) => unknown, bad?: (e: unknown) => unknown) => Promise.resolve(result()).then(ok, bad);
-      if (prop === "single" || prop === "maybeSingle") return () => Promise.resolve({ data: null, error: null });
-      if (table === "paige_suppressions" && (prop === "eq" || prop === "is")) return (col: string, v: unknown) => { filters.push([col, v]); return proxy; };
+      if (prop === "single" || prop === "maybeSingle") return () => Promise.resolve({ data: dialogEntry?rowsFor()[0]??null:null, error: null });
+      if ((dialogEntry||table === "paige_suppressions" || (actionEntry&&table==="messages")) && (prop === "eq" || prop === "is")) return (col: string, v: unknown) => { filters.push([col, v]); return proxy; };
       return () => proxy;
     },
   });
@@ -136,6 +145,7 @@ function builder(table: string) {
 async function rpc(name: string, args: unknown) {
   harnessLog.rpc.push({ name, args });
   if (name === "current_user_tenant_id") return { data: TENANT, error: null };
+  if(name==="is_tenant_admin")return{data:true,error:null};
   if (name === "tenant_comms_readiness") {
     return { data: { tenant_id: TENANT, can_send_sms: false, a2p: "not_started", number_e164: null, delivery: { state: "not_configured", last_inbound_at: null, inbound_reporting: "unavailable" } }, error: null };
   }
@@ -184,8 +194,11 @@ async function invoke(name: string, opts?: { body?: Record<string, unknown> }) {
     if(prior)return prior.request===request?{data:{...prior.result,replayed:true},error:null}:httpError(409,{ok:false,outcome:"refused",code:"COMMS_EMAIL_DRAFT_SAVE_REPLAY_MISMATCH"});
     if(door==="save-refuse")return httpError(409,{ok:false,outcome:"refused",code:"COMMS_EMAIL_DRAFT_SOURCE_CHANGED"});
     const source=body.draft_source as {message_id?:unknown;updated_at?:unknown}|undefined;
-    if(source?.message_id!==MESSAGE||source.updated_at!==savedDraft.updated_at||body.approval_id!==APPROVAL)
+    const origin=body.action_draft_source as {approval_id?:unknown;updated_at?:unknown}|undefined;
+    const first=actionEntry&&!jordanMessages.includes(savedDraft);
+    if((first?(origin?.approval_id!==APPROVAL||origin.updated_at!==approvals[0].updated_at):(source?.message_id!==MESSAGE||source.updated_at!==savedDraft.updated_at))||body.approval_id!==APPROVAL)
       return httpError(409,{ok:false,outcome:"refused",code:"COMMS_EMAIL_DRAFT_SOURCE_CHANGED"});
+    if(first){jordanMessages.push(savedDraft);approvals[0].metadata={action_id:ACTION,comms_email_draft:{message_id:MESSAGE}};}
     saveCount++;
     Object.assign(savedDraft,{subject:command.subject,body_text:command.body,body_html:commsEmailBodyHtml(command.body),
       updated_at:`2026-10-31T04:00:00.${String(123456+saveCount).padStart(6,"0")}Z`,scheduled_for:body.send_at??null});

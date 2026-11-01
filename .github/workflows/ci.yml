@@ -166,7 +166,7 @@ jobs:
       - name: Gmail native connection authority, private credential isolation and concurrent rollback
         run: node scripts/proof/gmail-connection-postgres.mjs 5432
       - name: EXP03 saved email whole atomic carrier, original source approval receipt and refusal recovery
-        run: node --experimental-strip-types scripts/proof/exp03-email-existing-draft-postgres.mjs 5432 --whole-carrier
+        run: node --experimental-strip-types scripts/proof/exp03-email-existing-draft-postgres.mjs 5432 --whole-carrier --action-after-whole --action-candidate --action-current-source --action-use-carrier --action-published
       - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
         run: node scripts/proof/operator-account-archive.mjs --postgres
       - name: Operator provider retirement SQL proof

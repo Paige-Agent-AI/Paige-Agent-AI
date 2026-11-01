@@ -61,7 +61,7 @@ import { MessageBubble as SharedMessageBubble } from "./conversations/MessageBub
 // EXP03 O12 piece 3 — an email reply is checked by the governed email door, inline, before it sends.
 import { useGovernedEmailReply } from "./conversations/useGovernedEmailReply";
 import { doorAnswered, governedReplyText, readDoorAnswer } from "./conversations/governedReply";
-import { parseCommsEmailDraftSource, type CommsEmailDraftSource } from "../../../supabase/functions/_shared/comms-email/draft-source.ts";
+import { parseCommsEmailDraftSource, parseCommsEmailActionDraftSource, type CommsEmailActionDraftSource, type CommsEmailDraftSource } from "../../../supabase/functions/_shared/comms-email/draft-source.ts";
 import { SnoozeMenu } from "./conversations/SnoozeMenu";
 import { LabelPopover } from "./conversations/LabelPopover";
 import { QuickAddDialog } from "@/components/planning/QuickAddDialog";
@@ -482,6 +482,7 @@ export default function ClientsConversations() {
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [editingDraftSource, setEditingDraftSource] = useState<CommsEmailDraftSource | null>(null);
+  const [editingActionDraftSource,setEditingActionDraftSource]=useState<CommsEmailActionDraftSource|undefined>();
   const [editingDraftApprovalId, setEditingDraftApprovalId] = useState<string | undefined>();
   const savedDraftOpenSequence = useRef(0);
   const [reviewDraftRequest, setReviewDraftRequest] = useState<{ id: string; epoch: AccountEpochToken } | null>(null);
@@ -541,7 +542,7 @@ export default function ClientsConversations() {
     setComposeChannel(""); setComposeConnectorId(""); setSubject(""); setBody("");
     setScheduledFor(null); resetAttachments(); setSnippets([]); setSignatures([]); setTemplates([]);
     setAppendSignature(true); setDragOver(false); setUndo(null);
-    setHandlingMode("human"); setLeadReplyApprovalId(null); setComposeApprovalId(undefined); setUserId(null); setDrafting(false); setDraftReadingDoc(false);
+    setHandlingMode("human"); setLeadReplyApprovalId(null); setEditingActionDraftSource(undefined); setComposeApprovalId(undefined); setUserId(null); setDrafting(false); setDraftReadingDoc(false);
     setDraftFlags([]); setSending(false); sendInFlightRef.current = null; setApprovingId(null); setEditingDraftId(null); suppReqRef.current += 1;
     portalRequestIdsRef.current.clear();
   }, [activeTenantId, resetAttachments]);
@@ -1009,7 +1010,7 @@ export default function ClientsConversations() {
       setComposeConnectorId(chosenConnector?.id ?? "");
       setComposeChannel(chosenConnector?.channel_type ?? "");
     }
-    setEditingDraftId(null); setLeadReplyApprovalId(null);
+    setEditingDraftId(null); setLeadReplyApprovalId(null); setEditingActionDraftSource(undefined);
     setSubject("");
     setBody("");
   }, [selectedKey, selected, composerConnectors, portalOffered, portalLinked, activeTenantId]);
@@ -1288,7 +1289,7 @@ export default function ClientsConversations() {
   const resetComposer = useCallback(() => {
     if (savedDraftToastRef.current !== null) { toast.dismiss(savedDraftToastRef.current); savedDraftToastRef.current = null; }
     setBody(""); setSubject(""); resetAttachments();
-    setScheduledFor(null); setEditingDraftId(null);
+    setScheduledFor(null); setEditingDraftId(null); setEditingActionDraftSource(undefined);
   }, [resetAttachments]);
 
   const followupEpoch=accountEpochRef.current.capture();
@@ -1314,8 +1315,13 @@ export default function ClientsConversations() {
     attachments, scheduledFor, epoch: accountEpochRef.current, composerRef: composerWrapRef, settingsHref: connectionsHref,
     draftSource: editingDraftId && composeChannel === "email" ? editingDraftSource : undefined,
     draftApprovalId: editingDraftId && composeChannel === "email" ? editingDraftApprovalId : undefined,
+    actionDraftSource:composeChannel==="email"?editingActionDraftSource:undefined,
     onDraftSaved: ({source,attachments:savedFiles})=>{
-      if(source.message_id!==editingDraftId)return;
+      if(editingDraftId?source.message_id!==editingDraftId:!editingActionDraftSource||editingActionDraftSource.approval_id!==leadReplyApprovalId)return;
+      if(editingActionDraftSource){
+        setEditingDraftId(source.message_id);setEditingDraftApprovalId(editingActionDraftSource.approval_id);
+        setEditingActionDraftSource(undefined);setLeadReplyApprovalId(null);
+      }
       setEditingDraftSource(source);restoreAttachments(savedFiles);
       savedDraftToastRef.current = toast.success("Draft saved. Nothing sent.", { id: savedDraftToastRef.current ?? undefined });void load();void loadThreads();
     },
@@ -1342,6 +1348,7 @@ export default function ClientsConversations() {
   }, [reviewDraftRequest, editingDraftId, editingDraftSource, composeChannel, checkSavedDraft]);
   useBeforeUnloadGuard(!!leadReplyApprovalId && (!!subject.trim() || !!body.trim() || leadReplyReview.blocksEditing));
   const cancelLeadReply=()=>{
+    if(governedReply.blocksEditing)return;
     if(!leadReplyReview.reset())return;
     resetComposer();setLeadReplyApprovalId(null);
     setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("approval");return next;},{replace:true});
@@ -1549,6 +1556,7 @@ export default function ClientsConversations() {
 
   // ── Send a fresh reply (or an edited draft) into the selected thread ──────────────
   const send = async () => {
+    if(governedReply.blocksEditing)return;
     if (leadReplyApprovalId) { if(followupLocatorConflict){toast.error("Return to the original reply before approving it.");return;}await leadReplyReview.prepare(); return; }
     if (followupLocator.kind !== "none" && !(editingDraftId && followupLocator.kind==="bound" && followupLocator.approvalId===editingDraftApprovalId && followupLocator.contactId===selected?.contactId)) { toast.error("Open the selected original reply before sending. No replacement was selected."); return; }
     if (!selected) return;
@@ -1845,7 +1853,7 @@ export default function ClientsConversations() {
       : `Reply to ${selected.name}…  (drop a file to attach)`,
     rows: 2,
     sendLabel: governedReply.checking ? "Checking…" : leadReplyApprovalId ? "Review reply" : portalMode ? "Send" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
-    note: leadReplyApprovalId ? <>Review the exact sender and message before approving. <button type="button" className="underline" disabled={leadReplyReview.blocksEditing} onClick={cancelLeadReply}>Cancel reply edit</button></> : portalUnreachable ? undefined : portalMode ? portalNote
+    note: leadReplyApprovalId ? <>Review the exact sender and message before approving. <button type="button" className="underline" disabled={leadReplyReview.blocksEditing||governedReply.blocksEditing} onClick={cancelLeadReply}>Cancel reply edit</button></> : portalUnreachable ? undefined : portalMode ? portalNote
       // Why Send is held for this channel, in words (20271120120003): the bounced address, the spam report, the opt-out.
       : composeHeldNote ? (
         <span data-compose-held-note className="inline-flex items-start gap-1.5 text-foreground">
@@ -1922,13 +1930,13 @@ export default function ClientsConversations() {
     dictationScopeEpoch: `${activeTenantId ?? "resolving"}|${selected.key}|${editingDraftId ?? "new-reply"}`,
     onDictate: (seg) => handleBodyChange(appendDictation(bodyRef.current, seg)),
     onDictateError: (msg) => toast.error(msg),
-    editingDraft: !!editingDraftId,
-    onCancelEdit: resetComposer,
-    onSaveDraft: editingDraftId && composeChannel==="email" && editingDraftSource ? ()=>{void governedReply.saveDraft();} : undefined,
+    editingDraft: !!editingDraftId || !!editingActionDraftSource,
+    onCancelEdit: editingActionDraftSource?cancelLeadReply:resetComposer,
+    onSaveDraft: composeChannel==="email" && ((editingDraftId&&editingDraftSource)||editingActionDraftSource) ? ()=>{if(!leadReplyReview.blocksSending)void governedReply.saveDraft();} : undefined,
     savingDraft: governedReply.savingDraft,
     saveUnconfirmed: governedReply.saveUnconfirmed,
     draftSaveNote: governedReply.draftSaveNote,
-    draftSaveDisabled: !selected.contactId || uploading || drafting || governedReply.savingDraft || (!governedReply.saveUnconfirmed && governedReply.phase!=="composing") || (isSolo && handlingMode==="governed"),
+    draftSaveDisabled: !selected.contactId || uploading || drafting || leadReplyReview.blocksSending || governedReply.savingDraft || (!governedReply.saveUnconfirmed && governedReply.phase!=="composing") || (isSolo && handlingMode==="governed"),
     dragOver,
     onDropFiles: uploadComposerFiles,
     onDragOverZone: () => setDragOver(true),
@@ -2186,6 +2194,14 @@ export default function ClientsConversations() {
                 }
                 if(approval.tenant_id!==activeTenantId||approval.contact_id!==selected.contactId
                   ||followupLocator.kind==="bound"&&(followupLocator.contactId!==selected.contactId||followupLocator.approvalId!==approval.id))return;
+                if(approval.metadata&&Object.prototype.hasOwnProperty.call(approval.metadata,"comms_email_draft")){
+                  const id=approval.metadata.comms_email_draft?.message_id;
+                  const saved=typeof id==="string"?rows.find(m=>m.id===id&&m.action_id===approval.metadata.action_id):undefined;
+                  if(!saved){toast.error("Reopen this saved reply in Drafts to load its current version.");void load();return;}
+                  void openSavedEmailDraft(saved);return;
+                }
+                try{setEditingActionDraftSource(parseCommsEmailActionDraftSource({approval_id:approval.id,updated_at:approval.updated_at}));}
+                catch{toast.error("Reopen this reply to load its current saved version.");return;}
                 setLeadReplyApprovalId(approval.id);setComposeChannel("email");setAppendSignature(false);
                 restoreFollowupOrigin(selected.contactId!,approval.id);
                 const connector=composerConnectors.find(c=>c.id===composeConnectorId&&c.channel_type==="email")??composerConnectors.find(c=>c.channel_type==="email");

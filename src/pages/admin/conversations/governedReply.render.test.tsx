@@ -66,12 +66,12 @@ vi.mock("@/integrations/supabase/client", () => {
       from: (table: string) => builder(table),
       rpc: (name: string, args?: { _id?: string }) => {
         if (name === "cancel_scheduled_message") { db.cancellations.push(args?._id ?? ""); return Promise.resolve({ data: true, error: null }); }
-        return Promise.resolve({ data: name === "current_user_tenant_id" ? db.rpcTenant : [], error: null });
+        return Promise.resolve({ data: name === "current_user_tenant_id" ? db.rpcTenant : name==="is_tenant_admin"?true:[], error: null });
       },
       channel: () => channel,
       removeChannel: () => {},
       auth: {
-        getUser: () => Promise.resolve({ data: { user: { id: "owner-1" } } }),
+        getUser: () => Promise.resolve({ data: { user: { id: "70000000-0000-4000-8000-000000000001" } } }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
       },
       functions: {
@@ -108,7 +108,7 @@ vi.mock("@/integrations/supabase/client", () => {
   }
 });
 vi.mock("@/hooks/useTenantContext", () => ({
-  useTenantContext: () => ({ activeTenantId: db.tenant, activeTenant: { id: db.tenant, account_number: "3855", account_type: "solo" }, accountContextStatus: "ready" }),
+  useTenantContext: () => ({ activeUserId:"70000000-0000-4000-8000-000000000001",activeTenantId: db.tenant, activeTenant: { id: db.tenant, account_number: "3855", account_type: "solo" }, accountContextStatus: "ready" }),
 }));
 vi.mock("@/components/ui/paige", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/components/ui/paige")>()),
@@ -800,6 +800,24 @@ describe("motion", () => {
 });
 
 describe("everything else keeps its own path", () => {
+  it("the original prepared action offers unsent Save and then reviews the same saved Messages source",async()=>{
+    db.messages=[];
+    db.approvals=[{id:CONN_2,tenant_id:TENANT,contact_id:CONTACT,status:"pending",updated_at:DRAFT_VERSION,
+      category:"owner.followup_email",draft_content:{channel:"email",subject:"Original follow-up",body:"Original unsent words."},metadata:{action_id:CONTACT}}];
+    const host=await mount();
+    await click(buttonByText(host,"Edit and review reply"));
+    expect(buttonByText(host,"Save draft")).toBeTruthy();expect(db.invokes).toEqual([]);
+    await write(host,"Edited follow-up","Edited unsent words.");
+    db.door=[b=>({data:{ok:true,outcome:"draft_saved",operation_id:b.operation_id,draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION},attachments:[],receipt_id:CONN_2},error:null})];
+    await click(buttonByText(host,"Save draft"));
+    expect(db.doorBodies[0]).toMatchObject({save_draft:true,action_draft_source:{approval_id:CONN_2,updated_at:DRAFT_VERSION},approval_id:CONN_2,command:{subject:"Edited follow-up",body:"Edited unsent words."}});
+    expect(db.doorBodies[0]).not.toHaveProperty("draft_source");expect(db.doorBodies[0]).not.toHaveProperty("approved_fingerprint");
+    expect(db.sendBodies).toEqual([]);
+    expect(document.activeElement).toBe(textarea(host));
+    await click(sendButton(host));
+    expect(db.doorBodies[1]).toMatchObject({draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION},approval_id:CONN_2});
+    expect(db.doorBodies[1]).not.toHaveProperty("action_draft_source");expect(db.doorBodies[1]).not.toHaveProperty("save_draft");
+  });
   it("an SMS reply still queues through send-message with the undo window", async () => {
     const SMS_KEY = `contact:${TENANT}:${CONTACT}`;
     db.connectors = [{ id: SMS_CONN, channel_type: "sms", provider: "twilio", display_name: "Business line", from_address: "+14045550138", from_name: null, inbound_address: null, status: "active", active: true }];

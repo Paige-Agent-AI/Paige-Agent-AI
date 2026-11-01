@@ -31,6 +31,14 @@ afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
 
 const legacyComposer = () => ({ok:true,draft:{subject:"Your inquiry",body_text:"Hello <Dana>, thanks for asking.",body_html:"<p>Different untrusted HTML</p>"},recipient:{email:"untrusted@example.test"},summary:"Untrusted composer summary"});
 describe("historical composer draft compatibility",()=>{
+  it("opens a saved original Messages reply without reusing old approval words or fetching private body content",async()=>{
+    const original={...pending(),metadata:{action_id:contact,comms_email_draft:{message_id:operation}}};
+    db.items=[original];await render();
+    const open=[...host.querySelectorAll("button")].find(b=>b.textContent==="Open saved reply");
+    expect(open).toBeTruthy();expect(host.textContent).not.toContain("Your inquiry");
+    await act(async()=>{open!.click();await flush();});
+    expect(edit).toHaveBeenCalledWith(original,{subject:"",body:""});expect(db.invoke).not.toHaveBeenCalled();
+  });
   it("reviews the intended email inside the historical model fence, not the JSON wrapper",async()=>{
     const body="```json\n"+JSON.stringify({subject:"The actual reviewed subject",body:"Hello <Dana>,\n\nYour next step is ready."})+"\n```";
     const original={...pending(),category:"client.followup",draft_content:{ok:true,draft:{subject:"Following up",body_text:body,body_html:"<p>Stale wrapper HTML</p>"},recipient:{email:"untrusted@example.test"}}};

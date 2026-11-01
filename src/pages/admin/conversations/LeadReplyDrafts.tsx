@@ -87,13 +87,15 @@ function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,recor
     // Review needs only these words; never traverse untrusted composer metadata.
     ?shapeEmailDraft({ok:true,draft:{subject:nested.subject,body:nested.body,body_text:nested.body_text,body_html:nested.body_html}}):stored;
   let ready=false;
+  const savedLocator=object(object(approval.metadata)?.comms_email_draft);
+  const hasSaved=typeof savedLocator?.message_id==="string"&&UUID.test(savedLocator.message_id);
   try { if(draft?.channel==="email") { parseCommsEmailCommand({action:"comms.email_send",contact_id:contactId,connector_id:null,subject:draft.subject,body:draft.body});ready=true; } } catch { /* Legacy malformed content grants no send authority. */ }
   return <div className="space-y-2">
     <p className="text-sm font-medium">{current?.original?"Original reply":ready?"PAIGE prepared a reply":"Reply draft needs attention"}</p>
-    {!current?.original&&(ready?<p className="break-words text-sm text-muted-foreground">{draft.subject as string}</p>:<p className="text-sm text-muted-foreground">No complete email draft is available.</p>)}
+    {!current?.original&&!hasSaved&&(ready?<p className="break-words text-sm text-muted-foreground">{draft.subject as string}</p>:<p className="text-sm text-muted-foreground">No complete email draft is available.</p>)}
     {!canEdit?<p className="text-xs text-muted-foreground">An owner or admin can review and approve this reply.</p>
       : !current||current.loading?<p role="status" className="text-sm text-muted-foreground">Checking this reply's recorded status…</p>
-      : current.editable?(ready?<Button variant="outline" size="sm" disabled={disabled} onClick={()=>{if(isCurrent())onEdit(approval,{subject:draft!.subject as string,body:draft!.body as string});}}>Edit and review reply</Button>:null)
+      : current.editable?(hasSaved||ready?<Button variant="outline" size="sm" disabled={disabled} onClick={()=>{if(isCurrent())onEdit(approval,hasSaved?{subject:"",body:""}:{subject:draft!.subject as string,body:draft!.body as string});}}>{hasSaved?"Open saved reply":"Edit and review reply"}</Button>:null)
       : current.original?<OriginalReplyReport actorId={actorId} tenantId={tenantId} contactId={contactId} threadKey={threadKey} approvalId={approval.id} original={current.original} disabled={recordDisabled} current={isCurrent}/>
       : <><p role="status" className="text-sm text-muted-foreground">{current.note}</p><Button variant="outline" size="sm" disabled={recordDisabled} onClick={()=>{void refresh();}}>Check sending status</Button></>}
   </div>;

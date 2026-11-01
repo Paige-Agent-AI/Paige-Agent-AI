@@ -2068,3 +2068,37 @@ uses existing built-in predicates, not a custom operator or credential mechanism
 The receiver must bind to the future committed native audit and current permissible
 recipient facts, never generic admin-notifier success or fire-and-forget delivery;
 it must not rerun pre-act holder-none against a legitimate working post-state.
+
+### October31 — original recovery actor/holder lock preparation, local only
+
+Source custody ANT147/1b2da248 covers new inert
+`scripts/proof/exp08-owner-recovery-writers.sql` and its owning local proof.
+This first part is a PRIVATE lock step only, not the public recovery RPC or an
+ownership writer. It locks the actual live identity/super-admin role, then keeps
+the original members-before-tenant order and re-resolves original I1 eligibility
+and holder state after waits. It returns the previous pointer without changing
+it. Authenticated, anon and service-role callers cannot execute it directly;
+caller-set recovery flags grant no authority. No native version/apply/publication.
+
+Actual PostgreSQL21 controls PASS, including four real two-connection tenant
+waits: newly working, paused or archived states refuse after commit; rollback
+preserves legitimate admission. Original super-admin/I1 eligibility/holder-state
+source is loaded, with minimal Auth/table/company/owner predicate ports explicitly
+named. No recovery effect, audit, receipt, private notification or email is proved.
+Raw `exp08-owner-recovery-writers-waits.log` SHA256
+`9ab8f04ace8d609f32d00613da88dd876a273e686784dfc370fd03beaeac733c`;
+candidate SHA256 `a62a5e12b7c4af55cfe805033ecd9429184b1b73f7ca1c4a0c3d8ff35f7411e4`.
+Own disposable database removed. Initial fixture selected the zero-argument
+super-admin overload and genuinely failed42883; retained log152cfd50. The fixture
+now selects the real UUID overload explicitly; no product assertion was removed.
+
+Original current revoke7d62c3fa still consumes E02 Billing revokef8fa3a42 and
+workspace-owner-scope3d33a31f. The approved recovery administrator cannot impersonate
+an owner to satisfy that seam. Original ANT138/1327085a requests the actual original
+Billing-owner recovery cleanup contract; no bypass, duplicated financial writer
+or broad grant is introduced. Grant/set-holder/private receipt integration can
+continue; full R9 revocation remains incomplete until this dependency is resolved.
+Original public writer bodies/ACL, self-step-down, entity link and Billing behavior
+are unchanged by this private preparation. Full source review, native metadata/
+replay guards, authorized effect/result/no-duplicate recovery and original-suite
+integration remain owed. The full assignment remains **STILL CODING**.

@@ -105,3 +105,43 @@ submit26/JWTtrue and worker87/JWTfalse, expected per-function config paths.
 All6 submit and39 worker source files match exact0b5a normalizedLF with zero
 different/unbound files. No handler/provider invocation or customer content was
 used; this is package source proof, not binary runtime/customer acceptance.
+
+Owner-requested October31 reground refreshed live Locks/original issues and
+normally composed current main94f48b8a9. Required verify124452434494 on6b FAILED,
+not a release: exact official artifacts attribute29 unit failures to the original
+business-review-document-worker suite resolving Deno-only parser npm imports.
+Unmodified local suite reproduced29FAIL before repair. Defer parser import to
+original Knowledge file-read callback after native claim/source admission;
+unrelated document routes no longer load the binary parser. No E02 tests,
+assertions, writer, authority or receipt changed. Fresh original business-review,
+Knowledge worker and binary handoff suites43PASS; frozen Deno2.1.4 actual worker
+graph PASS. These are source/runtime-graph controls, not authenticated acceptance.
+
+The other verify failure is distinct: latest Deno ratchet refused pinned
+unpdf2.1.0 under its minimum dependency age policy; base/head Chat diagnostics
+were identical. No dependency age policy, parser version, lock, baseline or gate
+is weakened. New exact-head CI must actually pass; prior failed run remains FAIL.
+Official log connector returned Transportclosed twice, then official artifact
+receipts13031393580/13032442554 provided the actual failure attribution.
+
+Current UI fixture reached initial Add/Files dialog and multiple chooser only;
+automatic approval review stopped subsequent synthetic file selection/observation
+because its usage limit was reached. No current upload/reopen proof or alternate
+browser/automation workaround. Full bulk UI/authenticated workflow remains
+UNVERIFIED and agreement-to-saved-game-plan/actual Work NOT READY.
+
+Exact eab2 hosted ratchet artifact13063655093 supersedes its old dependency-age
+failure for THIS run: dependencies now resolve, but newer compiler reports
+TS2322 at binary-adapters.ts29 (generic Uint8Array buffer is not BlobPart).
+Copy the exact compressed view into an owned ArrayBuffer; do not cast away the
+error or pass the entire backing buffer. Original streamed expansion counting,
+limits, cancellation, parser versions/lock and authority remain unchanged.
+Fresh TypeScript5.9.3 compile of the exact original expression reproducesTS2322;
+new exact expression has ZERO diagnostics. Initial virtual-host probe failed to
+locate its synthetic type file (TS6053), not product/type proof; corrected host
+then produced the stated red/green result. No full Deno-ratchet PASS inferred.
+Fresh actual pinned Deno parser suite9PASS and frozen Deno2.1.4 worker graphPASS;
+standard-font warnings retained. New exact CI/review/managed source still owed.
+All57 current open-PR file manifests plus3115page2 had no peer binary-adapter
+source overlap. Separate shared paige-browser render check FAILED on eab2;
+exact cause remains unverified until actual failure evidence, no UI bypass.

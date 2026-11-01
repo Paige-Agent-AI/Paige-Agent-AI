@@ -209,4 +209,23 @@ describe("releaseScheduledCommsEmail with files", () => {
     expect(await releaseScheduledCommsEmail(await binding(), M, t.d)).toEqual({ result: "settled" });
     expect(t.closes).toEqual([]);
   });
+  it("a scheduled saved reply records only its original accepted operation, without another transport",async()=>{
+    const approval="80000000-0000-4000-8000-000000000001";
+    const raw={...await binding(),approval_id:approval,governance:{approval_id:approval,draft_source:{message_id:M,updated_at:"2026-10-30T16:00:00.123456Z"}},
+      command:{action:"comms.email_send",contact_id:C,connector_id:S,subject:"Hi",body:"Hello there"}};
+    for(const status of ["recorded","pending_record"] as const){
+      const t=deps("provider_accepted",null);let reads=0;const records:unknown[]=[];
+      t.d.readBinding=async()=>({...raw,state:++reads===1?"prepared":"provider_accepted",eligible:true});
+      t.d.recordAccepted=async input=>{records.push(input);return status;};
+      expect(await releaseScheduledCommsEmail(raw,M,t.d)).toEqual({result:"released",record_status:status});
+      expect(t.sends).toHaveLength(1);expect(records).toEqual([{approvalId:approval,operationId:OP,actorUserId:A}]);
+    }
+  });
+  it("a saved scheduled reply without its recorder cannot dispatch",async()=>{
+    const approval="80000000-0000-4000-8000-000000000001",t=deps("provider_accepted",null);
+    const raw={...await binding(),approval_id:approval,governance:{approval_id:approval,draft_source:{message_id:M,updated_at:"2026-10-30T16:00:00.123456Z"}},
+      command:{action:"comms.email_send",contact_id:C,connector_id:S,subject:"Hi",body:"Hello there"}};
+    expect(await releaseScheduledCommsEmail(raw,M,t.d)).toEqual({result:"left",reason:"approval_recorder_unavailable"});
+    expect(t.sends).toEqual([]);
+  });
 });

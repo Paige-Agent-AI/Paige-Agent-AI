@@ -189,7 +189,9 @@ export function removalRefusal(raw: string | null | undefined, personName: strin
     // still have a perfectly good session. Telling them to sign in again is both untrue and useless.
     // One sentence that is true of both, rather than a guess at which.
     [/authentication required/, { message: "This did not run, and nothing was removed. Reopen Team — or sign in again if you have been signed out.", retryable: false, reconciled: false }],
+    [/^team_member_identity_unavailable:/, { message: "Your account access could not be confirmed, so nothing was removed. Check your access before opening Team again.", retryable: false, reconciled: false }],
     [/not on this workspace/, { message: `${personName} is no longer on this team. Nothing further was changed.`, retryable: false, reconciled: true }],
+    [/^team_member_protected:/, { message: `${personName}'s Paige account is protected, so they can't be removed from the business here. Nothing changed.`, retryable: false, reconciled: false }],
     [/cannot remove admin role from platform owner/, { message: `${personName} holds a platform role that can't be given up here, so nothing was changed.`, retryable: false, reconciled: false }],
   ];
   for (const [pattern, refusal] of known) if (pattern.test(text)) return refusal;

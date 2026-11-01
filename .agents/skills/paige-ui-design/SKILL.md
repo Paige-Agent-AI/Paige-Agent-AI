@@ -50,7 +50,7 @@ Read each module's `.agents/skills/<name>/SKILL.md` when its concern applies; a 
 
 1. State the user's job, audience, primary action, and visual direction. Inspect the real page, data contract, permissions, existing tokens, and neighboring states.
 2. Map first use, loading, empty, success, validation, refusal, error, retry, cancellation, close/back, permission, and workspace-switch behavior where relevant.
-3. If the work creates or materially changes a flow, use the installed Flow Prototype skill before production implementation. Obtain the required owner approval for intended behavior under the current delivery contract.
+3. If the work creates or materially changes a flow, consult the installed Flow Prototype skill. Follow the owner's intended behavior; record unrun prototype/browser proof as `UNVERIFIED`, complete technical review and genuine engineering CI, merge/deploy safely, then verify live.
 4. Reuse Paige's established design system. Add color, hierarchy, hover, focus, motion, and reduced-motion behavior only when they improve comprehension or action.
 5. Implement real editable controls and real exits. Never simulate success, authorization, provider capability, metrics, history, or data.
 6. Verify the complete affected flow, not just the edited file. Separate automated, static, rendered, behavioral, authenticated-runtime, and `UNVERIFIED` evidence.
@@ -58,7 +58,7 @@ Read each module's `.agents/skills/<name>/SKILL.md` when its concern applies; a 
 
 ## Material flow test
 
-Flow Prototype is required when users gain, lose, or materially change a goal, choice, step, transition, state, confirmation, exit, recovery path, or side effect. Examples include forms, onboarding, funnels, drawers, modals, settings, payment and connection flows, destructive actions, and multi-state interactions.
+Use Flow Prototype to explore changes to a user's goal, choice, step, transition, state, confirmation, exit, recovery path, or side effect. Examples include forms, onboarding, funnels, drawers, modals, settings, payment and connection flows, destructive actions, and multi-state interactions. Prototype/browser proof is reported truthfully and verified live after safe release; it is not a premerge requirement.
 
 A token-only correction, exact copy correction, or presentation-only adjustment that changes no action, state, exit, or consequence may record `FLOW_PROTOTYPE: NOT_REQUIRED` with a reason. Flow-by-Flow and this skill still apply.
 

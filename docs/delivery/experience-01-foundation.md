@@ -2,6 +2,23 @@
 
 ### Continued authority/full-schema preparation — November 1
 
+Actual exact `44b83abeffce9ab28173dbbda43802a62e301106` ENTIRE Spine run
+41324043026 SUCCESS: published job124900126163 confirms49 focused input/client,
+49 disposable native/race and44 actual full-schema assertions PASS. Whole frontend
+Test and all other verify guards passed, but required Build failed at Node20's
+~2GB heap limit; subsequent size check found no dist/assets. The actual GitHub
+rendered log confirms fatal JavaScript heap exhaustion, not a size-budget breach.
+Connector log retrieval failed Transport closed; read-only GitHub UI supplied the
+actual error, not product UI/prototype proof. Same-head local locked Build and
+unchanged size guard PASS394≤520kB; installed SDK synthetic fetch serialized the
+original6/8/3 correctly (not authenticated/native customer proof). Build-only
+NODE_OPTIONS4096 is the finite repair; no node pin/command/test/size/security gate
+changes. New final head must pass all required checks before ordinary release.
+Current main9e5b285/E04 factual closeout is preserved in full.
+Controlled local Node20.20.2 with4096MB PASS2m36s on identical runtime source;
+the unchanged Solo entry guard is rerun against that emitted output. This is
+supporting engineering proof, not a substitute for renewed hosted checks.
+
 First actual full-schema authority step SUCCESS on
 `3a59be3a6a2e8071a3dc38cca46f9e5ff4a17336`, existing Spine run41321995720 /
 job124893986291 / step143. This uses the actual schema/getters/writer/authority

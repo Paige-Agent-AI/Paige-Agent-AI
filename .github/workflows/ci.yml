@@ -975,6 +975,8 @@ jobs:
 
       - name: Build
         if: ${{ !cancelled() }}
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
         run: npm run build
 
       - name: Solo entry size guard (chat-first first load)

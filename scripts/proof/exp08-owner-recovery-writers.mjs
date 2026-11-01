@@ -17,7 +17,7 @@ function original(file,name,argumentPrefix=''){
  const s=source(file),a=s.indexOf('CREATE OR REPLACE FUNCTION public.'+name+'('+argumentPrefix);
  assert.ok(a>=0,name);const tail=s.slice(a),tag=tail.match(/AS\s+(\$[a-z_]*\$)/i);
  assert.ok(tag,name);const end=tail.indexOf(tag[1]+';',tag.index+tag[0].length);
- assert.ok(end>0,name);return tail.slice(0,end+tag[1].length+1);
+ assert.ok(end>0,name);return tail.slice(0,end+tag[1].length+1).replace(/\r\n/g,'\n');
 }
 const db=new OperatorPostgresFixture(Number(process.env.PGPORT));
 const actor='e8000000-0000-4000-8000-000000091001',holder='e8000000-0000-4000-8000-000000091002';
@@ -91,17 +91,26 @@ try{
  CREATE SCHEMA auth;
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('test.actor',true),'')::uuid$$;
  CREATE TYPE public.app_role AS ENUM('super_admin','platform_admin','admin');
+ CREATE TYPE public.tenant_role AS ENUM('owner','admin','member');
  CREATE TABLE auth.users(id uuid PRIMARY KEY,deleted_at timestamptz,banned_until timestamptz);
  CREATE TABLE public.user_roles(user_id uuid,role public.app_role,PRIMARY KEY(user_id,role));
  CREATE TABLE public.tenants(id uuid PRIMARY KEY,owner_user_id uuid,account_type text,archived_at timestamptz,company boolean DEFAULT false,
  platform_fee_bps integer,parent_tenant_id uuid,stripe_customer_id text,stripe_subscription_id text);
- CREATE TABLE public.tenant_members(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,user_id uuid,is_owner boolean,status text);
+ CREATE TABLE public.tenant_members(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,user_id uuid,is_owner boolean,status text,
+ role public.tenant_role DEFAULT 'member',business_owner_id uuid,updated_at timestamptz DEFAULT now());
+ CREATE TABLE public.paige_audit_log(id uuid DEFAULT gen_random_uuid(),actor_user_id uuid,actor_role text,
+ action text,target_type text,target_id uuid,payload jsonb,tenant_id uuid);
  -- Explicit ports for dependencies beneath the original I1 helpers, not a claimed full native schema.
  CREATE FUNCTION public.is_company_workspace(t uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT company FROM public.tenants WHERE id=t$$;
  CREATE FUNCTION public.is_tenant_owner(u uuid,t uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT EXISTS(
  SELECT 1 FROM public.tenant_members WHERE tenant_id=t AND user_id=u AND is_owner AND status='active')$$;
  ${original('20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c.sql','is_super_admin','_user_id uuid')}
+ ${original('20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c.sql','is_super_admin',')')}
+ ${original('20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c.sql','is_platform_owner',')')}
  ${original('20271116020008_exp08_co_owner_authority.sql','is_tenant_account_holder')}
+ ${original('20271116020008_exp08_co_owner_authority.sql','grant_co_owner')}
+ REVOKE ALL ON FUNCTION public.grant_co_owner(uuid,uuid) FROM PUBLIC,anon;
+ GRANT EXECUTE ON FUNCTION public.grant_co_owner(uuid,uuid) TO authenticated,service_role;
  ${original('20271120010008_exp08_owner_invitations.sql','_solo_shell_tenant')}
  ${original('20271120010008_exp08_owner_invitations.sql','_tenant_account_holder_state')}`);
  assert.equal(scalar("SELECT to_regprocedure('public._exp08_lock_owner_recovery(uuid)') IS NULL"),'t');
@@ -144,8 +153,7 @@ try{
  await identityUpdateWait('admission identity lock blocks competing ban',`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${actor}'`);
  await identityUpdateWait('admission identity lock blocks competing soft deletion',`UPDATE auth.users SET deleted_at=now() WHERE id='${actor}'`);
  // Add the real I1 pointer guard/audit only after preserving all original30 admission controls.
- db.run(`CREATE TABLE public.paige_audit_log(id uuid DEFAULT gen_random_uuid(),actor_user_id uuid,actor_role text,
- action text,target_type text,target_id uuid,payload jsonb,tenant_id uuid);
+ db.run(`
  ${original('20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c.sql','is_super_admin',')')}
  ${original('20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c.sql','is_platform_owner',')')}
  ${original('20271120010008_exp08_owner_invitations.sql','guard_tenant_owner_only_columns')}
@@ -203,6 +211,46 @@ try{
  assert.equal(scalar('SELECT count(*) FROM public.paige_audit_log'),'0');
  results.push({case:'late trigger failure atomically removes pointer/audit and restores recovery flag',passed:true});
  db.run('DROP TRIGGER zz_fixture_recovery_failure ON public.tenants;DROP FUNCTION public.fixture_recovery_audit_failure()');
+ // Original42 before shared original-grant kernel controls.
+ clear();db.run(`INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status) VALUES('${tenant}','${holder}',false,'active')`);
+ await denied('original public SOLO grant no longer admits a platform role outside recovery',
+  ()=>db.exec(`SELECT public.grant_co_owner('${tenant}','${holder}')`),/CO_OWNER_FORBIDDEN/);
+ await db.exec(`SELECT public._exp08_grant_co_owner('${tenant}','${holder}',true)`);
+ assert.equal(scalar(`SELECT is_owner AND role='owner' FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
+ assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE action='tenant:grant_co_owner' AND actor_user_id='${actor}' AND tenant_id='${tenant}'`),'1');
+ results.push({case:'private recovery grant executes the conserved original grant body and original audit',passed:true});
+ const kernelState=state(),publicMetadata=scalar("SELECT (to_jsonb(p)-'prosrc') FROM pg_proc p WHERE oid='public.grant_co_owner(uuid,uuid)'::regprocedure");
+ await db.exec(candidate);assert.equal(state(),kernelState);
+ assert.equal(scalar("SELECT (to_jsonb(p)-'prosrc') FROM pg_proc p WHERE oid='public.grant_co_owner(uuid,uuid)'::regprocedure"),publicMetadata);
+ results.push({case:'grant kernel exact replay preserves original public metadata and native business rows',passed:true});
+ for(const role of ['authenticated','anon','service_role']){
+  db.role=role;await denied(role+' cannot invoke private grant kernel',()=>db.exec(`SELECT public._exp08_grant_co_owner('${tenant}','${holder}',true)`));db.role='';
+ }
+ await db.exec(`SELECT public._exp08_set_recovery_holder('${tenant}','${holder}')`);
+ db.run(`INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status) VALUES('${tenant}','${actor}',false,'active')`);
+ db.actor=holder;await db.exec(`SELECT public.grant_co_owner('${tenant}','${actor}')`);
+ assert.equal(scalar(`SELECT is_owner AND role='owner' FROM public.tenant_members WHERE user_id='${actor}'`),'t');
+ results.push({case:'actual account holder retains original public grant ABI and effect',passed:true});
+ await denied('ordinary account holder is not recovery administrator',()=>db.exec(`SELECT public._exp08_grant_co_owner('${tenant}','${actor}',true)`));
+ db.actor=actor;
+ await denied('non-holder platform co-owner still cannot use public SOLO grant outside recovery',
+  ()=>db.exec(`SELECT public.grant_co_owner('${tenant}','${holder}')`),/CO_OWNER_FORBIDDEN/);
+ await denied('null private recovery mode grants no authority',()=>db.exec(`SELECT public._exp08_grant_co_owner('${tenant}','${holder}',NULL)`));
+ const beforeDrift=state();
+ db.run('GRANT EXECUTE ON FUNCTION public._exp08_grant_co_owner(uuid,uuid,boolean) TO authenticated');
+ await denied('private kernel ACL drift refuses replay without repair',()=>db.exec(candidate),/EXP08 recovery private grant metadata or ACL drift/);
+ assert.equal(scalar("SELECT has_function_privilege('authenticated','public._exp08_grant_co_owner(uuid,uuid,boolean)','EXECUTE')"),'t');
+ db.run('REVOKE EXECUTE ON FUNCTION public._exp08_grant_co_owner(uuid,uuid,boolean) FROM authenticated');
+ db.run('GRANT EXECUTE ON FUNCTION public.grant_co_owner(uuid,uuid) TO anon');
+ await denied('original public grant ACL drift refuses without repair',()=>db.exec(candidate),/EXP08 recovery original grant metadata drift/);
+ assert.equal(scalar("SELECT has_function_privilege('anon','public.grant_co_owner(uuid,uuid)','EXECUTE')"),'t');
+ db.run('REVOKE EXECUTE ON FUNCTION public.grant_co_owner(uuid,uuid) FROM anon');
+ const kernelDefinition=JSON.parse(scalar("SELECT to_json(pg_get_functiondef('public._exp08_grant_co_owner(uuid,uuid,boolean)'::regprocedure))"));
+ db.run(`CREATE OR REPLACE FUNCTION public._exp08_grant_co_owner(_tenant uuid,_user uuid,_recovery boolean)
+ RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$BEGIN RETURN;END;$$`);
+ await denied('changed private kernel source refuses without overwriting it',()=>db.exec(candidate),/EXP08 recovery grant kernel replay drift/);
+ assert.equal(scalar("SELECT prosrc FROM pg_proc WHERE oid='public._exp08_grant_co_owner(uuid,uuid,boolean)'::regprocedure"),'BEGIN RETURN;END;');
+ db.run(kernelDefinition);await db.exec(candidate);assert.equal(state(),beforeDrift);
  console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private admission and R12 effect with original I1 audit; public recovery RPC/recovery receipt/notices NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));

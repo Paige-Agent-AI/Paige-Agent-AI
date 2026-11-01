@@ -2154,3 +2154,37 @@ E02 Billing cleanup remain coding dependencies; original public writers unchange
 Metadata/bootstrap/replay guards, wider lock/lifecycle composition, original full
 runner integration, final review/CI/release and authenticated outcomes remain owed.
 All original18+6/five journeys and full-assignment **STILL CODING** are unchanged.
+
+### October31 — one original grant body shared by ordinary and recovery callers
+
+Same inert writer/proof reservation, no migration/publication. The actual original
+`grant_co_owner(uuid,uuid)` body2a75180d is moved, not duplicated, into private
+`_exp08_grant_co_owner(uuid,uuid,boolean)`. The original public ABI delegates with
+false and preserves its complete native metadata/ACL. For eligible SOLO, platform
+role alone no longer grants through that public door; the actual holder still
+does. Unsupported non-SOLO platform semantics are retained. Private recovery mode
+is inaccessible to clients, must pass native recovery admission, locks a live
+target/member and repeats admission after waits before the conserved original
+membership change and original `tenant:grant_co_owner` audit.
+
+The three bounded body edits are mechanically reversible to the exact original
+hash; unknown/partial source refuses. Exact replay checks that inverse plus
+private metadata/ACL, and refuses exposed original/public ACL, exposed private
+ACL or changed private body without repairing the drift. These kernel guards do
+not yet constitute whole-file bootstrap/metadata guards for the other helpers.
+Full publication still needs one atomic forward carrier and all native guards.
+
+Original42 controls remain before13 kernel/compatibility/role/drift controls:
+final55 local PostgreSQL PASS, raw `exp08-owner-recovery-grant-final.log` SHA256
+`4b4483caba54563ad98393b42b13969925031f5ed30ee2364265c7f4934b534e`;
+candidate SHA256 `b3a2d020e91d05ba912cd9bb88d8187c8d9aea8c0901767ba9f2019691510ce1`.
+Earlier49 PASS84fee11e retained separately. Native grant body and audit execute
+against explicit minimal table/Auth/company/owner ports, not managed full-schema
+or authenticated proof. Ordinary holder ABI, non-holder platform refusal,
+private mode/role refusal, exact replay/data/public-metadata preservation and
+non-repair drift controls pass; fixture disposed. Source review renewal owed.
+
+Revoke/Billing kernel integration, target/competing-writer broader lock composition,
+public recovery reason/audit/notice/receipt/replay and E03 receiver remain required
+coding work. No stand-alone private effect is customer-ready; no released policy,
+provider effect, full R9/R12 acceptance or ALG maturity promotion is claimed.

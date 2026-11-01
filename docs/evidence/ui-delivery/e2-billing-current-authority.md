@@ -1,5 +1,77 @@
 # Original Billing authority after a queued designation change
 
+## November 1 private recovery prerequisite — source preparation only
+
+The existing EXP08 original row4/R9/R12 recovery transaction needs to remove an
+eligible target's original Billing contact designation before demoting that owner.
+This is a named prerequisite; EXP02's ONE primary remains O06 and all original19
+outcomes/nine analytics remain required. Original3142 release evidence below is
+preserved; this preparation does not replace or reopen its accepted source checks.
+
+Producer: EXP08 immutable `65264e3e5faa9274195f6f541c1d30661f396a8a`, actual
+receiving contract ANT138/f3c3314c. Consumer: private Billing preparation in
+`scripts/proof/exp02-billing-recovery.sql`; native proof in
+`scripts/sql/exp02-billing-recovery-proof.mjs`. No applied migration is edited,
+managed native number reserved, public recovery entry created or new grant made.
+
+The original one-argument `platform_billing_contact_revoke(uuid)` keeps its
+signature, OID, owner, ACL, configuration, comment, ordinary owner authority,
+result and audit. Its original effect body moves into one private kernel.
+The recovery path consumes EXP08's actual private effect-time admission with the
+constant `revoke_owner`; it does not copy the recovery permission rule or trust a
+caller flag. It checks admission before contact serialization, after waits and
+after contact/audit writes. It retains the original strict final-primary rule,
+original contact and audit records, rollback, and current original Billing
+applicability. A source/metadata/partial-state mismatch refuses without repair.
+
+Private receiving ABI (postgres only, no anon/authenticated/service EXECUTE):
+
+```sql
+public._exp02_billing_recovery_cleanup(p_tenant uuid,p_user uuid,p_request uuid)
+  returns jsonb
+-- {status: "not_required" | "revoked", contact_ids: uuid[], audit_ids: uuid[]}
+```
+
+Only an authorized, actually empty target set is `not_required`. Denial, foreign
+context, missing source, an audit failure or uncertainty is an exception, never
+zero. Returned identifiers reference original records. EXP08 retains the native
+preparing/final recovery audit, membership writer, final receipt, notice status,
+post-commit recovery and future public door. In particular, its receipt reader
+must not reapply the pre-effect holder-none predicate after a legitimate restore.
+No Rail, approval engine, permission resolver or result store is introduced here.
+
+Failure-first native baseline reproduced SQL42883 for the deliberately absent
+private consumer on released main. The first candidate passed2 controls; the
+expanded candidate passed **41 local PostgreSQL16 controls**, including original
+owner ABI/audit, all three client-role/private-EXECUTE denials, exact zero, wrong
+request/tenant/target/role, missing and stale admission, working/paused/archived
+holders, final-primary and audit rollback, post-contact/post-audit revalidation,
+exact replay and source/ACL-drift refusal. Each run uses and drops only a random
+database in an explicitly opted-in, exact-directory-checked loopback fixture.
+Auth/current-workspace/minimal tables and preparing-audit creation are explicitly
+fixture ports. The actual original Billing bodies and immutable EXP08 private
+admission/provenance source execute natively. This is **not** hosted Auth/RLS,
+the complete original EXP08 transaction, customer action or tenant acceptance.
+
+Functional: inert source/native preparation only. Visual: no markup, layout,
+typography, focus, motion or responsive change; no new rendered acceptance claim.
+Experiential: complete recovery integration/release/useful receipt/reopen remains
+owed to original owners. Founder Acceptance: OPEN, one complete Experience review.
+Algorithm Support: deterministic record/admission/readback checks only; no new
+ALG implementation, business scoring, prediction or maturity promotion. Original
+ALG01 recovery and full EXP02 ALG03/06/11/12/13 proof remain separately tracked.
+Orchestration: no new Chat/Live tool, worker, job or provider/payment/send effect.
+Recovery Spine/catalogue activation is UNAVAILABLE; existing settings.billing
+PARTIAL and all nine analytics catalogue states are unchanged.
+
+Release order: actual EXP08 private producer compatibility, original Billing
+consumer composition and original EXP08 receiving writer, each with exact source
+review, required exact-head CI, managed migration ordering where applicable and
+normal release/readback. This unversioned source packet is NOT_DEPLOYED and does
+not itself authorize activation. Full producer concurrency/composition, protected
+authority, authenticated useful result/receipt/reload/recovery and founder proof
+remain **PROOF OWED**. No customer announcement/version.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original ANT138 Billing integration thread152c950c; pre-edit e34bd5d7 and independent native failure-first receipt07ec8a24.
 PAIGE_UI_DESIGN: PASS: existing Billing contact controls, refusal presentation and conversation context are retained; this slice changes only the original native authorization producer.

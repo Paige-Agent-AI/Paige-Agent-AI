@@ -3469,3 +3469,19 @@ unchanged; owning proof lint and diff check exit0. This is isolated SQL-role
 engineering proof, not full-schema, genuine Auth or production acceptance.
 Source remains unpublished/unversioned/unmounted. Whole original Team Hub remains
 STILL CODING; original3200 release checks and downstream host contracts separate.
+
+
+### Personal notice actual-schema packet preparation
+
+Added canonical exp08-owner-recovery-notice-state-native-proof.mjs/template and
+self-contained supabase/tests/exp08_owner_recovery_notice_state_native.sql.
+The rollback-only16 checks cover the ORIGINAL three dependency catalogs,
+installation/replay, exact new ABI/security metadata/auth-only ACL, unchanged
+private bodies, own ACL/metadata and dependency drift refusal, plus actual
+anon/service-role/no-Auth-identity refusal. No Auth user or customer row is
+created. Compiler --write/--check/--self-test and focused ESLint exit0; literal
+dollar sequences, wrong plan/missing marker/source transaction drift are checked.
+Packaging is NOT execution: local pgTAP is unavailable, actual full-schema
+hosted16 is UNVERIFIED. No workflow, native carrier/version, Preview or production
+apply changed. This packet extends the same original notice-read outcome only;
+original released predicate and sender/domain ownership remain untouched.

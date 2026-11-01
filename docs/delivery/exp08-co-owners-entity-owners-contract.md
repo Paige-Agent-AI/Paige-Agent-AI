@@ -2455,3 +2455,23 @@ composition, public recovery/receipt/detail and notification presentation, origi
 email receiver and Setup protection, normal exact-head review/CI/Preview/release
 and authenticated outcome/reopen/recovery. Full original18+6/five journeys,
 both-chat workshop/goals/proactivity/standing authority remain **STILL CODING**.
+
+### November1 — original entity lifecycle in the same recovery transaction
+
+The same local recovery proof now installs the released original80008 entity-seat
+lifecycle migration, original representative Auth FK and original composite
+FK/owner CHECK/unique entity-seat constraints. No replacement vacancy writer.
+Original revoke clears the existing representative link, records the held vacancy
+and conserves the legal owner record through that original trigger. A later notice
+failure rolls back that entity change, original Billing cleanup, membership and
+recovery audit together; retry of the rolled-back request succeeds, then replay
+preserves the original receipt and entity row without another effect.
+
+Final140/0 author local PASS; all prior138 controls retained. Raw
+`exp08-owner-recovery-entity-composed.log` SHA256
+`fa14f5d09e7ad7411fc7d72443e794f69fec1eee30e74647ba95bc820dd11c9b`;
+proof script `318f3443cb88a2f3c22033f956ccb3e2fd8acb1def1b415672ce4105f73975ac`.
+Own disposable database removed. Auth/context/minimal storage remain explicit
+ports; this is native component composition, not full schema, opposing-writer
+race coverage, customer/RLS proof or release clearance. Source-only review of
+prior7cc excludes this new proof-only delta until separately renewed.

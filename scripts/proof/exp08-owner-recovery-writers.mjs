@@ -704,7 +704,40 @@ try{
   assert.equal(scalar(`SELECT is_owner FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
   assert.equal(scalar(`SELECT revoked_at IS NULL FROM public.platform_billing_contacts WHERE id='${contact}'`),'t');
  }
- console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private recovery with original grant/revoke/Billing, audit/in-app notices and detail; public RPC, mounted UI and email NOT implemented',
+ // Compose the released original entity lifecycle and its original FK/CHECK/seat
+ // constraints into this same recovery transaction, not a copied vacancy writer.
+ revokeFixture();putContact();
+ const entityFixture=readFileSync(new URL('../../supabase/tests/exp08_entity_owner_seat_ended.sql',import.meta.url),'utf8');
+ const entityStart=entityFixture.indexOf('CREATE TABLE public.tenant_business_owners ('),entityEnd=entityFixture.indexOf('\nCREATE TABLE public.tenant_members',entityStart);
+ assert.ok(entityStart>=0&&entityEnd>entityStart);
+ db.run(entityFixture.slice(entityStart,entityEnd));
+ db.run(`ALTER TABLE public.tenant_members ADD FOREIGN KEY(tenant_id,business_owner_id) REFERENCES public.tenant_business_owners(tenant_id,id),
+  ADD CHECK(business_owner_id IS NULL OR is_owner);
+  CREATE UNIQUE INDEX tenant_members_one_seat_per_business_owner ON public.tenant_members(tenant_id,business_owner_id) WHERE business_owner_id IS NOT NULL;
+  REVOKE ALL ON FUNCTION public._solo_shell_tenant(uuid) FROM PUBLIC,anon,authenticated,service_role;`);
+ await db.exec(source('20271126080008_exp08_entity_owner_seat_ended.sql'));
+ const entity='e8000000-0000-4000-8000-000000094010',entityRequest='e8000000-0000-4000-8000-000000094011';
+ db.run(`INSERT INTO public.tenant_business_owners(id,tenant_id,owner_kind,representative_user_id,legal_name)
+  VALUES('${entity}','${tenant}','entity','${holder}','Synthetic legal owner');
+  UPDATE public.tenant_members SET business_owner_id='${entity}' WHERE tenant_id='${tenant}' AND user_id='${holder}'`);
+ const legalBefore=scalar(`SELECT to_jsonb(b) FROM public.tenant_business_owners b WHERE id='${entity}'`);
+ db.run(`CREATE FUNCTION public.exp08_entity_notice_failure() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'entity_notice_failure';END;$$;
+  CREATE TRIGGER exp08_entity_notice_failure BEFORE INSERT ON public.notifications FOR EACH ROW EXECUTE FUNCTION public.exp08_entity_notice_failure()`);
+ await denied('late recovery failure rolls back original entity vacancy together with Billing and ownership',()=>db.exec(apply(entityRequest,'revoke_owner')),/entity_notice_failure/);
+ assert.equal(scalar(`SELECT to_jsonb(b) FROM public.tenant_business_owners b WHERE id='${entity}'`),legalBefore);
+ assert.equal(scalar(`SELECT is_owner AND business_owner_id='${entity}'::uuid FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
+ assert.equal(scalar(`SELECT revoked_at IS NULL FROM public.platform_billing_contacts WHERE id='${contact}'`),'t');
+ assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${entityRequest}'`),'0');
+ db.run('DROP TRIGGER exp08_entity_notice_failure ON public.notifications;DROP FUNCTION public.exp08_entity_notice_failure()');
+ const entityResult=JSON.parse(scalar(apply(entityRequest,'revoke_owner')));
+ assert.equal(entityResult.receipt.billing.status,'revoked');
+ assert.equal(scalar(`SELECT representative_user_id IS NULL AND owner_seat_vacant_since IS NOT NULL AND legal_name='Synthetic legal owner' AND ownership_status='declared' FROM public.tenant_business_owners WHERE id='${entity}'`),'t');
+ assert.equal(scalar(`SELECT NOT is_owner AND business_owner_id IS NULL FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
+ const entityAfter=scalar(`SELECT to_jsonb(b) FROM public.tenant_business_owners b WHERE id='${entity}'`);
+ assert.deepEqual(JSON.parse(scalar(apply(entityRequest,'revoke_owner'))),entityResult);
+ assert.equal(scalar(`SELECT to_jsonb(b) FROM public.tenant_business_owners b WHERE id='${entity}'`),entityAfter);
+ results.push({case:'original entity lifecycle/FK/CHECK/unique seat composes with original revoke, Billing, receipt and duplicate-safe recovery',passed:true});
+ console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private recovery with original grant/revoke/Billing/entity lifecycle, audit/in-app notices and detail; public RPC, mounted UI and email NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));
 }finally{

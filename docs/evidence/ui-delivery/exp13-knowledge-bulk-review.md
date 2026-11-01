@@ -28,7 +28,7 @@ SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Current narrow complete shell, themes, k
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Current narrow shell with PAIGE open, zoom/reflow/focus/recovery evidence held by the existing browser usage review.
 UNVERIFIED: Worker3161 and client3174 production source releases are verified separately; this UI remains DRAFT3177. Current prototype/finish/exact CI/release/authenticated reopen and the full joined fact/Memory/plan/actual Work integrations remain owed. FLOW_PROTOTYPE stays UNVERIFIED and its required gate remains failed until actual proof; no owner waiver or browser workaround is inferred.
 
-INTERNAL_BUILD_IDENTITY: source=owner-one-Knowledge-button local composition on e2c5c2f97d67c726004e52fc4b8d3ca5ce3a3b5a; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp13-knowledge-bulk-review.md
+INTERNAL_BUILD_IDENTITY: source=d15afa0a29ce16abc9052903ae13c3fffc3e69c5; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp13-knowledge-bulk-review.md
 RELEASE_CHANNEL: development: local consumer composition only, not customer availability.
 RELEASE_CLASSIFICATION: internal-only: incomplete joined customer workflow.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release name, announcement or founder test request.
@@ -36,8 +36,9 @@ RELEASE_NOTE_REQUIRED: no: local preparation; eventual customer release governed
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: Current source tests, bounded static checks and non-author review do not prove rendered UI, authenticated useful source/fact/Memory/Mission/actual-Work results, later-session reopen or owner acceptance.
 RELEASE_RECOVERY: position=forward-fix preserving original source/work identities and inspect-before-repeat; reference=docs/evidence/exp13-knowledge-review-client.md
 
-The separate UI increment owns only five original Knowledge components and five
-tests, retaining all incoming code and source leases. Existing original source
+The original UI increment began with five Knowledge components and five tests;
+the dated owner-directed consolidation below extends only its existing intake
+presentation and focused controls, retaining incoming code and source leases. Existing original source
 producers/Knowledge CRUD/native permissions/Storage/work/review/publish and their
 receipts remain authoritative. No new batch ledger, scheduler, executor, Memory,
 approval inbox or copied client/private conversation store is created.
@@ -392,3 +393,19 @@ the current local owner-directed source checkpoint):
 > KEYBOARD_FOCUS: UNVERIFIED: Current full keyboard path and dialog/pagination focus renewal owed; original tests retain boundary coverage.
 > INTERNAL_BUILD_IDENTITY: source=a953e8117361cc95aca253b8afcefa426886a3cb; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp13-knowledge-bulk-review.md
 > RELEASE_TRUTH_BOUNDARY: PROOF OWED:355 modeled tests and bounded source review do not prove current rendered UI, deployed useful business outcome, source retrieval, original host reference persistence or owner acceptance.
+
+Final code composition is d15afa0a29ce16abc9052903ae13c3fffc3e69c5,
+treee858f07759b1be1c8ad62d88724309e866bc3510, normally receiving actual
+main17e74cefc3382d0a67d240dd7a1005ec0bf56547 (original E04 coherent source
+release) and E13 factual record3191/fdf. All18 actual owning paths are exact
+frozen158c source; all19,465 incoming outside-owned leaves are exact current
+main, with no unexpected/missing path. A first local conservation command
+incorrectly derived ownership by diffing a historical base against a branch
+already containing incoming work, classifying185 paths and flagging four peer
+documents. The corrected check derives only the original13 UI paths plus the
+eleven-path owner change; it proves the actual18-path union, including untouched
+incoming financial/CRM/Master/Brain records. No source conflict was overwritten.
+The360+58 test results apply to identical owning source/test blobs at this pure
+composition, not borrowed hosted CI; fresh exact-head CI remains required.
+The embedded-focus failing-first log SHA256 is
+21768d14d5793858518ec3088b11d12d57f3ed583fe1eac624b137976f8f44ab.

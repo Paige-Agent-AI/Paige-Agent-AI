@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/
  * right-hand drawer (a full-width sheet on a phone); `role="alertdialog"` is for the brief blocking
  * decision (suspend).
  */
-export function Modal({ title, description, onClose, onEscape, busy, wide, variant = "dialog", role = "dialog", titleRef, children }: { title: string; description: string; onClose: () => void; onEscape?: () => boolean; /** A request is in flight and must not be interrupted: the close control is DISABLED, not merely inert. */ busy?: boolean; /** Opens at the wider size from the first frame, so content arriving later never resizes it. */ wide?: boolean; variant?: "dialog" | "drawer"; role?: "dialog" | "alertdialog"; titleRef?: React.Ref<HTMLHeadingElement>; children: React.ReactNode }) {
+export function Modal({ title, description, onClose, onEscape, busy, wide, variant = "dialog", role = "dialog", titleRef, initialFocusTitle, children }: { title: string; description: string; onClose: () => void; onEscape?: () => boolean; /** A request is in flight and must not be interrupted: the close control is DISABLED, not merely inert. */ busy?: boolean; /** Opens at the wider size from the first frame, so content arriving later never resizes it. */ wide?: boolean; variant?: "dialog" | "drawer"; role?: "dialog" | "alertdialog"; titleRef?: React.Ref<HTMLHeadingElement>; initialFocusTitle?: boolean; children: React.ReactNode }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   // The key handler and the focus capture read the latest callbacks through refs so the effect can
@@ -76,7 +76,7 @@ export function Modal({ title, description, onClose, onEscape, busy, wide, varia
   const drawer = variant === "drawer";
   return <div className={drawer ? "stw-modal-backdrop is-drawer" : "stw-modal-backdrop"} role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target && !busy) onClose(); }}>
     <section ref={dialogRef} className={drawer ? "stw-drawer" : wide ? "stw-modal is-wide" : "stw-modal"} role={role} aria-modal="true" aria-labelledby="stw-modal-title" aria-describedby="stw-modal-desc">
-      <header><div><h2 id="stw-modal-title" ref={titleRef} tabIndex={-1}>{title}</h2><p id="stw-modal-desc">{description}</p></div><button ref={closeRef} type="button" className="stw-icon-btn" onClick={onClose} disabled={busy} aria-label="Close"><X /></button></header>
+      <header><div><h2 id="stw-modal-title" ref={titleRef} tabIndex={-1} data-initial-focus={initialFocusTitle ? "" : undefined}>{title}</h2><p id="stw-modal-desc">{description}</p></div><button ref={closeRef} type="button" className="stw-icon-btn" onClick={onClose} disabled={busy} aria-label="Close"><X /></button></header>
       {children}
     </section>
   </div>;

@@ -33,7 +33,7 @@ describe("Team → a person's contact details", () => {
         if (reads > 1) await new Promise((r) => setTimeout(r, 60));
         return { data: { tenant_id: "tenant-1", tenant_name: "Example Team", viewer_permission: "owner", can_manage_profiles: true, can_manage_invitations: true, can_change_permissions: true, total_members: 1, members: [dana], invitations: [] }, error: null };
       }
-      if (name === "set_solo_team_member_work_profile") return { data: { job_title: "Delivery Lead", responsibilities: "Runs onboarding." }, error: null };
+      if (name === "set_solo_team_member_work_profile") return { data: { membership_id: dana.membership_id, job_title: "Delivery Lead", responsibilities: "Runs onboarding." }, error: null };
       return { data: null, error: { message: `unexpected ${name}` } };
     });
     const host = document.createElement("div");

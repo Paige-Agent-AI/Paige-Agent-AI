@@ -647,7 +647,7 @@ describe("a selection that stops being live", () => {
     let rosterCall = 0;
     route({
       get_solo_team_workspace: () => { rosterCall += 1; return { data: page(rosterCall === 2 || rosterCall === 4 ? [dana] : [owner]), error: null }; },
-      set_solo_team_member_work_profile: () => ({ data: { job_title: "Changed", responsibilities: "Owns client handoffs." }, error: null }),
+      set_solo_team_member_work_profile: () => ({ data: { membership_id: dana.membership_id, job_title: "Changed", responsibilities: "Owns client handoffs." }, error: null }),
     });
     await openScreen();
     await act(async () => byText("Load more (1 remaining)")!.click());
@@ -678,7 +678,7 @@ describe("what the owner hit on production — a save that reports success and r
     let saved: { _job_title?: string } | null = null;
     mocks.rpc.mockImplementation((name: string, args: { _job_title?: string }) => {
       if (name === "get_solo_team_workspace") return new Promise((res) => setTimeout(() => res({ data: withTitle(), error: null }), 300));
-      if (name === "set_solo_team_member_work_profile") { saved = args; return Promise.resolve({ data: { job_title: args._job_title, responsibilities: "" }, error: null }); }
+      if (name === "set_solo_team_member_work_profile") { saved = args; return Promise.resolve({ data: { membership_id: dana.membership_id, job_title: args._job_title, responsibilities: "" }, error: null }); }
       return new Promise(() => {});
     });
     const { render } = mount(<SoloTeamWorkspace />);
@@ -786,5 +786,30 @@ describe("receivers come from the whole team, not the filtered roster on screen"
     const labels = await options(client);
     expect(labels.some((l) => l.includes("Ada Owner")), labels.join(" | ")).toBe(true);
     expect(labels.some((l) => l.includes("Avery Cole")), labels.join(" | ")).toBe(true);
+  });
+});
+
+
+describe("original work-profile unconfirmed close and reopen",()=>{
+  it("reads the original roster again before another edit after a lost response",async()=>{
+    let reads=0;let resolveRead!:(value:unknown)=>void;const after=member({job_title:"Recovery lead"});
+    route({
+      get_solo_team_workspace:()=>{reads++;return reads===1?{data:roster([owner,dana]),error:null}:new Promise(resolve=>{resolveRead=resolve;});},
+      set_solo_team_member_work_profile:()=>{throw new Error('synthetic lost response');},
+    });
+    await openScreen();
+    await act(async()=>document.querySelector<HTMLButtonElement>('[aria-label="Dana Reyes, edit details"]')!.click());
+    const title=document.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!;
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(title,'Recovery lead');title.dispatchEvent(new Event('input',{bubbles:true}));});
+    await act(async()=>byText('Save work details')!.click());
+    expect(mocks.success).not.toHaveBeenCalled();
+    await act(async()=>document.querySelector<HTMLButtonElement>('.stw-modal-actions .secondary')!.click());
+    expect(reads).toBe(2);
+    expect(document.querySelector('[aria-label="Dana Reyes, edit details"]')).toBeNull();
+    await act(async()=>resolveRead({data:roster([owner,after]),error:null}));
+    await act(async()=>document.querySelector<HTMLButtonElement>('[aria-label="Dana Reyes, edit details"]')!.click());
+    expect(document.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.value).toBe('Recovery lead');
+    expect(byText('Save work details')!.disabled).toBe(true);
+    expect(mocks.rpc.mock.calls.filter(([name])=>name==='set_solo_team_member_work_profile')).toHaveLength(1);
   });
 });

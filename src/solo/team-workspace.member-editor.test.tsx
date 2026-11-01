@@ -142,6 +142,8 @@ describe("Solo Team member work-details dialog", () => {
       _member_user_id: member.user_id,
       _job_title: "Operations Lead",
       _responsibilities: "Owns delivery and weekly planning.",
+      _expected_tenant_id: workspace.tenant_id,
+      _expected_membership_id: member.membership_id,
     });
     expect(mocks.rpc).not.toHaveBeenCalledWith("set_solo_team_member_permission", expect.anything());
     expect(title.value).toBe("Operations Lead");
@@ -189,5 +191,116 @@ describe("Solo Team member work-details dialog", () => {
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
 
     await act(async () => root.unmount());
+  });
+});
+
+
+describe("original approved owner work-profile admission and truthful receipt", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    mocks.rpc.mockReset(); mocks.success.mockReset(); mocks.error.mockReset();
+  });
+  async function mountOwner(override: Partial<TeamWorkspaceRecord> = {}, viewerId = "viewer-under-test") {
+    const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
+    const owner = { ...member, is_owner: true, permission: "owner" };
+    await act(async () => root.render(<MemberEditor member={owner} workspace={{ ...workspace, ...override }} viewerId={viewerId} onClose={vi.fn()} onSaved={vi.fn()} />));
+    return { host, root };
+  }
+  for (const holder of [false, undefined]) it(`keeps another owner's work details read-only when holder=${holder}`, async () => {
+    const {host,root}=await mountOwner({viewer_is_account_holder:holder});
+    expect(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.readOnly).toBe(true);
+    expect(Array.from(host.querySelectorAll('button')).some(b=>b.textContent==='Save work details')).toBe(false);
+    expect(host.textContent).toContain('account holder');
+    expect(document.activeElement).toBe(host.querySelector('h2'));
+    await act(async()=>root.unmount());
+  });
+  it("allows the confirmed current holder to edit another owner's work details", async()=>{
+    const {host,root}=await mountOwner({viewer_is_account_holder:true});
+    expect(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.readOnly).toBe(false);
+    expect(host.textContent).toContain('Save work details');await act(async()=>root.unmount());
+  });
+  it("allows an owner to edit their own work details without guessing holder status", async()=>{
+    const {host,root}=await mountOwner({},member.user_id);
+    expect(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.readOnly).toBe(false);
+    expect(host.textContent).toContain('Save work details');await act(async()=>root.unmount());
+  });
+  for(const data of [null,{membership_id:'another-membership',job_title:'Delivery Lead',responsibilities:member.responsibilities}])
+    it(`does not turn an unconfirmed receipt into Saved (${data===null?'missing':'foreign'})`,async()=>{
+      mocks.rpc.mockResolvedValueOnce({data,error:null});
+      const host=document.createElement('div');document.body.append(host);const root=createRoot(host);const saved=vi.fn();
+      await act(async()=>root.render(<MemberEditor member={member} workspace={workspace} onClose={vi.fn()} onSaved={saved}/>));
+      await act(async()=>setValue(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!,'Delivery Lead'));
+      const save=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Save work details')!;
+      await act(async()=>save.click());expect(mocks.success).not.toHaveBeenCalled();expect(saved).not.toHaveBeenCalled();
+      expect(mocks.error).toHaveBeenCalledWith(expect.stringMatching(/Reopen Team/));expect(save.disabled).toBe(true);
+      expect(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.value).toBe('Delivery Lead');
+      await act(async()=>save.click());expect(mocks.rpc).toHaveBeenCalledTimes(1);await act(async()=>root.unmount());
+    });
+  it("withdraws an old completion when the editor has closed",async()=>{
+    let resolve!:(value:unknown)=>void;mocks.rpc.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+    const host=document.createElement('div');document.body.append(host);const root=createRoot(host);const saved=vi.fn();
+    await act(async()=>root.render(<MemberEditor member={member} workspace={workspace} onClose={vi.fn()} onSaved={saved}/>));
+    await act(async()=>setValue(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!,'Delivery Lead'));
+    await act(async()=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Save work details')!.click());
+    await act(async()=>root.unmount());await act(async()=>resolve({data:{membership_id:member.membership_id,job_title:'Delivery Lead',responsibilities:member.responsibilities},error:null}));
+    expect(mocks.success).not.toHaveBeenCalled();expect(saved).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("original work-profile unknown and current-context recovery",()=>{
+  beforeEach(()=>{document.body.innerHTML="";mocks.rpc.mockReset();mocks.success.mockReset();mocks.error.mockReset();});
+  async function edit(isCurrent=()=>true){
+    const host=document.createElement('div');document.body.append(host);const root=createRoot(host);const saved=vi.fn();const closed=vi.fn();
+    await act(async()=>root.render(<MemberEditor member={member} workspace={workspace} isCurrent={isCurrent} onClose={closed} onSaved={saved}/>));
+    await act(async()=>setValue(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!,'Delivery Lead'));
+    const save=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Save work details')!;
+    return{host,root,saved,save,closed};
+  }
+  it("requires reconciliation after a transport rejection and preserves the draft",async()=>{
+    mocks.rpc.mockRejectedValueOnce(new Error('private backend detail'));
+    const {host,root,saved,save,closed}=await edit();await act(async()=>save.click());
+    expect(save.disabled).toBe(true);expect(mocks.error).toHaveBeenCalledWith(expect.stringMatching(/Reopen Team/));
+    expect(mocks.error.mock.calls.flat().join(' ')).not.toContain('private backend detail');
+    expect(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.value).toBe('Delivery Lead');
+    await act(async()=>save.click());expect(mocks.rpc).toHaveBeenCalledTimes(1);expect(saved).not.toHaveBeenCalled();
+    await act(async()=>host.querySelector<HTMLButtonElement>('.stw-modal-actions .secondary')!.click());expect(closed).toHaveBeenCalledWith(true);await act(async()=>root.unmount());
+  });
+  it("keeps every ordinary close route disabled until the pending save settles",async()=>{
+    let resolve!:(value:unknown)=>void;mocks.rpc.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+    const {host,root,save,closed}=await edit();await act(async()=>save.click());
+    expect(host.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.disabled).toBe(true);
+    expect(host.querySelector<HTMLButtonElement>('.stw-modal-actions .secondary')!.disabled).toBe(true);
+    await act(async()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));
+    expect(closed).not.toHaveBeenCalled();
+    await act(async()=>resolve({data:{membership_id:member.membership_id,job_title:'Delivery Lead',responsibilities:member.responsibilities},error:null}));
+    expect(host.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.disabled).toBe(false);
+    await act(async()=>host.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click());expect(closed).toHaveBeenCalledWith(false);
+    await act(async()=>root.unmount());
+  });
+  it("refuses the write when the original host context has departed",async()=>{
+    const {root,save}=await edit(()=>false);await act(async()=>save.click());expect(mocks.rpc).not.toHaveBeenCalled();await act(async()=>root.unmount());
+  });
+  it("does not publish an in-flight result after the host context has departed",async()=>{
+    let live=true;let resolve!:(value:unknown)=>void;mocks.rpc.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+    const {root,saved,save}=await edit(()=>live);await act(async()=>save.click());live=false;
+    await act(async()=>resolve({data:{membership_id:member.membership_id,job_title:'Delivery Lead',responsibilities:member.responsibilities},error:null}));
+    expect(mocks.success).not.toHaveBeenCalled();expect(saved).not.toHaveBeenCalled();await act(async()=>root.unmount());
+  });
+});
+
+
+describe("original scoped membership refusal",()=>{
+  beforeEach(()=>{document.body.innerHTML="";mocks.rpc.mockReset();mocks.success.mockReset();mocks.error.mockReset();});
+  it("retains the draft, requires a fresh Team read and never retries a replaced membership",async()=>{
+    mocks.rpc.mockResolvedValueOnce({data:null,error:{message:'this team membership changed before this could run; nothing was changed'}});
+    const host=document.createElement('div');document.body.append(host);const root=createRoot(host);const saved=vi.fn();
+    await act(async()=>root.render(<MemberEditor member={member} workspace={workspace} onClose={vi.fn()} onSaved={saved}/>));
+    await act(async()=>setValue(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!,'Delivery Lead'));
+    const save=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Save work details')!;
+    await act(async()=>save.click());expect(save.disabled).toBe(true);expect(mocks.error).toHaveBeenCalledWith("This person's team membership changed. Reopen Team before trying again.");
+    expect(mocks.rpc).toHaveBeenCalledWith('set_solo_team_member_work_profile',expect.objectContaining({_expected_tenant_id:workspace.tenant_id,_expected_membership_id:member.membership_id}));
+    expect(mocks.success).not.toHaveBeenCalled();expect(saved).not.toHaveBeenCalled();await act(async()=>save.click());expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    expect(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.value).toBe('Delivery Lead');await act(async()=>root.unmount());
   });
 });

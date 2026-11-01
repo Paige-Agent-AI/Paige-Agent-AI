@@ -1,3 +1,18 @@
+## November1 — second-read correction before production
+
+O01 remains sole PRIMARY/O02 NEXT/fullten/E5-CV1-CV9/0fullyclosed. Valid final
+review4436768954 reproduced a real two-read navigation overflow in native
+1793556897877; original3087 returned to DRAFT despite earlier bounded passes.
+New044e/forward27020005 caps ONLY navigation at six while preserving ALL source
+bindings. Native1793557125721 proves publication/replay/reopen and revocation of
+a source outside the six links, plus all original suites/races/17READONLY cases.
+Both applied Preview carriers remain immutable. All previous full-schema
+assertions retained/strengthened,12-case latest-forward replay framework prepared;
+fresh managed/new exact-head review/CI/release and actualbothchat O01 proof owed.
+Calendar3197 remains source-live. No owner-testing stop or scope reduction.
+Details: [original evidence](../evidence/ui-delivery/exp05-zion-planning-host.md#november1--cap-navigation-preserve-every-original-source).
+Earlier dated snapshots below are historical.
+
 ## November1 — O01 correction before release, Calendar source live
 
 O01 remains sole PRIMARY, O02 NEXT; original full ten outcomes and E5-CV1-CV9

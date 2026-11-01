@@ -135,12 +135,14 @@ Deno.serve(async (req) => {
       .not("status", "in", "(done,cancelled)")
       .lte("remind_at", nowIso)
       .is("reminded_at", null)
-      .select("id, updated_at")
+      .select("id, updated_at, reminded_at")
       .maybeSingle();
     if (claimErr) { failures.push({ id: r.id as string, error: claimErr.message }); continue; }
     if (!claimRow) continue; // lost the claim to a concurrent run
     if (claimRow.id !== r.id || typeof claimRow.updated_at !== "string"
-      || !Number.isFinite(Date.parse(claimRow.updated_at))) {
+      || !Number.isFinite(Date.parse(claimRow.updated_at))
+      || typeof claimRow.reminded_at !== "string"
+      || !Number.isFinite(Date.parse(claimRow.reminded_at))) {
       failures.push({ id: r.id as string, error: "reminder claim unconfirmed", outcome_unknown: true });
       continue;
     }
@@ -196,7 +198,14 @@ Deno.serve(async (req) => {
         message: summary || "You asked Paige to remind you.",
         action_url: `${PLANNING_URL}?item=${r.id}`,
         is_read: false,
-        metadata: { plan_item_id: r.id, plan_id: r.plan_id, remind_target: r.remind_target, source: "paige_planning" },
+        // Address this exact native occurrence. Consumers must re-read under
+        // the current caller's authority before using notification content.
+        // The claim version is not the final item version or a delivery receipt.
+        metadata: {
+          plan_item_id: r.id, plan_id: r.plan_id, remind_target: r.remind_target, source: "paige_planning",
+          tenant_id: r.tenant_id, reminder_claimed_at: claimRow.reminded_at,
+          scheduled_remind_at: r.remind_at, claim_source_version: claimRow.updated_at,
+        },
       }));
       notificationAttempted = true;
       const { error: notifErr } = await admin.from("notifications").insert(rows);

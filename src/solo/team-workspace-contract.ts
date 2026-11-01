@@ -1,5 +1,12 @@
 export type TeamPermission = "owner" | "admin" | "member" | string;
 export type InviteLifecycle = "pending" | "accepted" | "expired" | "revoked";
+export type TeamBusinessOwner = {id:string;kind:"company"|"trust"|"other_legal_person";display_name:string|null};
+export type AccountHolderState = "working"|"paused"|"none"|"archived";
+export type TeamBusinessOwnerOption = TeamBusinessOwner & {
+  seat_state:"represented"|"invited"|"held"|"none";
+  representative?: {user_id:string;display_name:string|null} | null;
+  pending_invitation?: {id:string;email:string|null;expires_at:string|null} | null;
+};
 
 export type TeamMemberRecord = {
   membership_id: string;
@@ -10,6 +17,10 @@ export type TeamMemberRecord = {
   status: string;
   permission: TeamPermission;
   is_owner: boolean;
+  /** Server-projected metadata. Absent/null means unavailable, never an authority grant. */
+  is_account_holder?: boolean | null;
+  business_owner?: TeamBusinessOwner | null;
+  billing_contact?: boolean | null;
   job_title: string | null;
   responsibilities: string | null;
   last_sign_in_at: string | null;
@@ -42,6 +53,7 @@ export type TeamInviteRecord = {
   uses: number;
   token?: string | null;
   delivery?: InviteDelivery | null;
+  business_owner?: TeamBusinessOwner | null;
   /** The invitation's Team conversations choice, when the roster read carries it. */
   team_hub_access?: boolean | null;
 };
@@ -109,6 +121,10 @@ export type TeamWorkspaceRecord = {
   total_members: number;
   members: TeamMemberRecord[];
   invitations: TeamInviteRecord[];
+  viewer_is_account_holder?: boolean | null;
+  account_holder_state?: AccountHolderState | null;
+  owner_seats_held?: (TeamBusinessOwner & {vacant_since:string|null})[];
+  business_owner_options?: TeamBusinessOwnerOption[];
 };
 
 /** Who may change this person's addresses. The server decides for real (`set_user_contact_methods`);
@@ -173,7 +189,9 @@ export function removalRefusal(raw: string | null | undefined, personName: strin
     // still have a perfectly good session. Telling them to sign in again is both untrue and useless.
     // One sentence that is true of both, rather than a guess at which.
     [/authentication required/, { message: "This did not run, and nothing was removed. Reopen Team — or sign in again if you have been signed out.", retryable: false, reconciled: false }],
+    [/^team_member_identity_unavailable:/, { message: "Your account access could not be confirmed, so nothing was removed. Check your access before opening Team again.", retryable: false, reconciled: false }],
     [/not on this workspace/, { message: `${personName} is no longer on this team. Nothing further was changed.`, retryable: false, reconciled: true }],
+    [/^team_member_protected:/, { message: `${personName}'s Paige account is protected, so they can't be removed from the business here. Nothing changed.`, retryable: false, reconciled: false }],
     [/cannot remove admin role from platform owner/, { message: `${personName} holds a platform role that can't be given up here, so nothing was changed.`, retryable: false, reconciled: false }],
   ];
   for (const [pattern, refusal] of known) if (pattern.test(text)) return refusal;
@@ -242,6 +260,30 @@ export function inviteLifecycle(invite: Pick<TeamInviteRecord, "uses" | "revoked
   return "pending";
 }
 
+function ownershipObject(value:unknown): Record<string,unknown> | null {
+  return value && typeof value==='object' && !Array.isArray(value) ? value as Record<string,unknown> : null;
+}
+function ownershipText(value:unknown,max:number): string | null {
+  return typeof value==='string' && value.trim() ? value.trim().slice(0,max) : null;
+}
+function ownershipId(value:unknown): value is string {
+  return typeof value==='string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+function normalizeBusinessOwner(value:unknown): TeamBusinessOwner | null {
+  const row=ownershipObject(value);
+  if (!row || !ownershipId(row.id) || typeof row.kind!=='string' || !['company','trust','other_legal_person'].includes(row.kind)) return null;
+  return {id:row.id,kind:row.kind as TeamBusinessOwner['kind'],display_name:ownershipText(row.display_name,500)};
+}
+function normalizeBusinessOwnerOption(value:unknown): TeamBusinessOwnerOption | null {
+  const row=ownershipObject(value);const owner=normalizeBusinessOwner(value);
+  if (!owner || !row || typeof row.seat_state!=='string' || !['represented','invited','held','none'].includes(row.seat_state)) return null;
+  const representative=ownershipObject(row.representative);const pending=ownershipObject(row.pending_invitation);
+  return {...owner,seat_state:row.seat_state as TeamBusinessOwnerOption['seat_state'],
+    representative:representative && ownershipId(representative.user_id) ? {user_id:representative.user_id,display_name:ownershipText(representative.display_name,320)} : null,
+    pending_invitation:pending && ownershipId(pending.id) ? {id:pending.id,email:ownershipText(pending.email,320),expires_at:ownershipText(pending.expires_at,40)} : null,
+  };
+}
+
 export function normalizeTeamWorkspace(value: unknown): TeamWorkspaceRecord | null {
   if (!value || typeof value !== "object") return null;
   const row = value as Partial<TeamWorkspaceRecord>;
@@ -254,8 +296,24 @@ export function normalizeTeamWorkspace(value: unknown): TeamWorkspaceRecord | nu
     can_manage_invitations: row.can_manage_invitations === true,
     can_change_permissions: row.can_change_permissions === true,
     total_members: Number(row.total_members) || 0,
-    members: row.members,
-    invitations: row.invitations,
+    members: row.members.map(member=>{
+      if (!ownershipObject(member)) return member;
+      return {...member,
+        ...('is_account_holder' in member ? {is_account_holder:typeof member.is_account_holder==='boolean' ? member.is_account_holder : null} : {}),
+        ...('business_owner' in member ? {business_owner:normalizeBusinessOwner(member.business_owner)} : {}),
+        ...('billing_contact' in member ? {billing_contact:typeof member.billing_contact==='boolean' ? member.billing_contact : null} : {}),
+      };
+    }),
+    invitations: row.invitations.map(invitation=>ownershipObject(invitation) && 'business_owner' in invitation
+      ? {...invitation,business_owner:normalizeBusinessOwner(invitation.business_owner)} : invitation),
+    viewer_is_account_holder:typeof row.viewer_is_account_holder==='boolean' ? row.viewer_is_account_holder : null,
+    account_holder_state:typeof row.account_holder_state==='string' && ['working','paused','none','archived'].includes(row.account_holder_state) ? row.account_holder_state : null,
+    owner_seats_held:Array.isArray(row.owner_seats_held) ? row.owner_seats_held.flatMap(value=>{
+      const owner=normalizeBusinessOwner(value);const record=ownershipObject(value);
+      return owner && record ? [{...owner,vacant_since:ownershipText(record.vacant_since,40)}] : [];
+    }) : [],
+    business_owner_options:row.viewer_is_account_holder===true && Array.isArray(row.business_owner_options)
+      ? row.business_owner_options.map(normalizeBusinessOwnerOption).filter((value):value is TeamBusinessOwnerOption=>value!==null) : [],
   };
 }
 

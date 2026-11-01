@@ -51,6 +51,8 @@ export interface MessageRow {
   scheduled_for: string | null; // R7 — queued outbound release instant (drives scheduled view/pill/cancel)
   sent_at: string | null;
   created_at: string;
+  /** Original native optimistic fence; older cached rows must reopen rather than invent it. */
+  updated_at?: string | null;
   // Phase-4 call fields (schema-present on public.messages; a voice row is channel_type='voice').
   // Nullable — null for non-voice rows and calls with no recording/transcript/completed duration (§13).
   call_duration_seconds: number | null;
@@ -62,7 +64,7 @@ export interface MessageRow {
 export const MESSAGE_COLS =
   "id, thread_key, contact_id, connector_id, channel_type, direction, status, sender, recipients, " +
   "subject, body_text, body_html, attachments, provider_message_id, in_reply_to_provider_id, " +
-  "action_id, error, scheduled_for, sent_at, created_at, call_duration_seconds, recording_url, transcript, " +
+  "action_id, error, scheduled_for, sent_at, created_at, updated_at, call_duration_seconds, recording_url, transcript, " +
   `clients(first_name, last_name, entity_name, ${CLIENT_CONTACT_METHODS_EMBED})`;
 
 /**
@@ -375,6 +377,8 @@ export interface CommsAttachmentsApi {
   removeAttachment: (a: Attachment) => Promise<void>;
   /** Clear all staged attachments (does NOT delete objects — call on composer reset). */
   reset: () => void;
+  /** Stage an original saved draft's references without taking ownership of its files. */
+  restore: (saved: readonly Attachment[]) => void;
 }
 
 /**
@@ -396,6 +400,7 @@ export function useCommsAttachments(getTenantId: () => string | null): CommsAtta
   // be sent to the wrong recipient (§9/§13). We drop + best-effort delete the orphaned
   // objects instead of appending them.
   const generation = useRef(0);
+  const retainedPaths = useRef(new Set<string>());
 
   const uploadFiles = useCallback(async (files: FileList | File[]) => {
     const tenantId = tenantIdFn.current();
@@ -420,17 +425,22 @@ export function useCommsAttachments(getTenantId: () => string | null): CommsAtta
         return;
       }
       if (next.length) setAttachments((a) => [...a, ...next]);
-    } finally { setUploading(false); }
+    } finally { if (gen === generation.current) setUploading(false); }
   }, []);
 
   const removeAttachment = useCallback(async (a: Attachment) => {
     setAttachments((cur) => cur.filter((x) => x.url !== a.url));
-    if (a.url) await supabase.storage.from(COMMS_ATTACH_BUCKET).remove([a.url]);
+    if (a.url && !retainedPaths.current.has(a.url)) await supabase.storage.from(COMMS_ATTACH_BUCKET).remove([a.url]);
   }, []);
 
-  const reset = useCallback(() => { generation.current += 1; setAttachments([]); }, []);
+  const reset = useCallback(() => { generation.current += 1; retainedPaths.current.clear(); setAttachments([]); setUploading(false); }, []);
+  const restore = useCallback((saved: readonly Attachment[]) => {
+    generation.current += 1;
+    retainedPaths.current = new Set(saved.flatMap(a => typeof a.url === "string" ? [a.url] : []));
+    setAttachments(saved.map(a => ({ ...a }))); setUploading(false);
+  }, []);
 
-  return { attachments, uploading, uploadFiles, removeAttachment, reset };
+  return { attachments, uploading, uploadFiles, removeAttachment, reset, restore };
 }
 
 // ── outbound send seam helpers (§18 one home — reused by the reply composer AND

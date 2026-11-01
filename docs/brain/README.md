@@ -1,3 +1,26 @@
+## EXP05 October30 — preserve the original reminder occurrence
+
+Verified [#3156/9f9da129](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3156)
+producer/Edge93/four-source/configuration and both-origin web release is recorded
+beside the original E05 rows in [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the actual native claim acknowledgment and raw timestamp precision;
+never reconstruct an occurrence with a local clock or call its claim-stage
+version the final Work version. Missing acknowledgment holds before dispatch;
+an uncertain insert retains its original no-repeat claim.
+
+The exact eight-field metadata extends the existing notification, not a second
+store or sender. EXP08 still owns current-recipient admission, consumer mount
+and actual occurrence/read-state/reopen proof; no manual cron/provider effect
+was used. [Original evidence](../evidence/ui-delivery/exp05-reminder-occurrence-reference.md).
+This finite prerequisite does not close O01, the full ten/E5, ZION Planning's
+native integration or founder acceptance. Prior histories remain unchanged.
+
+## EXP09 October30 — the enclosing history reader owns file-context continuity
+
+Verified [#3152/90a99e6f](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3152) source/web release is now recorded in [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log). Removing the enclosing history initializer's null reset preserves the original private Documents lifetime during the SAME customer recheck. Initial unknown identity remains empty; native currentness/admission, genuine scope remounts, different native threads and explicit upload/Send remain authoritative. A retained identifier is never an authorization grant.
+
+Reuse lesson: a correct child chooser fence cannot survive a parent that unnecessarily retires its canonical thread. Trace both lifetimes. Actual host68/3→71PASS and broader256/12files (including71), unchanged85JSX/eight incumbent pins, exact review/CI/merge and both-origin source/compiled-effect readbacks are bounded evidence, not a customer file-read result. The prior real chooser failure and physical Escape stop remain; repaired actual intake/reading/reload, crash continuation, multi-business/revocation/device/cohort and full42/seven/founder proof stay owed. No raw selected local File is claimed as durable Work, no private client context is shared into internal Team Hub, and no general desktop/folder/code execution or new registry/runtime is introduced. [Original evidence](../evidence/ui-delivery/e09-file-thread-recheck.md). Prior dated records follow unchanged.
+
 ## EXP09 October30 — customer recovery and private file-choice release
 
 Original #3143/d95f7ff3 and #3147/5e730388 source, exact lower-assurance reviews, green checks and production readback now appear in [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log). Reuse the [original chooser/retry flow](../evidence/ui-delivery/e09-conversation-recovery.md) and [private picker evidence](../evidence/ui-delivery/e09-private-picker-recheck.md); native Documents, private history, staff uploader and original domain writers remain authoritative.
@@ -5589,6 +5612,26 @@ a settled original frame instead. Synthetic UI/native fixtures remain distinct
 from genuine caller authority, saved business records/Rails, reload, both-chat,
 universal SOLO and full Experience acceptance. No second scheduler/ledger/runtime.
 
+## EXP08 October30 — original source-return release and remaining integration
+
+Original3109 reviewed0c771919262a6dd914000f4c21680d2fc484ffc9 normally merged62bdeca0866d31c7a2ce7f03516b2b333e70a730 after required exact-head checks, genuine Preview and recorded reviews. Same original task/message/thread reopening and scoped unsent PAIGE continuation reuse Work/Trust/domain writers. Native40008 and exact62 web were read back. Old62 Edge strict failure is retained; source-owner-coordinated notify-only refresh and normal compatible cumulative571 verifier record24/24 source/config matches, db-live/edge-live571 and public571 builds. Exact terminal API conclusion remains separately pending at this checkpoint. See Master4.0 and originalANT161; no authenticated customer outcome follows from source parity.
+
+Full EXP08 remains STILL CODING: all original18 rows/6 amendments/five lifecycle journeys retained; I2–I5/current management delegation, goals/adaptive coordination, A2c standing execution, both-chat workshop/proactive continuity and production result/receipt/reopen/recovery/role negatives remain built/partial/missing/proof owed according to original matrix. Owner-approved Solo bell/activity amendment is incorporated as MISSING/PROOF OWED; discover original Work/approval/recipient/read-state contracts, never operator notification data or a duplicate engine. Existing E01/E05/domain writers retain custody. ALG01/08/11/12 partial,03/13 gaps, actual evaluation/cost per verified outcome proof owed; no invented maturity. One integrated owner review after complete coding/integration/release; no customer acceptance or new activation asserted.
+
+## EXP08 October31 — lower lifecycle/admission production source receipt
+
+Original3130 reviewed00f75f0c78abea242dde960674e370967772cc61/all13 exactchecks,
+two web successes and non-author SOURCE review6538715894; normal merge21da54c89.
+Native80008/90008/100008/110008 and8 catalogue/ACL plus3 inverse readbacks match;
+normal Chat606/JWTtrue certificate325 source bindings and both production app builds
+are verified. Exact workflow/deployment identities and proof limits are in the
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and
+[original receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3130#issuecomment-6539217377).
+Actual predecessor receipt delivered to original EXP13; it is not worker/fact/Memory/
+Work activation or authenticated outcome acceptance. Full original Team lifecycle,
+both-chat workshop/goals/standing authority and one integrated owner review remain
+STILL CODING. Existing domain writers and all original matrix rows remain authoritative.
+
 ## 2026-10-30 EXP02 — weekly delivery and Billing release readback
 
 Original3132/3140/3142 exact releases, earlier source/customer failures and native/
@@ -5605,3 +5648,34 @@ customer gates remain. No new grant, writer, provider or autonomous action.
 Original19/nine, catalogue and algorithm maturity remain unchanged. See existing
 [weekly evidence](../evidence/ui-delivery/e2-weekly-credit-code.md) and
 [Billing evidence](../evidence/ui-delivery/e2-billing-current-authority.md).
+
+## 2026-10-31 EXP13 — parser prerequisite release identity
+
+Original parser3124 source-only merge4c8c27249, exact public build identity and
+proof limits are recorded in [Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log)
+and the [existing parser evidence](../evidence/exp13-file-text-preparation.md).
+This is the same original Knowledge worker prerequisite; no mounted upload,
+confirmed fact/Memory, saved Mission, actual Work or full FLOW:KNOWLEDGE acceptance
+follows from this mechanical release pointer. No algorithm/availability promotion.
+
+## 2026-10-31 EXP13 - original binary-source native release identity
+
+Verified original3154/eb60 native13, exact managed/production function and ACL
+readback, db-live and web identity are recorded in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse original raw-byte versus extracted-text hashes and opt-in evidence;
+source publication never confirms business facts or Memory. This prerequisite
+clears native-before-worker only. Same single/BULK agreement-to-saved-Mission
+and actual original Work/CRM receipt/reopen remains unfinished; no new store,
+writer, activation, algorithm maturity or customer-readiness claim.
+
+## 2026-11-01 UTC EXP13 - original binary-worker release identity
+
+Original3161/8374 worker source, normal Edge release, all45 production source
+files/configuration and both public web build identities are verified in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the original Knowledge-only callback and immutable source/work identity;
+keep parser imports off unrelated document routes. The native3154 prerequisite
+and worker release are distinct from mounted single/BULK/Chat review, approved
+facts/separate Memory, saved Mission and actual Work/CRM/reopen proof. No new
+runtime, writer, automatic approval or complete customer-outcome claim follows.

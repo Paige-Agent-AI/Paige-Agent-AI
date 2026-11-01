@@ -1,0 +1,14 @@
+{
+  "results": [
+    {
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: inline check focus must be revealed in the existing scroll owner"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_WORKSPACE",
+  "voice": "UNEXERCISED",
+  "paige": "PLACEHOLDER",
+  "nativeBrowserZoom": "UNVERIFIED"
+}

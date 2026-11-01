@@ -2987,3 +2987,43 @@ to published3190 headb2; the exact three-line workflow inverse recovers the whol
 incoming file. Sequential AUTHOR-REVIEW / LOWER ASSURANCE only; hosted proof,
 normal release and authenticated/cohort outcomes remain owed. Applied recovery
 migration bytes are unchanged. Full18+6/five-journey EXP08 remains STILL CODING.
+
+
+### Original §4.11 accepted owner work-profile rule — November 1, inert integration
+
+Owner accepted the holder-or-self default under §10.5 on October27. Fresh
+production source still returns original writer body1d99e171c55d259c18961068a7829fea,
+postgres/SECURITY DEFINER/public,pg_temp/authenticated-only. The new inert
+`exp08-owner-work-profile-patch.sql` inserts marked admission into that ORIGINAL
+writer, retaining three-argument ABI, JSON receipt, trim/120/2000 limits and audit.
+Only current holder or affected owner edits an owner seat (including role-only
+owner evidence). Admin/Member behavior stays original. Current Auth, sorted
+actor/target seats, profile scope and tenant pointer are locked/re-resolved before
+effect, following original departure/revoke membership-before-profile/tenant order.
+Title/responsibilities never confer authority. No new writer/approval/runtime.
+Exact inverse source and complete non-body metadata are conserved on replay.
+
+Final isolated PostgreSQL16 component exit0/46357ms:19/19 repaired cases; original
+baseline retains exactly six expected failures;5 source/ACL/path/security/volatility
+drift controls refuse without overwrite;4 permission/identity mutants killed;
+6 actual observed waits PASS (role loss, target becomes owner, identity ban,
+workspace switch, holder pointer change, permitted wait). Refusals leave no
+profile/audit effect; permitted wait writes one original audit. Identity negatives
+now isolate otherwise permitted Admin-to-Member edits: an earlier identity mutant
+survived because owner denial masked that check, a proof gap repaired without
+weakening assertions. Unknown-selector setup failure and telemetry extraction
+TypeError are retained as engineering setup/evidence errors, not product proof.
+Only the run-created database was disposed. Auth/scope helpers remain explicit
+ports; this is not full-schema, SDK/RLS/customer/cohort/production proof.
+
+Normal CI preserves all original groups and invokes this component in its own
+created/disposed child database after original departure proof; local selection
+is `--only-work-profile`. No applied file, native version, managed database or
+visible UI changed. Native carrier/composition, original title baseline, approved
+I3 read-only/editor/refusal copy, original Team/Spine caller integration and actual
+role/cohort/reopen proof remain owed. Current MemberEditor surfaces server errors
+raw, so this inert code prefix needs its approved authored mapping before release.
+Current3190/c998 checks remain separate; code6848acd3c is LOCAL/unpublished.
+All original18+6/five lifecycle journeys remain required; full EXP08 STILL CODING.
+
+Final isolated log SHA256: `f313215ce5c680cb0b6cf11529f2377ed4ae533d3535c6cd9d4fe439e74bda61`.

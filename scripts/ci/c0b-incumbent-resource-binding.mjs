@@ -1,3 +1,9 @@
+// EXP04 O5 paired Billing/CURA current financial representation, AUTHOR-REVIEW / LOWER ASSURANCE.
+// Renew ONLY the original invoice-context dependency after strict legacy/current
+// decoding, exact-string/null/TEST/source-withdrawal and original Chat tests106PASS.
+// Caller/Auth/actor/customer/thread/intent/admission/terminal controls unchanged.
+// All130 other source pins,29 dispatches, inspector and validators remain exact.
+// Native forward, hosted CI, release and actual customer/provider proof still owed.
 // EXP04 O5 current document/ledger pairing, 2026-11-01, AUTHOR-REVIEW / LOWER ASSURANCE.
 // Published6d reproduces131 source pins/all29 dispatches; whole Root is unchanged.
 // Renew ONLY these TWO reviewed ledger/document dependency digests after native53,
@@ -1081,7 +1087,7 @@ const CONTRACTS = {
   }
 };
 const SOURCES = {
-  "supabase/functions/_shared/client-portal-invoices-context.ts": "1dd26721dd270285083e87881acc1c170438af189077e2d60dbc6bb39976df49",
+  "supabase/functions/_shared/client-portal-invoices-context.ts": "dcc75191d1cade841d67756ef2746a8ee8eda45921407e1b235b8df74b14b156",
   "supabase/functions/_shared/client-engagement/chat.ts": "7fa69da242738091afaf308838adfc67d01ff785f02b7401893aabb8d0279c9f",
   "supabase/functions/_shared/client-engagement/money.ts": "ded2e5618ec1669a05b352764abcb2a40137961e45fdc637b4db16bb9a5a82d4",
   // EXP09 reviewed closed native selected-link dispatch; no new executor.

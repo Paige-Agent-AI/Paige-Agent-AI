@@ -45,6 +45,9 @@ const PILL_CLASS: Record<PortalInvoiceDisplay, string> = {
   partially_paid: "border-transparent bg-primary/10 text-foreground",
   past_due: "border-destructive/50 text-foreground",
   paid: "border-success/40 bg-success/10 text-foreground",
+  verification_pending: "border-border bg-muted text-foreground",
+  no_amount_due: "border-border text-foreground",
+  refund_owed: "border-transparent bg-primary/10 text-foreground",
   // Nothing more is asked for, but no money moved: never the success treatment.
   test_settled: "border-border text-foreground",
   // A filled box like the others, so its edge meets the same right edge; muted, never a state colour.
@@ -81,8 +84,10 @@ function MetaLine({ invoice, nowMs }: { invoice: PortalInvoice; nowMs: number })
 /** One invoice: the whole row opens it. The right column says what is owed, then where it stands. */
 function InvoiceRow({ invoice, nowMs }: { invoice: PortalInvoice; nowMs: number }) {
   const display = invoiceDisplayState(invoice);
+  const current = invoice.financial_evidence_version === 3;
+  const canPay = invoice.payable && (!current || invoice.financial_standing === "recorded" && invoice.remaining_minor !== null && invoice.remaining_minor > 0);
   // Settled by real money and a test payment reads "Partially paid", but nothing more is owed on it.
-  const owing = invoice.remaining_minor > 0 && (display === "open" || display === "past_due" || display === "partially_paid");
+  const owing = invoice.remaining_minor !== null && invoice.remaining_minor > 0 && (display === "open" || display === "past_due" || display === "partially_paid" || display === "refund_owed");
   const testNote = invoice.test_provider_minor > 0 && display !== "test_settled" && display !== "voided";
   const title = invoice.invoice_number ? `Invoice ${invoice.invoice_number}` : "Invoice";
   return (
@@ -96,7 +101,7 @@ function InvoiceRow({ invoice, nowMs }: { invoice: PortalInvoice; nowMs: number 
         <div className="min-w-0 flex-1">
           <p className="break-words text-sm font-semibold">{title}</p>
           <MetaLine invoice={invoice} nowMs={nowMs} />
-          {invoice.payable && (
+          {canPay && (
             <p data-testid="invoice-pay-ready" className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-foreground">
               Pay online <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
             </p>
@@ -104,11 +109,14 @@ function InvoiceRow({ invoice, nowMs }: { invoice: PortalInvoice; nowMs: number 
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1 text-right">
           <p className={`text-sm tabular-nums ${owing ? "font-semibold" : "text-muted-foreground"}`}>
-            {owing ? <>{formatPaymentMinor(invoice.remaining_minor, invoice.currency)} <span className="font-normal text-muted-foreground">due</span></> : formatPaymentMinor(invoice.amount_minor, invoice.currency)}
+            {invoice.remaining_minor === null ? "Amount pending" : owing ? <>{formatPaymentMinor(invoice.remaining_minor, invoice.currency)} <span className="font-normal text-muted-foreground">due</span></> : current ? "No amount due" : formatPaymentMinor(invoice.amount_minor, invoice.currency)}
           </p>
-          {(display === "partially_paid" && owing) || (display === "past_due" && invoice.remaining_minor < invoice.amount_minor) ? (
+          {(display === "partially_paid" && owing) || (display === "past_due" && invoice.remaining_minor !== null && invoice.remaining_minor < invoice.amount_minor) ? (
             <p className="text-xs text-muted-foreground tabular-nums">of {formatPaymentMinor(invoice.amount_minor, invoice.currency)}</p>
           ) : null}
+          {current && invoice.financial_standing === "recorded" && (invoice.refund_payable_minor ?? 0) > 0 && (
+            <p data-testid="invoice-refund-owed" className="text-xs tabular-nums text-foreground">{formatPaymentMinor(invoice.refund_payable_minor!, invoice.currency)} refund owed</p>
+          )}
           <StatusPill display={display} />
           {testNote && <p data-testid="invoice-test-note" className="text-xs text-muted-foreground">Includes a test payment</p>}
         </div>
@@ -183,8 +191,10 @@ export default function Billing() {
   const owed = useMemo(() => owedPhrase(invoices.balances), [invoices.balances]);
   const pastDue = invoices.pastDueCount;
   const testPayment = invoices.balances.some((b) => b.test_provider_minor > 0);
+  const currentFinancial = invoices.invoices.some((i) => i.financial_evidence_version === 3) || invoices.balances.some((b) => b.financial_evidence_version === 3);
+  const financialPending = invoices.openCount === null || invoices.balances.some((b) => b.remaining_minor === null);
   // Nothing is owed and the only money "received" was test money: it was settled, but nothing moved.
-  const settledByTest = !owed && testPayment
+  const settledByTest = !currentFinancial && !owed && testPayment
     && invoices.balances.every((b) => liveProviderMinor(b) + b.manual_recorded_minor === 0);
 
   const blocked = invoices.unavailable || invoices.multipleBusinesses;
@@ -207,10 +217,12 @@ export default function Billing() {
         {!blocked && <p className="text-sm text-muted-foreground">Invoices {businessName} has sent you.</p>}
         {!blocked && invoices.loaded && !empty && (
           <div data-testid="payments-summary" className="pt-3">
-            {owed ? (
+            {financialPending ? (
+              <p data-testid="payments-financial-pending" role="status" className="text-lg font-semibold">Balance awaiting verification. Contact {businessName} for help.</p>
+            ) : owed ? (
               <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <span className="text-lg font-semibold tabular-nums [text-wrap:balance]">
-                  {owed} due{open > 0 ? ` across ${open} open invoice${open === 1 ? "" : "s"}` : ""}
+                  {owed} due{open !== null && open > 0 ? ` across ${open} open invoice${open === 1 ? "" : "s"}` : ""}
                 </span>
                 {pastDue > 0 && !invoices.hasMore && invoices.pastDueKnown !== false && (
                   <span data-testid="payments-past-due" className="inline-flex items-center gap-1 text-sm font-medium tabular-nums">
@@ -218,6 +230,8 @@ export default function Billing() {
                   </span>
                 )}
               </p>
+            ) : currentFinancial ? (
+              <p data-testid="payments-no-amount-due" className="text-lg font-semibold">No amount currently due with {businessName}.</p>
             ) : settledByTest ? (
               <p data-testid="payments-test-settled" className="text-lg font-semibold [text-wrap:balance]">
                 Settled by a test payment. No money moved.

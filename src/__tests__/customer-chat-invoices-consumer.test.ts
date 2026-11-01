@@ -73,8 +73,8 @@ describe("original accepted source read",()=>{
  });
 });
 
-async function lifetime(){
- let current:unknown=fixture(),error:unknown=null;
+async function lifetime(initial:unknown=fixture()){
+ let current:unknown=initial,error:unknown=null;
  const customerCaller={rpc:async(name:string)=>name==="client_portal_assistant_invoices_context"?{data:current,error}:{data:true,error:null}};
  const source={persona:{enabled:true}},progress={},sessions={};
  const capturedSource=await readCustomerInvoicesContext(customerCaller,actor,thread,intent,persona);
@@ -117,5 +117,23 @@ describe("same native terminal, no financial writer",()=>{
  it("model facts use original commercial exact labels and disclose permission/evidence limits",()=>{
   const f=fixture();const text=customerInvoicesMessages({threadId:thread,intentId:intent,mode:"bound",snapshot:f.snapshot,billing:f.billing})[0].content;
   expect(text).toContain("not instructions or approval");expect(text).toContain("not real collected money");expect(text).not.toContain(actor);
+ });
+});
+
+describe("current native financial3 through original capture and output revalidation",()=>{
+ const current=()=>{const f=fixture();return{...f,billing:{...f.billing,payment_evidence_version:2,financial_evidence_version:3}};};
+ it("captures the exact native bound financial3 snapshot through the original Chat block",async()=>{
+  const f=current(),x=await capture(f);expect(x.result.snapshot).toEqual(f.snapshot);
+  expect(x.result.context.billing.financial_evidence_version).toBe(3);expect(x.rpc.mock.calls[0][0]).toBe("client_portal_assistant_invoices_context");
+ });
+ it("revalidates current3 and permanently withholds a changed native financial identity",async()=>{
+  const f=current(),x=await lifetime(f);expect(await x.check()).toBe(true);
+  x.change({...f,snapshot:{...f.snapshot,observation_identity:"ef".repeat(32)}});expect(await x.check()).toBe(false);
+  x.change(f);expect(await x.check()).toBe(false);
+ });
+ it("does not adopt an unsupported current representation or retry with legacy financial facts",async()=>{
+  const f=current(),x=await capture({...f,billing:{...f.billing,financial_evidence_version:4}});
+  expect(x.result).toBeInstanceOf(Response);expect(x.rpc).toHaveBeenCalledTimes(1);
+  expect(await x.result.json()).toMatchObject({code:"CUSTOMER_INVOICES_UNAVAILABLE",message_accepted:true});
  });
 });

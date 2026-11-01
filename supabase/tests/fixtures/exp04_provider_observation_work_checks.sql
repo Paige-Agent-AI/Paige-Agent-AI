@@ -16,6 +16,11 @@ insert into e04_work_state select 'original_operation',to_jsonb(p) from public.p
 insert into e04_work_state select 'original_payment',to_jsonb(p) from public.paige_invoice_payments p where provider_operation_id=current_setting('test.e04_work_operation')::uuid;
 insert into e04_work_state select 'original_settlement_work',to_jsonb(w) from public.paige_durable_work w
  join public.paige_invoice_provider_operations p on p.reconciliation_work_id=w.id where p.id=current_setting('test.e04_work_operation')::uuid;
+-- The full-schema caller already has verified observation history. Retain it;
+-- a complete provider read cannot erase earlier refund/dispute IDs.
+insert into e04_work_state select 'original_observation_snapshot',coalesce((select h.command->'snapshot'
+ from public.paige_invoice_provider_operations p join public.paige_invoice_operations h on h.id=p.provider_observation_operation_id
+ where p.id=current_setting('test.e04_work_operation')::uuid),'{}'::jsonb);
 insert into e04_work_state select 'original_balance',to_jsonb(b) from public._sales_invoice_balance_rows(current_setting('test.e04_work_tenant')::uuid,
  (select invoice_id from public.paige_invoice_provider_operations where id=current_setting('test.e04_work_operation')::uuid)) b;
 select set_config('test.actor','',true);select set_config('request.jwt.claim.sub','',true);
@@ -42,9 +47,9 @@ begin
  perform pg_temp.work_refused(format('select public.read_sales_provider_observation_work_context(%L,%L,%L,1)',current_setting('test.e04_work_tenant')::uuid,claim->>'work_id','wrong'),'42501','different server key cannot read or heartbeat the work');
  perform pg_temp.work_refused(format('select public.read_sales_provider_observation_work_context(%L,%L,%L,2)',current_setting('test.e04_work_tenant')::uuid,claim->>'work_id',claim->>'server_idempotency_key'),'42501','different attempt cannot read or heartbeat work');
  snapshot:=jsonb_build_object('state','observed','provider_transaction_id',current_setting('test.e04_work_charge'),'provider_settlement_id',current_setting('test.e04_work_settlement'),
-  'refunds',jsonb_build_array(jsonb_build_object('id','re_work','amount_minor',10000,'currency','usd',
+  'refunds',coalesce((select value->'refunds' from e04_work_state where key='original_observation_snapshot'),'[]'::jsonb)||jsonb_build_array(jsonb_build_object('id','re_work','amount_minor',10000,'currency','usd',
    'created_at',to_char((now()-interval '1 minute') at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
-   'status','pending','balance_transaction',null,'failure_balance_transaction',null)),'disputes','[]'::jsonb);
+   'status','pending','balance_transaction',null,'failure_balance_transaction',null)),'disputes',coalesce((select value->'disputes' from e04_work_state where key='original_observation_snapshot'),'[]'::jsonb));
  insert into e04_work_state values('snapshot',snapshot),('version',context->'observation_version');
  again:=public.complete_sales_provider_observation_work(current_setting('test.e04_work_tenant')::uuid,(claim->>'work_id')::uuid,claim->>'server_idempotency_key',1,null,null);
  perform pg_temp.work_check(again->>'work_status'='blocked' and again->>'blocked_reason'='provider_observation_unknown','unknown provider evidence stays blocked rather than becoming a payment or success');

@@ -109,7 +109,7 @@ function InvoiceRow({ invoice, nowMs }: { invoice: PortalInvoice; nowMs: number 
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1 text-right">
           <p className={`text-sm tabular-nums ${owing ? "font-semibold" : "text-muted-foreground"}`}>
-            {invoice.remaining_minor === null ? "Amount pending" : owing ? <>{formatPaymentMinor(invoice.remaining_minor, invoice.currency)} <span className="font-normal text-muted-foreground">due</span></> : current ? "No amount due" : formatPaymentMinor(invoice.amount_minor, invoice.currency)}
+            {display === "voided" ? formatPaymentMinor(invoice.amount_minor, invoice.currency) : invoice.remaining_minor === null ? "Amount pending" : owing ? <>{formatPaymentMinor(invoice.remaining_minor, invoice.currency)} <span className="font-normal text-muted-foreground">due</span></> : current ? "No amount due" : formatPaymentMinor(invoice.amount_minor, invoice.currency)}
           </p>
           {(display === "partially_paid" && owing) || (display === "past_due" && invoice.remaining_minor !== null && invoice.remaining_minor < invoice.amount_minor) ? (
             <p className="text-xs text-muted-foreground tabular-nums">of {formatPaymentMinor(invoice.amount_minor, invoice.currency)}</p>

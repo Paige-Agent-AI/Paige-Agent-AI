@@ -77,7 +77,7 @@ begin
  again:=public.complete_sales_provider_observation_work(current_setting('test.e04_work_tenant')::uuid,(c->>'work_id')::uuid,c->>'server_idempotency_key',2,v,snapshot);
  perform pg_temp.work_check(again->'receipt'=result->'receipt' and again->'replayed'='true'::jsonb,'lost completion response replays the same immutable receipt');
  perform pg_temp.work_refused(format('select public.complete_sales_provider_observation_work(%L,%L,%L,2,%L,%L::jsonb)',
-  current_setting('test.e04_work_tenant')::uuid,c->>'work_id',c->>'server_idempotency_key',v,jsonb_set(snapshot,'{refunds,0,status}','"failed"')),'55000','terminal event cannot adopt later changed evidence');
+  current_setting('test.e04_work_tenant')::uuid,c->>'work_id',c->>'server_idempotency_key',v,jsonb_set(snapshot,ARRAY['refunds',(jsonb_array_length(snapshot->'refunds')-1)::text,'status'],'"failed"')),'55000','terminal event cannot adopt later changed evidence');
  again:=public.register_sales_provider_observation_work(current_setting('test.e04_work_tenant')::uuid,current_setting('test.e04_work_operation')::uuid,'evt_workA',current_setting('test.e04_work_merchant'),'test',current_setting('test.e04_work_charge'));
  perform pg_temp.work_check(again->>'work_status'='succeeded' and again->>'attempt_count'='2','re-delivered completed event never reopens terminal work');
  perform pg_temp.work_check(public.claim_sales_provider_observation_work(3)->'claims'='[]'::jsonb,'terminal observation work never re-enters the queue');

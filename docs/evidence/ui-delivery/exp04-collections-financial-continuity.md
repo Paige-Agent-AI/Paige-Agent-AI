@@ -369,3 +369,63 @@ retains the same42501 requirement. The unmodified native guards pass all54 origi
 work controls with this corrected input, including event races/replay. Hosted
 full-schema verification on the new exact head remains owed. No execution or permission
 policy was changed to make a negative assertion pass.
+
+
+## November 1 — current adjusted financial representation in Collections
+
+This checkpoint supersedes the older local C175 render limitations above; original failures
+and exact release/acceptance distinctions remain. O5 is the sole primary, full O1–O12 remains
+assigned, and no complete outcome or founder acceptance is claimed.
+
+The same original scoped register, detail, export and conversational read now request native
+financial representation3. Managed rows copy the closed summary from the SAME original
+current-position reader. Current outstanding, refund owed, credits, provider net and gross
+receipt history remain separate. Unknown debt and due judgments stay null; the interface
+shows **Verification pending**, disables payment recording and never substitutes zero.
+Gross receipt totals must agree with their explicit evidence split, but are not reinterpreted
+as present debt or capped at original principal. No payment engine, financial writer, calendar,
+actor/permission, approval, provider, communication or admission contract changes.
+
+- Native companion **22 PASS**: exact original public identity/metadata, accurate old whole
+  payload compatibility, wrong adjusted legacy representations refused with40001, current
+  debt/refund/credit facts, preserved imported manual history, null unknown amounts, void
+  not collectible, unsupported header/authority drift and replay. Original public source and
+  current native engine execute; predecessor membership/snapshot and selected identity/schema/
+  signing/provider ports are explicitly synthetic. Actual Auth/snapshot/paging acceptance is owed.
+  Default original native proof source is byte-exact after removing only the optional new phase.
+- Actual Sales shell and Collections **15 rendered paths PASS**:1536×770,1366×768,1024×768,
+  900×1000 and390×844 with PAIGE closed/open, plus pending/zero/error/denied/loading.
+  Keyboard selection and Escape work; no root overflow. Compact original conversation overlay
+  folds through its existing control. Desktop, dark mobile and held mobile personally inspected.
+  Images: [desktop](assets/exp04-current-financial-review/collections-desktop.png),
+  [mobile](assets/exp04-current-financial-review/collections-mobile.png),
+  [held](assets/exp04-current-financial-review/collections-held-mobile.png).
+  The adjacent collections-manifest.json binds image/source hashes and synthetic evidence limits.
+- Whole original app compiler completed: **no new errors beyond six existing baseline diagnostics**.
+  Original frozen/cached Deno lock graph, scoped production ESLint, script syntax and whitespace
+  checks pass. No baseline, guard, lock or permission was loosened. The final bounded regression
+  passes **973/973** across the original payment/Owner/Finance and Collections/Chat/contract
+  suites after retained causal and obsolete-fixture failures. Selections overlap earlier counts;
+  they are not added to them.
+- Sequential **AUTHOR-REVIEW / LOWER ASSURANCE** caught receipt continuation comparing a numeric
+  marker to the combined version identity. The causal pagination failure is retained; both
+  matching append and changed-version refresh now pass. Review also rejects contradictory gross
+  totals, noninteger invoice versions and obsolete partial financial replies before model output.
+  The original privacy, caller/RPC, no-effect and cursor/export assertions remain; positive fixtures
+  now supply the requested native representation. This is not non-author review.
+
+**Still UNVERIFIED:** ordered original financial carrier/full-schema consumer compatibility,
+exact final-head CI/merge/deployment/readback, genuine merchant TEST settlement/reversal,
+ordinary signed-in Owner/client result/receipt/reload, known-good second context, physical
+mobile/zoom/AT and final integrated founder evaluation. The Owner tab still displays normal
+Sign In; the existing handoff is pending, without credentials/account/role/access workarounds.
+Historical nonmanaged provider invoices require reconciliation before this current projection
+can certify them; that path refuses rather than inventing current debt. Its explicit native
+negative case and full legacy customer recovery remain owed. No mutation is exposed as LIVE.
+
+Orchestration: these are ordinary original scoped reads; no Layer C executor is added. The
+conversational read keeps its original registered capability and Rail read receipt. The existing
+Owner financial decision remains the same high/confirm governed invoice command; current source
+and exact operation/receipt readback are still required. ALG01/12 have controlled source/native
+reconciliation and held-exception evidence only; no production maturity promotion. ALG02 and
+ALG13/onboarding/follow-up remain sequenced within the full Experience, without a second outcome.

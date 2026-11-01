@@ -13,6 +13,7 @@ if(process.argv.includes('--manual-financial'))assert(process.argv.includes('--f
 if(process.argv.includes('--actual-financial-read'))assert(process.argv.includes('--manual-financial'),'actual financial read proof requires the original manual/current financial proof');
 if(process.argv.includes('--actual-accepted-read'))assert(process.argv.includes('--actual-financial-read'),'actual accepted read proof requires original current financial read proof');
 if(process.argv.includes('--financial-catalogue'))assert(process.argv.includes('--actual-accepted-read'),'catalogue proof requires original accepted target proof');
+if(process.argv.includes('--actual-collections-read'))assert(process.argv.includes('--financial-catalogue'),'current Collections projection proof requires original complete financial proof');
 let database='postgres';
 const args=()=>['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-v','ON_ERROR_STOP=1','-At'];
 const run=sql=>{const p=spawnSync(binary,args(),{input:sql,encoding:'utf8',maxBuffer:4e6,windowsHide:true});if(p.status!==0)throw Error(p.stderr);return p.stdout.trim();};
@@ -634,6 +635,12 @@ if(process.argv.includes('--financial-catalogue')){
  const result=proveFinancialCatalogue({run,read});
  writeFileSync(new URL('../../work/sales-financial-catalogue-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
  console.log('SALES_FINANCIAL_CATALOGUE_PASS: '+JSON.stringify(result));
+}
+if(process.argv.includes('--actual-collections-read')){
+ const {proveActualCollectionsRead}=await import('./sales-actual-collections-read-proof.mjs');
+ const result=proveActualCollectionsRead({run,read});
+ writeFileSync(new URL('../../work/sales-actual-collections-read-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_ACTUAL_COLLECTIONS_READ_PASS: '+JSON.stringify({...result,sample:undefined}));
 }
  run(`UPDATE paige_invoices SET status='void' WHERE id='${invoice}';`);
  assert.equal(publicRequest(),null,'void invoice bearer refused');

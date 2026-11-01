@@ -55,3 +55,12 @@ it('a fully LIVE-paid obligation keeps zero outstanding and separate TEST histor
  expect([...host.querySelectorAll('.sc-facts article')].find(x=>x.textContent?.startsWith('Outstanding'))?.textContent).toContain('$0.00');
  await click('Open');expect(document.body.textContent).toContain('Provider confirmed: $100.00');expect(document.body.textContent).toContain('Test payments: $50.00');
 });
+
+it('retains an uncertain current invoice with withheld total, no overdue judgment and an inspectable original row',async()=>{
+ const base=financialInvoice();fixture.invoices=[{...base,status:'issued',record_kind:'managed',provenance:'canonical_record',remaining_cents:null,collection_required:null,financial_evidence_version:3,financial:{schema_version:3,invoice_id:base.id,invoice_version:1,currency:'usd',standing:'needs_review',outstanding_minor:null,refund_payable_minor:null,credit_minor:null,manual_recorded_minor:0,provider_confirmed_minor:10000,provider_net_minor:null,test_provider_minor:5000,source_hash:'a'.repeat(64)}}];
+ await render();const outstanding=[...host.querySelectorAll('.sc-facts article')].find(x=>x.textContent?.startsWith('Outstanding'));expect(outstanding?.textContent).toContain('On hold');expect(outstanding?.textContent).not.toContain('$0.00');expect(host.textContent).toContain('Verification pending');expect(host.querySelector('.sc-register-row button')?.textContent).toContain('Example actual-balance client');
+});
+it('shows current refund and credit separately from original gross receipt history',async()=>{
+ const base=financialInvoice();fixture.invoices=[{...base,status:'issued',record_kind:'managed',provenance:'canonical_record',provider_verified_cents:10000,allocated_cents:10000,remaining_cents:9000,financial_evidence_version:3,financial:{schema_version:3,invoice_id:base.id,invoice_version:1,currency:'usd',standing:'recorded',outstanding_minor:9000,refund_payable_minor:1000,credit_minor:0,manual_recorded_minor:0,provider_confirmed_minor:10000,provider_net_minor:9000,test_provider_minor:5000,source_hash:'a'.repeat(64)}}];
+ await render();await click('Open');expect(document.body.textContent).toContain('Refund owed: $10.00');expect(document.body.textContent).toContain('Credits recorded: $0.00');expect(document.body.textContent).toContain('Provider net after verified adjustments: $90.00');expect(document.body.textContent).toContain('Gross receipt history: $100.00');
+});

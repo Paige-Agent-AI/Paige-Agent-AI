@@ -44,3 +44,21 @@ it('late continuation from an old business cannot alter current financial rows o
  await render();await act(async()=>{void state.more('invoice');await flush();});await render(other);old.resolve(page(2,2));await act(flush);
  expect(state.invoices.map(r=>r.id)).toEqual([row(3,2).id]);expect(state.state).toBe('ready');expect(f.register.mock.calls.filter(c=>c[0]===other)).toHaveLength(2);
 });
+
+
+it('refreshes rather than appending when native current financial version appears on continuation',async()=>{
+ let changed=false;f.register.mockImplementation(async(_t:string,entity:string,cursor:unknown)=>{if(cursor){changed=true;return{...page(2,2),financial_evidence_version:3};}return{...page(2,changed?3:1,!changed&&entity==='invoice'),...(changed?{financial_evidence_version:3}:{})};});
+ await render();await act(async()=>{await state.more('invoice');await flush();});expect(state.invoices.map(r=>r.id)).toEqual([row(3,2).id]);expect(f.agreements).toHaveBeenCalledTimes(2);expect(state.state).toBe('ready');
+});
+it('refuses initial invoice and receipt reads with different current financial versions',async()=>{
+ f.register.mockImplementation(async(_t:string,entity:string)=>({...page(2),...(entity==='invoice'?{financial_evidence_version:3}:{})}));await render();expect(state.state).toBe('error');expect(state.invoices).toEqual([]);
+});
+
+it('appends the next original receipt page when both current financial versions match',async()=>{
+ f.register.mockImplementation(async(_t:string,entity:string,cursor:unknown)=>({...page(2,cursor?2:1,!cursor&&entity==='receipt'),financial_evidence_version:3,...(!cursor&&entity==='receipt'?{next_cursor:{snapshot_id:tenant,after_position:1,entity:'receipt'}}:{})}));
+ await render();await act(async()=>{await state.more('receipt');await flush();});expect(state.receipts.map(r=>r.id)).toEqual([row(1,2).id,row(2,2).id]);expect(f.register).toHaveBeenCalledTimes(3);expect(f.agreements).toHaveBeenCalledTimes(1);expect(f.register.mock.calls[2][4]).toBe(true);
+});
+it('refreshes both original lists rather than appending a receipt page with changed financial evidence',async()=>{
+ let changed=false;f.register.mockImplementation(async(_t:string,entity:string,cursor:unknown)=>{if(cursor){changed=true;return page(2,2);}return{...page(2,changed?3:1,!changed&&entity==='receipt'),financial_evidence_version:changed?undefined:3,...(!changed&&entity==='receipt'?{next_cursor:{snapshot_id:tenant,after_position:1,entity:'receipt'}}:{})};});
+ await render();await act(async()=>{await state.more('receipt');await flush();});expect(state.receipts.map(r=>r.id)).toEqual([row(3,2).id]);expect(state.invoices.map(r=>r.id)).toEqual([row(3,2).id]);expect(f.register).toHaveBeenCalledTimes(5);expect(state.state).toBe('ready');
+});

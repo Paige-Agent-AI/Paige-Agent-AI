@@ -54,13 +54,39 @@ it('retains original unversioned invoice/receipt compatibility without upgrading
  expect(decodeReceipt(oldReceipt,tenant)).not.toBeNull();
 });
 it('exports actual TEST context beside unchanged original financial columns',async()=>{
- f.reply.mockResolvedValueOnce({data:page(),error:null});const csv=await exportRegister(tenant,'invoice');
+ f.reply.mockResolvedValueOnce({data:{...page([actualInvoice()]),financial_evidence_version:3},error:null});const csv=await exportRegister(tenant,'invoice');
  expect(csv).toContain('test_provider_verified_cents');expect(csv).toContain('payment_evidence_version');expect(csv).toContain('5000');
- f.reply.mockResolvedValueOnce({data:page([receipt()]),error:null});const receipts=await exportRegister(tenant,'receipt');expect(receipts).toContain('provider_environment');expect(receipts).toContain('"test"');
+ f.reply.mockResolvedValueOnce({data:{...page([receipt()]),financial_evidence_version:3},error:null});const receipts=await exportRegister(tenant,'receipt');expect(receipts).toContain('provider_environment');expect(receipts).toContain('"test"');
 });
-it.each([[undefined,2],[2,undefined]] as const)('returns no CSV on a %s→%s financial representation rollover',async(before,after)=>{
- const make=(version:2|undefined,rowId:string,more:boolean)=>{const row={...invoice(),id:rowId};const result={...page([row]),has_more:more,next_cursor:more?{snapshot_id:id,after_position:1,entity:'invoice'}:null};
-  if(version===undefined){delete (row as Partial<typeof row>).payment_evidence_version;delete (result as Partial<typeof result>).payment_evidence_version;}return result;};
- f.reply.mockResolvedValueOnce({data:make(before,id,true),error:null}).mockResolvedValueOnce({data:make(after,client,false),error:null});
+it.each([undefined,2] as const)('returns no partial CSV when a current3 export encounters an older %s continuation',async after=>{
+ const current={...page([actualInvoice()]),financial_evidence_version:3,has_more:true,next_cursor:{snapshot_id:id,after_position:1,entity:'invoice'}};
+ const old={...page([{...invoice(),id:client}])};if(after===undefined)delete (old as Partial<typeof old>).payment_evidence_version;
+ f.reply.mockResolvedValueOnce({data:current,error:null}).mockResolvedValueOnce({data:old,error:null});
  await expect(exportRegister(tenant,'invoice')).rejects.toThrow(/financial|representation/i);expect(f.calls).toHaveLength(2);
 });
+
+const actualSummary=(extra:Record<string,unknown>={})=>({schema_version:3,invoice_id:id,invoice_version:1,currency:'usd',standing:'recorded',outstanding_minor:9000,refund_payable_minor:1000,credit_minor:0,manual_recorded_minor:0,provider_confirmed_minor:10000,provider_net_minor:9000,test_provider_minor:5000,source_hash:'a'.repeat(64),...extra});
+const actualInvoice=(extra:Record<string,unknown>={})=>({...invoice(),financial_evidence_version:3,financial_summary:actualSummary(),provider_verified_cents:10000,allocated_cents:10000,remaining_cents:9000,...extra});
+it('copies native current debt after a refund without applying gross receipt arithmetic',()=>{
+ const row=decodeInvoice(actualInvoice(),tenant);expect(row).toMatchObject({remaining_cents:9000,financial_evidence_version:3,financial:{outstanding_minor:9000,refund_payable_minor:1000}});
+});
+it('retains an unknown managed invoice while withholding debt and collection judgments',()=>{
+ const summary=actualSummary({standing:'needs_review',outstanding_minor:null,refund_payable_minor:null,credit_minor:null,provider_net_minor:null});
+ expect(decodeInvoice(actualInvoice({financial_summary:summary,remaining_cents:null,collection_required:null}),tenant)).toMatchObject({remaining_cents:null,collection_required:null,financial:{standing:'needs_review'}});
+});
+it.each([{financial_summary:actualSummary({invoice_id:client})},{financial_summary:actualSummary({invoice_version:2})},{remaining_cents:0},{collection_required:false},{financial_summary:actualSummary({outstanding_minor:null})}])('refuses mismatched current financial identity or collection truth: %j',change=>{
+ expect(decodeInvoice(actualInvoice(change),tenant)).toBeNull();
+});
+it('cannot silently accept an unsupported current marker as an ordinary allocation row',()=>{
+ expect(decodeInvoice({...invoice(),financial_evidence_version:4},tenant)).toBeNull();
+});
+
+it('a current-register caller refuses an older valid financial response instead of treating it as adjusted debt',async()=>{
+ f.reply.mockResolvedValue({data:page(),error:null});await expect(readRegister(tenant,'invoice',null,decodeInvoice,true)).rejects.toThrow(/current financial evidence/i);
+});
+it('a current-register caller explicitly negotiates native3 and retains its closed current summary',async()=>{
+ f.reply.mockResolvedValue({data:{...page([actualInvoice()]),financial_evidence_version:3},error:null});expect((await readRegister(tenant,'invoice',null,decodeInvoice,true)).rows[0]).toMatchObject({remaining_cents:9000,financial:{refund_payable_minor:1000}});expect(f.calls[0].headers).toEqual({'x-paige-invoice-evidence-version':'3'});
+});
+
+it.each([5000,15000])('rejects a gross history total %i that contradicts the explicit receipt split',allocated_cents=>{expect(decodeInvoice(actualInvoice({allocated_cents}),tenant)).toBeNull();});
+it('retains gross receipt history above principal when native adjusted debt supports it',()=>{const financial_summary=actualSummary({provider_confirmed_minor:15000,provider_net_minor:14000});expect(decodeInvoice(actualInvoice({provider_verified_cents:15000,allocated_cents:15000,financial_summary}),tenant)).toMatchObject({allocated_cents:15000,remaining_cents:9000});});

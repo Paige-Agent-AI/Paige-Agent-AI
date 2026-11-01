@@ -972,3 +972,30 @@ The client Billing financial-only receiving ACK remains pending in original ANT-
 Billing.tsx stays unedited and its current union-map integration error stays open.
 No merge/deployment/activation/Auth/provider/founder acceptance inferred. ALG01/12
 remain bounded PARTIAL source evidence; no global algorithm or Live promotion.
+
+
+November1 managed full-schema finding — NOT a whole-suite PASS: native36d and
+coherentd700 required database checks exposed the original observation setup,
+private source-oracle and Portal legacy-finance compatibility failures. The manual
+receipt/correction/current read controls passed; that does not clear the failures.
+
+The original neutral reviewed-commercial fixture is PAUSED. With current native
+collectibility, its accepted source correctly returns commercial_terms_inactive
+and holds allocation. Add only the SAME authenticated set_client_agreement_status
+writer already used by the original full-schema manual proof, before provider
+setup. Removing those seven setup lines restores the whole original43+39 assertion
+source byte-for-byte. In the genuine isolated managed Preview, the unchanged
+original fixture prefix with this status writer records one initial TEST settlement
+and one original receipt with accepted_state available, all BEGIN/ROLLBACK. This
+is DB-role/source behavior with synthetic facts, not hosted Auth, provider or
+production acceptance. A proposed bulk43+39 connector rerun confirmation expired;
+it did not establish execution or PASS and was not blindly retried. Full original
+43+39 hosted rerun is still required. Applied220004 stays unchanged.
+
+The private five-argument invoice query is now an original legacy adapter to the
+versioned six-argument query. Existing native source-oracle inversion and Portal
+legacy tests need a causal compatibility reconciliation, not removed assertions.
+Original CURA invoice observation/context also consumes that private source and
+retains E09 source custody. Its current3 financial representation/integration must
+be reconciled through original ANT163, alongside the pending Billing-only handoff.
+Exact-head verify/database checks FAILED atd700; no release or acceptance waiver.

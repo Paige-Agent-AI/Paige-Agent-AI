@@ -42,6 +42,7 @@ const workspace: TeamWorkspaceRecord = {
   tenant_id: "tenant-1",
   tenant_name: "Example Team",
   viewer_permission: "owner",
+  viewer_is_account_holder: false,
   can_manage_profiles: true,
   can_manage_invitations: true,
   can_change_permissions: true,
@@ -386,4 +387,25 @@ describe('original scoped permission change and unknown recovery',()=>{
   mocks.rpc.mockRejectedValue(Error('private SQL and customer text'));const e=await editor();await act(async()=>e.confirm().click());
   expect(mocks.error.mock.calls.at(-1)?.[0]).not.toContain('private');expect(mocks.error.mock.calls.at(-1)?.[0]).toContain('Reopen Team');expect(e.confirm().disabled).toBe(true);expect(mocks.success).not.toHaveBeenCalled();await act(async()=>e.root.unmount());
  });
+});
+
+
+describe("original Team native availability during release", () => {
+  beforeEach(() => { document.body.innerHTML = ""; mocks.rpc.mockReset(); mocks.success.mockReset(); mocks.error.mockReset(); });
+  it.each([undefined, null, "false", 0])("keeps a legacy or invalid reader snapshot %s from exposing unavailable writers", async (projection) => {
+    const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
+    const closed = vi.fn(), saved = vi.fn(), removal = vi.fn();
+    try {
+      await act(async () => root.render(<MemberEditor member={member} workspace={{ ...workspace, viewer_is_account_holder: projection as unknown as boolean }} viewerId="viewer-1" onClose={closed} onSaved={saved} canRemove onRequestRemoval={removal} />));
+      expect(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.disabled).toBe(true);
+      expect(host.querySelector('button[role="radio"]')).toBeNull();
+      expect(Array.from(host.querySelectorAll('button')).some(b => b.textContent === 'Save work details')).toBe(false);
+      expect(host.textContent).toContain('Close these details');
+      const remove = Array.from(host.querySelectorAll('button')).find(b => b.textContent === 'Remove from team…')!;
+      expect(remove.disabled).toBe(false); await act(async () => remove.click()); expect(removal).toHaveBeenCalledTimes(1);
+      await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click());
+      expect(closed).toHaveBeenCalledWith(true); expect(saved).not.toHaveBeenCalled();
+      expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.success).not.toHaveBeenCalled();
+    } finally { await act(async () => root.unmount()); host.remove(); }
+  });
 });

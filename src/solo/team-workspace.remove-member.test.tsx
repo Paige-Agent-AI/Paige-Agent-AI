@@ -53,6 +53,7 @@ const avery = member({ membership_id: "m-avery", user_id: "admin-2", full_name: 
 const dana = member();
 const roster = (members: TeamMemberRecord[], over: Partial<TeamWorkspaceRecord> = {}): TeamWorkspaceRecord => ({
   tenant_id: "tenant-1", tenant_name: "Example Team", viewer_permission: "owner",
+  viewer_is_account_holder: false,
   can_manage_profiles: true, can_manage_invitations: true, can_change_permissions: true,
   total_members: members.length, members, invitations: [], ...over,
 });

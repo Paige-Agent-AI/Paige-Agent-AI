@@ -129,9 +129,15 @@ export type TeamWorkspaceRecord = {
   business_owner_options?: TeamBusinessOwnerOption[];
 };
 
+/** The atomic native package adds this projection after BOTH scoped doors.
+ * Availability only; the original RPC independently resolves the actual authority. */
+export function teamDetailsAvailable(workspace: TeamWorkspaceRecord): boolean {
+  return typeof workspace.viewer_is_account_holder === "boolean";
+}
+
 /** Presentation only: the original RPC re-resolves the actual authority before writing. */
 export function canEditWorkProfile(member: TeamMemberRecord, workspace: TeamWorkspaceRecord, viewerId: string | null): boolean {
-  if (!workspace.can_manage_profiles || !["active", "suspended"].includes(member.status)) return false;
+  if (!teamDetailsAvailable(workspace) || !workspace.can_manage_profiles || !["active", "suspended"].includes(member.status)) return false;
   if (!member.is_owner && member.permission !== "owner") return true;
   return Boolean(viewerId && (member.user_id === viewerId || workspace.viewer_is_account_holder === true));
 }

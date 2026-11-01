@@ -3,6 +3,9 @@ import { canEditWorkProfile, verifiedWorkProfileReceipt, workProfileRefusal, typ
 const owner = { membership_id: "seat", user_id: "owner", status: "active", permission: "owner", is_owner: true } as TeamMemberRecord;
 const workspace = { can_manage_profiles: true, viewer_is_account_holder: false, members: [] } as unknown as TeamWorkspaceRecord;
 describe("original Team work-profile contract", () => {
+  it.each([undefined, null, "false", 0])("does not offer scoped work editing through legacy or invalid native projection %s", projection => {
+    expect(canEditWorkProfile({ ...owner, is_owner: false, permission: "member" }, { ...workspace, viewer_is_account_holder: projection as unknown as boolean }, "viewer")).toBe(false);
+  });
   it.each([undefined, null, false, "true", 1])("does not infer holder access from %s", (holder) => {
     expect(canEditWorkProfile(owner, { ...workspace, viewer_is_account_holder: holder as boolean }, "other")).toBe(false);
   });

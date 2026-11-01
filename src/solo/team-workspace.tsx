@@ -10,6 +10,7 @@ import { Modal, NoticeBar, PermissionCards, RowMenu, TeamPicker, TeamSwitch, typ
 import { DepartureReview, type DepartureOutcome } from "./team-departure";
 import {
   canActOn,
+  teamDetailsAvailable,
   canEditWorkProfile,
   ownerWorkProfileExplanation,
   verifiedWorkProfileReceipt,
@@ -145,13 +146,14 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
   const [saveConfirmed, setSaveConfirmed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [permissionDraft, setPermissionDraft] = useState<string | null>(null);
+  const detailsAvailable = teamDetailsAvailable(workspace);
   const canEdit = canEditWorkProfile(member, workspace, viewerId);
   const ownerReadOnly = (member.is_owner || member.permission === "owner") && !canEdit;
   const ownerExplanation = ownerWorkProfileExplanation(member, workspace);
   const [saveNeedsReopen, setSaveNeedsReopen] = useState(false);
   const permissionNeedsRefresh = useRef(false);
   const preserveDraftOnPermission = useRef(false);
-  const close = () => onClose(saveNeedsReopen || permissionNeedsRefresh.current);
+  const close = () => onClose(!detailsAvailable || saveNeedsReopen || permissionNeedsRefresh.current);
   const writeInFlight = useRef(false);
   const lifetime = useRef(0);
   const currentGuard = useRef(isCurrent);
@@ -283,7 +285,7 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
   const firstName = member.full_name?.trim() ? member.full_name.trim().split(/\s+/)[0] : identity.primary;
   // Stage 0 (live): change_user_role refuses a target without an active seat, so a suspended
   // person's permission can't be changed directly. The control is not offered; the reason is.
-  const permissionEditable = workspace.can_change_permissions && permission.mutable && !suspended;
+  const permissionEditable = detailsAvailable && workspace.can_change_permissions && permission.mutable && !suspended;
   return <Modal title={identity.primary} description={`${member.email ?? "Email unavailable"} · ${suspended ? "Suspended" : "Active"}`}
     wide
     initialFocusTitle={ownerReadOnly}
@@ -293,10 +295,10 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
       <div className="stw-person-summary"><span className="stw-avatar" data-hue={avatarHue(member)}>{initials(member)}</span><div><strong>{identity.primary}</strong>{identity.secondary && <span>{identity.secondary}</span>}</div><span className="stw-perm" data-tone={permissionTone(member.permission, member.is_owner)}>{permission.label}</span></div>
       <TeamMemberContact member={member} workspace={workspace} onDirtyChange={reportContactDirty}/>
       <div className="stw-separation-note"><ShieldCheck/><span><strong>Permission and title are separate.</strong> Changing someone’s title never changes their access.</span></div>
-      <label>Title<input value={title} readOnly={ownerReadOnly} aria-describedby={ownerReadOnly ? "stw-owner-profile-explanation" : undefined} className={ownerReadOnly ? "stw-work-readonly" : undefined} disabled={!workspace.can_manage_profiles || saving} maxLength={121} onChange={(e) => { if (canEdit) { setTitle(e.target.value); if (writeInFlight.current) preserveDraftOnPermission.current = true; setSaveConfirmed(false); } }} placeholder="e.g. Client Success Manager"/>{errors.title && <small role="alert">{errors.title}</small>}</label>
-      <label>Responsibilities<textarea value={responsibilities} readOnly={ownerReadOnly} aria-describedby={ownerReadOnly ? "stw-owner-profile-explanation" : undefined} className={ownerReadOnly ? "stw-work-readonly" : undefined} disabled={!workspace.can_manage_profiles || saving} maxLength={2001} onChange={(e) => { if (canEdit) { setResponsibilities(e.target.value); if (writeInFlight.current) preserveDraftOnPermission.current = true; setSaveConfirmed(false); } }} rows={5} placeholder="What this person owns, decides, and hands off."/>{errors.responsibilities && <small role="alert">{errors.responsibilities}</small>}</label>
+      <label>Title<input value={title} readOnly={ownerReadOnly} aria-describedby={ownerReadOnly ? "stw-owner-profile-explanation" : undefined} className={ownerReadOnly ? "stw-work-readonly" : undefined} disabled={!detailsAvailable || !workspace.can_manage_profiles || saving} maxLength={121} onChange={(e) => { if (canEdit) { setTitle(e.target.value); if (writeInFlight.current) preserveDraftOnPermission.current = true; setSaveConfirmed(false); } }} placeholder="e.g. Client Success Manager"/>{errors.title && <small role="alert">{errors.title}</small>}</label>
+      <label>Responsibilities<textarea value={responsibilities} readOnly={ownerReadOnly} aria-describedby={ownerReadOnly ? "stw-owner-profile-explanation" : undefined} className={ownerReadOnly ? "stw-work-readonly" : undefined} disabled={!detailsAvailable || !workspace.can_manage_profiles || saving} maxLength={2001} onChange={(e) => { if (canEdit) { setResponsibilities(e.target.value); if (writeInFlight.current) preserveDraftOnPermission.current = true; setSaveConfirmed(false); } }} rows={5} placeholder="What this person owns, decides, and hands off."/>{errors.responsibilities && <small role="alert">{errors.responsibilities}</small>}</label>
       {ownerReadOnly && <p id="stw-owner-profile-explanation" className="stw-owner-profile-explanation">{ownerExplanation}</p>}
-      {saveNeedsReopen && <div className="stw-separation-note" role="alert"><AlertTriangle/><span>Close these details, then reopen the person from Team to check the current state before another change.</span></div>}
+      {(!detailsAvailable || saveNeedsReopen) && <div className="stw-separation-note" role="alert"><AlertTriangle/><span>{saveNeedsReopen ? "Close these details, then reopen the person from Team to check the current state before another change." : "Close these details, then reopen the person from Team before changing work details or access."}</span></div>}
       {saveConfirmed && <div className="stw-separation-note" role="status"><ShieldCheck/><span>Work details saved. Permission was not changed.</span></div>}
       {permissionEditable
         ? <div className="stw-permission-change"><div className="stw-fieldlabel" id="stw-ed-perm-l">Permission</div>

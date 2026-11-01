@@ -42,6 +42,7 @@ const member = (user_id: string, full_name: string, permission: string, job_titl
 const OWNER = member("owner-1", "Morgan Lee", "owner", "Founder");
 const TEAM = {
   tenant_id: "tenant-1", tenant_name: "Example Team", viewer_permission: "owner",
+  viewer_is_account_holder: false,
   can_manage_profiles: true, can_manage_invitations: true, can_change_permissions: true, total_members: 3,
   members: [OWNER, member("trainer-1", "Sam Rivera", "member", "Head Trainer"), member("new-1", "Alex Kim", "member", null)],
   invitations: [],

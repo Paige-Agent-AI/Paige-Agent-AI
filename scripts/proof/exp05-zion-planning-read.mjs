@@ -45,6 +45,10 @@ const result=spawnSync(psql,['-X','-h',process.env.PGHOST??'127.0.0.1','-p',proc
  ...(process.argv.includes('--search-red')?['-v','exp05_search_red=1']:[]),'-f',fixture],
  {cwd:repo,encoding:'utf8',maxBuffer:20*1024*1024,timeout:120000});
 writeFileSync(join(run,'stdout.txt'),result.stdout??'');writeFileSync(join(run,'stderr.txt'),result.stderr??'');
+const contractLine=(result.stdout??'').split(/\r?\n/).find(line=>line.startsWith('EXP05_NATIVE_CONTRACT:'));
+const contract=contractLine?JSON.parse(contractLine.slice('EXP05_NATIVE_CONTRACT:'.length)):null;
+if(result.status===0)assert(contract?.length===13,'Successful proof includes the actual native source/metadata contract');
+if(contract)writeFileSync(join(run,'native-contract.json'),JSON.stringify(contract,null,2)+'\n');
 writeFileSync(join(run,'result.json'),JSON.stringify({exit:result.status,error:result.error?.message??null,
  inputs:[...inputs].map(([path,value])=>({path:relative(repo,path),sha256:value.sha256})),
  proof:'Original E08 reduced-schema disposable fixture plus EXP05 extension; no customer/full-schema/production claim'},null,2));

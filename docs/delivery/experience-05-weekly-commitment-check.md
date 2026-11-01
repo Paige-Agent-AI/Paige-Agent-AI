@@ -1206,7 +1206,7 @@ and fresh source without inheriting expired observations. No service plan_list,
 new grant, provider, scheduler, approval, execution or second source of truth.
 
 Engineering evidence: 178 host/source recording-port tests PASS; changed host
-and source modules pass cached Deno type checking. Existing E08 A2b assertions,
+and source modules pass pinned-dependency Deno type checking. Existing E08 A2b assertions,
 16 mutants, P1 and uncapped admission controls run unchanged before the new
 native extension. Native source/ACL/metadata conservation, exact replay,
 20 original-query filter comparisons, raw microsecond version changes, foreign

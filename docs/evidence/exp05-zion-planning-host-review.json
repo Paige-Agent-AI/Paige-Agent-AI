@@ -228,8 +228,8 @@
       "supabase/functions/_shared/team-hub/zion-planning-source.ts": "3ecc898e21707b46b54a6e33e6fb56674be5b7afe5ade84dd6f62d41641d56c7",
       "supabase/functions/_shared/team-hub/zion-planning-source.test.ts": "b9847b592bc3cc24f3ce4f785d1347ea9b25f84196c3cb34d04576caf747728e",
       "scripts/proof/exp05-zion-planning-read-candidate.sql": "0743cbf833a4726aff5e75a2a468ea01afdf505cbf89d990302f549c315ebb97",
-      "scripts/proof/exp05-zion-planning-read.mjs": "21aa8a5df4772a90df50461bf4c3c85185090d4dc6c67b2d99b1a636d4195789",
-      "supabase/tests/exp05_zion_planning_read.sql": "e46567b98fad20ebb0748b965d30475b46c36b6a577c122b8efd9b70db44f3f4",
+      "scripts/proof/exp05-zion-planning-read.mjs": "28b7cee3d56abf2b63d68acf520f011999816101a3ca1753d0521e10a8aad72e",
+      "supabase/tests/exp05_zion_planning_read.sql": "f46378a69aa58b106eedb76175c3dadfe9978d6ab1cf53345ed7af3d0a7647b2",
       "supabase/tests/fixtures/exp05-zion-planning-original.sql": "42f7b90ac7f08ea2235d13b2164c3e7203738e4d80db0ea7b4f9ba216c3aa175"
     },
     "abi": "Same service-only team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb); closed plan_list/version1 source descriptor; no public RPC or added grant",
@@ -242,8 +242,204 @@
       },
       "types": "Changed host and both Planning modules PASS under pinned Deno dependency cache; isolated non-network cache miss retained separately, no changed dependency",
       "native": "Existing E08 A2b full assertions/16 mutants/P1/uncapped suite unchanged, followed by native additive source/metadata/ACL/replay,20 differential queries,12 malformed envelopes and current-source/refusal/rearm/history checks. Reduced-schema synthetic role ports; not full-schema or customer proof",
-      "nativeEvidence": "work/planning-native-proof; exact final run recorded in original PR/Linear receipt",
-      "causalRed": "Native missing-contract baseline fails before candidate; exact original Search negative fails on newly source-revoked Planning result. Initial Windows transport/fixture/SQL correction attempts retained in private run evidence"
+      "nativeEvidence": "work/planning-native-proof/run-1793541409499/result.json (exit0; original disposable database dropped)",
+      "causalRed": "Native missing-contract baseline fails before candidate; exact original Search negative fails on newly source-revoked Planning result. Initial Windows transport/fixture/SQL correction attempts retained in private run evidence",
+      "nativeContract": [
+        {
+          "acl": [
+            "postgres=X/postgres",
+            "service_role=X/postgres"
+          ],
+          "body": "27202521ef9750d3246ee5e5e11018aa",
+          "owner": "postgres",
+          "config": [
+            "search_path=pg_catalog, public"
+          ],
+          "definer": true,
+          "signature": "_sales_invoice_actor(uuid,uuid)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "c0f1fc1451a8bc871b3c0b11c54b6091",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": false,
+          "signature": "_team_hub_agent_read_annotations(uuid)",
+          "volatility": "s"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "b92f4236bb2ef1e4bb01c584d0645ba7",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "_team_hub_assert_agent_read_scope(team_hub_agent_turns)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "06e75ab8306ecb1434727f2fca152e74",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "_team_hub_assert_planning_read(team_hub_agent_turns)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "1876c9f943d5f51ddef29d4528e5e981",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": false,
+          "signature": "_team_hub_message_json(team_hub_messages)",
+          "volatility": "s"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "c6cdad338235bb39ac2d0b8609a45aa3",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "_team_hub_planning_read_annotations(team_hub_agent_turns)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "2d492592c97ac898460a62e8981db6e5",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "_team_hub_planning_read_source(team_hub_agent_turns,jsonb)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "4bd168e06324f49e4eb75efc3efd7dd5",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": false,
+          "signature": "_team_hub_planning_source_versions(jsonb)",
+          "volatility": "s"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "body": "e9a48add1b7c7ce9a74518337f45d24d",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "_team_hub_stage_planning_read(team_hub_agent_turns,jsonb)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres",
+            "service_role=X/postgres",
+            "authenticated=X/postgres"
+          ],
+          "body": "702f2b52fc0d4e5c615fde7ec906b840",
+          "owner": "postgres",
+          "config": [
+            "search_path=public"
+          ],
+          "definer": true,
+          "signature": "plan_list(text,uuid,text,uuid,date,date,integer,uuid,uuid,boolean,boolean)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres",
+            "service_role=X/postgres",
+            "authenticated=X/postgres"
+          ],
+          "body": "425c6d84055788cc651001b8fe13199d",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "team_hub_list_messages(uuid,uuid,uuid,timestamp with time zone,uuid,integer)",
+          "volatility": "s"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres",
+            "authenticated=X/postgres"
+          ],
+          "body": "bd0e68f3c3e88976786d716dc4a870a6",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean,uuid,text,jsonb,text)",
+          "volatility": "v"
+        },
+        {
+          "acl": [
+            "postgres=X/postgres",
+            "service_role=X/postgres"
+          ],
+          "body": "5ca11bdb927e4d4a571f1936f608d2b5",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "signature": "team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)",
+          "volatility": "v"
+        }
+      ],
+      "neighbor": {
+        "pass": 15,
+        "fail": 0,
+        "skip": 0,
+        "paths": [
+          "team-hub/agent-turn-wiring.test.ts",
+          "team-hub/mentor-plan-read.test.ts",
+          "paige-turn/record-links.test.ts"
+        ]
+      },
+      "typeEvidence": "work/planning-agent-check-final.txt; exact final changed host/source modules; --cached-only exit0 in same pinned dependency environment",
+      "initialFailures": [
+        "Sandbox local TCP disallowed; rerun in authorized isolated native environment",
+        "Original Linux sed and nested include paths required literal Windows transport, retaining exact SQL/mutants",
+        "Fixture initially duplicated existing Planning tables and attempted a named-parameter role helper replacement; corrected to original table/role ports",
+        "New source projection SQL alias and a write/read same-statement snapshot assertion were corrected; no original assertion removed",
+        "Whitespace check corrected new trailing blank lines; no native source body rewritten"
+      ]
     },
     "review": "AUTHOR-REVIEW / LOWER ASSURANCE; sequential source, authority, privacy, recovery and migration pass. Search source/CI receiving scope and release gates remain OPEN; not an approval to merge",
     "releaseHolds": [

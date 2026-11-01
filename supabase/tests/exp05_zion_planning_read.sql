@@ -224,4 +224,15 @@ SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM jsonb_array_elements((:'e5revokeds
 \endif
 ROLLBACK TO e5_history_revoke;
 ROLLBACK;
+\o
+\pset format unaligned
+\pset tuples_only on
+SELECT 'EXP05_NATIVE_CONTRACT:'||jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),
+ 'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl)
+ ORDER BY p.oid::regprocedure::text)::text FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname IN (
+ '_team_hub_planning_read_source','_team_hub_planning_source_versions','_team_hub_assert_planning_read',
+ '_team_hub_stage_planning_read','_team_hub_planning_read_annotations','_team_hub_assert_agent_read_scope',
+ 'team_hub_stage_agent_read_context','_team_hub_agent_read_annotations','team_hub_post_agent_message',
+ 'team_hub_list_messages','_team_hub_message_json','plan_list','_sales_invoice_actor');
+\o /dev/null
 \echo 'PASS: EXP05 caller-JWT version parity, native stage-before-publication, mixed CRM reads, refusal, replay and history revocation'

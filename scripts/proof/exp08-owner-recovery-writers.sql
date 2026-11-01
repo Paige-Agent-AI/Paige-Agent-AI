@@ -263,6 +263,100 @@ $function$;
 REVOKE ALL ON FUNCTION public._exp08_lock_recovery_effect(uuid,uuid,uuid,text)
   FROM PUBLIC,anon,authenticated,service_role;
 
+-- Native in-app records only. Raw legacy notification surfaces get no private recovery detail.
+CREATE OR REPLACE FUNCTION public._exp08_record_recovery_notices(_tenant uuid,_request uuid)
+RETURNS void LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $function$
+DECLARE
+  actor uuid := public._exp08_lock_recovery_actor(); a public.paige_audit_log%ROWTYPE;
+  recipient uuid; notice uuid; notices jsonb := '[]'; notified jsonb := '[]'; membership jsonb;
+BEGIN
+  PERFORM public._exp08_require_recovery_audit();
+  SELECT * INTO a FROM public.paige_audit_log WHERE id=_request FOR UPDATE;
+  IF NOT FOUND OR a.tenant_id IS DISTINCT FROM _tenant OR a.actor_user_id IS DISTINCT FROM actor
+    OR a.actor_role IS DISTINCT FROM 'super_admin'
+    OR a.action NOT IN ('tenant:owner_recovery.grant_owner','tenant:owner_recovery.revoke_owner','tenant:owner_recovery.set_account_holder')
+    OR a.payload->>'outcome' IS DISTINCT FROM 'effect_verified'
+    OR a.payload->>'transaction_id' IS DISTINCT FROM pg_current_xact_id()::text
+    OR a.payload->>'backend_pid' IS DISTINCT FROM pg_backend_pid()::text THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_CONTEXT_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  IF a.payload->>'notice_status' IN ('in_app_recorded','no_recipients') THEN RETURN;END IF;
+  IF a.payload->>'notice_status' IS DISTINCT FROM 'not_prepared' THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_CONTEXT_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  FOR recipient IN SELECT u.id FROM auth.users u WHERE u.deleted_at IS NULL
+    AND (u.banned_until IS NULL OR u.banned_until<=statement_timestamp())
+    AND u.id IN (SELECT user_id FROM public.tenant_members WHERE tenant_id=_tenant AND is_owner AND status='active'
+      UNION SELECT (a.payload->>'previous_owner_user_id')::uuid)
+    ORDER BY u.id FOR SHARE LOOP
+    SELECT jsonb_build_object('id',m.id,'status',m.status,'is_owner',m.is_owner,'role',m.role,'updated_at',m.updated_at)
+      INTO membership FROM public.tenant_members m WHERE tenant_id=_tenant AND user_id=recipient;
+    notice := gen_random_uuid();
+    INSERT INTO public.notifications(id,user_id,type,title,message,action_url,is_read,metadata)
+      VALUES(notice,recipient,'system','Team ownership update','A team ownership change is available to review.',NULL,false,
+        jsonb_build_object('kind','exp08_owner_recovery','audit_id',_request));
+    notices:=notices||jsonb_build_array(jsonb_build_object('user_id',recipient,'notification_id',notice,
+      'audience',CASE WHEN recipient=(a.payload->>'previous_owner_user_id')::uuid THEN 'holder_of_record' ELSE 'active_owner' END,
+      'membership',membership));
+    notified:=notified||jsonb_build_array(recipient);
+  END LOOP;
+  UPDATE public.paige_audit_log SET payload=payload||jsonb_build_object('notices',notices,'notified',notified,
+    'notice_status',CASE WHEN jsonb_array_length(notices)=0 THEN 'no_recipients' ELSE 'in_app_recorded' END,
+    'email_status','not_requested') WHERE id=_request;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._exp08_record_recovery_notices(uuid,uuid)
+  FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE OR REPLACE FUNCTION public._exp08_read_recovery_notice(_expected_tenant uuid,_notice uuid)
+RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $function$
+DECLARE
+  actor uuid := auth.uid(); n public.notifications%ROWTYPE; a public.paige_audit_log%ROWTYPE;
+  member_state jsonb; binding jsonb; business_name text; active_owner boolean := false;
+BEGIN
+  PERFORM public._exp08_require_recovery_audit();
+  PERFORM 1 FROM auth.users WHERE id=actor AND deleted_at IS NULL
+    AND (banned_until IS NULL OR banned_until<=statement_timestamp()) FOR SHARE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';END IF;
+  PERFORM 1 FROM public.profiles WHERE user_id=actor AND active_tenant_id=_expected_tenant FOR SHARE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';END IF;
+  SELECT jsonb_build_object('id',m.id,'status',m.status,'is_owner',m.is_owner,'role',m.role,'updated_at',m.updated_at),
+    m.is_owner AND m.status='active' INTO member_state,active_owner FROM public.tenant_members m
+    WHERE tenant_id=_expected_tenant AND user_id=actor FOR SHARE;
+  SELECT name INTO business_name FROM public.tenants WHERE id=_expected_tenant AND archived_at IS NULL FOR SHARE;
+  IF NOT FOUND OR public._solo_shell_tenant(_expected_tenant) IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  SELECT * INTO n FROM public.notifications WHERE id=_notice AND user_id=actor FOR SHARE;
+  IF NOT FOUND OR n.metadata->>'kind' IS DISTINCT FROM 'exp08_owner_recovery' THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  IF coalesce(n.metadata->>'audit_id','') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  SELECT * INTO a FROM public.paige_audit_log WHERE id=(n.metadata->>'audit_id')::uuid FOR SHARE;
+  IF NOT FOUND OR a.tenant_id IS DISTINCT FROM _expected_tenant OR a.actor_role IS DISTINCT FROM 'super_admin'
+    OR a.payload->>'outcome' IS DISTINCT FROM 'effect_verified'
+    OR a.action NOT IN ('tenant:owner_recovery.grant_owner','tenant:owner_recovery.revoke_owner','tenant:owner_recovery.set_account_holder') THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  SELECT x INTO binding FROM jsonb_array_elements(a.payload->'notices') x
+    WHERE x->>'user_id'=actor::text AND x->>'notification_id'=_notice::text;
+  IF binding IS NULL OR (coalesce(active_owner,false) OR
+    (binding->>'audience'='holder_of_record' AND a.payload->>'previous_owner_user_id'=actor::text
+      AND binding->'membership' IS NOT DISTINCT FROM coalesce(member_state,'null'::jsonb))) IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  RETURN jsonb_build_object('audit_id',a.id,'notification_id',n.id,'tenant_id',a.tenant_id,
+    'business_name',business_name,'action',a.action,'target_user_id',a.target_id,
+    'reason',a.payload->>'reason','recorded_at',a.created_at,'is_read',n.is_read);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._exp08_read_recovery_notice(uuid,uuid)
+  FROM PUBLIC,anon,authenticated,service_role;
+
 CREATE OR REPLACE FUNCTION public._exp08_apply_owner_recovery(
   _tenant uuid,_act text,_user uuid,_reason text,_request uuid)
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
@@ -322,6 +416,7 @@ BEGIN
   IF NOT FOUND THEN
     RAISE EXCEPTION 'OWNER_RECOVERY_RESULT_UNVERIFIED' USING ERRCODE='42501';
   END IF;
+  PERFORM public._exp08_record_recovery_notices(_tenant,_request);
   RETURN public._exp08_read_owner_recovery(_tenant,_request);
 END;
 $function$;

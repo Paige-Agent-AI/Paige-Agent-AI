@@ -30,10 +30,11 @@ async function denied(label,fn=call,pattern=/OWNER_RECOVERY_FORBIDDEN|permission
 }
 function reset(){
  db.role='';db.actor=actor;
- db.run(`TRUNCATE auth.users,public.user_roles,public.tenant_members,public.tenants;
+ db.run(`TRUNCATE auth.users,public.user_roles,public.tenant_members,public.tenants,public.profiles;
  INSERT INTO auth.users(id) VALUES('${actor}'),('${holder}');
  INSERT INTO public.user_roles VALUES('${actor}','super_admin');
  INSERT INTO public.tenants(id,account_type) VALUES('${tenant}','standalone');`);
+ db.run(`INSERT INTO public.profiles(user_id,active_tenant_id) VALUES('${actor}','${tenant}'),('${holder}','${tenant}')`);
 }
 function session(input){
  const p=spawn(db.psql,db.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});
@@ -94,7 +95,7 @@ try{
  CREATE TYPE public.tenant_role AS ENUM('owner','admin','member');
  CREATE TABLE auth.users(id uuid PRIMARY KEY,deleted_at timestamptz,banned_until timestamptz);
  CREATE TABLE public.user_roles(user_id uuid,role public.app_role,PRIMARY KEY(user_id,role));
- CREATE TABLE public.tenants(id uuid PRIMARY KEY,owner_user_id uuid,account_type text,archived_at timestamptz,company boolean DEFAULT false,
+ CREATE TABLE public.tenants(id uuid PRIMARY KEY,name text DEFAULT 'Synthetic business',owner_user_id uuid,account_type text,archived_at timestamptz,company boolean DEFAULT false,
  platform_fee_bps integer,parent_tenant_id uuid,stripe_customer_id text,stripe_subscription_id text);
  CREATE TABLE public.tenant_members(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,user_id uuid,is_owner boolean,status text,
  role public.tenant_role DEFAULT 'member',business_owner_id uuid,updated_at timestamptz DEFAULT now());
@@ -105,6 +106,17 @@ try{
  GRANT ALL ON public.paige_audit_log TO authenticated,anon,service_role;
  -- Strong overlapping permission port; the actual restrictive recovery namespace must still win.
  CREATE POLICY fixture_permissive_audit ON public.paige_audit_log FOR ALL TO authenticated USING(true) WITH CHECK(true);
+ CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
+ CREATE TYPE public.notification_type AS ENUM('system');
+ CREATE TABLE public.notifications(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid NOT NULL,
+ type public.notification_type NOT NULL,title text NOT NULL,message text NOT NULL,action_url text,
+ is_read boolean DEFAULT false,metadata jsonb,created_at timestamptz DEFAULT now(),read_at timestamptz);
+ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ GRANT USAGE ON SCHEMA auth TO authenticated;
+ GRANT SELECT,UPDATE ON public.notifications TO authenticated;
+ -- Minimal original recipient-only SELECT/UPDATE policy ports; no service/other legacy policy claim.
+ CREATE POLICY fixture_notice_own_select ON public.notifications FOR SELECT TO authenticated USING(auth.uid()=user_id);
+ CREATE POLICY fixture_notice_own_update ON public.notifications FOR UPDATE TO authenticated USING(auth.uid()=user_id) WITH CHECK(auth.uid()=user_id);
  -- Explicit ports for dependencies beneath the original I1 helpers, not a claimed full native schema.
  CREATE FUNCTION public.is_company_workspace(t uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT company FROM public.tenants WHERE id=t$$;
  CREATE FUNCTION public.is_tenant_owner(u uuid,t uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT EXISTS(
@@ -281,13 +293,15 @@ try{
  reset();seat();
  assert.equal(read().status,'not_found');results.push({case:'missing original recovery receipt stays not_found',passed:true});
  const first=JSON.parse(scalar(apply()));
- assert.equal(first.receipt.outcome,'effect_verified');assert.equal(first.receipt.notice_status,'not_prepared');
- assert.deepEqual(first.receipt.notified,[]);assert.equal(first.audit_id,request);
+ assert.equal(first.receipt.outcome,'effect_verified');assert.equal(first.receipt.notice_status,'in_app_recorded');
+ assert.deepEqual(first.receipt.notified,[holder]);assert.equal(first.audit_id,request);
  assert.equal(scalar(`SELECT public._tenant_account_holder_state('${tenant}')`),'working');
- results.push({case:'private atomic R12 operation persists original recovery audit and truthful incomplete-notice receipt',passed:true});
+ results.push({case:'private atomic R12 operation persists original recovery audit and native in-app record, not email/seen delivery',passed:true});
  const count=scalar('SELECT count(*) FROM public.paige_audit_log');
+ const noticeCount=scalar('SELECT count(*) FROM public.notifications');
  assert.deepEqual(JSON.parse(scalar(apply())),first);assert.deepEqual(read(),first);
  assert.equal(scalar('SELECT count(*) FROM public.paige_audit_log'),count);
+ assert.equal(scalar('SELECT count(*) FROM public.notifications'),noticeCount);
  results.push({case:'same request replay/read succeeds after holder becomes working without repeating effect or audit',passed:true});
  await denied('same request changed reason refuses replay',()=>db.exec(apply(request,'set_account_holder','A materially different recovery reason')),/OWNER_RECOVERY_REQUEST_MISMATCH/);
  await denied('same request changed action refuses replay',()=>db.exec(apply(request,'grant_owner')),/OWNER_RECOVERY_REQUEST_MISMATCH/);
@@ -304,9 +318,11 @@ try{
  db.run('ALTER TABLE public.paige_audit_log ENABLE TRIGGER trg_owner_recovery_audit_truncate');
  reset();seat();
  const rolled='e8000000-0000-4000-8000-000000092003';
+ const beforeRolledNotices=scalar('SELECT count(*) FROM public.notifications');
  await db.exec(`BEGIN;${apply(rolled)};ROLLBACK;`);
  assert.equal(scalar(`SELECT owner_user_id IS NULL FROM public.tenants WHERE id='${tenant}'`),'t');
  assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${rolled}'`),'0');
+ assert.equal(scalar('SELECT count(*) FROM public.notifications'),beforeRolledNotices);
  results.push({case:'outer rollback removes pointer and recovery receipt atomically',passed:true});
  const revoked='e8000000-0000-4000-8000-000000092004';
  await denied('unimplemented Billing-dependent revoke refuses without a success receipt',()=>db.exec(apply(revoked,'revoke_owner')),/OWNER_RECOVERY_REVOKE_UNAVAILABLE/);
@@ -314,6 +330,7 @@ try{
  async function operationRace(label,commit,id){
   reset();seat();const name='exp08_recovery_operation_'+Date.now();
   const oldCount=Number(scalar("SELECT count(*) FROM public.paige_audit_log WHERE action='tenant:account_holder_changed'"));
+  const oldNotices=Number(scalar('SELECT count(*) FROM public.notifications'));
   const first=session(`BEGIN;${db.prefix()}${apply(id)};SELECT 'exp08_recovery_operation_locked';`);let second;
   try{
    await until(()=>first.out().includes('exp08_recovery_operation_locked'));
@@ -323,6 +340,7 @@ try{
    const r=await second.done;assert.equal(r.code,0,r.err);
    assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${id}'`),'1');
    assert.equal(Number(scalar("SELECT count(*) FROM public.paige_audit_log WHERE action='tenant:account_holder_changed'")),oldCount+1);
+   assert.equal(Number(scalar('SELECT count(*) FROM public.notifications')),oldNotices+1);
    assert.equal(JSON.parse(scalar(`SELECT public._exp08_read_owner_recovery('${tenant}','${id}')`)).receipt.outcome,'effect_verified');
    results.push({case:label,passed:true});
   }finally{
@@ -364,7 +382,69 @@ try{
  const internal=JSON.parse(scalar(`SELECT public._exp08_read_owner_recovery('${tenant}','${bound}')`));
  assert.equal(internal.receipt.transaction_id,undefined);assert.equal(internal.receipt.backend_pid,undefined);
  results.push({case:'private receipt omits internal backend and transaction identity',passed:true});
- console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private admission/grant/R12 and original durable audit receipt; public recovery RPC, notices and Billing-dependent revoke NOT implemented',
+ const nativeNotice=first.receipt.notices[0].notification_id;
+ db.actor=holder;
+ const detail=()=>JSON.parse(scalar(`SELECT public._exp08_read_recovery_notice('${tenant}','${nativeNotice}')`));
+ // Restore the original R12 notice's recipient as the current active owner in the same scope.
+ db.run(`INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status) SELECT '${tenant}','${holder}',true,'active'
+ WHERE NOT EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}')`);
+ assert.equal(detail().reason,reason);
+ results.push({case:'current native recipient reads private recovery reason from original audit, not raw notification',passed:true});
+ const raw=JSON.parse(scalar(`SELECT to_jsonb(n) FROM public.notifications n WHERE id='${nativeNotice}'`));
+ assert.equal(raw.message.includes(reason),false);assert.equal(raw.title.includes('Synthetic business'),false);
+ assert.deepEqual(Object.keys(raw.metadata).sort(),['audit_id','kind']);assert.equal(raw.action_url,null);
+ results.push({case:'legacy global notification row holds no business name/reason/private content or navigation authority',passed:true});
+ db.role='authenticated';assert.equal(scalar(`SELECT count(*) FROM public.notifications WHERE id='${nativeNotice}'`),'1');
+ db.run(`UPDATE public.notifications SET metadata=jsonb_build_object('kind','exp08_owner_recovery','audit_id','${bound}') WHERE id='${nativeNotice}'`);db.role='';
+ await denied('client-edited own metadata cannot substitute another native notice binding',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${nativeNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.role='authenticated';db.run(`UPDATE public.notifications SET metadata=jsonb_build_object('kind','exp08_owner_recovery','audit_id','not-a-uuid') WHERE id='${nativeNotice}'`);db.role='';
+ await denied('malformed client metadata receives typed refusal, not a private-data read',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${nativeNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.run(`UPDATE public.notifications SET metadata=jsonb_build_object('kind','exp08_owner_recovery','audit_id','${request}') WHERE id='${nativeNotice}'`);
+ db.run(`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${holder}'`);
+ await denied('currently banned recipient cannot read private notice detail',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${nativeNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.run(`UPDATE auth.users SET banned_until=now()-interval '1 hour' WHERE id='${holder}'`);assert.equal(detail().reason,reason);
+ results.push({case:'expired recipient ban retains legitimate scoped notice reading',passed:true});
+ db.run(`UPDATE auth.users SET deleted_at=now() WHERE id='${holder}'`);
+ await denied('soft-deleted recipient cannot read private notice detail',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${nativeNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.run(`UPDATE auth.users SET deleted_at=NULL WHERE id='${holder}';UPDATE public.tenants SET archived_at=now() WHERE id='${tenant}'`);
+ await denied('archived business refuses private recovery detail',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${nativeNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.run(`UPDATE public.tenants SET archived_at=NULL WHERE id='${tenant}'`);
+ db.run(`UPDATE public.profiles SET active_tenant_id='e8000000-0000-4000-8000-000000091020' WHERE user_id='${holder}'`);
+ await denied('wrong active workspace cannot read private recovery notice',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${nativeNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.run(`UPDATE public.profiles SET active_tenant_id='${tenant}' WHERE user_id='${holder}';UPDATE public.tenant_members SET is_owner=false,status='revoked' WHERE tenant_id='${tenant}' AND user_id='${holder}'`);
+ await denied('recipient departure revokes original active-owner notice detail',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${nativeNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.actor=actor;
+ await denied('non-recipient administrator cannot borrow another user notification',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${nativeNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.role='authenticated';assert.equal(scalar(`SELECT count(*) FROM public.notifications WHERE id='${nativeNotice}'`),'0');db.role='';
+ results.push({case:'original recipient-only RLS port hides another user raw notification',passed:true});
+ for(const role of ['authenticated','anon','service_role']){
+  db.role=role;await denied(role+' cannot invoke private notice producer',()=>db.exec(`SELECT public._exp08_record_recovery_notices('${tenant}','${request}')`));
+  await denied(role+' cannot invoke private notice detail reader',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${nativeNotice}')`));db.role='';
+ }
+ reset();seat();const former='e8000000-0000-4000-8000-000000091003',formerRequest='e8000000-0000-4000-8000-000000092009';
+ db.run(`INSERT INTO auth.users(id) VALUES('${former}');INSERT INTO public.profiles VALUES('${former}','${tenant}')`);
+ db.actor='';db.run(`UPDATE public.tenants SET owner_user_id='${former}' WHERE id='${tenant}'`);db.actor=actor;
+ const formerResult=JSON.parse(scalar(apply(formerRequest)));
+ assert.equal(formerResult.receipt.notices.length,2);
+ const formerNotice=formerResult.receipt.notices.find(x=>x.user_id===former).notification_id;
+ db.actor=former;
+ assert.equal(JSON.parse(scalar(`SELECT public._exp08_read_recovery_notice('${tenant}','${formerNotice}')`)).reason,reason);
+ results.push({case:'approved live original holder-of-record receives only its scoped event detail without a team seat',passed:true});
+ db.run(`INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status) VALUES('${tenant}','${former}',false,'revoked')`);
+ await denied('subsequent membership change revokes former-holder snapshot detail',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${formerNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.actor=actor;reset();seat();const failed='e8000000-0000-4000-8000-000000092010';
+ const beforeFailedAudits=scalar('SELECT count(*) FROM public.paige_audit_log'),beforeFailedNotices=scalar('SELECT count(*) FROM public.notifications');
+ db.run(`CREATE FUNCTION public.fixture_notice_failure() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN
+ RAISE EXCEPTION 'fixture native notice insertion failed' USING ERRCODE='23514';END$$;
+ CREATE TRIGGER fixture_notice_failure AFTER INSERT ON public.notifications FOR EACH ROW EXECUTE FUNCTION public.fixture_notice_failure()`);
+ await denied('late notice insertion failure refuses entire recovery operation',()=>db.exec(apply(failed)),/fixture native notice insertion failed/);
+ assert.equal(scalar(`SELECT owner_user_id IS NULL FROM public.tenants WHERE id='${tenant}'`),'t');
+ assert.equal(scalar('SELECT count(*) FROM public.paige_audit_log'),beforeFailedAudits);
+ assert.equal(scalar('SELECT count(*) FROM public.notifications'),beforeFailedNotices);
+ assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${failed}'`),'0');
+ results.push({case:'late native notice failure rolls back pointer, domain/recovery audits and all notices together',passed:true});
+ db.run('DROP TRIGGER fixture_notice_failure ON public.notifications;DROP FUNCTION public.fixture_notice_failure()');
+ console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private recovery, durable audit/in-app notices and read-now detail; public RPC, mounted UI, email and Billing-dependent revoke NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));
 }finally{

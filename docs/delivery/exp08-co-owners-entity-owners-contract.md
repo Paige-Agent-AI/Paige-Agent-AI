@@ -2277,3 +2277,57 @@ Source review, complete metadata/retention/privileged-writer admission, original
 runner/full-schema/target-writer races, native carrier/CI/release and authenticated
 proof remain owed. In-app/receiver integration and full original assignment remain
 **STILL CODING**, no customer routing/ALG maturity/provider/owner-acceptance change.
+
+### October31 — native private in-app notice records and current-context detail
+
+Exact prior source custody ANT147/52f0b290; existing inert writers/proof/own
+contract only. No shared bell/hook/shell, schema/enum/policy or unrelated notifier
+edit. `_exp08_record_recovery_notices(tenant,request)` remains PRIVATE and binds
+the exact effect-verified audit to the same native transaction/backend/actor.
+It writes the EXISTING `public.notifications` system records atomically, for the
+live original holder of record and current active owners, deduplicated by user.
+The original audit stores actual notice IDs/audience/user bindings and membership
+snapshots; stable request replay does not create another record.
+
+Raw title/message are generic, action_url NULL, metadata ONLY
+`{kind:exp08_owner_recovery,audit_id}`. No business name/reason/private content is
+stored for the legacy global renderer to disclose in another workspace. Detail
+is read from the ORIGINAL protected audit, never raw notification wording or
+client-edited metadata as authority. Existing notification semantics/writers stay.
+Native receipt now truthfully says `in_app_recorded` with actual IDs, email
+`not_requested`; it does not claim seen/read/email delivery or full recovery.
+Zero eligible recipients would be explicit no_recipients, not presumed delivery.
+The earlier not_prepared expectation was updated for this implemented feature;
+the original85 packet remains historical source evidence, never rewritten.
+
+PRIVATE `_exp08_read_recovery_notice(expected_tenant,notice)` checks live unbanned/
+undeleted auth.uid, locks actual current profile workspace and current member
+before tenant, rejects archived/unsupported business, binds exact notice/user to
+the native audit's original recipient/notice ID. Active owners retain their
+scoped event; the original holder-of-record receives the specifically approved
+event even without a team seat, without broader Team/Knowledge/business rights.
+For that explicit former-holder event grant, later membership changes invalidate
+the stored snapshot unless current active ownership independently permits it.
+Malformed/forged raw metadata, other users/admins/workspaces and departed owners
+cannot turn a generic row into a private read. No public/client/service EXECUTE.
+
+Final107 author-run local native controls PASS: original85 retained with truthful
+in-app status expectation,22 new notice/detail/availability/RLS/ACL/rollback cases.
+Two original actual duplicate-request races also verify ONE in-app record after
+first commit/rollback; outer rollback removes notices. A late notice insertion
+failure rolls back pointer, domain/recovery audits and all notices together.
+Actual local recipient-only RLS ports allow editing an own metadata reference,
+then native detail refuses forged/invalid bindings. Ban/soft-delete/archive/
+workspace/departure negatives, expired-ban positive and original holder-of-record
+without a seat pass. Minimal table/Auth/company/owner/policy ports remain explicit;
+no managed schema/full lifecycle or authenticated customer proof. All fixtures disposed.
+
+Raw `exp08-owner-recovery-notice-currentness.log` SHA256
+`d61f0edfd486f8abdd869a4b0a78f0cea5b1027eb3e01206c3e22bfc6a4bacbc`;
+candidate SHA256 `ff95c82f93eea28208ec130907ed3dc0cf88a23197125f5d3693e1d249869ea7`.
+Earlier90/103 PASS packets remain separately historical. Review renewal, complete
+metadata/retention/writer admission, actual cross-writer/profile wait/full-schema
+composition, public wrapper/detail host/bell admission/mark-read and E03 email
+receipt integration remain required. No fire_team_event/provider dispatch or new
+sender/runtime/ledger. E02 effect-binding ABI is unchanged; revoke still unavailable.
+Full original assignment **STILL CODING**, no new release or owner-review readiness.

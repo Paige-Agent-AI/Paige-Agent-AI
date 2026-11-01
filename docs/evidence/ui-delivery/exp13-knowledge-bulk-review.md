@@ -288,3 +288,29 @@ The existing browser usage-review hold cannot be bypassed through another
 surface or a changed CI marker. Source-only draft remains blocked from release.
 No UI code changed in this evidence repair; original343 source tests and bounded
 review remain supporting proof only, not fresh full-head runtime acceptance.
+
+## November1 UTC — released read guard integrated; genuine UI hold unchanged
+
+Normal current-main composition `a953e8117361cc95aca253b8afcefa426886a3cb`
+receives actual released `30e49e37ec364d0cbd597e7bf1a665e9013f7d35`.
+Original3188 has all10 applicable exact checks/both web statuses, non-author
+review and actual both-origin source readback in receipt6558882428. That release
+is the existing read-continuation repair, not release of this draft UI.
+All13 owned3177 blobs remain byte-exact to59287397 before this factual evidence
+append; all19,379 incoming outside leaves are exact, with no unexpected paths.
+No component, host, Memory, task writer, native ABI or interaction is redesigned.
+
+Twelve existing suites now359 PASS, including the four newly released read-boundary
+negatives. Project options plus strict remain5-to-5 identical inherited diagnostics;
+focused lint/diff PASS and pinned Impeccable static detector returns no findings.
+These are bounded source checks, not whole-app strict or rendered acceptance.
+The unchanged actual UI evidence command at this composition still exits1 ONLY
+for FLOW_PROTOTYPE. Browser/prototype/full-shell/AT/finish proof remains held and
+UNVERIFIED; no waiver, alternate browser, marker change or draft UI merge occurs.
+Fresh exact-head CI and final non-author composition review remain separate.
+
+Same original single/BULK/Chat source review, selected facts/separate Memory,
+saved Mission and actual original Work/CRM/receipt/reload/reopen are NOT READY.
+Original12-suite source log SHA256:
+42cfc3aa81c5399b5db569706c8088f21f5b690d3a2e8f007ce1239bb9fe8248.
+The prior355/343 results remain historical supporting proof, not current UI usage.

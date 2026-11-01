@@ -1043,6 +1043,7 @@ type DmOpts = {
   onTaskRead?: () => void;
   scopeNow?: () => unknown;
   actorAvailable?: boolean;
+  planningRead?: boolean;
 };
 function dmWorld(opts: DmOpts = {}) {
   const agent = opts.agent ?? "zion";
@@ -1064,6 +1065,8 @@ function dmWorld(opts: DmOpts = {}) {
       calls.push({ who: "caller", name, args });
       const answer = (() => {
         switch (name) {
+          case "get_team_authority_readiness": return opts.planningRead ? [{ tenant_id: TENANT, fact_key: "viewer_permission", value: "owner", status: "available" }] : null;
+          case "plan_list": return opts.planningRead ? { plans: [{ id: PLAN_ROW, tenant_id: TENANT, updated_at: TASK_UPDATED, title: "Current week", horizon: "week", items: [] }], loose_items: [] } : null;
           case "get_paige_persona_context": return [{ tenant_id: TENANT, tenant_name: "Brightline Studio" }];
           case "current_user_tenant_id": return TENANT;
           case "team_hub_list_conversations": return { ok: true, people: [{ user_id: SAM, display_name: "Sam Lee" }, { user_id: PRIYA, display_name: "Priya Shah" }],
@@ -1088,6 +1091,7 @@ function dmWorld(opts: DmOpts = {}) {
       return Promise.resolve({ data: answer, error: null });
     },
     ...fakeDb((q) => {
+      if (q.table === "tenants" && opts.planningRead) return { data: [{ id: TENANT, account_type: "standalone", parent_tenant_id: null }], error: null };
       if (q.table === "growth_pages") return { data: [{ id: PAGE, slug: "spring", title: "Spring", status: "draft", published_at: null, updated_at: TASK_UPDATED }], error: null };
       return { data: null, error: null };
     }, queries),
@@ -1638,6 +1642,34 @@ const zionTurn = () => turn({ conversationId: MERIT_DM, agent: "zion" });
 const planningAnswer = JSON.stringify({ reply: "Your saved plan includes Confirm venue. Nothing was changed.", route: "answer" });
 
 describe("EXP05 ZION Planning read host composition — native contract proof still owed", () => {
+  for (const planningFirst of [false, true]) it(`keeps the verified mixed-source answer when ${planningFirst ? "Planning precedes CRM" : "CRM precedes Planning"} and a fourth source is refused`, async () => {
+    const w = dmWorld({ planningRead: true });
+    const admitted = new Set<string>();
+    const originalRpc = w.service.rpc.bind(w.service);
+    w.service.rpc = (name, args = {}) => {
+      if (name === "team_hub_stage_agent_read_context") {
+        const next = new Set(admitted);
+        for (const input of args.p_read_tools as Array<string | { tool: string }>) next.add(typeof input === "string" ? input : input.tool);
+        if (next.size > 3) return Promise.resolve({ data: { ok: false }, error: null });
+        next.forEach(tool => admitted.add(tool));
+      }
+      return originalRpc(name, args);
+    };
+    const crm = [LIST, { name: "crm_get_task", args: { task_id: TASK } }, { name: "crm_list_team", args: {} }];
+    const plan = { name: "plan_list", args: { horizon: "week" } };
+    const calls = planningFirst ? [plan, ...crm] : [...crm, plan];
+    const m = model([{ tool_calls: calls }, { content: JSON.stringify({ reply: "Here is the work I verified. The remaining source needs a follow-up.", route: "answer" }) }]);
+    const r = await runDm(w, m);
+    assert.equal(r.body.outcome, "posted", "a bounded refusal preserves the valid original answer");
+    assert.equal(admitted.size, 3);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 1);
+    assert.equal(named(w, "plan_list").length, planningFirst ? 2 : 0, "no refused Planning query or receipt");
+    assert.equal(named(w, "list_team_members").length, planningFirst ? 0 : 1, "no refused fourth CRM read");
+    assert.equal(new Set(named(w, "record_capability_run").filter(c => c.args._capability_key === "plan_list").map(c => c.args._run_id)).size, planningFirst ? 1 : 0, "source revalidation retains one original receipt identity");
+    assert.equal(toolResults(m).at(-1).status, "unavailable");
+    assert.match(toolResults(m).at(-1).message, /read limit/);
+    assert.equal(w.invokes.length, 0, "no action was prepared or executed");
+  });
   it("offers the canonical read in ZION's own owner DM and stages its original turn before model exposure", async () => {
     let stages = 0;
     const w = zionWorld({ nativeReadStage: args => {

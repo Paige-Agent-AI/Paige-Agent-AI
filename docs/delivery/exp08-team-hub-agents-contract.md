@@ -2925,7 +2925,7 @@ Current original matrix delta (all original rows1–18/amendments1–6 remain re
 
 | Original rows | Current disposition and actual original producer/consumer | Still owed |
 |---|---|---|
-| 4 | PARTIAL / source-released: original Team removal14 and Hub admission/message/channel/DM/file15 writers, unchanged authority/cleanup/audit seams -> existing Settings Team/Hub | Authenticated authorized result/refusal/receipt/reopen/recovery; original R9/R12 recovery, Setup protection and broader retirement composition |
+| 4 | PARTIAL / source-native released: original Team removal14 and Hub admission/message/channel/DM/file15 writers plus R9/R12 recovery substrate230008/3190, existing authority/cleanup/audit/native receipt/recipient notice -> Settings Team/Hub and original Operator consumers | Authenticated authorized result/refusal/receipt/reopen/recovery; mounted R9/R12 recipient/Operator experience, original first-owner/Setup protection, scoped-profile and broader retirement composition |
 | 5,10 | BUILT bounded source / PROOF OWED: same native collaboration/files/current-identity helpers -> original hook/UI/Storage read-now gates, no new store or role grant | Actual private/foreign/stale/suspended/reentry and Storage-byte/device proof; native ports are not Auth/RLS acceptance |
 | 16 | PARTIAL / PROOF OWED: original canonical provisioning and shared admission helpers -> one current/future SOLO implementation, unchanged role/consent gates | Actual eligible cohorts, roles/configuration/provider differences, isolation/cache/in-flight/reentry proof; no account-specific fork or new QA identity |
 | 18 | PARTIAL:3166 normal reviewed release/database/web source readback verified | All remaining original coding/integration and one complete accessible owner review; no owner acceptance or full Experience readiness |
@@ -2951,3 +2951,65 @@ different `pg_get_functiondef` digest. For SQL connector reads, use one SELECT o
 an explicit aggregate per requested result; multiple statement calls can return
 only the last result. Keep authenticated outcome proof separate from every source,
 managed/native and public asset result above.
+
+### November 1 — same original row4 recovery/lifecycle integration checkpoint
+
+**PARTIAL / STILL CODING.** All original rows1–18, amendments1–6 and five
+lifecycle journeys remain required. Published native candidate3190/aee031a50
+extends the same original Team authority/recovery outcome through the original
+grant/revoke/holder, audit/receipt and native notice writers. Hosted original
+database-contract job124875356421 is SUCCESS; its actual extracted log records
+39/39 own native recovery, canonical archive/restore/permanent-delete, paused
+restoration, retained-audit privacy and retired-notice refusal assertions PASS.
+This is sequential replayed-schema engineering proof, not customer authentication
+or production persistence. It does not replace the remaining R16 concurrent or
+broader retirement proof. Communications boundary passed separately; main verify
+was still running at this checkpoint. Supabase Preview's update-function502
+remains a failed gate; GitHub accepted one normal rerun request, with no successful
+replacement result yet observed. No reset/history rewrite/production apply.
+
+The same native receipt's personal reader is prepared but unmounted. A separately
+preserved local follow-up adds the original Operator recovery client: one native
+submission, identical-request inspection, closed verified receipt, unknown without
+automatic replay/new request, and actual actor plus negative-only selection-lifetime
+guards. Author synthetic two-client proof56PASS (33 Operator/23 personal), focused
+lint and standalone strict compilation exit0. This is not a mounted/reload-durable
+journey: the original host must retain the intent before dispatch and supply real
+Auth/incarnation. Original Communications sender atomic-claim/reconciliation,
+first-owner history/Setup receiving protection, approved I3 interfaces and I4/I5
+remain coding/integration dependencies. No new store/runtime/approval/provider or
+ALG maturity is claimed; deterministic same-request support remains bounded
+ALG-01 evidence. Native source, technical review, required gates, normal release,
+production readback, authenticated results and owner acceptance remain separate.
+
+See the existing `exp08-co-owners-entity-owners-contract.md` for exact source and
+evidence boundaries. Current Finance published lower native positions21/22/23
+must be reconciled through original owners before production composition; no
+unreleased peer writer is absorbed. Under the latest owner communication amendment,
+coordination routes only to the Coordinator in Linear, with owner updates in the
+original chat. Full EXP08 is not ready for its one integrated owner review.
+
+
+### November1 production recovery readback - original row4 remains PARTIAL
+
+The earlier dated absent-native/coding checkpoint is historical:3190/70116a
+passed all13 exact checks/Preview+BOTHweb and normally merged6a9b18109/treef09009.
+Actual E13 incoming01c48 and19470outside leaves conserved, original peer source
+and CI proof flags retained; postmerge review5729264700 is AUTHOR-REVIEW/LOWER.
+Normal native41329445608 SUCCESS, db-live6a9, production230008 present once,
+43recorded statements, recorded-sourceMD5 1ce001dfec3d0e8c3080174cc58b2a5c.
+6public/13generated private source/ABI checks match;15private helpers expose0
+client/service execution. Stable recovery/request receipt, personal recipient
+notice and bounded service event now exist through the original domain doors.
+No provider/email activation or authenticated ownership change was performed.
+
+Own Vercel6a9 READY; actual public version/root readback17:08:31UTC serves its
+normal direct descendantb8f46fa6 (3184/only6Master lines) with every executable/
+native/client source unchanged. BOTHofficial aliases200/equalroot/version/
+bootstrap; initial exact6a9 alias expectation failed and was retained, then
+actual descendant source verified. No forced alias rollback or false identity.
+Actual original-owner release handoff is ANT147/ba23844c; receiving ACK is not
+invented. This does NOT close row4 or any other original18+6 outcome, the five
+journeys, ALG or customer proof. Mounted R9/R12, first-owner/Setup/profile,
+private/both-chat/cohort/reentry and full lifecycle work remain required.
+Full EXP08 STILL CODING; one complete owner review follows full integration.

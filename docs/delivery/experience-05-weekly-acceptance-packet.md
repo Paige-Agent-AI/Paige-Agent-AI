@@ -1,3 +1,49 @@
+## November1 — mixed-read and historical-scope corrections before production
+
+O01 remains sole PRIMARY/O02 NEXT/fullten/E5-CV1–CV9/0closed. Fresh4436855331/
+4436855337 findings are confirmed, not waived: combined CRM/Planning read budget
+must preserve the valid answer and historical access must honor the original
+read/card policy. Both host orderings fail-before/pass-after; all304 current
+neighbors pass. Actual native1793558414740 fails revoked access;1793558473021
+passes23 READ ONLY history/Search cases plus original assertions/mutants/races.
+Three applied Preview carriers immutable; new forward27030005 changes only the
+private historical predicate. Latest-forward13-case full-schema self-test passes;
+fresh managed execution/review/exact-head CI/release/readback and actual both-chat
+outcome proof remain owed. Calendar3197 source-live, Calendar-in-Team-Hub next
+after genuine parent release. No new owner testing gate, scope or subsystem.
+
+## November1 — second-read correction before production
+
+O01 remains sole PRIMARY/O02 NEXT/fullten/E5-CV1-CV9/0fullyclosed. Valid final
+review4436768954 reproduced a real two-read navigation overflow in native
+1793556897877; original3087 returned to DRAFT despite earlier bounded passes.
+New044e/forward27020005 caps ONLY navigation at six while preserving ALL source
+bindings. Native1793557125721 proves publication/replay/reopen and revocation of
+a source outside the six links, plus all original suites/races/17READONLY cases.
+Both applied Preview carriers remain immutable. All previous full-schema
+assertions retained/strengthened,12-case latest-forward replay framework prepared;
+fresh managed/new exact-head review/CI/release and actualbothchat O01 proof owed.
+Calendar3197 remains source-live. No owner-testing stop or scope reduction.
+Details: [original evidence](../evidence/ui-delivery/exp05-zion-planning-host.md#november1--cap-navigation-preserve-every-original-source).
+Earlier dated snapshots below are historical.
+
+## November1 — O01 correction before release, Calendar source live
+
+O01 remains sole PRIMARY, O02 NEXT; original full ten outcomes and E5-CV1-CV9
+are preserved, **0/10 fully closed**. Calendar receipt3197 has actually merged/
+deployed with exact Edge-source and both public web-origin readback; actual
+ordinary customer results remain separate. Original3087/915 returned to DRAFT
+after real READ ONLY history mode hid valid saved answers. Own forward-only
+correction fc0c, current-main compositioncfce, now passes17 READ ONLY history/
+Search positives/denials/recovery, FIVE installer drift refusals and original
+native assertions/mutants/FOUR observed publication races. Original applied
+Preview27000005 is immutable; CLI-created27010005 requires fresh managed proof,
+review, exact-head CI, normal release/native+Edge readback. Both-chat authenticated
+result/record/receipt/reopen/cohort evidence remains owed. Same E08/E05/E13 order
+and actual Calendar host handback remain; no renewed owner-testing gate. Full
+source/limits/failing-first and corrected proof: [existing evidence](../evidence/ui-delivery/exp05-zion-planning-host.md#november1--actual-read-only-history-correction-and-release-hold).
+Earlier dated checkpoints below retain their historical scope.
+
 ## November1 — O01 native source implemented; exact compatibility correction
 
 O01 remains the ONE primary; O02 NEXT, full ten/E5-CV1–9 preserved, **0/10

@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve, join, isAbsolute, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { provePlanningConcurrency } from './exp05-zion-planning-concurrency.mjs';
+import { provePlanningConcurrency, provePlanningReadOnlyHistory } from './exp05-zion-planning-concurrency.mjs';
 const repo=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 assert(['127.0.0.1','localhost'].includes(process.env.PGHOST??'127.0.0.1'),'Disposable local PostgreSQL only');
 const run=join(repo,'work','planning-native-proof',`run-${Date.now()}`);mkdirSync(run,{recursive:true});
@@ -41,23 +41,26 @@ const fixture=materialize(join(repo,'supabase/tests/exp08_team_hub_a2b_cards.sql
 const psql=process.env.PG_BIN?join(process.env.PG_BIN,process.platform==='win32'?'psql.exe':'psql'):
  process.platform==='win32'?'C:/Program Files/PostgreSQL/16/bin/psql.exe':'psql';
 const connection=['-h',process.env.PGHOST??'127.0.0.1','-p',process.env.PGPORT??'55485','-U',process.env.PGUSER??'postgres'];
-const concurrent=!process.argv.includes('--red')&&!process.argv.includes('--search-red');
+const concurrent=!process.argv.includes('--red')&&!process.argv.includes('--search-red')&&!process.argv.includes('--links-red');
 const result=spawnSync(psql,['-X',...connection,'-d','postgres','-v','ON_ERROR_STOP=1',
  ...(concurrent?['-v','exp05_concurrent=1']:[]),
  ...(process.argv.includes('--red')?['-v','exp05_native_red=1']:[]),
- ...(process.argv.includes('--search-red')?['-v','exp05_search_red=1']:[]),'-f',fixture],
+ ...(process.argv.includes('--search-red')?['-v','exp05_search_red=1']:[]),
+ ...(process.argv.includes('--links-red')?['-v','exp05_links_red=1']:[]),'-f',fixture],
  {cwd:repo,encoding:'utf8',windowsHide:true,maxBuffer:20*1024*1024,timeout:120000});
 writeFileSync(join(run,'stdout.txt'),result.stdout??'');writeFileSync(join(run,'stderr.txt'),result.stderr??'');
 const contractLine=(result.stdout??'').split(/\r?\n/).find(line=>line.startsWith('EXP05_NATIVE_CONTRACT:'));
 const contract=contractLine?JSON.parse(contractLine.slice('EXP05_NATIVE_CONTRACT:'.length)):null;
-let proofError=null,races=[];
+let proofError=null,races=[],readOnlyHistory=[];
 if(result.status===0){
  try{
   assert(contract?.length===14,'Successful proof includes the actual native source/metadata contract');
   if(concurrent){
    const line=(result.stdout??'').split(/\r?\n/).find(l=>l.startsWith('EXP05_RACE_CONTEXT:'));
    assert(line,'Original fixture exported its synthetic concurrency context');
-   races=await provePlanningConcurrency(psql,[...connection,'-d','exp08_team_hub_a2b_proof'],JSON.parse(line.slice('EXP05_RACE_CONTEXT:'.length)));
+   const context=JSON.parse(line.slice('EXP05_RACE_CONTEXT:'.length));
+   races=await provePlanningConcurrency(psql,[...connection,'-d','exp08_team_hub_a2b_proof'],context);
+   readOnlyHistory=provePlanningReadOnlyHistory(psql,[...connection,'-d','exp08_team_hub_a2b_proof'],context);
   }
  }catch(error){proofError=error.stack??String(error);}
  finally{
@@ -70,11 +73,12 @@ if(result.status===0){
 }
 if(contract)writeFileSync(join(run,'native-contract.json'),JSON.stringify(contract,null,2)+'\n');
 const exit=result.status===0&&!proofError?0:1;
-writeFileSync(join(run,'result.json'),JSON.stringify({exit,error:proofError??result.error?.message??null,races,
+writeFileSync(join(run,'result.json'),JSON.stringify({exit,error:proofError??result.error?.message??null,races,readOnlyHistory,
  inputs:[...inputs].map(([path,value])=>({path:relative(repo,path),sha256:value.sha256})),
  proof:'Original E08 reduced-schema disposable fixture plus EXP05 extension; no customer/full-schema/production claim'},null,2));
 console.log((result.stdout??'').split(/\r?\n/).filter(line=>line.startsWith('PASS:')).join('\n'));
 if(result.status!==0)console.error((result.stderr??'').slice(-6000));
 if(proofError)console.error(proofError);
 if(exit===0&&concurrent)console.log('PASS: four actual native source/role publication blocking pairs; same original retry/history; disposable database dropped');
+if(exit===0&&concurrent)console.log(`PASS: ${readOnlyHistory.length} actual read-only original history/Search positive, revocation and recovery controls; no new messages`);
 console.log(`Evidence: ${run}`);process.exitCode=exit;

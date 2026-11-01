@@ -134,3 +134,55 @@ future peer reservations must still be re-read before release. Managed Preview,
 normal ordered native release/exact-head CI and authoritative readback remain
 required. No admitted binary worker/UI or reviewed fact/Memory/GamePlan/actual
 Work availability is established by this prerequisite. Full EXP13 remains active.
+
+## Same private source validators — November1 current-main forward preparation
+
+Original3182/7955df03da6873286f290d4148c1f0fcda77c91e and applied210013 managed
+Preview bytes/history remain IMMUTABLE. Actual E04 coherent main17e/native21,
+22,23 release/readback is received; current mainbe2244d4c adds E02's original
+read-isolation proof only. The four original Knowledge dependency bodies,
+complete metadata and ACL read back unchanged; the two private source validators
+remain absent in production. No service-role source-row lookup or caller/RLS
+relaxation is used to change an inaccessible-upload refusal.
+
+The fresh forward branch reuses EXACT original six helper/builder/install/behavior
+sources and the original additive publication-check extension. Its whole current
+CI workflow inverse differs only in the original Knowledge proof command's source
+flags and unversioned installer path. No native migration/version is selected,
+reserved, copied or applied. Original E08 actual receiving30f8c5fb retains lower
+published230008 and its own applied Preview; E05 original8fe886b6 proposes a later
+Planning carrier before E13. Reconcile actual lower releases/frontier/manifests
+again before generating any E13 forward identity or managed Preview, retaining
+normal review/exact-head CI/merge/plain db-push/native source readback. Unversioned
+preparation is not permission to run private DDL manually in production.
+
+Same ABI: knowledge_utf16_excerpt_matches(text,integer,integer,text) and
+lock_knowledge_source_evidence(uuid,uuid,jsonb,jsonb). Canonical reference binds
+contractVersion1/tenantId/documentId/revision/contentSha256 and exact UTF16
+excerpts. Reuse original actor/current-tenant/source visibility and source/member
+locks inside the ORIGINAL effect writer transaction; no PUBLIC/anon/authenticated/
+service-role helper execution, second reader/store or reusable authority token.
+factConfirmation:not_asserted and originalFileEvidence:unavailable remain explicit.
+E01's original source-bound selected-fact approval/CAS/audit receipt (actual ABI
+receiving ANT50/a0f0063c) is separate; E02 retains saved Mission projection and E05
+retains exact consequential Work admission/claim/writer/finalizer/result/reopen.
+
+Fresh real PostgreSQL16 proof on the existing verified owned disposable cluster:
+original no-helper baseline fails at the actual missing quotation predicate;
+same-source joint publication/binary/Memory/quote/binding/install-guard run exits0,
+110 PASS-labelled observations (not distinct outcomes),16 source-install drift
+refusals with all six complete definitions/owners/ACL restored,2 actual competing
+source/member lock waits then stale/revoked evidence refusal. Existing fixtures
+model Auth/vector/receipt dependencies; this is not full schema, production roles,
+approved domain mutation, provider/customer agreement or owner acceptance proof.
+Earlier restricted loopback denial and incorrect fixture-role attempts are kept
+as INVALID setup evidence, not counted as source-negative controls. Actual final
+cleanup readback0 fixture databases/0 other clients; owned server stopped.
+Exact log SHA and current proof boundaries are in the SAME owning UI-delivery
+record exp13-native-source-validation.md. No aggregate ledger is introduced.
+
+Full original EXP13+BULK scope/aliases remain in ANT21/12fea7ea. This same producer
+increment does not establish native deployment, authenticated source retrieval,
+facts/Memory approval, saved game plan, actual Task/deal result or later-session
+recovery. Research/lifecycle/artifact/export obligations and all original consumer
+owners remain. Full agreement-to-working-plan and owner acceptance are NOT READY.

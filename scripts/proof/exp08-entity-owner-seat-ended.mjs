@@ -10,12 +10,13 @@ const host = process.env.PGHOST;
 assert.ok(host === '127.0.0.1' || host === 'localhost' || host === '::1', 'Loopback database only');
 assert.match(process.env.PGPORT ?? '', /^\d+$/, 'Explicit local port required');
 const executable = process.env.PSQL || 'psql';
-assert.ok(process.argv.slice(2).every(arg=>['--only-owner-read','--only-billing','--only-owner-history','--only-hub-identity'].includes(arg)),'Unknown native proof selection');
+assert.ok(process.argv.slice(2).every(arg=>['--only-work-profile','--only-owner-read','--only-billing','--only-owner-history','--only-hub-identity'].includes(arg)),'Unknown native proof selection');
 const onlyOwnerHistory=process.argv.includes('--only-owner-history');
 const onlyHubIdentity=process.argv.includes('--only-hub-identity');
+const onlyWorkProfile=process.argv.includes('--only-work-profile');
 const onlyOwnerRead=process.argv.includes('--only-owner-read');
 const onlyBilling=process.argv.includes('--only-billing');
-assert.ok([onlyOwnerRead,onlyBilling,onlyOwnerHistory,onlyHubIdentity].filter(Boolean).length<=1,'Select only one local proof group');
+assert.ok([onlyWorkProfile,onlyOwnerRead,onlyBilling,onlyOwnerHistory,onlyHubIdentity].filter(Boolean).length<=1,'Select only one local proof group');
 const database = `exp08_entity_seat_proof_${Date.now()}`;
 const fixture = readFileSync(new URL('../../supabase/tests/exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
 const migration = readFileSync(new URL('../../supabase/migrations/20271126080008_exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
@@ -560,6 +561,50 @@ async function hubIdentityChecks(holderSnapshot) {
   await identityAdmissionRace(false);await identityAdmissionRace(true);
   records.push({phase:'original-identity-final-metadata',metadata:JSON.parse(sql(`select json_agg(json_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'path',p.proconfig,'acl',p.proacl::text) order by p.oid) from pg_proc p where p.oid in (${identitySignatures.map(s=>`'${s}'::regprocedure`).join(',')});`))});
 }
+async function workProfileWait(name,scoped=false) {
+ const actor='e8000000-0000-4000-8000-000000060300',target='e8000000-0000-4000-8000-000000060100',tenant='e8000000-0000-4000-8000-000000060010';
+ sql(`SELECT proof.reset_rows(); TRUNCATE public.profiles,public.audit_logs;
+ UPDATE public.tenants SET owner_user_id='${target}' WHERE id='${tenant}';
+ UPDATE public.tenant_members SET is_owner=false,role='member',business_owner_id=NULL WHERE user_id='${target}';
+ INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status) VALUES('e8000000-0000-4000-8000-000000061003','${tenant}','${actor}',false,'admin','active');
+ INSERT INTO public.profiles VALUES('${actor}','${tenant}'),('${target}','${tenant}');`);
+ if(name==='holder changed')sql(`UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE tenant_id='${tenant}' AND user_id IN ('${actor}','${target}'); UPDATE public.tenants SET owner_user_id='${actor}' WHERE id='${tenant}';`);
+ const scopeArgs=scoped?`, '${tenant}', 'e8000000-0000-4000-8000-000000061001'`:'';
+ const reconciling=['same result committed','same result rolled back'].includes(name);
+ const blocker=reconciling?`SELECT set_config('request.jwt.claim.sub','${actor}',false); SET ROLE authenticated; SELECT public.set_solo_team_member_work_profile('${target}','After wait','Permitted work'); RESET ROLE;`:name==='identity changed'?`SELECT 1 FROM auth.users WHERE id='${actor}' FOR UPDATE;`:name==='workspace changed'?`SELECT 1 FROM public.profiles WHERE user_id='${actor}' FOR UPDATE;`:`SELECT 1 FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}' FOR UPDATE;`;
+ const first=spawn(executable,connectionArgs(database),{env:process.env,stdio:['pipe','pipe','pipe']});
+ let ready='',firstErrors='',errors='',second,secondDone,timer;
+ first.stdout.on('data',b=>ready+=b);first.stderr.on('data',b=>firstErrors+=b);
+ const firstDone=new Promise((resolve,reject)=>{first.on('error',reject);first.on('close',resolve);});
+ try {
+  timer=setTimeout(()=>{if(first.exitCode===null)first.kill();if(second&&second.exitCode===null)second.kill();},25000);
+  first.stdin.write(`BEGIN; ${blocker} SELECT 'PROFILE_LOCK_READY';\n`);
+  for(let i=0;i<80&&!ready.includes('PROFILE_LOCK_READY');i++)await new Promise(resolve=>setTimeout(resolve,50));
+  assert.ok(ready.includes('PROFILE_LOCK_READY'),firstErrors||'Fixture lock not acquired');
+  const app=`exp08_profile_${Date.now()}`;
+  second=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:app},stdio:['pipe','pipe','pipe']});
+  second.stdout.resume();second.stderr.on('data',b=>errors+=b);
+  secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
+  second.stdin.end(`SELECT set_config('request.jwt.claim.sub','${actor}',false); SET ROLE authenticated; SELECT public.set_solo_team_member_work_profile('${target}','After wait','Permitted work'${scopeArgs});\n`);
+  let waited=false;
+  for(let i=0;i<60;i++){
+   waited=sql(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname='${database}' AND application_name='${app}' AND wait_event_type='Lock');`)==='t';
+   if(waited)break;await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  assert.ok(waited,`${name}: actual database lock wait required`);
+  const change=name==='identity changed'?`UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id='${actor}';`:name==='workspace changed'?`UPDATE public.profiles SET active_tenant_id='e8000000-0000-4000-8000-000000060020' WHERE user_id='${actor}';`:name==='role lost'?`UPDATE public.tenant_members SET role='member' WHERE user_id='${actor}';`:name==='target became owner'?`UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE user_id='${target}';`:name==='holder changed'?`UPDATE public.tenants SET owner_user_id='${target}' WHERE id='${tenant}';`:name==='membership replaced'?`DELETE FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}'; INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status) VALUES('e8000000-0000-4000-8000-000000061007','${tenant}','${target}',false,'member','active');`:'';
+  first.stdin.end(`${change} ${name==='same result rolled back'?'ROLLBACK':'COMMIT'};\n\\q\n`);assert.equal(await firstDone,0,firstErrors);
+  const exit=await secondDone;
+  const state=JSON.parse(sql(`SELECT json_build_object('changed',(SELECT job_title='After wait' FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}'),'audits',(SELECT count(*) FROM public.audit_logs));`));
+  const allowed=name==='permitted wait'||reconciling;assert.equal(exit,allowed?0:3,errors);
+  assert.equal(state.changed===true,allowed);assert.equal(state.audits,allowed?1:0);
+  if(!allowed)assert.match(errors,name==='identity changed'?/TEAM_MEMBER_IDENTITY_UNAVAILABLE/:name==='workspace changed'?/active workspace changed/:name==='role lost'?/only an owner or admin/:name==='membership replaced'?/this team membership changed/:/TEAM_OWNER_PROFILE_FORBIDDEN/);
+  console.log(JSON.stringify({phase:'owner-work-profile-actual-wait',name,scoped,wait_observed:true,exit,state}));
+ }finally{
+  clearTimeout(timer);if(first.exitCode===null)first.stdin.end('ROLLBACK;\n\\q\n');if(second&&second.exitCode===null)second.kill();
+  await Promise.allSettled([firstDone,...(secondDone?[secondDone]:[])]);
+ }
+}
 const snapshot = `select json_build_object('members',(select json_agg(m order by id) from public.tenant_members m),
  'owners',(select json_agg(b order by id) from public.tenant_business_owners b));`;
 let created = false;
@@ -567,7 +612,93 @@ try {
   sql(`CREATE DATABASE ${database};`, 'postgres'); created = true;
   sql(fixture);
   sql(scopeHelper);
-  if(onlyHubIdentity){
+  if(onlyWorkProfile){
+    sql(readFileSync(new URL('../../supabase/tests/exp08_owner_work_profile.sql',import.meta.url),'utf8'));
+    sql(originalFunction(tenantAuthoritySource,'is_tenant_owner'));
+    sql(originalFunction(coOwnerSource,'is_tenant_account_holder'));
+    const profileSource=readFileSync(new URL('../../supabase/migrations/20260901001520_solo_team_workspace.sql',import.meta.url),'utf8');
+    sql(originalFunction(profileSource,'set_solo_team_member_work_profile'));
+    sql('REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) TO authenticated;');
+    const cases=()=>JSON.parse(sql('SELECT json_agg(t) FROM proof.work_profile_cases() t;'));
+    const before=cases();console.log(JSON.stringify({phase:'owner-work-profile-before',cases:before}));
+    assert.equal(before.length,19);
+    assert.deepEqual(before.filter(r=>!r.passed).map(r=>r.case_name),['admin edits holder','coowner edits holder','admin edits suspended owner','admin edits role-only owner','deleted actor','banned actor']);
+    const patch=readFileSync(new URL('./exp08-owner-work-profile-patch.sql',import.meta.url),'utf8');
+    const metadata=sql("SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;");
+    sql(patch);const after=cases();console.log(JSON.stringify({phase:'owner-work-profile-after',cases:after}));
+    const legacyScope=JSON.parse(sql('SELECT json_agg(t) FROM proof.work_profile_scope_cases(false) t;'));
+    assert.deepEqual(legacyScope.filter(r=>!r.passed).map(r=>r.case_name),['same person in both workspaces','caller cannot select another workspace','missing expected workspace','membership replaced','missing captured membership','caller cannot select another membership']);
+    console.log(JSON.stringify({phase:'owner-work-profile-legacy-intent-boundary',cases:legacyScope}));
+    const scoped=JSON.parse(sql('SELECT json_agg(t) FROM proof.work_profile_scope_cases(true) t;'));
+    assert.equal(scoped.length,7);assert.ok(scoped.every(r=>r.passed),JSON.stringify(scoped));
+    const scopedOriginal=JSON.parse(sql('SELECT json_agg(t) FROM proof.work_profile_cases(true) t;'));assert.equal(scopedOriginal.length,19);assert.ok(scopedOriginal.every(r=>r.passed));
+    console.log(JSON.stringify({phase:'owner-work-profile-scoped-boundary',cases:scoped,original_matrix_cases:19}));
+    const recovery=JSON.parse(sql('SELECT json_agg(t) FROM proof.work_profile_recovery_cases() t;'));
+    console.log(JSON.stringify({phase:'owner-work-profile-unknown-recovery',cases:recovery}));assert.equal(recovery.length,4);assert.ok(recovery.every(r=>r.passed),JSON.stringify(recovery));
+
+    assert.equal(after.length,19);assert.ok(after.every(r=>r.passed),JSON.stringify(after));
+    assert.equal(sql("SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;"),metadata);
+    sql(patch);assert.ok(cases().every(r=>r.passed));
+    console.log(JSON.stringify({phase:'owner-work-profile-replay',original_metadata_unchanged:true,cases:19}));
+    for(const [name,change] of [
+      ['source',originalFunction(profileSource,'set_solo_team_member_work_profile').replace('DECLARE','DECLARE\n-- drift\n')],
+      ['ACL','GRANT EXECUTE ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) TO anon;'],
+      ['path','ALTER FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) SET search_path=public;'],
+      ['security','ALTER FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) SECURITY INVOKER;'],
+      ['volatility','ALTER FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) STABLE;'],
+    ]) {
+      sql(originalFunction(profileSource,'set_solo_team_member_work_profile'));
+      sql('REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) FROM anon;');
+      sql(change);
+      const prior=sql("SELECT to_jsonb(p)::text FROM pg_proc p WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;");
+      sql(patch,database,true,/EXP08 owner work profile original (metadata|source) drift/);
+      assert.equal(sql("SELECT to_jsonb(p)::text FROM pg_proc p WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;"),prior);
+      console.log(JSON.stringify({phase:'owner-work-profile-drift',name,refused:true,not_rewritten:true}));
+    }
+    for(const [name,from,to] of [
+      ['owner edit authority removed',"IF (_row.is_owner OR _row.role=", "IF false AND (_row.is_owner OR _row.role="],
+      ['self exception removed','AND _member_user_id<>_actor','AND true'],
+      ['holder exception removed','AND NOT public.is_tenant_account_holder(_actor,_tenant)','AND true'],
+      ['identity currentness removed','IF NOT FOUND OR NOT EXISTS','IF false AND NOT FOUND OR false AND NOT EXISTS'],
+    ]) {
+      sql(originalFunction(profileSource,'set_solo_team_member_work_profile'));
+      sql('REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) FROM anon;');
+      const mutant=patch.replaceAll(from,to);assert.notEqual(mutant,patch,name);sql(mutant);
+      const failed=cases().filter(r=>!r.passed).map(r=>r.case_name);assert.ok(failed.length,`${name}: survived`);
+      console.log(JSON.stringify({phase:'owner-work-profile-mutant',name,killed_by:failed}));
+    }
+    sql(originalFunction(profileSource,'set_solo_team_member_work_profile'));
+    sql(patch);assert.ok(cases().every(r=>r.passed));
+
+  }
+  if(onlyWorkProfile){
+    const signature='public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)';
+    const patch=readFileSync(new URL('./exp08-owner-work-profile-patch.sql',import.meta.url),'utf8');
+    const definition=sql(`SELECT pg_get_functiondef('${signature}'::regprocedure);`);
+    const metadata=()=>sql("SELECT jsonb_agg(to_jsonb(p) ORDER BY p.oid)::text FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='set_solo_team_member_work_profile';");
+    const before=metadata();sql(patch);assert.equal(metadata(),before);
+    console.log(JSON.stringify({phase:'owner-work-profile-scoped-replay',full_metadata_unchanged:true}));
+    for(const [name,change] of [
+      ['source',definition.replace('DECLARE','DECLARE\n-- unreviewed scoped body\n')],
+      ['anon grant',`GRANT EXECUTE ON FUNCTION ${signature} TO anon;`],
+      ['grant option',`GRANT EXECUTE ON FUNCTION ${signature} TO authenticated WITH GRANT OPTION;`],
+      ['path',`ALTER FUNCTION ${signature} SET search_path=public;`],
+      ['security',`ALTER FUNCTION ${signature} SECURITY INVOKER;`],
+    ]) {
+      sql(change);const prior=metadata();sql(patch,database,true,/EXP08 scoped work profile original door drift/);assert.equal(metadata(),prior);
+      sql(`${definition};\nREVOKE ALL ON FUNCTION ${signature} FROM PUBLIC,anon,authenticated,service_role; GRANT EXECUTE ON FUNCTION ${signature} TO authenticated;`);
+      console.log(JSON.stringify({phase:'owner-work-profile-scoped-drift',name,refused:true,metadata_not_rewritten:true}));
+    }
+    for(const role of ['anon','service_role']){
+      sql(`SET ROLE ${role}; SELECT public.set_solo_team_member_work_profile(NULL,NULL,NULL,NULL,NULL);`,database,true,/permission denied for function set_solo_team_member_work_profile/);
+      console.log(JSON.stringify({phase:'owner-work-profile-scoped-role',role,refused:true}));
+    }
+    for(const name of ['role lost','target became owner','identity changed','workspace changed','holder changed','permitted wait'])await workProfileWait(name);
+    for(const name of ['role lost','target became owner','identity changed','workspace changed','holder changed','membership replaced','permitted wait'])await workProfileWait(name,true);
+    for(const name of ['same result committed','same result rolled back'])await workProfileWait(name,true);
+    console.log('Selected owner work-profile component only; NOT native/customer proof.');
+  }
+  else if(onlyHubIdentity){
     // Bounded local selection; normal CI still invokes every original group without arguments.
     sql(privateHelper(collaborationSource,'_team_hub_is_active','uuid,uuid'));
     sql(privateHelper(lifecycleSource,'_team_hub_participates','uuid,uuid'));
@@ -608,6 +739,20 @@ try {
     const rows=historyRun(historyPatch);
     console.log(JSON.stringify({phase:'first-owner-history-component',cases:rows}));
     assert.equal(rows.length,22);assert.ok(rows.every(r=>r.passed),JSON.stringify(rows));
+    for(const [name,change,trigger] of [
+      ['disabled','ALTER TABLE public.tenant_members DISABLE TRIGGER trg_tenant_first_owner_history','trg_tenant_first_owner_history'],
+      ['replica-only','ALTER TABLE public.tenant_members ENABLE REPLICA TRIGGER trg_tenant_first_owner_history','trg_tenant_first_owner_history'],
+      ['wrong event','DROP TRIGGER trg_tenant_first_owner_history ON public.tenant_members; CREATE TRIGGER trg_tenant_first_owner_history AFTER UPDATE OF is_owner,role,tenant_id ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history()','trg_tenant_first_owner_history'],
+      ['wrong columns','DROP TRIGGER trg_tenant_first_owner_history ON public.tenant_members; CREATE TRIGGER trg_tenant_first_owner_history AFTER INSERT OR UPDATE OF is_owner,role ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history()','trg_tenant_first_owner_history'],
+      ['conditional','DROP TRIGGER trg_tenant_first_owner_history ON public.tenant_members; CREATE TRIGGER trg_tenant_first_owner_history AFTER INSERT OR UPDATE OF is_owner,role,tenant_id ON public.tenant_members FOR EACH ROW WHEN (NEW.is_owner) EXECUTE FUNCTION public._tenant_first_owner_history()','trg_tenant_first_owner_history'],
+      ['arguments',"DROP TRIGGER trg_tenant_first_owner_history ON public.tenant_members; CREATE TRIGGER trg_tenant_first_owner_history AFTER INSERT OR UPDATE OF is_owner,role,tenant_id ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history('unexpected')",'trg_tenant_first_owner_history'],
+      ['wrong function','DROP TRIGGER trg_tenant_first_owner_history ON public.tenant_members; CREATE TRIGGER trg_tenant_first_owner_history AFTER INSERT OR UPDATE OF is_owner,role,tenant_id ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history_guard()','trg_tenant_first_owner_history'],
+      ['immutable disabled','ALTER TABLE public.tenants DISABLE TRIGGER trg_tenant_first_owner_history_immutable','trg_tenant_first_owner_history_immutable'],
+    ]) {
+      sql(`BEGIN;\n${historyFixture}\n${historyPatch}\n${change};\n${historyPatch}\nROLLBACK;`,database,true,
+        new RegExp(`ERROR:  EXP08 first owner history trigger drift: ${trigger}(?:\\r?\\n|$)`));
+      console.log(JSON.stringify({phase:'first-owner-history-trigger-drift',name,refused:true}));
+    }
     for(const [name,from,to] of [
       ['owner role evidence removed',"m.is_owner OR m.role='owner'::public.tenant_role",'m.is_owner'],
       ['injected parent counted as child owner',"'tenant:subaccount_owner_established','tenant:grant_co_owner'","'tenant:deleted_injected_owner','tenant:subaccount_owner_established','tenant:grant_co_owner'"],
@@ -617,13 +762,21 @@ try {
       ['initial history write admission removed',"AND current_user<>'postgres'",'AND false'],
     ]){
       const mutated=historyPatch.replaceAll(from,to);assert.notEqual(mutated,historyPatch,name);
+      if(name==='owner tenant move forgotten') {
+        // The exact trigger contract now kills this structural mutant before row cases run.
+        // Require this one precise refusal; all other errors still fail the harness.
+        sql(`BEGIN;\n${historyFixture}\n${mutated}\nROLLBACK;`,database,true,
+          /ERROR:  EXP08 first owner history trigger drift: trg_tenant_first_owner_history(?:\r?\n|$)/);
+        console.log(JSON.stringify({phase:'first-owner-history-mutant',name,killed_by:['exact trigger admission']}));
+        continue;
+      }
       const failed=historyRun(mutated).filter(r=>!r.passed).map(r=>r.case_name);
       assert.ok(failed.length,`${name}: survived`);
       console.log(JSON.stringify({phase:'first-owner-history-mutant',name,killed_by:failed}));
     }
-    const replay=sql(`BEGIN;\n${historyFixture}\n${historyPatch}\nCREATE TEMP TABLE history_before AS SELECT jsonb_agg(to_jsonb(t) ORDER BY id) AS rows FROM public.tenants t;\n${historyPatch}\nSELECT jsonb_build_object('rows_unchanged',(SELECT rows FROM history_before)=(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.tenants t));\nROLLBACK;`);
-    assert.deepEqual(JSON.parse(replay),{rows_unchanged:true});
-    console.log(JSON.stringify({phase:'first-owner-history-replay',rows_unchanged:true}));
+    const replay=sql(`BEGIN;\n${historyFixture}\n${historyPatch}\nCREATE TEMP TABLE history_before AS SELECT jsonb_agg(to_jsonb(t) ORDER BY id) AS rows FROM public.tenants t;\nCREATE TEMP TABLE history_trigger_before AS SELECT jsonb_agg(to_jsonb(t) ORDER BY tgname) AS triggers FROM pg_trigger t WHERE tgname IN ('trg_tenant_first_owner_history','trg_tenant_first_owner_history_immutable');\n${historyPatch}\nSELECT jsonb_build_object('rows_unchanged',(SELECT rows FROM history_before)=(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.tenants t),'trigger_metadata_unchanged',(SELECT triggers FROM history_trigger_before)=(SELECT jsonb_agg(to_jsonb(t) ORDER BY tgname) FROM pg_trigger t WHERE tgname IN ('trg_tenant_first_owner_history','trg_tenant_first_owner_history_immutable')));\nROLLBACK;`);
+    assert.deepEqual(JSON.parse(replay),{rows_unchanged:true,trigger_metadata_unchanged:true});
+    console.log(JSON.stringify({phase:'first-owner-history-replay',rows_unchanged:true,trigger_metadata_unchanged:true}));
     const invitationFixture=readFileSync(new URL('../../supabase/tests/exp08_first_owner_invitations.sql',import.meta.url),'utf8');
     const invitationBodies=['create_tenant_invite_token','accept_tenant_invite'].map(name=>originalFunction(invitationSource,name)).join('\n');
     // Exact live original ACLs, including the incumbent public mint EXECUTE: preserve, never widen.
@@ -635,6 +788,16 @@ try {
     assert.deepEqual(invitationBefore.filter(r=>!r.passed).map(r=>r.case_name),['mint_pointer','mint_suspended','mint_history','accept_pointer','accept_suspended','accept_history'],'Only approved missing platform-only first-owner gates may fail; original compatibility controls must work');
     const invitationPatch=readFileSync(new URL('./exp08-first-owner-invitation-patch.sql',import.meta.url),'utf8').replace(/\r\n/g,'\n');
     const invitationRun=patch=>sql(`${invitationSetup}${patch}\nSELECT row_to_json(t) FROM proof.owner_invitation_cases() t;\n${patch}\nROLLBACK;`).split('\n').filter(Boolean).map(JSON.parse);
+    const mintSignature='public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text)';
+    // Exact original CI reset/regrant shape: same grantors, grantees, privileges and options.
+    const replayACL=`REVOKE ALL ON FUNCTION ${mintSignature} FROM PUBLIC,anon,authenticated,service_role; GRANT EXECUTE ON FUNCTION ${mintSignature} TO PUBLIC; GRANT EXECUTE ON FUNCTION ${mintSignature} TO authenticated; REVOKE ALL ON FUNCTION public.accept_tenant_invite(text) FROM PUBLIC,anon,authenticated,service_role; GRANT EXECUTE ON FUNCTION public.accept_tenant_invite(text) TO service_role; GRANT EXECUTE ON FUNCTION public.accept_tenant_invite(text) TO authenticated;`;
+    const aclSnapshot=`CREATE TEMP TABLE original_invite_acl AS SELECT proacl,ARRAY(SELECT a::text FROM unnest(proacl) a ORDER BY 1) AS semantic_acl FROM pg_proc WHERE oid='${mintSignature}'::regprocedure;`;
+    const order=JSON.parse(sql(`${invitationSetup}${aclSnapshot}\n${replayACL}\nSELECT jsonb_build_object('semantic_acl_unchanged',(SELECT semantic_acl FROM original_invite_acl)=ARRAY(SELECT a::text FROM pg_proc p,unnest(p.proacl) a WHERE p.oid='${mintSignature}'::regprocedure ORDER BY 1),'physical_order_changed',(SELECT proacl FROM original_invite_acl) IS DISTINCT FROM (SELECT proacl FROM pg_proc WHERE oid='${mintSignature}'::regprocedure));\nROLLBACK;`));
+    assert.deepEqual(order,{semantic_acl_unchanged:true,physical_order_changed:true});
+    console.log(JSON.stringify({phase:'first-owner-invitation-actual-grant-replay',...order}));
+    const replayCases=sql(`${invitationSetup}${replayACL}\nCREATE TEMP TABLE replay_invite_metadata AS SELECT oid,to_jsonb(p)-'prosrc' AS metadata FROM pg_proc p WHERE oid IN('${mintSignature}'::regprocedure,'public.accept_tenant_invite(text)'::regprocedure);\n${invitationPatch}\nSELECT jsonb_build_object('metadata_unchanged',NOT EXISTS(SELECT 1 FROM replay_invite_metadata b JOIN pg_proc p ON p.oid=b.oid WHERE to_jsonb(p)-'prosrc' IS DISTINCT FROM b.metadata),'cases',(SELECT jsonb_agg(t) FROM proof.owner_invitation_cases() t));\nROLLBACK;`);
+    const replayResult=JSON.parse(replayCases);assert.equal(replayResult.metadata_unchanged,true);assert.equal(replayResult.cases.length,13);assert.ok(replayResult.cases.every(r=>r.passed),replayCases);
+    console.log(JSON.stringify({phase:'first-owner-invitation-grant-replay-after',metadata_unchanged:true,cases:replayResult.cases}));
     const invitationAfter=invitationRun(invitationPatch);
     console.log(JSON.stringify({phase:'first-owner-original-invitations-after',cases:invitationAfter}));
     assert.equal(invitationAfter.length,13);assert.ok(invitationAfter.every(r=>r.passed),JSON.stringify(invitationAfter));
@@ -651,6 +814,9 @@ try {
     for(const [name,drift] of [
       ['accept path',"ALTER FUNCTION public.accept_tenant_invite(text) SET search_path TO public,auth;"],
       ['accept ACL',"GRANT EXECUTE ON FUNCTION public.accept_tenant_invite(text) TO anon;"],
+      ['accept grant option',"GRANT EXECUTE ON FUNCTION public.accept_tenant_invite(text) TO authenticated WITH GRANT OPTION;"],
+      ['mint grant option',"GRANT EXECUTE ON FUNCTION public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text) TO authenticated WITH GRANT OPTION;"],
+      ['mint extra direct grantee',"GRANT EXECUTE ON FUNCTION public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text) TO anon;"],
       ['mint ACL',"REVOKE EXECUTE ON FUNCTION public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text) FROM PUBLIC;"],
       ['accept security',"ALTER FUNCTION public.accept_tenant_invite(text) SECURITY INVOKER;"],
       ['accept source',originalFunction(invitationSource,'accept_tenant_invite').replace('\nBEGIN','\nBEGIN\n  PERFORM 1;')],
@@ -1094,7 +1260,7 @@ try {
 }
 // Full original release proof also exercises the same departure writer's inert candidate.
 // Selected component runs remain bounded selections and never stand in for this whole run.
-if(!onlyOwnerRead&&!onlyBilling&&!onlyOwnerHistory&&!onlyHubIdentity){
+if(!onlyWorkProfile&&!onlyOwnerRead&&!onlyBilling&&!onlyOwnerHistory&&!onlyHubIdentity){
   const child=spawnSync(process.execPath,[fileURLToPath(new URL('./exp08-member-removal-currentness.mjs',import.meta.url))],{
     // Expanded original60 + Hub85 measured179.1s unchanged on Windows; retain
     // all individual SQL/wait/mutant bounds and propagate every nonzero/error.
@@ -1102,4 +1268,10 @@ if(!onlyOwnerRead&&!onlyBilling&&!onlyOwnerHistory&&!onlyHubIdentity){
   });
   if(child.error)throw child.error;
   assert.equal(child.status,0,'Original departure currentness, boundaries, replay, drift and causal controls must pass');
+  const profile=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--only-work-profile'],{env:process.env,stdio:'inherit',windowsHide:true,timeout:180000});
+  if(profile.error)throw profile.error;
+  assert.equal(profile.status,0,'Original owner work-profile authority/currentness controls must pass');
+  const permission=spawnSync(process.execPath,[fileURLToPath(new URL('./exp08-team-permission-currentness.mjs',import.meta.url))],{env:process.env,stdio:'inherit',windowsHide:true,timeout:330000});
+  if(permission.error)throw permission.error;
+  assert.equal(permission.status,0,'Original Team permission authority/currentness controls must pass');
 }

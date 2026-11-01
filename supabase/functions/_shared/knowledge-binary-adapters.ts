@@ -26,7 +26,7 @@ async function inspectExpandedDocx(bytes: Uint8Array, signal?: AbortSignal) {
     else {
       // Use native cancellable DEFLATE rather than JSZip's delayed Node stream:
       // pausing that stream leaves scheduled resume work after cancellation.
-      const reader = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate-raw'), { signal }).getReader();
+      const reader = new Blob([new Uint8Array(compressed).buffer]).stream().pipeThrough(new DecompressionStream('deflate-raw'), { signal }).getReader();
       try {
         for (;;) {
           current(signal); const part = await reader.read(); if (part.done) break;

@@ -1,0 +1,204 @@
+{
+  "scope": "LOCAL PROTOTYPE ONLY; no backend/auth/provider/full-shell/both-chat/legal or customer proof",
+  "results": [
+    {
+      "name": "light-1536-confirm",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "name": "light-1366-confirm",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "name": "light-1024-confirm",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "name": "light-900-confirm",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "name": "dark-1536-confirm",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "name": "dark-1366-confirm",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "name": "dark-1024-confirm",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "name": "dark-900-confirm",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "name": "light-1366-stale",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "name": "light-1366-refused",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "name": "light-1366-unknown",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "name": "light-1366-unavailable",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "name": "light-1366-offline",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "name": "light-1366-validation",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "name": "light-1366-cancel",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "name": "dark-900-stale",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "name": "dark-900-refused",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "name": "dark-900-unknown",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "name": "dark-900-unavailable",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "name": "dark-900-offline",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "name": "dark-900-validation",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "name": "dark-900-cancel",
+      "horizontalOverflow": false,
+      "editor": true,
+      "viewport": [
+        900,
+        1000
+      ]
+    }
+  ],
+  "errors": []
+}

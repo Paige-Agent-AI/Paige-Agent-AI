@@ -165,6 +165,10 @@ jobs:
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback
         run: node scripts/proof/gmail-connection-postgres.mjs 5432
+      - name: EXP03 original contact currentness, recipient recovery and combined carrier rollback in disposable PostgreSQL
+        run: node scripts/proof/exp03-contact-current-authority-postgres.mjs 5432 --recipient-timezone --combined-number-carrier
+      - name: EXP03 original number authority after native lock waits and exact source recovery in disposable PostgreSQL
+        run: node scripts/proof/exp03-number-current-authority-postgres.mjs 5432 --currentness
       - name: EXP03 saved email whole atomic carrier, original source approval receipt and refusal recovery
         run: node --experimental-strip-types scripts/proof/exp03-email-existing-draft-postgres.mjs 5432 --whole-carrier --action-after-whole --action-candidate --action-current-source --action-use-carrier --action-published
       - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
@@ -1237,7 +1241,7 @@ jobs:
           python3 scripts/knowledge-service/check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
           python3 scripts/knowledge-service/delete-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
           python3 scripts/knowledge-service/catalogue-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
-          python3 scripts/knowledge-service/publication-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres --expected-data-directory "$WORK/d" --publication-recovery --binary-source
+          python3 scripts/knowledge-service/publication-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres --expected-data-directory "$WORK/d" --publication-recovery --binary-source --memory-review-candidate --memory-install-guards --memory-review-carrier-file supabase/migrations/20271126180013_reviewed_memory_source_recovery.sql
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_int346_race
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_int346_race" node scripts/int346-database-check.mjs --race
 
@@ -1444,6 +1448,10 @@ jobs:
       - name: Smoke — comms number purchase (money-spent exits and price verification)
         if: ${{ !cancelled() }}
         run: npm run smoke:comms-purchase-safety
+
+      - name: Smoke — original calling workspace authority (synthetic provider ports)
+        if: ${{ !cancelled() }}
+        run: node scripts/comms-workspace-authority-smoke.mjs
 
       - name: Smoke — comms tenant scope (§9/§53 webhook scoping)
         if: ${{ !cancelled() }}

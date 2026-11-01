@@ -218,6 +218,6 @@ genuine managed Preview, normal ordered merge/plain migration release and actual
 native source/metadata/readback are owed before E01/E02 can use these helpers.
 Original source and explicit confirmation approval are distinct: no source JSON
 authorizes Setup, Memory, saved Mission or actual Work. User-requested Chat/Bucket
-editable single+BULK and actual saved-plan-to-Tasks usability remain unfinished;
-original3177 browser/AT/prototype hold is retained. Full original lifecycle,
+editable single+BULK and actual saved-plan-to-Tasks usability remain unfinished.
+Original3177 live browser/AT/prototype proof remains UNVERIFIED. Full original lifecycle,
 research, retention/revocation/deletion, version/conflict and artifact scope remain.

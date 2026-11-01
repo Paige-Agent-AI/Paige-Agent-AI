@@ -1,7 +1,7 @@
 -- Full replayed schema, original functions/triggers/RLS. Synthetic identities only.
 -- Every write rolls back; this is engineering evidence, not customer authentication.
 BEGIN;
-SELECT plan(30);
+SELECT plan(39);
 
 SELECT ok(has_function_privilege('authenticated','public.platform_owner_recovery(uuid,text,uuid,text,uuid)','EXECUTE')
  AND NOT has_function_privilege('anon','public.platform_owner_recovery(uuid,text,uuid,text,uuid)','EXECUTE')
@@ -125,9 +125,19 @@ SET LOCAL ROLE authenticated;
 SELECT throws_ok($$SELECT public.get_my_owner_recovery_notice((SELECT v FROM exp08_recovery_probe_ids WHERE k='e8b00000-0000-4000-8000-000000000004'))$$,
  '42501','OWNER_RECOVERY_NOTICE_UNAVAILABLE','changed reentry membership does not resurrect a stale former-holder grant');
 RESET ROLE;
+-- Restore this synthetic actor's live status, retaining the original registry.
+-- Exercise whole original lifecycle APIs, not copies of their UPDATE statements.
+UPDATE auth.users SET banned_until=NULL WHERE id='e8b00000-0000-4000-8000-000000000001';
+SELECT set_config('request.jwt.claim.sub','e8b00000-0000-4000-8000-000000000001',true);
+SELECT set_config('request.jwt.claims','{"sub":"e8b00000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT is(public.operator_archive_account('e8b00000-0000-4000-8000-000000000010',
+ public.operator_preview_account_archive('e8b00000-0000-4000-8000-000000000010')->>'version',
+ 'Recovery native probe','e8b00000-0000-4000-8000-000000000030')->>'state','archived',
+ 'canonical archive executes after recovery through the original permission and receipt');
+RESET ROLE;
 SELECT set_config('request.jwt.claim.sub','',true);
 SELECT set_config('request.jwt.claims','{}',true);
-UPDATE public.tenants SET archived_at=now() WHERE id='e8b00000-0000-4000-8000-000000000010';
 SET LOCAL ROLE service_role;
 SELECT throws_ok($$SELECT public.get_owner_recovery_delivery_event('e8b00000-0000-4000-8000-000000000010','e8b00000-0000-4000-8000-000000000020')$$,
  '42501','OWNER_RECOVERY_DELIVERY_UNAVAILABLE','archived native business refuses delivery-event access');
@@ -140,5 +150,48 @@ SELECT is((SELECT payload->>'email_status' FROM public.paige_audit_log WHERE id=
  'not_requested','native recovery and event reads never claim an email send');
 SELECT ok(NOT EXISTS(SELECT 1 FROM public.paige_audit_log WHERE id='e8b00000-0000-4000-8000-000000000021'),
  'refused new recovery leaves no partial receipt');
+
+SELECT set_config('request.jwt.claim.sub','e8b00000-0000-4000-8000-000000000001',true);
+SELECT set_config('request.jwt.claims','{"sub":"e8b00000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT is(public.operator_restore_archived_account('e8b00000-0000-4000-8000-000000000010',
+ 'e8b00000-0000-4000-8000-000000000030')->>'state','restored',
+ 'canonical restore retains its original native receipt after recovery');
+RESET ROLE;
+SELECT ok(EXISTS(SELECT 1 FROM public.tenants WHERE id='e8b00000-0000-4000-8000-000000000010'
+ AND archived_at IS NULL AND lifecycle_execution_paused)
+ AND NOT EXISTS(SELECT 1 FROM public.profiles WHERE active_tenant_id='e8b00000-0000-4000-8000-000000000010'),
+ 'restore keeps execution paused and does not silently restore active workspace pointers');
+SELECT set_config('request.jwt.claim.sub','',true);
+SELECT set_config('request.jwt.claims','{}',true);
+SET LOCAL ROLE service_role;
+SELECT is(public.get_owner_recovery_delivery_event('e8b00000-0000-4000-8000-000000000010',
+ 'e8b00000-0000-4000-8000-000000000020')->>'event','owner_recovery',
+ 'restored historical event read remains separate from execution or sender permission');
+RESET ROLE;
+SELECT set_config('request.jwt.claim.sub','e8b00000-0000-4000-8000-000000000001',true);
+SELECT set_config('request.jwt.claims','{"sub":"e8b00000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT is(public.operator_archive_account('e8b00000-0000-4000-8000-000000000010',
+ public.operator_preview_account_archive('e8b00000-0000-4000-8000-000000000010')->>'version',
+ 'Recovery native probe','e8b00000-0000-4000-8000-000000000031')->>'state','archived',
+ 'canonical fresh archive has its own operation before permanent deletion');
+SELECT is(public.operator_delete_archived_account('e8b00000-0000-4000-8000-000000000010',
+ public.operator_preview_account_deletion('e8b00000-0000-4000-8000-000000000010')->>'version',
+ 'Recovery native probe','e8b00000-0000-4000-8000-000000000031')->>'state','deleted',
+ 'canonical permanent deletion returns the original verified native receipt');
+RESET ROLE;
+SELECT ok(NOT EXISTS(SELECT 1 FROM public.tenants WHERE id='e8b00000-0000-4000-8000-000000000010')
+ AND NOT EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id='e8b00000-0000-4000-8000-000000000010'),
+ 'canonical deletion removes the retired tenant and its memberships');
+SELECT ok(EXISTS(SELECT 1 FROM public.paige_audit_log WHERE id='e8b00000-0000-4000-8000-000000000020'
+ AND tenant_id IS NULL AND operator_rows_server_only AND payload->>'outcome'='effect_verified'),
+ 'canonical deletion retains the original recovery audit with server-only privacy');
+SELECT set_config('request.jwt.claim.sub','e8b00000-0000-4000-8000-000000000002',true);
+SELECT set_config('request.jwt.claims','{"sub":"e8b00000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT throws_ok($$SELECT public.get_my_owner_recovery_notice((SELECT v FROM exp08_recovery_probe_ids WHERE k='e8b00000-0000-4000-8000-000000000002'))$$,
+ '42501','OWNER_RECOVERY_NOTICE_UNAVAILABLE','retired native audit never grants private personal notice detail');
+RESET ROLE;
 SELECT * FROM finish();
 ROLLBACK;

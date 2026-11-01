@@ -2866,3 +2866,22 @@ after those later probes also returned a connector internal error, so the prior
 zero-row cleanup readback is bounded to the earlier successful probes.
 These are author engineering probes of the own Preview, not authenticated
 customer evidence, full lifecycle/concurrency clearance or production release.
+
+Canonical lifecycle integration extension: the same rollback-only native suite
+now plans39 assertions. It replaces the synthetic direct archived flag UPDATE
+with the original archive preview/execute/receipt, then exercises original
+restore, paused execution and cleared workspace pointers, historical event read,
+fresh archive, permanent-delete preview/execute/receipt, absence readback,
+retained server-only recovery audit and personal-detail refusal after deletion.
+Nine new controls extend30; original denial/result/recipient checks remain.
+No original Operator API, registry, permission, applied carrier or workflow is
+edited. This is sequential full-schema integration coverage, not a new claim of
+concurrent full archive/delete execution. Static plan/count39 and diff checks
+pass; actual39 execution and required exact-head gates remain PENDING.
+
+The ff0cedafb managed Preview returned FAIL with exactly `unexpected update
+function status 502: error code: 502`. The original branch inventory still binds
+PR3190 to its own no-data Preview and reports RUNNING_MIGRATIONS/ACTIVE_HEALTHY;
+the project lookup returns NotFound. This conflicting control-plane evidence
+does not establish schema failure or recovery. No reset, branch replacement,
+history rewrite, direct production apply or failed-gate waiver follows.

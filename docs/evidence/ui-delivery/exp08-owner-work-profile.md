@@ -33,7 +33,7 @@ SOLO_1024X768_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus i
 SOLO_900X1000_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
 SOLO_900X1000_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
 UNVERIFIED: Full-schema/current native carrier, real authenticated role/cohort/save/reload/refusal, actual AT/native zoom and production release remain owed; isolated tests never close them
-INTERNAL_BUILD_IDENTITY: 8836a0c89bc4177de4ff525d036934d362d0aee0; original scoped profile and unconfirmed-save recovery source; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original co-owner contract
+INTERNAL_BUILD_IDENTITY: 0d599b50d10e244b4f579588ca51d3aa39182a53; joined editor and verified context-loss recovery source; deployment=none; environment=local; migrations=PROOF_OWED(20271128010008_exp08_team_details_notice_state requires ordered managed review and normal native release); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp08-owner-work-profile.md
 RELEASE_CHANNEL: development: same original outcome4, not deployed
 RELEASE_CLASSIFICATION: internal-only: integration increment of the full EXP08 assignment
 CUSTOMER_RELEASE_IDENTITY: none: full Team Hub integration and one owner review remain unfinished
@@ -268,3 +268,21 @@ failing log66dbbb189f301adac73dbd2800a661420b13671c3373e8c17da5e8372539fec7.
 No writer/receipt/permission/contact/layout or prototype redesign. Earlier rendered
 frames remain historical; this exact recovery delta's live/AT/rendered proof is
 UNVERIFIED and follows safe release. No browser-only premerge hold applies.
+
+
+### Native activation carrier for this same usable flow
+
+Actual CLI created EMPTY20261101201952_exp08_team_details_notice_state.sql, then
+only that NEVER-APPLIED scaffold was forward-renamed20271128010008. Fresh61/61
+published PR manifests had0fail; highest published E13forward28000013. Production
+frontier27030005 and all four original Team reader/writer body hashes verified.
+The native carrier contains BYTE-EXACT existing Team bundle0709a1aac2f0cfc91a2b4c34d467003da762b4c8b8fc292c0a29235cba3ddbb8
+and original notice setterbbea6619dea05884a45e0c14d669172c04f2f215a08359e26c09b943fc6e1a85
+in ONE transaction. CarrierSHA25670caa72050f1c60d8a1b06d9cf51bb185143be971f3d6c53a23bc4768827eb51.
+No new backend mechanism, row backfill or provider/effect activation. Migration
+version and both definer/ACL lints PASS. Actual managed carrier application and
+its full required technical gates remain UNVERIFIED; old component tests are
+supporting evidence, not an applied-carrier claim. E13original28000013 actual
+release/readback precedes this native forward; E05planned29000005 remains higher.
+No changed applied history, idle lease or source takeover. Carrier+approved editor
+are the single next end-to-end Team-details release, followed by live verification.

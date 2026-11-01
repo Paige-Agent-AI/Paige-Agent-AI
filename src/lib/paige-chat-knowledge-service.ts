@@ -105,7 +105,7 @@ function intakeInspection(data: unknown,scope: ChatKnowledgeScope,workId?: strin
  if(!object(data))return fail();
  if(data.status!=='recorded'||data.current!==true){
   const state=inspection(data,scope);
-  if(state.status==='recorded'&&state.current)return fail();return state;
+  if(state.status==='recorded'&&state.current===true)return fail();return state;
  }
  const r=data.reference;
  const integer=(v: unknown)=>Number.isInteger(v)&&Number(v)>0&&Number(v)<=2147483647;

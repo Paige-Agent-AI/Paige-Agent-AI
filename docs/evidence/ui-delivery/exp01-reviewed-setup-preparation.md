@@ -25,6 +25,15 @@ ALL8 definition/permission snapshots equal across forward/replay, clusterSTOPPED
 Actual prior2ef database job124971263944 E01 full-schema step149 SUCCESS; this is supporting
 behavior proof only. Final carrier-head exactCI/managedforward/native release still owed.
 
+Actual exacte8 WHOLE Spine41349143796 SUCCESS, including real full-schema native/authority
+and forward tests. Final CI still genuinely FAILS owned TS2322: actual app strict:false
+does not narrow the historical-return branch like the earlier strict:true focused check.
+Added two ES2020 actual-mode/strict compiler controls: original source1FAIL1PASS → explicit
+`state.current===true` narrowing2PASS; all original43 behavior/SDK tests unchanged45PASS total.
+No cast/type/parser/baseline broadening; only that one boolean rejection expression changes.
+Whole local app ratchet pending; final-head ALLrequiredCI still owed. Both applied migration
+hashes7ad214e2/d4c4677b unchanged, managedPreview installedbothONCE/full8metadata equal.
+
 November1 current additive checkpoint:3194 is source-released at355bc7ef781722859aad39dd4b32916f2fd5284b,
 all six exact2dd workflows/both web statuses SUCCESS, actual58 full-schema/58 focused/65 modeled-native
 PASS, lower-assurance review5729399630 and actual automated P2 resolved4436963629. Both official

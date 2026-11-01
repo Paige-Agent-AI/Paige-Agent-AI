@@ -1,9 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {captureChatKnowledgeAttachment,prepareChatKnowledgeLink,inspectChatKnowledgeLink,listChatKnowledgeLinks,prepareChatKnowledgeIntake,inspectChatKnowledgeIntake} from '../../src/lib/paige-chat-knowledge-service.ts';
 const id=n=>'10000000-0000-4000-8000-'+String(n).padStart(12,'0');
 const actorId=id(1),tenantId=id(2),threadId=id(3),workId=id(4),documentId=id(5),intentId=id(6),turnId=id(7);
 const sourceSha256='a'.repeat(64);
+for(const strict of [false,true])test(`original host adapter compiles in ES2020 strict:${strict}`,()=>{
+ const run=spawnSync(process.execPath,[fileURLToPath(new URL('../../node_modules/typescript/bin/tsc',import.meta.url)),
+  '--noEmit','--skipLibCheck','--target','ES2020','--module','ESNext','--moduleResolution','bundler',
+  '--lib','ES2020,DOM','--types','node','--strict',String(strict),
+  fileURLToPath(new URL('../../src/lib/paige-chat-knowledge-service.ts',import.meta.url))],{encoding:'utf8',timeout:60000});
+ assert.equal(run.error,undefined);assert.equal(run.status,0,run.stdout+run.stderr);
+});
 const input={publicationWorkId:workId,documentId,documentRevision:4,extractionIntentId:intentId,sourceSha256,turnId:null,expectedLinkRevision:0};
 const reference={schemaVersion:1,actorId,tenantId,threadId,turnId:null,documentId,documentRevision:4,sourceSha256,textSha256:'b'.repeat(64),extractionWorkId:id(8),extractionIntentId:intentId,publicationWorkId:workId,publicationIntentId:id(9),generationId:workId,publicationOutcome:'capability_succeeded',linkRevision:1};
 function fixture(){let current=true;const calls=[];const scope={actorId,tenantId,threadId,isCurrent:()=>current};

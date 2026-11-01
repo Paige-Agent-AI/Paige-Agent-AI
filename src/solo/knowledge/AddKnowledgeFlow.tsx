@@ -16,7 +16,7 @@ import {
 } from "@/lib/knowledge-review-service";
 import { KnowledgeServiceError, submitKnowledgePublication, type KnowledgeDocument } from "@/lib/knowledge-service";
 import { useTenantContext } from "@/hooks/useTenantContext";
-import { BulkKnowledgeUploadFlow } from "./BulkKnowledgeUploadFlow";
+import { BulkKnowledgeUploadFlow, type KnowledgeAttachedSelection } from "./BulkKnowledgeUploadFlow";
 import { KnowledgeSourceEvidencePanel } from "./KnowledgeSourceEvidencePanel";
 
 type HaltAction = "inspect-upload" | "read-stored" | "retry-submit" | "check-extraction" | "reread" | "retry-publish" | "check-publication";
@@ -26,6 +26,7 @@ export type KnowledgeCorrectionTarget = Pick<KnowledgeDocument, "id" | "tenant_i
 type Props = {
   tenantId: string; onPublished?: () => void; onClose: () => void;
   replacementTarget?: KnowledgeCorrectionTarget;
+  attachedSelection?: KnowledgeAttachedSelection;
   returnFocus?: () => HTMLElement | null;
 };
 
@@ -35,20 +36,35 @@ type Props = {
  */
 export function AddKnowledgeFlow(props: Props) {
   const identity = useTenantContext();
+  const initial = useRef<{input?: KnowledgeAttachedSelection; value?: KnowledgeAttachedSelection; retired: boolean}>({input: props.attachedSelection, retired: false});
+  if (initial.current.input !== props.attachedSelection) initial.current.retired = true;
+  if (initial.current.input && !initial.current.value) {
+    const source = initial.current.input, guard = source.isCurrent;
+    initial.current.value = Object.freeze({actorId: source.actorId, tenantId: source.tenantId, files: Object.freeze([...source.files]), isCurrent: () => {
+      try { if (guard() !== true) initial.current.retired = true; } catch { initial.current.retired = true; }
+      return !initial.current.retired;
+    }});
+  }
+  const source = initial.current.value;
+  if (source && (props.replacementTarget || source.actorId !== identity.activeUserId || identity.activeTenantId !== source.tenantId
+    || source.tenantId !== props.tenantId || identity.loading || identity.accountContextStatus !== "ready" || !source.files.length)) initial.current.retired = true;
+  if (initial.current.retired || (source && !source.isCurrent())) {
+    return <DialogContent><DialogHeader><DialogTitle>Source changed</DialogTitle><DialogDescription>Close this review and reopen the original attachment in your current workspace.</DialogDescription></DialogHeader><Button onClick={props.onClose}>Close</Button></DialogContent>;
+  }
   if (identity.loading || identity.accountContextStatus !== "ready" || !identity.activeUserId || identity.activeTenantId !== props.tenantId) {
     return <DialogContent><DialogHeader><DialogTitle>Workspace changed</DialogTitle><DialogDescription>Close this review and reopen Knowledge in your current workspace.</DialogDescription></DialogHeader><Button onClick={props.onClose}>Close</Button></DialogContent>;
   }
   // An observed actor/workspace or target change disposes the whole local incarnation,
   // including polling closures. Returning to A must never revive A's retired write.
   const target = props.replacementTarget;
-  return <KnowledgeFlowSession key={`${props.tenantId}:${identity.activeUserId}:${target?.id ?? "new"}:${target?.revision ?? "new"}`} {...props} />;
+  return <KnowledgeFlowSession key={`${props.tenantId}:${identity.activeUserId}:${target?.id ?? "new"}:${target?.revision ?? "new"}`} {...props} attachedSelection={source} />;
 }
 
-function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarget, returnFocus }: Props) {
+function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarget, returnFocus, attachedSelection }: Props) {
   const identity = useTenantContext();
   const [target] = useState(() => replacementTarget ? { ...replacementTarget, tags: [...(replacementTarget.tags ?? [])] } : null);
   const [step, setStep] = useState<Step>(target ? "checking" : "choose");
-  const [mode, setMode] = useState<"paste" | "file">("paste");
+  const [mode, setMode] = useState<"paste" | "file">(attachedSelection ? "file" : "paste");
   const [title, setTitle] = useState(target?.title ?? "");
   const [content, setContent] = useState(target?.content ?? "");
   const [file, setFile] = useState<File | null>(null);
@@ -385,7 +401,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
 
   const restoreFocus = (event: Event) => { if (returnFocus) { event.preventDefault(); returnFocus()?.focus(); } };
   if (!target && mode === "file" && step === "choose") {
-    return <BulkKnowledgeUploadFlow tenantId={tenantId} onClose={close} onBack={() => setMode("paste")} onPublished={onPublished} returnFocus={returnFocus} />;
+    return <BulkKnowledgeUploadFlow tenantId={tenantId} onClose={close} onBack={() => setMode("paste")} onPublished={onPublished} returnFocus={returnFocus} attachedSelection={attachedSelection} />;
   }
   const uploadPhase = step === "extracting" && mode === "file" && submittedInput.current === null;
   if (!targetValid) {

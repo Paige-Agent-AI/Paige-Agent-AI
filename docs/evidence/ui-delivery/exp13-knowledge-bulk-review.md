@@ -85,3 +85,65 @@ Current manual consumer preparation does not yet mount a durable Chat upload
 handoff: exact original E01/E08 shared-Chat receiver/source lease requested via
 Coordinator; E13 original source helpers/review are reused, not credit reports,
 private CURA publication or model-paste masquerading as the original file.
+
+### Same-flow attached-file entry contract — source preparation only
+
+Goal: original Chat files enter the SAME editable Knowledge review without a second chooser.
+Human and feel: eligible SOLO member reviews exactly what will be read and saved.
+Entry and exit: explicit Save to Knowledge opens the original dialog; Close returns to Chat.
+System: original Add/Bulk dialog, tokens, per-file list, buttons and pending recovery.
+Signature: each actual File retains its own name/MIME/bytes/native intent and review.
+Feedback: original preparation/validation/status; no new animation or haptic.
+Rejecting: automatic ingestion/Memory approval and replacing a source with model prose.
+Variants: same actor/current workspace required; desktop/tablet/mobile proof still owed.
+
+This is an input bridge into the already approved/prototyped flow, not a new
+container, menu or confirmation system. Owner October31 explicitly approved
+both entrypoints; this refinement adds no new visible step or automatic effect.
+Current render/keyboard/AT/full-shell/finish proof remains HELD/UNVERIFIED under
+the existing review usage hold; no alternate browser or simulated native proof.
+
+| Entry/state | Transition and original guard | Effect/recovery |
+| --- | --- | --- |
+| Chat explicit Save | Captured actor/tenant/Files/incarnation → original per-file preparation | Local reads only; no Storage, extraction or publication |
+| Prepared | Explicit Upload and read files | SAME transfer/readback/work IDs, per-file states and unknown inspection |
+| Invalid/unsupported/local read failure | SAME selection validator and per-file refusal | No rejected-file upload; readable siblings remain independent |
+| Source/actor/workspace changed | Refuse and latch departure, including A→B→A | Close/reopen original source; no late preparation or retarget |
+| Close while preparing/transferring | SAME cancel/stop semantics | No next transfer; existing unknown effects stay inspect-only |
+| Review/save/publish/reopen | Existing original Knowledge target/native authority | No fact/Memory/Mission/Task approval implied |
+
+Exact optional AddKnowledgeFlow prop is attachedSelection:
+{actorId, tenantId, files: readonly File[], isCurrent: () => boolean}.
+The original Chat host must capture it ON the explicit action, keep that object
+stable for the open review and supply its existing incarnation fence, which
+stays false after departure. It is DATA, not server authorization. Files/guard/
+scope are snapshotted before awaits; retargeting an open selection refuses.
+The input is not a durable message reference or permission to copy private
+transcripts. Source/work reference persistence and both-chat host mounting
+remain with the original E01/E08 contracts; no Root/Chat/TeamHub edit here.
+
+Failing-first new entry suite on original flow:5FAIL/3PASS because no attached
+selection input was consumed (including a missing pending-read callback);
+first extension plus original bulk controls13PASS. Additional actual departure
+controls then reproduced8PASS/2FAIL (preparation repeated after actor/workspace
+return). Latch observed actor/workspace departure before remounting: same
+controls plus StrictMode and original bulk16PASS. Final broader checks/review
+and all mounted/customer proof still owed; no source tests become readiness.
+
+Final local twelve-suite319PASS (original306 plus13 attached-entry cases),
+including guard failure, close during local reading, immutable source arrays,
+StrictMode and exact per-file explicit effects. Broader raw log SHA256
+71bedb4a3519bca11bcc0c141317b7266c0cb9f67a790b4d8269c9d65b0831f7;
+initial5FAIL/3PASS648720ea0e9eae4f9a5641db0e6fd8808fa1f0c8aaf852a042099c60b75d7f53,
+actual departure8PASS/2FAIL54672e642b1f0c71596bae2def6009e560ca965dcf0d82f95d4d4a2046e57936.
+Focused lint/UTF8/gold checks PASS. Strict source probe was NOT clean: four
+diagnostics at existing Supabase RPC typing/empty-input-array spans. Exact same
+options and virtual originalf4ae source comparison retain identical4→4 source
+diagnostics and ZERO new-test diagnostics; no baseline, type cast or peer source
+changed to hide them. This is scoped diagnostic parity, not whole-project or
+strict typecheck PASS. React review retains stable hooks, one-time preparation,
+immutable captured input and no effect from a render; no dependencies installed.
+Actual cached pinned Impeccable4.1 detector returns[]/exit0 for both changed
+components. An initial wrong CLI path failed MODULE_NOT_FOUND before detection;
+the package's actual bin was then used. This static check is not finish-review,
+current rendered/keyboard/accessibility or customer proof.

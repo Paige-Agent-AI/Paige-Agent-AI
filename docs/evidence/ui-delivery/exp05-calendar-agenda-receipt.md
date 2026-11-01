@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: bounded receipt/uncertainty bug repair in the orig
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO owner/member inspects an authorized Calendar window without changing bookings or mistaking an unconfirmed read for an empty schedule.
 VISUAL_DIRECTION: PASS: existing PAIGE interface/tokens unchanged. No layout, color, motion, banner or control is introduced; this is source conformity, not a new visual-quality observation.
 AUTOMATED_EVIDENCE: PASS: 138 controlled checks across the actual Calendar handler/real receipt helper, original caller reader and binding. New eight cases reproduce five failures before correction, then all pass. Original SOLO SP1–SP5 and all causal mutation/legitimate controls pass.
-STATIC_EVIDENCE: PASS: whole current-main Chat inverse outside ONE original Calendar case; new test ESLint clean; diff check clean. Deno global-cache comparison has the SAME eleven pre-existing whole-endpoint diagnostics before/after, zero new; raw full compiler is NOT green. Exact hosted checks remain required.
+STATIC_EVIDENCE: PASS: whole current-main Chat inverse outside ONE original Calendar case; new test ESLint clean; diff check clean. Original 131 dependency pins and 29 dispatches reproduced before fingerprint-only renewal; actual original 86 hostile/source controls pass after it. Deno global-cache comparison has the SAME eleven pre-existing whole-endpoint diagnostics before/after, zero new; raw full compiler is NOT green. Exact hosted checks remain required.
 RENDERED_EVIDENCE: UNVERIFIED: no screenshot/browser observation for this server-only result-availability repair; existing assistant rendering is unchanged. Compatible live outcome rendering remains owed.
 BEHAVIORAL_EVIDENCE: PASS: actual source branch, injected identity/reader/RPC ports and REAL recordCapabilityRun/calendarAgendaForModel. Correct native key, exact actor/tenant, available/empty, failed/uncertain receipt, denied/unavailable/needs-input and same-call identity; not database/Auth/browser acceptance.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no deployed ordinary customer question or new native Rail row verified for this correction; both-chat useful-result/receipt/reload/recovery/cohort proof remains open.
@@ -88,3 +88,31 @@ Functional: source verified; review/final CI/release/customer proof separate.
 Visual: components unchanged; rendered evidence UNVERIFIED. Experiential:
 controlled failure/reentry proof only, ordinary customer proof UNVERIFIED.
 Founder Acceptance: NOT_READY/NOT_ACCEPTED; full EXP05 remains0/10 complete.
+
+## Original source-verification reconciliation
+
+Published pre-renewal source caa0c934463df3de8ba6862106a2483dae0be630
+received sequential AUTHOR-REVIEW / LOWER ASSURANCE5728916248 before any pin
+renewal. Its required hosted contract job124898709234 genuinely failed the
+original Spine binding self-test; retain that failure, not an infrastructure
+label or waiver. Fresh mainbe224 reproduces all131 canonical dependencies and
+29 dispatches. Private decomposition of the ORIGINAL inspector proves that
+only enclosing identity[15] changes for29 fingerprints; all actual dispatches,
+controls, helpers, imports and other identities stay exact. Reverting only the
+owned Calendar case returns the WHOLE current-main Chat source byte-for-byte.
+
+The bounded renewal changes ONLY29 reviewed scalar values and a dated comment
+in the existing C0b file. Removing that comment and reversing those values
+returns its entire original source exactly:131 dependency pins, metadata,
+extractor, validator, every assertion and dated history are retained. All86
+ORIGINAL hostile/source tests, original Spine self-test and normal245-capability
+lint execute and PASS on the ACTUAL renewed source. Earlier private-import
+results are retained as preparation, not counted twice or as hosted-green proof.
+
+Original ANT147/c1ba3ce1 records the source-window reconciliation before edit.
+The extra external ACK wait was withdrawn only for this ordinary scalar
+maintenance: actual E08 return18b6b0af, unchanged current-main guard and active
+peer PR file sets establish no overlapping edit. No silence or old conditional
+handoff is called permission. The separate NEW Calendar-in-Team-Hub native
+admission/stage/history receiving contract remains pending and untouched.
+Final exact-head review/CI, deployment/readback and customer proof remain owed.

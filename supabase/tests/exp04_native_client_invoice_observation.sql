@@ -49,55 +49,62 @@ set local session_replication_role=origin;
 -- Build a TEMPORARY frozen oracle from the whole original query. The published
 -- source keeps ONE query. Its historical whole-body hash independently pins
 -- every original financial expression, validation and ordering predicate.
+-- Applied22 intentionally delegates the five-argument ABI to the versioned
+-- query; it is no longer the pre-22 source body that the old inverse assumed.
+-- Keep the WHOLE original frozen oracle (same hash) TEMPORARY/test-only.
+\ir fixtures/exp04_legacy_invoice_query.sql
 do $legacy_oracle$
-declare query_body text; step record;
+declare query_body text;
 begin
- select prosrc into strict query_body from pg_proc where oid='public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date)'::regprocedure;
-
-  for step in select * from (values ('  _today date := (now() AT TIME ZONE ''UTC'')::date;','  _today date := p_as_of;'),
-('  IF _tenant IS NULL OR _client IS NULL THEN
-    RAISE EXCEPTION ''CLIENT_INVOICE_UNAVAILABLE'' USING ERRCODE=''42501'';
-  END IF;','  IF _tenant IS NULL OR _client IS NULL THEN
-    RAISE EXCEPTION ''CLIENT_INVOICE_UNAVAILABLE'' USING ERRCODE=''42501'';
-  END IF;
-  IF p_as_of IS NOT NULL AND NOT isfinite(p_as_of) THEN
-    RAISE EXCEPTION ''CLIENT_INVOICE_INPUT_INVALID'' USING ERRCODE=''22023'';
-  END IF;'),
-('      i.billing_issued_at AS issued_at,','      i.billing_issued_at AS issued_at, i.billing_issued_snapshot_version AS issued_snapshot_version,'),
-('      ''issued_at'', p.issued_at, ''due_date'', p.due_date,','      ''issued_at'', p.issued_at, ''due_date'', p.due_date,
-      ''issued_snapshot_version'', p.issued_snapshot_version,'),
-('    ''read_at'', statement_timestamp()','    ''_native_sources'', jsonb_build_object(''as_of_date'',p_as_of,''all_facts_identity'',
-      encode(extensions.digest(coalesce((SELECT jsonb_agg(to_jsonb(f) ORDER BY f.id) FROM facts f),''[]''::jsonb)::text,''sha256''),''hex'')),
-    ''read_at'', statement_timestamp()')) s(before,after) loop
-   perform pg_temp.check_true((length(query_body)-length(replace(query_body,step.after,'')))/length(step.after)=1,
-    'exact native financial source inverse anchor');
-   query_body:=replace(query_body,step.after,step.before);
-  end loop;
-
- perform pg_temp.check_true(md5(query_body)='d86613d312960b0d507898210e7e5197','whole original financial query is retained, not a copied calculation');
- execute format('create function pg_temp.e04_legacy_invoice_oracle(_tenant uuid,_client uuid,p_limit integer,p_after jsonb) returns jsonb language plpgsql volatile security invoker set search_path='''' as %L',query_body);
- revoke all on function pg_temp.e04_legacy_invoice_oracle(uuid,uuid,integer,jsonb) from public,anon,authenticated,service_role;
+ select prosrc into strict query_body from pg_proc where oid='pg_temp.e04_legacy_invoice_oracle(uuid,uuid,integer,jsonb)'::regprocedure;
+ perform pg_temp.check_true(md5(query_body)='d86613d312960b0d507898210e7e5197','whole original financial query oracle remains exact');
+ perform pg_temp.check_true((select md5(prosrc)='1a622edb93cf9041638be41b615020c4' from pg_proc
+  where oid='public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date,integer)'::regprocedure),
+  'whole current versioned native financial query is exact');
+ perform pg_temp.check_true((select md5(prosrc)='15e147c5da416624ed82e4a5ced5d64f' from pg_proc
+  where oid='public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date)'::regprocedure),
+  'original five-argument ABI delegates legacy1 without another query');
 end $legacy_oracle$;
 do $legacy_results$
-declare take integer; expected jsonb; actual jsonb; cursor jsonb;
+declare take integer; expected jsonb; actual jsonb; current_facts jsonb; cursor jsonb; unsafe boolean;
 begin
+ current_facts:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',40,null,(now() AT TIME ZONE 'UTC')::date,3);
+ -- This retained standing fixture contains original TEST/manual/unallocated
+ -- history. A legacy reply is exact only when the current source can express
+ -- it truthfully; the source guard must refuse rather than discard evidence.
+ unsafe:=exists(select 1 from jsonb_array_elements(current_facts->'invoices') r where r->>'status'='issued'
+  and (r->>'financial_standing'<>'recorded' or (r->>'test_provider_minor')::numeric>0
+   or (r->>'refund_payable_minor')::numeric>0 or (r->>'credit_minor')::numeric>0));
  foreach take in array array[1,5,40] loop
   expected:=pg_temp.e04_legacy_invoice_oracle('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',take,null);
-  actual:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',take,null);
-  perform pg_temp.check_true(actual=expected,'whole original financial JSON remains exact at page size '||take);
+  begin
+   actual:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',take,null);
+   perform pg_temp.check_true(not unsafe and actual=expected,'whole truthful legacy financial JSON exact at page size '||take);
+  exception when sqlstate '40001' then
+   perform pg_temp.check_true(unsafe,'unsafe legacy facts explicitly refused at page size '||take);
+  end;
  end loop;
- cursor:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null)->'next_cursor';
+ cursor:=pg_temp.e04_legacy_invoice_oracle('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null)->'next_cursor';
  perform pg_temp.check_true(cursor is not null and cursor<>'null'::jsonb,'original fixture really exercises a second page');
  expected:=pg_temp.e04_legacy_invoice_oracle('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,cursor);
- actual:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,cursor);
- perform pg_temp.check_true(actual=expected,'whole original cursor page, totals and provider/manual/test facts remain exact');
+ begin
+  actual:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,cursor);
+  perform pg_temp.check_true(not unsafe and actual=expected,'whole truthful legacy cursor and all financial totals exact');
+ exception when sqlstate '40001' then perform pg_temp.check_true(unsafe,'unsafe legacy cursor explicitly refused');end;
+ -- Unconditionally exercise real legacy-compatible responses, including
+ -- genuine zero invoices. Refusal is not permitted for this original client.
+ foreach take in array array[1,5,40] loop
+  actual:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002',take,null);
+  expected:=pg_temp.e04_legacy_invoice_oracle('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002',take,null);
+  perform pg_temp.check_true(actual=expected,'genuine zero legacy source stays whole-body exact at page size '||take);
+ end loop;
 end $legacy_results$;
 
 create temp table e04_native_off_page_identity(before_read jsonb not null,off_page uuid not null,original_number text);
 do $off_page_capture$
 declare before_read jsonb; off_page uuid; original_number text;
 begin
- before_read:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date);
+ before_read:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date,3);
  select i.id,i.invoice_number into strict off_page,original_number from public.paige_invoices i
   where i.tenant_id='e4000000-0000-4000-8000-00000000aaaa' and i.contact_id='e4000000-0000-4000-8000-0000000c0001'
    and i.status in ('issued','void') and i.billing_issued_snapshot_version is not null and i.billing_document is not null
@@ -118,7 +125,7 @@ do $off_page_changed$
 declare before_read jsonb; after_read jsonb;
 begin
  select s.before_read into strict before_read from pg_temp.e04_native_off_page_identity s;
- after_read:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date);
+ after_read:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date,3);
  -- Capturing and mutating are separate top-level statements, so the original
  -- statement_timestamp read_at can differ. Compare EVERY other public field.
  perform pg_temp.check_true(before_read-ARRAY['_native_sources','read_at']=after_read-ARRAY['_native_sources','read_at'],
@@ -136,7 +143,7 @@ do $off_page_restored$
 declare before_read jsonb;
 begin
  select s.before_read into strict before_read from pg_temp.e04_native_off_page_identity s;
- perform pg_temp.check_true(public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date)-'read_at'=before_read-'read_at',
+ perform pg_temp.check_true(public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date,3)-'read_at'=before_read-'read_at',
   'source control restores every original financial field and source identity apart from observation time');
 end $off_page_restored$;
 
@@ -153,7 +160,7 @@ select pg_temp.check_true(public._business_time_zone_for_tenant('e4000000-0000-4
 select pg_temp.refused($s$select public._business_time_zone_for_tenant(null,now())$s$,'22023','native calendar refuses a missing business locator');
 select pg_temp.refused($s$select public._business_time_zone_for_tenant('e4000000-0000-4000-8000-00000000aaaa',null)$s$,'22023','native calendar refuses a missing observation time');
 select pg_temp.refused($s$select public._business_time_zone_for_tenant('e4000000-0000-4000-8000-00000000aaaa','infinity')$s$,'22023','native calendar refuses a nonfinite observation time');
-select pg_temp.refused($s$select public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',5,null,'infinity')$s$,'22023','native financial query refuses a nonfinite explicit date');
+select pg_temp.refused($s$select public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',5,null,'infinity',3)$s$,'22023','native financial query refuses a nonfinite explicit date');
 
 do $facts$
 declare before_day jsonb; after_day jsonb; unknown_day jsonb; observed jsonb; legacy jsonb;
@@ -162,16 +169,16 @@ begin
  select min(due_date),max(due_date) into first_due,last_due from public.paige_invoices
   where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and contact_id='e4000000-0000-4000-8000-0000000c0001';
  perform pg_temp.check_true(first_due is not null and last_due is not null,'original fixture contains actual dated invoice facts');
- before_day:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',40,null,first_due-1);
- after_day:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',40,null,last_due+1);
- unknown_day:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',40,null,null);
+ before_day:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',40,null,first_due-1,3);
+ after_day:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',40,null,last_due+1,3);
+ unknown_day:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',40,null,null,3);
  perform pg_temp.check_true(before_day->'balances'=after_day->'balances' and before_day->'balances'=unknown_day->'balances'
   and before_day->'invoice_count'=after_day->'invoice_count' and before_day->'open_count'=after_day->'open_count',
   'calendar input never changes original principal, allocation, all-currency totals or counts');
  for invoice_row in select value from jsonb_array_elements(after_day->'invoices') loop
-  perform pg_temp.check_true((invoice_row->>'past_due')::boolean=(invoice_row->>'status'='issued' and (invoice_row->>'remaining_minor')::numeric>0 and invoice_row->>'due_date' is not null),
+  perform pg_temp.check_true(invoice_row->'past_due' IS NOT DISTINCT FROM (CASE WHEN invoice_row->>'status'='issued' AND invoice_row->>'financial_standing'<>'recorded' THEN 'null'::jsonb ELSE to_jsonb(invoice_row->>'status'='issued' and (invoice_row->>'remaining_minor')::numeric>0 and invoice_row->>'due_date' is not null) END),
    'later explicit date classifies only actual outstanding dated invoices');
-  perform pg_temp.check_true((select (value->>'past_due')::boolean=false from jsonb_array_elements(before_day->'invoices') where value->>'id'=invoice_row->>'id'),
+  perform pg_temp.check_true((select value->'past_due' IS NOT DISTINCT FROM CASE WHEN value->>'status'='issued' AND value->>'financial_standing'<>'recorded' THEN 'null'::jsonb ELSE 'false'::jsonb END from jsonb_array_elements(before_day->'invoices') where value->>'id'=invoice_row->>'id'),
    'earlier explicit date does not inherit UTC overdue classification');
   if invoice_row->>'status'='issued' and (invoice_row->>'remaining_minor')::numeric>0 and invoice_row->>'due_date' is not null then
    perform pg_temp.check_true((select value->'past_due'='null'::jsonb from jsonb_array_elements(unknown_day->'invoices') where value->>'id'=invoice_row->>'id'),
@@ -181,7 +188,7 @@ begin
    'native version is the original immutable issued snapshot version');
  end loop;
  observed:=public._client_portal_invoice_observation_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001');
- legacy:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',5,null);
+ legacy:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',5,null,(observed#>>'{calendar,local_date}')::date,3);
  perform pg_temp.check_true(observed->'query'->>'limit'='5' and observed->'query'->'after'='null'::jsonb,
   'native observation fixes the original first five records and no cursor');
  perform pg_temp.check_true(jsonb_array_length(observed->'facts'->'invoices')=5

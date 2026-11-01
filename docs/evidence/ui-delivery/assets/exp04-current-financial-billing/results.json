@@ -1,0 +1,130 @@
+{
+  "kind": "CONTROLLED_RENDER_NOT_AUTHENTICATED",
+  "renderer": "Actual original Billing/BillingInvoice and original customer chrome; actual hook; controlled original RPC transport; no AppShell Auth or real Chat",
+  "sourceBoundary": "Same O5 current financial source representation only; no customer/provider action",
+  "widths": [
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "metrics": {
+        "body": true,
+        "heading": "Payments",
+        "height": 770,
+        "invoiceLinks": 3,
+        "rootOverflow": 0,
+        "width": 1536
+      },
+      "file": "billing-mixed-light-1536.png",
+      "hasDebt": true,
+      "hasRefund": true,
+      "hasUnknown": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "metrics": {
+        "body": true,
+        "heading": "Payments",
+        "height": 768,
+        "invoiceLinks": 3,
+        "rootOverflow": 0,
+        "width": 1366
+      },
+      "file": "billing-mixed-light-1366.png",
+      "hasDebt": true,
+      "hasRefund": true,
+      "hasUnknown": true,
+      "measurementNote": "Full AX snapshot corrects an initial diff-only measurement; initial false flags were not UI failures."
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "metrics": {
+        "body": true,
+        "heading": "Payments",
+        "height": 768,
+        "invoiceLinks": 3,
+        "rootOverflow": 0,
+        "width": 1024
+      },
+      "file": "billing-mixed-dark-1024.png",
+      "hasDebt": true,
+      "hasRefund": true,
+      "hasUnknown": true,
+      "measurementNote": "Full AX snapshot corrects an initial diff-only measurement; initial false flags were not UI failures."
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "metrics": {
+        "body": true,
+        "heading": "Payments",
+        "height": 1000,
+        "invoiceLinks": 3,
+        "rootOverflow": 0,
+        "width": 900
+      },
+      "file": "billing-mixed-dark-900.png",
+      "hasDebt": true,
+      "hasRefund": true,
+      "hasUnknown": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "metrics": {
+        "body": true,
+        "heading": "Payments",
+        "height": 844,
+        "invoiceLinks": 3,
+        "rootOverflow": 0,
+        "width": 390
+      },
+      "file": "billing-mixed-dark-390.png",
+      "hasDebt": true,
+      "hasRefund": true,
+      "hasUnknown": true
+    }
+  ],
+  "states": [
+    {
+      "scenario": "held",
+      "file": "billing-held-dark-390.png",
+      "unknown": true,
+      "noAmountDue": false,
+      "rootOverflow": 0
+    },
+    {
+      "scenario": "creditzero",
+      "file": "billing-creditzero-dark-390.png",
+      "unknown": true,
+      "noAmountDue": true,
+      "rootOverflow": 0
+    }
+  ],
+  "retry": {
+    "button": "Try again",
+    "restoredInvoices": true,
+    "errorGone": true
+  },
+  "keyboard": {
+    "invoiceEnterOpenedOriginalDetail": true,
+    "returnToPayments": true,
+    "focusReadback": {
+      "outline": "solid",
+      "tag": "A",
+      "text": "Invoice SYN-1Issued Oct 29$2,100.00 due$150.00 refund owedRefund dueIncludes a test payment"
+    }
+  },
+  "limitations": [
+    "Synthetic Auth/transport",
+    "Actual AppShell and Chat not mounted",
+    "Document port explicitly503; PDF not verified",
+    "Screen reader/real device/zoom and authenticated customer/provider proof owed"
+  ]
+}

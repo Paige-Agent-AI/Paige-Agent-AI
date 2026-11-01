@@ -1,5 +1,6 @@
 // E09 Payments: the ACTUAL sales-invoice-document handler and its real helpers (ledger collector,
-// portal client), loaded into a VM with only the network seams stubbed. No database, no Stripe.
+// portal client and canonical financial decoder), loaded into a VM with explicit network, renderer
+// and PDF ports. No database, real document rendering or Stripe acceptance.
 // PORTAL_TEST_BASELINE=<ref> loads index.ts from that git ref instead (fail-first against the base).
 import {readFileSync,existsSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
@@ -22,9 +23,11 @@ const SUBJECT='e0995100-0000-4000-8000-000000000003',OTHER='e0995100-0000-4000-8
 const FORGED_CLIENT='e0995300-0000-4000-8000-000000000002';
 
 function harness({subjects=[SUBJECT,SUBJECT],userError=null,rpcData}={}){
-  const clients=[],calls=[],pdfs=[];let getUserCalls=0;
-  const ledgerPage={invoice_id:INVOICE,version:2,current_invoice_number:'NW-0001',has_more:false,next_cursor:null,
-    payment_ledger:{rows:[{id:'r1',ordinal:1}],count:1,as_of:'2027-01-01T00:00:00Z',receipt_total_cents:12000,reversal_total_cents:0}};
+  const clients=[],calls=[],pdfs=[],queryHeaders=[];let getUserCalls=0;
+  const ledgerPage={invoice_id:INVOICE,version:2,status:'issued',currency:'usd',current_invoice_number:'NW-0001',has_more:false,next_cursor:null,
+    document:{currency:'usd'},payment_evidence_version:2,financial_evidence_version:3,remaining_cents:338000,manual_recorded_cents:12000,provider_verified_cents:0,test_provider_verified_cents:3000,allocated_cents:12000,
+    financial_summary:{schema_version:3,invoice_id:INVOICE,invoice_version:2,currency:'usd',standing:'recorded',outstanding_minor:338000,refund_payable_minor:0,credit_minor:0,manual_recorded_minor:12000,provider_confirmed_minor:0,provider_net_minor:0,test_provider_minor:3000,source_hash:'a'.repeat(64)},
+    payment_ledger:{rows:[{id:'r1',ordinal:1},{id:'r2',ordinal:2}],count:2,as_of:'2027-01-01T00:00:00Z',receipt_total_cents:15000,reversal_total_cents:0}};
   const paymentRequest={invoice_id:INVOICE,invoice_number:'NW-0001',remaining_cents:335000,test_provider_cents:3000,
     payment_request:{amount_minor:50000,currency:'usd',state:'customer_action_required',environment:'test',provider_url:'https://checkout.stripe.com/c/pay/cs_test_open02',expires_at:'2099-01-01T00:00:00Z'}};
   const answer=name=>rpcData&&Object.hasOwn(rpcData,name)?rpcData[name]
@@ -34,7 +37,7 @@ function harness({subjects=[SUBJECT,SUBJECT],userError=null,rpcData}={}){
   const createClient=(url,key,options)=>{
     const client={key,authorization:options?.global?.headers?.Authorization??null,
       auth:{getUser:async()=>{const id=subjects[Math.min(getUserCalls++,subjects.length-1)];return userError?{data:null,error:userError}:{data:{user:id?{id}:null},error:null};}},
-      rpc:async(name,args)=>{calls.push(JSON.parse(JSON.stringify({key,name,args})));return {data:answer(name),error:null};}};
+      rpc:(name,args)=>{const headers={...options?.global?.headers};const query={setHeader(k,v){headers[k]=v;return query;},then(resolve,reject){calls.push(JSON.parse(JSON.stringify({key,name,args})));queryHeaders.push({...headers});return Promise.resolve({data:answer(name),error:null}).then(resolve,reject);}};return query;}};
     clients.push(client);return client;
   };
   const env={SUPABASE_URL:'https://unit.test',SUPABASE_ANON_KEY:'anon-key',SUPABASE_SERVICE_ROLE_KEY:'service-key'};
@@ -43,11 +46,12 @@ function harness({subjects=[SUBJECT,SUBJECT],userError=null,rpcData}={}){
     renderSalesInvoiceDocument:value=>`<html>${value.invoice_id}|${value.ledger_complete}</html>`,
     renderDocumentPdf:async html=>{pdfs.push(html);return new Uint8Array([37,80,68,70]);},
     Deno:{env:{get:k=>env[k]},serve:fn=>{ctx.handler=fn;}}});
+  vm.runInContext(strip(read('_shared/sales-payments/balance-projection.ts')),ctx);
   vm.runInContext(strip(read('_shared/sales-invoice-ledger.ts')),ctx);
   vm.runInContext(strip(read('_shared/portal-invoice-client.ts')),ctx);
   vm.runInContext(strip(read('sales-invoice-document/index.ts')),ctx);
   const run=(query,authorization='Bearer customer-jwt')=>ctx.handler(new Request(`https://unit.test/functions/v1/sales-invoice-document?${query}`,{method:'GET',headers:authorization?{authorization}:{}}));
-  return {run,clients,calls,pdfs,getUserCalls:()=>getUserCalls};
+  return {run,clients,calls,pdfs,queryHeaders,getUserCalls:()=>getUserCalls};
 }
 const portalQuery=(extra='')=>`portal=1&invoice_id=${INVOICE}${extra}`;
 
@@ -128,4 +132,21 @@ test('the owner path is unchanged without portal=1',async()=>{
   assert.equal(res.status,200);
   assert.deepEqual(h.calls.map(c=>[c.key,c.name,c.args]),[['anon-key','read_sales_invoice_payment_ledger',{_expected_tenant_id:TENANT,_invoice_id:INVOICE,_limit:100,_cursor:null}]]);
   const noTenant=harness();assert.equal((await noTenant.run(`invoice_id=${INVOICE}`)).status,404,'the owner path still requires its tenant');
+});
+
+
+test('current document context pairs native financial identity without changing caller authority',async()=>{
+ const h=harness(),res=await h.run(portalQuery());
+ assert.equal(res.status,200);assert.deepEqual(JSON.parse(res.headers.get('X-PAIGE-Invoice-Financial-Context')),
+  {invoice_id:INVOICE,invoice_version:2,source_hash:'a'.repeat(64),standing:'recorded'});
+ assert.match(res.headers.get('Access-Control-Expose-Headers'),/X-PAIGE-Invoice-Financial-Context/);
+});
+test('both original payment-request routes negotiate current3 without changing their identity',async()=>{
+ const h=harness();await h.run(portalQuery('&format=payment-request'));
+ assert.equal(h.queryHeaders[0]['X-PAIGE-Invoice-Evidence-Version'],'3');
+ assert.equal(h.queryHeaders[0].Authorization,'Bearer customer-jwt');
+ const b=harness();await b.run('token='+'a'.repeat(64)+'&format=payment-request',null);
+ assert.equal(b.queryHeaders[0]['X-PAIGE-Invoice-Evidence-Version'],'3');
+ assert.equal(b.queryHeaders[0].Authorization,undefined);
+ assert.equal(b.calls[0].key,'service-key');
 });

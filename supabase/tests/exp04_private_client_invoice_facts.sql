@@ -2,6 +2,7 @@
 -- Retain all171 original Portal controls and the whole original query/authority
 -- pins. A five-argument move must reproduce the entire original financial body.
 begin;
+\ir fixtures/exp04_legacy_invoice_query.sql
 create function pg_temp.e04_core_check(v boolean,label text) returns void language plpgsql as $$
 begin if v is distinct from true then raise exception 'FAIL: %',label; end if; raise notice 'PASS: %',label; end $$;
 create function pg_temp.e04_core_refused(stmt text,label text) returns void language plpgsql as $$
@@ -15,7 +16,12 @@ begin
  select * into strict core from pg_catalog.pg_proc where oid='public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb)'::regprocedure;
  select * into strict wrapper from pg_catalog.pg_proc where oid='public.client_portal_invoices(uuid,integer,jsonb)'::regprocedure;
  query_body:=core.prosrc;
- if to_regprocedure('public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date)') is not null then
+ if to_regprocedure('public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date,integer)') is not null then
+  perform pg_temp.e04_core_check(md5(core.prosrc)='0a70d5ed7b157fa68472bbf24785be1a','exact compatible four-argument financial delegate');
+  perform pg_temp.e04_core_check((select md5(prosrc)='15e147c5da416624ed82e4a5ced5d64f' from pg_proc where oid='public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date)'::regprocedure),'exact five-argument legacy delegate');
+  perform pg_temp.e04_core_check((select md5(prosrc)='1a622edb93cf9041638be41b615020c4' from pg_proc where oid='public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date,integer)'::regprocedure),'whole current versioned financial query exact');
+  select prosrc into strict query_body from pg_proc where oid='pg_temp.e04_legacy_invoice_oracle(uuid,uuid,integer,jsonb)'::regprocedure;
+ elsif to_regprocedure('public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date)') is not null then
   perform pg_temp.e04_core_check(md5(core.prosrc)='0a70d5ed7b157fa68472bbf24785be1a','exact compatible four-argument financial delegate');
   select prosrc into strict query_body from pg_proc where oid='public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date)'::regprocedure;
   perform pg_temp.e04_core_check(md5(query_body)='a307bf9e57e5b2ad692c74a329e683cd','exact native financial source before whole inverse');

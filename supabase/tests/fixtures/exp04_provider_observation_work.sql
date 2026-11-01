@@ -68,6 +68,46 @@ end $$;
 revoke all on function public.register_sales_provider_observation_work(uuid,uuid,text,text,text,text) from public,anon,authenticated;
 grant execute on function public.register_sales_provider_observation_work(uuid,uuid,text,text,text,text) to service_role;
 
+-- Unmounted verified-ingress candidate. Event payloads supply only a bounded
+-- signal/reference; the ORIGINAL settled operation/receipt and current merchant
+-- resolve all scope. A not-yet-linked event stays retryable, never acknowledged
+-- as a financial result. No caller-supplied tenant, amount, status or authority.
+create function public.register_sales_provider_observation_event(_event_id text,_event_type text,
+ _merchant_account_id text,_environment text,_provider_transaction_id text) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare op public.paige_invoice_provider_operations%rowtype;matches bigint;work jsonb;
+begin
+ perform public._sales_payment_operation_service();
+ if coalesce(_event_id,'')!~'^evt_[A-Za-z0-9]{1,124}$'
+  or coalesce(_event_type,'') not in ('charge.refunded','charge.refund.updated','refund.created','refund.updated','refund.failed',
+   'charge.dispute.created','charge.dispute.updated','charge.dispute.closed','charge.dispute.funds_withdrawn','charge.dispute.funds_reinstated')
+  or coalesce(_merchant_account_id,'')!~'^acct_[A-Za-z0-9]{1,123}$'
+  or coalesce(_environment,'') not in ('test','live')
+  or coalesce(_provider_transaction_id,'')!~'^ch_[A-Za-z0-9]{1,125}$' then
+  raise exception 'Original provider event unavailable' using errcode='22023';
+ end if;
+ select count(*) into matches from public.paige_invoice_provider_operations p
+  where p.provider='stripe' and p.merchant_account_id=_merchant_account_id and p.environment=_environment
+   and p.state='settled' and p.verified_readback->>'provider_transaction_id'=_provider_transaction_id;
+ if matches=0 then
+  if not exists(select 1 from public.tenant_stripe_accounts m
+   where m.stripe_account_id=_merchant_account_id and m.provider_environment=_environment) then
+   return jsonb_build_object('state','other_domain');
+  end if;
+  return jsonb_build_object('state','verification_pending');
+ end if;
+ if matches<>1 then raise exception 'Original provider event scope ambiguous' using errcode='42501';end if;
+ select * into strict op from public.paige_invoice_provider_operations p
+  where p.provider='stripe' and p.merchant_account_id=_merchant_account_id and p.environment=_environment
+   and p.state='settled' and p.verified_readback->>'provider_transaction_id'=_provider_transaction_id;
+ -- A known original payment with a retired merchant remains a scope refusal
+ -- from the ORIGINAL context, never silently acknowledged as another domain.
+ work:=public.register_sales_provider_observation_work(op.tenant_id,op.id,_event_id,_merchant_account_id,_environment,_provider_transaction_id);
+ return jsonb_build_object('state','registered','work',work);
+end $$;
+revoke all on function public.register_sales_provider_observation_event(text,text,text,text,text) from public,anon,authenticated;
+grant execute on function public.register_sales_provider_observation_event(text,text,text,text,text) to service_role;
+
 create function public.claim_sales_provider_observation_work(_limit integer default 3) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare w public.paige_durable_work%rowtype;op public.paige_invoice_provider_operations%rowtype;claims jsonb:='[]';

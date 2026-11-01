@@ -7,6 +7,7 @@ import { FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand } fr
 import { manualAllocationReviewMatches } from "../../../supabase/functions/_shared/sales-invoice-command/manual-allocation";
 import { PAIGE_APP_ORIGIN } from "../../../supabase/functions/_shared/canonical-app-url";
 import { invoicePublicOriginReady } from "../../../supabase/functions/_shared/sales-invoice-delivery/binding";
+import {readProviderDispositionReview,providerDispositionReviewsEqual,providerDispositionResultMatches} from '../../../supabase/functions/_shared/sales-invoice-command/provider-disposition';
 
 const tenant = "10000000-0000-4000-8000-000000000001";
 const operation = "20000000-0000-4000-8000-000000000001";
@@ -14,7 +15,7 @@ const command = { action: "invoice.record_manual_payment", invoice_id: "30000000
 const source = readFileSync("supabase/functions/sales-invoice-command/index.ts", "utf8").replace(/^import .*;\r?\n/gm, "");
 const compiled = transpileModule(source, { compilerOptions: { module: ModuleKind.None, target: ScriptTarget.ES2022 } }).outputText;
 
-type Setup = { role?: string; currentTenant?: string; replay?: unknown; auditFails?: boolean; claimed?: unknown; pendingCycle?: unknown; executeError?: unknown; authenticated?: boolean; deliveryResult?: unknown; publicOrigin?: string; readiness?:boolean; preview?:unknown; };
+type Setup = { role?: string; currentTenant?: string; replay?: unknown; auditFails?: boolean; claimed?: unknown; pendingCycle?: unknown; executeError?: unknown; executeResult?:unknown; authenticated?: boolean; deliveryResult?: unknown; publicOrigin?: string; readiness?:boolean; preview?:unknown; };
 function setup(options: Setup = {}) {
   const calls: { name: string; args: unknown }[] = [];
   const claims: Record<string, unknown>[][] = [];
@@ -25,7 +26,7 @@ function setup(options: Setup = {}) {
       calls.push({ name, args });
       if (name === "read_sales_invoice_command_result" || name === "read_sales_invoice_delivery_result") return { data: options.replay ?? null, error: null };
       if (name === "preview_sales_invoice_command" || name === "preview_sales_invoice_delivery_command") return { data: options.preview??{ eligible: true, summary: "Review the exact commercial action" }, error: null };
-      return { data: { ok: true, row: { status: "issued", outstanding_cents: 9000 } }, error: options.executeError ?? null };
+      return { data: options.executeResult??{ ok: true, row: { status: "issued", outstanding_cents: 9000 } }, error: options.executeError ?? null };
     },
     from: (table: string) => {
       const filters: Record<string, unknown>[] = [];
@@ -57,6 +58,7 @@ function setup(options: Setup = {}) {
     mintSignerToken: () => "one-time-secret", sha256Hex: async () => "a".repeat(64),
     executeSalesInvoiceDelivery: async (args: unknown) => { calls.push({ name: "delivery", args }); return options.deliveryResult ?? { ok: true, outcome: "provider_accepted", provider_receipt_available: true, delivery_confirmed: false }; },
     FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand, manualAllocationReviewMatches,
+    readProviderDispositionReview,providerDispositionReviewsEqual,providerDispositionResultMatches,
     PAIGE_APP_ORIGIN: options.publicOrigin ?? PAIGE_APP_ORIGIN, invoicePublicOriginReady,
     readInvoiceDeliveryReadiness:async()=>({eligible:options.readiness!==false,state:options.readiness===false?'needs_setup':'ready',reason:options.readiness===false?'SMS_A2P_NOT_APPROVED':'READY_FOR_GOVERNED_REVIEW',provider_execution_verified:false}),
   };
@@ -245,4 +247,46 @@ describe('actual governed preferences handler',()=>{
  it('executes only stored tenant-scoped approved settings through existing RPC',async()=>{const stored={command:prefsCommand,operation_id:operation,expected_tenant_id:tenant};const test=setup({claimed:stored});const response=await test.request({command:prefsCommand,approved_fingerprint:'abcdef0123456789'});expect(response.status).toBe(200);expect(test.details('execute_sales_invoice_command')).toMatchObject({_command:prefsCommand,_operation_id:operation});expect(test.details('insert:paige_audit_log')).toMatchObject({target_type:'invoice_preferences',target_id:tenant});});
  it('refuses viewer settings before preview or write',async()=>{const test=setup({role:'viewer'});expect((await test.request({command:prefsCommand})).status).toBe(403);expect(test.calls).toEqual([])});
  it('retains ordinary twenty KB command bound',async()=>{const test=setup();expect((await test.request({command:{...command,notes:'x'.repeat(22000)}})).status).toBe(400)});
+});
+
+
+const financialCommand={action:'invoice.record_provider_disposition',invoice_id:command.invoice_id,expected_version:2,provider_operation_id:'e0448200-0000-4000-8000-000000000001',observation_id:'e0448200-0000-4000-8000-000000000002',observation_version:2,expected_disposition_version:0,decision:'credit_returned_principal',credit_minor:10000,reason:'Original reviewed credit'};
+
+const financialReview=()=>({review_version:2,financial_evidence_version:3,effect:'internal_financial_disposition_only',invoice_id:command.invoice_id,invoice_version:2,client_id:'e0448200-0000-4000-8000-000000000003',client_name:'Fixture client',currency:'usd',provider_operation_id:financialCommand.provider_operation_id,observation_id:financialCommand.observation_id,observation_version:2,disposition_version:0,decision:financialCommand.decision,captured_minor:50000,retained_minor:40000,returned_minor:10000,credit_before_minor:0,credit_after_minor:10000,standing_before:'needs_review',outstanding_before_minor:null,outstanding_after_minor:300000,refund_payable_before_minor:null,refund_payable_after_minor:0,standing_after:'recorded',source_hash:'a'.repeat(64)});
+
+const financialPreview=(review:unknown=financialReview())=>({eligible:true,invoice_number:'INV-1',currency:'usd',provider_disposition:review,summary:'Review original credit and balances'});
+
+const financialArgs=(review:unknown=financialReview())=>({command:financialCommand,operation_id:operation,expected_tenant_id:tenant,approval_subject:'invoice.record_provider_disposition:'+command.invoice_id,provider_disposition_review:review});
+
+const financialResult=()=>({ok:true,outcome:'financial_decision_recorded',effect:'internal_financial_disposition_only',payment_moved:false,customer_notified:false,rail_recorded:true,receipt_id:'e0448200-0000-4000-8000-000000000004',operation:{id:operation,action:financialCommand.action},provider_disposition_review:financialReview(),disposition_version:1,invoice_version:3,row:{id:command.invoice_id,tenant_id:tenant,version:3}});
+
+describe('original HTTP door binds the complete native financial consequence',()=>{
+
+ it('stores the exact native review in the existing approval rather than caller-authored money',async()=>{const h=setup({preview:financialPreview()});const r=await h.request({command:financialCommand});expect(r.status).toBe(202);expect(h.details('insert:paige_pending_confirmations').args).toMatchObject({command:financialCommand,provider_disposition_review:financialReview()});expect(h.calls.some(c=>c.name==='execute_sales_invoice_command')).toBe(false);});
+
+ it.each([undefined,{...financialReview(),observation_version:3},{...financialReview(),credit_after_minor:9999}])('refuses a missing or changed native financial review %j',async review=>{const h=setup({preview:financialPreview(review===undefined?null:review)});const r=await h.request({command:financialCommand});expect(r.status).toBe(422);expect(r.body.code).toBe('INVOICE_FINANCIAL_REVIEW_UNAVAILABLE');expect(h.calls.some(c=>c.name==='insert:paige_pending_confirmations'||c.name==='execute_sales_invoice_command')).toBe(false);});
+
+ it.each([null,{...financialReview(),source_hash:'b'.repeat(64)}])('cannot execute a missing or outdated stored financial consequence %j',async review=>{const h=setup({preview:financialPreview(),claimed:financialArgs(review),executeResult:financialResult()});const r=await h.request({command:financialCommand,approved_fingerprint:'0123456789abcdef'});expect(r.status).toBe(409);expect(r.body.code).toBe('INVOICE_FINANCIAL_APPROVAL_CHANGED');expect(h.calls.some(c=>c.name==='execute_sales_invoice_command')).toBe(false);});
+
+ it('passes only the stored native consequence through original invoice governance',async()=>{const h=setup({preview:financialPreview(),claimed:financialArgs(),executeResult:financialResult()});const r=await h.request({command:financialCommand,approved_fingerprint:'0123456789abcdef'});expect(r.status).toBe(200);expect(h.details('execute_sales_invoice_command')._governance).toMatchObject({tool:'sales_record_provider_disposition',approved_financial_review:financialReview()});expect(r.body.payment_moved).toBe(false);});
+
+ it.each([{...financialResult(),rail_recorded:false},{...financialResult(),payment_moved:true},{...financialResult(),customer_notified:true},{...financialResult(),invoice_version:4},{ok:true}])('an incomplete or contradictory native result is unknown, never success %j',async executeResult=>{const h=setup({preview:financialPreview(),claimed:financialArgs(),executeResult});const r=await h.request({command:financialCommand,approved_fingerprint:'0123456789abcdef'});expect(r.status).toBe(503);expect(r.body.outcome).toBe('outcome_unknown');expect(r.body.code).toBe('INVOICE_FINANCIAL_RESULT_UNVERIFIED');});
+
+ it('validates historical replay before treating it as a financial receipt',async()=>{const h=setup({replay:{...financialResult(),customer_notified:true}});const r=await h.request({command:financialCommand});expect(r.status).toBe(503);expect(r.body.code).toBe('INVOICE_FINANCIAL_RESULT_UNVERIFIED');expect(h.calls.some(c=>c.name==='execute_sales_invoice_command')).toBe(false);});
+
+ it('cannot smuggle a native review through the request envelope',async()=>{const h=setup({preview:financialPreview()});const r=await h.request({command:financialCommand,provider_disposition_review:financialReview()});expect(r.status).toBe(400);});
+
+ it('records the selected decision while keeping an unresolved whole-invoice balance unknown',async()=>{
+  const review={...financialReview(),standing_after:'needs_review',outstanding_after_minor:null,refund_payable_after_minor:null};
+  const h=setup({preview:financialPreview(review),claimed:financialArgs(review),executeResult:{...financialResult(),provider_disposition_review:review}});
+  const r=await h.request({command:financialCommand,approved_fingerprint:'0123456789abcdef'});
+  expect(r.status).toBe(200);expect(r.body.provider_disposition_review).toMatchObject({standing_after:'needs_review',outstanding_after_minor:null,refund_payable_after_minor:null});
+ });
+ it('refuses the unpublished older review schema before issuing or using approval',async()=>{
+  const old={...financialReview(),review_version:1};
+  const h=setup({preview:financialPreview(old)});const r=await h.request({command:financialCommand});
+  expect(r.status).toBe(422);expect(r.body.code).toBe('INVOICE_FINANCIAL_REVIEW_UNAVAILABLE');
+  expect(h.calls.some(c=>c.name==='insert:paige_pending_confirmations'||c.name==='execute_sales_invoice_command')).toBe(false);
+ });
+
 });

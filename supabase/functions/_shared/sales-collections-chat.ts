@@ -1,4 +1,5 @@
 import { projectCollectionAgreement } from './sales-collections/agreement-context.ts';
+import { readAllocatedBalance,readInvoiceFinancialSummary } from './sales-payments/balance-projection.ts';
 import { parseRepaymentRead, previewRepaymentRead } from './sales-collections/repayment-read.ts';
 import { SALES_COLLECTION_KIT_BY_ACTION, SALES_COLLECTION_READ_CAPABILITY } from './paige-spine/domains/sales_collections.ts';
 import { parseCollectionCommand,COLLECTION_ACTIONS,UUID } from './sales-collections/contract.ts';
@@ -33,9 +34,10 @@ export type SalesCollectionsApprovalQuery = {
   gt(key: string, value: string): SalesCollectionsApprovalQuery; limit(value: number): PromiseLike<{ data: { fingerprint?: unknown; args?: unknown }[] | null; error: unknown }>;
 };
 type Reply = { data: unknown; error: unknown };
+type ReadQuery = PromiseLike<Reply> & {setHeader?:(name:string,value:string)=>PromiseLike<Reply>};
 type Dependencies = {
   admin: { from(name: string): { select(value: string): SalesCollectionsApprovalQuery } };
-  caller: { rpc(name: string, args: Record<string, unknown>): PromiseLike<Reply>; functions: { invoke(name: string, options: { body: Record<string, unknown> }): Promise<Reply> } };
+  caller: { rpc(name: string, args: Record<string, unknown>): ReadQuery; functions: { invoke(name: string, options: { body: Record<string, unknown> }): Promise<Reply> } };
 };
 /** C4b — `pinned`: the stored proposal the chat's approval resume carried forward (see
  *  sales-invoice-chat.ts). When set, exactly that proposal is redeemed; the door still claims it. */
@@ -73,11 +75,56 @@ async function readCollections(ctx:Context,deps:Dependencies):Promise<Result>{
  if(ctx.args.before_id!=null&&(entity!=='agreement'||typeof ctx.args.before_id!=='string'||!UUID.test(ctx.args.before_id)))return {content:{success:false,error:'Invalid agreement cursor.'}};
  if(entity==='agreement'&&ctx.args.cursor!=null)return {content:{success:false,error:'Agreement cursor unavailable.'}};
  try {
- const reply=await deps.caller.rpc('read_sales_collections',{_expected_tenant_id:ctx.tenantId,_entity:entity,_limit:limit,_cursor:cursor,_before_id:ctx.args.before_id??null});
+ const query=deps.caller.rpc('read_sales_collections',{_expected_tenant_id:ctx.tenantId,_entity:entity,_limit:limit,_cursor:cursor,_before_id:ctx.args.before_id??null});
+ const reply=await(entity!=='agreement'&&typeof query.setHeader==='function'?query.setHeader('x-paige-invoice-evidence-version','3'):query);
  const data=object(reply.data);if(reply.error||!data||!Array.isArray(data.rows)||data.rows.length>Number(limit)||typeof data.has_more!=='boolean'||data.tenant_id!==ctx.tenantId||typeof data.receipt_id!=='string'||!UUID.test(data.receipt_id))throw Error('unverified');
- const rows=data.rows.map(value=>{if(entity==='agreement')return projectCollectionAgreement(value,ctx.tenantId!);const r=object(value);if(!r||typeof r.id!=='string'||!UUID.test(r.id))throw Error('unverified');const safe:Record<string,unknown>={id:r.id,...salesCollectionsSafeResult(r)};if(typeof r.record_kind==='string'&&['managed','imported','provider_or_legacy'].includes(r.record_kind))safe.record_kind=r.record_kind;if(typeof r.collection_terms_version==='number')safe.version=r.collection_terms_version;if(typeof r.agreed_currency==='string'&&/^[a-z]{3}$/.test(r.agreed_currency))safe.currency=r.agreed_currency;if(Number.isSafeInteger(r.agreed_amount_minor))safe.amount_cents=r.agreed_amount_minor;if(typeof r.terms_current==='boolean')safe.terms_current=r.terms_current;for(const k of ['invoice_id','reverses_payment_id'])if(typeof r[k]==='string'&&UUID.test(r[k] as string))safe[k]=r[k];for(const k of ['kind','provenance'])if(typeof r[k]==='string'&&['receipt','reversal','owner_imported_unverified','human_recorded','canonical_record','full','installment','recurring','deposit','milestone','custom'].includes(r[k] as string))safe[k]=r[k];return safe;});
+ const evidenceVersion=data.payment_evidence_version;
+ const financialVersion=data.financial_evidence_version;
+ if(entity!=='agreement'&&financialVersion!==3)throw Error('current financial evidence unverified');
+ if(financialVersion!==undefined&&(financialVersion!==3||evidenceVersion!==2||entity==='agreement'))throw Error('current financial representation');
+ if(evidenceVersion!==undefined&&(evidenceVersion!==2||entity==='agreement'))throw Error('financial representation');
+ const rows=data.rows.map(value=>{if(entity==='agreement')return projectCollectionAgreement(value,ctx.tenantId!);const r=object(value);if(!r||typeof r.id!=='string'||!UUID.test(r.id))throw Error('unverified');const safe:Record<string,unknown>={id:r.id,...salesCollectionsSafeResult(r)};if(typeof r.record_kind==='string'&&['managed','imported','provider_or_legacy'].includes(r.record_kind))safe.record_kind=r.record_kind;if(typeof r.collection_terms_version==='number')safe.version=r.collection_terms_version;if(typeof r.agreed_currency==='string'&&/^[a-z]{3}$/.test(r.agreed_currency))safe.currency=r.agreed_currency;if(Number.isSafeInteger(r.agreed_amount_minor))safe.amount_cents=r.agreed_amount_minor;if(typeof r.terms_current==='boolean')safe.terms_current=r.terms_current;for(const k of ['invoice_id','reverses_payment_id'])if(typeof r[k]==='string'&&UUID.test(r[k] as string))safe[k]=r[k];for(const k of ['kind','provenance'])if(typeof r[k]==='string'&&['receipt','reversal','owner_imported_unverified','human_recorded','canonical_record','full','installment','recurring','deposit','milestone','custom'].includes(r[k] as string))safe[k]=r[k];
+ if(r.payment_evidence_version!==evidenceVersion)throw Error('financial row representation');
+ if(r.financial_evidence_version!==undefined&&financialVersion!==3)throw Error('current financial row representation');
+ if(evidenceVersion===2){
+  if(r.tenant_id!==ctx.tenantId||typeof r.currency!=='string'||!/^[a-z]{3}$/.test(r.currency))throw Error('financial scope');
+  if(entity==='invoice'){
+   if(!Number.isSafeInteger(r.amount_cents)||Number(r.amount_cents)<0||typeof r.status!=='string')throw Error('financial invoice');
+   if(r.financial_evidence_version!==undefined||r.financial_summary!==undefined){
+    const financial=r.financial_evidence_version===3&&r.record_kind==='managed'&&Number.isSafeInteger(r.version)&&Number(r.version)>0
+     ?readInvoiceFinancialSummary(r.financial_summary,{id:r.id as string,version:r.version as number,currency:r.currency as string,status:r.status as string}):null;
+    if(!financial||!Number.isSafeInteger(r.allocated_cents)||Number(r.allocated_cents)<0
+     ||!Number.isSafeInteger(financial.manual_recorded_minor+financial.provider_confirmed_minor)
+     ||r.allocated_cents!==financial.manual_recorded_minor+financial.provider_confirmed_minor
+     ||r.remaining_cents!==financial.outstanding_minor||r.manual_recorded_cents!==financial.manual_recorded_minor
+     ||r.provider_verified_cents!==financial.provider_confirmed_minor||r.test_provider_verified_cents!==financial.test_provider_minor
+     ||r.collection_required!==(r.status==='issued'?(financial.standing==='recorded'?financial.outstanding_minor!>0:null):false))throw Error('current financial facts');
+    Object.assign(safe,{payment_evidence_version:2,financial_evidence_version:3,financial_standing:financial.standing,
+     remaining_cents:financial.outstanding_minor,refund_payable_minor:financial.refund_payable_minor,credit_minor:financial.credit_minor,
+     provider_net_minor:financial.provider_net_minor,provider_verified_cents:financial.provider_confirmed_minor,
+     allocated_cents:r.allocated_cents,test_provider_verified_cents:financial.test_provider_minor,collection_required:r.collection_required});
+   }else{
+    if(financialVersion===3&&r.record_kind==='managed')throw Error('missing current financial facts');
+   const balance=readAllocatedBalance(r,Number(r.amount_cents));
+   if(!balance||!Number.isSafeInteger(r.test_provider_verified_cents)||Number(r.test_provider_verified_cents)<0
+    ||!['draft','issued','void','recorded','sent','paid'].includes(String(r.status))
+    ||typeof r.collection_required!=='boolean'||r.collection_required!==(balance.remaining>0&&(r.status==='issued'||r.status==='recorded')))throw Error('financial facts');
+   Object.assign(safe,{payment_evidence_version:2,provider_verified_cents:balance.verified,allocated_cents:balance.allocated,
+    test_provider_verified_cents:r.test_provider_verified_cents,collection_required:r.collection_required});
+   }
+  }else{
+   if(!Number.isSafeInteger(r.amount_cents)||Number(r.amount_cents)<1||(r.kind!=='receipt'&&r.kind!=='reversal'))throw Error('financial receipt');
+   if(typeof r.invoice_id!=='string'||!UUID.test(r.invoice_id))throw Error('financial invoice reference');
+   if(r.provenance==='provider_verified'){
+    if(r.kind!=='receipt'||(r.provider!=='stripe'&&r.provider!=='paypal')||(r.provider_environment!=='test'&&r.provider_environment!=='live'))throw Error('financial provider evidence');
+    Object.assign(safe,{provenance:'provider_verified',provider:r.provider});
+   }else if((r.provenance!=='human_recorded'&&r.provenance!=='owner_imported_unverified')||r.provider_environment!==null||(r.provider!==undefined&&r.provider!==null))throw Error('financial manual evidence');
+   Object.assign(safe,{payment_evidence_version:2,provider_environment:r.provider_environment});
+  }
+ }
+ return safe;});
  const next=data.next_cursor;if(next!==null&&next!==undefined){if(entity==='agreement'){if(typeof next!=='string'||!UUID.test(next))throw Error('cursor');}else{const n=object(next);if(!n||typeof n.snapshot_id!=='string'||!UUID.test(n.snapshot_id)||!Number.isSafeInteger(n.after_position)||n.entity!==entity||Object.keys(n).some(k=>!['snapshot_id','after_position','entity'].includes(k)))throw Error('cursor');}}
- return {content:{success:true,entity,receipt_id:data.receipt_id,rows,has_more:data.has_more,next_cursor:next??null,...(repayment?{repayment_preview:previewRepaymentRead(repayment,rows)}:{}),note:'These are bounded canonical business records. Commercial terms are separate from signed documents; absent/stale terms need owner resolution. Schedule preview is deterministic recorded intent, not a payment mandate, accrued fee or settlement. Imported/manual receipts do not verify processor payment.'}};
+ return {content:{success:true,entity,receipt_id:data.receipt_id,rows,has_more:data.has_more,next_cursor:next??null,...(evidenceVersion===2?{payment_evidence_version:2}:{}),...(financialVersion===3?{financial_evidence_version:3}:{}),...(repayment?{repayment_preview:previewRepaymentRead(repayment,rows)}:{}),note:'These are bounded canonical business records. Commercial terms are separate from signed documents; absent/stale terms need owner resolution. Schedule preview is deterministic recorded intent, not a payment mandate, accrued fee or settlement. Imported/manual receipts do not verify processor payment.'+(entity==='agreement'?'':evidenceVersion===2?(financialVersion===3?' Current managed debt, separate refunds and credits come from original native evidence. Unknown amounts and due judgments stay withheld.':' These original balances exclude TEST activity; current refunds and credits are not verified in this older representation.')+' TEST payments moved no money; provider/manual evidence stays separate. This read performed no payment or financial action.':' Unversioned balances may include TEST activity; do not represent them as verified actual debt or collected money.')}};
  }catch{return {content:{success:false,error:'Collection register unavailable in this workspace.'}};}
 }
 /** Selection only. The action endpoint is the sole atomic approval consumer and execution gate. */

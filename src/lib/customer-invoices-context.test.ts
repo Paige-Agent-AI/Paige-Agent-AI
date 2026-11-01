@@ -166,3 +166,71 @@ test("bounds the final model projection after original amount labels without dro
  assert.equal((await read(f)).status,"degraded","Presentation expansion cannot silently exceed model budget");
  assert.equal(f.billing.balances.length,100);assert.equal(f.billing.balances[99].remaining_minor,large);
 });
+
+// O5 native current financial facts: synthetic responses through the SAME caller.
+function currentFixture(){const f=fixture();return {...f,billing:{...f.billing,payment_evidence_version:2,financial_evidence_version:3,
+ invoices:[{...f.billing.invoices[0],remaining_minor:'50000' as string|null,financial_standing:'recorded',financial_revision:'cd'.repeat(32),
+ refund_payable_minor:'10000' as string|null,credit_minor:'25000' as string|null,provider_net_minor:'20000' as string|null}],
+ balances:[{...f.billing.balances[0],remaining_minor:'50000' as string|null,financial_standing:'recorded',
+ refund_payable_minor:'10000' as string|null,credit_minor:'25000' as string|null,provider_net_minor:'20000' as string|null}],open_count:1 as number|null}};}
+test('current native facts retain simultaneous debt/refund/credit/net as separate exact strings',async()=>{
+ const r=await read(currentFixture());assert.equal(r.status,'available');if(r.status!=='available'||!r.data?.billing)throw Error('Expected current source');
+ const b=r.data.billing;assert.equal(b.invoices[0].remaining_minor,'50000');
+ const text=customerInvoicesMessages(r.data)[0].content;
+ for(const s of ['USD 500.00','USD 100.00','USD 250.00','USD 200.00','refund','credit','current outstanding'])assert.ok(text.includes(s),s);
+ assert.equal(text.includes('cd'.repeat(32)),false,'Opaque original source revision is not model content');
+});
+test('held current financial facts remain null with no invented zero amount or payment action',async()=>{
+ const f=currentFixture();Object.assign(f.billing.invoices[0],{financial_standing:'needs_review',financial_revision:null,remaining_minor:null,refund_payable_minor:null,credit_minor:null,provider_net_minor:null});
+ Object.assign(f.billing.balances[0],{financial_standing:'needs_review',remaining_minor:null,refund_payable_minor:null,credit_minor:null,provider_net_minor:null});f.billing.open_count=null;
+ const r=await read(f);assert.equal(r.status,'available');if(r.status!=='available'||!r.data?.billing)throw Error('Expected explicit held source');
+ assert.equal(r.data.billing.open_count,null);assert.equal(r.data.billing.invoices[0].remaining_minor,null);
+ const text=customerInvoicesMessages(r.data)[0].content;assert.ok(text.includes('Amount awaiting verification'));assert.ok(text.includes('never treat unknown as zero'));
+});
+test('current zero or credit never establishes collected money or provider settlement',async()=>{
+ const f=currentFixture();Object.assign(f.billing.invoices[0],{remaining_minor:'0',refund_payable_minor:'0',credit_minor:'125000'});
+ Object.assign(f.billing.balances[0],{remaining_minor:'0',refund_payable_minor:'0',credit_minor:'125000'});f.billing.open_count=0;
+ const r=await read(f);assert.equal(r.status,'available');if(r.status!=='available'||!r.data)throw Error('Expected current zero');
+ const text=customerInvoicesMessages(r.data)[0].content;assert.ok(text.includes('No amount currently due'));assert.ok(text.includes('does not establish payment completion'));
+});
+test('native current provider net preserves a negative exact minor string without refund authorization',async()=>{
+ const f=currentFixture();f.billing.invoices[0].provider_net_minor='-9007199254740991';f.billing.balances[0].provider_net_minor='-9007199254740991';
+ const r=await read(f);assert.equal(r.status,'available');if(r.status!=='available'||!r.data)throw Error('Expected signed native net');
+ assert.ok(customerInvoicesMessages(r.data)[0].content.includes('EUR')===false);assert.ok(customerInvoicesMessages(r.data)[0].content.includes('USD -90,071,992,547,409.91'));
+});
+const invalidCurrent:Array<[string,(f:ReturnType<typeof currentFixture>)=>unknown]>=[
+ ['unsupported financial marker',f=>({...f,billing:{...f.billing,financial_evidence_version:4}})],
+ ['wrong payment marker',f=>({...f,billing:{...f.billing,payment_evidence_version:1}})],
+ ['missing explicit marker',f=>{const {financial_evidence_version:_v,...billing}=f.billing;return {...f,billing};}],
+ ['rounded current amount',f=>({...f,billing:{...f.billing,invoices:[{...f.billing.invoices[0],remaining_minor:50000}]}})],
+ ['recorded null amount',f=>({...f,billing:{...f.billing,invoices:[{...f.billing.invoices[0],remaining_minor:null}]}})],
+ ['negative debt',f=>({...f,billing:{...f.billing,invoices:[{...f.billing.invoices[0],remaining_minor:'-1'}]}})],
+ ['negative credit',f=>({...f,billing:{...f.billing,invoices:[{...f.billing.invoices[0],credit_minor:'-1'}]}})],
+ ['unknown with inferred zero',f=>({...f,billing:{...f.billing,invoices:[{...f.billing.invoices[0],financial_standing:'needs_review',remaining_minor:'0'}]}})],
+ ['malformed source revision',f=>({...f,billing:{...f.billing,invoices:[{...f.billing.invoices[0],financial_revision:'bad'}]}})],
+ ['current private provider context',f=>({...f,billing:{...f.billing,invoices:[{...f.billing.invoices[0],merchant_account_id:'forbidden'}]}})],
+ ['missing current refund',f=>{const {refund_payable_minor:_r,...row}=f.billing.invoices[0];return {...f,billing:{...f.billing,invoices:[row]}};}],
+ ['current source invents count',f=>({...f,billing:{...f.billing,open_count:null}})],
+];for(const[name,change]of invalidCurrent)test('current financial source refuses '+name,async()=>{assert.equal((await read(change(currentFixture()))).status,'degraded');});
+
+test('current void facts remain not applicable without implying verification, debt or payment',async()=>{
+ const f=currentFixture();Object.assign(f.billing.invoices[0],{status:'void',financial_standing:'not_applicable',financial_revision:null,
+  remaining_minor:null,refund_payable_minor:null,credit_minor:null,provider_net_minor:null,payable:false,past_due:false});
+ f.billing.balances=[];f.billing.open_count=0;const r=await read(f);
+ assert.equal(r.status,'available');if(r.status!=='available'||!r.data)throw Error('Expected original void source');
+ const text=customerInvoicesMessages(r.data)[0].content;assert.ok(text.includes('Not applicable'));assert.equal(text.includes('Amount awaiting verification'),false);
+});
+test('off-page held balance withholds the total count without guessing from visible recorded invoices',async()=>{
+ const f=currentFixture();Object.assign(f.billing.balances[0],{financial_standing:'needs_review',remaining_minor:null,refund_payable_minor:null,credit_minor:null,provider_net_minor:null});
+ f.billing.open_count=null;f.billing.invoice_count=6;f.billing.has_more=true;
+ f.billing.invoices=Array.from({length:5},(_,n)=>({...f.billing.invoices[0],id:id(30+n)}));
+ const last=f.billing.invoices[4];f.billing.next_cursor={id:last.id,issued_at:last.issued_at};
+ const r=await read(f);assert.equal(r.status,'available');if(r.status!=='available'||!r.data?.billing)throw Error('Expected full-source unknown');
+ assert.equal(r.data.billing.open_count,null);assert.equal(r.data.billing.balances[0].remaining_minor,null);
+});
+for(const standing of ['allocation_required','unavailable'])test('current '+standing+' is recoverable evidence, never inferred zero',async()=>{
+ const f=currentFixture();Object.assign(f.billing.invoices[0],{financial_standing:standing,financial_revision:null,
+  remaining_minor:null,refund_payable_minor:null,credit_minor:null,provider_net_minor:null});
+ Object.assign(f.billing.balances[0],{financial_standing:'needs_review',remaining_minor:null,refund_payable_minor:null,credit_minor:null,provider_net_minor:null});f.billing.open_count=null;
+ assert.equal((await read(f)).status,'available');
+});

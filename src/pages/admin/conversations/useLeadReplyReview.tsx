@@ -7,6 +7,9 @@ import { parseCommsEmailCommand, commsEmailBodyHtml, normalizeCommsEmailAddress,
 import { parseCommsEmailDraftSource, type CommsEmailDraftSource } from "../../../../supabase/functions/_shared/comms-email/draft-source";
 import { parseCommsEmailAttachmentManifest, commsEmailAttachmentPreview, type CommsEmailAttachmentManifest } from "../../../../supabase/functions/_shared/comms-email/attachments";
 import { GOVERNED_SEND_COLS } from "./governedSend";
+import { readableMessageBody } from "../../../../supabase/functions/_shared/comms-email/message-reading";
+import { governedReplyFiles } from "./governedReply";
+import type { Attachment } from "./inbox-shared";
 
 // The generated PostgREST conditional type cannot represent these additive JSON
 // projections without recursive instantiation. Keep the SAME caller-JWT client;
@@ -49,6 +52,45 @@ export async function readSavedReplyApproval(context: {tenantId:string;contactId
     return approval?.id===approvalId && approval.tenant_id===tenantId && approval.status==="pending"
       && (approval.contact_id==null || approval.contact_id===contactId) && object(approval.metadata)?.action_id===actionId ? approvalId : null;
   } catch { return null; }
+}
+
+/** Load an opaque original approval's saved-draft locator through the SAME caller
+ * RLS client. No service read or approval JSON body contributes private words. */
+export async function readSavedActionEmailDraft(context:{tenantId:string;contactId:string;approvalId:string;messageId:string},current:()=>boolean):Promise<{
+ source:CommsEmailDraftSource;connectorId:string;subject:string;body:string;attachments:Attachment[];scheduledFor:string|null;
+}|null>{
+ const {tenantId,contactId,approvalId,messageId}=context;
+ if(![tenantId,contactId,approvalId,messageId].every(id=>UUID.test(id))||!current())return null;
+ try{
+  const read=await originalReplyRows.from("messages").select("id,tenant_id,contact_id,thread_key,action_id,connector_id,channel_type,direction,status,updated_at,subject,body_text,body_html,attachments,scheduled_for,provider_message_id,meta")
+   .eq("id",messageId).eq("tenant_id",tenantId).eq("contact_id",contactId).limit(2);
+  if(!current()||read.error||!Array.isArray(read.data)||read.data.length!==1)return null;
+  const m=object(read.data[0]),meta=object(m?.meta);
+  if(!m||m.id!==messageId||m.tenant_id!==tenantId||m.contact_id!==contactId||m.thread_key!==`contact:${tenantId}:${contactId}`
+   ||m.channel_type!=="email"||m.direction!=="outbound"||m.status!=="draft"||m.provider_message_id
+   ||typeof m.connector_id!=="string"||!UUID.test(m.connector_id)||typeof m.action_id!=="string"||!UUID.test(m.action_id)
+   ||!meta||["comms_email_binding","sales_invoice_binding","growth_sequence_binding","email_campaign_binding"].some(key=>Object.prototype.hasOwnProperty.call(meta,key)))return null;
+  const original=await readSavedReplyApproval({tenantId,contactId,actionId:m.action_id,messageId},current);
+  if(!current()||original!==approvalId)return null;
+  const approvalRead=await originalReplyRows.from("paige_approval_queue_v").select("id,tenant_id,contact_id,status,metadata")
+   .eq("id",approvalId).eq("tenant_id",tenantId).limit(2);
+  if(!current()||approvalRead.error||!Array.isArray(approvalRead.data)||approvalRead.data.length!==1)return null;
+  const ap=object(approvalRead.data[0]),apMeta=object(ap?.metadata);
+  if(!ap||ap.id!==approvalId||ap.tenant_id!==tenantId||ap.status!=="pending"||(ap.contact_id!=null&&ap.contact_id!==contactId)
+   ||apMeta?.action_id!==m.action_id||object(apMeta?.comms_email_draft)?.message_id!==messageId)return null;
+  const source=parseCommsEmailDraftSource({message_id:m.id,updated_at:m.updated_at});
+  if(typeof m.subject!=="string"||(m.body_text!=null&&typeof m.body_text!=="string")||(m.body_html!=null&&typeof m.body_html!=="string"))return null;
+  const body=typeof m.body_text==="string"&&m.body_text.trim()?m.body_text:readableMessageBody({body_html:typeof m.body_html==="string"?m.body_html:null});
+  parseCommsEmailCommand({action:"comms.email_send",contact_id:contactId,connector_id:m.connector_id,subject:m.subject,body});
+  const attachments:Attachment[]=[];
+  const rawFiles=m.attachments??[];
+  if(!Array.isArray(rawFiles))return null;
+  for(const raw of rawFiles){const file=object(raw);if(!file||typeof file.url!=="string"||typeof file.name!=="string"||typeof file.mime!=="string"||typeof file.size!=="number"||!Number.isFinite(file.size))return null;
+   attachments.push({url:file.url,name:file.name,mime:file.mime,size:file.size});}
+  if(!governedReplyFiles(tenantId,attachments).ok)return null;
+  if(m.scheduled_for!=null&&(typeof m.scheduled_for!=="string"||!Number.isFinite(Date.parse(m.scheduled_for))))return null;
+  return{source,connectorId:m.connector_id,subject:m.subject,body,attachments,scheduledFor:typeof m.scheduled_for==="string"?m.scheduled_for:null};
+ }catch{return null;}
 }
 export type FollowupLocator = { kind:"none" } | {kind:"invalid"} | {kind:"bound";contactId:string;approvalId:string};
 /** Navigation claim only. The original-JWT exact queue/door reads remain authority. */

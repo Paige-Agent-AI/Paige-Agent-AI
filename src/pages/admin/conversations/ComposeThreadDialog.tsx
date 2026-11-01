@@ -41,7 +41,8 @@ import { selectComposeConnector } from "./connectorRouting";
 import { createAccountEpochGuard } from "./solo/soloConversationModel";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
 import { LeadReplyDrafts } from "./LeadReplyDrafts";
-import { useLeadReplyReview,canReplaceFollowupDraft } from "./useLeadReplyReview";
+import { useLeadReplyReview,canReplaceFollowupDraft,readSavedActionEmailDraft } from "./useLeadReplyReview";
+import {parseCommsEmailActionDraftSource,type CommsEmailActionDraftSource,type CommsEmailDraftSource} from "../../../../supabase/functions/_shared/comms-email/draft-source";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { useGovernedEmailReply } from "./useGovernedEmailReply";
 
@@ -135,7 +136,13 @@ export function ComposeThreadDialog({
   const scopeRef=useRef({key:scopeKey});
   if(scopeRef.current.key!==scopeKey)scopeRef.current={key:scopeKey};
   const scope=scopeRef.current;
-  const emailScopeKey=JSON.stringify([scopeKey,recordDisabled]);
+  const [emailDraft,setEmailDraft]=useState<{scope:object;source:CommsEmailDraftSource|null;origin?:CommsEmailActionDraftSource}|null>(null);
+  const savedEmailSource=emailDraft?.scope===scope?emailDraft.source:null;
+  const actionEmailSource=emailDraft?.scope===scope?emailDraft.origin:undefined;
+  const [savedRead,setSavedRead]=useState<{scope:object;busy:boolean}|null>(null);
+  const savedReadSequence=useRef(0);
+  const readingSaved=savedRead?.scope===scope&&savedRead.busy;
+  const emailScopeKey=JSON.stringify([scopeKey,recordDisabled,locatorConflicted]);
   const emailEpochRef=useRef({key:emailScopeKey,guard:createAccountEpochGuard(emailScopeKey)});
   if(emailEpochRef.current.key!==emailScopeKey){emailEpochRef.current.key=emailScopeKey;emailEpochRef.current.guard.advance(emailScopeKey);}
   useEffect(()=>{const guard=emailEpochRef.current.guard;guard.advance(emailScopeKey);return()=>guard.advance(null);},[emailScopeKey]);
@@ -169,8 +176,10 @@ export function ComposeThreadDialog({
   // NOT deliver them as Twilio MMS media, so we never offer them on the SMS path.
   const {
     attachments, uploading, uploadFiles, removeAttachment,
-    reset: resetAttachments,
+    reset: resetAttachments,restore:restoreAttachments,
   } = useCommsAttachments(() => tenantId);
+  const editKey=JSON.stringify([scopeKey,subject,body,connectorId,leadReplyApprovalId,scheduledFor,attachments]);
+  const editKeyRef=useRef(editKey);editKeyRef.current=editKey;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset everything on open (mirror the reply composer's reset-on-open).
@@ -182,6 +191,7 @@ export function ComposeThreadDialog({
     setSubject("");
     setBody("");
     setLeadReplyApprovalId(null);
+    setEmailDraft(null);setSavedRead(null);savedReadSequence.current+=1;
     setScheduledFor(null);
     setSending(false);
     setDrafting(false);
@@ -421,16 +431,21 @@ export function ComposeThreadDialog({
   const leadReplyReview=useLeadReplyReview({actorId,tenantId,contactId:initialContact?.id??null,
     threadKey:tenantId&&initialContact?.id?`contact:${tenantId}:${initialContact.id}`:null,
     approvalId:leadReplyApprovalId,connectorId,channel,subject,body,attachmentCount:attachments.length,uploading,scheduledFor,
-    signatureEnabled:false,disabled:!open||!bound||locatorConflicted||leadReplyApprovalId!==approvalId||client?.id!==initialContact?.id,
+    signatureEnabled:false,disabled:!open||!bound||!!savedEmailSource||locatorConflicted||leadReplyApprovalId!==approvalId||client?.id!==initialContact?.id,
     current:()=>scopeRef.current===scope},()=>{
       if(tenantId&&client&&scopeRef.current===scope)onSent(canonicalThreadKey("email",tenantId,client.email??"",client.id));
     });
-  const governedEmail=!bound&&channel==="email";
+  const governedEmail=channel==="email"&&(!bound||!!savedEmailSource||!!actionEmailSource);
   const governedEmailReview=useGovernedEmailReply({
-    activeTenantId:open&&governedEmail&&!recordDisabled?activeTenantId:null,tenantIdRef:resolvedTenantRef,
+    activeTenantId:open&&governedEmail&&!recordDisabled&&(!bound||!locatorConflicted&&leadReplyApprovalId===approvalId&&client?.id===initialContact?.id)?activeTenantId:null,tenantIdRef:resolvedTenantRef,
     threadKey:client&&tenantId?canonicalThreadKey("email",tenantId,client.email??"",client.id):null,
     contactId:client?.id??null,contactName:client?.name??"",connectorId,connectors:sendable.map(c=>({id:c.id,display_name:c.display_name,from_address:c.from_address??null})),
     subject,text:body,attachments,scheduledFor,epoch:emailEpochRef.current.guard,composerRef,settingsHref,
+    draftSource:savedEmailSource??undefined,draftApprovalId:savedEmailSource?approvalId:undefined,actionDraftSource:actionEmailSource,
+    onDraftSaved:({source,attachments:files})=>{
+      if(!bound||leadReplyApprovalId!==approvalId||(savedEmailSource&&source.message_id!==savedEmailSource.message_id))return;
+      setEmailDraft({scope,source});restoreAttachments(files);toast.success("Draft saved. Nothing sent.");
+    },
     onChooseSender:id=>{setConnectorId(id);setChannel("email");},
     onRecorded:({outcome,contactId})=>{
       toast.success(outcome==="scheduled"?"Scheduled.":"Accepted by the email service. Delivery is not confirmed.");
@@ -438,8 +453,8 @@ export function ComposeThreadDialog({
       setSubject("");setBody("");resetAttachments();onOpenChange(false);
     },
   });
-  const emailLocked=governedEmail&&governedEmailReview.blocksEditing;
-  const emailFilesLocked=governedEmail&&governedEmailReview.filesLocked;
+  const emailLocked=readingSaved||governedEmail&&governedEmailReview.blocksEditing;
+  const emailFilesLocked=readingSaved||governedEmail&&governedEmailReview.filesLocked;
   // The modal already owns vertical scrolling. Keep its original check/focus target
   // in that viewport when the action row grows; never add another scroll container.
   const previousStripOpen=useRef(false);
@@ -464,7 +479,8 @@ export function ComposeThreadDialog({
     && !emailLocked&&!governedEmailReview.checking&&!(governedEmail&&recordDisabled);
 
   const send = async () => {
-    if(bound){if(locatorConflicted||leadReplyApprovalId!==approvalId){toast.error("Open the exact selected reply before reviewing. No replacement was selected.");return;}await leadReplyReview.prepare();return;}
+    if(emailLocked||bound&&recordDisabled)return;
+    if(bound&&!savedEmailSource){if(locatorConflicted||leadReplyApprovalId!==approvalId){toast.error("Open the exact selected reply before reviewing. No replacement was selected.");return;}await leadReplyReview.prepare();return;}
     if(governedEmail){await governedEmailReview.check();return;}
     if (!client || !channel) { toast.error("Pick a recipient and channel first."); return; }
     if (!toAddress) { toast.error("This contact has no address for that channel."); return; }
@@ -578,13 +594,29 @@ export function ComposeThreadDialog({
             {locatorConflicted?<p role="status" className="text-sm text-muted-foreground">The original reply is still open. {onRestoreOrigin?<button type="button" className="underline" onClick={onRestoreOrigin}>Return to original reply</button>:null}</p>:null}
             {open&&bound&&tenantId&&initialContact?<LeadReplyDrafts actorId={actorId} tenantId={tenantId} contactId={initialContact.id} approvalId={approvalId}
               threadKey={isSolo?`contact:${tenantId}:${initialContact.id}`:null}
-              current={()=>scopeRef.current===scope} disabled={leadReplyReview.blocksSending||client?.id!==initialContact.id}
+              current={()=>scopeRef.current===scope} disabled={readingSaved||leadReplyReview.blocksSending||client?.id!==initialContact.id}
               recordDisabled={recordDisabled||sending||leadReplyReview.blocksSending||locatorConflicted||client?.id!==initialContact.id}
-              onEdit={(approval,draft)=>{
+              onEdit={async(approval,draft)=>{
+                if(recordDisabled||locatorConflicted||readingSaved)return;
                 if(approval.id!==approvalId||approval.contact_id!==initialContact.id||approval.tenant_id!==tenantId)return;
-                if(!canReplaceFollowupDraft({subject,body,attachmentCount:attachments.length,scheduledFor,editingDraftId:null,approvalId:leadReplyApprovalId,pending:leadReplyReview.blocksSending})){
+                if(!canReplaceFollowupDraft({subject,body,attachmentCount:attachments.length,scheduledFor,editingDraftId:savedEmailSource?.message_id??null,approvalId:leadReplyApprovalId,pending:leadReplyReview.blocksSending||emailLocked})){
                   toast.error("Finish or cancel the current draft before opening another reply.");return;
                 }
+                if(approval.metadata&&Object.prototype.hasOwnProperty.call(approval.metadata,"comms_email_draft")){
+                  const id=approval.metadata.comms_email_draft?.message_id,attempt=++savedReadSequence.current,key=editKeyRef.current,epoch=emailEpochRef.current.guard.capture();
+                  const current=()=>scopeRef.current===scope&&emailEpochRef.current.guard.accept(epoch)&&savedReadSequence.current===attempt&&editKeyRef.current===key;
+                  setSavedRead({scope,busy:true});
+                  try{
+                    const saved=typeof id==="string"?await readSavedActionEmailDraft({tenantId,contactId:initialContact.id,approvalId:approval.id,messageId:id},current):null;
+                    if(!current())return;
+                    if(!saved){toast.error("This saved reply is unavailable or changed. Reopen its original conversation.");return;}
+                    setEmailDraft({scope,source:saved.source});setLeadReplyApprovalId(approval.id);setChannel("email");setConnectorId(saved.connectorId);
+                    setSubject(saved.subject);setBody(saved.body);setScheduledFor(saved.scheduledFor);restoreAttachments(saved.attachments);
+                  }finally{if(scopeRef.current===scope&&savedReadSequence.current===attempt)setSavedRead({scope,busy:false});}
+                  return;
+                }
+                try{setEmailDraft({scope,source:null,origin:parseCommsEmailActionDraftSource({approval_id:approval.id,updated_at:approval.updated_at})});}
+                catch{setEmailDraft(null);}
                 setLeadReplyApprovalId(approval.id);setChannel("email");
                 const sender=sendable.find(c=>c.id===connectorId&&c.channel_type==="email")??sendable.find(c=>c.channel_type==="email");
                 setConnectorId(sender?.id??"");setSubject(draft.subject);setBody(draft.body);
@@ -866,11 +898,15 @@ export function ComposeThreadDialog({
 
           {leadReplyReview.panel}
           {governedEmail&&governedEmailReview.actions}
-          <DialogFooter className="flex-row items-center justify-between gap-2 sm:justify-between">
-            <div className="flex items-center gap-2">
+          {bound&&governedEmailReview.draftSaveNote?<p role="status" className="text-xs text-muted-foreground">{governedEmailReview.draftSaveNote}</p>:null}
+          <DialogFooter className="flex-row flex-wrap items-center justify-between gap-2 sm:justify-between">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
               <Button variant="ghost" size="sm" onClick={close} disabled={sending||leadReplyReview.blocksEditing||emailLocked}>
                 {bound?"Cancel reply edit":"Cancel"}
               </Button>
+              {bound&&channel==="email"&&(savedEmailSource||actionEmailSource)?<Button type="button" variant="ghost" size="sm" data-comms-draft-save
+                aria-busy={governedEmailReview.savingDraft} disabled={readingSaved||locatorConflicted||recordDisabled||uploading||drafting||leadReplyReview.blocksSending||governedEmailReview.savingDraft||(!governedEmailReview.saveUnconfirmed&&governedEmailReview.phase!=="composing")}
+                onClick={()=>{void governedEmailReview.saveDraft();}}>{governedEmailReview.savingDraft?"Saving…":governedEmailReview.saveUnconfirmed?"Check save status":"Save draft"}</Button>:null}
               <Popover open={scheduleOpen} onOpenChange={setScheduleOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="h-9" disabled={emailFilesLocked}>

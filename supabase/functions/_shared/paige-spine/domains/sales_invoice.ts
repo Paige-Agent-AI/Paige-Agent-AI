@@ -14,10 +14,8 @@ const mutations = [
 ] as const;
 export const SALES_INVOICE_CAPABILITIES: readonly SpineCapability[] = [
  ...SALES_DRAFT_SPINE, SALES_COMMERCIAL_OFFERS_SPINE, SALES_COMMERCIAL_PACKAGE_SPINE,
- {key:'sales_invoice.record_provider_disposition',selfDescribe:false,readiness:'none',domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',
-  action:{classification:'mutate',executor:'public.execute_sales_invoice_command',riskPolicyKey:'high',approvalAuthority:'chat-canonical',idempotency:'Original actor/tenant/invoice/payment/observation and prior decision versions, exact stored approval and immutable operation/Rail; ambiguous results recover the same operation.'},
-  outcome:{kinds:['financial_decision_recorded','financial_decision_unchanged','refused','outcome_unknown'],projector:'public.read_sales_invoice_command_result',railVisibility:'Internal reviewed financial disposition only; no refund, charge, customer notice or signed amendment. Native writer, consumer and authenticated proof remain unavailable.'},
-  chatBinding:'UNAVAILABLE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'UNAVAILABLE'},
+ // Owner UI Kit declaration below stays high/confirm. Do not publish a Spine
+ // mutation before its genuine exact Chat binding and readiness are implemented.
  {key:'sales_invoice.payment_request',readiness:'sales_merchant',domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',
   action:{classification:'external_effect',executor:'public.prepare_sales_invoice_payment_request',chatTool:'sales_create_payment_request',riskPolicyKey:'high',approvalAuthority:'chat-canonical',idempotency:'Exact server-resolved tenant/customer/invoice/version/amount/currency/merchant/environment, immutable operation and one persisted dispatch claim; uncertain response only reconciles.'},
   outcome:{kinds:['prepared','dispatching','provider_accepted','customer_action_required','outcome_unknown','settled','failed','expired','cancelled','refused'],projector:'public.read_sales_invoice_payment_request',railVisibility:'Request/readback/verified settlement and allocation are distinct. Hosted request never claims payment. Authenticated provider acceptance is PROOF_OWED.'},

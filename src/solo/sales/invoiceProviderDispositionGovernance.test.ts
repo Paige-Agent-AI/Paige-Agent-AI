@@ -10,8 +10,9 @@ it('declares an internal high-confirm invoice decision on the original executor 
  expect(declaration()).toBeDefined();expect(classifyAction(key)).toBe('high');
  expect(declaration()).toMatchObject({identity:{id:'sales_invoice.record_provider_disposition',domain:'sales_invoice',owner:'sales'},effect:'mutation',governance:{actionRiskKey:key,risk:'high',approval:'confirm'},providerBinding:{kind:'internal',operation:'public.execute_sales_invoice_command',connectionResolver:null},receipt:{rail:true,recorder:'record_capability_run'}});
 });
-it('keeps the new unfinished native/Chat capability unavailable rather than claiming it Live',()=>{
- expect(domain.SALES_INVOICE_CAPABILITIES.find(c=>c.key==='sales_invoice.record_provider_disposition')).toMatchObject({selfDescribe:false,chatBinding:'UNAVAILABLE',mindBinding:'UNAVAILABLE',maturity:'UNAVAILABLE'});
+it('does not publish an unfinished mutation through Spine before a genuine exact Chat binding exists',()=>{
+ expect(domain.SALES_INVOICE_CAPABILITIES.some(c=>c.key==='sales_invoice.record_provider_disposition')).toBe(false);
+ expect(declaration()).toMatchObject({identity:{id:'sales_invoice.record_provider_disposition'},governance:{risk:'high',approval:'confirm'}});
 });
 it('never turns automatic preference into financial approval',()=>{expect(decideDeclaredCapability(declaration(),input())).toMatchObject({kind:'propose',risk:'high',audit:{laneEffective:'confirm'}});});
 it('executes only the original stored canonical arguments',()=>{const result=decideDeclaredCapability(declaration(),input({claimedFor:key,claimedArgs:args}));expect(result.kind).toBe('execute');if(result.kind==='execute')expect(result.args).toBe(args);});

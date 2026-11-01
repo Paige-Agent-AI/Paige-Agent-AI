@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: Reuse the approved existing Payments/detail flow and origi
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An authorized external client sees the original amount genuinely owed, understands separate TEST history, and can use only a compatible current payment request or recover the original read.
 VISUAL_DIRECTION: PASS: Impeccable refinement/Operate/Read within the incumbent Portal composition. Existing shared buttons, semantic error/success treatment, quiet supporting text and frozen invoice rendering remain; no new visual system.
 AUTOMATED_EVIDENCE: PASS: Fresh exact eight hook/Billing/detail suites149/149, single worker. The focused financial decoder/continuity/detail suites previously55/55 after22 causal failures on the prior implementation. These are overlapping selections, not additive totals. Selected-native core13/getter17/ledger20 controls pass with replay, rollback and owned disposable cleanup. Full-schema, hosted checks and genuine provider evidence remain owed.
-STATIC_EVIDENCE: PASS: Scoped ESLint for the five changed source/test files and git diff --check exit0; final diff inspected against the explicit E09 financial window. Original customer-mount harness source is unchanged. Whole-app compiler/build and exact-head hosted checks remain PROOF OWED, not inferred from these checks.
+STATIC_EVIDENCE: PASS: Scoped source ESLint and git diff --check exit0; original bounded source contracts and 642-test local regression are retained in docs/delivery/exp04-native-client-invoice-observation.md.
 RENDERED_EVIDENCE: PASS: Actual BillingInvoice, invoice hook/decoders, shared AppNav and frozen renderer mounted in the original customer harness with synthetic identity/transport and selected-native values. Sixteen cases cover four financial states, light/dark and1366/390 CSS widths; zero root overflow, page errors or outside requests. Four frames personally inspected, plus two mismatch-before-recovery frames in the bounded confirmation pass. Private artifacts outputs/e04-c173-portal-render.json, e04-c173-portal-render-confirm.json and their named PNGs retain exact source hashes. This is local component rendering, not authenticated full-shell proof.
 BEHAVIORAL_EVIDENCE: PASS: Local TEST-only remains owed, mixed actual receipts retain the native balance, fully LIVE-paid with historical TEST remains paid, and mismatched representation offers no link/false settlement. Original retry performs only the same read, retains the original debt and reaches the original no-link state. Original test/UI suites cover old/new paging, empty first page, failed refresh, stale replies, changed scope, signout, legacy behavior, currency/amount mismatch, void and correction.
 AUTHENTICATED_RUNTIME: UNVERIFIED: No ordinary Owner/client financial action, actual merchant/provider event, signed-in reload/reopen, full-shell/device/assistive-technology or tenant acceptance was performed in this local proof. No fabricated account or payment was created.
@@ -18,8 +18,8 @@ REDUCED_MOTION: PASS: Both original render passes use prefers-reduced-motion:red
 STATE_COVERAGE: UNVERIFIED: Source and controlled rendering cover populated/paid/mismatch/retry, with original loading/empty/error/refusal/late/void/correction tests retained. Authenticated relationship loss, genuine settlement/reversal and complete shell recovery remain owed. No synthetic approval or provider completion is shown as real.
 TRUTHFUL_STATE_LABELS: PASS: clients.portal remains PARTIAL. Local/native selected-source proof is not deployment, provider settlement or customer acceptance. TEST evidence never becomes actual cash; legacy formats retain their original semantics.
 SOLO_UI: YES: Existing SOLO-owned customer Payments/detail consumer for every eligible business; original linked-client authority and common provisioning remain unchanged, with no tenant-specific product path.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: Original customer harness has a PAIGE placeholder, not the real shell; this exact full-shell mode was not exercised.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Actual PAIGE open/close behavior is not mounted or proved by this harness.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: This original consumer harness has no authenticated Owner session or mounted genuine conversation transport; customer full-shell verification cannot be established by its synthetic ports.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Genuine authenticated PAIGE transport is not mounted in this original consumer harness. C191 invoice-only local viewport paths are separately recorded in docs/delivery/exp04-native-client-invoice-observation.md.
 SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: Local1366x900 component evidence is not this exact full-shell mode.
 SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: Actual PAIGE open state is not mounted or proved.
 SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Exact full-shell mode remains owed.
@@ -35,12 +35,12 @@ ACCEPTANCE_CRITERIA: Authorized original customer reads match canonical actual r
 MOTION_PURPOSE: NONE: No new motion.
 PROTECTED_SEAMS: Only the E09-returned financial-version ref/reset/rollover and PaymentPanel/per-invoice decoder financial/currentness spans plus owning tests change. Native authorization and financial writers remain authoritative and unchanged in this increment. Original E09 ANT163/973f705f window and E04 receiving22775573 are incorporated; additional producer requestd70ae74a remains pending.
 
-INTERNAL_BUILD_IDENTITY: Parent1b6288e83e97bca157132ee9189d80d96e74523a with bounded local working-tree changes; final reviewed head pending; deployment=NONE; environment=development; migrations=NOT_APPLICABLE in this increment; edge=NOT_APPLICABLE; evidence=private C173 artifacts and existing native invoice delivery record
+INTERNAL_BUILD_IDENTITY: sha=aef4572d95ffa2e617d1ffbf776d156a386a0b74; deployment=UNRELEASED; environment=development; migrations=PROOF_OWED(original versioned financial carrier not installed); edge=PROOF_OWED(original sales financial handler source not deployed); evidence=docs/delivery/exp04-native-client-invoice-observation.md
 RELEASE_CHANNEL: development: local source/native/render evidence only, no hosted delivery or customer release
 RELEASE_CLASSIFICATION: internal-only: incomplete original O5 financial continuity integration
 CUSTOMER_RELEASE_IDENTITY: none: complete outcome and required acceptance are not established
 RELEASE_NOTE_REQUIRED: no: no customer announcement candidate
-RELEASE_TRUTH_BOUNDARY: PARTIAL local source integration; PROOF OWED for native producer, release, actual provider and authorized customer outcome; clients.portal status is unchanged
+RELEASE_TRUTH_BOUNDARY: PARTIAL: Local source and bounded synthetic rendering only. Native carrier, current financial producer pairing and ordinary signed-in customer results are not deployed or accepted.
 RELEASE_RECOVERY: position=unpublished local change can be corrected before review; reference=original EXP04 native invoice record and exact Git parent, no production rollback claim
 
 ## Evidence limits and retained failures
@@ -65,3 +65,15 @@ CLI read could not connect; the GitHub connector independently returned actual m
 Neither environmental failure is relabeled as a product result. The owned render server was
 stopped after confirmation; the selected-native disposable database had already been removed
 and the owned local PostgreSQL cluster stopped. No unknown peer process was terminated.
+
+### C191 hosted gate correction
+
+Current metadata above uses the governed status grammar and keeps local, native and authenticated release legs separate. Historical pre-CI values are retained below as quoted records, not current evidence fields:
+
+> STATIC_EVIDENCE: PASS: Scoped ESLint for the five changed source/test files and git diff --check exit0; final diff inspected against the explicit E09 financial window. Original customer-mount harness source is unchanged. Whole-app compiler/build and exact-head hosted checks remain PROOF OWED, not inferred from these checks.
+> SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: Original customer harness has a PAIGE placeholder, not the real shell; this exact full-shell mode was not exercised.
+> SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Actual PAIGE open/close behavior is not mounted or proved by this harness.
+> INTERNAL_BUILD_IDENTITY: Parent1b6288e83e97bca157132ee9189d80d96e74523a with bounded local working-tree changes; final reviewed head pending; deployment=NONE; environment=development; migrations=NOT_APPLICABLE in this increment; edge=NOT_APPLICABLE; evidence=private C173 artifacts and existing native invoice delivery record
+> RELEASE_TRUTH_BOUNDARY: PARTIAL local source integration; PROOF OWED for native producer, release, actual provider and authorized customer outcome; clients.portal status is unchanged
+
+The original Spine registry correctly rejected an unbound mutation. The unfinished public Spine entry is removed; its original Owner UI Capability Kit declaration remains high/confirm on the existing invoice executor. No validator was relaxed and no LIVE binding was fabricated. Genuine Chat registration/execution remains O5 integration work.

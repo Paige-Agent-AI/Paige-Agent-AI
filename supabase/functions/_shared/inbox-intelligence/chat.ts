@@ -6,6 +6,9 @@
 // is SELECTION ONLY: comms-mailbox-command alone claims the approval and executes the
 // STORED call, mirroring the comms-email door pattern.
 import { COMMS_MAILBOX_ORGANIZE_CAPABILITY, COMMS_MESSAGE_CONTENT_READ_KIT, COMMS_SUPPORT_CASES_READ_KIT } from "../paige-spine/domains/comms.ts";
+import {parseCommsEmailDraftSource} from "../comms-email/draft-source.ts";
+import {readableMessageBody} from "../comms-email/message-reading.ts";
+import {COMMS_EMAIL_BODY_MAX} from "../comms-email/contract.ts";
 import { COMMS_MAILBOX_ORGANIZE_TOOL, parseOrganizeCommand, unsubscribeHttpsTarget, UUID } from "./organize.ts";
 
 const DOOR = "comms-mailbox-command";
@@ -17,7 +20,7 @@ export const INBOX_INTELLIGENCE_TOOLS = [
     type: "function",
     function: {
       name: "read_message_content",
-      description: "Read ONE message from the workspace inbox — envelope plus plain-text body, canonical labels and its classification. The server enforces the mailbox policy: a private mailbox is readable only by the person who connected it; a disconnected mailbox refuses. Use after inbox_list when the person asks what a message actually says. Never quote more than the person needs.",
+      description: "Read ONE message from the workspace inbox — envelope plus plain-text body, canonical labels and its classification. The server enforces the mailbox policy: a private mailbox is readable only by the person who connected it; a disconnected mailbox refuses. Use after inbox_list when the person asks what a message actually says. An eligible saved email also returns its exact draft_source and complete draft_body_text; use those together for comms_send_email, never the clipped ordinary body_text or a guessed version. Absent complete draft context means open Conversations rather than sending guessed content. Reading is never approval. Never quote more than the person needs.",
       parameters: COMMS_MESSAGE_CONTENT_READ_KIT.input,
     },
   },
@@ -99,7 +102,27 @@ export async function dispatchInboxIntelligenceChat(
             : "No readable message with that id in this workspace.";
       return { success: false, not_applied: true, error: note };
     }
-    return { success: true, message: result };
+    // Same original caller-scoped read and mailbox policy. The optional native
+    // context is owner-permitted draft content, not approval material. Raw HTML
+    // never reaches the model: use the incumbent source/HTML-only text projection.
+    const message={...result};delete message.saved_email_draft;
+    if(result.saved_email_draft!=null){
+      const raw=result.saved_email_draft;
+      const saved=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw as Record<string,unknown>:null;
+      try{
+        if(!saved||result.id!==args.message_id.toLowerCase()||result.channel!=="email"||result.direction!=="outbound"
+          ||result.status!=="draft"||typeof result.contact_id!=="string"||!UUID.test(result.contact_id)
+          ||(saved.body_text!=null&&typeof saved.body_text!=="string")||(saved.body_html!=null&&typeof saved.body_html!=="string")
+          ||(typeof saved.body_html==="string"&&saved.body_html.length>100000))throw Error("unavailable");
+        const source=parseCommsEmailDraftSource(saved.source);
+        if(source.message_id!==result.id)throw Error("unavailable");
+        const text=typeof saved.body_text==="string"&&saved.body_text.trim()?saved.body_text
+          :readableMessageBody({body_html:typeof saved.body_html==="string"?saved.body_html:null});
+        if(!text.trim()||text.length>COMMS_EMAIL_BODY_MAX||text.includes("\0"))throw Error("unavailable");
+        message.draft_source=source;message.draft_body_text=text;message.draft_body_complete=true;
+      }catch{message.draft_source_status="unavailable";}
+    }
+    return { success: true, message };
   }
 
   if (toolName === "read_support_cases") {

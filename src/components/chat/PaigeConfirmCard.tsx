@@ -1,7 +1,8 @@
-import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, X, ShieldQuestion, Loader2, AlertTriangle, CircleHelp, RotateCcw, Paperclip, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { renderEmailReviewHtml } from "@/components/admin/comms/mergeVars";
 
 /**
  * The approve/deny card Paige shows before she commits a change (#120).
@@ -113,16 +114,11 @@ function Address({ value }: { value: string }) {
 }
 
 /**
- * The envelope: To, From, Subject, then the body. Not a box: hairlines on the card's own ground
- * mark where the email starts, where its header ends and where it stops — a third bordered
- * container inside the bubble and the card was the cards-in-cards tell. No shadow, no colour; the
- * only gold on the card stays on Approve. Every address breaks where it must, so a long one never
- * pushes the card wider than a 320px phone.
- *
- * `bleed`: below 480px a lone action's envelope steps out of the seal-icon gutter (24px icon +
- * 10px gap) and takes the card's full width — at phone size that indent cost a fifth of the line.
+ * Original bounded email body, shared by the card and the saved-draft inline check.
+ * Historical plain text stays literal. Rich source uses the original Comms inert
+ * projection; it never changes the actual server-owned HTML approved for dispatch.
  */
-function EmailPreview({ email, bleed = false }: { email: ConfirmEmailPreview; bleed?: boolean }) {
+export function EmailBodyPreview({ email }: { email: Pick<ConfirmEmailPreview, "body_text" | "body_html"> }) {
   const bodyId = useId();
   const bodyRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
@@ -141,9 +137,50 @@ function EmailPreview({ email, bleed = false }: { email: ConfirmEmailPreview; bl
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [expanded, email.body_text]);
+  }, [expanded, email.body_text, email.body_html]);
 
   const clamped = overflows && !expanded;
+  const richHtml = useMemo(() => email.body_html === undefined ? null : renderEmailReviewHtml(email.body_html), [email.body_html]);
+  return (
+      <div className="border-t border-border/70 py-2.5">
+        {richHtml !== null && <p className="mb-2 text-xs text-muted-foreground">Formatting is simplified. Images are hidden; link destinations are shown without opening them.</p>}
+        <div
+          id={bodyId}
+          ref={bodyRef}
+          data-clamped={clamped ? "true" : "false"}
+          // Open, it is a bounded region of its own: a long email scrolls inside the card instead
+          // of pushing Approve off the screen, and a keyboard can scroll it.
+          role={expanded ? "region" : undefined}
+          aria-label={expanded ? "Full email" : undefined}
+          tabIndex={expanded ? 0 : undefined}
+          className={cn(
+            "max-w-[68ch] whitespace-pre-line text-[13px] leading-5 text-foreground [overflow-wrap:anywhere]",
+            // A height clamp, not -webkit-line-clamp: an email's blank lines would otherwise end the
+            // clamp on a lone ellipsis. The fade says "there is more"; the words stay in the DOM.
+            clamped && "max-h-[10rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_70%,transparent)]",
+            expanded && "max-h-[min(22rem,55vh)] overflow-y-auto overscroll-contain rounded-sm pr-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))]",
+          )}
+        >
+          {richHtml !== null ? <div data-email-rich-review="" className="whitespace-normal [&_p]:my-2 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5 [&_table]:max-w-full" dangerouslySetInnerHTML={{ __html: richHtml }} /> : email.body_text}
+        </div>
+        {(overflows || expanded) && (
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-controls={bodyId}
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1.5 rounded-sm text-[12.5px] font-medium leading-5 text-foreground underline decoration-border underline-offset-[3px] transition-colors hover:decoration-foreground motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))]"
+          >
+            {expanded ? "Show less" : "Show full email"}
+          </button>
+        )}
+      </div>
+  );
+}
+
+/** Original envelope metadata and layout. Below480px a lone envelope can bleed
+ * out of the seal-icon gutter; only the body is shared with the inline check. */
+function EmailPreview({ email, bleed = false }: { email: ConfirmEmailPreview; bleed?: boolean }) {
   const row = "flex flex-wrap gap-x-3";
   const label = "w-14 shrink-0 text-muted-foreground";
   const value = "min-w-[min(100%,11rem)] flex-1 [overflow-wrap:anywhere]";
@@ -212,38 +249,7 @@ function EmailPreview({ email, bleed = false }: { email: ConfirmEmailPreview; bl
           </div>
         ) : null}
       </dl>
-      <div className="border-t border-border/70 py-2.5">
-        <div
-          id={bodyId}
-          ref={bodyRef}
-          data-clamped={clamped ? "true" : "false"}
-          // Open, it is a bounded region of its own: a long email scrolls inside the card instead
-          // of pushing Approve off the screen, and a keyboard can scroll it.
-          role={expanded ? "region" : undefined}
-          aria-label={expanded ? "Full email" : undefined}
-          tabIndex={expanded ? 0 : undefined}
-          className={cn(
-            "max-w-[68ch] whitespace-pre-line text-[13px] leading-5 text-foreground [overflow-wrap:anywhere]",
-            // A height clamp, not -webkit-line-clamp: an email's blank lines would otherwise end the
-            // clamp on a lone ellipsis. The fade says "there is more"; the words stay in the DOM.
-            clamped && "max-h-[10rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_70%,transparent)]",
-            expanded && "max-h-[min(22rem,55vh)] overflow-y-auto overscroll-contain rounded-sm pr-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))]",
-          )}
-        >
-          {email.body_text}
-        </div>
-        {(overflows || expanded) && (
-          <button
-            type="button"
-            aria-expanded={expanded}
-            aria-controls={bodyId}
-            onClick={() => setExpanded((v) => !v)}
-            className="mt-1.5 rounded-sm text-[12.5px] font-medium leading-5 text-foreground underline decoration-border underline-offset-[3px] transition-colors hover:decoration-foreground motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))]"
-          >
-            {expanded ? "Show less" : "Show full email"}
-          </button>
-        )}
-      </div>
+      <EmailBodyPreview email={email} />
     </div>
   );
 }

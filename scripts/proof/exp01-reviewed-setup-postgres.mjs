@@ -1,5 +1,5 @@
 // Disposable localhost fixture. Actual candidate + original Setup brief/wrapper
-// and E13 validator bodies; getter/identity dependencies below are MODELS.
+// and E13 validator/getter bodies; identity/Knowledge reader dependencies are MODELS.
 // This is NOT full-schema, production, legal-owner or delegated-management proof.
 import { readFileSync } from 'node:fs';
 import { spawnSync, spawn } from 'node:child_process';
@@ -36,42 +36,75 @@ try{
  CREATE TABLE profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
  CREATE TABLE tenant_members(tenant_id uuid,user_id uuid,status text,role text,is_owner boolean DEFAULT false);
  CREATE TABLE user_roles(user_id uuid,role text);
- CREATE TABLE tenant_setup_business_context_meta(tenant_id uuid PRIMARY KEY,revision bigint DEFAULT 0,updated_at timestamptz DEFAULT now(),updated_by uuid);
+ CREATE TABLE tenant_setup_business_context_meta(tenant_id uuid PRIMARY KEY,revision bigint DEFAULT 0,updated_at timestamptz DEFAULT now(),updated_by uuid,primary_email_provenance jsonb,primary_email_snapshot text);
  CREATE TABLE tenant_business_owners(id uuid,tenant_id uuid,owner_kind text,legal_name text,display_name text,ownership_interest numeric,effective_date date,ownership_status text,representative_user_id uuid,setup_provenance jsonb,created_at timestamptz);
  CREATE TABLE tenant_business_representatives(tenant_id uuid,user_id uuid,source text,confidence text,confirmed_at timestamptz,created_at timestamptz,created_by uuid);
  CREATE TABLE tenant_setup_private_context(tenant_id uuid,private_brief jsonb,setup_provenance jsonb);
+ CREATE TABLE tenant_legal_profile(tenant_id uuid,setup_provenance jsonb);
+ CREATE TABLE tenant_email_identities(tenant_id uuid,local_part text);
+ CREATE TABLE platform_email_settings(shared_domain text);
+ CREATE TABLE tenant_setup_knowledge_sources(id uuid,tenant_id uuid,source_type text,title text,category text,source_url text,reference text,notes text,review_status text,setup_provenance jsonb,updated_at timestamptz);
+ CREATE TABLE tenant_setup_paige_profiles(tenant_id uuid,profile jsonb,setup_provenance jsonb);
+ CREATE TABLE tenant_setup_voice_examples(id uuid,tenant_id uuid,channel text,example_kind text,example_text text,note text,setup_provenance jsonb,updated_at timestamptz);
  CREATE TABLE paige_audit_log(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),actor_user_id uuid,actor_role text,action text,target_type text,target_id uuid,tenant_id uuid,payload jsonb,created_at timestamptz DEFAULT now());
  CREATE TABLE tenant_knowledge_docs(id uuid PRIMARY KEY,tenant_id uuid,record_state text,revision integer,content text,title text);
  CREATE FUNCTION is_platform_owner(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
  CREATE FUNCTION is_tenant_admin_as(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
  CREATE FUNCTION current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$SELECT active_tenant_id FROM profiles WHERE user_id=auth.uid()$$;
  CREATE FUNCTION solo_setup_can_read() RETURNS boolean LANGUAGE sql AS $$SELECT true$$;
+ CREATE FUNCTION solo_setup_operator_can_read() RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
  CREATE FUNCTION solo_setup_assert_canonical_tenant() RETURNS uuid LANGUAGE sql AS $$SELECT current_user_tenant_id()$$;
- CREATE FUNCTION get_solo_setup_context() RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$SELECT jsonb_build_object('tenantId',id,'brief',brand->'business_brief','businessOwners','[]'::jsonb) FROM tenants WHERE id=current_user_tenant_id()$$;
- CREATE FUNCTION get_solo_business_context() RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$SELECT get_solo_setup_context()||jsonb_build_object('contextRevision',coalesce((SELECT revision FROM tenant_setup_business_context_meta WHERE tenant_id=current_user_tenant_id()),0))$$;
+ CREATE FUNCTION solo_setup_assert_canonical_tenant_for_read() RETURNS uuid LANGUAGE sql AS $$SELECT current_user_tenant_id()$$;
+ CREATE FUNCTION solo_setup_managed_email_registration_ready() RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
+ CREATE FUNCTION get_solo_setup_identity() RETURNS TABLE(tenant_id uuid,tenant_name text,business_brief jsonb,pending_proposal jsonb,primary_business_email text,business_registration_number_last_4 text)
+ LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$SELECT id,name,brand->'business_brief',NULL::jsonb,NULL::text,NULL::text FROM tenants WHERE id=current_user_tenant_id()$$;
  CREATE FUNCTION read_tenant_knowledge(uuid,uuid,integer,integer) RETURNS jsonb LANGUAGE sql SET search_path=public AS $$SELECT jsonb_build_object('tenant_id',$1,'documents',coalesce(jsonb_agg(jsonb_build_object('id',id)),'[]'::jsonb)) FROM tenant_knowledge_docs WHERE tenant_id=$1 AND id=$2 AND record_state='canonical'$$;
  INSERT INTO auth.users(id) VALUES('${actor}');INSERT INTO profiles VALUES('${actor}','${tenant}');
  INSERT INTO tenant_members VALUES('${tenant}','${actor}','active','admin',false);
  INSERT INTO tenants VALUES('${tenant}','Example','{"business_brief":{"publicName":"Example","offers":"Before","provenance":{},"updatedAt":"2026-11-01T12:00:00.123456Z"}}','active','standalone',NULL,NULL);
  INSERT INTO tenant_knowledge_docs VALUES('${doc}','${tenant}','canonical',1,'Advisory','Example agreement');
  GRANT USAGE ON SCHEMA auth TO authenticated;REVOKE ALL ON ALL TABLES IN SCHEMA public FROM authenticated;`);
+ db.run(`ALTER TABLE paige_audit_log ENABLE ROW LEVEL SECURITY;GRANT INSERT ON paige_audit_log TO authenticated;
+ CREATE POLICY original_fixture_actor_events ON paige_audit_log FOR INSERT TO authenticated WITH CHECK(actor_user_id=auth.uid());`);
  const setup=read('supabase/migrations/20261046000000_solo_setup_persistence_repair.sql');
  for(const name of ['solo_setup_access_scope','save_solo_business_brief','save_solo_setup_context'])db.run(fn(setup,name));
  assert.equal(scalar("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.save_solo_setup_context(jsonb,jsonb,text,uuid)'::regprocedure"),'d70cdc664b5c703395e4f077a30fdbd8','original wrapper matches November1 production body');checks++;
  db.run(fn(read('supabase/migrations/20261103000000_solo_setup_business_context.sql'),'solo_setup_lock_expected_tenant'));
+ const reads=read('supabase/migrations/20270513000000_operator_act_as_reads_solo_setup.sql');
+ for(const name of ['get_solo_setup_context','get_solo_business_context'])db.run(fn(reads,name));
+ db.run(`REVOKE ALL ON FUNCTION public.solo_setup_access_scope(),public.solo_setup_lock_expected_tenant(uuid),public.get_solo_setup_context(),public.get_solo_business_context(),public.save_solo_setup_context(jsonb,jsonb,text,uuid) FROM PUBLIC,anon,authenticated,service_role;
+ GRANT EXECUTE ON FUNCTION public.get_solo_setup_context(),public.get_solo_business_context(),public.save_solo_setup_context(jsonb,jsonb,text,uuid) TO authenticated;`);
  db.run(fn(read('supabase/migrations/20270531600000_knowledge_durable_authority.sql'),'knowledge_actor_authorized'));
  const extraction=read('supabase/migrations/20270532000000_knowledge_extraction_work.sql');
  db.run(fn(extraction,'lock_knowledge_extraction_authority'));db.run(fn(extraction,'knowledge_utf16_length'));
  db.run(fn(source.stdout,'knowledge_utf16_excerpt_matches'));
  db.run(fn(source.stdout,'lock_knowledge_source_evidence'));
  db.run('REVOKE ALL ON FUNCTION lock_knowledge_source_evidence(uuid,uuid,jsonb,jsonb) FROM PUBLIC,anon,authenticated,service_role');
- let candidate=read('scripts/proof/exp01-reviewed-setup-candidate.sql');
+ const candidate=read('scripts/proof/exp01-reviewed-setup-candidate.sql');
+ const install=()=>{
+  const run=spawnSync(db.psql,db.args(),{input:candidate,encoding:'utf8',timeout:30000});
+  if(run.status!==0)throw Error('Candidate installation in disposable fixture: '+run.stderr);
+ };
+ install();install();checks++;
+ // Every failed reinstall runs in a disconnected, rolled-back transaction.
+ // Do not silently repair drift in original source, ACLs or a partial install.
+ for(const [mutation,reason] of [
+  ['ALTER FUNCTION public.get_solo_setup_context() SET search_path=public,vault','SETUP_REVIEW_INSTALL_DRIFT'],
+  ['GRANT EXECUTE ON FUNCTION public.inspect_solo_reviewed_business_facts(uuid,uuid,uuid) TO anon','SETUP_REVIEW_INSTALLED_DRIFT'],
+  ['DROP FUNCTION public.inspect_solo_reviewed_business_facts(uuid,uuid,uuid)','SETUP_REVIEW_PARTIAL_INSTALL'],
+  ['DROP POLICY exp01_reviewed_facts_server_events ON public.paige_audit_log','SETUP_REVIEW_PARTIAL_INSTALL'],
+  ['ALTER TABLE public.tenant_setup_business_context_meta ALTER COLUMN reviewed_fact_proposal SET DEFAULT \'{}\'::jsonb','SETUP_REVIEW_COLUMN_DRIFT'],
+ ]) {
+  const run=spawnSync(db.psql,db.args(),{input:`BEGIN;${mutation};\n${candidate}`,encoding:'utf8',timeout:30000});
+  assert.notEqual(run.status,0);assert.match(run.stderr,new RegExp(reason));checks++;
+ }
+ install();checks++;
  if(process.argv.includes('--without-save-source-check')) {
   const original='selected:=public.lock_solo_reviewed_setup_facts(_expected_tenant_id,auth.uid(),selected);';
   assert.equal(candidate.split(original).length,2,'one precise counterfactual save-source seam');
-  candidate=candidate.replace(original,'selected:=selected; -- COUNTERFACTUAL FIXTURE ONLY');
+  db.run(fn(candidate,'save_solo_reviewed_business_facts').replace(original,'selected:=selected; -- COUNTERFACTUAL FIXTURE ONLY'));
  }
- db.run(candidate);db.run(candidate);checks++;
+ denied(caller+`INSERT INTO paige_audit_log(actor_user_id,actor_role,action,target_type,target_id,tenant_id,payload) VALUES('${actor}','admin','solo_setup.reviewed_facts_approved','solo_business_brief','${tenant}','${tenant}','{}')`,/row-level security/);
  const facts=`jsonb_build_array(jsonb_build_object('field','offers','value','Advisory','reference',jsonb_build_object('contractVersion',1,'tenantId','${tenant}','documentId','${doc}','revision',1,'contentSha256',encode(sha256(convert_to('Advisory','UTF8')),'hex')),'excerpts','[{"start":0,"end":8,"text":"Advisory"}]'::jsonb))`;
  const stage=`SELECT stage_solo_reviewed_business_facts('${tenant}','${actor}','${review}','2026-11-01T12:00:00.123456Z',0,${facts})`;
  const save=`SELECT save_solo_reviewed_business_facts('${tenant}','${actor}','${review}','${request}','2026-11-01T12:00:00.123456Z',0,'["offers"]','setup_business_facts')`;

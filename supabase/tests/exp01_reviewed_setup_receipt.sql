@@ -28,6 +28,8 @@ SELECT ok(NOT has_function_privilege('authenticated','public.lock_solo_reviewed_
 SELECT ok(NOT has_table_privilege('authenticated','public.tenant_setup_business_context_meta','UPDATE'),'client cannot forge private review or receipt rows');
 SELECT ok((SELECT bool_and(prosecdef AND proconfig=ARRAY['search_path=""']::text[]) FROM pg_proc
  WHERE proname IN ('stage_solo_reviewed_business_facts','save_solo_reviewed_business_facts','inspect_solo_reviewed_business_facts')),'all exposed native methods pin an empty search path');
+SELECT ok((SELECT NOT polpermissive AND polcmd='a' FROM pg_policy WHERE polrelid='public.paige_audit_log'::regclass
+ AND polname='exp01_reviewed_facts_server_events'),'receipt events compose through a restrictive server-only audit policy');
 
 INSERT INTO auth.users(id,aud,role,email) VALUES
  ('e0100100-0000-4000-8000-000000000001','authenticated','authenticated','e01-receipt-owner@tests.invalid'),
@@ -76,6 +78,8 @@ SET LOCAL ROLE authenticated;
 SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000001');
 SELECT lives_ok($$SELECT public.save_solo_setup_context('{"publicName":"Receipt Proof A","legalName":"Receipt Proof LLC","offers":"Before"}','[]',NULL,NULL)$$,'ordinary original owner Setup save remains available');
 SELECT is(public.get_solo_business_context()->'brief'->>'offers','Before','actual getter reads the original stored brief');
+SELECT is(pg_temp.e01_error($$INSERT INTO public.paige_audit_log(actor_user_id,actor_role,action,target_type,target_id,tenant_id,payload)
+ VALUES(auth.uid(),'owner','solo_setup.reviewed_facts_approved','solo_business_brief','e0100200-0000-4000-8000-000000000001','e0100200-0000-4000-8000-000000000001','{}')$$),'42501','browser cannot manufacture an original approval audit event');
 SELECT is(public.inspect_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001',auth.uid(),'e0100500-0000-4000-8000-000000000001')->>'status','absent_at_read','same-request inspection reports no approval before explicit review');
 SELECT is(pg_temp.e01_error($$SELECT public.stage_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001','e0100100-0000-4000-8000-000000000002',gen_random_uuid(),NULL,0,'[]')$$),'42501','client cannot impersonate another approving actor');
 SELECT is(pg_temp.e01_error($$SELECT public.inspect_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000002',auth.uid(),gen_random_uuid())$$),'40001','expected workspace cannot select a foreign business');

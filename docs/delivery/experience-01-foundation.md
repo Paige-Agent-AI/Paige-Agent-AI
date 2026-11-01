@@ -1,5 +1,27 @@
 # Experience 01 foundation — ANT-50
 
+### Continued authority/full-schema preparation — November 1
+
+Main `17e74cefc3382d0a67d240dd7a1005ec0bf56547` incorporated without
+rewriting incoming E04 work. E04's coherent native deployment and E13's higher
+forward source-validator release remain independently verified release gates.
+The existing Spine database-contract job now runs the rollback-only EXP01
+full-schema fixture against actual Setup getters/writers/authority, with the
+original E13 candidate installed only inside that rollback. It does not deploy
+the lower Preview-applied file. First execution is pending; no full-schema PASS.
+
+The candidate pins original source, owner, settings and ACLs, refuses partial or
+drifted reinstall, and restricts the two server-authored receipt audit events
+without replacing existing audit policies. Exact five-function guards are
+generated from source and checked for drift. The disposable local fixture now
+uses the actual Setup getters as well as original write bodies: 33 checks PASS,
+including observed concurrent same-request blocking, unchanged authority
+refusals, forged audit refusal and five reinstall drift negatives. Its identity
+and Knowledge-read dependencies remain modeled; this is not full-schema proof.
+The separate closed parser has 23 focused PASS checks, not the original 23-case
+acceptance packet. Native release, mounted review, actual customer receipt,
+receiver ACK/incorporation and full owner acceptance remain unverified.
+
 ## November 1 sole-successor incorporation — STILL CODING
 
 Owner explicitly replaced the exhausted zCod lead with one Codex successor.

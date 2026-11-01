@@ -2,20 +2,108 @@
 -- Requires the independently released original E13 validator. Never copy its body.
 -- Existing Setup/legal-owner/delegated-management and full-schema gates remain.
 BEGIN;
+DO $original_setup_dependencies$
+DECLARE expected record; f record; target oid;
+BEGIN
+ FOR expected IN SELECT * FROM (VALUES
+  ('public.save_solo_setup_context(jsonb,jsonb,text,uuid)','d70cdc664b5c703395e4f077a30fdbd8','v','jsonb',3,
+   '''[]''::jsonb, NULL::text, NULL::uuid','search_path=public, vault',ARRAY['authenticated']::text[]),
+  ('public.get_solo_setup_context()','435c8ba9ec6a1ffb03e0cf6044ec6f00','s','jsonb',0,NULL::text,'search_path=public',ARRAY['authenticated']::text[]),
+  ('public.get_solo_business_context()','5559c5e3fd8e3fb174a7f45fb08c46c9','s','jsonb',0,NULL::text,'search_path=public',ARRAY['authenticated']::text[]),
+  ('public.solo_setup_access_scope()','0ec77d9d549daf94263e57848a00f5a6','s','text',0,NULL::text,'search_path=public',ARRAY[]::text[]),
+  ('public.solo_setup_lock_expected_tenant(uuid)','53d6ebd2fe0cf57c9943b3aa4599f47c','v','uuid',0,NULL::text,'search_path=public',ARRAY[]::text[])
+ ) v(signature,body_hash,volatility,return_type,defaults_count,defaults_text,settings,grantees) LOOP
+  target:=to_regprocedure(expected.signature);
+  IF target IS NULL THEN RAISE EXCEPTION 'SETUP_REVIEW_INSTALL_DRIFT'; END IF;
+  SELECT * INTO STRICT f FROM pg_proc WHERE oid=target;
+  IF md5(f.prosrc)<>expected.body_hash OR f.proowner<>current_user::regrole OR NOT f.prosecdef
+   OR f.prolang<>(SELECT oid FROM pg_language WHERE lanname='plpgsql') OR f.prokind<>'f'
+   OR f.provolatile::text<>expected.volatility OR f.proparallel<>'u' OR f.proretset OR f.proisstrict OR f.proleakproof
+   OR f.prorettype<>expected.return_type::regtype OR f.pronargdefaults<>expected.defaults_count
+   OR pg_get_expr(f.proargdefaults,0) IS DISTINCT FROM expected.defaults_text
+   OR f.proconfig IS DISTINCT FROM ARRAY[expected.settings]::text[]
+   OR EXISTS(SELECT 1 FROM unnest(expected.grantees) r WHERE NOT has_function_privilege(r,f.oid,'EXECUTE'))
+   OR EXISTS(SELECT 1 FROM aclexplode(coalesce(f.proacl,acldefault('f',f.proowner))) a WHERE a.privilege_type<>'EXECUTE'
+    OR a.grantor<>f.proowner OR (a.grantee<>f.proowner AND NOT EXISTS(SELECT 1 FROM unnest(expected.grantees) r WHERE a.grantee=r::regrole::oid))
+    OR (a.grantee<>f.proowner AND a.is_grantable)) THEN
+   RAISE EXCEPTION 'SETUP_REVIEW_INSTALL_DRIFT';
+  END IF;
+ END LOOP;
+END $original_setup_dependencies$;
 DO $dependency$
 DECLARE f record;
 BEGIN
  SELECT * INTO f FROM pg_proc WHERE oid=to_regprocedure('public.lock_knowledge_source_evidence(uuid,uuid,jsonb,jsonb)');
  IF NOT FOUND OR md5(f.prosrc)<>'c875eff4e94775dfeb6e140957d47507'
   OR f.proowner<>current_user::regrole OR f.prosecdef OR f.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
-  OR EXISTS(SELECT 1 FROM aclexplode(coalesce(f.proacl,acldefault('f',f.proowner))) a WHERE a.grantee<>f.proowner)
+  OR f.prolang<>(SELECT oid FROM pg_language WHERE lanname='plpgsql') OR f.prokind<>'f' OR f.provolatile<>'v' OR f.proparallel<>'u'
+  OR f.proisstrict OR f.proleakproof OR f.proretset OR f.prorettype<>'jsonb'::regtype OR f.pronargdefaults<>0
+  OR EXISTS(SELECT 1 FROM aclexplode(coalesce(f.proacl,acldefault('f',f.proowner))) a
+   WHERE a.grantee<>f.proowner OR a.grantor<>f.proowner OR a.privilege_type<>'EXECUTE')
  THEN RAISE EXCEPTION 'SETUP_REVIEW_SOURCE_DEPENDENCY'; END IF;
 END $dependency$;
+-- E01_OWNED_INSTALL_GUARD_BEGIN
+DO $owned_existing$
+DECLARE expected record; f record; installed integer:=0;
+BEGIN
+ FOR expected IN SELECT * FROM (VALUES
+  ('public.lock_solo_reviewed_setup_scope(uuid,uuid)','cfd3332240798913d006d58f31f2f54e',false,ARRAY[]::text[]),
+  ('public.lock_solo_reviewed_setup_facts(uuid,uuid,jsonb)','1eecbdbfdb90cc85f4633a5a18934915',false,ARRAY[]::text[]),
+  ('public.stage_solo_reviewed_business_facts(uuid,uuid,uuid,text,bigint,jsonb)','9bbd60edf98a4517bd09fed190b004b8',true,ARRAY['authenticated']::text[]),
+  ('public.inspect_solo_reviewed_business_facts(uuid,uuid,uuid)','baf098fd4fc9fe690f91e44e979628f0',true,ARRAY['authenticated']::text[]),
+  ('public.save_solo_reviewed_business_facts(uuid,uuid,uuid,uuid,text,bigint,jsonb,text)','3fb4d22cf1d95c7d952ec6ddd154882e',true,ARRAY['authenticated']::text[])
+ ) v(signature,body_hash,definer,grantees) LOOP
+  SELECT * INTO f FROM pg_proc WHERE oid=to_regprocedure(expected.signature);
+  IF NOT FOUND THEN CONTINUE; END IF;
+  installed:=installed+1;
+  IF md5(f.prosrc)<>expected.body_hash OR f.proowner<>current_user::regrole
+   OR f.prolang<>(SELECT oid FROM pg_language WHERE lanname='plpgsql') OR f.prokind<>'f'
+   OR f.provolatile<>'v' OR f.proparallel<>'u' OR f.prorettype<>'jsonb'::regtype
+   OR f.proretset OR f.proisstrict OR f.proleakproof OR f.pronargdefaults<>0
+   OR f.prosecdef IS DISTINCT FROM expected.definer OR f.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
+   OR EXISTS(SELECT 1 FROM unnest(expected.grantees) r WHERE NOT has_function_privilege(r,f.oid,'EXECUTE'))
+   OR EXISTS(SELECT 1 FROM aclexplode(coalesce(f.proacl,acldefault('f',f.proowner))) a
+    WHERE a.privilege_type<>'EXECUTE' OR a.grantor<>f.proowner
+    OR (a.grantee<>f.proowner AND NOT EXISTS(SELECT 1 FROM unnest(expected.grantees) r WHERE a.grantee=r::regrole::oid))
+    OR (a.grantee<>f.proowner AND a.is_grantable)) THEN
+   RAISE EXCEPTION 'SETUP_REVIEW_INSTALLED_DRIFT';
+  END IF;
+ END LOOP;
+ IF installed NOT IN (0,5) THEN RAISE EXCEPTION 'SETUP_REVIEW_PARTIAL_INSTALL'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM pg_class WHERE oid='public.paige_audit_log'::regclass AND relrowsecurity) THEN
+  RAISE EXCEPTION 'SETUP_REVIEW_AUDIT_DRIFT'; END IF;
+ IF (SELECT count(*) FROM pg_policy WHERE polrelid='public.paige_audit_log'::regclass
+  AND polname='exp01_reviewed_facts_server_events')<>(CASE WHEN installed=0 THEN 0 ELSE 1 END) THEN
+  RAISE EXCEPTION 'SETUP_REVIEW_PARTIAL_INSTALL'; END IF;
+ IF EXISTS(SELECT 1 FROM pg_policy WHERE polrelid='public.paige_audit_log'::regclass AND polname='exp01_reviewed_facts_server_events'
+  AND (polpermissive OR polcmd<>'a' OR polroles IS DISTINCT FROM ARRAY['authenticated'::regrole::oid]
+   OR polqual IS NOT NULL OR pg_get_expr(polwithcheck,polrelid) IS DISTINCT FROM
+   '(action <> ALL (ARRAY[''solo_setup.reviewed_facts_staged''::text, ''solo_setup.reviewed_facts_approved''::text]))')) THEN
+  RAISE EXCEPTION 'SETUP_REVIEW_AUDIT_DRIFT'; END IF;
+ IF EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='public.tenant_setup_business_context_meta'::regclass
+  AND attname IN ('reviewed_fact_proposal','reviewed_fact_approval') AND NOT attisdropped
+  AND (atttypid<>'jsonb'::regtype OR attnotnull OR atthasdef)) THEN
+  RAISE EXCEPTION 'SETUP_REVIEW_COLUMN_DRIFT'; END IF;
+ IF (SELECT count(*) FROM pg_attribute WHERE attrelid='public.tenant_setup_business_context_meta'::regclass
+   AND attname IN ('reviewed_fact_proposal','reviewed_fact_approval') AND NOT attisdropped)
+   IS DISTINCT FROM (CASE WHEN installed=0 THEN 0 ELSE 2 END) THEN
+  RAISE EXCEPTION 'SETUP_REVIEW_PARTIAL_INSTALL'; END IF;
+END $owned_existing$;
+-- E01_OWNED_INSTALL_GUARD_END
 
 ALTER TABLE public.tenant_setup_business_context_meta
  ADD COLUMN IF NOT EXISTS reviewed_fact_proposal jsonb,
  ADD COLUMN IF NOT EXISTS reviewed_fact_approval jsonb;
 -- Same private original table; retain its RLS/no direct API grants.
+-- These two original audit events are authored only by the native transaction.
+-- A restrictive policy composes with, rather than replaces, original audit rules.
+DO $audit_event_policy$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM pg_policy WHERE polrelid='public.paige_audit_log'::regclass AND polname='exp01_reviewed_facts_server_events') THEN
+  CREATE POLICY exp01_reviewed_facts_server_events ON public.paige_audit_log
+   AS RESTRICTIVE FOR INSERT TO authenticated
+   WITH CHECK (action <> ALL (ARRAY['solo_setup.reviewed_facts_staged'::text,'solo_setup.reviewed_facts_approved'::text]));
+ END IF;
+END $audit_event_policy$;
 
 CREATE OR REPLACE FUNCTION public.lock_solo_reviewed_setup_scope(p_tenant uuid,p_actor uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $scope$

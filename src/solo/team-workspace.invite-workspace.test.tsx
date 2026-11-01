@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   warning: vi.fn(),
   // Mutable, because the whole point of the switch guard is that this value CHANGES
   // underneath an open dialog. A frozen mock cannot exercise it.
-  tenant: { activeTenantId: "tenant-1" as string | null },
+  tenant: { activeTenantId: "tenant-1" as string | null, activeUserId: "u1" },
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
@@ -20,7 +20,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
-  useTenantContext: () => ({ activeTenantId: mocks.tenant.activeTenantId, loading: false }),
+  useTenantContext: () => ({ activeTenantId: mocks.tenant.activeTenantId, activeUserId: mocks.tenant.activeUserId, loading: false }),
 }));
 
 vi.mock("sonner", () => ({

@@ -336,7 +336,7 @@ export function agentOutcomeLine(outcome: AgentLineOutcome, agent: TeamHubAgentK
     case "conversations_off": return { text: refusalMessage("conversations_off", "send"), action: null };
     case "not_visible": return { text: `${name} couldn't reply: you can't see this conversation any more.`, action: null };
     case "other_workspace": return { text: `${name} couldn't reply: you're working in another workspace now.`, action: null };
-    case "rate_limited": return { text: "You've reached 30 agent replies this hour. Try again later.", action: null };
+    case "rate_limited": return { text: "Too many requests right now. Try again shortly.", action: null };
     case "could_not_start": return { text: privatePart ? `${name} couldn't finish your private answer.` : `${name} couldn't start just now.`, action: "ask_again" };
     case "no_reply": return { text: privatePart ? `${name} couldn't finish your private answer.` : `${name} didn't reply.`, action: "ask_again" };
     case "cannot_post_here": return { text: `${name} can't post here.`, action: null };

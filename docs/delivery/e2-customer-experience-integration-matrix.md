@@ -1,5 +1,217 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October31 — one primary outcome: O06 saved Systems Check inspection
+
+**Still coding; no completed-outcome or founder-acceptance claim.** The customer
+can inspect the original saved check's source, timestamp, coverage, severity and
+findings, then reopen or return with the same conversation. This is original O06;
+O07 new checks/corrections and O12/O19 governed execution remain separate.
+
+Built/released: #3018, exact merge `cd9fc03e060aab1556d423599f3960138ab17b33`,
+reviewed `081025755c19c2eac874f725f80afc375e71be37`, lower review5720219721,
+exact required checks and production build/source readback. One legitimate SOLO
+Owner's original finding and saved-run result/whole Chat survive reload/reopen.
+A missing-record link is truthfully unavailable; Back recovers the same original
+result. Keyboard containment and Return focus passed a fresh bounded follow-up;
+the earlier timeout and excluded loading image remain in protected ANT52 history.
+
+Remaining acceptance: a second authorized ordinary SOLO cohort, applicable
+role/foreign/revoked/current-source negatives and remaining recovery coverage.
+Browser custody was actually returned; the current canonical chooser does not
+offer the second owner-designated workspace. Original EXP01/Auth availability
+handoff is pending through Coordinator, not a new grant or product-defect claim.
+No alternate identity/account or private data is used to manufacture proof.
+
+Next coherent deliverable: finish this same read/reopen/permission/cohort outcome
+and correct only demonstrated material defects. #3157 proposes the preceding
+release in Master; its source is frozen/returned and required CI remains separate.
+Preceding #3153 released original acceptance-matrix documentation, not another
+product outcome. No discretionary secondary is started. All19, nine analytics,
+original domain writers, algorithm/readiness limits and one final founder review
+remain required. Metadata/RLS checks do not replace ordinary role acceptance.
+
+
+
+## October31 — complete working Experience receiving incorporation
+
+Received the [owner-approved complete working Experience amendment](https://linear.app/paigeagentai/issue/ANT-147/one-paige-foundational-systems-integration-and-end-to-end-readiness):
+all eight requirements and EXP00–19 applications. This extends acceptance of
+the SAME O01–O19 and nine analytics capabilities. Original definitions, IDs,
+historical denominators, specialists and writers below remain unchanged.
+Reception/source documentation is not implementation or acceptance. EXP02 is
+STILL CODING; one complete founder evaluation remains.
+
+Apply these eight requirements to each applicable original outcome:
+
+1. Goal/context: useful result, permitted tenant/resource/source/version, current
+   actor/delegation and success criteria; ask only material missing questions.
+   Private conversation/file context needs an explicit permitted handoff.
+2. Plan/steering: inspectable, editable scoped plan, original task/artifact,
+   current step and actual dependencies. Preserve steering, direct mentions,
+   DMs and the SAME specialists across PAIGE and EXP08 Team Hub.
+3. Execution: approved tools or original accountable writer with the same
+   resource/version. Action-specific Trust standing authority governs effects;
+   neither blanket autonomy nor a mandatory extra click for every covered step.
+4. Deliverable: useful original editable artifact/record, revision, provenance
+   and authorized export where applicable. Prose, screenshots and detached copies
+   do not prove a saved artifact. Ordinary analytical reads remain reads.
+5. Verification: actual original result/receipt; distinguish prepared, attempted,
+   saved, applied and externally confirmed. Explain uncertainty and next steps.
+6. Durable continuation: existing Work/Knowledge/domain stores, one identity,
+   both-chat save/reopen/continue with current permission/version checks.
+   Cross-device continuation is claimed only where actually supported/proven.
+7. Recovery: cancel, interrupt/disconnect, partial/UNKNOWN effects, stale/ABA/
+   concurrency and revoke/deny; reconcile before retry, preserve unsent/saved
+   revisions, prevent duplicates. Existing Harness/scheduling only where
+   legitimately available; no background/recurrence/general-runner activation.
+8. Grounded evaluation: outcome → permitted inputs → actual deterministic/
+   retrieval/model logic → original output/writer → exact canonical ALG wiring →
+   uncertainty → baseline/repeated/negative cases → useful result/receipt/reopen/
+   recovery → controlled feedback. Use `NO VERIFIED SUPPORTING ALGORITHM
+   IDENTIFIED — GAP OR VERIFICATION OWED` where appropriate; justified routing
+   N/A is valid. Measure useful result quality/reliability, not model/cache choice.
+
+The following adds receiving obligations to the existing rows, without creating
+new outcomes, tools, registrations, runtime availability or writers.
+
+| Original outcome | Useful original result / producer and receiving owner | Integration or proof still owed |
+| --- | --- | --- |
+| O01 | E02 source-backed briefing using `business.operating_snapshot` and Metric/Evidence; applicable review artifacts use the original EXP13 document contract. | Fresh sources, useful explanation and original saved editable artifact/retrieval where applicable; one weekly Owner case is bounded. |
+| O02 | Same Executive/Chat source, period/currency and references; EXP08 receives the SAME permitted review. | Matched result and both-chat reopen; a projection is not a saved review document. |
+| O03 | EXP03 pipeline/attribution and EXP04 commercial records, interpreted by E02/VERA. | Populated comparisons, permissions, useful next step and original-domain handoff/readback; no E02 CRM writer. |
+| O04 | EXP04 invoices/receipts plus verified Finance sources; EXP11 financial depth remains HELD. | Seven-page Owner read/reload is not connected banking/accounting, recognized revenue/profit, budgets/forecasts or all-role/cohort acceptance. |
+| O05 | EXP09 service signals, EXP04 accepted obligations and EXP05 delivery records. | Source/version-bound health interpretation, original result/reopen; absent Portal activity is not churn. |
+| O06 | Original Systems Check run/finding and read-only source review. | Original result/Chat/reload/focus and broader roles/cohorts; recorded counts do not prove current readiness or a new scan. |
+| O07 | Original request → Work/private runner → original new run/finding/result/Rail. | Product consumer, legitimate activation and real new result/cancel/UNKNOWN proof; merged private foundations are not active execution. |
+| O08 | One to three grounded priorities; original EXP03/04/05/09 writers receive permitted next steps. | Same plan/source/version, available capability, actual follow-through and later measurement; completion is not causal improvement. |
+| O09 | Original Setup direction and `business_mission.create/revise/transition` with mutation receipts. | Editable same-Play steering, stale/replay/UNKNOWN reconciliation and both-chat continuity; lifecycle Complete is not business success. |
+| O10 | Owner-approved Play-linked F7 targets/revisions and actuals from the existing Metric issuer. | Matched period/currency/variance, authorized lifecycle/readback/reload and both-chat continuity; no second actuals store. |
+| O11 | Original Trust role/delegation/policy and approval contract; receiving executors enforce current authority. | Eligible Admin/delegated-member positives and unassigned/foreign/revoked/stale negatives, including effect-time enforcement. |
+| O12 | Original proposal/approval → Harness/Layer C where applicable → original domain result/Rail. | Legitimate action-specific activation, real result and cancellation/uncertain-effect recovery; no second approval channel. |
+| O13 | Permission-filtered original Rail/Work/domain activity and current result references. | Accomplished/blocked/pending interpretation persisted with original work; a recorded line alone does not verify an effect. |
+| O14 | Existing record resolver and current-account department; destination reauthorizes. | Same original resource/version, return/reload/focus and denial/revocation/cohort cases; no copied records. |
+| O15 | Original Knowledge/Memory/Vault provenance; EXP13 source and EXP01 Setup contracts. | Required explicit durable-fact approval, correction/delete/revoke and later retrieval; no automatic private-DM/file sharing or Memory save. |
+| O16 | Existing PAIGE Chat/eligible Live and EXP08 presentation of the SAME specialists/work. | Fresh settlement, interruption, revision retention, mobile/current authority and both-chat recovery. Personal Live consent/audio stays separate; protected monthly UNKNOWN/UNRETRIED. |
+| O17 | EXP03 original Conversations/Communications thread, approval/provider state and department record. | Permitted history/reload/privacy; truthful prepared/accepted/delivered/failed/UNKNOWN; no duplicate inbox/sender. |
+| O18 | Original Deep Research run/citations/saved research and separately approved Knowledge publication. | Legitimate provider/cohort/spend/consent, useful editable artifact where applicable, persistence/retrieval/correction and recovery; no private-report replay to manufacture proof. |
+| O19 | Registered specialist/capability → original Trust/Harness/Layer C → original writer/result/Rail → review update. | Positive governed multistep work, same task/artifact/version across both chats, safe continuation; INT-346 and held EXP19 boundaries unchanged. Refusal does not close positive execution. |
+
+Joined milestone: original agreement/source/version review → explicit Memory
+approval → EXP01 Setup CAS/readback + permitted Knowledge retrieval → editable
+grounded gameplan → original EXP05 Work / EXP03 CRM handoff → actual result/
+receipt → reopen/continue. E02 owns interpretation and its consumer; EXP13
+source/artifacts, EXP01 Setup/admission, EXP05 Work/Harness, EXP08 presentation,
+EXP10 custody and original domain writers retain ownership. No private agreement
+upload, fabricated account/grant, provider/routing activation or general desktop/
+file/code/browser runner is authorized. EXP11/12/14–19 remain HELD.
+
+Each original row retains producer + receiving owner, actual writer/permission,
+implementation vs integration gap vs proof owed vs external decision vs held
+dependency, exact source/review/CI/release and ordinary customer evidence.
+Existing/new eligible SOLO behavior, authorized management-role positives and
+unassigned/foreign/revoked/stale negatives remain required. Functional, Visual,
+Experiential, Founder Acceptance, Algorithm Support, Orchestration Contract and
+Capabilities readiness are separate. ALG03/06/11/12 remain Partial, ALG13
+Unverified; nine catalogue states/all-account access proof are unchanged.
+
+
+### Current Mission/source handoff — integration and authority gaps
+
+Grounded in main90a99e6f and the existing EXP13 receiving handoff: the original
+Mission writers remain owner-only; authenticated execution grants do not admit
+Admin/delegated management. O09/O11/O19 must resolve eligible management through
+the canonical effective-authority contract, without blanket grants or impersonation.
+The original brief/projector has no typed Knowledge version/contentSHA, exact
+UTF16 per-field support or selected-fact confirmation receipt. EXP13 retains
+source/approved-intent validation; E02 retains the same immutable Mission brief,
+native writer, current readback and original Rail consumer. The atomic binding
+and current-source revocation/audience checks are integration gaps; prose,
+payload MD5, Memory approval or a source timestamp cannot substitute for them.
+No new native binding, permission expansion, grant or activation is claimed.
+
+## EXP02 October30 receiving checkpoint — native15 included, release holds retained
+
+Original3018 required database-contract41001866775/123887881658 failed its
+production-grant reproduction: the old14-only branch lacked FOUR released
+EXP04private actor functions. Normally receive full current915c977f/native15
+and original fixture/history/guards, without editing any SQL, grant or test
+assertion. This is source-order recovery, not proof the new CI has passed.
+Original component/test/raster sources remain exact; new-head review/CI and
+candidate rendered/cohort/role/recovery proof still required. Original P1OPEN.
+
+A SEPARATE current915 normal Edge41009746030/123912694812 source-verification
+failure (two original importers mismatched) is routed to the original EXP04
+release owner in ANT51/9442bda5. No E02upload/tag/retry or containing-merge bypass.
+Master3113 now receives the full E03row with its exact original23line insertion;
+no new shared Master content or queue takeover. Full19/nine/founderOPEN, original
+catalogue/algorithms/monthlyUNKNOWNUNRETRIEDUNINSPECTED and privacy holds retained.
+
+
+## EXP02 October30 — original held recorded-Communications source reconciliation
+
+O06/O14/O16 remains the SAME draft3018, not a new capability or scan. Receive
+current main6fe01f61a and preserve every incoming department/registry/Trust/
+source/Writer/migration history. The original presentation, tests and actual
+neutral raster leaves are unchanged; fresh209 original checks/seven suites,
+scoped lint/pinned design/UTF8 and base parity have passed. New composed-head
+type and hostile-parity controls remain separate/in progress at this checkpoint. Existing P1 PRRT_kwDOSAAXqM6w8IJP remains OPEN. Earlier local/
+synthetic and two-cohort production BASELINE observations remain historical,
+not this candidate's release/runtime acceptance. Current candidate rendered/
+role/zoom/cohort/source proof and exact-head review/CI remain required.
+
+Finance3101 is already normally merged6fe01f61a and source-deployed/exact;
+protected ANT52/c3964953 verifies ONE ordinary-owner week/Forecast/full-reload/
+Back/Forward result. Raw transcript/focus/two-cohort claims remain excluded.
+Master-only3113/87757e2e9 is separately frozen in required CI; its returned
+shared-file preparation window and queued E05/E09 history are preserved. No
+new Master content here: only the original bounded3004 read-proof addendum.
+
+E08 retains current3108/3109 privacy/P1 host and original-source return spans;
+E04 current15/E05 Task-carrier migration disposition remains original-owned.
+E02 changes no shared Chat/Root/writer/SQL/permission/provider or activation.
+Nine catalogue/algorithm/historical9/0+12/0/4/monthlyUNKNOWNUNRETRIEDUNINSPECTED
+and complete19/founder boundaries stay unchanged. No new agent or engine.
+Earlier exact recorded-Communications packet follows as dated source history.
+
+
+## EXP02 October28 — recorded Communications repair and current proof boundaries
+
+REPAIR O06/O14/O16 only. Original finding/status/writer/authority stay intact;
+the existing drawer labels recorded setup and strict original boolean calling
+facts, and discloses untested calling/delivery/current provider readiness.
+Original157 local checks/six suites and pinned detector are historical source
+proof; new composed-head checks are required. Full original shell/eight DOM
+sizes/390/synthetic B/native200-percent and keyboard evidence remain explicitly
+synthetic; the first component/reserved-space frames are supporting history.
+
+Actual SECOND owner-authorized existing SOLO baseline proof ANT52/35dacff3:
+original recorded finding/reload whole text EXACT, all8 real-shell configurations
+at exact1536x770/1366x768/1024x768/900x1000 with Chat open/closed, actual native
+Zoom200-percent/scroll/44px close/Escape/opener/Enter. Original Chat overlay is
+retained; covered background is not claimed interactive. Finance Overview/all7
+exact390x844 pages/VERA/no document overflow and whole Forecast reload EXACT.
+VERA CTA prepares an original read-only source question; empty draft restored,
+not sent. Zoom100-percent/viewport reset, own tab closed/original retained;
+private captures/customer data not published. Source is BASELINE4fb4b0398/
+main-B9ZNVahV, not this candidate's released-runtime acceptance. Initial failed,
+stale and cropped observations retained/excluded. Material3018 finding
+PRRT_kwDOSAAXqM6w8IJP remains OPEN; candidate/release proof still owed. No role,
+credential, account creation, provider, approval, scan or business action used.
+
+Incoming canonical3012/3014 release histories below supersede the earlier
+unpublished preparatory pending wording, which is consolidated here rather than
+reintroduced as a current hold. Original3004 activity read ANT52/1e80826a and
+recorded-check proof5dd2e20b remain bounded; Sales Back-loading ANT161/1117655d
+and original E01 panel handoffc88c13d4 remain open. New E08 original7-identity
+inline-turn proof is attributed to ANT161/e578105f+1f7519cb/receiving ACKe49a4477;
+earlier MERIT400 is historical/resolved. E08 A2 BusinessReview tool admission,
+both-chat result/reopen and expanded goal outcomes remain owed. No new runtime.
+
+Nine3ComingSoon/3Limited/3Unverified/allAccessUnverified; ALG03/06/11/12Partial,
+13Unverified unchanged. Historical9/0 and12/0/4/protected monthlyUNKNOWN/
+UNRETRIED/uninspected and all19/founder acceptance remain OPEN. No activation.
+
+
 ## October29 — VERA released result; Finance view continuity correction
 
 Original3096 mergeddb8807a11f29db2ca3bd2d2ce4b60ea9bfcf2c0d after all11 exact
@@ -3313,3 +3525,83 @@ Capabilities: original nine remain3ComingSoon/3Limited/3Unverified and all
 account-accessUnverified. Functional source proof, unchanged visual source,
 partial interruption recovery and OPEN founder acceptance remain distinct.
 The current follow-up has its own [delivery evidence](../evidence/ui-delivery/e2-weekly-credit-code.md).
+
+## October30 original Billing producer current-authority repair — development
+
+Original19 definitions/IDs and nine analytics remain unchanged. This supports
+authorized-work/evidence/continuity integrity (O12/O13/O16) and EXP08's original
+Team consumer; it does not add another Experience outcome or execution engine.
+
+Both original Billing writers now re-resolve their original current-workspace
+Owner scope after the SAME advisory wait and compare it with the retained
+initial locked workspace. They never retarget under a stale workspace lock.
+Original public ABI, all-workspace sole-primary refusal, contacts, atomic audit,
+metadata and ACL remain unchanged; no grant, payment or provider effect.
+
+Actual isolated original producer proof:8 changed-authority races FAIL before
+repair and PASS after, with2 unchanged-authority waited positives retained;
+4 causal mutants killed,9 prerequisite drift controls refuse atomically,
+whole metadata/idempotent replay and original validation/audit rollback PASS.
+Minimal Auth/workspace fixture ports are NOT hosted Auth/RLS/customer proof.
+Exact review/CI/managed Preview/native release after E05published80005 and before
+E08published80008, original-source readback, Team receiving composition and
+authenticated regression remain owed. [Bounded evidence](../evidence/ui-delivery/e2-billing-current-authority.md).
+
+Functional: local source/native proof. Visual: unchanged/no new acceptance.
+Experiential: original controls/context, hosted recovery still owed. Founder:
+OPEN. No catalogue or algorithm maturity promotion; this is deterministic
+authority validation, not predictive intelligence or causal business improvement.
+
+### October30 receiving correction — forward-only final transaction gate
+
+The preceding advisory-only proof is historical and does not close the later
+contact-row/audit wait finding. Original repaired80006 is already present in
+its managed Preview and remains byte-exact. Forward80007, in the SAME3142,
+revalidates the original scope after BOTH original writes, before RETURN;
+stale authority rolls contact and audit back together. Original `_t`, resolver,
+ABI, strict sole-primary rule, metadata/ACL and lock order remain unchanged.
+No new grant, executor, financial transaction, Team writer or activation.
+
+Actual source-native failure-first evidence retains4 contact and8 audit
+changed-authority failures against80006, with3 valid waited positives. Final
+local cc683091 source passes25 real waits,12 permission/tenant refusals,
+7 causal mutants,9 atomic drift refusals, missing-predecessor refusal and
+whole metadata/comments/replay/validation/audit rollback. Fixture Auth/scope
+ports exclude hosted Auth/RLS/recipient-trigger and customer acceptance.
+E05's original80005 production readback is received; E08 acknowledges80007
+before its first80008, and all59 open-PR manifests/current main have no80007
+collision. Applied history is preserved; final review, new exact-head CI,
+managed Preview, normal deployment/readback and receiving proof remain owed.
+3142 and dependent3130 remain HOLD until those gates pass.
+
+Functional: bounded native proof PASS; production repair unverified. Visual:
+no interface source changes or new visual acceptance. Experiential: original
+controls/context preserved, authenticated regression owed. Founder Acceptance:
+all original19/nine OPEN. Algorithm and Capabilities maturity remain unchanged;
+original contact/audit currentness is not an executed business-action Rail receipt.
+
+## October30 release evidence addendum — original outcomes remain open
+
+The preceding development/anticipated fields remain historical. Exact production
+source identities for original3132/3140/3142 now appear in Master§4.0 and their
+existing delivery evidence. 3132 source release passed but its customer weekly
+request FAILED. After3140 and normal current-main60fe complete44-function source
+certification, ONE fresh authorized weekly question returned usefulFINAL/38s;
+FULLreload retained the same answer/request once, old failures and empty composer
+(ANT52/e8e31b6f). This is bounded O01/O02/O16 evidence, not all-request/Live/cohort
+or complete outcome acceptance. A separate later Finance module-load failure is
+retained; settled remaining Finance subpage/reload/return proof is still owed.
+
+3142 normalmerge8684/native80006+80007/frontier80007 and original function
+body/29-field metadata/ACL/comment readback are verified; no customer Billing
+mutation occurred. EXP08 receiving ACK0b54e52b clears ONLY its producer prerequisite.
+Its original Team composition/review/newCI/managedPreview/permissions/customer and
+release proof remain independently required. No action/provider/grant activation.
+
+Functional source/native release and one weekly read/reload case are distinct
+from unchanged visual source, remaining full experience/recovery proof and OPEN
+Founder Acceptance. All original19/nine IDs/owners/definitions remain unchanged;
+catalogue3ComingSoon/3Limited/3Unverified/allAccessUnverified and
+ALG03/06/11/12Partial/13Unverified are not promoted. Historical9PASS0FAIL and
+12PASS0FAIL4BLOCKED remain; protected monthly UNKNOWN/UNRETRIED and original3018P1
+are preserved. This is a mechanical evidence closeout, not a new capability claim.

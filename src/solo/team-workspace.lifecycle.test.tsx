@@ -17,12 +17,12 @@ import { MemberEditor, SoloTeamWorkspace } from "./team-workspace";
 import type { TeamInviteRecord, TeamMemberRecord, TeamWorkspaceRecord } from "./team-workspace-contract";
 
 const mocks = vi.hoisted(() => ({
-  rpc: vi.fn(), invoke: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn(),
+  rpc: vi.fn(), invoke: vi.fn(), getUser: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn(),
   tenant: { activeTenantId: "tenant-1" as string | null, activeUserId: "owner-1" as string | null },
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    auth: { getUser: async () => ({ data: { user: { id: mocks.tenant.activeUserId } } }) },
+    auth: { getUser: mocks.getUser },
     from: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
     rpc: mocks.rpc, functions: { invoke: mocks.invoke },
   },
@@ -88,9 +88,125 @@ const calls = (fn: string) => mocks.rpc.mock.calls.filter(([n]) => n === fn);
 
 beforeEach(() => {
   document.body.innerHTML = "";
-  for (const m of [mocks.rpc, mocks.invoke, mocks.success, mocks.error, mocks.warning]) m.mockReset();
+  for (const m of [mocks.rpc, mocks.invoke, mocks.getUser, mocks.success, mocks.error, mocks.warning]) m.mockReset();
   mocks.tenant.activeTenantId = "tenant-1";
   mocks.tenant.activeUserId = "owner-1";
+  mocks.getUser.mockImplementation(async () => ({ data: { user: { id: mocks.tenant.activeUserId } } }));
+});
+
+describe("current authority during an in-place Team reread", () => {
+  async function pendingReload(surface: "invite" | "editor" | "suspend" | "departure" = "invite") {
+    let finish!: (answer: unknown) => void;
+    const pending = new Promise((resolve) => { finish = resolve; });
+    let reads = 0;
+    route({
+      get_solo_team_workspace: () => ++reads === 1 ? { data: roster([owner, member()]), error: null } : pending,
+      team_hub_list_conversations: () => hub([{ user_id: "member-1", on: true }]),
+      set_solo_team_member_team_hub_access: () => ({ data: { tenant_id: "tenant-1", membership_id: "membership-1", user_id: "member-1", team_hub_access: false }, error: null }),
+    });
+    const mounted = await open();
+    await act(async () => sw("Theo Brandt")!.click());
+    expect(reads).toBe(2);
+    if (surface === "invite") {
+      await act(async () => byText("Invite someone")!.click());
+      const email = document.querySelector<HTMLInputElement>('input[type="email"]')!;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(email, "draft@example.com");
+        email.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    } else await menu("Theo Brandt", surface === "editor" ? "Edit details" : surface === "suspend" ? "Suspend access" : "Remove from team");
+    return { ...mounted, finish };
+  }
+
+  it.each([
+    ["native null refusal", { data: null, error: null }],
+    ["permission refusal", { data: null, error: { code: "42501", message: "permission denied" } }],
+    ["wrong tenant", { data: roster([owner, member()], { tenant_id: "tenant-other" }), error: null }],
+  ])("withdraws cached roster and captured invitation after %s", async (_name, answer) => {
+    const { finish } = await pendingReload();
+    await act(async () => finish(answer));
+    expect(document.querySelector('[aria-label="Team roster"]')).toBeNull();
+    expect(document.querySelector('input[type="email"]'), "old invitation authority must be withdrawn").toBeNull();
+    expect(document.querySelector('.stw-rstate[role="alert"]')).toBeTruthy();
+    expect(document.activeElement).toBe(document.querySelector('.stw-rstate[role="alert"]'));
+    expect(mocks.invoke).not.toHaveBeenCalled();
+  });
+
+  it("preserves the unsent draft on a temporary reread failure and explains retry", async () => {
+    const { finish } = await pendingReload();
+    await act(async () => finish({ data: null, error: { message: "Failed to fetch" } }));
+    expect(document.querySelector<HTMLInputElement>('input[type="email"]')?.value).toBe("draft@example.com");
+    expect(document.querySelector('[aria-label="Team roster"]')).toBeTruthy();
+    expect(document.body.textContent).toContain("The team couldn't be refreshed");
+    expect(mocks.invoke).not.toHaveBeenCalled();
+  });
+
+  it.each(["actor", "missing-workspace"])("withdraws the previous snapshot immediately on %s change and ignores its delayed reread", async (change) => {
+    const { root, finish } = await pendingReload();
+    if (change === "actor") mocks.tenant.activeUserId = "different-user";
+    else mocks.tenant.activeTenantId = null;
+    await act(async () => root.render(<SoloTeamWorkspace />));
+    expect(document.querySelector('[aria-label="Team roster"]')).toBeNull();
+    expect(document.querySelector('input[type="email"]')).toBeNull();
+    await act(async () => finish({ data: roster([owner, member()]), error: null }));
+    expect(document.querySelector('[aria-label="Team roster"]')).toBeNull();
+    expect(mocks.invoke).not.toHaveBeenCalled();
+  });
+
+  it("does not publish a previous actor's delayed row-write result into the next actor's Team", async () => {
+    let finish!: (answer: unknown) => void;
+    const pending = new Promise((resolve) => { finish = resolve; });
+    route({
+      get_solo_team_workspace: () => ({ data: roster([owner, member()]), error: null }),
+      team_hub_list_conversations: () => hub([{ user_id: "member-1", on: true }]),
+      set_solo_team_member_team_hub_access: () => pending,
+    });
+    const { root } = await open();
+    await act(async () => sw("Theo Brandt")!.click());
+    mocks.tenant.activeUserId = "different-user";
+    await act(async () => root.render(<SoloTeamWorkspace />));
+    await act(async () => finish({ data: { tenant_id: "tenant-1", user_id: "member-1", team_hub_access: false }, error: null }));
+    expect(notice(), "a past actor's person/result is not a current-context notice").toBeNull();
+  });
+
+  it.each(["pending", "rejected"])("invalidates a populated fallback identity before a %s auth lookup on actor loss", async (outcome) => {
+    mocks.tenant.activeUserId = null;
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "owner-1" } } });
+    route({ get_solo_team_workspace: () => ({ data: roster([owner, member()]), error: null }) });
+    const { root } = await open();
+    expect(document.querySelector('[aria-label="Team roster"]')).toBeTruthy();
+    mocks.tenant.activeUserId = "owner-1";
+    await act(async () => root.render(<SoloTeamWorkspace />));
+    await wait();
+    if (outcome === "pending") mocks.getUser.mockImplementation(() => new Promise(() => {}));
+    else mocks.getUser.mockRejectedValue(new Error("identity lookup unavailable"));
+    mocks.tenant.activeUserId = null;
+    await act(async () => root.render(<SoloTeamWorkspace />));
+    expect(document.querySelector('[aria-label="Team roster"]')).toBeNull();
+    await wait();
+    expect(document.querySelector('[aria-label="Team roster"]')).toBeNull();
+  });
+
+  it.each(["editor", "suspend", "departure"] as const)("withdraws the captured %s on confirmed refusal", async (surface) => {
+    const { finish } = await pendingReload(surface);
+    expect(document.querySelector('[role="dialog"], [role="alertdialog"]')).toBeTruthy();
+    await act(async () => finish({ data: null, error: { code: "42501", message: "permission denied" } }));
+    expect(document.querySelector('[role="dialog"], [role="alertdialog"]')).toBeNull();
+    expect(document.querySelector('[aria-label="Team roster"]')).toBeNull();
+  });
+
+  it.each([
+    ["null", { data: null, error: null }],
+    ["permission", { data: null, error: { code: "42501", message: "permission denied" } }],
+    ["wrong tenant", { data: roster([owner], { tenant_id: "foreign" }), error: null }],
+  ])("withdraws the old page on a pagination %s refusal", async (_name, answer) => {
+    let reads = 0;
+    route({ get_solo_team_workspace: () => ++reads === 1 ? { data: roster([owner, member()], { total_members: 3 }), error: null } : answer });
+    await open();
+    await act(async () => byText("Load more (1 remaining)")!.click());
+    expect(document.querySelector('[aria-label="Team roster"]')).toBeNull();
+    expect(document.querySelector('.stw-rstate[role="alert"]')).toBeTruthy();
+  });
 });
 
 describe("the Team conversations switch", () => {

@@ -36,6 +36,53 @@ beforeEach(() => {
 });
 afterEach(() => {act(() => root.unmount()); host.remove();});
 
+it("conceals a local bulk choice during same-business rechecking and restores it without uploading", async () => {
+  await render(); act(() => state.append([pdf("Harbor.pdf"), pdf("Willow.pdf")]));
+  const ids = state.files.map(file => file.id);
+  f.phase = "loading"; f.current.mockReturnValue(false); await render(thread, false);
+  expect(state.files).toEqual([]); expect(f.transfer).not.toHaveBeenCalled();
+  f.phase = "ready"; f.current.mockReturnValue(true); await render();
+  expect(state.files.map(file => file.id)).toEqual(ids);
+  expect(f.transfer).not.toHaveBeenCalled(); expect(f.check).not.toHaveBeenCalled();
+});
+
+it("keeps an admitted native picker completion private until its original access is checked again", async () => {
+  await render(); const completeChoice = state.beginSelection();
+  expect(completeChoice).not.toBeNull();
+  f.phase = "loading"; f.current.mockReturnValue(false); await render(thread, false);
+  act(() => completeChoice!([pdf("Harbor.pdf"), pdf("Willow.pdf")]));
+  expect(state.files).toEqual([]); expect(f.transfer).not.toHaveBeenCalled();
+  f.phase = "ready"; f.current.mockReturnValue(true); await render();
+  expect(state.files.map(file => file.file.name)).toEqual(["Harbor.pdf", "Willow.pdf"]);
+  expect(f.transfer).not.toHaveBeenCalled();
+  act(() => completeChoice!([pdf("Duplicate.pdf")]));
+  expect(state.files).toHaveLength(2);
+});
+
+it("rejects a picker completion after business/thread retirement, even after returning", async () => {
+  await render(); const completeChoice = state.beginSelection();
+  f.tenant = other; ++f.epoch; await render(other);
+  f.tenant = "e0993000-0000-4000-8000-000000000002"; ++f.epoch; await render();
+  act(() => completeChoice!([pdf("Old private choice.pdf")]));
+  expect(state.files).toEqual([]); expect(f.transfer).not.toHaveBeenCalled();
+  await render(thread, false); expect(state.beginSelection()).toBeNull();
+});
+
+it("requires inspecting an upload whose access retired before its completion, without starting the next file", async () => {
+  const transfer = deferred<string>(); f.transfer.mockReturnValueOnce(transfer.promise);
+  await render(); act(() => state.append([pdf("Harbor.pdf"), pdf("Willow.pdf")]));
+  const id = state.files[0].id;
+  let preparation!: Promise<unknown>;
+  await act(async () => {preparation = state.prepare(); await flush();});
+  f.current.mockReturnValue(false);
+  await act(async () => {transfer.resolve(id); await preparation;});
+  f.phase = "loading"; await render(thread, false);
+  f.phase = "ready"; f.current.mockReturnValue(true); await render();
+  expect(state.files.map(file => file.phase)).toEqual(["check", "selected"]);
+  await act(async () => {expect(await state.prepare()).toEqual({status: "not_ready"});});
+  expect(f.transfer).toHaveBeenCalledTimes(1); expect(f.check).not.toHaveBeenCalled();
+});
+
 it("selection is private preparation and sends nothing until explicit preparation", async () => {
   await render(); act(() => state.append([pdf(), pdf("Brief.pdf")]));
   const ids = state.files.map(file => file.id);

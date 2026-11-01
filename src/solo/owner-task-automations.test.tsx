@@ -86,9 +86,8 @@ describe("internal task process customer controls", () => {
     expect(m.control).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Pause future contacts" })); expect(m.control).toHaveBeenCalledExactlyOnceWith(row, "pause");
   });
-  it("rejects multistep/bare-tool/external/dynamic/unsupported trigger shapes as enable choices", () => {
+  it("rejects bare-tool/external/dynamic/unsupported trigger shapes as enable choices", () => {
     for (const change of [
-      (r: OwnerTaskReview) => { r.acts.push({ ...r.acts[0], id: "other", position: 2 }); },
       (r: OwnerTaskReview) => { r.acts[0].action_kind = null; r.acts[0].tool_key = "crm_create_task"; },
       (r: OwnerTaskReview) => { r.acts[0].config = { title: "Review", to: "outside@example.invalid" }; },
       (r: OwnerTaskReview) => { r.process.trigger_config = { delay: 1 }; },
@@ -267,14 +266,13 @@ describe("original internal-task history inspection", () => {
 
 describe("saved process design inspection", () => {
   const inspect = () => fireEvent.click(screen.getByText("Inspect saved configuration"));
-  it("shows actual ordered task purposes in a multistep design without enabling it", () => {
+  it("shows every supported task purpose before offering the complete process for review", () => {
     row.acts.push({ ...row.acts[0], id: "step2", position: 2, config: { title: "Prepare the kickoff", description: "Check the signed scope." } });
-    const before = JSON.stringify(row); view(); inspect();
-    const steps = document.querySelectorAll(".sa-owner-task-design li");
+    const before = JSON.stringify(row); view();
+    const steps = document.querySelectorAll(".sa-owner-task-step");
     expect(steps).toHaveLength(2); expect(steps[0].textContent).toContain("Step 1");
     expect(steps[1].textContent).toContain("Step 2"); expect(steps[1].textContent).toContain("Prepare the kickoff");
-    expect(document.body.textContent).toContain("Multiple steps are saved for design review");
-    expect(screen.queryByRole("button", { name: "Review to enable" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Review to enable" })).toBeTruthy();
     expect(m.control).not.toHaveBeenCalled(); expect(JSON.stringify(row)).toBe(before);
   });
   it("withholds arbitrary settings and external-step content from the design preview", () => {
@@ -304,6 +302,56 @@ describe("saved process design inspection", () => {
     view(); inspect(); expect(document.querySelectorAll(".sa-owner-task-design li")).toHaveLength(20);
     expect(document.body.textContent).toContain("1 additional saved step is not shown");
     expect(document.body.textContent).not.toContain("Purpose 21"); expect(m.control).not.toHaveBeenCalled();
+  });
+});
+
+describe("complete internal-task process review", () => {
+  function chain(count: number) {
+    row.acts = Array.from({ length: count }, (_, index) => ({ ...review().acts[0], id: `step-${index + 1}`,
+      position: index + 1, config: { title: `Exact purpose ${index + 1}`, description: `Original details ${index + 1}` } }));
+  }
+  it.each([2, 20])("reviews all %s original steps and submits the captured complete chain only on confirmation", count => {
+    chain(count); const before = JSON.stringify(row); view();
+    const steps = document.querySelectorAll(".sa-owner-task-step"); expect(steps).toHaveLength(count);
+    for (let i = 0; i < count; i++) {
+      expect(steps[i].textContent).toContain(`Step ${i + 1}`);
+      expect(steps[i].textContent).toContain(`Exact purpose ${i + 1}`);
+      expect(steps[i].textContent).toContain(`Original details ${i + 1}`);
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Review to enable" }));
+    expect(screen.getByText(new RegExp(`Enable these ${count} exact tasks`)).textContent).toContain("Each task occurrence needs its own approval");
+    expect(document.body.textContent).toContain("Enabling creates no tasks");
+    expect(document.body.textContent).toContain("Recorded order does not establish task dependencies");
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Cancel" }));
+    expect(m.control).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Enable future contacts" }));
+    expect(m.control).toHaveBeenCalledExactlyOnceWith(row, "arm");
+    expect(JSON.stringify(row)).toBe(before); expect(m.refresh).not.toHaveBeenCalled();
+  });
+  it.each(["Cancel", "Escape"])("%s cancels a twenty-step review without enabling or losing the source", choice => {
+    chain(20); view(); const source = screen.getByRole("button", { name: "Review to enable" }); fireEvent.click(source);
+    const cancel = screen.getByRole("button", { name: "Cancel" });
+    if (choice === "Escape") fireEvent.keyDown(cancel, { key: "Escape" }); else fireEvent.click(cancel);
+    expect(document.activeElement).toBe(source); expect(screen.queryByRole("button", { name: "Enable future contacts" })).toBeNull();
+    expect(m.control).not.toHaveBeenCalled(); expect(m.refresh).not.toHaveBeenCalled();
+  });
+  it.each(["duplicate", "position", "external", "dynamic", "settings", "oversized", "empty"])("does not admit an incomplete %s chain from a valid first step", invalid => {
+    chain(invalid === "oversized" ? 21 : invalid === "empty" ? 0 : 2);
+    if (invalid === "duplicate") row.acts[1].id = row.acts[0].id;
+    if (invalid === "position") row.acts[1].position = 3;
+    if (invalid === "external") row.acts[1].tool_key = "send_email";
+    if (invalid === "dynamic") row.acts[1].config = { title: "{{payload.name}}" };
+    if (invalid === "settings") row.acts[1].config = { title: "Review", recipient: "outside@example.invalid" };
+    view(); expect(screen.queryByRole("button", { name: "Review to enable" })).toBeNull();
+    expect(m.control).not.toHaveBeenCalled();
+  });
+  it.each(["scope", "read", "refresh"])("retires the complete review when its %s changes", changed => {
+    chain(2); const h = view(); fireEvent.click(screen.getByRole("button", { name: "Review to enable" }));
+    if (changed === "scope") m.state.scopeKey = "other-actor:other-business";
+    if (changed === "read") m.state.read = { status: "refused" };
+    if (changed === "refresh") m.state.needsRefresh = true;
+    h.rerender(<MemoryRouter><OwnerTaskAutomations /></MemoryRouter>);
+    expect(screen.queryByRole("button", { name: "Enable future contacts" })).toBeNull(); expect(m.control).not.toHaveBeenCalled();
   });
 });
 

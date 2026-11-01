@@ -4952,3 +4952,164 @@ port and same components; no blanket20-of20 or whole-transitive claim. All exact
 final review/hosted gates, normal release/readback and corrected ordinary-user
 proof must be renewed before readiness. Shared40008→E05forward50005 order, E09
 held financial consumer and delegated-management assessment remain separate.
+
+### C150 — Original provider refund/dispute readback — October30
+
+Same sole EXP04/MERIT/full12. Parent3129 remains frozen at reviewed
+f5a7f251cb130892448c3f29108f70435add50ca, all13 check-runs+both web SUCCESS,
+READY/not merged. Production70005 is observed; original E05 published75005 must
+normally precede own immutable80004. No peer merge or native/activation bypass.
+
+LOCAL REUSE+EXTEND: GET-only methods on the SAME pinned Stripe17.5 client and
+original stripe-hosted.ts, requiring the original verified capture, operation,
+merchant/environment, invoice/intent metadata and available capture balance.
+Complete bounded refund/dispute pagination refuses duplicate, truncated, stale,
+inconsistent or unsupported facts. The final full capture/metadata fingerprint
+refuses a changed source. Original settlement/create/read bodies are retained;
+no refund POST, new client, balance ledger, scheduler or invoice calculation.
+
+Refund success/pending/action-required/failure/cancellation and actual debit/
+failure-credit entries stay distinct. Dispute status never substitutes for actual
+withdrawal/reinstatement entries. Raw provider/customer/error content is excluded.
+All391 original+55 new assertions PASS in18 suites. Original17 test files and
+hosted implementation inverse remain exact. The new-contract41 missing-function
+failures are not a production incident. Initial syntax failure is excluded; three
+NEW positive fixture aggregates were corrected, without weakening any assertion
+or guard. A separate causal final-metadata-fence failure/53 controls preceded its
+repair. Final446 PASS, lint3paths0, actual pinned SDK Deno2.9.8 check plus private
+lock/frozen check PASS; lock SHA256
+451e4cea176b18f0909312eccedec14a816a87700ec14a4b6020a93693faa821.
+
+This helper remains UNMOUNTED/LOCAL. Native context/authority, append-only original
+adjustment receipts, exact event location/idempotency, settled-work recovery,
+canonical balance/Collections hold, owner/Chat/private-Portal readback and actual
+provider/customer proof are still OWED. A provider refund does not forgive signed
+debt or authorize more collection. PAIGE's invoice remains the receivable; any
+commercial credit/amendment is a separate reviewed original-record decision.
+
+Existing sales_invoice.read/payment_request stay PARTIAL; refund/credit execution
+is UNAVAILABLE. Reuse original signed ingress/native work/Harness/Trust/Rail; E02
+reads/E03 Communications/E05 Work/E08 shared Chat/E09 Portal retain their writers.
+ALG01/12 bounded LOCAL comparison/abstention only;02/13/maturity unchanged. No new
+UI, hosted financial acceptance, CentralQA or founder completion is claimed.
+
+Primary sources: [refund objects](https://docs.stripe.com/api/refunds/object),
+[refund pagination](https://docs.stripe.com/api/refunds/list),
+[disputes](https://docs.stripe.com/api/disputes/object),
+[dispute pagination](https://docs.stripe.com/api/disputes/list), and
+[credit versus refund](https://docs.stripe.com/invoicing/integration/programmatic-credit-notes).
+Newer documentation does not upgrade the existing API pin or activate a provider.
+
+### C153 — Source-bound provider observations, reviewed foundation
+
+The original O3/O4 allocation/correction parent3129 is now mergedadb84deceb2d52787c2bf49364e712bf7893cdaf.
+Normal native80004 follows75005 exactly once; all eight changed functions and
+the unchanged original actor have matching production source/ACL readback.
+Webdpl_85MTmsLBwe3ZW2d5GFy94wYGmx6r is READY with canonical200/exactadb84-mvvdp0n1.
+Original Edge41117267588 first failed on a stale approval package; one diagnosed
+normal attempt2/job124279501843 passes all11 source/configuration closures.
+Artifact13006908295 ZIP SHA25686c4e80ab235f811052fa2e60501d5ed49b2c71102f96447a8f8dcf2146f1df7
+and normal db-live/edge-liveadb84 are verified. Scratch cleanup permission debt
+remains explicit. This is source release, not authenticated financial acceptance.
+
+This next O5 foundation normally composes that complete main into the existing
+provider-readback branch: original three own code/test blobs and all18,576
+outside-owned incoming leaves were exact; original main journey text recovered
+by the exact inverse of the datedC150 appendix. No source history was restarted.
+Sequential source review then proved and fixed two strict status-shape refusals
+and one mutable-source fingerprint refusal in this NEW, UNMOUNTED reader.
+Malformed array statuses cannot become a won dispute or a verified balance;
+the first validated capture fingerprint is retained before asynchronous reads.
+The unchanged new negatives failed2/57 then1/58 before their respective repairs.
+No production defect or independent non-author review is inferred.
+
+Final local source checks:449 assertions/18 suites PASS, retaining all391
+incumbent assertions and55 prior new cases plus3 causal controls. All17 incumbent
+test files and the original hosted implementation inverse remain exact; only
+erased import/binding annotations differ before the new helper. Three-path lint0,
+actual pinned Stripe17.5/API2024-11-20.acacia Deno2.9.8 frozen check PASS; original
+private lock451e4cea176b18f0909312eccedec14a816a87700ec14a4b6020a93693faa821 unchanged.
+An earlier root src-only configuration ran0 tests and is INVALID, not evidence.
+The final run uses the original CI sales-payments/vitest.config.ts unchanged.
+
+Orchestration Contract for this internal-only increment:
+
+1. Intended outcome: reconcile actual post-settlement refund/dispute evidence
+   for the original payment. Current scope only supplies a GET-only reader.
+2. Entry surface: none mounted. Sales/PAIGE/MERIT/Live/Portal availability is
+   unchanged; no customer action, model call or new specialist registry.
+3. Original records: existing invoice, provider operation, verified capture and
+   tenant merchant binding. Existing sales_invoice.read/payment_request remain
+   their bounded capabilities; refund/credit execution is UNAVAILABLE.
+4. Execution path: same pinned Stripe client, selected original connected
+   account and exact charge. No new ActionAdapter, charge/refund POST or sender.
+5. Authorization: this helper grants none. Future mounting must derive context
+   from the original service-only native reader and current merchant binding;
+   callers cannot nominate another tenant, customer, charge or environment.
+6. Risk/approval: observation only. Financial, credit, commercial and collection
+   decisions still require their original Trust/domain permissions and review.
+7. Durable work/Rail: none created here. Later integration extends original
+   Sales wrappers in paige_durable_work with finite event occurrences; never
+   resets terminal settlement work or introduces another queue/scheduler.
+8. Readback/reconciliation: full bounded pagination and repeated immutable-source
+   comparison; normalized success/pending/failure/cash facts remain distinct.
+   Native persistence, original Rail and financial allocation are still owed.
+9. Failure/uncertainty: malformed, unsupported, incomplete, changed, duplicate or
+   late source returns PROVIDER_ADJUSTMENT_READBACK_REQUIRED; no inferred money,
+   automatic retry of a business effect or optimistic account balance.
+10. Customer result: none newly exposed. Original owner/Chat/private-Portal UI,
+    Collections holds and eventual approved credit/refund disposition must be
+    integrated and proven before describing the complete outcome as available.
+
+The private C151 full-schema context/CAS/journal prototype passed21 controls and
+three causal guard-removal negatives, with all fixtures/DDL rolled back. It is
+not included in this source release, a financial writer or an adopted Portal
+contract. Its remaining single-snapshot, metadata/pointer/guard and finite-work
+requirements must be resolved before mounting; its old disposable Preview was
+retired normally after3129 merged. No unsafe reuse, applied-history rewrite,
+new permanent QA business or provider activation is authorized.
+
+Functional: source foundation only, required new-head review/CI/release owed.
+Visual: no UI/interaction/style change; no prior render borrowed as new proof.
+Experiential: original financial and service journey remains incomplete.
+Acceptance: new3129 Owner QA is UNVERIFIED while browser page access fails;
+prior bounded unsigned-document/PDF/history/reload observations stay source-scoped.
+CentralQA/all roles/current-new SOLO/full O1–O12/founder acceptance remain OPEN.
+ALG01/12 retain bounded local comparison/abstention; ALG02/13 and maturity unchanged.
+
+Source coordination correction: NO active E04 Master/Brain edit. Original
+Coordinator906463c6 receiving4256aaa7 returns the current slot to E02's ONE3122
+row, followed by existing E05/E09/E13 queued rows. An unmerged E08 PR is incoming
+work to preserve, not an indefinite exclusive edit. E04's prepared closeout rows
+remain private until the actual source is returned; no competing ledger or hold.
+
+
+### C156 — Original provider observation integrity proof (2026-10-30 UTC)
+
+Same MERIT / full O1–O12; this is a prerequisite for O5 payment exceptions and O9 Collections, not an accepted refund workflow. #3135 source-only Stripe GET adapter is merged at60fe883ee4dce82f88937b366fa763243ed10da9 and its normal44-function source/configuration certificate passed; no financial or provider activation follows from that release.
+
+The original Sales provider PostgreSQL runner now has a test-only observation mode. It installs an UNVERSIONED/UNPUBLISHED native candidate before the ENTIRE incumbent prepare/claim/settlement/Rail/recovery suite, then tests36 additional source/CAS/immutable-pointer/history/receipt/role controls. A transaction-scoped removal of the pointer trigger must produce the exact causal failure; connection rollback restores the schema before the positive cases. Controlled Rail failure rolls back the new journal, pointer, observation version and invoice source version. The original captured payment and canonical balance remain exact. The same existing Sales Collections CI step retains its old flags and gains this mode; a separate CI test artifact retains the bounded source-pinned proof JSON while the original Collections receipt keeps its exact archive path. No new test engine, authority, ledger, provider client, scheduler or account.
+
+Local real PostgreSQL16.14 checks have passed with36 new controls and the unchanged incumbent lifecycle, including the guard-removal causal negative. Two actual PostgreSQL-session cases additionally prove one retained observation for identical facts, exact40001 refusal for a conflicting source incarnation, and unchanged original payment/terminal settlement work. The source-pinned proof JSON is generated only after every incumbent check finishes; a new run first clears any stale PASS with NOT_COMPLETED. These are REDUCED TABLES and a TEST AUTH seam with original tracked writer bodies; they are not full-schema/hosted/provider/customer evidence. Earlier23 actual managed full-schema context/CAS checks remain separately dated; the intended43 C154 full-schema controls were NOT executed after their confirmation expired and the original Preview retired. No count or assurance is borrowed across these proofs. Exact-final-head review/CI/source release and final proof-artifact readback remain pending for this source increment.
+
+Production native carrier, full metadata/idempotent forward guards, actual source ordering behind the already-published E08 forwards, finite original C4 work, financial refund/reversal/credit/refund-payable/overpayment disposition, canonical balance/Collections/UI integration and real Stripe TEST/authenticated role/reload/recovery proof remain OPEN. Ordinary Owner and authorized Admin read-only invoice/empty/time-zone-hold navigation are bounded supporting proof, not financial acceptance. No Chat capability, binding state, algorithm maturity or provider activation is promoted. ALG01/12 remain PARTIAL; ALG02/13 progression and recommendation gaps remain. The original ANT51 twelve-outcome matrix, protected ANT52 and ANT163 producer/consumer contract remain the acceptance homes; founder integrated evaluation stays NOT_READY.
+
+
+### C157 — Existing full-schema native proof path (2026-10-30)
+
+The same provider-observation test candidate now also has a rollback-only full-schema proof in the existing `database-contract` job. It includes the original commercial metadata and provider candidate fixtures rather than copying either contract. Intended43 controls exercise current native allocation, provider context, source-version CAS, immutable journal/pointer integrity, original Rail rollback/retry and role refusals. Synthetic signing/issued metadata remains explicitly synthetic. The first direct Preview submissions expired without executing; zero-residue readback is not a43-control pass. Hosted execution/readback is still owed at this source checkpoint. No deployable migration, provider request, financial adjustment, new engine, secret or customer UI is added.
+
+The original Collections download retains its original `sql-proof-result.txt` archive path. Provider-observation test evidence uses a separate workflow artifact in that same existing job. This fixes an observed artifact-layout regression without changing product receipts or creating a second execution record. The E05#3145 Operations proof insertion occupies a separate workflow span and must be preserved on composition. Full O1–O12 and all customer/provider acceptance remain open.
+
+
+### C158 — Later provider evidence through original C4 (2026-10-31)
+
+LOCAL continuation from frozen3144/f045: the same original provider proof now exercises a test-only native event-work candidate. It uses paige_durable_work original immutable identity/payload, leases, transitions and25-attempt ceiling. One signed-event identity creates one bounded occurrence; retries never reopen the original terminal settlement work. Completion binds the original capture and CAS journal plus actual atomic Rail, and observed evidence never authorizes a charge, refund, credit or forgiven debt. Native carrier and signed ingress remain UNAVAILABLE/unmounted.
+
+Actual selected-schema native39 controls pass, including wrong tenant/merchant/environment/charge, retry delay, stale attempt, unknown/exhausted outcomes, terminal replay, original payment/balance/settlement-work retention and actual work-Rail failure rollback/recovery. A controlled missing-merchant-binding mutation produces the exact expected admission failure and restores the original definition. The first added concurrency attempt failed only on parsing psql command tags; it is retained as an INVALID completion proof, corrected without weakening assertions. Actual two-session completion proof and refreshed common-body result are reported separately after execution.
+
+The unmounted continuation module uses the original pinned Stripe GET-only reader and original service RPCs. It validates native work/current capture, heartbeats before and after reads, retains the original pre-read source incarnation, and reports observed/pending/unverified counts only. Initial focused type checking caught an unknown environment assignment; constructing it from the already-validated canonical operation corrected it. All473 source cases across19 suites and scoped lint/type0 pass. No entry point invokes the continuation or requests a provider action.
+
+Integration debt remains explicit: early refund/dispute events can precede initial allocation; the original settlement projection refuses already-adjusted charge flags. Do not acknowledge that ordering as a completed payment. Safe combined original capture/adjustment reconciliation, financial reversal/credit/refund-payable/overpayment treatment in canonical billing, Collections suppression and owner/client history still need implementation and genuine provider/role QA. This is engineering work within O5/O9, not a reason to reduce all12 or invent another financial engine. ALG01/12 retain PARTIAL; ALG02/13/customer usefulness, CentralQA and founder acceptance remain OPEN.
+
+Final local common-body/native result: all39 controls and a real two-session same-event registration/completion case PASS (one commit/one retained replay). The exact merchant-binding removal control fails as expected; native definitions restore after rollback. Original payment, balance and terminal settlement work stay exact; owned test database removed and cluster stopped. The source-pinned JSON records39 work controls/one work race separately from36 observation controls/two source races. Full-schema conditional now reuses this SAME common native check body and original settlement writers; hosted execution remains owed. No native carrier/provider/financial/UI activation.

@@ -1,0 +1,17 @@
+{
+  "head": "f30e2e88cd4b3f458c96a347e3c13b68eb921ef5",
+  "main": "1515a9ffdf3e86733e41d5dde9b58bde27d35b98",
+  "incomingLeavesPreserved": 18564,
+  "ownedNonPacketBlobsConserved": 10,
+  "oldRenderedInputs": 125,
+  "newRenderedInputs": 125,
+  "changedRenderedInputs": [
+    "src/solo/operations/OperationsCrmStageReview.tsx",
+    "src/solo/operations/OperationsCrmWorkEditor.tsx",
+    "src/solo/operations/operations-crm-work-command.ts",
+    "src/solo/operations/operations-crm-work-edit.ts",
+    "src/solo/operations/operations-workspace.css"
+  ],
+  "wholeCurrentRender": "PENDING_BROWSER_WINDOW",
+  "scope": "All original render histories retained; changed source/input conservation is not a new screenshot."
+}

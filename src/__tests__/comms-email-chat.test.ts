@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, commsEmailChatSafeResult, commsEmailConfirmPreview, commsEmailOperationId, dispatchCommsEmailChat } from '../../supabase/functions/_shared/comms-email/chat.ts';
+import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, commsEmailChatSafeResult, commsEmailConfirmPreview, commsEmailOperationId, dispatchCommsEmailChat, type CommsEmailChatDependencies } from '../../supabase/functions/_shared/comms-email/chat.ts';
 import { COMMS_EMAIL_SEND_CAPABILITY } from '../../supabase/functions/_shared/paige-spine/domains/comms.ts';
 import { classifySpentApproval } from '../../supabase/functions/_shared/approval-outcome.ts';
 
@@ -15,6 +15,59 @@ const command = { action: 'comms.email_send', contact_id: contact, connector_id:
 const turn = { thread_id: null, user_turn_ordinal: 1, user_turn: 'email Dana' };
 const context = { tenantId: tenant, userId: 'actor', toolName: 'comms_send_email', args, approved: new Set<string>(), sameToolCalls: 1, turn };
 const preview = { kind: 'email', to_name: 'Dana Reyes', to_address: 'dana@example.test', from_address: 'hello@business.test', subject: 'Thursday', body_text: 'Hi Dana,\n\nSee you Thursday.' };
+const savedSource={message_id:'55555555-5555-4555-8555-555555555555',updated_at:'2026-10-30T16:00:00.123456Z'};
+const sourceContext={...context,userId:'88888888-8888-4888-8888-888888888888',turn:{...turn,thread_id:'99999999-9999-4999-8999-999999999999'},current:()=>true};
+
+it('the same domain dispatcher forwards an exact saved source and explicit file selection to the original door',async()=>{
+  const h=harness();
+  const r=await dispatchCommsEmailChat({...sourceContext,args:{...args,draft_source:savedSource,attachments:[]}},h.deps);
+  expect(r.content.needs_confirm).toBe(true);
+  expect(h.calls[0].options.body).toMatchObject({draft_source:savedSource,attachments:[]});
+});
+it('saved draft preparation cannot spend a send fingerprint or impersonate a source read scope',async()=>{
+  const h=harness();
+  await dispatchCommsEmailChat({...sourceContext,args:{...args,draft_source:savedSource,save_draft:true},approved:new Set([fingerprint])},h.deps);
+  expect(h.calls).toEqual([]);
+  await dispatchCommsEmailChat({...sourceContext,current:undefined,args:{...args,draft_source:savedSource}},h.deps);
+  expect(h.calls).toEqual([]);
+});
+it('a saved-draft result in either chat reports only the correlated draft receipt, never a send',async()=>{
+  const op=await commsEmailOperationId(tenant,sourceContext.userId,{...command,connector_id:null},sourceContext.turn,undefined,undefined,{source:savedSource,save_draft:true});
+  const h=harness([],{ok:true,outcome:'draft_saved',operation_id:op,draft_source:{...savedSource,updated_at:savedSource.updated_at.replace('123456','123457')},receipt_id:'77777777-7777-4777-8777-777777777777'});
+  const r=await dispatchCommsEmailChat({...sourceContext,args:{...args,draft_source:savedSource,save_draft:true}},h.deps);
+  expect(h.calls[0].options.body).toMatchObject({save_draft:true,draft_source:savedSource});
+  expect(r.content).toMatchObject({success:true,outcome:'draft_saved',delivery_confirmed:false});
+  expect(r.spent).toBeUndefined();expect(r.content.note).toMatch(/Nothing was sent/i);
+});
+it('a trusted saved-email pin replays only its stored source and manifest, ignoring new model words or files',async()=>{
+  const path=`${tenant}/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa-proof.pdf`;
+  const manifest=[{path:`${tenant}/governed/${operation}/1-proof.pdf`,source_path:path,name:'proof.pdf',mime:'application/pdf',size:17,sha256:'a'.repeat(64)}];
+  const h=harness([],{ok:true,outcome:'provider_accepted'});
+  const pinned={fingerprint,args:{expected_tenant_id:tenant,operation_id:operation,command,draft_source:savedSource,attachments:manifest}};
+  await dispatchCommsEmailChat({...sourceContext,args:{...args,body:'Different model words',attachments:[]},pinned},h.deps);
+  expect(h.calls[0].options.body).toMatchObject({operation_id:operation,command,draft_source:savedSource,attachments:[{path}],approved_fingerprint:fingerprint});
+  expect(h.calls[0].options.body).not.toHaveProperty('draft_body_html');
+});
+it('approved saved sources require their sticky actor/thread scope even without a lead approval',async()=>{
+ const storedSource={expected_tenant_id:tenant,operation_id:operation,command,draft_source:savedSource};
+ for(const ctx of [{...sourceContext,current:undefined},{...sourceContext,userId:'actor'},{...sourceContext,turn:{...sourceContext.turn,thread_id:null}}]){
+  const h=harness([{fingerprint,args:storedSource}],{ok:true,outcome:'provider_accepted'});
+  const r=await dispatchCommsEmailChat({...ctx,approved:new Set([fingerprint])},h.deps);
+  expect(h.calls).toHaveLength(0);expect(r.content.success).toBe(false);
+ }
+});
+it('rich saved email previews survive the domain projection, and malformed previews cannot expose an approval',async()=>{
+  const html='<p><strong>Exact saved words.</strong></p>';
+  expect(commsEmailConfirmPreview({...preview,body_html:html})?.body_html).toBe(html);
+  const h=harness([],{outcome:'approval_required',fingerprint,preview:{...preview,body_html:{unsafe:true}}});
+  const r=await dispatchCommsEmailChat({...sourceContext,args:{...args,draft_source:savedSource}},h.deps);
+  expect(r.content).toMatchObject({success:false,outcome:'refused'});expect(r.content).not.toHaveProperty('confirm_fingerprint');
+});
+it('saving, sending, changing a source version or choosing different files never shares a source operation',async()=>{
+  const baseline=await commsEmailOperationId(tenant,sourceContext.userId,command,sourceContext.turn,undefined,undefined,{source:savedSource});
+  for(const draft of [{source:savedSource,save_draft:true},{source:{...savedSource,updated_at:savedSource.updated_at.replace('123456','123457')}},{source:savedSource,files:[]}])
+    expect(await commsEmailOperationId(tenant,sourceContext.userId,command,sourceContext.turn,undefined,undefined,draft)).not.toBe(baseline);
+});
 
 function harness(rows: unknown[] = [], reply: unknown = { ok: false, outcome: 'approval_required', fingerprint, summary: 'Email Dana Reyes at dana@example.test from hello@business.test: "Thursday"', preview }) {
   const predicates: unknown[][] = [];
@@ -23,7 +76,7 @@ function harness(rows: unknown[] = [], reply: unknown = { ok: false, outcome: 'a
   query.limit = async (...a: unknown[]) => { predicates.push(['limit', ...a]); return { data: rows, error: null }; };
   const calls: { name: string; options: { body: Record<string, unknown> } }[] = [];
   const deps = {
-    admin: { from: (_name: string) => query },
+    admin: { from: (_name: string) => query as unknown as (ReturnType<CommsEmailChatDependencies["admin"]["from"]> & ReturnType<ReturnType<CommsEmailChatDependencies["admin"]["from"]>["select"]>) },
     caller: { functions: { invoke: async (name: string, options: { body: Record<string, unknown> }): Promise<{ data: unknown; error: unknown }> => { calls.push({ name, options }); return { data: reply, error: null }; } } },
   };
   return { predicates, calls, deps };

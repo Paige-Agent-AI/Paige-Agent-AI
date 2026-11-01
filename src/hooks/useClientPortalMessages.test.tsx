@@ -66,6 +66,81 @@ it("surfaces a read failure instead of an empty conversation", async () => {
   expect(state.unavailable).toBe(false);
 });
 
+it("accepts a genuinely empty, authorized conversation", async () => {
+  f.rpc.mockResolvedValue({ data: { tenant_id: T, messages: [], has_more: false }, error: null });
+  await mount();
+  expect(state.messages).toEqual([]);
+  expect(state.tenantId).toBe(T);
+  expect(state.error).toBeNull();
+  expect(state.unavailable).toBe(false);
+});
+
+it.each([
+  ["missing payload", undefined],
+  ["array envelope", []],
+  ["missing business", { messages: [], has_more: false }],
+  ["missing messages", { tenant_id: T, has_more: false }],
+  ["non-array messages", { tenant_id: T, messages: {}, has_more: false }],
+  ["missing paging state", { tenant_id: T, messages: [] }],
+  ["coerced paging state", { tenant_id: T, messages: [], has_more: "false" }],
+  ["malformed row", { tenant_id: T, messages: [null], has_more: false }],
+  ["invalid kind", { tenant_id: T, messages: [{ ...msg("a", "customer", "2026-10-01T10:00:00Z"), kind: "internal" }], has_more: false }],
+  ["invalid timestamp", { tenant_id: T, messages: [msg("a", "customer", "invalid")], has_more: false }],
+  ["empty message identity", { tenant_id: T, messages: [msg("", "customer", "2026-10-01T10:00:00Z")], has_more: false }],
+  ["duplicate message identity", { tenant_id: T, messages: [msg("a", "customer", "2026-10-01T10:00:00Z"), msg("a", "business", "2026-10-02T10:00:00Z")], has_more: false }],
+])("reports %s as unreadable history, without enabling a first send", async (_label, data) => {
+  f.rpc.mockResolvedValue({ data, error: null });
+  await mount();
+  expect(state.loading).toBe(false);
+  expect(state.error).toContain("couldn't load");
+  expect(state.unavailable).toBe(false);
+  expect(state.messages).toEqual([]);
+  expect(state.tenantId).toBeNull();
+  await act(async () => { expect(await state.send("Do not dispatch", "help")).toBe(false); });
+  expect(sendCalls()).toHaveLength(0);
+});
+
+it("retains loaded history and uncertain-send identity until a complete read can reconcile them", async () => {
+  await mount();
+  f.rpc.mockImplementation(async (name: string) => name === "client_portal_send_message"
+    ? Promise.reject(new Error("lost acknowledgment"))
+    : { data: { tenant_id: T, messages: [], has_more: false }, error: null });
+  await act(async () => { await state.send("Please help", "help"); });
+  const original = state.outbox[0];
+  const saved = state.messages.map(m => m.id);
+  const newRow = { ...msg("new", "customer", "2026-10-03T10:00:00Z", "Please help"), request_id: original.requestId };
+  f.rpc.mockResolvedValue({ data: { tenant_id: T, messages: [newRow, null], has_more: false }, error: null });
+  await act(async () => { await state.refresh(); });
+  expect(state.error).toContain("couldn't load");
+  expect(state.messages.map(m => m.id)).toEqual(saved);
+  expect(state.outbox).toEqual([original]);
+  expect(sendCalls()).toHaveLength(1);
+  f.rpc.mockResolvedValue({ data: { tenant_id: T, messages: [newRow], has_more: false }, error: null });
+  await act(async () => { await state.refresh(); });
+  expect(state.error).toBeNull();
+  expect(state.messages.map(m => m.id)).toContain("new");
+  expect(state.outbox).toEqual([]);
+  expect(sendCalls()).toHaveLength(1);
+});
+
+it("rejects an incomplete older page without losing the current page or paging cursor", async () => {
+  f.rpc.mockResolvedValue({ data: { tenant_id: T, messages: [msg("a", "customer", "2026-10-01T10:00:00Z")], has_more: true }, error: null });
+  await mount();
+  f.rpc.mockResolvedValue({ data: { tenant_id: T, messages: [msg("older", "business", "2026-09-01T10:00:00Z"), {}], has_more: false }, error: null });
+  await act(async () => { await state.loadMore(); });
+  expect(state.messages.map(m => m.id)).toEqual(["a"]);
+  expect(state.hasMore).toBe(true);
+  expect(state.loadingMore).toBe(false);
+  expect(state.error).toContain("couldn't load earlier");
+  expect(sendCalls()).toHaveLength(0);
+  f.rpc.mockResolvedValue({ data: { tenant_id: T, messages: [msg("older", "business", "2026-09-01T10:00:00Z")], has_more: false }, error: null });
+  await act(async () => { await state.loadMore(); });
+  expect(state.messages.map(m => m.id)).toEqual(["older", "a"]);
+  expect(state.hasMore).toBe(false);
+  expect(state.error).toBeNull();
+  expect(conversationCalls()[2][1]).toEqual(conversationCalls()[1][1]);
+});
+
 it("sends with a request id and the resolved tenant, shows the confirmed row, then refreshes", async () => {
   await mount();
   let ok = false;

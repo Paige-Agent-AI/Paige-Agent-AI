@@ -63,12 +63,16 @@ let store: Msg[] = state === "empty" ? [] : state === "help" ? [...helpThread] :
 const pageSize = (limit: unknown) => (typeof limit === "number" && limit > 0 ? limit : 50);
 const MULTI = { code: "42501", message: "select an authorized customer relationship" };
 let sendCount = 0;
+let historyReadable = state !== "malformed" && state !== "partial";
+export const restoreHarnessHistory = () => { historyReadable = true; };
 
 function conversation(args: Record<string, unknown>) {
   if (state === "loading") return new Promise(() => {});
   if (state === "norelationship") return Promise.resolve({ data: null, error: null });
   if (state === "multiple") return Promise.resolve({ data: null, error: MULTI });
   if (state === "error") return Promise.resolve({ data: null, error: { code: "57014", message: "canceling statement due to statement timeout" } });
+  if (!historyReadable) return Promise.resolve({ data: { tenant_id: TENANT,
+    messages: state === "partial" ? [recent[0], null] : null, has_more: false }, error: null });
   const before = typeof args.p_before === "string" ? Date.parse(args.p_before) : null;
   const beforeId = typeof args.p_before_id === "string" ? args.p_before_id : null;
   // (created_at, id) descending, the server's order; ids compare as the server's uuid order does.

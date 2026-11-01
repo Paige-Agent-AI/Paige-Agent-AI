@@ -346,6 +346,49 @@ describe("Solo Systems Check workspace", () => {
     expect(host.textContent).toContain("delivery is not tested");
   });
 
+  it.each([true, false])("qualifies a recorded communications pass when stored calling configuration is %s", configured => {
+    const original = { ...finding, check_id: "comms_configured", status: "pass",
+      paige_interpretation: "Communications are configured. Calling is READY.",
+      evidence: { has_email_identity: true, calling_account_configured: configured,
+        primary_voice_capable: configured, auth_token_vault_ref: "private-test-reference" },
+    };
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [original] });
+    render("/", "Example Services");
+    const trigger = button("Email and phone setup")!;
+    act(() => { trigger.focus(); trigger.click(); });
+    const dialog = host.querySelector('[role="dialog"]')!;
+    expect(dialog.textContent).toContain("Email and phone setup was recorded at the time of this check.");
+    expect(dialog.textContent).toContain("This check does not test live calling, message delivery or current provider readiness.");
+    expect(dialog.textContent).not.toContain("Calling is READY");
+    const rows = [...dialog.querySelectorAll("dl dt")].map(term => [term.textContent, term.nextElementSibling?.textContent]);
+    expect(rows).toContainEqual(["Calling Account Configured", String(configured)]);
+    expect(rows).toContainEqual(["Primary Voice Capable", String(configured)]);
+    expect(dialog.textContent).not.toContain("private-test-reference");
+    expect(original.paige_interpretation).toContain("Calling is READY");
+    expect(dialog.textContent).toContain("Persisted finding finding-1 from Systems Check run run-1");
+    act(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })));
+    expect(document.activeElement).toBe(trigger);
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+    expect(baseCommand.decline).not.toHaveBeenCalled();
+    expect(openPaige).not.toHaveBeenCalled();
+    expect(refreshSystems).not.toHaveBeenCalled();
+  });
+
+  it("does not reinterpret a failed communications check or promote malformed calling evidence", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding,
+      check_id: "comms_configured", status: "fail", paige_interpretation: "No sending identity is recorded.",
+      evidence: { calling_account_configured: "READY", primary_voice_capable: { voice: true } },
+    }] });
+    render("/", "Example Services");
+    act(() => button("What was checked")!.click());
+    const dialog = host.querySelector('[role="dialog"]')!;
+    expect(dialog.textContent).toContain("No sending identity is recorded.");
+    expect(dialog.textContent).toContain("This check does not test live calling, message delivery or current provider readiness.");
+    expect(dialog.textContent).not.toContain("setup was recorded at the time");
+    expect(dialog.textContent).not.toContain("READY");
+    expect(dialog.querySelectorAll("dl dt")).toHaveLength(0);
+  });
+
   it("withholds an area's all-clear when another expected setup check is absent", () => {
     harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding,
       check_id: "company_info_populated", status: "pass",

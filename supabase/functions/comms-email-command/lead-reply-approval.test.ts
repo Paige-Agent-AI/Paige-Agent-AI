@@ -39,6 +39,7 @@ interface World {
   bindingApproval: string | null;
   /** When set, prepare_comms_email_send answers this database error. */
   prepareError: { code: string; message: string } | null;
+  sendUnanswered: boolean;
 }
 const BINDING_APPROVAL = "meta->comms_email_binding->>approval_id";
 function world(overrides: Partial<World> = {}): World {
@@ -55,7 +56,7 @@ function world(overrides: Partial<World> = {}): World {
     domains: [{ tenant_id: T, domain: "own.example.invalid", sendgrid_status: "verified", sendgrid_domain_id: "sg-dom-1", sendgrid_verified_at: "2026-10-13T00:00:00Z" }],
     connectors: [{ id: SG, tenant_id: T, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "sendgrid", from_address: "Hello@Own.example.invalid", active: true, status: "active", credentials_vault_ref: null, config: {} }],
     proposals: [], sent: false, recordResult: { data: { ok: true, state: "provider_accepted" }, error: null },
-    rpcCalls: [], fetches: [], messages: [], bindingApproval: AP, prepareError: null,
+    rpcCalls: [], fetches: [], messages: [], bindingApproval: AP, prepareError: null, sendUnanswered: false,
     ...overrides,
   };
 }
@@ -69,6 +70,12 @@ function scenario(w: World) {
       if (filters.some((f) => f[0] === "lte")) return [];
       const live = w.proposals.find((p) => p.fingerprint === fp && !p.consumed_at);
       if (!live) return [];
+      const args = live.args as Row;
+      const e = eqs(filters);
+      if (e["args->draft_source->>message_id"] !== undefined && (args.draft_source as Row)?.message_id !== e["args->draft_source->>message_id"]) return [];
+      if (e["args->draft_source->>updated_at"] !== undefined && (args.draft_source as Row)?.updated_at !== e["args->draft_source->>updated_at"]) return [];
+      if (e["args->>draft_body_digest"] !== undefined && args.draft_body_digest !== e["args->>draft_body_digest"]) return [];
+      if (filters.some(f => f[0] === "is" && f[1] === "args->draft_source") && args.draft_source !== undefined) return [];
       live.consumed_at = new Date().toISOString();
       return [{ args: live.args }];
     }
@@ -102,15 +109,32 @@ function scenario(w: World) {
       comms_provider_execution_allowed: { data: true, error: null },
       resolve_tool_autonomy: { data: "confirm", error: null },
       find_comms_email_pending_reconciliation: { data: null, error: null },
-      read_comms_email_send_result: rpc("read_comms_email_send_result", (args) => ({ data: w.sent && args._operation_id === OP ? result("provider_accepted") : null, error: null })),
+      read_comms_email_send_result: rpc("read_comms_email_send_result", (args) => ({ data: w.sent && args._operation_id === OP ? result("provider_accepted")
+        : w.messages.some(m => m.operation_id === args._operation_id && m.state === "prepared") ? result("prepared") : null, error: null })),
       // Like the real prepare: the send is written with the approval the door's governance carried.
       prepare_comms_email_send: rpc("prepare_comms_email_send", (args) => {
         if (w.prepareError) return { data: null, error: w.prepareError };
         const approval = ((args._governance as Row).approval_id as string | undefined) ?? null;
-        w.messages.push({ tenant_id: T, [BINDING_APPROVAL]: approval, operation_id: args._operation_id, state: "prepared" });
-        return { data: { ok: true, replayed: false, state: "prepared", message_id: MSG }, error: null };
+        const source = args._draft_source as Row | undefined;
+        const binding = { message_id: source?.message_id ?? MSG, operation_id: args._operation_id, tenant_id: T, actor_user_id: U, approval_id: approval,
+          command: args._command, connector_id: args._connector_id, recipient: args._recipient, from_address: args._from_address,
+          content_digest: args._content_digest, body_html: args._body_html,
+          governance: { ...(args._governance as Row), ...(source ? { draft_source: source } : {}) } };
+        const original = source ? w.messages.find(m => m.id === source.message_id) : null;
+        const prepared = { tenant_id: T, [BINDING_APPROVAL]: approval, operation_id: args._operation_id, state: "prepared", binding };
+        if (original) Object.assign(original, prepared); else w.messages.push(prepared);
+        return { data: { ok: true, replayed: false, state: "prepared", message_id: MSG, ...(args._send_at?{send_at:args._send_at}:{}) }, error: null };
       }),
-      read_comms_email_send_binding: rpc("read_comms_email_send_binding", () => ({ data: { message_id: MSG, operation_id: OP, approval_id: w.bindingApproval }, error: null })),
+      save_comms_email_draft: rpc("save_comms_email_draft",args=>{
+        const m=w.messages.find(m=>m.id===args._message_id);
+        const prior=m?.meta as Row|undefined,save=prior?.comms_draft_save as Row|undefined;
+        if(m&&save?.id===args._save_id&&save?.actor===args._actor&&m.body_text===args._text&&m.subject===args._subject)
+          return {data:{ok:true,outcome:"draft_saved",message_id:m.id,updated_at:m.updated_at,receipt_id:"a3e30300-0000-4000-8000-000000000301",replayed:true},error:null};
+        if(!m||m.updated_at!==args._expected_updated_at)return {data:null,error:{code:"40001",message:"COMMS_EMAIL_DRAFT_SOURCE_CHANGED"}};
+        Object.assign(m,{subject:args._subject,body_text:args._text,body_html:args._html,attachments:args._attachments,scheduled_for:args._send_at,updated_at:"2026-10-30T16:00:00.123457Z",meta:{...prior,comms_draft_save:{id:args._save_id,actor:args._actor}}});
+        return {data:{ok:true,outcome:"draft_saved",message_id:m.id,updated_at:m.updated_at,receipt_id:"a3e30300-0000-4000-8000-000000000301"},error:null};
+      }),
+      read_comms_email_send_binding: rpc("read_comms_email_send_binding", () => ({ data: w.messages.find(m => m.binding)?.binding ?? { message_id: MSG, operation_id: OP, approval_id: w.bindingApproval }, error: null })),
       lead_reply_record_send_service: rpc("lead_reply_record_send_service", () => { if (typeof w.recordResult === "function") return w.recordResult(); return w.recordResult; }),
       mark_support_case_outbound: { data: null, error: null },
     },
@@ -126,6 +150,7 @@ await import("./index.ts");
 let current: World;
 globalThis.fetch = (async (url: string | URL) => {
   current.fetches.push(String(url));
+  if (current.sendUnanswered) throw new Error("Fictional unanswered original email transport");
   current.sent = true;
   for (const m of current.messages) if (m.state === "prepared") m.state = "provider_accepted";
   return new Response(JSON.stringify({ ok: true, outcome: "provider_accepted", delivery_confirmed: false }), { status: 200 });
@@ -141,6 +166,153 @@ async function call(w: World, extra: Row = {}, command: Row = {}) {
   return { status: res.status, body: await res.json() as Row };
 }
 const rpcNames = (w: World) => w.rpcCalls.map((c) => c.name);
+
+const DRAFT_VERSION="2026-10-30T16:00:00.123456Z";
+const DRAFT_SOURCE={message_id:MSG,updated_at:DRAFT_VERSION};
+const DRAFT_HTML="<p><strong>Hi Riley, thanks for your note.</strong></p>";
+function withOriginalDraft(overrides:Row={}){
+ return world({messages:[{id:MSG,tenant_id:T,contact_id:C,connector_id:SG,channel_type:"email",direction:"outbound",status:"draft",updated_at:DRAFT_VERSION,
+  subject:"Thanks for reaching out",body_text:"Hi Riley, thanks for your note.",body_html:DRAFT_HTML,attachments:[],meta:{source:"original-manual-draft"},...overrides}]});
+}
+test("saved draft check and approval use the same original door, source version and server rich HTML",async()=>{
+ const w=withOriginalDraft();const p=await call(w,{draft_source:DRAFT_SOURCE});
+ assert.equal(p.status,202,JSON.stringify(p.body));assert.equal(w.fetches.length,0);assert.equal(w.messages.length,1);
+ assert.equal((p.body.preview as Row).body_html,DRAFT_HTML,"review must expose the same server-read rich body being approved");
+ assert.deepEqual((w.proposals[0].args as Row).draft_source,DRAFT_SOURCE);assert.equal((w.proposals[0].args as Row).draft_body_html,DRAFT_HTML);
+ assert.match(String((w.proposals[0].args as Row).draft_body_digest),/^[a-f0-9]{64}$/);
+ const sent=await call(w,{draft_source:DRAFT_SOURCE,approved_fingerprint:p.body.fingerprint});
+ assert.equal(sent.body.outcome,"provider_accepted",JSON.stringify(sent.body));assert.equal(w.messages.length,1);assert.equal(w.fetches.length,1);
+ const prepared=w.rpcCalls.find(c=>c.name==="prepare_comms_email_send");assert.deepEqual(prepared?.args._draft_source,DRAFT_SOURCE);assert.equal(prepared?.args._body_html,DRAFT_HTML);
+ const replay=await call(w,{draft_source:DRAFT_SOURCE});assert.equal(replay.body.outcome,"provider_accepted");assert.equal(w.fetches.length,1);
+});
+test("saving an unsent edit changes only its original draft, without an approval or provider attempt",async()=>{
+ const w=withOriginalDraft({action_id:ACT});
+ const saved=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP,attachments:[],save_draft:true},{body:"An edited unsent reply."});
+ assert.equal(saved.body.outcome,"draft_saved",JSON.stringify(saved.body));
+ assert.deepEqual(saved.body.draft_source,{message_id:MSG,updated_at:"2026-10-30T16:00:00.123457Z"});
+ assert.equal(w.messages.length,1);assert.equal(w.messages[0].body_text,"An edited unsent reply.");
+ assert.equal(w.proposals.length,0);assertNoSend(w);assert.equal(w.approvals[0].status,"pending");
+ const replay=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP,attachments:[],save_draft:true},{body:"An edited unsent reply."});
+ assert.equal(replay.body.outcome,"draft_saved",JSON.stringify(replay.body));assert.equal(replay.body.replayed,true);assertNoSend(w);
+});
+test("save cannot be used without an original source or with an approval-redemption fingerprint",async()=>{
+ for(const request of [{save_draft:true},{save_draft:true,draft_source:DRAFT_SOURCE,approved_fingerprint:"a".repeat(16)}]){
+  const w=withOriginalDraft();const result=await call(w,request);assert.equal(result.status,400);assertNoSend(w);
+  assert.ok(!rpcNames(w).includes("save_comms_email_draft"));
+ }
+});
+test("an action-owned saved reply uses its original verified approval and original message",async()=>{
+ const w=withOriginalDraft({action_id:ACT});const p=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP});
+ assert.equal(p.status,202,JSON.stringify(p.body));assert.equal(w.fetches.length,0);
+ assert.equal((p.body.preview as Row).body_html,DRAFT_HTML);
+ const r=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP,approved_fingerprint:p.body.fingerprint});
+ assert.equal(r.body.outcome,"provider_accepted",JSON.stringify(r.body));assert.equal(w.messages.length,1);
+ const prepared=w.rpcCalls.find(c=>c.name==="prepare_comms_email_send");
+ assert.equal((prepared?.args._governance as Row).approval_id,AP);assert.deepEqual(prepared?.args._draft_source,DRAFT_SOURCE);
+ assert.equal(w.rpcCalls.filter(c=>c.name==="lead_reply_record_send_service").length,1);
+});
+test("an action-owned saved reply accepts its explicit empty file list and records only the original operation",async()=>{
+ const w=withOriginalDraft({action_id:ACT});
+ const request={draft_source:DRAFT_SOURCE,approval_id:AP,attachments:[]};
+ const p=await call(w,request);
+ assert.equal(p.status,202,JSON.stringify(p.body));assert.equal(w.fetches.length,0);
+ const r=await call(w,{...request,approved_fingerprint:p.body.fingerprint});
+ assert.equal(r.body.outcome,"provider_accepted",JSON.stringify(r.body));
+ assert.equal(r.body.record_status,"recorded");assert.equal(w.messages.length,1);
+ assert.equal(w.rpcCalls.filter(c=>c.name==="lead_reply_record_send_service").length,1);
+ const replay=await call(w,request);assert.equal(replay.body.outcome,"provider_accepted");assert.equal(w.fetches.length,1);
+});
+test("source-bound approval files still reject foreign paths before proposing or sending",async()=>{
+ const w=withOriginalDraft({action_id:ACT});
+ const r=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP,attachments:[{path:`${T2}/uploads/foreign.pdf`}]});
+ assert.equal(r.body.code,"COMMS_EMAIL_ATTACHMENTS_INVALID",JSON.stringify(r.body));
+ assert.equal(w.proposals.length,0);assertNoSend(w);
+});
+test("legacy unbound approval files keep their original refusal",async()=>{
+ const w=world();const r=await call(w,{approval_id:AP,attachments:[]});
+ assert.equal(r.body.code,"COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED");assert.equal(w.proposals.length,0);assertNoSend(w);
+});
+test("a saved action reply can approve a later send without prematurely recording acceptance",async()=>{
+ const w=withOriginalDraft({action_id:ACT});
+ const send_at=new Date(Math.floor((Date.now()+60*60_000)/60_000)*60_000).toISOString();
+ const request={draft_source:DRAFT_SOURCE,approval_id:AP,attachments:[],send_at};
+ const p=await call(w,request);assert.equal(p.status,202,JSON.stringify(p.body));
+ assert.equal((p.body.preview as Row).send_at,send_at);
+ const r=await call(w,{...request,approved_fingerprint:p.body.fingerprint});
+ assert.equal(r.body.outcome,"scheduled",JSON.stringify(r.body));
+ assert.equal(w.fetches.length,0);assert.ok(!rpcNames(w).includes("lead_reply_record_send_service"));
+ const prepared=w.rpcCalls.find(c=>c.name==="prepare_comms_email_send");
+ assert.equal(prepared?.args._send_at,send_at);assert.equal((prepared?.args._governance as Row).approval_id,AP);
+});
+test("an action-owned source cannot borrow another otherwise valid approval",async()=>{
+ for(const extra of [{draft_source:DRAFT_SOURCE,approval_id:AP2}]){
+  const w=withOriginalDraft({action_id:ACT});const r=await call(w,extra);
+  assert.equal(r.body.code,"COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED",JSON.stringify(r.body));
+  assert.equal(w.proposals.length,0);assert.equal(w.fetches.length,0);
+ }
+});
+test("changing the original action after source review never consumes or dispatches its approval",async()=>{
+ const w=withOriginalDraft({action_id:ACT});const p=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP});
+ assert.equal(p.status,202,JSON.stringify(p.body));w.messages[0].action_id=ACT2;
+ const r=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP,approved_fingerprint:p.body.fingerprint});
+ assert.equal(r.body.code,"COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED");assert.equal(w.fetches.length,0);
+ assert.equal(w.proposals[0].consumed_at,undefined);
+});
+test("changing original HTML without changing visible plain text does not consume its approval",async()=>{
+ const w=withOriginalDraft();const p=await call(w,{draft_source:DRAFT_SOURCE});
+ w.messages[0].body_html="<p><em>Hi Riley, thanks for your note.</em></p>";
+ const changed=await call(w,{draft_source:DRAFT_SOURCE,approved_fingerprint:p.body.fingerprint});
+ assert.notEqual(changed.body.outcome,"provider_accepted");assert.equal(w.fetches.length,0);assert(!w.proposals[0].consumed_at);assert(!rpcNames(w).includes("prepare_comms_email_send"));
+});
+test("a microsecond source edit refuses before consuming approval or preparing a replacement",async()=>{
+ const w=withOriginalDraft();const p=await call(w,{draft_source:DRAFT_SOURCE});w.messages[0].updated_at=DRAFT_VERSION.replace("123456","123457");
+ const changed=await call(w,{draft_source:DRAFT_SOURCE,approved_fingerprint:p.body.fingerprint});assert.equal(changed.body.code,"COMMS_EMAIL_DRAFT_SOURCE_CHANGED");
+ assert(!w.proposals[0].consumed_at);assert.equal(w.messages.length,1);assert.equal(w.fetches.length,0);
+});
+test("a different or stripped saved source cannot consume the original proposal",async()=>{
+ const w=withOriginalDraft();const p=await call(w,{draft_source:DRAFT_SOURCE});
+ const changed=await call(w,{approved_fingerprint:p.body.fingerprint});assert.notEqual(changed.body.outcome,"provider_accepted");assert(!w.proposals[0].consumed_at);assert.equal(w.fetches.length,0);
+});
+test("personal source privacy is checked even when the command chooses a company From",async()=>{
+ const w=withOriginalDraft();w.connectors[0].mailbox_class="personal";w.connectors[0].mailbox_owner_user_id=C;
+ const r=await call(w,{draft_source:DRAFT_SOURCE},{connector_id:SG});assert.equal(r.body.code,"COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE");assert.equal(w.proposals.length,0);assert.equal(w.fetches.length,0);
+});
+test("request-authored HTML and expanded source descriptors are rejected before source reads",async()=>{
+ for(const extra of [{draft_source:{...DRAFT_SOURCE,body_html:"<p>untrusted</p>"}},{draft_source:DRAFT_SOURCE,draft_body_html:"<p>untrusted</p>"}]){
+  const w=withOriginalDraft();const r=await call(w,extra);assert.equal(r.status,400);assert.equal(w.proposals.length,0);assert.equal(w.rpcCalls.length,0);assert.equal(w.fetches.length,0);
+ }
+});
+test("an old database refuses the required source overload without any legacy fallback",async()=>{
+ const w=withOriginalDraft();w.prepareError={code:"PGRST202",message:"schema cache missing required overload"};const p=await call(w,{draft_source:DRAFT_SOURCE});
+ const r=await call(w,{draft_source:DRAFT_SOURCE,approved_fingerprint:p.body.fingerprint});assert.equal(r.body.reason,"COMMS_EMAIL_DRAFT_BINDING_UNAVAILABLE");
+ assert.equal(w.rpcCalls.filter(c=>c.name==="prepare_comms_email_send").length,1);assert.equal(w.fetches.length,0);assert.equal(w.messages.length,1);
+});
+test("a terminal saved draft is never reported as another source or edited command",async()=>{
+ const w=withOriginalDraft();const p=await call(w,{draft_source:DRAFT_SOURCE});await call(w,{draft_source:DRAFT_SOURCE,approved_fingerprint:p.body.fingerprint});
+ for(const [extra,cmd] of [[{},{}],[{draft_source:{...DRAFT_SOURCE,updated_at:DRAFT_VERSION.replace("123456","123457")} },{}],[{draft_source:DRAFT_SOURCE},{body:"Different words"}]] as [Row,Row][]){
+  const r=await call(w,extra,cmd);assert.equal(r.body.outcome,"outcome_unknown");assert.equal(r.body.code,"COMMS_EMAIL_DRAFT_REPLAY_MISMATCH");
+ }
+ assert.equal(w.fetches.length,1);assert.equal(w.messages.length,1);
+});
+test("an unanswered prepared saved draft recovers its same approved binding, not a new source row",async()=>{
+ const w=withOriginalDraft();w.sendUnanswered=true;
+ const p=await call(w,{draft_source:DRAFT_SOURCE});const first=await call(w,{draft_source:DRAFT_SOURCE,approved_fingerprint:p.body.fingerprint});
+ assert.equal(first.body.outcome,"outcome_unknown",JSON.stringify(first.body));assert.equal(w.fetches.length,1);assert.equal(w.messages.length,1);
+ // The original row's native update changes its version, and its post-prepare
+ // content is not a new source. Recovery uses the approved binding instead.
+ w.messages[0].updated_at="2026-10-30T17:00:00.999999Z";
+ const recovery=await call(w,{draft_source:DRAFT_SOURCE});assert.equal(recovery.status,202,JSON.stringify(recovery.body));
+ assert.notEqual(recovery.body.fingerprint,p.body.fingerprint);assert.equal(w.fetches.length,1);
+ assert.equal((w.proposals.at(-1)?.args as Row).draft_body_html,DRAFT_HTML);
+ w.sendUnanswered=false;const sent=await call(w,{draft_source:DRAFT_SOURCE,approved_fingerprint:recovery.body.fingerprint});
+ assert.equal(sent.body.outcome,"provider_accepted",JSON.stringify(sent.body));assert.equal(w.messages.length,1);assert.equal(w.fetches.length,2);
+ assert(w.rpcCalls.filter(c=>c.name==="prepare_comms_email_send").every(c=>(c.args._draft_source as Row).message_id===MSG));
+});
+test("a changed source cannot mint a recovery approval for an unanswered existing operation",async()=>{
+ const w=withOriginalDraft();w.sendUnanswered=true;const p=await call(w,{draft_source:DRAFT_SOURCE});await call(w,{draft_source:DRAFT_SOURCE,approved_fingerprint:p.body.fingerprint});
+ const count=w.proposals.length;const r=await call(w,{draft_source:{...DRAFT_SOURCE,updated_at:DRAFT_VERSION.replace("123456","123457")}});
+ assert.equal(r.body.code,"COMMS_EMAIL_DRAFT_REPLAY_MISMATCH");assert.equal(r.body.outcome,"outcome_unknown");assert.equal(w.proposals.length,count);assert.equal(w.fetches.length,1);
+});
 
 // ── the door, end to end ─────────────────────────────────────────────────────────────────────
 test("a verified PAIGE Email (SendGrid) sender is proposed; approval_id is part of the fingerprinted call", async () => {
@@ -506,4 +678,33 @@ test("approval validation keeps the email-kind set closed with no coercion", asy
     const w = world({ actions: [{ id: ACT, tenant_id: T, approval_id: AP, action_kind: kind, contact_id: C }] });
     assert.equal(await verifyLeadReplyApproval(admin(w), { tenantId: T, approvalId: AP, contactId: C }), "LEAD_REPLY_APPROVAL_WRONG_KIND");
   }
+});
+
+
+test("original inbound email reply requires its exact saved source; generic or SMS approvals stay refused", async () => {
+  const source={id:MSG,tenant_id:T,contact_id:C,action_id:ACT,channel_type:"email",direction:"outbound",status:"draft",meta:{source:"comms-draft-reply"}};
+  const action={id:ACT,tenant_id:T,approval_id:AP,action_kind:"comms-draft-reply",contact_id:C,status:"pending_approval",channel_type:"email"};
+  const w=world({actions:[action],messages:[source]});
+  assert.equal(await verifyLeadReplyApproval(admin(w),{tenantId:T,approvalId:AP,contactId:C,savedSourceId:MSG}),null);
+  assert.equal(await verifyLeadReplyApproval(admin(w),{tenantId:T,approvalId:AP,contactId:C}),"LEAD_REPLY_APPROVAL_WRONG_KIND");
+  for(const change of [{channel_type:"sms"},{status:"blocked"},{approval_id:AP2}]){
+    const negative=world({actions:[{...action,...change}],messages:[source]});
+    assert.equal(await verifyLeadReplyApproval(admin(negative),{tenantId:T,approvalId:AP,contactId:C,savedSourceId:MSG}),"LEAD_REPLY_APPROVAL_WRONG_KIND");
+  }
+  for(const change of [{action_id:ACT2},{channel_type:"sms"},{status:"sent"},{meta:{source:"original-manual-draft"}},{tenant_id:T2},{contact_id:C2}]){
+    const negative=world({actions:[action],messages:[{...source,...change}]});
+    assert.equal(await verifyLeadReplyApproval(admin(negative),{tenantId:T,approvalId:AP,contactId:C,savedSourceId:MSG}),"LEAD_REPLY_APPROVAL_WRONG_KIND");
+  }
+});
+
+
+test("saved source derives only its original approval for Chat without accepting model approval authority", async()=>{
+ const w=withOriginalDraft({action_id:ACT,meta:{source:"comms-draft-reply"}});
+ w.actions[0]={...w.actions[0],action_kind:"comms-draft-reply",status:"pending_approval",channel_type:"email"};
+ const proposed=await call(w,{draft_source:DRAFT_SOURCE});
+ assert.equal(proposed.status,202,JSON.stringify(proposed.body));assert.equal(w.fetches.length,0);
+ assert.equal((w.proposals[0].args as Row).approval_id,AP);
+ const sent=await call(w,{draft_source:DRAFT_SOURCE,approved_fingerprint:proposed.body.fingerprint});
+ assert.equal(sent.body.outcome,"provider_accepted",JSON.stringify(sent.body));assert.equal(sent.body.record_status,"recorded");
+ assert.equal(w.fetches.length,1);assert.equal(w.rpcCalls.filter(c=>c.name==="lead_reply_record_send_service").length,1);
 });

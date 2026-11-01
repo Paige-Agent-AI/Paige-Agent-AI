@@ -7,15 +7,18 @@ import type { OwnerTaskReview } from "./data/ownerTaskAutomation";
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 /** Presentation guard only; the native writer independently validates every reviewed byte. */
 function reviewableOwnerTask(r: OwnerTaskReview): boolean {
-  const p = r.process, a = r.acts[0];
-  if (r.acts.length !== 1 || !a || a.position !== 1 || a.action_kind !== "owner.task" || a.tool_key !== null
+  const p = r.process;
+  if (r.acts.length < 1 || r.acts.length > 20 || new Set(r.acts.map(a => a.id)).size !== r.acts.length
     || p.trigger_key !== "contact.created" || typeof p.created_by !== "string" || !object(p.trigger_config)
-    || Object.keys(p.trigger_config).length || !Array.isArray(p.conditions) || p.conditions.length || !object(a.config)) return false;
-  const c = a.config;
-  return typeof c.title === "string" && c.title.trim().length > 0 && [...c.title.trim()].length <= 500
-    && (!Object.prototype.hasOwnProperty.call(c, "description") || typeof c.description === "string" && [...c.description].length <= 10_000)
-    && Object.keys(c).every(k => ["title", "description"].includes(k))
-    && !/(\{\{|\$\{|\{%|<%)/.test(c.title + (typeof c.description === "string" ? c.description : ""));
+    || Object.keys(p.trigger_config).length || !Array.isArray(p.conditions) || p.conditions.length) return false;
+  return r.acts.every((a, index) => {
+    if (a.position !== index + 1 || a.action_kind !== "owner.task" || a.tool_key !== null || !object(a.config)) return false;
+    const c = a.config;
+    return typeof c.title === "string" && c.title.trim().length > 0 && [...c.title.trim()].length <= 500
+      && (!Object.prototype.hasOwnProperty.call(c, "description") || typeof c.description === "string" && [...c.description].length <= 10_000)
+      && Object.keys(c).every(k => ["title", "description"].includes(k))
+      && !/(\{\{|\$\{|\{%|<%)/.test(c.title + (typeof c.description === "string" ? c.description : ""));
+  });
 }
 /** Display only known literal task fields; this never admits an execution. */
 function SavedProcessDesign({ review }: { review: OwnerTaskReview }) {
@@ -32,7 +35,7 @@ function SavedProcessDesign({ review }: { review: OwnerTaskReview }) {
   return <div className="sa-owner-task-design">
     <p>Saved status: {review.process.state === "draft" ? "Draft" : review.process.state === "paused" ? "Paused"
       : review.process.state === "live" ? "Recorded live; activation is unverified" : "Unverified"}.</p>
-    {review.acts.length > 1 && <p>Multiple steps are saved for design review. This control currently enables only one supported internal-task step.</p>}
+    {review.acts.length > 1 && <p>Multiple steps are saved for design review. Only a complete supported internal-task chain can be enabled here.</p>}
     {!ordered && <p>Saved step order needs review. Recorded positions are shown without rearranging them.</p>}
     {settings && <p>Trigger settings and conditions need separate review. Their values are not displayed here.</p>}
     <ol aria-label="Saved process steps">{steps.map((step, index) => {
@@ -112,7 +115,7 @@ export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuard
   };
   return <section className="sa-panel sa-owner-tasks" aria-labelledby={`${id}-title`} aria-busy={a.busy || a.read.status === "loading"}>
     <header className="sa-panel-head"><div><h2 id={`${id}-title`}>Internal task processes</h2>
-      <p>A new contact can prepare a task for your approval.</p></div>
+      <p>A new contact can prepare internal tasks for your approval.</p></div>
       <button type="button" className="sa-ctl" ref={refreshRef} disabled={a.busy || a.read.status === "loading"}
         onClick={() => { setReview(null); void a.refresh(); }}>Refresh</button></header>
     {a.busy && <p className="sa-empty" role="status">Saving the reviewed configuration…</p>}
@@ -131,6 +134,7 @@ export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuard
             <h3 className="sa-rule-sentence" id={`${id}-${r.id}-name`}>{String(r.process.name)}</h3>
             <p className="sa-rule-meta">When a contact is created · {a.needsRefresh ? "Last read: " : ""}{supported ? stateWords(r) : "Unsupported configuration"} · {supported ? "Each task needs your approval" : "Execution support is not verified"}</p>
             {supported && r.acts.map(step => <div className="sa-owner-task-step" key={String(step.id)}>
+              {r.acts.length > 1 && <strong>Step {String(step.position)}</strong>}
               {object(step.config) && typeof step.config.title === "string" && <p className="sa-rule-sentence sa-owner-task-title">{step.config.title}</p>}
               {object(step.config) && typeof step.config.description === "string" && <p className="sa-note sa-owner-task-description">{step.config.description}</p>}
             </div>)}
@@ -155,7 +159,7 @@ export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuard
             <OwnerTaskProcessHistory source={a} review={r} account={base?.split("/")[2] ?? null}
               id={`${id}-${r.id}-history`} close={closeHistory} navigationHeld={navigationHeld} />
             {selected === r && <div id={`${id}-${r.id}-review`} className="sa-editor" onKeyDown={e => { if (e.key === "Escape" && !a.busy) { e.preventDefault(); cancel(); } }}>
-              <div className="sa-field"><p className="sa-note">Enable this exact task for contacts created after you enable it. Each occurrence waits for your approval. No task is created by enabling.</p></div>
+              <div className="sa-field"><p className="sa-note">{r.acts.length === 1 ? "Enable this exact task for contacts created after you enable it. Each occurrence waits for your approval. No task is created by enabling." : `Enable these ${r.acts.length} exact tasks for contacts created after you enable them. Each task occurrence needs its own approval. Enabling creates no tasks. Recorded order does not establish task dependencies.`}</p></div>
               <div className="sa-editor-foot"><button type="button" className="sa-action" data-primary disabled={a.busy}
                 onClick={() => void submit(r, "arm")}>Enable future contacts</button>
                 <button type="button" className="sa-ctl" ref={cancelRef} disabled={a.busy} onClick={cancel}>Cancel</button></div>

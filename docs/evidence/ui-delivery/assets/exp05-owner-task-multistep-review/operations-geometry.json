@@ -1,0 +1,1046 @@
+{
+  "proofClass": "SYNTHETIC_ACTUAL_OPERATIONS_ROUTE_WORKSPACE_PLAYBOOKS",
+  "captures": [
+    {
+      "name": "operations-mineral-1366-closed-review.jpg",
+      "expected": {
+        "width": 1366,
+        "height": 768,
+        "steps": 2,
+        "open": false,
+        "scene": "review"
+      },
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 62.26250076293945,
+              "x": 1253.737548828125,
+              "y": 25.100000381469727
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 394.4500122070313
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 448.4500122070313
+            },
+            "text": "View history"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 155.0749969482422,
+              "x": 128.8000030517578,
+              "y": 601.9500122070312
+            },
+            "text": "Enable future contacts"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 57.8125,
+              "x": 293.875,
+              "y": 601.9500122070312
+            },
+            "text": "Cancel"
+          }
+        ],
+        "department": {
+          "client": 641,
+          "overflow": "auto",
+          "scroll": 904,
+          "scrollTop": 262.3999938964844
+        },
+        "document": {
+          "client": 1366,
+          "scroll": 1366
+        },
+        "focus": "Enable future contacts",
+        "ink": "rgb(32, 30, 35)",
+        "main": {
+          "client": 702,
+          "overflow": "hidden",
+          "scroll": 702
+        },
+        "review": {
+          "height": 70.80000305175781,
+          "width": 1203.2000732421875,
+          "x": 112.8000030517578,
+          "y": 588.1500244140625
+        },
+        "steps": 2,
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "jpeg": {
+        "width": 1366,
+        "height": 768
+      },
+      "sha256": "70d03140315e016866b2ae05e69d3d3af90c2d715b58ad35b91cc70a947148f4",
+      "bridgeEdge": false
+    },
+    {
+      "name": "operations-mineral-1366-open-review.jpg",
+      "expected": {
+        "width": 1366,
+        "height": 768,
+        "steps": 2,
+        "open": true,
+        "scene": "review"
+      },
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 62.26250076293945,
+              "x": 789.1625366210938,
+              "y": -15.699999809265137
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 393.9500122070313
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 447.9500122070313
+            },
+            "text": "View history"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 155.0749969482422,
+              "x": 128.8000030517578,
+              "y": 601.4500122070312
+            },
+            "text": "Enable future contacts"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 57.8125,
+              "x": 293.875,
+              "y": 601.4500122070312
+            },
+            "text": "Cancel"
+          }
+        ],
+        "department": {
+          "client": 641,
+          "overflow": "auto",
+          "scroll": 944,
+          "scrollTop": 303.20001220703125
+        },
+        "document": {
+          "client": 1366,
+          "scroll": 1366
+        },
+        "focus": "Enable future contacts",
+        "ink": "rgb(32, 30, 35)",
+        "main": {
+          "client": 702,
+          "overflow": "hidden",
+          "scroll": 702
+        },
+        "review": {
+          "height": 70.80000305175781,
+          "width": 738.625,
+          "x": 112.8000030517578,
+          "y": 587.6500244140625
+        },
+        "steps": 2,
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "jpeg": {
+        "width": 1366,
+        "height": 768
+      },
+      "sha256": "ff6006f0fedd3d5467da250e8325711faaaa354ac27188e861a6a20906e7538d",
+      "bridgeEdge": false
+    },
+    {
+      "name": "operations-mineral-1536-closed-review.jpg",
+      "expected": {
+        "width": 1536,
+        "height": 770,
+        "steps": 2,
+        "open": false,
+        "scene": "review"
+      },
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 62.26250076293945,
+              "x": 1423.3375244140625,
+              "y": 27.5
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 116.82500457763672,
+              "x": 256.8000183105469,
+              "y": 396.8500061035156
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 89.5,
+              "x": 256.8000183105469,
+              "y": 450.8500061035156
+            },
+            "text": "View history"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 155.0749969482422,
+              "x": 272.8000183105469,
+              "y": 604.3500366210938
+            },
+            "text": "Enable future contacts"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 57.8125,
+              "x": 437.875,
+              "y": 604.3500366210938
+            },
+            "text": "Cancel"
+          }
+        ],
+        "department": {
+          "client": 643,
+          "overflow": "auto",
+          "scroll": 904,
+          "scrollTop": 260
+        },
+        "document": {
+          "client": 1536,
+          "scroll": 1536
+        },
+        "focus": "Enable future contacts",
+        "ink": "rgb(32, 30, 35)",
+        "main": {
+          "client": 704,
+          "overflow": "hidden",
+          "scroll": 704
+        },
+        "review": {
+          "height": 70.80000305175781,
+          "width": 1228.800048828125,
+          "x": 256.8000183105469,
+          "y": 590.5499877929688
+        },
+        "steps": 2,
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "jpeg": {
+        "width": 1535,
+        "height": 770
+      },
+      "sha256": "ea04023fb51c0630fe01183589b954df71b69d5127be3404e084e466d5dba395",
+      "bridgeEdge": true
+    },
+    {
+      "name": "operations-mineral-1536-open-review.jpg",
+      "expected": {
+        "width": 1536,
+        "height": 770,
+        "steps": 2,
+        "open": true,
+        "scene": "review"
+      },
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 62.26250076293945,
+              "x": 901.1000366210938,
+              "y": -13.300000190734863
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 116.82500457763672,
+              "x": 256.8000183105469,
+              "y": 396.3500061035156
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 89.5,
+              "x": 256.8000183105469,
+              "y": 450.3500061035156
+            },
+            "text": "View history"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 155.0749969482422,
+              "x": 272.8000183105469,
+              "y": 603.8500366210938
+            },
+            "text": "Enable future contacts"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 57.8125,
+              "x": 437.875,
+              "y": 603.8500366210938
+            },
+            "text": "Cancel"
+          }
+        ],
+        "department": {
+          "client": 643,
+          "overflow": "auto",
+          "scroll": 944,
+          "scrollTop": 300.79998779296875
+        },
+        "document": {
+          "client": 1536,
+          "scroll": 1536
+        },
+        "focus": "Enable future contacts",
+        "ink": "rgb(32, 30, 35)",
+        "main": {
+          "client": 704,
+          "overflow": "hidden",
+          "scroll": 704
+        },
+        "review": {
+          "height": 70.80000305175781,
+          "width": 706.5625,
+          "x": 256.8000183105469,
+          "y": 590.0499877929688
+        },
+        "steps": 2,
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "jpeg": {
+        "width": 1535,
+        "height": 770
+      },
+      "sha256": "18cc1eeee96ffb7857d687cbe7778d15ff11245512815ad7b816eb5b2d4f5a6d",
+      "bridgeEdge": true
+    },
+    {
+      "name": "operations-mineral-1024-closed-review.jpg",
+      "expected": {
+        "width": 1024,
+        "height": 768,
+        "steps": 2,
+        "open": false,
+        "scene": "review"
+      },
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 62.26250076293945,
+              "x": 911.3375244140624,
+              "y": -15.699999809265137
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 393.9500122070313
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 447.9500122070313
+            },
+            "text": "View history"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 155.0749969482422,
+              "x": 128.8000030517578,
+              "y": 601.4500122070312
+            },
+            "text": "Enable future contacts"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 57.8125,
+              "x": 293.875,
+              "y": 601.4500122070312
+            },
+            "text": "Cancel"
+          }
+        ],
+        "department": {
+          "client": 641,
+          "overflow": "auto",
+          "scroll": 944,
+          "scrollTop": 303.20001220703125
+        },
+        "document": {
+          "client": 1024,
+          "scroll": 1024
+        },
+        "focus": "Enable future contacts",
+        "ink": "rgb(32, 30, 35)",
+        "main": {
+          "client": 702,
+          "overflow": "hidden",
+          "scroll": 702
+        },
+        "review": {
+          "height": 70.80000305175781,
+          "width": 860.7999877929688,
+          "x": 112.8000030517578,
+          "y": 587.6500244140625
+        },
+        "steps": 2,
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "jpeg": {
+        "width": 1024,
+        "height": 768
+      },
+      "sha256": "f79cac99fc13d75260764dac870a0623124d1a1bb2b6296fa4b41148f7d92785",
+      "bridgeEdge": false
+    },
+    {
+      "name": "operations-mineral-1024-open-review.jpg",
+      "expected": {
+        "width": 1024,
+        "height": 768,
+        "steps": 2,
+        "open": true,
+        "scene": "review"
+      },
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 62.26250076293945,
+              "x": 911.3375244140624,
+              "y": 287.5
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 697.1500244140625
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 751.1500244140625
+            },
+            "text": "View history"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 155.0749969482422,
+              "x": 128.8000030517578,
+              "y": 904.6500244140624
+            },
+            "text": "Enable future contacts"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 57.8125,
+              "x": 293.875,
+              "y": 904.6500244140624
+            },
+            "text": "Cancel"
+          }
+        ],
+        "department": {
+          "client": 641,
+          "overflow": "auto",
+          "scroll": 944,
+          "scrollTop": 0
+        },
+        "document": {
+          "client": 1024,
+          "scroll": 1024
+        },
+        "focus": "PAIGE workspace readySkip to contentPAIGEBusiness operating systemCommand CenterOperationsTeam HubClientsMarketingAdsSalesFinanceMarketplaceSettingsObsidianSign outTETest servicesOwner workspaceTest servicesOperationsSoloDirect PAIGE, or press ⌘\\⌘\\OverviewWorkProjectsDeliveryPlaybooksCapacityReview with ZIONProceduresAutomationsAutomationsDesign with ZIONContact created → Task approval → Original work and receiptInternal task processesA new contact can prepare internal tasks for your approval.RefreshReview every new contactWhen a contact is created · Draft · Each task needs your approvalStep 1Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. Preserve the complete request and check these long reference details: contactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferenceRead the contact record and confirm the next internal task before taking any action.\nKeep the original notes, verify ownership, and let the owner approve each occurrence. This synthetic task never sends a message.Step 2Review internal responsibility 2Read the contact record and confirm the next internal task before taking any action.\nKeep the original notes, verify ownership, and let the owner approve each occurrence. This synthetic task never sends a message.Review to enableView historyEnable these 2 exact tasks for contacts created after you enable them. Each task occurrence needs its own approval. Enabling creates no tasks. Recorded order does not establish task dependencies.Enable future contactsCancelReview pending tasksOpen workPAIGEYour live operating partner@container (max-width: 650px){[data-solo-thread-rail=\"true\"]{display:none!important}[data-solo-mobile-history=\"true\"]{display:flex!important}.spw-tabs button{padding-inline:6px;font-size:11px;gap:4px}}ChatKnowledgeResearchHelpersCapabilitiesSearch conversations New chatNo saved conversations yet ChatsNew chatPAIGEActive Solo account · tenant-scopedWhat are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve.05:42 PMPaige permissions·Ask firstTalk live with PaigeChat view open",
+        "ink": "rgb(32, 30, 35)",
+        "main": {
+          "client": 702,
+          "overflow": "hidden",
+          "scroll": 702
+        },
+        "review": {
+          "height": 70.80000305175781,
+          "width": 860.7999877929688,
+          "x": 112.8000030517578,
+          "y": 890.8500366210938
+        },
+        "steps": 2,
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "jpeg": {
+        "width": 1024,
+        "height": 768
+      },
+      "sha256": "5c3bb637c290844abb447682d4ae359dc2cc0a6cff8d9c1b50b92f0102323b9a",
+      "bridgeEdge": false
+    },
+    {
+      "name": "operations-mineral-900-closed-review.jpg",
+      "expected": {
+        "width": 900,
+        "height": 1000,
+        "steps": 2,
+        "open": false,
+        "scene": "review"
+      },
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 62.26250076293945,
+              "x": 787.3375244140625,
+              "y": 216.3000030517578
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 625.9500122070312
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 679.9500122070312
+            },
+            "text": "View history"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 155.0749969482422,
+              "x": 128.8000030517578,
+              "y": 833.4500122070312
+            },
+            "text": "Enable future contacts"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 57.8125,
+              "x": 293.875,
+              "y": 833.4500122070312
+            },
+            "text": "Cancel"
+          }
+        ],
+        "department": {
+          "client": 873,
+          "overflow": "auto",
+          "scroll": 944,
+          "scrollTop": 71.19999694824219
+        },
+        "document": {
+          "client": 900,
+          "scroll": 900
+        },
+        "focus": "Enable future contacts",
+        "ink": "rgb(32, 30, 35)",
+        "main": {
+          "client": 934,
+          "overflow": "hidden",
+          "scroll": 934
+        },
+        "review": {
+          "height": 70.80000305175781,
+          "width": 736.7999877929688,
+          "x": 112.8000030517578,
+          "y": 819.6500244140625
+        },
+        "steps": 2,
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "jpeg": {
+        "width": 900,
+        "height": 1000
+      },
+      "sha256": "11bddc7807a533b8b7c292c0b94ee0a17b07aa0957ab2138c64be475108cd714",
+      "bridgeEdge": false
+    },
+    {
+      "name": "operations-mineral-900-open-review.jpg",
+      "expected": {
+        "width": 900,
+        "height": 1000,
+        "steps": 2,
+        "open": true,
+        "scene": "review"
+      },
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 62.26250076293945,
+              "x": 787.3375244140625,
+              "y": 287.5
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 697.1500244140625
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 751.1500244140625
+            },
+            "text": "View history"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 155.0749969482422,
+              "x": 128.8000030517578,
+              "y": 904.6500244140624
+            },
+            "text": "Enable future contacts"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 57.8125,
+              "x": 293.875,
+              "y": 904.6500244140624
+            },
+            "text": "Cancel"
+          }
+        ],
+        "department": {
+          "client": 873,
+          "overflow": "auto",
+          "scroll": 944,
+          "scrollTop": 0
+        },
+        "document": {
+          "client": 900,
+          "scroll": 900
+        },
+        "focus": "PAIGE workspace readySkip to contentPAIGEBusiness operating systemCommand CenterOperationsTeam HubClientsMarketingAdsSalesFinanceMarketplaceSettingsObsidianSign outTETest servicesOwner workspaceTest servicesOperationsSoloDirect PAIGE, or press ⌘\\⌘\\OverviewWorkProjectsDeliveryPlaybooksCapacityReview with ZIONProceduresAutomationsAutomationsDesign with ZIONContact created → Task approval → Original work and receiptInternal task processesA new contact can prepare internal tasks for your approval.RefreshReview every new contactWhen a contact is created · Draft · Each task needs your approvalStep 1Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. Preserve the complete request and check these long reference details: contactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferenceRead the contact record and confirm the next internal task before taking any action.\nKeep the original notes, verify ownership, and let the owner approve each occurrence. This synthetic task never sends a message.Step 2Review internal responsibility 2Read the contact record and confirm the next internal task before taking any action.\nKeep the original notes, verify ownership, and let the owner approve each occurrence. This synthetic task never sends a message.Review to enableView historyEnable these 2 exact tasks for contacts created after you enable them. Each task occurrence needs its own approval. Enabling creates no tasks. Recorded order does not establish task dependencies.Enable future contactsCancelReview pending tasksOpen workPAIGEYour live operating partner@container (max-width: 650px){[data-solo-thread-rail=\"true\"]{display:none!important}[data-solo-mobile-history=\"true\"]{display:flex!important}.spw-tabs button{padding-inline:6px;font-size:11px;gap:4px}}ChatKnowledgeResearchHelpersCapabilitiesSearch conversations New chatNo saved conversations yet ChatsNew chatPAIGEActive Solo account · tenant-scopedWhat are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve.05:42 PMPaige permissions·Ask firstTalk live with PaigeChat view open",
+        "ink": "rgb(32, 30, 35)",
+        "main": {
+          "client": 934,
+          "overflow": "hidden",
+          "scroll": 934
+        },
+        "review": {
+          "height": 70.80000305175781,
+          "width": 736.7999877929688,
+          "x": 112.8000030517578,
+          "y": 890.8500366210938
+        },
+        "steps": 2,
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "jpeg": {
+        "width": 900,
+        "height": 1000
+      },
+      "sha256": "55cd42fd63bbaed57030c30d1510d1e689fcefaedb317701672875f3d3605186",
+      "bridgeEdge": false
+    },
+    {
+      "name": "operations-obsidian-1366-closed-review.jpg",
+      "expected": {
+        "width": 1366,
+        "height": 768,
+        "steps": 2,
+        "open": false,
+        "scene": "review"
+      },
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 62.26250076293945,
+              "x": 1253.737548828125,
+              "y": 25.100000381469727
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 116.82500457763672,
+              "x": 112.8000030517578,
+              "y": 394.4500122070313
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 89.5,
+              "x": 112.8000030517578,
+              "y": 448.4500122070313
+            },
+            "text": "View history"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 155.0749969482422,
+              "x": 128.8000030517578,
+              "y": 601.9500122070312
+            },
+            "text": "Enable future contacts"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 57.8125,
+              "x": 293.875,
+              "y": 601.9500122070312
+            },
+            "text": "Cancel"
+          }
+        ],
+        "department": {
+          "client": 641,
+          "overflow": "auto",
+          "scroll": 904,
+          "scrollTop": 262.3999938964844
+        },
+        "document": {
+          "client": 1366,
+          "scroll": 1366
+        },
+        "focus": "Enable future contacts",
+        "ink": "rgb(246, 242, 234)",
+        "main": {
+          "client": 702,
+          "overflow": "hidden",
+          "scroll": 702
+        },
+        "review": {
+          "height": 70.80000305175781,
+          "width": 1203.2000732421875,
+          "x": 112.8000030517578,
+          "y": 588.1500244140625
+        },
+        "steps": 2,
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "jpeg": {
+        "width": 1366,
+        "height": 768
+      },
+      "sha256": "2f85a90090271de98d33787d9e9b2113c026dccb82ecabaaaf4b8588d858dd5d",
+      "bridgeEdge": false
+    },
+    {
+      "name": "operations-obsidian-320-twenty-review.jpg",
+      "expected": {
+        "width": 320,
+        "height": 768,
+        "steps": 20,
+        "open": false,
+        "scene": "review"
+      },
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 62.26250076293945,
+              "x": 102.8000030517578,
+              "y": -4540.2001953125
+            },
+            "text": "Refresh"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 116.82500457763672,
+              "x": 102.8000030517578,
+              "y": 182.5
+            },
+            "text": "Review to enable"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 89.5,
+              "x": 102.8000030517578,
+              "y": 236.5
+            },
+            "text": "View history"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 144.8000030517578,
+              "x": 118.8000030517578,
+              "y": 499.8000183105469
+            },
+            "text": "Enable future contacts"
+          },
+          {
+            "disabled": false,
+            "rect": {
+              "height": 44,
+              "width": 57.8125,
+              "x": 118.8000030517578,
+              "y": 553.7999877929688
+            },
+            "text": "Cancel"
+          }
+        ],
+        "department": {
+          "client": 534,
+          "overflow": "auto",
+          "scroll": 5598,
+          "scrollTop": 5063.2001953125
+        },
+        "document": {
+          "client": 320,
+          "scroll": 320
+        },
+        "focus": "Enable future contacts",
+        "ink": "rgb(246, 242, 234)",
+        "main": {
+          "client": 709,
+          "overflow": "hidden",
+          "scroll": 709
+        },
+        "review": {
+          "height": 124.8000030517578,
+          "width": 176.8000030517578,
+          "x": 102.8000030517578,
+          "y": 486
+        },
+        "steps": 20,
+        "viewport": {
+          "height": 768,
+          "width": 320
+        }
+      },
+      "jpeg": {
+        "width": 320,
+        "height": 768
+      },
+      "sha256": "9f0c30fad7303e3a8268b1bd6863ee4d6ad9150d23d2a3c4d318180c431b9d28",
+      "bridgeEdge": false
+    },
+    {
+      "name": "operations-obsidian-320-twenty-unknown-natural.jpg",
+      "expected": {
+        "width": 320,
+        "height": 768,
+        "steps": 20,
+        "open": false,
+        "scene": "unknown"
+      },
+      "geometry": {
+        "buttons": [
+          {
+            "disabled": false,
+            "text": "Refresh"
+          },
+          {
+            "disabled": true,
+            "text": "Review to enable"
+          },
+          {
+            "disabled": true,
+            "text": "View history"
+          }
+        ],
+        "department": {
+          "client": 534,
+          "overflow": "auto",
+          "scroll": 5401,
+          "scrollTop": 0
+        },
+        "document": {
+          "client": 320,
+          "scroll": 320,
+          "scrollY": 0
+        },
+        "focus": "PAIGE workspace readySkip to contentPAIGEBusiness operating systemCommand CenterOperationsTeam HubCl",
+        "main": {
+          "overflow": "hidden"
+        },
+        "steps": 20,
+        "viewport": {
+          "height": 768,
+          "width": 320
+        }
+      },
+      "jpeg": {
+        "width": 320,
+        "height": 768
+      },
+      "sha256": "8d9143d054cb158c61e5b2734a2146bf29bccbec0db18976d63c57c8fc1fce9a",
+      "bridgeEdge": false
+    }
+  ],
+  "excluded": "One direct-locator-focus recovery capture is retained locally and excluded; natural initial recovery frame used.",
+  "authenticatedQa": "UNVERIFIED",
+  "nativeZoomAndAssistiveTechnology": "UNVERIFIED",
+  "historicalSettingsFixtureOnlyDelta": [
+    "src/solo/__render__/owner-task-automations.render.test.tsx"
+  ],
+  "captureProtocol": "Separate-call settled screenshots after navigation/viewport observation; real Operations scroll body. Existing narrow PAIGE overlay covers the background. No image editing/resizing.",
+  "boundary": "Serialized actual React route/workspace/playbooks/hook/caller and current original CSS with neutral read ports; no ordinary authentication, native zoom, modal focus trap or complete Operations acceptance. Native full-application keyboard/scroll behavior remains owed.",
+  "firstIncompleteStyles": "Initial Operations stylesheet omitted canonical operations-views.css; initial24-pin frame set excluded and retained privately. New25-pin four-test run passed."
+}

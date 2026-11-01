@@ -16,7 +16,7 @@ const message='40000000-0000-4000-8000-000000000001';
 const to='+15555550101', words='Fictional approved text';
 const sid='SM'+'1'.repeat(32);
 
-function harness(result,{floor=true,configured=true,actualGate=false,onPrepare=null}={}) {
+function harness(result,{floor=true,configured=true,actualGate=false,onPrepare=null,onRead=null}={}) {
   const writes=[],attempts=[],adapters=new Map(),faults=new Set(),reads=[];
   let prepared=false;
   const rows={
@@ -40,6 +40,7 @@ function harness(result,{floor=true,configured=true,actualGate=false,onPrepare=n
         if(!change){
           reads.push(table);
           if(table==='tenant_phone_numbers'&&!prepared){prepared=true;onPrepare?.({rows,faults});}
+          onRead?.({table,prepared,rows,faults});
         }
         if(faults.has('throw:'+table))throw new Error('Fictional sensitive database failure');
         if(faults.has(table))return {data:null,error:{message:'Fictional read failure'}};
@@ -221,6 +222,30 @@ test('actual final gate preserves explicit client-DND override and accepted rece
   const response=await h.run({overrideClientDnd:true});
   assert.equal(h.attempts.length,1);assert.equal(response.body.outcome,'sent');
   assert(h.reads.filter(table=>table==='paige_consent_events').length>=2,'same original consent gate re-entered');
+});
+
+test('actual final gate honors DND activated while its consent lookup waits',async()=>{
+  let changed=false;
+  const h=harness({ok:true,status:201,data:{sid}},{actualGate:true,onRead:({table,prepared,rows})=>{
+    if(prepared&&table==='paige_consent_events'){
+      changed=true;rows.clients.dnd_active=true;rows.clients.dnd_reason='Please wait until our meeting.';
+    }
+  }});
+  const response=await h.run();
+  assert(changed,'the original adapter reached preparation and its final consent read');
+  assert.equal(h.attempts.length,0,'fresh recipient hold stops the actual transport port');
+  assert.equal(response.body.status,'failed');assert.equal(response.body.outcome,'failed');
+  assert.equal(response.body.scheduled_for,null);assert.notEqual(response.body.unconfirmed,true);
+  assert.match(response.body.reason,/meeting/);
+  assert(!JSON.stringify(response.body).includes("it'll send"));
+});
+
+test('existing explicit DND override also applies to a hold activated during final consent lookup',async()=>{
+  const h=harness({ok:true,status:201,data:{sid}},{actualGate:true,onRead:({table,prepared,rows})=>{
+    if(prepared&&table==='paige_consent_events')rows.clients.dnd_active=true;
+  }});
+  const response=await h.run({overrideClientDnd:true});
+  assert.deepEqual(h.attempts,[{to,body:words}]);assert.equal(response.body.outcome,'sent');
 });
 
 test('client-DND override never bypasses a newly recorded STOP',async()=>{

@@ -1,5 +1,34 @@
 # EXP08 co-owners and entity owners: delivery contract
 
+### October30 actual-source recovery: holder state already belongs to I1
+
+The original applied I1 `20271120010008` already defines `_tenant_account_holder_state(uuid)`
+at lines326–347 and `_assert_tenant_account_holder` immediately afterward. Fresh production
+catalogue read confirms the actual SQL/STABLE/definer/postgres/pathpublic/private-only helper,
+body **8f9d27463a4c825994f165a5777aca1f**, matching that original source. It derives archived,
+missing pointer/identity, working, exact suspended holder and none, with NULL for a missing tenant.
+This is BUILT/source-released I1 support, not a missing I2 implementation or a recovery permission.
+
+The successor initially missed that implementation in the historical handoff. Its proposed LOCAL
+140008 replacement was preserved in the local work packet and withdrawn before commit, managed
+publication or apply. No duplicate helper or new migration ships. Its unpublished candidate-only
+drift tests do not claim to enforce production; they are retired with that candidate. The original
+source characterization remains in the original lifecycle proof runner: **20 current-I1 cases**,
+seven load-bearing mutants, actual denied execution as anon/authenticated/service roles, exact
+original-definition replay with no row/metadata change, and unchanged incumbent owner/holder helpers.
+The first expanded fixture omitted the incumbent's original ACL and correctly met a strict refusal;
+the fixture now extracts the actual source ACL. No production guard was relaxed. Original earlier
+46 cases, mutation/drift controls and two real PostgreSQL lock races remain unchanged.
+
+Fresh production signature read separately confirms `platform_owner_recovery`, `_tenant_never_owned`
+and `remove_solo_team_co_owner` absent. Full R9/R12 recovery, first-owner history/backfill, billing
+contact cleanup, original Setup/provisioning changes, native projections, approved I3 interfaces,
+both-chat I4 and I5 still require implementation/integration/proof. Existing I1 does not complete them.
+Use actual source chronology over the historical I2 descriptions below; preserve all original
+rulings, denominators and later management-delegation amendments. Full EXP08 remains STILL CODING.
+
+October30 current unpublished-component order: original E05 PR3121/604d0888 records already-published E09 60009 and original Planning receipt70005 after40008→Task50005. The local NEVER-MANAGED I2 candidate60008 below was therefore forward-renumbered to **20271126080008_exp08_entity_owner_seat_ended.sql** before managed publication. Historical60008 references are retained as history, not an apply instruction. SQL body is byte-identical; only its own runner path changes. No peer/applied migration changes or release-order waiver. Original I2 trigger source review found no material finding; native component proof remains bounded and must still accompany exact-head hosted/release gates.
+
 Status: **CONTRACT, round 7 (2026-10-27): design APPROVED by the owner (§28 frozen), open questions §10.1, §10.2a, §10.11 and §10.13 owner-ruled (R12–R15); R16 (operator powers over Solo accounts kept as shipped) reverses B3, D-A, D-B. I1 built (branch `exp08-owners-i1`, migration `20271120010008`), round 2, 3, 4, 5, 6 and 7 review findings applied.** Round 5 text follows, amended only where those rulings change it; reversed text is kept struck through and marked (§58), never silently deleted. Grounded on **`origin/main` at `50468eec2`** (fetched
 2026-10-26). **PR #2945 is merged, as squash `51ede67eb`, and applied on production:** the `db-live` tag, which
 `deploy-migrations.yml` moves only after a persisted apply (§32), points at `51ede67eb` (`git ls-remote origin
@@ -1339,3 +1368,639 @@ the account holder's seat (§5.4d, D-C).
     promotional Solo access, the account holder of record automatically gets their owner seat back, without owner
     recovery. It is audited and they are notified, and it never seats anyone else (§5.4d). OK? And the promotional
     grant would also reactivate the seat on an archived account: should it refuse there instead?
+
+
+## Sole-successor I2 component checkpoint — October30,2026
+
+Additional original full-matrix4/13/16 admission repair, local and NEVER APPLIED:100008 changes only the existing private `_team_hub_refusal(uuid)` boundary, preserving every original role, tier, workspace and conversation-switch refusal. A causal original-source lifecycle fixture is12PASS/3FAIL before repair and15PASS after;6load-bearing mutants and10source/metadata drift controls pass, exact replay changes0rows, original OID/ACL/invoker/STABLE/empty path conserved. Final body1c2ef63537cb340106b95b730e3f05f1, postgres/private owner-only EXECUTE. Distinct source-only review found no material defect; complete combined local run passes all46cases plus prior native replacement/floor races, with claims/resolver/table inputs remaining explicit ports. Detailed synthetic reproduction stays in the local proof, not a claim of production/customer exposure. No Auth writer, session, credential, role, grant, provider or domain-writer change. Session expiry/ban, target-identity and in-flight/other-domain currentness plus actual RLS/authenticated privacy proof remain separate obligations. Publication of80008/90008/100008 remains ordered behind40008→50005→60009→70005; tentative unpublished/native-unapplied versions never freeze peer releases and must be advanced again if the frontier overtakes them. Full I2 and EXP08 remain STILL CODING.
+
+Latest original-writer integration: the actual original `revoke_co_owner` body e2ba8ca80d63df58ebc93b34e5dc5f01 could not demote an entity representative because it left business_owner_id on a nonowner seat, genuinely failing I1's owner-link CHECK23514. The runner now loads that EXACT original writer plus actual `is_tenant_owner` f392787e7469ed325960850ad091473d and `is_tenant_account_holder`4a3cab59aad7a70ff06a9054aa4aa60e. Auth/platform/company/table inputs remain explicit ports; this is original SQL-source integration, not authenticated admission/RLS.
+
+New NEVER-APPLIED forward90008 changes ONLY the original demoting UPDATE: clear business_owner_id for the canonical original SOLO scope, preserve the original out-of-scope behavior. Inverse body e2ba.../all original authority/holder/floor/locking/audit code and OID/security/ACL/defaults are conserved. Private80008 derivation functions, original scope helper and exact event/attribute/WHEN-free trigger prerequisites must match. Final revoke body9d4e28f6d75ee91c0b40db6059d3ba5d, postgres/definer/search_pathpublic/original authenticated+service EXECUTE. No new action, approval, writer store or provider.
+
+Actual second fixture baseline4FAIL/7PASS→11PASS, including holder demotion, representative step-down, ordinary person path, holder/member/foreign-target/floor/paused-holder refusal, replacement preservation, out-of-scope behavior and repeat/no second audit. Four load-bearing mutants (SOLO scope, original authority, holder protection, owner floor) are killed; the member negative retains two other owners so the floor cannot mask a broken authority gate. Thirteen new source/partial/ACL/grant-option/owner/path/security/volatility/helper/trigger drift cases refuse. Exact90008 replay changes0member/legal-owner/audit rows; metadata identity retained. A second genuine TWO-session race runs the REAL original revoke: one step-down holds its owner locks, the second actually waits and then refuses CO_OWNER_LAST, leaving1active owner and1original audit. The prior20component cases/9mutants/13drift controls/replay/replacement race also pass in the SAME final run. First hardening attempt failed in test-only restoration SQL (pg_get_functiondef needs an explicit separator before concatenated REVOKE); failure retained, delimiter corrected, complete fresh run passed. No assertion was removed.
+
+Source-only distinct review found no material defect; final full native run passed locally. No managed80008/90008 apply, production release, original Auth/RLS/current-workspace integration or full-I2/customer proof is claimed. Existing direct-platform grant/revoke reconciliation to R9 recovery, expected-current-workspace binding, billing-contact cleanup, Setup validation, provisioning/backfill and approved interfaces remain original REQUIRED integration gaps. Original source-authority behavior is preserved, not declared fully compliant with future I2. Publication must follow40008→Task50005→publishedE0960009→E0570005→own80008/90008, with fresh exact-head checks/review/managed proof before normal release. Current3109/0c7719192 managed Preview is SUCCESS; native40008 production release still owed and required verify remains running at this checkpoint. Full EXP08 STILL CODING.
+
+**STILL CODING.** This dated addition preserves every original ruling, acceptance case and I1–I5 denominator. Later owner instructions control: use authorized EXISTING ordinary accounts for eventual customer proof, never the historical I5 proposal to create test accounts. The ALL-EXP delegated-management amendment also requires actual scoped Admin/management-member permissions; the historical holder-or-self work-profile narrowing must not be installed as a blanket loss of legitimate delegated authority. Existing Setup/Auth/Work/provider writers retain custody.
+
+The first bounded I2 lifecycle component is LOCAL on the sequential child of3109/89e9683: tentative never-managed migration20271126060008_exp08_entity_owner_seat_ended.sql. It is not a complete I2, not a released offboarding journey, and not a new ownership action. R6/R11's existing legal-owner record becomes held after its original representative owner-seat linkage ends. The existing original authorized writer still decides and executes departure. The function changes only representative_user_id, owner_seat_vacant_since and updated_at; it preserves legal ownership_status, identity, kind/name and every role/grant. Billing-only suspension/resumption keeps representation (R13). Only the exact old tenant/entity/person is cleared, a replacement already written is preserved, and the first vacancy time is retained.
+
+Production structural reads confirmed the I1 columns, composite FK and unique entity seat, plus ABSENT _business_owner_seat_ended(). Review correctly identified the REAL representative FK to auth.users ON DELETE SET NULL. The initial minimal fixture omitted its ordering; after adding that original FK,13cases passed and2 genuinely failed (Auth deletion first / Auth-only deletion). The companion _business_owner_representative_deleted trigger on the ORIGINAL legal-owner table handles that ordering only when the old Auth user is absent and its same-tenant/entity/person owner seat exists. No trigger or writer is installed on Auth, and a merely named unseated contact or living person's reference edit does not become a held ownership seat. The original Setup mutation guard remains unbuilt; this does not disguise that gap.
+
+Project-owned isolated proof: scripts/proof/exp08-entity-owner-seat-ended.mjs and supabase/tests/exp08_entity_owner_seat_ended.sql. Fresh unchanged baseline9FAIL/8PASS, candidate17PASS;7load-bearing mutants killed;12body/security/path/ACL/owner/trigger drift controls refuse unknown implementations; exact replay changes0rows. A genuine TWO-session native PostgreSQL16 proof observes the departure waiting on a replacement's row lock, then preserves the committed replacement while deleting the original seat. Final private function metadata: body810d66d9bc728bf4df57a54162525d7e and a2635323c5e77d40e632ebea9e3940f8, postgres owner, SECURITY DEFINER, empty search_path, no direct anon/authenticated/service_role EXECUTE. Original CI uses the existing local PostgreSQL16/Node24 job with one additive step; no existing assertion is removed.
+
+Evidence class: isolated native COMPONENT. Auth user rows/table shape, original seat-writer admission/RLS, billing and grant/revoke operations are ports or absent. This is NOT Auth SDK deletion, original permission/race integration, authenticated customer offboarding, managed Preview, production persistence or owner acceptance. The first drift-test mutation accidentally made invalid SQL; it is retained as a failed test invocation and corrected to valid unknown-body SQL before the complete proof, not counted as a killed product mutant.
+
+Publication order stays original EXP08through40008 → EXP05Task50005 → a fresh compatible I2 candidate.60008 is tentative local development, not an idle reservation blocking peer publication; forward-renumber before durable publication if the real frontier advances. Required renewed exact-head CI, independent technical review, real managed Preview, merge/native/Edge/web readback and original useful customer result remain owed. I2's recovery/grant/revoke/Setup/provisioning/first-owner backfill and exact original writers, I3 owner/entity interfaces, I4 both-chat actions and I5 integrated evidence remain OPEN. Shared-workshop/goals/proactivity/standing-execution and all five original team journeys remain in the full EXP08 matrix.
+
+
+Final component scope hardening: both triggers now reuse the ORIGINAL I1 _solo_shell_tenant (verified production body9ade6efeff0689b78ff57b116a28c9d4), with a fail-closed prerequisite/body/owner/security/path/ACL guard. No second eligibility rule. Unsupported Agency/Enterprise/company-workspace departure is unchanged; the original FK still clears a deleted Auth reference outside this feature scope without a new held-seat classification. The fixture loads the real helper from I1; its underlying minimal tenants/company predicate is an explicit port. Final20cases PASS (unchanged baseline9FAIL/11PASS),9load-bearing mutants killed,13drift controls refused, exact replay0rows and true two-session replacement lock race PASS. Final private function bodies75d4a8e014e495c5e0a819881b6a79bd/f95cbff2d3f69c274b287ef0b9bc0067 supersede the earlier unscoped local hashes above. Original migration-version guard includes1533tracked migrations PASS; explicit signature-ACL run retains4/4historical baseline entries/no new debt plus12/12self-tests PASS. Direct Windows entrypoint of that scanner does not execute it; the explicit original exported run/selfTest was used, not a silent exit counted as proof. Still local/unreleased/component-only, no original Auth/RLS/permission or full lifecycle acceptance.
+
+### October30 successor §5.5 implementation — LOCAL / partial integration
+
+Actual production reads recovered the ORIGINAL I1 `_tenant_account_holder_state(uuid)` body
+8f9d27463a4c825994f165a5777aca1f. It already exists; preserve it. The earlier never-published
+duplicate candidate was withdrawn, not applied or substituted. Recovery, removal, billing cleanup,
+Setup/provisioning and first-owner/backfill integration remain separate unfinished I2 work.
+
+The inert `scripts/proof/exp08-owner-read-projection-patch.sql` now extends the ORIGINAL
+`get_solo_team_workspace(text,text,integer,integer)` (ded4ae3cb9d57f2c1ed0cef52493590b) and
+`get_paige_team_context()` (623d712d745867ed8f7d29374e3a6078). No migration number is assigned.
+Exact body/inverse, ABI/default, owner/ACL/security/path guards preserve original fields, search,
+paging, delivery history, speaker and governance. Current actor identity and membership must remain
+admitted; Auth then membership SHARE locks protect the same caller through projection. Current
+workspace is rechecked in the projection statement. An intervening role change refuses the entire
+stale result, including original private invitations. These are reads/locks, never grants or writes.
+
+New private legal facts require the original actual owner predicate or a fresh active Admin seat;
+the legacy displayed Owner role label alone does not authorize them. Holder-only legal-owner
+options include same-record representative and live invitation labels needed by the approved
+picker. Billing designation remains self-or-holder only. Never return ownership interest or a full
+legal profile. The existing held-seat row has a vacancy timestamp but no durable former-person
+field: that required history/receipt integration remains missing; no departed identity is invented.
+
+Consumers are the existing `_shared/team-context.ts` formatter and
+`team-workspace-contract.ts:normalizeTeamWorkspace`. The latter previously discarded the new
+top-level fields; its genuine failing-before assertion is retained locally. Both now whitelist named
+facts; absent/malformed values are unknown, not role inference. Context is reference data, never
+an action grant; existing Trust standing authority and required approval remain independent.
+Actual owner/entity controls and confirmed-refusal UI invalidation remain I3 integration work.
+
+Verification extends the SAME `exp08-entity-owner-seat-ended.mjs` runner. Normal CI without
+arguments retains ALL earlier lifecycle, admission, mutation/drift and two-session checks.
+`--only-owner-read` selects local development proof only and is explicitly NOT full native release
+proof. Current32-case baseline has29 expected failures/3 existing refusals; an intermediate candidate
+passes32,9 static mutants,23 reader/default drifts and actual-role checks. Separate review then
+found a post-admission interval not covered by the earlier races; a real three-session counterexample
+was captured before the locking repair. Final identity/seat locking races and causal mutants,
+complete native runner, final review, exact-head hosted CI/Preview, ordered managed release,
+catalogue/ACL readback and authenticated customer proof remain required. Intermediate green
+checks never close a later finding.
+
+Retain actual initial SQL/test-transport failures, timeout, OS spawn UNKNOWN, OOM/OS1455 and
+ENOSPC as failed/incomplete history. Every completed disposable run removed only its own database.
+Root solution-only tsc checked no app files and is not app proof. Focused two-file semantic checking
+and direct original-module assertions are bounded evidence; full Vitest/app checks remain owed
+after host capacity failure. No peer process, unknown scratch directory or infrastructure was altered.
+
+Routing: this is original Team collaboration/lifecycle ownership, not another registry or authority
+engine. Existing Spine `team.authority` remains its narrower caller-seat contract; these new facts
+do not silently expand it or its maturity. No provider, action verb, approval channel, job, event or
+receipt store is added. Existing shared actor/scope admission and domain writers remain mandatory;
+ALG-01/08 reconciliation/currentness support is PARTIAL, not a new algorithm claim. All original
+18 rows,6 amendments and five journeys remain; full assignment STILL CODING.
+
+Later final selected-phase receipt (October30): `--only-owner-read` completes with32/32 cases,
+baseline29 expected failures/3 existing refusals,9 static-predicate mutants killed,22 reader
+source/metadata/ACL drift variants plus1 default-ABI drift refused, exact zero-row/metadata replay,
+an actual authenticated-role call and4 anon/service execution denials. Two early demotion races
+and4 post-admission identity/seat races observe real PostgreSQL waits. Two role-check mutants and
+4 lock-removal mutants are also killed by actual concurrent sessions. The review P1 is resolved
+in source after a genuine failing-before three-session counterexample; non-author assurance remains
+SOURCE-ONLY, not an independently rerun native or authenticated customer certificate.
+
+Canonical stored body MD5s in that local run are `28c9a41b7359825ef25b787a60b43cd8`
+(`get_solo_team_workspace`) and `76647016a6e0c303dd200845defcffc1`
+(`get_paige_team_context`). Windows psql text output/candidate Git text is normalized to LF for
+source-edit fixtures; actual in-database MD5s, inverse guards and every assertion remain exact.
+The caught non-editing multiline mutant is retained as test-transport failure, not a killed mutant.
+The run disposes only its own database. These receipts do NOT replace the complete default runner,
+full Vitest/app checks, exact final-head review/CI/Preview, managed release/readback or customer proof.
+
+Separate parent3130 release HOLD: original90008's newly reachable entity-owner demotion still needs
+the approved§5.8 original Billing cleanup/last-primary integration. Source-only review confirms
+that missing prerequisite; actual billing powers/data delivery and affected customer accounts are
+UNVERIFIED. Original E02 writer contract requested in ANT138/152c950c-f074-4357-913f-4bbb27109862.
+No raw Billing update, Auth-context override, paid-rule waiver or parallel writer is authorized by
+this read projection. Parent and child remain separate; full assignment STILL CODING.
+
+### October30 original §5.8 integration and actual concurrent-authority failure
+
+E02's original producer response ANT138/7272091b was received/ACKed in98702508. Narrow E08
+ownership covers the unmerged90008 original Team writer composition and its existing native proof;
+Billing source, permissions and original audit remain with E02. Coordinator explicitly permits
+normal repair of this unmerged source, preserving production-applied history and the previous own
+Preview/failure evidence. The old own disposable Preview must be supported-replaced/rebuilt and
+read back against the final source before release; its existing90008 version is not updated proof.
+
+Intended outcome: a current authorized holder can demote a co-owner, or a co-owner can step down,
+only after their live original Billing designations are atomically ended through the original writer.
+The strict original last-primary refusal applies to ALL applicable workspaces, including unpaid ones.
+No paid-only exemption, raw contact update, synthetic actor/workspace, copied Billing rule or new
+authority/approval/runtime/receipt system is introduced. Original owner/holder/floor/tenant locks,
+non-SOLO behavior, target-seat link/vacancy provenance and Team/Billing audits remain authoritative.
+
+The local candidate calls `platform_billing_workspace_owner_scope()` before and after the SAME
+original billing advisory lock; both must match the already-authorized target. It enumerates only
+that tenant/person's live designations in stable ID order and invokes the original
+`platform_billing_contact_revoke(uuid)` BEFORE the seat UPDATE. Exceptions roll back every
+contact, audit and seat effect. Team authority is re-resolved after the owner-row wait. A private
+recovery or arbitrary-target ABI is NOT provided by this current-workspace public Billing door;
+full R9/I2 recovery remains a missing integration, never legitimized by fabricated context.
+
+Actual catalog-only production readback confirms unchanged original bodies and metadata:
+scope `3d33a31f95f308784853f7b3816b1e8c` (STABLE/private), Billing revoke
+`c67dc4c18e72fde1dbc89d15be09edd9` (authenticated only), Team revoke
+`e2ba8ca80d63df58ebc93b34e5dc5f01` (authenticated/service). All are postgres-owned definers
+with original public search paths. No production mutation, demotion or customer-data read occurred.
+
+The SAME original native runner now includes `exp08_owner_billing_interlock.sql`. Local
+`--only-billing` is a development selection, NOT complete release proof. Nine cases genuinely
+reproduce eight FAIL/one PASS against old90008, then nine PASS with the composition: no contacts,
+delegate cleanup, self-stepdown, unpaid sole-primary refusal, partial-loop rollback for duplicate
+target primaries, historical duplicate cleanup with another primary, two foreign-scope refusals
+(including no contacts), and foreign/already-revoked preservation. Four causal mutants are killed;
+eight original Billing body/path/anonymous/service-permission drifts are refused; migration replay
+changes zero rows and preserves original writer metadata. Minimal table/current-workspace/Auth
+ports are disclosed; these are original-writer native tests, not SDK/RLS/customer proof.
+
+The required REAL three-session negative exposes an ORIGINAL BILLING PRODUCER failure:
+one session holds the original billing advisory lock; an actual public revoke call reaches a
+verified lock wait under an initially active Owner; a third session suspends that caller and commits.
+After lock release, unchanged Billing revoke succeeds with contact revoked/audit1. The required
+authority-lost refusal assertion FAILS. Exact counterexample was returned to E02 in original
+ANT138/c1eca592; no E08 Billing takeover/bypass or speculative production exposure claim.
+The Team-door counterpart with an unaffected third owner (so the owner floor cannot mask the
+authority test) refuses `CO_OWNER_FORBIDDEN`/42501 with zero contact/audit/seat effects.
+
+The failing original producer assertion remains in the normal complete native suite. Source repair
+by its owner, final original ABI/pin composition, competing-designation proof, complete native and
+app checks, exact-head review/CI/Preview, normal release/readback and authenticated outcomes
+remain owed. Parent3130/421e now has all13 check-runs SUCCESS, including Supabase Preview,
+database-contract, verify and Spine contract; these certify THAT old published source only and
+do not clear this later material finding or certify the unpublished child. PR3130 remains HOLD.
+Original18 rows/six amendments/five journeys, both-chat and bell outcomes remain STILL CODING.
+
+Later source-review P2 and causal repair: the first interlock called Billing for every
+`_solo_shell_tenant`, which also includes sub-accounts; Billing intentionally rejects sub-accounts
+and parented workspaces. Actual added fixtures reproduce the two permitted-demotion failures and
+two missing explicit unavailable-cleanup refusals, then pass all13 cases after using the intersection
+of the original applicability contract (standalone and no parent, existing tenant row locked).
+Non-billable SOLO demotion with no live target designation preserves original behavior; inconsistent
+live designations refuse `CO_OWNER_BILLING_CLEANUP_UNAVAILABLE`/42501 before any seat effect.
+The consumer proposal was returned to Billing in original ANT138/cc0afe1f; final producer ACK and
+re-review remain owed. No public Billing refusal is caught/ignored to obtain the positive path.
+
+The complete native attempt also caught an old authority mutant now surviving because the new
+currentness gate and original Billing owner gate correctly provide additional defenses. Rather than
+remove its assertion, the original fixture now explicitly tests an ACTIVE co-owner trying to revoke
+ANOTHER co-owner; Billing legitimately admits that Owner but Team must refuse. The causal mutant
+removes both initial/current Team authority predicates, so it still must fail the original Team
+permission contract independently of Billing. Original cases are retained, now12 rather than11.
+That earlier complete attempt is FAIL/incomplete, not a full-suite PASS or solely infrastructure.
+E02 receiving ACK5d9652a0 confirms original designation/revoke post-wait revalidation repair remains
+with its producer. The original failing concurrency assertion remains in the complete suite.
+
+Terminal full-run receipt on published product source `7eedd8949c2d667f3f563aef9d9934b693cb6877`:
+the normal no-argument original runner finishes **EXIT1 / FAIL**, specifically at the final original
+Billing public-writer authority-loss invariant. It does NOT pass overall. Before that failure, all
+134 post-repair isolated cases pass: lifecycle20, original revoke12, Billing interlock13, actor15,
+original I1 holder-state20, identity22 and original owner-read32. The complete JSON has188 recorded
+phases/controls, retaining all original baseline failures, mutation/drift/replay/role negatives and
+actual multi-session races; the additional six Billing mutants/eight drifts/replay are also logged.
+The original public Billing race still commits a revoked contact/audit after caller authority is lost.
+The runner removes only its uniquely created database. This is original-writer/minimal-schema
+engineering evidence, not full production schema, Auth SDK/RLS, provider or customer proof.
+
+Original Billing source-owner applicability ACK `ANT138/fc21c1f6` confirms the consumer intersection
+and no-live-contact non-billable path. E08 receiving ACK `73984153` preserves that authority boundary.
+NON-AUTHOR SOURCE re-review at7eedd894 resolves the sub-account P2 with no additional material
+source finding; the reviewer did not independently execute native tests. Original E02 producer
+repair remains outstanding. Published parent421e greens are separate from this child and its
+terminal FAIL. No Preview, migration deployment, source release, activation, authenticated QA or
+owner acceptance follows. Full EXP08 remains STILL CODING, with all original matrix rows retained.
+
+### I2 first-owner history component — local work checkpoint, 2026-10-30
+
+Pre-edit routing: intended outcome is to distinguish a genuinely never-owned account from one whose
+last owner seat disappeared. EXP08 owns this original ownership component; EXP01 retains Setup/Auth,
+and E02 retains Billing. Existing native Team invitation/recovery writers will consume the private
+predicate; no new Spine tool, Harness layer, provider, approval flow, runtime or task store is added.
+This component grants no ownership/action authority and changes no existing customer invitation
+entry point. It is reusable across account identities, with no founder/cohort branch. Its only
+persisted datum is the approved timestamp on the original tenant row; existing owner facts/audits
+are historical backfill inputs. No financial limits, metering, external effects or activation change.
+The native proof is minimal-schema engineering evidence; full-schema compatibility, concurrent
+writer composition, source review, exact-head CI/Preview, release and customer proof remain owed.
+
+Active narrow source lease was posted in the existing ANT161 marker before editing: original
+`scripts/proof/exp08-entity-owner-seat-ended.mjs`, new UNVERSIONED
+`scripts/proof/exp08-first-owner-history-patch.sql`, and its owning native SQL fixture. This is not
+an applied/versioned migration or permission to take over Setup. The existing normal runner now
+includes the component in a rolled-back transaction before its unchanged original proofs; local
+`--only-owner-history` explicitly does not claim complete native release proof.
+
+Candidate implements the original private `_tenant_never_owned` predicate, earliest accepted-audit
+or existing-owner creation-time backfill, and first-seat history. Existing suspended boolean-owner
+and role-only-owner evidence counts. `tenant:deleted_injected_owner` does not count. The private
+trigger retains history after deletion and also records an owner moved to another tenant; it refuses
+clearing/rewriting a non-null history timestamp. This is not yet the complete column write-admission
+or provisioning contract: direct initial marker writes, exact tenant/member lock order and all
+invitation/recovery writer consumers must be reconciled before any migration is released.
+
+Actual local native result: **15 cases PASS**, four deliberately regressed implementations rejected,
+and replay leaves tenant rows unchanged. Initial control run correctly **FAILS** because removing
+role-only evidence survived the old fixture: add an existing suspended role-only owner rather than
+remove that assertion. Final control run exits0 and removes only its uniquely created database.
+Tables/Auth are ports; no production/customer account, RLS, effect or acceptance claim follows.
+Original logs `exp08-first-owner-history-controls.log` (FAIL) and
+`exp08-first-owner-history-controls-v2.log` (PASS) remain in the coding workspace. Original Billing
+full-run failure remains unresolved; this selected component does not supersede it. Setup protection
+handoff ANT50/b618c8ac awaits its original owner. Full EXP08 remains **STILL CODING**.
+
+Bounded NON-AUTHOR SOURCE review of these four component paths reports no new material finding;
+it did not independently execute the native proof. It explicitly retains initial-marker protection,
+guarded migration/replay admission, tenant/member lock ordering, provisioning and original
+invitation/recovery consumers as required unfinished work before release. No full-I2 approval follows.
+
+Follow-on initial-marker repair (same narrow unversioned component): actual fixture table grants
+allow authenticated, anon and service_role UPDATE/INSERT so the trigger, rather than an unrelated
+table ACL, must refuse manufacturing history. Before repair **four cases FAIL /18 PASS**: all three
+roles can populate a null marker and authenticated can insert a fabricated marker. Keep that failed
+log. The new private tenant trigger guard runs **SECURITY INVOKER** to inspect the actual SQL caller;
+the original private member trigger remains DEFINER and can record real owner history as postgres.
+Unchanged marker values remain compatible. Existing non-null history remains immutable. No grants
+were added by the candidate; broad grants exist only in the rolled-back disposable fixture.
+
+Final selected result **22 cases PASS**, now **six causal mutants rejected**, replay unchanged.
+Turning the guard into DEFINER or deleting initial-write admission each revives all four failures.
+Original member/history/backfill assertions remain. Logs `exp08-first-owner-initial-writes-before.log`
+(FAIL), `exp08-first-owner-initial-writes-after.log` and
+`exp08-first-owner-initial-writes-controls.log` (PASS) are retained. This closes the bounded local
+initial direct-write gap, not full migration admission, PostgreSQL lock-order/concurrency,
+provisioning, privileged-writer field inventory or original invitation/recovery integration.
+Those remain coding dependencies before release. No production/RLS/customer proof is claimed.
+
+Follow-on NON-AUTHOR SOURCE review reports no material finding in the bounded initial-marker
+guard/test change, with no independent proof execution. Privileged-writer inventory, lock ordering,
+provisioning, consumer integration and guarded versioned migration admission remain unfinished.
+
+Invitation-consumer grounding before shared edits, 2026-10-30: refreshed actual main to
+`60fe883ee4dce82f88937b366fa763243ed10da9`. Incoming47-path peer diff includes E05 native80005,
+original Work editor/reminder proof, E02 Fabric/Responses/credit repair and E04 original payment
+readback; no incoming change to the original I1 invitation or Setup writer files. Those incoming
+changes are not yet composed into this child and must all be preserved at integration.
+
+Catalog-only production source read (no customer records/effects) verifies original
+`accept_tenant_invite(text)` body MD5 `0194a076acce065d23de842cab9b6d29` and original
+`create_tenant_invite_token(uuid,text,tenant_role,integer,integer,uuid,text)` body MD5
+`a42d7b2852daf7dcd3e108f0eb588679`; both postgres-owned DEFINER, search_path=public. Exact LF
+bodies extracted from released `20271120010008_exp08_owner_invitations.sql` reproduce both hashes.
+Do not copy the older function definitions cited in historical contract opening summaries.
+The platform-only `subaccount_owner` branch remains the approved I2 integration target; all E09
+consumer/contact/recipient protections and every unrelated branch must survive byte-exact.
+Current E09 source-reservation/consumer-contract renewal was requested through its existing chat
+before any writer edit. No receiving ACK or implemented invitation gate is claimed yet.
+
+Billing original ANT138/f9c9e693 now reports that its first producer repair80006 was actually
+applied to its OWN disposable Preview. E08 receiving ACK25642543 gives explicit own no-conflict
+for forward-only80007 after80006/before80008, preserving applied history. It covers E08-owned
+order only, not unknown peers or source/release approval. Both original producer/consumer PRs
+remain held; no stale pin renewal or production Billing mutation has been performed.
+
+Original invitation failure-first integration fixture, 2026-10-30: the SAME entity-owner native
+runner loads the exact released I1 mint/accept bodies into the rolled-back minimal schema, plus
+the local history candidate. Actual original subaccount-owner statements execute; no handwritten
+acceptance replacement is used. New owning fixture is
+`supabase/tests/exp08_first_owner_invitations.sql`. Real pgcrypto creates local synthetic tokens;
+Auth/platform/agency inputs and tables remain ports, not customer or RLS proof.
+
+Observed original behavior: **six required outcomes FAIL / seven compatibility controls PASS**.
+Platform-only mint and accept each incorrectly succeed with (a) owner pointer present, (b) a
+suspended owner seat, or (c) retained first-owner history. The fixture snapshots original tenant,
+member, token, profile and audit rows so the future refusal must also leave them unchanged.
+Fresh standalone/sub-account mint, fresh acceptance, managing-agency/dual-role paused-owner
+acceptance, and non-shell enterprise mint/accept remain positive controls. Source writers are
+unchanged. The runner currently asserts this exact baseline failing set; exit0 means the baseline
+was reproduced, NOT that those six required features pass. Log
+`exp08-first-owner-invitations-before.log` retains the individual false outcomes. Original complete
+native Billing failure and invitation-source-owner receiving ACK remain separate outstanding work.
+
+NON-AUTHOR SOURCE review finds no material baseline-fixture/evidence-classification issue and
+executes no native proof. For the actual repair, extend assertions to the specific authored refusal
+reason and exact minted-token contract, in addition to current row snapshots/compatibility positives.
+
+### I2 original invitation gate candidate — 2026-10-30, unversioned/local
+
+Before edit, original ANT161 compact marker names the exact E08-owned subaccount_owner mint/accept
+spans, owning native runner/fixtures and new UNVERSIONED patch. E09 consumer source-contract
+renewal remains requested; no overlapping writer edit was received. This does not claim receiving
+ACK. E08 implements only its original ownership spans; every consumer/contact/recipient/team/agency
+branch remains the incumbent. No original/applied migration file is edited and no native slot is
+reserved. Existing original invitation RPCs are the entry points; no new tool, approval or runtime.
+The owner outcome is that platform-only invitations cannot bypass the approved account-holder/
+recovery rule on a previously owned Solo-shell business. Existing domain/source ownership, provider,
+Trust and account applicability boundaries from the pre-edit routing above continue to apply.
+
+`scripts/proof/exp08-first-owner-invitation-patch.sql` changes only the two named spans in the
+actual incumbent functions. Exact original body identities0194a076/a42d7b28 admit the operation;
+inverse replacement must reproduce the entire original body. Both original metadata and ACL are
+preserved, checked before application AND replay. Live catalogue separately confirms accept ACL
+`{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}` and mint ACL
+`{=X/postgres,postgres=X/postgres,authenticated=X/postgres}`. The incumbent public EXECUTE on mint
+is preserved, not newly granted or treated as authorization; its original in-body gates still apply.
+No candidate GRANT/REVOKE is introduced. Native fixture now reproduces those exact ACLs.
+
+For original platform-only Solo-shell mint, lock the tenant and require private never-owned state
+before token insertion. For original subaccount_owner acceptance, after the existing token lock
+lock the tenant and refuse the platform-only previously-owned path before any owner/admin seat,
+pointer, profile, usage or audit write. Preserve managing-agency/dual-role and non-shell behavior.
+Both use the approved authored §4.10 messages with stable `OWNER_HISTORY_REQUIRES_RECOVERY` hint.
+There is no silent admin downgrade on the refused path and no generic blanket always-click rule.
+
+Actual selected proof: original **six FAIL/seven positives PASS →13 PASS**. Refusals require that
+specific hint/42501 plus unchanged tenant/member/token/profile/audit snapshots. Positive mint
+asserts the original kind/admin role/minter/uses/max-use/expiry contract. Four deliberately broken
+gates each revive the expected failure, and five actual path/ACL/security/source drift controls
+refuse application. Replay succeeds without metadata changes. Existing history22 cases and six
+mutants/replay remain included. Final run exits0 and disposes only its unique database; log
+`exp08-first-owner-invitations-final.log`. This remains actual-original-writer/minimal-schema proof,
+not full-schema/Auth SDK/RLS, authenticated acceptance, release or a completed I2 journey.
+
+Unfinished before release: concurrent two-token/tenant/member lock composition and late changes,
+full-schema/source-owner consumer assurance, complete original invitation negative matrix,
+provisioning/recovery/Setup integration, guarded versioned history migration admission, renewed
+whole-head technical review/CI/Preview, normal release/readback and authorized customer proof.
+Original Billing producer repair/parent3130 hold remains. Full assignment **STILL CODING**.
+
+NON-AUTHOR SOURCE review of the bounded unversioned invitation patch finds no additional material
+finding; no native proof was independently executed. It does not clear authority changes during
+waits or the remaining full-I2 dependencies. Next failing-first races must include tenant-kind
+changes and platform/agency authority changes while waiting, plus token expiry during the new
+tenant wait: the current candidate evaluates some scope predicates before that wait. Do not
+release this intermediate component before those currentness paths are tested and repaired.
+
+### I2 actual expiry waits — local repair and proof, 2026-10-30
+
+Extend the same original native runner using independent psql sessions in its own uniquely-created
+database. The original acceptance really waits on the tenant row, then separately on the original
+profile UPDATE. No fake trigger/clock/transport/sleep assertion substitutes for observing a real
+`pg_stat_activity` lock wait. An actual short-lived token expires by wall-clock before releasing
+the blocker. The first attempt hit a fixture `row_to_json(uuid)` alias error before any race and
+remains a failed setup attempt. The corrected failure-first run proves the candidate incorrectly
+accepts the expired token: seat/pointer/token/profile/audit all commit. Preserve
+`exp08-first-owner-invitation-wait-before-v2.log` as **FAIL**.
+
+Repair the same UNVERSIONED original-function patch: re-check actual clock expiry after the tenant
+wait and at the function's final return for subaccount_owner only, after original writes. Late
+`OWNER_INVITE_EXPIRED`/42501 rolls back the whole original transaction. Whole-body inverse now also
+removes that exact final bounded conditional before proving the original0194 body; no unrelated
+consumer/agency/team statements or existing ACL/metadata change. No existing applied migration is
+edited. The native currentness fixture is reset only by recreating the SAME database made by this
+run, then reloading the original fixture before older proof groups; no peer database is touched.
+
+Actual final selected run: history22 cases/six mutants/replay and invitation13 cases/four mutants/
+five drifts/replay still pass. Both tenant and profile **valid waits PASS**, and both **expired waits
+PASS** with zero effects across the five original outputs. Deliberately removing ONLY the final
+expiry check makes the actual profile wait commit all five effects again, killing that mutant.
+Log `exp08-first-owner-invitation-final-waits.log`; terminal exit0/own database disposed. These are
+native minimal-schema/original-writer controls, not authenticated customer or full-schema proof.
+Actor/agency/tenant-kind changes, broader lock ordering and all prior full-I2 integration/release
+dependencies remain coding work; this expiry repair does not close them.
+
+Separately, original manual CI41134479447 on published032e is terminal verify124333440477 **SUCCESS**,
+web-fetch124333440955 **SUCCESS**, comms124333440777 **FAIL** at the retained original Billing
+authority-loss assertion. Thus the workflow is not green. It does not cover this later local
+unversioned candidate. Parent3130/producer3142 remain held; full EXP08 **STILL CODING**.
+
+NON-AUTHOR SOURCE review reports no material issue within this bounded expiry repair and no
+independent native execution. It retains authority/type/agency wait changes, full lock ordering,
+provisioning and release integration as unfinished work. Next specific scope race: a non-shell
+tenant becoming Solo while original acceptance waits on the original owner-pointer write; a
+pre-wait non-shell classification must not bypass the applicable first-owner rule afterward.
+
+### I2 account-type wait repair and Billing receiving checkpoint — 2026-10-30
+
+Actual native failure-first scope race now reproduces: an enterprise account with recorded prior
+ownership becomes Solo while original acceptance waits at the owner-pointer UPDATE. Pre-wait
+classification skips the Solo gate, and the intermediate candidate incorrectly commits all five
+effects. Preserve `exp08-first-owner-type-wait-before.log` as FAIL. Repair only original
+subaccount_owner spans: both mint and accept lock the exact tenant BEFORE resolving current
+Solo/platform/agency/history applicability. Existing original mint authority checks still follow;
+no new permission resolver or role grant. Exact inverse/metadata/ACL and unrelated branches remain.
+
+Final selected run `exp08-first-owner-type-wait-after.log` exits0: actual enterprise→Solo wait
+refuses with the specific recovery hint and all five effects absent; actual Solo→enterprise wait
+retains original permitted non-shell outcome. Existing22 history cases/six mutants,13 invitation
+cases/four mutants/five drifts/replay, four tenant/profile valid/expiry waits and final-expiry causal
+control remain passing. This is minimal-schema original-writer proof, not product support or
+activation of held Agency/Enterprise features. Authority/agency changes at later waits, complete
+lock composition and all earlier full-I2/full-assignment integration work remain unfinished.
+
+Independent Billing receiving checkpoint: actual PR3142 head is now published
+`5437bf53c7c07556fb583034f613ba3d026a894f`, OPEN/DRAFT. Fetched exact Git objects and inspected
+forward80007; preserve old80006 and earlier failing receiving artifacts. The EXISTING temporary
+E08 contact-row-wait adapter, using actual published80006+80007, now passes the formerly failing
+public revoke/suspension case: final body `f8fa3a425f70d301f47b5b5750c57ad3`, actual transactionid/
+tuple wait, committed suspension, `billing_workspace_owner_only` refusal, contact unrevoked,
+audit0 and target owner unchanged. Terminal exit0/only own unique database disposed. Original
+ANT138 receiving receipt `3ba06b79-4033-4076-af61-2346f30ab3bb`; local log
+`exp08-billing-final-contact-wait-receiving.log`. This independently executes ONE receiving case,
+not the producer's full25/12 suite or full SQL/security/customer assurance. Producer reports its
+own Preview80007/final bodies and hosted proof; required CI/normal production release/readback
+remain separate. No Team pin renewal, production mutation, release or owner acceptance follows.
+Parent3130 and producer3142 remain held; full EXP08 remains **STILL CODING**.
+
+NON-AUTHOR SOURCE review reports no new material issue in the account-type repair, with no native
+execution by the reviewer. It retains later authority/agency changes, full lock ordering,
+provisioning/recovery and migration readiness as unfinished. Single-case Billing receiving proof
+does not become a full-suite/source-release approval.
+
+### I2 late agency/platform authority — local repair, 2026-10-30
+
+Actual failure-first extension uses the same original acceptance and profile-row blocker. The
+minter initially qualifies through both platform and managing agency on a previously owned Solo
+account. While the original profile UPDATE actually waits, a third session commits removal of the
+agency mapping. The intermediate candidate incorrectly commits the owner change despite now
+being platform-only on a previously owned account. Retain
+`exp08-first-owner-agency-wait-before.log` as FAIL; actual original writes, no model/transport.
+
+Repair only the same UNVERSIONED original acceptance: capture the private never-owned fact after
+the tenant lock and before effects in a function-local boolean; do not recompute history from our
+own new seat/pointer after effects. At the final native return re-resolve the SAME original
+platform/agency predicates. If the previously qualified minter lost both, refuse with authored
+`OWNER_INVITE_AUTHORITY_CHANGED`; if an agency exception disappeared, enforce the recorded prior
+history with the existing recovery refusal. Both roll back the original transaction. This is
+per-call native derived state, not new standing authority, memory, registry or ledger. Original
+already-unqualified-minter fallback semantics are not broadened or relabeled as a new owner grant.
+Full-body inverse also removes the exact added local declaration; all original metadata/ACL and
+unrelated branches remain protected.
+
+Final selected `exp08-first-owner-authority-final.log` exits0 and disposes only this run's database.
+Nine real wait cases pass: retained/lost agency, lost platform, both account-type directions, and
+tenant/profile valid/expired cases. All refusal cases leave the five original effect categories
+unchanged; valid agency and first-owner requests retain their positive outcomes. Three additional
+actual-wait causal controls remove final expiry, agency/history, or minter authority checks; each
+then commits all five effects and is rejected. History22/six mutants and invitation13/four mutants/
+five drifts/replay remain passing. Earlier setup and real failures remain evidence, never waived.
+
+This does not prove full-schema locks/RLS/Auth SDK, all initial/late actor and tenant negatives,
+mint-time later-effect authority, two-token contention, provisioning/Setup/recovery or full-I2
+integration. Versioned migration admission, complete exact-head review/CI/Preview, production
+readback, customer proof and one integrated owner review remain owed. Full EXP08 **STILL CODING**.
+
+Producer Billing check41140203128/5437 currently has comms-provider-boundary and web-fetch SUCCESS,
+verify still genuinely IN PROGRESS at its original INT336 native proof. This is the producer head,
+not renewed consumer/Team Hub clearance. No production/pin update follows.
+
+NON-AUTHOR SOURCE review reports no additional material finding in the bounded late-authority
+repair and independently runs no native tests. Mint-side later authority changes, two-token races,
+full lock ordering/schema/RLS, provisioning/recovery and release readiness remain unfinished.
+
+### I2 mint-side late authority — local repair, 2026-10-30
+
+Reuse the SAME native runner and original create_tenant_invite_token. An actual table SHARE lock
+blocks its token INSERT (observed native relation lock); a separate session commits platform or
+agency revocation after admission. The intermediate mint writer incorrectly returns/saves a token
+after losing authority. `exp08-first-owner-mint-wait-before.log` retains actual FAIL. No fabricated
+trigger, alternate writer or external send is used.
+
+The UNVERSIONED patch now re-resolves the same original platform/agency/history facts immediately
+before the mint function returns. For subaccount_owner only, lost permission or a lost agency
+exception raises the specific authority/history refusal and rolls back the original INSERT.
+Other invite kinds, original ABI/metadata/ACL and every original statement remain protected by
+whole-body inverse, now including the exact mint-tail conditional. No new GRANT or action channel.
+
+Actual final `exp08-first-owner-mint-final.log`: history22/six mutants, invitation13/four mutants/
+five drifts/replay, twelve real mint/accept waits and five actual-wait causal controls PASS; own
+database disposed/exit0. Valid agency mint remains positive; both lost-authority mint cases save
+zero tokens and leave all other original effects unchanged. Removing each final mint check makes
+its real INSERT wait save a token again and is rejected. Earlier acceptance expiry/type/authority
+cases remain. An intermediate control run FAIL (`exp08-first-owner-mint-wait-after.log`) because
+removing only the old pre-write history check now correctly leaves the new final defense effective.
+Retain the assertion; make its causal mutant remove BOTH history checks. This is strengthened
+causal coverage, not an assertion waiver or a successful intermediate run.
+
+This remains minimal-schema engineering proof of the original writers, not authenticated SQL/RLS,
+actual invitation sending or customer acceptance. Two-token contention, full lock-order/schema,
+all actor/tenant/recovery negatives, provisioning/Setup/recovery and guarded versioned migration
+integration remain coding work. Full assignment remains **STILL CODING**; release holds unchanged.
+
+NON-AUTHOR SOURCE review reports no additional material issue in the bounded final-mint repair;
+no native execution by the reviewer. Two-token/full-lock/schema composition, provisioning,
+Setup/recovery and guarded migration admission remain unfinished; no release/customer assurance.
+
+### I2 two actual first-owner acceptances — component proof, 2026-10-30
+
+Same original native runner, original acceptance and uniquely-created local database. Two valid
+synthetic legacy tokens target the same fresh Solo-shell tenant, for distinct authenticated-user
+ports. First original acceptance settles inside its uncommitted transaction. The second actually
+waits on that FIRST writer, verified by pg_blocking_pids and both named sessions. After the first
+commits, the second refuses with the authored recovery hint. Exactly one seat/owner/audit exists,
+holder and first profile belong to the first invitee, first token uses1, second token uses0 and
+second profile unchanged. No replacement acceptance implementation is used.
+
+Actual causal control removes ONLY the explicit original tenant serialization in the candidate:
+the second writer still really waits, now later in history effects, but its pre-effect fact is stale.
+Both tokens then consume and two owners/audits commit, so the original assertion rejects it. Restore
+the real definition afterward. This establishes why serialization must precede history capture;
+it does not assert serialization alone closes every full-schema lock-order interaction.
+
+`exp08-first-owner-two-token.log` final selected run exits0/only own database disposed, retaining
+all history22/six mutants, invitation13/four mutants/five drifts/replay, twelve earlier real waits,
+five earlier actual-wait causal controls, and adding this two-token race plus its serialization
+mutant. No product source change was needed for this new regression proof. Native table/Auth/
+platform ports are explicit; no authenticated customer/RLS/full-schema/release evidence follows.
+Full lock/schema composition, all original lifecycle/provisioning/Setup/recovery integration and
+guarded migration readiness remain unfinished. Full EXP08 **STILL CODING**.
+
+NON-AUTHOR SOURCE review finds no material issue in the two-token regression proof; it executes
+no race independently. It retains selected synthetic/native, full-schema/authenticated and release
+assurance as separate evidence classes. Existing full-run and original lifecycle gaps remain.
+
+### Current-main and released Billing composition — 2026-10-30
+
+Existing child merges peer6dacc3c14 as `4ac216caf1725ddfbed1f175efd5433399513c30`. Only conflict
+was simultaneous Master§4.0 additions: preserve exact original E08 release block AND every incoming
+E05/E02 entry, not either side alone. Index readback proves18667 incoming outside-owned leaves and
+76 uncontested original E08 leaves exact. Removing ONLY the original E08 additions recovers each
+ENTIRE incoming Master and Brain document. First temporary readback attempt hit a Node stdout
+buffer limit before assertions; increasing that local read buffer produced the actual checks,
+not a source change/waiver. Original receipt `exp08-6dacc-composition.json` retained.
+
+Then compose verified main8684a38a2 as `55be185905b62937b078184313fb468538662801`. All six E02
+producer paths remain byte-exact; no overlap,18671 incoming leaves and78 original E08 leaves exact,
+both document whole-inverses retained. Actual original Spine lint **245 capabilities PASS**.
+ALL original C0b test files plus int304 observation suite **284 PASS/0 FAIL/0 skipped**, normal
+single-worker local run; logs `exp08-8684-spine.log` and `exp08-8684-c0b.log`. No checker, declaration,
+assertion or source pin changed in these merges. These are local source tests, not new required
+exact-head CI or authenticated execution. Second receipt `exp08-8684a38a2-composition.json`.
+
+Independent read-only production catalog now records both producer80006+80007/frontier80007 and
+exact ab1e51f4 designate/f8fa3a42 revoke/scope3d33 with original owner/definer/path/ACL. GitHub normal
+native41143811589 is independently terminalSUCCESS/head8684. Original E02 full29-field/OID/comment
+conservation and ready web are attributed to its23:22 producer receipt, not an E08 independent
+rerun. Original receivingACK ANT138/0b54e52b clears this PRODUCER dependency only. Consumer90008
+still pins oldc67 at this checkpoint; exact renewal, current producer loading in the original
+native harness, complete original native tests, whole-head review/required CI/own managed Preview
+and normal release/readback remain required. No own production migration or native effect occurred.
+
+Read original E09 shared handoff ANT161/ea0882f6 in full for the relevant invitation contract:
+NO active accept-body edit/lease, narrow E08 subaccount_owner window acknowledged. E09's normalized
+definition12553chars/MD5 20539b691522c34f2d9a518d7c7f2229, common-prefix SHA256 a341f89a090d06163d1d1098e0e8f26a7f03732b3babbfc51f25cf54a2655973,
+consumer SHA2561f9add8d39f9b9e192c9a56d3a5461ecc6b9a9ae3ab42298ff91cf3b1c69f1af are method-labelled
+producer pins, not new C0b bindings. Own earlier catalog definition also has12553chars; prosrc0194
+is a different extraction, not a contradictory hash. Preserve all original common authorization,
+recipient/contact/one-use/expiry/linkage/receipt and consumer early-return semantics. Candidate
+whole-body inverse removes only E08 additions, including its local declaration; do not falsely
+claim a prefix containing that added declaration has an unchanged hash. E09's current mechanical
+Master/Brain slot and subsequent original E13 queue are not taken over by source-conserving merges.
+
+Canonical register own F13/D10/I10 NOTES updated23:29:36UTC, all prior history/value/format/validation
+preserved. Exact21 completeCellData readback: only three intended notes changed, zero collateral
+differences. This is coordination evidence, never product readiness. All original18 rows/six
+amendments/five journeys, workshop/goals/standing authority, bell and one complete owner review
+remain in the full assignment. Status **STILL CODING**, not ready/accepted.
+
+### Released producer prerequisite renewal — 2026-10-30
+
+After independently verified producer release/readback and original receivingACK0b54e52b, renew
+ONLY90008's exact public revoke prerequisite from oldc67 to released
+`f8fa3a425f70d301f47b5b5750c57ad3`. Restoring that single scalar recovers the ENTIRE prior migration;
+consumer body, authorization, locks, financial rules, metadata/ACL guards and assertions do not
+change. No E02 writer file is edited. This is an unmerged/unapplied-to-production E08 revision;
+the old applied copy exists only in OWN disposable Preview and must be reconciled through its
+supported rebuild, never treated as a production history rewrite or same-version automatic repair.
+
+Original native harness now loads the actual original designate/scope/revoke functions with the
+original authenticated-only writer ACLs, then the EXACT released E02 native80006+80007 files.
+No copied financial rules or mock replacement Billing writer. Actual first run with the old
+prerequisite correctly FAILS on the real f8fa source; retain
+`exp08-released-billing-pin-before.log`. After the one-scalar renewal, selected original Billing
+interlock **13 cases/six mutants/eight drift controls/replay PASS**, with actual Team member wait,
+public advisory wait and public contact-row wait each refusing lost authority and preserving
+contact/audit/owner state. Integrate the previous temporary contact counterexample into the SAME
+original runner; retain the original failure assertion verbatim. Selected exit0/own database
+disposed; log `exp08-released-billing-pin-after.log`. This is NOT complete native release proof.
+
+NON-AUTHOR SOURCE review of the two source paths confirms the exact scalar inverse and unchanged
+consumer/permission guards, original producer loading and preserved refusal assertions. It executes
+no native tests or production verification independently. Complete no-argument original runner is
+now active against this frozen source; final conclusion is pending at this checkpoint. New required
+exact-head CI/Preview, full modified-source review and normal source release remain owed.
+
+Actual own managed Preview read: branch62c86253/projectayxuygtityxdtqlctkmz is nonpersistent,
+with_data:false, linked to original3130, FUNCTIONS_DEPLOYED/ACTIVE_HEALTHY. Its actual ledger frontier
+is110008, with80008/90008/100008/110008 and WITHOUT new producer80006/80007 or child140008. Its
+original old linked revoke body is9d4e28f6d75ee91c0b40db6059d3ba5d. Healthy metadata therefore does
+NOT certify this current source. Preserve that applied-state evidence before a supported OWN
+disposable Preview replacement/rebuild; do not rerun new90008 over its applied ledger or alter
+production/peer Preview history. Full assignment remains **STILL CODING**.
+
+Complete native terminal receipt: the NORMAL no-argument original runner now finishes **EXIT0 /
+PASS** on the frozen renewal above, log `exp08-released-billing-full-native.log`, selection
+`full-original-runner`. All original lifecycle/revoke/actor/holder/identity/read phases, baseline
+failures, causal mutants, drift/replay/role negatives and actual waits remain present; original
+lost-authority refusal is not removed or weakened. Both final public advisory and contact-row
+waits refuse with contact unrevoked/audit0/target owner intact. All new unversioned history/
+invitation/authority/type/expiry/two-token component proof also remains. Only its own unique
+database is disposed. Earlier full-run FAILs remain historical evidence, not retroactively green.
+This closes the LOCAL original native integration failure, not fresh hosted CI/managed Preview,
+full SQL/security/UI assurance, authenticated customer proof, release or full-assignment readiness.
+
+Parsed terminal original record packet retains188 phases and all original post-repair case counts:
+lifecycle20, revoke12, Billing13, actor15, incumbent holder20, identity22, owner-read32 (134 total).
+New unversioned component history22/invitation13 adds35 separately; do not conflate those with
+the baseline intentionally failing sets, causal mutations or real-wait counts. Original packet
+selection is explicitly full-original-runner, not a selected-only invocation.

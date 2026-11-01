@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { env } from 'node:process';
+import { randomUUID } from 'node:crypto';
 import ts from 'typescript';
 import { describe, expect, it, vi } from 'vitest';
 import { databaseAnswered, OUTCOME_UNKNOWN_NOTE } from '../../supabase/functions/_shared/approval-outcome';
@@ -486,6 +487,79 @@ function nativeSql(sql: string) {
 }
 
 describe('saved contact-created owner.task native core', () => {
+  // Only the original human-control native harness installs this forward seam.
+  // The older core-only proof retains its unchanged single-step coverage.
+  if (env.OWNER_TASK_NATIVE_DB && nativeSql("select to_regprocedure('public._owner_task_literal_chain_supported(jsonb)')is not null;") === 't') {
+    it('runs a saved two-step process through the actual engine, separate C5 approvals, native Tasks and recovery', async () => {
+      const saved = await drive('', { name: 'Two internal responsibilities', trigger_key: 'contact.created', steps: [
+        { action_kind: 'owner.task', config: { title: 'Review the source commitment' } },
+        { action_kind: 'owner.task', config: { title: 'Prepare the internal handoff' } },
+      ] });
+      expect(saved.result).toMatchObject({ success: true, execution_started: false });
+      const processId = randomUUID(), contact = randomUUID(), acts = [randomUUID(), randomUUID()];
+      const quote = (v: unknown): string => v == null ? 'null' : typeof v === 'boolean' || typeof v === 'number'
+        ? String(v) : "'" + (typeof v === 'object' ? JSON.stringify(v) : String(v)).split("'").join("''") + "'" + (typeof v === 'object' ? '::jsonb' : '');
+      nativeSql(`insert into paige_automations(id,tenant_id,name,trigger_key,created_by,granted_lane,state)
+        values('${processId}','${tenant}','Two internal responsibilities','contact.created','${actor}','confirm','draft');
+        insert into paige_automation_acts(id,automation_id,position,action_kind,config)values
+        ${acts.map((act, i) => `('${act}','${processId}',${i + 1},'owner.task',${quote(saved.state.acts[i].config)})`).join(',')};`);
+      const review = JSON.parse(nativeSql(`select jsonb_build_object('updated_at',p.updated_at,'process',_owner_task_process_review(p),'acts',
+        (select jsonb_agg(jsonb_build_object('id',a.id,'position',a.position,'action_kind',a.action_kind,'tool_key',a.tool_key,'config',a.config)order by a.position,a.id)
+          from paige_automation_acts a where a.automation_id=p.id))from paige_automations p where id='${processId}';`));
+      nativeSql(`set role authenticated;set request.jwt.claims='{"role":"authenticated","sub":"${actor}"}';
+        select control_owner_task_automation('${processId}','arm',${quote(review.updated_at)}::timestamptz,${quote(review.process)},${quote(review.acts)});`);
+      nativeSql(`insert into clients(id,tenant_id,first_name,last_name,account_number,source)
+        values('${contact}','${tenant}','Synthetic','Two step engine','${contact}','test');`);
+      const eventId = nativeSql(`select id from paige_native_events where subject_id='${contact}';`);
+      const processRow = JSON.parse(nativeSql(`select to_jsonb(p)from paige_automations p where id='${processId}';`));
+      const executions: Row[] = [];
+      // Same isolated native transport as the incumbent test, without replacing
+      // its intentionally single-step synthetic authority model.
+      const db = { from(table: string) {
+        expect(['paige_automations', 'paige_automation_acts', 'paige_act_executions', 'tenant_members', 'clients', 'paige_native_events', 'paige_pending_approvals']).toContain(table);
+        const filters: string[] = [], ordering: string[] = [];
+        const field = (key: string) => { if (!/^[a-z_]+$/.test(key)) throw new Error('Invalid native proof field'); return key; };
+        const q = { select() { return q; }, eq(k: string, v: unknown) { filters.push(field(k) + '=' + quote(v)); return q; },
+          lte(k: string, v: unknown) { filters.push(field(k) + '<=' + quote(v)); return q; },
+          order(k: string, options?: { ascending?: boolean }) { ordering.push(field(k) + (options?.ascending === false ? ' desc' : ' asc')); return q; }, limit() { return q; },
+          then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) {
+            const data = JSON.parse(nativeSql(`select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb)from
+              (select * from public.${table} where ${filters.join(' and ') || 'true'}${ordering.length ? ' order by ' + ordering.join(',') : ''})t;`));
+            return Promise.resolve({ data, error: null }).then(resolve, reject);
+          } }; return q;
+      }, async rpc(fn: string, args: Row = {}) {
+        if (!['resolve_automation_autonomy', 'paige_record_act_execution', 'paige_approve_act_execution', 'paige_claim_act_dispatch', 'execute_owner_task_act', 'read_owner_task_act'].includes(fn)) return { data: null, error: null };
+        const parameters = Object.entries(args).map(([key, value]) => {
+          if (!/^_[a-z_]+$/.test(key)) throw new Error('Invalid native proof argument');
+          return key + '=>' + quote(value);
+        }).join(',');
+        const output = nativeSql(`set role service_role;set request.jwt.claims='{"role":"service_role"}';select to_jsonb(public.${fn}(${parameters}));`);
+        const data = output ? JSON.parse(output) : null;
+        if (fn === 'execute_owner_task_act') executions.push({ args, data });
+        return { data, error: null };
+      } };
+      const event = { event_id: eventId, event_key: 'contact.created', tenant_id: tenant, subject_table: 'clients', subject_id: contact, payload: { contact_id: contact } };
+      const run = () => runEventActs(db as unknown as EngineDb, event, [processRow]);
+      const planned = await run();
+      expect(planned.persist_failures).toEqual([]); expect(planned.subscriber_retry).toEqual([]);
+      expect(planned.records).toHaveLength(2); expect(planned.records.every(row => row.outcome === 'approval_pending')).toBe(true);
+      expect(executions).toHaveLength(0);
+      const approve = (actId: string) => executeApprovedLayerCAct({ db: db as unknown as ApproveExecutorDb, eventId, actId,
+        approverUserId: actor, expectedTenantId: tenant, resolveAvailability: async () => ({ ok: true, status: { availability: 'live' } }) as never });
+      expect((await approve(acts[0])).executed).toBe(true);
+      expect(nativeSql(`select outcome from paige_act_executions where event_id='${eventId}'and act_id='${acts[1]}';`)).toBe('approval_pending');
+      expect((await approve(acts[0])).executed).toBe(true); expect(executions).toHaveLength(1);
+      expect((await approve(acts[1])).executed).toBe(true);
+      expect((await approve(acts[1])).executed).toBe(true); expect(executions).toHaveLength(2);
+      const results = executions.map(x => (x.data as Row).result as Row);
+      expect(new Set(results.map(x => (x.readback as Row).id)).size).toBe(2);
+      expect(new Set(results.map(x => x.correlation_id)).size).toBe(2);
+      expect(results.every(x => x.receipt_recorded === true)).toBe(true);
+      expect((await run()).persist_failures).toEqual([]); expect(executions).toHaveLength(2);
+      expect(nativeSql(`select count(*)from crm_command_results where idempotency_key in(
+        select idempotency_key from paige_act_executions where event_id='${eventId}');`)).toBe('2');
+    });
+  }
   it.skipIf(!env.OWNER_TASK_NATIVE_DB)('carries the saved draft through actual engine/C5 and the real native CRM SQL writer', async () => {
     const f = await ownerTask('native-sql');
     expect((await f.approve()).executed).toBe(true);

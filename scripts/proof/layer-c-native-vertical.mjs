@@ -64,7 +64,7 @@ import { createServer } from "node:net";
 import { retireSyntheticTenantSQL } from "./operator-postgres-fixture.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-if (process.argv.includes("--owner-task-native") || process.argv.includes("--owner-task-human-control") || process.argv.includes("--owner-task-approval-visibility")) {
+if (process.argv.includes("--owner-task-native") || process.argv.includes("--owner-task-human-control") || process.argv.includes("--owner-task-approval-visibility") || process.argv.includes("--owner-task-multistep")) {
   await ownerTaskNativeProof();
   process.exit(0);
 }
@@ -75,7 +75,8 @@ if (process.argv.includes("--owner-task-native") || process.argv.includes("--own
 // are explicit fixture ports; this is NOT a full Supabase schema replay.
 async function ownerTaskNativeProof() {
   const approvalVisibility=process.argv.includes("--owner-task-approval-visibility");
-  const humanControl = process.argv.includes("--owner-task-human-control") || approvalVisibility;
+  const multistepOnly = process.argv.includes("--owner-task-multistep");
+  const humanControl = process.argv.includes("--owner-task-human-control") || approvalVisibility || multistepOnly;
   const ci = process.argv.includes("--postgres");
   assert.ok(!ci || process.env.CI === "true", "--postgres requires the disposable CI service");
   assert.ok(!ci || !process.env.PGHOST || ["localhost", "127.0.0.1"].includes(process.env.PGHOST), "loopback only");
@@ -139,7 +140,8 @@ async function ownerTaskNativeProof() {
       create function trust_effective_rung()returns int language sql as $$select 3$$;
       create function resolve_tool_autonomy(uuid,text)returns text language sql as $$select 'confirm'::text$$;
       create function is_tenant_member(uuid)returns boolean language sql as $$select false$$;
-      create table tenants(id uuid primary key,status text,archived_at timestamptz,lifecycle_execution_paused boolean default false);
+      create table tenants(id uuid primary key,status text,archived_at timestamptz,lifecycle_execution_paused boolean default false,
+        account_type text default 'standalone',parent_tenant_id uuid,features jsonb default '{}');
       create table profiles(user_id uuid primary key,active_tenant_id uuid);
       create table tenant_members(tenant_id uuid,user_id uuid,role text,status text,joined_at timestamptz default clock_timestamp());
       create table audit_logs(id uuid primary key default gen_random_uuid(),user_id uuid references auth.users(id),action text not null,entity text not null,entity_id uuid,data jsonb,created_at timestamptz default now());
@@ -223,7 +225,7 @@ async function ownerTaskNativeProof() {
     const controlStatement = (process, action, review = controlReview(process), who = actor) => human(who)+
       `select control_owner_task_automation('${process}',${literal(action)},${literal(review.updated_at)}::timestamptz,${json(review.process)},${json(review.acts)})::text;`;
     const control = (process, action, review, who) => JSON.parse(sql(controlStatement(process, action, review, who)));
-    let controlInstalled = false;
+    let controlInstalled = false, multistepMetadataBefore;
     function held(number) {
       const process = id(number), act = id(number + 1), contact = id(number + 2);
       sql(`insert into paige_automations(id,tenant_id,name,trigger_key,created_by,granted_lane,state)values('${process}','${tenant}','Native task ${number}','contact.created','${actor}','confirm','${controlInstalled ? "draft" : "live"}');
@@ -258,6 +260,12 @@ async function ownerTaskNativeProof() {
       sql(base.slice(base.indexOf("ALTER TABLE public.paige_automations      ENABLE ROW LEVEL SECURITY;"), base.indexOf("-- ── 5."))+
         [...base.matchAll(/GRANT [^;]* ON public\.paige_(?:automations|automation_acts) TO authenticated;/g)].map(m=>m[0]).join("\n"));
       sql(text("supabase/migrations/20271108242000_owner_task_human_control.sql"));
+      sql(fn("20270521000000_operator_authority_in_company_workspaces.sql", "is_company_workspace", true));
+      multistepMetadataBefore = JSON.parse(sql(`select jsonb_object_agg(p.oid::regprocedure::text,to_jsonb(p)-'prosrc')from pg_proc p where p.oid in(
+        'public.control_owner_task_automation(uuid,text,timestamptz,jsonb,jsonb)'::regprocedure,
+        'public._owner_task_source_snapshot(uuid,uuid)'::regprocedure,'public.paige_owner_task_hold_context()'::regprocedure,
+        'public._read_owner_task_act(uuid,uuid,text)'::regprocedure);`));
+      sql(text("supabase/migrations/20271126080005_owner_task_multistep_review.sql"));
       controlInstalled = true;
       check("human control exists as an authenticated-only exact five-argument domain writer", () => {
         const abi = "public.control_owner_task_automation(uuid,text,timestamptz,jsonb,jsonb)";
@@ -291,6 +299,28 @@ async function ownerTaskNativeProof() {
     const claim = f => native("paige_claim_act_dispatch", [literal(f.event), literal(f.act), literal(randomUUID()), "interval '10 minutes'", "true"]);
     const bridge = (f, read = false) => native(read ? "read_owner_task_act" : "execute_owner_task_act", [literal(f.event), literal(f.act), literal(f.correlation)]);
     const resultCount = f => sql(`select count(*)from crm_command_results where idempotency_key='${f.correlation}';`);
+    let nextControl=3000;
+    function draft(config={title:"Review the new contact"}, fixtureTenant=tenant, fixtureActor=actor) {
+      const process=id(nextControl++),act=id(nextControl++);
+      sql(`insert into paige_automations(id,tenant_id,name,trigger_key,created_by)values('${process}','${fixtureTenant}','Human task ${process}','contact.created','${fixtureActor}');
+        insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${act}','${process}',1,'owner.task',${json(config)});`);
+      return {process,act};
+    }
+    const proveMultistep = async () => {
+      check("shared rollback-only literal/ACL SQL contract passes without business fixtures or effects", () => {
+        sql(text("supabase/tests/owner_task_multistep.sql"));
+      });
+      const { proveOwnerTaskMultistep } = await import("./owner-task-multistep-cases.mjs");
+      proveOwnerTaskMultistep({ sql, text, draft, control, controlReview, native, actor, tenant,
+        check, refuses, literal, json, approve, claim, bridge, resultCount, human, multistepMetadataBefore });
+    };
+    if (multistepOnly) {
+      await proveMultistep();
+      writeFileSync(resolve(scratch,"multistep-result.json"),JSON.stringify({passed:cases.length,cases,
+        proofClass:"SELECTED_DISPOSABLE_NATIVE_MULTISTEP",fullRegression:"NOT_RUN",fullSchema:"NOT_RUN",authenticatedQA:"NOT_RUN"},null,2));
+      console.log(`PASS ${cases.length} selected native multi-step controls; evidence ${scratch}`);
+      return;
+    }
     const age = f => sql(`alter table paige_act_executions disable trigger trg_paige_act_executions_touch;
       update paige_act_executions set updated_at=now()-interval '3 days',dispatched_at=now()-interval '3 days'where id='${f.row.id}';
       alter table paige_act_executions enable trigger trg_paige_act_executions_touch;`);
@@ -543,14 +573,20 @@ async function ownerTaskNativeProof() {
     });
     if (humanControl) {
       const controlCasesStart=cases.length;
-      let nextControl=3000;
-      function draft(config={title:"Review the new contact"}, fixtureTenant=tenant, fixtureActor=actor) {
-        const process=id(nextControl++),act=id(nextControl++);
-        sql(`insert into paige_automations(id,tenant_id,name,trigger_key,created_by)values('${process}','${fixtureTenant}','Human task ${process}','contact.created','${fixtureActor}');
-          insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${act}','${process}',1,'owner.task',${json(config)});`);
-        return {process,act};
-      }
       const auditCount=p=>sql(`select count(*)from audit_logs where entity_id='${p}';`);
+      check("two literal internal-task steps can be reviewed together without creating or approving either task",()=>{
+        const x=draft(), second=id(nextControl++);
+        sql(`insert into paige_automation_acts(id,automation_id,position,action_kind,config)
+          values('${second}','${x.process}',2,'owner.task','{"title":"Review the delivery handoff","description":"Prepare the next internal responsibility."}');`);
+        const review=controlReview(x.process), before=sql("select count(*)from tasks;"), rails=sql("select count(*)from paige_workspace_events;");
+        assert.equal(review.acts.length,2);
+        const result=control(x.process,"arm",review);
+        assert.equal(result.state,"live");assert.equal(result.granted_lane,"confirm");assert.equal(result.execution_started,false);
+        assert.equal(result.future_events_only,true);assert.equal(result.acts.length,2);
+        assert.deepEqual(result.acts,review.acts);assert.equal(auditCount(x.process),"1");
+        assert.equal(sql("select count(*)from tasks;"),before);assert.equal(sql("select count(*)from paige_workspace_events;"),rails);
+      });
+      await proveMultistep();
       const armed=draft(), initial=controlReview(armed.process);
       check("ordinary owner arms only the exact reviewed stored process with confirm; canonical audit is configuration, not a task receipt",()=>{
         const before=sql("select count(*)from tasks;"), rails=sql("select count(*)from paige_workspace_events;");
@@ -646,7 +682,7 @@ async function ownerTaskNativeProof() {
         assert.equal(control(x.process,"pause").state,"paused");assert.equal(auditCount(x.process),"1");
       });
       for(const [label,mutation] of [
-        ["multi-step",x=>`insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${id(nextControl++)}','${x.process}',2,'owner.task','{"title":"Second"}');`],
+        ["more than twenty steps",x=>`insert into paige_automation_acts(id,automation_id,position,action_kind,config)select gen_random_uuid(),'${x.process}',v,'owner.task','{"title":"Next internal task"}' from generate_series(2,21) v;`],
         ["nonempty trigger configuration",x=>`update paige_automations set trigger_config='{"delay":1}'where id='${x.process}';`],
         ["conditions",x=>`update paige_automations set conditions='[{"field":"source","op":"eq","value":"test"}]'where id='${x.process}';`],
       ])check(label+" cannot arm; owner can pause the exact unsupported process",()=>{
@@ -779,8 +815,10 @@ async function ownerTaskNativeProof() {
         evidence:"actual selected native SQL + canonical resolver body; auth/agency/operator/Realtime ports; synthetic new-tenant fixture, not full provisioning",authenticatedQA:"NOT_RUN",fullSchema:"NOT_RUN"},null,2));
     }
     check("saved draft drives actual engine/C5 and native recorder/claim/CRM SQL, including receipt-backed replay", () => {
+      const nativeReport = resolve(scratch, "engine-c5-native.json");
       const log = execFileSync(process.execPath, [resolve(root, "node_modules/vitest/vitest.mjs"), "run",
-        "src/__tests__/automation-chat-draft-recovery.test.ts", "--testTimeout=30000", "--maxWorkers=2"], {
+        "src/__tests__/automation-chat-draft-recovery.test.ts", "--testTimeout=30000", "--maxWorkers=2",
+        "--reporter=default", "--reporter=json", "--outputFile.json=" + nativeReport], {
         cwd: root, encoding: "utf8", windowsHide: true, timeout: 120000,
         env: { ...process.env, OWNER_TASK_NATIVE_DB: `postgresql://postgres@127.0.0.1:${port}/${database}`,
           PSQL_BIN: exe("psql"), TEMP: scratch, TMP: scratch },
@@ -790,8 +828,15 @@ async function ownerTaskNativeProof() {
       // then inspect the same report without terminal presentation controls.
       const report = stripVTControlCharacters(log);
       const passed = report.match(/Tests\s+(\d+) passed/);
-      assert.ok(passed && Number(passed[1]) >= 43, "all native engine/C5 controls must actually pass");
+      assert.ok(passed && Number(passed[1]) >= (humanControl ? 44 : 43), "all native engine/C5 controls must actually pass");
       assert.doesNotMatch(report, /\d+ (?:failed|skipped)/, "the optional native SQL case must actually execute");
+      const assertions = JSON.parse(readFileSync(nativeReport, "utf8")).testResults.flatMap(result => result.assertionResults);
+      const original = assertions.find(test => test.title === "carries the saved draft through actual engine/C5 and the real native CRM SQL writer");
+      assert.equal(original?.status, "passed", "the original native SQL test must execute");
+      if (humanControl) {
+        const multistep = assertions.find(test => test.title === "runs a saved two-step process through the actual engine, separate C5 approvals, native Tasks and recovery");
+        assert.equal(multistep?.status, "passed", "the actual multi-step engine/C5 test must execute, not merely raise the suite count");
+      }
     });
     writeFileSync(resolve(scratch, "result.json"), JSON.stringify({ passed: cases.length, cases, database, port,
       evidence: "isolated-native-postgresql-selected-real-functions", fullSchema: "NOT_RUN", authenticatedQA: "NOT_RUN" }, null, 2));

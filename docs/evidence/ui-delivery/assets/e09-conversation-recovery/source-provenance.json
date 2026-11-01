@@ -1,0 +1,76 @@
+{
+  "implementation": "47e89b03abc6b650e018cfd42e46cb5b689ed349",
+  "mode": "synthetic original-component render",
+  "sourcePins": [
+    {
+      "path": "src/pages/app/Messages.tsx",
+      "sha256": "a549c9af9b304a2f9d5abcfbadb89258a6d6b62f829096c6b7421e6cd38401f9"
+    },
+    {
+      "path": "src/pages/Support.tsx",
+      "sha256": "72c8738f3fc12a84a811e39ec9ab4d5b148f187f733b042ff6a0c760fd44bd00"
+    },
+    {
+      "path": "src/hooks/useClientPortalMessages.ts",
+      "sha256": "90f6a1e4971a736a4cd9110cd0ec3ee277944c79a31200f955f503dd233bfa34"
+    },
+    {
+      "path": "src/lib/client-portal-entry.ts",
+      "sha256": "0586dec8165b19198d258afd3dd119eabfcb59889345368fec13e38267e33b0b"
+    },
+    {
+      "path": "src/components/app/CustomerAccessGate.tsx",
+      "sha256": "05445ef6416b05712cc05ee10a6721e5b06f8ee6f583b1eb4ce81c72a213ae3a"
+    },
+    {
+      "path": "src/components/app/AppNav.tsx",
+      "sha256": "c5abb43842d3e50ad4d29e607b2d04fd78a22e7b886374c96867bb643c40816e"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "path": "scripts/live-drive/harness/portal-messages-customer-mount/main.tsx",
+      "sha256": "f5d5af84aafc8e1e28b8fd08f0d9b68283a63e1122f98e22dd959657510adcfb"
+    },
+    {
+      "path": "scripts/live-drive/harness/portal-messages-customer-mount/stubs.ts",
+      "sha256": "59deb25b8eea7cfa8a0659196c272d313496b48e0017fc2798cbcd1713b17d7f"
+    },
+    {
+      "path": "scripts/live-drive/harness/portal-messages-customer-mount/messages-drive.mjs",
+      "sha256": "985a08ddbb6d888bdc0de5563adbc855c7dae17f58accd5aa424b4c83df8275a"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "desktop-business-choice.png",
+      "sha256": "c8878899d5dc49d038120e6d2e6fd62b3d89e2f47a3295637369b01587a54af0"
+    },
+    {
+      "path": "desktop-keyboard-recovered.png",
+      "sha256": "26d899b997995982e95c7caa9b1641f4e5adc1f0d0faf3f95dafdf0ffe45bbdb"
+    },
+    {
+      "path": "desktop-read-error.png",
+      "sha256": "9cef2a2a8e45ab3a07b7046a982f44c50a7e3fa0fc3d916df6a802bd15502ac9"
+    },
+    {
+      "path": "mobile-business-choice-dark.png",
+      "sha256": "370b330279f488f435ef8f46c75934245f7c9e7965278da0af5dbdce822d0bca"
+    },
+    {
+      "path": "mobile-keyboard-recovered-dark.png",
+      "sha256": "739fb2198eca3b462ba7b5469e8ffea803c2f2e1e91692d181bd28137b25e478"
+    },
+    {
+      "path": "mobile-keyboard-recovered-light.png",
+      "sha256": "1179e2194a5a06410269194826d5061b4916aa1b26f157cac74d08134730160b"
+    }
+  ],
+  "authenticatedRuntime": "UNVERIFIED",
+  "nativeChooserMounted": false,
+  "physicalIPhone": "UNVERIFIED",
+  "imageGeneration": false
+}

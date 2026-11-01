@@ -1,0 +1,51 @@
+{
+  "scope": "Actual original Messages page and hook; synthetic transport; not authenticated production or physical iPhone proof",
+  "desktopError": {
+    "width": 1366,
+    "height": 768,
+    "scrollWidth": 1366,
+    "errorVisible": true,
+    "emptyClaim": false,
+    "composerDisabled": true
+  },
+  "desktopRecovered": {
+    "composerDisabled": false,
+    "focus": "BODY",
+    "height": 768,
+    "rows": 0,
+    "scrollWidth": 1366,
+    "width": 1366,
+    "rowCountNotUsed": "Selector did not match original row markup; actual AX tree showed all ten fixture messages"
+  },
+  "mobileError": {
+    "buttons": [
+      {
+        "height": 44,
+        "label": "Try again",
+        "width": 83.7750015258789
+      }
+    ],
+    "composerDisabled": true,
+    "errorVisible": true,
+    "height": 844,
+    "partialRowShown": false,
+    "scrollWidth": 390,
+    "width": 390
+  },
+  "mobileRecovered": {
+    "composerDisabled": false,
+    "errorVisible": false,
+    "focus": "BODY",
+    "height": 844,
+    "originalHistoryShown": true,
+    "scrollWidth": 390,
+    "width": 390
+  },
+  "actions": [
+    "Restore synthetic response (test control)",
+    "Try again via Enter"
+  ],
+  "sends": 0,
+  "minorFinding": "Retry recovery unmounts the button and leaves focus on BODY; all controls remain keyboard reachable. No focus trap; focus restoration remains a follow-up.",
+  "nativeQA": "UNVERIFIED"
+}

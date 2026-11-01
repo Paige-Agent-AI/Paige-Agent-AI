@@ -46,6 +46,15 @@ Deno.test("transport failures are outages; unknown stays unknown", () => {
   assertEquals(c({ provider: "openai", status: 418 }), "unknown");
 });
 
+Deno.test("explicit exhausted-credit code is billing, not message-based permission to retry", () => {
+  assertEquals(O(200, "credit_balance_exhausted"), "billing");
+  assertEquals(O(429, "credit_balance_exhausted"), "billing");
+  assertEquals(O(200, "CREDIT_BALANCE_EXHAUSTED"), "billing");
+  const message = "You have no credits remaining. Add credits to continue using the API.";
+  assertEquals(O(200, null, message), "unknown");
+  assertEquals(O(200, "credit_balance_exhausted_extra", message), "unknown");
+});
+
 Deno.test("only closed classes, and no message ever comes back", () => {
   const secret = "SECRET-REQUEST-MATERIAL";
   for (const s of [0, 200, 400, 401, 402, 403, 404, 413, 418, 422, 429, 500, 503, 529]) {

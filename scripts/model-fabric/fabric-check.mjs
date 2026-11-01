@@ -878,5 +878,166 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   }
   setScenario({});openaiPlan={status:200};
 }
+// A successful HTTP open is not a successful model acquisition. Only a proven
+// provider failure before ANY semantic output may use the existing next leg.
+{
+  setScenario({}); anthropicPlan = { status: 200 };
+  const created = { type: 'response.created', response: { status: 'in_progress' } };
+  const failed = (code) => ({ type: 'response.failed', response: {
+    status: 'failed', error: { code, message: 'Synthetic provider failure.' },
+  } });
+  for (const [code, expected] of [
+    ['insufficient_quota', 'billing'], ['credit_balance_exhausted', 'billing'], ['rate_limit_exceeded', 'rate_limit'],
+    ['model_not_found', 'model_unavailable'], ['invalid_api_key', 'auth_config'],
+  ]) {
+    let gates = 0, opens = 0;
+    const r = await run('frontier', { ...ON,
+      beforeProviderAttempt: async () => { gates++; return true; },
+      openaiFetch: async () => { opens++; return new Response(sse([created, failed(code)])); },
+    });
+    ok(r.s.ok && r.s.served?.provider === 'anthropic' && opens === 1 && gates === 2
+      && r.s.attempts[0]?.failure === expected && r.runnable.length === 1,
+      `J1 presemantic HTTP200 ${code} uses the canonical fallback, rechecking authority`);
+  }
+  for (const semantic of [
+    { type: 'response.output_text.delta', delta: 'Already received.' },
+    { type: 'response.output_item.added', output_index: 0, item: { type: 'function_call', id: 'fc-j2', call_id: 'call-j2', name: 'crm_contact_lookup' } },
+    { type: 'response.refusal.delta', delta: 'Refused.' },
+    { type: 'response.output_item.done', item: { type: 'reasoning', id: 'rs-j2', encrypted_content: 'synthetic-opaque', summary: [] } },
+    { type: 'response.future_unknown_event' },
+    { type: 'response.created', response: { status: 'in_progress', output: [{ type: 'reasoning', id: 'rs-hidden' }] } },
+    { type: 'response.failed', response: { status: 'failed', error: { code: 'insufficient_quota' }, output: [{ type: 'function_call', call_id: 'call-hidden' }] } },
+  ]) {
+    const r = await run('frontier', { ...ON,
+      openaiFetch: async () => new Response(sse([created, semantic, failed('insufficient_quota')])),
+    });
+    ok(r.s.served?.provider === 'openai' && r.calls.length === 0 && r.runnable.length === 0,
+      `J2 ${semantic.type} prevents replay/fallback even after a provider failure`);
+  }
+  for (const terminal of [failed('unrecognised_code'), failed('credit_balance_exhausted_extra'),
+    { type: 'response.failed', response: { status: 'completed', error: { code: 'insufficient_quota' } } },
+  ]) {
+    const r = await run('frontier', { ...ON, openaiFetch: async () => new Response(sse([created, terminal])) });
+    ok(!r.s.ok && r.s.served === null && r.calls.length === 0
+      && r.s.attempts.at(-1)?.failure === 'unknown', 'J3 unknown/contradictory terminal is refused, never replayed');
+  }
+  let gates = 0;
+  const refused = await run('frontier', { ...ON, beforeProviderAttempt: async () => ++gates === 1,
+    openaiFetch: async () => new Response(sse([created, failed('insufficient_quota')])),
+  });
+  ok(!refused.s.ok && gates === 2 && refused.calls.length === 0
+    && refused.s.attempts.at(-1)?.failure === 'caller_refused', 'J4 changed authority after stream failure prevents fallback');
+
+  let creditGates = 0;
+  const refusedCredits = await run('frontier', { ...ON, beforeProviderAttempt: async () => ++creditGates === 1,
+    openaiFetch: async () => new Response(sse([created, failed('credit_balance_exhausted')])),
+  });
+  ok(!refusedCredits.s.ok && creditGates === 2 && refusedCredits.calls.length === 0
+    && refusedCredits.s.attempts.at(-1)?.failure === 'caller_refused',
+    'J4 credit exhaustion cannot bypass current authority on the existing fallback');
+  for (const semantic of [
+    { type: 'response.output_text.delta', delta: 'Already received.' },
+    { type: 'response.output_item.added', item: { type: 'function_call', id: 'fc-credit', call_id: 'call-credit', name: 'crm_contact_lookup' } },
+    { type: 'response.refusal.delta', delta: 'Refused.' },
+    { type: 'response.output_item.done', item: { type: 'reasoning', id: 'rs-credit', encrypted_content: 'synthetic-opaque', summary: [] } },
+    { type: 'response.future_unknown_event' },
+  ]) {
+    const r = await run('frontier', { ...ON,
+      openaiFetch: async () => new Response(sse([created, semantic, failed('credit_balance_exhausted')])),
+    });
+    ok(r.s.served?.provider === 'openai' && r.calls.length === 0 && r.runnable.length === 0,
+      `J4 credit exhaustion after ${semantic.type} cannot replay received or uncertain work`);
+  }
+  const cancelled = new AbortController(); cancelled.abort(); let opens = 0;
+  const aborted = await fabric.fabricChatStream('frontier', BODY, { ...ON, signal: cancelled.signal,
+    openaiFetch: async () => { opens++; return new Response(sse([created, failed('insufficient_quota')])); },
+  });
+  if (aborted.body) await aborted.body.cancel();
+  ok(!aborted.ok && aborted.served === null && opens === 0
+    && aborted.attempts.at(-1)?.failure === 'aborted', 'J5 an already cancelled caller starts no provider leg');
+
+  let entered, upstreamCancelled = 0, actualSignal;
+  const opened = new Promise(resolve => { entered = resolve; });
+  const controller = new AbortController(); calls = [];
+  const acquiring = fabric.fabricChatStream('frontier', BODY, { ...ON, signal: controller.signal,
+    openaiFetch: async (_url, init) => {
+      actualSignal = init.signal; entered();
+      return new Response(new ReadableStream({
+        start(c) { c.enqueue(enc.encode(`data: ${JSON.stringify(created)}\n\n`)); },
+        cancel() { upstreamCancelled++; },
+      }));
+    },
+  });
+  let settled = false; void acquiring.then(() => { settled = true; });
+  await opened; await Promise.resolve(); await Promise.resolve();
+  ok(!settled, 'J6 metadata alone does not claim a served business answer');
+  controller.abort(); const interrupted = await acquiring;
+  ok(!interrupted.ok && interrupted.served === null && actualSignal.aborted
+    && upstreamCancelled === 1 && calls.length === 0 && interrupted.attempts.at(-1)?.failure === 'aborted',
+    'J6 caller cancellation during acquisition cancels upstream and starts no fallback');
+
+  const bytes = enc.encode([created, failed('insufficient_quota')]
+    .map(e => `data: ${JSON.stringify(e)}\r\n\r\n`).join(''));
+  const fragmented = await run('frontier', { ...ON, openaiFetch: async () => new Response(new ReadableStream({
+    start(c) { for (const b of bytes) c.enqueue(Uint8Array.of(b)); c.close(); },
+  })) });
+  ok(fragmented.s.served?.provider === 'anthropic' && fragmented.runnable.length === 1,
+    'J7 one-byte fragmented CRLF terminal failure uses the same canonical recovery');
+
+  const recoveredError = await run('frontier', { ...ON,
+    openaiFetch: async () => new Response(sse([created, { type: 'error', error: { type: 'api_error' } }])),
+  });
+  ok(recoveredError.s.served?.provider === 'anthropic' && recoveredError.s.attempts[0]?.failure === 'provider_outage',
+    'J8 an explicit presemantic provider error uses the incumbent failure classifier');
+
+  setScenario({});
+  const trace = { tenant_id: '7e5a0000-0000-4000-8000-0000000000f3', agent_id: 'fabric-check', job_kind: 'chat' };
+  const traced = await run('frontier', { ...ON, trace,
+    openaiFetch: async () => new Response(sse([created, failed('insufficient_quota')])),
+  });
+  for (let i = 0; i < 30 && recorder().inserts.filter(r => r.table === 'paige_llm_trace').length < 2; i++)
+    await new Promise(resolve => setTimeout(resolve, 0));
+  const rows = recorder().inserts.filter(r => r.table === 'paige_llm_trace').map(r => r.row);
+  const primary = rows.find(r => r.provider === 'openai'), secondary = rows.find(r => r.provider === 'anthropic');
+  ok(traced.s.served?.provider === 'anthropic' && rows.length === 2 && primary?.status === 'error'
+    && primary.metadata?.route_served_provider === 'openai' && primary.metadata?.route_fallback === false
+    && secondary?.status === 'success' && secondary.metadata?.route_served_provider === 'anthropic'
+    && secondary.metadata?.route_fallback === true && trace.fabric_route?.served_provider === 'anthropic',
+    `J9 each original trace retains its own provider/route while the caller observes the actual fallback (${rows.length} rows)`);
+}
+// Cancellation before HTTP open is the caller's state, never a provider fault.
+{
+  setScenario({});
+  const ctrl = new AbortController(); let opens = 0;
+  const r = await run('frontier', { ...ON, signal: ctrl.signal,
+    openaiFetch: async () => { opens++; ctrl.abort(); throw new DOMException('Synthetic cancellation.', 'AbortError'); },
+  });
+  ok(!r.s.ok && r.s.served === null && opens === 1 && r.calls.length === 0
+    && r.s.attempts.at(-1)?.failure === 'aborted', 'J11 pre-header cancellation is reported as aborted with no fallback');
+  const atAuthority = new AbortController(); opens = 0;
+  const refused = await run('frontier', { ...ON, signal: atAuthority.signal,
+    beforeProviderAttempt: async () => { atAuthority.abort(); return false; },
+    openaiFetch: async () => { opens++; throw new Error('CANCELLED_DISPATCH_FORBIDDEN'); },
+  });
+  ok(!refused.s.ok && opens === 0 && refused.calls.length === 0
+    && refused.s.attempts.at(-1)?.failure === 'aborted', 'J11 cancellation during authority check is not misreported as an authority refusal');
+}
+// The five incumbent Root entry points must actually forward cancellation;
+// an adapter-only signal test cannot establish that the owner can interrupt.
+{
+  const { default: ts } = await import('typescript');
+  const source = readFileSync(new URL('../../supabase/functions/paige-ai-chat/index.ts', import.meta.url), 'utf8');
+  const root = ts.createSourceFile('index.ts', source, ts.ScriptTarget.Latest, true);
+  const sites = [];
+  const visit = node => {
+    if (ts.isCallExpression(node) && node.expression.getText(root) === 'fabricChatStream') sites.push(node);
+    ts.forEachChild(node, visit);
+  };
+  visit(root);
+  ok(sites.length === 5, 'J10 preserves the five original streaming call sites');
+  ok(sites.every(call => ts.isObjectLiteralExpression(call.arguments[2]) && call.arguments[2].properties.some(
+    p => ts.isPropertyAssignment(p) && p.name.getText(root) === 'signal' && p.initializer.getText(root) === 'req.signal')),
+    'J10 every original Root stream forwards its true request signal');
+}
 console.log(`fabric-check: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

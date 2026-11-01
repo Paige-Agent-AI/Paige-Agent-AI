@@ -87,10 +87,9 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
   const canStatus = staff === true || creator || item.assigned_to_user_id === actorId;
   const canDate = staff === true || creator;
   const reminder = item.item_type === "reminder";
-  // The native reminder field also requires the incumbent app role for a noncreator.
+  // Current tenant authority governs access; keep the actor/loading fences.
   const reminderStaff = staff === true && staffScope?.actorId === actorId && staffScope.tenantId === tenantId
-    && !userRoles.loading && userRoles.userId === actorId
-    && (userRoles.roles.includes("admin") || userRoles.roles.includes("super_admin"));
+    && !userRoles.loading && userRoles.userId === actorId;
   const canEditTime = (reminder ? creator || reminderStaff : canDate) && (!reminder || !["done","cancelled"].includes(item.status));
   const busy = phase !== "idle";
   const changed = status !== item.status || priority !== item.priority || Boolean(due) || assignee !== (item.assigned_to_user_id ?? "");

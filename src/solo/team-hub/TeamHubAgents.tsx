@@ -53,8 +53,8 @@ export function AgentTyping({ agent, label }: { agent: TeamHubAgentKey; label?: 
  * `pending` is a state nobody can know yet ("may still be replying"): not a failure, so its mark is a
  * neutral clock, never the warning triangle.
  */
-export function AgentFailRow({ text, action, onAction, online, pending = false }: { text: string; action: "ask_again" | "check_again" | null; onAction: () => void; online: boolean; pending?: boolean }) {
-  return <div className={`th-ag-fail${pending ? " th-ag-fail--pending" : ""}`}>{pending ? <Clock aria-hidden="true" /> : <TriangleAlert aria-hidden="true" />}<span>{text}</span>
+export function AgentFailRow({ text, action, onAction, online, pending = false, announce = true }: { text: string; action: "ask_again" | "check_again" | null; onAction: () => void; online: boolean; pending?: boolean; announce?: boolean }) {
+  return <div className={`th-ag-fail${pending ? " th-ag-fail--pending" : ""}`} role={announce ? "status" : undefined}>{pending ? <Clock aria-hidden="true" /> : <TriangleAlert aria-hidden="true" />}<span>{text}</span>
     {action && <button type="button" className="th-btn" disabled={!online} onClick={onAction}>{action === "check_again" ? "Check again" : "Ask again"}</button>}
   </div>;
 }

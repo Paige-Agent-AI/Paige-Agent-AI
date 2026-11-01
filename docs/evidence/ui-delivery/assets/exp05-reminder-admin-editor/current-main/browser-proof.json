@@ -1,0 +1,95 @@
+{
+  "sourceHead": "f7281451b56b3a27b3d715e715687759e073b488",
+  "boundary": "OFFLINE original OperationsWorkspace/inspector; synthetic neutral ports; no actual auth/record/approval/provider/Rail/full-shell proof",
+  "observations": [
+    {
+      "documentWidth": 1366,
+      "focus": "Save change",
+      "saveDisabled": false,
+      "state": "admin-desktop-edited",
+      "time": "2099-02-02T10:30",
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    },
+    {
+      "feedback": [
+        "Review assignments unavailableCurrent work and source access could not be verified. Refresh to inspect your recorded nominations.",
+        "Unsaved changes discarded."
+      ],
+      "saveDisabled": true,
+      "state": "discarded",
+      "time": ""
+    },
+    {
+      "dialogs": 0,
+      "focus": "normal priority · reminderReview the weekly delivery commitmentsStandalone workSOSam OkaforReminder · Jan 1, 9:00 AM",
+      "state": "escape"
+    },
+    {
+      "dialog": {
+        "height": 1000,
+        "width": 320,
+        "x": 0,
+        "y": 0
+      },
+      "documentWidth": 320,
+      "field": {
+        "height": 43.75,
+        "width": 261.6000061035156,
+        "x": 24.80000114440918,
+        "y": 732.6000366210938
+      },
+      "state": "admin-dark-320",
+      "viewport": {
+        "height": 1000,
+        "width": 320
+      }
+    },
+    {
+      "state": "denied",
+      "dialogWidth": 480,
+      "documentWidth": 1366,
+      "readOnly": true,
+      "timeControlCount": 0,
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    },
+    {
+      "state": "loading",
+      "dialogWidth": 320,
+      "documentWidth": 320,
+      "readOnly": true,
+      "timeControlCount": 0,
+      "viewport": {
+        "height": 1000,
+        "width": 320
+      }
+    },
+    {
+      "state": "wrong-actor",
+      "dialogWidth": 320,
+      "documentWidth": 320,
+      "readOnly": true,
+      "timeControlCount": 0,
+      "viewport": {
+        "height": 1000,
+        "width": 320
+      }
+    }
+  ],
+  "interaction": {
+    "nativeKeyboardDateEdit": true,
+    "discardReturnedSaveDisabled": true,
+    "tabReachedDatetimeField": true,
+    "escapeReturnedFocusToOriginalCard": true,
+    "saveSubmitted": false,
+    "actual200PercentZoom": "UNVERIFIED",
+    "screenReader": "UNVERIFIED"
+  },
+  "excludedFrames": "Three immediate screenshot captures showed earlier board despite dialog DOM; preserved with excluded-stale suffix. Confirmed captures inspected separately.",
+  "buildInputs": "All125 compiled product input hashes match exact f728 source; no product rebuild required."
+}

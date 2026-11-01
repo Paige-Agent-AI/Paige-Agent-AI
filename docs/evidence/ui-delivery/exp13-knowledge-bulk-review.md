@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: YES: Existing Add dialog supports multiple permitted files
 FLOW_PROTOTYPE: UNVERIFIED: Prior actual component prototypes exercised original Add/Bulk/Pending and source panel on synthetic ports; current source composition requires renewed rendered/state/finish evidence before release. No routine owner design question is pending.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Eligible existing and future SOLO operators upload permitted single or bulk PDF/DOCX/text, inspect original source/coverage, edit the Knowledge review and reopen unfinished records. No upload implies contractual acceptance, business-fact/Memory confirmation or Work authorization.
 VISUAL_DIRECTION: PASS: Preserve the existing SOLO Knowledge Library and Add dialog, established tokens, form geometry and navigation. Source observers add no visible controls or visual redesign; current complete rendered finish remains separate proof.
-AUTOMATED_EVIDENCE: PASS: Exact source381f5c67facfba0053dd1a55bf410ccb6f07b1ce twelve focused suites355 tests PASS, including original client and actual component controls. Seven corrected native-shaped acknowledgement fixtures fail against original a65 bulk source and pass against current source. Ports are explicitly synthetic, not native authentication or deployed persistence.
-STATIC_EVIDENCE: PASS: Exact381f NON-AUTHOR bounded source/fixture/conservation review clear; tests inspected, not independently rerun. Lint/diff and pinned Impeccable detector[] pass. Scoped strict5-to-5 inherited diagnostic parity is not strict/global typecheck PASS. Current rendered finish remains owed.
+AUTOMATED_EVIDENCE: PASS: Exact current-main code a953e8117361cc95aca253b8afcefa426886a3cb twelve existing focused suites359 tests PASS, including the four released read-continuation controls. Original corrected native-shaped acknowledgement controls remain preserved. Ports are synthetic, not native authentication or deployed persistence.
+STATIC_EVIDENCE: PASS: Current-main code a953 retains all twelve owned code/test blobs from592; NON-AUTHOR composition review676 is clear, tests not independently rerun. Lint/diff and pinned Impeccable detector[] pass. Scoped strict5-to-5 inherited diagnostic parity is not strict/global typecheck PASS. Current rendered finish remains owed.
 RENDERED_EVIDENCE: UNVERIFIED: Renew current actual-component and complete SOLO shell four required sizes/both themes/PAIGE open and closed/cohort proof; previous dated partial fixtures do not certify this head.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Automated component cases cover separate per-file paths, pending reopening, source disclosure and focus return. Current real browser interruption/selection/cancel/late response/reload and later-session source/index/fact/plan/Work proof remains required under the existing usage-review hold.
 AUTHENTICATED_RUNTIME: UNVERIFIED: No customer agreement, credentials, QA account, impersonation, provider effect or authenticated source mutation used. Existing designated ordinary customer proof remains owed.
@@ -28,7 +28,7 @@ SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Current narrow complete shell, themes, k
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Current narrow shell with PAIGE open, zoom/reflow/focus/recovery evidence held by the existing browser usage review.
 UNVERIFIED: Worker3161 and client3174 production source releases are verified separately; this UI remains DRAFT3177. Current prototype/finish/exact CI/release/authenticated reopen and the full joined fact/Memory/plan/actual Work integrations remain owed. FLOW_PROTOTYPE stays UNVERIFIED and its required gate remains failed until actual proof; no owner waiver or browser workaround is inferred.
 
-INTERNAL_BUILD_IDENTITY: source=381f5c67facfba0053dd1a55bf410ccb6f07b1ce; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp13-knowledge-bulk-review.md
+INTERNAL_BUILD_IDENTITY: source=a953e8117361cc95aca253b8afcefa426886a3cb; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp13-knowledge-bulk-review.md
 RELEASE_CHANNEL: development: local consumer composition only, not customer availability.
 RELEASE_CLASSIFICATION: internal-only: incomplete joined customer workflow.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release name, announcement or founder test request.
@@ -314,3 +314,13 @@ saved Mission and actual original Work/CRM/receipt/reload/reopen are NOT READY.
 Original12-suite source log SHA256:
 42cfc3aa81c5399b5db569706c8088f21f5b690d3a2e8f007ce1239bb9fe8248.
 The prior355/343 results remain historical supporting proof, not current UI usage.
+
+## Historical header statements retained after composition review
+
+The prior exact381f/355 statements remain supporting source evidence:
+
+> AUTOMATED_EVIDENCE: PASS: Exact source381f5c67facfba0053dd1a55bf410ccb6f07b1ce twelve focused suites355 tests PASS, including original client and actual component controls. Seven corrected native-shaped acknowledgement fixtures fail against original a65 bulk source and pass against current source. Ports are explicitly synthetic, not native authentication or deployed persistence.
+
+> STATIC_EVIDENCE: PASS: Exact381f NON-AUTHOR bounded source/fixture/conservation review clear; tests inspected, not independently rerun. Lint/diff and pinned Impeccable detector[] pass. Scoped strict5-to-5 inherited diagnostic parity is not strict/global typecheck PASS. Current rendered finish remains owed.
+
+> INTERNAL_BUILD_IDENTITY: source=381f5c67facfba0053dd1a55bf410ccb6f07b1ce; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp13-knowledge-bulk-review.md

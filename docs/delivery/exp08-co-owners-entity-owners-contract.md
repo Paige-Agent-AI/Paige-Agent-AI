@@ -3299,3 +3299,34 @@ necessary repairs and stable recovery-read client are consolidated into existing
 28native successes remain exact historical/supporting evidence; the composed head
 requires fresh complete review/CI/native28+32. No migration/version, mounted caller,
 new project/provider/approval/task/result store or full Experience readiness.
+
+### November1 — unversioned atomic original Team details composition
+
+Finite own preparation82c9a60e adds `exp08-team-details-bundle.mjs` and its owning
+`exp08-team-details-bundle-proof.mjs`, not a migration/version, release or activation.
+Both reviewed original profile and permission patches are embedded byte-exact in
+ONE DO statement. All original body/ABI/metadata/ACL/overload guards remain;
+outer catalog-qualified checks refuse missing originals, mixed scoped installation
+or a legacy-original/scoped mixture rather than normalizing it. Any later component
+refusal rolls back the earlier component's DDL too. No effect/approval/result store,
+request generator, provider or alternate writer is added.
+
+Causal disposable-PostgreSQL proof demonstrates that separate autocommit components
+leave the profile scoped API installed when the later permission metadata guard
+refuses. The atomic composition refuses the SAME drift with the complete original
+catalog and all rows unchanged. Actual10controls PASS: late metadata and ACL drift,
+first install/nonbody conservation/no data effects, exact full replay, partial
+installation, BOTH scoped ACL drifts, legacy-base mixture and anon/service denial.
+This ports existing original fixture/Auth/table dependencies; it is NOT full-schema,
+managed Preview, real Auth/RLS/customer or actual production execution proof.
+
+Final unversioned bundle SHA256
+`31f67e225fd85dcfe766ae9f6a575d971d5491587622882241bba1f7e8acfeb7`;
+original component SHAs remain `f5ca4cd8ba6d25f8c6f9873cb9174ad08923540cdb40b717a41251b2cfa0af6f`
+and `d9b3aa28a96602086059fb0a3344c977b1c76c272b086cbf5ae42b702e766572`.
+Original3200/e6b head stays frozen; actual native28/32 and whole Spine SUCCESS are
+its bounded engineering evidence. Main verify still running; no source/native release.
+Actual managed carrier/source-frontier/ALL published manifests/peer applied history,
+review/exact CI/ordinary release/readback remain required before mounted callers.
+Preserved local UI4744d1fb5 and its209tests/3controlled states remain a separate
+unpublished native-dependent continuation. Full original18+6/five journeys STILL CODING.

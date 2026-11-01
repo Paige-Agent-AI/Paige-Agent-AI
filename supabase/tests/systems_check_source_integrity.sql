@@ -244,19 +244,27 @@ SELECT ok(
   AND EXISTS (SELECT 1 FROM public.paige_systems_check_finding WHERE id = 'd1000000-0000-0000-0000-00000000f002'),
   'active ordinary membership retains the existing saved-source read permission'
 );
-RESET ROLE;
-UPDATE public.tenant_members SET status = 'suspended'
- WHERE tenant_id = 'd1000000-0000-0000-0000-000000001111' AND user_id = 'd1000000-0000-0000-0000-000000000004';
-SET LOCAL ROLE authenticated;
+-- Use the original governed lifecycle writers. A direct active-status flip is
+-- intentionally insufficient to lift an existing suspension (EXP08 section C).
+SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+DO $$ BEGIN
+  PERFORM public.suspend_solo_team_member('d1000000-0000-0000-0000-000000000004', 'd1000000-0000-0000-0000-000000001111');
+END $$;
 SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000004","role":"authenticated"}', true);
 SELECT ok(
   NOT EXISTS (SELECT 1 FROM public.paige_systems_check_run WHERE id = 'd1000000-0000-0000-0000-00000000a002')
   AND NOT EXISTS (SELECT 1 FROM public.paige_systems_check_finding WHERE id = 'd1000000-0000-0000-0000-00000000f002'),
   'revoking the existing membership withdraws both saved-source reads without a new JWT'
 );
+SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+DO $$ BEGIN
+  PERFORM public.reinstate_solo_team_member('d1000000-0000-0000-0000-000000000004', 'd1000000-0000-0000-0000-000000001111');
+END $$;
 RESET ROLE;
-UPDATE public.tenant_members SET status = 'active'
- WHERE tenant_id = 'd1000000-0000-0000-0000-000000001111' AND user_id = 'd1000000-0000-0000-0000-000000000004';
+-- Restore the original selected-workspace fixture after the legitimate writer
+-- has restored membership; never manufacture a role or lift a suspension here.
+UPDATE public.profiles SET active_tenant_id = 'd1000000-0000-0000-0000-000000001111'
+ WHERE user_id = 'd1000000-0000-0000-0000-000000000004';
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000004","role":"authenticated"}', true);
 SELECT ok(

@@ -12,13 +12,22 @@ All fixtures roll back; the original36 assertions and product permissions,
 policies, functions, UI and execution behavior remain unchanged. The existing
 canonical CI gate is reused with its label synchronized to47 assertions.
 
-Functional: source prepared; exact-head review and full-schema47 execution/CI/
-release are PROOF OWED. Visual: unchanged. Experiential: ordinary signed-in
-role/cohort/reload/recovery proof remains owed; database fixtures are not customer
-acceptance. The latest authorized browser chooser remained loading and reported
-a browser-storage write failure before account identity. Its environment cause
-is UNKNOWN; no account, storage or permission change was made. Original second
-SOLO access handoff remains pending through Coordinator. Founder Acceptance:
+The first genuine full-schema execution on3192/7d3d6ddd ran all47 assertions:
+46PASS/1FAIL, with only the new restoration case returningNULL. The fixture tried
+a direct active-status flip; the original EXP08 suspension contract correctly
+requires its governed reinstatement writer. The correction uses the EXISTING
+owner-authorized suspend/reinstate functions and restores only the selected-
+workspace fixture afterward. No product guard is weakened; the failed run stays
+in history. Corrected-head full-schema execution/review/CI/release are PROOF OWED.
+
+Visual: unchanged. Experiential: after the earlier browser-storage write failure,
+a later bounded chooser read and authorized Owner entry succeeded. Original
+saved-run totals/source survived full reload on the same original route;
+Escape returned to the original invoker, with the existing refresh fallback
+after direct reload. This is one ordinary SOLO Owner case, not role/cohort or
+complete Experience acceptance. The chooser still lists only the already tested
+workspace; the original second-SOLO handoff remains pending through Coordinator.
+No browser storage, role, provider, scan or approval change was made. Founder Acceptance:
 OPEN, one complete Experience review. ALG12 remains Partial; orchestration,
 activation and all nine catalogue states are unchanged. This analytical/source
 read proof does not run a new check, approve a correction or prove an effect.

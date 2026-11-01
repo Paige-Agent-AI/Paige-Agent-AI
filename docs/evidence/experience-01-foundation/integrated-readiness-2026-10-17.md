@@ -1,5 +1,20 @@
 # E01 integrated experience readiness — Day-Two evidence (zCod, 2026-10-17)
 
+### November 1 explicit source-decision review repair
+
+The original outcome/case tables below remain intact. Code22bf1f2be repairs actual
+automated P2 PRRC4436325239: optional per-fact original adopt/override intent is
+captured in the staged selection; only selected decisions reach the original
+writer and durable receipt. Missing decisions/changed-value adopt still refuse;
+Admin legal restrictions and unselected connection provenance remain enforced.
+58 focused and65 modeled-dependency native controls PASS; strict types/lint PASS.
+Actual full-schema44 remain with14 additional assertions prepared, NOT RUN yet.
+Renew final-head review/requiredCI/normal release;627 fullSpine PASS is supporting
+only. No native source validator/receipt host/customer availability or original
+23-case acceptance is established. Legal-owner protection, durable Chat source
+linkage, both-chat join, delegated management, cohorts, Live and all amendments
+remain active. Original ANT50/e2479b3e records the material review hold.
+
 ## Additive successor reconciliation — November 1, 2026
 
 CONTROLLING: current owner successor assignment + all twelve ANT-161 R2 sections.

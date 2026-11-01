@@ -1,5 +1,46 @@
 # Experience 01 foundation — ANT-50
 
+### Explicit source-decision review correction — November 1
+
+Automated review thread `PRRC4436325239` identified a real missing connection-
+source replacement path. Earlier technical CLEAR statements were incomplete for
+that case; merge is held until the repair's final review and required CI pass.
+Code `22bf1f2be343e8c029b4ce285534bbc1b8a75948` composes actual incoming
+`c77bd7c82` (including E13 source3198/E08 native3190/E09 records) normally.
+The original 6/8/3 native signatures and manual Setup writer remain unchanged.
+Each reviewed fact may now carry the OPTIONAL original
+`sourceDecision: 'adopt' | 'override'`, only following the user's explicit
+provenance choice. It is part of the immutable staged selection and receipt;
+only selected validated decisions reach the original writer. Approval alone
+never overrides a connection; changed-value `adopt` still refuses, as do Admin
+protected-identity changes. Unselected adoption/value changes are not forwarded.
+
+Failure-first parser27PASS/2FAIL and actual native stage22023 were reproduced.
+Current58 parser/client controls and65 disposable native checks pass; original
+source/current-authority/CAS/replay/UNKNOWN/races remain. Native proof uses actual
+Setup bodies with modeled dependencies; strict ES2020 types/lint/diff pass.
+All44 original actual full-schema assertions are retained with14 new public/
+private source-decision assertions prepared:58 COMPOSED ONLY, execution pending.
+The first new client negative expected the wrong error label; corrected to the
+existing READBACK_MISMATCH/mayHaveSaved and INSPECTION_REQUIRED contract, without
+changing client behavior or weakening the no-repeat assertion.
+
+Supporting627 whole Spine49+49+44 PASS and its CI remain historical, not this
+amended-head clearance. E13's same private helpers are now source-merged; actual
+production has E08's230008 ONCE, original Setupd70 unchanged and no installed
+source validator. Preserve agreed E05→E13→E01 forward/native ordering and old
+applied Preview history. No native/API/customer availability is inferred.
+
+Owner-directed E13 Chat window is returned in original ANT50/99ae70d2 and
+ANT161/ba14f739: finite explicit single-File review handoff source only, no Root/
+Chat API/credit/Setup/Memory/storage/Hub takeover. Durable message-to-Knowledge
+work/intent/revision/readback writer is not verified; E01 retains it. Internal
+link maps remain outside that window; CURA is not internal Knowledge. Genuine
+E13 UI/prototype/browser/AT hold remains. Separate legal-owner guard proposal
+46 local modeled controls is outside this PR and not full-schema/released.
+Full original ten outcomes,23 cases/all amendments and one integrated owner
+evaluation remain active; no timer, acceptance or Live activation is introduced.
+
 ### Continued authority/full-schema preparation — November 1
 
 Actual exact `44b83abeffce9ab28173dbbda43802a62e301106` ENTIRE Spine run

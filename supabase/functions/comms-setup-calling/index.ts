@@ -60,25 +60,29 @@ Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth) return json({ error: "unauthorized" }, 401);
   const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: auth } } });
-  const { data: { user } } = await userClient.auth.getUser();
-  if (!user) return json({ error: "unauthorized" }, 401);
+  const { data: { user }, error: authError } = await userClient.auth.getUser();
+  if (authError || !user) return json({ error: "unauthorized" }, 401);
 
-  const { data: tenantId } = await userClient.rpc("current_user_tenant_id");
+  const scope = await Promise.resolve(userClient.rpc("current_user_tenant_id")).catch(() => null);
+  if (!scope || scope.error) return json({ error: "calling_authority_unavailable" }, 503);
+  const tenantId = scope.data;
   if (!tenantId || typeof tenantId !== "string") {
     return json({ needs_config: true, error: "tenant_not_resolved" }, 400);
   }
 
-  // Refusal BEFORE any provider call (design S1): platform owner acting in-tenant
-  // OR an admin of THIS tenant — the same gate comms-purchase-number enforces.
-  const { data: isOwner } = await userClient.rpc("is_platform_owner");
-  if (isOwner !== true) {
-    // Both parameters, exactly like comms-purchase-number's gate — has_role has no
-    // defaults; omitting _user_id finds no signature and always denies (round-3 P1).
-    const { data: isAdmin } = await userClient.rpc("has_role", { _user_id: user.id, _role: "admin" });
-    if (isAdmin !== true) {
-      return json({ error: "forbidden", message: "You don't have permission to set up calling for this workspace." }, 403);
+  const admin = createClient(supabaseUrl, serviceKey);
+  try {
+    const owner = await userClient.rpc("is_platform_owner");
+    if (owner.error) return json({ error: "calling_authority_unavailable" }, 503);
+    if (owner.data !== true) {
+      const role = await admin.rpc("is_tenant_admin_as", { _actor: user.id, _tenant: tenantId });
+      if (role.error) return json({ error: "calling_authority_unavailable" }, 503);
+      if (role.data !== true) return json({ error: "forbidden", message: "You don't have permission to set up calling for this workspace." }, 403);
     }
-  }
+    const current = await userClient.rpc("current_user_tenant_id");
+    if (current.error) return json({ error: "calling_authority_unavailable" }, 503);
+    if (current.data !== tenantId) return json({ error: "workspace_changed" }, 409);
+  } catch { return json({ error: "calling_authority_unavailable" }, 503); }
 
   let body: SetupBody = {};
   try { body = (await req.json()) as SetupBody; } catch { body = {}; }
@@ -86,8 +90,6 @@ Deno.serve(async (req) => {
 
   // Service-role client for ALL writes (§9: the INSERT trigger must see
   // current_user_tenant_id()=null so the EXPLICIT tenant_id is honored).
-  const admin = createClient(supabaseUrl, serviceKey);
-
   const { data: tenantRow } = await admin
     .from("tenants")
     .select("name")
@@ -95,6 +97,18 @@ Deno.serve(async (req) => {
     .maybeSingle();
   const tenantName = typeof tenantRow?.name === "string" ? tenantRow.name : null;
 
+  try {
+    const owner = await userClient.rpc("is_platform_owner");
+    if (owner.error) return json({ error: "calling_authority_unavailable" }, 503);
+    if (owner.data !== true) {
+      const role = await admin.rpc("is_tenant_admin_as", { _actor: user.id, _tenant: tenantId });
+      if (role.error) return json({ error: "calling_authority_unavailable" }, 503);
+      if (role.data !== true) return json({ error: "forbidden" }, 403);
+    }
+    const current = await userClient.rpc("current_user_tenant_id");
+    if (current.error) return json({ error: "calling_authority_unavailable" }, 503);
+    if (current.data !== tenantId) return json({ error: "workspace_changed" }, 409);
+  } catch { return json({ error: "calling_authority_unavailable" }, 503); }
   const result = await provisionTenantTwilio(admin as unknown as SupabaseAdminLike, {
     tenantId,
     tenantName,

@@ -26,6 +26,13 @@ export type ContactUpsertPatch = Partial<{
   status: string;
   assigned_coach_user_id: string | null;
   do_not_contact: boolean;
+  /** Explicit native confirmation; availability depends on the original writer's released contract. */
+  timezone: string | null;
+  timezone_verified: boolean;
+  expected_timezone: string | null;
+  expected_timezone_verified: boolean;
+  /** Pass the original native timestamp unchanged; Date serialization loses microseconds. */
+  expected_updated_at: string;
 }>;
 
 export async function upsertRelationshipContact({

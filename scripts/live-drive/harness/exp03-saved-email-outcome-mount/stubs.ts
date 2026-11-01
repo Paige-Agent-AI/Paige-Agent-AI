@@ -75,6 +75,9 @@ if(actionEntry){savedDraft.source="original-action-email-draft";savedDraft.meta=
 const actions=[{id:ACTION,tenant_id:TENANT,contact_id:JORDAN,approval_id:APPROVAL,action_kind:actionEntry?"owner.followup_email":"comms-draft-reply",status:"pending_approval",channel_type:"email"}];
 const approvals:Array<Record<string,unknown>>=[{id:APPROVAL,tenant_id:TENANT,contact_id:JORDAN,status:"pending",category:actionEntry?"owner.followup_email":"comms-draft-reply",metadata:{action_id:ACTION},
  ...(actionEntry?{updated_at:savedDraft.updated_at,draft_content:{channel:"email",subject:savedDraft.subject,body:savedDraft.body_text}}:{})}];
+// Rolling-view compatibility: legacy replies remain reviewable, never first-Save authority.
+if(actionEntry&&params.get("queueVersion")==="missing")delete approvals[0].updated_at;
+if(actionEntry&&params.get("queueVersion")==="invalid")approvals[0].updated_at="unreadable-version";
 const savedResults=new Map<string,{request:string;result:Record<string,unknown>}>();let saveCount=0;
 const jordanMessages: Array<Record<string, unknown>> = [jordanIn,...actionEntry?[]:[savedDraft]];
 

@@ -818,6 +818,17 @@ describe("everything else keeps its own path", () => {
     expect(db.doorBodies[1]).toMatchObject({draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION},approval_id:CONN_2});
     expect(db.doorBodies[1]).not.toHaveProperty("action_draft_source");expect(db.doorBodies[1]).not.toHaveProperty("save_draft");
   });
+  it.each([undefined,"unreadable-version"])("original legacy prepared reply with version %s opens review while withholding Save",async version=>{
+    db.messages=[];
+    db.approvals=[{id:CONN_2,tenant_id:TENANT,contact_id:CONTACT,status:"pending",updated_at:version,
+      category:"owner.followup_email",draft_content:{channel:"email",subject:"Original legacy follow-up",body:"Original legacy words."},metadata:{action_id:CONTACT}}];
+    const host=await mount();await click(buttonByText(host,"Edit and review reply"));
+    expect(textarea(host)?.value).toBe("Original legacy words.");expect(buttonByText(host,"Save draft")).toBeUndefined();expect(db.invokes).toEqual([]);
+    await click(sendButton(host));expect(db.doorBodies).toHaveLength(1);
+    expect(db.doorBodies[0]).toMatchObject({approval_id:CONN_2,command:{subject:"Original legacy follow-up",body:"Original legacy words."}});
+    for(const key of ["save_draft","action_draft_source","draft_source","approved_fingerprint"])expect(db.doorBodies[0]).not.toHaveProperty(key);
+    expect(db.sendBodies).toEqual([]);
+  });
   it("an SMS reply still queues through send-message with the undo window", async () => {
     const SMS_KEY = `contact:${TENANT}:${CONTACT}`;
     db.connectors = [{ id: SMS_CONN, channel_type: "sms", provider: "twilio", display_name: "Business line", from_address: "+14045550138", from_name: null, inbound_address: null, status: "active", active: true }];

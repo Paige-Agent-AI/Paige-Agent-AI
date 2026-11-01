@@ -9,7 +9,8 @@ import assert from 'node:assert/strict';
 import {buildLaunchOptions,resolvePlaywright} from '../../live-drive.mjs';
 const require=createRequire(import.meta.url),here=path.dirname(fileURLToPath(import.meta.url)),repo=path.resolve(here,'../../../..');
 const actionEntry=process.argv.includes('--action-entry');
-const out=path.join(repo,'docs/evidence/ui-delivery/assets',actionEntry?'exp03-saved-email-action-entry':'exp03-saved-email-outcome',new Date().toISOString().replaceAll(':','-'));
+const legacyQueue=process.argv.includes('--legacy-queue');
+const out=path.join(repo,'docs/evidence/ui-delivery/assets',legacyQueue?'exp03-legacy-reply-version':actionEntry?'exp03-saved-email-action-entry':'exp03-saved-email-outcome',new Date().toISOString().replaceAll(':','-'));
 fs.mkdirSync(out,{recursive:true});
 const port=5227,results=[],errors=[],external=[];let server,browser,log='';
 // Reuse the original metric implementation; only expose one extra result projection
@@ -36,20 +37,30 @@ async function open(page,variant){
   await page.evaluate(()=>{document.querySelector('[data-tenant-shell]').dataset.paige='closed';document.querySelector('.tcs-paige').hidden=true;});
  }
  await page.getByRole('button',{name:actionEntry?'Edit and review reply':'Edit',exact:true}).first().click();
- await page.getByRole('button',{name:'Save draft',exact:true}).waitFor();return overlay;
+ if(!legacyQueue)await page.getByRole('button',{name:'Save draft',exact:true}).waitFor();return overlay;
 }
 try{
  const vite=path.join(path.dirname(require.resolve('vite/package.json')),'bin/vite.js');
  server=spawn(process.execPath,[vite,'--config',path.join(here,'vite.config.ts'),'--host','127.0.0.1','--port',String(port),'--strictPort'],{cwd:repo,windowsHide:true,stdio:['ignore','pipe','pipe']});
  await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(Error('Owned Vite startup timeout: '+log.slice(-2000))),60000);const data=b=>{log+=String(b);if(log.includes('ready in')){clearTimeout(timeout);resolve();}};server.stdout.on('data',data);server.stderr.on('data',data);server.on('error',reject);server.on('exit',c=>{clearTimeout(timeout);reject(Error('Owned Vite exited '+c+': '+log.slice(-2000)));});});
  const {chromium}=await resolvePlaywright();browser=await chromium.launch(buildLaunchOptions());
- const variants=(process.argv.includes('--accepted-only')||process.argv.includes('--reflow-only'))?[]:process.argv.includes('--smoke')?[{theme:'light',paige:'closed',w:1366,h:768}]:['light','dark'].flatMap(theme=>['closed','open'].flatMap(paige=>[[1536,770],[1366,768],[1024,768],[900,1000]].map(([w,h])=>({theme,paige,w,h}))));
+ const variants=legacyQueue?['light','dark'].flatMap(theme=>['missing','invalid'].map(queueVersion=>({theme,queueVersion,paige:'closed',w:1366,h:768}))):(process.argv.includes('--accepted-only')||process.argv.includes('--reflow-only'))?[]:process.argv.includes('--smoke')?[{theme:'light',paige:'closed',w:1366,h:768}]:['light','dark'].flatMap(theme=>['closed','open'].flatMap(paige=>[[1536,770],[1366,768],[1024,768],[900,1000]].map(([w,h])=>({theme,paige,w,h}))));
  for(const variant of variants){
   const context=await browser.newContext({viewport:{width:variant.w,height:variant.h},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const url=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(url.hostname)||['data:','blob:'].includes(url.protocol))return route.continue();external.push(url.origin);return route.abort();});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
   try{
-   const overlay=await open(page,{theme:variant.theme,paige:variant.paige,door:'ok'});
+   const overlay=await open(page,{theme:variant.theme,paige:variant.paige,door:'ok',...legacyQueue?{queueVersion:variant.queueVersion}:{}});
+   if(legacyQueue){
+    await labelMock(page);await page.screenshot({path:path.join(out,`${variant.theme}-${variant.queueVersion}-opened.png`)});
+    assert.equal(await page.locator('[data-composer-writing-surface="true"] textarea').inputValue(),'Saved original reply words.','legacy original reply opens for review');
+    assert.equal(await page.getByRole('button',{name:'Save draft',exact:true}).count(),0,'missing/unreadable version never grants Save');
+    assert.equal((await calls(page)).length,0,'opening never dispatches');
+    await page.getByRole('button',{name:'Review reply',exact:true}).click();await page.getByRole('button',{name:'Approve',exact:true}).waitFor();
+    const reviewed=await calls(page);assert.equal(reviewed.length,1);assert.equal(reviewed[0].approval_id,'e0300000-0000-4000-8000-0000000b0002');
+    assert.equal(reviewed[0].command.body,'Saved original reply words.');assert.equal(reviewed[0].save_draft,undefined);assert.equal(reviewed[0].draft_source,undefined);assert.equal(reviewed[0].action_draft_source,undefined);assert.equal(reviewed[0].approved_fingerprint,undefined);
+    results.push({name:`${variant.theme}-${variant.queueVersion}-original-review`,pass:true,saveWithheld:true,proof:'controlled original workspace; no approval/send/authenticated claim'});continue;
+   }
    const words='Saved durable reply for the original conversation.',textarea=page.locator('[data-composer-writing-surface="true"] textarea');
    if(actionEntry){await labelMock(page);await page.screenshot({path:path.join(out,`${variant.theme}-${variant.w}-${variant.paige}-before-save.png`)});}
    await textarea.fill(words);const save=page.getByRole('button',{name:'Save draft',exact:true});await save.focus();await save.press('Space');
@@ -66,7 +77,7 @@ try{
    const name=`${variant.theme}-${variant.w}-${variant.paige}`;await page.screenshot({path:path.join(out,name+'.png')});results.push({name,pass:true,overlay,measurement,originalMetrics,saveCalls:1,reopenWords:true,proof:'controlled original workspace; not authenticated/provider/Hub-host proof'});
   }finally{await context.close();}
  }
- if(!process.argv.includes('--smoke')&&!process.argv.includes('--reflow-only'))for(const theme of ['light','dark'])for(const recovery of (process.argv.includes('--accepted-only')?['accepted']:['save-unknown','save-refuse','accepted'])){
+ if(!legacyQueue&&!process.argv.includes('--smoke')&&!process.argv.includes('--reflow-only'))for(const theme of ['light','dark'])for(const recovery of (process.argv.includes('--accepted-only')?['accepted']:['save-unknown','save-refuse','accepted'])){
   const context=await browser.newContext({viewport:{width:1366,height:768},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const u=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(u.hostname)||['data:','blob:'].includes(u.protocol))return route.continue();external.push(u.origin);return route.abort();});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
@@ -99,7 +110,7 @@ try{
  }
  // Pointer setup selects the original conversation and opens its saved draft.
  // From that entry, exercise editing/save/cancel/reopen/check/approve only by keyboard.
- if(!process.argv.includes('--smoke')&&!process.argv.includes('--accepted-only')&&!process.argv.includes('--reflow-only'))for(const theme of ['light','dark']){
+ if(!legacyQueue&&!process.argv.includes('--smoke')&&!process.argv.includes('--accepted-only')&&!process.argv.includes('--reflow-only'))for(const theme of ['light','dark']){
   const context=await browser.newContext({viewport:{width:1366,height:768},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const u=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(u.hostname)||['data:','blob:'].includes(u.protocol))return route.continue();external.push(u.origin);return route.abort();});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
@@ -121,7 +132,7 @@ try{
  }
  // CSS viewport observed during the separate native 200% Chrome drive (1134x762 -> 567x381).
  // This repeatable viewport check is not itself native browser zoom or authenticated-host proof.
- if(!process.argv.includes('--smoke')&&!process.argv.includes('--accepted-only'))for(const theme of ['light','dark']){
+ if(!legacyQueue&&!process.argv.includes('--smoke')&&!process.argv.includes('--accepted-only'))for(const theme of ['light','dark']){
   const context=await browser.newContext({viewport:{width:567,height:381},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const u=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(u.hostname)||['data:','blob:'].includes(u.protocol))return route.continue();external.push(u.origin);return route.abort();});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));

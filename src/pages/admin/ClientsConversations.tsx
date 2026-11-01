@@ -2201,7 +2201,7 @@ export default function ClientsConversations() {
                   void openSavedEmailDraft(saved);return;
                 }
                 try{setEditingActionDraftSource(parseCommsEmailActionDraftSource({approval_id:approval.id,updated_at:approval.updated_at}));}
-                catch{toast.error("Reopen this reply to load its current saved version.");return;}
+                catch{setEditingActionDraftSource(null);}
                 setLeadReplyApprovalId(approval.id);setComposeChannel("email");setAppendSignature(false);
                 restoreFollowupOrigin(selected.contactId!,approval.id);
                 const connector=composerConnectors.find(c=>c.id===composeConnectorId&&c.channel_type==="email")??composerConnectors.find(c=>c.channel_type==="email");

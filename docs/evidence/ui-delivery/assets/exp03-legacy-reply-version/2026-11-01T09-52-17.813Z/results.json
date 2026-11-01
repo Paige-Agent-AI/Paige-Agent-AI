@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "name": "light-missing-original-review",
+      "pass": true,
+      "saveWithheld": true,
+      "proof": "controlled original workspace; no approval/send/authenticated claim"
+    },
+    {
+      "name": "light-invalid-original-review",
+      "pass": true,
+      "saveWithheld": true,
+      "proof": "controlled original workspace; no approval/send/authenticated claim"
+    },
+    {
+      "name": "dark-missing-original-review",
+      "pass": true,
+      "saveWithheld": true,
+      "proof": "controlled original workspace; no approval/send/authenticated claim"
+    },
+    {
+      "name": "dark-invalid-original-review",
+      "pass": true,
+      "saveWithheld": true,
+      "proof": "controlled original workspace; no approval/send/authenticated claim"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_WORKSPACE",
+  "voice": "UNEXERCISED",
+  "paige": "PLACEHOLDER",
+  "nativeBrowserZoom": "UNVERIFIED"
+}

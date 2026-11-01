@@ -1,0 +1,227 @@
+{
+  "results": [
+    {
+      "name": "light-1366-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 759.171875,
+        "y": 451.953125,
+        "right": 834.421875,
+        "bottom": 487.953125,
+        "viewport": {
+          "w": 1366,
+          "h": 768
+        },
+        "scrollWidth": 1366,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": false
+      },
+      "originalMetrics": {
+        "font": {
+          "schibsted": true
+        },
+        "tagged": [
+          {
+            "kind": "composer-note",
+            "disabled": false,
+            "incidental": false,
+            "text": "Goes to Jordan Rivera's main email.",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "low": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "1",
+            "ratio": 3.52,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "10px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "LIVE",
+            "ratio": 3.69,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(217,212,211)",
+            "size": "8px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "· 1 day ago",
+            "ratio": 2.46,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Paige drafted — awaiting your approval",
+            "ratio": 4.47,
+            "color": "rgb(150, 98, 34)",
+            "bg": "rgb(244,238,225)",
+            "size": "11px",
+            "weight": "600"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "PROFILE · LIVE",
+            "ratio": 4.37,
+            "color": "rgb(50, 118, 90)",
+            "bg": "rgb(238,230,215)",
+            "size": "8px",
+            "weight": "600"
+          }
+        ],
+        "textCount": 163,
+        "saveContrast": [
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 15.05,
+            "color": "rgb(32, 30, 35)",
+            "bg": "rgb(247, 244, 238)",
+            "size": "14px",
+            "weight": "400"
+          },
+          {
+            "kind": null,
+            "disabled": false,
+            "incidental": false,
+            "text": "Save draft",
+            "ratio": 5.32,
+            "color": "rgb(103, 97, 107)",
+            "bg": "rgb(244, 241, 235)",
+            "size": "11px",
+            "weight": "400"
+          },
+          {
+            "kind": "toast",
+            "disabled": false,
+            "incidental": false,
+            "text": "Draft saved. Nothing sent.",
+            "ratio": 17.26,
+            "color": "rgb(4, 20, 57)",
+            "bg": "rgb(249, 250, 251)",
+            "size": "13px",
+            "weight": "500"
+          }
+        ],
+        "goldOutsideAct": [],
+        "goldButtons": [
+          "Send edited"
+        ],
+        "strip": null,
+        "send": {
+          "text": "Send edited",
+          "ariaBusy": null,
+          "ariaDisabled": null,
+          "disabled": false
+        },
+        "focus": {
+          "stripFocus": null,
+          "tag": "TEXTAREA",
+          "inComposer": true,
+          "text": "Saved durable reply for the original con"
+        },
+        "targets": [],
+        "status": "Draft saved. Nothing sent.",
+        "note": "Goes to Jordan Rivera's main email.",
+        "composer": {
+          "subject": "Re: Kitchen refresh — scope questions",
+          "body": "Saved durable reply for the original conversation.",
+          "disabled": false
+        },
+        "pills": {
+          "accepted": 0,
+          "scheduled": 0,
+          "unconfirmed": 0
+        },
+        "overflowX": false,
+        "toasts": [
+          {
+            "type": "success",
+            "text": "Draft saved. Nothing sent."
+          }
+        ],
+        "calls": [
+          {
+            "name": "functions:comms-email-command",
+            "args": {
+              "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+              "operation_id": "3127f5b1-2ef4-42be-9aa6-2db11062bcb7",
+              "command": {
+                "action": "comms.email_send",
+                "contact_id": "e0300000-0000-4000-8000-0000000c0001",
+                "connector_id": "e0300000-0000-4000-8000-0000000e0001",
+                "subject": "Re: Kitchen refresh — scope questions",
+                "body": "Saved durable reply for the original conversation."
+              },
+              "save_draft": true,
+              "action_draft_source": {
+                "approval_id": "e0300000-0000-4000-8000-0000000b0002",
+                "updated_at": "2026-10-31T04:00:00.123456Z"
+              },
+              "approval_id": "e0300000-0000-4000-8000-0000000b0002"
+            }
+          }
+        ],
+        "selectedJordan": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_WORKSPACE",
+  "voice": "UNEXERCISED",
+  "paige": "PLACEHOLDER",
+  "nativeBrowserZoom": "UNVERIFIED"
+}

@@ -56,3 +56,32 @@ review/fact separation and parent workspace/actor incarnation disposal retained.
 Reviewer did not execute tests and cannot certify geometry/keyboard/AT/full shell,
 deployed source/index persistence or customer acceptance. All such proof stays
 UNVERIFIED; this is still local preparation, not a ready UI release.
+
+Owner October31 intended-function/location confirmation: preserve the existing
+Settings > Setup > Knowledge bucket > Add Knowledge surface and PAIGE-open/
+closed layout. The owner explicitly approves two entrypoints into the SAME
+editable Knowledge record: Chat upload plus explicit Save to Knowledge, and
+single/BULK direct document upload. Extracted text must be reviewable/editable,
+saved/read/indexed honestly and reopened/reused later. This is a subcase of the
+same full agreement-to-actual-Work primary; no new menu/store or automatic fact,
+Memory, program/offer/deal/pipeline mutation is approved by saving a source.
+Owner screenshots are direction/location evidence, not current-source runtime
+proof; no private account identifier, screenshot content or agreement is copied.
+
+Current LOCAL UI compositionce9b44194bf385a3381c4a6cb742f50136650056 normally
+receives final workered828/main94f48 without own UI/client behavior changes.
+Fresh ten focused suites301PASS plus the separately corrected bulk-flow
+selection5PASS (initial invocation misspelled that one filename, so the first
+run legitimately contained10 rather than11 suites). Total306 controls on the
+same source, no test result borrowed from another head. Render/finish/AT/full
+shell/customer proof remains UNVERIFIED.
+
+Controlled own server repair after the earlier dated no-listener checkpoint
+reached initial current Add/Files dialog1536x770 and chooser multiple=true only.
+Subsequent synthetic file selection/observation was denied by automatic
+approval review's usage limit; no selected/uploaded/reopened result inferred,
+no alternate browser/automation workaround. Historical captures remain dated.
+Current manual consumer preparation does not yet mount a durable Chat upload
+handoff: exact original E01/E08 shared-Chat receiver/source lease requested via
+Coordinator; E13 original source helpers/review are reused, not credit reports,
+private CURA publication or model-paste masquerading as the original file.

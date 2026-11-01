@@ -15,6 +15,24 @@ was used. [Original evidence](../evidence/ui-delivery/exp05-reminder-occurrence-
 This finite prerequisite does not close O01, the full ten/E5, ZION Planning's
 native integration or founder acceptance. Prior histories remain unchanged.
 
+## EXP05 November1 — correct the original inactive workflow step
+
+Verified [#3145/bfd4cda5](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3145)
+native 160005/controller 90c5960f and both-origin web release is recorded in
+[Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and the
+[original release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3145#issuecomment-6553406056). Reuse the same five-argument controller,
+original process/act identity, raw version and full-source comparison; revise only
+the selected configuration of an original inactive draft/paused workflow. A no-op
+has no new audit; stale source refuses. Preserve earlier Tasks and Rails unchanged.
+
+Configuration correction is not authority to arm or execute. Its original audit is
+not a Task/Rail business receipt, and the separate unmounted #3148 consumer is not
+customer proof. This finite prerequisite clears only the published lower-native
+order for E13/E03; it does not admit Planning into ZION's native context, close O01,
+activate recurrence/providers or promote any capability/algorithm. Ordinary current
+actor/tenant/cohort, both-chat result and later-session recovery proof remain owed.
+Prior dated records follow unchanged.
+
 ## EXP09 October30 — the enclosing history reader owns file-context continuity
 
 Verified [#3152/90a99e6f](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3152) source/web release is now recorded in [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log). Removing the enclosing history initializer's null reset preserves the original private Documents lifetime during the SAME customer recheck. Initial unknown identity remains empty; native currentness/admission, genuine scope remounts, different native threads and explicit upload/Send remain authoritative. A retained identifier is never an authorization grant.
@@ -5690,3 +5708,27 @@ Reuse those original clients for single/BULK/Chat source review; no repeated
 write resolves an unknown effect. Mounted UI, authenticated useful indexing,
 approved facts/separate Memory, saved Mission and actual Work/CRM receipt/reopen
 remain separate unfinished proof. No new runtime, authority or readiness claim.
+
+## 2026-11-01 UTC EXP13 - original reviewed Memory release identity
+
+Original3169/3eeb native18 and exact production function/ACL plus both public
+web build identities are recorded in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse original private record/get/forget interfaces and same-intent inspection;
+selected correction/retirement and current-source eligibility preserve original
+Memory and legacy callers. Source publication is not Memory or domain approval.
+Consumer mounting, explicit review, selected Setup facts, saved Mission, actual
+Work/CRM receipt/reopen and customer acceptance remain separate unfinished proof.
+No automatic learning, copied store/runtime or algorithm/readiness promotion.
+
+## 2026-11-01 UTC EXP13 - original reviewed Memory client release identity
+
+Original3185/cbc technical source release is recorded in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the original native9/5/4 selected-save/read/retirement adapter in the
+[existing client](../../src/lib/paige-memory-review-service.ts)
+with original authority resolution, negative-only scope and exact version CAS.
+Unknown effects require same-intent inspection, never automatic replay.
+Source publication is not business-fact, Memory or consequential-work approval.
+Consumer mounting, selected Setup facts, saved Mission and actual Work/CRM
+receipt/reopen remain unfinished; no automatic learning or readiness promotion.

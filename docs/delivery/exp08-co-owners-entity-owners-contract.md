@@ -3299,3 +3299,88 @@ necessary repairs and stable recovery-read client are consolidated into existing
 28native successes remain exact historical/supporting evidence; the composed head
 requires fresh complete review/CI/native28+32. No migration/version, mounted caller,
 new project/provider/approval/task/result store or full Experience readiness.
+
+### November1 — unversioned atomic original Team details composition
+
+Finite own preparation82c9a60e adds `exp08-team-details-bundle.mjs` and its owning
+`exp08-team-details-bundle-proof.mjs`, not a migration/version, release or activation.
+Both reviewed original profile and permission patches are embedded byte-exact in
+ONE DO statement. All original body/ABI/metadata/ACL/overload guards remain;
+outer catalog-qualified checks refuse missing originals, mixed scoped installation
+or a legacy-original/scoped mixture rather than normalizing it. Any later component
+refusal rolls back the earlier component's DDL too. No effect/approval/result store,
+request generator, provider or alternate writer is added.
+
+Causal disposable-PostgreSQL proof demonstrates that separate autocommit components
+leave the profile scoped API installed when the later permission metadata guard
+refuses. The atomic composition refuses the SAME drift with the complete original
+catalog and all rows unchanged. Actual10controls PASS: late metadata and ACL drift,
+first install/nonbody conservation/no data effects, exact full replay, partial
+installation, BOTH scoped ACL drifts, legacy-base mixture and anon/service denial.
+This ports existing original fixture/Auth/table dependencies; it is NOT full-schema,
+managed Preview, real Auth/RLS/customer or actual production execution proof.
+
+Final unversioned bundle SHA256
+`31f67e225fd85dcfe766ae9f6a575d971d5491587622882241bba1f7e8acfeb7`;
+original component SHAs remain `f5ca4cd8ba6d25f8c6f9873cb9174ad08923540cdb40b717a41251b2cfa0af6f`
+and `d9b3aa28a96602086059fb0a3344c977b1c76c272b086cbf5ae42b702e766572`.
+Original3200/e6b head stays frozen; actual native28/32 and whole Spine SUCCESS are
+its bounded engineering evidence. Main verify still running; no source/native release.
+Actual managed carrier/source-frontier/ALL published manifests/peer applied history,
+review/exact CI/ordinary release/readback remain required before mounted callers.
+Preserved local UI4744d1fb5 and its209tests/3controlled states remain a separate
+unpublished native-dependent continuation. Full original18+6/five journeys STILL CODING.
+
+
+Same atomic source-preparation continuation adds a canonical native14 rollback
+artifact/compiler/template using the existing original APIs and schema catalog.
+Its14 actual assertions cover whole install/replay/nonbody conservation, scoped
+role ACLs, late metadata refusal/catalog preservation, ACL refusal/no normalization
+and partial-install refusal/surviving body. No customer identity, provider or
+recovery/workforce action is executed. Canonical/negative packaging and lint PASS;
+local PG16 has no available pgTAP extension, so actual14 execution is UNVERIFIED.
+It is not yet wired into hosted CI and must execute through the original schema
+job when the actual managed carrier is prepared. Native28/32 success never proves
+this new14. No shared workflow, migration version or current3200 head changed.
+
+
+### November1 — compose original owner projections with Team details
+
+Actual production CATALOG-only read independently confirms original rosterded4ae3c
+has no holder-state, held-seat or legal-owner-choice projection; original PAIGE
+reader623d712d and private helpers9ade6efe/8f9d2746 still match the existing INERT
+owner-read patchef1486c9. No customer rows/actions were read. The two write patches
+alone were an incomplete deployment package for the preserved owner UI.
+A new owning PostgreSQL test genuinely FAILED the absent-projection assertion on
+the two-component bundle. SAME bundle now embeds the exact ORIGINAL owner-read DO
+as third component, removing only its exact BEGIN/SET LOCAL/COMMIT shell and keeping
+the original2s lock timeout inside the atomic statement. Original patch bytes and
+private-fact/role predicates are unchanged; no parallel reader or grant is added.
+
+Actual13component controls PASS, including a third-component PAIGE metadata refusal
+that rolls back both writer installations AND the earlier roster projection, private
+holder-helper ACL drift, exact replay and conserved original reader ABIs/ACL/default
+expressions. The original selected ownership-read suite separately exits0: baseline
+29expected failing/32, candidate32PASS, original mutants/ACL/metadata/current-context
+and actual observed read-versus-demotion waits retained. These are ported component
+proofs, never authenticated production or full-schema native result proof.
+
+Native rollback packaging is now16 rather than historical14: both reader metadata
+and third-component refusal checks are included. Packaging correctly caught
+19-vs1 transaction delimiters because JavaScript replacement-string dollar tokens
+expanded original SQL text; callback replacement fixes literal insertion and new
+six-copy dollar-token regression controls PASS. No transaction/count assertion
+was removed. Native16 canonical/self-negative/lint PASS, actual hosted16 execution
+still UNVERIFIED (local pgTAP unavailable). Original generated14/history remains
+in earlier commits; current16 is not an attestation that14 or16 ran.
+
+Final three-component bundle SHA256
+`eec6737365d2271834dc17393486147f3aa77fefcb0cf46b38d155f44ea97f69`;
+third ORIGINAL raw component SHA256
+`03ce407cacbc4638d92ac908eef90f6c34d77116294d438d491bec0b9b09f3b3`.
+No native version/reservation, shared workflow edit, production apply or mounted
+caller activation. Future normal carrier must renew E01/E13 receiving compatibility,
+real schema execution/review/exactCI/frontier/applied-history readback. Full18+6/five
+journeys STILL CODING. E05 actual latest3087 reviewer findingsae5472ed are received:
+original owner retains mixed-read limit and access-class history repairs; all
+27000005/27010005/27020005 applied Preview carriers remain immutable.

@@ -3176,3 +3176,21 @@ running at this checkpoint, no release/production claim. Calendar receiving
 contract ACK via Coordinator6eab458f is finite and later, requiring exact
 baseline/hunk publication; no host lease held or action/provider activation.
 All original18+6/five journeys remain STILL CODING; no owner increment review.
+
+
+### Original scoped work-profile native proof preparation — November1
+
+Coordinator-only42537837 finite window: original canonical profile patch plus new
+self-contained rollback-only native26 template/artifact/packaging script. It
+uses actual native tables/writers/role switching, no ported current-tenant or
+permission functions.26 assertions declare source/nonbody metadata, original
+3arg and scoped5arg compatibility/receipts/audits, holder/self versus Admin
+owner editing, missing/foreign tenant/seat, same actor+target across2workspaces,
+actual native membership deletion/reentry, banned actor, anon/service denial
+and complete two-overload replay. All synthetic Auth/table changes roll back.
+Banned actor uses the CURRENT reentered seat so another refusal cannot mask
+missing identity enforcement. This is test source preparation, NOT an executed
+full-schema PASS. Canonical --write/--check/--self-test PASS only packaging.
+No workflow/current3190 head, applied source/native slot, managed fixture/account
+or authorization changed. Native26 actual CI execution and full released
+caller/Auth/cohort proof remain UNVERIFIED. Full original EXP08 STILL CODING.

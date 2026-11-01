@@ -3071,3 +3071,34 @@ Exact published ce6826dfec2fa085ab746654a19de8dfd22ae42f database job12489834457
 Actual catalogue read preserves BOTH original revoke_platform_access(uuid) and revoke_platform_access(uuid,text DEFAULT NULL) writers (body MD5 0fb5624c04e4d170f3e0826b8b9cfa52 and f0686e66877bd31bc8c1d8b905cac643). A no-effect disposable parser control reproduced that a single UUID cast is STILL ambiguous; explicit UUID,NULL::text resolves the actual two-argument writer. Only the original R16 fixture call and deterministically generated artifact change. Authority, audit effects, both deployed writers and every32 assertion remain unchanged. Canonical --check and packaging --self-test PASS; replacement exact-head full-schema32 remains UNVERIFIED until hosted execution. No native migration/source/ACL/history rewrite, activation or customer proof.
 
 Local scoped work-profile source is preserved separately on its original local branch; it is NOT bundled into this release repair. Required exact-head review/CI/Preview/merge/deployment/readback and the entire original experience remain open. STILL CODING.
+
+
+### Original recovery stable-reference reopen preparation - November1
+
+LOCAL source e8d491067b68615313c610140d5c2891b4eabab6 adds
+`reopenOwnerRecovery` to the ORIGINAL recovery service and its owning tests.
+After reload it admits actual actor/tenant/request, calls ONLY the original
+`platform_owner_recovery_receipt`, validates the same full native projection,
+and derives private intent text only from that admitted receipt. No reason in
+URL, browser result store, new request, approval, writer or resubmission. Missing
+receipt stays `not_found`, never authority to retry an outstanding transaction.
+No new native ABI, carrier or shared host was edited.
+
+Failure-first16 new cases failed while33 original service cases stayed PASS.
+Initial implementation gave1FAIL/71PASS across original service/notice suites:
+a queued context retirement landed between inner and public continuation.
+The original outer lifetime-check pattern repairs it; final2suites72PASS
+(49 service including16new,23 personal notice). Focused ESLint and bounded
+TypeScript check of service+owning test both exit0. This is NOT the whole-app
+compiler or mounted/native/authenticated proof. Current memory1244284KiB free
+is below the prior whole-app compiler attempt; that interrupted broad check
+remains UNVERIFIED, with no peer process stopped or resource abort called PASS.
+
+Raw task transcripts SHA256: before38e443c0eef82795705804aa2adb8d8c02f0244862f94a696e6c08f1c37f174b;
+first implementationcea2446b497077291cfb08be7f839383a92febc6986fb56477d7109316086c75;
+final51659e36d2120d11c4d51c126ec96a77257f8184b7cab671b74d5531bf68166c.
+These are mocked engineering ports, not customer proof. Original Operator,
+recipient/zero-membership host and approved broader bell/activity still need
+mounting and full current-role/tenant/reentry/UNKNOWN/reopen proof. The unused
+SoloApp TopBar is not the actual shell; use the original authenticated hosts,
+no substitute inbox/notification/result/approval store. Full EXP08 STILL CODING.

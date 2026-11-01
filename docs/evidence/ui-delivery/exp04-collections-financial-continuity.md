@@ -234,3 +234,28 @@ availability promotion, production adoption or authenticated Owner/client result
 is claimed. Paired native financial projections, client/Owner statuses, exact
 review/consequence UI and prior compact-shell focus proof remain release holds.
 Same O5/all12; final integrated founder acceptance stays OPEN.
+
+### November1 C189 — manual financial review/correction, final surface still owed
+
+INERT original manual preview/record/reversal/target/receipt integration uses the
+same native actual position. Review separates current debt from refund payable
+and abstains on unknown evidence; a genuine human correction remains available
+without claiming provider reconciliation or a money refund. Exact original Rail
+and receipt are required. Original preview wrappers and schema3 are preserved.
+
+Native27 new controls PASS in the original runner after financial55, cash39+2 ACL
+and collectibility/context39, including refunded-target re-collection, retained
+credit, genuine reversal, unknown debt, receipt rollback/replay, current actor/
+tenant denial, two native sessions and unchanged function metadata. The two
+initial observation/format assertion failures are retained. Inputs and schema
+remain explicitly synthetic/reduced; no customer/provider acceptance follows.
+
+No rendered interface or new layout/navigation/focus proof is claimed. The legacy
+result-row projection and paired actual financial Owner/Collections/Chat/cleared
+Portal consumers remain release holds, alongside prior compact-shell keyboard
+proof. Source-only partial; no hosted CI/release/activation/Auth/acceptance.
+Same O5 only/all12, current R2 and original source owners retained.
+
+Final staging additionally caught a trailing blank at the new SQL file EOF; it
+was corrected before adoption. The original failed whitespace result is retained;
+no function body, authority, algorithm or test assertion changed for that repair.

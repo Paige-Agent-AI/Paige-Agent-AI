@@ -839,3 +839,65 @@ rendered/focus proof, combined schema/order/CI/release/readback, genuine correct
 merchant TEST and ordinary Owner/client receipts/reload/reopen/recovery. Preserve
 every remaining original O5 financial-action requirement. The current native and
 adapter checkpoint is not completion of payment processing or the Experience.
+
+## November1 C189 — original human receipt and correction, actual financial position
+
+INERT / LOCAL ONLY. Reuse the same original manual record/reversal command, native
+approval/actor/tenant/invoice locks, immutable payment/operation rows and Rail.
+The original target validator now uses the SAME current actual-position helper
+as provider request eligibility. Its exact accepted signing/version/digest/date/
+amount selector is retained. No new obligation, allocation ledger, provider call
+or calculation engine is introduced; the existing human cash cap is preserved.
+
+The original preview chain is composed from its real schema3 lifecycle, settings
+and payment-breakdown wrappers. Review shows current debt and a separate refund
+payable, without an unsupported projected-after balance. Unknown financial facts
+prevent a new receipt; a genuine human-record correction remains available while
+unrelated provider evidence is unresolved and does not resolve that uncertainty.
+Human-recorded payments retain their provenance and do not become verified funds.
+
+The same original executor and receipt reader now require the exact original
+actor/action/source identity and actual success Rail. Missing, suppressed or
+colliding receipts cannot complete/recover a successful manual act; failure
+rolls back invoice version, payment and journal together. No new receipt store,
+permission, retry engine or authorization path is created. All five modified
+functions retain exact OID, arguments, owner, ACL, definer and runtime metadata.
+
+Actual isolated verification:27 new native controls PASS after the original
+financial55, cash39 plus2 ACL controls and collectibility/context39 in the SAME
+original disposable runner. The original gross-allocation failure and original
+suppressed-Rail success were genuinely reproduced before repair, with the latter
+rolled back. The first Windows line-ending observation failure and second native
+summary-format assertion mismatch are retained, not labeled product failures or
+passes. Final amounts and original outputs were inspected; original default
+runner inverse is byte-exact. Syntax, scoped lint and whitespace PASS. Owned
+cluster STOPPED/DB0; no hosted customer, provider or business effect.
+
+Synthetic example: current debt220000 minor units plus separate refund10000;
+record10000 against the refunded original installment produces debt210000 and
+refund10000; full human correction returns debt220000/refund10000. Later credit,
+failed-refund reversal, unknown-source abstention, recovery and real two-session
+no-duplicate checks retain original identities and provider receipts. These are
+reduced-schema/synthetic identity/signing/provider facts, not customer acceptance.
+
+Functional: PARTIAL/local. Visual: no new render. Experiential: source-verified
+review/record/correction/recovery only. The legacy result-row projection is
+explicitly NOT final actual-financial presentation and remains a paired reader/UI
+release hold. Explicit provider/manual target assignment and revision, combined
+full-schema carrier/order/CI/release/readback, correct-merchant TEST, ordinary
+Owner/client both-surface result/reload/reopen/recovery and final founder proof
+remain. No PR/hosted CI/main merge/deployment/activation or availability promotion.
+Separate final review is AUTHOR-REVIEW / LOWER ASSURANCE, never non-author.
+
+Same sole EXP04/MERIT, O5 primary only/no secondary, all12 original outcomes open.
+Current ANT161 R2/North Star/Bootstrap/register/Algorithms incorporated through
+original ANT51/888d2b9e. ALG01/12 have bounded source reconciliation/exception
+coverage; ALG13 useful-result evaluation and ALG02 activation remain unverified
+or sequenced. Named E05/E13 R2 Planning native admission/publication/history
+prerequisite is acknowledged in ANT51/526d86af and9bb86c94; original stage/post/
+read contracts and actual missing source-version proof were returned, without
+Memory-to-Work permission inference, shared source takeover or activation.
+
+Final staging additionally caught a trailing blank at the new SQL file EOF; it
+was corrected before adoption. The original failed whitespace result is retained;
+no function body, authority, algorithm or test assertion changed for that repair.

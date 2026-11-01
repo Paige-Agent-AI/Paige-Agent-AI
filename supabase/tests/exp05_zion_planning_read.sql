@@ -71,6 +71,28 @@ SELECT pg_temp.check(pg_temp.try(:'exp05historypatch')='Original Planning histor
  'EXP05 historical replay refuses an unknown private source');
 ROLLBACK;
 
+\if :{?exp05_links_red}
+\echo 'EXP05 causal link-cap inverse: original stage retained'
+\else
+\ir ../../scripts/proof/exp05-zion-planning-link-cap.sql
+CREATE TEMP TABLE exp05_link_capped AS SELECT oid,to_jsonb(p) metadata FROM pg_proc p WHERE pronamespace='public'::regnamespace;
+\ir ../../scripts/proof/exp05-zion-planning-link-cap.sql
+SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM exp05_link_capped b FULL JOIN pg_proc p USING(oid)
+ WHERE (b.oid IS NOT NULL OR p.pronamespace='public'::regnamespace) AND b.metadata IS DISTINCT FROM to_jsonb(p)),
+ 'EXP05 link-cap replay preserves every function body, OID, ABI, owner, ACL and metadata');
+\set exp05linkpatch `sed -n '/^DO \$patch\$/,/^END \$patch\$;/p' scripts/proof/exp05-zion-planning-link-cap.sql`
+BEGIN;
+GRANT EXECUTE ON FUNCTION public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb) TO authenticated;
+SELECT pg_temp.check(pg_temp.try(:'exp05linkpatch')='Original Planning link-stage metadata drift',
+ 'EXP05 link-cap installer refuses widened stage authority');
+ROLLBACK;
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)','BEGIN',E'BEGIN\n -- unknown link-stage drift');
+SELECT pg_temp.check(pg_temp.try(:'exp05linkpatch')='Original Planning link-stage source drift',
+ 'EXP05 link-cap installer refuses unknown stage source');
+ROLLBACK;
+\endif
+
 CREATE FUNCTION pg_temp.planning_binding(actor text,tenant text,args jsonb DEFAULT '{}') RETURNS jsonb LANGUAGE plpgsql AS $$
 DECLARE a jsonb; raw jsonb; source jsonb;
 BEGIN
@@ -140,6 +162,7 @@ SELECT pg_temp.j(:'u3',format('public.team_hub_open_agent_dm(%L::uuid,''zion'')'
 SELECT pg_temp.post(:'u3',:'ta',:'e5dm','Review my original weekly work')->'message'->>'id' AS e5q \gset
 SELECT pg_temp.accept(:'ta',:'u3',:'e5dm',:'e5q','zion','dm',pg_temp.tok('E5')) AS e5accepted \gset
 SELECT pg_temp.check((:'e5accepted')::jsonb->>'ok'='true','EXP05 original accepted ZION turn');
+\ir fixtures/exp05-zion-planning-links.sql
 
 
 

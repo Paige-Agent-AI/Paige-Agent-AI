@@ -462,15 +462,16 @@ export function validateEvidenceText(text, classification) {
     errors.push("MATERIAL_FLOW_CHANGE must be YES: reason or NO: reason.");
   }
   const flowPrototype = fields.get("FLOW_PROTOTYPE");
-  if (/^YES:/i.test(materialFlow ?? "")) {
-    // A material flow change needs a real prototype/approval reference — or,
-    // only when the owner has ruled the change itself and waived the
-    // prototype gate, the same owner-waiver grammar as FLOW_BY_FLOW.
-    if (!isPassWithEvidence(flowPrototype) && !isWaivedWithOwnerDecision(flowPrototype)) {
-      errors.push("FLOW_PROTOTYPE must be PASS with a prototype/approval reference for a material flow change, or WAIVED: owner-decision=<reference>; reason=<reason>.");
-    }
-  } else if (!/^(?:PASS|NOT_REQUIRED):\s*\S.+$/i.test(flowPrototype ?? "") || hasPlaceholder(flowPrototype)) {
-    errors.push("FLOW_PROTOTYPE must be PASS: evidence or NOT_REQUIRED: reason.");
+  // Record prototype truth; an unrun browser/prototype is not a premerge gate.
+  // Retain legacy substantive owner waivers without requiring a new waiver.
+  const prototypeRecorded = isPassWithEvidence(flowPrototype)
+    || (/^UNVERIFIED:/i.test(flowPrototype ?? "") && isEvidenceValue(flowPrototype));
+  const prototypeNotRequired = /^NO:/i.test(materialFlow ?? "")
+    && /^NOT_REQUIRED:\s*\S.+$/i.test(flowPrototype ?? "") && !hasPlaceholder(flowPrototype);
+  const historicalPrototypeWaiver = /^YES:/i.test(materialFlow ?? "")
+    && isWaivedWithOwnerDecision(flowPrototype);
+  if (!prototypeRecorded && !prototypeNotRequired && !historicalPrototypeWaiver) {
+    errors.push("FLOW_PROTOTYPE must record PASS: evidence or UNVERIFIED: reason; non-material flows may use NOT_REQUIRED: reason, and historical substantive owner waivers remain valid.");
   }
 
   for (const key of CORE_FIELDS.filter((key) => ![

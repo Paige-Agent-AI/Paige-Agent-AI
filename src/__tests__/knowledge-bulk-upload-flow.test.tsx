@@ -25,7 +25,13 @@ it.each([
   ['expired','needs recovery · inspect original'],
   ['outcome_unknown','unconfirmed · inspect original'],
 ])('shows the last confirmed %s reading state without claiming publication',async(status,label)=>{
-  api.submit.mockResolvedValue({reference:{tenantId:tenant,documentId:'doc',workId:'work'},status,replayed:false});
+  const prepared=rows().map((row,index)=>({...row,intentId:`30000000-0000-4000-8000-00000000000${index+1}`}));
+  api.prepare.mockResolvedValue(prepared);
+  api.submit.mockImplementation(async(_client,_scope,input)=>{
+    const number=prepared.findIndex(row=>row.intentId===input.intent_id)+1;
+    return {reference:{tenantId:tenant,documentId:`40000000-0000-4000-8000-00000000000${number}`,
+      workId:`50000000-0000-4000-8000-00000000000${number}`,intentId:input.intent_id,revision:1},status,replayed:status!=='claimed'};
+  });
   const published=vi.fn();await render(published);await choose();await click('Upload and read files');
   expect(document.body.textContent).toContain('Last confirmed reading: '+label);
   expect(document.body.textContent).not.toContain('Original reading available');

@@ -5732,3 +5732,15 @@ Unknown effects require same-intent inspection, never automatic replay.
 Source publication is not business-fact, Memory or consequential-work approval.
 Consumer mounting, selected Setup facts, saved Mission and actual Work/CRM
 receipt/reopen remain unfinished; no automatic learning or readiness promotion.
+
+## 2026-11-01 UTC EXP13 - original source-read continuation release identity
+
+Original3188/30e source and both public build identities are recorded in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the original Knowledge read projection and status reader with their
+captured negative-only incarnation check after the inner RPC settles.
+Do not substitute tenant equality for the original caller lifetime or authority.
+Source/consumer tests and web delivery are distinct from authenticated behavior;
+this repair adds no writer, retry, store, approval or provider effect.
+Single/BULK/Chat review, selected facts/separate Memory, saved Mission and actual
+Work/CRM receipt/reopen remain unfinished; full EXP13 is not customer-ready.

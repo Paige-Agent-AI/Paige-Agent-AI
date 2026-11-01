@@ -13,11 +13,21 @@ BEGIN
   RAISE EXCEPTION 'EXP03 action-save original source/metadata drift';END IF;
  revised:=replace(original,'_save_id IS NULL OR _message_id IS NULL OR _expected_updated_at IS NULL',
   '_save_id IS NULL OR (_message_id IS NULL AND _approval IS NULL) OR _expected_updated_at IS NULL');
+ revised:=replace(revised,'DECLARE m public.messages%ROWTYPE;',
+  'DECLARE action_entry boolean:=_message_id IS NULL; m public.messages%ROWTYPE;');
  revised:=replace(revised,'prior_receipt.target_id IS DISTINCT FROM _message_id',
   '(_message_id IS NOT NULL AND prior_receipt.target_id IS DISTINCT FROM _message_id)');
  anchor:=' SELECT * INTO m FROM public.messages WHERE id=_message_id AND tenant_id=_tenant FOR UPDATE;';
  IF position(anchor in revised)=0 THEN RAISE EXCEPTION 'EXP03 action-save source anchor drift';END IF;
  revised:=replace(revised,anchor,$entry$
+ -- A first-save acknowledgment already identifies its original Message through
+ -- the SAME actor/operation/digest receipt. Lock that Message before its approval,
+ -- exactly like an existing-source edit; never invert the order on replay.
+ IF _message_id IS NULL AND prior_receipt.id IS NOT NULL THEN
+  IF prior_receipt.target_id IS NULL THEN
+   RAISE EXCEPTION 'COMMS_EMAIL_DRAFT_SAVE_RECEIPT_UNAVAILABLE' USING ERRCODE='55000';END IF;
+  _message_id:=prior_receipt.target_id;
+ END IF;
  IF _message_id IS NULL THEN
   -- Serialize the first materialization with the existing original approval.
   -- Never copy edited mailbox content into tenant-readable approval/action JSON.
@@ -39,11 +49,6 @@ BEGIN
    OR NOT EXISTS(SELECT 1 FROM public.paige_action_kinds WHERE slug=act.action_kind AND executor='send_via_approval')
    OR ap.metadata ? 'governed_send' THEN
    RAISE EXCEPTION 'COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED' USING ERRCODE='42501';END IF;
-  IF prior_receipt.id IS NOT NULL THEN
-   _message_id:=prior_receipt.target_id;
-   IF ap.metadata#>>'{comms_email_draft,message_id}' IS DISTINCT FROM _message_id::text THEN
-    RAISE EXCEPTION 'COMMS_EMAIL_DRAFT_SAVE_REPLAY_MISMATCH' USING ERRCODE='22023';END IF;
-  ELSE
    IF ap.updated_at IS DISTINCT FROM _expected_updated_at THEN
     RAISE EXCEPTION 'COMMS_EMAIL_DRAFT_SOURCE_CHANGED' USING ERRCODE='40001';END IF;
    IF ap.metadata ? 'comms_email_draft'
@@ -59,9 +64,13 @@ BEGIN
    UPDATE public.paige_pending_approvals SET metadata=coalesce(metadata,'{}'::jsonb)
     ||jsonb_build_object('comms_email_draft',jsonb_build_object('message_id',_message_id))
     WHERE id=ap.id AND tenant_id=_tenant;
-  END IF;
  END IF;
  SELECT * INTO m FROM public.messages WHERE id=_message_id AND tenant_id=_tenant FOR UPDATE;$entry$);
+ anchor:='   OR ap.metadata->>''action_id'' IS DISTINCT FROM act.id::text OR act.contact_id IS DISTINCT FROM _contact';
+ IF position(anchor in revised)=0 THEN RAISE EXCEPTION 'EXP03 action-save approval backlink anchor drift';END IF;
+ revised:=replace(revised,anchor,anchor||$backlink$
+   OR ((action_entry OR ap.metadata ? 'comms_email_draft')
+    AND ap.metadata#>>'{comms_email_draft,message_id}' IS DISTINCT FROM m.id::text)$backlink$);
  IF revised=original THEN RAISE EXCEPTION 'EXP03 action-save replacement missing';END IF;
  EXECUTE revised;
  -- Once an action has a durable Messages draft, its legacy review entry must

@@ -167,15 +167,19 @@ $function$;
     const original=catalogue(),rows=businessState();
     assert.throws(()=>db.run(`BEGIN;GRANT EXECUTE ON FUNCTION ${signature} TO authenticated;${patch};COMMIT;`),/action-save original prepare source drift|saved action original drift/);
     assert.equal(catalogue(),original,'late prepare-metadata refusal rolls back the preceding Save source replacement and grant');assert.equal(businessState(),rows);checks++;
+    if(compiled){
+     const terminal='END $exp03_saved_action$;';assert.equal(patch.split(terminal).length,2);
+     // Exercise rollback while BOTH original bodies would actually change, not
+     // against an already-installed no-op replay of the compiled carrier.
+     assert.throws(()=>db.run('BEGIN;'+patch.replace(terminal,"RAISE EXCEPTION 'EXP03 forced action carrier late failure';"+terminal)+'COMMIT;'),/forced action carrier late failure/);
+     assert.equal(catalogue(),original);assert.equal(businessState(),rows);checks++;
+    }
     const metadata=()=>db.run(`SELECT jsonb_agg(to_jsonb(p)-'prosrc' ORDER BY oid) FROM pg_proc p WHERE oid IN ('public.save_comms_email_draft(uuid,uuid,uuid,uuid,timestamptz,uuid,uuid,text,text,text,jsonb,timestamptz,uuid)'::regprocedure,'${signature}'::regprocedure)`);
     const before=metadata();db.run(patch);
     assert.equal(metadata(),before,'same original OIDs, owner, security mode, path and exact ACLs');checks++;
     if(compiled){
      const installed=catalogue(),business=businessState();db.run(patch);
      assert.equal(catalogue(),installed,'compiled same-head replay preserves every original source/OID/ACL');assert.equal(businessState(),business);checks++;
-     const terminal='END $exp03_saved_action$;';assert.equal(patch.split(terminal).length,2);
-     assert.throws(()=>db.run('BEGIN;'+patch.replace(terminal,"RAISE EXCEPTION 'EXP03 forced action carrier late failure';"+terminal)+'COMMIT;'),/forced action carrier late failure/);
-     assert.equal(catalogue(),installed);assert.equal(businessState(),business);checks++;
     }
     if(process.argv.includes('--export-action-candidate')){
      const exported=db.run(`SELECT jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'definition',pg_get_functiondef(p.oid),'full_md5',md5(pg_get_functiondef(p.oid)),'owner',pg_get_userbyid(p.proowner),'definer',p.prosecdef,'settings',p.proconfig,'acl',p.proacl::text) ORDER BY p.oid::regprocedure::text) FROM pg_proc p WHERE oid IN ('public.save_comms_email_draft(uuid,uuid,uuid,uuid,timestamptz,uuid,uuid,text,text,text,jsonb,timestamptz,uuid)'::regprocedure,'${signature}'::regprocedure)`);
@@ -234,6 +238,28 @@ $function$;
     assert(answers.filter(r=>r.code!==0).every(r=>/COMMS_EMAIL_DRAFT_SOURCE_CHANGED|COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED/.test(r.err)),'loser refuses; no duplicate or deadlock');checks++;
     assert.equal(db.run('SELECT count(*) FROM public.messages'),'1');assert.equal(db.run(`SELECT count(*) FROM public.messages WHERE provider_message_id IS NOT NULL`),'0');checks++;
    }
+   // An acknowledged first-save replay must use the SAME message-before-approval
+   // order as an edit of its now-existing source. Hold that row in an actual
+   // editor session, observe replay waiting, then let the editor save normally.
+   resetEntry();
+   const originalSave=JSON.parse(db.run(saveSQL(version,{message:null,approval})).split(/\r?\n/).find(x=>x.startsWith('{')));
+   const editor=spawn(db.psql,db.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});let editorOut='',editorErr='',ackReplay;
+   const edited=new Promise((resolve,reject)=>{editor.on('error',reject);editor.on('close',code=>resolve({code,out:editorOut,err:editorErr}));});edited.catch(()=>{});
+   editor.stderr.on('data',chunk=>{editorErr+=chunk;});
+   let timer;
+   const held=new Promise((resolve,reject)=>{timer=setTimeout(()=>reject(Error('Original edit row lock not observed')),8000);editor.on('error',reject);editor.stdout.on('data',chunk=>{editorOut+=chunk;if(editorOut.includes('action_edit_row_held'))resolve();});});
+   try{
+    editor.stdin.write(`BEGIN;SET application_name='action-edit-current-source';SET statement_timeout='10s';SELECT id FROM public.messages WHERE id='${originalSave.message_id}' FOR UPDATE;SELECT 'action_edit_row_held';\n`);
+    await held;clearTimeout(timer);
+    ackReplay=concurrentSQL('action-first-save-ack-replay',saveSQL(version,{message:null,approval}));
+    await observeWait(['action-first-save-ack-replay']);
+    editor.stdin.end(saveSQL(originalSave.updated_at,{message:originalSave.message_id,approval,id:operation,text:'Newer saved words.'})+'COMMIT;');
+    const [editResult,replayResult]=await Promise.all([edited,ackReplay.completed]);
+    assert.equal(editResult.code,0,'newer original source edit finishes without deadlock');checks++;
+    assert.notEqual(replayResult.code,0);assert.match(replayResult.err,/COMMS_EMAIL_DRAFT_SOURCE_CHANGED/,'old acknowledgment cannot overwrite a newer edit or deadlock');checks++;
+    assert.equal(db.run(`SELECT body_text FROM public.messages WHERE id='${originalSave.message_id}'`),'Newer saved words.');
+    assert.equal(db.run(`SELECT count(*) FROM public.paige_audit_log WHERE action='comms.email_draft_saved'`),'2');checks++;
+   }finally{clearTimeout(timer);if(editor.exitCode===null)editor.kill();await edited.catch(()=>{});if(ackReplay){if(ackReplay.child.exitCode===null)ackReplay.child.kill();await ackReplay.completed.catch(()=>{});}}
    console.log(JSON.stringify({checks,scope:'original action first unsent save; synthetic native fixture only'}));
    // This opt-in proof does not claim the remaining default or whole-carrier
    // assertions ran. The finally block still disposes its own database.

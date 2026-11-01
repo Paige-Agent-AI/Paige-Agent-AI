@@ -1,4 +1,4 @@
-// Unmounted EXP05 composition, not native admission or a second Calendar reader.
+// Server-only EXP05 composition, not native admission or a second Calendar reader.
 // The original accepted-turn native stage MUST validate this proposed closed
 // source binding before any result is eligible for model disclosure.
 import { CALENDAR_AGENDA_READ_TOOLS } from "../paige-spine/domains/calendar_booking.ts";
@@ -29,7 +29,7 @@ export type ZionCalendarDeps = CalendarBookingReadDeps & {
   // The SAME host-owned total budget used by other original ZION private reads.
   takeRead: () => boolean;
   recordRead: (tool: "read_calendar_agenda") => Promise<boolean>;
-  // Proposed native integration port; a fake/absent stage is never authority.
+  // Original native integration port; a fake/absent stage is never authority.
   stageReadContext: (scope: Readonly<ZionCalendarScope>, source: ZionCalendarSource) => Promise<boolean | "context_limit">;
 };
 export type ZionCalendarRead = { model: Readonly<Record<string, unknown>>; revalidate: () => Promise<boolean> };

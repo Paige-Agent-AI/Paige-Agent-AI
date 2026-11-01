@@ -51,7 +51,7 @@ function ports() {
       rows: (v: ReturnType<typeof booking>[]) => rows = v, error: (v: unknown) => readError = v,
       onReceipt: (v: () => void) => onReceipt = v, onStage: (v: () => void) => onStage = v } };
 }
-describe("unmounted same-ZION Calendar composition", () => {
+describe("same-ZION governed Calendar composition", () => {
   it("returns no Calendar facts on the known native no-change capacity refusal", async () => {
     const p = ports(); p.change.stage("context_limit");
     const read = await p.run(); assert.equal(read.model.status, "limited");

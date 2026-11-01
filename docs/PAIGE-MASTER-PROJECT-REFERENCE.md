@@ -860,6 +860,22 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded2026-11-01 UTC — EXP04 O5 original current-financial allocation, reversal and paired client continuity.**
+
+| Increment | Exact source and observed production release | Useful result and remaining proof |
+| --- | --- | --- |
+| [#3179](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3179#issuecomment-6559973108) | Reviewed `890e74dd805f94ae663a2268069adc43bff18dac`; separate **AUTHOR-REVIEW / LOWER ASSURANCE**5728775366; bounded E09 NON-AUTHOR financial receiving review independently passed89 original cases, not whole-change approval. All13 required exact-head checks and both web statuses SUCCESS, zero inline threads. Actual merge `17e74cefc3382d0a67d240dd7a1005ec0bf56547`/tree`a846bc920edf21fb68bbe7cedacd04f1b4083687` equals inspected fdf+890 union:170 reviewed own blobs and19,300 incoming leaves conserved. Normal native41320330617 SUCCESS: immutable20271126210004/220004 and guarded230004 each1/frontier230004; production54/54 selected source/ABI/owner/ACL contracts exact. Normal Edge41320330723 SUCCESS, original downloaded-source and marker guards; db-live/edge-live17. Artifact13088702801 SHA`5195956ccced649ef9b0a42c96279215616284d519e815bde84c34f9626c11e7`:32 source/config rows PASS; independently verified1523 original-source-input comparisons/532 paths, including329 frozen vendor-emitted Chat rows under the original pipeline. Production `dpl_Dj1hCMRRtrVTPWa3HbzJuQeBESoX` READY/exact17; app.paigeagent.ai and paige-agent-ai.vercel.app at15:20:49UTC version/root/served module200, build`17e74cefc3382d0a67d240dd7a1005ec0bf56547-mvxz3n8m`/customerUpdate:null; main moduleSHA`6f2e9b18e51f5890cb804653ed510afc1a71eea23d91d6ae51e20bd80d1b621d`. | Original financial position, accepted obligations, allocations/reversals/provider observations and exact owner credit/balance review now stay consistent across original Owner/Collections/Portal/Billing/CURA/document consumers. Real debt, refund payable, credit, net receipts, TEST and unknown facts remain distinct; stale/incompatible reads recover instead of inventing payment completion. Original authority, HIGH/confirm Kit, Work/Rail receipts and immutable histories remain. No new ledger, sender, processor, approval engine or Chat admission. Fresh378/19 and107/3 overlap and are not summed; full-schema255 Portal/private/replay/composer controls passed. Actual ordinary roles/cohorts, designated TEST merchant settlement/refund/reversal, receipts/reload/reopen/recovery and founder acceptance remain PROOF OWED. |
+
+Functional: code/native/web/Edge source release verified; source is not customer acceptance.
+Visual: existing eleven controlled Billing captures/five widths, zero root overflow,
+keyboard/detail-return/retry and held/credit/void states; real AppShell/Chat/AT proof owed.
+Experiential: designated ordinary-owner context is unavailable; a different existing
+workspace was not substituted. No account/role/provider/payment/signature/send action.
+CI scratch cleanup reports nonfatal permission_denied on its ephemeral runner; the
+original source checks passed. Long Vercel alias is protected, not a public200 claim.
+ALG-01/12 bounded source PARTIAL unchanged. O5 remains sole primary, all twelve original
+outcomes and integrated Founder Acceptance OPEN; no activation, customer version or announcement.
+
 **Recorded2026-11-01 UTC — EXP03 original native19 prerequisite and saved-email first Save source release.**
 
 | Increment | Exact reviewed source and production release | Useful behavior and proof boundary |

@@ -2951,3 +2951,40 @@ different `pg_get_functiondef` digest. For SQL connector reads, use one SELECT o
 an explicit aggregate per requested result; multiple statement calls can return
 only the last result. Keep authenticated outcome proof separate from every source,
 managed/native and public asset result above.
+
+### November 1 — same original row4 recovery/lifecycle integration checkpoint
+
+**PARTIAL / STILL CODING.** All original rows1–18, amendments1–6 and five
+lifecycle journeys remain required. Published native candidate3190/aee031a50
+extends the same original Team authority/recovery outcome through the original
+grant/revoke/holder, audit/receipt and native notice writers. Hosted original
+database-contract job124875356421 is SUCCESS; its actual extracted log records
+39/39 own native recovery, canonical archive/restore/permanent-delete, paused
+restoration, retained-audit privacy and retired-notice refusal assertions PASS.
+This is sequential replayed-schema engineering proof, not customer authentication
+or production persistence. It does not replace the remaining R16 concurrent or
+broader retirement proof. Communications boundary passed separately; main verify
+was still running at this checkpoint. Supabase Preview's update-function502
+remains a failed gate; GitHub accepted one normal rerun request, with no successful
+replacement result yet observed. No reset/history rewrite/production apply.
+
+The same native receipt's personal reader is prepared but unmounted. A separately
+preserved local follow-up adds the original Operator recovery client: one native
+submission, identical-request inspection, closed verified receipt, unknown without
+automatic replay/new request, and actual actor plus negative-only selection-lifetime
+guards. Author synthetic two-client proof56PASS (33 Operator/23 personal), focused
+lint and standalone strict compilation exit0. This is not a mounted/reload-durable
+journey: the original host must retain the intent before dispatch and supply real
+Auth/incarnation. Original Communications sender atomic-claim/reconciliation,
+first-owner history/Setup receiving protection, approved I3 interfaces and I4/I5
+remain coding/integration dependencies. No new store/runtime/approval/provider or
+ALG maturity is claimed; deterministic same-request support remains bounded
+ALG-01 evidence. Native source, technical review, required gates, normal release,
+production readback, authenticated results and owner acceptance remain separate.
+
+See the existing `exp08-co-owners-entity-owners-contract.md` for exact source and
+evidence boundaries. Current Finance published lower native positions21/22/23
+must be reconciled through original owners before production composition; no
+unreleased peer writer is absorbed. Under the latest owner communication amendment,
+coordination routes only to the Coordinator in Linear, with owner updates in the
+original chat. Full EXP08 is not ready for its one integrated owner review.

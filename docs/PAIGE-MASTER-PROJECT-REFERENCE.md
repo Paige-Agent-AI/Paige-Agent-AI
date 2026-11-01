@@ -860,6 +860,22 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded2026-11-01 UTC — EXP04 O5 original current-financial allocation, reversal and paired client continuity.**
+
+| Increment | Exact source and observed production release | Useful result and remaining proof |
+| --- | --- | --- |
+| [#3179](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3179#issuecomment-6559973108) | Reviewed `890e74dd805f94ae663a2268069adc43bff18dac`; separate **AUTHOR-REVIEW / LOWER ASSURANCE**5728775366; bounded E09 NON-AUTHOR financial receiving review independently passed89 original cases, not whole-change approval. All13 required exact-head checks and both web statuses SUCCESS, zero inline threads. Actual merge `17e74cefc3382d0a67d240dd7a1005ec0bf56547`/tree`a846bc920edf21fb68bbe7cedacd04f1b4083687` equals inspected fdf+890 union:170 reviewed own blobs and19,300 incoming leaves conserved. Normal native41320330617 SUCCESS: immutable20271126210004/220004 and guarded230004 each1/frontier230004; production54/54 selected source/ABI/owner/ACL contracts exact. Normal Edge41320330723 SUCCESS, original downloaded-source and marker guards; db-live/edge-live17. Artifact13088702801 SHA`5195956ccced649ef9b0a42c96279215616284d519e815bde84c34f9626c11e7`:32 source/config rows PASS; independently verified1523 original-source-input comparisons/532 paths, including329 frozen vendor-emitted Chat rows under the original pipeline. Production `dpl_Dj1hCMRRtrVTPWa3HbzJuQeBESoX` READY/exact17; app.paigeagent.ai and paige-agent-ai.vercel.app at15:20:49UTC version/root/served module200, build`17e74cefc3382d0a67d240dd7a1005ec0bf56547-mvxz3n8m`/customerUpdate:null; main moduleSHA`6f2e9b18e51f5890cb804653ed510afc1a71eea23d91d6ae51e20bd80d1b621d`. | Original financial position, accepted obligations, allocations/reversals/provider observations and exact owner credit/balance review now stay consistent across original Owner/Collections/Portal/Billing/CURA/document consumers. Real debt, refund payable, credit, net receipts, TEST and unknown facts remain distinct; stale/incompatible reads recover instead of inventing payment completion. Original authority, HIGH/confirm Kit, Work/Rail receipts and immutable histories remain. No new ledger, sender, processor, approval engine or Chat admission. Fresh378/19 and107/3 overlap and are not summed; full-schema255 Portal/private/replay/composer controls passed. Actual ordinary roles/cohorts, designated TEST merchant settlement/refund/reversal, receipts/reload/reopen/recovery and founder acceptance remain PROOF OWED. |
+
+Functional: code/native/web/Edge source release verified; source is not customer acceptance.
+Visual: existing eleven controlled Billing captures/five widths, zero root overflow,
+keyboard/detail-return/retry and held/credit/void states; real AppShell/Chat/AT proof owed.
+Experiential: designated ordinary-owner context is unavailable; a different existing
+workspace was not substituted. No account/role/provider/payment/signature/send action.
+CI scratch cleanup reports nonfatal permission_denied on its ephemeral runner; the
+original source checks passed. Long Vercel alias is protected, not a public200 claim.
+ALG-01/12 bounded source PARTIAL unchanged. O5 remains sole primary, all twelve original
+outcomes and integrated Founder Acceptance OPEN; no activation, customer version or announcement.
+
 **Recorded2026-11-01 UTC — EXP03 original native19 prerequisite and saved-email first Save source release.**
 
 | Increment | Exact reviewed source and production release | Useful behavior and proof boundary |
@@ -909,6 +925,12 @@ unchanged. Experiential: full recovery integration remains PROOF OWED. Founder
 Acceptance OPEN. E02's ONE PRIMARY O06, all original19/nine analytics, original
 nine-point briefing evidence, Algorithm maturity and catalogue states remain
 unchanged. This is a named E08 prerequisite, not a second E02 customer outcome.
+
+**Recorded2026-11-01 UTC — EXP09 S4 private-file regression protection; the complete Portal remains open.**
+
+| Increment | Exact source and observed production release | Useful result and remaining proof |
+| --- | --- | --- |
+| [#3171](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3171), original private-file host/selector/Documents integration | Reviewed `65af14659ad37290c44f76f28a1be412ec7137dd`; separate sequential **AUTHOR-REVIEW / LOWER ASSURANCE**5726025799. All10 latest applicable exact-head checks SUCCESS, schema-free Supabase Preview correctly SKIPPED, both web statuses SUCCESS and zero review threads. Normal merge `8264798a2cbcf71c40a6ac0c9927d8f8c7e87dbc`/tree`7c6c28d6c471b63c402260735fffec01aaca7ae1` exactly equals the inspected union with incoming main21ec; only the same three reviewed test/evidence blobs differ, all other incoming leaves and original runtime sources preserved. Production Vercel`dpl_rpALP6EZufB9UV2XhQHTnTHdWfr9` READY/exact826. BOTH official origins independently verified05:04:36UTC: build`8264798a2cbcf71c40a6ac0c9927d8f8c7e87dbc-mvxd6oq8`, customerUpdate:null, version/app/observed JS+CSS/auth/privacy/terms200, missing modules404 without long-lived error cache, ordinary cache reuse304. [Actual release receipt6553717523](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3171#issuecomment-6553717523). Native/schema/Edge delta NOT_APPLICABLE to these three files. | Seven additional tests compose the actual host, selector, attachment hook and Documents lifecycle; same-thread choice, refused history, changed thread/business, two-file preparation before one Chat dispatch and exact ordered saved receipts. Four suites113PASS, overlapping prior256 evidence rather than adding to it; original authorization1254PASS plus retained picker/month-boundary causal controls. Earlier cancelled/failed CI remains historical evidence. Auth/native/Storage/history/provider transports are synthetic; source tests and public delivery do not prove true model extraction or customer persistence. No product UI/runtime, permissions, provider or activation change. Actual customer upload, CURA reading, original manifest/receipt, private reload/return and recovery remain **PROOF OWED**. Visual implementation unchanged; no fresh device/AT proof. No ALG-maturity promotion, customer release identity/announcement or founder acceptance. Full original42 requirements/seven pillars/eight completion areas remain OPEN; same primary S4 and one final integrated founder evaluation **NOT_READY / NOT_ACCEPTED**. |
 
 **Recorded2026-10-31 UTC — EXP08 original outcome4 Hub current-identity source release; full Team Hub remains open.**
 

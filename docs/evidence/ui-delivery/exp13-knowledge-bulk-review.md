@@ -10,7 +10,7 @@ VISUAL_DIRECTION: PASS: Owner screenshot request controls the existing Knowledge
 AUTOMATED_EVIDENCE: PASS: Renewed current-composition COMPLETE Knowledge filename regression set passes35 suites733 tests, including all8 changed component suites, native-shaped source/readback/review/recovery and ingestion scope. Earlier418 controls used a different manifest; do not add overlapping counts. Synthetic ports are not authenticated or deployed persistence.
 STATIC_EVIDENCE: PASS: Ten owning source/test roots retain strict project-option baseline8-to-8 identical inherited diagnostic parity, zero new/added-file diagnostics. Ten-file ESLint, diff check and pinned Impeccable detector[] pass. Not whole-app strict or rendered finish proof.
 RENDERED_EVIDENCE: UNVERIFIED: Renew current actual-component and complete SOLO shell four required sizes/both themes/PAIGE open and closed/cohort proof; previous dated partial fixtures do not certify this head.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: Automated component cases cover separate per-file paths, pending reopening, source disclosure and focus return. Current live browser interruption/selection/cancel/late response/reload and later-session source/index/fact/plan/Work proof remains owed; browser access limitations do not establish customer success.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: This build has no live browser drive; component tests use synthetic ports. Actual interruption, cancellation, late response, reload and later-session saved-source/plan/Work behavior has not been exercised.
 AUTHENTICATED_RUNTIME: UNVERIFIED: No customer agreement, credentials, QA account, impersonation, provider effect or authenticated source mutation used. Existing designated ordinary customer proof remains owed.
 KEYBOARD_FOCUS: UNVERIFIED: Automated actual-Radix tab navigation and embedded file-review focus return pass, including a published-row fallback. Full browser keyboard, assistive technology and final dialog/pagination path remain owed.
 ZOOM_REFLOW: UNVERIFIED: Current browser zoom/reflow and real scroll-owner/clipping/reachability proof owed.
@@ -439,3 +439,8 @@ reviewed domain facts and separate Memory, saved original E02 Mission, exactly
 authorized actual E05 Work/appropriate E03 CRM and durable receipts/reload remain
 joined integration obligations. Full original EXP13+BULK NOT READY, no customer
 release identity or owner acceptance. Four-hour timer remains deleted/off.
+
+Local57dd evidence check failed on an unsubstantiated behavioral-proof boundary.
+The active field now states the exact absent evidence: no current live browser
+drive, synthetic component ports only. No behavior was relabeled PASS and no
+validator/requirement was weakened; the failed attempt remains in Git/history.

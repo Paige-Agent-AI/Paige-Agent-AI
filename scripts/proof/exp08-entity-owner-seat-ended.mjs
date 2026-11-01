@@ -657,6 +657,16 @@ try {
     assert.deepEqual(invitationBefore.filter(r=>!r.passed).map(r=>r.case_name),['mint_pointer','mint_suspended','mint_history','accept_pointer','accept_suspended','accept_history'],'Only approved missing platform-only first-owner gates may fail; original compatibility controls must work');
     const invitationPatch=readFileSync(new URL('./exp08-first-owner-invitation-patch.sql',import.meta.url),'utf8').replace(/\r\n/g,'\n');
     const invitationRun=patch=>sql(`${invitationSetup}${patch}\nSELECT row_to_json(t) FROM proof.owner_invitation_cases() t;\n${patch}\nROLLBACK;`).split('\n').filter(Boolean).map(JSON.parse);
+    const mintSignature='public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text)';
+    // Exact original CI reset/regrant shape: same grantors, grantees, privileges and options.
+    const replayACL=`REVOKE ALL ON FUNCTION ${mintSignature} FROM PUBLIC,anon,authenticated,service_role; GRANT EXECUTE ON FUNCTION ${mintSignature} TO PUBLIC; GRANT EXECUTE ON FUNCTION ${mintSignature} TO authenticated; REVOKE ALL ON FUNCTION public.accept_tenant_invite(text) FROM PUBLIC,anon,authenticated,service_role; GRANT EXECUTE ON FUNCTION public.accept_tenant_invite(text) TO service_role; GRANT EXECUTE ON FUNCTION public.accept_tenant_invite(text) TO authenticated;`;
+    const aclSnapshot=`CREATE TEMP TABLE original_invite_acl AS SELECT proacl,ARRAY(SELECT a::text FROM unnest(proacl) a ORDER BY 1) AS semantic_acl FROM pg_proc WHERE oid='${mintSignature}'::regprocedure;`;
+    const order=JSON.parse(sql(`${invitationSetup}${aclSnapshot}\n${replayACL}\nSELECT jsonb_build_object('semantic_acl_unchanged',(SELECT semantic_acl FROM original_invite_acl)=ARRAY(SELECT a::text FROM pg_proc p,unnest(p.proacl) a WHERE p.oid='${mintSignature}'::regprocedure ORDER BY 1),'physical_order_changed',(SELECT proacl FROM original_invite_acl) IS DISTINCT FROM (SELECT proacl FROM pg_proc WHERE oid='${mintSignature}'::regprocedure));\nROLLBACK;`));
+    assert.deepEqual(order,{semantic_acl_unchanged:true,physical_order_changed:true});
+    console.log(JSON.stringify({phase:'first-owner-invitation-actual-grant-replay',...order}));
+    const replayCases=sql(`${invitationSetup}${replayACL}\nCREATE TEMP TABLE replay_invite_metadata AS SELECT oid,to_jsonb(p)-'prosrc' AS metadata FROM pg_proc p WHERE oid IN('${mintSignature}'::regprocedure,'public.accept_tenant_invite(text)'::regprocedure);\n${invitationPatch}\nSELECT jsonb_build_object('metadata_unchanged',NOT EXISTS(SELECT 1 FROM replay_invite_metadata b JOIN pg_proc p ON p.oid=b.oid WHERE to_jsonb(p)-'prosrc' IS DISTINCT FROM b.metadata),'cases',(SELECT jsonb_agg(t) FROM proof.owner_invitation_cases() t));\nROLLBACK;`);
+    const replayResult=JSON.parse(replayCases);assert.equal(replayResult.metadata_unchanged,true);assert.equal(replayResult.cases.length,13);assert.ok(replayResult.cases.every(r=>r.passed),replayCases);
+    console.log(JSON.stringify({phase:'first-owner-invitation-grant-replay-after',metadata_unchanged:true,cases:replayResult.cases}));
     const invitationAfter=invitationRun(invitationPatch);
     console.log(JSON.stringify({phase:'first-owner-original-invitations-after',cases:invitationAfter}));
     assert.equal(invitationAfter.length,13);assert.ok(invitationAfter.every(r=>r.passed),JSON.stringify(invitationAfter));
@@ -673,6 +683,9 @@ try {
     for(const [name,drift] of [
       ['accept path',"ALTER FUNCTION public.accept_tenant_invite(text) SET search_path TO public,auth;"],
       ['accept ACL',"GRANT EXECUTE ON FUNCTION public.accept_tenant_invite(text) TO anon;"],
+      ['accept grant option',"GRANT EXECUTE ON FUNCTION public.accept_tenant_invite(text) TO authenticated WITH GRANT OPTION;"],
+      ['mint grant option',"GRANT EXECUTE ON FUNCTION public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text) TO authenticated WITH GRANT OPTION;"],
+      ['mint extra direct grantee',"GRANT EXECUTE ON FUNCTION public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text) TO anon;"],
       ['mint ACL',"REVOKE EXECUTE ON FUNCTION public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text) FROM PUBLIC;"],
       ['accept security',"ALTER FUNCTION public.accept_tenant_invite(text) SECURITY INVOKER;"],
       ['accept source',originalFunction(invitationSource,'accept_tenant_invite').replace('\nBEGIN','\nBEGIN\n  PERFORM 1;')],

@@ -841,7 +841,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   const zionReadDeps: ZionPlanningDeps = {
     caller, signal: deps.signal, isCurrent: currentZionScope,
     takeRead: () => {
-      if (zionReadsUsed >= MAX_PRIVATE_READS) return false;
+      if (zionReadsUsed >= MAX_PRIVATE_READS || (!zionReadsUsed && cardReadTools.size >= MAX_PRIVATE_READS)) return false;
       zionReadsUsed += 1;
       return true;
     },
@@ -1078,7 +1078,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
         // A2b: the chat's own read from its one home, under this person's authority in this workspace.
         if (!await currentCardReadScope()) return endedWithoutPost("no_reply");
         // The existing native read-context protocol admits at most three distinct private sources.
-        if (!cardReadTools.has(name) && cardReadTools.size >= 3) {
+        if (!cardReadTools.has(name) && cardReadTools.size + (zionReadsUsed ? 1 : 0) >= MAX_PRIVATE_READS) {
           messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ status: "unavailable",
             message: "This turn reached its private read limit. No further records were read. Ask for a follow-up if needed." }) });
           continue;
@@ -1174,7 +1174,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
           messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ status: "needs_input", message: "The Planning request must be a JSON object. Nothing was read or changed. Correct the request before trying again." }) });
           continue;
         }
-        if (zionReadsUsed >= MAX_PRIVATE_READS) {
+        if (zionReadsUsed >= MAX_PRIVATE_READS || (!zionReadsUsed && cardReadTools.size >= MAX_PRIVATE_READS)) {
           messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ status: "unavailable", message: "This turn reached its three-read limit. No further plans were read. Explain the limit and ask for a follow-up if needed." }) });
           continue;
         }

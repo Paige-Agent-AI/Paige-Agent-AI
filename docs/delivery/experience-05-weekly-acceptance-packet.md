@@ -1,3 +1,17 @@
+## November1 — mixed-read and historical-scope corrections before production
+
+O01 remains sole PRIMARY/O02 NEXT/fullten/E5-CV1–CV9/0closed. Fresh4436855331/
+4436855337 findings are confirmed, not waived: combined CRM/Planning read budget
+must preserve the valid answer and historical access must honor the original
+read/card policy. Both host orderings fail-before/pass-after; all304 current
+neighbors pass. Actual native1793558414740 fails revoked access;1793558473021
+passes23 READ ONLY history/Search cases plus original assertions/mutants/races.
+Three applied Preview carriers immutable; new forward27030005 changes only the
+private historical predicate. Latest-forward13-case full-schema self-test passes;
+fresh managed execution/review/exact-head CI/release/readback and actual both-chat
+outcome proof remain owed. Calendar3197 source-live, Calendar-in-Team-Hub next
+after genuine parent release. No new owner testing gate, scope or subsystem.
+
 ## November1 — second-read correction before production
 
 O01 remains sole PRIMARY/O02 NEXT/fullten/E5-CV1-CV9/0fullyclosed. Valid final

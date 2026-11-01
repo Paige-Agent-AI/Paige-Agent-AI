@@ -14,21 +14,27 @@ const history=readFileSync(join(repo,'scripts/proof/exp05-zion-planning-history-
 const historyCarrier=readFileSync(join(repo,'supabase/migrations/20271127010005_exp05_zion_planning_readonly_history.sql'),'utf8').replace(/\r\n/g,'\n');
 const linkCap=readFileSync(join(repo,'scripts/proof/exp05-zion-planning-link-cap.sql'),'utf8').replace(/\r\n/g,'\n');
 const linkCarrier=readFileSync(join(repo,'supabase/migrations/20271127020005_exp05_zion_planning_link_cap.sql'),'utf8').replace(/\r\n/g,'\n');
+const historyScope=readFileSync(join(repo,'scripts/proof/exp05-zion-planning-history-scope.sql'),'utf8').replace(/\r\n/g,'\n');
+const scopeCarrier=readFileSync(join(repo,'supabase/migrations/20271127030005_exp05_zion_planning_history_scope.sql'),'utf8').replace(/\r\n/g,'\n');
 assert.equal(carrier.slice(carrier.indexOf('-- INERT SOURCE CANDIDATE,')),candidate,
  'The forward migration must retain the complete original native candidate exercised by this proof');
 assert.equal(historyCarrier.slice(historyCarrier.indexOf('-- Original EXP05 Planning history correction.')),history,
  'The history forward carrier must retain the complete source exercised by this proof');
 assert.equal(linkCarrier.slice(linkCarrier.indexOf('-- Forward-only presentation correction;')),linkCap,
  'The link-cap forward carrier must retain the complete source exercised by this proof');
+assert.equal(scopeCarrier.slice(scopeCarrier.indexOf('-- Forward-only restoration of the original')),historyScope,
+ 'The historical scope forward carrier must retain the complete source exercised by this proof');
 const unwrap=source=>{
  assert.equal(source.match(/^BEGIN;$/gm)?.length,1,'Exactly one candidate transaction');
  assert.equal(source.match(/^COMMIT;$/gm)?.length,1,'Exactly one candidate commit');
  return source.replace(/^BEGIN;\n/m,'').replace(/\nCOMMIT;\s*$/,'\n');
 };
-unwrap(candidate);unwrap(history);
-const body=unwrap(linkCap);
+unwrap(candidate);unwrap(history);unwrap(linkCap);
+const body=unwrap(historyScope);
 const originalLinks=linkCap.split('$original$')[1],boundedLinks=linkCap.split('$bounded$')[1];
+const originalScope=historyScope.split('$original$')[1],boundedScope=historyScope.split('$bounded$')[1];
 assert(originalLinks&&boundedLinks,'Complete inverse hunks present');
+assert(originalScope&&boundedScope,'Complete historical scope inverse hunks present');
 assert(!/^COMMIT;$/m.test(body));
 // Establish the WHOLE original replay variant independently of the native pin.
 const fixture=readFileSync(join(repo,'supabase/tests/fixtures/exp05-zion-planning-original.sql'),'utf8').replace(/\r\n/g,'\n');
@@ -40,7 +46,7 @@ assert(immutable.includes(comments+anchor));assert.equal(live.split(anchor).leng
 assert.equal(createHash('md5').update(live).digest('hex'),'702f2b52fc0d4e5c615fde7ec906b840');
 assert.equal(createHash('md5').update(live.replace(anchor,comments+anchor)).digest('hex'),'a8c0a676cdd686bc17d5dbbb7d605ecc');
 const sql=`BEGIN;
-SELECT plan(12);
+SELECT plan(13);
 CREATE FUNCTION pg_temp.e5_metadata(p pg_proc) RETURNS jsonb LANGUAGE sql AS $$
  SELECT CASE WHEN p.proname='team_hub_search' THEN jsonb_set(to_jsonb(p)-'prosrc','{proargdefaults}',
   to_jsonb(regexp_replace(p.proargdefaults::text,':location -?[0-9]+',':location -1','g'))) ELSE to_jsonb(p)-'prosrc' END $$;
@@ -87,6 +93,9 @@ SELECT ok((SELECT bool_and(provolatile='s') FROM pg_proc WHERE oid=ANY(ARRAY[
 SELECT is((SELECT md5(replace(prosrc,$e5bounded$${boundedLinks}$e5bounded$,$e5original$${originalLinks}$e5original$))
  FROM pg_proc WHERE oid='public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)'::regprocedure),
  '5ca11bdb927e4d4a571f1936f608d2b5','Complete native stage inverse is unchanged outside bounded navigation');
+SELECT is((SELECT md5(replace(prosrc,$e5scope$${boundedScope}$e5scope$,$e5originalscope$${originalScope}$e5originalscope$))
+ FROM pg_proc WHERE oid='public._team_hub_planning_read_annotations(public.team_hub_agent_turns)'::regprocedure),
+ 'f6ffa06936970dd1ad1a8d3b1cb98be1','Complete READ ONLY history inverse unchanged outside original read/card access class');
 CREATE TEMP TABLE e5_installed AS SELECT oid,to_jsonb(p) full_metadata FROM pg_proc p WHERE pronamespace='public'::regnamespace;
 ${body}
 SELECT ok(NOT EXISTS(SELECT 1 FROM e5_installed b FULL JOIN pg_proc p USING(oid)
@@ -96,11 +105,11 @@ SELECT * FROM finish();
 ROLLBACK;
 `;
 if(process.argv.includes('--self-test')){
- assert(sql.startsWith('BEGIN;\nSELECT plan(12);'));assert(sql.endsWith('ROLLBACK;\n'));
+ assert(sql.startsWith('BEGIN;\nSELECT plan(13);'));assert(sql.endsWith('ROLLBACK;\n'));
  assert.equal((sql.match(/^BEGIN;$/gm)??[]).length,1);assert.equal((sql.match(/^COMMIT;$/gm)??[]).length,0);
  assert.equal(sql.split(body).length,3,'Exact candidate bytes embedded twice without transaction wrappers');
  assert(!/INSERT INTO (public|auth)\./i.test(sql));
- console.log('PASS: all three exact carriers verified; latest forward twice inside one rollback-only test;12 assertions; no business fixture/ledger');
+ console.log('PASS: all four exact carriers verified; latest forward twice inside one rollback-only test;13 assertions; no business fixture/ledger');
 }else{
  const cli=process.env.SUPABASE_BIN??'supabase';
  const state=spawnSync(cli,['status','-o','json'],{cwd:repo,encoding:'utf8',timeout:30000});

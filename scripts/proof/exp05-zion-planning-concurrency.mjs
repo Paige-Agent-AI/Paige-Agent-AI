@@ -170,6 +170,8 @@ export function provePlanningReadOnlyHistory(psql,connection,context){
   check('soft-deleted original actor cannot recover private content',false,`UPDATE auth.users SET deleted_at=clock_timestamp() WHERE id='${context.actor}';`);
   check('current roster revocation hides original private content',false,
    `UPDATE public.paige_subagents SET config=jsonb_set(config,'{capability_scope,tools}',(config#>'{capability_scope,tools}')-'plan_list') WHERE tenant_id IS NULL AND slug='zion';`);
+  for(const access of [null,'','disabled','write','read','card'])check(`current specialist access class ${JSON.stringify(access)}`,access==='read'||access==='card',
+   `UPDATE public.paige_subagents SET config=${access===null?"config#-'{capability_scope,access}'":`jsonb_set(config,'{capability_scope,access}',${literal(JSON.stringify(access))}::jsonb)`} WHERE tenant_id IS NULL AND slug='zion';`);
   check('another member cannot read the original private DM',false,null,context.member);
   check('foreign expected business cannot recover the original private content',false,null,context.actor,context.foreign_tenant);
   const drift=snapshot.actor_definition.replace('\nBEGIN\n','\nBEGIN\n -- unknown policy source\n');

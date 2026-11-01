@@ -1,5 +1,38 @@
 # EXP05 — ZION Planning read in the original Team Hub DM
 
+## November1 — final mixed-read and historical-scope corrections
+
+Fresh automated reviews4436855331/4436855337 on f733 identified two genuine
+defects. Same3087 returned to DRAFT before release. The actual native guarda75/
+b92 DOES retain read/card access; the READ ONLY history projection had omitted
+that predicate. The earlier investigation's contrary assumption is superseded.
+Native run1793558414740 fails the revoked-scope history test; corrected
+1793558473021 passes all23 READ ONLY history/Search cases, including absent,
+empty, disabled and write access denial, read/card positives, original message
+IDs and restored access without new messages. Original16mutants/four observed
+publication races, source revocation, all prior assertions and installer refusals
+remain PASS. New scope installer replay/unknown-body/widened-ACL cases pass.
+
+Two host cases causally fail before the correction in BOTH CRM→Planning and
+Planning→CRM order. The host now checks the SAME native combined3-source limit
+before a fourth read; the legitimate prior answer posts once, with no refused
+query/receipt/action. Source revalidation retains one original receipt identity.
+Initial fixture assertion incorrectly counted repeated same-ID receipt attempts;
+corrected to assert unique original identity, preserving actual revalidation.
+All304 current host/Planning/source/MENTOR/MERIT/CURA/VERA/NEXUS neighbors PASS.
+
+Three applied Preview migrations remain immutable. Existing CLI created the
+empty20261101184218 file; fresh58-open-head/current-main manifest reconciliation
+found27030005 unoccupied, so it was safely renamed before filling. New forward
+20271127030005/carrier94836ceb embeds exact sourceacdf567d; it changes ONLY
+private STABLE historical predicate, inversef6ffa069/new4e6ea1c3, all metadata
+preserved. All previous full-schema assertions retained; latest-forward twice
+rollback-only13-case framework self-test PASS. Actual fresh managed execution,
+review/CI/release/readback still required. No native stage/publication/locks/ABI/
+grants/business writer or provider change. Incoming E13 source3201/currentmain
+c467 is preserved through normal composition; Team Hub retains its owned source.
+O01 remains sole PRIMARY/O02 NEXT/fullten/E5/0closed; actual both-chat proof owed.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original EXP05 outcomes01/02/08/10; owner/admin asks the same ZION about actual plans in his existing private DM, receives only authorized verified results and returns through original post/readback/recovery. Source/authority packet ANT161/42659e6c/a5f4c899/d0ab0e63 precedes this approved review-branch implementation.
 PAIGE_UI_DESIGN: PASS: existing approved Team Hub DM/shell/personality/state contract is reused without JSX, CSS, typography, layout, controls, motion or source-link redesign. Original project design, protected behavior and truthful acceptance guidance applied; actual new-result rendering remains unverified below.

@@ -86,6 +86,25 @@ GRANT EXECUTE ON FUNCTION public.team_hub_stage_agent_read_context(uuid,text,jso
 SELECT pg_temp.check(pg_temp.try(:'exp05linkpatch')='Original Planning link-stage metadata drift',
  'EXP05 link-cap installer refuses widened stage authority');
 ROLLBACK;
+
+-- Original access class remains authoritative in READ ONLY list and Search.
+\ir ../../scripts/proof/exp05-zion-planning-history-scope.sql
+CREATE TEMP TABLE exp05_scope_checked AS SELECT oid,to_jsonb(p) metadata FROM pg_proc p WHERE pronamespace='public'::regnamespace;
+\ir ../../scripts/proof/exp05-zion-planning-history-scope.sql
+SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM exp05_scope_checked b FULL JOIN pg_proc p USING(oid)
+ WHERE (b.oid IS NOT NULL OR p.pronamespace='public'::regnamespace) AND b.metadata IS DISTINCT FROM to_jsonb(p)),
+ 'EXP05 access-class correction replay preserves every function and full metadata');
+\set exp05scopepatch `sed -n '/^DO \$patch\$/,/^END \$patch\$;/p' scripts/proof/exp05-zion-planning-history-scope.sql`
+BEGIN;
+GRANT EXECUTE ON FUNCTION public._team_hub_planning_read_annotations(public.team_hub_agent_turns) TO authenticated;
+SELECT pg_temp.check(pg_temp.try(:'exp05scopepatch')='Original Planning history-scope metadata drift',
+ 'EXP05 access-class correction refuses widened private helper authority');
+ROLLBACK;
+BEGIN;
+SELECT pg_temp.mutate('public._team_hub_planning_read_annotations(public.team_hub_agent_turns)','BEGIN',E'BEGIN\n -- unknown scope drift');
+SELECT pg_temp.check(pg_temp.try(:'exp05scopepatch')='Original Planning history-scope source drift',
+ 'EXP05 access-class correction refuses unknown history source');
+ROLLBACK;
 BEGIN;
 SELECT pg_temp.mutate('public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)','BEGIN',E'BEGIN\n -- unknown link-stage drift');
 SELECT pg_temp.check(pg_temp.try(:'exp05linkpatch')='Original Planning link-stage source drift',

@@ -12,6 +12,33 @@ const ref:ExtractionReference={tenantId:tenant,intentId:intent,documentId:doc,wo
 const accepted={ok:true,work_id:work,document_id:doc,revision:1,status:'claimed',replayed:false};
 const pending={schema_version:1,extracted_content:input.content,reviewed_content:null,extraction_version:'utf8-v1',coverage:'complete'};
 const review={tenant_id:tenant,document_id:doc,revision:2,record_state:'draft',source_coverage:'unknown',source_binding:null,pending_review:pending,extraction_work_id:work,extraction_source_binding:null};
+
+describe('public read continuation after the original RPC settles',()=>{
+ it.each(['document','review','publication','status'] as const)('refuses %s data when its captured incarnation retires between inner read and public continuation',async kind=>{
+  const c=client();let current=true;
+  const captured={tenantId:tenant,isCurrent:()=>current};
+  const publicationWork='66666666-6666-4666-8666-666666666666';
+  c.rpc.mockImplementation(name=>{
+   const payload=name==='get_paige_durable_work'?[status]:kind==='publication'
+    ?{...review,revision:4,record_state:'canonical',pending_review:null,extraction_work_id:null,
+      publication:{contract_version:1,association:'matched',work_id:publicationWork,work_status:'succeeded',generation_id:publicationWork,outcome:'capability_succeeded'}}
+    :review;
+   const response=Promise.resolve({data:payload,error:null});
+   // An earlier settlement listener queues a workspace departure. The inner
+   // read runs first; its public async continuation must check again afterward.
+   if(kind!=='status'||name==='get_paige_durable_work')response.then(()=>queueMicrotask(()=>{current=false;}));
+   return response;
+  });
+  const result=kind==='document'?readKnowledgeExtractionForDocument(c,captured,doc,2)
+   :kind==='review'?readKnowledgeExtractionReview(c,captured,ref)
+   :kind==='publication'?readKnowledgePublicationForDocument(c,captured,{tenantId:tenant,documentId:doc,revision:3,extractionWorkId:work,workId:publicationWork})
+   :readKnowledgeExtractionStatus(c,captured,ref);
+  await expect(result).rejects.toMatchObject({code:'EXTRACTION_SCOPE_CHANGED'});
+  expect(current).toBe(false);
+  expect(c.rpc).toHaveBeenCalledTimes(kind==='status'?2:1);
+  expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+});
 const status={work_id:work,capability_key:'knowledge.extract',work_kind:'knowledge_extract',work_status:'succeeded',attempt_count:1,max_attempts:3,blocked_reason:null,error_code:null,safe_summary:'Ready for review. Nothing has been published.',created_at:'2026-09-30T12:00:00Z',updated_at:'2026-09-30T12:01:00Z',settled_at:'2026-09-30T12:01:00Z'};
 const binding={bucket:'tenant-knowledge',object_id:other,object_name:tenant+'/source.txt',sha256:'a'.repeat(64),byte_size:12,mime_type:'text/plain',bound_at:'2026-09-30T12:00:00Z'};
 function client(){return {functions:{invoke:vi.fn().mockResolvedValue({data:accepted,error:null})},rpc:vi.fn().mockImplementation(async(name:string)=>({data:name==='read_tenant_knowledge_review'?review:[status],error:null}))};}

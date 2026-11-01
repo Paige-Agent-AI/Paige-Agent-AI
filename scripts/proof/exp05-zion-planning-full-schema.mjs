@@ -2,7 +2,7 @@
 // Supabase CI stack. No new project, migration-ledger entry or business fixture.
 import assert from 'node:assert/strict';
 import { readFileSync,writeFileSync,unlinkSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
+import { randomUUID,createHash } from 'node:crypto';
 import { dirname,join,resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -12,6 +12,15 @@ assert.equal(candidate.match(/^BEGIN;$/gm)?.length,1,'Exactly one candidate tran
 assert.equal(candidate.match(/^COMMIT;$/gm)?.length,1,'Exactly one candidate commit');
 const body=candidate.replace(/^BEGIN;\n/m,'').replace(/\nCOMMIT;\s*$/,'\n');
 assert(!/^COMMIT;$/m.test(body));
+// Establish the WHOLE original replay variant independently of the native pin.
+const fixture=readFileSync(join(repo,'supabase/tests/fixtures/exp05-zion-planning-original.sql'),'utf8').replace(/\r\n/g,'\n');
+const live=fixture.slice(fixture.indexOf('CREATE OR REPLACE FUNCTION public.plan_list(')).split('AS $function$')[1].split('$function$')[0];
+const comments='       -- Plan-window filter applies only in the default (plan-window) mode; in\n       -- by-item-date mode we keep all plans and filter their items by date.\n';
+const anchor='       AND (p_by_item_date OR ((p_from';
+const immutable=readFileSync(join(repo,'supabase/migrations/20260712040000_plan_list_contact_and_calendar.sql'),'utf8').replace(/\r\n/g,'\n');
+assert(immutable.includes(comments+anchor));assert.equal(live.split(anchor).length,2);
+assert.equal(createHash('md5').update(live).digest('hex'),'702f2b52fc0d4e5c615fde7ec906b840');
+assert.equal(createHash('md5').update(live.replace(anchor,comments+anchor)).digest('hex'),'a8c0a676cdd686bc17d5dbbb7d605ecc');
 const sql=`BEGIN;
 SELECT plan(10);
 CREATE FUNCTION pg_temp.e5_metadata(p pg_proc) RETURNS jsonb LANGUAGE sql AS $$
@@ -24,8 +33,11 @@ SELECT ok(NOT EXISTS(SELECT 1 FROM e5_original b LEFT JOIN pg_proc p USING(oid)
  WHERE b.metadata IS DISTINCT FROM pg_temp.e5_metadata(p) OR (p.prosrc<>b.prosrc AND p.proname NOT IN
  ('_team_hub_assert_agent_read_scope','team_hub_stage_agent_read_context','_team_hub_agent_read_annotations','team_hub_search'))),
  'Full-schema original OIDs/ABI/owner/ACL/config/default behavior and all outside-owned bodies conserved');
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.plan_list(text,uuid,text,uuid,date,date,integer,uuid,uuid,boolean,boolean)'::regprocedure),
- '702f2b52fc0d4e5c615fde7ec906b840','Original caller reader exact; no service-role replacement');
+SELECT ok((SELECT p.prosrc=b.prosrc AND md5(p.prosrc) IN
+ ('702f2b52fc0d4e5c615fde7ec906b840','a8c0a676cdd686bc17d5dbbb7d605ecc')
+ FROM e5_original b JOIN pg_proc p USING(oid) WHERE p.oid=
+ 'public.plan_list(text,uuid,text,uuid,date,date,integer,uuid,uuid,boolean,boolean)'::regprocedure),
+ 'Original complete reader unchanged; only the two exact immutable source variants admitted');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean,uuid,text,jsonb,text)'::regprocedure),
  'bd0e68f3c3e88976786d716dc4a870a6','Original public post including native stage guard unchanged');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.team_hub_list_messages(uuid,uuid,uuid,timestamptz,uuid,integer)'::regprocedure),

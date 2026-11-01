@@ -46,7 +46,7 @@ const result=spawnSync(psql,['-X',...connection,'-d','postgres','-v','ON_ERROR_S
  ...(concurrent?['-v','exp05_concurrent=1']:[]),
  ...(process.argv.includes('--red')?['-v','exp05_native_red=1']:[]),
  ...(process.argv.includes('--search-red')?['-v','exp05_search_red=1']:[]),'-f',fixture],
- {cwd:repo,encoding:'utf8',maxBuffer:20*1024*1024,timeout:120000});
+ {cwd:repo,encoding:'utf8',windowsHide:true,maxBuffer:20*1024*1024,timeout:120000});
 writeFileSync(join(run,'stdout.txt'),result.stdout??'');writeFileSync(join(run,'stderr.txt'),result.stderr??'');
 const contractLine=(result.stdout??'').split(/\r?\n/).find(line=>line.startsWith('EXP05_NATIVE_CONTRACT:'));
 const contract=contractLine?JSON.parse(contractLine.slice('EXP05_NATIVE_CONTRACT:'.length)):null;

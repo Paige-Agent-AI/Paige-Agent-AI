@@ -1,3 +1,24 @@
+## November1 — current sole O01 source/release boundary
+
+Original #3087 now IMPLEMENTS the returned E04/EXP08 Planning contract; no
+remaining custody hold is asserted. Native/host preparation remains INERT and
+unversioned, not production or customer acceptance. Exact77 full-schema test
+ran9PASS/1FAIL: the immutable reader retains only two explanatory comments that
+live source omits. Pinning both complete known source hashes corrects this
+actual compatibility defect without changing the original reader or relaxing
+unknown-source refusal. New native variant parity20each/semantic-drift negative,
+all original E08 controls and four observed source/role publication races PASS;
+causal pre-fix failure retained. Fresh final full-schema/review/exact CI owed.
+
+Main2125057 normally composed; all peer files preserved. EXP08 ea5bb946 confirms
+no semantic/slot reservation against independent Planning release. E04/E13
+source/order and non-destructive Preview reconciliation remain pending; no
+identity reserved or migration/activation performed. Continue this SAME O01
+through actual source release, useful both-chat result/receipt/Work links,
+reload/recovery and equivalent tenant/role/cohort proof. O02 remains NEXT, all
+ten/E5 retained,0/10 complete, founder NOT_READY/NOT_ACCEPTED. Current evidence
+is the original planning-host-review.json; older dated records remain below.
+
 ## October31 — O01 current-source revalidation
 
 Original3087/source43380c734 on main17338 compositioncf364527 uses the

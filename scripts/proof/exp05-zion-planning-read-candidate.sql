@@ -24,9 +24,11 @@ BEGIN
     AND a->>k.key !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'))
   OR EXISTS(SELECT 1 FROM (VALUES('from'),('to')) k(key) WHERE jsonb_typeof(a->k.key) NOT IN ('string','null')
    OR (a->>k.key IS NOT NULL AND a->>k.key !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'))
-  OR (SELECT md5(prosrc) FROM pg_catalog.pg_proc WHERE oid=to_regprocedure(
-   'public.plan_list(text,uuid,text,uuid,date,date,integer,uuid,uuid,boolean,boolean)'))
-   IS DISTINCT FROM '702f2b52fc0d4e5c615fde7ec906b840' THEN
+  -- Original immutable replay400 retains two explanatory comments absent from
+  -- live22552. Pin both complete bodies; never normalize an unknown reader.
+  OR coalesce((SELECT md5(prosrc) FROM pg_catalog.pg_proc WHERE oid=to_regprocedure(
+   'public.plan_list(text,uuid,text,uuid,date,date,integer,uuid,uuid,boolean,boolean)')),'')
+   NOT IN ('702f2b52fc0d4e5c615fde7ec906b840','a8c0a676cdd686bc17d5dbbb7d605ecc') THEN
   RAISE EXCEPTION 'Planning read contract unavailable' USING ERRCODE='42501'; END IF;
  lim:=(a->>'limit')::integer;
  -- Reuse the original domain role helpers, with the accepted original actor.

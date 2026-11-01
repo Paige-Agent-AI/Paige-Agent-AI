@@ -115,6 +115,31 @@ SELECT pg_temp.check((:'e5accepted')::jsonb->>'ok'='true','EXP05 original accept
 
 SELECT pg_temp.check(pg_temp.planning_filter_parity(:'u3',:'ta',(:'e5accepted')::jsonb->>'turn_id')=20,
  'EXP05 twenty bounded filter/version projections match the actual original caller-JWT reader');
+-- Immutable replay400 retains these two explanatory comments; production22552
+-- omits them. Complete original fingerprints differ; executable query is exact.
+SAVEPOINT e5_reader_replay;
+SELECT pg_temp.mutate('public.plan_list(text,uuid,text,uuid,date,date,integer,uuid,uuid,boolean,boolean)',
+ '       AND (p_by_item_date OR ((p_from',
+ $comments$       -- Plan-window filter applies only in the default (plan-window) mode; in
+       -- by-item-date mode we keep all plans and filter their items by date.
+       AND (p_by_item_date OR ((p_from$comments$);
+SELECT pg_temp.check((SELECT md5(prosrc)='a8c0a676cdd686bc17d5dbbb7d605ecc' FROM pg_proc WHERE
+ oid='public.plan_list(text,uuid,text,uuid,date,date,integer,uuid,uuid,boolean,boolean)'::regprocedure),
+ 'EXP05 exact original replay variant differs by only the two immutable explanatory comments');
+SELECT pg_temp.check(pg_temp.planning_filter_parity(:'u3',:'ta',(:'e5accepted')::jsonb->>'turn_id')=20,
+ 'EXP05 original replay reader also matches all twenty source/filter/version projections');
+SELECT pg_temp.planning_binding(:'u3',:'ta') AS e5replaybinding \gset
+SAVEPOINT e5_reader_semantic;
+SELECT pg_temp.mutate('public.plan_list(text,uuid,text,uuid,date,date,integer,uuid,uuid,boolean,boolean)',
+ 'WHERE tenant_id=_tenant','WHERE true');
+SELECT pg_temp.check(pg_temp.try(format('SELECT public._team_hub_planning_read_source(t,%L::jsonb) FROM public.team_hub_agent_turns t WHERE id=%L::uuid',
+ (:'e5replaybinding')::jsonb->'arguments',(:'e5accepted')::jsonb->>'turn_id'))='Planning read contract unavailable',
+ 'EXP05 genuine tenant-query drift remains refused; no unknown source normalization');
+ROLLBACK TO e5_reader_semantic;
+ROLLBACK TO e5_reader_replay;
+SELECT pg_temp.check((SELECT p.prosrc=b.prosrc AND pg_temp.exp05_metadata(p)=b.metadata FROM exp05_before b JOIN pg_proc p USING(oid)
+ WHERE p.oid='public.plan_list(text,uuid,text,uuid,date,date,integer,uuid,uuid,boolean,boolean)'::regprocedure),
+ 'EXP05 reader variants and mutant leave original reader body and complete metadata exact');
 SELECT pg_temp.planning_binding(:'u3',:'ta') AS e5binding \gset
 SELECT pg_temp.planning_stage((:'e5accepted')::jsonb->>'turn_id',pg_temp.tok('E5'),(:'e5binding')::jsonb,
  '[{"destination":"operations_work","record_id":"e5000000-0000-4000-8000-000000000011","record_kind":"planning_item"}]') AS e5staged \gset

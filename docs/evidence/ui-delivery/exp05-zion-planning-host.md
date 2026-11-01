@@ -74,3 +74,11 @@ its single-hunk causal inverse FAIL as required. Canonical record-link display
 and history presentation still require actual compatible rendered/customer
 verification; source/CI proof does not satisfy that visual gate. Final immutable
 internal build identity is recorded in the existing #3087 review/CI checkpoint.
+
+November1 compatibility follow-through: exact77 full-schema install ran9PASS/
+1FAIL on a known original reader comment-only variant. The precise source-pin
+correction and actual native parity/mutant/race proof do not change presentation,
+layout or native link rendering. Both complete original reader bodies remain
+unchanged; no broad source normalization. Fresh exact-head/full-schema release
+proof and compatible rendered/authenticated both-chat checks remain required.
+Current source custody is clear; actual native order is still being reconciled.

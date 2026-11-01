@@ -1,3 +1,32 @@
+## November1 — O01 native source implemented; exact compatibility correction
+
+O01 remains the ONE primary; O02 NEXT, full ten/E5-CV1–9 preserved, **0/10
+complete**. Actual E04 handback and EXP08 clearance received: the original
+Planning source/stage/history contract is implemented on ORIGINAL #3087, not
+waiting for another developer. Raw versions, original caller-JWT reads, private
+native stage before model, typed Work links, current permission/revocation,
+original receipts/rearm and no-duplicate publication are locally verified.
+
+Actual exact77 full-schema installation ran: nine assertions passed, one failed
+because immutable replay400 retains two SQL comments absent from live22552.
+The complete original source hashes differ only by those exact comment lines.
+The correction pins BOTH complete known bodies, preserves the reader byte for
+byte, tests twenty query/version projections per variant and refuses a real
+tenant-query mutation. New causal test FAIL before / PASS after; original E08
+suite/mutants and four observed source/role publication races PASS, final local
+fixture/client counts0 and owned server stopped. No required gate waived.
+
+Latest main2125057 is normally composed. Native candidate remains unversioned,
+INERT/DRAFT; fresh final review/full-schema/exact-head CI are still required.
+EXP08's actual source-order acknowledgment ea5bb946 confirms no semantic
+requirement to wait for its recovery carrier. E04/E13 original order/Preview
+disposition remains pending under d05db22d/0f7d4025; no slot reserved, applied
+history rewritten or production DDL performed. Next: clear the exact native
+gates/order, release safely, then prove useful original results/Work navigation,
+receipt/reload/recovery in both chats and equivalent existing/new SOLO cohorts.
+Actual rendered/authenticated/founder acceptance remains OPEN; no catalogue or
+ALG maturity promotion. Earlier dated checkpoints below remain historical.
+
 ## October31 — O01 original-source verification before publication
 
 Existing3087 now composes currentmain17338 in cf364527; source43380c734

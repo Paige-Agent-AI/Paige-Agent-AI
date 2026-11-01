@@ -213,7 +213,7 @@
   },
   "planning_native_source_candidate": {
     "status": "UNVERSIONED_INERT / DRAFT / NOT_READY",
-    "currentMain": "30e49e37ec364d0cbd597e7bf1a665e9013f7d35",
+    "currentMain": "2125057ed1fade8688f1801bd643f33082101536",
     "originalComposition": "591bf3d97000361e2071f2db5d777b438f35b762",
     "authority": [
       "ANT51/58ca8d6b-7084-4963-9e8f-54fa19c0cc75",
@@ -227,13 +227,13 @@
       "supabase/functions/_shared/team-hub/zion-planning-read.test.ts": "ddad91973a816d5db3d164e1ce3ca890f32d25eec34f1c88dfd8bd834f8d01bf",
       "supabase/functions/_shared/team-hub/zion-planning-source.ts": "3ecc898e21707b46b54a6e33e6fb56674be5b7afe5ade84dd6f62d41641d56c7",
       "supabase/functions/_shared/team-hub/zion-planning-source.test.ts": "b9847b592bc3cc24f3ce4f785d1347ea9b25f84196c3cb34d04576caf747728e",
-      "scripts/proof/exp05-zion-planning-read-candidate.sql": "2408309a49c373844517bb15449a8a2bb18980c5d5ff6739a7179d85279290d7",
-      "scripts/proof/exp05-zion-planning-read.mjs": "12ef7401bfa09eb275e085ef84881eab1b7bc8fed54e5edf2f6abe20f6685d42",
-      "supabase/tests/exp05_zion_planning_read.sql": "6941ec0c10da33e2e9b0ff4e643a91fbc09caffff8760bcf3161daa0edd942a4",
+      "scripts/proof/exp05-zion-planning-read-candidate.sql": "8244cedcce27de6526645a39b4d46dcda9a9b24a44d183a48024174cf62544ed",
+      "scripts/proof/exp05-zion-planning-read.mjs": "a04f76374440243e7f0a2b40e2045e7493513dcf659ebdf6950a651e8402a76c",
+      "supabase/tests/exp05_zion_planning_read.sql": "12563014364d5e122882236f130e40dc20b0386df8aa2bcc84b44f0545d93d71",
       "supabase/tests/fixtures/exp05-zion-planning-original.sql": "42f7b90ac7f08ea2235d13b2164c3e7203738e4d80db0ea7b4f9ba216c3aa175",
       ".github/workflows/ci.yml": "7b66a47852e2af9a3a6e60cecc72059bc0ae834e448c900b5951596741482ecb",
       "scripts/proof/exp05-zion-planning-concurrency.mjs": "185353cf379cd99ae3093554fc6653b1d23da981a646d86e7a8916f371f18b47",
-      "scripts/proof/exp05-zion-planning-full-schema.mjs": "9bfb5dc487a5b0ebf765f47388c2dcaa9f01760e9b6f8d2ae60dce8e775c3055",
+      "scripts/proof/exp05-zion-planning-full-schema.mjs": "1d6f4521ea2a233755761a5f53efcf9d882caee2ba6e84d08edd5f6c62464a71",
       ".github/workflows/paige-spine-contract.yml": "43b85d65e281fb0de503f864b6fc5db7a9b21c17a36b312221ee4f9a0d70c5f4"
     },
     "abi": "Same service-only team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb); closed plan_list/version1 source descriptor; no public RPC or added grant",
@@ -246,7 +246,7 @@
       },
       "types": "Changed host and both Planning modules PASS under pinned Deno dependency cache; isolated non-network cache miss retained separately, no changed dependency",
       "native": "Existing E08 A2b full assertions/16 mutants/P1/uncapped suite unchanged, followed by native additive source/metadata/ACL/replay,20 differential queries,12 malformed envelopes and current-source/refusal/rearm/history checks. Reduced-schema synthetic role ports; not full-schema or customer proof",
-      "nativeEvidence": "work/planning-native-proof/run-1793542825069/result.json; exit0, four observed blocking pairs, original fixture dropped",
+      "nativeEvidence": "work/planning-native-proof/run-1793544604148/result.json; exit0; both exact original reader variants/20 query projections each, semantic-drift refusal, four observed blocking pairs; separate final fixture/client counts0; own server stopped",
       "causalRed": "Native missing-contract baseline fails before candidate; exact original Search negative fails on newly source-revoked Planning result. Initial Windows transport/fixture/SQL correction attempts retained in private run evidence",
       "nativeContract": [
         {
@@ -332,7 +332,7 @@
           "acl": [
             "postgres=X/postgres"
           ],
-          "body": "2d492592c97ac898460a62e8981db6e5",
+          "body": "ffca375a8ea2d90fc306664ddfff6a85",
           "owner": "postgres",
           "config": [
             "search_path=\"\""
@@ -494,19 +494,21 @@
         "exit": 0
       },
       "fullSchema": {
-        "status": "GENERATOR_SELFTEST_PASS / ACTUAL_FULL_SCHEMA_EXECUTION_UNVERIFIED",
+        "status": "FIRST_EXACT77_RUN_9_PASS_1_FAIL / PRECISE_COMPATIBILITY_CORRECTION_LOCAL_PASS / FRESH_FULL_SCHEMA_RUN_REQUIRED",
         "script": "scripts/proof/exp05-zion-planning-full-schema.mjs",
         "scope": "Existing local Supabase54322 only; exact inert candidate embedded twice in one rollback-only pgTAP transaction;10 native source/ABI/permission/replay assertions; no business fixture, remote DDL or migration-ledger write",
-        "workflow": "One own push-path and one test step in existing database-contract job; both preserve all incumbent source and E08 reserved insertion anchors"
+        "workflow": "One own push-path and one test step in existing database-contract job; both preserve all incumbent source and E08 reserved insertion anchors",
+        "initialFailure": "124877867209 on77: actual replay plan_list bodya8c0a676cdd686bc17d5dbbb7d605ecc differs from live702f solely by TWO exact explanatory comments inherited from immutable20260712040000. No query/role/ABI difference. New native causal test fails before fix (run1793544565041), passes after fix (run1793544604148); retain the failed gate.",
+        "sourceConservation": "Both WHOLE original reader fingerprints pinned; independent original-file/comment reconstruction matches both exact MD5s. Actual full-schema assertion still requires the complete existing reader to remain unchanged. No generic normalization/source relaxation or applied-file edit."
       }
     },
-    "review": "AUTHOR-REVIEW / LOWER ASSURANCE; source/spec/authority/privacy/metadata/recovery pass. Search failure corrected, original native and neighboring regressions pass. Managed/concurrency/exact-head CI and release gates remain open. Full-schema wrapper generation self-test only; actual native CI result remains unverified and required.",
+    "review": "Sequential AUTHOR-REVIEW / LOWER ASSURANCE: complete eight-path correction diff reviewed separately after implementation. Exactly two complete original bodies admitted, missing/unknown/semantic-drift rejected, unchanged original reader and four shared transforms, 20 query projections per variant and actual original four lock pairs PASS; no new permission/actor/tenant/model/effect path. New full-schema/exact-head CI and ordinary release/customer gates remain required; no non-author independence or merge approval claimed.",
     "releaseHolds": [
       "Actual lower-owner native ordering then genuinely free forward carrier; no speculative slot",
       "Full-schema/managed proof; four bounded native concurrency pairs now PASS; exact final source review/required CI; deployment/production readback",
       "Ordinary authorized useful both-chat result, original records/receipts/reload/recovery and equivalent existing/new SOLO proof"
     ],
-    "sourceReader": "Original plan_list body702f2b52fc0d4e5c615fde7ec906b840 unchanged; private validation projects IDs/versions only, never service plan_list or domain effects",
+    "sourceReader": "Original caller-JWT plan_list unchanged: live702f2b52fc0d4e5c615fde7ec906b840; immutable replaya8c0a676cdd686bc17d5dbbb7d605ecc differs only by two exact explanatory comments. Both complete source fingerprints pinned;20 filter/version parity checks per variant, genuine tenant-query mutant refused. Private helper projects IDs/versions only; no service plan_list or domain effects.",
     "capabilities": "Existing catalogue status unchanged; no Live or algorithm maturity promotion",
     "outcomes": "O01 PRIMARY, O02 NEXT; all ten outcomes/E5-CV1–9 preserved;0/10 fully complete; founder NOT_ACCEPTED",
     "resolvedScope": [
@@ -517,9 +519,16 @@
     "infrastructure": {
       "b5": "Supabase Preview124871817388 FAILED function update502; preserved, not waived",
       "f3": "Identical-tree retryf3b212b4; database-contract124873002424 baseline project-status read FAILED api.supabase.com origin502 before local stack startup; downstream missing-stack results not domain test verdicts",
-      "nativeReadback": "Fresh MCP catalog/log queries Internal errors; last successful frontier20 is historical, no current source-health conclusion",
+      "nativeReadback": "Actual readonly production and original no-data Preview reads recovered at frontier20271126200003; no Planning candidate applied. Earlier Internal errors remain historical.",
       "response": "Normal safe recovery and fresh exact-head gates only; no reset/new branch/project/secret or status override",
       "recovered": "Exact422 Supabase Preview SUCCESS, native postgres-authority SUCCESS; actual readonly MCP production frontier20271126200003 recovered. Remaining exact required gates still running at next proof slice; previous502 failures retained."
+    },
+    "currentComposition": "74df1ec20e95b003ce7490baa2b35edaae7fd286",
+    "releaseOrder": {
+      "status": "RECEIVING_SOURCE_RECONCILIATION_PENDING / NO_MIGRATION_ID_RESERVED",
+      "proposal": "Original ANT51/d05db22d and sharedANT147/0f7d4025 propose genuinely free never-applied20271126200005 ahead of unrelated higher native chain; fresh frontier must be reread before any carrier.",
+      "exp08": "Actual ea5bb946-d93b-4b15-bf48-9f3c3e0a1b32 confirms NO semantic source/slot conflict; original recovery does not pin changed Planning functions. Managed rebase/source/ACL/ledger proof remains distinct.",
+      "remaining": "E04/E13 original source/order disposition remains pending. Preserve all immutable Preview histories; no reset, blind include-all or silent lower insertion."
     }
   }
 }

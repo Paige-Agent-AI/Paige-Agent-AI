@@ -1650,7 +1650,7 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
       if (name === "team_hub_stage_agent_read_context") {
         const next = new Set(admitted);
         for (const input of args.p_read_tools as Array<string | { tool: string }>) next.add(typeof input === "string" ? input : input.tool);
-        if (next.size > 3) return Promise.resolve({ data: null, error: { message: "Private read budget exceeded" } });
+        if (next.size > 3) return Promise.resolve({ data: { ok: false }, error: null });
         next.forEach(tool => admitted.add(tool));
       }
       return originalRpc(name, args);

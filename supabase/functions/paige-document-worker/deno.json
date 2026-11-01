@@ -1,0 +1,7 @@
+{
+  "nodeModulesDir": "none",
+  "lock": {
+    "path": "../_shared/knowledge-binary-adapters.deno.lock",
+    "frozen": true
+  }
+}

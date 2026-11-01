@@ -3730,7 +3730,7 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
   for (const deny of [false, true]) {
     let metric;
     const liveMetric = await liveDrive({ spokenText: 'What do customers currently owe us?',
-      readTool: { name: 'read_business_metric', args: { metric_key: 'sales.receivables.outstanding_current', period: 'this_month' } },
+      readTool: { name: 'read_business_metric', args: { metric_key: 'sales.receivables.outstanding_current', period: 'last_30_days' } },
       rpcExtras: { issue_analytics_evidence_bundle: input => { metric = conversationalMetricFixture(input); return { data: metric, error: null }; },
         resolve_analytics_evidence_reference: () => deny ? { data: null, error: { code: '42501' } } : { data: metric, error: null } },
     });
@@ -10141,7 +10141,44 @@ function conversationalMetricFixture(input, mutate = () => {}) {
 console.log('\nINT-340 / #1837 — one governed conversational metric read');
 {
   const metricKey = 'sales.receivables.outstanding_current';
-  async function metricDrive({ mutate, resolveError, tier = 'tenant', args = { metric_key: metricKey, period: 'this_month' } } = {}) {
+  // Authorization cases below need a nonempty period on every UTC date. Keep the
+  // real first-day refusal separately observable through the existing per-call clock.
+  const { readBusinessMetric } = await import('../../supabase/functions/_shared/analytics-metrics/read.ts');
+  for (const test of [
+    { at: '2026-10-31T12:00:00Z', period: 'this_month', start: '2026-10-01T00:00:00.000Z', end: '2026-10-31T00:00:00.000Z' },
+    { at: '2026-11-01T00:30:00Z', period: 'this_month' },
+    { at: '2026-11-02T00:30:00Z', period: 'this_month', start: '2026-11-01T00:00:00.000Z', end: '2026-11-02T00:00:00.000Z' },
+    { at: '2026-11-01T00:30:00Z', period: 'last_30_days', start: '2026-10-02T00:00:00.000Z', end: '2026-11-01T00:00:00.000Z' },
+  ]) {
+    const now = Date.parse(test.at), calls = [];
+    let issued;
+    const caller = { rpc: async (name, input) => {
+      calls.push(name);
+      if (name === 'current_user_tenant_id') return { data: CALLER_TENANT, error: null };
+      if (name === 'issue_analytics_evidence_bundle') issued = conversationalMetricFixture(input, m => {
+        m.as_of = new Date(now).toISOString();
+        m.freshness.queried_at = m.as_of;
+        m.reference_expires_at = new Date(now + 900000).toISOString();
+      });
+      return { data: issued, error: null };
+    } };
+    const result = await readBusinessMetric(caller, { tenantId: CALLER_TENANT },
+      { metric_key: metricKey, period: test.period }, () => now);
+    const label = `1837.date ${test.at} ${test.period}`;
+    assert(`${label}: completed-day range determines availability`, result.status === (test.start ? 'available' : 'needs_input'));
+    if (test.start) {
+      assert(`${label}: original issuer/resolver and scope checks run once`,
+        calls.join() === 'current_user_tenant_id,issue_analytics_evidence_bundle,resolve_analytics_evidence_reference,current_user_tenant_id');
+      assert(`${label}: exact completed UTC bounds reach the model-safe projection`,
+        result.metric?.range.start === test.start && result.metric?.range.end === test.end
+          && JSON.stringify(result).includes('125050') && !JSON.stringify(result).includes('NEVER_PROJECT_THIS'));
+    } else {
+      assert(`${label}: empty month performs zero RPCs and emits no money or evidence`,
+        calls.length === 0 && !('metric' in result) && !JSON.stringify(result).includes('125050')
+          && !JSON.stringify(result).includes('aneb_v1_'));
+    }
+  }
+  async function metricDrive({ mutate, resolveError, tier = 'tenant', args = { metric_key: metricKey, period: 'last_30_days' } } = {}) {
     let issued;
     return drive({ stream: true, text: 'How much do customers currently owe us, and what does that number mean?', toolCall: { name: 'read_business_metric', args },
       rpcOverrides: { studio_role_ok: { data: true, error: null }, get_actor_access: { data: { tier }, error: null },

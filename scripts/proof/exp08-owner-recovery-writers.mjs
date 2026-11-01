@@ -5,20 +5,26 @@ import {createHash} from 'node:crypto';
 import {spawn,spawnSync} from 'node:child_process';
 import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 import {verifyOwnerRecoveryBundle} from './exp08-owner-recovery-bundle-proof.mjs';
+import {verifyRecoveryNoticeRetirement} from './exp08-owner-recovery-notice-retirement.mjs';
 assert.equal(process.env.EXP08_DISPOSABLE,'1');
 assert.ok(['127.0.0.1','localhost','::1'].includes(process.env.PGHOST));
 assert.match(process.env.PGPORT??'',/^\d+$/);
-assert.ok(process.argv.slice(2).every(x=>['--baseline-02126','--baseline-notice-order','--baseline-revoke','--baseline-owner-context','--baseline-door-metadata'].includes(x))&&process.argv.length<=3,'Unknown proof option');
+assert.ok(process.argv.slice(2).every(x=>['--baseline-02126','--baseline-notice-order','--baseline-revoke','--baseline-owner-context','--baseline-door-metadata','--baseline-notice-retirement'].includes(x))&&process.argv.length<=3,'Unknown proof option');
 const baseline=process.argv.includes('--baseline-02126');
 const historical=baseline?spawnSync('git',['show','02126ee52:scripts/proof/exp08-owner-recovery-writers.sql'],{encoding:'utf8',windowsHide:true}):null;
 if(historical)assert.equal(historical.status,0,historical.stderr);
 const candidate=historical?.stdout??readFileSync(new URL('./exp08-owner-recovery-writers.sql',import.meta.url),'utf8');
 const source=name=>readFileSync(new URL('../../supabase/migrations/'+name,import.meta.url),'utf8');
-function original(file,name,argumentPrefix=''){
- const s=source(file),a=s.toLowerCase().indexOf(('CREATE OR REPLACE FUNCTION public.'+name+'('+argumentPrefix).toLowerCase());
+function functionDefinition(s,name,argumentPrefix=''){
+ const a=s.toLowerCase().indexOf(('CREATE OR REPLACE FUNCTION public.'+name+'('+argumentPrefix).toLowerCase());
  assert.ok(a>=0,name);const tail=s.slice(a),tag=tail.match(/AS\s+(\$[a-z_]*\$)/i);
  assert.ok(tag,name);const end=tail.indexOf(tag[1]+';',tag.index+tag[0].length);
  assert.ok(end>0,name);return tail.slice(0,end+tag[1].length+1).replace(/\r\n/g,'\n');
+}
+const original=(file,name,argumentPrefix='')=>functionDefinition(source(file),name,argumentPrefix);
+function historicalFunction(ref,name){
+ const r=spawnSync('git',['show',ref+':scripts/proof/exp08-owner-recovery-writers.sql'],{encoding:'utf8',windowsHide:true,maxBuffer:16*1024*1024});
+ if(r.error)throw r.error;assert.equal(r.status,0,r.stderr);return functionDefinition(r.stdout,name);
 }
 const db=new OperatorPostgresFixture(Number(process.env.PGPORT));
 const actor='e8000000-0000-4000-8000-000000091001',holder='e8000000-0000-4000-8000-000000091002';
@@ -431,8 +437,14 @@ try{
  db.actor=former;
  assert.equal(JSON.parse(scalar(`SELECT public._exp08_read_recovery_notice('${tenant}','${formerNotice}')`)).reason,reason);
  results.push({case:'approved live original holder-of-record receives only its scoped event detail without a team seat',passed:true});
+ db.run(`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${former}'`);db.actor='';
+ assert.equal(JSON.parse(scalar(`SELECT public._exp08_read_recovery_notice_for_recipient('${tenant}','${formerNotice}','${former}',false)`)).reason,reason);
+ assert.equal(scalar('SELECT auth.uid() IS NULL'),'t');
+ results.push({case:'native former-holder snapshot permits only original event for future server delivery without workspace or impersonation',passed:true});
+ db.actor=former;db.run(`UPDATE public.profiles SET active_tenant_id='${tenant}' WHERE user_id='${former}'`);
  db.run(`INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status) VALUES('${tenant}','${former}',false,'revoked')`);
  await denied('subsequent membership change revokes former-holder snapshot detail',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${formerNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.actor='';await denied('native former-holder server mode also refuses changed membership snapshot',()=>db.exec(`SELECT public._exp08_read_recovery_notice_for_recipient('${tenant}','${formerNotice}','${former}',false)`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
  db.actor=actor;reset();seat();const failed='e8000000-0000-4000-8000-000000092010';
  const beforeFailedAudits=scalar('SELECT count(*) FROM public.paige_audit_log'),beforeFailedNotices=scalar('SELECT count(*) FROM public.notifications');
  db.run(`CREATE FUNCTION public.fixture_notice_failure() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN
@@ -710,8 +722,10 @@ try{
  const historicalDoors=process.argv.includes('--baseline-door-metadata')?spawnSync('git',['show','e44f8f8b0:scripts/proof/exp08-owner-recovery-doors.sql'],{encoding:'utf8',windowsHide:true}):null;
  if(historicalDoors){if(historicalDoors.error)throw historicalDoors.error;assert.equal(historicalDoors.status,0,historicalDoors.stderr);}
  const publicSource=historicalDoors?.stdout??readFileSync(new URL('./exp08-owner-recovery-doors.sql',import.meta.url),'utf8');
+ if(historicalDoors)db.run(historicalFunction('e44f8f8b0','_exp08_read_recovery_notice'));
  await denied('public recovery has no callable door before its explicit installer',()=>db.exec(`SELECT public.platform_owner_recovery('${tenant}','set_account_holder','${remaining}','${reason}','e8000000-0000-4000-8000-000000094020')`),/does not exist/);
  if(!process.argv.includes('--baseline-door-metadata'))for(const inheritedRole of ['anon','service_role']){
+  assert.equal(scalar(`SELECT pg_has_role('${inheritedRole}','authenticated','MEMBER')`),'f','Dedicated fixture must not have a preexisting role grant');
   db.run(`GRANT authenticated TO ${inheritedRole}`);
   try{
    await denied('first public recovery installation refuses inherited '+inheritedRole+' access atomically',()=>db.exec(publicSource),/EXP08 original recovery public door drift/);
@@ -736,6 +750,19 @@ try{
  await denied('ordinary customer cannot read platform recovery receipt',()=>db.exec(`SELECT public.platform_owner_recovery_receipt('${tenant}','${publicRequest}')`),/OWNER_RECOVERY_FORBIDDEN/);
  const publicDetail=JSON.parse(scalar(`SELECT public.get_owner_recovery_notice('${tenant}','${publicNotice}')`));assert.equal(publicDetail.reason,reason);
  results.push({case:'original notification recipient uses scoped public detail without platform recovery powers',passed:true});
+ db.role='';db.run(`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${holder}'`);
+ await denied('customer notice still requires the original active workspace after recipient factoring',()=>db.exec(`SELECT public._exp08_read_recovery_notice('${tenant}','${publicNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.actor='';
+ const recipientCore=`SELECT public._exp08_read_recovery_notice_for_recipient('${tenant}','${publicNotice}','${holder}',false)`;
+ assert.equal(scalar('SELECT auth.uid() IS NULL'),'t');assert.equal(JSON.parse(scalar(recipientCore)).reason,reason);assert.equal(scalar('SELECT auth.uid() IS NULL'),'t');
+ results.push({case:'private native-bound recipient read needs no borrowed recipient identity or unrelated active workspace',passed:true});
+ for(const role of ['anon','authenticated','service_role']){
+  db.role=role;await denied(role+' cannot choose recipient or bypass profile via private primitive',()=>db.exec(recipientCore),/permission denied/);
+ }
+ db.role='';
+ await denied('private profile-free mode does not grant another recipient event access',()=>db.exec(`SELECT public._exp08_read_recovery_notice_for_recipient('${tenant}','${publicNotice}','${actor}',false)`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ await denied('null private profile mode grants no context authority',()=>db.exec(`SELECT public._exp08_read_recovery_notice_for_recipient('${tenant}','${publicNotice}','${holder}',NULL)`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.actor=holder;db.run(`UPDATE public.profiles SET active_tenant_id='${tenant}' WHERE user_id='${holder}'`);db.role='authenticated';
  await denied('public notification detail refuses wrong active expected tenant',()=>db.exec(`SELECT public.get_owner_recovery_notice('e8000000-0000-4000-8000-000000094099','${publicNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
  db.actor=actor;
  for(const role of ['anon','service_role']){
@@ -783,6 +810,18 @@ try{
  await denied('unsupported original recovery overload refuses installation',()=>db.exec(publicSource),/EXP08 original recovery unsupported overload/);
  assert.equal(scalar("SELECT to_regprocedure('public.platform_owner_recovery(uuid,text,uuid,text,uuid,integer)') IS NOT NULL"),'t');
  db.run('DROP FUNCTION public.platform_owner_recovery(uuid,text,uuid,text,uuid,integer)');await db.exec(publicSource);
+ if(process.argv.includes('--baseline-notice-retirement')){
+  db.run(historicalFunction('781ba0d2a','_exp08_read_recovery_notice'));
+ }
+ results.push(...await verifyRecoveryNoticeRetirement(db,{
+  lockDefinition:original('20270602000203_operator_account_archive.sql','operator_lock_retirement_scope'),
+  archiveSource:source('20271020000100_operator_archive_delete_authority.sql'),tenant,holder,
+  prepare:async request=>{
+   revokeFixture();const event=JSON.parse(scalar(`SELECT public._exp08_apply_owner_recovery('${tenant}','set_account_holder','${remaining}','${reason}','${request}')`));
+   return event.receipt.notices.find(n=>n.user_id===holder).notification_id;
+  }
+ }));
+ db.actor=actor;
  // Compose the released original entity lifecycle and its original FK/CHECK/seat
  // constraints into this same recovery transaction, not a copied vacancy writer.
  revokeFixture();putContact();

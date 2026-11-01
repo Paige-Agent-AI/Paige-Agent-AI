@@ -21,7 +21,8 @@ BEGIN
     ('public._exp08_require_recovery_audit()','defee9e1d221f1858669985f56ffad3d','void',NULL::text[]),
     ('public._exp08_apply_owner_recovery(uuid,text,uuid,text,uuid)','b28866ce3be2085643433cf3ba104036','jsonb',ARRAY['_tenant','_act','_user','_reason','_request']),
     ('public._exp08_read_owner_recovery(uuid,uuid)','8930f6094db5dc87a55a693b06d60857','jsonb',ARRAY['_tenant','_request']),
-    ('public._exp08_read_recovery_notice(uuid,uuid)','06f8a39a3ff415d97e0b6aa8aad91d20','jsonb',ARRAY['_expected_tenant','_notice'])
+    ('public._exp08_read_recovery_notice(uuid,uuid)','a16a4d793c2440aad2bd5b48cec2ee34','jsonb',ARRAY['_expected_tenant','_notice']),
+    ('public._exp08_read_recovery_notice_for_recipient(uuid,uuid,uuid,boolean)','ddcdb478a4956181fc99dd8ebee80d0b','jsonb',ARRAY['_expected_tenant','_notice','_recipient','_require_profile'])
   ) v(signature,body_hash,result_type,argument_names) LOOP
     SELECT * INTO p FROM pg_proc WHERE oid=to_regprocedure(s.signature);
     IF NOT FOUND OR md5(p.prosrc)<>s.body_hash OR p.proowner<>'postgres'::regrole

@@ -2594,3 +2594,50 @@ three received files remain exact and its frozen helper ABI unchanged. Original
 EXP13 new Knowledge producer packet received for later bounded host inspection;
 receipt ACK is not source/host integration or a broad Chat/Root writer lease.
 Original18+6/five journeys/full assignment remain **STILL CODING**.
+
+### November1 — one recipient predicate and retirement table-gate repair
+
+The original recipient predicate is now one private
+`_exp08_read_recovery_notice_for_recipient(tenant,notice,recipient,require_profile)`.
+The existing customer wrapper hard-codes actual `auth.uid()` and profile=true;
+clients cannot choose another recipient or disable workspace checks. The new
+primitive is postgres-only, including no direct service-role EXECUTE. Its false
+mode is preparation for a source-derived server delivery consumer, not a service
+endpoint, new workspace grant or recovery action. Native notice/audit binding,
+live Auth, current active ownership or unchanged former-holder event snapshot
+remain required. Customer membership-before-profile ordering is conserved.
+
+The original retirement gate acquires tenant SHARE ROW EXCLUSIVE before scoped
+rows. The shared reader now takes compatible-to-normal-DML ROW EXCLUSIVE before
+recipient row locks, so retirement waits before taking its rows. Actual preserved
+781 reader via the original authenticated public notice door reproduced a
+DEADLOCK with the original retirement lock primitive and exact original archive
+UPDATE spans. Baseline raw `exp08-notice-retirement-baseline-public.log` SHA256
+`6f0d3b1ff6ac95c2443fa1f0056c18cd4bf87868fc16e275a40246aa425bae1a`.
+Earlier fixture parameter-binding and private-function-under-Auth failures are
+retained separately and do NOT establish that product lock defect.
+
+Final187/0 author local PASS, all174 earlier controls retained; raw
+`exp08-recipient-retirement-current.log` SHA256
+`d7b9001ec46160b0b20919f79f33638d8ae26015af9aa25a549ef8849a27778b`;
+base writer b34cbeb5a75530f3953fe0c4fb0e56cb8e39f307df3d7ee04deb3517be3ac600;
+retirement proof6991419fa5591fac729d6c08a385829fff71688983e90e60a27e311d50f6d941.
+Both lock orderings and customer/private-native recipient modes pass; customer
+wrong-workspace refusal, NULL mode refusal, wrong recipient and private EXECUTE
+negatives remain. Former-holder server preparation survives unrelated workspace
+selection without borrowing identity, but a changed membership snapshot refuses.
+The fixture uses actual retirement lock source and exact three UPDATE spans,
+minimal added lifecycle columns and a sequential reader-first gate demonstration;
+it is NOT invocation/proof of the full archive/delete API or actual schema.
+All11 static private helpers and exact public prerequisite source/ABI are admitted;
+the original four E02-bound bodies remain unchanged. No managed grant/activation.
+
+E02 independently executed immutable781's174 controls from24 byte-verified inputs:
+174PASS/0FAIL, raw0712827173eddcc7502f9b45fbe3d92c2f170e8d0b74a0276b36014fa4f1bcf3,
+independent database-disposal readback. Its parser first-object error was corrected
+without rerunning/changing product proof. This is receiving execution of174 only,
+not187, source review, a summed305, cluster-role-conservation, hosted/Auth/privacy
+or release approval. Source-only factoring review is clear pending exact commit
+renewal. Current sender-owner receiver/idempotency/result contract requested;
+source event reader, real delivery, UI, full schema/retirement and original full
+assignment integration remain **STILL CODING**.

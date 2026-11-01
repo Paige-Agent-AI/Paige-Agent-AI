@@ -370,14 +370,24 @@ $function$;
 REVOKE ALL ON FUNCTION public._exp08_record_recovery_notices(uuid,uuid)
   FROM PUBLIC,anon,authenticated,service_role;
 
-CREATE OR REPLACE FUNCTION public._exp08_read_recovery_notice(_expected_tenant uuid,_notice uuid)
+-- ONE original recipient predicate. Customer wrapper supplies auth.uid()/true;
+-- the future service event reader supplies only a native bound recipient/false.
+-- This private flag is never client input or authority to execute recovery.
+CREATE OR REPLACE FUNCTION public._exp08_read_recovery_notice_for_recipient(
+  _expected_tenant uuid,_notice uuid,_recipient uuid,_require_profile boolean)
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
 AS $function$
 DECLARE
-  actor uuid := auth.uid(); n public.notifications%ROWTYPE; a public.paige_audit_log%ROWTYPE;
+  actor uuid := _recipient; n public.notifications%ROWTYPE; a public.paige_audit_log%ROWTYPE;
   member_state jsonb; binding jsonb; business_name text; active_owner boolean := false;
 BEGIN
   PERFORM public._exp08_require_recovery_audit();
+  IF actor IS NULL OR _require_profile IS NULL THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  -- Original retirement acquires its table gate before member/profile rows.
+  -- Match it before taking recipient locks, without blocking ordinary tenant DML.
+  LOCK TABLE public.tenants IN ROW EXCLUSIVE MODE;
   PERFORM 1 FROM auth.users WHERE id=actor AND deleted_at IS NULL
     AND (banned_until IS NULL OR banned_until<=statement_timestamp()) FOR SHARE;
   IF NOT FOUND THEN RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';END IF;
@@ -386,8 +396,10 @@ BEGIN
     WHERE tenant_id=_expected_tenant AND user_id=actor FOR SHARE;
   -- Original removal locks membership before clearing this same profile pointer.
   -- Even an eventually refused stale reader must retain that order.
-  PERFORM 1 FROM public.profiles WHERE user_id=actor AND active_tenant_id=_expected_tenant FOR SHARE;
-  IF NOT FOUND THEN RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';END IF;
+  IF _require_profile THEN
+    PERFORM 1 FROM public.profiles WHERE user_id=actor AND active_tenant_id=_expected_tenant FOR SHARE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';END IF;
+  END IF;
   SELECT name INTO business_name FROM public.tenants WHERE id=_expected_tenant AND archived_at IS NULL FOR SHARE;
   IF NOT FOUND OR public._solo_shell_tenant(_expected_tenant) IS DISTINCT FROM true THEN
     RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';
@@ -415,6 +427,16 @@ BEGIN
   RETURN jsonb_build_object('audit_id',a.id,'notification_id',n.id,'tenant_id',a.tenant_id,
     'business_name',business_name,'action',a.action,'target_user_id',a.target_id,
     'reason',a.payload->>'reason','recorded_at',a.created_at,'is_read',n.is_read);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._exp08_read_recovery_notice_for_recipient(uuid,uuid,uuid,boolean)
+  FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE OR REPLACE FUNCTION public._exp08_read_recovery_notice(_expected_tenant uuid,_notice uuid)
+RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $function$
+BEGIN
+  RETURN public._exp08_read_recovery_notice_for_recipient(_expected_tenant,_notice,auth.uid(),true);
 END;
 $function$;
 REVOKE ALL ON FUNCTION public._exp08_read_recovery_notice(uuid,uuid)

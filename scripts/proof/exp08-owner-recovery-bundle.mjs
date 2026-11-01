@@ -31,8 +31,8 @@ export function buildOwnerRecoveryBundle(){
   specs.push({signature:`public.${m[1]}(${args.map(a=>a.split(/\s+/)[1]).join(',')})`,
    names:args.map(a=>a.split(/\s+/)[0]),result:m[3],hash:digest('md5',base.slice(m.index+m[0].length,end))});
  }
- assert.equal(specs.length,10,'All original statically declared private helpers must be admitted');
- assert.equal(new Set(specs.map(s=>s.signature)).size,10);
+ assert.equal(specs.length,11,'All original statically declared private helpers must be admitted');
+ assert.equal(new Set(specs.map(s=>s.signature)).size,11);
  const values=specs.map(s=>`(${quote(s.signature)},${quote(s.hash)},${quote(s.result)},${s.names.length?'ARRAY['+s.names.map(quote).join(',')+']':'NULL::text[]'})`).join(',\n');
  const allSignatures=[...specs.map(s=>s.signature),'public._exp08_grant_co_owner(uuid,uuid,boolean)','public._exp08_revoke_co_owner(uuid,uuid,uuid)',
   'public.grant_co_owner(uuid,uuid)','public.revoke_co_owner(uuid,uuid)'];
@@ -95,7 +95,7 @@ BEGIN
   to_regprocedure('public._exp08_grant_co_owner(uuid,uuid,boolean)'),to_regprocedure('public._exp08_revoke_co_owner(uuid,uuid,uuid)'));
  SELECT count(*) INTO doors FROM pg_proc f JOIN pg_namespace n ON n.oid=f.pronamespace
   WHERE n.nspname='public' AND f.proname IN('platform_owner_recovery','platform_owner_recovery_receipt','get_owner_recovery_notice');
- IF NOT ((present=0 AND kernels=0 AND doors=0) OR (present=10 AND kernels=2 AND doors=4)) THEN
+ IF NOT ((present=0 AND kernels=0 AND doors=0) OR (present=11 AND kernels=2 AND doors=4)) THEN
   RAISE EXCEPTION 'EXP08 recovery bundle partial installation: reconcile before changing source';
  END IF;
 END $exp08_bundle_preflight$;`;

@@ -101,7 +101,7 @@ export async function verifyOwnerRecoveryBundle(db,{originalGrantDefinition,orig
   assert.equal(scalar(fresh,"SELECT md5(prosrc) FROM pg_proc WHERE oid='public.platform_billing_contact_revoke(uuid)'::regprocedure"),'f8fa3a425f70d301f47b5b5750c57ad3');
   fresh.run(originalBillingDefinition.replace('BEGIN','BEGIN\n PERFORM 1;'));
   const lateFailureMetadata=metadata(fresh);
-  await assert.rejects(()=>sqlFile(fresh,bundle),/EXP02.*(?:drift|guard|original)/);
+  await assert.rejects(()=>sqlFile(fresh,bundle),/EXP02 original Billing source or partial kernel drift/);
   assert.equal(metadata(fresh),lateFailureMetadata);
   assert.equal(scalar(fresh,"SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE '_exp08_%'"),'0');
   cases.push({case:'fresh bundle late original Billing prerequisite failure rolls back ALL newly created recovery functions/policies/triggers',passed:true});

@@ -2004,3 +2004,67 @@ lifecycle20, revoke12, Billing13, actor15, incumbent holder20, identity22, owner
 New unversioned component history22/invitation13 adds35 separately; do not conflate those with
 the baseline intentionally failing sets, causal mutations or real-wait counts. Original packet
 selection is explicitly full-original-runner, not a selected-only invocation.
+
+### October31 — original R9/R12 provenance foundation, INERT/local only
+
+The full original row4 recovery flow remains PARTIAL/MISSING integration, not
+completed by this foundation. Fresh production catalogue confirms recovery and
+co-owner-removal RPCs have no overloads. Reuse the original private I1 holder-state
+helper8f9d27463a4c825994f165a5777aca1f; preserve the actual current grant/revoke
+writers, incoming EXP02 Billing integration, R13 billing-paused holder and R16
+original Operator powers. No holder helper, runtime, store or approval engine is cloned.
+
+Pre-edit capability route: Team/EXP08 owns native recovery/audit/private notices;
+existing EXP03 owns the queued original notification receiver (ANT147/f83667d0,
+receiving response b65bd28d). Existing `team.authority` is a read-only PARTIAL
+capability, not a recovery executor; recovery model action/MUTATION_VERB remains
+UNAVAILABLE, never an invented registered key. Original Settings/Team binding is
+PROOF_OWED. Native operator authority and actual server checks control effects;
+no model, confidence, personality or caller flag grants permission. This stage has
+no provider/connection, durable job, model routing or activation; eventual email
+must use the original sender and its actual permission/result. Existing audit is
+the durable source, no teammate-as-client Rail row. Authenticated ordinary-account
+roles/current-context/result/receipt/reopen/recovery proof remains separate and owed.
+The original full18+6/five journeys and shared goals/workshop/proactivity/standing
+authority work remain in scope, **STILL CODING**.
+
+Exact source custody ANT147/99b2b1da: new INERT
+`scripts/proof/exp08-owner-recovery-provenance.sql` and its local owning proof only,
+plus this contract append. One restrictive client policy for the NEW
+`tenant:owner_recovery.*` namespace and a private truncate-retention trigger;
+existing audit policies, grants, columns, constraints, triggers, data and unrelated
+activity are conserved. First bootstrap serializes with writers and refuses any
+preexisting untrusted recovery-looking row, never deleting or blessing it. Replay
+requires the complete exact boundary; partial install, altered source/ACL/trigger
+or policy refuses without overwriting. Raw client reads/writes cannot substitute
+for the still-missing authorized recovery writer/private receipt reader.
+
+Current native proof:17 controls PASS, preserving the initial14 before caller-flag,
+partial-install and changed-source negatives. Actual PostgreSQL RLS/ACL/trigger
+execution uses the current original actor/own-read policies; Auth identity/table
+shape and an overlapping permissive policy are explicit ports. The privileged
+record insertion is a fixture, NOT a real recovery act or customer receipt.
+Tests cover client fabrication/rename, private-row visibility/update/delete,
+truncate retention, legacy fixture operations, bootstrap refusal, replay/metadata
+conservation and strict drift refusal. No original191core+60/102 runner group was
+edited or replaced; the new group is not yet imported into that original runner.
+Candidate SHA256 `28d123723a8c4ef1e2c344fffd30f2e320905c5b8da6cb9d6bd9fba4de7612c7`;
+final raw log `exp08-owner-recovery-provenance-final.log` SHA256
+`393293b7ac1dd18445ba8b4eef687c6559172ddbf0b9fb5cc3d3af45dc6bef43`.
+Own fixture disposal verified; catalogue postgres-only/zero other clients.
+
+Initial two runs genuinely refused a policy descriptor whose role OIDs had the
+opposite array order, with identical exact roles/expressions/command/restrictive
+mode. Logs255b5d80/fdc5a511 remain FAIL. The candidate now compares the complete
+exact role set order-independently, pins catalogue resolution to pg_catalog and
+retains raw metadata replay checks; no permission or assertion was removed.
+Full source review, original-suite integration, managed schema, new native carrier,
+review/exact-head checks/release and authenticated proof remain owed. No production
+mutation, new role/account, provider/held activation or full recovery claim.
+
+Implementation references: [PostgreSQL restrictive policy semantics](https://www.postgresql.org/docs/16/sql-createpolicy.html)
+and current Supabase RLS documentation/changelog were checked. The native guard
+uses existing built-in predicates, not a custom operator or credential mechanism.
+The receiver must bind to the future committed native audit and current permissible
+recipient facts, never generic admin-notifier success or fire-and-forget delivery;
+it must not rerun pre-act holder-none against a legitimate working post-state.

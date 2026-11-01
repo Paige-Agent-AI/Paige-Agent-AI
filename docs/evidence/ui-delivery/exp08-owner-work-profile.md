@@ -13,27 +13,27 @@ MUST_PRESERVE: Original three-argument Team RPC/audit, contact editor and its se
 ACCEPTANCE_CRITERIA: Holder/self can edit/save/reopen native values; Admin/co-owner can inspect another owner's read-only fields and Close; native refusal/unknown preserves draft and cannot claim success; tenant/actor/unmount invalidates stale completion
 MOTION_PURPOSE: NONE: retain existing reduced-motion-aware dialog transition; no new animation
 PROTECTED_SEAMS: Affected: scoped roster presentation, owner edit authority, original work-profile readback, dialog focus/accessibility and responsive geometry. Unaffected: Auth/account choice writers, entitlement/paywall/provisioning/Billing, shared approval/Trust/Harness/Spine runtime, Rail/Memory writers, Chat transcripts/stream/popout/history, Live, Vault/credentials, providers/sends, durable scheduler and all domain writers. Server authority remains independent of presentation.
-AUTOMATED_EVIDENCE: PASS: unchanged original12 Team/contact/lifecycle suites230PASS; exact source0d599b50. Supporting composed5658 full-schema first-owner/profile/permission/atomic/notice steps90-94 actualSUCCESS. Replacement release exact full engineering gates still owed, no totals aggregated.
-STATIC_EVIDENCE: UNVERIFIED: original unchanged6 UI/contract/test files scoped ESLint exit0; exact current-main union conserved. Old local whole-app compiler straddled composition and was retired; its wrapper exit0 is INVALID, not compiler proof. Required final hosted compiler remains owed; no baseline changed.
+AUTOMATED_EVIDENCE: PASS: local12 Team/contact/lifecycle suites239PASS after native-availability repair; original230 assertions retained plus9 legacy/malformed/close-reread controls. Supporting original native proof stays separate; final-head hosted engineering gates remain owed.
+STATIC_EVIDENCE: UNVERIFIED:7 changed source/test files scoped ESLint exit0 and diff clean; native carrier unchanged. Required final hosted compiler remains owed. Earlier retired compiler wrapper result INVALID, never proof; no baseline changed.
 RENDERED_EVIDENCE: PASS: historical controlled real-SoloApp32 captures with fictional contexts/themes/four viewports/PAIGE open and closed, geometry/focus only. Current production/native integration and authenticated rendered proof remain UNVERIFIED.
 BEHAVIORAL_EVIDENCE: PASS: original12 mounted suites230 and prior controlled recovery/permission states cover exact receipts, draft retention, scoped refusal and explicit reopen. Fictional transport/isolated SQL are not customer persistence proof.
 AUTHENTICATED_RUNTIME: UNVERIFIED: guarded native plus UI production release and actual authorized save/access/result/reopen/recovery remain owed. Isolated managed Preview is engineering proof only.
-KEYBOARD_FOCUS: PASS: all32 controlled-browser contexts prove read-only heading initial focus, keyboard Close reachability, Escape and original Team-row focus return; actual AT remains owed
+KEYBOARD_FOCUS: UNVERIFIED: historical32 controlled original dialog focus/Close/Escape cases preserved; current readiness/authorized native/AT keyboard drive remains owed after safe release. Mounted cases prove accessible Close callback and original reread without dispatch.
 ZOOM_REFLOW: UNVERIFIED: local 200percent/reflow and native zoom proof separate
 REDUCED_MOTION: PASS: existing dialog rendered under reduced-motion preference in the controlled-browser32frames/7states; no new motion
-STATE_COVERAGE: UNVERIFIED: local32geometry/focus cases and7synthetic save/refusal states PASS plus181 DOM cases; full authenticated/lifetime/cohort proof remains owed
+STATE_COVERAGE: UNVERIFIED: Mounted239 cases cover legacy readiness, receipts, preserved drafts, unknown responses and existing lifecycle. Current authenticated role/cohort/reopen and rendered verification is unavailable because production deployment is not complete and the authorized QA session handback is missing. See docs/evidence/ui-delivery/exp08-owner-work-profile.md; no customer result is established.
 TRUTHFUL_STATE_LABELS: PASS: no LIVE claim; native and source tests separate from customer results
 SOLO_UI: YES: existing Settings Team MemberEditor; no shell or navigation change
-SOLO_1536X770_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
-SOLO_1536X770_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
-SOLO_1366X768_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
-SOLO_1366X768_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
-SOLO_1024X768_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
-SOLO_1024X768_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
-SOLO_900X1000_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
-SOLO_900X1000_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: Current native-readiness integration has no fresh authorized viewport drive; original controlled32 geometry/focus captures and report below remain historical evidence only.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Current native-readiness integration has no fresh authorized viewport drive; original controlled32 geometry/focus captures and report below remain historical evidence only.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: Current native-readiness integration has no fresh authorized viewport drive; original controlled32 geometry/focus captures and report below remain historical evidence only.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: Current native-readiness integration has no fresh authorized viewport drive; original controlled32 geometry/focus captures and report below remain historical evidence only.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Current native-readiness integration has no fresh authorized viewport drive; original controlled32 geometry/focus captures and report below remain historical evidence only.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Current native-readiness integration has no fresh authorized viewport drive; original controlled32 geometry/focus captures and report below remain historical evidence only.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Current native-readiness integration has no fresh authorized viewport drive; original controlled32 geometry/focus captures and report below remain historical evidence only.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Current native-readiness integration has no fresh authorized viewport drive; original controlled32 geometry/focus captures and report below remain historical evidence only.
 UNVERIFIED: Replacement exact-head engineering CI/review, native plus UI production release, legitimate existing-account role/cohort save/result/reload/reopen/recovery, actual AT/native zoom remain owed; no outcome or owner acceptance claim.
-INTERNAL_BUILD_IDENTITY: source=d950e5133ebee8a4aa5c93eb5d2ad57201e8894b; original_editor=0d599b50d10e244b4f579588ca51d3aa39182a53; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(unchanged20271128010008 normal production release); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp08-owner-work-profile.md
+INTERNAL_BUILD_IDENTITY: source=9a775066b990071f2dcbc56603be0767c494299b; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(unchanged20271128010008 normal production release); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp08-owner-work-profile.md
 RELEASE_CHANNEL: development: single teammate-details release composition, not production
 RELEASE_CLASSIFICATION: internal-only: integration increment of the full EXP08 assignment
 CUSTOMER_RELEASE_IDENTITY: none: full Team Hub integration and one owner review remain unfinished
@@ -357,3 +357,41 @@ tested but never applied, then withdrawn. Existing QA custody/eligible target
 request ANT147/3f19953c remains pending. No tab/session authority was borrowed,
 new QA account/login/role grant made or owner review requested. Actual useful
 LIVE save/access/result/reopen/recovery verification follows safe release.
+
+
+### Same outcome — native availability before new controls
+
+Actual Vercel and native main actuators can finish in either order. First mounted
+counterexamples genuinely FAIL9/54originalPASS: a legacy or malformed reader still
+offers scoped work/access calls whose APIs may not exist yet. Original pinned
+prepatch reader has no viewer_is_account_holder projection. Existing reviewed
+atomic bundle installs BOTH scoped writers BEFORE adding that exact boolean to
+original readers, and commits them together. No new server flag/API/schema/store.
+
+Source9a775066 uses ONLY literal boolean true OR false from that EXISTING
+projection for display availability; missing/null/string/numeric values withhold
+new controls. False means available, never account-holder authority. Original
+role/status/holder/self and current native actor/scope authorization remain
+independent. Original Close requests the original fresh roster read, then an
+actually ready native packet permits the appropriate existing5arg/4arg actions.
+There is no unscoped fallback, new polling/automatic retry or write before readiness.
+
+Targeted63PASS. The first neighbor run233PASS/6FAIL exposed an actual over-broad
+initial unknown-write fence disabling original removal, plus old fixture packets
+omitting the now-required projection. Corrected: availability is SEPARATE from
+unknown-write state; original contacts/removal and suspended-role explanations
+remain usable. Four legacy mounted cases explicitly retain original removal
+callback with ZERO scoped calls; parent case keeps contact input usable, Close
+causes actual roster reread, ready-false packet permits ONE original verified save.
+Only native-ready fixture fields changed in old positive tests; all original
+assertions/errors and malformed/unknown negatives retained. Fixture-only unknown
+casts preserve corrupt-runtime cases without widening any production type/parser.
+
+Final12suites239PASS/terminal0,7file scoped ESLint0, diff clean. Final neighborlog
+SHA2567f530538e63a6457ca3d9c59814ac501ae65f204cd766bb06ce8d3e4773f11b1;
+initial9FAIL log747dac13dd6d9c298bf148527e20440272aeb64963d4db4de39a68b86317b43a;
+neighbor6FAIL logdded0f8da2dc2ea9c75d128827b99aee30f1f20e3451c629b5ef63b4166e55bb.
+Empty-success scoped lintSHAe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.
+Current fresh rendered/AT/zoom and authenticated customer proof remain UNVERIFIED;
+no browser-only release veto or owner acceptance inferred. Native carrier is
+still byte-exact70caa720; actual final review/ALLCI/normal release/LIVE result owed.

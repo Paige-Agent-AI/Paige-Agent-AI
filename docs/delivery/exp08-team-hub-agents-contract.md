@@ -674,8 +674,9 @@ Priya (admin), Marcus and Sam (members).
 
 Every increment is additive and replay-safe, and its migration comes with its own disposable-PG16
 proof in the style of the existing ones (§6 of the grounding). Each one ships as one or more PRs,
-and per §4 pre-launch it merges on verified. The design gate (prototype v3, owner approval) comes
-before A1's UI.
+and per §4 pre-launch it merges after proportionate technical review and required engineering CI.
+The approved prototype v3 and owner decisions remain the design direction. Verify LIVE after safe
+merge/deploy; unrun browser/prototype/AT proof stays UNVERIFIED, and full owner acceptance stays open.
 
 ### A1. Agents converse
 

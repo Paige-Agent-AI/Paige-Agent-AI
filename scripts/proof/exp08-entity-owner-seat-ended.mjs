@@ -1153,11 +1153,12 @@ try {
     'self_billing','other_billing_private','revoked_billing','foreign_billing','entity_label','private_legal_fields','held_seat',
     'holder_options','options_private','pending_option','expired_option','individual_excluded','foreign_entity_excluded',
     'search_paging','invitations_preserved','conversations_off','suspended_viewer','no_actor','no_workspace',
-    'missing_identity','soft_deleted_identity','banned_identity','expired_ban','unsupported_tier'];
-  const ownerReadCases=()=>{
+    'missing_identity','soft_deleted_identity','banned_identity','expired_ban','unsupported_tier',
+    'owner_floor_filtered','owner_floor_suspended','owner_floor_role_label','owner_floor_foreign','owner_floor_zero'];
+  const ownerReadCases=(selection=ownerReadNames)=>{
     const result=[];
-    for(let i=0;i<ownerReadNames.length;i+=9){
-      const names=ownerReadNames.slice(i,i+9);
+    for(let i=0;i<selection.length;i+=9){
+      const names=selection.slice(i,i+9);
       const group=sql(`select row_to_json(t) from proof.owner_read_cases(ARRAY[${names.map(n=>`'${n}'`).join(',')}]) t;`).split('\n').filter(Boolean).map(JSON.parse);
       assert.deepEqual(group.map(r=>r.case_name),names,'Every original case must execute exactly once in order');result.push(...group);
     }
@@ -1165,7 +1166,7 @@ try {
   };
   const ownerReadBefore=ownerReadCases();
   records.push({phase:'original-owner-read-before',cases:ownerReadBefore});
-  assert.equal(ownerReadBefore.length,32);
+  assert.equal(ownerReadBefore.length,37);
   assert.deepEqual(ownerReadBefore.filter(r=>r.passed).map(r=>r.case_name),['suspended_viewer','no_actor','no_workspace']);
   console.error(`EXP08 owner read baseline: ${ownerReadBefore.filter(r=>!r.passed).length} expected failing / ${ownerReadBefore.length} cases`);
   const readerSignatures=['public.get_solo_team_workspace(text,text,integer,integer)','public.get_paige_team_context()'];
@@ -1198,6 +1199,18 @@ try {
     const original=readerDefinitions[0].definition;const changed=mutate(original);assert.notEqual(changed,original,name);sql(changed);
     const failed=ownerReadCases().filter(r=>!r.passed).map(r=>r.case_name);assert.ok(failed.length,`${name}: owner read mutant survived`);
     records.push({phase:'original-owner-read-mutant',name,killed_by:failed});restoreReaders();
+  }
+  // Mutate BOTH readers so same-value agreement cannot conceal a wrong floor.
+  for(const [name,mutate,killer] of [
+    ['filtered page substituted for native owner set',s=>s.replace(/\(SELECT count\(\*\) FROM public\.tenant_members active_owner\n[^\n]*?active_owner\.status='active'\)/,"jsonb_array_length(_result->'members')"),'owner_floor_filtered'],
+    ['suspended owners counted',s=>s.replace(" AND active_owner.status='active'",''),'owner_floor_suspended'],
+    ['role labels substituted for owner flag',s=>s.replace(' AND active_owner.is_owner=true',''),'owner_floor_role_label'],
+    ['foreign owner set counted',s=>s.replace('active_owner.tenant_id=_tenant AND ',''),'owner_floor_foreign'],
+  ]){
+    for(const {definition} of readerDefinitions){const changed=mutate(definition);assert.notEqual(changed,definition,name);sql(changed);}
+    const failed=ownerReadCases(ownerReadNames.slice(-5)).filter(r=>!r.passed).map(r=>r.case_name);
+    assert(failed.includes(killer),`${name}: owning semantic counterexample must fail`);
+    records.push({phase:'original-owner-floor-mutant',name,killed_by:failed});restoreReaders();
   }
   for(const {signature,definition} of readerDefinitions){
     for(const [name,statement] of [

@@ -123,6 +123,8 @@ export type TeamWorkspaceRecord = {
   invitations: TeamInviteRecord[];
   viewer_is_account_holder?: boolean | null;
   account_holder_state?: AccountHolderState | null;
+  /** Full native active-owner set, display only. Null/absent is unknown, never a page-derived floor. */
+  active_owner_count?: number | null;
   owner_seats_held?: (TeamBusinessOwner & {vacant_since:string|null})[];
   business_owner_options?: TeamBusinessOwnerOption[];
 };
@@ -308,6 +310,7 @@ export function normalizeTeamWorkspace(value: unknown): TeamWorkspaceRecord | nu
       ? {...invitation,business_owner:normalizeBusinessOwner(invitation.business_owner)} : invitation),
     viewer_is_account_holder:typeof row.viewer_is_account_holder==='boolean' ? row.viewer_is_account_holder : null,
     account_holder_state:typeof row.account_holder_state==='string' && ['working','paused','none','archived'].includes(row.account_holder_state) ? row.account_holder_state : null,
+    active_owner_count:typeof row.active_owner_count==='number' && Number.isSafeInteger(row.active_owner_count) && row.active_owner_count>=0 ? row.active_owner_count : null,
     owner_seats_held:Array.isArray(row.owner_seats_held) ? row.owner_seats_held.flatMap(value=>{
       const owner=normalizeBusinessOwner(value);const record=ownershipObject(value);
       return owner && record ? [{...owner,vacant_since:ownershipText(record.vacant_since,40)}] : [];

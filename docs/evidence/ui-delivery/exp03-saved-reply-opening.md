@@ -1,7 +1,7 @@
 # EXP03 original saved-reply opening feedback and recovery
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-FLOW_BY_FLOW: PASS: O12B(ii), original Conversations saved Message → original approval read → same composer → exact existing review; journey14.56.
+FLOW_BY_FLOW: PASS: O12B(ii), original Conversations saved Message â†’ original approval read â†’ same composer â†’ exact existing review; journey14.56.
 PAIGE_UI_DESIGN: PASS: original project design skill, upstream accessibility/quality/review instructions and pinned detector read/applied; existing Operate reply-check pattern preserved.
 MATERIAL_FLOW_CHANGE: NO: feedback and keyboard recovery for an existing read transition; no new goal, entry, writer, authority or consequence.
 FLOW_PROTOTYPE: NOT_REQUIRED: existing approved reply editor and inline busy/refusal pattern; no redesigned flow.
@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: this feedback patch is not released. Earlier 
 KEYBOARD_FOCUS: PASS: Space on original Edit opens and returns focus to original writing surface; focus moved to Attach stays there; typing while reading preserves the newer words and explains recovery.
 ZOOM_REFLOW: UNVERIFIED: controlled CSS widths are not native browser zoom; full-shell native zoom proof remains owed.
 REDUCED_MOTION: PASS: controlled browser prefers reduced motion; original reduced-motion scroll branch retained, no new motion.
-STATE_COVERAGE: PASS: pending/success/duplicate attempt/changed words/changed workspace/focus moved; original approval refusal and existing controls retained by434 tests.
+STATE_COVERAGE: PASS: controlled deferred-read, successful source load, duplicate attempt, changed words, changed workspace and moved focus; original approval refusal and existing controls retained by434 tests.
 TRUTHFUL_STATE_LABELS: PASS: Opening saved reply describes a read only; no saved/sent/approved result is inferred.
 SOLO_UI: YES: original Solo Clients Conversations.
 UNVERIFIED: candidate exact-head hosted gates, review, production release/readback and authenticated feedback verification remain owed; actual Hub email integration, second cohort, cross-tenant/role/revocation and provider acceptance remain separate.
@@ -33,8 +33,8 @@ MUST_PRESERVE: original source/CAS/backlink/permission checks, Messages body cus
 ACCEPTANCE_CRITERIA: original saved email visibly opens; current words survive an interrupted read; exact original source/review remain; no send without original approval.
 MOTION_PURPOSE: existing button spinner communicates pending read; original reduced-motion scroll remains.
 PROTECTED_SEAMS: existing account epoch/thread/composer guards exercised; no native function, migration, Edge, Hub admission, provider, registry or permission change.
-INTERNAL_BUILD_IDENTITY: candidate branch codex/exp03-saved-reply-open-feedback-20261101 based2125057ed1fade8688f1801bd643f33082101536; deployment=UNVERIFIED; environment=controlled-local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record
-RELEASE_CHANNEL: internal: candidate source only; ordinary release required.
+INTERNAL_BUILD_IDENTITY: source=a2668fb2a4c88fc463122268c79c739955f5f2ed; deployment=LOCAL_CONTROLLED_WORKSPACE; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/exp03-saved-reply-opening/2026-11-01T14-44-53.658Z/results.json
+RELEASE_CHANNEL: development: controlled original-workspace evidence; ordinary exact-head hosted checks and production release remain separate.
 RELEASE_CLASSIFICATION: patch: existing saved-reply opening feedback/recovery.
 CUSTOMER_RELEASE_IDENTITY: none: no new customer announcement or version proposed.
 RELEASE_NOTE_REQUIRED: no: bounded feedback repair; internal source identity retained.
@@ -44,3 +44,5 @@ RELEASE_RECOVERY: position=ordinary source rollback or forward fix; reference=or
 ## Failures and proof limits
 
 Preserve baseline2 causal failures (pending feedback/interrupted-read explanation), focus1FAIL/1PASS before guarded focus, wider254PASS/1FAIL caused by an absent test placeholder corrected to actual Attach, then final434PASS. First browser drive timed out at30s during navigation; retained failed results in assets/exp03-saved-reply-opening/2026-11-01T14-44-01.140Z. Original harness navigation timeout180s then12PASS, no product guard weakened. All data in these PNGs are fictional. The 900px original multi-column compression is not claimed repaired. Full assignment remains STILL CODING.
+
+Original local evidence CLI rejected the first record for environment/channel grammar and a pending-state word interpreted as unresolved proof. Corrected only evidence wording and exact source identity; no product or validator change.

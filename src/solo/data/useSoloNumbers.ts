@@ -28,7 +28,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
-import { useUserRoles } from "@/hooks/useUserRoles";
 import { createSettingsRequestGate } from "../settings-contract";
 import { resolveFunctionError } from "@/lib/integrations/connectError";
 
@@ -151,13 +150,9 @@ export function useSoloNumbers(): SoloNumbersData {
   // bills another (§9/§51). So: re-read when the client says the tenant moved, but scope
   // every read to the tenant the SERVER resolved.
   const { activeTenantId, loading: tenantLoading } = useTenantContext();
-  // The SERVER's gate, mirrored. Both edge functions admit
-  // `is_platform_owner() OR global admin OR global coach` — which `isStaff` is exactly.
-  // The surface gated on `is_current_user_tenant_admin()` instead and justified it with a
-  // comment claiming that was the server's rule. It is not: a tenant COACH maps to the
-  // global `coach` role, passes the server, and was shown a read-only surface anyway —
-  // a capability hidden from someone the server permits, on a false premise (§13/§70).
-  const { isStaff } = useUserRoles();
+  // Mirror the original current-business administrator predicate and explicit operator
+  // exception. A global staff title alone is not authority over this business.
+  // This is a current projection, never a future grant; each original writer rechecks.
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -173,7 +168,10 @@ export function useSoloNumbers(): SoloNumbersData {
   const load = useCallback(async () => {
     const token = gate.current.begin();
     setError(null);
-    if (!activeTenantId) { setLoading(false); return; }
+    if (!activeTenantId) {
+      setLoadedTenantId(null); loadedRef.current = null;
+      setOwned([]); setCanManage(false); setLoading(false); return;
+    }
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC not in generated types (repo-wide pattern)
       const { data: resolved } = await (supabase as any).rpc("current_user_tenant_id");
@@ -196,7 +194,7 @@ export function useSoloNumbers(): SoloNumbersData {
       }
       if (loadedRef.current !== tenantId) setLoading(true);
 
-      const [numbersRes, adminRes] = await Promise.all([
+      const [numbersRes, adminRes, ownerRes] = await Promise.all([
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated types (repo-wide pattern, cf. channel_connectors)
         (supabase as any)
           .from("tenant_phone_numbers")
@@ -205,6 +203,7 @@ export function useSoloNumbers(): SoloNumbersData {
           .order("is_primary", { ascending: false }),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC not in generated types (repo-wide pattern)
         supabase.rpc("is_current_user_tenant_admin" as any),
+        supabase.rpc("is_platform_owner"),
       ]);
       if (!gate.current.isCurrent(token)) return;
       if (numbersRes.error) throw numbersRes.error;
@@ -218,18 +217,17 @@ export function useSoloNumbers(): SoloNumbersData {
           friendlyName: str(row.friendly_name),
         };
       }));
-      // Either half is sufficient because either half passes the server. Fail-closed on
-      // both: an unreadable role answer is never treated as authority.
-      setCanManage(adminRes.data === true || isStaff);
+      setCanManage(!ownerRes.error && (ownerRes.data === true || (!adminRes.error && adminRes.data === true)));
       loadedRef.current = tenantId;
       setLoadedTenantId(tenantId);
     } catch (e) {
       if (!gate.current.isCurrent(token)) return;
+      setCanManage(false);
       setError(e instanceof Error ? e.message : "Couldn't read this workspace's numbers.");
     } finally {
       if (gate.current.isCurrent(token)) setLoading(false);
     }
-  }, [activeTenantId, isStaff]);
+  }, [activeTenantId]);
 
   useEffect(() => {
     const active = gate.current;
@@ -390,8 +388,8 @@ export function useSoloNumbers(): SoloNumbersData {
     try {
       const { data, error } = await supabase.functions.invoke("comms-setup-calling", { body: {} });
       if (error) {
-        // Non-2xx (a real failure). The invoke error carries no body we can trust.
-        return { ok: false, outcome: "failed", message: "Calling setup couldn't reach the platform. Try again in a moment.", calling: null };
+        const { message } = await resolveFunctionError({ error, data, action: "set up calling" });
+        return { ok: false, outcome: "failed", message, calling: null };
       }
       const rec = (data ?? {}) as Record<string, unknown>;
       const outcome = typeof rec.outcome === "string" ? rec.outcome : "failed";

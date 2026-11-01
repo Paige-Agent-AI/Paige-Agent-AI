@@ -2,12 +2,15 @@
 import React, {act} from 'react';
 import {createRoot, type Root} from 'react-dom/client';
 import {afterEach, beforeEach, expect, it, vi} from 'vitest';
-const api = vi.hoisted(() => ({prepare: vi.fn(), upload: vi.fn(), submit: vi.fn(), rpc: vi.fn(), from: vi.fn()}));
+const api = vi.hoisted(() => ({prepare: vi.fn(), upload: vi.fn(), submit: vi.fn(), rpc: vi.fn(), from: vi.fn(), review: vi.fn(), restore: vi.fn(), existing: vi.fn(), status: vi.fn(), save: vi.fn(), hash: vi.fn(), publish: vi.fn()}));
 const identity = vi.hoisted(() => ({activeTenantId: '11111111-1111-4111-8111-111111111111', activeUserId: '22222222-2222-4222-8222-222222222222', loading: false, accountContextStatus: 'ready'}));
 const tenant = '11111111-1111-4111-8111-111111111111', actor = '22222222-2222-4222-8222-222222222222';
+const doc = '33333333-3333-4333-8333-333333333333', work = '44444444-4444-4444-8444-444444444444';
 vi.mock('@/hooks/useTenantContext', () => ({useTenantContext: () => identity}));
 vi.mock('@/integrations/supabase/client', () => ({supabase: {rpc: api.rpc, storage: {from: api.from}}}));
-vi.mock('@/lib/knowledge-extraction-service', async original => ({...await original<typeof import('@/lib/knowledge-extraction-service')>(), prepareKnowledgeUploadSelection: api.prepare, uploadKnowledgeFileOnce: api.upload, submitKnowledgeExtraction: api.submit}));
+vi.mock('@/lib/knowledge-extraction-service', async original => ({...await original<typeof import('@/lib/knowledge-extraction-service')>(), prepareKnowledgeUploadSelection: api.prepare, uploadKnowledgeFileOnce: api.upload, submitKnowledgeExtraction: api.submit, readKnowledgeExtractionReview: api.review, readKnowledgePendingReviewTarget: api.restore, readKnowledgeExtractionForDocument: api.existing, readKnowledgeExtractionStatus: api.status}));
+vi.mock('@/lib/knowledge-review-service', async original => ({...await original<typeof import('@/lib/knowledge-review-service')>(), saveKnowledgeReview: api.save, sha256Hex: api.hash}));
+vi.mock('@/lib/knowledge-service', async original => ({...await original<typeof import('@/lib/knowledge-service')>(), submitKnowledgePublication: api.publish}));
 import {AddKnowledgeFlow} from '@/solo/knowledge/AddKnowledgeFlow';
 import {Dialog} from '@/components/ui/dialog';
 type Selection = {actorId: string; tenantId: string; files: readonly File[]; isCurrent: () => boolean};
@@ -18,6 +21,7 @@ const file = (name: string, bytes = [1, 2, 3]) => {
   return value;
 };
 const selection = (files = [file('Agreement.docx')]): Selection => ({actorId: actor, tenantId: tenant, files, isCurrent: () => true});
+const review = {phase: 'awaiting_review', tenant_id: tenant, document_id: doc, revision: 2, record_state: 'draft', extraction_work_id: work, source_binding: null, extraction_source_binding: null, pending_review: {schema_version: 1, extracted_content: 'Source text', reviewed_content: null, extraction_version: 'v1', coverage: 'complete'}, publication: {association: 'not_submitted', work_id: null, work_status: null, generation_id: null, outcome: null}};
 const render = async (attachedSelection: Selection) => {await act(async () => {root.render(<Dialog open><AddKnowledgeFlow tenantId={tenant} attachedSelection={attachedSelection} onClose={() => {}} /></Dialog>); await new Promise(r => setTimeout(r, 15));});};
 const click = async (text: string) => {const button = [...document.body.querySelectorAll('button')].find(b => b.textContent === text); expect(button).toBeTruthy(); await act(async () => button!.click());};
 beforeEach(() => {
@@ -26,7 +30,10 @@ beforeEach(() => {
   api.from.mockReturnValue({});
   api.prepare.mockImplementation(async (_scope, _actor, inputs) => inputs.map((input: {name: string; mime: string; bytes: Uint8Array}, i: number) => ({phase: 'prepared', name: input.name, intentId: `intent-${i}`, source: {path: `${tenant}/original-${i}`, ...input}})));
   api.upload.mockImplementation(async (_c, _s, source) => ({phase: 'stored', path: source.path}));
-  api.submit.mockResolvedValue({reference: {tenantId: tenant, documentId: 'doc', workId: 'work'}, status: 'claimed'});
+  api.submit.mockResolvedValue({reference: {tenantId: tenant, documentId: doc, workId: work}, status: 'claimed'});
+  api.review.mockResolvedValue(review); api.restore.mockResolvedValue({id: doc, tenant_id: tenant, revision: 2, title: 'Agreement.docx', content: 'Source text', tags: []});
+  api.existing.mockImplementation(async () => api.save.mock.calls.length ? {...review, revision: 3, pending_review: {...review.pending_review, reviewed_content: 'Source text'}} : review);
+  api.status.mockResolvedValue({work_status: 'succeeded'}); api.save.mockResolvedValue({revision: 3, outcome: 'capability_succeeded', runId: 'run'}); api.hash.mockResolvedValue('a'.repeat(64)); api.publish.mockResolvedValue({work_id: 'pub', document_id: 'doc', status: 'claimed', revision: 3});
 });
 afterEach(async () => {await act(async () => root.unmount()); host.remove(); vi.resetAllMocks();});
 it('prepares the original attached file bytes without another chooser or automatic effect', async () => {
@@ -95,4 +102,27 @@ it('snapshots the file list before the first await so host mutation cannot chang
   await act(async () => resolve(new Uint8Array([1, 2, 3]).buffer));
   expect(api.prepare.mock.calls[0][2].map((f: {name: string}) => f.name)).toEqual(['First.txt', 'Second.txt']);
   expect(api.from).not.toHaveBeenCalled();
+});
+const openAttachedReview = async (isCurrent: () => boolean) => {
+  await render({...selection(), isCurrent}); await click('Upload and read files'); await click('Open reading');
+  expect(document.body.textContent).toContain('Review what Paige read');
+};
+it('keeps the original Chat lifetime through nested review Save without a parent rerender', async () => {
+  let current = true; await openAttachedReview(() => current); current = false; await click('Save review');
+  expect(api.save).not.toHaveBeenCalled(); expect(api.publish).not.toHaveBeenCalled();
+  current = true; await click('Save review'); expect(api.save).not.toHaveBeenCalled();
+});
+it('keeps the original Chat lifetime through nested publication without a parent rerender', async () => {
+  let current = true; await openAttachedReview(() => current); await click('Save review'); expect(api.save).toHaveBeenCalledTimes(1);
+  current = false; await click('Publish to Knowledge'); expect(api.publish).not.toHaveBeenCalled();
+});
+it('keeps the original Chat lifetime through nested source disclosure', async () => {
+  let current = true; await openAttachedReview(() => current); current = false; await click('View source references');
+  expect(api.rpc).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
+});
+it('does not adopt a nested Save response after the original Chat lifetime retires', async () => {
+  let current = true, resolve!: (value: unknown) => void; await openAttachedReview(() => current);
+  api.save.mockImplementationOnce(() => new Promise(r => {resolve = r;})); await click('Save review');
+  current = false; await act(async () => resolve({revision: 3, outcome: 'capability_succeeded', runId: 'run'}));
+  expect(document.body.textContent).not.toContain('Review saved.'); expect(api.publish).not.toHaveBeenCalled();
 });

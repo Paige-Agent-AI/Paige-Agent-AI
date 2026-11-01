@@ -147,3 +147,24 @@ Actual cached pinned Impeccable4.1 detector returns[]/exit0 for both changed
 components. An initial wrong CLI path failed MODULE_NOT_FOUND before detection;
 the package's actual bin was then used. This static check is not finish-review,
 current rendered/keyboard/accessibility or customer proof.
+
+Distinct NON-AUTHOR source review of36d0f56b found materialP2: Bulk's nested
+review dropped the original attached-source lifetime guard. Caller/native
+permission stayed intact, but a retired Chat incarnation could still save,
+publish, open source disclosure or adopt a late save acknowledgment without a
+parent rerender. Actual new controls first showed3FAIL/14PASS; its fourth
+source-read case used malformed synthetic document IDs and did not reach RPC.
+Correct valid synthetic IDs then reproduce ALL4FAIL/13PASS, without changing
+assertions. Preserve both logs; no customer incident or exposure is claimed.
+
+Forward a captured negative-only sourceLifetime through SAME Add/Bulk/nested
+review, extraction/source scopes, state adoption and completion callbacks.
+Retirement latches; returning true later cannot revive it. Native current
+actor/tenant/resource/version/CAS/approval remain authoritative; no permission
+or writer is added. Those same controls plus original Add/Bulk suites81PASS.
+Full final composition recheck and renewed non-author review remain owed.
+Repaired final twelve-suite323PASS includes the four genuine nested-review
+controls, plus refusing Save again after the retired guard later returns true.
+Focused lint/UTF8/gold/pinnedImpeccable[] PASS; identical strict-probe source
+diagnostics remain4→4, new test diagnostics0. Renewed NON-AUTHOR exact-head
+review requested; source-only/unmounted, no full rendered/customer claim.

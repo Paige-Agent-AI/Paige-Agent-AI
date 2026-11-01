@@ -27,6 +27,8 @@ type Props = {
   tenantId: string; onPublished?: () => void; onClose: () => void;
   replacementTarget?: KnowledgeCorrectionTarget;
   attachedSelection?: KnowledgeAttachedSelection;
+  /** Negative-only parent incarnation fence; never substitutes for native authority. */
+  sourceLifetime?: () => boolean;
   returnFocus?: () => HTMLElement | null;
 };
 
@@ -37,6 +39,14 @@ type Props = {
 export function AddKnowledgeFlow(props: Props) {
   const identity = useTenantContext();
   const initial = useRef<{input?: KnowledgeAttachedSelection; value?: KnowledgeAttachedSelection; retired: boolean}>({input: props.attachedSelection, retired: false});
+  const parentLifetime = useRef(props.sourceLifetime);
+  const guardedLifetime = useRef(() => {
+    try {
+      if (parentLifetime.current && parentLifetime.current() !== true) initial.current.retired = true;
+      if (initial.current.value && !initial.current.value.isCurrent()) initial.current.retired = true;
+    } catch { initial.current.retired = true; }
+    return !initial.current.retired;
+  });
   if (initial.current.input !== props.attachedSelection) initial.current.retired = true;
   if (initial.current.input && !initial.current.value) {
     const source = initial.current.input, guard = source.isCurrent;
@@ -48,7 +58,7 @@ export function AddKnowledgeFlow(props: Props) {
   const source = initial.current.value;
   if (source && (props.replacementTarget || source.actorId !== identity.activeUserId || identity.activeTenantId !== source.tenantId
     || source.tenantId !== props.tenantId || identity.loading || identity.accountContextStatus !== "ready" || !source.files.length)) initial.current.retired = true;
-  if (initial.current.retired || (source && !source.isCurrent())) {
+  if (!guardedLifetime.current()) {
     return <DialogContent><DialogHeader><DialogTitle>Source changed</DialogTitle><DialogDescription>Close this review and reopen the original attachment in your current workspace.</DialogDescription></DialogHeader><Button onClick={props.onClose}>Close</Button></DialogContent>;
   }
   if (identity.loading || identity.accountContextStatus !== "ready" || !identity.activeUserId || identity.activeTenantId !== props.tenantId) {
@@ -57,10 +67,10 @@ export function AddKnowledgeFlow(props: Props) {
   // An observed actor/workspace or target change disposes the whole local incarnation,
   // including polling closures. Returning to A must never revive A's retired write.
   const target = props.replacementTarget;
-  return <KnowledgeFlowSession key={`${props.tenantId}:${identity.activeUserId}:${target?.id ?? "new"}:${target?.revision ?? "new"}`} {...props} attachedSelection={source} />;
+  return <KnowledgeFlowSession key={`${props.tenantId}:${identity.activeUserId}:${target?.id ?? "new"}:${target?.revision ?? "new"}`} {...props} attachedSelection={source} sourceLifetime={guardedLifetime.current} />;
 }
 
-function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarget, returnFocus, attachedSelection }: Props) {
+function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarget, returnFocus, attachedSelection, sourceLifetime }: Props) {
   const identity = useTenantContext();
   const [target] = useState(() => replacementTarget ? { ...replacementTarget, tags: [...(replacementTarget.tags ?? [])] } : null);
   const [step, setStep] = useState<Step>(target ? "checking" : "choose");
@@ -102,7 +112,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
     initialRestore.current?.(run);
     return () => { mounted.current = false; pollRun.current = run + 1; };
   }, []);
-  const current = () => mounted.current && scope.current === attemptScope;
+  const current = () => mounted.current && scope.current === attemptScope && (!sourceLifetime || sourceLifetime() === true);
   const close = () => { mounted.current = false; pollRun.current++; onClose(); };
   // The generated supabase client's rpc() keys on a known function-name union; the shared
   // ports take a plain name, so the call is widened once here.
@@ -336,6 +346,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
   };
 
   const presentPublication = (read: ExtractionDocumentReview, attempt: number, run: number, allowReady = false) => {
+    if (!current()) return;
     const association = read.publication;
     if (association?.association === "not_submitted" && allowReady && read.pending_review?.reviewed_content != null) {
       setStep("ready"); setNotice("Your saved review is ready to publish."); return;
@@ -401,7 +412,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
 
   const restoreFocus = (event: Event) => { if (returnFocus) { event.preventDefault(); returnFocus()?.focus(); } };
   if (!target && mode === "file" && step === "choose") {
-    return <BulkKnowledgeUploadFlow tenantId={tenantId} onClose={close} onBack={() => setMode("paste")} onPublished={onPublished} returnFocus={returnFocus} attachedSelection={attachedSelection} />;
+    return <BulkKnowledgeUploadFlow tenantId={tenantId} onClose={close} onBack={() => setMode("paste")} onPublished={onPublished} returnFocus={returnFocus} attachedSelection={attachedSelection} sourceLifetime={sourceLifetime} />;
   }
   const uploadPhase = step === "extracting" && mode === "file" && submittedInput.current === null;
   if (!targetValid) {

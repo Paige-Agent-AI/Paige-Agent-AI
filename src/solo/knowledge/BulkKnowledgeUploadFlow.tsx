@@ -17,19 +17,22 @@ type Row=Omit<KnowledgeUploadSelectionRow,'phase'>&{phase:Phase;input?:Extractio
  * isCurrent must remain false after that incarnation departs, including A→B→A.
  */
 export type KnowledgeAttachedSelection=Readonly<{actorId:string;tenantId:string;files:readonly File[];isCurrent:()=>boolean}>;
-type Props={tenantId:string;onClose:()=>void;onBack:()=>void;onPublished?:()=>void;returnFocus?:()=>HTMLElement|null;attachedSelection?:KnowledgeAttachedSelection};
+type Props={tenantId:string;onClose:()=>void;onBack:()=>void;onPublished?:()=>void;returnFocus?:()=>HTMLElement|null;attachedSelection?:KnowledgeAttachedSelection;sourceLifetime?:()=>boolean};
 const labels:Record<Phase,string>={prepared:'Ready to upload',duplicate:'Duplicate in this selection · skipped',refused:'Unsupported or invalid file · not uploaded',uploading:'Uploading and verifying source',upload_unknown:'Upload unconfirmed · inspect original',read_unavailable:'Source readback unavailable',source_changed:'Stored bytes differ · reading refused',stored:'Stored source · not yet read',submission_unknown:'Reading submission unconfirmed',submitted:'Original reading available',published:'Reviewed text published',not_started:'Not started'};
 /** A finite attended transfer loop. Original Storage, extraction work, reviews
  * and publication own all durable effects; this component stores no batch ledger.
  */
-export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,returnFocus,attachedSelection}:Props){
+export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,returnFocus,attachedSelection,sourceLifetime}:Props){
   const identity=useTenantContext();
   const [rows,setRows]=useState<Row[]>([]),[busy,setBusy]=useState(false),[notice,setNotice]=useState<string|null>(null),[target,setTarget]=useState<KnowledgeReviewTarget|null>(null);
   const currentRows=useRef<Row[]>([]),live=useRef(true),stopping=useRef(false),running=useRef(false),selectedIndex=useRef<number|null>(null);
   const actor=useRef(identity.activeUserId),scopeToken=useRef({tenantId,actor:identity.activeUserId});
   const initialSelection=useRef(attachedSelection),selectionPrepared=useRef(false),selectionRetired=useRef(false);
+  const parentLifetime=useRef(sourceLifetime);
   if(initialSelection.current!==attachedSelection||(initialSelection.current&&(identity.activeTenantId!==tenantId||identity.activeUserId!==actor.current)))selectionRetired.current=true;
   const sourceCurrent=()=>{
+    try{if(parentLifetime.current&&parentLifetime.current()!==true)selectionRetired.current=true;}
+    catch{selectionRetired.current=true;}
     const source=initialSelection.current;
     if(!source)return !selectionRetired.current;
     try{if(source.actorId!==actor.current||source.tenantId!==tenantId||source.isCurrent()!==true)selectionRetired.current=true;}
@@ -120,7 +123,8 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
     finally{running.current=false;if(current())setBusy(false);}
   };
   if(!current())return <DialogContent><DialogHeader><DialogTitle>Workspace changed</DialogTitle><DialogDescription>Reopen Knowledge in your current workspace to inspect the original files.</DialogDescription></DialogHeader><Button onClick={close}>Close</Button></DialogContent>;
-  if(target)return <AddKnowledgeFlow tenantId={tenantId} replacementTarget={target} onClose={()=>setTarget(null)} onPublished={()=>{
+  if(target)return <AddKnowledgeFlow tenantId={tenantId} replacementTarget={target} sourceLifetime={current} onClose={()=>setTarget(null)} onPublished={()=>{
+    if(!current())return;
     if(selectedIndex.current!==null)patch(selectedIndex.current,{phase:'published'});
     // Preserve the original completion callback once all admitted files finish.
     // A partial batch remains open; Close already refreshes its owning library.

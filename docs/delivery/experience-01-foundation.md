@@ -1,5 +1,280 @@
 # Experience 01 foundation — ANT-50
 
+### Full-schema fixture ordering correction — November 1
+
+Exactf69 own full-schema step145 FAILED: hosted58 focused +65 modeled-native
+passed, then43 actual schema assertions passed before the fixture aborted at
+composedSQL960 with42501. The original consent/reinstatement trigger correctly
+neutralized the fixture's suspended→active UPDATE under the revoked Admin JWT;
+even SQL rolepostgres does not bypass that rule. This is not a product permission
+outage. Remove the attempted restoration and run the new positive cases before
+the original revocation case. All58 complete assertion strings/expected values
+are identical; the original same-JWT revocation refusal remains. No new actor,
+grant, source function, trigger, caller or production behavior changes. Native
+candidate/parser/client remain byte-exactf69/code22bf. Recomposition and source
+conservation pass; renewed actual58 full-schema execution and ALL final-head CI
+are mandatory. Old43-only failure and original P2 remain in their review history.
+
+### Explicit source-decision review correction — November 1
+
+Automated review thread `PRRC4436325239` identified a real missing connection-
+source replacement path. Earlier technical CLEAR statements were incomplete for
+that case; merge is held until the repair's final review and required CI pass.
+Code `22bf1f2be343e8c029b4ce285534bbc1b8a75948` composes actual incoming
+`c77bd7c82` (including E13 source3198/E08 native3190/E09 records) normally.
+The original 6/8/3 native signatures and manual Setup writer remain unchanged.
+Each reviewed fact may now carry the OPTIONAL original
+`sourceDecision: 'adopt' | 'override'`, only following the user's explicit
+provenance choice. It is part of the immutable staged selection and receipt;
+only selected validated decisions reach the original writer. Approval alone
+never overrides a connection; changed-value `adopt` still refuses, as do Admin
+protected-identity changes. Unselected adoption/value changes are not forwarded.
+
+Failure-first parser27PASS/2FAIL and actual native stage22023 were reproduced.
+Current58 parser/client controls and65 disposable native checks pass; original
+source/current-authority/CAS/replay/UNKNOWN/races remain. Native proof uses actual
+Setup bodies with modeled dependencies; strict ES2020 types/lint/diff pass.
+All44 original actual full-schema assertions are retained with14 new public/
+private source-decision assertions prepared:58 COMPOSED ONLY, execution pending.
+The first new client negative expected the wrong error label; corrected to the
+existing READBACK_MISMATCH/mayHaveSaved and INSPECTION_REQUIRED contract, without
+changing client behavior or weakening the no-repeat assertion.
+
+Supporting627 whole Spine49+49+44 PASS and its CI remain historical, not this
+amended-head clearance. E13's same private helpers are now source-merged; actual
+production has E08's230008 ONCE, original Setupd70 unchanged and no installed
+source validator. Preserve agreed E05→E13→E01 forward/native ordering and old
+applied Preview history. No native/API/customer availability is inferred.
+
+Owner-directed E13 Chat window is returned in original ANT50/99ae70d2 and
+ANT161/ba14f739: finite explicit single-File review handoff source only, no Root/
+Chat API/credit/Setup/Memory/storage/Hub takeover. Durable message-to-Knowledge
+work/intent/revision/readback writer is not verified; E01 retains it. Internal
+link maps remain outside that window; CURA is not internal Knowledge. Genuine
+E13 UI/prototype/browser/AT hold remains. Separate legal-owner guard proposal
+46 local modeled controls is outside this PR and not full-schema/released.
+Full original ten outcomes,23 cases/all amendments and one integrated owner
+evaluation remain active; no timer, acceptance or Live activation is introduced.
+
+### Continued authority/full-schema preparation — November 1
+
+Actual exact `44b83abeffce9ab28173dbbda43802a62e301106` ENTIRE Spine run
+41324043026 SUCCESS: published job124900126163 confirms49 focused input/client,
+49 disposable native/race and44 actual full-schema assertions PASS. Whole frontend
+Test and all other verify guards passed, but required Build failed at Node20's
+~2GB heap limit; subsequent size check found no dist/assets. The actual GitHub
+rendered log confirms fatal JavaScript heap exhaustion, not a size-budget breach.
+Connector log retrieval failed Transport closed; read-only GitHub UI supplied the
+actual error, not product UI/prototype proof. Same-head local locked Build and
+unchanged size guard PASS394≤520kB; installed SDK synthetic fetch serialized the
+original6/8/3 correctly (not authenticated/native customer proof). Build-only
+NODE_OPTIONS4096 is the finite repair; no node pin/command/test/size/security gate
+changes. New final head must pass all required checks before ordinary release.
+Current main9e5b285/E04 factual closeout is preserved in full.
+Controlled local Node20.20.2 with4096MB PASS2m36s on identical runtime source;
+the unchanged Solo entry guard is rerun against that emitted output. This is
+supporting engineering proof, not a substitute for renewed hosted checks.
+
+First actual full-schema authority step SUCCESS on
+`3a59be3a6a2e8071a3dc38cca46f9e5ff4a17336`, existing Spine run41321995720 /
+job124893986291 / step143. This uses the actual schema/getters/writer/authority
+and rollback-only synthetic fixtures, not an authenticated customer. Final-head
+CI remains required. Local native proof now has49 PASS checks, including two
+reviewed facts with only one explicitly selected and the unselected value intact, and both
+observed serializations of revocation vs approval; after a winning save the
+revocation still removes inspection eligibility. The existing runner now includes
+that disposable concurrency proof as well as49 focused input/client checks.
+Full-schema adds direct Admin protected-legal-field refusal/no receipt alongside
+its successful operational approval; this expanded final-head execution is owed.
+No independent remote runner or production fixture is created.
+
+ACTUAL E13 source ABI receiving ACK ANT-50/a0f0063c was personally read and
+incorporated: canonical reference1/UTF16 excerpts accepted, native/current-authority
+and downstream scope remain separate. E02 original receiver packet
+ANT-138/b0719bb1 and E05 ANT-11/c6f108fa delivered and read back; their receiving
+ACK/incorporation remains unverified. E13 now names E08's existing230008 before
+its higher forward source carrier; no E01 migration number is reserved, and no
+old applied Preview file is rewritten. Full10/original23/amendments remain active.
+
+Continued local proof is now 39 checks: both same-request concurrency and a
+receipt waiting behind an actual original manual Setup save were observed via
+`pg_blocking_pids`; the latter refuses stale CAS with no approval audit and
+preserves the manual value. Source-only currentness loss remains separately
+covered. Removing the save-time source check still fails the expected assertion.
+First full-schema c995 execution FAILED before SQL: shallow checkout lacked the
+pinned original E13 object. Exact immutable-object fetching is now implemented;
+no source pin/helper/grant/test was substituted. Full-schema remains UNVERIFIED.
+
+New isolated `src/solo/data/reviewed-setup-client.ts` prepares the same stage6 /
+save8 / inspect3 ABI, without changing any existing hook or host. Explicit selected
+approval requires verified staging and returns only after original native
+inspection. A lost/contradictory save or failed readback requires same-identity
+inspection; absent-at-read never auto-repeats, and an explicit retry retains the
+same captured request/selection. Current actor/tenant and the host's negative
+incarnation fence are checked around every asynchronous continuation. Historical
+receipts stay ineligible; mismatched actor/source/value/revision/purpose refuses.
+Errors expose no raw response body. Twenty-six isolated client controls PASS;
+strict TypeScript5.8.3 with actual ES2020/bundler options PASS. Ports are modeled,
+not installed-SDK or mounted customer evidence. Native authority, original host
+durable request-reference recovery, UI approval and receiver mounting remain owed.
+
+Main `17e74cefc3382d0a67d240dd7a1005ec0bf56547` incorporated without
+rewriting incoming E04 work. E04's coherent native deployment and E13's higher
+forward source-validator release remain independently verified release gates.
+The existing Spine database-contract job now runs the rollback-only EXP01
+full-schema fixture against actual Setup getters/writers/authority, with the
+original E13 candidate installed only inside that rollback. It does not deploy
+the lower Preview-applied file. First execution is pending; no full-schema PASS.
+
+The candidate pins original source, owner, settings and ACLs, refuses partial or
+drifted reinstall, and restricts the two server-authored receipt audit events
+without replacing existing audit policies. Exact five-function guards are
+generated from source and checked for drift. The disposable local fixture now
+uses the actual Setup getters as well as original write bodies: 33 checks PASS,
+including observed concurrent same-request blocking, unchanged authority
+refusals, forged audit refusal and five reinstall drift negatives. Its identity
+and Knowledge-read dependencies remain modeled; this is not full-schema proof.
+The separate closed parser has 23 focused PASS checks, not the original 23-case
+acceptance packet. Native release, mounted review, actual customer receipt,
+receiver ACK/incorporation and full owner acceptance remain unverified.
+
+## November 1 sole-successor incorporation — STILL CODING
+
+Owner explicitly replaced the exhausted zCod lead with one Codex successor.
+Actual receiving ACK: ANT-50/63c7eecf-6886-4744-aa88-c8b67d60209e; producer
+assessment: ANT-50/c4137452-12a3-467e-99a2-599faeaebfdf. Both were read back.
+The full original ten outcomes/23 cases and every approved amendment remain
+assigned; earlier PR1–PR7 releases are reused. This additive reconciliation does
+not overwrite the historical packets or equate issue Done with acceptance.
+Live remains NOT ACTIVATED; full EXP01 is NOT READY FOR OWNER REVIEW.
+
+Primary outcome: agreement → original editable Knowledge review → selected-fact
+approval → original Setup CAS/receipt → E02 saved editable Mission → separately
+authorized E05 Work/appropriate E03 CRM → original result/receipt → both-chat
+reload/reopen/recovery. E13 owns Knowledge/Memory; E08 owns Team Hub presentation.
+No peer Codex messages, recurring timer, alternate ledger/runtime or new account.
+
+### Source-bound producer preparation, not a released receipt
+
+Grounded main `fdf40a646`; production catalogue frontier `20271126200003`.
+Original stage4 body `863b4e232b7feee4d06cd6c328c7d020`, Setup4 body
+`d70cdc664b5c703395e4f077a30fdbd8`, business-context12 body
+`7e27552bf7a07ec4d71ff2536469e41e` and scope body
+`0ec77d9d549daf94263e57848a00f5a6` were read, without customer rows/effects.
+The current provenance/proposal has no source-bound approval receipt.
+Original private E13 `lock_knowledge_source_evidence(uuid,uuid,jsonb,jsonb)`
+and UTF16 helper are absent in production. Preserve #3182/210013's applied
+Preview history; E04's coherent native release then E13's reviewed higher forward
+carrier precede any E01 native carrier. No migration number is reserved here.
+
+Original `settings-setup-contract.ts` now has additive closed input types and a
+rejecting parser. It preserves raw CAS and exact field/value/reference/UTF16
+quotation selection; it is not authority. Existing manual Setup remains unchanged.
+`scripts/proof/exp01-reviewed-setup-candidate.sql` is UNVERSIONED/INERT and
+unmounted. Its candidate APIs are:
+
+* `stage_solo_reviewed_business_facts(uuid,uuid,uuid,text,bigint,jsonb)`:
+  expected tenant/actor, review UUID, raw brief CAS, context revision, facts.
+* `save_solo_reviewed_business_facts(uuid,uuid,uuid,uuid,text,bigint,jsonb,text)`:
+  same scope/review, request UUID, both CAS values, selected field names,
+  exact purpose `setup_business_facts`.
+* `inspect_solo_reviewed_business_facts(uuid,uuid,uuid)`: same scope/request.
+  Returns absent-at-read or recorded/current vs historical; no save replay.
+
+Each fact is `{field,value,reference:{contractVersion:1,tenantId,documentId,
+revision,contentSha256},excerpts:[{start,end,text}]}`. Source binding is the E13
+ABI, not a client approval token. Source literal validation stays in its original
+private native helper in the writer transaction. Stage is not approval. Save
+requires the captured review, selected fields, current authority and both CAS
+values, merges into the authoritative brief, preserves the actual owner list,
+and calls the original `save_solo_setup_context`. Current review/approval lives
+in the original private Setup meta row; original audit UUID supplies the durable
+receipt, with hashes/IDs only in audit. Private quotes never enter brand/audit.
+The receipt carries exact selected facts, original source binding and resulting
+Setup revision/readback. A client JSON, timestamp or receipt UUID grants nothing.
+
+E02 must validate the original current receipt/source/selection in its own native
+Mission transaction, require separate Mission intent and retain PROPOSED status.
+E05 must independently authorize its original stored proposal/claim/writer/
+finalizer and verify original Work/result/Rail. A receipt is not idempotency for
+those effects. Receiving ACK, incorporation, implementation and acceptance are
+separate; none is claimed for this proposed ABI.
+
+### Original scope reconciliation and sequence
+
+The original 23-case table and ten-outcome matrix remain in the original
+[integrated packet](../evidence/experience-01-foundation/integrated-readiness-2026-10-17.md).
+The new additive reconciliation there records source, remaining build/integration,
+proof/dependencies and next delivery without replacing historical dispositions.
+
+Sequence: (1) source-bound Setup producer/native proof and receiver contract;
+(2) same-outcome Chat explicit Knowledge Save + durable original references and
+single/BULK mounting with E13/E08; (3) E02/E05/E03 joins and both-chat continuation;
+(4) remaining original entry/interview/recommendation/recovery/delegation/cohort
+and legal-owner/notification amendments; (5) full released integrated owner
+evaluation. Live consent/bidirectional audio and activation remain distinct.
+Original #3177 UI FLOW_PROTOTYPE/browser/AT/finish hold is not waived.
+
+Known source gaps are not hidden: current Setup scope only distinguishes
+owner_full/admin_operational/read_only, so legitimately delegated member
+management remains an original authority-integration obligation. Do not invent a
+global member grant or claim that title/responsibilities authorize work. Original
+legal-owner seated/vacant/live-invitation protection remains a distinct repair;
+this candidate passes the unchanged authoritative owner list, never omits it.
+E08 personal recovery notice entry is bounded personal access, not workspace choice.
+
+ALG-01 applies to CAS/reconciliation/current-source/no-repeat; ALG-02 to confirmed
+first value; ALG-13 to grounded useful recommendations; ALG-11 to original shared
+Model Fabric and quality/cost; ALG-12 to truthful failures/UNKNOWN handling.
+Parser/native tests are bounded deterministic proof, not measured algorithm
+effectiveness. Baseline/repeated/changed-source/revoked/concurrency and useful
+result/receipt/reopen/feedback evidence stay separate; no maturity is promoted.
+
+### First native preparation proof and review disposition
+
+PASS: `node --experimental-strip-types --test
+scripts/proof/exp01-reviewed-setup-contract.test.mjs` — 23 focused input/manual
+compatibility tests. These are NOT the original 23 authenticated acceptance cases.
+PASS: original SOLO parity guard SP1–SP5 and all its mutation/legitimate-eligibility
+controls; script syntax and diff whitespace checks. Full app compiler/build and
+hosted exact-head CI are not established by these focused checks.
+
+Local native command: `EXP01_SOURCE_VALIDATOR_REF=7955df03da6873286f290d4148c1f0fcda77c91e
+node scripts/proof/exp01-reviewed-setup-postgres.mjs 55461` (set the environment
+variable using the host shell). It uses a dedicated disposable localhost database,
+extracts the ORIGINAL Setup brief/wrapper/scope and E13 validator function bodies,
+and asserts Setup wrapper body matches production `d70cdc664b5c703395e4f077a30fdbd8`.
+The 26 native selected-save/CAS/changed-source/receipt/inspection/revocation checks pass;
+two actual native connections observe `pg_blocking_pids` before committing and
+confirm one same-request receipt and one revision increment. Identity/Setup
+getter/Knowledge reader dependencies are MODELS, not full-schema/production proof.
+The original E13 source candidate is read from the pinned local Git object, not
+copied into a production migration or released out of order.
+
+CAUSAL NEGATIVE: the fixture-only `--without-save-source-check` counterfactual
+removes only transaction-time save revalidation; the actual stale-source assertion
+fails with Missing expected exception / KNOWLEDGE_SOURCE_CHANGED. The real source
+check remains intact. Earlier fixture search-path mismatch and second-session
+output-parser failure were corrected; neither was a product/native PASS.
+The later lock-order run correctly refused a switched workspace through the
+original Setup 40001 error before the E13 scope error; the test now asserts that
+exact canonical refusal and SQLSTATE rather than the former ordering's label.
+Initial restricted local cluster bootstrap stalled and was stopped; a separate ordinary
+disposable cluster initialized successfully. No production database was modified.
+
+Sequential AUTHOR-REVIEW / LOWER ASSURANCE: inspected exact closed input shape,
+current authority/source/CAS locks, original-writer use, minimized audit/private
+receipt, duplicate request binding and UNKNOWN readback. Corrected nullable native
+field admission, eliminated shared-to-exclusive receipt lock upgrades by using
+the original Setup selection/tenant serialization first, and removed meta-row
+insertion from inspection. No independent non-author review is claimed.
+HOLD RELEASE: full native schema/actual getter and legal-owner regressions,
+legitimate delegated-management integration, cross-API/multi-actor concurrency,
+closed install/source/ABI/ACL replay guards, source-validator ordered release,
+native consumer revalidation, host review/mounting, final exact-head CI/normal
+release/native readback and authenticated result/reload remain required.
+This unversioned preparation is not a deployed receipt or ready Experience.
+
 **2026-10-17 Day-Two integrated readiness packet (zCod):** the consolidated ten-outcome evidence matrix (seven truth levels per outcome), the Live usage/budget/cost/provider-readiness audit (LLM spend budget-gated via the canonical chat path; Live STT/TTS seam deliberately unpersisted — platform budget-lane decision, admission gate is the structural ceiling), and the 23-case acceptance package (11 ANT-52 cases verbatim + 12 derived interview cases, every disposition OWNER WINDOW / PROOF OWED, no PASS claims) with the production entry route and proposed owner walkthrough: [integrated-readiness-2026-10-17.md](../evidence/experience-01-foundation/integrated-readiness-2026-10-17.md). Plus one hardening test pinning the owner-scoped interview return link on the People & email subtab (forged-pointer and read-only negatives; Setup suite 63/63).
 
 **2026-10-17 E01 Live server timing observation RELEASED (zCod):** PR [#2277](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2277), independent non-author review CLEAN (0 P1/P2, 5 P3 dispositioned, comment 6237172371) -> head `dac4553a3` (composed main `4def6ce77`; runtime byte-identical to reviewed `41c23f0e`) -> merged `f0dd73428`. ALL 11 exact-head checks SUCCESS incl. required verify + Preview. Deploy run `39054164930`: paige-live-relay deployed, **deployed-source verification SUCCESS**, retained-verification SUCCESS; live probe HTTP 426 expected_websocket = ACTIVE. Readback comment 6238324860 + supersession correction 6239197994. Optional UsageSink timing seam (3 closed numeric phases), observer-failure isolation, clock-anomaly suppression; no admission/billing/websocket/voice/UI change. Global edge certification was independently blocked by a latent Sales cross-root import, fixed by the Sales lane (`6e9b97a98`) — zCod's parallel repair #2310 withdrawn superseded; edge recovery run `39060979318` SUCCESS, edge-live certified at main `0f495d29`. Actual provider p50/p95, Live barge-in and all authenticated cases remain owed. [Live-phase manifest](../evidence/experience-01-foundation/progressive-read-aloud-2026-10-16/live-phase-source-manifest.json).

@@ -3278,3 +3278,24 @@ normal review/exact-head gates/release/readback and mounted permission/profile/
 Operator/recipient/both-chat/cohort recovery remain required. Original3200 now
 4ace source-only CI is separate. No new permission API is advertised as deployed.
 Full original18+6/five journeys remain STILL CODING and not owner-review ready.
+
+
+### Same-row native32 proof packaging and release composition - November1
+
+Prepared `exp08-team-permission-native.template.sql` with32 explicit assertions
+against original actual-schema writer metadata, existing Auth/tenant/member/audit
+shapes, original2arg and scoped4arg behavior, exact current receipt and no-op audit,
+captured scope/reentry/current identity/owner/refusal/role exclusions, and full
+object replay. Both fictional top-level businesses have distinct actual holders;
+the same owner and target still participate in both businesses. One transaction
+rolls back ALL fixture/function changes. Canonical compiler embeds the SAME inert
+patch twice; write/check/negative packaging controls PASS. This does NOT establish
+native32 execution, managed API availability, Auth SDK or customer proof.
+
+Only one original Spine test-path plus one step after the existing own profile
+step is added, preserving all incoming peer workflow lines. Same original row4
+necessary repairs and stable recovery-read client are consolidated into existing
+3200 BEFORE source release, avoiding a competing PR/Preview. Earlier4ace/d654 and
+28native successes remain exact historical/supporting evidence; the composed head
+requires fresh complete review/CI/native28+32. No migration/version, mounted caller,
+new project/provider/approval/task/result store or full Experience readiness.

@@ -7,7 +7,7 @@ import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 assert.equal(process.env.EXP08_DISPOSABLE,'1');
 assert.ok(['127.0.0.1','localhost','::1'].includes(process.env.PGHOST));
 assert.match(process.env.PGPORT??'',/^\d+$/);
-assert.ok(process.argv.slice(2).every(x=>['--baseline-02126','--baseline-notice-order'].includes(x))&&process.argv.length<=3,'Unknown proof option');
+assert.ok(process.argv.slice(2).every(x=>['--baseline-02126','--baseline-notice-order','--baseline-revoke'].includes(x))&&process.argv.length<=3,'Unknown proof option');
 const baseline=process.argv.includes('--baseline-02126');
 const historical=baseline?spawnSync('git',['show','02126ee52:scripts/proof/exp08-owner-recovery-writers.sql'],{encoding:'utf8',windowsHide:true}):null;
 if(historical)assert.equal(historical.status,0,historical.stderr);
@@ -543,7 +543,116 @@ try{
    results.push({case:'holder without seat '+(readerFirst?'reader first':'original remover first')+' retains scoped event and original not-on-team refusal without profile change',passed:true});
   }finally{if(!first.p.stdin.destroyed)first.p.stdin.end('ROLLBACK;\n');await first.done;if(second){if(!second.p.stdin.destroyed)second.p.stdin.end();await second.done;}}
  }
- console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private recovery, durable audit/in-app notices and read-now detail; public RPC, mounted UI, email and Billing-dependent revoke NOT implemented',
+ // Original111 before the receiving original E02/EXP08 revoke transaction composition.
+ db.run(`CREATE TABLE public.platform_billing_contacts(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,user_id uuid,
+ designation text,designated_by uuid,revoked_at timestamptz,revoked_by uuid);
+ CREATE FUNCTION public.billing_active_tenant_id() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT active_tenant_id FROM public.profiles WHERE user_id=auth.uid()$$;
+ ${original('20261045000000_platform_billing_accounts_foundation_a.sql','platform_billing_workspace_owner_scope')}
+ ${original('20261045000000_platform_billing_accounts_foundation_a.sql','platform_billing_contact_designate')}
+ ${original('20261111050000_the_workspace_can_connect_a_payment_method.sql','platform_billing_contact_revoke')}
+ REVOKE ALL ON FUNCTION public.platform_billing_workspace_owner_scope() FROM PUBLIC,anon,authenticated,service_role;
+ REVOKE ALL ON FUNCTION public.platform_billing_contact_designate(uuid,text),public.platform_billing_contact_revoke(uuid) FROM PUBLIC,anon,service_role;
+ GRANT EXECUTE ON FUNCTION public.platform_billing_contact_designate(uuid,text),public.platform_billing_contact_revoke(uuid) TO authenticated;`);
+ await db.exec(source('20271126080006_exp02_billing_current_authority.sql'));
+ await db.exec(source('20271126080007_exp02_billing_final_authority.sql'));
+ const linkPatch=source('20271126090008_exp08_entity_owner_revoke_link.sql');
+ const linkOld=linkPatch.match(/old_span text:=\$old\$([\s\S]*?)\$old\$/)[1],linkNew=linkPatch.match(/new_span text:=\$new\$([\s\S]*?)\$new\$/)[1];
+ db.run(original('20271116020008_exp08_co_owner_authority.sql','revoke_co_owner').replace(linkOld,linkNew));
+ db.run('REVOKE ALL ON FUNCTION public.revoke_co_owner(uuid,uuid) FROM PUBLIC,anon;GRANT EXECUTE ON FUNCTION public.revoke_co_owner(uuid,uuid) TO authenticated,service_role;');
+ assert.equal(scalar("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.revoke_co_owner(uuid,uuid)'::regprocedure"),'7d62c3fac37e2af0b6f2a3029d892752');
+ const originalRevokeMetadata=scalar("SELECT to_jsonb(p)-'prosrc' FROM pg_proc p WHERE oid='public.revoke_co_owner(uuid,uuid)'::regprocedure");
+ const originalRevokeBody=JSON.parse(scalar("SELECT to_json(prosrc) FROM pg_proc WHERE oid='public.revoke_co_owner(uuid,uuid)'::regprocedure"));
+ await db.exec(readFileSync(new URL('./exp02-billing-recovery.sql',import.meta.url),'utf8'));
+ const revokeSource=readFileSync(new URL('./exp08-owner-recovery-revoke.sql',import.meta.url),'utf8');
+ if(!process.argv.includes('--baseline-revoke'))await db.exec(revokeSource);
+ assert.equal(scalar("SELECT to_jsonb(p)-'prosrc' FROM pg_proc p WHERE oid='public.revoke_co_owner(uuid,uuid)'::regprocedure"),originalRevokeMetadata);
+ const remaining='e8000000-0000-4000-8000-000000091004',contact='e8000000-0000-4000-8000-000000093001';
+ function revokeFixture(){
+  reset();db.run('TRUNCATE public.platform_billing_contacts');
+  db.run(`INSERT INTO auth.users(id) VALUES('${remaining}');INSERT INTO public.profiles VALUES('${remaining}','${tenant}');
+  INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status,role) VALUES('${tenant}','${holder}',true,'active','owner'),('${tenant}','${remaining}',true,'active','owner')`);
+ }
+ const putContact=(designation='delegate')=>db.run(`INSERT INTO public.platform_billing_contacts(id,tenant_id,user_id,designation) VALUES('${contact}','${tenant}','${holder}','${designation}')`);
+ const revokeRequest='e8000000-0000-4000-8000-000000093010';
+ revokeFixture();putContact();
+ const recovered=JSON.parse(scalar(apply(revokeRequest,'revoke_owner')));
+ assert.equal(recovered.receipt.billing.status,'revoked');assert.deepEqual(recovered.receipt.billing.contact_ids,[contact]);assert.equal(recovered.receipt.billing.audit_ids.length,1);
+ assert.equal(scalar(`SELECT NOT is_owner AND role='admin' AND business_owner_id IS NULL FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
+ assert.equal(scalar(`SELECT revoked_at IS NOT NULL AND revoked_by='${actor}'::uuid FROM public.platform_billing_contacts WHERE id='${contact}'`),'t');
+ assert.deepEqual(recovered.receipt.notified,[remaining]);
+ results.push({case:'actual original revoke +E02 Billing writer +original role sync commit native cleanup IDs, demotion and recipient notice in one recovery transaction',passed:true});
+ const beforeReplayAudits=scalar('SELECT count(*) FROM public.paige_audit_log'),beforeReplayNotices=scalar('SELECT count(*) FROM public.notifications');
+ assert.deepEqual(JSON.parse(scalar(apply(revokeRequest,'revoke_owner'))),recovered);
+ assert.equal(scalar('SELECT count(*) FROM public.paige_audit_log'),beforeReplayAudits);assert.equal(scalar('SELECT count(*) FROM public.notifications'),beforeReplayNotices);
+ results.push({case:'revocation replay returns original Billing IDs without repeating contacts, ownership audits or notices',passed:true});
+ revokeFixture();
+ const zeroRequest='e8000000-0000-4000-8000-000000093011';
+ const zeroResult=JSON.parse(scalar(apply(zeroRequest,'revoke_owner')));assert.deepEqual(zeroResult.receipt.billing,{status:'not_required',contact_ids:[],audit_ids:[]});
+ results.push({case:'actual original cleanup known-zero remains explicit not_required',passed:true});
+ revokeFixture();putContact('primary_contact');const primaryRequest='e8000000-0000-4000-8000-000000093012';
+ await denied('original Billing final-primary refusal rolls back complete ownership recovery',()=>db.exec(apply(primaryRequest,'revoke_owner')),/billing_primary_contact_required/);
+ assert.equal(scalar(`SELECT is_owner FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
+ assert.equal(scalar(`SELECT revoked_at IS NULL FROM public.platform_billing_contacts WHERE id='${contact}'`),'t');
+ assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${primaryRequest}'`),'0');
+ revokeFixture();putContact();db.run(`DELETE FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${remaining}'`);
+ const floorRequest='e8000000-0000-4000-8000-000000093013';
+ await denied('original last-owner floor refuses before Billing cleanup',()=>db.exec(apply(floorRequest,'revoke_owner')),/CO_OWNER_LAST/);
+ assert.equal(scalar(`SELECT revoked_at IS NULL FROM public.platform_billing_contacts WHERE id='${contact}'`),'t');
+ assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${floorRequest}'`),'0');
+ for(const role of ['authenticated','anon','service_role']){db.role=role;await denied(role+' cannot invoke private original revoke kernel',()=>db.exec(`SELECT public._exp08_revoke_co_owner('${tenant}','${holder}','${floorRequest}')`));db.role='';}
+ await db.exec(revokeSource);
+ results.push({case:'exact original revoke kernel replay retains all native source guards',passed:true});
+ revokeFixture();await denied('public SOLO revoke cannot use platform role outside recovery',()=>db.exec(`SELECT public.revoke_co_owner('${tenant}','${holder}')`),/CO_OWNER_FORBIDDEN/);
+ putContact();db.actor=holder;db.role='authenticated';await db.exec(`SELECT public.revoke_co_owner('${tenant}','${holder}')`);db.role='';db.actor=actor;
+ assert.equal(scalar(`SELECT NOT is_owner AND role='admin' FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
+ assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE action='platform_billing_contact_revoked' AND target_id='${contact}' AND actor_user_id='${holder}' AND actor_role='owner' AND NOT(payload ? 'owner_recovery_request_id')`),'1');
+ results.push({case:'original authenticated owner self-step-down keeps ordinary Billing effect and owner audit without recovery credential',passed:true});
+ revokeFixture();putContact();
+ const establish='e8000000-0000-4000-8000-000000093014';
+ await db.exec(`SELECT public._exp08_apply_owner_recovery('${tenant}','set_account_holder','${remaining}','${reason}','${establish}')`);
+ db.actor=remaining;db.role='authenticated';await db.exec(`SELECT public.revoke_co_owner('${tenant}','${holder}')`);db.role='';db.actor=actor;
+ assert.equal(scalar(`SELECT NOT is_owner AND role='admin' FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
+ results.push({case:'actual account holder retains original public revoke ABI and original ordinary Billing cleanup',passed:true});
+ for(const type of ['sub_account','agency']){
+  revokeFixture();db.run(`UPDATE public.tenants SET account_type='${type}' WHERE id='${tenant}'`);
+  if(type==='sub_account'){
+   const id='e8000000-0000-4000-8000-000000093015';
+   const r=JSON.parse(scalar(apply(id,'revoke_owner')));assert.deepEqual(r.receipt.billing,{status:'not_applicable',contact_ids:[],audit_ids:[]});
+   results.push({case:'original non-Billing SOLO sub-account known-zero compatibility is retained',passed:true});
+  }else{
+   db.role='authenticated';await db.exec(`SELECT public.revoke_co_owner('${tenant}','${holder}')`);db.role='';
+   results.push({case:'non-SOLO original platform revoke behavior is retained',passed:true});
+  }
+ }
+ revokeFixture();db.run(`UPDATE public.tenants SET account_type='sub_account' WHERE id='${tenant}'`);putContact();
+ const unsupported='e8000000-0000-4000-8000-000000093016';
+ await denied('legacy contacts in a non-Billing SOLO refuse rather than silently orphan',()=>db.exec(apply(unsupported,'revoke_owner')),/CO_OWNER_BILLING_CLEANUP_UNAVAILABLE/);
+ assert.equal(scalar(`SELECT is_owner FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
+ revokeFixture();putContact();const late='e8000000-0000-4000-8000-000000093017';
+ const beforeLateAudits=scalar('SELECT count(*) FROM public.paige_audit_log'),beforeLateNotices=scalar('SELECT count(*) FROM public.notifications');
+ db.run(`CREATE FUNCTION public.fixture_revoke_notice_failure() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'fixture revoke notice failed' USING ERRCODE='23514';END$$;
+ CREATE TRIGGER fixture_revoke_notice_failure AFTER INSERT ON public.notifications FOR EACH ROW EXECUTE FUNCTION public.fixture_revoke_notice_failure()`);
+ await denied('late revoke notice failure aborts financial and ownership transaction',()=>db.exec(apply(late,'revoke_owner')),/fixture revoke notice failed/);
+ assert.equal(scalar(`SELECT revoked_at IS NULL FROM public.platform_billing_contacts WHERE id='${contact}'`),'t');
+ assert.equal(scalar(`SELECT is_owner AND role='owner' FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
+ assert.equal(scalar('SELECT count(*) FROM public.paige_audit_log'),beforeLateAudits);assert.equal(scalar('SELECT count(*) FROM public.notifications'),beforeLateNotices);
+ db.run('DROP TRIGGER fixture_revoke_notice_failure ON public.notifications;DROP FUNCTION public.fixture_revoke_notice_failure()');
+ results.push({case:'late notice failure rolls back original Billing contacts/audits, owner state and native recovery records together',passed:true});
+ const privateRevokeDefinition=JSON.parse(scalar("SELECT to_json(pg_get_functiondef('public._exp08_revoke_co_owner(uuid,uuid,uuid)'::regprocedure))"));
+ const privateRevokeBody=JSON.parse(scalar("SELECT to_json(prosrc) FROM pg_proc WHERE oid='public._exp08_revoke_co_owner(uuid,uuid,uuid)'::regprocedure"));
+ db.run(privateRevokeDefinition.replace(privateRevokeBody,originalRevokeBody));
+ await denied('restored original revoke body cannot pass recovery kernel replay',()=>db.exec(revokeSource),/EXP08 original revoke kernel conservation drift/);
+ assert.equal(JSON.parse(scalar("SELECT to_json(prosrc) FROM pg_proc WHERE oid='public._exp08_revoke_co_owner(uuid,uuid,uuid)'::regprocedure")),originalRevokeBody);
+ db.run(privateRevokeDefinition);await db.exec(revokeSource);
+ db.run('GRANT EXECUTE ON FUNCTION public._exp08_revoke_co_owner(uuid,uuid,uuid) TO authenticated');
+ await denied('exposed private revoke ACL refuses replay without normalization',()=>db.exec(revokeSource),/EXP08 private revoke metadata drift/);
+ db.run('REVOKE EXECUTE ON FUNCTION public._exp08_revoke_co_owner(uuid,uuid,uuid) FROM authenticated');
+ const cleanupDefinition=JSON.parse(scalar("SELECT to_json(pg_get_functiondef('public._exp02_billing_recovery_cleanup(uuid,uuid,uuid)'::regprocedure))"));
+ db.run(`CREATE OR REPLACE FUNCTION public._exp02_billing_recovery_cleanup(p_tenant uuid,p_user uuid,p_request uuid) RETURNS jsonb
+ LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$BEGIN RETURN '{}';END;$$`);
+ await denied('changed E02 private cleanup source refuses composition rather than being trusted or overwritten',()=>db.exec(revokeSource),/EXP08 original E02 private cleanup unavailable/);
+ db.run(cleanupDefinition);await db.exec(revokeSource);
+ console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private recovery with original grant/revoke/Billing, audit/in-app notices and detail; public RPC, mounted UI and email NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));
 }finally{

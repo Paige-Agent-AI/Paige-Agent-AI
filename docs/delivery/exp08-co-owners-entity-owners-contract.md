@@ -2358,3 +2358,53 @@ candidate SHA256 `d4ef55fcd5c78acc3c42214c0727d0bcca3da943d26cd0487c10401985f9e9
 Source review renewal is owed. The earlier107 PASS remains historical and does not
 prove this lock composition. Other full-native/lifecycle/privacy/metadata/reader/
 receiver/public-door and complete assignment requirements remain unchanged.
+
+### October31 — original revoke and received E02 Billing cleanup composed locally
+
+Original receiving custody ANT138/98462d2d. E02 frozen e4cc/PR3173 is normally
+composed in1f781e, ALL3 peer files byte-exact, ALL19,102 outside leaves conserved.
+An initial truncated tree probe is INVALID, corrected by a complete16MiB/error-
+checked union read; original history retained. E02 owns those files unchanged.
+
+New INERT `scripts/proof/exp08-owner-recovery-revoke.sql` runs after the E08 base
+and actual E02 private preparation. One CURRENT ORIGINAL revoke7d62 body moves
+into a private request-bound kernel, while the original public2arg ABI/OID/ACL/
+configuration, holder refusal, self-step-down, owner floor, entity unlink, role
+sync and original domain audit remain. The ordinary SOLO platform bypass is
+removed; legitimate holder/self authority and non-SOLO platform behavior remain.
+Exact forward/inverse original-body conservation, replay, partial-source and
+private ACL guards refuse drift. The E02 cleanup entry must retain its actual
+frozen source69ff592a/private metadata; unknown code is not trusted or overwritten.
+
+Recovery uses E02's ORIGINAL private cleanup and verifies returned contact/audit
+identities against actual original records, native tenant/user/actor/request and
+revoked state. Results append to the SAME preparing recovery audit. Known empty
+applicable sets return not_required; non-Billing SOLO's original known-zero
+compatibility is explicit not_applicable. Unsupported legacy contacts refuse,
+never an exception-to-zero. Original last-owner/final-primary rules remain load
+bearing. The parent verifies actual demotion before finalizing its original audit
+and in-app notices. Private grant/set-holder/revoke now compose locally; no public
+recovery, service grant, provider/payment/send effect, version or managed apply.
+
+Original111 controls before20 new receiving/native compatibility/rollback/drift
+controls: final131 author-run local PASS. Actual original E02 scope/revoke bodies,
+private cleanup, current7d62 revoke, role writers and original recovery transaction
+execute; Auth/workspace/minimal tables/company/owner remain ports. The private
+baseline genuinely returns OWNER_RECOVERY_REVOKE_UNAVAILABLE without the consumer
+(rawa7057617), not a production defect. Initial120 PASS9f6b42af retained separately.
+Ordinary authenticated self-step-down/holder API and owner audit, sub-account
+zero/non-SOLO platform behavior, floor/primary refusal, stable original Billing
+IDs on replay and late notice failure rolling back ALL financial/ownership/audit/
+notice effects pass. Unpatched kernel, exposed ACL and changed peer entry refuse.
+All own disposable databases removed; no hosted/customer acceptance claim.
+
+Final raw `exp08-owner-recovery-revoke-final.log` SHA256
+`5fcdd055baf601cd0b916543b1084fd6010cc4fd3339beed0f8a10394fba67a2`;
+base writer SHA256 `51ff184447d4c60741efe721370a72c827f70f57ee46d9ed5cdb397ea810f692`;
+revoke component SHA256 `7eb609038750efe57758a7445a9c6ae4fe285195f38a1568be90a009b6d5bb25`;
+received E02 SQL SHA256 `b2638ef3001dc5bcbea5a418fd9cf9bae046b9c2f00b8685fc26018b39e9cdb3`.
+Review renewal, exact original owner-door current-context/live-identity assurance,
+complete metadata/retention/privileged-writer/full-native/entity/lifecycle races,
+public wrapper/detail host/bell and E03 email remain required coding/integration.
+Consumer proof is not PR3173 CI/merge/release or full R9/customer acceptance.
+All original18+6/five journeys/full assignment remain **STILL CODING**.

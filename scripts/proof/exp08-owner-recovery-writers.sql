@@ -407,8 +407,14 @@ BEGIN
   ELSIF _act='set_account_holder' THEN
     PERFORM public._exp08_set_recovery_holder(_tenant,_user);
   ELSE
-    -- Original E02 cleanup contract is required; no fallback financial writer.
-    RAISE EXCEPTION 'OWNER_RECOVERY_REVOKE_UNAVAILABLE' USING ERRCODE='42501';
+    IF to_regprocedure('public._exp08_revoke_co_owner(uuid,uuid,uuid)') IS NULL THEN
+      RAISE EXCEPTION 'OWNER_RECOVERY_REVOKE_UNAVAILABLE' USING ERRCODE='42501';
+    END IF;
+    PERFORM public._exp08_revoke_co_owner(_tenant,_user,_request);
+    IF NOT EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id=_tenant AND user_id=_user
+      AND NOT is_owner AND role='admin' AND status='active' AND business_owner_id IS NULL) THEN
+      RAISE EXCEPTION 'OWNER_RECOVERY_RESULT_UNVERIFIED' USING ERRCODE='42501';
+    END IF;
   END IF;
   UPDATE public.paige_audit_log SET payload=jsonb_set(payload,'{outcome}','"effect_verified"'::jsonb)
     WHERE id=_request AND tenant_id=_tenant AND actor_user_id=actor AND target_id=_user

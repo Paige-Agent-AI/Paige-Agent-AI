@@ -2838,3 +2838,31 @@ or tests. Raw TSC log SHA256
 b7acea54d36c767a85c0f5ff08c3f1ff2be0787daf8c12537f39aed43c24bd6d.
 This is not a claim of a clean full-app typecheck; the existing required CI
 ratchet and all other exact-head gates still apply, with no baseline edit.
+
+Full-schema second execution at63bc0b5f ran17/28:16 passed, one failed;
+eleven assertions were not reached. Exact job124870510263/step87 recorded the
+working-holder denial at the earlier original `_exp08_prepare_owner_change`
+context gate, not the later recovery gate whose message the fixture expected.
+The next setup statement attempted to delete the only super-admin and correctly
+hit original `guard_last_super_admin` lockout protection. Neither is evidence
+of an allowed recovery or a product authorization bypass. The new fixture keeps
+the precise42501 denial, pins its actual first-gate message, adds an explicit
+native working-holder-state assertion and asserts the last-super-admin refusal.
+It then suspends the synthetic original actor to test independent service reads
+without removing protected standing. Planned30 preserves every original28
+behavior assertion and adds two controls. Actual execution is still PENDING;
+no30PASS is claimed. Applied Preview carrier23 remains byte-identicalB910F0B9.
+The finite edit window covers only this own test and contract and is returned
+at freeze, with no workflow, original registry, role guard or peer-source edit.
+
+Separate own managed-Preview rollback probes executed the actual original
+recovery, canonical archive and canonical permanent-delete APIs. The archive
+returned its native archived receipt; permanent deletion removed the synthetic
+tenant and retained its recovery audit with NULLtenant/server-only privacy.
+Those probes rolled back; subsequent readback found zero synthetic users,
+tenants or recovery receipts. Restore probes returned a connector internal error
+and are UNVERIFIED, not a product diagnosis or PASS. The final cleanup read
+after those later probes also returned a connector internal error, so the prior
+zero-row cleanup readback is bounded to the earlier successful probes.
+These are author engineering probes of the own Preview, not authenticated
+customer evidence, full lifecycle/concurrency clearance or production release.

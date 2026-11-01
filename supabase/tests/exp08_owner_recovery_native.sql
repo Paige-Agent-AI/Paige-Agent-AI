@@ -1,7 +1,7 @@
 -- Full replayed schema, original functions/triggers/RLS. Synthetic identities only.
 -- Every write rolls back; this is engineering evidence, not customer authentication.
 BEGIN;
-SELECT plan(28);
+SELECT plan(30);
 
 SELECT ok(has_function_privilege('authenticated','public.platform_owner_recovery(uuid,text,uuid,text,uuid)','EXECUTE')
  AND NOT has_function_privilege('anon','public.platform_owner_recovery(uuid,text,uuid,text,uuid)','EXECUTE')
@@ -51,9 +51,13 @@ SELECT is(public.platform_owner_recovery_receipt('e8b00000-0000-4000-8000-000000
  'e8b00000-0000-4000-8000-000000000020')->>'status','found','original operator reopens durable receipt without another effect');
 SELECT is((SELECT count(*) FROM public.paige_audit_log WHERE id='e8b00000-0000-4000-8000-000000000020'),0::bigint,
  'even authenticated operator cannot read protected native audit row directly');
+RESET ROLE;
+SELECT is(public._tenant_account_holder_state('e8b00000-0000-4000-8000-000000000010'),'working',
+ 'the new-request negative exercises an actually working original account holder');
+SET LOCAL ROLE authenticated;
 SELECT throws_ok($$SELECT public.platform_owner_recovery('e8b00000-0000-4000-8000-000000000010','set_account_holder',
  'e8b00000-0000-4000-8000-000000000003','Synthetic native recovery reason','e8b00000-0000-4000-8000-000000000021')$$,
- '42501','OWNER_RECOVERY_FORBIDDEN','new recovery refuses a now-working holder');
+ '42501','CO_OWNER_FORBIDDEN: current owner context required','new recovery refuses a now-working holder at the original first context gate');
 RESET ROLE;
 SELECT is((SELECT owner_user_id FROM public.tenants WHERE id='e8b00000-0000-4000-8000-000000000010'),
  'e8b00000-0000-4000-8000-000000000003'::uuid,'actual original tenant pointer reflects verified recovery');
@@ -87,10 +91,15 @@ SELECT ok(NOT EXISTS(SELECT 1 FROM public.tenant_members WHERE user_id='e8b00000
 
 SELECT set_config('request.jwt.claim.sub','',true);
 SELECT set_config('request.jwt.claims','{}',true);
-DELETE FROM public.user_roles WHERE user_id='e8b00000-0000-4000-8000-000000000001' AND role='super_admin';
+-- The real registry permits exactly one super-admin and protects its last row.
+-- Retain that protection; suspension exercises lost actor eligibility instead.
+SELECT throws_ok($$DELETE FROM public.user_roles WHERE user_id='e8b00000-0000-4000-8000-000000000001' AND role='super_admin'$$,
+ '42501','Refusing to remove the last super_admin (platform-owner lockout protection)',
+ 'native platform lockout protection remains effective during the recovery fixture');
+UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id='e8b00000-0000-4000-8000-000000000001';
 SET LOCAL ROLE service_role;
 SELECT is(public.get_owner_recovery_delivery_event('e8b00000-0000-4000-8000-000000000010','e8b00000-0000-4000-8000-000000000020')->>'event',
- 'owner_recovery','service reads already-committed event after operator role loss without impersonation');
+ 'owner_recovery','service reads the original event after operator suspension without impersonation');
 SELECT is(jsonb_array_length(public.get_owner_recovery_delivery_event('e8b00000-0000-4000-8000-000000000010','e8b00000-0000-4000-8000-000000000020')->'recipients'),
  3,'service returns only the three original recipient-notice bindings');
 SELECT ok(NOT EXISTS(SELECT 1 FROM jsonb_object_keys(public.get_owner_recovery_delivery_event(

@@ -10,6 +10,35 @@ const UUID = "e4000000-0000-4000-8000-0000000c0001";
 const soloTenant = { account_type: "standalone", parent_tenant_id: null, account_number: 3855 };
 const subTenant = { account_type: "sub_account", parent_tenant_id: "e4000000-0000-4000-8000-00000000aaaa", account_number: 3856 };
 
+it("reopens a persisted internal Knowledge reference through the current business's existing bucket", () => {
+  const reference = { destination: "business_knowledge", record_id: UUID };
+  const [saved] = readRecordLinks(JSON.parse(JSON.stringify([{ ...reference, subject: "Private agreement", tenant: "foreign", url: "https://foreign.invalid", approved: true }])));
+  expect(saved).toEqual(reference);
+  expect(workspaceLinkTarget(saved, soloTenant)).toEqual({
+    label: "Open Knowledge source", to: `/solo/3855/settings/setup/knowledge-bucket?knowledge=${UUID}`, status: "exact",
+  });
+});
+
+it("uses the current eligible account after reload and never treats a company source as CURA publication", () => {
+  const [reference] = readRecordLinks([{ destination: "business_knowledge", record_id: UUID, account: 999999 }]);
+  for (const account_number of [3855, 9999]) expect(workspaceLinkTarget(reference, { ...soloTenant, account_number })).toEqual({
+    label: "Open Knowledge source", to: `/solo/${account_number}/settings/setup/knowledge-bucket?knowledge=${UUID}`, status: "exact",
+  });
+  expect(workspaceLinkTarget({ destination: "portal_knowledge", record_id: UUID }, soloTenant)?.to)
+    .toBe(`/solo/3855/clients/portal?view=knowledge&source=${UUID}`);
+  expect(workspaceLinkTarget(reference, subTenant)).toBeNull();
+  expect(workspaceLinkTarget(reference, { account_type: "agency", parent_tenant_id: null, account_number: 3855 })).toBeNull();
+  expect(workspaceLinkTarget(reference, null)).toBeNull();
+});
+
+it("opens only the existing Knowledge surface when no exact UUID is available", () => {
+  const [reference] = readRecordLinks([{ destination: "business_knowledge", record_id: "https://foreign.invalid" }]);
+  expect(workspaceLinkTarget(reference, soloTenant)).toEqual({
+    label: "Open Knowledge", to: "/solo/3855/settings/setup/knowledge-bucket", status: "surface_only",
+  });
+  expect(routeLinkTarget(reference, "solo", "../foreign")).toBeNull();
+});
+
 it("names exact recorded finding inspection without implying execution or cross-tier availability", () => {
   expect(workspaceLinkTarget({ destination: "systems_check", record_id: UUID }, soloTenant)).toEqual({
     label: "Open recorded finding", to: `/solo/3855/command-center/systems-check?finding=${UUID}`, status: "exact",
@@ -50,6 +79,7 @@ describe("DESTINATION_LABEL — the frozen words", () => {
       business_game_plan: "Open Business Game Plan",
       trust_compass: "Open Trust Compass",
       mind: "Open Mind",
+      business_knowledge: "Open Knowledge",
       portal_knowledge: "Open CURA Knowledge",
       calendar: "Open Calendar",
       pipeline: "Open pipeline",

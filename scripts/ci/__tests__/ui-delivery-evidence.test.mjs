@@ -921,3 +921,35 @@ test("existing records still pass (both unchanged legs)", () => {
   const result = validateEvidenceText(coreEvidence, { required: true, solo: false });
   assert.equal(result.ok, true, result.errors.join("\n"));
 });
+
+for (const material of ["YES", "NO"]) {
+  test(`owner release policy: ${material} flow records unrun prototype honestly without a premerge proof gate`, () => {
+    const record = coreEvidence
+      .replace(/^MATERIAL_FLOW_CHANGE:.*$/m, `MATERIAL_FLOW_CHANGE: ${material}: scoped settings interaction under review`)
+      .replace(/^FLOW_PROTOTYPE:.*$/m, "FLOW_PROTOTYPE: UNVERIFIED: Current prototype has not been exercised; verify the live flow after safe reviewed release.");
+    const result = validateEvidenceText(record, { required: true, solo: false });
+    assert.equal(result.ok, true, result.errors.join("\n"));
+  });
+}
+
+test("owner release policy: unrun browser and authenticated evidence remains unverified at safe release", () => {
+  let record = coreEvidence
+    .replace(/^MATERIAL_FLOW_CHANGE:.*$/m, "MATERIAL_FLOW_CHANGE: YES: scoped settings interaction changed")
+    .replace(/^FLOW_PROTOTYPE:.*$/m, "FLOW_PROTOTYPE: UNVERIFIED: Prototype not exercised on this build; live verification follows safe reviewed release.");
+  for (const field of ["RENDERED_EVIDENCE", "BEHAVIORAL_EVIDENCE", "AUTHENTICATED_RUNTIME", "KEYBOARD_FOCUS", "ZOOM_REFLOW", "REDUCED_MOTION", "STATE_COVERAGE"]) {
+    record = record.replace(new RegExp(`^${field}:.*$`, "m"), `${field}: UNVERIFIED: This build has no live browser drive; the affected customer claim remains unverified until that drive.`);
+  }
+  const result = validateEvidenceText(record, { required: true, solo: false });
+  assert.equal(result.ok, true, result.errors.join("\n"));
+});
+
+test("owner release policy still rejects missing, placeholder and unsupported prototype claims", () => {
+  for (const value of ["", "UNVERIFIED:", "UNVERIFIED: pending", "UNVERIFIED: REPLACE_ME with evidence", "PASS: pending", "LIVE: prototype works"]) {
+    const record = coreEvidence
+      .replace(/^MATERIAL_FLOW_CHANGE:.*$/m, "MATERIAL_FLOW_CHANGE: YES: scoped settings interaction changed")
+      .replace(/^FLOW_PROTOTYPE:.*$/m, `FLOW_PROTOTYPE: ${value}`);
+    const result = validateEvidenceText(record, { required: true, solo: false });
+    assert.equal(result.ok, false, value);
+    assert.match(result.errors.join("\n"), /FLOW_PROTOTYPE/);
+  }
+});

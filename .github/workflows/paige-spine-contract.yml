@@ -17,6 +17,7 @@ on:
     branches: [main]
     paths:
       - "supabase/functions/_shared/paige-spine/**"
+      - "scripts/proof/exp05-zion-planning-full-schema.mjs"
       - "supabase/migrations/**"
       - "supabase/tests/e09_cura_preparation_readback.sql"
       - "scripts/proof/e09-cura-preparation-concurrency.mjs"
@@ -42,6 +43,11 @@ on:
       - "supabase/tests/mcp_gateway_approval_future_expiry.sql"
       - "supabase/tests/integrations_surface_sees_mcp.sql"
       - "supabase/tests/systems_check_source_integrity.sql"
+      - "supabase/tests/exp08_owner_recovery_native.sql"
+      - "supabase/tests/exp08_first_owner_history_native.sql"
+      - "supabase/tests/exp08_owner_work_profile_native.sql"
+      - "supabase/tests/exp08_team_permission_native.sql"
+      - "supabase/tests/exp08_team_details_bundle_native.sql"
       - "supabase/tests/record_capability_run_single_overload.sql"
       - "supabase/tests/mcp_tool_catalog_tenant_scope.sql"
       - "supabase/tests/mcp_oauth_refuses_the_rest_facet.sql"
@@ -82,6 +88,9 @@ on:
       - "scripts/ci/consent-parity-gen.mjs"
       - "supabase/tests/media_credit_ledger.sql"
       - "supabase/tests/business_context_readiness.sql"
+      - "supabase/tests/exp01_reviewed_setup_receipt.sql"
+      - "scripts/proof/exp01-reviewed-setup-full-schema.mjs"
+      - "scripts/proof/exp01-reviewed-setup-candidate.sql"
       - "supabase/tests/team_authority_readiness.sql"
       - "supabase/tests/business_mission_foundation.sql"
       - "supabase/tests/zion_role_remap.sql"
@@ -376,6 +385,9 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_task_creation.sql
 
+      - name: EXP05 ZION Planning candidate full-schema source and private permission installation (rolled back)
+        if: ${{ !cancelled() }}
+        run: node scripts/proof/exp05-zion-planning-full-schema.mjs
       - name: Operations original inactive draft-step correction (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/owner_task_step_revision.sql
@@ -654,6 +666,30 @@ jobs:
       # a DM with PAIGE and each of the six specialists, a channel and a first message).
       - run: supabase test db supabase/tests/exp08_team_hub_new_solo_parity.sql
         if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/exp08_owner_recovery_native.sql
+        if: ${{ !cancelled() }}
+      - name: Original EXP08 first-owner full-schema composition
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/proof/exp08-first-owner-native-proof.mjs --check
+          supabase test db supabase/tests/exp08_first_owner_history_native.sql
+      - name: Original EXP08 scoped work-profile full-schema composition
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/proof/exp08-owner-work-profile-native-proof.mjs --check
+          supabase test db supabase/tests/exp08_owner_work_profile_native.sql
+      - name: Original EXP08 scoped permission full-schema composition
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/proof/exp08-team-permission-native-proof.mjs --check
+          supabase test db supabase/tests/exp08_team_permission_native.sql
+      - name: Original EXP08 atomic Team details read/write full-schema composition
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/proof/exp08-team-details-bundle.mjs --check
+          node scripts/proof/exp08-team-details-bundle-native-proof.mjs --check
+          node scripts/proof/exp08-team-details-bundle-native-proof.mjs --self-test
+          supabase test db supabase/tests/exp08_team_details_bundle_native.sql
       - run: supabase test db supabase/tests/solo_team_invite_workspace_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_recipient_binding.sql
       # Additive E09 customer-safe relationship/profile foundation; no new CI database.
@@ -864,6 +900,9 @@ jobs:
       # authenticated user of that same tenant). Rides this job for the same reason as the two
       # above — the expensive part is `supabase start` + `db reset` (§24).
       - run: supabase test db supabase/tests/business_context_readiness.sql
+      - name: Original EXP01 reviewed Setup receipt full-schema authority
+        run: node scripts/proof/exp01-reviewed-setup-full-schema.mjs
+        if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/secure_browser_control_plane_security.sql
       # PC-1 — concurrent budget enforcement: 12 racing service-role callers against a day
       # budget that admits 4; the gate's FOR UPDATE reservation must refuse the other 8.
@@ -1085,7 +1124,7 @@ jobs:
       # 5c6a8a0ab: without roles/tables every assertion errors, and only ON_ERROR_STOP
       # converts that into a red). ON_ERROR_STOP is set at the step level, as here.
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/systems_check_runner_read_grants.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
-      - name: Systems Check saved-source integrity (36 assertions; rolled back)
+      - name: Systems Check saved-source integrity (47 assertions; rolled back)
         run: supabase test db supabase/tests/systems_check_source_integrity.sql
       # There must be exactly ONE public.record_capability_run (migration 20270411090000).
       # 20270107000000 added four trailing params as a NEW signature instead of replacing the

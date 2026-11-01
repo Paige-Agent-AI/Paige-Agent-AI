@@ -1,4 +1,4 @@
-// Local private recovery-lock preparation only; no recovery effect or authenticated proof.
+// Local private recovery admission/R12 effect preparation; no public RPC or authenticated proof.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -93,7 +93,8 @@ try{
  CREATE TYPE public.app_role AS ENUM('super_admin','platform_admin','admin');
  CREATE TABLE auth.users(id uuid PRIMARY KEY,deleted_at timestamptz,banned_until timestamptz);
  CREATE TABLE public.user_roles(user_id uuid,role public.app_role,PRIMARY KEY(user_id,role));
- CREATE TABLE public.tenants(id uuid PRIMARY KEY,owner_user_id uuid,account_type text,archived_at timestamptz,company boolean DEFAULT false);
+ CREATE TABLE public.tenants(id uuid PRIMARY KEY,owner_user_id uuid,account_type text,archived_at timestamptz,company boolean DEFAULT false,
+ platform_fee_bps integer,parent_tenant_id uuid,stripe_customer_id text,stripe_subscription_id text);
  CREATE TABLE public.tenant_members(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,user_id uuid,is_owner boolean,status text);
  -- Explicit ports for dependencies beneath the original I1 helpers, not a claimed full native schema.
  CREATE FUNCTION public.is_company_workspace(t uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT company FROM public.tenants WHERE id=t$$;
@@ -142,7 +143,67 @@ try{
  await tenantWait('rolled-back ban retains legitimate admission',`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${actor}'`,false);
  await identityUpdateWait('admission identity lock blocks competing ban',`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${actor}'`);
  await identityUpdateWait('admission identity lock blocks competing soft deletion',`UPDATE auth.users SET deleted_at=now() WHERE id='${actor}'`);
- console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private lock preparation; effect/audit/receipt/notices/public RPC NOT implemented',
+ // Add the real I1 pointer guard/audit only after preserving all original30 admission controls.
+ db.run(`CREATE TABLE public.paige_audit_log(id uuid DEFAULT gen_random_uuid(),actor_user_id uuid,actor_role text,
+ action text,target_type text,target_id uuid,payload jsonb,tenant_id uuid);
+ ${original('20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c.sql','is_super_admin',')')}
+ ${original('20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c.sql','is_platform_owner',')')}
+ ${original('20271120010008_exp08_owner_invitations.sql','guard_tenant_owner_only_columns')}
+ ${original('20271120010008_exp08_owner_invitations.sql','_tenant_account_holder_changed')}
+ CREATE TRIGGER original_holder_guard BEFORE UPDATE ON public.tenants FOR EACH ROW EXECUTE FUNCTION public.guard_tenant_owner_only_columns();
+ CREATE TRIGGER original_holder_audit AFTER UPDATE OF owner_user_id ON public.tenants FOR EACH ROW
+ WHEN(OLD.owner_user_id IS DISTINCT FROM NEW.owner_user_id) EXECUTE FUNCTION public._tenant_account_holder_changed();`);
+ const setHolder=()=>db.exec(`SELECT public._exp08_set_recovery_holder('${tenant}','${holder}')`);
+ const seat=()=>db.run(`INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status) VALUES('${tenant}','${holder}',true,'active')`);
+ const clear=()=>{reset();db.run('TRUNCATE public.paige_audit_log');};
+ clear();await denied('R12 refuses a live target without an active owner seat',setHolder,/OWNER_RECOVERY_TARGET_NOT_ACTIVE_OWNER/);
+ seat();db.run(`UPDATE public.tenant_members SET status='suspended'`);
+ await denied('R12 refuses a suspended target owner seat',setHolder,/OWNER_RECOVERY_TARGET_NOT_ACTIVE_OWNER/);
+ clear();seat();db.run(`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${holder}'`);
+ await denied('R12 refuses a banned target rather than restoring an unusable holder',setHolder,/OWNER_RECOVERY_TARGET_NOT_ACTIVE_OWNER/);
+ clear();seat();db.run(`UPDATE auth.users SET deleted_at=now() WHERE id='${holder}'`);
+ await denied('R12 refuses a soft-deleted target',setHolder,/OWNER_RECOVERY_TARGET_NOT_ACTIVE_OWNER/);
+ clear();seat();
+ await db.exec(`DO $$BEGIN
+ PERFORM set_config('paige.owner_recovery','off',true);
+ PERFORM public._exp08_set_recovery_holder('${tenant}','${holder}');
+ IF current_setting('paige.owner_recovery',true)<>'off' THEN RAISE EXCEPTION 'flag leaked';END IF;
+ END$$;`);
+ assert.equal(scalar(`SELECT public._tenant_account_holder_state('${tenant}')`),'working');
+ assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE action='tenant:account_holder_changed'
+ AND actor_user_id='${actor}' AND tenant_id='${tenant}' AND payload->>'recovery'='true'`),'1');
+ results.push({case:'R12 private effect uses original pointer guard/audit and restores caller flag',passed:true});
+ await denied('R12 repeated effect refuses the now-working holder without a duplicate pointer audit',setHolder);
+ assert.equal(scalar('SELECT count(*) FROM public.paige_audit_log'),'1');
+ clear();seat();
+ await db.exec(`BEGIN;SELECT public._exp08_set_recovery_holder('${tenant}','${holder}');ROLLBACK;`);
+ assert.equal(scalar(`SELECT owner_user_id IS NULL FROM public.tenants WHERE id='${tenant}'`),'t');
+ assert.equal(scalar('SELECT count(*) FROM public.paige_audit_log'),'0');
+ results.push({case:'outer transaction rollback removes private pointer effect and original audit together',passed:true});
+ for(const role of ['authenticated','anon','service_role']){
+  db.role=role;await denied(role+' cannot invoke private R12 effect',setHolder);db.role='';
+ }
+ clear();db.run(`INSERT INTO public.tenants(id,account_type) VALUES('e8000000-0000-4000-8000-000000091020','standalone');
+ INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status) VALUES('e8000000-0000-4000-8000-000000091020','${holder}',true,'active')`);
+ await denied('R12 refuses an owner seat belonging only to another business',setHolder,/OWNER_RECOVERY_TARGET_NOT_ACTIVE_OWNER/);
+ assert.equal(scalar('SELECT count(*) FROM public.paige_audit_log'),'0');
+ clear();seat();
+ db.run(`CREATE FUNCTION public.fixture_recovery_audit_failure() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN
+ RAISE EXCEPTION 'fixture late audit failure' USING ERRCODE='23514';END$$;
+ CREATE TRIGGER zz_fixture_recovery_failure AFTER UPDATE OF owner_user_id ON public.tenants
+ FOR EACH ROW EXECUTE FUNCTION public.fixture_recovery_audit_failure();`);
+ await db.exec(`DO $$BEGIN
+ PERFORM set_config('paige.owner_recovery','off',true);
+ BEGIN PERFORM public._exp08_set_recovery_holder('${tenant}','${holder}');
+ RAISE EXCEPTION 'expected fixture failure';
+ EXCEPTION WHEN check_violation THEN
+ IF current_setting('paige.owner_recovery',true)<>'off' THEN RAISE EXCEPTION 'flag leaked after failure';END IF;
+ END;END$$;`);
+ assert.equal(scalar(`SELECT owner_user_id IS NULL FROM public.tenants WHERE id='${tenant}'`),'t');
+ assert.equal(scalar('SELECT count(*) FROM public.paige_audit_log'),'0');
+ results.push({case:'late trigger failure atomically removes pointer/audit and restores recovery flag',passed:true});
+ db.run('DROP TRIGGER zz_fixture_recovery_failure ON public.tenants;DROP FUNCTION public.fixture_recovery_audit_failure()');
+ console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private admission and R12 effect with original I1 audit; public recovery RPC/recovery receipt/notices NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));
 }finally{

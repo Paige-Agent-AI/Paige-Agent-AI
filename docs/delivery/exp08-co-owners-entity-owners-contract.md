@@ -2122,3 +2122,35 @@ raw3a6e5f8e retained FAIL. Both fixtures disposed, final native client catalogue
 empty. Review renewal is required before considering this repaired source clear.
 The earlier21 PASS remains historical subset evidence, not proof of Auth
 availability. No effects/public endpoint/native migration/release claim changed.
+
+### October31 — private R12 holder restoration through original I1 guard/audit
+
+The same reserved inert writer preparation now adds the PRIVATE
+`_exp08_set_recovery_holder(uuid,uuid)` effect for the future original recovery
+transaction. No client or service-role EXECUTE, migration or public RPC. It
+reuses the reviewed recovery lock, requires a live available target with an
+existing active owner seat in exactly this business, uses the original I1
+pointer guard's bounded recovery flag, restores the previous flag on success or
+failure and verifies the original holder-state helper now returns working.
+It never grants a seat or changes Billing/hierarchy/provider fields. Original
+I1 pointer-change audit is produced by its original trigger, not copied logic.
+
+Original30 admission controls stay before12 additional native effect controls:
+unseated/suspended/banned/soft-deleted/other-business targets, original guard/audit
+and flag restoration, repeated-effect refusal, outer rollback, three actual
+client-role ACL refusals, late trigger failure with atomic pointer/audit/flag
+rollback. Final42 PASS, raw `exp08-owner-recovery-r12-final.log` SHA256
+`51a7a4c1ada537a99382029f0f900ea4a1aed3761374c31c292ed36a14012e3c`;
+tested candidate SHA256 `3fa70774ff893bc56dd228cbb43b4da65a9a57b612b9601c6de7a5e05c95eac8`.
+First40-run PASS is retained separately (a1bd073c), not counted as final42.
+Actual original I1 guard and pointer audit run against explicit minimal schema
+ports; no authenticated customer or managed-schema proof. Own fixture disposed.
+
+This private effect MUST NOT be exposed alone: the original public recovery
+transaction still owes reason validation, trusted recovery audit identity,
+current-recipient private notices/read-now receipts, durable unknown/no-duplicate
+reconciliation and E03 original email integration. Grant/revoke kernels and
+E02 Billing cleanup remain coding dependencies; original public writers unchanged.
+Metadata/bootstrap/replay guards, wider lock/lifecycle composition, original full
+runner integration, final review/CI/release and authenticated outcomes remain owed.
+All original18+6/five journeys and full-assignment **STILL CODING** are unchanged.

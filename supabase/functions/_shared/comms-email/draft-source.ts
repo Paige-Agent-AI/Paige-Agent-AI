@@ -7,6 +7,17 @@ export interface CommsEmailDraftSource {
   updated_at: string;
 }
 
+/** An original pending action entry before its first Messages save. Navigation
+ * and a stale-write fence only; the native writer re-proves its original owner. */
+export interface CommsEmailActionDraftSource { approval_id: string; updated_at: string }
+export function parseCommsEmailActionDraftSource(value:unknown):CommsEmailActionDraftSource {
+  if(!value||typeof value!=="object"||Array.isArray(value))throw new TypeError("COMMS_EMAIL_DRAFT_SOURCE_INVALID");
+  const v=value as Record<string,unknown>;
+  if(Object.keys(v).length!==2||!Object.prototype.hasOwnProperty.call(v,"approval_id")||!Object.prototype.hasOwnProperty.call(v,"updated_at"))throw new TypeError("COMMS_EMAIL_DRAFT_SOURCE_INVALID");
+  const parsed=parseCommsEmailDraftSource({message_id:v.approval_id,updated_at:v.updated_at});
+  return Object.freeze({approval_id:parsed.message_id,updated_at:parsed.updated_at});
+}
+
 export function parseCommsEmailDraftSource(value: unknown): CommsEmailDraftSource {
   const invalid = () => new TypeError("COMMS_EMAIL_DRAFT_SOURCE_INVALID");
   if (!value || typeof value !== "object" || Array.isArray(value)) throw invalid();

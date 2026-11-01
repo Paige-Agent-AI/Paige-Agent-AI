@@ -84,7 +84,7 @@ export function ConversationsRichComposer(model: ConversationsComposerModel) {
               Cancel
             </button>
           )}
-          {onSaveDraft && <Button type="button" variant="ghost" size="sm" disabled={draftSaveDisabled || savingDraft} aria-busy={savingDraft} onClick={onSaveDraft}>
+          {onSaveDraft && <Button type="button" variant="ghost" size="sm" data-comms-draft-save disabled={draftSaveDisabled || savingDraft} aria-busy={savingDraft} onClick={onSaveDraft}>
             {savingDraft ? "Saving…" : saveUnconfirmed ? "Check save status" : "Save draft"}
           </Button>}
           {draftSaveNote && <span>{draftSaveNote}</span>}

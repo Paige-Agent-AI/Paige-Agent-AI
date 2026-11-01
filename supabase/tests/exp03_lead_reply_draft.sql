@@ -133,7 +133,7 @@ SELECT p.oid AS function_oid, pg_get_functiondef(p.oid) AS definition, e.expecte
   'cost',p.procost,'rows',p.prorows) AS metadata
 FROM (VALUES
  ('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure,'0d412f9c0a734aeb2815dca39ab061a3'),
- ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'f7fbbd2a430bf391f43dc6ca7e2692ee'),
+ ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'682c2fe410521c7bfd23ec8b26a95a90'),
  -- read_binding + claim: the scheduled-send bodies (20271119000000 — release actor, not-before, queued -> draft).
  ('public.read_comms_email_send_binding(uuid)'::regprocedure,'3d1ce2b3524c6342a0c152af1ca482d6'),
  ('public.claim_comms_email_send(uuid,uuid,boolean)'::regprocedure,'a9dfb75621838268a961152d19de954d'),

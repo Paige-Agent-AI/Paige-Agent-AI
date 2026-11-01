@@ -1,5 +1,28 @@
 # Original inactive workflow-step correction
 
+## October31 late checkpoint — current-source release prerequisite
+
+Primary outcome remains O01, with all ten original outcomes and E5-CV1–9 open.
+This existing configuration-only carrier is a finite receiving prerequisite for
+EXP13 Memory180013 and EXP03 Saved190003, not a second discretionary outcome.
+Production frontier150008 and controller4715/ACL were read directly;160005 is
+absent. The existing PR Preview contains160005 once/controller90c5960f, no higher
+migration. These are catalogue observations, not customer execution.
+
+Normal composition668018544 receives currentmaind10e875c. All four original
+runtime/proof inputs remain byte-identical to revieweda0df3048; all19,107 incoming
+outside-owned leaves and the complete incoming Spine workflow are conserved.
+The four additive test-registration lines are the only shared workflow delta.
+Existing182 native/56 engine results retain their original fixture boundary;
+fresh exact-head CI and ordered production readback remain required.
+
+Catalogue correction: no `operations.department` Spine key is verified in the
+current registry. The existing `workflow_design_draft` skill remains preparation,
+and this unmounted native correction grants no Chat/Live/Team Hub availability.
+No source registry, capability-panel status, specialist identity or activation
+changes. E04's separate native Planning admission/publication/history carrier
+still gates O01; reviewed3087 source and this prerequisite cannot substitute for it.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: same saved process and act → exact captured source/version → one proposed literal purpose → original human-control RPC → original configuration audit/readback. This is a prerequisite to correction in the complete Workflow Automation Builder, not a replacement draft.
 PAIGE_UI_DESIGN: PASS: native-only preparation preserves the released Operations/Playbooks and Settings controls. No customer UI, layout, tokens, persona or interaction container changes in this slice.
@@ -55,7 +78,8 @@ not a performed Task. Completed original Task/Rail results remain immutable.
 
 EXP05 owns existing `workflow_design_draft` in the original Operations/Process
 skills catalogue. It remains a design/draft skill, not an execution grant.
-`operations.department` remains PARTIAL. Existing `automations.list` and
+The Operations Experience remains partially built; no `operations.department`
+Spine registration is verified. Existing `automations.list` and
 `automations.owner_task_history` are reads; a Chat/Live correction binding remains
 UNAVAILABLE until the canonical consumer/admission is built. No shared catalogue
 or Capabilities-panel change is implied; its actual actor/account display remains

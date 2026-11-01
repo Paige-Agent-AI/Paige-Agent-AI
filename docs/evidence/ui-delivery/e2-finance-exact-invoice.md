@@ -107,8 +107,9 @@ uses the original source correction/reread, with no automatic Memory promotion.
 O04 financial calculations and O16 Chat/Live runtime are unchanged consumers.
 
 Per original AGENTS.md October15 Merge-to-main-after-green policy, safe source
-release follows completed applicable review/rendered source checks and exact-head
-CI. Actual customer acceptance/native200/AT remain explicitly separate; no LIVE
+release follows completed applicable technical review, proportionate engineering
+checks and exact-head CI. Verify the released interface afterward. Actual customer
+acceptance/native200/AT remain explicitly separate; no LIVE
 claim is permitted from these fixtures. This source-stage classification is not
 a waiver of failed CI or any original3018 material finding, identity, money,
 provider, privileged permission or consequential-action gate.

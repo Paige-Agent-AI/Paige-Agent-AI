@@ -86,7 +86,7 @@
 .sc-meta dd{margin:0;font-size:10px;color:var(--pg-ink-2);overflow-wrap:anywhere}
 .sc-meta dd.sc-mono{font-family:var(--pg-font-data);font-size:9px;color:var(--pg-muted)}
 .sc-item-a{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:10px}
-.sc-caveat{font-size:10px;color:var(--sc-attention);flex:1 1 100%}
+.sc-caveat{font-size:13px;line-height:1.5;color:var(--pg-muted);flex:1 1 100%;overflow-wrap:anywhere}
 
 /* what is ready to operate */
 .sc-ready{border:1px solid var(--pg-line);background:var(--pg-raised);border-radius:12px;box-shadow:var(--pg-e1);overflow:hidden}

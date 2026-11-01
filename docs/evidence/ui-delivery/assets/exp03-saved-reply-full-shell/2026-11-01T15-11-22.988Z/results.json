@@ -1,0 +1,154 @@
+{
+  "results": [
+    {
+      "name": "light-1366-closed",
+      "pass": true,
+      "geometry": {
+        "shellTheme": "light",
+        "shellPaige": "closed",
+        "rootScrollWidth": 1366,
+        "viewport": 1366,
+        "status": {
+          "x": 435.203125,
+          "y": 469.75,
+          "right": 1002.78125,
+          "bottom": 489.75
+        },
+        "dock": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "placeholder": false
+      },
+      "focusBounds": {
+        "left": 431.203125,
+        "top": 590.5,
+        "right": 1006.78125,
+        "bottom": 686.5,
+        "width": 1366,
+        "height": 768
+      },
+      "blockedFontStyles": [
+        "https://fonts.googleapis.com"
+      ],
+      "writerCalls": 0,
+      "proof": "original shell and PAIGE renderer; fictional ports/local fixture fonts, not authenticated/second-tenant/native-zoom proof"
+    },
+    {
+      "name": "light-1366-open",
+      "pass": true,
+      "geometry": {
+        "shellTheme": "light",
+        "shellPaige": "open",
+        "rootScrollWidth": 1366,
+        "viewport": 1366,
+        "status": {
+          "x": 312.984375,
+          "y": 513,
+          "right": 660.5625,
+          "bottom": 533
+        },
+        "dock": {
+          "x": 901.5625,
+          "y": 0,
+          "width": 464.4375,
+          "height": 768
+        },
+        "placeholder": false
+      },
+      "focusBounds": {
+        "left": 431.203125,
+        "top": 590.5,
+        "right": 1006.78125,
+        "bottom": 686.5,
+        "width": 1366,
+        "height": 768
+      },
+      "blockedFontStyles": [
+        "https://fonts.googleapis.com"
+      ],
+      "writerCalls": 0,
+      "proof": "original shell and PAIGE renderer; fictional ports/local fixture fonts, not authenticated/second-tenant/native-zoom proof"
+    },
+    {
+      "name": "dark-1366-closed",
+      "pass": true,
+      "geometry": {
+        "shellTheme": "dark",
+        "shellPaige": "closed",
+        "rootScrollWidth": 1366,
+        "viewport": 1366,
+        "status": {
+          "x": 435.203125,
+          "y": 469.75,
+          "right": 1002.78125,
+          "bottom": 489.75
+        },
+        "dock": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "placeholder": false
+      },
+      "focusBounds": {
+        "left": 431.203125,
+        "top": 590.5,
+        "right": 1006.78125,
+        "bottom": 686.5,
+        "width": 1366,
+        "height": 768
+      },
+      "blockedFontStyles": [
+        "https://fonts.googleapis.com"
+      ],
+      "writerCalls": 0,
+      "proof": "original shell and PAIGE renderer; fictional ports/local fixture fonts, not authenticated/second-tenant/native-zoom proof"
+    },
+    {
+      "name": "dark-1366-open",
+      "pass": true,
+      "geometry": {
+        "shellTheme": "dark",
+        "shellPaige": "open",
+        "rootScrollWidth": 1366,
+        "viewport": 1366,
+        "status": {
+          "x": 312.984375,
+          "y": 513,
+          "right": 660.5625,
+          "bottom": 533
+        },
+        "dock": {
+          "x": 901.5625,
+          "y": 0,
+          "width": 464.4375,
+          "height": 768
+        },
+        "placeholder": false
+      },
+      "focusBounds": {
+        "left": 431.203125,
+        "top": 590.5,
+        "right": 1006.78125,
+        "bottom": 686.5,
+        "width": 1366,
+        "height": 768
+      },
+      "blockedFontStyles": [
+        "https://fonts.googleapis.com"
+      ],
+      "writerCalls": 0,
+      "proof": "original shell and PAIGE renderer; fictional ports/local fixture fonts, not authenticated/second-tenant/native-zoom proof"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_WORKSPACE",
+  "voice": "UNEXERCISED",
+  "paige": "ORIGINAL_SHELL_AND_WORKSPACE_FICTIONAL_PORTS",
+  "nativeBrowserZoom": "UNVERIFIED"
+}

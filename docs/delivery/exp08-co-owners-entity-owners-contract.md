@@ -2796,3 +2796,35 @@ lines only). The first text-mode inverse verifier used Windows' default locale
 and failed on existing Unicode; byte comparison corrected the verifier, with
 no workflow/source edit or assertion removal. Shared source windows RETURNED
 at this freeze, irrespective of pending hosted checks.
+
+Full-schema first execution on3190/82fbd reached the new suite: 3 ACL assertions
+passed, then test setup failed because its synthetic tenant INSERT omitted the
+actual required `slug` column. The remaining25 assertions were NOT REACHED;
+planned28/run3/bad-plan/stepFAIL, not28PASS and not a reproduced product defect.
+Exact job124864134222 logged that failure at13:48:40UTC. The focused sanitized
+excerpt is retained in the original workspace. Actual own Preview catalogue
+confirmed required columns and native defaults/triggers before correction.
+Only the fixture INSERT gains a neutral synthetic slug; plan28, assertions,
+native functions/permissions and applied Preview carrier23 remain unchanged.
+Required exact-head full-schema execution must be renewed after publication.
+
+Personal-notice consumer preparation (UNMOUNTED): new original client adapter
+and its owning tests resolve the actual actor before/after the original personal
+RPC, retain the host's negative-only lifetime guard, validate requested notice
+identity and native fields, return only the declared projection and keep refusals
+and transport errors generic. No workspace selection, raw legacy notification
+hook, read-state mutation, Memory save, provider/client router or fallback/retry.
+This does NOT implement the complete approved SOLO bell/activity amendment,
+which retains original tenant-scoped Rail/Trust/Work sources and storage proof;
+operator/admin notifications remain excluded from that amendment.
+
+Author synthetic23 tests PASS (including installed SDK with mocked fetch/actor,
+late actor/departure/refusal/malformed/coercible-action controls), raw
+exp08-notice-client-sdk-current.log SHA256
+6b7bf8d103793944a727d15d75e537726033ec826a7c48b88fed2910beddc4e6.
+The missing-module baseline was an import failure with zero tests executed, not
+a production defect reproduction. Existing non-author source-only review found
+no material finding; it performed no execution. ESLint/full-app typecheck process
+is still pending; no PASS inferred. The future host's actual signed-in resolver,
+permanently invalidated lifetime, mounted accessible UI and authenticated server
+flow remain required. No complete notice journey or customer readiness claimed.

@@ -25,8 +25,8 @@ INSERT INTO auth.users(id,aud,role,email) VALUES
  ('e8b00000-0000-4000-8000-000000000003','authenticated','authenticated','e8-recovery-target@tests.invalid'),
  ('e8b00000-0000-4000-8000-000000000004','authenticated','authenticated','e8-recovery-former@tests.invalid');
 INSERT INTO public.user_roles(user_id,role) VALUES('e8b00000-0000-4000-8000-000000000001','super_admin') ON CONFLICT DO NOTHING;
-INSERT INTO public.tenants(id,name,account_type,owner_user_id) VALUES
- ('e8b00000-0000-4000-8000-000000000010','Recovery native probe','standalone','e8b00000-0000-4000-8000-000000000004');
+INSERT INTO public.tenants(id,name,slug,account_type,owner_user_id) VALUES
+ ('e8b00000-0000-4000-8000-000000000010','Recovery native probe','test-exp08-recovery-native-probe','standalone','e8b00000-0000-4000-8000-000000000004');
 INSERT INTO public.tenant_members(tenant_id,user_id,status,role,is_owner) VALUES
  ('e8b00000-0000-4000-8000-000000000010','e8b00000-0000-4000-8000-000000000002','active','owner',true),
  ('e8b00000-0000-4000-8000-000000000010','e8b00000-0000-4000-8000-000000000003','active','owner',true);

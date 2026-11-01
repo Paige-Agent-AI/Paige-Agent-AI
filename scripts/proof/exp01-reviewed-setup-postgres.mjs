@@ -224,6 +224,37 @@ try{
  db.run('UPDATE tenant_members SET status=\'suspended\'');denied(caller+inspect,/SCOPE_CHANGED|AUTHORITY_REQUIRED/);
  db.run('UPDATE tenant_members SET status=\'active\';UPDATE profiles SET active_tenant_id=gen_random_uuid()');
  assert.throws(()=>db.run(caller+inspect),error=>error.code==='40001' && /active workspace changed/.test(error.message));checks++;
+ // Original connection provenance requires a SEPARATE explicit source decision.
+ // Approval alone never implies override; only selected staged decisions travel.
+ db.run(`UPDATE profiles SET active_tenant_id='${tenant}';UPDATE tenant_members SET status='active';UPDATE tenant_knowledge_docs SET revision=1;`);
+ db.run(`UPDATE tenants SET brand=jsonb_set(jsonb_set(brand,'{business_brief,offers}','"Connection before"'),
+  '{business_brief,provenance}','{"offers":{"source":"connection_sourced"},"deliveryModel":{"source":"connection_sourced"}}')`);
+ const decisionContext=JSON.parse(scalar(caller+'SELECT public.get_solo_business_context()'));
+ const decisionStage=(id,input)=>`SELECT stage_solo_reviewed_business_facts('${tenant}','${actor}','${id}','${decisionContext.brief.updatedAt}',${decisionContext.contextRevision},${input})`;
+ const decisionSave=(id,requestId)=>`SELECT save_solo_reviewed_business_facts('${tenant}','${actor}','${id}','${requestId}','${decisionContext.brief.updatedAt}',${decisionContext.contextRevision},'["offers"]','setup_business_facts')`;
+ const noDecision='30000000-0000-4000-8000-000000000005',noDecisionRequest='50000000-0000-4000-8000-000000000005';
+ for(const invalid of ["jsonb_set("+facts+",'{0,sourceDecision}','true')","jsonb_set("+facts+",'{0,sourceDecision}','null')","jsonb_set("+facts+",'{0,sourceDecision}','\"approve\"')","jsonb_set("+facts+",'{0,override}','true')"])
+  denied(caller+decisionStage(noDecision,invalid),/SETUP_REVIEW_INVALID/);
+ db.run(caller+decisionStage(noDecision,facts));
+ denied(caller+decisionSave(noDecision,noDecisionRequest),/explicit override/);
+ assert.equal(scalar(`SELECT count(*) FROM paige_audit_log WHERE payload->>'requestId'='${noDecisionRequest}'`),'0');checks++;
+ const adopt='30000000-0000-4000-8000-000000000006';
+ db.run(caller+decisionStage(adopt,`jsonb_set(${facts},'{0,sourceDecision}','"adopt"')`));
+ denied(caller+decisionSave(adopt,'50000000-0000-4000-8000-000000000006'),/explicit override/);
+ const override='30000000-0000-4000-8000-000000000007',overrideRequest='50000000-0000-4000-8000-000000000007';
+ const withDecisions=`jsonb_set(jsonb_set(${facts},'{0,sourceDecision}','"override"'),'{1,sourceDecision}','"adopt"')`;
+ db.run(caller+decisionStage(override,withDecisions));
+ denied(caller+decisionStage(override,`jsonb_set(${withDecisions},'{0,sourceDecision}','"adopt"')`),/SETUP_REVIEW_ID_REUSED/);
+ const decisionReceipt=JSON.parse(scalar(caller+decisionSave(override,overrideRequest)));
+ assert.equal(decisionReceipt.current,true);checks++;
+ assert.equal(decisionReceipt.receipt.selectedFacts[0].sourceDecision,'override');checks++;
+ const afterDecision=JSON.parse(scalar(caller+'SELECT public.get_solo_business_context()'));
+ assert.equal(afterDecision.brief.offers,'Advisory');checks++;
+ assert.equal(afterDecision.brief.provenance.offers.source,'owner_confirmed');checks++;
+ assert.equal(afterDecision.brief.provenance.deliveryModel.source,'connection_sourced','unselected adopt was not forwarded');checks++;
+ assert.equal(afterDecision.brief.deliveryModel,decisionContext.brief.deliveryModel,'unselected connection value is preserved');checks++;
+ assert.equal(scalar(`SELECT count(*) FROM paige_audit_log WHERE payload->>'requestId'='${overrideRequest}'`),'1');checks++;
+ assert.equal(JSON.parse(scalar(caller+decisionSave(override,overrideRequest))).receiptId,decisionReceipt.receiptId);checks++;
  console.log(JSON.stringify({checks,result:'PASS',scope:'candidate + original Setup write bodies in modeled dependency fixture; NOT full-schema/customer/role completeness',originalSourceRef}));
 } finally {
  db.run(`DROP DATABASE ${db.database}`,[],'postgres');

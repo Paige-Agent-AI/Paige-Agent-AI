@@ -141,6 +141,50 @@ SET LOCAL ROLE authenticated;
 SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000002');
 SELECT ok(pg_temp.e01_error($$SELECT public.inspect_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001',auth.uid(),'e0100500-0000-4000-8000-000000000003')$$) IN ('42501','40001'),'same-JWT revoked Admin loses receipt eligibility');
 RESET ROLE;
+-- Explicit source decisions extend the SAME reviewed selection, never authority.
+-- These direct fixture writes only arrange connection-sourced state in rollback.
+UPDATE public.tenant_members SET status='active' WHERE tenant_id='e0100200-0000-4000-8000-000000000001' AND user_id='e0100100-0000-4000-8000-000000000002';
+UPDATE public.tenants SET brand=jsonb_set(jsonb_set(brand,'{business_brief,offers}','"Connection before"'),
+ '{business_brief,provenance}',coalesce(brand#>'{business_brief,provenance}','{}')||
+ '{"offers":{"source":"connection_sourced","confidence":"observed"},"deliveryModel":{"source":"connection_sourced","confidence":"observed"}}')
+ WHERE id='e0100200-0000-4000-8000-000000000001';
+UPDATE e01_state SET value=pg_temp.e01_facts() WHERE name='facts';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000002');
+UPDATE e01_state SET value=pg_temp.e01_stage('e0100400-0000-4000-8000-000000000005') WHERE name='proposal';
+SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_save('e0100400-0000-4000-8000-000000000005','e0100500-0000-4000-8000-000000000005')$$),'22023','approval alone does not override actual connection-sourced operational fact');
+UPDATE e01_state SET value=(SELECT jsonb_agg(f||'{"sourceDecision":"adopt"}'::jsonb) FROM jsonb_array_elements(value) f) WHERE name='facts';
+UPDATE e01_state SET value=pg_temp.e01_stage('e0100400-0000-4000-8000-000000000006') WHERE name='proposal';
+SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_save('e0100400-0000-4000-8000-000000000006','e0100500-0000-4000-8000-000000000006')$$),'22023','adopt is not silently converted into override for a changed connection value');
+UPDATE e01_state SET value=(SELECT jsonb_agg(f||jsonb_build_object('sourceDecision',CASE WHEN f->>'field'='offers' THEN 'override' ELSE 'adopt' END)) FROM jsonb_array_elements(value) f) WHERE name='facts';
+UPDATE e01_state SET value=pg_temp.e01_stage('e0100400-0000-4000-8000-000000000007') WHERE name='proposal';
+UPDATE e01_state SET value=pg_temp.e01_save('e0100400-0000-4000-8000-000000000007','e0100500-0000-4000-8000-000000000007') WHERE name='saved';
+SELECT is((SELECT value->>'current' FROM e01_state WHERE name='saved'),'true','Admin explicit selected override reaches original authority-checked writer and readback');
+SELECT is((SELECT value#>>'{receipt,selectedFacts,0,sourceDecision}' FROM e01_state WHERE name='saved'),'override','durable receipt binds exact selected provenance decision');
+SELECT is(public.get_solo_business_context()->'brief'->>'offers','Advisory','actual overridden operational value is read back');
+SELECT is(public.get_solo_business_context()#>>'{brief,provenance,offers,source}','owner_confirmed','explicit override uses original provenance writer');
+SELECT is(public.get_solo_business_context()#>>'{brief,provenance,deliveryModel,source}','connection_sourced','unselected adopt decision cannot change provenance');
+SELECT is(pg_temp.e01_save('e0100400-0000-4000-8000-000000000007','e0100500-0000-4000-8000-000000000007')->>'receiptId',
+ (SELECT value->>'receiptId' FROM e01_state WHERE name='saved'),'same-request inspection preserves original explicit-decision receipt');
+UPDATE e01_state SET value=jsonb_build_array((value->0)||'{"field":"legalName","sourceDecision":"override"}'::jsonb) WHERE name='facts';
+UPDATE e01_state SET value=pg_temp.e01_stage('e0100400-0000-4000-8000-000000000008') WHERE name='proposal';
+SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_save('e0100400-0000-4000-8000-000000000008','e0100500-0000-4000-8000-000000000008','["legalName"]')$$),'42501','explicit override decision grants Admin no protected legal identity authority');
+RESET ROLE;
+SELECT is((SELECT count(*)::integer FROM public.paige_audit_log WHERE tenant_id='e0100200-0000-4000-8000-000000000001' AND action='solo_setup.reviewed_facts_approved'),3,'missing/adopt/protected refusals produce no extra receipt');
+UPDATE public.tenant_setup_private_context SET private_brief=private_brief||'{"address":"Private connection before"}',
+ setup_provenance=setup_provenance||'{"address":{"source":"connection_sourced","confidence":"observed"}}'
+ WHERE tenant_id='e0100200-0000-4000-8000-000000000001';
+UPDATE e01_state SET value=jsonb_build_array((pg_temp.e01_facts()->0)||'{"field":"address"}'::jsonb) WHERE name='facts';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000001');
+UPDATE e01_state SET value=pg_temp.e01_stage('e0100400-0000-4000-8000-000000000009') WHERE name='proposal';
+SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_save('e0100400-0000-4000-8000-000000000009','e0100500-0000-4000-8000-000000000009','["address"]')$$),'22023','private connection-sourced address also requires its own explicit override');
+UPDATE e01_state SET value=jsonb_set(value,'{0,sourceDecision}','"override"') WHERE name='facts';
+UPDATE e01_state SET value=pg_temp.e01_stage('e0100400-0000-4000-8000-000000000010') WHERE name='proposal';
+SELECT is(pg_temp.e01_save('e0100400-0000-4000-8000-000000000010','e0100500-0000-4000-8000-000000000010','["address"]')->>'current','true','Owner explicit private-field override reaches original private writer with readback');
+SELECT is(public.get_solo_business_context()->'brief'->>'address','Advisory','actual private address getter confirms selected value');
+RESET ROLE;
+SELECT is((SELECT setup_provenance#>>'{address,source}' FROM public.tenant_setup_private_context WHERE tenant_id='e0100200-0000-4000-8000-000000000001'),'owner_confirmed','private override retains original private provenance boundary');
 SELECT is((SELECT count(*)::integer FROM e01_original_functions b JOIN pg_proc p USING(oid)
  WHERE b.definition IS DISTINCT FROM md5(pg_get_functiondef(p.oid)) OR b.proowner<>p.proowner
  OR b.proconfig IS DISTINCT FROM p.proconfig OR b.proacl IS DISTINCT FROM p.proacl),0,'full flow retains every original Setup function and ACL');

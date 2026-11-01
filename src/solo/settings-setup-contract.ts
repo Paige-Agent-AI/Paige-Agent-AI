@@ -17,6 +17,8 @@ export type ReviewedSetupFact = {
   value: string;
   reference: { contractVersion: 1; tenantId: string; documentId: string; revision: number; contentSha256: string };
   excerpts: { start: number; end: number; text: string }[];
+  /** Explicit original provenance choice; source review alone never overrides it. */
+  sourceDecision?: SetupSourceDecision;
 };
 export type ReviewedSetupSelection = {
   schemaVersion: 1;
@@ -47,7 +49,10 @@ export function parseReviewedSetupSelection(input: unknown): ReviewedSetupSelect
   const fields = new Set<string>();
   let units = 0;
   for (const fact of input.facts) {
-    if (!exact(fact, ["field", "value", "reference", "excerpts"])
+    const keys = ["field", "value", "reference", "excerpts"];
+    if (record(fact) && Object.prototype.hasOwnProperty.call(fact, "sourceDecision")) keys.push("sourceDecision");
+    if (!exact(fact, keys)
+      || ("sourceDecision" in fact && fact.sourceDecision !== "adopt" && fact.sourceDecision !== "override")
       || typeof fact.field !== "string" || !REVIEWED_SETUP_FACT_FIELDS.includes(fact.field as ReviewedSetupFactField)
       || fields.has(fact.field) || typeof fact.value !== "string" || !fact.value || fact.value !== fact.value.trim()
       || fact.value.length > 4000 || !exact(fact.reference, ["contractVersion", "tenantId", "documentId", "revision", "contentSha256"])

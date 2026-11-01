@@ -32,6 +32,19 @@ test('explicit stage never approves; explicit selected save uses original ABI an
 test('approval requires completed native review and does not infer approval from source input',async()=>{
  const f=fixture();await assert.rejects(f.handle().approve(requestId,['offers']),code('REVIEW_REQUIRED'));assert.equal(f.calls.length,0);
 });
+for(const sourceDecision of ['adopt','override'])test(`original ${sourceDecision} decision is bound to stage and authoritative receipt`,async()=>{
+ const f=fixture();f.selection.facts[0].sourceDecision=sourceDecision;f.receipt.selectedFacts[0].sourceDecision=sourceDecision;
+ const h=f.handle();await h.stage();const r=await h.approve(requestId,['offers']);
+ assert.equal(f.calls[0].args._facts[0].sourceDecision,sourceDecision);
+ assert.equal(r.receipt.selectedFacts[0].sourceDecision,sourceDecision);
+ assert.equal('_sourceDecisions' in f.calls[1].args,false,'save cannot inject a different decision map');
+});
+test('changed source decision in authoritative receipt is UNKNOWN, never a repeat save',async()=>{
+ const f=fixture();f.selection.facts[0].sourceDecision='override';f.receipt.selectedFacts[0].sourceDecision='adopt';
+ const h=f.handle();await h.stage();await assert.rejects(h.approve(requestId,['offers']),e=>e.code==='READBACK_MISMATCH'&&e.mayHaveSaved&&e.requestId===requestId);
+ await assert.rejects(h.approve(requestId,['offers']),code('INSPECTION_REQUIRED'));
+ assert.equal(f.calls.filter(c=>c.name.startsWith('save_')).length,1);
+});
 test('capture before first await detaches mutable source and selected fields',async()=>{
  const f=fixture(),h=f.handle();f.selection.facts[0].value='Tampered';
  // Native fixture must return the originally captured selection, not mutated host input.

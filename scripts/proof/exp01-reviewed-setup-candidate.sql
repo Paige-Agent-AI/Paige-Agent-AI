@@ -48,10 +48,10 @@ DECLARE expected record; f record; installed integer:=0;
 BEGIN
  FOR expected IN SELECT * FROM (VALUES
   ('public.lock_solo_reviewed_setup_scope(uuid,uuid)','cfd3332240798913d006d58f31f2f54e',false,ARRAY[]::text[]),
-  ('public.lock_solo_reviewed_setup_facts(uuid,uuid,jsonb)','1eecbdbfdb90cc85f4633a5a18934915',false,ARRAY[]::text[]),
+  ('public.lock_solo_reviewed_setup_facts(uuid,uuid,jsonb)','c457ff083335ebf09cde5483aa983812',false,ARRAY[]::text[]),
   ('public.stage_solo_reviewed_business_facts(uuid,uuid,uuid,text,bigint,jsonb)','9bbd60edf98a4517bd09fed190b004b8',true,ARRAY['authenticated']::text[]),
   ('public.inspect_solo_reviewed_business_facts(uuid,uuid,uuid)','baf098fd4fc9fe690f91e44e979628f0',true,ARRAY['authenticated']::text[]),
-  ('public.save_solo_reviewed_business_facts(uuid,uuid,uuid,uuid,text,bigint,jsonb,text)','3fb4d22cf1d95c7d952ec6ddd154882e',true,ARRAY['authenticated']::text[])
+  ('public.save_solo_reviewed_business_facts(uuid,uuid,uuid,uuid,text,bigint,jsonb,text)','3d6285cf1b28baca8dcbc38764a3fc54',true,ARRAY['authenticated']::text[])
  ) v(signature,body_hash,definer,grantees) LOOP
   SELECT * INTO f FROM pg_proc WHERE oid=to_regprocedure(expected.signature);
   IF NOT FOUND THEN CONTINUE; END IF;
@@ -144,7 +144,10 @@ BEGIN
  -- Deterministic source lock order for selections spanning multiple documents.
  FOR fact IN SELECT value FROM jsonb_array_elements(p_facts) ORDER BY value->'reference'->>'documentId',value->>'field' LOOP
   IF jsonb_typeof(fact)<>'object' OR NOT(fact ?& ARRAY['field','value','reference','excerpts'])
-   OR (SELECT count(*) FROM jsonb_object_keys(fact))<>4 OR jsonb_typeof(fact->'field') IS DISTINCT FROM 'string'
+   OR EXISTS(SELECT 1 FROM jsonb_object_keys(fact) key WHERE key<>ALL(ARRAY['field','value','reference','excerpts','sourceDecision']))
+   OR (fact ? 'sourceDecision' AND (jsonb_typeof(fact->'sourceDecision') IS DISTINCT FROM 'string'
+     OR coalesce(fact->>'sourceDecision','') NOT IN ('adopt','override')))
+   OR jsonb_typeof(fact->'field') IS DISTINCT FROM 'string'
    OR NOT((fact->>'field')=ANY(allowed))
    OR jsonb_typeof(fact->'value') IS DISTINCT FROM 'string' OR char_length(fact->>'value') NOT BETWEEN 1 AND 4000
    OR fact->>'value' IS DISTINCT FROM btrim(fact->>'value')
@@ -265,9 +268,15 @@ BEGIN
  IF selected IS NULL OR jsonb_array_length(selected)<>jsonb_array_length(fields) THEN
   RAISE EXCEPTION 'SETUP_REVIEW_SELECTION_CHANGED' USING ERRCODE='40001'; END IF;
  selected:=public.lock_solo_reviewed_setup_facts(_expected_tenant_id,auth.uid(),selected);
- brief:=context->'brief';
+ -- Never inherit a generic decision map from a readback/client. Only explicit
+ -- decisions bound to the selected immutable staged facts reach the old writer.
+ brief:=(context->'brief')-'sourceDecisions';
  FOR fact IN SELECT value FROM jsonb_array_elements(selected) LOOP
   brief:=jsonb_set(brief,ARRAY[fact->>'field'],fact->'value',true);
+  IF fact ? 'sourceDecision' THEN
+   brief:=jsonb_set(brief,'{sourceDecisions}',coalesce(brief->'sourceDecisions','{}'::jsonb)
+    ||jsonb_build_object(fact->>'field',fact->'sourceDecision'),true);
+  END IF;
  END LOOP;
  -- Sole original writer; no paige-write-back, no no-CAS branch, no owner-list
  -- reconstruction and no inference of legal identity/Memory/Work approval.

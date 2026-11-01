@@ -22,7 +22,18 @@ test('original UTF16 source offsets retain supplementary characters',()=>{
   const s=selection();s.facts[0].excerpts=[{start:3,end:5,text:'🌱'}];
   assert.deepEqual(parseReviewedSetupSelection(s).facts[0].excerpts,s.facts[0].excerpts);
 });
+for(const sourceDecision of ['adopt','override'])test(`explicit original ${sourceDecision} decision is captured without inferring it`,()=>{
+  const s=selection();s.facts[0].sourceDecision=sourceDecision;
+  const captured=parseReviewedSetupSelection(s);
+  s.facts[0].sourceDecision='changed';
+  assert.equal(captured.facts[0].sourceDecision,sourceDecision);
+  assert.equal('sourceDecision' in parseReviewedSetupSelection(selection()).facts[0],false);
+});
 const hostile={
+  'generic override flag':s=>{s.facts[0].override=true;},
+  'boolean source decision':s=>{s.facts[0].sourceDecision=true;},
+  'null source decision':s=>{s.facts[0].sourceDecision=null;},
+  'invented source decision':s=>{s.facts[0].sourceDecision='approve';},
   'foreign workspace source':s=>{s.facts[0].reference.tenantId=actorId;},
   'client approval flag':s=>{s.approved=true;},
   'source authority injection':s=>{s.facts[0].reference.approved=true;},

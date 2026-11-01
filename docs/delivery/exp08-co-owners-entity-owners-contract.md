@@ -3450,3 +3450,22 @@ permission32 AND new atomic16 steps SUCCESS; whole database/verify still running
 at this checkpoint. Its source release is not activation of this next read-state
 RPC. E01 recipient/zero-seat/broader bell host and full native/schema/role/customer
 read/reload/reconcile proof remain required. Full18+6/five journeys STILL CODING.
+
+
+### Personal notice stored-state readback follow-up
+
+Own sequential source review added an AFTER-trigger timestamp counterexample.
+The unreleased RETURNING-based receipt failed against the actual stored timestamp
+(exp08-notice-state-after-trigger-before.log, terminal exit1). The fix revalidates
+original personal eligibility after UPDATE and then reads the actual stored row
+while original locks remain held; actor, notice, requested state and timestamp
+consistency must all agree before a receipt. No authority or source guard waived.
+The SAME original full ported runner subsequently exited0:230cases ALL PASS,
+including18own and3observed native waits. Exact final log
+exp08-notice-state-after-trigger-final.log SHA256
+ d08021b8bc328beb59e08317c1f9ea7495c4e1ea0281c453541be0415b2d75d4.
+Earlier229/17 remains historical evidence. Client96 and bounded TypeScript
+unchanged; owning proof lint and diff check exit0. This is isolated SQL-role
+engineering proof, not full-schema, genuine Auth or production acceptance.
+Source remains unpublished/unversioned/unmounted. Whole original Team Hub remains
+STILL CODING; original3200 release checks and downstream host contracts separate.

@@ -33,3 +33,14 @@ Exact raw logs are retained in the local work packet: exp08-notice-read-state-th
 exp08-notice-state-client-before.log, exp08-notice-state-context-before.log,
 exp08-notice-state-client-final.log and exp08-notice-state-client-tsc.log.
 The original co-owner contract records final counts and failure dispositions.
+
+
+Follow-up source review reproduced a stale timestamp receipt after AFTER-trigger
+work, then repaired final actual stored-row readback. The original full ported
+runner now exits0 with230cases,18own and3observed native waits, all passing.
+Previous229/17 counts above describe the earlier checkpoint, not this new case.
+Counterexample and final logs: exp08-notice-state-after-trigger-before.log and
+exp08-notice-state-after-trigger-final.log (SHA256
+d08021b8bc328beb59e08317c1f9ea7495c4e1ea0281c453541be0415b2d75d4).
+Client96, bounded strict compilation and existing scope remain unchanged.
+No mounted, managed/full-schema, production or genuine customer proof added.

@@ -42,6 +42,15 @@ export async function verifyRecoveryNoticeReadState(db,{reset,tenant,actor,holde
  db.run(`UPDATE public.notifications SET is_read=true,read_at=NULL WHERE id='${id}'`);const repaired=result('true');assert(Number.isFinite(Date.parse(repaired.read_at)));assert.deepEqual(result('true'),repaired);
  db.run(`UPDATE public.notifications SET is_read=false,read_at=now() WHERE id='${id}'`);assert.deepEqual(result('false'),{notification_id:id,is_read:false,read_at:null});
  cases.push({case:'legacy inconsistent read timestamp heals once then reconciles without duplicate writes',passed:true});
+ id=prepare();
+ db.run(`CREATE FUNCTION proof.notice_after_read_timestamp() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN
+  IF pg_trigger_depth()=1 AND NEW.is_read THEN UPDATE public.notifications SET read_at=NEW.read_at+interval '1 minute' WHERE id=NEW.id;END IF;RETURN NEW;END$$;
+ CREATE TRIGGER fixture_notice_after_read_timestamp AFTER UPDATE OF is_read ON public.notifications FOR EACH ROW EXECUTE FUNCTION proof.notice_after_read_timestamp();`);
+ const triggered=result('true');
+ assert.equal(triggered.read_at,JSON.parse(scalar(`SELECT to_json(read_at) FROM public.notifications WHERE id='${id}'`)),'Receipt must read actual stored timestamp after AFTER triggers, not an earlier RETURNING row');
+ db.run('DROP TRIGGER fixture_notice_after_read_timestamp ON public.notifications;DROP FUNCTION proof.notice_after_read_timestamp();');
+ cases.push({case:'receipt reads the actual stored read timestamp after original notification AFTER-trigger work',passed:true});
+
  for(const [name,change,who]of [
   ['ban',`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${holder}'`,holder],
   ['soft deletion',`UPDATE auth.users SET deleted_at=now() WHERE id='${holder}'`,holder],

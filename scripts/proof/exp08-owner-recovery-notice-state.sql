@@ -20,14 +20,14 @@ BEGIN
    read_at=CASE WHEN _is_read THEN clock_timestamp() ELSE NULL END
   WHERE id=_notice AND user_id=actor AND
    (is_read IS DISTINCT FROM _is_read OR (_is_read AND read_at IS NULL) OR (NOT _is_read AND read_at IS NOT NULL))
-  RETURNING * INTO n;
- IF NOT FOUND THEN
-  SELECT * INTO n FROM public.notifications WHERE id=_notice AND user_id=actor;
-  IF NOT FOUND THEN RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_STATE_UNKNOWN' USING ERRCODE='40001'; END IF;
- END IF;
+ ;
  verified:=public._exp08_read_my_recovery_notice(_notice);
- IF actor IS DISTINCT FROM auth.uid() OR verified->>'notification_id' IS DISTINCT FROM _notice::text
-  OR (verified->>'is_read')::boolean IS DISTINCT FROM _is_read OR n.is_read IS DISTINCT FROM _is_read THEN
+ -- RETURNING predates AFTER-trigger work. Read the actual stored state while
+ -- the original eligibility/recipient locks are still held.
+ SELECT * INTO n FROM public.notifications WHERE id=_notice AND user_id=actor;
+ IF NOT FOUND OR actor IS DISTINCT FROM auth.uid() OR verified->>'notification_id' IS DISTINCT FROM _notice::text
+  OR (verified->>'is_read')::boolean IS DISTINCT FROM _is_read OR n.is_read IS DISTINCT FROM _is_read
+  OR (_is_read AND n.read_at IS NULL) OR (NOT _is_read AND n.read_at IS NOT NULL) THEN
   RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_STATE_UNKNOWN' USING ERRCODE='40001';
  END IF;
  RETURN jsonb_build_object('notification_id',n.id,'is_read',n.is_read,'read_at',n.read_at);

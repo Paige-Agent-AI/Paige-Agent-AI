@@ -1,4 +1,44 @@
-# EXP13 original reviewed Memory client — local integration
+# EXP13 original reviewed Memory client
+
+## November 1 release-candidate checkpoint
+
+PARTIAL / UNMOUNTED SOURCE. The original native reviewed Memory prerequisite is
+now technically released: PR3169 merged at
+`3eeb5ba5d54445090f0c4236ff7b62df39bbf92f`, migration `20271126180013`
+applied once through the normal release pipeline. Production function bodies,
+defaults, volatility, search paths and ACLs matched the actual premerge managed
+readback; exact web deployment and both official public entry points were
+verified. Original release receipt: PR3169 comment6553509101. This is producer
+release evidence, not a customer Memory save or consumer mounting result.
+
+This cut reuses only the original three-file client contribution from
+`a1967f4627a6df238797d7fb7cd3c43067f197d0` and its bounded review repairs;
+older candidate migrations and unrelated branch history are excluded. Existing
+`usePaigeMemory` session/client-memory behavior and all Chat, Setup, Mission,
+Work and authority producers remain owned by their original integrations.
+
+The installed Supabase SDK now runs against a synthetic fetch receiver in the
+owning test: it serializes the original nine-argument writer, then five-argument
+authoritative reader, with the ordinary-user token and no service-role path.
+This performs no real authentication, network request or provider effect.
+Additional controls cover selected predecessor CAS/readback, permission loss
+after a possible save, source change/unavailability, contradictory errors and
+late save/retirement acknowledgements after scope departure. No automatic
+replay or legacy fallback is introduced.
+
+Current focused result: 31 reviewed-client controls plus 19 original context
+controls, 50 PASS. Before repair, strict compilation using the actual project
+ES2020 options reported two owned diagnostics: unsupported `Object.hasOwn`
+and an incorrectly inferred zero-argument test mock. The equivalent incumbent
+own-property check and explicit mock port parameters resolve both; same project
+options plus strict checking report zero owned diagnostics. Focused lint and
+diff checks PASS. This is an isolated owned-file check, not whole-app strict
+clearance. Earlier broader-ES-library proof below is retained as historical.
+Fresh non-author review, exact-head hosted CI, release and actual consumer
+integration/readback/reopen remain owed. The joined agreement-to-working-plan
+experience is NOT READY; the full original EXP13 assignment remains active.
+
+## Earlier local development evidence (preserved)
 
 Status: PARTIAL / LOCAL ONLY. Same primary FLOW:KNOWLEDGE. Not mounted,
 published, deployed, authenticated customer proof, or agreement-to-Work readiness.

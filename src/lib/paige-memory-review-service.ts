@@ -42,7 +42,7 @@ function sourceReference(v: unknown, tenant: string): boolean {
 }
 function sameObject(a: unknown, b: unknown): boolean {
   if (object(a) && object(b)) return Object.keys(a).length === Object.keys(b).length
-    && Object.keys(a).every(key => Object.hasOwn(b, key) && sameObject(a[key], b[key]));
+    && Object.keys(a).every(key => Object.prototype.hasOwnProperty.call(b, key) && sameObject(a[key], b[key]));
   return a === b;
 }
 

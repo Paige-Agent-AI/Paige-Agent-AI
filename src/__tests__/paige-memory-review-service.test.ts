@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
+import { createClient } from '@supabase/supabase-js';
 import { forgetReviewedPaigeMemory, inspectReviewedPaigeMemory, saveReviewedPaigeMemory } from '../lib/paige-memory-review-service';
 
 const actorId = '10000000-0000-4000-8000-000000000001';
@@ -20,9 +21,85 @@ function stored(sourceState = 'current') {
 const scope = () => ({ actorId, tenantId, isCurrent: () => true });
 const client = (data: unknown, error: unknown = null) => ({
   getScope: vi.fn(async () => ({ actorId, tenantId })),
-  rpc: vi.fn(async () => ({ data, error })),
+  rpc: vi.fn(async (_name: string, _args: Record<string, unknown>) => ({ data, error })),
 });
 describe('original reviewed Memory inspection', () => {
+  it('uses the installed SDK receiver for the reviewed writer and authoritative reader', async () => {
+    const calls: { name: string; args: Record<string, unknown> }[] = [];
+    const sdk = createClient('https://memory-fixture.invalid', 'synthetic-anon-key', {
+      accessToken: async () => 'synthetic-ordinary-user-jwt',
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      global: { fetch: async (input, init) => {
+        const url = new URL(String(input));
+        expect(url.origin).toBe('https://memory-fixture.invalid');
+        expect(url.pathname).toMatch(/^\/rest\/v1\/rpc\/(record|get)_paige_memory$/);
+        expect(new Headers(init?.headers).get('authorization')).toBe('Bearer synthetic-ordinary-user-jwt');
+        const name = url.pathname.split('/').pop()!;
+        calls.push({ name, args: JSON.parse(String(init?.body)) });
+        return new Response(JSON.stringify(name === 'record_paige_memory' ? actorId : stored()), {
+          status: 200, headers: { 'Content-Type': 'application/json' },
+        });
+      } },
+    });
+    const port = { getScope: async () => ({ actorId, tenantId }), rpc: (name: string, args: Record<string, unknown>) => sdk.rpc(name, args) };
+    await expect(saveReviewedPaigeMemory(port, scope(), selection())).resolves.toMatchObject({ memoryId: actorId, eligibleForContext: true });
+    expect(calls.map(call => call.name)).toEqual(['record_paige_memory', 'get_paige_memory']);
+    expect(Object.keys(calls[0].args)).toHaveLength(9);
+    expect(calls[0].args).toMatchObject({ p_user_id: null, p_tenant_id: null, p_confirmation_state: 'confirmed',
+      p_review: { expected_actor: actorId, expected_tenant: tenantId, intent_id: intentId } });
+    expect(Object.keys(calls[1].args)).toHaveLength(5);
+  });
+  it('preserves the exact selected correction version and verifies the stored correction', async () => {
+    const supersedes = { memoryId: tenantId, updatedAt: '2026-10-31T01:00:00.123456Z' };
+    const row = stored();
+    Object.assign(row.memory.metadata.reviewed_save, { supersedes: { memory_id: supersedes.memoryId, updated_at: supersedes.updatedAt } });
+    const port = client(row);
+    port.rpc.mockImplementationOnce(async () => ({ data: actorId, error: null }));
+    await saveReviewedPaigeMemory(port, scope(), { ...selection(), supersedes });
+    expect(port.rpc).toHaveBeenNthCalledWith(1, 'record_paige_memory', expect.objectContaining({ p_supersede_prior: true,
+      p_review: expect.objectContaining({ supersedes: { memory_id: tenantId, updated_at: supersedes.updatedAt } }) }));
+  });
+  it('refuses a correction readback which omits the selected predecessor', async () => {
+    const port = client(stored());
+    port.rpc.mockImplementationOnce(async () => ({ data: actorId, error: null }));
+    await expect(saveReviewedPaigeMemory(port, scope(), { ...selection(),
+      supersedes: { memoryId: tenantId, updatedAt: '2026-10-31T01:00:00.123456Z' },
+    })).rejects.toMatchObject({ code: 'READBACK_MISMATCH', mutationMayHavePersisted: true, intentId });
+    expect(port.rpc).toHaveBeenCalledTimes(2);
+  });
+  it.each(['changed', 'unavailable'])('verifies saved persistence without using a now %s source as current context', async state => {
+    const port = client(stored(state));
+    port.rpc.mockImplementationOnce(async () => ({ data: actorId, error: null }));
+    await expect(saveReviewedPaigeMemory(port, scope(), selection())).resolves.toMatchObject({
+      status: 'present', sourceState: state, eligibleForContext: false,
+    });
+    expect(port.rpc).toHaveBeenCalledTimes(2);
+  });
+  it('does not repeat a save when permission is lost before its authoritative readback', async () => {
+    const port = client(null, { code: '42501' });
+    port.rpc.mockImplementationOnce(async () => ({ data: actorId, error: null }));
+    await expect(saveReviewedPaigeMemory(port, scope(), selection())).rejects.toMatchObject({
+      code: 'READ_FAILED', mutationMayHavePersisted: true, intentId,
+    });
+    expect(port.rpc.mock.calls.map(call => call[0])).toEqual(['record_paige_memory', 'get_paige_memory']);
+  });
+  it.each(['save', 'forget'])('withholds a late %s acknowledgement after scope departure without repeating it', async action => {
+    let active = true;
+    const port = client(null);
+    port.rpc.mockImplementationOnce(async () => { active = false; return { data: actorId, error: null }; });
+    const captured = { ...scope(), isCurrent: () => active };
+    const result = action === 'save' ? saveReviewedPaigeMemory(port, captured, selection())
+      : forgetReviewedPaigeMemory(port, captured, { memoryId: actorId, updatedAt: '2026-10-31T01:00:00.123456Z' });
+    await expect(result).rejects.toMatchObject({ code: 'SCOPE_CHANGED', mutationMayHavePersisted: true });
+    expect(port.rpc).toHaveBeenCalledTimes(1);
+  });
+  it('does not reinterpret contradictory save data and a missing-function error as no effect', async () => {
+    const port = client(actorId, { code: 'PGRST202' });
+    await expect(saveReviewedPaigeMemory(port, scope(), selection())).rejects.toMatchObject({
+      code: 'SAVE_UNKNOWN', mutationMayHavePersisted: true, intentId,
+    });
+    expect(port.rpc).toHaveBeenCalledTimes(1);
+  });
   it.each(['PGRST202', '42883'])('reports unavailable save contract %s without claiming an uncertain write', async code => {
     const port = client(null, { code });
     await expect(saveReviewedPaigeMemory(port, scope(), selection())).rejects.toMatchObject({

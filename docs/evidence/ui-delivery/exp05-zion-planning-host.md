@@ -32,7 +32,7 @@ MUST_PRESERVE: Original MENTOR/NEXUS/MERIT/CURA/E08 spans, approved identities/p
 ACCEPTANCE_CRITERIA: On a reviewed native-compatible release, authorized owner/admin obtains genuine plans, correct original publication/receipt and later retrieval; member/foreign/channel/revoke/unknown negatives deny without leak or duplicate. Equivalent existing/new SOLO and both chats must be verified before full Experience acceptance.
 MOTION_PURPOSE: NONE: no motion or interaction layout changes.
 PROTECTED_SEAMS: Original domain definition/executor/caller JWT preserved. E05 owns the returned finite native Planning source/guard/stage/history/Search hunks under E04 handback/E08 ACK; original public post/list/serializer/ACL remain exact. Recording-port/disposable SQL proof is separate from actual managed/native/Auth/customer proof. Root/card/Calendar/other writers and personalities unchanged.
-INTERNAL_BUILD_IDENTITY: commit=044e3ef9aac9e2736d75e43a219a25a62391a23b; main=55dcbc2c88b45fbe23aa2e218077bfbd90ce3a1d; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(original27000005+27010005 applied in original no-data Preview only, new27020005 fresh managed and production proof pending); edge=PROOF_OWED(actual selected paige-ai-chat runtime closure; original module import verified, final deploy certificate required); evidence=ANT11/88129ed8, ANT147/55b5835c and original native/review packets; final exact head/review/CI in original PR3087
+INTERNAL_BUILD_IDENTITY: commit=044e3ef9aac9e2736d75e43a219a25a62391a23b; main=55dcbc2c88b45fbe23aa2e218077bfbd90ce3a1d; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(original27000005+27010005 applied in original no-data Preview only, new27020005 fresh managed and production proof pending); edge=PROOF_OWED(actual selected paige-ai-chat runtime closure and final deploy certificate required); evidence=ANT11/88129ed8, ANT147/55b5835c and original native/review packets; final exact head/review/CI in original PR3087
 RELEASE_CHANNEL: development: owner-approved review branch only, not a live capability or new rollout cohort.
 RELEASE_CLASSIFICATION: internal-only: original readonly integration increment; actual E04/E08 custody/native-order dependency cleared, own final review/fresh exact-head CI and production readback remain; no customer release claim.
 CUSTOMER_RELEASE_IDENTITY: none: review branch only, no customer version assigned.
@@ -264,3 +264,7 @@ original CalendarHub integration and complete useful O01 through BOTH chats.
 Functional source repaired locally, visual render owed, experiential result/
 receipt/reload/recovery owed, founder NOT_READY/NOT_ACCEPTED. Fullten/E5/0closed
 retained; no catalogue-Live, ALG maturity, provider or recurrence promotion.
+
+The initial3c508 evidence-guard run rejected a semicolon inside its edge-state
+field. The delimiter was corrected before publication; no missing proof was
+relabelled PASS and no validation rule was changed.

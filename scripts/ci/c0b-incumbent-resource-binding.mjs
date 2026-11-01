@@ -1,3 +1,10 @@
+// EXP04 O5 native package risk reconciliation, 2026-11-01, AUTHOR-REVIEW / LOWER ASSURANCE.
+// c269 reproduces131 sources/all29 dispatches. ONE existing financial high-risk
+// row accompanies its native catalogue; exact whole classifier inverse retained.
+// Renew ONLY this reviewed action-risk digest;130 peer pins/29 fingerprints,
+// whole Root, inspector/metadata/validators/hostile checks remain unchanged.
+// Native Preview52 source/ACL contracts match; whole CI/production/Auth/provider
+// and founder acceptance stay separate. No Kit/model/Spine/tool admission.
 // EXP02 explicit credit code source8f83c9624903e91cc1803c4c6522f2e26314cb0e.
 // Separate AUTHOR-REVIEW / LOWER ASSURANCE before this single pin renewal.
 // Whole classifier inverse restores277; original131 dependencies/29 dispatches
@@ -1086,7 +1093,7 @@ const SOURCES = {
   // 2026-10-28 EXP06 hosting door: canonical delta is TWO added `high` rows
   // (growth_hosting_deploy/growth_hosting_recover) after the studio_image keys — no existing
   // row touched. Renewed with the proof's own printer (removeComments).
-  "supabase/functions/_shared/action-risk.ts": "cb0a549c4d5c8d401c16c8087b0e4d28032dedaff355f86934e2242f106a4956",
+  "supabase/functions/_shared/action-risk.ts": "4c5c2a8a959024508454156c2c5cb19937e8a0ba477d0e543ec7d058979a230a",
   "supabase/functions/_shared/finance-gate.ts": "dfa7fbec065d346ca72199313294a4418aa8be66f3dbb68cfe991a93aef0cf40",
   "supabase/functions/_shared/paige-capability-status/projection.ts": "280c36a53ed5d553f6e6467f7177d049a2c612078cdb8d8139878cec3463922f",
   "supabase/functions/_shared/paige-capability-status/readiness.ts": "56b0a8da8b1a76414a147d15bffb9b589b9bcf9e130c797290b846759e1da65e",

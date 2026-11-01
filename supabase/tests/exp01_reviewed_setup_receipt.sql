@@ -76,7 +76,10 @@ CREATE FUNCTION pg_temp.e01_save(review uuid,request uuid,fields jsonb DEFAULT '
 
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000001');
-SELECT lives_ok($$SELECT public.save_solo_setup_context('{"publicName":"Receipt Proof A","legalName":"Receipt Proof LLC","offers":"Before"}','[]',NULL,NULL)$$,'ordinary original owner Setup save remains available');
+SELECT lives_ok($$SELECT public.save_solo_setup_context('{"publicName":"Receipt Proof A","legalName":"Receipt Proof LLC","offers":"Before"}',
+ '[{"id":"e0100600-0000-4000-8000-000000000001","ownerKind":"individual","legalName":"Fixture Legal Owner","ownershipInterest":"50","status":"active","representativeUserId":"e0100100-0000-4000-8000-000000000001"},
+   {"id":"e0100600-0000-4000-8000-000000000002","ownerKind":"company","legalName":"Fixture Vacant Owner","ownershipInterest":"50","status":"active"}]',NULL,NULL)$$,'ordinary original owner Setup save remains available with representative and vacant ownership facts');
+INSERT INTO e01_state VALUES('original_owners',public.get_solo_business_context()->'businessOwners');
 SELECT is(public.get_solo_business_context()->'brief'->>'offers','Before','actual getter reads the original stored brief');
 SELECT is(pg_temp.e01_error($$INSERT INTO public.paige_audit_log(actor_user_id,actor_role,action,target_type,target_id,tenant_id,payload)
  VALUES(auth.uid(),'owner','solo_setup.reviewed_facts_approved','solo_business_brief','e0100200-0000-4000-8000-000000000001','e0100200-0000-4000-8000-000000000001','{}')$$),'42501','browser cannot manufacture an original approval audit event');
@@ -99,6 +102,7 @@ SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_save('e0100400-0000-4000-8000-0
 INSERT INTO e01_state VALUES('saved',pg_temp.e01_save('e0100400-0000-4000-8000-000000000002','e0100500-0000-4000-8000-000000000001'));
 SELECT is((SELECT value->>'current' FROM e01_state WHERE name='saved'),'true','actual owner save returns a current original receipt');
 SELECT is(public.get_solo_business_context()->'brief'->>'offers','Advisory','actual original getter verifies saved selected value');
+SELECT is(public.get_solo_business_context()->'businessOwners',(SELECT value FROM e01_state WHERE name='original_owners'),'Owner receipt preserves the exact original ownership list and provenance');
 SELECT is(pg_temp.e01_save('e0100400-0000-4000-8000-000000000002','e0100500-0000-4000-8000-000000000001')->>'receiptId',
  (SELECT value->>'receiptId' FROM e01_state WHERE name='saved'),'same-request replay returns the original durable receipt');
 SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_save('e0100400-0000-4000-8000-000000000002','e0100500-0000-4000-8000-000000000001','["industry"]')$$),'40001','same request cannot be reused with changed selected fields');
@@ -112,6 +116,7 @@ SELECT is(public.get_solo_setup_context()->>'accessScope','admin_operational','a
 UPDATE e01_state SET value=pg_temp.e01_stage('e0100400-0000-4000-8000-000000000003') WHERE name='proposal';
 SELECT is(pg_temp.e01_save('e0100400-0000-4000-8000-000000000003','e0100500-0000-4000-8000-000000000003')->>'current','true','authorized Admin explicitly saves selected operational facts through original writer');
 SELECT is(public.get_solo_business_context()->'brief'->>'legalName','Receipt Proof LLC','Admin operational receipt preserves legal identity');
+SELECT is(public.get_solo_business_context()->'businessOwners',(SELECT value FROM e01_state WHERE name='original_owners'),'Admin receipt passes the exact original ownership list through the original authority check');
 SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000003');
 SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_stage(gen_random_uuid())$$),'42501','unassigned ordinary member cannot infer Setup authority from source access');
 SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000004');

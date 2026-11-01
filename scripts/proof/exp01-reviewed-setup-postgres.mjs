@@ -150,11 +150,40 @@ try{
  assert.equal(scalar('SELECT revision FROM tenant_setup_business_context_meta'),'2');checks++;
  const secondRows=secondOut.trim().split(/\r?\n/).filter(line=>line.startsWith('{'));
  assert.equal(secondRows.length,1);assert.equal(JSON.parse(secondRows[0]).current,true);checks++;
+ db.run('UPDATE tenant_knowledge_docs SET revision=2');
+ assert.equal(JSON.parse(scalar(caller+inspect.replace(request,request2))).reason,'source_unavailable_or_changed');checks++;
+ db.run('UPDATE tenant_knowledge_docs SET revision=1');
+ // An original manual Setup save wins its own transaction before a staged
+ // approval proceeds. The receipt must wait, then refuse its now-stale CAS.
+ const c=JSON.parse(scalar(caller+'SELECT public.get_solo_business_context()'));
+ const review3='30000000-0000-4000-8000-000000000003',request3='50000000-0000-4000-8000-000000000003';
+ const stage3=stage.replace(review,review3).replace('2026-11-01T12:00:00.123456Z',c.brief.updatedAt).replace(',0,',',2,');
+ const save3=save.replace(review,review3).replace(request,request3).replace('2026-11-01T12:00:00.123456Z',c.brief.updatedAt).replace(',0,',',2,');
+ db.run(caller+stage3);
+ const literal=v=>"'"+JSON.stringify(v).replaceAll("'","''")+"'::jsonb";
+ const manual=`SELECT public.save_solo_setup_context(${literal({...c.brief,offers:'Manual current'})},${literal(c.businessOwners)},'${c.brief.updatedAt}',NULL)`;
+ const manualHeld=await db.holdArchive(caller+manual,[],{manualRelease:true});
+ const stale=spawn(db.psql,db.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});let staleErr='';
+ stale.stderr.on('data',b=>{staleErr+=b;});stale.stdout.resume();
+ const staleDone=new Promise((resolve,reject)=>{stale.on('error',reject);stale.on('close',resolve);});
+ stale.stdin.end(`SET application_name='exp01_receipt_after_manual';${caller}${save3};`);
+ try {
+  const deadline=Date.now()+5000;let blocked=false;
+  while(Date.now()<deadline){
+   blocked=scalar("SELECT count(*) FROM pg_stat_activity WHERE application_name='exp01_receipt_after_manual' AND cardinality(pg_blocking_pids(pid))>0")==='1';
+   if(blocked)break;await new Promise(r=>setTimeout(r,30));
+  }
+  assert.ok(blocked,'receipt actually waits behind original manual writer');checks++;
+ } finally {manualHeld.release();await manualHeld.completed;}
+ assert.notEqual(await staleDone,0);assert.match(staleErr,/SETUP_REVIEW_CONFLICT/);checks++;
+ assert.equal(scalar("SELECT brand#>>'{business_brief,offers}' FROM tenants"),'Manual current');checks++;
+ assert.equal(scalar(`SELECT count(*) FROM paige_audit_log WHERE action='solo_setup.reviewed_facts_approved' AND payload->>'requestId'='${request3}'`),'0');checks++;
+ assert.equal(JSON.parse(scalar(caller+inspect.replace(request,request2))).reason,'setup_changed');checks++;
  denied(caller+save.replace('setup_business_facts','execute_work'),/SETUP_REVIEW_INVALID/);
  denied(caller+save.replace("'[\"offers\"]'","'[\"offers\",\"offers\"]'"),/SETUP_REVIEW_INVALID/);
  db.run('UPDATE tenant_knowledge_docs SET revision=2');
  const changed=JSON.parse(scalar(caller+inspect.replace(request,request2)));
- assert.equal(changed.current,false);assert.equal(changed.reason,'source_unavailable_or_changed');checks++;
+ assert.equal(changed.current,false);assert.equal(changed.reason,'setup_changed');checks++;
  db.run('UPDATE tenant_members SET status=\'suspended\'');denied(caller+inspect,/SCOPE_CHANGED|AUTHORITY_REQUIRED/);
  db.run('UPDATE tenant_members SET status=\'active\';UPDATE profiles SET active_tenant_id=gen_random_uuid()');
  assert.throws(()=>db.run(caller+inspect),error=>error.code==='40001' && /active workspace changed/.test(error.message));checks++;

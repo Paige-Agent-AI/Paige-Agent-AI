@@ -13,6 +13,12 @@ function body(sql){
  assert.ok(sql.search(begin)<sql.search(end),'original transaction order');
  return sql.replace(begin,'-- Original outer BEGIN supplied by rollback-only proof').replace(end,'-- Original COMMIT suppressed inside rollback-only proof');
 }
+// A shallow Actions checkout does not contain this original unmerged source.
+// Fetch only its immutable object; never choose a moving branch or apply it.
+if(spawnSync('git',['cat-file','-e',`${originalSourceRef}^{commit}`],{stdio:'ignore'}).status!==0){
+ const fetch=spawnSync('git',['fetch','--no-tags','--depth=1','origin',originalSourceRef],{encoding:'utf8',timeout:60000});
+ if(fetch.status!==0)throw Error('Pinned original E13 source fetch failed; no substitution');
+}
 const source=spawnSync('git',['show',`${originalSourceRef}:${sourcePath}`],{encoding:'utf8',maxBuffer:1024*1024});
 if(source.status!==0)throw Error('Pinned original E13 source object unavailable; do not substitute a helper or bypass the dependency guard');
 const candidate=body(read('scripts/proof/exp01-reviewed-setup-candidate.sql'));

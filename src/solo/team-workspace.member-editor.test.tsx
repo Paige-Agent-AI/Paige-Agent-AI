@@ -257,6 +257,23 @@ describe("original work-profile unknown and current-context recovery",()=>{
     const save=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Save work details')!;
     return{host,root,saved,save,closed};
   }
+  it('refuses a throwing original context before dispatch and keeps explicit Close available',async()=>{
+    const e=await edit(()=>{throw new Error('private context detail');});await act(async()=>e.save.click());
+    expect(mocks.rpc).not.toHaveBeenCalled();expect(e.save.disabled).toBe(true);
+    expect(e.host.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.disabled).toBe(false);
+    await act(async()=>e.host.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click());expect(e.closed).toHaveBeenCalledWith(true);
+    expect(e.host.textContent).not.toContain('private context detail');await act(async()=>e.root.unmount());
+  });
+  it.each(['false','throw'])('settles a late unavailable work context %s into explicit reopen without publishing',async mode=>{
+    let live=true;let resolve!:(value:unknown)=>void;mocks.rpc.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+    const e=await edit(()=>{if(!live&&mode==='throw')throw new Error('private context detail');return live;});await act(async()=>e.save.click());live=false;
+    await act(async()=>resolve({data:{membership_id:member.membership_id,job_title:'Delivery Lead',responsibilities:member.responsibilities},error:null}));
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);expect(e.saved).not.toHaveBeenCalled();expect(mocks.success).not.toHaveBeenCalled();
+    expect(e.host.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.disabled).toBe(false);expect(e.save.disabled).toBe(true);
+    expect(e.host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.value).toBe('Delivery Lead');
+    expect(e.host.textContent).toContain('Close these details');await act(async()=>e.save.click());expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    await act(async()=>e.host.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click());expect(e.closed).toHaveBeenCalledWith(true);await act(async()=>e.root.unmount());
+  });
   it("requires reconciliation after a transport rejection and preserves the draft",async()=>{
     mocks.rpc.mockRejectedValueOnce(new Error('private backend detail'));
     const {host,root,saved,save,closed}=await edit();await act(async()=>save.click());
@@ -316,6 +333,23 @@ describe('original scoped permission change and unknown recovery',()=>{
   await act(async()=>admin.click());
   return {host,root,saved,closed,admin,confirm:()=>button(host,'Confirm access change')};
  }
+ it('refuses a throwing context while choosing permission without dispatch or a stuck Close',async()=>{
+  const e=await editor({isCurrent:()=>{throw new Error('private context detail');}});expect(e.confirm()).toBeUndefined();expect(e.admin.disabled).toBe(true);expect(mocks.rpc).not.toHaveBeenCalled();
+  expect(e.host.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.disabled).toBe(false);await act(async()=>button(e.host,'Close').click());expect(e.closed).toHaveBeenCalledWith(true);await act(async()=>e.root.unmount());
+ });
+ it('refuses a throwing context before permission confirmation',async()=>{
+  let bad=false;const e=await editor({isCurrent:()=>{if(bad)throw new Error('private context detail');return true;}});bad=true;await act(async()=>e.confirm().click());
+  expect(mocks.rpc).not.toHaveBeenCalled();expect(e.confirm().disabled).toBe(true);expect(e.admin.disabled).toBe(true);
+  await act(async()=>button(e.host,'Close').click());expect(e.closed).toHaveBeenCalledWith(true);await act(async()=>e.root.unmount());
+ });
+ it.each(['false','throw'])('settles a late unavailable permission context %s into explicit reopen without publishing',async mode=>{
+  let live=true;let resolve!:(value:unknown)=>void;mocks.rpc.mockImplementation(()=>new Promise(r=>{resolve=r;}));const e=await editor({isCurrent:()=>{if(!live&&mode==='throw')throw new Error('private context detail');return live;}});
+  await act(async()=>e.confirm().click());live=false;await act(async()=>resolve({data:{membership_id:member.membership_id,permission:'admin'},error:null}));
+  expect(mocks.rpc).toHaveBeenCalledTimes(1);expect(e.saved).not.toHaveBeenCalled();expect(mocks.success).not.toHaveBeenCalled();
+  expect(e.host.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.disabled).toBe(false);expect(e.confirm().disabled).toBe(true);expect(e.admin.disabled).toBe(true);
+  expect(e.host.textContent).toContain('Close these details');await act(async()=>e.confirm().click());expect(mocks.rpc).toHaveBeenCalledTimes(1);
+  await act(async()=>button(e.host,'Close').click());expect(e.closed).toHaveBeenCalledWith(true);await act(async()=>e.root.unmount());
+ });
  it('uses the original scoped writer and reports only verified current access',async()=>{
   mocks.rpc.mockResolvedValue({data:{membership_id:member.membership_id,permission:'admin'},error:null});
   const e=await editor();await act(async()=>e.confirm().click());

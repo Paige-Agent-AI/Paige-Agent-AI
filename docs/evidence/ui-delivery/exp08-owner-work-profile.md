@@ -252,3 +252,19 @@ alone is not a merge/deploy veto under the explicit November1 owner correction.
 Actual native5arg/4arg availability before mounting remains a functional dependency,
 not an obsolete browser hold. This local continuation is not another PR/Preview,
 new owner review, runtime/store/provider or migration. Full18+6/five journeys remain.
+
+
+### Same editor recovery repair after joined-source review
+
+Mounted failing-first tests reproduced7FAIL/26originalPASS and5uncaught callback
+errors: unavailable/throwing context could escape before dispatch or leave a
+settled dialog busy. The existing context guard now treats only literal true as
+verified, catches unavailable scope, and releases same-lifetime settlement into
+EXISTING explicit-reopen state. Close works; draft stays, no late success/parent
+callback or automatic retry; different lifetimes still withdraw without updates.
+Targeted33PASS/0uncaught and12neighbor suites230PASS terminal0, scoped6file lint0.
+Final neighboring log SHA25670422948e76f14e5c0c94c69b71e7322a7fd35f3733ab2fb0f896c07a8ace6ef;
+failing log66dbbb189f301adac73dbd2800a661420b13671c3373e8c17da5e8372539fec7.
+No writer/receipt/permission/contact/layout or prototype redesign. Earlier rendered
+frames remain historical; this exact recovery delta's live/AT/rendered proof is
+UNVERIFIED and follows safe release. No browser-only premerge hold applies.

@@ -3713,3 +3713,13 @@ remains frozen in actual native67/engineering gates. No new carrier/version/host
 activation or separate customer release. Live/browser proof follows safe release,
 not a generic premerge hold; missing installed native APIs remain real integration
 work. All original18+6/five journeys and one complete owner review remain required.
+
+
+Joined original MemberEditor recovery repair: actual7FAIL/26oldPASS/5uncaught ->
+33PASS/0uncaught, then12neighbor suites230PASS and scoped6file lint0. A throwing
+or unavailable original host validity callback refuses before dispatch and cannot
+strand saving after settlement: same lifetime enters existing explicit-reopen,
+with usable Close/retained draft/no duplicate or late success. Cross-lifetime
+withdrawal, original native effects/receipts/contact and permissions unchanged.
+Existing owner-profile evidence retains exact failure/final logs and post-release
+live proof boundary. No separate infrastructure/outcome or release/API activation.

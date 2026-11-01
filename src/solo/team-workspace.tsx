@@ -156,6 +156,9 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
   const lifetime = useRef(0);
   const currentGuard = useRef(isCurrent);
   useLayoutEffect(() => { currentGuard.current = isCurrent; });
+  // An unavailable host context is refusal, never an escaping event exception.
+  const contextIsCurrent = () => { try { return currentGuard.current() === true; } catch { return false; } };
+  const requireReopen = () => { writeInFlight.current = false; setSaving(false); setSaveNeedsReopen(true); };
   useLayoutEffect(() => { lifetime.current += 1; return () => { lifetime.current += 1; }; }, [member.membership_id, workspace.tenant_id, viewerId]);
   const errors = validateWorkProfile(title, responsibilities);
   const permission = permissionPresentation(member.permission, member.is_owner);
@@ -168,7 +171,8 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
   useBeforeUnloadGuard(dirty || contactDirty || saving || permissionDraft !== null);
 
   const save = async () => {
-    if (!canEdit || saveNeedsReopen || writeInFlight.current || !dirty || Object.keys(errors).length || !currentGuard.current()) return;
+    if (!canEdit || saveNeedsReopen || writeInFlight.current || !dirty || Object.keys(errors).length) return;
+    if (!contextIsCurrent()) { requireReopen(); return; }
     writeInFlight.current = true;
     const requestLifetime = lifetime.current;
     setSaving(true);
@@ -190,7 +194,8 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
       transportUnknown = true;
       error = { message: thrown instanceof Error ? thrown.message : "We could not reach the server, so the result of this is unknown. Reopen Team to see the current values." };
     }
-    if (requestLifetime !== lifetime.current || !currentGuard.current()) return;
+    if (requestLifetime !== lifetime.current) return;
+    if (!contextIsCurrent()) { requireReopen(); return; }
     writeInFlight.current = false;
     setSaving(false);
     if (error) {
@@ -226,10 +231,12 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
     await onSaved({ job_title: nextTitle, responsibilities: nextResponsibilities });
   };
   const changePermission = async () => {
-    if (!permissionEditable || saveNeedsReopen || writeInFlight.current || !currentGuard.current() || (permissionDraft !== "admin" && permissionDraft !== "member")) return;
+    if (!permissionEditable || saveNeedsReopen || writeInFlight.current || (permissionDraft !== "admin" && permissionDraft !== "member")) return;
+    if (!contextIsCurrent()) { requireReopen(); return; }
     const wanted = permissionDraft, membershipId = member.membership_id, tenantId = workspace.tenant_id, userId = member.user_id;
     const requestLifetime = lifetime.current;
-    const current = () => requestLifetime === lifetime.current && currentGuard.current();
+    const current = () => requestLifetime === lifetime.current && contextIsCurrent();
+    const withdraw = () => { if (requestLifetime === lifetime.current) requireReopen(); };
     writeInFlight.current = true;
     preserveDraftOnPermission.current = dirty || contactDirty;
     setSaving(true);
@@ -246,7 +253,7 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
       transportUnknown = true;
       error = {};
     }
-    if (!current()) return;
+    if (!current()) { withdraw(); return; }
     if (error) {
       const message = teamPermissionRefusal(transportUnknown ? null : error.message);
       if (transportUnknown || message.includes("Reopen Team")) setSaveNeedsReopen(true);
@@ -260,11 +267,11 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
     permissionNeedsRefresh.current = true;
     try { await onSaved(receipt); }
     catch {
-      if (!current()) return;
+      if (!current()) { withdraw(); return; }
       setSaveNeedsReopen(true); writeInFlight.current = false; setSaving(false);
       toast.error("Permission was verified. Reopen Team to see the current access."); return;
     }
-    if (!current()) return;
+    if (!current()) { withdraw(); return; }
     writeInFlight.current = false; setSaving(false); setPermissionDraft(null);
     toast.success(`${permissionPresentation(receipt.permission, false).label} access confirmed.`);
     if (!preserveDraftOnPermission.current) onClose(true);
@@ -293,7 +300,7 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
       {saveConfirmed && <div className="stw-separation-note" role="status"><ShieldCheck/><span>Work details saved. Permission was not changed.</span></div>}
       {permissionEditable
         ? <div className="stw-permission-change"><div className="stw-fieldlabel" id="stw-ed-perm-l">Permission</div>
-          <PermissionCards value={permissionDraft ?? member.permission} labelledBy="stw-ed-perm-l" disabled={saving || saveNeedsReopen} onChange={(next) => { if (!writeInFlight.current && !saveNeedsReopen && currentGuard.current()) setPermissionDraft(next === member.permission ? null : next); }} />
+          <PermissionCards value={permissionDraft ?? member.permission} labelledBy="stw-ed-perm-l" disabled={saving || saveNeedsReopen} onChange={(next) => { if (writeInFlight.current || saveNeedsReopen) return; if (!contextIsCurrent()) { requireReopen(); return; } setPermissionDraft(next === member.permission ? null : next); }} />
           {permissionDraft && permissionDraft !== member.permission && <div className="stw-confirm"><p>Change access from {permission.label} to {permissionPresentation(permissionDraft, false).label}? This changes authorization, not the title.</p><button type="button" className="stw-btn secondary" disabled={saving || saveNeedsReopen} onClick={() => setPermissionDraft(null)}>Cancel</button><button type="button" className="stw-btn primary" disabled={saving || saveNeedsReopen} onClick={changePermission}>Confirm access change</button></div>}</div>
         : <div className="stw-permission-change"><div className="stw-fieldlabel">Permission</div><p className="stw-perm-ro"><span className="stw-perm" data-tone={permissionTone(member.permission, member.is_owner)}>{permission.label}</span><span className="stw-muted">{member.is_owner || member.permission === "owner" ? "Owner access is protected here." : suspended && workspace.can_change_permissions && permission.mutable ? `Reinstate ${firstName} before changing their permission.` : !permission.mutable ? "This access level isn't changed from Team settings." : "Only the owner changes permissions."}</span></p></div>}
     </div>

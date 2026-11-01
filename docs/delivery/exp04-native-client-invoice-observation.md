@@ -936,3 +936,39 @@ Review/release state: AUTHOR-REVIEW / LOWER ASSURANCE only until a genuine indep
 C191 rendered readback: all 16 cases PASS (eight states plus the eight required viewport/PAIGE paths); two additional 390px financial approval/recovery paths PASS. At <=1080px PAIGE is a foreground overlay; the original header fold control is used before returning to the retained invoice. No shared-shell edit or background force click. Scoped regression: original 22-file run retained 636 PASS/5 FAIL from outdated accepted-flow SDK fixtures; those same five original assertions pass after the fixture declares the new native projection. Final whole-run result remains separately recorded. Broad app tsc probe stopped without a result during constrained host memory and is not a PASS.
 
 C191 final source checks: all 642 tests across the original 22-file root set PASS. Earlier 636/5 failure is preserved, followed by the same five original accepted-flow assertions passing with the declared current SDK projection. Final local review remains AUTHOR-REVIEW / LOWER ASSURANCE; hosted exact-head CI and independent customer acceptance are not inferred.
+
+
+## O5 coherent financial release package — November 1, 2026
+
+O5 is the sole primary within the original twelve outcomes. The exact220004 native
+carrier and full-schema test adaptations are incorporated from frozen #3187/36d
+into original consumer #3179. This keeps the catalogue, actual high/confirm command
+map, retained review/result validation, receipt declaration and paired consumers
+in one coherent release. No new engine, account, provider or Chat admission.
+
+The carrier matches the already-applied isolated Preview bytes exactly. Original
+210004/220004 history eachONCE, all52 selected function source/ABI/owner/ACL contracts,
+both observation columns/defaults and guard trigger were independently read back.
+Historicalc1fec/current9add/ledger0b74/publicpaymentb7b6 match. This is first-apply/source
+parity only, not production, hosted-role, provider or customer acceptance. Existing
+lower E03/E13 20/21 migration ordering is preserved; applied history is immutable.
+
+Original full-schema43 observation/39 C4 assertions remain; the installed-native
+branch skips only historical fixture installation. Original16 manual assertions
+remain plus10 current debt/document/history/role/foreign/version/no-new-receipt
+cases. The original workflow adds that test trigger/step only. Exact-head hosted
+CI is required; existing controlled actual-getter53 ledger/bearer and financial39/
+manual27/private24/link15/public35 source results are not full-schema acceptance.
+
+Frozen native-only #3187/36d exposed an incomplete package: its classified action
+was a ghost without its original governed door/receipt declaration. That package
+will not release alone. A local Windows receipt-coverage command returned0 without
+entering the original module because its main-file comparison assumes POSIX URL
+spelling. That vacuous PASS is RETRACTED. Re-execute the unchanged guard by normalizing
+only process.argv[1] to its actual import URL spelling; preserve its complete checks
+and hostile self-tests. No guard, source pin or assertion is weakened.
+
+The client Billing financial-only receiving ACK remains pending in original ANT-163;
+Billing.tsx stays unedited and its current union-map integration error stays open.
+No merge/deployment/activation/Auth/provider/founder acceptance inferred. ALG01/12
+remain bounded PARTIAL source evidence; no global algorithm or Live promotion.

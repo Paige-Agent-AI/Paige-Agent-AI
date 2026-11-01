@@ -126,4 +126,48 @@ set local role authenticated;
 select pg_temp.check_true((select public.read_sales_invoice_manual_allocations((data->>'tenant_id')::uuid,(data#>>'{effective,invoice_id}')::uuid,4,'e4950000-0000-4000-8000-000000000001')=(select value from e04_manual_full_result where key='owner_read') from e04_commercial_fixture),'negative rollback retains the same original receipt history');
 reset role;
 select jsonb_build_object('proof','E04_FULL_SCHEMA_MANUAL_RECEIPT','status','PASS','checks',16,'scope','Synthetic original commercial and issued metadata, actual native receipt/correction/Rail, DB authenticated-role read; no hosted Auth, actual signing, provider effect or customer acceptance') as evidence;
+
+-- Current financial adoption: use original full-schema records/writers above,
+-- not a second fixture, actor guard or financial calculation.
+select set_config('request.headers','{"x-paige-invoice-evidence-version":"3"}',true);
+select set_config('request.jwt.claim.sub',(select data->>'actor_id' from e04_commercial_fixture),true);
+set local role authenticated;
+insert into e04_manual_full_result
+select 'current_read',public.read_sales_invoice((data->>'tenant_id')::uuid,(data#>>'{effective,invoice_id}')::uuid) from e04_commercial_fixture;
+insert into e04_manual_full_result
+select 'current_ledger',public.read_sales_invoice_payment_ledger((data->>'tenant_id')::uuid,(data#>>'{effective,invoice_id}')::uuid,100,null) from e04_commercial_fixture;
+select pg_temp.check_true((select value->'financial_evidence_version'='3'::jsonb
+ and value#>>'{financial_summary,standing}'='recorded' and value#>'{financial_summary,outstanding_minor}'='350000'::jsonb
+ and value#>'{financial_summary,manual_recorded_minor}'='0'::jsonb from e04_manual_full_result where key='current_read'),
+ 'current Owner read retains restored actual debt after original correction');
+select pg_temp.check_true((select value->'financial_summary'=(select value->'financial_summary' from e04_manual_full_result where key='current_read')
+ and value->'remaining_cents'='350000'::jsonb and value#>'{payment_ledger,count}'='2'::jsonb
+ from e04_manual_full_result where key='current_ledger'),
+ 'current ledger copies same debt and retains both immutable historical receipts');
+select pg_temp.check_true((select value->'document'=(select value->'document' from e04_manual_full_result where key='current_read')
+ and value->'document_input_digest'=(select value->'document_input_digest' from e04_manual_full_result where key='current_read')
+ from e04_manual_full_result where key='current_ledger'),'current document identity survives original receipt and reversal');
+select pg_temp.refused(format('select public._sales_invoice_read(%L,%L,0,3)',data->>'tenant_id',data#>>'{effective,invoice_id}'),
+ '42501','ordinary Owner cannot bypass public financial admission through private getter') from e04_commercial_fixture;
+select pg_temp.refused(format('select public.read_sales_invoice(%L,%L)','aaaaaaaa-0000-4000-8000-000000000002',data#>>'{effective,invoice_id}'),
+ '42501','current public financial read refuses a foreign workspace') from e04_commercial_fixture;
+select set_config('request.headers','{"x-paige-invoice-evidence-version":"4"}',true);
+select pg_temp.refused(format('select public.read_sales_invoice(%L,%L)',data->>'tenant_id',data#>>'{effective,invoice_id}'),
+ '22023','current public financial read refuses an unsupported representation') from e04_commercial_fixture;
+select set_config('request.headers','{"x-paige-invoice-evidence-version":"3"}',true);
+select set_config('request.jwt.claim.sub','e4960000-0000-4000-8000-000000000002',true);
+select pg_temp.refused(format('select public.read_sales_invoice(%L,%L)',data->>'tenant_id',data#>>'{effective,invoice_id}'),
+ '42501','client cannot use current Owner financial reader') from e04_commercial_fixture;
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+set local role service_role;
+select pg_temp.refused(format('select public._sales_invoice_read(%L,%L,0,3)',data->>'tenant_id',data#>>'{effective,invoice_id}'),
+ '42501','service role receives no new direct private financial getter grant') from e04_commercial_fixture;
+reset role;
+select pg_temp.check_true((select count(*)=2 from public.paige_invoice_payments where invoice_id=(select(data#>>'{effective,invoice_id}')::uuid from e04_commercial_fixture)),
+ 'financial reads and negative recovery never create a receipt or reversal');
+select pg_temp.check_true((select md5(prosrc)='c1fec742f8ff2a3753b58a9800ce5fab' from pg_proc where oid='public._sales_invoice_read(uuid,uuid,integer)'::regprocedure),
+ 'original historical three-argument getter remains exact production source');
+select jsonb_build_object('proof','E04_FULL_SCHEMA_CURRENT_FINANCIAL','checks',10,'status','PASS',
+ 'scope','Same synthetic commercial fixture and actual native manual receipt/correction/Owner DB-role reads; not hosted authentication, provider or customer acceptance') as evidence;
 rollback;

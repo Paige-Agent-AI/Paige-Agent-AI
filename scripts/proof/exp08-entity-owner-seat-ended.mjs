@@ -1271,4 +1271,7 @@ if(!onlyWorkProfile&&!onlyOwnerRead&&!onlyBilling&&!onlyOwnerHistory&&!onlyHubId
   const profile=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--only-work-profile'],{env:process.env,stdio:'inherit',windowsHide:true,timeout:180000});
   if(profile.error)throw profile.error;
   assert.equal(profile.status,0,'Original owner work-profile authority/currentness controls must pass');
+  const permission=spawnSync(process.execPath,[fileURLToPath(new URL('./exp08-team-permission-currentness.mjs',import.meta.url))],{env:process.env,stdio:'inherit',windowsHide:true,timeout:330000});
+  if(permission.error)throw permission.error;
+  assert.equal(permission.status,0,'Original Team permission authority/currentness controls must pass');
 }

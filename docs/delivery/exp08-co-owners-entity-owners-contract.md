@@ -3196,3 +3196,38 @@ recipient/zero-membership host and approved broader bell/activity still need
 mounting and full current-role/tenant/reentry/UNKNOWN/reopen proof. The unused
 SoloApp TopBar is not the actual shell; use the original authenticated hosts,
 no substitute inbox/notification/result/approval store. Full EXP08 STILL CODING.
+
+
+### Original permission effect-time repair preparation - November1
+
+LOCAL inert source in `exp08-team-permission-patch.sql` extends only the
+ORIGINAL two-argument Team permission writer, preserving its effect/audit,
+owner-target refusal, return ABI, grants and complete nonbody metadata. It
+revalidates current actor/workspace/owner authority under the original ordered
+locks. Original target-status behavior stays unchanged. No managed carrier,
+new public grant, original global-role predicate or R16 Operator change.
+
+The owning `exp08-team-permission-currentness.mjs` reuses the original entity
+fixture and original writer/owner source, runs baseline then guarded phase in
+separate disposable databases, and verifies14 authority/behavior cases,
+7 source/ACL/metadata drift refusals and8 actual waits across before/after.
+Legitimate original work remains permitted; refused cases have no write/audit.
+Replay retains complete original nonbody metadata. Individual phases and the
+whole owning child completed exit0; same original parent runner now invokes
+this child after its original departure and profile children. Full original
+parent run is LIVE, not called PASS before its terminal result. These are
+modeled identity/scope/table ports, not full-schema/Auth/customer proof.
+No disposable probe database remains after each completed child.
+
+Local same-row branch normally composes published3200/d654 profile proof and
+preserved recovery-reopen source26ef; one append-only co-owner document conflict
+was resolved by retaining BOTH complete chronologies. Original profile runner,
+workflow and native28 assertions remain intact. Captured tenant/membership
+intent, trusted permission readback/UNKNOWN/no-duplicate caller behavior,
+full-schema permission proof, managed native release and actual mounted/full
+Experience evidence remain required. A safe source guard is not full row4.
+
+Actual3200/d654 database124922317843 is now COMPLETE SUCCESS, with its decoded
+own native step explicitly reporting Files=1/Tests=28/Result:PASS. The whole
+exact verify/comms gates remain running; previousbe20 fixture failure is kept.
+No source merge or native profile activation is inferred from this result.

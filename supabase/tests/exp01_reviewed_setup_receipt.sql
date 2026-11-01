@@ -60,11 +60,12 @@ CREATE FUNCTION pg_temp.e01_error(statement text) RETURNS text LANGUAGE plpgsql 
 CREATE FUNCTION pg_temp.e01_affected(statement text) RETURNS integer LANGUAGE plpgsql SECURITY INVOKER AS $$DECLARE affected integer;BEGIN
  EXECUTE statement;GET DIAGNOSTICS affected=ROW_COUNT;RETURN affected;END$$;
 CREATE FUNCTION pg_temp.e01_facts() RETURNS jsonb LANGUAGE sql SECURITY INVOKER AS $$
- SELECT jsonb_build_array(jsonb_build_object('field','offers','value','Advisory','reference',
+ SELECT jsonb_agg(jsonb_build_object('field',f.field,'value','Advisory','reference',
  jsonb_build_object('contractVersion',1,'tenantId',d.tenant_id,'documentId',d.id,'revision',d.revision,
  'contentSha256',encode(sha256(convert_to(d.content,'UTF8')),'hex')),'excerpts',
  jsonb_build_array(jsonb_build_object('start',0,'end',8,'text','Advisory'))))
- FROM public.tenant_knowledge_docs d WHERE id='e0100300-0000-4000-8000-000000000001'$$;
+ FROM public.tenant_knowledge_docs d CROSS JOIN (VALUES('offers'),('deliveryModel')) f(field)
+ WHERE id='e0100300-0000-4000-8000-000000000001'$$;
 -- Capture native reference as fixture owner, not by granting a protected table to the browser.
 INSERT INTO e01_state VALUES('facts',pg_temp.e01_facts());
 CREATE FUNCTION pg_temp.e01_stage(review uuid) RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER AS $$DECLARE c jsonb;BEGIN
@@ -78,7 +79,7 @@ CREATE FUNCTION pg_temp.e01_save(review uuid,request uuid,fields jsonb DEFAULT '
 
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000001');
-SELECT lives_ok($$SELECT public.save_solo_setup_context('{"publicName":"Receipt Proof A","legalName":"Receipt Proof LLC","offers":"Before"}',
+SELECT lives_ok($$SELECT public.save_solo_setup_context('{"publicName":"Receipt Proof A","legalName":"Receipt Proof LLC","offers":"Before","deliveryModel":"Unselected current value"}',
  '[{"id":"e0100600-0000-4000-8000-000000000001","ownerKind":"individual","legalName":"Fixture Legal Owner","ownershipInterest":"50","status":"active","representativeUserId":"e0100100-0000-4000-8000-000000000001"},
    {"id":"e0100600-0000-4000-8000-000000000002","ownerKind":"company","legalName":"Fixture Vacant Owner","ownershipInterest":"50","status":"active"}]',NULL,NULL)$$,'ordinary original owner Setup save remains available with representative and vacant ownership facts');
 INSERT INTO e01_state VALUES('original_owners',public.get_solo_business_context()->'businessOwners');
@@ -104,6 +105,8 @@ SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_save('e0100400-0000-4000-8000-0
 INSERT INTO e01_state VALUES('saved',pg_temp.e01_save('e0100400-0000-4000-8000-000000000002','e0100500-0000-4000-8000-000000000001'));
 SELECT is((SELECT value->>'current' FROM e01_state WHERE name='saved'),'true','actual owner save returns a current original receipt');
 SELECT is(public.get_solo_business_context()->'brief'->>'offers','Advisory','actual original getter verifies saved selected value');
+SELECT is((SELECT jsonb_array_length(value->'receipt'->'selectedFacts') FROM e01_state WHERE name='saved'),1,'receipt contains only explicitly selected facts from the two-fact review');
+SELECT is(public.get_solo_business_context()->'brief'->>'deliveryModel','Unselected current value','reviewed but unselected field remains unchanged through original writer');
 SELECT is(public.get_solo_business_context()->'businessOwners',(SELECT value FROM e01_state WHERE name='original_owners'),'Owner receipt preserves the exact original ownership list and provenance');
 SELECT is(pg_temp.e01_save('e0100400-0000-4000-8000-000000000002','e0100500-0000-4000-8000-000000000001')->>'receiptId',
  (SELECT value->>'receiptId' FROM e01_state WHERE name='saved'),'same-request replay returns the original durable receipt');
@@ -121,6 +124,13 @@ UPDATE e01_state SET value=pg_temp.e01_stage('e0100400-0000-4000-8000-0000000000
 SELECT is(pg_temp.e01_save('e0100400-0000-4000-8000-000000000003','e0100500-0000-4000-8000-000000000003')->>'current','true','authorized Admin explicitly saves selected operational facts through original writer');
 SELECT is(public.get_solo_business_context()->'brief'->>'legalName','Receipt Proof LLC','Admin operational receipt preserves legal identity');
 SELECT is(public.get_solo_business_context()->'businessOwners',(SELECT value FROM e01_state WHERE name='original_owners'),'Admin receipt passes the exact original ownership list through the original authority check');
+UPDATE e01_state SET value=jsonb_build_array(jsonb_set(value->0,'{field}','"legalName"'::jsonb)) WHERE name='facts';
+UPDATE e01_state SET value=pg_temp.e01_stage('e0100400-0000-4000-8000-000000000004') WHERE name='proposal';
+SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_save('e0100400-0000-4000-8000-000000000004','e0100500-0000-4000-8000-000000000004','["legalName"]')$$),'42501','explicit source review does not grant Admin Owner-only legal identity authority');
+SELECT is(public.get_solo_business_context()->'brief'->>'legalName','Receipt Proof LLC','protected-field refusal preserves actual original legal identity');
+RESET ROLE;
+SELECT is((SELECT count(*)::integer FROM public.paige_audit_log WHERE tenant_id='e0100200-0000-4000-8000-000000000001' AND action='solo_setup.reviewed_facts_approved'),2,'refused protected-field approval adds no receipt');
+SET LOCAL ROLE authenticated;
 SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000003');
 SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_stage(gen_random_uuid())$$),'42501','unassigned ordinary member cannot infer Setup authority from source access');
 SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000004');

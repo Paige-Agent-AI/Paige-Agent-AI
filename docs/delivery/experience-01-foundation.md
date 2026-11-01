@@ -6,10 +6,13 @@ First actual full-schema authority step SUCCESS on
 `3a59be3a6a2e8071a3dc38cca46f9e5ff4a17336`, existing Spine run41321995720 /
 job124893986291 / step143. This uses the actual schema/getters/writer/authority
 and rollback-only synthetic fixtures, not an authenticated customer. Final-head
-CI remains required. Local native proof now has47 PASS checks, including both
+CI remains required. Local native proof now has49 PASS checks, including two
+reviewed facts with only one explicitly selected and the unselected value intact, and both
 observed serializations of revocation vs approval; after a winning save the
 revocation still removes inspection eligibility. The existing runner now includes
 that disposable concurrency proof as well as49 focused input/client checks.
+Full-schema adds direct Admin protected-legal-field refusal/no receipt alongside
+its successful operational approval; this expanded final-head execution is owed.
 No independent remote runner or production fixture is created.
 
 ACTUAL E13 source ABI receiving ACK ANT-50/a0f0063c was personally read and

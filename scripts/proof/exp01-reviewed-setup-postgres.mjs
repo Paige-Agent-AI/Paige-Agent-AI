@@ -77,7 +77,7 @@ try{
  CREATE FUNCTION read_tenant_knowledge(uuid,uuid,integer,integer) RETURNS jsonb LANGUAGE sql SET search_path=public AS $$SELECT jsonb_build_object('tenant_id',$1,'documents',coalesce(jsonb_agg(jsonb_build_object('id',id)),'[]'::jsonb)) FROM tenant_knowledge_docs WHERE tenant_id=$1 AND id=$2 AND record_state='canonical'$$;
  INSERT INTO auth.users(id) VALUES('${actor}');INSERT INTO profiles VALUES('${actor}','${tenant}');
  INSERT INTO tenant_members VALUES('${tenant}','${actor}','active','admin',false);
- INSERT INTO tenants VALUES('${tenant}','Example','{"business_brief":{"publicName":"Example","offers":"Before","provenance":{},"updatedAt":"2026-11-01T12:00:00.123456Z"}}','active','standalone',NULL,NULL);
+ INSERT INTO tenants VALUES('${tenant}','Example','{"business_brief":{"publicName":"Example","offers":"Before","deliveryModel":"Unselected current value","provenance":{},"updatedAt":"2026-11-01T12:00:00.123456Z"}}','active','standalone',NULL,NULL);
  INSERT INTO tenant_knowledge_docs VALUES('${doc}','${tenant}','canonical',1,'Advisory','Example agreement');
  GRANT USAGE ON SCHEMA auth TO authenticated;REVOKE ALL ON ALL TABLES IN SCHEMA public FROM authenticated;`);
  db.run(`ALTER TABLE paige_audit_log ENABLE ROW LEVEL SECURITY;GRANT INSERT ON paige_audit_log TO authenticated;
@@ -121,7 +121,8 @@ try{
   db.run(fn(candidate,'save_solo_reviewed_business_facts').replace(original,'selected:=selected; -- COUNTERFACTUAL FIXTURE ONLY'));
  }
  denied(caller+`INSERT INTO paige_audit_log(actor_user_id,actor_role,action,target_type,target_id,tenant_id,payload) VALUES('${actor}','admin','solo_setup.reviewed_facts_approved','solo_business_brief','${tenant}','${tenant}','{}')`,/row-level security/);
- const facts=`jsonb_build_array(jsonb_build_object('field','offers','value','Advisory','reference',jsonb_build_object('contractVersion',1,'tenantId','${tenant}','documentId','${doc}','revision',1,'contentSha256',encode(sha256(convert_to('Advisory','UTF8')),'hex')),'excerpts','[{"start":0,"end":8,"text":"Advisory"}]'::jsonb))`;
+ const oneFact=`jsonb_build_array(jsonb_build_object('field','offers','value','Advisory','reference',jsonb_build_object('contractVersion',1,'tenantId','${tenant}','documentId','${doc}','revision',1,'contentSha256',encode(sha256(convert_to('Advisory','UTF8')),'hex')),'excerpts','[{"start":0,"end":8,"text":"Advisory"}]'::jsonb))`;
+ const facts=`(${oneFact}||jsonb_build_array(jsonb_set((${oneFact})->0,'{field}','"deliveryModel"'::jsonb)))`;
  const stage=`SELECT stage_solo_reviewed_business_facts('${tenant}','${actor}','${review}','2026-11-01T12:00:00.123456Z',0,${facts})`;
  const save=`SELECT save_solo_reviewed_business_facts('${tenant}','${actor}','${review}','${request}','2026-11-01T12:00:00.123456Z',0,'["offers"]','setup_business_facts')`;
  const inspect=`SELECT inspect_solo_reviewed_business_facts('${tenant}','${actor}','${request}')`;
@@ -138,6 +139,8 @@ try{
  db.run(`UPDATE tenant_knowledge_docs SET revision=1`);
  const result=JSON.parse(scalar(caller+save));assert.equal(result.current,true);checks++;
  assert.equal(result.receipt.selectedFacts[0].value,'Advisory');checks++;
+ assert.equal(result.receipt.selectedFacts.length,1);checks++;
+ assert.equal(scalar("SELECT brand#>>'{business_brief,deliveryModel}' FROM tenants"),'Unselected current value');checks++;
  assert.equal(scalar(`SELECT brand#>>'{business_brief,offers}' FROM tenants`),'Advisory');checks++;
  const repeated=JSON.parse(scalar(caller+save));assert.equal(repeated.receiptId,result.receiptId);checks++;
  denied(caller+save.replace("'[\"offers\"]'","'[\"industry\"]'"),/SETUP_REVIEW_REQUEST_REUSED/);

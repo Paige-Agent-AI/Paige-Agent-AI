@@ -16,6 +16,23 @@ afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.resetAll
 const click=async(text:string)=>{const b=[...document.body.querySelectorAll('button')].find(b=>b.textContent===text);expect(b).toBeTruthy();await act(async()=>b!.click());};
 const render=async(onPublished?:()=>void,observers:KnowledgeFlowObservers={})=>{await act(async()=>root.render(<Dialog open><BulkKnowledgeUploadFlow tenantId={tenant} onClose={()=>{}} onBack={()=>{}} onPublished={onPublished} {...observers}/></Dialog>));};
 async function choose(files=[new File(['one'],'Agreement.pdf'),new File(['two'],'Notes.txt')]){const input=document.body.querySelector('input[type="file"]')!;Object.defineProperty(input,'files',{configurable:true,value:files});await act(async()=>{input.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,25));});}
+it.each([
+  ['claimed','requested · open to check progress'],
+  ['succeeded','finished · review required'],
+  ['failed','failed · inspect original'],
+  ['blocked','paused · inspect original'],
+  ['cancelled','cancelled · inspect original'],
+  ['expired','needs recovery · inspect original'],
+  ['outcome_unknown','unconfirmed · inspect original'],
+])('shows the last confirmed %s reading state without claiming publication',async(status,label)=>{
+  api.submit.mockResolvedValue({reference:{tenantId:tenant,documentId:'doc',workId:'work'},status,replayed:false});
+  const published=vi.fn();await render(published);await choose();await click('Upload and read files');
+  expect(document.body.textContent).toContain('Last confirmed reading: '+label);
+  expect(document.body.textContent).not.toContain('Original reading available');
+  expect(document.body.textContent).not.toContain('Reviewed text published');
+  expect(published).not.toHaveBeenCalled();expect(api.submit).toHaveBeenCalledTimes(2);
+  expect(api.review).not.toHaveBeenCalled();expect(api.restore).not.toHaveBeenCalled();
+});
 it('accepts multiple files and submits each verified source through its own original intent',async()=>{await render();expect(document.body.querySelector('input')?.multiple).toBe(true);await choose();await click('Upload and read files');expect(api.upload).toHaveBeenCalledTimes(2);expect(api.submit.mock.calls.map(c=>c[2])).toEqual(rows().map(r=>({kind:'file',intent_id:r.intentId,title:r.name,path:r.source.path})));});
 it('isolates uncertain upload and uses inspect-only recovery without another upload',async()=>{api.upload.mockResolvedValueOnce({phase:'upload_unknown',path:rows()[0].source.path});await render();await choose();await click('Upload and read files');expect(api.submit).toHaveBeenCalledTimes(1);await click('Inspect original');expect(api.upload).toHaveBeenCalledTimes(2);expect(api.submit).toHaveBeenCalledTimes(1);await click('Read stored source');expect(api.submit).toHaveBeenCalledTimes(2);expect(api.inspect.mock.calls[0][2].path).toBe(rows()[0].source.path);});
 it('stops before the next transfer while retaining a source already stored',async()=>{let resolve!:(v:unknown)=>void;api.upload.mockImplementationOnce(()=>new Promise(r=>resolve=r));await render();await choose();await click('Upload and read files');await click('Stop remaining uploads');await act(async()=>resolve({phase:'stored',path:rows()[0].source.path}));expect(api.upload).toHaveBeenCalledTimes(1);expect(api.submit).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Not started');expect(document.body.textContent).toContain('Stored source');});

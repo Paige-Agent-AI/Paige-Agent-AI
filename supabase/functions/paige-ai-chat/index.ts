@@ -18760,21 +18760,27 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             role: calendarBookingRole, accountShape: calendarBookingAccountShape,
             actAsClientId: scopedClientId ?? null, scopeEpoch: payloadThreadId ?? validatedData.requestIntentId ?? "current_request",
           };
-          const result = await readCalendarBooking(calendarIdentity, {
+          let result = await readCalendarBooking(calendarIdentity, {
             caller: supabaseClient as unknown as CalendarBookingReadCaller,
             currentIdentity: () => req.signal.aborted || tenantKnowledgeScopeRevoked || customerPortal || callerTier !== "tenant"
               ? null : { ...calendarIdentity, tenantId: personaCtx.tenant_id ?? null, workspaceId: personaCtx.tenant_id ?? null },
             revalidateScope: () => revalidateTenantKnowledgeScope(true), signal: req.signal,
           }, JSON.parse(tc.function.arguments || "{}"));
           if (result.status === "available" && turnScopeTenantId) {
-            if (result.found) readRecordLinkSource.set(tc, [{ destination: "calendar", record_id: null }]);
+            let recorded = false;
             try {
-              await recordCapabilityRun(supabase, {
+              recorded = await recordCapabilityRun(supabase, {
                 tenantId: turnScopeTenantId, actorId: user.id, capabilityKey: tc.function.name, outcome: "capability_succeeded",
                 runId: await stableRunId([tc.function.name, turnScopeTenantId, `${payloadThreadId ?? ""}:${tc.id}`]),
                 detail: { channel: "paige_chat", tool: tc.function.name },
               });
             } catch (e) { console.error("[paige] Calendar read receipt unavailable:", (e as Error)?.message); }
+            if (!recorded) {
+              result = { status: "unavailable", reason: "receipt_unconfirmed",
+                message: "This Calendar read could not be confirmed with its receipt. Do not infer that the booking is missing. Nothing was changed." };
+            } else if (result.found) {
+              readRecordLinkSource.set(tc, [{ destination: "calendar", record_id: null }]);
+            }
           }
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
         } else if (tc.function.name === "read_calendar_agenda") {
@@ -18783,21 +18789,27 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             role: calendarBookingRole, accountShape: calendarBookingAccountShape,
             actAsClientId: scopedClientId ?? null, scopeEpoch: payloadThreadId ?? validatedData.requestIntentId ?? "current_request",
           };
-          const result = await readCalendarAgenda(calendarIdentity, {
+          let result = await readCalendarAgenda(calendarIdentity, {
             caller: supabaseClient as unknown as CalendarBookingReadCaller,
             currentIdentity: () => req.signal.aborted || tenantKnowledgeScopeRevoked || customerPortal || callerTier !== "tenant"
               ? null : { ...calendarIdentity, tenantId: personaCtx.tenant_id ?? null, workspaceId: personaCtx.tenant_id ?? null },
             revalidateScope: () => revalidateTenantKnowledgeScope(true), signal: req.signal,
           }, JSON.parse(tc.function.arguments || "{}"));
           if (result.status === "available" && turnScopeTenantId) {
-            if (result.bookings.length > 0) readRecordLinkSource.set(tc, [{ destination: "calendar", record_id: null }]);
+            let recorded = false;
             try {
-              await recordCapabilityRun(supabase, {
-                tenantId: turnScopeTenantId, actorId: user.id, capabilityKey: "calendar.agenda_read", outcome: "capability_succeeded",
+              recorded = await recordCapabilityRun(supabase, {
+                tenantId: turnScopeTenantId, actorId: user.id, capabilityKey: "read_calendar_agenda", outcome: "capability_succeeded",
                 runId: await stableRunId([tc.function.name, turnScopeTenantId, `${payloadThreadId ?? ""}:${tc.id}`]),
                 detail: { channel: "paige_chat", tool: tc.function.name },
               });
             } catch (e) { console.error("[paige] Calendar read receipt unavailable:", (e as Error)?.message); }
+            if (!recorded) {
+              result = { status: "unavailable", reason: "receipt_unconfirmed",
+                message: "This Calendar read could not be confirmed with its receipt. Do not infer an empty or conflict-free schedule. Nothing was changed." };
+            } else if (result.bookings.length > 0) {
+              readRecordLinkSource.set(tc, [{ destination: "calendar", record_id: null }]);
+            }
           }
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(calendarAgendaForModel(result)) });
         } else if (tc.function.name === "crm_get_task") {

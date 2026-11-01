@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: This is an address reference, never a readback/rece
 SOLO_UI: NO: Same original eligible SOLO route tree and tier helpers, no tenant allowlist/new layout. Sub-account/agency/enterprise/operator references remain unavailable for this internal target.
 UNVERIFIED: Producer/host emission, current source-version receipt/native persistence and useful authenticated reopen remain unmounted/proof owed. Full EXP13+BULK/saved game plan/actual working Tasks NOT READY. Original3177 genuine FLOW_PROTOTYPE/browser-usage hold is unchanged; no waiver or alternate browser path.
 
-INTERNAL_BUILD_IDENTITY: source=local preparation on c77bd7c82512580896b7f86e1842ca4613eaef19; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE(pure unmounted shared reference code); evidence=docs/evidence/ui-delivery/knowledge-library-adoption.md
+INTERNAL_BUILD_IDENTITY: source=20af070506c2350091a25b0f3d8dcc0a2cc95957 on c77bd7c82512580896b7f86e1842ca4613eaef19; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE(pure unmounted shared reference code); evidence=docs/evidence/ui-delivery/knowledge-library-adoption.md
 RELEASE_CHANNEL: development: pure original-reference preparation only, not customer availability.
 RELEASE_CLASSIFICATION: internal-only: same source-reopen prerequisite within original EXP13.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version/announcement.
@@ -39,7 +39,7 @@ targets,733/a571 behavior and shared six-reference cap remain. No whole-file
 lease, Chat/chip/hook/Root/TeamHub/Setup/Memory/native/provisioning edit.
 
 Demonstrated absence: the original decoder drops the business_knowledge target;
-The original source and89 retained tests lacked this target. The one new actual before
+the original source and89 retained tests lacked this target. The one new actual before
 control fails at that missing reference, with89 original cases passing. Whole-word
 baseline Git search finds no business_knowledge token in application/Edge code;
 existing longer CURA RPC names are a distinct namespace. No existing source

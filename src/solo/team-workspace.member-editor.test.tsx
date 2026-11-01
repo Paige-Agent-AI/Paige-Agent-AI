@@ -1,4 +1,4 @@
-import { act } from "react";
+import { act, type ComponentProps } from "react";
 import { createRoot } from "react-dom/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemberEditor } from "./team-workspace";
@@ -303,4 +303,53 @@ describe("original scoped membership refusal",()=>{
     expect(mocks.success).not.toHaveBeenCalled();expect(saved).not.toHaveBeenCalled();await act(async()=>save.click());expect(mocks.rpc).toHaveBeenCalledTimes(1);
     expect(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.value).toBe('Delivery Lead');await act(async()=>root.unmount());
   });
+});
+
+
+describe('original scoped permission change and unknown recovery',()=>{
+ beforeEach(()=>{document.body.innerHTML='';mocks.rpc.mockReset();mocks.success.mockReset();mocks.error.mockReset();});
+ const button=(host:HTMLElement,text:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===text)!;
+ async function editor(props:Partial<ComponentProps<typeof MemberEditor>>={}){
+  const host=document.createElement('div');document.body.append(host);const root=createRoot(host);const saved=vi.fn(),closed=vi.fn();
+  await act(async()=>root.render(<MemberEditor member={member} workspace={workspace} viewerId="viewer-1" onSaved={saved} onClose={closed} {...props}/>));
+  const admin=Array.from(host.querySelectorAll<HTMLButtonElement>('[role="radio"]')).find(b=>b.textContent?.includes('Admin'))!;
+  await act(async()=>admin.click());
+  return {host,root,saved,closed,admin,confirm:()=>button(host,'Confirm access change')};
+ }
+ it('uses the original scoped writer and reports only verified current access',async()=>{
+  mocks.rpc.mockResolvedValue({data:{membership_id:member.membership_id,permission:'admin'},error:null});
+  const e=await editor();await act(async()=>e.confirm().click());
+  expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith('set_solo_team_member_permission',{_member_user_id:member.user_id,_new_permission:'admin',_expected_tenant_id:workspace.tenant_id,_expected_membership_id:member.membership_id});
+  expect(e.saved).toHaveBeenCalledWith({membership_id:member.membership_id,permission:'admin'});
+  expect(mocks.success).toHaveBeenCalledWith('Admin access confirmed.');expect(e.closed).toHaveBeenCalledWith(true);await act(async()=>e.root.unmount());
+ });
+ it.each([null,{membership_id:'foreign-seat',permission:'admin'},{membership_id:member.membership_id,permission:'member'}])('withholds success and requires reopen after unconfirmed receipt %#',async data=>{
+  mocks.rpc.mockResolvedValue({data,error:null});const e=await editor();await act(async()=>e.confirm().click());
+  expect(mocks.success).not.toHaveBeenCalled();expect(e.saved).not.toHaveBeenCalled();expect(e.closed).not.toHaveBeenCalled();expect(e.confirm().disabled).toBe(true);expect(e.admin.disabled).toBe(true);
+  expect(e.host.textContent).toContain('Close these details');await act(async()=>e.confirm().click());expect(mocks.rpc).toHaveBeenCalledTimes(1);
+  await act(async()=>button(e.host,'Close').click());expect(e.closed).toHaveBeenCalledWith(true);await act(async()=>e.root.unmount());
+ });
+ it('never sends through a retired context',async()=>{
+  const e=await editor({isCurrent:()=>false});expect(e.confirm()).toBeUndefined();expect(mocks.rpc).not.toHaveBeenCalled();await act(async()=>e.root.unmount());
+ });
+ it('withdraws late permission output after the original context retires',async()=>{
+  let current=true;let resolve!:(value:unknown)=>void;mocks.rpc.mockImplementation(()=>new Promise(r=>{resolve=r;}));const e=await editor({isCurrent:()=>current});
+  await act(async()=>e.confirm().click());current=false;await act(async()=>resolve({data:{membership_id:member.membership_id,permission:'admin'},error:null}));
+  expect(mocks.success).not.toHaveBeenCalled();expect(e.saved).not.toHaveBeenCalled();expect(e.closed).not.toHaveBeenCalled();await act(async()=>e.root.unmount());
+ });
+ it('holds one in-flight original change and disables all permission choices',async()=>{
+  let resolve!:(value:unknown)=>void;mocks.rpc.mockImplementation(()=>new Promise(r=>{resolve=r;}));const e=await editor();const confirm=e.confirm();
+  await act(async()=>{confirm.click();confirm.click();});expect(mocks.rpc).toHaveBeenCalledTimes(1);expect(e.admin.disabled).toBe(true);
+  await act(async()=>resolve({data:{membership_id:member.membership_id,permission:'admin'},error:null}));await act(async()=>e.root.unmount());
+ });
+ it('preserves unsaved work details when permission is verified',async()=>{
+  mocks.rpc.mockResolvedValue({data:{membership_id:member.membership_id,permission:'admin'},error:null});const e=await editor();
+  await act(async()=>setValue(e.host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!,'Unsent work draft'));
+  await act(async()=>e.confirm().click());expect(e.closed).not.toHaveBeenCalled();expect(e.saved).toHaveBeenCalledWith({membership_id:member.membership_id,permission:'admin'});
+  expect(e.host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!.value).toBe('Unsent work draft');await act(async()=>e.root.unmount());
+ });
+ it('sanitizes unknown transport failure and prevents all Team retries before reopen',async()=>{
+  mocks.rpc.mockRejectedValue(Error('private SQL and customer text'));const e=await editor();await act(async()=>e.confirm().click());
+  expect(mocks.error.mock.calls.at(-1)?.[0]).not.toContain('private');expect(mocks.error.mock.calls.at(-1)?.[0]).toContain('Reopen Team');expect(e.confirm().disabled).toBe(true);expect(mocks.success).not.toHaveBeenCalled();await act(async()=>e.root.unmount());
+ });
 });

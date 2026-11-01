@@ -3452,4 +3452,3 @@ Native28 template/artifact is canonical with2new duplicate checks; actual
 full-schema execution and broad type/Auth/production/both-chat proof remain
 UNVERIFIED. Current3190 release head/gates unchanged; no migration/native apply.
 Full original18+6/five journeys STILL CODING.
-

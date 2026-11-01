@@ -25,6 +25,49 @@ const byText = (h: ParentNode, t: string) => Array.from(h.querySelectorAll("butt
 const wait = (ms: number) => act(async () => { await new Promise((r) => setTimeout(r, ms)); });
 
 describe("Team → a person's contact details", () => {
+
+  it("retains unsaved contact and work drafts after a verified access change in the mounted Team workspace", async () => {
+    let reads = 0;
+    mocks.rpc.mockReset();
+    mocks.rpc.mockImplementation(async (name: string) => {
+      if (name === "get_solo_team_workspace") {
+        reads += 1;
+        return { data: { tenant_id: "tenant-1", tenant_name: "Example Team", viewer_permission: "owner", can_manage_profiles: true, can_manage_invitations: true, can_change_permissions: true, total_members: 1, members: [dana], invitations: [] }, error: null };
+      }
+      if (name === "set_solo_team_member_permission") return { data: { membership_id: "m1", permission: "admin" }, error: null };
+      return { data: null, error: { message: `unexpected ${name}` } };
+    });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<SoloTeamWorkspace />));
+      await wait(250);
+      await act(async () => (Array.from(host.querySelectorAll("button.stw-namebtn")).find((b) => b.textContent?.includes("Dana Reyes")) as HTMLButtonElement).click());
+      await wait(50);
+      await act(async () => set(document.querySelector<HTMLInputElement>('.stw-contact input[type="tel"]')!, "+15125550199"));
+      await act(async () => set(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')!, "Unsent work title"));
+      const readsBefore = reads;
+      await act(async () => (Array.from(host.querySelectorAll<HTMLButtonElement>('.stw-permission-change [role="radio"]')).find(b => b.textContent?.includes("Admin"))!).click());
+      await act(async () => byText(host, "Confirm access change")!.click());
+      await wait(100);
+      expect(mocks.rpc).toHaveBeenCalledWith("set_solo_team_member_permission", { _member_user_id: "member-1", _new_permission: "admin", _expected_tenant_id: "tenant-1", _expected_membership_id: "m1" });
+      expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+      expect(document.querySelector<HTMLInputElement>('.stw-contact input[type="tel"]')?.value).toBe("+15125550199");
+      expect(host.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')?.value).toBe("Unsent work title");
+      expect(host.querySelector('.stw-permission-change [role="radio"][aria-checked="true"]')?.textContent).toContain("Admin");
+      expect(reads).toBe(readsBefore);
+      expect(mocks.rpc.mock.calls.filter(([name]) => String(name).startsWith("set_")).map(([name]) => name)).toEqual(["set_solo_team_member_permission"]);
+      await act(async () => byText(host, "Cancel")!.click());
+      await wait(100);
+      expect(host.querySelector('[role="dialog"]')).toBeNull();
+      expect(reads).toBeGreaterThan(readsBefore);
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+    }
+  });
+
   it("keeps unsaved contact edits when the work details are saved and the roster reloads", async () => {
     let reads = 0;
     mocks.rpc.mockImplementation(async (name: string) => {

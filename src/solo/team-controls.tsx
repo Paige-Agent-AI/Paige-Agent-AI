@@ -216,10 +216,10 @@ export function NoticeBar({ notice, onDismiss }: { notice: TeamNotice | null; on
 }
 
 /** Two-option permission cards, a radiogroup with arrow-key movement. Replaces the permission <select>. */
-export function PermissionCards({ value, onChange, labelledBy, adminDisabledReason }: { value: string; onChange: (value: "member" | "admin") => void; labelledBy: string; adminDisabledReason?: string | null }) {
+export function PermissionCards({ value, onChange, labelledBy, adminDisabledReason, disabled = false }: { value: string; onChange: (value: "member" | "admin") => void; labelledBy: string; adminDisabledReason?: string | null; disabled?: boolean }) {
   const options: { v: "member" | "admin"; label: string; hint: string; disabled: boolean }[] = [
-    { v: "member", label: "Member", hint: "Works in the business. Can't manage people.", disabled: false },
-    { v: "admin", label: "Admin", hint: adminDisabledReason ?? "Also manages members and invitations.", disabled: Boolean(adminDisabledReason) },
+    { v: "member", label: "Member", hint: "Works in the business. Can't manage people.", disabled },
+    { v: "admin", label: "Admin", hint: adminDisabledReason ?? "Also manages members and invitations.", disabled: disabled || Boolean(adminDisabledReason) },
   ];
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
   return <div className="stw-seg" role="radiogroup" aria-labelledby={labelledBy}
@@ -227,12 +227,13 @@ export function PermissionCards({ value, onChange, labelledBy, adminDisabledReas
       if (!["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
       event.preventDefault();
       const enabled = options.filter((o) => !o.disabled);
+      if (!enabled.length) return;
       const at = enabled.findIndex((o) => o.v === value);
       const next = enabled[(at + (event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : enabled.length - 1)) % enabled.length];
       onChange(next.v);
       refs.current[next.v]?.focus();
     }}>
-    {options.map((o) => <button key={o.v} ref={(n) => { refs.current[o.v] = n; }} type="button" role="radio" aria-checked={value === o.v} aria-disabled={o.disabled || undefined} tabIndex={value === o.v ? 0 : -1}
+    {options.map((o) => <button key={o.v} ref={(n) => { refs.current[o.v] = n; }} type="button" role="radio" aria-checked={value === o.v} aria-disabled={o.disabled || undefined} disabled={disabled} tabIndex={!disabled && value === o.v ? 0 : -1}
       onClick={() => { if (!o.disabled) onChange(o.v); }}>
       <strong><span className="stw-radio" aria-hidden="true" />{o.label}</strong><span>{o.hint}</span>
     </button>)}

@@ -184,3 +184,45 @@ Prepared full-schema proof now plans28, adding duplicate-receipt/audit controls
 to the original26; canonical generation/negative controls PASS. Actual native28
 execution, current broad compiler, both-chat consumer and authenticated cohorts
 remain UNVERIFIED. Original source-only follow-up is not published or released.
+
+
+## November 1 — original scoped permission editor, local integration
+
+Preserved UI merge a8f460778d10fe5b61154e4db75c3dcbb405e156 receives the same
+3200/e6b8e838 source preparation without activating the unavailable native APIs.
+The original permission editor captures tenant/membership/user/desired role,
+uses the same four-argument writer and requires its exact two-field current-state
+receipt. Missing/foreign/expanded/wrong-role replies and transport uncertainty
+never show success; the existing shared write fence disables another Team
+change until Close and the original roster reread. Late retired contexts withhold
+callbacks. Permission choices retain original role eligibility and design.
+
+Verified access updates only the selected membership. Unsaved contact/work drafts
+stay mounted; Close triggers the original roster reload. The mounted workspace
+test proves both drafts survive and no other setter is called. Its first test
+assertion incorrectly counted the normal conversation READ as a writer; the
+corrected assertion enumerates actual set_ calls. Final focused3/43PASS and
+parent Close/reread2PASS overlap the prior12-suite208PASS; not additive totals.
+Six changed UI/contract/test files pass focused ESLint. Whole application compiler
+and authenticated cohort/production proof remain UNVERIFIED.
+
+Existing opt-in SoloApp harness now offers --permission-only: actual original
+shell/editor/CSS with fictional transport, no new application/runtime/account.
+Successful clean save, unsent work draft, and committed-but-response-lost recovery
+all reopen the actual mocked current Admin state with ONE write attempt each.
+The first drive failed only because its unknown-state exit expected Cancel while
+the clean original footer correctly says Close; original failure log/report are
+retained outside shipped assets. Corrected drive exits0,3states,0page errors,
+0failures. All3 off-machine requests were BLOCKED. Inspected draft, UNKNOWN and
+reopened captures retain the approved design. No new responsive geometry pass
+is claimed; previous32-frame evidence remains scoped to its historical source.
+
+[Permission report](assets/exp08-owner-work-profile/permission-report.json)
+SHA256 `94a7cd74191337b447b755ac70f9b81c56789fa54c714b60bbed27f365aa3694`.
+Original native full-schema28+32 steps and whole Spine are SUCCESS on3200/e6b;
+ci verify remains running at this checkpoint. This local mounted caller must NOT
+release before the actual managed native carrier and authoritative readback.
+Full original18+6/five journeys STILL CODING, no owner acceptance/readiness.
+
+Final same-source neighbor replay:12suites209tests PASS, terminal exit0. Focused
+final parent/harness-stub ESLint exit0. Earlier208count remains historical.

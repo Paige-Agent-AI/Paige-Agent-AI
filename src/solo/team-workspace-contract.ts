@@ -163,6 +163,22 @@ export function workProfileRefusal(message: string | undefined, ownerExplanation
   return "The save could not be confirmed. Reopen Team to check the current work details before trying again.";
 }
 
+/** Closed projection of the ORIGINAL scoped permission writer's current-state receipt. */
+export type TeamPermissionReceipt = { membership_id: string; permission: "admin" | "member" };
+export function verifiedTeamPermissionReceipt(value: unknown, membershipId: string, wanted: string): TeamPermissionReceipt | null {
+  if (!membershipId || (wanted !== "admin" && wanted !== "member") || !value || typeof value !== "object" || Array.isArray(value)) return null;
+  const receipt = value as Record<string, unknown>;
+  if (Object.keys(receipt).sort().join(",") !== "membership_id,permission" || receipt.membership_id !== membershipId || receipt.permission !== wanted) return null;
+  return { membership_id: membershipId, permission: wanted };
+}
+export function teamPermissionRefusal(message: unknown): string {
+  if (message === "this team membership changed before this could run; nothing was changed" || message === "team member not found in this workspace") return "This person's team membership changed. Reopen Team before trying again.";
+  if (message === "your active workspace changed before this could run; nothing was changed") return "Your workspace changed. Reopen Team before trying again.";
+  if (typeof message === "string" && /only the tenant owner|the owner permission cannot be changed here|TEAM_MEMBER_IDENTITY_UNAVAILABLE|authentication required/.test(message)) return "Your access to this permission change could not be confirmed. Reopen Team to check the current access.";
+  if (message === "permission must be Admin or Member") return "Choose Admin or Member. Nothing was changed.";
+  return "The access change could not be confirmed. Reopen Team to check the current access before trying again.";
+}
+
 /** Who may change this person's addresses. The server decides for real (`set_user_contact_methods`);
  *  this only decides what to offer, and mirrors the same rule: yourself; an owner or an admin, anyone
  *  on the team, the owner included (an admin holds the owner's powers except removing the owner). */

@@ -44,6 +44,7 @@ on:
       - "supabase/tests/systems_check_source_integrity.sql"
       - "supabase/tests/exp08_owner_recovery_native.sql"
       - "supabase/tests/exp08_first_owner_history_native.sql"
+      - "supabase/tests/exp08_owner_work_profile_native.sql"
       - "supabase/tests/record_capability_run_single_overload.sql"
       - "supabase/tests/mcp_tool_catalog_tenant_scope.sql"
       - "supabase/tests/mcp_oauth_refuses_the_rest_facet.sql"
@@ -663,6 +664,11 @@ jobs:
         run: |
           node scripts/proof/exp08-first-owner-native-proof.mjs --check
           supabase test db supabase/tests/exp08_first_owner_history_native.sql
+      - name: Original EXP08 scoped work-profile full-schema composition
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/proof/exp08-owner-work-profile-native-proof.mjs --check
+          supabase test db supabase/tests/exp08_owner_work_profile_native.sql
       - run: supabase test db supabase/tests/solo_team_invite_workspace_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_recipient_binding.sql
       # Additive E09 customer-safe relationship/profile foundation; no new CI database.

@@ -3073,6 +3073,100 @@ Actual catalogue read preserves BOTH original revoke_platform_access(uuid) and r
 Local scoped work-profile source is preserved separately on its original local branch; it is NOT bundled into this release repair. Required exact-head review/CI/Preview/merge/deployment/readback and the entire original experience remain open. STILL CODING.
 
 
+### Isolated original work-profile native integration preparation — November1
+
+Original same-row4 source and proof follow-up is prepared separately from the
+mounted UI: original inert guarded3arg writer and scoped5arg refusal-only door,
+existing local fixture/runner and self-contained native28 canonical test. No
+profile migration/version/API activation or mounted UI change is in this proof
+increment. Existing source-only controls retain19cases per original/scoped
+door,7scope/seat,4UNKNOWN/retry controls, complete metadata/drift/role checks
+and15observed waits, including first writer COMMIT/ROLLBACK one final audit.
+These are bounded component results, not native28 or customer/Auth proof.
+
+One path and one run step are appended immediately after EXP08's original
+first-owner native step in the EXISTING Spine full-schema job. Removing only
+these6new lines restores the entire incoming workflow byte-for-byte. The
+canonical test expands the original inert SQL twice in one transaction; every
+synthetic Auth/table/function change rolls back. No copied permission helper,
+new DB runner, runtime, ledger or service impersonation. Packaging equality/
+negative controls PASS; actual native28 execution is UNVERIFIED.
+
+Source preparation remains LOCAL until original3190 actual release/readback;
+it does not compete to release its immutable230008 carrier. Normal exact-head
+review/CI/main-peer composition/native compatibility remain required before
+publication/merge; full original18+6/five journeys STILL CODING. Original UI
+084989532 and actual DOM184/controlled-browser32+7+recovery evidence stay on their
+existing local branch, with native/currenttype/Auth/both-chat proof owed.
+
+
+### Actual3190 native/source release and next original profile proof - November1
+
+Original exact70116a/all13checks/Preview/BOTHweb SUCCESS/0threads/final lower
+review5729255467 normally merged6a9b18109bfc8d92e07ea1015f8fe599020179dc,
+treef09009cb5ecc8263acfd38bc5fc3ff364a2a5425. E13 source3198 landed in the
+read/merge race: actual parent01c48b878 plus70116a yields that exact tree,
+19470outside27owned leaves preserved. Its private unversioned Knowledge source
+and existing CI command flags remain; no native/version/runtime/host activation.
+Postmerge lower review5729264700 records actual composition, not old9e5b tree.
+
+Normal deploy-migrations41329445608 lint+deploy SUCCESS; db-live actual6a9.
+Productionxygzy ledger20271126230008 once,43statements, recorded-sourceMD5
+1ce001dfec3d0e8c3080174cc58b2a5c; original carrier SHA256 remains
+b910f0b9d86da9900a7010a6f50a35f67c102e3ab85f91ce0a242e26be9ce83f.
+6public and13generated private body/owner/ABI match compiled source;15private
+helpers/no direct client/service execution, original grant/revoke kernels
+catalogued. Public full named arguments/result/metadata/ACL additionally read.
+No actual recovery/customer data/provider action used as engineering proof.
+
+Own Vercel6a9 deploymentdpl_A5hZLAE7zUeKdkUTDnBsPykzcPf8 READY. Public origins
+at17:08:31UTC both200/version/equalroot/observedbootstrap, actual served build
+b8f46fa6c72f9e800fee7706787533d31ea1bf95-mvy2yl9x/customerUpdate:null.
+First exact6a9 expectation FAILED because direct descendant3184 was already
+READY; it adds only6Master lines, all released executable/native/client bytes
+remain exact. Actual newer deploymentdpl_9TNhxHR8comLP7AvWSNZSCfszMDQ READY.
+No old alias forced, no preview/source claim substituted for production.
+Coordinator-only original E05/E13 handoffba23844c delivered actual source/native
+receipt and ABI; actual receiving ACK remains separate. E03 sender claim/
+reconciliation and E01 Setup/Chat remain their original coding dependencies.
+
+New isolated work-profile native28 proof composes actual mainb8f and all incoming
+E13/Finance/Portal records normally, no UI or new migration. The FULL original
+component runner, departure child and profile child completed EXIT0 at unchanged
+own source: logSHA256d3737b119d748965b49db2a96e193bb7e162e7687f584405e387443a439e66a8.
+All original controls and15 profile waits retained; Auth/table inputs are ports,
+NOT actual full-schema28/customer proof. Earlier stale-handle observation after
+the terminal0 was not a reason to restart. Canonical native28 packaging remains
+PASS; its actual hosted execution still UNVERIFIED before the next PR gate.
+Mounted profile/UNKNOWN UI084989532 remains separately preserved/unreleased,
+with local DOM184 and controlled32+7+1 evidence scoped as recorded. No frontend
+5arg caller is released before its native door/reader integration. All original
+18+6/five journeys/standing authority/goals/workshop/ALG/cohort proof remain
+STILL CODING; no complete owner review or acceptance claim.
+
+
+### Original profile native28 fixture reconciliation - November1
+
+3200/be20c737205dc9f6531d28b03eeb0ab2fb599fc2 actual full-schema job
+124919582696 step90 FAILED at17:23:56UTC: generated native line15 violated
+`tenants_one_toplevel_per_owner`; both synthetic top-level businesses named
+holder...0001. Zero of28 assertions ran. This is our fixture/schema defect,
+not infrastructure, a product authorization verdict or native success. Preceding
+canonical parity, recovery39 and first-owner32 steps completed SUCCESS.
+The still-live job continued later original peer suites; it was not restarted.
+Live log API returned404; the actual rendered GitHub step exposed the exact
+constraint/error/test summary, and the owned inspection tab was closed.
+
+The original template now gives workspace B its existing synthetic owner...0003
+with matching ownerseat...0113. Admin...0002 and target...0004 remain members of
+BOTH workspaces, so the original captured-tenant and replaced-seat negatives
+remain meaningful. All28 assertions, patch/writer bodies, original unique
+constraint and applied migration history are unchanged. Regenerated artifact,
+canonical check and packaging negative controls PASS; actual native28 remains
+UNVERIFIED until the fresh exact-head job executes. No assertion waiver, UI
+mount, new carrier/version/provider or authenticated outcome is included.
+
+
 ### Original recovery stable-reference reopen preparation - November1
 
 LOCAL source e8d491067b68615313c610140d5c2891b4eabab6 adds

@@ -42,6 +42,7 @@ const db = vi.hoisted(() => ({
   reduce: true,
   /** Every table read, in order (the thread re-reads after a confirm's answer). */
   reads: [] as string[],
+  actionReadGate: null as Promise<void> | null,
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
@@ -53,7 +54,7 @@ vi.mock("@/integrations/supabase/client", () => {
     const result = () => ({ data: rows(), error: null, count: rows().length });
     const proxy: Record<string, unknown> = new Proxy({}, {
       get(_t, key) {
-        if (key === "then") return (ok: (v: unknown) => void) => ok(result());
+        if (key === "then") return (ok: (v: unknown) => void) => table==="paige_actions"&&db.actionReadGate ? db.actionReadGate.then(()=>ok(result())) : ok(result());
         if (key === "single" || key === "maybeSingle") return () => Promise.resolve({ data: null, error: null });
         return () => proxy;
       },
@@ -167,7 +168,7 @@ const tree = (path: string) => <MemoryRouter initialEntries={[path]}><ClientsCon
 beforeEach(() => {
   vi.clearAllMocks();
   db.messages = [message()]; db.threads = [thread]; db.signatures = [];
-  db.actions=[];db.approvals=[];
+  db.actions=[];db.approvals=[];db.actionReadGate=null;
   db.connectors = [emailConnector(CONN, "Northlight Advisory", "jordan@northlightadvisory.example")];
   db.invokes = []; db.sendBodies = []; db.doorBodies = []; db.door = []; db.cancellations = []; db.reads = [];
   db.tenant = TENANT; db.rpcTenant = TENANT; db.reduce = true;
@@ -958,6 +959,47 @@ describe("everything else keeps its own path", () => {
     await click(buttonByText(host,"Send now"));
     expect(db.doorBodies[1]).toMatchObject({approval_id:CONN_2,operation_id:db.doorBodies[0].operation_id,approved_fingerprint:FP});
     expect(db.sendBodies).toEqual([]);
+  });
+  it.each([false,true])("opening an original saved action visibly waits without duplicate reads or sending; preserve other focus=%s",async(otherFocus)=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original action reply.",action_id:CONTACT})];
+    db.actions=[{id:CONTACT,tenant_id:TENANT,contact_id:CONTACT,approval_id:CONN_2,action_kind:"client.followup"}];
+    db.approvals=[{id:CONN_2,tenant_id:TENANT,contact_id:CONTACT,status:"pending",metadata:{action_id:CONTACT}}];
+    const host=await mount();let release!:()=>void;db.actionReadGate=new Promise<void>(resolve=>{release=resolve;});
+    try{
+      buttonByText(host,"Edit")!.focus();await click(buttonByText(host,"Edit"));
+      expect([...host.querySelectorAll('[role="status"]')].some(el=>el.textContent==="Opening saved reply…")).toBe(true);
+      expect(buttonByText(host,"Edit")?.disabled).toBe(true);
+      const reads=db.reads.filter(t=>t==="paige_actions").length;await click(buttonByText(host,"Edit"));
+      expect(db.reads.filter(t=>t==="paige_actions")).toHaveLength(reads);expect(db.invokes).toEqual([]);
+      if(otherFocus)buttonByText(host,"Attach")!.focus();
+    }finally{await act(async()=>{release();await flush();});await settle();}
+    expect(textarea(host).value).toBe("Original action reply.");expect(db.invokes).toEqual([]);
+    expect(document.activeElement).toBe(otherFocus?buttonByText(host,"Attach"):textarea(host));
+  });
+  it("a newer reply during original saved-action lookup is kept and the interrupted open explains recovery",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original action reply.",action_id:CONTACT})];
+    db.actions=[{id:CONTACT,tenant_id:TENANT,contact_id:CONTACT,approval_id:CONN_2,action_kind:"client.followup"}];
+    db.approvals=[{id:CONN_2,tenant_id:TENANT,contact_id:CONTACT,status:"pending",metadata:{action_id:CONTACT}}];
+    const host=await mount();let release!:()=>void;db.actionReadGate=new Promise<void>(resolve=>{release=resolve;});
+    try{await click(buttonByText(host,"Edit"));await write(host,"Newer reply","Keep my newer words.");}
+    finally{await act(async()=>{release();await flush();});await settle();}
+    expect(textarea(host).value).toBe("Keep my newer words.");expect(host.textContent).not.toContain("Opening saved reply…");
+    expect(vi.mocked(toast.error).mock.calls.some(([text])=>String(text).includes("reply changed while opening"))).toBe(true);
+    expect(db.invokes).toEqual([]);expect(db.sendBodies).toEqual([]);
+  });
+  it("an old workspace's saved-action completion cannot paint its words or interruption message in a new workspace",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original action reply.",action_id:CONTACT})];
+    db.actions=[{id:CONTACT,tenant_id:TENANT,contact_id:CONTACT,approval_id:CONN_2,action_kind:"client.followup"}];
+    db.approvals=[{id:CONN_2,tenant_id:TENANT,contact_id:CONTACT,status:"pending",metadata:{action_id:CONTACT}}];
+    const host=await mount();let release!:()=>void;db.actionReadGate=new Promise<void>(resolve=>{release=resolve;});
+    try{
+      await click(buttonByText(host,"Edit"));
+      db.tenant=OTHER_TENANT;db.rpcTenant=OTHER_TENANT;db.threads=[];db.messages=[];db.approvals=[];
+      await act(async()=>{root!.render(tree("/solo/3855/clients/conversations"));await flush();});await settle();
+    }finally{await act(async()=>{release();await flush();});await settle();}
+    expect(host.textContent).not.toContain("Opening saved reply…");expect(host.textContent).not.toContain("Original action reply.");
+    expect(vi.mocked(toast.error).mock.calls.some(([text])=>String(text).includes("reply changed while opening"))).toBe(false);
+    expect(db.invokes).toEqual([]);expect(db.sendBodies).toEqual([]);
   });
   it("an original inbound email draft preserves its own approval through inline review and send",async()=>{
     db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original action reply.",action_id:CONTACT,tenant_id:TENANT,source:"comms-draft-reply",meta:{source:"comms-draft-reply"}})];

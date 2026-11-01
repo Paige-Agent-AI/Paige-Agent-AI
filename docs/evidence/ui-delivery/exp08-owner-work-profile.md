@@ -226,3 +226,29 @@ Full original18+6/five journeys STILL CODING, no owner acceptance/readiness.
 
 Final same-source neighbor replay:12suites209tests PASS, terminal exit0. Focused
 final parent/harness-stub ESLint exit0. Earlier208count remains historical.
+
+
+## 2026-11-01 joined original source and peer integration
+
+Preserved UI4744d1fb normal-received original3203/f3 and incoming E01/E05/E13
+source as fb01faa5d7a78506a50aac369f13bee86d7e8c64/tree55ad87229bb8ad455b093da756d45568c1d78b47.
+Only documentation conflicted: ENTIRE incoming contract retained plus38/41/74-line
+history inserts verified from old UI source. The first whole-file inverse check
+correctly noticed two additional automatically preserved old UI paragraphs; no
+incoming/history deletion or source waiver was used. All original UI assets and
+source are byte-exact4744 except the contract's THREE incoming count/type lines;
+all19,540outside56UI-owned leaves exactf3. Original32frames and controlled browser
+results remain historical at their tested revision, not freshly re-labelled.
+
+Actual joined12editor/contact/lifecycle/profile/permission suites223PASS terminal0
+(209previous +14new count cases), six-file scoped ESLint exit0. Exact test log
+exp08-team-details-joined-ui-final.log SHA256
+161b0455680632f97567a615eed2ca5ea2339088fffdf103ef06402471923606;
+empty-success lint log SHA256e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.
+No actual Auth/customer/native persistence or new rendered/AT/zoom claim is added.
+After genuine engineering gates and actual native API availability, safe release
+and live verification proceed in that order; missing browser/prototype evidence
+alone is not a merge/deploy veto under the explicit November1 owner correction.
+Actual native5arg/4arg availability before mounting remains a functional dependency,
+not an obsolete browser hold. This local continuation is not another PR/Preview,
+new owner review, runtime/store/provider or migration. Full18+6/five journeys remain.

@@ -3698,3 +3698,18 @@ PARTIAL claims and ALL EIGHT frames UNVERIFIED; no render/acceptance or gate wai
 The pre-push review API request correctly refused an unpublished commit after the
 local gate stopped the push; no review receipt or release was established there.
 Fresh exact published-head technical review remains required.
+
+
+### Joined approved Team details consumer — original same-outcome continuation
+
+UI branch normal composition fb01faa5d (4744 +f3) preserves all original editor,
+contact drafts, scoped profile/permission/UNKNOWN reread behavior and all incoming
+E01/E05/E13 source. Actual12selected suites223PASS, focused6file lint0; original
+UI assets/source exact4744 except three incoming native count/type lines. Shared
+contract resolution retains entire incoming text plus only three original UI
+history inserts; no rewrite of observed tests/releases. Same original evidence
+packet records exact log SHA and all current proof boundaries. Published3203/f3
+remains frozen in actual native67/engineering gates. No new carrier/version/host
+activation or separate customer release. Live/browser proof follows safe release,
+not a generic premerge hold; missing installed native APIs remain real integration
+work. All original18+6/five journeys and one complete owner review remain required.

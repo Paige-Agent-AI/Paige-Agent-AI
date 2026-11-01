@@ -3063,3 +3063,40 @@ new work-profile controls. That is component engineering evidence, not native32,
 authenticated behavior or release clearance. Local UI31 controls pass; neighboring
 UI176PASS/1FAIL exposes a selection-lifetime regression still under repair, so
 that UI is unfinished/unreleased. Full original18+6/five journeys STILL CODING.
+
+
+### Exact original ACL replay admission — November 1, pending native rerun
+
+Published93ff native32 packaging check PASS and recovery39 step88 SUCCESS, but
+first-owner step89 again ran3PASS/29NOT REACHED: original mint metadata admission
+refused. No native32 acceptance is inferred. The existing original CI grant
+reproducer resets/regrants API roles/PUBLIC; local exact-shape reproduction
+confirmed physical ACL order changed while every complete entry remained equal.
+The former text-order guard then FAILED on that equivalent replay. This is a
+causal guard/compatibility finding, not a stale-infrastructure diagnosis.
+
+The inert invitation patch now compares sorted complete ACL entries, retaining
+grantors, grantees, privileges, grant options and duplicate-entry sensitivity.
+It never writes an ACL. Original owner/security/search-path/source pins remain;
+full non-body metadata, including ACTUAL physical ACL order, is preserved during
+patch/replay. Any remaining refusal includes bounded actual owner/path/ACL/source
+hash detail for diagnosis, never customer data. No privilege broadened/removed.
+
+Final selected PostgreSQL16 run exits0/46910ms. All original22 history/13 repaired
+invitation cases and earlier column/helper/trigger controls/mutants/two-token and
+17 actual waits remain. Both original invite writers admit reordered equivalent
+grants; all13 cases PASS and complete metadata is unchanged. Original5 invitation
+drift controls remain, with3 added actual refusals: accept grant option, mint
+grant option and mint extra direct grantee. Eight total invitation drift controls
+PASS. The run disposes only its own database. Full native32 is STILL PENDING;
+all32 assertions and canonical compiled test source are retained.
+
+Managed own Preview now actually contains released E04native21/22/23 and unchanged
+recovery230008 eachONCE; recovery/personal/service reader source/owner/path/ACL
+match frozen hashes. Auth0/tenants3 are observed counts, not a customer outcome.
+No reset, account creation, applied carrier change or production recovery apply.
+New mainbe2244d4c adds only E02's original Systems read-test/matrix/workflow delta;
+those incoming files are composed normally. Unfinished work-profile/UI follow-up
+remains separate and unpublished. Full original18+6/five journeys STILL CODING.
+
+Final selected ACL replay log SHA256: `d7cdec7c00461dd8e3a151ae98d448dceb0122e13a4846025ee07257cfcd9362`.

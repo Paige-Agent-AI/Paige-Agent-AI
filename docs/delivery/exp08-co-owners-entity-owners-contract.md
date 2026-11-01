@@ -3384,3 +3384,17 @@ real schema execution/review/exactCI/frontier/applied-history readback. Full18+6
 journeys STILL CODING. E05 actual latest3087 reviewer findingsae5472ed are received:
 original owner retains mixed-read limit and access-class history repairs; all
 27000005/27010005/27020005 applied Preview carriers remain immutable.
+
+
+### November1 — same original3200 full-schema atomic composition wiring
+
+SAME source PR now includes the complete original unversioned atomic read/write
+package and its native16 compiler/template/artifact. One new original test path
+and one step follow profile28 and permission32 in the existing Spine database
+job. No new workflow, migration/version, project, native grant or mounted UI.
+This supersedes only the earlier not-yet-wired16 checkpoint; actual hosted16
+execution remains UNVERIFIED until the new exact head's job returns. All original
+case assertions and earlier10/13/14/16 history are preserved. Existing e6b whole
+required checks passed; current composite source must rerun all exact gates and
+renew review before normal source release. No earlier-head/native-component or
+packaging proof is promoted to full-schema16/Auth/customer outcome proof.

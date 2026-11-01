@@ -144,6 +144,14 @@ jobs:
           PGHOST: 127.0.0.1
           PGPORT: '5432'
         run: node scripts/proof/exp08-entity-owner-seat-ended.mjs
+      - name: EXP08 original recovery carrier, native replay, private recipients and committed delivery event in disposable PostgreSQL
+        env:
+          EXP08_DISPOSABLE: '1'
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+        run: |
+          node scripts/proof/exp08-owner-recovery-carrier.mjs --check
+          node scripts/proof/exp08-owner-recovery-writers.mjs
       - name: EXP08 Team Hub agents A1a, accepted-turn record, single-use agent posts, one-reply rule, per-seat cap, agent DM isolation, roster correction and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_agents_a1.sql
       - name: EXP08 Team Hub agents A1b, member-safe turn-state read, staged Bring in suggestions, same-token acceptance retry and mutants in a disposable database
@@ -1243,7 +1251,7 @@ jobs:
           python3 scripts/knowledge-service/check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
           python3 scripts/knowledge-service/delete-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
           python3 scripts/knowledge-service/catalogue-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
-          python3 scripts/knowledge-service/publication-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres --expected-data-directory "$WORK/d" --publication-recovery --binary-source --memory-review-candidate --memory-install-guards --memory-review-carrier-file supabase/migrations/20271126180013_reviewed_memory_source_recovery.sql
+          python3 scripts/knowledge-service/publication-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres --expected-data-directory "$WORK/d" --publication-recovery --binary-source --memory-review-candidate --memory-install-guards --memory-review-carrier-file supabase/migrations/20271126180013_reviewed_memory_source_recovery.sql --source-quotation-proof --source-binding-proof --source-evidence-carrier-file scripts/knowledge-service/native-source-evidence-install.sql --source-evidence-install-guards
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_int346_race
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_int346_race" node scripts/int346-database-check.mjs --race
 

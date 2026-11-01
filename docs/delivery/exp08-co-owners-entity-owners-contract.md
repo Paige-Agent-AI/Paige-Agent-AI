@@ -2004,3 +2004,1070 @@ lifecycle20, revoke12, Billing13, actor15, incumbent holder20, identity22, owner
 New unversioned component history22/invitation13 adds35 separately; do not conflate those with
 the baseline intentionally failing sets, causal mutations or real-wait counts. Original packet
 selection is explicitly full-original-runner, not a selected-only invocation.
+
+### October31 — original R9/R12 provenance foundation, INERT/local only
+
+The full original row4 recovery flow remains PARTIAL/MISSING integration, not
+completed by this foundation. Fresh production catalogue confirms recovery and
+co-owner-removal RPCs have no overloads. Reuse the original private I1 holder-state
+helper8f9d27463a4c825994f165a5777aca1f; preserve the actual current grant/revoke
+writers, incoming EXP02 Billing integration, R13 billing-paused holder and R16
+original Operator powers. No holder helper, runtime, store or approval engine is cloned.
+
+Pre-edit capability route: Team/EXP08 owns native recovery/audit/private notices;
+existing EXP03 owns the queued original notification receiver (ANT147/f83667d0,
+receiving response b65bd28d). Existing `team.authority` is a read-only PARTIAL
+capability, not a recovery executor; recovery model action/MUTATION_VERB remains
+UNAVAILABLE, never an invented registered key. Original Settings/Team binding is
+PROOF_OWED. Native operator authority and actual server checks control effects;
+no model, confidence, personality or caller flag grants permission. This stage has
+no provider/connection, durable job, model routing or activation; eventual email
+must use the original sender and its actual permission/result. Existing audit is
+the durable source, no teammate-as-client Rail row. Authenticated ordinary-account
+roles/current-context/result/receipt/reopen/recovery proof remains separate and owed.
+The original full18+6/five journeys and shared goals/workshop/proactivity/standing
+authority work remain in scope, **STILL CODING**.
+
+Exact source custody ANT147/99b2b1da: new INERT
+`scripts/proof/exp08-owner-recovery-provenance.sql` and its local owning proof only,
+plus this contract append. One restrictive client policy for the NEW
+`tenant:owner_recovery.*` namespace and a private truncate-retention trigger;
+existing audit policies, grants, columns, constraints, triggers, data and unrelated
+activity are conserved. First bootstrap serializes with writers and refuses any
+preexisting untrusted recovery-looking row, never deleting or blessing it. Replay
+requires the complete exact boundary; partial install, altered source/ACL/trigger
+or policy refuses without overwriting. Raw client reads/writes cannot substitute
+for the still-missing authorized recovery writer/private receipt reader.
+
+Current native proof:17 controls PASS, preserving the initial14 before caller-flag,
+partial-install and changed-source negatives. Actual PostgreSQL RLS/ACL/trigger
+execution uses the current original actor/own-read policies; Auth identity/table
+shape and an overlapping permissive policy are explicit ports. The privileged
+record insertion is a fixture, NOT a real recovery act or customer receipt.
+Tests cover client fabrication/rename, private-row visibility/update/delete,
+truncate retention, legacy fixture operations, bootstrap refusal, replay/metadata
+conservation and strict drift refusal. No original191core+60/102 runner group was
+edited or replaced; the new group is not yet imported into that original runner.
+Candidate SHA256 `28d123723a8c4ef1e2c344fffd30f2e320905c5b8da6cb9d6bd9fba4de7612c7`;
+final raw log `exp08-owner-recovery-provenance-final.log` SHA256
+`393293b7ac1dd18445ba8b4eef687c6559172ddbf0b9fb5cc3d3af45dc6bef43`.
+Own fixture disposal verified; catalogue postgres-only/zero other clients.
+
+Initial two runs genuinely refused a policy descriptor whose role OIDs had the
+opposite array order, with identical exact roles/expressions/command/restrictive
+mode. Logs255b5d80/fdc5a511 remain FAIL. The candidate now compares the complete
+exact role set order-independently, pins catalogue resolution to pg_catalog and
+retains raw metadata replay checks; no permission or assertion was removed.
+Full source review, original-suite integration, managed schema, new native carrier,
+review/exact-head checks/release and authenticated proof remain owed. No production
+mutation, new role/account, provider/held activation or full recovery claim.
+
+Implementation references: [PostgreSQL restrictive policy semantics](https://www.postgresql.org/docs/16/sql-createpolicy.html)
+and current Supabase RLS documentation/changelog were checked. The native guard
+uses existing built-in predicates, not a custom operator or credential mechanism.
+The receiver must bind to the future committed native audit and current permissible
+recipient facts, never generic admin-notifier success or fire-and-forget delivery;
+it must not rerun pre-act holder-none against a legitimate working post-state.
+
+### October31 — original recovery actor/holder lock preparation, local only
+
+Source custody ANT147/1b2da248 covers new inert
+`scripts/proof/exp08-owner-recovery-writers.sql` and its owning local proof.
+This first part is a PRIVATE lock step only, not the public recovery RPC or an
+ownership writer. It locks the actual live identity/super-admin role, then keeps
+the original members-before-tenant order and re-resolves original I1 eligibility
+and holder state after waits. It returns the previous pointer without changing
+it. Authenticated, anon and service-role callers cannot execute it directly;
+caller-set recovery flags grant no authority. No native version/apply/publication.
+
+Actual PostgreSQL21 controls PASS, including four real two-connection tenant
+waits: newly working, paused or archived states refuse after commit; rollback
+preserves legitimate admission. Original super-admin/I1 eligibility/holder-state
+source is loaded, with minimal Auth/table/company/owner predicate ports explicitly
+named. No recovery effect, audit, receipt, private notification or email is proved.
+Raw `exp08-owner-recovery-writers-waits.log` SHA256
+`9ab8f04ace8d609f32d00613da88dd876a273e686784dfc370fd03beaeac733c`;
+candidate SHA256 `a62a5e12b7c4af55cfe805033ecd9429184b1b73f7ca1c4a0c3d8ff35f7411e4`.
+Own disposable database removed. Initial fixture selected the zero-argument
+super-admin overload and genuinely failed42883; retained log152cfd50. The fixture
+now selects the real UUID overload explicitly; no product assertion was removed.
+
+Original current revoke7d62c3fa still consumes E02 Billing revokef8fa3a42 and
+workspace-owner-scope3d33a31f. The approved recovery administrator cannot impersonate
+an owner to satisfy that seam. Original ANT138/1327085a requests the actual original
+Billing-owner recovery cleanup contract; no bypass, duplicated financial writer
+or broad grant is introduced. Grant/set-holder/private receipt integration can
+continue; full R9 revocation remains incomplete until this dependency is resolved.
+Original public writer bodies/ACL, self-step-down, entity link and Billing behavior
+are unchanged by this private preparation. Full source review, native metadata/
+replay guards, authorized effect/result/no-duplicate recovery and original-suite
+integration remain owed. The full assignment remains **STILL CODING**.
+
+Distinct SOURCE-ONLY review of02126 found one P2: live identity existence alone
+did not exclude an active ban or soft deletion, and KEY SHARE did not block those
+updates. This is a local inert preparation finding, not a production incident.
+Actual Auth catalogue confirms deleted_at/banned_until timestamptz columns. The
+candidate now checks both current fields under FOR SHARE, and repeats those checks
+after waits. The original21 controls stay before nine additions: soft deletion,
+current/expired ban, four actual change-before-lock commit/rollback races, and two
+actual lock-before-change waits followed by denied subsequent admission.
+
+Final30 controls PASS; candidate SHA256
+`b725827e179518fb1681f7e1a96debc47fc69a2a420199d741e9da0f0be975bd`.
+Raw `exp08-owner-recovery-writers-auth-final.log` SHA256
+`044fda5cde05e2f9e9fd7330fa609073e9201b2f2ee7c59dcb2e3241aebbb768`.
+The same new regression genuinely fails against preserved02126 source at the
+soft-deleted identity refusal (historical baseline option, no source overwrite);
+raw3a6e5f8e retained FAIL. Both fixtures disposed, final native client catalogue
+empty. Review renewal is required before considering this repaired source clear.
+The earlier21 PASS remains historical subset evidence, not proof of Auth
+availability. No effects/public endpoint/native migration/release claim changed.
+
+### October31 — private R12 holder restoration through original I1 guard/audit
+
+The same reserved inert writer preparation now adds the PRIVATE
+`_exp08_set_recovery_holder(uuid,uuid)` effect for the future original recovery
+transaction. No client or service-role EXECUTE, migration or public RPC. It
+reuses the reviewed recovery lock, requires a live available target with an
+existing active owner seat in exactly this business, uses the original I1
+pointer guard's bounded recovery flag, restores the previous flag on success or
+failure and verifies the original holder-state helper now returns working.
+It never grants a seat or changes Billing/hierarchy/provider fields. Original
+I1 pointer-change audit is produced by its original trigger, not copied logic.
+
+Original30 admission controls stay before12 additional native effect controls:
+unseated/suspended/banned/soft-deleted/other-business targets, original guard/audit
+and flag restoration, repeated-effect refusal, outer rollback, three actual
+client-role ACL refusals, late trigger failure with atomic pointer/audit/flag
+rollback. Final42 PASS, raw `exp08-owner-recovery-r12-final.log` SHA256
+`51a7a4c1ada537a99382029f0f900ea4a1aed3761374c31c292ed36a14012e3c`;
+tested candidate SHA256 `3fa70774ff893bc56dd228cbb43b4da65a9a57b612b9601c6de7a5e05c95eac8`.
+First40-run PASS is retained separately (a1bd073c), not counted as final42.
+Actual original I1 guard and pointer audit run against explicit minimal schema
+ports; no authenticated customer or managed-schema proof. Own fixture disposed.
+
+This private effect MUST NOT be exposed alone: the original public recovery
+transaction still owes reason validation, trusted recovery audit identity,
+current-recipient private notices/read-now receipts, durable unknown/no-duplicate
+reconciliation and E03 original email integration. Grant/revoke kernels and
+E02 Billing cleanup remain coding dependencies; original public writers unchanged.
+Metadata/bootstrap/replay guards, wider lock/lifecycle composition, original full
+runner integration, final review/CI/release and authenticated outcomes remain owed.
+All original18+6/five journeys and full-assignment **STILL CODING** are unchanged.
+
+### October31 — one original grant body shared by ordinary and recovery callers
+
+Same inert writer/proof reservation, no migration/publication. The actual original
+`grant_co_owner(uuid,uuid)` body2a75180d is moved, not duplicated, into private
+`_exp08_grant_co_owner(uuid,uuid,boolean)`. The original public ABI delegates with
+false and preserves its complete native metadata/ACL. For eligible SOLO, platform
+role alone no longer grants through that public door; the actual holder still
+does. Unsupported non-SOLO platform semantics are retained. Private recovery mode
+is inaccessible to clients, must pass native recovery admission, locks a live
+target/member and repeats admission after waits before the conserved original
+membership change and original `tenant:grant_co_owner` audit.
+
+The three bounded body edits are mechanically reversible to the exact original
+hash; unknown/partial source refuses. Exact replay checks that inverse plus
+private metadata/ACL, and refuses exposed original/public ACL, exposed private
+ACL or changed private body without repairing the drift. These kernel guards do
+not yet constitute whole-file bootstrap/metadata guards for the other helpers.
+Full publication still needs one atomic forward carrier and all native guards.
+
+Original42 controls remain before13 kernel/compatibility/role/drift controls:
+final55 local PostgreSQL PASS, raw `exp08-owner-recovery-grant-final.log` SHA256
+`4b4483caba54563ad98393b42b13969925031f5ed30ee2364265c7f4934b534e`;
+candidate SHA256 `b3a2d020e91d05ba912cd9bb88d8187c8d9aea8c0901767ba9f2019691510ce1`.
+Earlier49 PASS84fee11e retained separately. Native grant body and audit execute
+against explicit minimal table/Auth/company/owner ports, not managed full-schema
+or authenticated proof. Ordinary holder ABI, non-holder platform refusal,
+private mode/role refusal, exact replay/data/public-metadata preservation and
+non-repair drift controls pass; fixture disposed. Source review renewal owed.
+
+Revoke/Billing kernel integration, target/competing-writer broader lock composition,
+public recovery reason/audit/notice/receipt/replay and E03 receiver remain required
+coding work. No stand-alone private effect is customer-ready; no released policy,
+provider effect, full R9/R12 acceptance or ALG maturity promotion is claimed.
+
+Distinct SOURCE-ONLY review of1de9 found P2 in replay: the inverse hash alone
+also accepted the exact original body or an individually reverted new span.
+The new regression genuinely reproduced missing refusal against that candidate
+(raw `exp08-owner-recovery-grant-replay-baseline.log`, SHA256
+`00ba22d001e699ad9acac491cf7cd6e59beb8cf592f222c596d6fd448735b4a8`).
+Initial test-literal polymorphic-type failure42804/e407c501 is retained separately,
+not counted as the product reproduction. All fixtures disposed.
+
+Replay now requires all three new spans exactly once AND exact equality to the
+deterministic forward transformation of the pinned original body. Original55
+controls remain before four native reversion negatives; all59 PASS, preserving
+each altered body and business rows on refusal. Final raw
+`exp08-owner-recovery-grant-replay-final.log` SHA256
+`4272a00deea1a0446e42a74e401268e23de663bb3507307c641a232b8e56b5d3`;
+candidate SHA256 `3b848bfb004ba5f3a2f53358c2665bd578c2660454e97724bb1d3be191798842`.
+The earlier55 PASS is historical and does not prove this replay property. Renewed
+source review remains required; no native release/public recovery/effect acceptance.
+
+### October31 — private atomic recovery audit/receipt and E02 effect binding
+
+Source custody ANT147/996e4e4e, SAME original row4. Private preparation now factors
+the existing live Auth/super-admin lock into `_exp08_lock_recovery_actor() -> uuid`.
+`_exp08_lock_owner_recovery(uuid) -> uuid` retains its original signature, returns
+the previous holder and reuses I1 eligibility/holder state. No client/service
+EXECUTE; actual actor/tenant/role checks remain native, independent of model/GUC.
+
+`_exp08_apply_owner_recovery(uuid,text,uuid,text,uuid) -> jsonb` is PRIVATE ONLY:
+tenant, act, target user, reason, stable request UUID. It serializes that request,
+requires reason10–500, reserves the ORIGINAL audit row with id=request BEFORE
+effects, executes the original grant/private R12 effect and finalizes that same
+row only after native verification. Pointer/domain/recovery audits and effects
+commit or roll back together. Identical replay returns the committed receipt;
+actor/tenant/action/target/reason mismatch refuses. A prior preparing/unknown row
+is not silently retried. Revoke still refuses UNAVAILABLE pending E02's writer.
+No second operation/result ledger, public recovery RPC or provider dispatch.
+
+Private `_exp08_read_owner_recovery(tenant,request) -> jsonb` revalidates the LIVE
+original administrator, binds the exact tenant/actor/native audit identity and
+returns found/not_found separately. It does NOT rerun holder-none against a valid
+working post-state. Result is `effect_verified`, `notice_status:not_prepared`,
+`notified:[]`; this is not Done/delivered/full R9. Backend/transaction internals
+are removed from the returned receipt. Recipient/ordinary-owner private readers
+and actual notices remain to build. Runtime consumption requires the installed
+original recovery namespace/retention boundary; no forged client audit is trusted.
+
+**Finite E02 producer ABI (not deployed/available yet):**
+
+- `_exp08_lock_recovery_effect(_tenant uuid,_user uuid,_request uuid,_act text) -> uuid`
+  is postgres-only DEFINER/VOLATILE/empty search_path. E02 passes constant
+  `revoke_owner`, never a caller-selected act. Return is the actual native actor.
+- It first runs the original live actor/recovery admission, then locks the exact
+  original audit row. Required row: id=request, tenant_id=tenant, target_id=user,
+  actor_user_id=auth.uid(), actor_role=super_admin,
+  action=`tenant:owner_recovery.revoke_owner`; payload request_id/target match,
+  outcome=`preparing`, transaction_id=`pg_current_xact_id()::text`,
+  backend_pid=`pg_backend_pid()`. Those fields are native-generated, not caller
+  JSON/GUC credentials. Full transaction ID works across nested subtransactions;
+  no unsafe 32-bit xmin/epoch inference. A committed/stale record is not a fresh
+  effect credential. Finalization changes outcome only, preserving identity.
+- Lock order: live Auth SHARE -> actual super-admin role SHARE -> request advisory
+  lock in the outer transaction -> active owner seats ordered by id FOR UPDATE ->
+  tenant FOR UPDATE -> preparing audit FOR UPDATE -> original Billing contacts
+  advisory/rows inside E02's existing effect. Revalidation after Billing waits/
+  writes uses this same E08 function while outcome remains preparing. No second
+  resolver or owner impersonation. Full cross-writer lock composition still owed.
+- E02 retains ALL Billing source/ordinary one-arg API, authority, remaining-primary
+  invariant and native audit/atomic rollback. E08 retains recovery/public wrapper/
+  result/private notices. Zero known contacts must be explicit not-required;
+  unknown/error/foreign absence is never zero. Receipt/delivery after commit MUST
+  NOT call the effect predicate; it may legitimately observe a working holder.
+
+Original59 before26 new controls=85author-run local native PASS. Two actual
+duplicate-request connection races prove first commit returns one effect/receipt,
+and first rollback permits one committed effect/receipt. Tests also cover live
+role/other-admin/tenant/ACL negatives, short reason, runtime retention refusal,
+outer rollback, direct client audit fabrication, and a fixture domain consumer
+inside the actual original grant: exact native preparing identity succeeds while
+wrong action/target/null target fail. Completed or stale preparing records refuse.
+This is producer proof, NOT actual E02 cleanup or full native schema/customer proof.
+
+Raw `exp08-owner-recovery-receipt-binding-final.log` SHA256
+`cffaaefd1e3e771906cffac79e6bb97c1b903de41b60a76e7519f9de7e2933d3`;
+candidate SHA256 `73b162bf350e46d433b046ecf5f592476b6b81b13c77ba8ccb15623cae00ab77`.
+Earlier75/81/84 PASS packets remain separately historical; all own fixtures disposed.
+Source review, complete metadata/retention/privileged-writer admission, original
+runner/full-schema/target-writer races, native carrier/CI/release and authenticated
+proof remain owed. In-app/receiver integration and full original assignment remain
+**STILL CODING**, no customer routing/ALG maturity/provider/owner-acceptance change.
+
+### October31 — native private in-app notice records and current-context detail
+
+Exact prior source custody ANT147/52f0b290; existing inert writers/proof/own
+contract only. No shared bell/hook/shell, schema/enum/policy or unrelated notifier
+edit. `_exp08_record_recovery_notices(tenant,request)` remains PRIVATE and binds
+the exact effect-verified audit to the same native transaction/backend/actor.
+It writes the EXISTING `public.notifications` system records atomically, for the
+live original holder of record and current active owners, deduplicated by user.
+The original audit stores actual notice IDs/audience/user bindings and membership
+snapshots; stable request replay does not create another record.
+
+Raw title/message are generic, action_url NULL, metadata ONLY
+`{kind:exp08_owner_recovery,audit_id}`. No business name/reason/private content is
+stored for the legacy global renderer to disclose in another workspace. Detail
+is read from the ORIGINAL protected audit, never raw notification wording or
+client-edited metadata as authority. Existing notification semantics/writers stay.
+Native receipt now truthfully says `in_app_recorded` with actual IDs, email
+`not_requested`; it does not claim seen/read/email delivery or full recovery.
+Zero eligible recipients would be explicit no_recipients, not presumed delivery.
+The earlier not_prepared expectation was updated for this implemented feature;
+the original85 packet remains historical source evidence, never rewritten.
+
+PRIVATE `_exp08_read_recovery_notice(expected_tenant,notice)` checks live unbanned/
+undeleted auth.uid, locks actual current profile workspace and current member
+before tenant, rejects archived/unsupported business, binds exact notice/user to
+the native audit's original recipient/notice ID. Active owners retain their
+scoped event; the original holder-of-record receives the specifically approved
+event even without a team seat, without broader Team/Knowledge/business rights.
+For that explicit former-holder event grant, later membership changes invalidate
+the stored snapshot unless current active ownership independently permits it.
+Malformed/forged raw metadata, other users/admins/workspaces and departed owners
+cannot turn a generic row into a private read. No public/client/service EXECUTE.
+
+Final107 author-run local native controls PASS: original85 retained with truthful
+in-app status expectation,22 new notice/detail/availability/RLS/ACL/rollback cases.
+Two original actual duplicate-request races also verify ONE in-app record after
+first commit/rollback; outer rollback removes notices. A late notice insertion
+failure rolls back pointer, domain/recovery audits and all notices together.
+Actual local recipient-only RLS ports allow editing an own metadata reference,
+then native detail refuses forged/invalid bindings. Ban/soft-delete/archive/
+workspace/departure negatives, expired-ban positive and original holder-of-record
+without a seat pass. Minimal table/Auth/company/owner/policy ports remain explicit;
+no managed schema/full lifecycle or authenticated customer proof. All fixtures disposed.
+
+Raw `exp08-owner-recovery-notice-currentness.log` SHA256
+`d61f0edfd486f8abdd869a4b0a78f0cea5b1027eb3e01206c3e22bfc6a4bacbc`;
+candidate SHA256 `ff95c82f93eea28208ec130907ed3dc0cf88a23197125f5d3693e1d249869ea7`.
+Earlier90/103 PASS packets remain separately historical. Review renewal, complete
+metadata/retention/writer admission, actual cross-writer/profile wait/full-schema
+composition, public wrapper/detail host/bell admission/mark-read and E03 email
+receipt integration remain required. No fire_team_event/provider dispatch or new
+sender/runtime/ledger. E02 effect-binding ABI is unchanged; revoke still unavailable.
+Full original assignment **STILL CODING**, no new release or owner-review readiness.
+
+Distinct SOURCE-ONLY review ofd580 found P2: the detail reader's profile-before-
+membership order inverted the original member remover's membership-before-profile
+cleanup. Preserved d580 source GENUINELY deadlocks against the real released
+remover in the new regression, raw `exp08-owner-recovery-notice-removal-baseline.log`
+SHA256 `7e028876bc925760f097c1b6255c5c2d322a6b3dcbfc7fc3f11b931f18d4f400`.
+This is an inert local source finding, not a production incident. No assertion
+or source guard was waived; the corrected reader locks membership before profile
+and checks the actual current workspace after its wait.
+
+Original107 controls stay before four native composition cases, final111 PASS.
+The test loads the ORIGINAL remover plus actual released140008 carrier and checks
+its production bodycc631b7a. Original role-map/sync/protection functions and real
+triggers run; Auth/table/company/owner/agency standing remain explicit ports.
+An actual membership-before-profile barrier makes removal-first finish cleanup
+while the stale read refuses without deadlock. Reader-first completes a legitimate
+owner read and preserves the original remover's owner refusal. Both orders of the
+original holder-without-seat case retain its scoped event and the original
+not-on-team refusal without clearing a nonexistent seat's profile. No copied
+remover, new writer, new schema/runtime or production effect; all fixtures disposed.
+
+Final raw `exp08-owner-recovery-notice-removal-final.log` SHA256
+`25fd57aac3721be8563bccb64bc22b99a3df857aabb357c53ac35e10382e2ec3`;
+candidate SHA256 `d4ef55fcd5c78acc3c42214c0727d0bcca3da943d26cd0487c10401985f9e9c2`.
+Source review renewal is owed. The earlier107 PASS remains historical and does not
+prove this lock composition. Other full-native/lifecycle/privacy/metadata/reader/
+receiver/public-door and complete assignment requirements remain unchanged.
+
+### October31 — original revoke and received E02 Billing cleanup composed locally
+
+Original receiving custody ANT138/98462d2d. E02 frozen e4cc/PR3173 is normally
+composed in1f781e, ALL3 peer files byte-exact, ALL19,102 outside leaves conserved.
+An initial truncated tree probe is INVALID, corrected by a complete16MiB/error-
+checked union read; original history retained. E02 owns those files unchanged.
+
+New INERT `scripts/proof/exp08-owner-recovery-revoke.sql` runs after the E08 base
+and actual E02 private preparation. One CURRENT ORIGINAL revoke7d62 body moves
+into a private request-bound kernel, while the original public2arg ABI/OID/ACL/
+configuration, holder refusal, self-step-down, owner floor, entity unlink, role
+sync and original domain audit remain. The ordinary SOLO platform bypass is
+removed; legitimate holder/self authority and non-SOLO platform behavior remain.
+Exact forward/inverse original-body conservation, replay, partial-source and
+private ACL guards refuse drift. The E02 cleanup entry must retain its actual
+frozen source69ff592a/private metadata; unknown code is not trusted or overwritten.
+
+Recovery uses E02's ORIGINAL private cleanup and verifies returned contact/audit
+identities against actual original records, native tenant/user/actor/request and
+revoked state. Results append to the SAME preparing recovery audit. Known empty
+applicable sets return not_required; non-Billing SOLO's original known-zero
+compatibility is explicit not_applicable. Unsupported legacy contacts refuse,
+never an exception-to-zero. Original last-owner/final-primary rules remain load
+bearing. The parent verifies actual demotion before finalizing its original audit
+and in-app notices. Private grant/set-holder/revoke now compose locally; no public
+recovery, service grant, provider/payment/send effect, version or managed apply.
+
+Original111 controls before20 new receiving/native compatibility/rollback/drift
+controls: final131 author-run local PASS. Actual original E02 scope/revoke bodies,
+private cleanup, current7d62 revoke, role writers and original recovery transaction
+execute; Auth/workspace/minimal tables/company/owner remain ports. The private
+baseline genuinely returns OWNER_RECOVERY_REVOKE_UNAVAILABLE without the consumer
+(rawa7057617), not a production defect. Initial120 PASS9f6b42af retained separately.
+Ordinary authenticated self-step-down/holder API and owner audit, sub-account
+zero/non-SOLO platform behavior, floor/primary refusal, stable original Billing
+IDs on replay and late notice failure rolling back ALL financial/ownership/audit/
+notice effects pass. Unpatched kernel, exposed ACL and changed peer entry refuse.
+All own disposable databases removed; no hosted/customer acceptance claim.
+
+Final raw `exp08-owner-recovery-revoke-final.log` SHA256
+`5fcdd055baf601cd0b916543b1084fd6010cc4fd3339beed0f8a10394fba67a2`;
+base writer SHA256 `51ff184447d4c60741efe721370a72c827f70f57ee46d9ed5cdb397ea810f692`;
+revoke component SHA256 `7eb609038750efe57758a7445a9c6ae4fe285195f38a1568be90a009b6d5bb25`;
+received E02 SQL SHA256 `b2638ef3001dc5bcbea5a418fd9cf9bae046b9c2f00b8685fc26018b39e9cdb3`.
+Review renewal, exact original owner-door current-context/live-identity assurance,
+complete metadata/retention/privileged-writer/full-native/entity/lifecycle races,
+public wrapper/detail host/bell and E03 email remain required coding/integration.
+Consumer proof is not PR3173 CI/merge/release or full R9/customer acceptance.
+All original18+6/five journeys/full assignment remain **STILL CODING**.
+
+### November1 — original owner-door current context, private preparation
+
+The intended outcome remains legitimate owner changes and recovery with current
+identity/workspace authority, original domain effects and truthful durable results.
+The new private mechanical prelude reuses the existing holder/owner/super-admin
+predicates; no new authority engine, provider action, approval or result store.
+Ordinary public grant/revoke now enter it; new private recovery enters before the
+four frozen E02-bound helpers, whose bodies remain unchanged. Non-SOLO original
+behavior remains unchanged. Snapshot admission precedes sorted Auth UPDATE,
+membership UPDATE, ordinary actor profile SHARE and tenant UPDATE locks, with
+the original retirement-compatible table gate first. Snapshot/identity/context/
+authority changes refuse before effects. Full opposing-writer assurance is owed.
+
+The preserved grant door genuinely accepted a grant with its holder's active
+workspace elsewhere: causal baseline FAIL, raw SHA256
+`ad158d0bc49398265a55119913896da97205b83c7750e9458443317a0302613c`.
+The earlier revoke comparison already refused via original Billing
+`no_active_workspace`; its error-wording mismatch is NOT a demonstrated stale-
+workspace bypass. A first current concurrency run failed because its unprivileged
+observer could not see another backend's wait detail. Only the observer was
+corrected; the actual owner operation still runs as `authenticated`.
+
+Final author local138/0 PASS, raw `exp08-owner-context-observer-corrected.log`
+SHA256 `ecdceaf59484584ab18fc67afb60af0e314653c988044c47b24a1fbad0b62b39`;
+writer `f07666c30344eae873692c858f4309b529686d4c3e1d2a5b8f4ac0b3ac89a4c0`,
+revoke `0a5f49d6dc03033d08ab2f16537a954a558f13b3cdb5438edcdc0cc808cf8a52`.
+Includes wrong workspace/live ban/soft deletion/archive refusal and actual
+workspace/identity commit-during-wait refusal, with ownership and original Billing
+contacts unchanged. Each run disposed only its own disposable local database.
+This remains a ported local proof, not managed/full-schema/authenticated evidence.
+
+E02 separately reports independent execution of immutable5b20b26's original131
+controls from its byte-verified snapshot, same raw5fcdd055, with independent
+disposal readback. That is separate receiving execution, not execution of this
+new delta or approval of privacy/release/customer readiness. E02 successor3173
+cbb4dd50 remains draft/unmerged at read; its source/workflow custody is preserved.
+Fresh main794d6e394 includes peer Knowledge releases; composition/readback pending.
+Coordinator reconfirmed original ANT50 Setup protection request ae0d19d7/b618
+unanswered, original E01 owner accountable, no verified new incumbent or handback.
+Do not infer shared-source custody or duplicate that pending request.
+
+Remaining: full metadata/retention/privileged-writer and entity/lifecycle/native
+composition, public recovery/receipt/detail and notification presentation, original
+email receiver and Setup protection, normal exact-head review/CI/Preview/release
+and authenticated outcome/reopen/recovery. Full original18+6/five journeys,
+both-chat workshop/goals/proactivity/standing authority remain **STILL CODING**.
+
+### November1 — original entity lifecycle in the same recovery transaction
+
+The same local recovery proof now installs the released original80008 entity-seat
+lifecycle migration, original representative Auth FK and original composite
+FK/owner CHECK/unique entity-seat constraints. No replacement vacancy writer.
+Original revoke clears the existing representative link, records the held vacancy
+and conserves the legal owner record through that original trigger. A later notice
+failure rolls back that entity change, original Billing cleanup, membership and
+recovery audit together; retry of the rolled-back request succeeds, then replay
+preserves the original receipt and entity row without another effect.
+
+Final140/0 author local PASS; all prior138 controls retained. Raw
+`exp08-owner-recovery-entity-composed.log` SHA256
+`fa14f5d09e7ad7411fc7d72443e794f69fec1eee30e74647ba95bc820dd11c9b`;
+proof script `318f3443cb88a2f3c22033f956ccb3e2fd8acb1def1b415672ce4105f73975ac`.
+Own disposable database removed. Auth/context/minimal storage remain explicit
+ports; this is native component composition, not full schema, opposing-writer
+race coverage, customer/RLS proof or release clearance. Source-only review of
+prior7cc excludes this new proof-only delta until separately renewed.
+
+### November1 — original public recovery doors, INERT / review repair pending
+
+Intended outcome: authorized original R9/R12 recovery, durable receipt reconciliation
+and recipient-scoped event detail. E08 owns collaboration/admission/integration;
+original owner/Billing/entity writers and audit/notifications remain the producers.
+No task runtime/model/provider is needed for this operator action. No Spine tool is
+registered: agent recovery remains UNAVAILABLE. Actual live super-admin recovery
+authority remains native; no new Trust/approval path or standing business power.
+No new job/result store, model consumption or financial allowance. Original audit
+and notice rows supply readback; no mounted UI/binding/production state is advanced.
+
+The original planned four-argument `platform_owner_recovery` has no released source
+or existing caller in current source. New five-argument preparation requires the
+stable request ID; omitted-ID four-argument calls receive an authored refusal after
+actual live admin admission, never an unrepeatable generated operation. The original
+private transaction and readers remain the only implementation. Receipt and scoped
+notification detail wrappers grant authenticated EXECUTE only; that grant grants
+neither recovery authority nor another recipient's data. No managed/public exposure.
+
+Initial157/0 author local PASS, raw `exp08-owner-recovery-original-doors.log` SHA256
+`36e412838d2c4bc3229f111b95d97d3af3fbba645f9b8ae4e2b3ceccd219c595`.
+All140 prior controls retained, original actual-role entry/receipt/detail, wrong
+actor/tenant and anon/service refusals, source/ACL drift refusal and installer replay.
+Own database disposed. This does NOT close the independent source-review P2:
+installer metadata must additionally pin argument defaults/names, function shape,
+language and execution flags, and reject unsupported overloads. Repair/regression
+required before publication/release; initial PASS is not clearance. All remaining
+full-native/privacy/retirement/UI/email/Setup/full-assignment gates remain open.
+
+### November1 — recovery-door review repairs and final165 local controls
+
+The initial e44f8f8b0 installer genuinely accepted default-argument drift; causal
+baseline FAIL `exp08-recovery-door-metadata-baseline.log`, raw SHA256
+`06b2feb4a77cc7caa74042b9d36e63bdbac6d1d745bf98e010f6e963eab8612d`.
+The repair pins language, scalar function kind/result, argument names/modes/defaults,
+strictness, parallel/leakproof/support/body/configuration and cost/rows flags for
+the original native prerequisites and public doors; unsupported overloads refuse.
+The original audit foundation is validated before creating any public entry.
+A second source P2 found effective-permission checks only on replay; fixed by ONE
+common post-create-or-inspect validation. Fresh inherited anon/service access now
+refuses atomically with zero endpoints created. Fixture role membership is restored
+in finally; no production roles changed. Changed source/ACL/default/STRICT/parallel/
+cost/private-reader flags and unsupported overload remain altered on refusal.
+
+Final165/0 author local PASS, all earlier157 controls retained; own database disposed.
+Raw `exp08-recovery-door-metadata-repaired.log` SHA256
+`69d862754809be26b27f8d6e9a57be4de7a24bd685a41318e1d32c8b87592138`;
+door installer `7776f43e7e23d88f037455aeba84ab2ec6ae88b6d6a87c5a4a340fd8e89d54e8`;
+proof `5eb48a076d051c5dde56aadc91423abb3288e14b804a067fe7577a2db3939c15`.
+Source-only repair reviews clear; exact committed review renewal remains required.
+No independent execution of165, managed/private namespace installation, mounted
+customer/operator UI, email, production release or authenticated acceptance.
+
+READ-ONLY actual production inventory: all91 function-source mentions captured,
+82 direct mutation functions;85 VALUES entries statically classified,75 simple
+literal actions. This is a heuristic inventory, NOT exhaustive SQL interpretation.
+Remaining cases include fixed-domain expressions, two service-only parameterized
+actions and original operator retirement. Original audit actor/tenant FKs use
+ON DELETE SET NULL, before-insert stamp fills only a NULL tenant, and retirement
+preserves audit rows while detaching tenant and marking server-only. No directly
+named scheduled audit-retention job; indirect/dynamic/Edge inventory still owed.
+Current protected-prefix count0 and public/private recovery doors ABSENT verified
+from actual production catalogue. No row contents, service action or DDL performed.
+Preserve R16 archive/delete authority; do not make retention a blanket deletion hold.
+Complete bootstrap/replay/privileged-writer and lifecycle/retirement composition,
+versioned normal release, UI/notifications/email/Setup and full original experience
+remain **STILL CODING**. The scoped public source is PARTIAL; customer results are
+PROOF OWED, never promoted from local tests or a source-only review.
+
+### November1 — one atomic original recovery bundle, ported bootstrap proof
+
+Build-only `exp08-owner-recovery-bundle.mjs` composes the SAME five original
+provenance/base/E02/revoke/public components in one outer transaction. It strictly
+removes their known outer wrappers and pins received E02 bytes; it is neither a
+runtime nor a new registry/writer. All10 statically declared private helpers are
+admitted BEFORE CREATE OR REPLACE can normalize drift. Original public owner doors
+and both private kernels also receive full ABI/execution admission; unsupported
+owned overloads and partial installations refuse. Original component source/body/
+ACL guards remain intact. No versioned carrier or managed application yet.
+
+Counterfactual local composition WITHOUT the preflight genuinely normalizes a
+changed private helper; the guarded bundle refuses the same alteration unchanged.
+Partial state and original/kernel STRICT flags refuse without repairing metadata.
+A separate schema-only clone of the OWN ported native fixture restores actual
+original2a751 grant/7d62 revoke/f8fa Billing writers and removes ONLY candidates
+from that empty clone. A late original Billing source failure rolls back ALL new
+functions/policies/triggers. Fresh install/replay, authenticated-role original
+revoke→Billing/entity vacancy→R12 restoration, durable receipt replay after working
+post-state and unchanged whole-bundle replay after native rows pass.
+
+Two failed runs remain evidence: large Windows stdin early-error pipe EOF
+raw87f3ec56be20abd1468a0618de4e607c1a14c79f54b86eabaf2ada53f3f1eb61;
+then a real original Billing scope refusal raw
+e7f8e15ea5496d5f99b4ac2d17ddaac9a4eedafdea15fc633701a6b404a0518d.
+Actual diagnostic showed Windows dump CRLF changed scope body to92c0c4df;
+canonical LF restores EXACT original3d33a31f. Guard and E02 source unchanged.
+Owned SQL-file transport fixes early-pipe observation; clone LF normalization is
+checked against EVERY original function body and portable ABI/execution/privilege
+descriptor before any candidate removal. Raw CRLF clone retained, SHA256
+adec782986fbaee09e4d8115ad63571d15bb90acca946c45dec68f38a0e4dace.
+
+Final174/0 author local PASS, all prior165 retained; raw
+`exp08-recovery-atomic-bundle-canonical.log` SHA256
+`df1423e03f3639d49ef1fb6c855be1d311030256aca8a7f183284e3f9eef8bdf`;
+compiler a3cf77400ab93770942826ae40b51a9d0138cd2bde58a7dd242983d90d3e4707;
+bundle proof41f047310ba06e3889e2dd2b29acc52dc23a6ce987c3fb205461fd1251ec94b6;
+main proof8273803c67d946509c1f3a4043478c63c77c457494c5bb7f1af425e943122f87.
+Both owned fixture databases disposed; no managed/full-production-schema or
+authenticated customer proof. Source-only reviews clear pending exact commit
+renewal; wider privileged/indirect writers, retention/retirement/lifecycle, public
+UI/email/Setup and normal release/full original experience remain open.
+
+E02 original3173 now normally merged8ead539c/cbb4dd50, inert source only;
+producer reports READY production source readback, NOT native activation. Its
+three received files remain exact and its frozen helper ABI unchanged. Original
+EXP13 new Knowledge producer packet received for later bounded host inspection;
+receipt ACK is not source/host integration or a broad Chat/Root writer lease.
+Original18+6/five journeys/full assignment remain **STILL CODING**.
+
+### November1 — one recipient predicate and retirement table-gate repair
+
+The original recipient predicate is now one private
+`_exp08_read_recovery_notice_for_recipient(tenant,notice,recipient,require_profile)`.
+The existing customer wrapper hard-codes actual `auth.uid()` and profile=true;
+clients cannot choose another recipient or disable workspace checks. The new
+primitive is postgres-only, including no direct service-role EXECUTE. Its false
+mode is preparation for a source-derived server delivery consumer, not a service
+endpoint, new workspace grant or recovery action. Native notice/audit binding,
+live Auth, current active ownership or unchanged former-holder event snapshot
+remain required. Customer membership-before-profile ordering is conserved.
+
+The original retirement gate acquires tenant SHARE ROW EXCLUSIVE before scoped
+rows. The shared reader now takes compatible-to-normal-DML ROW EXCLUSIVE before
+recipient row locks, so retirement waits before taking its rows. Actual preserved
+781 reader via the original authenticated public notice door reproduced a
+DEADLOCK with the original retirement lock primitive and exact original archive
+UPDATE spans. Baseline raw `exp08-notice-retirement-baseline-public.log` SHA256
+`6f0d3b1ff6ac95c2443fa1f0056c18cd4bf87868fc16e275a40246aa425bae1a`.
+Earlier fixture parameter-binding and private-function-under-Auth failures are
+retained separately and do NOT establish that product lock defect.
+
+Final187/0 author local PASS, all174 earlier controls retained; raw
+`exp08-recipient-retirement-current.log` SHA256
+`d7b9001ec46160b0b20919f79f33638d8ae26015af9aa25a549ef8849a27778b`;
+base writer b34cbeb5a75530f3953fe0c4fb0e56cb8e39f307df3d7ee04deb3517be3ac600;
+retirement proof6991419fa5591fac729d6c08a385829fff71688983e90e60a27e311d50f6d941.
+Both lock orderings and customer/private-native recipient modes pass; customer
+wrong-workspace refusal, NULL mode refusal, wrong recipient and private EXECUTE
+negatives remain. Former-holder server preparation survives unrelated workspace
+selection without borrowing identity, but a changed membership snapshot refuses.
+The fixture uses actual retirement lock source and exact three UPDATE spans,
+minimal added lifecycle columns and a sequential reader-first gate demonstration;
+it is NOT invocation/proof of the full archive/delete API or actual schema.
+All11 static private helpers and exact public prerequisite source/ABI are admitted;
+the original four E02-bound bodies remain unchanged. No managed grant/activation.
+
+E02 independently executed immutable781's174 controls from24 byte-verified inputs:
+174PASS/0FAIL, raw0712827173eddcc7502f9b45fbe3d92c2f170e8d0b74a0276b36014fa4f1bcf3,
+independent database-disposal readback. Its parser first-object error was corrected
+without rerunning/changing product proof. This is receiving execution of174 only,
+not187, source review, a summed305, cluster-role-conservation, hosted/Auth/privacy
+or release approval. Source-only factoring review is clear pending exact commit
+renewal. Current sender-owner receiver/idempotency/result contract requested;
+source event reader, real delivery, UI, full schema/retirement and original full
+assignment integration remain **STILL CODING**.
+
+### November 1 — personal native recovery notice reader (local evidence)
+
+The original recovery-notice audience can reopen its own native event without
+selecting a business workspace. `get_my_owner_recovery_notice(uuid)` accepts only
+the native notice ID; its private reader derives the tenant and recipient from
+actual Auth identity and the original notification/audit binding. It uses the
+same live recipient, membership-snapshot, retirement and event predicates as the
+scoped reader. It does not select a workspace or grant business membership.
+The existing two-argument workspace reader retains its stricter workspace gate.
+Anon/service execution, another user's notice (including an administrator), and
+client-edited metadata refuse. The approved former holder without a membership
+or selected workspace can read only this bounded event.
+
+Author local run: 194 controls PASS / 0 FAIL, retaining the earlier 187 controls.
+Raw `exp08-personal-native-notice-profile-restored.log` SHA256
+`68bf04dec36e671692ba7f6f82e195ef051a56c9ad9e93bf3af358cbf9e95713`.
+The initial run's fixture profile update lacked its setup role reset; that failed
+run is retained separately. Only fixture setup was corrected; actual public API
+calls remain authenticated. The successful run reports disposal of its owned
+local database. These are ported minimal-schema PostgreSQL16 controls, not hosted
+schema, production authentication, mounted UI, delivery, or owner acceptance.
+E02's independent 174-control execution remains a separate immutable baseline.
+
+The unversioned atomic bundle admits twelve private helpers and five public
+signatures, including the existing request-required compatibility overload. No
+managed migration, production endpoint, service event reader, email sender or
+customer-facing mount is activated by these inert source changes. Full Team Hub
+integration and all original matrix outcomes remain **STILL CODING**.
+
+### November 1 — original Communications committed-event reader
+
+Receiving requirement: original Communications handoff ANT-147/e5d474e8. Its
+existing transactional sender records idempotency keys but does not deduplicate
+on them. EXP03 retains the existing receiver/sender atomic claim, original
+email_send_log reconciliation and truthful unknown/accepted outcomes; this reader
+neither sends nor repairs that separate dependency. No email activation is implied.
+
+Prepared original RPC `get_owner_recovery_delivery_event(_tenant uuid,_audit uuid)`
+returns only `{event:'owner_recovery',version:1,audit_id,tenant_id,action,
+recorded_at,recipients:[{user_id,notification_id,eligible}]}`. It admits exactly
+service_role EXECUTE (postgres owner); anon/authenticated have no EXECUTE, and
+all three have no direct private-helper EXECUTE. No caller actor, address,
+recipient list, reason, template, destination, override or new recovery request.
+No written reason, business name, target identity, transaction/backend or audit
+payload reaches the receiver. The receiver uses original server-side current
+identity/address resolution and the canonical Team/personal-notice destination;
+this source does not invent a URL or grant navigation/workspace authority.
+
+The private `_exp08_read_recovery_delivery_event(uuid,uuid)` reads only an exact
+committed, effect-verified native recovery event with its original recorded
+recipient/notice bindings. Its body MD5 is ab105e060e570fc095c24f4602f1cca5.
+The original retirement table gate precedes sorted whole-audience Auth and member
+locks, then live canonical tenant, notice and audit locks; the complete native
+event is rechecked after waits. The existing common recipient predicate handles
+current eligibility with no recipient impersonation or active-workspace selection.
+Recorded ineligible IDs remain solely for original receipt reconciliation;
+`eligible:false` is never dispatch permission. A working post-recovery holder or
+later operator-role loss does not rerun/refuse the already-committed effect.
+The service lookup is not a durable dispatch authorization: EXP03 must retain its
+original delivery-time authorization, suppression, provider gates and no-blind-
+retry/unknown reconciliation. Provider acceptance remains distinct from delivery.
+
+Failing-first absent RPC: exp08-service-event-missing-door-baseline.log SHA256
+655c5a9e2f65d53fd99a9cb29d2013a15648a8917c82163c68e528e8b092ad02.
+First implemented run failed the TEST'S expected alphabetic JSON key order, raw
+exp08-service-event-current.log SHA256
+8e0b83105fff4386acd304230d93ec3aa942f3683f4f83fe0881ec7dbde42c83.
+Sorting that expected closed whitelist corrected only the fixture; no output
+field was waived or product code changed for that failure.
+Final author local211 PASS/0 FAIL (all earlier194 retained), raw
+exp08-service-event-key-order-corrected.log SHA256
+152350bd8bf394f64f0a9731edb888fb400a3cc43767f67d3c5aa2158aad8fa9.
+Controls include exact closed output, zero writes/replay, wrong/null IDs, client
+and private-role refusals, ban/delete/role/suspension/edited-binding negatives,
+archived tenant refusal and actual committed/rolled-back Auth lock waits.
+Atomic fresh-clone install/replay and late prerequisite rollback remain covered;
+static preflight now admits thirteen helpers and six role-specific public doors.
+These remain minimal-schema PG16 local controls, not actual production-schema,
+authenticated customer, hosted CI or production/release proof. Source-only review
+found no material issue; exact immutable renewal remains separate.
+
+Production catalogue reconciliation also returned the original unstarted
+Planning compatibility window to EXP05 in ANT-11/510f194f after the explicit E04
+handback. No overlap with this recovery source. Existing guard a75a322d43e4cde08f5142d1eabf6ddb,
+stage a933da55e5f23d33ec62f90f9ec03c73, post bd0e68f3c3e88976786d716dc4a870a6,
+and history list425c6d84055788cc651001b8fe13199d were read from actual production;
+original ACL/signatures remain. This clears source custody only, not Planning
+implementation, native compatibility or both-chat acceptance. No E08 lease held.
+
+A fresh EXP08-only Supabase preview creation confirmation expired without
+creating a branch. No peer branch, production mutation, cost bypass or native
+activation was used. Full-schema/retirement/UI/email/Setup and all original
+full-assignment coding/integration and release gates remain **STILL CODING**.
+
+### November 1 — prospective native carrier and original CI integration
+
+CLI2.109.1 created the empty scaffold; only that unapplied EXP08 file was
+renumbered to `20271126230008_exp08_owner_recovery_native.sql`. No applied history
+was changed. The deterministic builder's --write-once refuses populated files;
+--check compares the whole actual artifact with the original atomic components.
+Carrier SHA256 b910f0b9d86da9900a7010a6f50a35f67c102e3ab85f91ce0a242e26be9ce83f.
+Embedded original preparation comments retain provenance; the top header makes
+this prospective carrier's state explicit. It is NOT applied or release-cleared.
+
+Actual production catalogue reconfirmed original grant2a75180de63325dd7e328a73e494e6dc,
+revoke7d62c3fac37e2af0b6f2a3029d892752 and Billing revoke
+f8fa3a425f70d301f47b5b5750c57ad3, with original ownership/path/ACL. New recovery
+and delivery endpoints remain absent. Latest queried native frontier was19;
+actual published Communications20 and proposed Knowledge21/commercial22 must be
+reconciled with current main/ledger/order before merge. Slot23 imposes no peer
+hold; renumber this OWN unapplied carrier if actual serialized order requires it.
+
+The existing comms-provider-boundary disposable PostgreSQL job gains one additive
+EXP08 step beside its original entity-lifecycle proof: carrier equality plus the
+original recovery integration proof. The existing database-contract job gains
+one own test path and one rollback-only full-schema test after original SOLO
+parity. No incumbent assertion, test, workflow, filter or peer source was removed.
+These finite CI source windows are returned at freeze; no lease through checks.
+
+The new `supabase/tests/exp08_owner_recovery_native.sql` declares28 assertions
+against the full replayed schema with its original functions/triggers/RLS. It
+uses synthetic Auth/business records solely inside one rollback transaction,
+never a new customer QA account. It covers role ACLs, original R12/audit/result,
+same-ID recovery/reopen, protected audit visibility, working-holder refusal,
+generic original notices, former-holder personal detail without a workspace,
+wrong recipient/scoped/service refusals, current service eligibility, ban,
+reentry snapshot change, archive refusal and no duplicate/no-email claims.
+It is NOT YET EXECUTED. In-transaction SQL readback is not durable post-commit
+customer/delivery proof. Hosted/full-schema and Preview compatibility remain
+PROOF OWED; existing local211 is a separate completed evidence population.
+
+The bundle bootstrap proof now tests the actual generated migration, rather than
+only unversioned compiler output, and adds a carrier-equality assertion. Its new
+local run is pending; do not label it212PASS before terminal output. Non-author
+source-only review found no material finding but explicitly holds release pending
+full schema/CI, order/Preview and lifecycle/privacy assurance. No managed apply,
+provider action, customer verification or full Team Hub completion is claimed.
+
+Native-carrier local run completed212 PASS/0 FAIL, terminal exit0; raw
+`exp08-prospective-carrier-local.log` SHA256
+fc5a45197aaff08e0674857154e05ac7791f35b3c09a34b7d0bd0200d0524df9.
+This adds only the actual-carrier equality control to prior211 and tests its
+first application/replay in the OWN ported-schema clone. It does not execute the
+new full-schema28 or prove managed Preview compatibility. Both owned databases
+are disposed through the original fixture/clone finally paths.
+
+Current normal composition e60c515275f51b02fb26c19fc85e2047632c0659 preserves all
+19,381 incoming leaves outside eleven E08-owned paths against main9a254104;
+all eleven own leaves match frozen94d88c54. Complete git-tree comparison has zero
+mismatches. The two edited workflows also have byte-exact additive inverses (8+3
+lines only). The first text-mode inverse verifier used Windows' default locale
+and failed on existing Unicode; byte comparison corrected the verifier, with
+no workflow/source edit or assertion removal. Shared source windows RETURNED
+at this freeze, irrespective of pending hosted checks.
+
+Full-schema first execution on3190/82fbd reached the new suite: 3 ACL assertions
+passed, then test setup failed because its synthetic tenant INSERT omitted the
+actual required `slug` column. The remaining25 assertions were NOT REACHED;
+planned28/run3/bad-plan/stepFAIL, not28PASS and not a reproduced product defect.
+Exact job124864134222 logged that failure at13:48:40UTC. The focused sanitized
+excerpt is retained in the original workspace. Actual own Preview catalogue
+confirmed required columns and native defaults/triggers before correction.
+Only the fixture INSERT gains a neutral synthetic slug; plan28, assertions,
+native functions/permissions and applied Preview carrier23 remain unchanged.
+Required exact-head full-schema execution must be renewed after publication.
+
+Personal-notice consumer preparation (UNMOUNTED): new original client adapter
+and its owning tests resolve the actual actor before/after the original personal
+RPC, retain the host's negative-only lifetime guard, validate requested notice
+identity and native fields, return only the declared projection and keep refusals
+and transport errors generic. No workspace selection, raw legacy notification
+hook, read-state mutation, Memory save, provider/client router or fallback/retry.
+This does NOT implement the complete approved SOLO bell/activity amendment,
+which retains original tenant-scoped Rail/Trust/Work sources and storage proof;
+operator/admin notifications remain excluded from that amendment.
+
+Author synthetic23 tests PASS (including installed SDK with mocked fetch/actor,
+late actor/departure/refusal/malformed/coercible-action controls), raw
+exp08-notice-client-sdk-current.log SHA256
+6b7bf8d103793944a727d15d75e537726033ec826a7c48b88fed2910beddc4e6.
+The missing-module baseline was an import failure with zero tests executed, not
+a production defect reproduction. Existing non-author source-only review found
+no material finding; it performed no execution. ESLint/full-app typecheck process
+is still pending; no PASS inferred. The future host's actual signed-in resolver,
+permanently invalidated lifetime, mounted accessible UI and authenticated server
+flow remain required. No complete notice journey or customer readiness claimed.
+
+Client static-result follow-up: focused ESLint on the two new files completed
+exit0. The full-app TypeScript command completed exit1 with six diagnostics in
+unchanged outside-owned files. Exact normalized diagnostic multiplicities were
+compared with the existing unchanged tsc-baseline.txt: all six are within its
+original allowances, zero new diagnostics and zero diagnostics in the new client
+or tests. Raw TSC log SHA256
+b7acea54d36c767a85c0f5ff08c3f1ff2be0787daf8c12537f39aed43c24bd6d.
+This is not a claim of a clean full-app typecheck; the existing required CI
+ratchet and all other exact-head gates still apply, with no baseline edit.
+
+Full-schema second execution at63bc0b5f ran17/28:16 passed, one failed;
+eleven assertions were not reached. Exact job124870510263/step87 recorded the
+working-holder denial at the earlier original `_exp08_prepare_owner_change`
+context gate, not the later recovery gate whose message the fixture expected.
+The next setup statement attempted to delete the only super-admin and correctly
+hit original `guard_last_super_admin` lockout protection. Neither is evidence
+of an allowed recovery or a product authorization bypass. The new fixture keeps
+the precise42501 denial, pins its actual first-gate message, adds an explicit
+native working-holder-state assertion and asserts the last-super-admin refusal.
+It then suspends the synthetic original actor to test independent service reads
+without removing protected standing. Planned30 preserves every original28
+behavior assertion and adds two controls. Actual execution is still PENDING;
+no30PASS is claimed. Applied Preview carrier23 remains byte-identicalB910F0B9.
+The finite edit window covers only this own test and contract and is returned
+at freeze, with no workflow, original registry, role guard or peer-source edit.
+
+Separate own managed-Preview rollback probes executed the actual original
+recovery, canonical archive and canonical permanent-delete APIs. The archive
+returned its native archived receipt; permanent deletion removed the synthetic
+tenant and retained its recovery audit with NULLtenant/server-only privacy.
+Those probes rolled back; subsequent readback found zero synthetic users,
+tenants or recovery receipts. Restore probes returned a connector internal error
+and are UNVERIFIED, not a product diagnosis or PASS. The final cleanup read
+after those later probes also returned a connector internal error, so the prior
+zero-row cleanup readback is bounded to the earlier successful probes.
+These are author engineering probes of the own Preview, not authenticated
+customer evidence, full lifecycle/concurrency clearance or production release.
+
+Canonical lifecycle integration extension: the same rollback-only native suite
+now plans39 assertions. It replaces the synthetic direct archived flag UPDATE
+with the original archive preview/execute/receipt, then exercises original
+restore, paused execution and cleared workspace pointers, historical event read,
+fresh archive, permanent-delete preview/execute/receipt, absence readback,
+retained server-only recovery audit and personal-detail refusal after deletion.
+Nine new controls extend30; original denial/result/recipient checks remain.
+No original Operator API, registry, permission, applied carrier or workflow is
+edited. This is sequential full-schema integration coverage, not a new claim of
+concurrent full archive/delete execution. Static plan/count39 and diff checks
+pass; actual39 execution and required exact-head gates remain PENDING.
+
+The ff0cedafb managed Preview returned FAIL with exactly `unexpected update
+function status 502: error code: 502`. The original branch inventory still binds
+PR3190 to its own no-data Preview and reports RUNNING_MIGRATIONS/ACTIVE_HEALTHY;
+the project lookup returns NotFound. This conflicting control-plane evidence
+does not establish schema failure or recovery. No reset, branch replacement,
+history rewrite, direct production apply or failed-gate waiver follows.
+
+Original Operator recovery client preparation (UNMOUNTED, follow-up source only):
+`owner-recovery-service.ts` calls the same five-argument native recovery door
+once and verifies through `platform_owner_recovery_receipt` for the identical
+request. It captures actor/selected-tenant/intent before awaits and rechecks the
+host's original negative-only incarnation and actual actor around reads. Native
+role/holder/effect admission remains server authority. Unknown write transport
+or an unverified/read-unavailable result inspects the same request; not-found
+does not authorize retry. No request generator, automatic replay, local result
+store, approval gate, provider, model router or sender is introduced. The future
+host must retain the exact pending intent before dispatch and bind real Auth and
+selection lifetime; this module does not implement that mounted durable journey.
+
+An additional public-async-continuation control reproduced one local defect in
+this new unmounted source (1FAIL/21PASS): the inner receipt reader settled before
+its public continuation returned after an incarnation retired. A final check at
+that continuation repairs it; no production exposure is inferred. Final author
+synthetic two-client run53PASS includes30 Operator client cases and23 existing
+personal-notice cases, raw `exp08-recovery-clients-current.log` SHA256
+162ab87ee2537392427fcbca76bdf45bfdfc652fc848f4db789c5dc60baf51fa.
+Focused new-file ESLint and strict standalone TypeScript checks exit0; neither is
+whole-app or authenticated clearance. Initial missing-module baseline executed
+zero tests. Installed Supabase SDK coverage uses explicitly mocked actor/fetch.
+The native39 release candidate is separate; no later-head CI, mounted UI,
+production receipt, sender integration or full Team Hub readiness is claimed.
+
+Follow-up client controls now additionally cover the submit continuation, an
+apparently successful write with no visible receipt, and a positively recorded
+in-app audience without disclosing recipient bindings or claiming delivery.
+Actual final two-client run56PASS =33 Operator cases +23 personal cases (not
+added to the superseded53). Raw `exp08-recovery-clients-final.log` SHA256
+b96ff6d9dcfa466dd5fcc0c72c329664ec2c79ba1aa8ffc2d5c6ff7cd54a780a.
+Focused lint and strict standalone new-file compilation again exit0.
+Separate sequential source review is AUTHOR-REVIEW / LOWER ASSURANCE; no
+distinct non-author execution, mounted flow or production proof is claimed.
+
+Published native candidate aee031a50: hosted database job124875356421 reports
+the own native lifecycle step87 SUCCESS. Exact test-count log extraction is
+not yet available (job still runs; log endpoint returned404). This is a step
+result, not whole database-contract/CI/Preview or production clearance. The
+managed Preview remains FAIL for the recorded update-function502.
+
+
+First-owner native integration preparation (separate follow-up, NOT APPLIED):
+`supabase/tests/exp08_first_owner_history_native.sql` plans31 assertions using the
+existing inert history/invitation patches inside ONE rollback. It exercises the
+original actual mint/accept writers and their current guards/ACLs, existing-seat
+and original-audit history, excluded injected-parent corrections, original R16
+platform revocation, a previously minted historical token refusing without seat
+or token effects, a genuine first-owner recipient/seat/pointer/profile/token
+result, immutable history and unchanged tenant/token data on candidate replay.
+It is not Auth SDK, new customer account, delivery or production proof. Existing
+recovery39 assertions and every earlier CI step remain unchanged; the original
+Spine workflow adds exactly one own path and one two-line own test step. Its byte
+inverse recovers the complete incoming workflow. Actual native31 is PENDING;
+static plan/count and diff checks do not establish execution.
+
+Fresh production catalogue reconfirmed both original guarded source prerequisites
+and their full owner/security/path/ACL, with history column/helpers absent. No
+migration identity or managed apply is assigned by this test. Before the later
+native carrier, trigger drift/admission and trigger identity conservation on replay
+still require explicit assessment: the current inert history component recreates
+its named triggers. Do not infer that the tenant/token replay assertion establishes
+trigger identity or accepts an unknown installed trigger. First-owner backfill,
+Setup receiving custody, approved UI and actual role/cohort/reload proof remain
+unfinished original row4 work. Current3190 release gates belong to its published
+head; this uncommitted follow-up does not change or clear them.
+
+
+### Same-row first-owner trigger replay repair — November 1, pending freeze
+
+A newly added complete `pg_trigger` replay comparison first FAILED against the
+inert candidate: tenant rows were unchanged but trigger metadata changed. The
+candidate now admits exact installed triggers before backfill, creates only absent
+triggers and checks the installed shape afterward. Original helper bodies and
+applied recovery carrier remain unchanged. The original structural mutant that
+omits tenant moves now refuses at this precise trigger admission boundary; its
+owning control requires that exact refusal instead of accepting arbitrary errors.
+Eight additional installed-trigger drift controls cover disabled/replica, event,
+columns, condition, arguments, wrong helper and immutable-trigger suspension.
+The original component/invitation assertions and concurrency controls remain.
+The full-schema first-owner proof is now plan32, adding complete trigger-object
+replay conservation. It is NOT YET EXECUTED in full schema; prior plan31 wording
+above is the preparation history, not a PASS or current denominator. No native
+version, managed apply, customer account or production activation is introduced.
+
+
+The corrected owning PostgreSQL16 component run completed exit0 on November1.
+All22 history and13 repaired invitation cases PASS; the pre-repair baseline
+retains exactly its six expected admission failures. All4 column,12 helper and8
+trigger drift controls refuse, all6 history and4 invitation semantic/structural
+mutants are killed, both two-token races and17 observed invitation waits pass,
+and the remaining6 wait/authority/mint mutant controls are killed. Exact replay
+conserves rows AND complete trigger metadata. The runner reports disposal only
+of its own database. Log SHA256:
+`b90550f01048b2ae8543db4f9f084b79b203c7c42f718a121b04c0ad44c8a767`.
+These are isolated component/ported-writer tests, not the pending32 full-schema
+run or customer/Auth SDK proof. Original helper definitions are byte-identical
+to published3190 headb2; the exact three-line workflow inverse recovers the whole
+incoming file. Sequential AUTHOR-REVIEW / LOWER ASSURANCE only; hosted proof,
+normal release and authenticated/cohort outcomes remain owed. Applied recovery
+migration bytes are unchanged. Full18+6/five-journey EXP08 remains STILL CODING.
+
+
+### Native32 packaging correction and released Finance composition — November 1
+
+Exact3190/c998 full-schema database-contract124885725310 FAILED. Original recovery39
+step87 SUCCESS; first-owner32 step88 executed3/3 PASS, then could not resolve the
+external scripts/proof include from the native test runner. Remaining29 were NOT
+REACHED, not passed or assertion failures. Exact named-step evidence is retained
+in the successor workspace; no raw CI credentials/customer data copied.
+
+The native test is now a deterministic self-contained artifact generated from
+`exp08-first-owner-native.template.sql` and the SAME original history/invitation
+candidate scripts. Template is byte-identical (canonical LF) to the previous32
+fixture. Only its four include lines expand to original candidate bytes/hash
+markers; all32 assertions and the single outer BEGIN/ROLLBACK are retained. New
+compiler --check enforces complete equality before the same Supabase test command.
+--self-test passes plan/include refusal and source-change detection. It never
+connects to a database or generates/applies a migration. No assertion or runtime
+source/permission was weakened; corrected full-schema execution is still PENDING.
+
+Actual released E04 main17e74cefc3382d0a67d240dd7a1005ec0bf56547 is now composed.
+Fresh production readback confirms native210004/220004/230004 and frontier230004;
+EXP08 recovery230008 remains absent in production. Original public grant/revoke
+bodies/ACL and work-profile1d99 source are unchanged. All19,464 incoming leaves
+outside the frozen EXP08-owned set are exact. The only overlapping merge is the
+Spine workflow; its complete incoming file is recovered by removing exactly the
+nine own recovery/first-owner path/step lines. All peer Finance steps are intact.
+Applied recovery carrier remains byte-identical SHA256b910f0b9d86da9900a7010a6f50a35f67c102e3ab85f91ce0a242e26be9ce83f.
+Managed Preview must now establish the actual new production prerequisite through
+its normal update path; no reset/renumber/history rewrite or blanket include-all.
+
+Separate unpublished owner work-profile/UI follow-up is preserved locally; it is
+not included to clear this failed gate. Its full original no-argument lifecycle
+proof completed exit0/878122ms with all incumbent groups, departure and isolated
+new work-profile controls. That is component engineering evidence, not native32,
+authenticated behavior or release clearance. Local UI31 controls pass; neighboring
+UI176PASS/1FAIL exposes a selection-lifetime regression still under repair, so
+that UI is unfinished/unreleased. Full original18+6/five journeys STILL CODING.
+
+
+### Exact original ACL replay admission — November 1, pending native rerun
+
+Published93ff native32 packaging check PASS and recovery39 step88 SUCCESS, but
+first-owner step89 again ran3PASS/29NOT REACHED: original mint metadata admission
+refused. No native32 acceptance is inferred. The existing original CI grant
+reproducer resets/regrants API roles/PUBLIC; local exact-shape reproduction
+confirmed physical ACL order changed while every complete entry remained equal.
+The former text-order guard then FAILED on that equivalent replay. This is a
+causal guard/compatibility finding, not a stale-infrastructure diagnosis.
+
+The inert invitation patch now compares sorted complete ACL entries, retaining
+grantors, grantees, privileges, grant options and duplicate-entry sensitivity.
+It never writes an ACL. Original owner/security/search-path/source pins remain;
+full non-body metadata, including ACTUAL physical ACL order, is preserved during
+patch/replay. Any remaining refusal includes bounded actual owner/path/ACL/source
+hash detail for diagnosis, never customer data. No privilege broadened/removed.
+
+Final selected PostgreSQL16 run exits0/46910ms. All original22 history/13 repaired
+invitation cases and earlier column/helper/trigger controls/mutants/two-token and
+17 actual waits remain. Both original invite writers admit reordered equivalent
+grants; all13 cases PASS and complete metadata is unchanged. Original5 invitation
+drift controls remain, with3 added actual refusals: accept grant option, mint
+grant option and mint extra direct grantee. Eight total invitation drift controls
+PASS. The run disposes only its own database. Full native32 is STILL PENDING;
+all32 assertions and canonical compiled test source are retained.
+
+Managed own Preview now actually contains released E04native21/22/23 and unchanged
+recovery230008 eachONCE; recovery/personal/service reader source/owner/path/ACL
+match frozen hashes. Auth0/tenants3 are observed counts, not a customer outcome.
+No reset, account creation, applied carrier change or production recovery apply.
+New mainbe2244d4c adds only E02's original Systems read-test/matrix/workflow delta;
+those incoming files are composed normally. Unfinished work-profile/UI follow-up
+remains separate and unpublished. Full original18+6/five journeys STILL CODING.
+
+Final selected ACL replay log SHA256: `d7cdec7c00461dd8e3a151ae98d448dceb0122e13a4846025ee07257cfcd9362`.
+
+
+### Native32 original revocation overload repair — November 1
+
+Exact published ce6826dfec2fa085ab746654a19de8dfd22ae42f database job124898344576 ran recovery39 SUCCESS and all first-owner32 assertions:29 PASS/3 FAIL. Test12 failed PostgreSQL42725 because an untyped one-argument revoke_platform_access call is ambiguous;13/18 correctly then failed because the original revocation never occurred. No infrastructure attribution or assertion waiver.
+
+Actual catalogue read preserves BOTH original revoke_platform_access(uuid) and revoke_platform_access(uuid,text DEFAULT NULL) writers (body MD5 0fb5624c04e4d170f3e0826b8b9cfa52 and f0686e66877bd31bc8c1d8b905cac643). A no-effect disposable parser control reproduced that a single UUID cast is STILL ambiguous; explicit UUID,NULL::text resolves the actual two-argument writer. Only the original R16 fixture call and deterministically generated artifact change. Authority, audit effects, both deployed writers and every32 assertion remain unchanged. Canonical --check and packaging --self-test PASS; replacement exact-head full-schema32 remains UNVERIFIED until hosted execution. No native migration/source/ACL/history rewrite, activation or customer proof.
+
+Local scoped work-profile source is preserved separately on its original local branch; it is NOT bundled into this release repair. Required exact-head review/CI/Preview/merge/deployment/readback and the entire original experience remain open. STILL CODING.

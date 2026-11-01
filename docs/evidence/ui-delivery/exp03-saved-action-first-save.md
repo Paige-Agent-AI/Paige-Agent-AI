@@ -1,0 +1,53 @@
+# Original prepared email: first unsent Save
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+OWNER_INTENT: Complete original EXP03 O12B(ii): edit a prepared email, save it without sending, reopen the durable words, then review and approve the exact original email through its existing owner.
+MUST_NOT_HAPPEN: No send on Save, duplicate Messages draft, stale replay replacing a newer edit, private edited body copied into shared approval JSON, replacement approval/runtime, provider activation or acceptance inferred from fixtures.
+MUST_PRESERVE: Original action/approval, Messages, email writer, scheduler/files, receipt/recovery, mailbox privacy, current actor/tenant/role, approved inline composer and SMS/portal/fresh-email paths.
+ACCEPTANCE_CRITERIA: The authorized ordinary sender saves and reopens the same original email and receipt; exact review preserves sender/content/files/time; stale/revoked/foreign/private sources refuse; interrupted save recovers without duplicate effects. Released customer and both-chat verification remain separate.
+FLOW_BY_FLOW: PASS: original journey14.52 and ANT87/a7f3fe7d; original prepared reply through Save, reopen, exact review and original result, with permission/version/refusal/interruption recovery.
+PAIGE_UI_DESIGN: PASS: installed mandatory overlay and routed modules read; existing Conversations source and actual controlled Mineral/Obsidian frames inspected, preserving its original controls and tokens.
+MATERIAL_FLOW_CHANGE: YES: enables first unsent Save from the existing prepared-action editor and connects it to the existing saved-Messages review path.
+FLOW_PROTOTYPE: PASS: reuses owner-approved Reply Check B(ii), October27, in exp03-composer-inline-check.md and the existing saved-email flow in exp03-saved-draft-conversation.md; same inline editor/check/approval containers and consequence.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: the business sender keeps editable prepared words with Save draft before separately reviewing and approving the email.
+VISUAL_DIRECTION: PASS: Operate; original Mineral/Obsidian Conversations, Schibsted and existing tokens/controls; Impeccable source https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md applied to contrast, geometry, state, focus and recovery inspection.
+MOTION_PURPOSE: NOT_APPLICABLE: no new motion; preserve original reduced-motion behavior and existing inline continuity.
+PROTECTED_SEAMS: AFFECTED current tenant/actor/resource/role/mailbox privacy, original action/approval, durable source/version/files/time, receipt/replay/rollback and keyboard recovery. Authentication/provisioning/billing, E08 Hub host/admission, shared registry/runtime/Memory, provider configuration/credentials and external-effect authority are unchanged.
+AUTOMATED_EVIDENCE: PASS: actual compiled/published native235 retaining original192; rendered/backend240; domain71; original approval57; C0b86. Original causal focus and native replay/edit deadlock failures retained, followed by repair.
+STATIC_EVIDENCE: PASS: changed-source ESLint, definer guards and migration-order guard; all19085 outside owned main leaves exact8374; four SQL fixture reverse transforms exact; carrier/migration bytes equal. Original full tsc transcript has6 baseline diagnostics and0NEW versus committed10.
+RENDERED_EVIDENCE: PASS: controlled browser26/0pageErrors/0offMachine in assets/exp03-saved-email-action-entry/2026-11-01T03-14-03.420Z/results.json, both themes, four required desktop sizes and bounded reflow. First-entry and saved/reopened screenshots included.
+BEHAVIORAL_EVIDENCE: PASS: original component/controlled-browser Save without send, cancel/reopen, exact review, refusal and same-operation uncertain-save recovery; native two-session first Save/review and acknowledgment replay/edit races preserve one source and newer edits.
+AUTHENTICATED_RUNTIME: UNVERIFIED: genuine designated ordinary session identity was verified, and its released legacy editor lacked Save. This new repair is not production-released; actual saved-action Save/reload/reopen/audit/role/cohort proof remains separate.
+KEYBOARD_FOCUS: PASS: controlled browser26 exercises keyboard edit/save/cancel/reopen/check/confirm; successful Save returns focus to the original textarea and uncertain Save focuses Check save status. Actual prior BODY-focus regression and correct Shift+Tab header traversal are preserved.
+ZOOM_REFLOW: UNVERIFIED: repeated567x381 CSS viewport cases passed Edit-first focus reveal; this does not establish native browser zoom or the authenticated complete shell. Inherited compressed three-column layout remains a separate host limitation.
+REDUCED_MOTION: PASS: all controlled browser contexts use reducedMotion reduce; no added animation or haptics.
+STATE_COVERAGE: PASS: first prepared entry, editing, saving, saved/cancel/reopen, stale/source refusal, unresolved save/status recovery, exact review and original accepted-result labels; native tenant/role/private/closed/SMS-origin, duplicate, rollback and competing-writer cases.
+TRUTHFUL_STATE_LABELS: PASS: Save says Draft saved. Nothing sent.; review is separate; original provider acceptance does not claim delivery. Controlled screenshots are visibly marked fictional data and not live.
+SOLO_UI: YES: canonical existing/future eligible SOLO Conversations implementation; no tenant-conditioned source or fixture account activation.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: controlled light/dark1536-closed first-save/reopen frames and geometry pass in the linked26-case artifact; actual authenticated full host remains unexercised.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: controlled light/dark1536-open frames and geometry pass in the linked26-case artifact; simulated PAIGE column is not actual Hub/host proof.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: controlled light/dark1366-closed first-save/reopen frames and geometry pass in the linked26-case artifact; actual authenticated full host remains unexercised.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: controlled light/dark1366-open frames and geometry pass in the linked26-case artifact; simulated PAIGE column is not actual Hub/host proof.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: controlled light/dark1024-closed Save/reopen/reachability pass in the linked26-case artifact; actual authenticated full host remains unexercised.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: controlled light/dark1024-open overlay boundary and folded fixture editing pass in the linked26-case artifact; actual fold/backdrop/admission are unexercised.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: controlled light/dark900-closed Save/reopen/reachability pass in the linked26-case artifact; inherited panel compression and actual full host remain separately unverified.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: controlled light/dark900-open overlay boundary and folded fixture editing pass in the linked26-case artifact; actual fold/backdrop/admission are unexercised.
+INTERNAL_BUILD_IDENTITY: source=a22c7087a8d3b3303e9d7418f40b35d1b13f0c3f; deployment=LOCAL_CONTROLLED_WORKSPACE; environment=local; migrations=PROOF_OWED(20271126200003_exp03_saved_action_first_save exact hosted Preview and lower-order production release); edge=PROOF_OWED(comms-email-command normal exact-source release after approved merge); evidence=scripts/proof/exp03-email-existing-draft-postgres.mjs and assets/exp03-saved-email-action-entry/2026-11-01T03-14-03.420Z/results.json
+RELEASE_CHANNEL: development: local original-writer and controlled workspace proof; PR3175 exact hosted gates and compatible ordered release remain separate.
+RELEASE_CLASSIFICATION: patch: completes first unsent Save through the original approved email journey.
+CUSTOMER_RELEASE_IDENTITY: none: full Experience review and customer announcement have not occurred.
+RELEASE_NOTE_REQUIRED: NO: original journey repair; no customer version or announcement is assigned.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: exact-head hosted SQL/CI/Preview, lower-order normal release/readback, genuine saved-action customer proof and actual E08 both-chat consumer.
+RELEASE_RECOVERY: position=preserve original Message/version/operation/receipt and refuse stale or unreadable source without replaying effects; reference=original journey14.52 and native235 source-drift/replay/rollback/two-session controls
+UNVERIFIED: Actual production Saved-action result/receipt/reload/reopen, second legitimate eligible cohort, real provider outcome under its specific authority, actual Team Hub NEXUS email admission/private-context/card/result, complete shell/native zoom/voice and full Experience acceptance. Prospective200003 follows lower160005/180013/190003. Full EXP03 remains STILL CODING.
+
+The full original matrix, applicable ALG-01 deterministic recovery and original ALG-10 dispatch boundaries remain in [the original journey](../../delivery/exp03-grow-my-business-journey.md). The earlier complete saved-email record and its failures remain in [the original evidence](exp03-saved-draft-conversation.md). This change-specific attestation is added because the required UI gate admits new records; no guard or prior evidence is replaced.
+
+| Entry/state | Action/result | Recovery |
+|---|---|---|
+| Original pending prepared email | Edit, then Save creates one original unsent Messages source and receipt | Missing/stale/private/closed origin refuses and keeps words |
+| Saved source | Cancel/reopen preserves saved words; review uses exact original source/version | Changed words/files/time require the original new review |
+| Save acknowledgment lost | Check save status reuses the same operation | Newer edits survive; old acknowledgment refuses safely |
+| Review/result | Original exact approval and receipt path | Provider acceptance remains distinct from delivery |
+
+Review: exact a22c7087 source AUTHOR-REVIEW / LOWER ASSURANCE5726241283. First hosted UI-evidence job124738453163 FAILED because only an existing evidence file was appended; this required new attestation repairs routing. That failure remains, and all new-head hosted checks must renew.

@@ -18,12 +18,13 @@ import { KnowledgeServiceError, submitKnowledgePublication, type KnowledgeDocume
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { BulkKnowledgeUploadFlow, type KnowledgeAttachedSelection } from "./BulkKnowledgeUploadFlow";
 import { KnowledgeSourceEvidencePanel } from "./KnowledgeSourceEvidencePanel";
+import {knowledgeExtractionAcknowledgment, notifyKnowledgeObserver, type KnowledgeFlowObservers} from './knowledge-flow-observers';
 
 type HaltAction = "inspect-upload" | "read-stored" | "retry-submit" | "check-extraction" | "reread" | "retry-publish" | "check-publication";
 type Halt = { title: string; message: string; action: HaltAction | null };
 type Step = "checking" | "choose" | "extracting" | "review" | "ready" | "publishing" | "done";
 export type KnowledgeCorrectionTarget = Pick<KnowledgeDocument, "id" | "tenant_id" | "revision" | "title" | "content" | "summary" | "category" | "tags">;
-type Props = {
+type Props = KnowledgeFlowObservers & {
   tenantId: string; onPublished?: () => void; onClose: () => void;
   replacementTarget?: KnowledgeCorrectionTarget;
   attachedSelection?: KnowledgeAttachedSelection;
@@ -70,8 +71,10 @@ export function AddKnowledgeFlow(props: Props) {
   return <KnowledgeFlowSession key={`${props.tenantId}:${identity.activeUserId}:${target?.id ?? "new"}:${target?.revision ?? "new"}`} {...props} attachedSelection={source} sourceLifetime={guardedLifetime.current} />;
 }
 
-function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarget, returnFocus, attachedSelection, sourceLifetime }: Props) {
+function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarget, returnFocus, attachedSelection, sourceLifetime, onExtractionAcknowledged, onPublicationVerified }: Props) {
   const identity = useTenantContext();
+  const observers = useRef({onExtractionAcknowledged, onPublicationVerified});
+  const notifiedExtractions = useRef(new Set<string>()), notifiedPublications = useRef(new Set<string>());
   const [target] = useState(() => replacementTarget ? { ...replacementTarget, tags: [...(replacementTarget.tags ?? [])] } : null);
   const [step, setStep] = useState<Step>(target ? "checking" : "choose");
   const [mode, setMode] = useState<"paste" | "file">(attachedSelection ? "file" : "paste");
@@ -91,6 +94,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
   const savedRevision = useRef<number | null>(null);
   const publishWorkId = useRef<string | null>(null);
   const publicationReference = useRef<KnowledgePublicationReadReference | null>(null);
+  const publicationAttempt = useRef<KnowledgePublicationReadReference | null>(null);
   const openedPublication = useRef<string | null>(null);
   const extractIntent = useRef<string | null>(null);
   const publishIntent = useRef<string | null>(null);
@@ -259,6 +263,12 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       const run = ++pollRun.current;
       setNotice("Paige is reading your source…");
       setTimeout(() => void watchExtraction(submission.reference, 0, run), 800);
+      const key = `${submission.reference.intentId}:${submission.reference.workId}`;
+      if (!notifiedExtractions.current.has(key)) {
+        notifiedExtractions.current.add(key);
+        notifyKnowledgeObserver(observers.current.onExtractionAcknowledged,
+          knowledgeExtractionAcknowledgment(submission), {isCurrent: current});
+      }
     } catch (error) {
       if (!current()) return;
       if ((uploadSource.current && !uploadVerified.current) || (error instanceof ExtractionConsumerError && ['EXTRACTION_UPLOAD_UNCONFIRMED','EXTRACTION_UPLOAD_CHANGED'].includes(error.code))) {
@@ -323,6 +333,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       const hash = await sha256Hex(reviewContent);
       if (!current()) return;
       submitted = true;
+      publicationAttempt.current = {...publicationReference.current};
       const submission = await submitKnowledgePublication(supabase, tenantId, reference.current.documentId, reference.current.workId, savedRevision.current, publishIntent.current, hash);
       if (!current()) return;
       publishWorkId.current = submission.work_id;
@@ -333,6 +344,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       setTimeout(() => void watchPublication(0, run), 800);
     } catch (error) {
       if (!current()) return;
+      if (error instanceof KnowledgeServiceError && ["40001", "42501", "22023", "P0002", "55000"].includes(error.code)) publicationAttempt.current = null;
       if (!submitted) {
         stop({ title: "Publication unavailable", message: "The current saved review could not be verified. No publication was submitted. Close this review and reopen the current document before publishing.", action: null });
       } else if (error instanceof KnowledgeServiceError && error.code === "55000" && error.message.includes("KNOWLEDGE_PUBLICATION_PENDING")) {
@@ -360,7 +372,20 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       setHalt(null); setStep("done");
       setCanCorrectAgain(!!openedPublication.current);
       setNotice(association.outcome === "capability_completed_unrecorded" ? "Published. The activity receipt could not be recorded; do not publish again." : target ? "Published. The corrected text is now on the same document." : "Published. The reviewed text is now part of Knowledge.");
-      if (!openedPublication.current) onPublished?.();
+      if (!openedPublication.current) {
+        if (publicationAttempt.current?.documentId === read.document_id
+          && publicationAttempt.current.extractionWorkId === publicationReference.current?.extractionWorkId
+          && publicationAttempt.current.revision === publicationReference.current?.revision
+          && read.tenant_id === tenantId && read.document_id === publicationReference.current?.documentId
+          && read.record_state === 'canonical' && read.pending_review === null && read.extraction_work_id === null
+          && association.work_id && association.generation_id && !notifiedPublications.current.has(association.work_id)) {
+          notifiedPublications.current.add(association.work_id);
+          notifyKnowledgeObserver(observers.current.onPublicationVerified, Object.freeze({tenantId,
+            documentId: read.document_id, revision: read.revision, workId: association.work_id,
+            generationId: association.generation_id, outcome: association.outcome}), {isCurrent: current});
+        }
+        if (current()) onPublished?.();
+      }
       return;
     }
     if (association.work_status === "claimed" || association.work_status === "expired") {
@@ -405,14 +430,14 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       if (!current()) return;
       if (read.publication?.association !== "matched" || read.publication.work_status !== "succeeded" || read.publication.work_id !== openedPublication.current) throw new Error("Publication changed");
       setCanCorrectAgain(false); openedPublication.current = null; publishWorkId.current = null;
-      publicationReference.current = null; setNotice(null); setStep("choose");
+      publicationReference.current = null; publicationAttempt.current = null; setNotice(null); setStep("choose");
     } catch { if (current()) stop({ title: "Document changed", message: "Close this review and reopen the current document before another correction. No new reading was started.", action: null }); }
     finally { busy.current = false; }
   };
 
   const restoreFocus = (event: Event) => { if (returnFocus) { event.preventDefault(); returnFocus()?.focus(); } };
   if (!target && mode === "file" && step === "choose") {
-    return <BulkKnowledgeUploadFlow tenantId={tenantId} onClose={close} onBack={() => setMode("paste")} onPublished={onPublished} returnFocus={returnFocus} attachedSelection={attachedSelection} sourceLifetime={sourceLifetime} />;
+    return <BulkKnowledgeUploadFlow tenantId={tenantId} onClose={close} onBack={() => setMode("paste")} onPublished={onPublished} returnFocus={returnFocus} attachedSelection={attachedSelection} sourceLifetime={sourceLifetime} {...observers.current} />;
   }
   const uploadPhase = step === "extracting" && mode === "file" && submittedInput.current === null;
   if (!targetValid) {

@@ -168,3 +168,72 @@ controls, plus refusing Save again after the retired guard later returns true.
 Focused lint/UTF8/gold/pinnedImpeccable[] PASS; identical strict-probe source
 diagnostics remain4→4, new test diagnostics0. Renewed NON-AUTHOR exact-head
 review requested; source-only/unmounted, no full rendered/customer claim.
+
+## Original Chat reference handoff — producer source only
+
+Normally composed current main794d into the existing UI branch atd72eaa410.
+The already released service/client remains unchanged. Optional data-only
+onExtractionAcknowledged and onPublicationVerified observers let the original
+Chat host bind original document/work references through its OWN authorized
+message door. This does not implement that door, save a transcript, create a
+Chat message, infer approval or add any store/runtime/executor.
+
+Admission output contains ONLY copied/frozen original tenant/document/work/
+intent/optional revision, status and replayed. It means admission, not reading,
+review, publication, indexing or business-fact/Memory/task approval. Publication
+output contains tenant/document/current canonical revision, original work and
+generation IDs and the exact native outcome. It is emitted only after the
+existing authoritative publication reader proves canonical promotion with no
+pending extraction/review; capability_completed_unrecorded stays explicit.
+There are no invented result URLs, Rail IDs, original-file text or storage paths.
+Actual permitted retrieval/search usefulness remains separate proof.
+
+Listeners are captured for the original review incarnation. Frozen contexts
+carry a negative-only isCurrent fence; Bulk adds a captured local selectionIndex,
+which is correlation only, never durable identity or authority. Hosts must check
+their original actor/tenant/resource/version/CAS and this fence after awaits.
+Throwing/rejecting observers are isolated from native effect handling: failed
+host notification never repeats an upload, extraction, review or publication and
+never relabels a verified native effect failed. Notification is NOT durable host
+receiving ACK. Legacy void onPublished remains separate.
+
+Initial genuine observer absence controls:8FAIL/63PASS, raw logSHA256
+4a093d3b7a2beec852423664cbe8592115debcde20a8b425a368b039a8eadc44.
+Explicit minimization control failed1/71skip when the first local implementation
+spread response fields; explicit field projection repairs it, logSHA256
+cefb924fb98181f329e44c91bb0ee8831b4bd773e19ec5fea7c27126a2272cb1.
+The first close-fence control clicked a disabled extraction Close; that failed
+test is preserved and corrected to wait for the existing enabled review Close,
+with no product change. Scoped strict probe found one new nullable generation
+diagnostic; an actual non-null generation guard repairs it without a cast or
+baseline change. Original four inherited strict diagnostics remain separate.
+
+NON-AUTHOR review found a P2: read-only reopening of an in-flight publication
+could emit a new host event when it later finished. The first control's two
+mocked review revisions disagreed and never reached promotion; excluded from
+causal proof. Corrected SAME source/revision fixture reproduces1FAIL/1PASS
+(72skip), SHA256b767be03a8116842efca33b553fc021bf2af5c24ed278c7b08b74a8246c4997a.
+Gate the new structured observer on a locally attempted original publication,
+clear that attempt on concrete refusal/new correction, preserve exact unknown
+acknowledgment reconciliation and legacy completion callbacks. Already canonical
+AND in-flight read-only resumes emit no new publication event. Fresh three-suite
+101PASS includes per-file correlation, minimization, callback failures, stale
+sources, unknown acknowledgment and pending/canonical reopen. Final broader
+composition:343PASS/twelve suites, rawSHA256
+947c157e639d360adaa8cda7614104ffe368a5918cd2f17e6da9947cf3d16a6f.
+Exact-head non-author re-review and all hosted gates remain owed.
+Fresh exact strict-probe comparison againstd72 includes both changed components,
+all three entry/observer tests and the new helper:5→5 IDENTICAL inherited
+diagnostics (four component diagnostics plus one pre-existing test assertion
+cast diagnostic). No new helper/test diagnostic, cast or baseline change;
+this remains diagnostic parity, not strict or whole-project typecheck PASS.
+
+No visible controls, layout, tokens or interaction choices were added by these
+observers. Existing Flow/PAIGE UI/[Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md)
+direction retained; renewed pinned detector[]/exit0, focused lint and diffcheck
+PASS after the P2 repair. Current full-shell geometry/themes/PAIGE-open/
+closed/cohorts/keyboard/AT/reduced-motion/finish review remains UNVERIFIED under
+the existing automatic approval-review usage hold. No alternate browser path.
+This UI source is NOT released or customer-ready. Full single/BULK agreements →
+reviewed facts/separate Memory → saved Mission → actual Work/CRM/receipt/reopen
+remains NOT READY; original E01/E02/E05/E08 integration boundaries remain.

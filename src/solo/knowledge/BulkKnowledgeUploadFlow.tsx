@@ -9,6 +9,7 @@ import {AddKnowledgeFlow} from './AddKnowledgeFlow';
 import {prepareKnowledgeUploadSelection,uploadKnowledgeFileOnce,inspectKnowledgeUploadedFile,submitKnowledgeExtraction,
   readKnowledgeExtractionReview,readKnowledgePendingReviewTarget,type ExtractionClient,type ExtractionInput,
   type ExtractionSubmission,type KnowledgeUploadSelectionRow,type KnowledgeReviewTarget} from '@/lib/knowledge-extraction-service';
+import {knowledgeExtractionAcknowledgment,notifyKnowledgeObserver,type KnowledgeFlowObservers} from './knowledge-flow-observers';
 
 type Phase=KnowledgeUploadSelectionRow['phase']|'uploading'|'upload_unknown'|'read_unavailable'|'source_changed'|'stored'|'submission_unknown'|'submitted'|'published'|'not_started';
 type Row=Omit<KnowledgeUploadSelectionRow,'phase'>&{phase:Phase;input?:ExtractionInput;submission?:ExtractionSubmission};
@@ -17,13 +18,15 @@ type Row=Omit<KnowledgeUploadSelectionRow,'phase'>&{phase:Phase;input?:Extractio
  * isCurrent must remain false after that incarnation departs, including A→B→A.
  */
 export type KnowledgeAttachedSelection=Readonly<{actorId:string;tenantId:string;files:readonly File[];isCurrent:()=>boolean}>;
-type Props={tenantId:string;onClose:()=>void;onBack:()=>void;onPublished?:()=>void;returnFocus?:()=>HTMLElement|null;attachedSelection?:KnowledgeAttachedSelection;sourceLifetime?:()=>boolean};
+type Props=KnowledgeFlowObservers&{tenantId:string;onClose:()=>void;onBack:()=>void;onPublished?:()=>void;returnFocus?:()=>HTMLElement|null;attachedSelection?:KnowledgeAttachedSelection;sourceLifetime?:()=>boolean};
 const labels:Record<Phase,string>={prepared:'Ready to upload',duplicate:'Duplicate in this selection · skipped',refused:'Unsupported or invalid file · not uploaded',uploading:'Uploading and verifying source',upload_unknown:'Upload unconfirmed · inspect original',read_unavailable:'Source readback unavailable',source_changed:'Stored bytes differ · reading refused',stored:'Stored source · not yet read',submission_unknown:'Reading submission unconfirmed',submitted:'Original reading available',published:'Reviewed text published',not_started:'Not started'};
 /** A finite attended transfer loop. Original Storage, extraction work, reviews
  * and publication own all durable effects; this component stores no batch ledger.
  */
-export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,returnFocus,attachedSelection,sourceLifetime}:Props){
+export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,returnFocus,attachedSelection,sourceLifetime,onExtractionAcknowledged,onPublicationVerified}:Props){
   const identity=useTenantContext();
+  const observers=useRef({onExtractionAcknowledged,onPublicationVerified});
+  const notifiedExtractions=useRef(new Set<string>()),notifiedPublications=useRef(new Set<string>());
   const [rows,setRows]=useState<Row[]>([]),[busy,setBusy]=useState(false),[notice,setNotice]=useState<string|null>(null),[target,setTarget]=useState<KnowledgeReviewTarget|null>(null);
   const currentRows=useRef<Row[]>([]),live=useRef(true),stopping=useRef(false),running=useRef(false),selectedIndex=useRef<number|null>(null);
   const actor=useRef(identity.activeUserId),scopeToken=useRef({tenantId,actor:identity.activeUserId});
@@ -84,7 +87,14 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
     const row=currentRows.current[index];if(!row.source||!row.intentId||!current())return;
     const input=row.input??{kind:'file' as const,intent_id:row.intentId,title:row.name.trim(),path:row.source.path};
     patch(index,{input});
-    try{const submission=await submitKnowledgeExtraction(client,scope(),input);if(current())patch(index,{phase:'submitted',submission});}
+    try{const submission=await submitKnowledgeExtraction(client,scope(),input);if(current()){
+      patch(index,{phase:'submitted',submission});
+      const key=`${submission.reference.intentId}:${submission.reference.workId}`;
+      if(!notifiedExtractions.current.has(key)){
+        notifiedExtractions.current.add(key);
+        notifyKnowledgeObserver(observers.current.onExtractionAcknowledged,knowledgeExtractionAcknowledgment(submission),{isCurrent:current,selectionIndex:index});
+      }
+    }}
     catch{if(current())patch(index,{phase:'submission_unknown'});}
   };
   const transfer=async(index:number,inspect=false)=>{
@@ -123,7 +133,12 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
     finally{running.current=false;if(current())setBusy(false);}
   };
   if(!current())return <DialogContent><DialogHeader><DialogTitle>Workspace changed</DialogTitle><DialogDescription>Reopen Knowledge in your current workspace to inspect the original files.</DialogDescription></DialogHeader><Button onClick={close}>Close</Button></DialogContent>;
-  if(target)return <AddKnowledgeFlow tenantId={tenantId} replacementTarget={target} sourceLifetime={current} onClose={()=>setTarget(null)} onPublished={()=>{
+  const reviewIndex=selectedIndex.current;
+  if(target)return <AddKnowledgeFlow tenantId={tenantId} replacementTarget={target} sourceLifetime={current} onClose={()=>setTarget(null)} onPublicationVerified={(value,context)=>{
+    if(!context.isCurrent()||!current()||value.tenantId!==tenantId||value.documentId!==target.id||notifiedPublications.current.has(value.workId))return;
+    notifiedPublications.current.add(value.workId);
+    notifyKnowledgeObserver(observers.current.onPublicationVerified,value,{isCurrent:()=>context.isCurrent()&&current(),...(reviewIndex===null?{}:{selectionIndex:reviewIndex})});
+  }} onPublished={()=>{
     if(!current())return;
     if(selectedIndex.current!==null)patch(selectedIndex.current,{phase:'published'});
     // Preserve the original completion callback once all admitted files finish.

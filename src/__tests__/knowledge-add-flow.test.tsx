@@ -29,6 +29,7 @@ vi.mock("@/lib/knowledge-service", async (importOriginal) => {
 import { AddKnowledgeFlow } from "@/solo/knowledge/AddKnowledgeFlow";
 import { ExtractionConsumerError } from "@/lib/knowledge-extraction-service";
 import { KnowledgeReviewServiceError } from "@/lib/knowledge-review-service";
+import { KnowledgeServiceError } from "@/lib/knowledge-service";
 
 const REF = { tenantId: "tenant-a", intentId: "intent-a", documentId: "doc-a", workId: "work-a", revision: 1 };
 const status = (work_status: string, extra: Record<string, unknown> = {}) => ({ work_id: "work-a", capability_key: "knowledge.extract", work_kind: "knowledge_extract", work_status, attempt_count: 1, max_attempts: 3, blocked_reason: null, error_code: null, safe_summary: null, created_at: "2026-10-02T00:00:00Z", updated_at: "2026-10-02T00:00:00Z", settled_at: null, ...extra });
@@ -54,6 +55,110 @@ const set = (el: HTMLInputElement & HTMLTextAreaElement, value: string) => {
 };
 const click = async (text: string) => { await act(async () => { button(text).click(); }); };
 const tick = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
+
+describe('original Knowledge producer observers', () => {
+  const start = async (props: Record<string, unknown>) => {
+    await render(props);
+    set(field('knowledge-add-title'), 'Agreement'); set(field('knowledge-add-content'), 'Source text');
+    await click('Send to Paige');
+  };
+  const finish = async () => { await tick(800); await click('Save review'); await click('Publish to Knowledge'); await tick(800); };
+  it('returns only immutable original admission references, without a publication claim', async () => {
+    const acknowledged = vi.fn(), published = vi.fn();
+    await start({onExtractionAcknowledged: acknowledged, onPublicationVerified: published});
+    expect(acknowledged).toHaveBeenCalledOnce();
+    const [value, context] = acknowledged.mock.calls[0];
+    expect(value).toEqual({reference: REF, status: 'claimed', replayed: false});
+    expect(Object.isFrozen(value)).toBe(true); expect(Object.isFrozen(value.reference)).toBe(true);
+    expect(value.reference).not.toBe(REF); expect(Object.isFrozen(context)).toBe(true);
+    expect(context.isCurrent()).toBe(true); expect(published).not.toHaveBeenCalled();
+    await tick(800); await click('Close'); expect(context.isCurrent()).toBe(false);
+  });
+  it('captures the original listener before the admission await rather than adopting a later host', async () => {
+    let resolve!: (value: unknown) => void;
+    mocks.submitExtraction.mockImplementationOnce(() => new Promise(r => { resolve = r; }));
+    const original = vi.fn(), later = vi.fn();
+    await start({onExtractionAcknowledged: original}); await render({onExtractionAcknowledged: later});
+    await act(async () => resolve({reference: REF, status: 'claimed', replayed: true}));
+    expect(original).toHaveBeenCalledOnce(); expect(original.mock.calls[0][0].replayed).toBe(true);
+    expect(later).not.toHaveBeenCalled(); expect(mocks.submitExtraction).toHaveBeenCalledOnce();
+  });
+  it('does not forward unrelated response fields or storage paths to the host', async () => {
+    mocks.submitExtraction.mockResolvedValueOnce({reference: {...REF, path: 'private-storage-path'}, status: 'claimed', replayed: false, content: 'private source text'});
+    const observer = vi.fn(); await start({onExtractionAcknowledged: observer});
+    expect(observer.mock.calls[0][0]).toEqual({reference: REF, status: 'claimed', replayed: false});
+  });
+  it.each(['throw', 'reject'])('isolates %s from an admission observer without repeating the effect', async mode => {
+    const observer = vi.fn(() => { if (mode === 'throw') throw new Error('host unavailable'); return Promise.reject(new Error('host unavailable')); });
+    await start({onExtractionAcknowledged: observer}); await tick(800);
+    expect(observer).toHaveBeenCalledOnce(); expect(body()).toContain('Review what Paige read');
+    expect(body()).not.toContain('Submission failed'); expect(mocks.submitExtraction).toHaveBeenCalledOnce();
+  });
+  it('does not notify admission after an unknown acknowledgment or source departure', async () => {
+    const observer = vi.fn(); let live = true;
+    mocks.submitExtraction.mockImplementationOnce(async () => { live = false; return {reference: REF, status: 'claimed', replayed: false}; });
+    await start({onExtractionAcknowledged: observer, sourceLifetime: () => live});
+    expect(observer).not.toHaveBeenCalled(); expect(mocks.submitExtraction).toHaveBeenCalledOnce();
+  });
+  it('does not convert a lost admission acknowledgment into a success notification', async () => {
+    const observer = vi.fn(); mocks.submitExtraction.mockRejectedValueOnce(new ExtractionConsumerError('NETWORK', 'unknown', true));
+    await start({onExtractionAcknowledged: observer});
+    expect(observer).not.toHaveBeenCalled(); expect(body()).toContain('Submission unconfirmed');
+  });
+  it.each(['capability_succeeded', 'capability_completed_unrecorded'])('reports canonical revision and exact generation with %s preserved', async outcome => {
+    const observer = vi.fn(); mocks.publicationRead.mockImplementation(async (_c, _s, ref) => {
+      const value = publicationResult(ref); return {...value, revision: 9, publication: {...value.publication, outcome}};
+    });
+    await start({onPublicationVerified: observer}); await finish();
+    expect(observer).toHaveBeenCalledOnce();
+    expect(observer.mock.calls[0][0]).toEqual({tenantId: 'tenant-a', documentId: 'doc-a', revision: 9, workId: 'pub-work', generationId: 'pub-work', outcome});
+    expect(Object.isFrozen(observer.mock.calls[0][0])).toBe(true); expect(observer.mock.calls[0][1].isCurrent()).toBe(true);
+    expect(onPublished).toHaveBeenCalledOnce(); expect(mocks.submitPublication).toHaveBeenCalledOnce();
+    if (outcome === 'capability_completed_unrecorded') expect(body()).toContain('activity receipt could not be recorded');
+    await tick(60000); expect(observer).toHaveBeenCalledOnce();
+  });
+  it.each(['throw', 'reject'])('keeps verified Knowledge published when its host notification %s fails', async mode => {
+    const observer = vi.fn(() => { if (mode === 'throw') throw new Error('link unavailable'); return Promise.reject(new Error('link unavailable')); });
+    await start({onPublicationVerified: observer}); await finish();
+    expect(observer).toHaveBeenCalledOnce(); expect(body()).toContain('Published to Knowledge');
+    expect(body()).not.toContain('Publication status failed'); expect(onPublished).toHaveBeenCalledOnce();
+    expect(mocks.submitExtraction).toHaveBeenCalledOnce(); expect(mocks.saveReview).toHaveBeenCalledOnce(); expect(mocks.submitPublication).toHaveBeenCalledOnce();
+  });
+  it('does not emit a new publication event while reopening an already canonical source', async () => {
+    const observer = vi.fn(); mocks.existingReview.mockResolvedValue(publicationResult({documentId: 'doc-a', extractionWorkId: 'work-a', revision: 3}));
+    await render({onPublicationVerified: observer, replacementTarget: {id: 'doc-a', tenant_id: 'tenant-a', revision: 4, title: 'Agreement', content: 'Saved exact text', summary: null, category: null, tags: []}});
+    expect(body()).toContain('Published to Knowledge'); expect(observer).not.toHaveBeenCalled(); expect(onPublished).not.toHaveBeenCalled();
+    expect(mocks.submitPublication).not.toHaveBeenCalled(); expect(mocks.submitExtraction).not.toHaveBeenCalled();
+  });
+  it('does not emit a new publication event while only observing a restored in-flight publication finish', async () => {
+    const observer = vi.fn(); const pending = {...review, revision: 3,
+      pending_review: {...review.pending_review, reviewed_content: 'Saved exact text'},
+      publication: {...idlePublication, association: 'matched', work_id: 'pub-work', work_status: 'claimed'}};
+    mocks.existingReview.mockResolvedValue(pending); mocks.extractionReview.mockResolvedValue(pending);
+    await render({onPublicationVerified: observer, replacementTarget: {id: 'doc-a', tenant_id: 'tenant-a', revision: 3, title: 'Agreement', content: 'Saved exact text', summary: null, category: null, tags: []}});
+    await tick(1500); expect(body()).toContain('Published to Knowledge'); expect(onPublished).toHaveBeenCalledOnce();
+    expect(observer).not.toHaveBeenCalled(); expect(mocks.submitPublication).not.toHaveBeenCalled(); expect(mocks.submitExtraction).not.toHaveBeenCalled();
+  });
+  it('notifies once after reconciling the same locally attempted publication with a lost acknowledgment', async () => {
+    const observer = vi.fn(); mocks.submitPublication.mockRejectedValueOnce(new Error('acknowledgment lost'));
+    await start({onPublicationVerified: observer}); await tick(800); await click('Save review'); await click('Publish to Knowledge');
+    expect(body()).toContain('Publication unconfirmed'); expect(observer).not.toHaveBeenCalled();
+    await click('Check publication'); expect(body()).toContain('Published to Knowledge'); expect(observer).toHaveBeenCalledOnce();
+    expect(mocks.submitPublication).toHaveBeenCalledOnce(); expect(mocks.saveReview).toHaveBeenCalledOnce();
+  });
+  it('does not attribute another pending publication to a concretely refused local attempt', async () => {
+    const observer = vi.fn(); mocks.submitPublication.mockRejectedValueOnce(new KnowledgeServiceError('55000', 'KNOWLEDGE_PUBLICATION_PENDING'));
+    await start({onPublicationVerified: observer}); await tick(800); await click('Save review'); await click('Publish to Knowledge');
+    expect(body()).toContain('Already publishing'); await click('Check publication');
+    expect(body()).toContain('Published to Knowledge'); expect(observer).not.toHaveBeenCalled(); expect(mocks.submitPublication).toHaveBeenCalledOnce();
+  });
+  it('withholds a late publication notification after the original source retires', async () => {
+    const observer = vi.fn(); let live = true;
+    mocks.publicationRead.mockImplementation(async (_c, _s, ref) => { live = false; return publicationResult(ref); });
+    await start({onPublicationVerified: observer, sourceLifetime: () => live}); await finish();
+    expect(observer).not.toHaveBeenCalled(); expect(onPublished).not.toHaveBeenCalled(); expect(mocks.submitPublication).toHaveBeenCalledOnce();
+  });
+});
 
 beforeEach(() => {
   Object.defineProperty(globalThis.crypto, 'subtle', {value: webcrypto.subtle, configurable: true});

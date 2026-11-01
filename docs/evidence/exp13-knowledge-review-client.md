@@ -48,3 +48,20 @@ captured-scope continuations repaired, boundary controls and retained failure
 evidence inspected. No remaining material finding in that bounded recheck.
 Reviewer did not execute tests. Focused lint/diff checks also PASS; no release,
 deployment or customer readiness follows from this local review.
+
+Current LOCAL publication preparation942cfc626 normally composes exact final
+workered828/main94f48. All seven owned service/test blobs are byte-exact to the
+freshly tested full UI compositionf4ae1c670 (ten suites301 plus separate5 bulk
+controls on that same source); source-only own diff remains eight files, no UI.
+Original worker remains unmerged at this checkpoint, so no client availability
+or customer release is inferred. Final non-author composition review follows.
+
+Owner explicitly confirms existing Settings > Setup > Knowledge bucket as the
+shared edit home: Chat upload plus explicit Save to Knowledge and direct single/
+BULK PDF/DOCX/text intake must land in SAME editable original source/review and
+later read/reopen. These adapters provide existing raw-file preparation/inspect/
+transfer/native-submit and pending review references for that receiving mount.
+The shared Chat receiver/retained source-reference contract and its narrow lease
+remain with original E01/E08 owners; no caller mount or approval handback is
+implied. Domain-fact/Memory review and saved Mission/actual Work remain separate.
+No real account identifier, private screenshot or agreement is copied here.

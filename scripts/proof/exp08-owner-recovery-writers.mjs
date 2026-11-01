@@ -704,6 +704,44 @@ try{
   assert.equal(scalar(`SELECT is_owner FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'t');
   assert.equal(scalar(`SELECT revoked_at IS NULL FROM public.platform_billing_contacts WHERE id='${contact}'`),'t');
  }
+ // Local mount of the original recovery door, never managed/public activation.
+ const publicSource=readFileSync(new URL('./exp08-owner-recovery-doors.sql',import.meta.url),'utf8');
+ await denied('public recovery has no callable door before its explicit installer',()=>db.exec(`SELECT public.platform_owner_recovery('${tenant}','set_account_holder','${remaining}','${reason}','e8000000-0000-4000-8000-000000094020')`),/does not exist/);
+ await db.exec(publicSource);revokeFixture();
+ const publicRequest='e8000000-0000-4000-8000-000000094020';
+ const publicApply=`SELECT public.platform_owner_recovery('${tenant}','set_account_holder','${remaining}','${reason}','${publicRequest}')`;
+ db.role='authenticated';
+ const publicResult=JSON.parse(scalar(publicApply));
+ assert.equal(publicResult.status,'found');assert.equal(publicResult.action,'tenant:owner_recovery.set_account_holder');
+ assert.deepEqual(JSON.parse(scalar(publicApply)),publicResult);
+ assert.deepEqual(JSON.parse(scalar(`SELECT public.platform_owner_recovery_receipt('${tenant}','${publicRequest}')`)),publicResult);
+ assert.equal('transaction_id' in publicResult.receipt,false);assert.equal('backend_pid' in publicResult.receipt,false);
+ results.push({case:'original authenticated recovery door executes native transaction and reopens/replays same receipt without exposing internal provenance fields',passed:true});
+ await denied('four-argument planned recovery door requires a stable request before any effect',()=>db.exec(`SELECT public.platform_owner_recovery('${tenant}','revoke_owner','${holder}','${reason}')`),/OWNER_RECOVERY_REQUEST_REQUIRED/);
+ await denied('public receipt refuses same request under another tenant',()=>db.exec(`SELECT public.platform_owner_recovery_receipt('e8000000-0000-4000-8000-000000094099','${publicRequest}')`),/OWNER_RECOVERY_RECEIPT_UNAVAILABLE/);
+ const publicNotice=publicResult.receipt.notices.find(n=>n.user_id===holder).notification_id;
+ db.actor=holder;
+ await denied('ordinary customer cannot use platform recovery despite public EXECUTE',()=>db.exec(publicApply),/OWNER_RECOVERY_FORBIDDEN/);
+ await denied('ordinary customer cannot read platform recovery receipt',()=>db.exec(`SELECT public.platform_owner_recovery_receipt('${tenant}','${publicRequest}')`),/OWNER_RECOVERY_FORBIDDEN/);
+ const publicDetail=JSON.parse(scalar(`SELECT public.get_owner_recovery_notice('${tenant}','${publicNotice}')`));assert.equal(publicDetail.reason,reason);
+ results.push({case:'original notification recipient uses scoped public detail without platform recovery powers',passed:true});
+ await denied('public notification detail refuses wrong active expected tenant',()=>db.exec(`SELECT public.get_owner_recovery_notice('e8000000-0000-4000-8000-000000094099','${publicNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.actor=actor;
+ for(const role of ['anon','service_role']){
+  db.role=role;
+  for(const query of [publicApply,`SELECT public.platform_owner_recovery_receipt('${tenant}','${publicRequest}')`,`SELECT public.get_owner_recovery_notice('${tenant}','${publicNotice}')`])
+   await denied(role+' has no public recovery/detail EXECUTE',()=>db.exec(query),/permission denied/);
+ }
+ db.role='';
+ await db.exec(publicSource);results.push({case:'public original recovery installer replays exact source/metadata without another effect',passed:true});
+ db.run('GRANT EXECUTE ON FUNCTION public.platform_owner_recovery(uuid,text,uuid,text,uuid) TO anon');
+ await denied('public recovery ACL drift is refused without normalization',()=>db.exec(publicSource),/EXP08 original recovery public door drift/);
+ assert.equal(scalar("SELECT has_function_privilege('anon','public.platform_owner_recovery(uuid,text,uuid,text,uuid)','EXECUTE')"),'t');
+ db.run('REVOKE EXECUTE ON FUNCTION public.platform_owner_recovery(uuid,text,uuid,text,uuid) FROM anon');
+ const nativeApplyDefinition=JSON.parse(scalar("SELECT to_json(pg_get_functiondef('public._exp08_apply_owner_recovery(uuid,text,uuid,text,uuid)'::regprocedure))"));
+ db.run(nativeApplyDefinition.replace('BEGIN','BEGIN\n PERFORM 1;'));
+ await denied('changed native transaction refuses public door admission',()=>db.exec(publicSource),/EXP08 original recovery door prerequisite drift/);
+ db.run(nativeApplyDefinition);await db.exec(publicSource);
  // Compose the released original entity lifecycle and its original FK/CHECK/seat
  // constraints into this same recovery transaction, not a copied vacancy writer.
  revokeFixture();putContact();
@@ -737,7 +775,7 @@ try{
  assert.deepEqual(JSON.parse(scalar(apply(entityRequest,'revoke_owner'))),entityResult);
  assert.equal(scalar(`SELECT to_jsonb(b) FROM public.tenant_business_owners b WHERE id='${entity}'`),entityAfter);
  results.push({case:'original entity lifecycle/FK/CHECK/unique seat composes with original revoke, Billing, receipt and duplicate-safe recovery',passed:true});
- console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private recovery with original grant/revoke/Billing/entity lifecycle, audit/in-app notices and detail; public RPC, mounted UI and email NOT implemented',
+ console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL original recovery/public doors with grant/revoke/Billing/entity lifecycle, audit/in-app notices and detail; managed activation, mounted UI and email NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));
 }finally{

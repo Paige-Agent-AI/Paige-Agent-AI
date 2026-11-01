@@ -2475,3 +2475,32 @@ Own disposable database removed. Auth/context/minimal storage remain explicit
 ports; this is native component composition, not full schema, opposing-writer
 race coverage, customer/RLS proof or release clearance. Source-only review of
 prior7cc excludes this new proof-only delta until separately renewed.
+
+### November1 — original public recovery doors, INERT / review repair pending
+
+Intended outcome: authorized original R9/R12 recovery, durable receipt reconciliation
+and recipient-scoped event detail. E08 owns collaboration/admission/integration;
+original owner/Billing/entity writers and audit/notifications remain the producers.
+No task runtime/model/provider is needed for this operator action. No Spine tool is
+registered: agent recovery remains UNAVAILABLE. Actual live super-admin recovery
+authority remains native; no new Trust/approval path or standing business power.
+No new job/result store, model consumption or financial allowance. Original audit
+and notice rows supply readback; no mounted UI/binding/production state is advanced.
+
+The original planned four-argument `platform_owner_recovery` has no released source
+or existing caller in current source. New five-argument preparation requires the
+stable request ID; omitted-ID four-argument calls receive an authored refusal after
+actual live admin admission, never an unrepeatable generated operation. The original
+private transaction and readers remain the only implementation. Receipt and scoped
+notification detail wrappers grant authenticated EXECUTE only; that grant grants
+neither recovery authority nor another recipient's data. No managed/public exposure.
+
+Initial157/0 author local PASS, raw `exp08-owner-recovery-original-doors.log` SHA256
+`36e412838d2c4bc3229f111b95d97d3af3fbba645f9b8ae4e2b3ceccd219c595`.
+All140 prior controls retained, original actual-role entry/receipt/detail, wrong
+actor/tenant and anon/service refusals, source/ACL drift refusal and installer replay.
+Own database disposed. This does NOT close the independent source-review P2:
+installer metadata must additionally pin argument defaults/names, function shape,
+language and execution flags, and reject unsupported overloads. Repair/regression
+required before publication/release; initial PASS is not clearance. All remaining
+full-native/privacy/retirement/UI/email/Setup/full-assignment gates remain open.

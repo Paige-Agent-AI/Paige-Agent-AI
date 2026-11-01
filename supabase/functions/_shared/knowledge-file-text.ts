@@ -131,6 +131,15 @@ function formatFor(bytes: Uint8Array, name: string, suppliedMime: string): Knowl
   return fail('FILE_UNSUPPORTED');
 }
 
+/** Validate permitted bytes before durable submission without executing a parser. */
+export function inspectKnowledgeFile(input: KnowledgeFileInput): KnowledgeFileFormat {
+  if (!byteView(input.bytes) || !input.bytes.length) return fail('FILE_TEXT_INVALID');
+  if (input.bytes.byteLength > MAX_BYTES) return fail('FILE_TOO_LARGE');
+  const format = formatFor(input.bytes, input.name, input.mime);
+  if (format === 'docx') inspectDocxArchive(input.bytes);
+  return format;
+}
+
 /** Returns only a bounded untrusted reading. No fact/Memory approval is inferred.
  * PDF/DOCX always remain partial: images, layout semantics and OCR are not read.
  */
@@ -139,8 +148,7 @@ export async function extractKnowledgeFile(input: KnowledgeFileInput, parsers: K
   if (!byteView(input.bytes) || !input.bytes.length) return fail('FILE_TEXT_INVALID');
   if (input.bytes.byteLength > MAX_BYTES) return fail('FILE_TOO_LARGE');
   const bytes = new Uint8Array(input.bytes); // Snapshot also accepts genuine cross-realm byte views.
-  const format = formatFor(bytes, input.name, input.mime);
-  if (format === 'docx') inspectDocxArchive(bytes);
+  const format = inspectKnowledgeFile({ ...input, bytes });
   const sourceSha256 = await sourceHash(bytes);
   current(signal);
   let output = ''; const segments: KnowledgeTextSegment[] = []; const limits = new Set<string>();

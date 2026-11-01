@@ -11,6 +11,24 @@ import {
 // from the current account through the one route map. Never a path, a URL or a readback.
 
 const A = "e4000000-0000-4000-8000-0000000c0001";
+
+describe("internal company Knowledge references", () => {
+  it("keeps internal and CURA references distinct and strips private text, authority and stored addresses", () => {
+    const refs = readRecordLinks(JSON.parse(JSON.stringify([
+      { destination: "business_knowledge", record_id: A.toUpperCase(), subject: "Private agreement", tenant: "foreign", url: "https://foreign.invalid", approved: true, revision: 42 },
+      { destination: "portal_knowledge", record_id: A },
+      { destination: "business_knowledge", record_id: A },
+    ])));
+    expect(refs).toEqual([{ destination: "business_knowledge", record_id: A }, { destination: "portal_knowledge", record_id: A }]);
+    expect(readRecordLinks(JSON.parse(JSON.stringify(refs)))).toEqual(refs);
+  });
+  it("withholds invalid focus and rejects injected destinations or a Planning record kind", () => {
+    expect(readRecordLinks([{ destination: "business_knowledge", record_id: "../foreign?knowledge=other", subject: "discard" }]))
+      .toEqual([{ destination: "business_knowledge", record_id: null }]);
+    expect(readRecordLinks([{ destination: "business_knowledge?published=true", record_id: A },
+      { destination: "business_knowledge", record_id: A, record_kind: "planning_item" }])).toEqual([]);
+  });
+});
 describe("Marketing surface reference", () => {
   it("persists only the closed destination, discarding source labels, record IDs and injected destinations", () => {
     const saved = JSON.parse(JSON.stringify([
@@ -57,10 +75,10 @@ it("retains a Systems Check finding UUID through the original reference frame wi
 });
 
 describe("readRecordLinks — the defensive reader for live frames and persisted bundle_ref", () => {
-  it("retains the existing destinations and admits the bounded owner Portal Knowledge reference", () => {
+  it("retains the existing destinations and separates internal Knowledge from Portal Knowledge", () => {
     expect([...READ_LINK_DESTINATIONS]).toEqual([
       "contacts", "sales_agreements", "sales_invoices", "sales_collections", "operations_work", "team_hub", "business_time_zone",
-      "executive", "finance", "marketing", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind", "portal_knowledge", "calendar", "pipeline", "conversations",
+      "executive", "finance", "marketing", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind", "business_knowledge", "portal_knowledge", "calendar", "pipeline", "conversations",
     ]);
   });
 

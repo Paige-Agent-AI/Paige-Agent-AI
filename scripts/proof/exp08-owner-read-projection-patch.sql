@@ -54,6 +54,12 @@ BEGIN
    'viewer_is_account_holder',public._solo_shell_tenant(_tenant) AND public.is_tenant_account_holder(_actor,_tenant),
    'account_holder_state',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
     THEN public._tenant_account_holder_state(_tenant) ELSE NULL END,
+   -- Display only: exactly the ORIGINAL revoke_co_owner active-owner floor set.
+   -- Read the whole tenant membership set, never the filtered/paginated roster.
+   'active_owner_count',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
+    THEN (SELECT count(*) FROM public.tenant_members active_owner
+      WHERE active_owner.tenant_id=_tenant AND active_owner.is_owner=true AND active_owner.status='active')
+    ELSE NULL END,
    'members',coalesce((SELECT jsonb_agg(m.value || jsonb_build_object(
     'is_account_holder',public._solo_shell_tenant(_tenant) AND EXISTS(SELECT 1 FROM public.tenants t
       WHERE t.id=_tenant AND t.owner_user_id=tm.user_id AND tm.is_owner

@@ -1,3 +1,135 @@
+# EXP13 internal Knowledge references — source-only preparation
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: Same original ANT21/12fea7ea full agreement to reviewed Knowledge/facts/separate Memory to saved original Mission to actual Work. This increment supplies only its missing internal source-reference target.
+PAIGE_UI_DESIGN: PASS: Existing source/reference contract and E08 receiving9d8bfcc6 inspected; no renderer, menu, component, control or layout change. Original3177 visible intake/browser proof remains separate.
+MATERIAL_FLOW_CHANGE: NO: Pure additive reference decoder/canonical map/labels only. No existing producing caller, host, native writer, model tool or context adapter is changed to emit this new key. No new visible control or current customer-flow activation.
+FLOW_PROTOTYPE: NOT_REQUIRED: Source-only address/reference primitive with no producer mount or renderer change. This is not clearance of held3177 or a future Chat handoff; those still require real prototype/browser/finish proof.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Future original verified-source producers may name an internal business Knowledge UUID that reopens the existing Setup Knowledge Bucket through the same canonical route home and current eligible account.
+VISUAL_DIRECTION: NOT_APPLICABLE: Existing link renderer/tokens/navigation remain unchanged. Neutral Open Knowledge/Open Knowledge source labels contain no private title, approval or saved-status claim.
+AUTOMATED_EVIDENCE: PASS: Genuine original missing-target control1FAIL/89PASS; after additive repair95PASS across the three existing canonical route/decoder/label suites plus39PASS across three distinct existing Chat/CURA private-file consumers. Six actual suites134PASS; synthetic source checks, not authenticated persistence/reopen.
+STATIC_EVIDENCE: PASS: Same six-root import graph/project options plus strict retains1-to-1 identical inherited canonical-app-url test diagnostic/new0/no source diagnostics; not global strict PASS. Six-file ESLint/diff and frozen Deno2.1.4 shared modules PASS; pinned Impeccable detector[] is static only.
+RENDERED_EVIDENCE: NOT_APPLICABLE: No new rendered surface/consumer or style. Original Library UI and held3177/browser/theme/cohort/AT/finish evidence are not certified here.
+BEHAVIORAL_EVIDENCE: PASS: Pure controls verify current-account resolution, persisted-reference JSON round trip, invalid UUID/query/tier refusal, private-field stripping, distinct company/CURA references and original shared limit/targets. No native effect or auth bypass.
+AUTHENTICATED_RUNTIME: UNVERIFIED: No customer account/document/provider/native write or authenticated source-read/reopen was used. Link exactness means supported UUID focus, not source existence, access, save, indexing, approved facts or version authority.
+KEYBOARD_FOCUS: NOT_APPLICABLE: No controls/focus change; future mounted consumer accessibility proof remains owed.
+ZOOM_REFLOW: NOT_APPLICABLE: No renderer/geometry change.
+REDUCED_MOTION: NOT_APPLICABLE: No motion change.
+STATE_COVERAGE: UNVERIFIED: Pure reference success/refusal/reload/tier/namespace controls pass. Original native writer readback/receipt, durable host emission/persistence, actual changed/revoked/deleted-source destination result and customer later-session proof remain owed.
+TRUTHFUL_STATE_LABELS: PASS: This is an address reference, never a readback/receipt or authority. Internal Knowledge is separate from Mind's surface link and CURA/client publication; no automatic source/Memory/domain save or private-context transfer.
+SOLO_UI: NO: Same original eligible SOLO route tree and tier helpers, no tenant allowlist/new layout. Sub-account/agency/enterprise/operator references remain unavailable for this internal target.
+UNVERIFIED: Producer/host emission, current source-version receipt/native persistence and useful authenticated reopen remain unmounted/proof owed. Full EXP13+BULK/saved game plan/actual working Tasks NOT READY. Original3177 genuine FLOW_PROTOTYPE/browser-usage hold is unchanged; no waiver or alternate browser path.
+
+INTERNAL_BUILD_IDENTITY: source=acea2b610e3054df62f671b337d7b30c126206e4 with actualmain55dcbc2c88b45fbe23aa2e218077bfbd90ce3a1d; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PENDING(original transitive shared-import deployment and exact source certificate after merge); evidence=docs/evidence/ui-delivery/knowledge-library-adoption.md
+RELEASE_CHANNEL: development: pure original-reference preparation only, not customer availability.
+RELEASE_CLASSIFICATION: internal-only: same source-reopen prerequisite within original EXP13.
+CUSTOMER_RELEASE_IDENTITY: none: no customer version/announcement.
+RELEASE_NOTE_REQUIRED: NO: No newly mounted customer outcome.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: Pure reference tests and source release cannot prove native source permission/readiness, current source version, approved facts/Memory/Mission/actual Work or owner acceptance.
+RELEASE_RECOVERY: position=ordinary reviewed source correction preserving original identifiers/targets/readback and existing history; reference=docs/evidence/exp13-source-evidence-contract.md
+
+## Exact pre-edit custody and reuse
+
+Ten routing answers and exact finite hunks were posted BEFORE edits in original
+ANT21/77a8c323 and ANT161/89d631f5. Actual original E08 receiving9d8bfcc6 grants
+bounded source/no-conflict custody only. Current c77 source blobs equal the
+ACKed9e5 versions: canonical-app-url7bb405da, record-links b4ff8620 and
+workspaceLinks49d0854d. All existing E04/MERIT/CURA/Planning/CRM/Team-message
+targets,733/a571 behavior and shared six-reference cap remain. No whole-file
+lease, Chat/chip/hook/Root/TeamHub/Setup/Memory/native/provisioning edit.
+
+Demonstrated absence: the original decoder drops the business_knowledge target;
+the original source and89 retained tests lacked this target. The one new actual before
+control fails at that missing reference, with89 original cases passing. Whole-word
+baseline Git search finds no business_knowledge token in application/Edge code;
+existing longer CURA RPC names are a distinct namespace. No existing source
+producer is silently switched to the new target.
+
+Reuse only the original map/decoder and existing Library destination. The new
+business_knowledge target admits UUID focus via the original knowledge query
+parameter on /settings/setup/knowledge-bucket. portal_knowledge still addresses
+the client Portal/CURA view; Mind remains surface-only. References retain only
+destination and valid UUID, discard subject/private text/tenant/URL/approval or
+revision claims, reject misplaced Planning record kinds and injected targets,
+and resolve from the CURRENT eligible account. Invalid UUID opens only the
+existing Knowledge surface, not an invented exact source or another namespace.
+
+Existing original KnowledgeLibrary/Setup handles the destination's own current
+session/Knowledge permission/RLS readback. A producer must obtain its original
+verified record/version/work/publication receipt before emitting/persisting a
+minimized reference through the existing accepted-message/bundle_ref contract.
+This change adds no emitter or persistence writer, and a link is not version or
+action authority. Original Knowledge/Mission/source contracts must independently
+revalidate version/hash/permission before use; no arbitrary bundle_ref insert,
+raw private-client-to-business transfer, conversation copy or automatic learning.
+
+Impeccable4.3.1 craft-floor/harden reread immediately: retained product language,
+neutral labels and real input/tier/privacy validation; no new aesthetic choice.
+Canonical skill: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md.
+No rendered/style/contrast/AT claim is made by its static detector. Original
+Flow2.0.2 and PAIGE standards remain; current source-only proof does not waive
+future consumer prototype/finish or authenticated useful-result requirements.
+
+Before-control log SHA256 f0634c63a1d8351352656d964daa1c621e1b4046f5ca3885785ee1d78929378e.
+The one inherited strict diagnostic is original mounted.subtabs possibly undefined
+in canonical-app-url.test.ts; it remains unchanged, not hidden or waived.
+No provider calls, customer data, account creation, impersonation or authority
+mutation used. No new store/runtime/menu/registry/capability/algorithm maturity.
+Full original aliases and denominator remain in ANT21/12fea7ea; NO VERIFIED
+SUPPORTING ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED for full business
+outcome maturity. Shipped Delivery Log N/A at preparation, not merged.
+
+## November1 source-contract maintenance after the actual hosted refusal
+
+Immutable cf19c67a3/code20af07050 received NON-AUTHOR source review6561518651:
+independent3suites95PASS, original history exact, no active emitting producer.
+Hosted REQUIRED contract124925716958 genuinely FAILED at the original research
+binding positive. Local full lint identifies only the two reviewed canonical
+helper dependency digests, then the original validator's fail-closed cascade.
+This was missing maintenance in this increment; the failure is preserved in
+PR6561582055. It is not called flaky or a Research/customer runtime defect.
+
+Normal composition776dada8 receives ACTUALmain2ca5ab579/Calendar3197. All seven
+reviewed source/test/evidence blobs remain exact, as do19,492 incoming outside
+leaves. Original inspector reproduces131 incoming dependency pins and all29
+dispatch fingerprints; only the two reviewed link helpers differ, other129
+pins/whole Root exact. NON-AUTHOR6561622793 independently reproduces old/new
+canonical digests and clears narrow two-pin rationale, not hosted failure.
+
+Before checker edits, exact finite scalar scope was posted in original
+ANT161/1018d657 and owning77a8c323/89d631f5. All59 current open-PR manifests
+and the six guard-bearing patches were read: none changes these two dependency
+scalars. Their SMS/financial/dispatch history remains protected. Actual E05
+51d8c74d returned/no-active-C0b window and original routine reviewed-scalar
+renewal protocol were incorporated. This proceeds under standing authorized
+repair and actual named-hunk non-overlap; no new receiving ACK is fabricated
+from silence, no whole-file custody, no author-review exception requested.
+
+Only two dependency digest literals and nine dated comment lines change in the
+existing guard. Removing those lines and restoring those two literals recovers
+the COMPLETE incoming guard. All29 dispatches/metadata,129 other source pins,
+extractor, validator and original negative controls remain exact. Actual original
+incumbent suite86PASS/0FAIL/0skipped and original full Spine self-test/normal245
+capability registry lint PASS. Final exact review and ALL fresh hosted CI remain
+required; no old-head green is borrowed as clearance.
+No snapshot regeneration, marker, include-all, acceptance promotion or waiver.
+
+Release-field correction: an unmounted target still changes shared modules
+imported by existing Edge functions. The earlier14c preparation's Edge N.A.
+classification was incorrect. Original affected-import selection, normal Edge
+release and exact deployed-source certificate/readback remain PENDING after
+merge; no direct renderer/emitter or new provider/action activation follows.
+Migration delta remains N.A. Earlier source/CI evidence is retained at its scope.
+
+Original source3198 mechanical record3199 is ACTUALLY merged55dcbc2c/tree4cf07c;
+normal READYdpl_GmEhwsRYFZYHSZR8BNqcA9d79hZy and BOTHofficial public origins
+17:54UTC full55d-mvy4n5c6/observed bootstrap200/equal hash are verified in
+PR6561679005. This is a factual source closeout only, no new native/Edge/product
+effect. Current UI3177 genuine prototype/browser/AT/finish hold and all unmounted
+host/permission/readback/version/real customer outcome boundaries above remain.
+
+## Original consumer-adoption history (preserved byte-for-byte below)
+
 # Knowledge canonical consumer adoption — pre-edit packet
 
 Base: 44d62e77c595e1b09148b6d09eb3108215c04ac2. Development only; no deployment or go-live approval.

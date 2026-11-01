@@ -96,6 +96,7 @@ jobs:
           supabase/functions/_shared/team-hub/cura-service-read.test.ts
           supabase/functions/_shared/team-hub/mentor-plan-read.test.ts
           supabase/functions/_shared/team-hub/zion-planning-read.test.ts
+          supabase/functions/_shared/team-hub/zion-planning-source.test.ts
           supabase/functions/_shared/client-engagement/merit-team-hub-read.test.ts
           supabase/functions/_shared/team-hub/vera-metric-read.test.ts
           supabase/functions/_shared/team-hub/nexus-connection-read.test.ts
@@ -160,6 +161,12 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_a1c.sql
       - name: EXP08 Team Hub agents A2b, cards as the door's own proposal, the one link row, decide/settle/states doors, outcome turn, scope trigger, roster v2 and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_a2b_cards.sql
+      - name: EXP05 original ZION Planning source binding, private publication, Search revocation and same-turn recovery in disposable PostgreSQL
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+        run: node scripts/proof/exp05-zion-planning-read.mjs
       - name: EXP01 MENTOR Team Hub plan read, roster gains exactly one read tool once, no other row or key moves, idempotent in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/e01_mentor_team_hub_plan_read.sql
       - name: EXP04 original Team Hub commercial read scope, references and publication restrictions
@@ -983,6 +990,8 @@ jobs:
 
       - name: Build
         if: ${{ !cancelled() }}
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
         run: npm run build
 
       - name: Solo entry size guard (chat-first first load)

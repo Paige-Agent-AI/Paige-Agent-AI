@@ -1,4 +1,52 @@
+## November1 — current sole O01 source/release boundary
+
+Original #3087 now IMPLEMENTS the returned E04/EXP08 Planning contract; no
+remaining custody hold is asserted. Native/host preparation remains INERT and
+unversioned, not production or customer acceptance. Exact77 full-schema test
+ran9PASS/1FAIL: the immutable reader retains only two explanatory comments that
+live source omits. Pinning both complete known source hashes corrects this
+actual compatibility defect without changing the original reader or relaxing
+unknown-source refusal. New native variant parity20each/semantic-drift negative,
+all original E08 controls and four observed source/role publication races PASS;
+causal pre-fix failure retained. Fresh final full-schema/review/exact CI owed.
+
+Main2125057 normally composed; all peer files preserved. EXP08 ea5bb946 confirms
+no semantic/slot reservation against independent Planning release. E04/E13
+source/order and non-destructive Preview reconciliation remain pending; no
+identity reserved or migration/activation performed. Continue this SAME O01
+through actual source release, useful both-chat result/receipt/Work links,
+reload/recovery and equivalent tenant/role/cohort proof. O02 remains NEXT, all
+ten/E5 retained,0/10 complete, founder NOT_READY/NOT_ACCEPTED. Current evidence
+is the original planning-host-review.json; older dated records remain below.
+
+## October31 — O01 current-source revalidation
+
+Original3087/source43380c734 on main17338 compositioncf364527 uses the
+incumbent bounded-original-reader comparison pattern, with same actor/business,
+original source versions/nested facts, receipts and native turn. Actual164PASS
+includes changed-source/refusal/timeout/lost-post negatives; source alone is not
+native admission/history, production behavior or complete customer acceptance.
+E04 receiving HOLD/fullten/E5 and one integrated founder evaluation remain.
+
 # Experience 05 Weekly Internal Commitment Check
+
+## October30 Eastern — ONE primary O01 ZION compatibility reconciliation
+
+Existing host3087 has productad9c5c0427252bc43f4667232e857ef70ca48709 and
+currentmain4c8c2724941ed233229a289ce54b4eb45c0cc113 composed in674111ee.
+Current approved global ZION v2/card already contains plan_list. Strict read/card
+compatibility preserves exact tool/current actor/tenant/owner-admin/SOLO/private
+DM, native staging before model and original receipts/recovery; no authority or
+registry change. Current host/reader157PASS/0skipped follows causal v2 test
+155PASS/2FAIL. Current shared declarations/assertion predicates are conserved;
+raw baseline/candidate ESLint2+31 errors unchanged. Fresh strict host/test
+compiler comparison has six inherited diagnostics in both versions, no added
+diagnostic; this is not a clean full-app compile.
+Foundation3086 is actually merged; E04 native source-version/stage/publication/
+history and receiving review still HOLD release. No hosted CI/deployment/customer
+claim. Full first responsibilities outcome and all ten/E5/both chats/cohorts/
+founder acceptance remain open. Prior current-main text and the old host checkpoint
+are retained. [Current evidence](../evidence/exp05-zion-planning-host-review.json).
 
 ## October29 — original automation draft preview source released
 
@@ -1121,3 +1169,146 @@ current guard excludes ZION. operations.department PARTIAL; both-chat/private
 record/Rail/reload/cohort/native/negative/full ten/E5/founder proof remains owed.
 Functional source/web verified; Visual original source preserved, no new rendered
 flow claim; Experiential incomplete; Founder NOT_ACCEPTED. STILL CODING / NOT_READY.
+
+
+## October29 — ZION Planning host review branch; native release dependency OPEN
+
+The owner explicitly approved bounded review-branch implementation after the
+automatic source-authorization rejection. The rejected patch was never applied;
+this later authorized branch adds only ZION private owner/admin Planning reads.
+Same identity/personality, original ToolDef/executor/caller JWT, fresh persona/DM/
+SOLO/role/roster checks, one total three-read budget, original marker/native
+turn-token stage before model exposure, pre-provider/post checks and original
+post/readback/unknown-result reconciliation. No writer, new scheduler or ledger.
+Malformed/non-object calls cannot become broader empty reads; native refusals or
+uncertain/late acknowledgements withhold private data and stop the turn.
+
+Orchestration Contract: original private Team Hub asking message/accepted turn →
+planning.list / plan_list canonical read → original read marker → existing
+service-only read-context stage → original caller-JWT post/readback/Rail. No
+Layer C business effect or new ActionAdapter. E04 owns native forward admission,
+source-version/currentness/history and exact receiving review; CURRENT native
+guard excludes ZION. Scope checks are not source-version proof. No fabricated
+non-null Work link, no native bypass, no unmerged peer dependency copied.
+
+Local original+foundation103 plus12 new host cases =115PASS/0FAIL/0skip. Test-only
+WIP10abb recorded six expected-red missing behaviors. Removing the new malformed
+object guard yields an unexpected real recording-port plan read (1 versus0);
+final guard passes. Strict source+test baseline6/candidate6/no added diagnostics;
+ESLint baseline2+19/candidate2+19/no new diagnostics; original Kit288/296/no new
+bypass. Eight peer files and four original host spans remain byte-identical.
+[Exact branch evidence](../evidence/exp05-zion-planning-host-review.json).
+
+Functional SOURCE/REVIEW BRANCH only; hosted CI, merge and deployment not claimed.
+Visual: original approved DM/UI/presentation unchanged, no rendered integration
+claim. Experiential: native/actual actor/private publication/reload/current+new
+SOLO proof remains owed. AUTHOR-REVIEW / LOWER ASSURANCE; native receiving review
+not waived. operations.department stays PARTIAL; no capability/algorithm maturity
+promotion. ALG-01/08/11 reused, ALG-12/13 truthful limitations. Weekly execution,
+full automation lifecycle, both-chat ZION/recovery, all ten outcomes/E5-CV1–9
+and complete founder evaluation remain OPEN. STILL CODING / NOT_READY.
+
+
+## November 1 — original Planning custody received; native candidate still inert
+
+Actual E04 handback ANT51/58ca8d6b and E08 source ACK ANT11/510f194f
+clear the original guard/stage/necessary-history custody dependency. EXP05
+received it in ANT11/62e26c80 and continues the ORIGINAL #3087 branch, preserving
+all ten outcomes and E5-CV1–CV9. No competing lead, public RPC or Work writer.
+
+The host now passes a closed projection of original caller-JWT plan_list IDs,
+raw versions, original query and frozen roster to the SAME four-argument,
+service-only stage before model exposure. Existing typed Planning-item Work
+references are native-validated and survive later CRM staging. Private native
+validation compares current original rows; original post/list/serializer remain
+unchanged. Legitimate historical edits retain the original answer; revoked
+source access masks it. Original ended-turn rearm binds the new accepted token
+and fresh source without inheriting expired observations. No service plan_list,
+new grant, provider, scheduler, approval, execution or second source of truth.
+
+Engineering evidence: 178 host/source recording-port tests PASS; changed host
+and source modules pass pinned-dependency Deno type checking. Existing E08 A2b assertions,
+16 mutants, P1 and uncapped admission controls run unchanged before the new
+native extension. Native source/ACL/metadata conservation, exact replay,
+20 original-query filter comparisons, raw microsecond version changes, foreign
+records, role/roster/expiry, typed links, mixed CRM, original post retry, rearm
+and later-history revocation controls PASS in the existing isolated local
+fixture. Its synthetic role ports are declared; managed full-schema, concurrent
+writers and ordinary customer proof are separate obligations.
+
+Release HOLD: a causally reproduced negative against exact original Search
+source d71b872a shows that a newly source-revoked Planning reply can still
+appear there. The finite additional search/CI source request is ANT11/addb61da
+and ANT147/5814a977. No protected Search or shared CI edit was taken before
+acknowledgment. The candidate SQL is UNVERSIONED/INERT under scripts/proof,
+not a deployable migration. Choose a genuinely free forward carrier only after
+actual lower-owner ordering/readback; no speculative slot or applied-history
+rewrite. Prior f790 CI/reviews are supporting history, not successor clearance.
+
+Orchestration Contract: original private asking message/accepted turn/token →
+planning.list read under asker JWT → original capability-read marker → native
+source stage → bounded model response → current native publication → SAME
+message/readback/history and canonical Work references. This is a read path,
+not a Layer C business effect or a business-execution Rail receipt.
+
+Functional: LOCAL SOURCE/PARTIAL PROOF; not merged/deployed/activated.
+Visual: existing approved interface preserved; compatible rendered evidence owed.
+Experiential: useful both-chat result, original record/receipt, reload/recovery,
+existing/new equivalent SOLO cohorts and full customer outcome remain OPEN.
+Founder acceptance: NOT_READY / NOT_ACCEPTED; 0/10 fully complete. O01 remains
+sole PRIMARY; O02 NEXT. ALG-01 has bounded reconciliation/source-version support;
+ALG-02/03/08/11/12/13 retain original maturity and proof gaps. Capabilities stay
+at their existing status; no Live promotion. No intermediate founder test.
+ +
+
+November1 follow-through: actual source ACK510f194f already authorizes necessary
+Planning history validation, and E08 returned shared CI custodya0eb3bb8. Fresh
+inspection of original #3190/82fbd4e2 confirms no overlapping Search/Planning
+hunk. The redundant extra-ACK hold above is superseded by receiving record
+e43e0b68; it is not a new permission inferred from silence. The exact bounded
+Search filter is now implemented and its full original-body inverse, ABI/default20
+(default-AST parser positions only normalized), config/ACL and replay verified.
+The normal native suite now REQUIRES revoked Planning results to be absent from
+Search. Removing only that filter restores exact original d71b872a and fails
+the new property, causally confirming the correction. Both additive CI hunks
+invert to the complete incoming workflow; E08 recovery hunks remain untouched.
+
+Current source/proof checkpoint: 178 host/source cases plus15 neighboring
+reader/link/wiring cases PASS; native20 query comparisons/12 hostile envelopes,
+original security suite and new recovery/history/Search controls PASS. Actual
+native source/permission fingerprints are retained in the existing JSON packet.
+The source is still UNVERSIONED/INERT: normal native ordering, a genuine free
+forward carrier, managed/full-schema/concurrency proof, final review/exact CI,
+production readback and ordinary customer proof remain separate gates. No native
+migration, live activation or O01/full-Experience completion is claimed.
+
+
+Concurrent proof follow-through: the SAME original disposable E08 fixture now
+checks four real source-change/role-demotion versus publication races, in both
+orders. pg_blocking_pids confirms the exact blocked pair; original publication,
+retry, current history and consumed-turn records determine the result. All four
+PASS with full cleanup (run1793542825069). Synthetic committed records and
+original domain/Hub RPCs only; this does not replace managed or customer proof.
+
+Infrastructure gates remain real holds: b5 Preview returned function-update502;
+identical-tree f3 database-contract failed its very first production-baseline
+status call at api.supabase.com with origin502, so its local stack never started.
+Later missing-stack errors are not executed domain/security test findings.
+No baseline/grant/assertion was weakened and no fresh native health/frontier
+is claimed from failed MCP reads. Normal source/order/managed/CI recovery and
+ordinary authenticated acceptance still remain. All shared source windows are
+returned; only own proof/evidence files changed for this follow-through.
+
+
+Full-schema verification preparation (SOURCE only): a thin own wrapper embeds
+the exact candidate twice in ONE rollback-only pgTAP transaction and uses only
+the EXISTING local Supabase54322 stack. Ten native source/metadata/private-ACL/
+replay assertions, no business fixture, remote DDL or migration-ledger entry.
+Generator self-test PASS; actual full-schema execution is UNVERIFIED until the
+existing database-contract job runs it. Both additive workflow hunks invert to
+complete incoming source and avoid E08's separate path/step insertion anchors.
+
+Exact422 Preview and native postgres-authority recovered to SUCCESS; readonly
+production metadata recovered at frontier20271126200003. Prior502 failures are
+retained, and remaining exact gates were still running. This does not activate
+the Planning candidate or clear actual native ordering/customer/founder proof.

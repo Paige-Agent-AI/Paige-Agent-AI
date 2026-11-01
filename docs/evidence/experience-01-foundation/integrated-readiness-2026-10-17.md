@@ -1,5 +1,93 @@
 # E01 integrated experience readiness — Day-Two evidence (zCod, 2026-10-17)
 
+November1 full-schema renewal: f69 actual step145 FAILED after43 schema assertions
+passed because its new fixture attempted to reactivate the intentionally revoked
+Admin under that same JWT. Original reinstatement enforcement correctly refused.
+Positive cases now precede revocation; no reinstatement remains, all58 assertion
+strings/expected values and every original negative are unchanged. Candidate/
+parser/client bytes remain exactf69/code22bf. Renewed exact-head CI and actual
+full-schema execution remain required; no product guard or permission is changed.
+
+### November 1 explicit source-decision review repair
+
+The original outcome/case tables below remain intact. Code22bf1f2be repairs actual
+automated P2 PRRC4436325239: optional per-fact original adopt/override intent is
+captured in the staged selection; only selected decisions reach the original
+writer and durable receipt. Missing decisions/changed-value adopt still refuse;
+Admin legal restrictions and unselected connection provenance remain enforced.
+58 focused and65 modeled-dependency native controls PASS; strict types/lint PASS.
+Actual full-schema44 remain with14 additional assertions prepared, NOT RUN yet.
+Renew final-head review/requiredCI/normal release;627 fullSpine PASS is supporting
+only. No native source validator/receipt host/customer availability or original
+23-case acceptance is established. Legal-owner protection, durable Chat source
+linkage, both-chat join, delegated management, cohorts, Live and all amendments
+remain active. Original ANT50/e2479b3e records the material review hold.
+
+## Additive successor reconciliation — November 1, 2026
+
+CONTROLLING: current owner successor assignment + all twelve ANT-161 R2 sections.
+Historical packet below is preserved, including its original case enumeration
+and dated source-only completion claims. Later source-bound Setup, both-chat,
+delegation, legal-owner, notification, universal SOLO and complete-work amendments
+supersede any historical assertion that only founder proof remains.
+
+Current inspected main: `fdf40a646`; production metadata only frontier
+`20271126200003`. Source/native inspection is not authenticated customer proof.
+Actual receiving ACK ANT-50/63c7eecf; first ABI/dependency packet ANT-50/c4137452.
+Canonical Locks C3 and Program D3 now record sole Codex successor with all prior
+values/notes preserved; exact readback matched. No acceptance cells were changed.
+
+| Original outcome | Built/released source retained | Remaining implementation/integration | Review/CI/release and authenticated result/receipt/recovery | Dependency / next coherent deliverable | Owner acceptance |
+|---|---|---|---|---|---|
+| 1 authentic first/returning entry | Original Auth/provisioning/chooser; #2884/#3050 recovery ancestry | Applicable new/existing eligibility, bounded former-holder personal notice entry | Earlier source releases retained; fresh native/current-cohort and authenticated entry/denial/reload proof owed | E00 handoff/E08 notice; sequence after same-primary receipt | OPEN |
+| 2 conversational onboarding | Original interview/private thread/Setup reader, PR1–PR7 | Agreement source-bound fact review and actual both-chat handoff | Historical source proof preserved; no fresh ordinary exchange or receiver result claimed | E01 source-bound producer first | OPEN |
+| 3 adaptive questions | Original interview fields/confirmed-context/readiness logic | Source freshness/conflict, changed goals and actual decision-quality evaluation | ALG-02/13 useful first value unverified; source tests are not maturity | Same reviewed-fact inputs then repeat/changed-context eval | OPEN |
+| 4 editable business profile | Existing inline/complete Setup editor/provenance | Exact selected source/quotation approval and host mounting | New parser/candidate is development only; UI/prototype/AT/permission proof owed | E13 source and original review; no UI hold waiver | OPEN |
+| 5 governed Setup + Comms | Original Setup4/business-context12/CAS/getter; Comms original preference writer | Source-bound approval/CAS receipt; legal-owner protection; actual delegated management | Current native writer read; candidate not deployed; Comms saved preference and Setup receipt/reload remain owed | E04→E13 source validator release; E01 native proof/release | OPEN |
+| 6 connection/Vault guidance | Original guidance and native handoffs/return | Current eligibility/privacy/revocation and useful connection guidance proof | Listed provider is not connected; no provider activation/test effect | Original E10 custody and permission-aware current readback | OPEN |
+| 7 3–4 relevant capabilities | Original capability projection/status framing | Current evidence-quality/availability and tailored recommendations | Prior source releases retained; useful live quality/negative evaluation owed | Original registry/Model Fabric only | OPEN |
+| 8 first governed action + Rail | Original PR7/Planning/domain/Harness/Rail seams | Joined selected facts→E02 Mission→E05 accepted proposal/claim/writer/finalizer/result; both-chat real ACK | E05 explicitly reports general writer non-idempotency and missing consumer invocation; historical structural chain is not full acceptance | E02 Mission and E05 Work; receipt is not their authority | OPEN |
+| 9 responsive Chat / genuine Live | Original Chat/audio cancellation and shared voice architecture | Applicable current failures/consent/audio/usage persistence/evaluation | Live NOT ACTIVATED; real bidirectional audio, interruption/provider latency and personal consent unverified | Independent provider/consent/admission holds; no effect to manufacture proof | OPEN |
+| 10 durable continuation | #2769/#2780 continuity, #3050 recovery, #3068 original-plan read ancestry retained | Original Knowledge refs/explicit Save/bulk host; same task/artifact both chats; cancel/stale/revoke/UNKNOWN | Draft/source helpers not durable linkage; customer receipt/reload/reopen/recovery and cohorts owed | E13 producer/E08 presentation/E05 original Work; same-primary integration | OPEN |
+
+### Every original case retained, with additive disposition
+
+All rows below retain their original historical implementation/evidence beneath
+this section. “Proof owed” does not assert missing code; named new gaps do.
+
+| Original case | Current additive assessment / next proof | Final owner acceptance |
+|---|---|---|
+| C01 registration | Original enrollment retained; genuine new-account execution/provisioning proof owed; no new test account created | OPEN |
+| C02 email verify/login | Original Auth retained; legitimate login/verification and recovery proof owed; no credentials copied/reset | OPEN |
+| C03 Solo provisioning | Same universal provisioning path; current/new cohort isolation and entitlements proof owed | OPEN |
+| C04 workspace selection | Original chooser/context retained; switch/revoke/denial and source-lifetime proof owed | OPEN |
+| C05 Setup/first value | Existing Setup retained; source-bound receipt implementation and joined first-value integration incomplete | OPEN |
+| C06 logout/relogin persistence | Existing persistence retained; real later-session same-context/history/receipt recovery owed | OPEN |
+| C07 business modules | Original native role/resource gates retained; legitimately delegated management and negatives incomplete | OPEN |
+| C08 unavailable/disconnected | Honest existing states retained; current provider/unknown/refusal/recovery proof owed | OPEN |
+| C09 subscription/account context | Original billing/entitlement sources retained; correct current account/provisioning proof owed, no financial cap reintroduced | OPEN |
+| C10 useful result/readback | Source-bound approval→saved Mission→separately authorized Work/result/Rail/reopen not yet complete | OPEN |
+| OP01 operator is not owner | Original boundaries retained; ordinary role/operator/foreign isolation proof owed; no impersonation | OPEN |
+| D1 private interview | Existing interview retained; source lifecycle/current private thread and genuine conversation proof owed | OPEN |
+| D2 review fact/provenance | Existing labels insufficient for canonical source/version/selected quote approval; candidate prepared, not mounted | OPEN |
+| D3 confirm/canonical save | Original writer reused; source-bound selected-fact CAS receipt still native preparation/release owed | OPEN |
+| D4 authoritative readback | Existing Setup getter retained; real receipt/selected values/revision/source and reload proof owed | OPEN |
+| D5 correction/conflict | Original CAS retained; source/review/ABA/concurrent correction and legal-owner guards require proof/repair | OPEN |
+| D6 pause/skip | Existing checkpoint retained; review drafts and uncertain-effect no-replay after abandonment require integration/proof | OPEN |
+| D7 same-thread resume | Original durable conversation retained; original source/task/plan/artifact references across both chats incomplete | OPEN |
+| D8 honest inability | Existing admission/refusal retained; source denied/revoked/stale/UNKNOWN must withhold authority before effect | OPEN |
+| D9 tenant/thread fencing | Existing guards retained; current source/review/request/role/cohort/concurrency negative proof owed | OPEN |
+| D10 truthful 3–4 recs | Existing guidance retained; actual permitted-source quality/usefulness and changed-context eval owed | OPEN |
+| D11 Comms preference | Original guidance/People-email writer retained; genuine authorized preference save/readback/return owed | OPEN |
+| D12 action→approval→Task/Rail | Existing seams retained; E05 actual authorized claim/result join and same-original-receipt recovery incomplete | OPEN |
+
+Priority sequence and exact first candidate/source ABI are in the original
+[foundation](../../delivery/experience-01-foundation.md#november-1-sole-successor-incorporation--still-coding).
+Applicable ALG-01/02/11/12/13 inputs/logic/writer/uncertainty/evaluation/result and
+controlled-feedback obligations remain; no new ALG IDs or maturity claims.
+Full assignment STILL CODING; bounded receipt release, joined milestone, Live
+activation, authenticated useful outcome and final owner acceptance are distinct.
+
 Single consolidated engineering packet backing the owner's one comprehensive evaluation window. Truth levels are separated per the standing evidence rule: IMPLEMENTED SOURCE (merged main) / INTEGRATED BEHAVIOR (component-level wiring proven) / PRODUCTION DEPLOYMENT (served/delivered identity verified) / ENGINEERING VERIFICATION (tests, contracts, reviews, captures) / AUTHENTICATED WORKFLOW (real owner-session execution) / AUTHORITATIVE RESULT+RECEIPT (canonical record/Rail) / OWNER ACCEPTANCE (Antonio's evaluation). Only OWNER ACCEPTANCE is globally absent; per-row states are factual.
 
 **2026-10-18 ALG addendum (zCod, PR #2365 merged `ec7df9981f`):** the reactivation order's algorithm directive is delivered — the deterministic ALG-02/ALG-13 first-value core (pure versioned module + the "Where you actually are" panel section + the canonical web-identity read) is shipped and production-verified (served SoloEntry chunk carries the surface; review findings all fixed incl. a real fabrication-class catch now test-pinned). Rows 3, 5, 7 and 10 above gain their deterministic core; all AUTHENTICATED/RECEIPT/OWNER cells remain OWNER WINDOW unchanged. Evidence: docs/evidence/ui-delivery/experience-01-first-value-core.md + the 2026-10-18 frames under first-value-2026-10-18/. ANT-50 carries the full checkpoint.

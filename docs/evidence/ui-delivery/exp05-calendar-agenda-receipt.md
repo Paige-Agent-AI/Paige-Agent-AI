@@ -46,8 +46,10 @@ RELEASE_RECOVERY: position=ordinary reviewed forward correction or source revert
 ## Scope and collision resolution
 
 Original Calendar reader/Chat authorship: EXP05 bf694ff7,4d35de9e,98b7df6c.
-Latest main17e74cefc contains actual E04 financial source; it was composed normally.
-All eight current relevant peer PR file sets were inspected:3192,3177,3194,3193,
+Main17e74cefc contains actual E04 financial source; it was composed normally.
+Later mainbe2244d4c adds only E02's original saved-read proof/workflow/matrix;
+that complete incoming change was composed without changing the tested product.
+At the pre-edit checkpoint eight relevant peer PR file sets were inspected:3192,3177,3194,3193,
 3190,3184,3182,3187 have NO Chat-index edit. E01's finite Setup/native window and
 E08's Team/work-profile windows exclude this hunk. ANT147/9162636d resolves the
 redundant whole-file/import request using actual own-hunk ownership and explicit

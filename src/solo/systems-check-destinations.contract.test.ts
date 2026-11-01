@@ -26,7 +26,7 @@ import { describe, expect, it } from "vitest";
 import { branchBySlug, subtabBySlug } from "@/lib/routing/tierBranches";
 import { CHECK_DESTINATIONS } from "./systems-check-areas";
 
-const ACCOUNT = "9082725";
+const ACCOUNT = "test-tenant-systems";
 
 /** Split a rendered destination into the parts the router actually resolves. */
 function parse(path: string) {
@@ -104,6 +104,21 @@ describe("Systems Check destinations resolve against the real Solo route tree", 
     }
     expect(thin).toEqual([]);
   });
+
+  it.each(["payment_processor_connected", "payment_method_options"] as const)(
+    "%s reaches the original payment records without a legacy Overview redirect",
+    (checkId) => {
+      const destination = CHECK_DESTINATIONS[checkId];
+      const target = parse(destination.path(ACCOUNT));
+      expect(target.branch).toBe("sales");
+      expect(target.rest).toEqual(["payments"]);
+      expect(target.query.get("view")).toBe("invoices");
+      expect(destination.label).toBe("Sales › Payments");
+      // Original records are inspectable; the old declaration editor is not mounted here.
+      expect(destination.caveat).toContain("cannot be changed here");
+      expect(destination.caveat).toContain("processor connection");
+    },
+  );
 
   it("sends the revenue finding where a stage is authored, not where revenue is reported", () => {
     // The check fails with "add a closing stage to your pipeline". Stages are authored on

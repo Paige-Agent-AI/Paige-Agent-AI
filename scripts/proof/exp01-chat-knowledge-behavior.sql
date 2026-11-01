@@ -95,6 +95,30 @@ RESET ROLE;
 SET LOCAL ROLE authenticated;
 SELECT public.test_assert(public.test_chat_stage()->>'extractionStatus'='succeeded' AND public.test_chat_stage()->>'currentDocumentRevision'='2','normal extraction advances current review revision without repeating intake');
 SELECT public.test_assert(public.test_chat_stage()#>>'{reference,documentRevision}'='1' AND public.test_chat_stage()#>>'{reference,linkRevision}'='1','original admission receipt remains immutable across native extraction completion');
+RESET ROLE;
+SAVEPOINT intake_revision_integrity;
+UPDATE public.paige_durable_work SET chat_source_link=jsonb_set(chat_source_link,'{documentRevision}','999')
+ WHERE id=(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='chat-pending');
+SET LOCAL ROLE authenticated;
+SELECT public.test_assert(public.inspect_paige_chat_knowledge_intake('00000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001',NULL,
+ (SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='chat-pending'))->>'current'='false','future captured revision cannot become current through inspection');
+ROLLBACK TO SAVEPOINT intake_revision_integrity;
+UPDATE public.paige_durable_work SET chat_source_link=chat_source_link-'documentRevision'
+ WHERE id=(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='chat-pending');
+SET LOCAL ROLE authenticated;
+SELECT public.test_denied($q$SELECT public.test_chat_stage()$q$,'CHAT_KNOWLEDGE_LINK_CONFLICT');
+ROLLBACK TO SAVEPOINT intake_revision_integrity;
+UPDATE public.paige_durable_work SET chat_source_link=jsonb_set(chat_source_link,'{documentRevision}','"1"')
+ WHERE id=(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='chat-pending');
+SET LOCAL ROLE authenticated;
+SELECT public.test_denied($q$SELECT public.test_chat_stage()$q$,'CHAT_KNOWLEDGE_LINK_CONFLICT');
+ROLLBACK TO SAVEPOINT intake_revision_integrity;
+UPDATE public.paige_durable_work SET chat_source_link=jsonb_set(chat_source_link,'{documentRevision}','0')
+ WHERE id=(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='chat-pending');
+SET LOCAL ROLE authenticated;
+SELECT public.test_assert(public.inspect_paige_chat_knowledge_intake('00000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001',NULL,
+ (SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='chat-pending'))->>'current'='false','captured revision preceding original source cannot be current');
+ROLLBACK TO SAVEPOINT intake_revision_integrity;
 ROLLBACK TO SAVEPOINT intake_lifetime;
 SAVEPOINT intake_to_publication;
 SET LOCAL ROLE authenticated;

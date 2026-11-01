@@ -15,13 +15,22 @@ The native source independently validates existing publication/generation/outcom
 and current actor/workspace/owned eligible thread; an unsent attachment has no fabricated message.
 One real File is hashed only on explicit selection; after every await original scope/incarnation is
 rechecked. Same-work inspection follows UNKNOWN, with no upload/publication replay or guessed receipt.
-Local42 client,49 native assertions,8 install-refusal controls and5 observed concurrency waits PASS;
+Local43 client,53 native assertions,8 install-refusal controls and5 observed concurrency waits PASS;
 admission BEFORE review/publication and both observer orders preserve one original conversation.
 Raw binary-file and reviewed-text hashes remain distinct; all message work_id bindings stay exact.
 modeled identity/Chat dependencies and COMPOSED_ONLY new full-schema cases remain explicit limits.
 Original58 Setup schema assertions are unchanged. No component/hook/route/Root/Team Hub/financial/
 private-client/native Knowledge writer changes, UI mount or activation. All eight unrun geometry
 cases remain UNVERIFIED; browser/prototype/AT verification follows safe engineering release.
+
+Sequential AUTHOR-REVIEW / LOWER ASSURANCE PRR_kwDOSAAXqM8AAAABVYkmgA at cdf5b1ed
+found native intake inspection did not bound the captured documentRevision independently of the
+client. Repaired native type/integer and source/current-version bounds; four causal local controls
+cover future/missing/string/pre-source revisions while original normal version progression remains
+PASS. Initial added control called stage instead of inspect and genuinely failed with the expected
+writer conflict; corrected only that call, retained the failure, then full53+8+5 proof exited0 and
+the verified local cluster stopped. Two corresponding actual-schema cases added; runtime pending.
+No native installation, host mount, customer approval or receiver incorporation is inferred.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: Existing foundation and original integrated-readiness packet now map the full ten outcomes, all original cases, exact writer/source/CAS/receipt, recovery and dependencies; implementation/native/review/release/customer evidence remain separate.

@@ -9,7 +9,7 @@ BEGIN
   ('public._paige_chat_knowledge_scope(uuid,uuid,uuid)','dd38278257509b3ec5a16000f58cbaf3',false,'void',0,ARRAY[]::text[]),
   ('public._paige_chat_knowledge_source(uuid,uuid,uuid)','16155b2b73477bc0dc467f76813be923',false,'jsonb',0,ARRAY[]::text[]),
   ('public._paige_chat_knowledge_intake_source(uuid,uuid,uuid)','fbd970644c893f7717f2c51459e625c9',false,'jsonb',0,ARRAY[]::text[]),
-  ('public.inspect_paige_chat_knowledge_intake(uuid,uuid,uuid,uuid)','913352d249bfb06f34d639da54302626',true,'jsonb',0,ARRAY['authenticated']::text[]),
+  ('public.inspect_paige_chat_knowledge_intake(uuid,uuid,uuid,uuid)','a18311c4a033402d6419b30141b5f952',true,'jsonb',0,ARRAY['authenticated']::text[]),
   ('public.stage_paige_chat_knowledge_intake(uuid,uuid,uuid,uuid,uuid,uuid,integer,uuid,text,integer)','4a95dc21530706619f6c95789b1be6a6',true,'jsonb',0,ARRAY['authenticated']::text[]),
   ('public.inspect_paige_chat_knowledge_link(uuid,uuid,uuid,uuid)','5f7588388f3f1c64d931c8f0c943f8dd',true,'jsonb',0,ARRAY['authenticated']::text[]),
   ('public.save_paige_chat_knowledge_link(uuid,uuid,uuid,uuid,uuid,uuid,integer,uuid,text,integer)','1f6bd209b4caebfe7c0c535103a85985',true,'jsonb',0,ARRAY['authenticated']::text[]),
@@ -280,6 +280,8 @@ BEGIN
  IF jsonb_typeof(link)<>'object' OR link->'schemaVersion' IS DISTINCT FROM '1'::jsonb
   OR link->>'phase' IS DISTINCT FROM 'intake' OR link->'linkRevision' NOT IN ('1'::jsonb,'2'::jsonb)
   OR NOT link ? 'linkRevision' OR NOT link ? 'turnId'
+  OR jsonb_typeof(link->'documentRevision') IS DISTINCT FROM 'number'
+  OR NOT pg_catalog.pg_input_is_valid(coalesce(link->>'documentRevision',''),'integer')
   OR NOT pg_catalog.pg_input_is_valid(coalesce(link->>'threadId',''),'uuid')
   OR (link->'turnId'<>'null'::jsonb AND NOT pg_catalog.pg_input_is_valid(coalesce(link->>'turnId',''),'uuid'))
   OR link->>'actorId' IS DISTINCT FROM _expected_actor::text OR link->>'tenantId' IS DISTINCT FROM _expected_tenant::text THEN
@@ -292,7 +294,9 @@ BEGIN
   RETURN jsonb_build_object('status','recorded','current',false,'reason','source_unavailable_or_changed'); END;
  -- Normal extraction/review advances the document; the admission receipt is
  -- immutable. Current document revision is returned separately, never approval.
- IF link-ARRAY['schemaVersion','actorId','tenantId','threadId','turnId','linkRevision','documentRevision']
+ IF (link->>'documentRevision')::integer < greatest(1,(source->>'sourceRevision')::integer)
+  OR (link->>'documentRevision')::integer > (source->>'documentRevision')::integer
+  OR link-ARRAY['schemaVersion','actorId','tenantId','threadId','turnId','linkRevision','documentRevision']
   IS DISTINCT FROM source-'documentRevision' THEN
   RETURN jsonb_build_object('status','recorded','current',false,'reason','source_unavailable_or_changed'); END IF;
  IF link->>'turnId' IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.paige_chat_turns t WHERE t.id=(link->>'turnId')::uuid

@@ -68,6 +68,19 @@ SELECT is((SELECT value->>'status' FROM e01_host_state WHERE name='admission'),'
 SELECT is(public.inspect_paige_chat_knowledge_intake('e0100200-0000-4000-8000-000000000001',auth.uid(),NULL,
  (SELECT (value#>>'{}')::uuid FROM e01_host_state WHERE name='extraction'))->>'currentDocumentRevision','4','reopen discovers current canonical revision while retaining original intake version');
 RESET ROLE;
+SAVEPOINT e01_intake_revision_integrity;
+UPDATE public.paige_durable_work SET chat_source_link=jsonb_set(chat_source_link,'{documentRevision}','999')
+ WHERE id=(SELECT (value#>>'{}')::uuid FROM e01_host_state WHERE name='extraction');
+SET LOCAL ROLE authenticated;
+SELECT is(public.inspect_paige_chat_knowledge_intake('e0100200-0000-4000-8000-000000000001',auth.uid(),NULL,
+ (SELECT (value#>>'{}')::uuid FROM e01_host_state WHERE name='extraction'))->>'current','false','future captured intake version is withheld by native inspection');
+ROLLBACK TO SAVEPOINT e01_intake_revision_integrity;
+UPDATE public.paige_durable_work SET chat_source_link=chat_source_link-'documentRevision'
+ WHERE id=(SELECT (value#>>'{}')::uuid FROM e01_host_state WHERE name='extraction');
+SET LOCAL ROLE authenticated;
+SELECT is(pg_temp.e01_error($$SELECT public.inspect_paige_chat_knowledge_intake('e0100200-0000-4000-8000-000000000001',auth.uid(),NULL,
+ (SELECT (value#>>'{}')::uuid FROM e01_host_state WHERE name='extraction'))$$),'40001','missing captured intake version is a native conflict');
+ROLLBACK TO SAVEPOINT e01_intake_revision_integrity;
 CREATE TEMP TABLE e01_host_original_rows AS SELECT id,to_jsonb(w)-'chat_source_link' AS original FROM public.paige_durable_work w;
 CREATE TEMP TABLE e01_host_turn_count AS SELECT count(*) total FROM public.paige_chat_turns;
 CREATE TEMP TABLE e01_host_turn_work AS SELECT id,work_id FROM public.paige_chat_turns;

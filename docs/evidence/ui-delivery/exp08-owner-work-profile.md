@@ -13,27 +13,27 @@ MUST_PRESERVE: Original three-argument Team RPC/audit, contact editor and its se
 ACCEPTANCE_CRITERIA: Holder/self can edit/save/reopen native values; Admin/co-owner can inspect another owner's read-only fields and Close; native refusal/unknown preserves draft and cannot claim success; tenant/actor/unmount invalidates stale completion
 MOTION_PURPOSE: NONE: retain existing reduced-motion-aware dialog transition; no new animation
 PROTECTED_SEAMS: Affected: scoped roster presentation, owner edit authority, original work-profile readback, dialog focus/accessibility and responsive geometry. Unaffected: Auth/account choice writers, entitlement/paywall/provisioning/Billing, shared approval/Trust/Harness/Spine runtime, Rail/Memory writers, Chat transcripts/stream/popout/history, Live, Vault/credentials, providers/sends, durable scheduler and all domain writers. Server authority remains independent of presentation.
-AUTOMATED_EVIDENCE: PASS: original11 neighboring Team/contact/departure/modal and new profile suites180/180; initial5FAIL/7PASS source controls, fixture1FAIL/176PASS and mock-reset2FAIL retained; no assertions removed
-STATIC_EVIDENCE: UNVERIFIED: initial focused5-file lint exit0; final new fixture/harness checks pending; whole-app compiler stopped after actual13MB free memory, no completed type result
-RENDERED_EVIDENCE: UNVERIFIED: actual local dialog geometry/themes pending; no authenticated customer claim
-BEHAVIORAL_EVIDENCE: UNVERIFIED: focused DOM and controlled-browser pathways pending
+AUTOMATED_EVIDENCE: PASS: current original11 neighboring Team/contact/departure/modal and profile suites181/181; prior180/180, failing-first and fixture/mock-reset failures retained below, not added as independent populations
+STATIC_EVIDENCE: UNVERIFIED: current four changed UI/contract/test/transport files ESLint exit0; title-authority guard and SOLO parity guard plus parity mutation self-test PASS; whole-app compiler previously resource-stopped, no current clean type result
+RENDERED_EVIDENCE: PASS: current real SoloApp controlled-browser32 captures, two fictional contexts, both themes, four viewports with PAIGE open/closed; geometry/focus only, no authenticated customer claim
+BEHAVIORAL_EVIDENCE: PASS: current11 suites181 cases and original controlled-browser7 states; synthetic transport only, native/authenticated persistence and context recovery remain owed
 AUTHENTICATED_RUNTIME: UNVERIFIED: inert native work-profile candidate not released; actual original Team/Spine/cohort results remain owed
-KEYBOARD_FOCUS: UNVERIFIED: approved read-only heading focus/Close/Escape/return requires drive
+KEYBOARD_FOCUS: PASS: all32 controlled-browser contexts prove read-only heading initial focus, keyboard Close reachability, Escape and original Team-row focus return; actual AT remains owed
 ZOOM_REFLOW: UNVERIFIED: local 200percent/reflow and native zoom proof separate
-REDUCED_MOTION: UNVERIFIED: existing dialog behavior retained, rendered preference proof pending
-STATE_COVERAGE: UNVERIFIED: edit/read-only/missing metadata/validation/save/refusal/unknown/cancel/close/lifetime pending tests
+REDUCED_MOTION: PASS: existing dialog rendered under reduced-motion preference in the controlled-browser32frames/7states; no new motion
+STATE_COVERAGE: UNVERIFIED: local32geometry/focus cases and7synthetic save/refusal states PASS plus181 DOM cases; full authenticated/lifetime/cohort proof remains owed
 TRUTHFUL_STATE_LABELS: PASS: no LIVE claim; native and source tests separate from customer results
 SOLO_UI: YES: existing Settings Team MemberEditor; no shell or navigation change
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: local controlled shell drive pending
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: local controlled shell drive pending
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: local controlled shell drive pending
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: local controlled shell drive pending
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: local controlled shell drive pending
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: local controlled shell drive pending
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: local controlled shell drive pending
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: local controlled shell drive pending
+SOLO_1536X770_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
+SOLO_1536X770_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
+SOLO_1366X768_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
+SOLO_1366X768_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
+SOLO_1024X768_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
+SOLO_1024X768_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
+SOLO_900X1000_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
+SOLO_900X1000_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
 UNVERIFIED: Full-schema/current native carrier, real authenticated role/cohort/save/reload/refusal, actual AT/native zoom and production release remain owed; isolated tests never close them
-INTERNAL_BUILD_IDENTITY: 08e55acc0b7e5647138e35641027242714d14b95; development base only, UI delta uncommitted; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original co-owner contract
+INTERNAL_BUILD_IDENTITY: 3e8bdd1d8; original scoped work-profile363190d10 source preserved plus native70116a merge; controlled-browser driver selector/diagnostics verified locally; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original co-owner contract
 RELEASE_CHANNEL: development: same original outcome4, not deployed
 RELEASE_CLASSIFICATION: internal-only: integration increment of the full EXP08 assignment
 CUSTOMER_RELEASE_IDENTITY: none: full Team Hub integration and one owner review remain unfinished
@@ -114,3 +114,38 @@ no unscoped fallback. New exact call expectation first FAILED, then original
 neighboring11 suites181/181 PASS, including stale-membership draft retention,
 no false success/auto retry and fresh-Team recovery. Shared Team Chat/C0b native
 producer/consumer receiving remains pending; full Team Hub is not ready.
+
+
+## Terminal controlled-browser proof — November1
+
+Original driver terminal exit0:32geometry captures and7states. Each geometry
+case verifies actual on-screen modal bounds, no document horizontal overflow,
+read-only title, no Save, approved explanation, heading initial focus, keyboard
+Close reachability, Escape and focus return. The7states exercise holder/self
+verified synthetic save, unknown metadata read-only, missing/foreign receipt,
+transport and authored refusal, retaining draft and blocking unknown retries.
+The report is [original report](assets/exp08-owner-work-profile/report.json);
+SHA256 `181758a4ccc9745e064bc09050d682725b94639fdf6cd5e434e74403fc7c57c4`. The full32 PNGs are beside it.
+
+Three representative captures were actually inspected:1024 light/PAIGE-open,
+900 dark/PAIGE-open,1536 light/PAIGE-closed. Approved existing dialog/tokens,
+dashed read-only fields and internal scroll remain. No product visual redesign.
+Recorded offMachineRequests39 means39 attempts BLOCKED by loopback-only routing,
+not successful remote traffic. No customer/provider/session authorization proof.
+
+Prior failure history retained separately: first navigation timeout under13MB
+host headroom; second row-selector timeout after successful actual Team render;
+diagnostic showed pageErrors0 and the wrong driver accessible-name expectation.
+Only that selector was corrected to original `Taylor Reed, edit details`.
+No product control, authority, geometry assertion or timeout was weakened.
+The local diagnostic report is preserved outside versioned product evidence.
+Native full schema, real caller/cohorts, AT/native zoom and full integrated owner
+review remain PROOF OWED. Controlled-browser PASS is not customer acceptance.
+
+Pinned Impeccable4.1.0 detector terminal exit0,0 anti-patterns,68 nonblocking
+advisories across the existing settings.css scale. The owner-profile CSS delta
+adds only dashed border, existing muted/font tokens, no shadow or new radius.
+The broader pre-existing8/9px typography and10/12px radius advisories are not
+concealed by an unqualified visual/contrast PASS and are not silently redesigned.
+Local source reviewer is AUTHOR-REVIEW / LOWER ASSURANCE; native/AT/contrast
+measurements and full release assurance remain distinct.

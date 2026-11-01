@@ -17,7 +17,11 @@ async function open(tenant,theme,mode,width=1366,height=768){
  page.on('pageerror',e=>errors.push(String(e)));
  await page.route('**/*',route=>{if(new URL(route.request().url()).hostname==='127.0.0.1')return route.continue();report.offMachineRequests++;return route.abort();});
  await page.goto(`${base}/solo/${tenant==='a'?'3855':'4120'}/settings/team?theme=${theme}&tenant=${tenant}&ownerProfile=${mode}`,{waitUntil:'domcontentloaded',timeout:60000});
- const name=page.getByRole('button',{name:'Taylor Reed',exact:true});await name.waitFor({timeout:60000});
+ const name=page.getByRole('button',{name:'Taylor Reed, edit details',exact:true});
+ try{await name.waitFor({timeout:60000});}catch(error){
+  report.failures.push(JSON.stringify({phase:'original Team row mount',url:page.url(),pageErrors:errors,body:(await page.locator('body').innerText().catch(()=>'<unavailable>')).slice(0,8000)}));
+  throw error;
+ }
  const shell=page.locator('[data-tenant-shell]');if(await shell.getAttribute('data-paige')!=='closed')await page.keyboard.press('Control+Backslash');
  await name.focus();await name.press('Enter');const dialog=page.locator('.stw-modal');await dialog.waitFor();
  return{page,dialog,errors,shell,name};

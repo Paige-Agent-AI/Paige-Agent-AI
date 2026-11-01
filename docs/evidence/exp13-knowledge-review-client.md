@@ -1,5 +1,35 @@
 # Original Knowledge reviewed-source client release preparation
 
+## November 1 UTC — original read-continuation repair, not yet released
+
+Base: actual main `3050d8274037b8b2ee549309d20d9c7cbe25b723`.
+The original worker3161 and client3174 have since been released; their historical
+preparation statements below remain dated evidence, not current dependencies.
+
+Four controlled ordinary-Promise settlement cases reproduced a remaining gap in
+document discovery, extraction review, publication recovery and work-status reads:
+the inner RPC reader checked its captured incarnation, but the public async
+continuation could project data after that incarnation retired. Actual unchanged
+source: **4 FAIL / 156 PASS**. This is synthetic source-boundary evidence, not a
+confirmed customer exposure or an authenticated cross-tenant finding.
+
+The original review projection now rechecks the same negative-only incarnation;
+the original work-status continuation checks immediately after its final read.
+No RPC/authority resolver, effect, retry, native ABI, store, UI or admission is
+added. Existing pending/replacement and private consumer wrappers are unchanged.
+The same four negatives and original controls pass: three suites188 PASS, then
+twelve existing source/consumer/Memory suites376 PASS. Focused lint/diff PASS.
+Project compiler options plus strict checking preserve the identical one inherited
+test diagnostic (1 before / 1 after); source has zero owned diagnostics. This is
+bounded parity, not whole-app strict clearance. Existing Vite warnings remain.
+
+Fresh exact-head review, hosted checks, merge and production readback remain owed.
+The single/BULK/Chat UI3177 proof hold and downstream selected facts, separate
+Memory review, saved Mission and actual authorized Work/CRM/receipts/reopen remain
+unfinished. Full original EXP13 is STILL CODING; customer outcome NOT READY.
+
+## Earlier client preparation and release evidence (preserved)
+
 PARTIAL / LOCAL ONLY. Same primary FLOW:KNOWLEDGE, full original scope retained.
 No customer UI is mounted by this increment and no new store, queue, runtime or
 permission resolver is created. Native3154 is live; original worker3161 is an

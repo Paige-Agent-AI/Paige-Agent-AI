@@ -35,9 +35,9 @@ ACCEPTANCE_CRITERIA: after safe release an authorized owner receives the origina
 MOTION_PURPOSE: NONE: no motion, layout, focus or CSS change.
 PROTECTED_SEAMS: exact original Calendar handler only; every other current-main Chat byte retained. Shared core/Trust/Live/Model Fabric, Team Hub, original domain/native writers and provider activation untouched.
 
-INTERNAL_BUILD_IDENTITY: 69bdd5774a847e826cd2df55ff6b09ac07665e4d; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_DEPLOYED(paige-ai-chat); evidence=original ANT-11, ANT-147/9162636d and this record
+INTERNAL_BUILD_IDENTITY: 69bdd5774a847e826cd2df55ff6b09ac07665e4d; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat deployment and exact source readback before customer proof); evidence=original ANT-11, ANT-147/9162636d and this record
 RELEASE_CHANNEL: development: source correction only; no production result claimed.
-RELEASE_CLASSIFICATION: bounded reliability/receipt repair within original O01.
+RELEASE_CLASSIFICATION: patch: bounded reliability/receipt repair within original O01.
 CUSTOMER_RELEASE_IDENTITY: none: complete owner-visible outcome and publication gate not met.
 RELEASE_NOTE_REQUIRED: no: internal repair, no customer announcement authorized.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: no new Live, complete O01, whole Experience, activation or customer-acceptance claim.

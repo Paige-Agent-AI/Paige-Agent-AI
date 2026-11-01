@@ -964,6 +964,10 @@ describe("everything else keeps its own path", () => {
     db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original action reply.",action_id:CONTACT})];
     db.actions=[{id:CONTACT,tenant_id:TENANT,contact_id:CONTACT,approval_id:CONN_2,action_kind:"client.followup"}];
     db.approvals=[{id:CONN_2,tenant_id:TENANT,contact_id:CONTACT,status:"pending",metadata:{action_id:CONTACT}}];
+    let frameId=0;const frames=new Map<number,FrameRequestCallback>();
+    const frameSpy=vi.spyOn(window,"requestAnimationFrame").mockImplementation(callback=>{frames.set(++frameId,callback);return frameId;});
+    const cancelFrameSpy=vi.spyOn(window,"cancelAnimationFrame").mockImplementation(id=>{frames.delete(id);});
+    try{
     const host=await mount();let release!:()=>void;db.actionReadGate=new Promise<void>(resolve=>{release=resolve;});
     try{
       buttonByText(host,"Edit")!.focus();await click(buttonByText(host,"Edit"));
@@ -974,7 +978,12 @@ describe("everything else keeps its own path", () => {
       if(otherFocus)buttonByText(host,"Attach")!.focus();
     }finally{await act(async()=>{release();await flush();});await settle();}
     expect(textarea(host).value).toBe("Original action reply.");expect(db.invokes).toEqual([]);
+    // Read settlement does not imply that the browser's next frame has run.
+    expect(document.activeElement).toBe(buttonByText(host,otherFocus?"Attach":"Edit"));
+    expect(frames.size).toBeGreaterThan(0);
+    await act(async()=>{const frame=[...frames.values()];frames.clear();for(const callback of frame)callback(performance.now());await flush();});
     expect(document.activeElement).toBe(otherFocus?buttonByText(host,"Attach"):textarea(host));
+    }finally{frameSpy.mockRestore();cancelFrameSpy.mockRestore();}
   });
   it("a newer reply during original saved-action lookup is kept and the interrupted open explains recovery",async()=>{
     db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original action reply.",action_id:CONTACT})];

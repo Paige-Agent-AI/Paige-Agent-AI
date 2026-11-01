@@ -41,20 +41,6 @@ SELECT pg_temp.check(pg_temp.try(:'exp05patch') LIKE 'Original Planning dependen
  'EXP05 unknown guard source refuses candidate replay');
 ROLLBACK;
 
-BEGIN;
-UPDATE public.tenant_members SET role='admin',status='active' WHERE tenant_id=:'ta'::uuid AND user_id=:'u3'::uuid;
-INSERT INTO public.plans(id,tenant_id,created_by,owner_user_id,title) VALUES
- ('e5000000-0000-4000-8000-000000000001',:'ta',:'u3',:'u3','PRIVATE original plan'),
- ('e5000000-0000-4000-8000-000000000002',:'tb',:'u3',:'u3','FOREIGN plan'),
- ('e5000000-0000-4000-8000-000000000003',:'ta',:'u2',:'u2','Other owner private plan');
-INSERT INTO public.plan_items(id,tenant_id,plan_id,item_type,created_by,assigned_to_user_id,title,updated_at) VALUES
- ('e5000000-0000-4000-8000-000000000011',:'ta','e5000000-0000-4000-8000-000000000001','task',:'u3',:'u3','PRIVATE original item','2026-11-01T00:00:00.123456Z'),
- ('e5000000-0000-4000-8000-000000000012',:'tb','e5000000-0000-4000-8000-000000000002','task',:'u3',:'u3','FOREIGN item',now()),
- ('e5000000-0000-4000-8000-000000000013',:'ta',NULL,'task',:'u3',:'u3','PRIVATE loose item',now());
-SELECT pg_temp.j(:'u3',format('public.team_hub_open_agent_dm(%L::uuid,''zion'')',:'ta'))->>'channel_id' AS e5dm \gset
-SELECT pg_temp.post(:'u3',:'ta',:'e5dm','Review my original weekly work')->'message'->>'id' AS e5q \gset
-SELECT pg_temp.accept(:'ta',:'u3',:'e5dm',:'e5q','zion','dm',pg_temp.tok('E5')) AS e5accepted \gset
-SELECT pg_temp.check((:'e5accepted')::jsonb->>'ok'='true','EXP05 original accepted ZION turn');
 CREATE FUNCTION pg_temp.planning_binding(actor text,tenant text,args jsonb DEFAULT '{}') RETURNS jsonb LANGUAGE plpgsql AS $$
 DECLARE a jsonb; raw jsonb; source jsonb;
 BEGIN
@@ -69,6 +55,7 @@ BEGIN
  RETURN jsonb_build_object('tool','plan_list','version',1,'arguments',a,'source',source,'roster_tools',
   (SELECT config#>'{capability_scope,tools}' FROM public.paige_subagents WHERE tenant_id IS NULL AND slug='zion'));
 END $$;
+
 CREATE FUNCTION pg_temp.planning_filter_parity(actor text,tenant text,turn_id text) RETURNS integer LANGUAGE plpgsql AS $$
 DECLARE args jsonb; binding jsonb; t public.team_hub_agent_turns; n integer:=0;
 BEGIN
@@ -86,9 +73,46 @@ BEGIN
  END LOOP;
  RETURN n;
 END $$;
+
 CREATE FUNCTION pg_temp.planning_stage(turn text,token text,binding jsonb,links jsonb DEFAULT '[]') RETURNS jsonb LANGUAGE sql AS $$
  SELECT pg_temp.j(NULL,format('public.team_hub_stage_agent_read_context(%L::uuid,%L,%L::jsonb,%L::jsonb)',
  turn,pg_temp.h(token),jsonb_build_array(binding),links),'service_role') $$;
+
+CREATE FUNCTION pg_temp.planning_malformed(turn_id text,token text,b jsonb) RETURNS integer LANGUAGE plpgsql AS $$
+DECLARE bad jsonb; n integer:=0;
+BEGIN
+ FOR bad IN SELECT value FROM jsonb_array_elements(jsonb_build_array(
+  b-'source',b||'{"version":2}',b||'{"roster_tools":[]}',
+  jsonb_set(b,'{arguments,limit}','31'),jsonb_set(b,'{arguments,limit}','1.5'),
+  jsonb_set(b,'{arguments,status}','["open"]'),jsonb_set(b,'{arguments,from}','"2026-02-30"'),
+  jsonb_set(b,'{arguments}',b->'arguments'||'{"tenant_id":"e5000000-0000-4000-8000-000000000002"}'),
+  jsonb_set(b,'{source}','{"plans":[],"loose_items":[]}'),
+  b#-'{source,plans,0,updated_at}',
+  jsonb_set(b,'{source,plans,0,updated_at}','"2026-11-01T00:00:00.1234567Z"'),
+  jsonb_set(b,'{source,plans,0,items}',(b#>'{source,plans,0,items}')||(b#>'{source,plans,0,items}')))) LOOP
+  PERFORM pg_temp.check(pg_temp.planning_stage(turn_id,token,bad) ? 'error','EXP05 closed native binding refuses malformed source/query/roster');
+  n:=n+1;
+ END LOOP;
+ RETURN n;
+END $$;
+
+BEGIN;
+UPDATE public.tenant_members SET role='admin',status='active' WHERE tenant_id=:'ta'::uuid AND user_id=:'u3'::uuid;
+INSERT INTO public.plans(id,tenant_id,created_by,owner_user_id,title) VALUES
+ ('e5000000-0000-4000-8000-000000000001',:'ta',:'u3',:'u3','PRIVATE original plan'),
+ ('e5000000-0000-4000-8000-000000000002',:'tb',:'u3',:'u3','FOREIGN plan'),
+ ('e5000000-0000-4000-8000-000000000003',:'ta',:'u2',:'u2','Other owner private plan');
+INSERT INTO public.plan_items(id,tenant_id,plan_id,item_type,created_by,assigned_to_user_id,title,updated_at) VALUES
+ ('e5000000-0000-4000-8000-000000000011',:'ta','e5000000-0000-4000-8000-000000000001','task',:'u3',:'u3','PRIVATE original item','2026-11-01T00:00:00.123456Z'),
+ ('e5000000-0000-4000-8000-000000000012',:'tb','e5000000-0000-4000-8000-000000000002','task',:'u3',:'u3','FOREIGN item',now()),
+ ('e5000000-0000-4000-8000-000000000013',:'ta',NULL,'task',:'u3',:'u3','PRIVATE loose item',now());
+SELECT pg_temp.j(:'u3',format('public.team_hub_open_agent_dm(%L::uuid,''zion'')',:'ta'))->>'channel_id' AS e5dm \gset
+SELECT pg_temp.post(:'u3',:'ta',:'e5dm','Review my original weekly work')->'message'->>'id' AS e5q \gset
+SELECT pg_temp.accept(:'ta',:'u3',:'e5dm',:'e5q','zion','dm',pg_temp.tok('E5')) AS e5accepted \gset
+SELECT pg_temp.check((:'e5accepted')::jsonb->>'ok'='true','EXP05 original accepted ZION turn');
+
+
+
 SELECT pg_temp.check(pg_temp.planning_filter_parity(:'u3',:'ta',(:'e5accepted')::jsonb->>'turn_id')=20,
  'EXP05 twenty bounded filter/version projections match the actual original caller-JWT reader');
 SELECT pg_temp.planning_binding(:'u3',:'ta') AS e5binding \gset
@@ -156,23 +180,7 @@ SELECT pg_temp.check(pg_temp.planning_stage((:'e5accepted')::jsonb->>'turn_id',p
 SELECT pg_temp.check(pg_temp.planning_stage((:'e5accepted')::jsonb->>'turn_id',pg_temp.tok('E5'),
  (:'e5binding')::jsonb||'{"actor_id":"10000000-0000-4000-8000-000000000001"}') ? 'error',
  'EXP05 generic JSON actor authority is rejected');
-CREATE FUNCTION pg_temp.planning_malformed(turn_id text,token text,b jsonb) RETURNS integer LANGUAGE plpgsql AS $$
-DECLARE bad jsonb; n integer:=0;
-BEGIN
- FOR bad IN SELECT value FROM jsonb_array_elements(jsonb_build_array(
-  b-'source',b||'{"version":2}',b||'{"roster_tools":[]}',
-  jsonb_set(b,'{arguments,limit}','31'),jsonb_set(b,'{arguments,limit}','1.5'),
-  jsonb_set(b,'{arguments,status}','["open"]'),jsonb_set(b,'{arguments,from}','"2026-02-30"'),
-  jsonb_set(b,'{arguments}',b->'arguments'||'{"tenant_id":"e5000000-0000-4000-8000-000000000002"}'),
-  jsonb_set(b,'{source}','{"plans":[],"loose_items":[]}'),
-  b#-'{source,plans,0,updated_at}',
-  jsonb_set(b,'{source,plans,0,updated_at}','"2026-11-01T00:00:00.1234567Z"'),
-  jsonb_set(b,'{source,plans,0,items}',(b#>'{source,plans,0,items}')||(b#>'{source,plans,0,items}')))) LOOP
-  PERFORM pg_temp.check(pg_temp.planning_stage(turn_id,token,bad) ? 'error','EXP05 closed native binding refuses malformed source/query/roster');
-  n:=n+1;
- END LOOP;
- RETURN n;
-END $$;
+
 SELECT pg_temp.check(pg_temp.planning_malformed((:'e5accepted')::jsonb->>'turn_id',pg_temp.tok('E5'),(:'e5binding')::jsonb)=12,
  'EXP05 twelve malformed native source/query/roster envelopes refuse without widening');
 SELECT pg_temp.check(pg_temp.planning_stage((:'e5accepted')::jsonb->>'turn_id',pg_temp.tok('E5'),(:'e5binding')::jsonb,
@@ -234,6 +242,40 @@ SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM jsonb_array_elements((:'e5revokeds
  'EXP05 revoked Planning source must not remain in original Search');
 ROLLBACK TO e5_history_revoke;
 ROLLBACK;
+\if :{?exp05_concurrent}
+-- Reuse the SAME synthetic people, canonical reader, accepted-token stage and
+-- original post in committed rows so independent sessions can observe locks.
+BEGIN;
+UPDATE public.tenant_members SET role='admin',status='active' WHERE tenant_id=:'ta'::uuid AND user_id=:'u3'::uuid;
+INSERT INTO public.plans(id,tenant_id,created_by,owner_user_id,title) VALUES
+ ('e5000000-0000-4000-8000-000000000100',:'ta',:'u3',:'u3','Concurrent original plan');
+INSERT INTO public.plan_items(id,tenant_id,plan_id,item_type,created_by,assigned_to_user_id,title,updated_at) VALUES
+ ('e5000000-0000-4000-8000-000000000101',:'ta','e5000000-0000-4000-8000-000000000100','task',:'u3',:'u3',
+  'Original concurrent work','2026-11-01T00:00:00.123456Z');
+CREATE FUNCTION pg_temp.planning_race_context(actor text,tenant text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE dm text; question text; token text; a jsonb; b jsonb; cases jsonb:='[]'; n integer;
+BEGIN
+ dm:=pg_temp.j(actor,format('public.team_hub_open_agent_dm(%L::uuid,''zion'')',tenant))->>'channel_id';
+ b:=pg_temp.planning_binding(actor,tenant,'{"plan_id":"e5000000-0000-4000-8000-000000000100"}');
+ FOR n IN 0..3 LOOP
+  token:=pg_temp.tok('E5-concurrent-'||n);
+  question:=pg_temp.post(actor,tenant,dm,'Review original concurrent Planning work '||n)#>>'{message,id}';
+  a:=pg_temp.accept(tenant,actor,dm,question,'zion','dm',token);
+  PERFORM pg_temp.check(a->>'ok'='true' AND pg_temp.planning_stage(a->>'turn_id',token,b)->>'ok'='true',
+   'EXP05 concurrent fixture uses original accepted source binding');
+  cases:=cases||jsonb_build_array(jsonb_build_object('turn',a->>'turn_id','question',question,'token',token,'request',gen_random_uuid()));
+ END LOOP;
+ RETURN jsonb_build_object('actor',actor,'tenant',tenant,'channel',dm,'plan','e5000000-0000-4000-8000-000000000100',
+  'item','e5000000-0000-4000-8000-000000000101','cases',cases);
+END $$;
+SELECT pg_temp.planning_race_context(:'u3',:'ta') AS e5racecontext \gset
+COMMIT;
+\o
+\pset format unaligned
+\pset tuples_only on
+SELECT 'EXP05_RACE_CONTEXT:'||(:'e5racecontext')::jsonb::text;
+\o /dev/null
+\endif
 \o
 \pset format unaligned
 \pset tuples_only on

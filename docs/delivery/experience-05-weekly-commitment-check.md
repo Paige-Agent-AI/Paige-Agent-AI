@@ -1260,3 +1260,20 @@ The source is still UNVERSIONED/INERT: normal native ordering, a genuine free
 forward carrier, managed/full-schema/concurrency proof, final review/exact CI,
 production readback and ordinary customer proof remain separate gates. No native
 migration, live activation or O01/full-Experience completion is claimed.
+
+
+Concurrent proof follow-through: the SAME original disposable E08 fixture now
+checks four real source-change/role-demotion versus publication races, in both
+orders. pg_blocking_pids confirms the exact blocked pair; original publication,
+retry, current history and consumed-turn records determine the result. All four
+PASS with full cleanup (run1793542825069). Synthetic committed records and
+original domain/Hub RPCs only; this does not replace managed or customer proof.
+
+Infrastructure gates remain real holds: b5 Preview returned function-update502;
+identical-tree f3 database-contract failed its very first production-baseline
+status call at api.supabase.com with origin502, so its local stack never started.
+Later missing-stack errors are not executed domain/security test findings.
+No baseline/grant/assertion was weakened and no fresh native health/frontier
+is claimed from failed MCP reads. Normal source/order/managed/CI recovery and
+ordinary authenticated acceptance still remain. All shared source windows are
+returned; only own proof/evidence files changed for this follow-through.

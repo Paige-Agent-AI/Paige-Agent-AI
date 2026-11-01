@@ -228,10 +228,11 @@
       "supabase/functions/_shared/team-hub/zion-planning-source.ts": "3ecc898e21707b46b54a6e33e6fb56674be5b7afe5ade84dd6f62d41641d56c7",
       "supabase/functions/_shared/team-hub/zion-planning-source.test.ts": "b9847b592bc3cc24f3ce4f785d1347ea9b25f84196c3cb34d04576caf747728e",
       "scripts/proof/exp05-zion-planning-read-candidate.sql": "2408309a49c373844517bb15449a8a2bb18980c5d5ff6739a7179d85279290d7",
-      "scripts/proof/exp05-zion-planning-read.mjs": "462abead20ca3cb865d042d5726f55927403095eb49f4ae7f10ff326bf43a1f1",
-      "supabase/tests/exp05_zion_planning_read.sql": "cc1d54de5ed7373661c8304add1ae27383ffca7822ae64e085641408ddbf19f2",
+      "scripts/proof/exp05-zion-planning-read.mjs": "12ef7401bfa09eb275e085ef84881eab1b7bc8fed54e5edf2f6abe20f6685d42",
+      "supabase/tests/exp05_zion_planning_read.sql": "6941ec0c10da33e2e9b0ff4e643a91fbc09caffff8760bcf3161daa0edd942a4",
       "supabase/tests/fixtures/exp05-zion-planning-original.sql": "42f7b90ac7f08ea2235d13b2164c3e7203738e4d80db0ea7b4f9ba216c3aa175",
-      ".github/workflows/ci.yml": "7b66a47852e2af9a3a6e60cecc72059bc0ae834e448c900b5951596741482ecb"
+      ".github/workflows/ci.yml": "7b66a47852e2af9a3a6e60cecc72059bc0ae834e448c900b5951596741482ecb",
+      "scripts/proof/exp05-zion-planning-concurrency.mjs": "185353cf379cd99ae3093554fc6653b1d23da981a646d86e7a8916f371f18b47"
     },
     "abi": "Same service-only team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb); closed plan_list/version1 source descriptor; no public RPC or added grant",
     "contract": "Original caller-JWT read/versions -> same accepted-token native stage before model -> current original source guard -> original post/readback/history. Typed Planning-item Work references only; mixed CRM staging retains the same source binding. Same-operation rearm uses the new original token, never expired evidence. Original Search final bounded-hit projection excludes newly source-unavailable Planning replies; default20/ABI/config/ACL and complete non-Planning body conserved.",
@@ -243,7 +244,7 @@
       },
       "types": "Changed host and both Planning modules PASS under pinned Deno dependency cache; isolated non-network cache miss retained separately, no changed dependency",
       "native": "Existing E08 A2b full assertions/16 mutants/P1/uncapped suite unchanged, followed by native additive source/metadata/ACL/replay,20 differential queries,12 malformed envelopes and current-source/refusal/rearm/history checks. Reduced-schema synthetic role ports; not full-schema or customer proof",
-      "nativeEvidence": "work/planning-native-proof/run-1793541800073/result.json (exit0; complete disposable cleanup)",
+      "nativeEvidence": "work/planning-native-proof/run-1793542825069/result.json; exit0, four observed blocking pairs, original fixture dropped",
       "causalRed": "Native missing-contract baseline fails before candidate; exact original Search negative fails on newly source-revoked Planning result. Initial Windows transport/fixture/SQL correction attempts retained in private run evidence",
       "nativeContract": [
         {
@@ -454,15 +455,47 @@
         "Original Linux sed and nested include paths required literal Windows transport, retaining exact SQL/mutants",
         "Fixture initially duplicated existing Planning tables and attempted a named-parameter role helper replacement; corrected to original table/role ports",
         "New source projection SQL alias and a write/read same-statement snapshot assertion were corrected; no original assertion removed",
-        "Whitespace check corrected new trailing blank lines; no native source body rewritten"
+        "Whitespace check corrected new trailing blank lines; no native source body rewritten",
+        "Concurrency fixture helper definitions were originally rolled back; exact committed bodies moved outside scenario rollback by literal slicing after replacement-string delimiter expansion failed",
+        "Opaque test token and required explicit null parent were matched to the original fixture/writer ABI; no native product function changed"
       ],
       "causalSearch": "run-1793541738611 --search-red: restore ONLY exact original Search d71b872a, then fail revoked Planning assertion; normal final run1793541800073 PASS",
-      "workflow": "Both additive hunks invert to complete current-main ci.yml; valid YAML with no empty step; peer3190 recovery spans not touched"
+      "workflow": "Both additive hunks invert to complete current-main ci.yml; valid YAML with no empty step; peer3190 recovery spans not touched",
+      "concurrency": {
+        "scope": "Same original E08 disposable fixture, committed synthetic records, actual original post and source/role changes in two independent PostgreSQL sessions; no full-schema/customer claim",
+        "cases": [
+          {
+            "change": "source",
+            "order": "publication-first",
+            "actualBlockingPair": true,
+            "originalMessages": 1
+          },
+          {
+            "change": "source",
+            "order": "change-first",
+            "actualBlockingPair": true,
+            "originalMessages": 0
+          },
+          {
+            "change": "role",
+            "order": "publication-first",
+            "actualBlockingPair": true,
+            "originalMessages": 1
+          },
+          {
+            "change": "role",
+            "order": "change-first",
+            "actualBlockingPair": true,
+            "originalMessages": 0
+          }
+        ],
+        "exit": 0
+      }
     },
     "review": "AUTHOR-REVIEW / LOWER ASSURANCE; source/spec/authority/privacy/metadata/recovery pass. Search failure corrected, original native and neighboring regressions pass. Managed/concurrency/exact-head CI and release gates remain open.",
     "releaseHolds": [
       "Actual lower-owner native ordering then genuinely free forward carrier; no speculative slot",
-      "Full-schema/managed and concurrency proof; exact final source review/required CI; deployment/production readback",
+      "Full-schema/managed proof; four bounded native concurrency pairs now PASS; exact final source review/required CI; deployment/production readback",
       "Ordinary authorized useful both-chat result, original records/receipts/reload/recovery and equivalent existing/new SOLO proof"
     ],
     "sourceReader": "Original plan_list body702f2b52fc0d4e5c615fde7ec906b840 unchanged; private validation projects IDs/versions only, never service plan_list or domain effects",
@@ -472,6 +505,12 @@
       "Actual E04 handback58ca8d6b/E08 original guard-stage-necessary-history ACK510f194f",
       "Actual E08 shared-CI custody returna0eb3bb8; final bounded Search hunk and nonoverlapping CI additions received under existing scopee43e0b68",
       "Red Search privacy finding corrected in source and causally verified; no extra founder/peer signoff invented"
-    ]
+    ],
+    "infrastructure": {
+      "b5": "Supabase Preview124871817388 FAILED function update502; preserved, not waived",
+      "f3": "Identical-tree retryf3b212b4; database-contract124873002424 baseline project-status read FAILED api.supabase.com origin502 before local stack startup; downstream missing-stack results not domain test verdicts",
+      "nativeReadback": "Fresh MCP catalog/log queries Internal errors; last successful frontier20 is historical, no current source-health conclusion",
+      "response": "Normal safe recovery and fresh exact-head gates only; no reset/new branch/project/secret or status override"
+    }
   }
 }

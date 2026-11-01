@@ -129,3 +129,19 @@ automatic approval review stopped subsequent synthetic file selection/observatio
 because its usage limit was reached. No current upload/reopen proof or alternate
 browser/automation workaround. Full bulk UI/authenticated workflow remains
 UNVERIFIED and agreement-to-saved-game-plan/actual Work NOT READY.
+
+Exact eab2 hosted ratchet artifact13063655093 supersedes its old dependency-age
+failure for THIS run: dependencies now resolve, but newer compiler reports
+TS2322 at binary-adapters.ts29 (generic Uint8Array buffer is not BlobPart).
+Copy the exact compressed view into an owned ArrayBuffer; do not cast away the
+error or pass the entire backing buffer. Original streamed expansion counting,
+limits, cancellation, parser versions/lock and authority remain unchanged.
+Fresh TypeScript5.9.3 compile of the exact original expression reproducesTS2322;
+new exact expression has ZERO diagnostics. Initial virtual-host probe failed to
+locate its synthetic type file (TS6053), not product/type proof; corrected host
+then produced the stated red/green result. No full Deno-ratchet PASS inferred.
+Fresh actual pinned Deno parser suite9PASS and frozen Deno2.1.4 worker graphPASS;
+standard-font warnings retained. New exact CI/review/managed source still owed.
+All57 current open-PR file manifests plus3115page2 had no peer binary-adapter
+source overlap. Separate shared paige-browser render check FAILED on eab2;
+exact cause remains unverified until actual failure evidence, no UI bypass.

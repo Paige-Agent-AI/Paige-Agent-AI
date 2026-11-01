@@ -281,3 +281,25 @@ Knowledge dependency preflight remains inside outer transaction and changes no
 helper; expanded volatility/grant/default controls retain rollback readbacks.
 Reviewer did not execute native tests. This supersedes pending successor source
 review only; version/order/CI/Preview/release and customer proof remain owed.
+
+Current-main composition checkpoint October31: normal mergeebda7bf08 receives
+main94f48 and preserves every incoming binary-source control. Runner conflicts
+were resolved by retaining the entire original binary install/repeat/drift loop
+and exact Memory control block, extending only CLI/imports to admit both modes.
+Carrier regeneration remains EXACT0f1111fdc6b621933a1ac2ef1da771ed42f9b352240a71f5d996101cf8f22364.
+Fresh joint native session37468 actually exits0 with --publication-recovery
+--binary-source --memory-review-candidate --memory-install-guards and the same
+atomic carrier. All84 Memory drift refusals, original binary drift controls,
+publication/lifecycle/access and actual duplicate-save/inspection lock waits
+pass together. Original context source suite19PASS. Log:
+work/exp13-memory-current-main-native.log. Disposable database DROP observed;
+only verified own cluster stopped in finally. No customer/provider effect.
+
+Fresh production CODE catalogue confirms original8/4/3 and both Knowledge
+helper bodies/owners/paths/ACL unchanged. Fresh migration metadata frontier is
+20271126150008; published E03 150003 and E05 160005 remain unapplied, own proposed
+180013 absent. GitHub3115/5abb and3145/a0df remain original DRAFTs. No inserting
+below applied frontier, lower published order skip, source-draft-as-apply claim
+or uncreated17 wait. Native Memory remains unversioned/local/unpublished;
+current composed runner/source review and normal ordered CI/Preview/release
+still owed. Full agreement-to-plan/actual tasks NOT READY.

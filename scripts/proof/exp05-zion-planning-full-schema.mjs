@@ -8,6 +8,9 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 const repo=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const candidate=readFileSync(join(repo,'scripts/proof/exp05-zion-planning-read-candidate.sql'),'utf8').replace(/\r\n/g,'\n');
+const carrier=readFileSync(join(repo,'supabase/migrations/20271127000005_exp05_zion_planning_source_binding.sql'),'utf8').replace(/\r\n/g,'\n');
+assert.equal(carrier.slice(carrier.indexOf('-- INERT SOURCE CANDIDATE,')),candidate,
+ 'The forward migration must retain the complete original native candidate exercised by this proof');
 assert.equal(candidate.match(/^BEGIN;$/gm)?.length,1,'Exactly one candidate transaction');
 assert.equal(candidate.match(/^COMMIT;$/gm)?.length,1,'Exactly one candidate commit');
 const body=candidate.replace(/^BEGIN;\n/m,'').replace(/\nCOMMIT;\s*$/,'\n');

@@ -13,6 +13,14 @@ const item = (state: "confirmed" | "corrected" | "proposed", id = "test-memory")
   state, candidate: state === "proposed",
 });
 describe("C6 governed owner-memory context (INT-326 dials)", () => {
+  it.each(["proposed", "retired"])("current source metadata does not promote a %s Memory into approved knowledge", (state) => {
+    const input = row(state, `source-${state}`);
+    const bound = { ...input, metadata: { ...input.metadata, reviewed_save: { schema_version: 1, source_reference: { contractVersion: 1 } }, source_state: "current", eligible_for_context: true } };
+    const result = resolveOwnerMemoryContext(scope, { data: [bound], error: null });
+    expect(result.status).toBe("available");
+    if (state === "retired") expect(result.data?.memories).toEqual([]);
+    else expect(result.data?.memories).toEqual([item("proposed", "source-proposed")]);
+  });
   it("pins the captured read scope and canonical provenance without retaining mutable input", () => {
     const captured = { ...scope }; const input = row();
     const result = resolveOwnerMemoryContext(captured, { data: [input], error: null });

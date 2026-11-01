@@ -219,7 +219,7 @@ END
 $history_triggers$;
 
 -- END ORIGINAL INERT COMPONENT exp08-first-owner-history-patch.sql
--- ORIGINAL INERT COMPONENT exp08-first-owner-invitation-patch.sql canonical-LF SHA256 5d92784bfb99eaaa38a2504bbb5c60732afc1f90f76e337dc213b2479ec7a86c
+-- ORIGINAL INERT COMPONENT exp08-first-owner-invitation-patch.sql canonical-LF SHA256 e18bb5c3a6e5e96f139cc75952342b88c7825b0c44e15c86209e0899e4c54450
 -- UNVERSIONED I2 component. Original mint/accept only; no deployment/native slot/activation.
 -- Preserve the entire incumbent including E09 consumer/recipient/contact protections.
 DO $patch$
@@ -318,10 +318,16 @@ BEGIN
     SELECT prosrc,to_jsonb(p)-'prosrc' INTO old_body,before_metadata FROM pg_proc p WHERE oid=target;
     IF NOT EXISTS(SELECT 1 FROM pg_proc p WHERE oid=target AND prosecdef
       AND proowner='postgres'::regrole AND proconfig=ARRAY['search_path=public']
-      AND proacl::text=CASE WHEN sig='public.accept_tenant_invite(text)'
-        THEN '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'
-        ELSE '{=X/postgres,postgres=X/postgres,authenticated=X/postgres}' END) THEN
-      RAISE EXCEPTION 'EXP08 first owner invitation requires original writer metadata: %',sig;
+      -- Original grant replay may reorder ACL entries. Compare the complete entries,
+      -- including grantors/grantees/privileges/grant options, without changing them.
+      AND ARRAY(SELECT a::text FROM unnest(p.proacl) a ORDER BY 1)=
+        ARRAY(SELECT a::text FROM unnest((CASE WHEN sig='public.accept_tenant_invite(text)'
+          THEN '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'
+          ELSE '{=X/postgres,postgres=X/postgres,authenticated=X/postgres}' END)::pg_catalog.aclitem[]) a ORDER BY 1)) THEN
+      RAISE EXCEPTION 'EXP08 first owner invitation requires original writer metadata: %',sig
+        USING DETAIL=coalesce((SELECT jsonb_build_object('owner',p.proowner::regrole::text,
+          'definer',p.prosecdef,'path',p.proconfig,'acl',p.proacl::text,'source_hash',md5(p.prosrc))::text
+          FROM pg_proc p WHERE oid=target),'original function missing');
     END IF;
     -- Replay is admitted only when removing this exact complete span recovers the exact incumbent.
     IF md5(old_body)<>expected THEN
@@ -641,7 +647,7 @@ END
 $history_triggers$;
 
 -- END ORIGINAL INERT COMPONENT exp08-first-owner-history-patch.sql
--- ORIGINAL INERT COMPONENT exp08-first-owner-invitation-patch.sql canonical-LF SHA256 5d92784bfb99eaaa38a2504bbb5c60732afc1f90f76e337dc213b2479ec7a86c
+-- ORIGINAL INERT COMPONENT exp08-first-owner-invitation-patch.sql canonical-LF SHA256 e18bb5c3a6e5e96f139cc75952342b88c7825b0c44e15c86209e0899e4c54450
 -- UNVERSIONED I2 component. Original mint/accept only; no deployment/native slot/activation.
 -- Preserve the entire incumbent including E09 consumer/recipient/contact protections.
 DO $patch$
@@ -740,10 +746,16 @@ BEGIN
     SELECT prosrc,to_jsonb(p)-'prosrc' INTO old_body,before_metadata FROM pg_proc p WHERE oid=target;
     IF NOT EXISTS(SELECT 1 FROM pg_proc p WHERE oid=target AND prosecdef
       AND proowner='postgres'::regrole AND proconfig=ARRAY['search_path=public']
-      AND proacl::text=CASE WHEN sig='public.accept_tenant_invite(text)'
-        THEN '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'
-        ELSE '{=X/postgres,postgres=X/postgres,authenticated=X/postgres}' END) THEN
-      RAISE EXCEPTION 'EXP08 first owner invitation requires original writer metadata: %',sig;
+      -- Original grant replay may reorder ACL entries. Compare the complete entries,
+      -- including grantors/grantees/privileges/grant options, without changing them.
+      AND ARRAY(SELECT a::text FROM unnest(p.proacl) a ORDER BY 1)=
+        ARRAY(SELECT a::text FROM unnest((CASE WHEN sig='public.accept_tenant_invite(text)'
+          THEN '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'
+          ELSE '{=X/postgres,postgres=X/postgres,authenticated=X/postgres}' END)::pg_catalog.aclitem[]) a ORDER BY 1)) THEN
+      RAISE EXCEPTION 'EXP08 first owner invitation requires original writer metadata: %',sig
+        USING DETAIL=coalesce((SELECT jsonb_build_object('owner',p.proowner::regrole::text,
+          'definer',p.prosecdef,'path',p.proconfig,'acl',p.proacl::text,'source_hash',md5(p.prosrc))::text
+          FROM pg_proc p WHERE oid=target),'original function missing');
     END IF;
     -- Replay is admitted only when removing this exact complete span recovers the exact incumbent.
     IF md5(old_body)<>expected THEN

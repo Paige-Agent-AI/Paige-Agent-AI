@@ -13,8 +13,10 @@ CREATE FUNCTION pg_temp.exp05_metadata(p pg_proc) RETURNS jsonb LANGUAGE sql AS 
   to_jsonb(regexp_replace(p.proargdefaults::text,':location -?[0-9]+',':location -1','g'))) ELSE to_jsonb(p)-'prosrc' END $$;
 CREATE TEMP TABLE exp05_before AS SELECT oid,pg_temp.exp05_metadata(p) AS metadata,prosrc FROM pg_proc p WHERE pronamespace='public'::regnamespace;
 \ir ../../scripts/proof/exp05-zion-planning-read-candidate.sql
+\ir ../../scripts/proof/exp05-zion-planning-history-readonly.sql
 CREATE TEMP TABLE exp05_after AS SELECT oid,to_jsonb(p) AS full FROM pg_proc p WHERE pronamespace='public'::regnamespace;
 \ir ../../scripts/proof/exp05-zion-planning-read-candidate.sql
+\ir ../../scripts/proof/exp05-zion-planning-history-readonly.sql
 SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM exp05_after b FULL JOIN pg_proc p USING(oid)
  WHERE (b.oid IS NOT NULL OR p.pronamespace='public'::regnamespace) AND b.full IS DISTINCT FROM to_jsonb(p)),
  'EXP05 exact replay retains every public function body, OID, ABI, owner, ACL and metadata');
@@ -39,6 +41,34 @@ BEGIN;
 SELECT pg_temp.mutate('public._team_hub_assert_agent_read_scope(public.team_hub_agent_turns)','BEGIN',E'BEGIN\n -- unknown drift');
 SELECT pg_temp.check(pg_temp.try(:'exp05patch') LIKE 'Original Planning dependency drift:%',
  'EXP05 unknown guard source refuses candidate replay');
+ROLLBACK;
+
+-- The forward history installer must refuse unknown source or authority drift.
+\set exp05historypatch `sed -n '/^DO \$patch\$/,/^END \$patch\$;/p' scripts/proof/exp05-zion-planning-history-readonly.sql`
+BEGIN;
+GRANT EXECUTE ON FUNCTION public._team_hub_planning_read_annotations(public.team_hub_agent_turns) TO authenticated;
+SELECT pg_temp.check(pg_temp.try(:'exp05historypatch')='Original Planning history source or metadata drift',
+ 'EXP05 historical replay refuses a widened private helper ACL');
+ROLLBACK;
+BEGIN;
+ALTER FUNCTION public._team_hub_planning_read_annotations(public.team_hub_agent_turns) SECURITY INVOKER;
+SELECT pg_temp.check(pg_temp.try(:'exp05historypatch')='Original Planning history source or metadata drift',
+ 'EXP05 historical replay refuses changed execution authority');
+ROLLBACK;
+BEGIN;
+ALTER FUNCTION public._team_hub_planning_read_annotations(public.team_hub_agent_turns) VOLATILE;
+SELECT pg_temp.check(pg_temp.try(:'exp05historypatch')='Original Planning history source or metadata drift',
+ 'EXP05 historical replay refuses an unknown volatility/source pair');
+ROLLBACK;
+BEGIN;
+ALTER FUNCTION public._team_hub_planning_read_annotations(public.team_hub_agent_turns) SET search_path=public;
+SELECT pg_temp.check(pg_temp.try(:'exp05historypatch')='Original Planning history source or metadata drift',
+ 'EXP05 historical replay refuses an unsafe search path');
+ROLLBACK;
+BEGIN;
+SELECT pg_temp.mutate('public._team_hub_planning_read_annotations(public.team_hub_agent_turns)','BEGIN',E'BEGIN\n -- unknown history drift');
+SELECT pg_temp.check(pg_temp.try(:'exp05historypatch')='Original Planning history source or metadata drift',
+ 'EXP05 historical replay refuses an unknown private source');
 ROLLBACK;
 
 CREATE FUNCTION pg_temp.planning_binding(actor text,tenant text,args jsonb DEFAULT '{}') RETURNS jsonb LANGUAGE plpgsql AS $$
@@ -293,7 +323,7 @@ BEGIN
  RETURN jsonb_build_object('actor',actor,'tenant',tenant,'channel',dm,'plan','e5000000-0000-4000-8000-000000000100',
   'item','e5000000-0000-4000-8000-000000000101','cases',cases);
 END $$;
-SELECT pg_temp.planning_race_context(:'u3',:'ta') AS e5racecontext \gset
+SELECT pg_temp.planning_race_context(:'u3',:'ta')||jsonb_build_object('member',:'u2','foreign_tenant',:'tb') AS e5racecontext \gset
 COMMIT;
 \o
 \pset format unaligned

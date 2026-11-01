@@ -1,0 +1,153 @@
+{
+  "results": [
+    {
+      "theme": "light",
+      "w": 1366,
+      "h": 768,
+      "pass": true,
+      "geometry": {
+        "x": 589.84375,
+        "y": 686.5,
+        "right": 678.125,
+        "bottom": 722.5,
+        "width": 88.28125,
+        "height": 36,
+        "overflow": false
+      },
+      "proof": "LOCAL_CONTROLLED_ORIGINAL_WORKSPACE_DIALOG",
+      "authenticated": false,
+      "provider": false
+    },
+    {
+      "theme": "light",
+      "w": 1024,
+      "h": 768,
+      "pass": true,
+      "geometry": {
+        "x": 418.84375,
+        "y": 686.5,
+        "right": 507.125,
+        "bottom": 722.5,
+        "width": 88.28125,
+        "height": 36,
+        "overflow": false
+      },
+      "proof": "LOCAL_CONTROLLED_ORIGINAL_WORKSPACE_DIALOG",
+      "authenticated": false,
+      "provider": false
+    },
+    {
+      "theme": "light",
+      "w": 900,
+      "h": 1000,
+      "pass": true,
+      "geometry": {
+        "x": 356.84375,
+        "y": 790.75,
+        "right": 445.125,
+        "bottom": 826.75,
+        "width": 88.28125,
+        "height": 36,
+        "overflow": false
+      },
+      "proof": "LOCAL_CONTROLLED_ORIGINAL_WORKSPACE_DIALOG",
+      "authenticated": false,
+      "provider": false
+    },
+    {
+      "theme": "light",
+      "w": 567,
+      "h": 381,
+      "pass": true,
+      "geometry": {
+        "x": 182.34375,
+        "y": 267.5,
+        "right": 270.625,
+        "bottom": 303.5,
+        "width": 88.28125,
+        "height": 36,
+        "overflow": false
+      },
+      "proof": "LOCAL_CONTROLLED_ORIGINAL_WORKSPACE_DIALOG",
+      "authenticated": false,
+      "provider": false
+    },
+    {
+      "theme": "dark",
+      "w": 1366,
+      "h": 768,
+      "pass": true,
+      "geometry": {
+        "x": 589.84375,
+        "y": 686.5,
+        "right": 678.125,
+        "bottom": 722.5,
+        "width": 88.28125,
+        "height": 36,
+        "overflow": false
+      },
+      "proof": "LOCAL_CONTROLLED_ORIGINAL_WORKSPACE_DIALOG",
+      "authenticated": false,
+      "provider": false
+    },
+    {
+      "theme": "dark",
+      "w": 1024,
+      "h": 768,
+      "pass": true,
+      "geometry": {
+        "x": 418.84375,
+        "y": 686.5,
+        "right": 507.125,
+        "bottom": 722.5,
+        "width": 88.28125,
+        "height": 36,
+        "overflow": false
+      },
+      "proof": "LOCAL_CONTROLLED_ORIGINAL_WORKSPACE_DIALOG",
+      "authenticated": false,
+      "provider": false
+    },
+    {
+      "theme": "dark",
+      "w": 900,
+      "h": 1000,
+      "pass": true,
+      "geometry": {
+        "x": 356.84375,
+        "y": 790.75,
+        "right": 445.125,
+        "bottom": 826.75,
+        "width": 88.28125,
+        "height": 36,
+        "overflow": false
+      },
+      "proof": "LOCAL_CONTROLLED_ORIGINAL_WORKSPACE_DIALOG",
+      "authenticated": false,
+      "provider": false
+    },
+    {
+      "theme": "dark",
+      "w": 567,
+      "h": 381,
+      "pass": true,
+      "geometry": {
+        "x": 182.34375,
+        "y": 267.5,
+        "right": 270.625,
+        "bottom": 303.5,
+        "width": 88.28125,
+        "height": 36,
+        "overflow": false
+      },
+      "proof": "LOCAL_CONTROLLED_ORIGINAL_WORKSPACE_DIALOG",
+      "authenticated": false,
+      "provider": false
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_ORIGINAL_WORKSPACE_DIALOG",
+  "nativeZoom": "UNVERIFIED",
+  "hub": "UNEXERCISED"
+}

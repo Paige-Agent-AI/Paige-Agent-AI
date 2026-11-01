@@ -1,0 +1,13 @@
+{
+  "results": [
+    {
+      "pass": false,
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\tonig\\AppData\\Local\\Packages\\sandbox.{275fb2be-019e-4ad1-af35-308d8a155100}\\AC\\ms-playwright\\chromium_headless_shell-1234\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_ORIGINAL_WORKSPACE_DIALOG",
+  "nativeZoom": "UNVERIFIED",
+  "hub": "UNEXERCISED"
+}

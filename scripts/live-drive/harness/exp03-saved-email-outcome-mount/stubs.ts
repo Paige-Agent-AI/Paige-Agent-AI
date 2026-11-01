@@ -25,6 +25,7 @@ import {commsEmailBodyHtml} from "../../../../supabase/functions/_shared/comms-e
 const params = new URLSearchParams(window.location.search);
 const door = params.get("door") ?? "ok";
 const actionEntry=params.get("entry")==="action";
+const dialogEntry=params.get("surface")==="bound-dialog";
 
 export const TENANT = "e0300000-0000-4000-8000-00000000b003";
 const OWNER = "e0300000-0000-4000-8000-00000000a003";
@@ -106,7 +107,7 @@ export const harnessLog: { rpc: Array<{ name: string; args: unknown }>; tables: 
 (window as unknown as { __harness: typeof harnessLog }).__harness = harnessLog;
 
 const tableRows = (table: string): unknown[] =>
-  table === "paige_actions" ? actions : table === "paige_approval_queue_v" ? approvals : table === "messages" ? messages() : table === "threads" ? threads() : table === "channel_connectors" ? connectors : [];
+  table === "clients"&&dialogEntry ? [{...clientRow(JORDAN,"Jordan","Rivera",jordanCardEmail),tenant_id:TENANT}] : table === "paige_actions" ? actions : table === "paige_approval_queue_v" ? approvals : table === "messages" ? messages() : table === "threads" ? threads().filter(t=>!dialogEntry||t.contact_id!==JORDAN) : table === "channel_connectors" ? connectors : [];
 
 // ?supp=bounce|complaint|optout — EXP03 20271120120003: Jordan's do-not-send rows. A governed email's hard bounce is
 // this business's row for the normalised ADDRESS (no contact); a spam report and an opt-out are on the contact.
@@ -125,13 +126,13 @@ function builder(table: string) {
     ? suppressionRows.filter((r) => filters.every(([col, v]) => (r as Record<string, unknown>)[col] === v)).map(({ channel: ch, reason }) => ({ channel: ch, reason }))
     : actionEntry&&table==="messages"&&filters.some(([col])=>col==="meta->comms_email_binding->>approval_id")
       ?jordanMessages.filter(m=>((m.meta as Record<string,unknown>|undefined)?.comms_email_binding as Record<string,unknown>|undefined)?.approval_id===APPROVAL)
-      :tableRows(table);
+      :dialogEntry?tableRows(table).filter(row=>filters.every(([col,v])=>col.includes("->")||((row as Record<string,unknown>)[col]??null)===v)):tableRows(table);
   const result = () => ({ data: rowsFor(), error: null, count: rowsFor().length });
   const proxy: Record<string, unknown> = new Proxy({}, {
     get(_t, prop) {
       if (prop === "then") return (ok: (v: unknown) => unknown, bad?: (e: unknown) => unknown) => Promise.resolve(result()).then(ok, bad);
-      if (prop === "single" || prop === "maybeSingle") return () => Promise.resolve({ data: null, error: null });
-      if ((table === "paige_suppressions" || (actionEntry&&table==="messages")) && (prop === "eq" || prop === "is")) return (col: string, v: unknown) => { filters.push([col, v]); return proxy; };
+      if (prop === "single" || prop === "maybeSingle") return () => Promise.resolve({ data: dialogEntry?rowsFor()[0]??null:null, error: null });
+      if ((dialogEntry||table === "paige_suppressions" || (actionEntry&&table==="messages")) && (prop === "eq" || prop === "is")) return (col: string, v: unknown) => { filters.push([col, v]); return proxy; };
       return () => proxy;
     },
   });

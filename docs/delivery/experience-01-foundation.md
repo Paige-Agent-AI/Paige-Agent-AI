@@ -1,5 +1,58 @@
 # Experience 01 foundation — ANT-50
 
+### November 1 producer continuation — original full assignment active
+
+Source preparation3194 actually merged355bc7ef781722859aad39dd4b32916f2fd5284b;
+all six exact2dd workflows/both web statuses pass, as do actual58 full-schema,
+58 input/client and65 modeled-native controls. Productiondpl_B1DfEnk7mHkxuo71Hq1uNBGZayS3
+and both official public builds were read back at19:13UTC. Original source-decision
+P2 is fixed/resolved; prior failed fixtures/builds remain historical evidence below.
+This source release does not install native approval APIs or complete any original case.
+
+The same primary outcome now also prepares original Chat→Knowledge persistence:
+`src/lib/paige-chat-knowledge-service.ts` consumes E13's existing real-File/lifetime/
+native observers; new native candidate is `scripts/proof/exp01-chat-knowledge-candidate.sql`.
+It annotates ORIGINAL extraction/publication Work rows with typed `chat_source_link`,
+never changes its immutable thread_id, payload/authority/terminal receipt/version,
+and creates no Knowledge source/work/store/job. Native intake stage10/inspect4,
+publication save10/inspect4 and list5 independently
+resolve current actor/tenant/owned nonprivate coach thread, original source hash,
+document/revision, extraction and publication intents/work, canonical generation
+and actual publication outcome. Admission persists BEFORE review/publication;
+its `phase:intake`, original source revision and actual extraction status carry
+no publication receipt. Normal extraction advances separately returned current
+document revision without rewriting the original admission receipt. Both observer
+orders reuse one original conversation; first-value creation calls the original
+Chat constructor atomically under the original extraction identity. A staged
+attachment truthfully has turnId:null;
+only a separately selected real admitted user turn may subsequently attach by CAS.
+Original turn metadata gets a reference-only internal business_knowledge link;
+native original Work annotation/readback remains authoritative. Unknown saves
+inspect the SAME publication work before explicit retry; no intake/publication replay.
+
+Local42 client cases,49 native assertions,8 installation drift/refusal controls and
+5 actual observed blocking pairs pass. Raw binary-file SHA and edited canonical
+text SHA are independently verified through original native source functions.
+All original message work_id bindings remain unchanged. The initial fixture duplicate-column error
+is INVALID setup; missing-writer and original immutable-thread-identity failures
+and message-Work-binding regression are retained and drove the correction. The
+Windows long-argv proof failure was fixed with unchanged SQL on stdin; it was an
+infrastructure failure after49 assertions, not eight-install/five-race proof.
+Identity/Chat dependencies in local native
+proof remain modeled. Joined actual full-schema host cases are COMPOSED_ONLY until
+fresh hosted execution; all58 original receipt assertions/order are conserved.
+Existing scoped Admin positives precede original revocation, with rollback-only
+negative savepoints and no reinstatement. E13's acknowledged99ae/09856c99 finite
+Chat window remains unchanged; post-release browser/AT verification is owed, with no host
+component/hook/Root/credit/private-file/financial/Team Hub takeover or UI activation.
+
+Original ten outcomes/C01–C10/OP01/D1–D12 and every authorized amendment remain
+active in the additive reconciliation below. Native ordered release, consumer
+integration, actual selected approval, saved Mission, independently authorized
+Work/CRM, both-chat receipt/reload/reopen/recovery and one owner evaluation remain
+owed. Knowledge publication, business-fact approval, Memory approval, Mission
+intent and Work execution authority remain distinct. Timers remain off.
+
 ### Full-schema fixture ordering correction — November 1
 
 Exactf69 own full-schema step145 FAILED: hosted58 focused +65 modeled-native
@@ -51,7 +104,7 @@ ANT161/ba14f739: finite explicit single-File review handoff source only, no Root
 Chat API/credit/Setup/Memory/storage/Hub takeover. Durable message-to-Knowledge
 work/intent/revision/readback writer is not verified; E01 retains it. Internal
 link maps remain outside that window; CURA is not internal Knowledge. Genuine
-E13 UI/prototype/browser/AT hold remains. Separate legal-owner guard proposal
+Browser/AT verification remains post-release proof owed. Separate legal-owner guard proposal
 46 local modeled controls is outside this PR and not full-schema/released.
 Full original ten outcomes,23 cases/all amendments and one integrated owner
 evaluation remain active; no timer, acceptance or Live activation is introduced.
@@ -213,7 +266,7 @@ single/BULK mounting with E13/E08; (3) E02/E05/E03 joins and both-chat continuat
 (4) remaining original entry/interview/recommendation/recovery/delegation/cohort
 and legal-owner/notification amendments; (5) full released integrated owner
 evaluation. Live consent/bidirectional audio and activation remain distinct.
-Original #3177 UI FLOW_PROTOTYPE/browser/AT/finish hold is not waived.
+Original #3177 live browser/AT/finish verification remains owed after safe engineering release.
 
 Known source gaps are not hidden: current Setup scope only distinguishes
 owner_full/admin_operational/read_only, so legitimately delegated member

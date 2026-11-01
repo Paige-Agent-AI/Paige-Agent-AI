@@ -1,10 +1,33 @@
 # EXP01 reviewed Setup producer preparation — unmounted draft
 
+November1 current additive checkpoint:3194 is source-released at355bc7ef781722859aad39dd4b32916f2fd5284b,
+all six exact2dd workflows/both web statuses SUCCESS, actual58 full-schema/58 focused/65 modeled-native
+PASS, lower-assurance review5729399630 and actual automated P2 resolved4436963629. Both official
+public builds/served assets verified19:13UTC; native APIs remain UNINSTALLED and customer proof owed.
+Earlier machine-field declarations below retain their original dated preparation evidence.
+
+The SAME original outcome now adds an UNMOUNTED Chat-to-Knowledge host client and UNVERSIONED native
+intake stage10/inspect4, publication save10/inspect4 and list5 candidate. Only original extraction/
+publication Work rows' typed source-link annotations
+changes; no immutable Work identity/version/execution/authority/receipt field changes. The first
+thread_id proposal actually failed original identity enforcement and was withdrawn, without a bypass.
+The native source independently validates existing publication/generation/outcome/source/intent/version
+and current actor/workspace/owned eligible thread; an unsent attachment has no fabricated message.
+One real File is hashed only on explicit selection; after every await original scope/incarnation is
+rechecked. Same-work inspection follows UNKNOWN, with no upload/publication replay or guessed receipt.
+Local42 client,49 native assertions,8 install-refusal controls and5 observed concurrency waits PASS;
+admission BEFORE review/publication and both observer orders preserve one original conversation.
+Raw binary-file and reviewed-text hashes remain distinct; all message work_id bindings stay exact.
+modeled identity/Chat dependencies and COMPOSED_ONLY new full-schema cases remain explicit limits.
+Original58 Setup schema assertions are unchanged. No component/hook/route/Root/Team Hub/financial/
+private-client/native Knowledge writer changes, UI mount or activation. All eight unrun geometry
+cases remain UNVERIFIED; browser/prototype/AT verification follows safe engineering release.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: Existing foundation and original integrated-readiness packet now map the full ten outcomes, all original cases, exact writer/source/CAS/receipt, recovery and dependencies; implementation/native/review/release/customer evidence remain separate.
 PAIGE_UI_DESIGN: PASS: Project skill, upstream/accessibility/quality/review references inspected for scope; this candidate adds closed input validation and inert native proof only. No component, route, control, visual state, token or mounted writer is changed; actual host delivery retains every applicable UI gate.
 MATERIAL_FLOW_CHANGE: NO: This draft has no mounted caller and no migration. The selected approval flow is future integration, not a user-visible behavior introduced by these preparatory exports or scripts.
-FLOW_PROTOTYPE: NOT_REQUIRED: No rendered or executable customer flow changes in this preparation. Actual Knowledge/Setup host integration requires its own genuine applicable prototype/approval proof; EXP13's existing UI hold remains intact.
+FLOW_PROTOTYPE: NOT_REQUIRED: No rendered or executable customer flow changes in this preparation. Mounted integration requires post-release live/browser/AT verification; unavailable prototype/browser evidence is not a blanket premerge hold. Engineering/security/authority checks and native release order remain mandatory.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Existing authorized users must eventually review selected source-bound facts and explicitly save through original Setup with durable CAS receipt/readback; this draft supplies inspectable producer source, not an available customer action.
 VISUAL_DIRECTION: NOT_APPLICABLE: No interface or visual-world change; preserve original Setup, Chat, Knowledge and Team Hub design/tokens when separately integrating the producer.
 AUTOMATED_EVIDENCE: PASS: Code22bf1f2be passes58 parser/client and65 modeled-dependency native controls locally and onf69. Actual f69 full-schema step FAILED after43 schema assertions: fixture restoration was correctly neutralized by original revoked-JWT reinstatement enforcement. Fix ONLY orders positives before revocation/removes restoration; all58 assertion strings/expectations and original negatives remain exact, candidate/parser/client source unchanged. Recomposition PASS; renewed actual58 schema execution/ALL final-headCI pending. Older627 wholeSpine49+49+44 PASS is supporting only. None is the original23 authenticated cases.

@@ -1091,7 +1091,7 @@ jobs:
       # 5c6a8a0ab: without roles/tables every assertion errors, and only ON_ERROR_STOP
       # converts that into a red). ON_ERROR_STOP is set at the step level, as here.
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/systems_check_runner_read_grants.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
-      - name: Systems Check saved-source integrity (36 assertions; rolled back)
+      - name: Systems Check saved-source integrity (47 assertions; rolled back)
         run: supabase test db supabase/tests/systems_check_source_integrity.sql
       # There must be exactly ONE public.record_capability_run (migration 20270411090000).
       # 20270107000000 added four trailing params as a NEW signature instead of replacing the

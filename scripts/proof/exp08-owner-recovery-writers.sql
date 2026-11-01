@@ -371,7 +371,8 @@ REVOKE ALL ON FUNCTION public._exp08_record_recovery_notices(uuid,uuid)
   FROM PUBLIC,anon,authenticated,service_role;
 
 -- ONE original recipient predicate. Customer wrapper supplies auth.uid()/true;
--- the future service event reader supplies only a native bound recipient/false.
+-- the personal notice wrapper derives native scope and supplies auth.uid()/false.
+-- A future service event reader supplies only a native bound recipient/false.
 -- This private flag is never client input or authority to execute recovery.
 CREATE OR REPLACE FUNCTION public._exp08_read_recovery_notice_for_recipient(
   _expected_tenant uuid,_notice uuid,_recipient uuid,_require_profile boolean)
@@ -440,6 +441,30 @@ BEGIN
 END;
 $function$;
 REVOKE ALL ON FUNCTION public._exp08_read_recovery_notice(uuid,uuid)
+  FROM PUBLIC,anon,authenticated,service_role;
+
+-- Personal notification context only: derive the business from this actual user's
+-- native notice. This does not select a workspace or grant any business surface.
+CREATE OR REPLACE FUNCTION public._exp08_read_my_recovery_notice(_notice uuid)
+RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $function$
+DECLARE actor uuid:=auth.uid(); n public.notifications%ROWTYPE; tenant uuid;
+BEGIN
+  PERFORM public._exp08_require_recovery_audit();
+  IF actor IS NULL THEN RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';END IF;
+  -- No early row locks: the common predicate acquires the retirement table gate
+  -- and revalidates BOTH rows after recipient/tenant locks in the original order.
+  SELECT * INTO n FROM public.notifications WHERE id=_notice AND user_id=actor;
+  IF NOT FOUND OR n.metadata->>'kind' IS DISTINCT FROM 'exp08_owner_recovery'
+    OR coalesce(n.metadata->>'audit_id','') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  SELECT tenant_id INTO tenant FROM public.paige_audit_log WHERE id=(n.metadata->>'audit_id')::uuid;
+  IF tenant IS NULL THEN RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';END IF;
+  RETURN public._exp08_read_recovery_notice_for_recipient(tenant,_notice,actor,false);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._exp08_read_my_recovery_notice(uuid)
   FROM PUBLIC,anon,authenticated,service_role;
 
 CREATE OR REPLACE FUNCTION public._exp08_apply_owner_recovery(

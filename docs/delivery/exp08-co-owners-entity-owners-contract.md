@@ -2641,3 +2641,32 @@ or release approval. Source-only factoring review is clear pending exact commit
 renewal. Current sender-owner receiver/idempotency/result contract requested;
 source event reader, real delivery, UI, full schema/retirement and original full
 assignment integration remain **STILL CODING**.
+
+### November 1 — personal native recovery notice reader (local evidence)
+
+The original recovery-notice audience can reopen its own native event without
+selecting a business workspace. `get_my_owner_recovery_notice(uuid)` accepts only
+the native notice ID; its private reader derives the tenant and recipient from
+actual Auth identity and the original notification/audit binding. It uses the
+same live recipient, membership-snapshot, retirement and event predicates as the
+scoped reader. It does not select a workspace or grant business membership.
+The existing two-argument workspace reader retains its stricter workspace gate.
+Anon/service execution, another user's notice (including an administrator), and
+client-edited metadata refuse. The approved former holder without a membership
+or selected workspace can read only this bounded event.
+
+Author local run: 194 controls PASS / 0 FAIL, retaining the earlier 187 controls.
+Raw `exp08-personal-native-notice-profile-restored.log` SHA256
+`68bf04dec36e671692ba7f6f82e195ef051a56c9ad9e93bf3af358cbf9e95713`.
+The initial run's fixture profile update lacked its setup role reset; that failed
+run is retained separately. Only fixture setup was corrected; actual public API
+calls remain authenticated. The successful run reports disposal of its owned
+local database. These are ported minimal-schema PostgreSQL16 controls, not hosted
+schema, production authentication, mounted UI, delivery, or owner acceptance.
+E02's independent 174-control execution remains a separate immutable baseline.
+
+The unversioned atomic bundle admits twelve private helpers and five public
+signatures, including the existing request-required compatibility overload. No
+managed migration, production endpoint, service event reader, email sender or
+customer-facing mount is activated by these inert source changes. Full Team Hub
+integration and all original matrix outcomes remain **STILL CODING**.

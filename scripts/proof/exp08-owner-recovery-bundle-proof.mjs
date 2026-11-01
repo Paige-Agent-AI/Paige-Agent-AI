@@ -91,7 +91,7 @@ export async function verifyOwnerRecoveryBundle(db,{originalGrantDefinition,orig
    DROP POLICY exp08_owner_recovery_native_rows ON public.paige_audit_log;
    DROP FUNCTION public.guard_owner_recovery_audit_truncate();
    DROP FUNCTION public.platform_owner_recovery(uuid,text,uuid,text,uuid),public.platform_owner_recovery(uuid,text,uuid,text),
-    public.platform_owner_recovery_receipt(uuid,uuid),public.get_owner_recovery_notice(uuid,uuid);
+    public.platform_owner_recovery_receipt(uuid,uuid),public.get_owner_recovery_notice(uuid,uuid),public.get_my_owner_recovery_notice(uuid);
    DROP FUNCTION public._exp02_billing_recovery_cleanup(uuid,uuid,uuid),public._exp02_billing_contact_revoke(uuid,uuid,uuid,uuid),public._exp02_billing_revoke_scope(uuid,uuid,uuid);
    DROP FUNCTION public._exp08_grant_co_owner(uuid,uuid,boolean),public._exp08_revoke_co_owner(uuid,uuid,uuid);
    ${privateSpecifications.map(s=>'DROP FUNCTION '+s.signature+';').join('\n')}`);

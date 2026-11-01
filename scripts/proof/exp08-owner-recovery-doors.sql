@@ -8,12 +8,13 @@ DECLARE s record; p pg_proc; signature regprocedure;
 BEGIN
   IF current_user<>'postgres' THEN RAISE EXCEPTION 'EXP08 recovery installer requires postgres';END IF;
   IF EXISTS(SELECT 1 FROM pg_proc f JOIN pg_namespace n ON n.oid=f.pronamespace
-    WHERE n.nspname='public' AND f.proname IN('platform_owner_recovery','platform_owner_recovery_receipt','get_owner_recovery_notice')
+    WHERE n.nspname='public' AND f.proname IN('platform_owner_recovery','platform_owner_recovery_receipt','get_owner_recovery_notice','get_my_owner_recovery_notice')
       AND NOT (f.oid::regprocedure=ANY(array_remove(ARRAY[
         to_regprocedure('public.platform_owner_recovery(uuid,text,uuid,text,uuid)'),
         to_regprocedure('public.platform_owner_recovery(uuid,text,uuid,text)'),
         to_regprocedure('public.platform_owner_recovery_receipt(uuid,uuid)'),
-        to_regprocedure('public.get_owner_recovery_notice(uuid,uuid)')],NULL)))) THEN
+        to_regprocedure('public.get_owner_recovery_notice(uuid,uuid)'),
+        to_regprocedure('public.get_my_owner_recovery_notice(uuid)')],NULL)))) THEN
     RAISE EXCEPTION 'EXP08 original recovery unsupported overload';
   END IF;
   FOR s IN SELECT * FROM (VALUES
@@ -22,7 +23,8 @@ BEGIN
     ('public._exp08_apply_owner_recovery(uuid,text,uuid,text,uuid)','b28866ce3be2085643433cf3ba104036','jsonb',ARRAY['_tenant','_act','_user','_reason','_request']),
     ('public._exp08_read_owner_recovery(uuid,uuid)','8930f6094db5dc87a55a693b06d60857','jsonb',ARRAY['_tenant','_request']),
     ('public._exp08_read_recovery_notice(uuid,uuid)','a16a4d793c2440aad2bd5b48cec2ee34','jsonb',ARRAY['_expected_tenant','_notice']),
-    ('public._exp08_read_recovery_notice_for_recipient(uuid,uuid,uuid,boolean)','ddcdb478a4956181fc99dd8ebee80d0b','jsonb',ARRAY['_expected_tenant','_notice','_recipient','_require_profile'])
+    ('public._exp08_read_recovery_notice_for_recipient(uuid,uuid,uuid,boolean)','ddcdb478a4956181fc99dd8ebee80d0b','jsonb',ARRAY['_expected_tenant','_notice','_recipient','_require_profile']),
+    ('public._exp08_read_my_recovery_notice(uuid)','3502ca4bdad1ba029b73b2b6c0a370af','jsonb',ARRAY['_notice'])
   ) v(signature,body_hash,result_type,argument_names) LOOP
     SELECT * INTO p FROM pg_proc WHERE oid=to_regprocedure(s.signature);
     IF NOT FOUND OR md5(p.prosrc)<>s.body_hash OR p.proowner<>'postgres'::regrole
@@ -66,7 +68,13 @@ $receipt$),
 BEGIN
   RETURN public._exp08_read_recovery_notice(_expected_tenant,_notice);
 END;
-$notice$)
+$notice$),
+    ('get_my_owner_recovery_notice','_notice uuid','uuid',
+      $personal$
+BEGIN
+  RETURN public._exp08_read_my_recovery_notice(_notice);
+END;
+$personal$)
   ) v(name,arguments,types,body) LOOP
     signature:=to_regprocedure('public.'||s.name||'('||s.types||')');
     IF signature IS NULL THEN

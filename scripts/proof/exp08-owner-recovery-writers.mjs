@@ -729,7 +729,7 @@ try{
   db.run(`GRANT authenticated TO ${inheritedRole}`);
   try{
    await denied('first public recovery installation refuses inherited '+inheritedRole+' access atomically',()=>db.exec(publicSource),/EXP08 original recovery public door drift/);
-   assert.equal(scalar("SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN('platform_owner_recovery','platform_owner_recovery_receipt','get_owner_recovery_notice')"),'0');
+   assert.equal(scalar("SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN('platform_owner_recovery','platform_owner_recovery_receipt','get_owner_recovery_notice','get_my_owner_recovery_notice')"),'0');
   }finally{db.run(`REVOKE authenticated FROM ${inheritedRole}`);}
  }
  await db.exec(publicSource);revokeFixture();
@@ -762,12 +762,23 @@ try{
  db.role='';
  await denied('private profile-free mode does not grant another recipient event access',()=>db.exec(`SELECT public._exp08_read_recovery_notice_for_recipient('${tenant}','${publicNotice}','${actor}',false)`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
  await denied('null private profile mode grants no context authority',()=>db.exec(`SELECT public._exp08_read_recovery_notice_for_recipient('${tenant}','${publicNotice}','${holder}',NULL)`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
- db.actor=holder;db.run(`UPDATE public.profiles SET active_tenant_id='${tenant}' WHERE user_id='${holder}'`);db.role='authenticated';
+ db.actor=holder;db.role='authenticated';
+ const personal=JSON.parse(scalar(`SELECT public.get_my_owner_recovery_notice('${publicNotice}')`));
+ assert.equal(personal.tenant_id,tenant);assert.equal(personal.reason,reason);
+ db.role='';
+ assert.equal(scalar(`SELECT active_tenant_id IS NULL FROM public.profiles WHERE user_id='${holder}'`),'t');
+ results.push({case:'personal native notice derives its own event context without selecting or granting a workspace',passed:true});
+ db.actor=actor;db.role='authenticated';
+ await denied('even a recovery administrator cannot read another user personal notice',()=>db.exec(`SELECT public.get_my_owner_recovery_notice('${publicNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.actor=holder;db.run(`UPDATE public.notifications SET metadata=jsonb_build_object('kind','exp08_owner_recovery','audit_id','malformed') WHERE id='${publicNotice}'`);
+ await denied('personal notice refuses edited malformed source metadata without exposing context',()=>db.exec(`SELECT public.get_my_owner_recovery_notice('${publicNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.run(`UPDATE public.notifications SET metadata=jsonb_build_object('kind','exp08_owner_recovery','audit_id','${publicRequest}') WHERE id='${publicNotice}'`);
+ db.actor=holder;db.role='';db.run(`UPDATE public.profiles SET active_tenant_id='${tenant}' WHERE user_id='${holder}'`);db.role='authenticated';
  await denied('public notification detail refuses wrong active expected tenant',()=>db.exec(`SELECT public.get_owner_recovery_notice('e8000000-0000-4000-8000-000000094099','${publicNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
  db.actor=actor;
  for(const role of ['anon','service_role']){
   db.role=role;
-  for(const query of [publicApply,`SELECT public.platform_owner_recovery_receipt('${tenant}','${publicRequest}')`,`SELECT public.get_owner_recovery_notice('${tenant}','${publicNotice}')`])
+  for(const query of [publicApply,`SELECT public.platform_owner_recovery_receipt('${tenant}','${publicRequest}')`,`SELECT public.get_owner_recovery_notice('${tenant}','${publicNotice}')`,`SELECT public.get_my_owner_recovery_notice('${publicNotice}')`])
    await denied(role+' has no public recovery/detail EXECUTE',()=>db.exec(query),/permission denied/);
  }
  db.role='';
@@ -810,6 +821,19 @@ try{
  await denied('unsupported original recovery overload refuses installation',()=>db.exec(publicSource),/EXP08 original recovery unsupported overload/);
  assert.equal(scalar("SELECT to_regprocedure('public.platform_owner_recovery(uuid,text,uuid,text,uuid,integer)') IS NOT NULL"),'t');
  db.run('DROP FUNCTION public.platform_owner_recovery(uuid,text,uuid,text,uuid,integer)');await db.exec(publicSource);
+ revokeFixture();const personalFormer='e8000000-0000-4000-8000-000000096301',personalFormerRequest='e8000000-0000-4000-8000-000000096300';
+ db.run(`INSERT INTO auth.users(id) VALUES('${personalFormer}');INSERT INTO public.profiles VALUES('${personalFormer}',NULL)`);
+ db.actor='';db.run(`UPDATE public.tenants SET owner_user_id='${personalFormer}' WHERE id='${tenant}'`);db.actor=actor;
+ const personalFormerResult=JSON.parse(scalar(`SELECT public._exp08_apply_owner_recovery('${tenant}','set_account_holder','${remaining}','${reason}','${personalFormerRequest}')`));
+ const personalFormerNotice=personalFormerResult.receipt.notices.find(n=>n.user_id===personalFormer).notification_id;
+ db.actor=personalFormer;db.role='authenticated';
+ assert.equal(JSON.parse(scalar(`SELECT public.get_my_owner_recovery_notice('${personalFormerNotice}')`)).reason,reason);
+ await denied('former-holder personal notice grants no workspace-scoped read without the active workspace',()=>db.exec(`SELECT public.get_owner_recovery_notice('${tenant}','${personalFormerNotice}')`),/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);
+ db.role='';
+ assert.equal(scalar(`SELECT active_tenant_id IS NULL FROM public.profiles WHERE user_id='${personalFormer}'`),'t');
+ assert.equal(scalar(`SELECT count(*) FROM public.tenant_members WHERE user_id='${personalFormer}'`),'0');
+ results.push({case:'former holder with no seat or selected workspace can reopen only the native personal event without profile/membership mutation',passed:true});
+ db.actor=actor;
  if(process.argv.includes('--baseline-notice-retirement')){
   db.run(historicalFunction('781ba0d2a','_exp08_read_recovery_notice'));
  }

@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: Canonical text evidence explicitly retains factConf
 SOLO_UI: NO: Native-only prerequisite for original writers across every eligible existing/future SOLO account; no tenant-specific implementation or new public door.
 UNVERIFIED: Unversioned/unapplied preparation. Preserve original3182/795/applied210013 Preview history; actual lower E08 release/managed order and E05 proposed serialization precede any fresh E13 identity. Normal reviewed carrier/managed Preview/exact CI/merge/native/web readback plus E01/E02/E05 useful customer result remain owed. Full EXP13+BULK NOT READY.
 
-INTERNAL_BUILD_IDENTITY: source=local preparation on be2244d4c567725a2cae8906d2b3a56abb4365d7; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE(unversioned source only); edge=NOT_APPLICABLE; evidence=docs/evidence/exp13-source-evidence-contract.md
+INTERNAL_BUILD_IDENTITY: source=0308fae69b2eb795b7a25985692ce2a09f319aa0; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE(unversioned source only); edge=NOT_APPLICABLE; evidence=docs/evidence/exp13-source-evidence-contract.md
 RELEASE_CHANNEL: development: original private helper source preparation, not customer availability.
 RELEASE_CLASSIFICATION: internal-only: source-integrity prerequisite within same full original EXP13 outcome.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release name or announcement.
@@ -68,6 +68,8 @@ databases and0 other client backends; only that owned server was stopped. Native
 source guard/AST/diff/source conservation checks pass. New exact-head review and
 hosted checks are not borrowed from archived795 or the held UI branch.
 Shipped Delivery Log: N/A at this checkpoint, not merged. No native/Edge apply.
+Exact0308 source evidence guard reports no recognized UI source changed: not
+required, not rendered/flow-prototype clearance or an alternate UI ship path.
 
 Applicable canonical algorithm business-outcome maturity: NO VERIFIED SUPPORTING
 ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED. Narrow deterministic source

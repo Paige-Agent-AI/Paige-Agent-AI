@@ -7,12 +7,13 @@
 -- provider-operation identity and never carries notes, references or actors; the payment-request
 -- read returns only an EXISTING validated link and every incumbent projection guard nulls it; none
 -- of the three reads writes anything; a sub-account's customer reads the same way (no tier filter);
--- and the incumbent owner and bearer reads are byte-for-byte untouched by this slice. The scope helper
+-- and incumbent owner reads remain exact; explicitly negotiated bearer evidence and truthful
+-- legacy compatibility are tested separately without claiming TEST settlement reduces real debt. The scope helper
 -- also refuses, as E04 #2170 (aeb0db5f1) `_assert_e04_client_commercial_scope` does, a linked client who
 -- is active staff of the same business, a platform owner, and a deleted or banned account (section 4b);
 -- a linked client whose membership of that business is no longer active (suspended) still reads.
 BEGIN;
-SELECT plan(252);
+SELECT plan(255);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0995100-0000-4000-8000-000000000001','authenticated','authenticated','payments-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0995100-0000-4000-8000-000000000002','authenticated','authenticated','payments-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -137,15 +138,21 @@ INSERT INTO public.paige_invoice_provider_operations(id,tenant_id,invoice_id,cli
   'customer_action_required',gen_random_uuid(),now()-interval '1 day','cs_test_open02','open','https://checkout.stripe.com/c/pay/cs_test_open02',now()+interval '1 hour',now()-interval '1 day');
 -- The incumbent share grant (bearer page), for the §58 regression check.
 INSERT INTO public.paige_invoice_access_grants(id,tenant_id,invoice_id,issued_snapshot_version,scope,token_hash,expires_at,actor_user_id) VALUES
- ('e0995700-0000-4000-8000-000000000001','e0995200-0000-4000-8000-000000000001','e0995400-0000-4000-8000-000000000001',1,'share',repeat('b',64),now()+interval '1 day','e0995100-0000-4000-8000-000000000001');
+ ('e0995700-0000-4000-8000-000000000001','e0995200-0000-4000-8000-000000000001','e0995400-0000-4000-8000-000000000001',1,'share',repeat('b',64),now()+interval '1 day','e0995100-0000-4000-8000-000000000001'),
+ ('e0995700-0000-4000-8000-000000000002','e0995200-0000-4000-8000-000000000001','e0995400-0000-4000-8000-000000000002',1,'share',repeat('c',64),now()+interval '1 day','e0995100-0000-4000-8000-000000000001');
 
-CREATE FUNCTION pg_temp.as_user(_actor uuid, _sql text, _role text DEFAULT 'authenticated') RETURNS jsonb
+CREATE FUNCTION pg_temp.as_user(_actor uuid, _sql text, _role text DEFAULT 'authenticated', _evidence text DEFAULT '3') RETURNS jsonb
 LANGUAGE plpgsql AS $$
-DECLARE _r jsonb;
+DECLARE _r jsonb; _headers jsonb;
 BEGIN
- -- Negotiate ONLY representation; every caller/role/relationship guard remains native.
- PERFORM set_config('request.headers',(coalesce(nullif(current_setting('request.headers',true),''),'{}')::jsonb
-  ||jsonb_build_object('x-paige-invoice-evidence-version','3'))::text,true);
+ -- Negotiate representation only for a valid existing object. Preserve malformed
+ -- headers for the ORIGINAL native parser/ordering controls, never normalize them.
+ BEGIN _headers:=coalesce(nullif(current_setting('request.headers',true),''),'{}')::jsonb;
+ EXCEPTION WHEN invalid_text_representation THEN _headers:=NULL; END;
+ IF jsonb_typeof(_headers)='object' THEN
+  PERFORM set_config('request.headers',(CASE WHEN _evidence IS NULL THEN _headers-'x-paige-invoice-evidence-version'
+   ELSE _headers||jsonb_build_object('x-paige-invoice-evidence-version',_evidence) END)::text,true);
+ END IF;
  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role',_role)::text,true);
  IF _role='anon' THEN SET LOCAL ROLE anon;
  ELSIF _role='service_role' THEN SET LOCAL ROLE service_role;
@@ -337,10 +344,10 @@ SELECT is(pg_temp.ledger('e0995400-0000-4000-8000-000000000001')->>'invoice_id',
 SELECT is((pg_temp.ledger('e0995400-0000-4000-8000-000000000001')#>>'{payment_ledger,count}')::int, 2, 'with both receipts');
 SELECT ok(NOT EXISTS(SELECT 1 FROM jsonb_array_elements(pg_temp.ledger('e0995400-0000-4000-8000-000000000001')#>'{payment_ledger,rows}') e WHERE e ? 'provider_operation_id'), 'no ledger row carries the internal provider-operation id');
 SELECT is((SELECT e->>'provider_environment' FROM jsonb_array_elements(pg_temp.ledger('e0995400-0000-4000-8000-000000000001')#>'{payment_ledger,rows}') e WHERE e->>'provenance'='provider_verified'), 'test', 'the provider receipt says it was a test');
-SELECT ok(NOT EXISTS(SELECT 1 FROM jsonb_array_elements(pg_temp.ledger('e0995400-0000-4000-8000-000000000001')#>'{payment_ledger,rows}') e WHERE e->>'provenance'<>'provider_verified' AND e ? 'provider_environment'), 'a manual receipt carries no provider environment');
+SELECT ok(NOT EXISTS(SELECT 1 FROM jsonb_array_elements(pg_temp.ledger('e0995400-0000-4000-8000-000000000001')#>'{payment_ledger,rows}') e WHERE e->>'provenance'<>'provider_verified' AND e->'provider_environment' IS DISTINCT FROM 'null'::jsonb), 'current evidence represents a manual receipt environment explicitly as null');
 SELECT ok(pg_temp.ledger('e0995400-0000-4000-8000-000000000001')::text !~ '(PRIVATE STAFF NOTE|PRIVATE REFERENCE TEXT|actor|e0995600|e0995100)', 'no notes, references, actors or operation ids');
 SELECT is((pg_temp.ledger('e0995400-0000-4000-8000-000000000001')->>'test_provider_cents')::int, 3000, 'the ledger root reports the test amount');
-SELECT is((pg_temp.ledger('e0995400-0000-4000-8000-000000000001')->>'remaining_cents')::int, 335000, 'and the canonical remaining balance');
+SELECT is((pg_temp.ledger('e0995400-0000-4000-8000-000000000001')->>'remaining_cents')::int, 338000, 'and the real outstanding balance excludes TEST settlement');
 SELECT is(pg_temp.ledger('e0995400-0000-4000-8000-000000000008')->>'error', 'CLIENT_INVOICE_UNAVAILABLE', 'another client''s invoice is unavailable');
 SELECT is(pg_temp.ledger('e0995400-0000-4000-8000-000000000005')->>'error', 'CLIENT_INVOICE_UNAVAILABLE', 'his own draft is unavailable');
 SELECT is(pg_temp.ledger('e0995400-0000-4000-8000-000000000009')->>'error', 'CLIENT_INVOICE_UNAVAILABLE', 'another business''s invoice is unavailable');
@@ -375,8 +382,8 @@ SELECT pg_temp.fixture($$UPDATE public.paige_invoice_provider_operations SET pro
 SELECT is(pg_temp.link(), NULL, 'a processor with no proven merchant binding produces no link');
 SELECT pg_temp.fixture($$UPDATE public.paige_invoice_provider_operations SET provider='stripe' WHERE id='e0995600-0000-4000-8000-000000000002'$$);
 SELECT is(pg_temp.link(), 'https://checkout.stripe.com/c/pay/cs_test_open02', 'restored, the same link reads again');
-SELECT is(pg_temp.request('e0995400-0000-4000-8000-000000000004') - 'invoice_id' - 'invoice_number',
- '{"remaining_cents":50000,"test_provider_cents":0,"payment_request":null}'::jsonb, 'no payment request: the answer says so and invents none');
+SELECT is(pg_temp.request('e0995400-0000-4000-8000-000000000004') - 'invoice_id' - 'invoice_number' - 'financial_revision',
+ '{"remaining_cents":50000,"test_provider_cents":0,"payment_request":null,"payment_evidence_version":2,"financial_evidence_version":3,"financial_standing":"recorded","refund_payable_minor":0,"credit_minor":0,"provider_net_minor":0}'::jsonb, 'no payment request: the answer says so and invents none');
 SELECT is(pg_temp.request('e0995400-0000-4000-8000-000000000003')->>'error', 'CLIENT_INVOICE_UNAVAILABLE', 'a voided invoice has no payment request');
 SELECT is(pg_temp.request('e0995400-0000-4000-8000-000000000008')->>'error', 'CLIENT_INVOICE_UNAVAILABLE', 'another client''s request is unavailable');
 SELECT is(pg_temp.request('e0995400-0000-4000-8000-000000000005')->>'error', 'CLIENT_INVOICE_UNAVAILABLE', 'a draft has no request');
@@ -395,10 +402,14 @@ SELECT is((SELECT state FROM public.paige_invoice_provider_operations WHERE id='
 
 -- ── 13–14. Incumbent owner and bearer reads are untouched (§58/§37) ───────────────────────────────
 SELECT is(pg_temp.keys(pg_temp.as_user(NULL,format('SELECT public.read_public_sales_invoice_payment_request(%L)',repeat('b',64)),'service_role')),
- 'invoice_number,payment_request,remaining_cents', 'the bearer payment request keeps its exact root keys');
+ 'currency,financial_evidence_version,financial_summary,invoice_id,invoice_number,invoice_version,payment_evidence_version,payment_request,remaining_cents', 'the explicitly negotiated current bearer payment request has exact root keys');
 SELECT is(pg_temp.as_user(NULL,format('SELECT public.read_public_sales_invoice_payment_request(%L)',repeat('b',64)),'service_role') #>> '{payment_request,provider_url}',
  'https://checkout.stripe.com/c/pay/cs_test_open02', 'and still returns the same link');
-SELECT ok(NOT (pg_temp.as_user(NULL,format('SELECT public.read_public_sales_invoice_payment_request(%L)',repeat('b',64)),'service_role') -> 'payment_request' ? 'environment'), 'the bearer projection gained no key');
+SELECT is(pg_temp.as_user(NULL,format('SELECT public.read_public_sales_invoice_payment_request(%L)',repeat('b',64)),'service_role') #>> '{payment_request,environment}', 'test', 'the negotiated current bearer link truthfully identifies its TEST environment');
+SELECT is(pg_temp.as_user(NULL,format('SELECT public.read_public_sales_invoice_payment_request(%L)',repeat('b',64)),'service_role',NULL)->>'sqlstate', '40001', 'unsafe legacy bearer representation is recoverably refused rather than reducing debt by TEST receipts');
+SELECT is(pg_temp.as_user(NULL,format('SELECT public.read_public_sales_invoice_payment_request(%L)',repeat('c',64)),'service_role',NULL),
+ '{"invoice_number":"NW-0002","remaining_cents":0,"payment_request":null}'::jsonb, 'truthful legacy bearer keeps its exact complete original shape and manual-receipt balance');
+SELECT ok(pg_temp.request('e0995400-0000-4000-8000-000000000004')->>'financial_revision' ~ '^[a-f0-9]{64}$', 'a payment-request absence still carries a valid current financial source revision');
 SELECT ok(EXISTS(SELECT 1 FROM jsonb_array_elements(pg_temp.as_user(NULL,format('SELECT public.read_public_sales_invoice_payment_ledger(%L)',repeat('b',64)),'service_role')#>'{payment_ledger,rows}') e WHERE e ? 'provider_operation_id'), 'the bearer ledger keeps its incumbent provider-operation field');
 SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000001',format('SELECT public.list_sales_invoice_payment_operations(%L,%L)','e0995200-0000-4000-8000-000000000001','e0995400-0000-4000-8000-000000000001')) #>> '{rows,0,provider_url}',
  'https://checkout.stripe.com/c/pay/cs_test_open02', 'the owner''s payment-operations read is unchanged');
@@ -409,7 +420,7 @@ SELECT ok(NOT (pg_temp.as_user('e0995100-0000-4000-8000-000000000001',format('SE
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._client_portal_billing_client(uuid)'::regprocedure),'e7e882b76516c67b6a9b5a4e03dce37b','Auth-bound financial source delegates the same canonical actor factor (Native15): public._client_portal_billing_client(uuid)');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoices(uuid,integer,jsonb)'::regprocedure),'91f0344a6231205da5763af3755f0ad3','original scoped invoice wrapper delegates the unchanged financial query: public.client_portal_invoices(uuid,integer,jsonb)');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoice_ledger(uuid,uuid,integer,jsonb)'::regprocedure),'a871c10fdea9b0f8e9bf3b7a9bdda887','original commercial native source remains unchanged: public.client_portal_invoice_ledger(uuid,uuid,integer,jsonb)');
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoice_payment_request(uuid,uuid)'::regprocedure),'b7b62fe3131bea45818bfd99ccc9c01d','original payment-request source uses current financial projection with unchanged authority: public.client_portal_invoice_payment_request(uuid,uuid)');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoice_payment_request(uuid,uuid)'::regprocedure),'5addaaad6dbb3186f3b5ff67457ee009','original payment-request source uses current financial projection with unchanged authority: public.client_portal_invoice_payment_request(uuid,uuid)');
 SELECT ok(has_function_privilege('authenticated','public.client_portal_invoices_scoped(uuid,uuid,integer,jsonb)','EXECUTE') AND NOT has_function_privilege('anon','public.client_portal_invoices_scoped(uuid,uuid,integer,jsonb)','EXECUTE') AND NOT has_function_privilege('service_role','public.client_portal_invoices_scoped(uuid,uuid,integer,jsonb)','EXECUTE'),'client_portal_invoices_scoped has exactly the intended customer execution grant');
 SELECT ok(has_function_privilege('authenticated','public.client_portal_invoice_ledger_scoped(uuid,uuid,uuid,integer,jsonb)','EXECUTE') AND NOT has_function_privilege('anon','public.client_portal_invoice_ledger_scoped(uuid,uuid,uuid,integer,jsonb)','EXECUTE') AND NOT has_function_privilege('service_role','public.client_portal_invoice_ledger_scoped(uuid,uuid,uuid,integer,jsonb)','EXECUTE'),'client_portal_invoice_ledger_scoped has exactly the intended customer execution grant');
 SELECT ok(has_function_privilege('authenticated','public.client_portal_invoice_payment_request_scoped(uuid,uuid,uuid)','EXECUTE') AND NOT has_function_privilege('anon','public.client_portal_invoice_payment_request_scoped(uuid,uuid,uuid)','EXECUTE') AND NOT has_function_privilege('service_role','public.client_portal_invoice_payment_request_scoped(uuid,uuid,uuid)','EXECUTE'),'client_portal_invoice_payment_request_scoped has exactly the intended customer execution grant');

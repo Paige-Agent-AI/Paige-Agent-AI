@@ -49,7 +49,7 @@ describe("original invoice admission, not another Chat executor",()=>{
 
 const captureBlock=find(n=>ts.isIfStatement(n)&&n.expression.getText(ast)==='customerPortal && !customerControl && customerPersona && interactiveInput.kind === "message"').getText(ast);
 async function capture(data:unknown,error:unknown=null,degraded=false){
- const rpc=vi.fn(async()=>({data,error}));
+ const rpc=vi.fn(async(_name:string,_args:Record<string,unknown>)=>({data,error}));
  const run=new AsyncFunction("env",compile(`const {customerPortal,customerControl,customerPersona,interactiveInput,customerCaller,user,validatedData,readCustomerInvoicesContext,corsHeaders,degraded}=env;
  let customerInvoicesContext=null,customerInvoicesSnapshot=null;${captureBlock};return{context:customerInvoicesContext,snapshot:customerInvoicesSnapshot};`));
  return{rpc,result:await run({customerPortal:true,customerControl:false,customerPersona:persona,interactiveInput:{kind:"message"},customerCaller:{rpc},user:{id:actor},

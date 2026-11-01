@@ -3485,3 +3485,12 @@ Packaging is NOT execution: local pgTAP is unavailable, actual full-schema
 hosted16 is UNVERIFIED. No workflow, native carrier/version, Preview or production
 apply changed. This packet extends the same original notice-read outcome only;
 original released predicate and sender/domain ownership remain untouched.
+
+
+Native16 packet is now wired into the SAME original Spine database-contract
+job after the original atomic Team details proof. Three owning path filters
+and six-line command step only: removing these9 lines restores ENTIRE actual
+27ba incoming workflow byte-exact, including E01 Setup and original invite/E09
+steps. No workflow policy/runner/provider/auth source changed. Canonical checks
+and negative controls still exit0; hosted execution remains UNVERIFIED pending
+publication and exact-head CI. Source window returned after this finite change.

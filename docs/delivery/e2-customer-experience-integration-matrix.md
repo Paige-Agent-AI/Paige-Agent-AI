@@ -63,16 +63,19 @@ defects, failed engineering checks, native ordering and consequential-action
 authorization remain binding. Older dated observations remain history, not active
 browser-only release requirements.
 
-O06 is the SOLE implementation priority under the owner's outcome-only direction.
-The previously named O04 secondary is queued, with no active coding until O06 is
-complete. Original Finance summary metrics still read the legacy balance
+O06 is the ONLY authorized outcome in progress. Finish its useful result and live
+verification, report back, then STOP. The owner must approve the next outcome;
+there is no active secondary. Other original rows remain backlog, not permission
+to begin another outcome.
+
+Historical queued O04 finding: original Finance summary metrics still read the legacy balance
 projection while invoice detail consumes financial3. An unchanged-source native
 counterexample reproduced a TEST-allocation difference; this is a source-confirmed
 integration gap, not an authenticated customer-money finding. Original producer
 contract/custody request ANT147/157a7042 remains pending through Coordinator before
 shared source/version edits. No replacement calculation, issuer, store or native
-identity is introduced. Its existing request remains recorded without expanding
-work in progress. Finish O06's release and authorized useful-result proof first.
+identity is introduced. Its existing request remains recorded without active
+implementation. Finish O06's release and authorized useful-result proof only.
 
 ## October31 — O06 existing source-integrity proof gate (development)
 

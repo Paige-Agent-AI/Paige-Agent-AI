@@ -4,11 +4,11 @@ UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original ANT138/90738317 pre-edit packet follows saved finding → original Sales payment records → Back, with no business action.
 PAIGE_UI_DESIGN: PASS: project router, upstream/accessibility references, five quality modules and incumbent Solo contract read; original fonts, themes, links and scroll owner retained.
 MATERIAL_FLOW_CHANGE: YES: corrects two original finding exits that currently redirect through retired Marketing/Sales to Sales Overview.
-FLOW_PROTOTYPE: UNVERIFIED: no new prototype proof; original flow was inspected before editing. November1 owner literal-deletion policy is carried by original shared PR3207, without a competing checker or fabricated waiver.
+FLOW_PROTOTYPE: UNVERIFIED: no new prototype proof; original flow was inspected before editing. Original shared PR3207/c556 policy is consumed unchanged, without a competing checker or fabricated waiver.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible ordinary SOLO actor can inspect the original finding and open its actual Sales payment records, while understanding that the declaration editor is unavailable there.
 VISUAL_DIRECTION: PASS: preserve the existing Systems Check surface; concise link labels and the original secondary caveat use Schibsted, existing theme tokens and wrapping. No banner, card, form, icon, chart or motion is added.
 AUTOMATED_EVIDENCE: PASS: original destination suite first returned6PASS/2newFAIL for the legacy growth branch; corrected source passes128 cases across four disjoint destination/workspace/recorded-source/latest-run suites. Original assertions retained; test account text is neutral.
-STATIC_EVIDENCE: PASS: scoped ESLint and whitespace checks pass; existing SOLO parity SP1–SP5 and all its mutation controls pass. Pinned Impeccable4.1 detector reports0 primary findings and28 advisories on existing type/radius styling, with no global repair. Hosted exact-head type/build/security/CI remain separately required.
+STATIC_EVIDENCE: PASS: scoped ESLint and whitespace checks pass; existing SOLO parity SP1–SP5 and all its mutation controls pass. Actual required SOLO evidence validation passes with the original composed3207 guard. Pinned Impeccable4.1 detector reports0 primary findings and28 advisories on existing type/radius styling, with no global repair. Hosted exact-head type/build/security/CI remain separately required.
 RENDERED_EVIDENCE: UNVERIFIED: changed source has not been rendered in the released app; desktop/narrow inspection follows safe release and the existing browser-custody handoff.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: the original legacy redirect was reproduced through authorized read-only UI; repaired links, Back and reload require released-source readback.
 AUTHENTICATED_RUNTIME: UNVERIFIED: candidate is local, not deployed. Earlier original Owner source/reload/focus observations are bounded historical evidence, not repaired-candidate or second-cohort acceptance.
@@ -70,5 +70,7 @@ remain distinct from the local functional/static results.
 The original guard, invoked with actual required SOLO routing, refuses only this
 record's honest UNVERIFIED prototype status. The first direct validator probe
 omitted its required flag and is INVALID as a substantive validation result.
-Original shared policy3207 owns that obsolete condition; consume its reviewed
-source and renew the legitimate gate without inventing prototype proof.
+Original shared policy3207 owns that obsolete condition. Its exact original
+c556 source was composed unchanged; actual required SOLO validation now passes.
+The original predecessor review/CI/normal merge remains required before this
+consumer merges, with no invented prototype proof or borrowed customer acceptance.

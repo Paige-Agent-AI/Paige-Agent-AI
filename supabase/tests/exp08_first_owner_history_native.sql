@@ -395,7 +395,7 @@ SELECT set_config('request.jwt.claims','{"sub":"e8c00000-0000-4000-8000-00000000
 SET LOCAL ROLE authenticated;
 SELECT throws_ok($$SELECT public._tenant_never_owned('e8c00000-0000-4000-8000-000000000011')$$,
  '42501','permission denied for function _tenant_never_owned','browser callers cannot invoke the private history authority');
-SELECT lives_ok($$SELECT public.revoke_platform_access('e8c00000-0000-4000-8000-000000000002')$$,
+SELECT lives_ok($$SELECT public.revoke_platform_access('e8c00000-0000-4000-8000-000000000002'::uuid,NULL::text)$$,
  'R16 original platform access revocation remains executable without a new owner-floor restriction');
 RESET ROLE;
 SELECT ok(NOT EXISTS(SELECT 1 FROM public.tenant_members WHERE user_id='e8c00000-0000-4000-8000-000000000002')

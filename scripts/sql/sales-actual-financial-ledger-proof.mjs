@@ -15,6 +15,7 @@ export function proveActualFinancialLedger({run,read}){
  const deployedDefinition=run("SELECT pg_get_functiondef('public._sales_invoice_payment_ledger(uuid,uuid,integer,jsonb)'::regprocedure);");
  const deployedHash=run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_invoice_payment_ledger(uuid,uuid,integer,jsonb)'::regprocedure;");assert.equal(deployedHash,'327e4883b78725137137e1ad7349ba20','actual deployed original ledger source');
  const getterHash=run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_invoice_read(uuid,uuid,integer)'::regprocedure;");
+ assert.equal(getterHash,'c1fec742f8ff2a3753b58a9800ce5fab','actual independently verified production getter');
  const originalMetadata=meta(),oldPlain=call(plain,null,100,null,'',plainTenant);
  run(read('supabase/tests/fixtures/exp04_invoice_financial_ledger.sql'));
  // Reconstruct the earlier evidence2 prototype only within rollback; keep the

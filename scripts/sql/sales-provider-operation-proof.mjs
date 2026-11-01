@@ -130,6 +130,17 @@ try {
   const balance=/CREATE OR REPLACE FUNCTION public\._sales_invoice_balance_rows\([\s\S]*?AS \$\$[\s\S]*?\$\$;/i.exec(balanceSource)?.[0];
   assert(balance,'actual original canonical receipt balance projection');
   run(balance+`REVOKE ALL ON FUNCTION public._sales_invoice_balance_rows(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;`);
+
+  // Current-mode adoption must use the ACTUAL retained production getter,
+  // not the older provider-operations-era sibling. Default historical proof
+  // remains unchanged; no installed product function is edited here.
+  if(mode==='--current'){
+   const currentReader=extract(balanceSource,'_sales_invoice_read');
+   const body=/AS \$\$([\s\S]*?)\$\$;/.exec(currentReader);assert(body);
+   assert.equal(createHash('md5').update(body[1]).digest('hex'),'c1fec742f8ff2a3753b58a9800ce5fab','independently verified current getter source');
+   run(currentReader);
+   assert.equal(run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_invoice_read(uuid,uuid,integer)'::regprocedure;"),'c1fec742f8ff2a3753b58a9800ce5fab');
+  }
   run(`ALTER TABLE public.paige_workspace_events ADD COLUMN IF NOT EXISTS job_attempt_id text,
    ADD COLUMN IF NOT EXISTS llm_trace_id uuid,ADD COLUMN IF NOT EXISTS release_id text,ADD COLUMN IF NOT EXISTS detail jsonb;`);
   run(rail+`REVOKE ALL ON FUNCTION public._record_workspace_rail_event(uuid,uuid,text,uuid,bigint,text,text,text,text,uuid,text,jsonb) FROM PUBLIC,anon,authenticated,service_role;`);

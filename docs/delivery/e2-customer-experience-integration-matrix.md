@@ -1,5 +1,29 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## November1 — O06 saved-source row authorization proof (development)
+
+O06 remains the ONE PRIMARY; no secondary starts. The existing native
+`systems_check_source_integrity.sql` adds11 actual authenticated row-read cases
+to its original36 assertions. They exercise original run/finding RLS, historical
+and resolved evidence, foreign/operator exclusion, eligible Admin and member
+reads, linked-client/suspended refusal, active-workspace switching, membership
+revocation with the same JWT and reopening the same source after restoration.
+All fixtures roll back; the original36 assertions and product permissions,
+policies, functions, UI and execution behavior remain unchanged. The existing
+canonical CI gate is reused with its label synchronized to47 assertions.
+
+Functional: source prepared; exact-head review and full-schema47 execution/CI/
+release are PROOF OWED. Visual: unchanged. Experiential: ordinary signed-in
+role/cohort/reload/recovery proof remains owed; database fixtures are not customer
+acceptance. The latest authorized browser chooser remained loading and reported
+a browser-storage write failure before account identity. Its environment cause
+is UNKNOWN; no account, storage or permission change was made. Original second
+SOLO access handoff remains pending through Coordinator. Founder Acceptance:
+OPEN, one complete Experience review. ALG12 remains Partial; orchestration,
+activation and all nine catalogue states are unchanged. This analytical/source
+read proof does not run a new check, approve a correction or prove an effect.
+All original19 definitions and historical acceptance denominators below remain.
+
 ## October31 — O06 existing source-integrity proof gate (development)
 
 The same PRIMARY O06 retains its original saved-finding/run/source/reopen and

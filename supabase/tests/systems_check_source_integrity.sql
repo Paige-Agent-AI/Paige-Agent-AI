@@ -3,7 +3,7 @@
 
 BEGIN;
 
-SELECT plan(36);
+SELECT plan(47);
 
 SELECT ok(
   NOT has_table_privilege('authenticated', 'public.paige_systems_check_run', 'INSERT,UPDATE,DELETE'),
@@ -162,6 +162,111 @@ VALUES
   ('f3000000-0000-0000-0000-00000000f001', 'f3000000-0000-0000-0000-00000000c001', 'comms_configured', 'f3000000-0000-0000-0000-000000003333', 'fail', 'high', '{"source":"stale"}'::jsonb, 'Stale', '{}'::jsonb, NULL, NULL, NULL),
   ('d1000000-0000-0000-0000-00000000ff02', 'd1000000-0000-0000-0000-00000000ff01', 'operator_db_health', NULL, 'fail', 'high', '{"source":"operator"}'::jsonb, 'Operator', '{}'::jsonb, NULL, NULL, NULL),
   ('d1000000-0000-0000-0000-00000000ff03', 'd1000000-0000-0000-0000-00000000ff01', 'operator_rls_coverage', NULL, 'fail', 'high', '{"source":"operator-admin"}'::jsonb, 'Operator admin', '{}'::jsonb, NULL, NULL, NULL);
+
+-- O06 saved-source inspection uses the original authenticated table reads, not
+-- approval or the current-only signal issuer. Exercise real RLS, including old
+-- evidence and authority changes, before the existing approval assertions.
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+SELECT is(
+  (SELECT array_agg(id::text ORDER BY id) FROM public.paige_systems_check_run
+    WHERE id IN ('d1000000-0000-0000-0000-00000000a001', 'd1000000-0000-0000-0000-00000000a002',
+                 'e2000000-0000-0000-0000-00000000b001', 'd1000000-0000-0000-0000-00000000ff01')),
+  ARRAY['d1000000-0000-0000-0000-00000000a001', 'd1000000-0000-0000-0000-00000000a002']::text[],
+  'owner reads original current and historical runs but no foreign or operator run'
+);
+SELECT is(
+  (SELECT array_agg(id::text ORDER BY id) FROM public.paige_systems_check_finding
+    WHERE id IN ('d1000000-0000-0000-0000-00000000f001', 'd1000000-0000-0000-0000-00000000f002',
+                 'd1000000-0000-0000-0000-00000000f003', 'e2000000-0000-0000-0000-00000000f001',
+                 'd1000000-0000-0000-0000-00000000ff02')),
+  ARRAY['d1000000-0000-0000-0000-00000000f001', 'd1000000-0000-0000-0000-00000000f002',
+        'd1000000-0000-0000-0000-00000000f003']::text[],
+  'owner reads original superseded and resolved findings without foreign or operator findings'
+);
+SELECT ok(
+  (SELECT evidence->>'source' = 'superseded' AND resolution IS NULL
+     FROM public.paige_systems_check_finding WHERE id = 'd1000000-0000-0000-0000-00000000f001')
+  AND (SELECT evidence->>'source' = 'resolved' AND resolution = 'approved' AND resolved_at IS NOT NULL
+     FROM public.paige_systems_check_finding WHERE id = 'd1000000-0000-0000-0000-00000000f003'),
+  'historical inspection preserves original evidence and the recorded resolution'
+);
+SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+SELECT is(
+  (SELECT f.id::text FROM public.paige_systems_check_finding f
+     JOIN public.paige_systems_check_run r ON r.id = f.run_id AND r.tenant_id = f.tenant_id
+    WHERE f.id = 'd1000000-0000-0000-0000-00000000f001'),
+  'd1000000-0000-0000-0000-00000000f001',
+  'active tenant admin can inspect an original historical finding and its original run'
+);
+SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000005","role":"authenticated"}', true);
+SELECT ok(
+  NOT EXISTS (SELECT 1 FROM public.paige_systems_check_run WHERE id = 'd1000000-0000-0000-0000-00000000a002')
+  AND NOT EXISTS (SELECT 1 FROM public.paige_systems_check_finding WHERE id = 'd1000000-0000-0000-0000-00000000f002'),
+  'a linked client without staff membership cannot read the saved business check'
+);
+SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000007","role":"authenticated"}', true);
+SELECT ok(
+  NOT EXISTS (SELECT 1 FROM public.paige_systems_check_run WHERE id = 'd1000000-0000-0000-0000-00000000a002')
+  AND NOT EXISTS (SELECT 1 FROM public.paige_systems_check_finding WHERE id = 'd1000000-0000-0000-0000-00000000f002'),
+  'suspended staff cannot read original saved runs or findings'
+);
+SELECT set_config('request.jwt.claims', '{"sub":"e2000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+SELECT ok(
+  NOT EXISTS (SELECT 1 FROM public.paige_systems_check_run WHERE id = 'd1000000-0000-0000-0000-00000000a002')
+  AND NOT EXISTS (SELECT 1 FROM public.paige_systems_check_finding WHERE id = 'd1000000-0000-0000-0000-00000000f002'),
+  'another business owner cannot reopen the original saved business check'
+);
+
+RESET ROLE;
+UPDATE public.profiles SET active_tenant_id = 'e2000000-0000-0000-0000-000000002222'
+ WHERE user_id = 'd1000000-0000-0000-0000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+SELECT is(
+  (SELECT array_agg(f.id::text ORDER BY f.id) FROM public.paige_systems_check_finding f
+     JOIN public.paige_systems_check_run r ON r.id = f.run_id AND r.tenant_id = f.tenant_id
+    WHERE f.id IN ('d1000000-0000-0000-0000-00000000f002', 'e2000000-0000-0000-0000-00000000f001',
+                   'd1000000-0000-0000-0000-00000000ff02')),
+  ARRAY['e2000000-0000-0000-0000-00000000f001']::text[],
+  'switching a legitimate multi-workspace actor reauthorizes both original tables for the active business'
+);
+RESET ROLE;
+UPDATE public.profiles SET active_tenant_id = 'd1000000-0000-0000-0000-000000001111'
+ WHERE user_id = 'd1000000-0000-0000-0000-000000000001';
+
+-- A read permission is not an approval permission. The existing member may read
+-- while active, and still fails the unchanged approval test below.
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000004","role":"authenticated"}', true);
+SELECT ok(
+  EXISTS (SELECT 1 FROM public.paige_systems_check_run WHERE id = 'd1000000-0000-0000-0000-00000000a002')
+  AND EXISTS (SELECT 1 FROM public.paige_systems_check_finding WHERE id = 'd1000000-0000-0000-0000-00000000f002'),
+  'active ordinary membership retains the existing saved-source read permission'
+);
+RESET ROLE;
+UPDATE public.tenant_members SET status = 'suspended'
+ WHERE tenant_id = 'd1000000-0000-0000-0000-000000001111' AND user_id = 'd1000000-0000-0000-0000-000000000004';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000004","role":"authenticated"}', true);
+SELECT ok(
+  NOT EXISTS (SELECT 1 FROM public.paige_systems_check_run WHERE id = 'd1000000-0000-0000-0000-00000000a002')
+  AND NOT EXISTS (SELECT 1 FROM public.paige_systems_check_finding WHERE id = 'd1000000-0000-0000-0000-00000000f002'),
+  'revoking the existing membership withdraws both saved-source reads without a new JWT'
+);
+RESET ROLE;
+UPDATE public.tenant_members SET status = 'active'
+ WHERE tenant_id = 'd1000000-0000-0000-0000-000000001111' AND user_id = 'd1000000-0000-0000-0000-000000000004';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000004","role":"authenticated"}', true);
+SELECT ok(
+  (SELECT f.evidence->>'source' = 'current' AND f.resolved_at IS NULL
+     FROM public.paige_systems_check_finding f
+     JOIN public.paige_systems_check_run r ON r.id = f.run_id AND r.tenant_id = f.tenant_id
+    WHERE f.id = 'd1000000-0000-0000-0000-00000000f002'),
+  'restored legitimate membership reopens the same original finding without rewriting it'
+);
+RESET ROLE;
 
 CREATE OR REPLACE FUNCTION pg_temp.expect_approval_denied(p_scope text, p_account bigint, p_finding uuid)
 RETURNS boolean LANGUAGE plpgsql AS $$

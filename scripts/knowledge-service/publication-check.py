@@ -1,6 +1,6 @@
 import argparse,hashlib,json,pathlib,re,subprocess,time,uuid
-p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql')
-p.add_argument('--memory-review-baseline',action='store_true'); p.add_argument('--memory-review-candidate',action='store_true'); p.add_argument('--memory-install-guards',action='store_true'); p.add_argument('--memory-review-candidate-file',default='scripts/knowledge-service/reviewed-memory-candidate.sql'); p.add_argument('--memory-review-carrier-file'); a=p.parse_args()
+p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql'); p.add_argument('--binary-source',action='store_true'); p.add_argument('--binary-baseline',action='store_true'); p.add_argument('--binary-migration',default='supabase/migrations/20271126130013_knowledge_binary_source_evidence.sql'); p.add_argument('--memory-review-baseline',action='store_true'); p.add_argument('--memory-review-candidate',action='store_true'); p.add_argument('--memory-install-guards',action='store_true'); p.add_argument('--memory-review-candidate-file',default='scripts/knowledge-service/reviewed-memory-candidate.sql'); p.add_argument('--memory-review-carrier-file'); a=p.parse_args()
+if a.binary_source and (not a.expected_data_directory or not a.publication_recovery): p.error('binary source proof requires the verified disposable data directory and original publication recovery')
 if a.memory_review_carrier_file and not a.memory_review_candidate: p.error('Memory carrier requires native reviewed candidate controls')
 if a.memory_install_guards and not a.memory_review_candidate: p.error('Memory install guards require the native reviewed candidate')
 if (a.memory_review_baseline or a.memory_review_candidate) and not a.expected_data_directory: p.error('Memory proof requires a verified disposable data directory')
@@ -19,9 +19,24 @@ try:
  files+=['supabase/migrations/20270533100000_knowledge_publication_worker_adoption.sql']*2
  files+=['supabase/migrations/20270533200000_knowledge_submit_activation.sql']*2
  if a.publication_recovery and not a.recovery_baseline: files+=[a.recovery_migration]*2
+ if a.binary_source and not a.binary_baseline: files+=[a.binary_migration]*2
  files+=['scripts/knowledge-service/extraction-behavior.sql','scripts/knowledge-service/publication-behavior.sql']
  if a.publication_recovery: files+=['scripts/knowledge-service/publication-recovery-behavior.sql']
- for f in files: run(['-d',db,'-f',f])
+ if a.binary_source: files+=['scripts/knowledge-service/binary-source-behavior.sql']
+ for f in files:
+  run(['-d',db,'-f',f])
+  if a.binary_source and not a.binary_baseline and f==a.binary_migration:
+   # Faults exist only inside this verified disposable database transaction.
+   # ON_ERROR_STOP closes the failed connection, rolling every fault back.
+   faults=[
+    "CREATE OR REPLACE FUNCTION public.complete_knowledge_extraction(_work_id uuid,_server_key text,_attempt integer,_revision integer,_content text,_hash text) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path='' AS $$ SELECT NULL::jsonb $$",
+    'GRANT EXECUTE ON FUNCTION public.complete_knowledge_extraction(uuid,text,integer,integer,text,text) TO authenticated',
+    'GRANT EXECUTE ON FUNCTION public.complete_knowledge_extraction(uuid,text,integer,integer,text,text,jsonb) TO pg_monitor',
+   ]
+   for fault in faults:
+    rejected=subprocess.run(base+['-d',db,'-c','BEGIN','-c',fault,'-f',a.binary_migration],cwd=root,text=True,capture_output=True,encoding='utf-8')
+    if rejected.returncode==0 or 'KNOWLEDGE_BINARY_SOURCE_DRIFT' not in rejected.stderr: raise RuntimeError('source/ACL fault was not refused: '+rejected.stdout+rejected.stderr)
+    print('PASS: transactional source/ACL drift refused; fixture fault rolled back')
  if a.memory_review_baseline or a.memory_review_candidate:
   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-fixture.sql'])
   # Execute the ORIGINAL writers, not a copied or modeled writer implementation.

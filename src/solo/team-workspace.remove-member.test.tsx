@@ -14,10 +14,11 @@
  * shapes and refusal sentences in supabase/migrations/20271115040008_exp08_team_lifecycle.sql. They
  * prove what the SCREEN does with those answers, not that the database gives them.
  */
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SoloTeamWorkspace } from "./team-workspace";
+import { DepartureReview } from "./team-departure";
 import { removalRefusal, type TeamMemberRecord, type TeamWorkspaceRecord } from "./team-workspace-contract";
 
 const mocks = vi.hoisted(() => ({
@@ -86,8 +87,11 @@ function mount(node: React.ReactNode) {
   host.setAttribute("data-pg", "light");
   document.body.append(host);
   const root = createRoot(host);
+  mounted.push(root);
   return { host, root, render: async () => act(async () => root.render(node)) };
 }
+const mounted: Array<ReturnType<typeof createRoot>> = [];
+afterEach(() => { for (const root of mounted.splice(0)) act(() => root.unmount()); });
 const wait = (ms = 250) => act(async () => { await new Promise((r) => setTimeout(r, ms)); });
 const buttons = () => Array.from(document.querySelectorAll("button"));
 const byText = (text: string | RegExp) => buttons().find((b) => (typeof text === "string" ? b.textContent?.trim() === text : text.test(b.textContent?.trim() ?? "")));
@@ -353,6 +357,25 @@ describe("removing", () => {
     // Unknown is not "switched": the refusal stays in the drawer, where it is still true.
     expect(drawer()?.querySelector('[role="alert"]')?.textContent).toContain("Only the workspace owner");
   });
+
+  it("pauses failed departure retry without starting a new roster read under unknown context", async () => {
+    let rosterReads = 0;
+    route({
+      get_solo_team_workspace: () => ++rosterReads === 1 ? { data: roster([owner, avery, dana]), error: null } : { data: null, error: null },
+      team_member_holdings: () => ({ data: null, error: { message: "Holdings are temporarily unavailable." } }),
+    });
+    const screen = await openScreen();
+    await openRemoval();
+    expect(drawer()?.textContent).toContain("We couldn't load what Dana holds");
+    mocks.tenant.activeTenantId = null;
+    await act(async () => screen.root.render(<SoloTeamWorkspace />));
+    const retry = Array.from(drawer()!.querySelectorAll("button")).find((button) => button.textContent?.trim() === "Try again")!;
+    const before = mocks.rpc.mock.calls.length;
+    await act(async () => retry.click());
+    expect(mocks.rpc.mock.calls.length, "neither holdings nor uncached roster may reread while paused").toBe(before);
+    expect(retry.disabled).toBe(true);
+    expect(drawer()?.textContent).toContain("review is paused");
+  });
 });
 
 describe("handing over, then removing", () => {
@@ -362,6 +385,42 @@ describe("handing over, then removing", () => {
     expect(option, `option ${label}`).toBeTruthy();
     await act(async () => { key(option!, "Enter"); });
   }
+
+  it("pauses queued hand-overs after the in-flight result and resumes only after a fresh same-workspace Team read", async () => {
+    let finishFirst!: (answer: unknown) => void;
+    let finishRead!: (answer: unknown) => void;
+    let holdRead = false;
+    let writes = 0;
+    route({
+      get_solo_team_workspace: () => holdRead ? new Promise((resolve) => { finishRead = resolve; }) : { data: roster([owner, avery, dana]), error: null },
+      team_member_holdings: () => ({ data: holdings({ work: [WORK, { ...WORK, id: "w-2", title: "Second hand-over" }] }), error: null }),
+      plan_update_item_versioned: (args) => ++writes === 1 ? new Promise((resolve) => { finishFirst = resolve; }) : { data: { ok: true, item_id: args.p_item_id, tenant_id: "tenant-1", actor_id: "owner-1" }, error: null },
+    });
+    const screen = await openScreen();
+    await openRemoval();
+    await chooseIn(drawer()!.querySelector<HTMLElement>('[aria-labelledby="stw-handall-l"]')!, "Avery Cole");
+    await act(async () => byText("Continue")!.click());
+    await act(async () => byText("Start hand-over")!.click());
+    await wait(30);
+    expect(writes).toBe(1);
+    mocks.tenant.activeTenantId = null;
+    await act(async () => screen.root.render(<SoloTeamWorkspace />));
+    await act(async () => finishFirst({ data: { ok: true, item_id: "w-1", tenant_id: "tenant-1", actor_id: "owner-1" }, error: null }));
+    await wait(30);
+    expect(writes, "the next original writer waits for renewed context").toBe(1);
+    expect(drawer()?.textContent).toContain("1 of 2 saved");
+    expect(drawer()?.textContent).toContain("review is paused");
+    holdRead = true;
+    mocks.tenant.activeTenantId = "tenant-1";
+    await act(async () => screen.root.render(<SoloTeamWorkspace />));
+    await wait();
+    expect(writes, "workspace selection alone is not a fresh native Team read").toBe(1);
+    await act(async () => finishRead({ data: roster([owner, avery, dana]), error: null }));
+    await wait(30);
+    expect(writes).toBe(2);
+    expect(mocks.rpc.mock.calls.filter(([n]) => n === "plan_update_item_versioned").map(([, args]) => args.p_item_id)).toEqual(["w-1", "w-2"]);
+    expect(drawer()?.textContent).toContain("2 of 2 saved");
+  });
 
   it("hands work through Operations' writer and a client through crm-command's confirmation, each on its own", async () => {
     route({
@@ -464,6 +523,53 @@ describe("handing over, then removing", () => {
   });
 });
 
+describe("departure review lifecycle", () => {
+  it("focuses the authored refusal inside the review when removal becomes disabled", async () => {
+    route({
+      get_solo_team_workspace: () => ({ data: roster([owner, dana]), error: null }),
+      team_member_holdings: () => ({ data: holdings(), error: null }),
+      remove_solo_team_member: () => ({ data: null, error: { code: "42501", message: "TEAM_MEMBER_PROTECTED: this Paige account is protected; nothing was changed" } }),
+    });
+    await openScreen();
+    await openRemoval();
+    await act(async () => byText("Continue")!.click());
+    await act(async () => { removeButton()!.focus(); removeButton()!.click(); });
+    expect(removeButton()!.disabled).toBe(true);
+    expect(document.activeElement).toBe(drawer()!.querySelector('[role="alert"]'));
+    expect(removeCalls()).toHaveLength(1);
+  });
+
+  it("finishes the original holdings read after StrictMode effect teardown and setup", async () => {
+    route({ get_solo_team_workspace: () => ({ data: roster([owner, dana]), error: null }), team_member_holdings: () => ({ data: holdings(), error: null }) });
+    const screen = mount(<StrictMode><SoloTeamWorkspace /></StrictMode>);
+    await screen.render();
+    await wait();
+    await openRemoval();
+    expect(drawer()?.textContent).toContain("Dana Reyes holds nothing to hand over");
+    expect(drawer()?.textContent).not.toContain("Checking Dana's open work");
+    expect(removeCalls()).toHaveLength(0);
+  });
+
+  it("still suppresses a removal result after a genuine unmount", async () => {
+    let settle!: (value: unknown) => void;
+    const removed = vi.fn();
+    route({
+      get_solo_team_workspace: () => ({ data: roster([owner, dana]), error: null }),
+      team_member_holdings: () => ({ data: holdings(), error: null }),
+      remove_solo_team_member: () => new Promise((resolve) => { settle = resolve; }),
+    });
+    const screen = mount(<StrictMode><DepartureReview member={dana} workspace={roster([owner, dana])} viewerId="owner-1" members={[owner, dana]} onClose={vi.fn()} onRemoved={removed} /></StrictMode>);
+    await screen.render();
+    await wait(30);
+    await act(async () => byText("Continue")!.click());
+    await act(async () => removeButton()!.click());
+    expect(removeCalls()).toHaveLength(1);
+    act(() => screen.root.unmount());
+    await act(async () => settle({ data: { tenant_id: "tenant-1" }, error: null }));
+    expect(removed).not.toHaveBeenCalled();
+  });
+});
+
 describe("the refusal vocabulary itself", () => {
   it("recognises every reason this seam authors, and degrades honestly for anything else", () => {
     const cases: Array<[string, RegExp, boolean, boolean]> = [
@@ -497,6 +603,23 @@ describe("the refusal vocabulary itself", () => {
     const refusal = removalRefusal("Cannot remove admin role from platform owner", "Dana Reyes", "Example Team");
     expect(refusal.message).toMatch(/platform role/);
     expect(refusal.retryable).toBe(false);
+  });
+
+  it("translates the authored protected-account refusal without offering another removal", () => {
+    expect(removalRefusal("TEAM_MEMBER_PROTECTED: this Paige account is protected; nothing was changed", "Dana Reyes", "Example Team")).toEqual({
+      message: "Dana Reyes's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+      retryable: false,
+      reconciled: false,
+    });
+  });
+
+  it("explains unavailable actor access without disclosing a cause or inviting another removal", () => {
+    expect(removalRefusal("TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was removed", "Dana Reyes", "Example Team")).toEqual({
+      message: "Your account access could not be confirmed, so nothing was removed. Check your access before opening Team again.",
+      retryable: false,
+      reconciled: false,
+    });
+    expect(removalRefusal("unrecognised TEAM_MEMBER_IDENTITY_UNAVAILABLE: text", "Dana Reyes", "Example Team").message).not.toContain("Your account access");
   });
 
   it("still offers a retry for a transport failure, and calls a server-decided timeout what it is", () => {

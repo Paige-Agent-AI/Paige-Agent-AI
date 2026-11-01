@@ -193,7 +193,7 @@ describe("agentOutcomeLine (flow 9 copy)", () => {
       expect(agentOutcomeLine(outcome, "cura").text).not.toMatch(/Ask again|Check again/);
     }
     expect(agentOutcomeLine("not_visible", "cura").text).toBe("CURA couldn't reply: you can't see this conversation any more.");
-    expect(agentOutcomeLine("rate_limited", "cura")).toEqual({ text: "You've reached 30 agent replies this hour. Try again later.", action: null });
+    expect(agentOutcomeLine("rate_limited", "cura")).toEqual({ text: "Too many requests right now. Try again shortly.", action: null });
     expect(agentOutcomeLine("cannot_post_here", "cura").text).toBe("CURA can't post here.");
     expect(agentOutcomeLine("no_reply", "merit", true).text).toBe("MERIT couldn't finish your private answer.");
   });

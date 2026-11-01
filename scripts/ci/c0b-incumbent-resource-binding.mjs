@@ -1507,7 +1507,12 @@ const ANCESTRY_SOURCES = {
  // 2026-10-28 review round 1: renewed from 4a71458d (reproduced from 025ff551). send_at description asks
  // for the offset on the TARGET date (no fixed example); "scheduled" never reads Not sent and points to
  // the card's local time; COMMS_EMAIL_ALREADY_SCHEDULED note. Nothing else.
- "supabase/functions/_shared/comms-email/chat.ts": "0bf1f64ec1d82e5ef435fdf06cf07fd8169e2853e3c5401eb1c8592b00d81608",
+ // 2026-10-31 EXP03 saved-source extension, selected-source AUTHOR-REVIEW / LOWER ASSURANCE.
+ // Incumbent0bf1f64e reproduced from main5e962a1bc. Exact source/files/save intent
+ // uses the original email door; stored pins retain their source/files. Saved-source
+ // approvals require UUID actor/thread + sticky current fence (counterexample retained).
+ // Only this adapter AST pin changes; Root/checker/other pins and action risk stay intact.
+ "supabase/functions/_shared/comms-email/chat.ts": "b32b0597a818c5cb0ca3daea10efc9d8e313c7cc1c352fc282aa22c09e94bb83",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {
  const findings=[],tools=new Map();

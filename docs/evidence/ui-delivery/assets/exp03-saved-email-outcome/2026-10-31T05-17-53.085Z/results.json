@@ -1,0 +1,14 @@
+{
+  "results": [
+    {
+      "pass": false,
+      "error": "TimeoutError: locator.waitFor: Timeout 1500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Draft saved. Nothing sent.').first() to be hidden\u001b[22m\n\u001b[2m    14 × locator resolved to visible <div class=\"\" data-title=\"\">Draft saved. Nothing sent.</div>\u001b[22m\n"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_WORKSPACE",
+  "voice": "UNEXERCISED",
+  "paige": "PLACEHOLDER",
+  "nativeBrowserZoom": "UNVERIFIED"
+}

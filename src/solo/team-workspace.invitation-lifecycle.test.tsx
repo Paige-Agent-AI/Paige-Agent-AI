@@ -29,7 +29,7 @@ import {
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), invoke: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn(), tenant: { activeTenantId: "tenant-1" } }));
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: mocks.rpc, functions: { invoke: mocks.invoke } } }));
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: mocks.tenant.activeTenantId, loading: false }) }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: mocks.tenant.activeTenantId, activeUserId: "u1", loading: false }) }));
 vi.mock("sonner", () => ({ toast: { success: mocks.success, error: mocks.error, warning: mocks.warning } }));
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -42,10 +42,10 @@ const invite = (over: Partial<TeamInviteRecord> = {}): TeamInviteRecord => ({
 });
 
 const workspace = (invitations: TeamInviteRecord[]): TeamWorkspaceRecord => ({
-  tenant_id: "tenant-1", tenant_name: "Mogul Maker Academy", viewer_permission: "owner",
+  tenant_id: "tenant-1", tenant_name: "Example Studio", viewer_permission: "owner",
   can_manage_profiles: true, can_manage_invitations: true, can_change_permissions: true,
   total_members: 1,
-  members: [{ membership_id: "m1", user_id: "u1", full_name: "Antonio Cook", email: "owner@example.com", avatar_url: null, status: "active", permission: "owner", is_owner: true, job_title: null, responsibilities: null, last_sign_in_at: null }],
+  members: [{ membership_id: "m1", user_id: "u1", full_name: "Morgan Hale", email: "owner@example.com", avatar_url: null, status: "active", permission: "owner", is_owner: true, job_title: null, responsibilities: null, last_sign_in_at: null }],
   invitations,
 });
 

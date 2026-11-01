@@ -1,0 +1,7 @@
+{
+  "scope": "real SoloApp / synthetic transport / not authenticated / no membership effect",
+  "records": [],
+  "failures": [
+    "TimeoutError: page.goto: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:5298/solo/3855/settings/team?theme=light&tenant=a\", waiting until \"domcontentloaded\"\u001b[22m\n"
+  ]
+}

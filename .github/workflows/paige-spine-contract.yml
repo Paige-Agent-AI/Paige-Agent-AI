@@ -82,6 +82,9 @@ on:
       - "scripts/ci/consent-parity-gen.mjs"
       - "supabase/tests/media_credit_ledger.sql"
       - "supabase/tests/business_context_readiness.sql"
+      - "supabase/tests/exp01_reviewed_setup_receipt.sql"
+      - "scripts/proof/exp01-reviewed-setup-full-schema.mjs"
+      - "scripts/proof/exp01-reviewed-setup-candidate.sql"
       - "supabase/tests/team_authority_readiness.sql"
       - "supabase/tests/business_mission_foundation.sql"
       - "supabase/tests/zion_role_remap.sql"
@@ -864,6 +867,9 @@ jobs:
       # authenticated user of that same tenant). Rides this job for the same reason as the two
       # above — the expensive part is `supabase start` + `db reset` (§24).
       - run: supabase test db supabase/tests/business_context_readiness.sql
+      - name: Original EXP01 reviewed Setup receipt full-schema authority
+        run: node scripts/proof/exp01-reviewed-setup-full-schema.mjs
+        if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/secure_browser_control_plane_security.sql
       # PC-1 — concurrent budget enforcement: 12 racing service-role callers against a day
       # budget that admits 4; the gate's FOR UPDATE reservation must refuse the other 8.

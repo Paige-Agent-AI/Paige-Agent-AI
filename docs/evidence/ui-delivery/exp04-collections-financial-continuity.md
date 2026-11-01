@@ -360,3 +360,12 @@ Native metadata/replay/hostile authority-drift proof: **16 PASS**. This does not
 or verify the inherited catalogue's customer execution dependencies. The old receipt
 refusal remains unchanged; both original JWT-subject and reduced actor fixture ports
 are populated and their actual Auth identity is asserted. Same full native chain passes.
+
+
+The next exact hosted3f7a database failure is retained: original actual-actor refusal
+passed; retired-merchant refusal then used the wrong hard-coded fixture merchant/charge.
+That case now uses its existing ORIGINAL capture settings for both references and
+retains the same42501 requirement. The unmodified native guards pass all54 original
+work controls with this corrected input, including event races/replay. Hosted
+full-schema verification on the new exact head remains owed. No execution or permission
+policy was changed to make a negative assertion pass.

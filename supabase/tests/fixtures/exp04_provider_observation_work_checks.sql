@@ -214,7 +214,7 @@ select set_config('test.actor','',true);select set_config('request.jwt.claim.sub
 update public.tenant_stripe_accounts set binding_version=binding_version+1,stripe_account_id='acct_replacement'
  where tenant_id=current_setting('test.e04_work_tenant')::uuid;
 set local role service_role;
-select pg_temp.work_refused($q$select public.register_sales_provider_observation_event('evt_retired','refund.created','acct_fixtureA','test','ch_fixture')$q$,'42501',
+select pg_temp.work_refused($q$select public.register_sales_provider_observation_event('evt_retired','refund.created',current_setting('test.e04_work_merchant'),'test',current_setting('test.e04_work_charge'))$q$,'42501',
  'known original payment with retired merchant scope is refused rather than silently ignored');
 reset role;
 update public.tenant_stripe_accounts m set binding_version=(s.value->>'merchant_binding_version')::bigint,

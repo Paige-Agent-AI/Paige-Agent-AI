@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { readInvoiceRecord, type InvoiceRecord } from './invoiceLifecycleApi';
+import { readInvoiceRecord, requestInvoiceFinancialEvidence, type InvoiceRecord } from './invoiceLifecycleApi';
 import type { BillingRpc } from './billingDrafts';
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -75,7 +75,7 @@ export function useFocusedSalesInvoice({ tenantId, resolving, invoiceIds, accoun
     if (!actorId || !uuid.test(actorId)) { set('refused', 'Sign in to open this saved invoice.', null, epoch); return; }
     void (async () => {
       try {
-        const response = await rpc('read_sales_invoice', { _expected_tenant_id: expectedTenant, _invoice_id: invoiceId });
+        const response = await requestInvoiceFinancialEvidence(rpc('read_sales_invoice', { _expected_tenant_id: expectedTenant, _invoice_id: invoiceId }));
         if (cancelled || identity.current !== opened || actorEpoch.current !== epoch) return;
         // A missed/late auth event must not publish a response read by a previous actor.
         const { data: current } = await supabase.auth.getSession();
@@ -87,7 +87,7 @@ export function useFocusedSalesInvoice({ tenantId, resolving, invoiceIds, accoun
           return;
         }
         if (response.data === null) { set('unavailable', unavailable, null, epoch); return; }
-        const row = readInvoiceRecord(response.data, expectedTenant);
+        const row = readInvoiceRecord(response.data, expectedTenant, true);
         // Parser scope validation is necessary but not sufficient: never accept another invoice.
         if (!row || row.id !== invoiceId) { set('refused', refused, null, epoch); return; }
         set('ready', '', row, epoch);

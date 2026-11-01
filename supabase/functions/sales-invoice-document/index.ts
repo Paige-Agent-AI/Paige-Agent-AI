@@ -5,7 +5,7 @@ import {overRateLimit,trustedClientIp} from '../_shared/rateLimit.ts';
 import {sha256Hex} from '../_shared/agreements/token.ts';
 import {renderSalesInvoiceDocument} from '../_shared/sales-invoice-document.ts';
 import {renderDocumentPdf} from '../_shared/document-pdf.ts';
-const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Cache-Control':'no-store','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",'X-Content-Type-Options':'nosniff'};
+const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Expose-Headers':'X-PAIGE-Invoice-Financial-Context','Cache-Control':'no-store','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",'X-Content-Type-Options':'nosniff'};
 const refuse=()=>new Response('This invoice link is unavailable. Ask the business for a new link.',{status:404,headers});
 Deno.serve(async req=>{
   if(req.method==='OPTIONS')return new Response(null,{headers});
@@ -16,7 +16,7 @@ Deno.serve(async req=>{
   if(token){
     if(!/^[0-9a-f]{64}$/.test(token))return refuse();
     if(url.searchParams.get('format')==='payment-request'){
-      const {data,error}=await db.rpc('read_public_sales_invoice_payment_request',{_token_hash:await sha256Hex(token)});
+      const {data,error}=await db.rpc('read_public_sales_invoice_payment_request',{_token_hash:await sha256Hex(token)}).setHeader('X-PAIGE-Invoice-Evidence-Version','3');
       if(error||!data)return refuse();
       return new Response(JSON.stringify(data),{headers:{...headers,'Content-Type':'application/json'}});
     }
@@ -27,7 +27,7 @@ Deno.serve(async req=>{
     // from this JWT; no client id is read, and there is no bearer grant or owner fallback on this path.
     const target=portalInvoiceTarget(url.searchParams);const authorization=req.headers.get('authorization');
     if(!target||!authorization?.startsWith('Bearer '))return refuse();
-    const caller=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_ANON_KEY')!,{auth:{persistSession:false},global:{headers:{Authorization:authorization}}});
+    const caller=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_ANON_KEY')!,{auth:{persistSession:false},global:{headers:{Authorization:authorization,'X-PAIGE-Invoice-Evidence-Version':'3'}}});
     if(url.searchParams.get('format')==='payment-request'){
       const data=await readPortalInvoicePaymentRequest(caller,target);
       if(!data)return refuse();
@@ -44,10 +44,16 @@ Deno.serve(async req=>{
     if(!projection)return refuse();
   }
   const html=renderSalesInvoiceDocument(projection);if(!html)return refuse();
+  // Same canonical collector validated this identity/summary. Metadata is an
+  // observation for pairing only; the original bearer/JWT remains authority.
+  const current=projection as Record<string,unknown>,financial=current.financial_summary as Record<string,unknown>;
+  const documentHeaders={...headers,'X-PAIGE-Invoice-Financial-Context':JSON.stringify({
+    invoice_id:current.invoice_id,invoice_version:current.version,source_hash:financial.source_hash,standing:financial.standing})};
+
   if(url.searchParams.get('format')==='pdf'){
     // renderDocumentPdf creates this full-view Uint8Array from response.arrayBuffer().
-    try {const bytes=await renderDocumentPdf(html);return new Response(bytes.buffer as ArrayBuffer,{headers:{...headers,'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="invoice.pdf"'}});}
+    try {const bytes=await renderDocumentPdf(html);return new Response(bytes.buffer as ArrayBuffer,{headers:{...documentHeaders,'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="invoice.pdf"'}});}
     catch{return new Response('PDF could not be prepared. Retry the current invoice.',{status:503,headers});}
   }
-  return new Response(html,{headers:{...headers,'Content-Type':'text/html; charset=utf-8'}});
+  return new Response(html,{headers:{...documentHeaders,'Content-Type':'text/html; charset=utf-8'}});
 });

@@ -19569,6 +19569,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         sales_create_payment_request: "paige_invoice_provider_operations",
         sales_publish_invoice: "paige_invoices", sales_record_manual_payment: "paige_invoices",
         sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
+        sales_record_provider_disposition: "paige_invoices",
         sales_create_invoice_link: "paige_invoices",
         sales_create_commercial_terms: "tenant_client_agreements",
         sales_effectuate_commercial_terms: "tenant_client_agreements",

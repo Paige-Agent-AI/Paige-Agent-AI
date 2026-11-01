@@ -2885,3 +2885,28 @@ PR3190 to its own no-data Preview and reports RUNNING_MIGRATIONS/ACTIVE_HEALTHY;
 the project lookup returns NotFound. This conflicting control-plane evidence
 does not establish schema failure or recovery. No reset, branch replacement,
 history rewrite, direct production apply or failed-gate waiver follows.
+
+Original Operator recovery client preparation (UNMOUNTED, follow-up source only):
+`owner-recovery-service.ts` calls the same five-argument native recovery door
+once and verifies through `platform_owner_recovery_receipt` for the identical
+request. It captures actor/selected-tenant/intent before awaits and rechecks the
+host's original negative-only incarnation and actual actor around reads. Native
+role/holder/effect admission remains server authority. Unknown write transport
+or an unverified/read-unavailable result inspects the same request; not-found
+does not authorize retry. No request generator, automatic replay, local result
+store, approval gate, provider, model router or sender is introduced. The future
+host must retain the exact pending intent before dispatch and bind real Auth and
+selection lifetime; this module does not implement that mounted durable journey.
+
+An additional public-async-continuation control reproduced one local defect in
+this new unmounted source (1FAIL/21PASS): the inner receipt reader settled before
+its public continuation returned after an incarnation retired. A final check at
+that continuation repairs it; no production exposure is inferred. Final author
+synthetic two-client run53PASS includes30 Operator client cases and23 existing
+personal-notice cases, raw `exp08-recovery-clients-current.log` SHA256
+162ab87ee2537392427fcbca76bdf45bfdfc652fc848f4db789c5dc60baf51fa.
+Focused new-file ESLint and strict standalone TypeScript checks exit0; neither is
+whole-app or authenticated clearance. Initial missing-module baseline executed
+zero tests. Installed Supabase SDK coverage uses explicitly mocked actor/fetch.
+The native39 release candidate is separate; no later-head CI, mounted UI,
+production receipt, sender integration or full Team Hub readiness is claimed.

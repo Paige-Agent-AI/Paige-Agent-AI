@@ -3398,3 +3398,55 @@ case assertions and earlier10/13/14/16 history are preserved. Existing e6b whole
 required checks passed; current composite source must rerun all exact gates and
 renew review before normal source release. No earlier-head/native-component or
 packaging proof is promoted to full-schema16/Auth/customer outcome proof.
+
+
+### November1 — original personal notice read/unread preparation
+
+Finite own next-slice df0cb280 prepares inert
+`set_my_owner_recovery_notice_read(_notice uuid,_is_read boolean) -> jsonb`.
+It updates ONLY original `notifications.is_read/read_at` after the SAME released
+private personal-recipient predicate, then revalidates before returning exactly
+`{notification_id,is_read,read_at}`. It accepts no tenant, actor, reason, audience,
+permission, approval or recovery intent. One Auth UPDATE lock follows the original
+retirement table gate and precedes original recipient/member/tenant/notice locks;
+same-actor marks serialize before a notice SHARE-to-UPDATE upgrade. Legacy timestamp
+inconsistency is healed once; same-state replay does not update again or change time.
+Original dependency source/ABI/ACL/security metadata and own replay are guarded.
+No notification store, owner effect, result ledger, runtime, grant or sender is added.
+
+Actual production CATALOG only confirms original user-owned notifications has
+read state but mutable metadata/title/action_url; those values never grant native
+resource access. Three original private helper hashes3502ca4b/ddcdb478/defee9e1
+and private/empty-path/volatile metadata were read before preparing this source.
+No customer notices/accounts were queried or changed.
+
+The original full ported recovery runner now executes the owning17 new cases
+BEFORE its late legal-owner FK fixture. Actual full229cases PASS/terminal0,
+including3observed native mark waits: first commit, first rollback and identity
+revocation first. Same-state updates, native audience/ban/soft-delete/foreign/
+retired/forged-binding refusals, zero-seat holder-of-record without workspace
+access, member reentry refusal, excluded SDK roles, source/ACL drift and unchanged
+business/audit data are covered. These are controlled Auth/table/RLS ports, NOT
+production or authenticated customer proof. The first run misplaced this hook
+after the legal-owner FK fixture and got a protected TRUNCATE failure; the hook
+moved before that fixture, without CASCADE or relaxing a constraint. The second
+run's direct pointer seed met the ORIGINAL protected ownership refusal; the
+fixture now seeds through the ORIGINAL native recovery door, then ports an
+already-lost seat. Both failures are retained, not called product-native defects.
+
+The existing personal notice service adds a strict current-state setter using
+actual actor resolution, captured original lifetime and SAME notice reference;
+missing/foreign/expanded/wrong-state/malformed or interrupted results are UNKNOWN,
+never success or automatic retry. Original GET is the recovery path. Capturing
+the common read scope preserves original reader behavior; a newly thrown context
+callback counterexample2FAIL/22PASS is repaired to sanitized SCOPE_CHANGED before
+any dispatch. New method missing-before22FAIL/23oldPASS is retained. Final3client
+suites96PASS (72original +24new), focused4file lint and bounded strict service/test
+compilation exit0; not whole-app TypeScript clearance. No UI is mounted and no
+native version/managed/production apply or full bell/global unread claim exists.
+
+Original3200/1b remains frozen independently: hosted original profile28,
+permission32 AND new atomic16 steps SUCCESS; whole database/verify still running
+at this checkpoint. Its source release is not activation of this next read-state
+RPC. E01 recipient/zero-seat/broader bell host and full native/schema/role/customer
+read/reload/reconcile proof remain required. Full18+6/five journeys STILL CODING.

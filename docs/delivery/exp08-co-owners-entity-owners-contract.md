@@ -2910,3 +2910,19 @@ whole-app or authenticated clearance. Initial missing-module baseline executed
 zero tests. Installed Supabase SDK coverage uses explicitly mocked actor/fetch.
 The native39 release candidate is separate; no later-head CI, mounted UI,
 production receipt, sender integration or full Team Hub readiness is claimed.
+
+Follow-up client controls now additionally cover the submit continuation, an
+apparently successful write with no visible receipt, and a positively recorded
+in-app audience without disclosing recipient bindings or claiming delivery.
+Actual final two-client run56PASS =33 Operator cases +23 personal cases (not
+added to the superseded53). Raw `exp08-recovery-clients-final.log` SHA256
+b96ff6d9dcfa466dd5fcc0c72c329664ec2c79ba1aa8ffc2d5c6ff7cd54a780a.
+Focused lint and strict standalone new-file compilation again exit0.
+Separate sequential source review is AUTHOR-REVIEW / LOWER ASSURANCE; no
+distinct non-author execution, mounted flow or production proof is claimed.
+
+Published native candidate aee031a50: hosted database job124875356421 reports
+the own native lifecycle step87 SUCCESS. Exact test-count log extraction is
+not yet available (job still runs; log endpoint returned404). This is a step
+result, not whole database-contract/CI/Preview or production clearance. The
+managed Preview remains FAIL for the recorded update-function502.

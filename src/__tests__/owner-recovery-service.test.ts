@@ -36,15 +36,15 @@ describe('original operator recovery client (synthetic ports, no mounted flow)',
   await expect(submitOwnerRecovery(client,scope,{...intent,action:selected})).resolves.toMatchObject({state:'verified',receipt:{action:selected}});
   expect(client.rpc.mock.calls[0][1]).toMatchObject({_act:selected,_request:request});
  });
- it('refuses an incarnation retired between the inner receipt read and public async continuation',async()=>{
+ it.each(['inspect','submit'] as const)('refuses an incarnation retired between the inner receipt read and public %s continuation',async mode=>{
   const {client,scope}=fixture();let current=true;scope.isCurrent=()=>current;let reads=0;
   client.getActor.mockImplementation(()=>{
    const response=Promise.resolve(actor);
-   if(++reads===2)response.then(()=>queueMicrotask(()=>queueMicrotask(()=>{current=false;})));
+   if(++reads===(mode==='inspect'?2:3))response.then(()=>queueMicrotask(()=>queueMicrotask(()=>{current=false;})));
    return response;
   });
-  await expect(inspectOwnerRecovery(client,scope,intent)).rejects.toMatchObject({code:'SCOPE_CHANGED'});
-  expect(current).toBe(false);expect(client.rpc).toHaveBeenCalledOnce();
+  await expect(mode==='inspect'?inspectOwnerRecovery(client,scope,intent):submitOwnerRecovery(client,scope,intent)).rejects.toMatchObject({code:'SCOPE_CHANGED'});
+  expect(current).toBe(false);expect(client.rpc).toHaveBeenCalledTimes(mode==='inspect'?1:2);
  });
  it('submits the exact five native arguments once and verifies through the original same-request receipt',async()=>{
   const {client,scope}=fixture();const result=await submitOwnerRecovery(client,scope,intent);
@@ -72,6 +72,19 @@ describe('original operator recovery client (synthetic ports, no mounted flow)',
  it('does not use a writer success response as a substitute for receipt verification',async()=>{
   const {client,scope}=fixture();client.rpc.mockResolvedValueOnce({data:native(),error:null});client.rpc.mockRejectedValueOnce(Error('read unavailable'));
   await expect(submitOwnerRecovery(client,scope,intent)).resolves.toEqual({state:'unknown',requestId:request});
+ });
+ it('does not report a writer response as verified when its original receipt is not yet visible',async()=>{
+  const {client,scope}=fixture();client.rpc.mockResolvedValueOnce({data:native(),error:null});
+  client.rpc.mockResolvedValueOnce({data:{status:'not_found',request_id:request},error:null});
+  await expect(submitOwnerRecovery(client,scope,intent)).resolves.toEqual({state:'unknown',requestId:request});
+  expect(client.rpc).toHaveBeenCalledTimes(2);
+ });
+ it('projects actual recorded in-app audience count without claiming delivery or exposing recipient bindings',async()=>{
+  const {client,scope}=fixture();client.rpc.mockResolvedValue({data:{...native(),receipt:{...native().receipt,
+   notice_status:'in_app_recorded',notices:[{user_id:target,notification_id:request},{user_id:actor,notification_id:other}],notified:[target,actor]}},error:null});
+  const result=await inspectOwnerRecovery(client,scope,intent);
+  expect(result).toMatchObject({state:'verified',receipt:{noticeCount:2,noticeStatus:'in_app_recorded',emailStatus:'not_requested'}});
+  expect(result).not.toHaveProperty('receipt.notices');expect(result).not.toHaveProperty('receipt.notified');
  });
  it('keeps inspection not-found bounded to this request, without executing',async()=>{
   const {client,scope}=fixture();client.rpc.mockResolvedValue({data:{status:'not_found',request_id:request},error:null});

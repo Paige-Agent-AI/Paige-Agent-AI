@@ -999,3 +999,21 @@ Original CURA invoice observation/context also consumes that private source and
 retains E09 source custody. Its current3 financial representation/integration must
 be reconciled through original ANT163, alongside the pending Billing-only handoff.
 Exact-head verify/database checks FAILED atd700; no release or acceptance waiver.
+
+
+November1 invoice-delivery verification: actuald700 verify also failed the owning
+invoice delivery group (290PASS/3FAIL across15 suites). Reproduced the same three
+locally. Its mocked RPC returned a bare Promise without the real SDK setHeader
+method and only old financial ledger facts. Current documents correctly refused
+that contract before creating an attachment or reaching the substituted provider.
+
+The original test-only RPC port now supplies the real request-header method and
+explicit synthetic native3 summary/gross ledger facts. ALL12 original send-message
+assertions remain byte-for-byte. One new case checks requested evidence3 and that
+an old financial reply still produces no PDF/provider attempt or bearer leak.
+Original entire delivery selection now294PASS/15 suites. The intermediate partially
+updated fixture still failed (missing native receivable history totals); its log
+is retained before the final corrected result. Product/sender/governance/native
+bytes are unchanged; no real send, activation, delivery or provider acceptance.
+Full exact-head hosted checks, source-oracle/Portal compatibility, paired Billing
+integration and actual Owner/client/provider outcome proof remain release holds.

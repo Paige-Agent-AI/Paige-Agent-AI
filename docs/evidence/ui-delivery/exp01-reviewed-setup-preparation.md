@@ -9,6 +9,22 @@ or any application; complete61 manifests/productionfrontier27030005 verified abs
 No dependency on E13's private Setup-source validator, no Setup-native payload included.
 Full-schema/managed Preview/review/exact CI/normal ordered release/readback pending.
 
+Forward permission declaration:27040001 actually installedONCE in clean managedPreviewpjlp;
+ALL8 body/fullABI/owner/config/default/ACL readbacks match, original Work RLS+FORCEtrue,
+nullablejsonb/exactindex/browserUPDATEfalse. Its7ad214e2 SHA is now IMMUTABLE. Original
+signature-level source guard genuinely FAILS3 signatures because grouped ACL statements
+are not recognized after their first function. No guard/baseline exemption or weakening.
+New CLI-created EMPTY20261101204957 explicitly prospectively renamed BEFORE population
+or application to27040002_exp01_chat_knowledge_explicit_acl.sql: unchanged8-function
+installation guard plus individual REVOKE/GRANT reassertions for SAME3 restricted APIs.
+Original runner asserts exact forward text and applies/replays both. Explicit imported
+original signature run() nowPASS4/4baseline/no additions; Windows direct invocation did
+not execute it due existing file-URL main detection, so that earlier exit0 was not proof.
+Fresh complete local53native+16original/forward drift refusals+5observedwaits PASS/exit0,
+ALL8 definition/permission snapshots equal across forward/replay, clusterSTOPPED.
+Actual prior2ef database job124971263944 E01 full-schema step149 SUCCESS; this is supporting
+behavior proof only. Final carrier-head exactCI/managedforward/native release still owed.
+
 November1 current additive checkpoint:3194 is source-released at355bc7ef781722859aad39dd4b32916f2fd5284b,
 all six exact2dd workflows/both web statuses SUCCESS, actual58 full-schema/58 focused/65 modeled-native
 PASS, lower-assurance review5729399630 and actual automated P2 resolved4436963629. Both official

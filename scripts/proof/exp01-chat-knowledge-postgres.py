@@ -26,6 +26,11 @@ try:
  for f in files:sql(db,file=root/f)
  if not a.without_candidate:
   for _ in range(2):sql(db,file=root/'scripts/proof/exp01-chat-knowledge-candidate.sql')
+  acl_snapshot="SELECT jsonb_agg(jsonb_build_object('id',oid,'definition',pg_get_functiondef(oid),'owner',proowner,'acl',proacl) ORDER BY oid) FROM pg_proc WHERE proname IN ('_paige_chat_knowledge_scope','_paige_chat_knowledge_source','_paige_chat_knowledge_intake_source','inspect_paige_chat_knowledge_intake','stage_paige_chat_knowledge_intake','inspect_paige_chat_knowledge_link','save_paige_chat_knowledge_link','list_paige_chat_knowledge_links')"
+  acl_before=sql(db,acl_snapshot)[0]
+  for _ in range(2):sql(db,file=root/'supabase/migrations/20271127040002_exp01_chat_knowledge_explicit_acl.sql')
+  if sql(db,acl_snapshot)[0]!=acl_before:raise RuntimeError('Explicit ACL forward changed original eight function definitions or permissions')
+  print('PASS: explicit ACL forward and replay preserve all eight native definitions and permissions')
  # SQL helper bodies resolve at execution; absence control genuinely reaches
  # the missing original host mutation/inspection after real native publication.
  sql(db,file=root/'scripts/proof/exp01-chat-knowledge-fixture.sql')
@@ -51,11 +56,12 @@ try:
   'DROP INDEX public.paige_work_chat_knowledge_source',
   "ALTER TABLE public.paige_durable_work ALTER COLUMN chat_source_link SET DEFAULT '{}'::jsonb",
  ]
- for fault in faults:
-  run=subprocess.run(base+['-d',db],input='BEGIN;'+fault+';'+candidate,cwd=root,text=True,capture_output=True,encoding='utf8')
-  if run.returncode==0 or 'CHAT_KNOWLEDGE_' not in run.stderr:raise RuntimeError('Install fault not refused: '+fault+' '+run.stderr[-2000:])
-  if sql(db,snapshots)[0]!=before:raise RuntimeError('Refused install changed original eight function definitions/metadata')
- print('PASS:',len(faults),'installation source/config/permission/storage/index faults refused and rolled back')
+ for installer in [candidate,(root/'supabase/migrations/20271127040002_exp01_chat_knowledge_explicit_acl.sql').read_text(encoding='utf8')]:
+  for fault in faults:
+   run=subprocess.run(base+['-d',db],input='BEGIN;'+fault+';'+installer,cwd=root,text=True,capture_output=True,encoding='utf8')
+   if run.returncode==0 or 'CHAT_KNOWLEDGE_' not in run.stderr:raise RuntimeError('Install fault not refused: '+fault+' '+run.stderr[-2000:])
+   if sql(db,snapshots)[0]!=before:raise RuntimeError('Refused install changed original eight function definitions/metadata')
+ print('PASS:',len(faults)*2,'original and forward installation source/config/permission/storage/index faults refused and rolled back')
  actor="SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);"
  def reset():
   sql(db,"UPDATE public.paige_durable_work SET chat_source_link=NULL WHERE id=public.test_chat_work() OR id=(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='chat');UPDATE public.tenant_members SET status='active' WHERE user_id='10000000-0000-0000-0000-000000000001'")

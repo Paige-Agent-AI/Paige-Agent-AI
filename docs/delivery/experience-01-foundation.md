@@ -18,6 +18,13 @@ validator; this lower release precedes pending E13 28000013/E05 29000005, with f
 frontier/order checks before merge. No Setup writer/helper is included in the carrier.
 Actual full-schema/managed Preview/exact-head CI/native release/readback remain owed.
 
+Forward27040002 reasserts the SAME3 ACLs individually for the unchanged original
+signature-level static guard, which cannot attribute later functions in grouped
+statements. It copies the exact8-function installation guard first; no function
+body/permission expansion or guard exemption. Applied Preview27040001/7ad214e2 is
+unchanged/immutable. Local53+16drift+5waits and exact8metadata conservation PASS;
+prior2ef actual E01 full-schema step149 SUCCESS is supporting, not final-head clearance.
+
 ### November 1 producer continuation — original full assignment active
 
 Source preparation3194 actually merged355bc7ef781722859aad39dd4b32916f2fd5284b;

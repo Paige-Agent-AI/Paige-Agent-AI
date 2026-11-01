@@ -41,7 +41,17 @@ const hostCandidateSource=read('scripts/proof/exp01-chat-knowledge-candidate.sql
 const hostCarrierSource=read('supabase/migrations/20271127040001_exp01_chat_knowledge_links.sql');
 assert.equal(hostCarrierSource.slice(hostCarrierSource.indexOf('\n')),hostCandidateSource.slice(hostCandidateSource.indexOf('\n')),
  'released carrier is byte-exact original Chat candidate after its first descriptive comment');
-const hostCandidate=body(hostCandidateSource);
+const hostAclSource=read('supabase/migrations/20271127040002_exp01_chat_knowledge_explicit_acl.sql');
+const hostGuard=hostCandidateSource.split('-- E01_CHAT_INSTALL_GUARD_BEGIN\n')[1].split('-- E01_CHAT_INSTALL_GUARD_END')[0];
+const explicitSignatures=[
+ 'stage_paige_chat_knowledge_intake(uuid,uuid,uuid,uuid,uuid,uuid,integer,uuid,text,integer)',
+ 'save_paige_chat_knowledge_link(uuid,uuid,uuid,uuid,uuid,uuid,integer,uuid,text,integer)',
+ 'list_paige_chat_knowledge_links(uuid,uuid,uuid,uuid,integer)',
+];
+assert.equal(hostAclSource,'-- Reassert original restricted ACLs per signature; preserve applied27040001 unchanged.\nBEGIN;\n'+hostGuard+
+ explicitSignatures.map(s=>'REVOKE ALL ON FUNCTION public.'+s+' FROM PUBLIC,anon,authenticated,service_role;\nGRANT EXECUTE ON FUNCTION public.'+s+' TO authenticated;\n').join('')+'COMMIT;\n',
+ 'forward only reasserts exact original restricted ACLs behind the unchanged eight-function guard');
+const hostCandidate=body(hostCandidateSource)+'\n'+body(hostAclSource);
 const hostTest=read('supabase/tests/exp01_chat_knowledge_link.sql');
 assert.equal(hostTest.split('-- EXP01_CHAT_INSTALL_CANDIDATE').length,2);
 assert.equal(hostTest.split('-- EXP01_CHAT_REPLAY_CANDIDATE').length,2);

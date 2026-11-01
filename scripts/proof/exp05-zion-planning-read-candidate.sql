@@ -201,10 +201,10 @@ EXCEPTION WHEN OTHERS THEN
 END $fn$;
 REVOKE ALL ON FUNCTION public._team_hub_planning_read_annotations(public.team_hub_agent_turns) FROM PUBLIC,anon,authenticated,service_role;
 
--- Exact guarded additive edits to the three original functions. Public post,
--- list, serializer, domain reader, actor helper and all other cards stay exact.
+-- Exact guarded additive edits to the original guard/stage/history projection.
+-- Public post, list, serializer, domain reader and all other cards stay exact.
 DO $patch$
-DECLARE sig text; old text; src text; replaced text; additions text[]; originals text[]; n integer; i integer; p pg_catalog.pg_proc; metadata jsonb;
+DECLARE sig text; old text; src text; replaced text; additions text[]; originals text[]; n integer; i integer; p pg_catalog.pg_proc; metadata jsonb; after_metadata jsonb;
 BEGIN
  FOR sig,old,originals,additions IN SELECT * FROM (VALUES
  ('public._team_hub_assert_agent_read_scope(public.team_hub_agent_turns)','a75a322d43e4cde08f5142d1eabf6ddb',
@@ -260,22 +260,41 @@ BEGIN
  ('public._team_hub_agent_read_annotations(uuid)','61bb33a7a92608e3090f25fbd477401d',
  ARRAY[$a$jsonb_build_object('source_backed_read',true,'paige_record_links',t.read_context->'record_links')$a$],
  ARRAY[$a$jsonb_build_object('source_backed_read',true,'paige_record_links',t.read_context->'record_links')
-   || CASE WHEN t.read_context ? 'planning' THEN public._team_hub_planning_read_annotations(t) ELSE '{}'::jsonb END$a$])
+   || CASE WHEN t.read_context ? 'planning' THEN public._team_hub_planning_read_annotations(t) ELSE '{}'::jsonb END$a$]),
+ ('public.team_hub_search(uuid,text,integer)','d71b872a84e35d1b6b758006181e15d2',
+ ARRAY[$a$  WHERE m.id=ANY(hits)$a$],
+ ARRAY[$a$  WHERE m.id=ANY(hits)
+   AND NOT coalesce((public._team_hub_agent_read_annotations(m.id)->>'source_unavailable')::boolean,false)$a$])
  ) v(signature,old_md5,from_parts,to_parts)
  LOOP
   SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=to_regprocedure(sig);
-  IF NOT FOUND OR p.proowner<>'postgres'::regrole OR p.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
-   OR p.pronargdefaults<>0 OR p.proretset OR p.proisstrict OR p.proleakproof OR p.proparallel<>'u'
+  IF NOT FOUND OR p.proowner<>'postgres'::regrole
+   OR p.proconfig IS DISTINCT FROM (CASE WHEN p.proname='team_hub_search'
+    THEN ARRAY['search_path=""','plan_cache_mode=force_custom_plan']::text[] ELSE ARRAY['search_path=""']::text[] END)
+   OR p.pronargdefaults<>(CASE WHEN p.proname='team_hub_search' THEN 1 ELSE 0 END)
+   OR (p.proname='team_hub_search' AND pg_get_expr(p.proargdefaults,0) IS DISTINCT FROM '20')
+   OR p.proargnames IS DISTINCT FROM (CASE p.proname
+    WHEN 'team_hub_search' THEN ARRAY['p_expected_tenant','p_query','p_limit']
+    WHEN 'team_hub_stage_agent_read_context' THEN ARRAY['p_turn_id','p_token_hash','p_read_tools','p_record_links']
+    WHEN '_team_hub_assert_agent_read_scope' THEN ARRAY['t'] ELSE ARRAY['p_message'] END)
+   OR p.proretset OR p.proisstrict OR p.proleakproof OR p.proparallel<>'u'
    OR p.prokind<>'f' OR p.provariadic<>0 OR p.proacl IS NULL
    OR (p.proname='_team_hub_agent_read_annotations' AND (p.prosecdef OR p.provolatile<>'s'
     OR p.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='sql')))
-   OR (p.proname<>'_team_hub_agent_read_annotations' AND (NOT p.prosecdef OR p.provolatile<>'v'
+   OR (p.proname<>'_team_hub_agent_read_annotations' AND (NOT p.prosecdef
+    OR p.provolatile<>(CASE WHEN p.proname='team_hub_search' THEN 's' ELSE 'v' END)
     OR p.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')))
    OR EXISTS(SELECT 1 FROM pg_catalog.aclexplode(p.proacl) a WHERE a.privilege_type<>'EXECUTE' OR a.is_grantable
-    OR (a.grantee<>p.proowner AND NOT (p.proname='team_hub_stage_agent_read_context' AND a.grantee='service_role'::regrole)))
-   OR (p.proname='team_hub_stage_agent_read_context' AND NOT has_function_privilege('service_role',p.oid,'EXECUTE')) THEN
+    OR (a.grantee<>p.proowner AND NOT (p.proname='team_hub_stage_agent_read_context' AND a.grantee='service_role'::regrole)
+     AND NOT (p.proname='team_hub_search' AND a.grantee='authenticated'::regrole)))
+   OR (p.proname='team_hub_stage_agent_read_context' AND NOT has_function_privilege('service_role',p.oid,'EXECUTE'))
+   OR (p.proname='team_hub_search' AND NOT has_function_privilege('authenticated',p.oid,'EXECUTE')) THEN
    RAISE EXCEPTION 'Original Planning dependency metadata drift: %',sig; END IF;
   src:=p.prosrc; metadata:=to_jsonb(p)-'prosrc';
+  -- Only parser positions in the existing default's AST may move on re-emission.
+  -- Its actual default20, argument names/types and every other field stay exact.
+  IF p.proname='team_hub_search' THEN metadata:=jsonb_set(metadata,'{proargdefaults}',
+   to_jsonb(regexp_replace(p.proargdefaults::text,':location -?[0-9]+',':location -1','g'))); END IF;
   replaced:=src;
   -- Inverse first: a replay must be the complete exact approved transform.
   FOR i IN REVERSE array_length(originals,1)..1 LOOP replaced:=replace(replaced,additions[i],originals[i]); END LOOP;
@@ -290,7 +309,10 @@ BEGIN
    IF n=0 THEN RAISE EXCEPTION 'Original function delimiter drift'; END IF;
    EXECUTE left(src,n-1)||'AS $function$'||replaced||'$function$';
   END IF;
-  IF (SELECT to_jsonb(r)-'prosrc' FROM pg_catalog.pg_proc r WHERE r.oid=p.oid) IS DISTINCT FROM metadata THEN
+  SELECT to_jsonb(r)-'prosrc' INTO after_metadata FROM pg_catalog.pg_proc r WHERE r.oid=p.oid;
+  IF p.proname='team_hub_search' THEN after_metadata:=jsonb_set(after_metadata,'{proargdefaults}',
+   to_jsonb(regexp_replace(after_metadata->>'proargdefaults',':location -?[0-9]+',':location -1','g'))); END IF;
+  IF after_metadata IS DISTINCT FROM metadata THEN
    RAISE EXCEPTION 'Original Planning metadata changed: %',sig; END IF;
  END LOOP;
 END $patch$;

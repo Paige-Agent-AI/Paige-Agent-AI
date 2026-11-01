@@ -1684,3 +1684,25 @@ Founder acceptance: NOT_READY / NOT_ACCEPTED; 0/10 fully complete. O01 remains
 sole PRIMARY; O02 NEXT. ALG-01 has bounded reconciliation/source-version support;
 ALG-02/03/08/11/12/13 retain original maturity and proof gaps. Capabilities stay
 at their existing status; no Live promotion. No intermediate founder test.
+ +
+
+November1 follow-through: actual source ACK510f194f already authorizes necessary
+Planning history validation, and E08 returned shared CI custodya0eb3bb8. Fresh
+inspection of original #3190/82fbd4e2 confirms no overlapping Search/Planning
+hunk. The redundant extra-ACK hold above is superseded by receiving record
+e43e0b68; it is not a new permission inferred from silence. The exact bounded
+Search filter is now implemented and its full original-body inverse, ABI/default20
+(default-AST parser positions only normalized), config/ACL and replay verified.
+The normal native suite now REQUIRES revoked Planning results to be absent from
+Search. Removing only that filter restores exact original d71b872a and fails
+the new property, causally confirming the correction. Both additive CI hunks
+invert to the complete incoming workflow; E08 recovery hunks remain untouched.
+
+Current source/proof checkpoint: 178 host/source cases plus15 neighboring
+reader/link/wiring cases PASS; native20 query comparisons/12 hostile envelopes,
+original security suite and new recovery/history/Search controls PASS. Actual
+native source/permission fingerprints are retained in the existing JSON packet.
+The source is still UNVERSIONED/INERT: normal native ordering, a genuine free
+forward carrier, managed/full-schema/concurrency proof, final review/exact CI,
+production readback and ordinary customer proof remain separate gates. No native
+migration, live activation or O01/full-Experience completion is claimed.

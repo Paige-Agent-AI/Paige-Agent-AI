@@ -47,7 +47,7 @@ const result=spawnSync(psql,['-X','-h',process.env.PGHOST??'127.0.0.1','-p',proc
 writeFileSync(join(run,'stdout.txt'),result.stdout??'');writeFileSync(join(run,'stderr.txt'),result.stderr??'');
 const contractLine=(result.stdout??'').split(/\r?\n/).find(line=>line.startsWith('EXP05_NATIVE_CONTRACT:'));
 const contract=contractLine?JSON.parse(contractLine.slice('EXP05_NATIVE_CONTRACT:'.length)):null;
-if(result.status===0)assert(contract?.length===13,'Successful proof includes the actual native source/metadata contract');
+if(result.status===0)assert(contract?.length===14,'Successful proof includes the actual native source/metadata contract');
 if(contract)writeFileSync(join(run,'native-contract.json'),JSON.stringify(contract,null,2)+'\n');
 writeFileSync(join(run,'result.json'),JSON.stringify({exit:result.status,error:result.error?.message??null,
  inputs:[...inputs].map(([path,value])=>({path:relative(repo,path),sha256:value.sha256})),

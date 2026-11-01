@@ -8,7 +8,10 @@ DO $$ BEGIN IF current_database()<>'exp08_team_hub_a2b_proof' THEN
 SELECT pg_temp.check(to_regprocedure('public._team_hub_planning_read_source(public.team_hub_agent_turns,jsonb)') IS NOT NULL,
  'EXP05 missing original native Planning source contract');
 \endif
-CREATE TEMP TABLE exp05_before AS SELECT oid,to_jsonb(p)-'prosrc' AS metadata,prosrc FROM pg_proc p WHERE pronamespace='public'::regnamespace;
+CREATE FUNCTION pg_temp.exp05_metadata(p pg_proc) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT CASE WHEN p.proname='team_hub_search' THEN jsonb_set(to_jsonb(p)-'prosrc','{proargdefaults}',
+  to_jsonb(regexp_replace(p.proargdefaults::text,':location -?[0-9]+',':location -1','g'))) ELSE to_jsonb(p)-'prosrc' END $$;
+CREATE TEMP TABLE exp05_before AS SELECT oid,pg_temp.exp05_metadata(p) AS metadata,prosrc FROM pg_proc p WHERE pronamespace='public'::regnamespace;
 \ir ../../scripts/proof/exp05-zion-planning-read-candidate.sql
 CREATE TEMP TABLE exp05_after AS SELECT oid,to_jsonb(p) AS full FROM pg_proc p WHERE pronamespace='public'::regnamespace;
 \ir ../../scripts/proof/exp05-zion-planning-read-candidate.sql
@@ -16,8 +19,8 @@ SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM exp05_after b FULL JOIN pg_proc p 
  WHERE (b.oid IS NOT NULL OR p.pronamespace='public'::regnamespace) AND b.full IS DISTINCT FROM to_jsonb(p)),
  'EXP05 exact replay retains every public function body, OID, ABI, owner, ACL and metadata');
 SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM exp05_before b LEFT JOIN pg_proc p USING(oid)
- WHERE b.metadata IS DISTINCT FROM to_jsonb(p)-'prosrc' OR (b.prosrc<>p.prosrc AND p.proname NOT IN (
- '_team_hub_assert_agent_read_scope','team_hub_stage_agent_read_context','_team_hub_agent_read_annotations'))),
+ WHERE b.metadata IS DISTINCT FROM pg_temp.exp05_metadata(p) OR (b.prosrc<>p.prosrc AND p.proname NOT IN (
+ '_team_hub_assert_agent_read_scope','team_hub_stage_agent_read_context','_team_hub_agent_read_annotations','team_hub_search'))),
  'EXP05 every incumbent metadata and outside-owned body remains exact');
 SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(p.proacl) a
  WHERE p.proname IN ('_team_hub_planning_read_source','_team_hub_planning_source_versions','_team_hub_assert_planning_read',
@@ -215,13 +218,20 @@ SELECT pg_temp.j(:'u3',format('public.team_hub_list_messages(%L::uuid,%L::uuid)'
 SELECT pg_temp.check((:'e5revokedhistory') NOT LIKE '%Original weekly review%' AND (:'e5revokedhistory') LIKE '%source_unavailable%',
  'EXP05 original history masks the answer after source access is revoked');
 \if :{?exp05_search_red}
+-- Causal inverse only in this disposable proof: restore the exact original
+-- Search body and require the new privacy property to fail, preserving its ABI.
+DO $$ DECLARE d text; src text; BEGIN
+ SELECT prosrc INTO src FROM exp05_before WHERE oid='public.team_hub_search(uuid,text,integer)'::regprocedure;
+ SELECT pg_get_functiondef('public.team_hub_search(uuid,text,integer)'::regprocedure) INTO d;
+ EXECUTE left(d,strpos(d,'AS $function$')-1)||'AS $function$'||src||'$function$';
+END $$;
 SELECT pg_temp.check((SELECT md5(prosrc)='d71b872a84e35d1b6b758006181e15d2' FROM pg_proc
  WHERE oid='public.team_hub_search(uuid,text,integer)'::regprocedure),'EXP05 Search reproduction uses exact current original source');
+\endif
 SELECT pg_temp.j(:'u3',format('public.team_hub_search(%L::uuid,''weekly'')',:'ta')) AS e5revokedsearch \gset
 SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM jsonb_array_elements((:'e5revokedsearch')::jsonb->'results') r
  WHERE r->>'message_id'=(:'e5posted')::jsonb#>>'{message,id}'),
  'EXP05 revoked Planning source must not remain in original Search');
-\endif
 ROLLBACK TO e5_history_revoke;
 ROLLBACK;
 \o
@@ -233,6 +243,6 @@ SELECT 'EXP05_NATIVE_CONTRACT:'||jsonb_agg(jsonb_build_object('signature',p.oid:
  '_team_hub_planning_read_source','_team_hub_planning_source_versions','_team_hub_assert_planning_read',
  '_team_hub_stage_planning_read','_team_hub_planning_read_annotations','_team_hub_assert_agent_read_scope',
  'team_hub_stage_agent_read_context','_team_hub_agent_read_annotations','team_hub_post_agent_message',
- 'team_hub_list_messages','_team_hub_message_json','plan_list','_sales_invoice_actor');
+ 'team_hub_list_messages','_team_hub_message_json','plan_list','_sales_invoice_actor','team_hub_search');
 \o /dev/null
 \echo 'PASS: EXP05 caller-JWT version parity, native stage-before-publication, mixed CRM reads, refusal, replay and history revocation'

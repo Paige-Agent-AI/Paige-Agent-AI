@@ -66,3 +66,11 @@ receiving scope is clear. Native source is UNVERSIONED/INERT, no migration or
 production activation. Actual compatible desktop/narrow/keyboard/rendered link,
 reload, permissions and both-chat customer evidence remain UNVERIFIED. No new
 visual-quality, customer-outcome, catalogue-Live or founder-acceptance claim.
+
+Current follow-through: original history ACK510f194f and shared-CI returna0eb3bb8
+were sufficient; the redundant extra-ACK hold is superseded by e43e0b68. The
+Planning-only Search protection is implemented, native normal proof PASS and
+its single-hunk causal inverse FAIL as required. Canonical record-link display
+and history presentation still require actual compatible rendered/customer
+verification; source/CI proof does not satisfy that visual gate. Final immutable
+internal build identity is recorded in the existing #3087 review/CI checkpoint.

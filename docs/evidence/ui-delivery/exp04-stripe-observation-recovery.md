@@ -35,13 +35,13 @@ ACCEPTANCE_CRITERIA: A properly authorized original request can be paid in appro
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: Original Sales-only webhook hunk, merchant namespace, original payment and observation Work, native source/role/tenant locks, original Finance/Portal consumers. Platform billing/fulfillment suffix and all other runtime/authority systems unchanged.
 
-INTERNAL_BUILD_IDENTITY: development candidate on original EXP04 payment-completion branch; exact reviewed head and deployment identities are recorded in the PR/ANT-51 after observed; migration=LOCAL_UNAPPLIED(20271130000004); edge=LOCAL_UNDEPLOYED(tenant-stripe-connect,sales-invoice-command,sales-payment-reconcile,stripe-webhook); evidence=original ANT-51 and protected ANT-52.
+INTERNAL_BUILD_IDENTITY: db09637c652109de879f49355e4c04ede80cfed9; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271130000004_e04_atomic_capture_observation is locally proven but not deployed); edge=PROOF_OWED(tenant-stripe-connect sales-invoice-command sales-payment-reconcile and stripe-webhook are local only); evidence=original ANT-51 C249 native and Edge transcripts plus this source record
 RELEASE_CHANNEL: development: local engineering source only; no activation/configuration change.
 RELEASE_CLASSIFICATION: internal-only: necessary O5 completion source, not an accepted customer release.
 CUSTOMER_RELEASE_IDENTITY: none: full payment outcome/provider acceptance has not been demonstrated.
 RELEASE_NOTE_REQUIRED: no: no customer release identity or publication is authorized.
-RELEASE_TRUTH_BOUNDARY: PARTIAL original financial screens; UNAVAILABLE unconfigured PAIGE TEST merchant; PROOF OWED this candidate's hosted/native/provider/Owner acceptance. No new LIVE claim.
-RELEASE_RECOVERY: position=keep the server observation gate OFF until source/readback and activation authority are established; no destructive rollback of receipts; reference=original payment Work/journal/readback and same ANT-51 record.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: candidate hosted checks and native/Edge/provider/Owner acceptance remain unverified, original financial screens are partial and the PAIGE TEST merchant is unconfigured; no new LIVE claim.
+RELEASE_RECOVERY: position=keep the existing observation gate OFF pending release readback and activation authority, preserving original financial receipts; reference=original payment Work and immutable observation journal recovery in ANT-51
 
 ## Scope and proof
 

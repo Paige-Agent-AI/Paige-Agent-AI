@@ -2206,3 +2206,74 @@ each altered body and business rows on refusal. Final raw
 candidate SHA256 `3b848bfb004ba5f3a2f53358c2665bd578c2660454e97724bb1d3be191798842`.
 The earlier55 PASS is historical and does not prove this replay property. Renewed
 source review remains required; no native release/public recovery/effect acceptance.
+
+### October31 — private atomic recovery audit/receipt and E02 effect binding
+
+Source custody ANT147/996e4e4e, SAME original row4. Private preparation now factors
+the existing live Auth/super-admin lock into `_exp08_lock_recovery_actor() -> uuid`.
+`_exp08_lock_owner_recovery(uuid) -> uuid` retains its original signature, returns
+the previous holder and reuses I1 eligibility/holder state. No client/service
+EXECUTE; actual actor/tenant/role checks remain native, independent of model/GUC.
+
+`_exp08_apply_owner_recovery(uuid,text,uuid,text,uuid) -> jsonb` is PRIVATE ONLY:
+tenant, act, target user, reason, stable request UUID. It serializes that request,
+requires reason10–500, reserves the ORIGINAL audit row with id=request BEFORE
+effects, executes the original grant/private R12 effect and finalizes that same
+row only after native verification. Pointer/domain/recovery audits and effects
+commit or roll back together. Identical replay returns the committed receipt;
+actor/tenant/action/target/reason mismatch refuses. A prior preparing/unknown row
+is not silently retried. Revoke still refuses UNAVAILABLE pending E02's writer.
+No second operation/result ledger, public recovery RPC or provider dispatch.
+
+Private `_exp08_read_owner_recovery(tenant,request) -> jsonb` revalidates the LIVE
+original administrator, binds the exact tenant/actor/native audit identity and
+returns found/not_found separately. It does NOT rerun holder-none against a valid
+working post-state. Result is `effect_verified`, `notice_status:not_prepared`,
+`notified:[]`; this is not Done/delivered/full R9. Backend/transaction internals
+are removed from the returned receipt. Recipient/ordinary-owner private readers
+and actual notices remain to build. Runtime consumption requires the installed
+original recovery namespace/retention boundary; no forged client audit is trusted.
+
+**Finite E02 producer ABI (not deployed/available yet):**
+
+- `_exp08_lock_recovery_effect(_tenant uuid,_user uuid,_request uuid,_act text) -> uuid`
+  is postgres-only DEFINER/VOLATILE/empty search_path. E02 passes constant
+  `revoke_owner`, never a caller-selected act. Return is the actual native actor.
+- It first runs the original live actor/recovery admission, then locks the exact
+  original audit row. Required row: id=request, tenant_id=tenant, target_id=user,
+  actor_user_id=auth.uid(), actor_role=super_admin,
+  action=`tenant:owner_recovery.revoke_owner`; payload request_id/target match,
+  outcome=`preparing`, transaction_id=`pg_current_xact_id()::text`,
+  backend_pid=`pg_backend_pid()`. Those fields are native-generated, not caller
+  JSON/GUC credentials. Full transaction ID works across nested subtransactions;
+  no unsafe 32-bit xmin/epoch inference. A committed/stale record is not a fresh
+  effect credential. Finalization changes outcome only, preserving identity.
+- Lock order: live Auth SHARE -> actual super-admin role SHARE -> request advisory
+  lock in the outer transaction -> active owner seats ordered by id FOR UPDATE ->
+  tenant FOR UPDATE -> preparing audit FOR UPDATE -> original Billing contacts
+  advisory/rows inside E02's existing effect. Revalidation after Billing waits/
+  writes uses this same E08 function while outcome remains preparing. No second
+  resolver or owner impersonation. Full cross-writer lock composition still owed.
+- E02 retains ALL Billing source/ordinary one-arg API, authority, remaining-primary
+  invariant and native audit/atomic rollback. E08 retains recovery/public wrapper/
+  result/private notices. Zero known contacts must be explicit not-required;
+  unknown/error/foreign absence is never zero. Receipt/delivery after commit MUST
+  NOT call the effect predicate; it may legitimately observe a working holder.
+
+Original59 before26 new controls=85author-run local native PASS. Two actual
+duplicate-request connection races prove first commit returns one effect/receipt,
+and first rollback permits one committed effect/receipt. Tests also cover live
+role/other-admin/tenant/ACL negatives, short reason, runtime retention refusal,
+outer rollback, direct client audit fabrication, and a fixture domain consumer
+inside the actual original grant: exact native preparing identity succeeds while
+wrong action/target/null target fail. Completed or stale preparing records refuse.
+This is producer proof, NOT actual E02 cleanup or full native schema/customer proof.
+
+Raw `exp08-owner-recovery-receipt-binding-final.log` SHA256
+`cffaaefd1e3e771906cffac79e6bb97c1b903de41b60a76e7519f9de7e2933d3`;
+candidate SHA256 `73b162bf350e46d433b046ecf5f592476b6b81b13c77ba8ccb15623cae00ab77`.
+Earlier75/81/84 PASS packets remain separately historical; all own fixtures disposed.
+Source review, complete metadata/retention/privileged-writer admission, original
+runner/full-schema/target-writer races, native carrier/CI/release and authenticated
+proof remain owed. In-app/receiver integration and full original assignment remain
+**STILL CODING**, no customer routing/ALG maturity/provider/owner-acceptance change.

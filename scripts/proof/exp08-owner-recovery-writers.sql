@@ -2,26 +2,37 @@
 -- The original holder-state and eligibility helpers are reused, never reimplemented here.
 -- The first private lock step alone produces no effect, audit, notification or receipt.
 -- The later private R12 effect is incomplete until composed into the original recovery transaction.
-CREATE OR REPLACE FUNCTION public._exp08_lock_owner_recovery(_tenant uuid)
+CREATE OR REPLACE FUNCTION public._exp08_lock_recovery_actor()
 RETURNS uuid LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
 AS $function$
-DECLARE
-  actor uuid := auth.uid();
-  previous_holder uuid;
+DECLARE actor uuid := auth.uid();
 BEGIN
-  IF actor IS NULL OR _tenant IS NULL OR NOT public.is_super_admin(actor) THEN
+  IF actor IS NULL OR NOT public.is_super_admin(actor) THEN
     RAISE EXCEPTION 'OWNER_RECOVERY_FORBIDDEN' USING ERRCODE='42501';
   END IF;
-  -- Hold the actual live identity and role records, rather than trusting JWT role claims.
-  -- SHARE also conflicts with a ban/soft-delete update of this existing identity.
   PERFORM 1 FROM auth.users WHERE id=actor AND deleted_at IS NULL
     AND (banned_until IS NULL OR banned_until<=statement_timestamp()) FOR SHARE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'OWNER_RECOVERY_FORBIDDEN' USING ERRCODE='42501';
   END IF;
-  PERFORM 1 FROM public.user_roles
-    WHERE user_id=actor AND role='super_admin' FOR SHARE;
-  IF NOT FOUND THEN
+  PERFORM 1 FROM public.user_roles WHERE user_id=actor AND role='super_admin' FOR SHARE;
+  IF NOT FOUND OR NOT public.is_super_admin(actor) THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_FORBIDDEN' USING ERRCODE='42501';
+  END IF;
+  RETURN actor;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._exp08_lock_recovery_actor()
+  FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE OR REPLACE FUNCTION public._exp08_lock_owner_recovery(_tenant uuid)
+RETURNS uuid LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $function$
+DECLARE
+  actor uuid := public._exp08_lock_recovery_actor();
+  previous_holder uuid;
+BEGIN
+  IF _tenant IS NULL THEN
     RAISE EXCEPTION 'OWNER_RECOVERY_FORBIDDEN' USING ERRCODE='42501';
   END IF;
   -- Preserve the original owner writer's members -> tenant lock order.
@@ -34,7 +45,7 @@ BEGIN
     RAISE EXCEPTION 'OWNER_RECOVERY_FORBIDDEN' USING ERRCODE='42501';
   END IF;
   -- Every earlier wait may have changed the tenant or its authority. Re-read now.
-  IF auth.uid() IS DISTINCT FROM actor
+  IF public._exp08_lock_recovery_actor() IS DISTINCT FROM actor
     OR NOT public.is_super_admin(actor)
     OR NOT EXISTS(SELECT 1 FROM auth.users WHERE id=actor AND deleted_at IS NULL
       AND (banned_until IS NULL OR banned_until<=statement_timestamp()))
@@ -167,3 +178,152 @@ BEGIN
   END IF;
 END;
 $grant_kernel$;
+
+-- Original audit is the durable receipt; no second operation/result table.
+-- Private operator receipt only. Current recipient/private-notice readers remain separate work.
+CREATE OR REPLACE FUNCTION public._exp08_require_recovery_audit()
+RETURNS void LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $function$
+BEGIN
+  IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class c WHERE c.oid='public.paige_audit_log'::regclass
+    AND c.relowner='postgres'::regrole AND c.relrowsecurity AND NOT c.relforcerowsecurity)
+    OR NOT EXISTS(SELECT 1 FROM pg_catalog.pg_policy p WHERE p.polrelid='public.paige_audit_log'::regclass
+      AND p.polname='exp08_owner_recovery_native_rows' AND NOT p.polpermissive AND p.polcmd='*'
+      AND ARRAY(SELECT x FROM unnest(p.polroles) r(x) ORDER BY x)=
+        ARRAY(SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN ('anon','authenticated') ORDER BY oid)
+      AND pg_catalog.pg_get_expr(p.polqual,p.polrelid)='(NOT starts_with(action, ''tenant:owner_recovery.''::text))'
+      AND pg_catalog.pg_get_expr(p.polwithcheck,p.polrelid)='(NOT starts_with(action, ''tenant:owner_recovery.''::text))')
+    OR NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger t JOIN pg_catalog.pg_proc f ON f.oid=t.tgfoid
+      WHERE t.tgrelid='public.paige_audit_log'::regclass AND t.tgname='trg_owner_recovery_audit_truncate'
+      AND t.tgenabled='O' AND t.tgtype=34 AND NOT t.tgisinternal
+      AND f.oid=to_regprocedure('public.guard_owner_recovery_audit_truncate()')
+      AND f.proowner='postgres'::regrole AND f.prosecdef
+      AND md5(f.prosrc)='10797adfc24d314cdd592312eed9c3ab'
+      AND f.proconfig=ARRAY['search_path=""']::text[]
+      AND NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(coalesce(f.proacl,pg_catalog.acldefault('f',f.proowner))) a
+        WHERE a.grantee<>f.proowner OR a.privilege_type<>'EXECUTE' OR a.is_grantable)) THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_AUDIT_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._exp08_require_recovery_audit()
+  FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE OR REPLACE FUNCTION public._exp08_read_owner_recovery(_tenant uuid,_request uuid)
+RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $function$
+DECLARE actor uuid := public._exp08_lock_recovery_actor(); a public.paige_audit_log%ROWTYPE;
+BEGIN
+  PERFORM public._exp08_require_recovery_audit();
+  IF _tenant IS NULL OR _request IS NULL THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_BAD_REQUEST' USING ERRCODE='22023';
+  END IF;
+  SELECT * INTO a FROM public.paige_audit_log WHERE id=_request;
+  IF NOT FOUND THEN RETURN jsonb_build_object('status','not_found','request_id',_request);END IF;
+  IF a.tenant_id IS DISTINCT FROM _tenant OR a.actor_user_id IS DISTINCT FROM actor
+    OR a.actor_role IS DISTINCT FROM 'super_admin'
+    OR a.action NOT IN ('tenant:owner_recovery.grant_owner','tenant:owner_recovery.set_account_holder','tenant:owner_recovery.revoke_owner')
+    OR a.payload->>'request_id' IS DISTINCT FROM _request::text
+    OR a.payload->>'outcome' IS DISTINCT FROM 'effect_verified' THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_RECEIPT_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  RETURN jsonb_build_object('status','found','audit_id',a.id,'tenant_id',a.tenant_id,
+    'action',a.action,'target_user_id',a.target_id,
+    'receipt',a.payload-ARRAY['transaction_id','backend_pid']::text[],'recorded_at',a.created_at);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._exp08_read_owner_recovery(uuid,uuid)
+  FROM PUBLIC,anon,authenticated,service_role;
+
+-- Effect-time domain integration only, never a post-commit receipt/delivery predicate.
+CREATE OR REPLACE FUNCTION public._exp08_lock_recovery_effect(
+  _tenant uuid,_user uuid,_request uuid,_act text)
+RETURNS uuid LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $function$
+DECLARE actor uuid := public._exp08_lock_recovery_actor(); a public.paige_audit_log%ROWTYPE;
+BEGIN
+  PERFORM public._exp08_require_recovery_audit();
+  PERFORM public._exp08_lock_owner_recovery(_tenant);
+  SELECT * INTO a FROM public.paige_audit_log WHERE id=_request FOR UPDATE;
+  IF NOT FOUND OR _user IS NULL OR _request IS NULL OR _act IS NULL
+    OR _act NOT IN ('grant_owner','revoke_owner','set_account_holder')
+    OR a.actor_user_id IS DISTINCT FROM actor OR a.actor_role IS DISTINCT FROM 'super_admin'
+    OR a.tenant_id IS DISTINCT FROM _tenant OR a.target_id IS DISTINCT FROM _user
+    OR a.action IS DISTINCT FROM 'tenant:owner_recovery.'||_act
+    OR a.payload->>'request_id' IS DISTINCT FROM _request::text
+    OR a.payload->>'target' IS DISTINCT FROM _user::text
+    OR a.payload->>'outcome' IS DISTINCT FROM 'preparing'
+    OR a.payload->>'transaction_id' IS DISTINCT FROM pg_current_xact_id()::text
+    OR a.payload->>'backend_pid' IS DISTINCT FROM pg_backend_pid()::text THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_EFFECT_CONTEXT_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  RETURN actor;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._exp08_lock_recovery_effect(uuid,uuid,uuid,text)
+  FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE OR REPLACE FUNCTION public._exp08_apply_owner_recovery(
+  _tenant uuid,_act text,_user uuid,_reason text,_request uuid)
+RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $function$
+DECLARE
+  actor uuid := public._exp08_lock_recovery_actor();
+  reason text := btrim(_reason);
+  previous_holder uuid;
+  a public.paige_audit_log%ROWTYPE;
+BEGIN
+  PERFORM public._exp08_require_recovery_audit();
+  IF _tenant IS NULL OR _user IS NULL OR _request IS NULL OR _act IS NULL
+    OR _act NOT IN ('grant_owner','revoke_owner','set_account_holder')
+    OR reason IS NULL OR char_length(reason) NOT BETWEEN 10 AND 500 THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_BAD_REQUEST' USING ERRCODE='22023';
+  END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended('exp08_owner_recovery_request:'||_request::text,0));
+  IF public._exp08_lock_recovery_actor() IS DISTINCT FROM actor THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_FORBIDDEN' USING ERRCODE='42501';
+  END IF;
+  SELECT * INTO a FROM public.paige_audit_log WHERE id=_request;
+  IF FOUND THEN
+    IF a.actor_user_id IS DISTINCT FROM actor OR a.tenant_id IS DISTINCT FROM _tenant
+      OR a.action IS DISTINCT FROM 'tenant:owner_recovery.'||_act OR a.target_id IS DISTINCT FROM _user
+      OR a.payload->>'reason' IS DISTINCT FROM reason THEN
+      RAISE EXCEPTION 'OWNER_RECOVERY_REQUEST_MISMATCH' USING ERRCODE='42501';
+    END IF;
+    -- Post-act working state is valid receipt/replay, not a new recovery admission.
+    RETURN public._exp08_read_owner_recovery(_tenant,_request);
+  END IF;
+  previous_holder := public._exp08_lock_owner_recovery(_tenant);
+  -- Reserve the native identity BEFORE effects, in this same transaction/backend.
+  -- A dependent private domain writer can bind to this actual row, never caller JSON/GUC.
+  INSERT INTO public.paige_audit_log(id,actor_user_id,actor_role,action,target_type,target_id,tenant_id,payload)
+  VALUES(_request,actor,'super_admin','tenant:owner_recovery.'||_act,'user',_user,_tenant,
+    jsonb_build_object('request_id',_request,'reason',reason,'target',_user,
+      'previous_owner_user_id',previous_holder,'outcome','preparing',
+      'transaction_id',pg_current_xact_id()::text,'backend_pid',pg_backend_pid(),
+      'notice_status','not_prepared','notified','[]'::jsonb));
+  IF _act='grant_owner' THEN
+    PERFORM public._exp08_grant_co_owner(_tenant,_user,true);
+    IF NOT EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id=_tenant
+      AND user_id=_user AND is_owner AND status='active' AND role='owner') THEN
+      RAISE EXCEPTION 'OWNER_RECOVERY_RESULT_UNVERIFIED' USING ERRCODE='42501';
+    END IF;
+  ELSIF _act='set_account_holder' THEN
+    PERFORM public._exp08_set_recovery_holder(_tenant,_user);
+  ELSE
+    -- Original E02 cleanup contract is required; no fallback financial writer.
+    RAISE EXCEPTION 'OWNER_RECOVERY_REVOKE_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  UPDATE public.paige_audit_log SET payload=jsonb_set(payload,'{outcome}','"effect_verified"'::jsonb)
+    WHERE id=_request AND tenant_id=_tenant AND actor_user_id=actor AND target_id=_user
+      AND action='tenant:owner_recovery.'||_act AND payload->>'outcome'='preparing'
+      AND payload->>'transaction_id'=pg_current_xact_id()::text
+      AND payload->>'backend_pid'=pg_backend_pid()::text;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_RESULT_UNVERIFIED' USING ERRCODE='42501';
+  END IF;
+  RETURN public._exp08_read_owner_recovery(_tenant,_request);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._exp08_apply_owner_recovery(uuid,text,uuid,text,uuid)
+  FROM PUBLIC,anon,authenticated,service_role;

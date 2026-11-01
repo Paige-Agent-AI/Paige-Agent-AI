@@ -98,8 +98,13 @@ try{
  platform_fee_bps integer,parent_tenant_id uuid,stripe_customer_id text,stripe_subscription_id text);
  CREATE TABLE public.tenant_members(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,user_id uuid,is_owner boolean,status text,
  role public.tenant_role DEFAULT 'member',business_owner_id uuid,updated_at timestamptz DEFAULT now());
- CREATE TABLE public.paige_audit_log(id uuid DEFAULT gen_random_uuid(),actor_user_id uuid,actor_role text,
- action text,target_type text,target_id uuid,payload jsonb,tenant_id uuid);
+ CREATE TABLE public.paige_audit_log(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),actor_user_id uuid,actor_role text,
+ action text NOT NULL,target_type text,target_id uuid,payload jsonb NOT NULL DEFAULT '{}',tenant_id uuid,
+ created_at timestamptz NOT NULL DEFAULT now());
+ ALTER TABLE public.paige_audit_log ENABLE ROW LEVEL SECURITY;
+ GRANT ALL ON public.paige_audit_log TO authenticated,anon,service_role;
+ -- Strong overlapping permission port; the actual restrictive recovery namespace must still win.
+ CREATE POLICY fixture_permissive_audit ON public.paige_audit_log FOR ALL TO authenticated USING(true) WITH CHECK(true);
  -- Explicit ports for dependencies beneath the original I1 helpers, not a claimed full native schema.
  CREATE FUNCTION public.is_company_workspace(t uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT company FROM public.tenants WHERE id=t$$;
  CREATE FUNCTION public.is_tenant_owner(u uuid,t uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT EXISTS(
@@ -267,7 +272,99 @@ try{
   assert.equal(state(),beforeDrift);db.run(kernelDefinition);
  }
  await db.exec(candidate);
- console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private admission and R12 effect with original I1 audit; public recovery RPC/recovery receipt/notices NOT implemented',
+ // Original59 before private atomic audit/receipt controls. Reuse the actual namespace boundary.
+ await db.exec(readFileSync(new URL('./exp08-owner-recovery-provenance.sql',import.meta.url),'utf8'));
+ const request='e8000000-0000-4000-8000-000000092001';
+ const reason='Restore the verified account holder';
+ const apply=(id=request,act='set_account_holder',text=reason)=>`SELECT public._exp08_apply_owner_recovery('${tenant}','${act}','${holder}','${text}','${id}')`;
+ const read=()=>JSON.parse(scalar(`SELECT public._exp08_read_owner_recovery('${tenant}','${request}')`));
+ reset();seat();
+ assert.equal(read().status,'not_found');results.push({case:'missing original recovery receipt stays not_found',passed:true});
+ const first=JSON.parse(scalar(apply()));
+ assert.equal(first.receipt.outcome,'effect_verified');assert.equal(first.receipt.notice_status,'not_prepared');
+ assert.deepEqual(first.receipt.notified,[]);assert.equal(first.audit_id,request);
+ assert.equal(scalar(`SELECT public._tenant_account_holder_state('${tenant}')`),'working');
+ results.push({case:'private atomic R12 operation persists original recovery audit and truthful incomplete-notice receipt',passed:true});
+ const count=scalar('SELECT count(*) FROM public.paige_audit_log');
+ assert.deepEqual(JSON.parse(scalar(apply())),first);assert.deepEqual(read(),first);
+ assert.equal(scalar('SELECT count(*) FROM public.paige_audit_log'),count);
+ results.push({case:'same request replay/read succeeds after holder becomes working without repeating effect or audit',passed:true});
+ await denied('same request changed reason refuses replay',()=>db.exec(apply(request,'set_account_holder','A materially different recovery reason')),/OWNER_RECOVERY_REQUEST_MISMATCH/);
+ await denied('same request changed action refuses replay',()=>db.exec(apply(request,'grant_owner')),/OWNER_RECOVERY_REQUEST_MISMATCH/);
+ db.run(`DELETE FROM public.user_roles`);await denied('receipt current role revocation refuses private reason disclosure',()=>db.exec(`SELECT public._exp08_read_owner_recovery('${tenant}','${request}')`));
+ db.run(`INSERT INTO public.user_roles VALUES('${actor}','super_admin')`);
+ db.role='authenticated';await denied('client cannot forge a native recovery audit despite overlapping allow port',
+  ()=>db.exec(`INSERT INTO public.paige_audit_log(id,action) VALUES('e8000000-0000-4000-8000-000000092002','tenant:owner_recovery.set_account_holder')`),/row-level security/);db.role='';
+ for(const role of ['authenticated','anon','service_role']){
+  db.role=role;await denied(role+' cannot invoke private recovery apply',()=>db.exec(apply()));
+  await denied(role+' cannot invoke private recovery receipt reader',()=>db.exec(`SELECT public._exp08_read_owner_recovery('${tenant}','${request}')`));db.role='';
+ }
+ db.run('ALTER TABLE public.paige_audit_log DISABLE TRIGGER trg_owner_recovery_audit_truncate');
+ await denied('missing native retention boundary refuses receipt',()=>db.exec(`SELECT public._exp08_read_owner_recovery('${tenant}','${request}')`),/OWNER_RECOVERY_AUDIT_UNAVAILABLE/);
+ db.run('ALTER TABLE public.paige_audit_log ENABLE TRIGGER trg_owner_recovery_audit_truncate');
+ reset();seat();
+ const rolled='e8000000-0000-4000-8000-000000092003';
+ await db.exec(`BEGIN;${apply(rolled)};ROLLBACK;`);
+ assert.equal(scalar(`SELECT owner_user_id IS NULL FROM public.tenants WHERE id='${tenant}'`),'t');
+ assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${rolled}'`),'0');
+ results.push({case:'outer rollback removes pointer and recovery receipt atomically',passed:true});
+ const revoked='e8000000-0000-4000-8000-000000092004';
+ await denied('unimplemented Billing-dependent revoke refuses without a success receipt',()=>db.exec(apply(revoked,'revoke_owner')),/OWNER_RECOVERY_REVOKE_UNAVAILABLE/);
+ assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${revoked}'`),'0');
+ async function operationRace(label,commit,id){
+  reset();seat();const name='exp08_recovery_operation_'+Date.now();
+  const oldCount=Number(scalar("SELECT count(*) FROM public.paige_audit_log WHERE action='tenant:account_holder_changed'"));
+  const first=session(`BEGIN;${db.prefix()}${apply(id)};SELECT 'exp08_recovery_operation_locked';`);let second;
+  try{
+   await until(()=>first.out().includes('exp08_recovery_operation_locked'));
+   second=session(`SET application_name='${name}';${db.prefix()}${apply(id)};`);second.p.stdin.end();
+   await until(()=>scalar(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='${name}' AND wait_event_type='Lock' AND cardinality(pg_blocking_pids(pid))>0)`)==='t');
+   first.p.stdin.end(commit?'COMMIT;\n':'ROLLBACK;\n');assert.equal((await first.done).code,0);
+   const r=await second.done;assert.equal(r.code,0,r.err);
+   assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${id}'`),'1');
+   assert.equal(Number(scalar("SELECT count(*) FROM public.paige_audit_log WHERE action='tenant:account_holder_changed'")),oldCount+1);
+   assert.equal(JSON.parse(scalar(`SELECT public._exp08_read_owner_recovery('${tenant}','${id}')`)).receipt.outcome,'effect_verified');
+   results.push({case:label,passed:true});
+  }finally{
+   if(!first.p.stdin.destroyed)first.p.stdin.end('ROLLBACK;\n');await first.done;
+   if(second){if(!second.p.stdin.destroyed)second.p.stdin.end();await second.done;}
+  }
+ }
+ await operationRace('concurrent same request waits for commit then returns one effect and one durable recovery audit',true,'e8000000-0000-4000-8000-000000092005');
+ await operationRace('concurrent same request after first rollback executes once with one committed receipt',false,'e8000000-0000-4000-8000-000000092006');
+ db.run(`INSERT INTO public.user_roles VALUES('${holder}','super_admin')`);db.actor=holder;
+ await denied('different live administrator cannot read the original private receipt',()=>db.exec(`SELECT public._exp08_read_owner_recovery('${tenant}','${request}')`),/OWNER_RECOVERY_RECEIPT_UNAVAILABLE/);
+ await denied('different live administrator cannot reuse original request identity',()=>db.exec(apply()),/OWNER_RECOVERY_REQUEST_MISMATCH/);db.actor=actor;
+ await denied('different tenant cannot read original private receipt',()=>db.exec(`SELECT public._exp08_read_owner_recovery('e8000000-0000-4000-8000-000000091020','${request}')`),/OWNER_RECOVERY_RECEIPT_UNAVAILABLE/);
+ const invalid='e8000000-0000-4000-8000-000000092007';
+ await denied('short reason refuses before any effect or receipt',()=>db.exec(apply(invalid,'set_account_holder','short')),/OWNER_RECOVERY_BAD_REQUEST/);
+ assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${invalid}'`),'0');
+ reset();db.run(`INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status) VALUES('${tenant}','${holder}',false,'active')`);
+ const bound='e8000000-0000-4000-8000-000000092008';
+ db.run(`CREATE FUNCTION public.fixture_recovery_context_consumer() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN
+ IF NEW.is_owner AND NOT OLD.is_owner THEN
+ BEGIN PERFORM public._exp08_lock_recovery_effect(NEW.tenant_id,NEW.user_id,'${bound}','revoke_owner');
+ RAISE EXCEPTION 'wrong action admitted';EXCEPTION WHEN insufficient_privilege THEN NULL;END;
+ BEGIN PERFORM public._exp08_lock_recovery_effect(NEW.tenant_id,'${actor}','${bound}','grant_owner');
+ RAISE EXCEPTION 'wrong target admitted';EXCEPTION WHEN insufficient_privilege THEN NULL;END;
+ BEGIN PERFORM public._exp08_lock_recovery_effect(NEW.tenant_id,NULL,'${bound}','grant_owner');
+ RAISE EXCEPTION 'null target admitted';EXCEPTION WHEN insufficient_privilege THEN NULL;END;
+ PERFORM public._exp08_lock_recovery_effect(NEW.tenant_id,NEW.user_id,'${bound}','grant_owner');END IF;
+ RETURN NEW;END$$;
+ CREATE TRIGGER fixture_recovery_context BEFORE UPDATE OF is_owner ON public.tenant_members
+ FOR EACH ROW EXECUTE FUNCTION public.fixture_recovery_context_consumer();`);
+ await db.exec(apply(bound,'grant_owner'));
+ assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${bound}' AND payload->>'outcome'='effect_verified'`),'1');
+ results.push({case:'actual grant effect exposes native same-transaction preparing audit; wrong action/target/null target deny inside domain consumer',passed:true});
+ db.run('DROP TRIGGER fixture_recovery_context ON public.tenant_members;DROP FUNCTION public.fixture_recovery_context_consumer()');
+ await denied('committed completed audit is not a fresh effect credential',()=>db.exec(`SELECT public._exp08_lock_recovery_effect('${tenant}','${holder}','${bound}','grant_owner')`),/OWNER_RECOVERY_EFFECT_CONTEXT_UNAVAILABLE/);
+ db.run(`UPDATE public.paige_audit_log SET payload=jsonb_set(payload,'{outcome}','"preparing"'::jsonb) WHERE id='${bound}'`);
+ await denied('stale committed preparing audit is not a current-transaction effect credential',()=>db.exec(`SELECT public._exp08_lock_recovery_effect('${tenant}','${holder}','${bound}','grant_owner')`),/OWNER_RECOVERY_EFFECT_CONTEXT_UNAVAILABLE/);
+ db.run(`UPDATE public.paige_audit_log SET payload=jsonb_set(payload,'{outcome}','"effect_verified"'::jsonb) WHERE id='${bound}'`);
+ const internal=JSON.parse(scalar(`SELECT public._exp08_read_owner_recovery('${tenant}','${bound}')`));
+ assert.equal(internal.receipt.transaction_id,undefined);assert.equal(internal.receipt.backend_pid,undefined);
+ results.push({case:'private receipt omits internal backend and transaction identity',passed:true});
+ console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private admission/grant/R12 and original durable audit receipt; public recovery RPC, notices and Billing-dependent revoke NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));
 }finally{

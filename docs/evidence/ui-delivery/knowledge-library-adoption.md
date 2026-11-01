@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: This is an address reference, never a readback/rece
 SOLO_UI: NO: Same original eligible SOLO route tree and tier helpers, no tenant allowlist/new layout. Sub-account/agency/enterprise/operator references remain unavailable for this internal target.
 UNVERIFIED: Producer/host emission, current source-version receipt/native persistence and useful authenticated reopen remain unmounted/proof owed. Full EXP13+BULK/saved game plan/actual working Tasks NOT READY. Original3177 genuine FLOW_PROTOTYPE/browser-usage hold is unchanged; no waiver or alternate browser path.
 
-INTERNAL_BUILD_IDENTITY: source=acea2b610e3054df62f671b337d7b30c126206e4 with actualmain55dcbc2c88b45fbe23aa2e218077bfbd90ce3a1d; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE(pure unmounted shared reference code); evidence=docs/evidence/ui-delivery/knowledge-library-adoption.md
+INTERNAL_BUILD_IDENTITY: source=acea2b610e3054df62f671b337d7b30c126206e4 with actualmain55dcbc2c88b45fbe23aa2e218077bfbd90ce3a1d; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PENDING(original transitive shared-import deployment and exact source certificate after merge); evidence=docs/evidence/ui-delivery/knowledge-library-adoption.md
 RELEASE_CHANNEL: development: pure original-reference preparation only, not customer availability.
 RELEASE_CLASSIFICATION: internal-only: same source-reopen prerequisite within original EXP13.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version/announcement.
@@ -113,6 +113,13 @@ incumbent suite86PASS/0FAIL/0skipped and original full Spine self-test/normal245
 capability registry lint PASS. Final exact review and ALL fresh hosted CI remain
 required; no old-head green is borrowed as clearance.
 No snapshot regeneration, marker, include-all, acceptance promotion or waiver.
+
+Release-field correction: an unmounted target still changes shared modules
+imported by existing Edge functions. The earlier14c preparation's Edge N.A.
+classification was incorrect. Original affected-import selection, normal Edge
+release and exact deployed-source certificate/readback remain PENDING after
+merge; no direct renderer/emitter or new provider/action activation follows.
+Migration delta remains N.A. Earlier source/CI evidence is retained at its scope.
 
 Original source3198 mechanical record3199 is ACTUALLY merged55dcbc2c/tree4cf07c;
 normal READYdpl_GmEhwsRYFZYHSZR8BNqcA9d79hZy and BOTHofficial public origins

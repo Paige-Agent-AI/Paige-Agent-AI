@@ -40,7 +40,7 @@ try{
   const setup=()=>sql(`SELECT proof.reset_rows();TRUNCATE public.profiles,public.audit_logs;
    INSERT INTO public.profiles VALUES('${actor}','${tenant}');
    INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status) VALUES('e8000000-0000-4000-8000-000000061003','${tenant}','${actor}',true,'owner','active'),('e8000000-0000-4000-8000-000000061004','${tenant}','${target}',false,'member','active');`);
-  for(const [name,change,value,needle] of [
+  for(const scoped of [false,true]) for(const [name,change,value,needle] of [
    ['owner promotes member','',' AdMiN ',null],
    ['owner demotes admin',`UPDATE public.tenant_members SET role='admin' WHERE tenant_id='${tenant}' AND user_id='${target}';`,'member',null],
    ['Admin is not owner',`UPDATE public.tenant_members SET role='admin',is_owner=false WHERE user_id='${actor}';`,'admin','only the tenant owner'],
@@ -57,14 +57,58 @@ try{
    ['foreign target only',`DELETE FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}';`,'member','team member not found in this workspace'],
   ]){
    setup();if(change)sql(change);
-   const result=spawnSync(psql,args(db),{input:`SELECT set_config('request.jwt.claim.sub','${actor}',false);SET ROLE authenticated;SELECT public.set_solo_team_member_permission('${target}','${value}');`,encoding:'utf8',timeout:30000});
-   assert.ifError(result.error);assert.equal(result.status,needle?3:0,result.stderr);if(needle)assert.ok(result.stderr.includes(needle),result.stderr);
+   const result=spawnSync(psql,args(db),{input:`SELECT set_config('request.jwt.claim.sub','${actor}',false);SET ROLE authenticated;SELECT public.set_solo_team_member_permission('${target}','${value}'${scoped?`, '${tenant}', 'e8000000-0000-4000-8000-000000061004'`:''});`,encoding:'utf8',timeout:30000});
+   assert.ifError(result.error);assert.equal(result.status,needle?3:0,result.stderr);if(needle)assert.ok(result.stderr.includes(scoped&&['missing target','foreign target only'].includes(name)?'team membership changed':needle),result.stderr);
    assert.equal(sql('SELECT count(*) FROM public.audit_logs;'),needle?'0':'1');
    if(!needle)assert.equal(sql(`SELECT role FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}';`),value.trim().toLowerCase());
-   console.log(JSON.stringify({phase:'permission-authority-matrix',name,refused:Boolean(needle),original_audits:needle?0:1}));
+   console.log(JSON.stringify({phase:'permission-authority-matrix',name,scoped,refused:Boolean(needle),original_audits:needle?0:1}));
+  }
+
+  const seat='e8000000-0000-4000-8000-000000061004';
+  const scopedCall=(t=tenant,m=seat)=>`SELECT set_config('request.jwt.claim.sub','${actor}',false); SET ROLE authenticated; SELECT public.set_solo_team_member_permission('${target}','admin',${t===null?'NULL':`'${t}'`},${m===null?'NULL':`'${m}'`});`;
+  setup();const receipt=JSON.parse(sql(scopedCall()).split('\n').at(-1));
+  assert.deepEqual(receipt,{membership_id:seat,permission:'admin'});
+  assert.deepEqual(JSON.parse(sql(scopedCall()).split('\n').at(-1)),receipt);
+  assert.equal(sql('SELECT count(*) FROM public.audit_logs;'),'1','same permitted state must not produce a duplicate original audit');
+  console.log(JSON.stringify({phase:'permission-scoped-current-receipt',original_writer:true,same_state_reconciled:true,original_audits:1}));
+  for(const [name,t,m,change,needle] of [
+   ['missing captured workspace',null,seat,'','active workspace changed'],
+   ['foreign captured workspace',other,seat,'','active workspace changed'],
+   ['missing captured membership',tenant,null,'','team membership changed'],
+   ['foreign captured membership',tenant,'e8000000-0000-4000-8000-000000061002','','team membership changed'],
+   ['same actor and target in both workspaces',tenant,seat,`UPDATE public.tenant_members SET business_owner_id=NULL,is_owner=false,role='member' WHERE tenant_id='${other}' AND user_id='${target}';INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role) VALUES('e8000000-0000-4000-8000-000000061006','${other}','${actor}',true,'owner'); UPDATE public.profiles SET active_tenant_id='${other}' WHERE user_id='${actor}';`,'active workspace changed'],
+   ['replaced captured membership',tenant,seat,`DELETE FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}';INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role) VALUES('e8000000-0000-4000-8000-000000061007','${tenant}','${target}',false,'member');`,'team membership changed'],
+   ['owner even when role unchanged',tenant,seat,`UPDATE public.tenant_members SET is_owner=true,role='admin' WHERE tenant_id='${tenant}' AND user_id='${target}';`,'the owner permission cannot be changed here'],
+  ]){
+   setup();if(change)sql(change);const before=sql(`SELECT jsonb_agg(to_jsonb(m) ORDER BY id) FROM public.tenant_members m;`);
+   const result=spawnSync(psql,args(db),{input:scopedCall(t,m),encoding:'utf8',timeout:30000});assert.ifError(result.error);assert.equal(result.status,3,result.stderr);assert.ok(result.stderr.includes(needle),result.stderr);
+   assert.equal(sql(`SELECT jsonb_agg(to_jsonb(m) ORDER BY id) FROM public.tenant_members m;`),before);assert.equal(sql('SELECT count(*) FROM public.audit_logs;'),'0');
+   console.log(JSON.stringify({phase:'permission-scoped-intent',name,refused:true,no_effects:true}));
+  }
+  for(const role of ['anon','service_role']){
+   const result=spawnSync(psql,args(db),{input:`SET ROLE ${role}; SELECT public.set_solo_team_member_permission(NULL,NULL,NULL,NULL);`,encoding:'utf8',timeout:30000});assert.ifError(result.error);assert.equal(result.status,3,result.stderr);assert.match(result.stderr,/permission denied for function set_solo_team_member_permission/);
+   console.log(JSON.stringify({phase:'permission-scoped-role',role,refused:true}));
   }
   const patch=readFileSync(new URL('./exp08-team-permission-patch.sql',import.meta.url),'utf8');
   const metadata=()=>sql("SELECT to_jsonb(p)::text FROM pg_proc p WHERE oid='public.set_solo_team_member_permission(uuid,text)'::regprocedure");
+
+  const allMetadata=()=>sql("SELECT jsonb_agg(to_jsonb(p) ORDER BY p.oid)::text FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='set_solo_team_member_permission'");
+  const allBefore=allMetadata();sql(patch);assert.equal(allMetadata(),allBefore);
+  console.log(JSON.stringify({phase:'permission-both-abi-replay',full_metadata_unchanged:true}));
+  const scopedSignature='public.set_solo_team_member_permission(uuid,text,uuid,uuid)';
+  const scopedDefinition=sql(`SELECT pg_get_functiondef('${scopedSignature}'::regprocedure)`);
+  for(const [name,change] of [
+   ['source',scopedDefinition.replace('DECLARE','DECLARE\n-- unreviewed scoped source\n')],
+   ['anonymous grant',`GRANT EXECUTE ON FUNCTION ${scopedSignature} TO anon;`],
+   ['service grant',`GRANT EXECUTE ON FUNCTION ${scopedSignature} TO service_role;`],
+   ['grant option',`GRANT EXECUTE ON FUNCTION ${scopedSignature} TO authenticated WITH GRANT OPTION;`],
+   ['path',`ALTER FUNCTION ${scopedSignature} SET search_path=public;`],
+   ['security',`ALTER FUNCTION ${scopedSignature} SECURITY INVOKER;`],
+   ['strictness',`ALTER FUNCTION ${scopedSignature} STRICT;`],
+  ]){
+   const result=spawnSync(psql,args(db),{input:`BEGIN;${change};${patch}`,encoding:'utf8',timeout:30000});assert.ifError(result.error);assert.equal(result.status,3,result.stderr);assert.match(result.stderr,/EXP08 scoped permission original door drift/);assert.equal(allMetadata(),allBefore);
+   console.log(JSON.stringify({phase:'permission-scoped-drift',name,refused:true,both_objects_restored:true}));
+  }
   const saved=metadata();const definition=sql("SELECT pg_get_functiondef('public.set_solo_team_member_permission(uuid,text)'::regprocedure)");
   for(const [name,change] of [
    ['source',definition.replace('DECLARE','DECLARE\n-- unreviewed source\n')],
@@ -79,7 +123,7 @@ try{
    console.log(JSON.stringify({phase:'permission-source-drift',name,refused:true,original_full_metadata_restored:true}));
   }
  }
- for(const name of ['owner revoked','workspace changed','actor suspended','permitted wait']){
+ for(const scoped of repaired?[false,true]:[false]) for(const name of ['owner revoked','workspace changed','actor suspended','permitted wait',...(repaired?['target became owner']:[]),...(scoped?['membership replaced','same result committed','same result rolled back']:[])]){
   sql(`SELECT proof.reset_rows();TRUNCATE public.profiles,public.audit_logs;
  INSERT INTO public.profiles VALUES('${actor}','${tenant}');
  INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status) VALUES('e8000000-0000-4000-8000-000000061003','${tenant}','${actor}',true,'owner','active'),('e8000000-0000-4000-8000-000000061004','${tenant}','${target}',false,'member','active');`);
@@ -87,17 +131,20 @@ try{
   const firstDone=new Promise((resolve,reject)=>{first.on('error',reject);first.on('close',resolve);});let second,secondDone,secondErr='';
   let timer;try{
    const ready=new Promise((resolve,reject)=>{timer=setTimeout(()=>reject(Error('own target lock not observed')),10000);first.stdout.on('data',x=>{out+=x;if(out.includes('PERMISSION_LOCKED'))resolve();});});
-   first.stdin.write(`SET statement_timeout='15s';BEGIN;SELECT 1 FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}' FOR UPDATE;\n\\echo PERMISSION_LOCKED\n`.replaceAll('\\n','\n').replaceAll('\\\\echo','\\echo'));
+   const reconciling=name==='same result committed'||name==='same result rolled back';
+   const scopeArgs=scoped?`, '${tenant}', 'e8000000-0000-4000-8000-000000061004'`:'';
+   const held=reconciling?`SELECT set_config('request.jwt.claim.sub','${actor}',false);SET ROLE authenticated;SELECT public.set_solo_team_member_permission('${target}','admin'${scopeArgs});RESET ROLE;`:`SELECT 1 FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}' FOR UPDATE;`;
+   first.stdin.write(`SET statement_timeout='15s';BEGIN;${held}\n\\echo PERMISSION_LOCKED\n`.replaceAll('\\n','\n').replaceAll('\\\\echo','\\echo'));
    await ready;clearTimeout(timer);
    const app=`exp08_permission_${name.replaceAll(' ','_')}`;
    second=spawn(psql,args(db),{windowsHide:true,env:{...process.env,PGAPPNAME:app},stdio:['pipe','pipe','pipe']});second.stdout.resume();second.stderr.on('data',x=>secondErr+=x);secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
-   second.stdin.end(`SET statement_timeout='15s';SET lock_timeout='10s';SELECT set_config('request.jwt.claim.sub','${actor}',false);SET ROLE authenticated;SELECT public.set_solo_team_member_permission('${target}','admin');`);
+   second.stdin.end(`SET statement_timeout='15s';SET lock_timeout='10s';SELECT set_config('request.jwt.claim.sub','${actor}',false);SET ROLE authenticated;SELECT public.set_solo_team_member_permission('${target}','admin'${scopeArgs});`);
    let waited=false;for(let i=0;i<80;i++){waited=sql(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname='${db}' AND application_name='${app}' AND wait_event_type='Lock');`)==='t';if(waited)break;await new Promise(r=>setTimeout(r,50));}assert.ok(waited,'actual database lock wait required');
-   const change=name==='owner revoked'?`UPDATE public.tenant_members SET is_owner=false,role='member' WHERE tenant_id='${tenant}' AND user_id='${actor}';`:name==='workspace changed'?`UPDATE public.profiles SET active_tenant_id='${other}' WHERE user_id='${actor}';`:name==='actor suspended'?`UPDATE public.tenant_members SET status='suspended' WHERE tenant_id='${tenant}' AND user_id='${actor}';`:'';
-   first.stdin.end(`${change}COMMIT;\n`);assert.equal(await firstDone,0,firstErr);const allowed=!repaired||name==='permitted wait';assert.equal(await secondDone,allowed?0:3,secondErr);if(!allowed)assert.match(secondErr,name==='workspace changed'?/active workspace changed/:/only the tenant owner/);
+   const change=name==='owner revoked'?`UPDATE public.tenant_members SET is_owner=false,role='member' WHERE tenant_id='${tenant}' AND user_id='${actor}';`:name==='workspace changed'?`UPDATE public.profiles SET active_tenant_id='${other}' WHERE user_id='${actor}';`:name==='actor suspended'?`UPDATE public.tenant_members SET status='suspended' WHERE tenant_id='${tenant}' AND user_id='${actor}';`:name==='target became owner'?`UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE tenant_id='${tenant}' AND user_id='${target}';`:name==='membership replaced'?`DELETE FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}';INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role) VALUES('e8000000-0000-4000-8000-000000061007','${tenant}','${target}',false,'member');`:'';
+   first.stdin.end(`${change}${name==='same result rolled back'?'ROLLBACK':'COMMIT'};\n`);assert.equal(await firstDone,0,firstErr);const allowed=!repaired||name==='permitted wait'||reconciling;assert.equal(await secondDone,allowed?0:3,secondErr);if(!allowed)assert.match(secondErr,name==='workspace changed'?/active workspace changed/:name==='membership replaced'?/team membership changed/:name==='target became owner'?/the owner permission cannot be changed here/:/only the tenant owner/);
    const state=JSON.parse(sql(`SELECT json_build_object('target_role',(SELECT role FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}'),'audits',(SELECT count(*) FROM public.audit_logs),'actor_owner',public.is_tenant_owner('${actor}','${tenant}'),'actor_workspace',(SELECT active_tenant_id FROM public.profiles WHERE user_id='${actor}'));`));
-   assert.equal(state.target_role,allowed?'admin':'member');assert.equal(state.audits,allowed?1:0);
-   console.log(JSON.stringify({case:name,repaired,original_body_md5:'aab67c9a70880f160de550e4361a6142',actual_lock_wait:waited,state,classification:name==='permitted wait'?'legitimate control':repaired?'guarded original writer refused without effect':'modeled original writer stale-currentness effect reproduced'}));
+   assert.equal(state.target_role,allowed?'admin':name==='target became owner'?'owner':'member');assert.equal(state.audits,allowed?1:0);
+   console.log(JSON.stringify({case:name,repaired,scoped,original_body_md5:'aab67c9a70880f160de550e4361a6142',actual_lock_wait:waited,state,classification:name==='permitted wait'||reconciling?'legitimate control':repaired?'guarded original writer refused without effect':'modeled original writer stale-currentness effect reproduced'}));
   }finally{clearTimeout(timer);if(first.exitCode===null)first.stdin.end('ROLLBACK;\n');if(second&&second.exitCode===null)second.kill();await Promise.allSettled([firstDone,...(secondDone?[secondDone]:[])]);}
  }
 }finally{if(created)sql(`DROP DATABASE ${db};`,'postgres');}

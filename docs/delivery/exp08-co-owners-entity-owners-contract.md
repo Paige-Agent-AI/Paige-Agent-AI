@@ -3231,3 +3231,50 @@ Actual3200/d654 database124922317843 is now COMPLETE SUCCESS, with its decoded
 own native step explicitly reporting Files=1/Tests=28/Result:PASS. The whole
 exact verify/comms gates remain running; previousbe20 fixture failure is kept.
 No source merge or native profile activation is inferred from this result.
+
+
+### Scoped original permission receipt and recovery - November1, local preparation
+
+The original9f full lifecycle/component run completed terminal exit0, including
+its original groups and departure/profile/permission children. Raw transcript
+SHA256 fd286a7862189a5bcade05aada30264231a7f1ff7c1ecde4a102640eb3891925,
+164778bytes. Actual currentmain E05 Calendar/Booking source was composed normally
+via4ace and local mergea803125155faf64ea24404c8e049ebebd820ff80; all five peer
+paths and both co-owner evidence chronologies retained. This completed run is
+bounded to its then-current9f inputs, not blanket proof of later code.
+
+New LOCAL inert permission source adds the SAME original setter's four-argument
+overload: `_member_user_id`, `_new_permission`, `_expected_tenant_id`,
+`_expected_membership_id`. Expected values refuse stale captured intent; they
+never select the acting tenant, actor or target. Fresh actual identity/owner,
+ordered seat/profile/tenant locks, original owner-target protection and the
+ORIGINAL2arg validation/effect/audit remain authoritative. The overload delegates
+the only effect, then returns exactly actual `membership_id` and `permission`
+(admin/member) under those locks. Missing/mismatched readback rolls back; it is
+not a made-up success. Both ABIs' complete objects replay unchanged; scoped
+EXECUTE is authenticated-only with empty search_path, no defaults or service lane.
+
+Identical normalized permitted state now returns before a second original update/
+audit, AFTER original owner-target refusal and fresh actor/scope authority. It
+reconciles CURRENT state; no private browser result store, new result/approval
+ledger, automatic UNKNOWN retry or assertion of an unobserved earlier execution.
+The future caller must preserve actual prepared membership/workspace bindings,
+withdraw stale/lost-context output, read the native receipt before claiming saved,
+and handle UNKNOWN truthfully through the existing Team read/reopen flow.
+
+Failure-first scoped proof genuinely failed because4arg did not exist. Its first
+expanded metadata query then failed on ambiguous `oid`; qualified `p.oid` in the
+own proof only, no assertion/source waiver. Latest owning baseline+candidate run
+terminal0:28 authority cases (14 through EACH ABI),7 captured-intent negatives,
+2 excluded-role denials,7 original +7 scoped source/ACL/metadata drift refusals,
+complete both-ABI replay, exact current-state receipt/no duplicate audit, and
+17 observed waits including committed-first and rolled-back-first retries.
+Raw final SHA256 0108c0c67c2423a5d4bd1955c371c80bf9f471f816a41eaef210325151f1607a,
+11424bytes. All own disposable probe databases absent after completion.
+These are modeled identity/scope/table ports, not full-schema/Auth/customer proof.
+
+Native full-schema permission artifact/actual execution, managed carrier/version,
+normal review/exact-head gates/release/readback and mounted permission/profile/
+Operator/recipient/both-chat/cohort recovery remain required. Original3200 now
+4ace source-only CI is separate. No new permission API is advertised as deployed.
+Full original18+6/five journeys remain STILL CODING and not owner-review ready.

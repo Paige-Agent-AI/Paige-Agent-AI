@@ -33,7 +33,7 @@ SOLO_1024X768_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus i
 SOLO_900X1000_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
 SOLO_900X1000_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
 UNVERIFIED: Full-schema/current native carrier, real authenticated role/cohort/save/reload/refusal, actual AT/native zoom and production release remain owed; isolated tests never close them
-INTERNAL_BUILD_IDENTITY: 3e8bdd1d8; original scoped work-profile363190d10 source preserved plus native70116a merge; controlled-browser driver selector/diagnostics verified locally; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original co-owner contract
+INTERNAL_BUILD_IDENTITY: 3e8bdd1d86c1797bd276e19c0aefea362cfb0a3f; original scoped work-profile363190d10 source preserved plus native70116a merge; controlled-browser driver selector/diagnostics verified locally; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original co-owner contract
 RELEASE_CHANNEL: development: same original outcome4, not deployed
 RELEASE_CLASSIFICATION: internal-only: integration increment of the full EXP08 assignment
 CUSTOMER_RELEASE_IDENTITY: none: full Team Hub integration and one owner review remain unfinished

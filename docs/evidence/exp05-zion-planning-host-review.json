@@ -232,7 +232,9 @@
       "supabase/tests/exp05_zion_planning_read.sql": "6941ec0c10da33e2e9b0ff4e643a91fbc09caffff8760bcf3161daa0edd942a4",
       "supabase/tests/fixtures/exp05-zion-planning-original.sql": "42f7b90ac7f08ea2235d13b2164c3e7203738e4d80db0ea7b4f9ba216c3aa175",
       ".github/workflows/ci.yml": "7b66a47852e2af9a3a6e60cecc72059bc0ae834e448c900b5951596741482ecb",
-      "scripts/proof/exp05-zion-planning-concurrency.mjs": "185353cf379cd99ae3093554fc6653b1d23da981a646d86e7a8916f371f18b47"
+      "scripts/proof/exp05-zion-planning-concurrency.mjs": "185353cf379cd99ae3093554fc6653b1d23da981a646d86e7a8916f371f18b47",
+      "scripts/proof/exp05-zion-planning-full-schema.mjs": "9bfb5dc487a5b0ebf765f47388c2dcaa9f01760e9b6f8d2ae60dce8e775c3055",
+      ".github/workflows/paige-spine-contract.yml": "43b85d65e281fb0de503f864b6fc5db7a9b21c17a36b312221ee4f9a0d70c5f4"
     },
     "abi": "Same service-only team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb); closed plan_list/version1 source descriptor; no public RPC or added grant",
     "contract": "Original caller-JWT read/versions -> same accepted-token native stage before model -> current original source guard -> original post/readback/history. Typed Planning-item Work references only; mixed CRM staging retains the same source binding. Same-operation rearm uses the new original token, never expired evidence. Original Search final bounded-hit projection excludes newly source-unavailable Planning replies; default20/ABI/config/ACL and complete non-Planning body conserved.",
@@ -490,9 +492,15 @@
           }
         ],
         "exit": 0
+      },
+      "fullSchema": {
+        "status": "GENERATOR_SELFTEST_PASS / ACTUAL_FULL_SCHEMA_EXECUTION_UNVERIFIED",
+        "script": "scripts/proof/exp05-zion-planning-full-schema.mjs",
+        "scope": "Existing local Supabase54322 only; exact inert candidate embedded twice in one rollback-only pgTAP transaction;10 native source/ABI/permission/replay assertions; no business fixture, remote DDL or migration-ledger write",
+        "workflow": "One own push-path and one test step in existing database-contract job; both preserve all incumbent source and E08 reserved insertion anchors"
       }
     },
-    "review": "AUTHOR-REVIEW / LOWER ASSURANCE; source/spec/authority/privacy/metadata/recovery pass. Search failure corrected, original native and neighboring regressions pass. Managed/concurrency/exact-head CI and release gates remain open.",
+    "review": "AUTHOR-REVIEW / LOWER ASSURANCE; source/spec/authority/privacy/metadata/recovery pass. Search failure corrected, original native and neighboring regressions pass. Managed/concurrency/exact-head CI and release gates remain open. Full-schema wrapper generation self-test only; actual native CI result remains unverified and required.",
     "releaseHolds": [
       "Actual lower-owner native ordering then genuinely free forward carrier; no speculative slot",
       "Full-schema/managed proof; four bounded native concurrency pairs now PASS; exact final source review/required CI; deployment/production readback",
@@ -510,7 +518,8 @@
       "b5": "Supabase Preview124871817388 FAILED function update502; preserved, not waived",
       "f3": "Identical-tree retryf3b212b4; database-contract124873002424 baseline project-status read FAILED api.supabase.com origin502 before local stack startup; downstream missing-stack results not domain test verdicts",
       "nativeReadback": "Fresh MCP catalog/log queries Internal errors; last successful frontier20 is historical, no current source-health conclusion",
-      "response": "Normal safe recovery and fresh exact-head gates only; no reset/new branch/project/secret or status override"
+      "response": "Normal safe recovery and fresh exact-head gates only; no reset/new branch/project/secret or status override",
+      "recovered": "Exact422 Supabase Preview SUCCESS, native postgres-authority SUCCESS; actual readonly MCP production frontier20271126200003 recovered. Remaining exact required gates still running at next proof slice; previous502 failures retained."
     }
   }
 }

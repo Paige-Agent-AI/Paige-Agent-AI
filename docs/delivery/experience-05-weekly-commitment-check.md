@@ -1277,3 +1277,17 @@ No baseline/grant/assertion was weakened and no fresh native health/frontier
 is claimed from failed MCP reads. Normal source/order/managed/CI recovery and
 ordinary authenticated acceptance still remain. All shared source windows are
 returned; only own proof/evidence files changed for this follow-through.
+
+
+Full-schema verification preparation (SOURCE only): a thin own wrapper embeds
+the exact candidate twice in ONE rollback-only pgTAP transaction and uses only
+the EXISTING local Supabase54322 stack. Ten native source/metadata/private-ACL/
+replay assertions, no business fixture, remote DDL or migration-ledger entry.
+Generator self-test PASS; actual full-schema execution is UNVERIFIED until the
+existing database-contract job runs it. Both additive workflow hunks invert to
+complete incoming source and avoid E08's separate path/step insertion anchors.
+
+Exact422 Preview and native postgres-authority recovered to SUCCESS; readonly
+production metadata recovered at frontier20271126200003. Prior502 failures are
+retained, and remaining exact gates were still running. This does not activate
+the Planning candidate or clear actual native ordering/customer/founder proof.

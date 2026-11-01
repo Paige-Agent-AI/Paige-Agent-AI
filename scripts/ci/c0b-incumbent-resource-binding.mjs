@@ -1,3 +1,12 @@
+// EXP04 O5 current financial read/review, 2026-11-01, AUTHOR-REVIEW / LOWER ASSURANCE.
+// Original main794d6e reproduces all FOUR incumbent canonical dependency hashes.
+// Only action-risk high/confirm row, original invoice ledger snapshot/currentness,
+// original document evidence separation and actual financial DTO validator change.
+// Native31 + prior55/39/27, Owner/UI contracts642 and rendered16+2 are bounded proof;
+// no hosted/provider/customer acceptance or new Chat admission. Renew these four
+// dependency digests only; all other pins, 29 dispatch fingerprints, extractor,
+// metadata, validators and hostile controls remain exact. Public unbound mutation
+// is absent; original Owner UI Kit remains high/confirm.
 // EXP02 explicit credit code source8f83c9624903e91cc1803c4c6522f2e26314cb0e.
 // Separate AUTHOR-REVIEW / LOWER ASSURANCE before this single pin renewal.
 // Whole classifier inverse restores277; original131 dependencies/29 dispatches
@@ -1086,7 +1095,7 @@ const SOURCES = {
   // 2026-10-28 EXP06 hosting door: canonical delta is TWO added `high` rows
   // (growth_hosting_deploy/growth_hosting_recover) after the studio_image keys — no existing
   // row touched. Renewed with the proof's own printer (removeComments).
-  "supabase/functions/_shared/action-risk.ts": "cb0a549c4d5c8d401c16c8087b0e4d28032dedaff355f86934e2242f106a4956",
+  "supabase/functions/_shared/action-risk.ts": "4c5c2a8a959024508454156c2c5cb19937e8a0ba477d0e543ec7d058979a230a",
   "supabase/functions/_shared/finance-gate.ts": "dfa7fbec065d346ca72199313294a4418aa8be66f3dbb68cfe991a93aef0cf40",
   "supabase/functions/_shared/paige-capability-status/projection.ts": "280c36a53ed5d553f6e6467f7177d049a2c612078cdb8d8139878cec3463922f",
   "supabase/functions/_shared/paige-capability-status/readiness.ts": "56b0a8da8b1a76414a147d15bffb9b589b9bcf9e130c797290b846759e1da65e",
@@ -1284,7 +1293,7 @@ const SOURCES = {
   "supabase/functions/_shared/marketplace-authority-containment.ts": "ac5391d46081aa6f3b08382e1420ad944f0519558b8b8d2d0b16dd8cef1cb4c2",
   "supabase/functions/_shared/subagent-authority.ts": "633143a287651772f3c78810397d7a1e753d1d9924c3668693783422be6c8494",
   "supabase/functions/_shared/systems-check-http.ts": "fd5713b29f5127fa0d10e501bd20cd869aa860b816eed500eb19e21e522fcfa6",
-  "supabase/functions/_shared/sales-invoice-ledger.ts": "dab806f8decf8682d311a0eeaff90a2c9e7687f6043ff1d85d27a56d66b1515e",
+  "supabase/functions/_shared/sales-invoice-ledger.ts": "508b179c8dfb3a10b2605ab19e8e74aa540bcdb6ad4605a2f49504fde710a18e",
   // E09 Payments round 3 (2026-10-18, pin ec72c112…466b): presentation only. A projection carrying the
   // portal-only test_provider_cents / provider_environment keys tells a TEST receipt as a test that moved
   // no money and does not name the processor; it refuses a test total that contradicts the evidence.
@@ -1308,7 +1317,7 @@ const SOURCES = {
   // ("Business-recorded payments") and the box says when its totals are after corrections. Owner and
   // bearer output unchanged: 240 fixtures byte-identical to the round-2 renderer and 60,000 random
   // projections (24,489 rendered, 10,829 of them void) byte-identical to base dbb8a8842.
-  "supabase/functions/_shared/sales-invoice-document.ts": "5ae255569a861722b09868da12dac1e43c104a593d3f3cb0c16f29e47eb55649",
+  "supabase/functions/_shared/sales-invoice-document.ts": "45aaba0f4bb62b9d275a96935c5f39adaad3d31967767cecee7e90120646f9fa",
   "supabase/functions/_shared/document-pdf.ts": "e88f697d5d79af5feb0d6952fc5029633d488434b232798bc42fffd0fccd9a8e",
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
   // EXP03 Resend retirement (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: one fact's source key changes,
@@ -1363,7 +1372,7 @@ const SOURCES = {
   "supabase/functions/_shared/paige-spine/governedExecution.ts": "771d67a36c3a88323690e528df35b5355f74a5b6ff330d7262952a7eb87a83a9",
   // Experience 05: independently reviewed process-subject registration; all refusal branches retained.
   "supabase/functions/_shared/paige-orchestration/subject-tenant.ts": "79bfca5cada98f8226a533684556c2b6035ec8aaf0855c06846b035ef4d778bd",
-  "supabase/functions/_shared/sales-payments/balance-projection.ts": "089be3509f1a784659f86ceaa8e21238a765b744ebc5f75ecdb870be58070a92",
+  "supabase/functions/_shared/sales-payments/balance-projection.ts": "90d7c39ad4478f325ae660d645fd920292d456ade87b4a4cd11078e509ec2af0",
   "supabase/functions/_shared/sales-invoice-delivery/readiness.ts": "951b29afbdab2ad6480fdaadde38ae6f927bf5686f7bbf5518109128c91bb140",
   // EXP03 Resend retirement (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: readCommsEmailReadiness's
   // resendConfigured fact reads SENDGRID_MAIL_SEND_API_KEY presence instead of RESEND_API_KEY. Decision

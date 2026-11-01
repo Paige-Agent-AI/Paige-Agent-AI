@@ -10,12 +10,13 @@ const host = process.env.PGHOST;
 assert.ok(host === '127.0.0.1' || host === 'localhost' || host === '::1', 'Loopback database only');
 assert.match(process.env.PGPORT ?? '', /^\d+$/, 'Explicit local port required');
 const executable = process.env.PSQL || 'psql';
-assert.ok(process.argv.slice(2).every(arg=>['--only-owner-read','--only-billing','--only-owner-history','--only-hub-identity'].includes(arg)),'Unknown native proof selection');
+assert.ok(process.argv.slice(2).every(arg=>['--only-work-profile','--only-owner-read','--only-billing','--only-owner-history','--only-hub-identity'].includes(arg)),'Unknown native proof selection');
 const onlyOwnerHistory=process.argv.includes('--only-owner-history');
 const onlyHubIdentity=process.argv.includes('--only-hub-identity');
+const onlyWorkProfile=process.argv.includes('--only-work-profile');
 const onlyOwnerRead=process.argv.includes('--only-owner-read');
 const onlyBilling=process.argv.includes('--only-billing');
-assert.ok([onlyOwnerRead,onlyBilling,onlyOwnerHistory,onlyHubIdentity].filter(Boolean).length<=1,'Select only one local proof group');
+assert.ok([onlyWorkProfile,onlyOwnerRead,onlyBilling,onlyOwnerHistory,onlyHubIdentity].filter(Boolean).length<=1,'Select only one local proof group');
 const database = `exp08_entity_seat_proof_${Date.now()}`;
 const fixture = readFileSync(new URL('../../supabase/tests/exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
 const migration = readFileSync(new URL('../../supabase/migrations/20271126080008_exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
@@ -560,6 +561,48 @@ async function hubIdentityChecks(holderSnapshot) {
   await identityAdmissionRace(false);await identityAdmissionRace(true);
   records.push({phase:'original-identity-final-metadata',metadata:JSON.parse(sql(`select json_agg(json_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'path',p.proconfig,'acl',p.proacl::text) order by p.oid) from pg_proc p where p.oid in (${identitySignatures.map(s=>`'${s}'::regprocedure`).join(',')});`))});
 }
+async function workProfileWait(name) {
+ const actor='e8000000-0000-4000-8000-000000060300',target='e8000000-0000-4000-8000-000000060100',tenant='e8000000-0000-4000-8000-000000060010';
+ sql(`SELECT proof.reset_rows(); TRUNCATE public.profiles,public.audit_logs;
+ UPDATE public.tenants SET owner_user_id='${target}' WHERE id='${tenant}';
+ UPDATE public.tenant_members SET is_owner=false,role='member',business_owner_id=NULL WHERE user_id='${target}';
+ INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status) VALUES('e8000000-0000-4000-8000-000000061003','${tenant}','${actor}',false,'admin','active');
+ INSERT INTO public.profiles VALUES('${actor}','${tenant}'),('${target}','${tenant}');`);
+ if(name==='holder changed')sql(`UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE tenant_id='${tenant}' AND user_id IN ('${actor}','${target}'); UPDATE public.tenants SET owner_user_id='${actor}' WHERE id='${tenant}';`);
+ const blocker=name==='identity changed'?`SELECT 1 FROM auth.users WHERE id='${actor}' FOR UPDATE;`:name==='workspace changed'?`SELECT 1 FROM public.profiles WHERE user_id='${actor}' FOR UPDATE;`:`SELECT 1 FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}' FOR UPDATE;`;
+ const first=spawn(executable,connectionArgs(database),{env:process.env,stdio:['pipe','pipe','pipe']});
+ let ready='',firstErrors='',errors='',second,secondDone,timer;
+ first.stdout.on('data',b=>ready+=b);first.stderr.on('data',b=>firstErrors+=b);
+ const firstDone=new Promise((resolve,reject)=>{first.on('error',reject);first.on('close',resolve);});
+ try {
+  timer=setTimeout(()=>{if(first.exitCode===null)first.kill();if(second&&second.exitCode===null)second.kill();},25000);
+  first.stdin.write(`BEGIN; ${blocker} SELECT 'PROFILE_LOCK_READY';\n`);
+  for(let i=0;i<80&&!ready.includes('PROFILE_LOCK_READY');i++)await new Promise(resolve=>setTimeout(resolve,50));
+  assert.ok(ready.includes('PROFILE_LOCK_READY'),firstErrors||'Fixture lock not acquired');
+  const app=`exp08_profile_${Date.now()}`;
+  second=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:app},stdio:['pipe','pipe','pipe']});
+  second.stdout.resume();second.stderr.on('data',b=>errors+=b);
+  secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
+  second.stdin.end(`SELECT set_config('request.jwt.claim.sub','${actor}',false); SET ROLE authenticated; SELECT public.set_solo_team_member_work_profile('${target}','After wait','Permitted work');\n`);
+  let waited=false;
+  for(let i=0;i<60;i++){
+   waited=sql(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname='${database}' AND application_name='${app}' AND wait_event_type='Lock');`)==='t';
+   if(waited)break;await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  assert.ok(waited,`${name}: actual database lock wait required`);
+  const change=name==='identity changed'?`UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id='${actor}';`:name==='workspace changed'?`UPDATE public.profiles SET active_tenant_id='e8000000-0000-4000-8000-000000060020' WHERE user_id='${actor}';`:name==='role lost'?`UPDATE public.tenant_members SET role='member' WHERE user_id='${actor}';`:name==='target became owner'?`UPDATE public.tenant_members SET is_owner=true,role='owner' WHERE user_id='${target}';`:name==='holder changed'?`UPDATE public.tenants SET owner_user_id='${target}' WHERE id='${tenant}';`:'';
+  first.stdin.end(`${change} COMMIT;\n\\q\n`);assert.equal(await firstDone,0,firstErrors);
+  const exit=await secondDone;
+  const state=JSON.parse(sql(`SELECT json_build_object('changed',(SELECT job_title='After wait' FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${target}'),'audits',(SELECT count(*) FROM public.audit_logs));`));
+  const allowed=name==='permitted wait';assert.equal(exit,allowed?0:3,errors);
+  assert.equal(state.changed===true,allowed);assert.equal(state.audits,allowed?1:0);
+  if(!allowed)assert.match(errors,name==='identity changed'?/TEAM_MEMBER_IDENTITY_UNAVAILABLE/:name==='workspace changed'?/active workspace changed/:name==='role lost'?/only an owner or admin/:/TEAM_OWNER_PROFILE_FORBIDDEN/);
+  console.log(JSON.stringify({phase:'owner-work-profile-actual-wait',name,wait_observed:true,exit,state}));
+ }finally{
+  clearTimeout(timer);if(first.exitCode===null)first.stdin.end('ROLLBACK;\n\\q\n');if(second&&second.exitCode===null)second.kill();
+  await Promise.allSettled([firstDone,...(secondDone?[secondDone]:[])]);
+ }
+}
 const snapshot = `select json_build_object('members',(select json_agg(m order by id) from public.tenant_members m),
  'owners',(select json_agg(b order by id) from public.tenant_business_owners b));`;
 let created = false;
@@ -567,7 +610,60 @@ try {
   sql(`CREATE DATABASE ${database};`, 'postgres'); created = true;
   sql(fixture);
   sql(scopeHelper);
-  if(onlyHubIdentity){
+  if(onlyWorkProfile){
+    sql(readFileSync(new URL('../../supabase/tests/exp08_owner_work_profile.sql',import.meta.url),'utf8'));
+    sql(originalFunction(tenantAuthoritySource,'is_tenant_owner'));
+    sql(originalFunction(coOwnerSource,'is_tenant_account_holder'));
+    const profileSource=readFileSync(new URL('../../supabase/migrations/20260901001520_solo_team_workspace.sql',import.meta.url),'utf8');
+    sql(originalFunction(profileSource,'set_solo_team_member_work_profile'));
+    sql('REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) TO authenticated;');
+    const cases=()=>JSON.parse(sql('SELECT json_agg(t) FROM proof.work_profile_cases() t;'));
+    const before=cases();console.log(JSON.stringify({phase:'owner-work-profile-before',cases:before}));
+    assert.equal(before.length,19);
+    assert.deepEqual(before.filter(r=>!r.passed).map(r=>r.case_name),['admin edits holder','coowner edits holder','admin edits suspended owner','admin edits role-only owner','deleted actor','banned actor']);
+    const patch=readFileSync(new URL('./exp08-owner-work-profile-patch.sql',import.meta.url),'utf8');
+    const metadata=sql("SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;");
+    sql(patch);const after=cases();console.log(JSON.stringify({phase:'owner-work-profile-after',cases:after}));
+    assert.equal(after.length,19);assert.ok(after.every(r=>r.passed),JSON.stringify(after));
+    assert.equal(sql("SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;"),metadata);
+    sql(patch);assert.ok(cases().every(r=>r.passed));
+    console.log(JSON.stringify({phase:'owner-work-profile-replay',original_metadata_unchanged:true,cases:19}));
+    for(const [name,change] of [
+      ['source',originalFunction(profileSource,'set_solo_team_member_work_profile').replace('DECLARE','DECLARE\n-- drift\n')],
+      ['ACL','GRANT EXECUTE ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) TO anon;'],
+      ['path','ALTER FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) SET search_path=public;'],
+      ['security','ALTER FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) SECURITY INVOKER;'],
+      ['volatility','ALTER FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) STABLE;'],
+    ]) {
+      sql(originalFunction(profileSource,'set_solo_team_member_work_profile'));
+      sql('REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) FROM anon;');
+      sql(change);
+      const prior=sql("SELECT to_jsonb(p)::text FROM pg_proc p WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;");
+      sql(patch,database,true,/EXP08 owner work profile original (metadata|source) drift/);
+      assert.equal(sql("SELECT to_jsonb(p)::text FROM pg_proc p WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;"),prior);
+      console.log(JSON.stringify({phase:'owner-work-profile-drift',name,refused:true,not_rewritten:true}));
+    }
+    for(const [name,from,to] of [
+      ['owner edit authority removed',"IF (_row.is_owner OR _row.role=", "IF false AND (_row.is_owner OR _row.role="],
+      ['self exception removed','AND _member_user_id<>_actor','AND true'],
+      ['holder exception removed','AND NOT public.is_tenant_account_holder(_actor,_tenant)','AND true'],
+      ['identity currentness removed','IF NOT FOUND OR NOT EXISTS','IF false AND NOT FOUND OR false AND NOT EXISTS'],
+    ]) {
+      sql(originalFunction(profileSource,'set_solo_team_member_work_profile'));
+      sql('REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) FROM anon;');
+      const mutant=patch.replaceAll(from,to);assert.notEqual(mutant,patch,name);sql(mutant);
+      const failed=cases().filter(r=>!r.passed).map(r=>r.case_name);assert.ok(failed.length,`${name}: survived`);
+      console.log(JSON.stringify({phase:'owner-work-profile-mutant',name,killed_by:failed}));
+    }
+    sql(originalFunction(profileSource,'set_solo_team_member_work_profile'));
+    sql(patch);assert.ok(cases().every(r=>r.passed));
+
+  }
+  if(onlyWorkProfile){
+    for(const name of ['role lost','target became owner','identity changed','workspace changed','holder changed','permitted wait'])await workProfileWait(name);
+    console.log('Selected owner work-profile component only; NOT native/customer proof.');
+  }
+  else if(onlyHubIdentity){
     // Bounded local selection; normal CI still invokes every original group without arguments.
     sql(privateHelper(collaborationSource,'_team_hub_is_active','uuid,uuid'));
     sql(privateHelper(lifecycleSource,'_team_hub_participates','uuid,uuid'));
@@ -1116,7 +1212,7 @@ try {
 }
 // Full original release proof also exercises the same departure writer's inert candidate.
 // Selected component runs remain bounded selections and never stand in for this whole run.
-if(!onlyOwnerRead&&!onlyBilling&&!onlyOwnerHistory&&!onlyHubIdentity){
+if(!onlyWorkProfile&&!onlyOwnerRead&&!onlyBilling&&!onlyOwnerHistory&&!onlyHubIdentity){
   const child=spawnSync(process.execPath,[fileURLToPath(new URL('./exp08-member-removal-currentness.mjs',import.meta.url))],{
     // Expanded original60 + Hub85 measured179.1s unchanged on Windows; retain
     // all individual SQL/wait/mutant bounds and propagate every nonzero/error.
@@ -1124,4 +1220,7 @@ if(!onlyOwnerRead&&!onlyBilling&&!onlyOwnerHistory&&!onlyHubIdentity){
   });
   if(child.error)throw child.error;
   assert.equal(child.status,0,'Original departure currentness, boundaries, replay, drift and causal controls must pass');
+  const profile=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--only-work-profile'],{env:process.env,stdio:'inherit',windowsHide:true,timeout:180000});
+  if(profile.error)throw profile.error;
+  assert.equal(profile.status,0,'Original owner work-profile authority/currentness controls must pass');
 }

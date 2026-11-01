@@ -653,8 +653,11 @@ jobs:
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/exp08_owner_recovery_native.sql
         if: ${{ !cancelled() }}
-      - run: supabase test db supabase/tests/exp08_first_owner_history_native.sql
+      - name: Original EXP08 first-owner full-schema composition
         if: ${{ !cancelled() }}
+        run: |
+          node scripts/proof/exp08-first-owner-native-proof.mjs --check
+          supabase test db supabase/tests/exp08_first_owner_history_native.sql
       - run: supabase test db supabase/tests/solo_team_invite_workspace_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_recipient_binding.sql
       # Additive E09 customer-safe relationship/profile foundation; no new CI database.

@@ -295,6 +295,8 @@ export async function submitKnowledgeExtraction(client: ExtractionClient, suppli
 }
 /** Plain text only. Presence of pending_review means awaiting review, never publication or indexing. */
 function reviewProjection(d: unknown, scope: ExtractionScope, documentId: string, revision?: number, workId?: string, exactRevision = false): ExtractionDocumentReview {
+  // The inner RPC reader settled before this public continuation resumed.
+  assertScope(scope);
   if (!object(d) || d.tenant_id !== scope.tenantId || d.document_id !== documentId
     || !(d.extraction_work_id === null || uuid(d.extraction_work_id)) || (workId !== undefined && d.extraction_work_id !== workId)
     || !integer(d.revision) || (revision !== undefined && (exactRevision ? d.revision !== revision : d.revision < revision))
@@ -524,6 +526,7 @@ export async function readKnowledgeExtractionStatus(client: ExtractionClient, su
   const scope = capture(suppliedScope); const ref = reference(scope, suppliedRef);
   await readKnowledgeExtractionReview(client, scope, ref);
   const rows = await read(client, scope, 'get_paige_durable_work', { _work_id: ref.workId });
+  assertScope(scope);
   if (!Array.isArray(rows) || rows.length !== 1) invalid();
   const d = rows[0];
   if (!object(d) || d.work_id !== ref.workId || d.capability_key !== 'knowledge.extract' || d.work_kind !== 'knowledge_extract'

@@ -31,6 +31,33 @@ BEGIN
   END LOOP;
 END
 $history_helpers$;
+-- Admit exact incumbent triggers BEFORE backfill can fire any installed code.
+DO $history_triggers$
+DECLARE expected record; tr pg_catalog.pg_trigger; attributes text; attribute_count integer;
+BEGIN
+ FOR expected IN SELECT * FROM (VALUES
+  ('public.tenant_members'::regclass,'trg_tenant_first_owner_history',
+   'public._tenant_first_owner_history()',21,ARRAY['is_owner','role','tenant_id']::text[]),
+  ('public.tenants'::regclass,'trg_tenant_first_owner_history_immutable',
+   'public._tenant_first_owner_history_guard()',23,ARRAY['first_owner_seated_at']::text[])
+ ) v(target,trigger_name,signature,trigger_type,columns) LOOP
+  SELECT * INTO tr FROM pg_catalog.pg_trigger WHERE tgrelid=expected.target AND tgname=expected.trigger_name;
+  IF NOT FOUND THEN CONTINUE; END IF;
+  SELECT string_agg(a.attnum::text,' ' ORDER BY c.position),count(*) INTO attributes,attribute_count
+   FROM unnest(expected.columns) WITH ORDINALITY c(name,position)
+   JOIN pg_catalog.pg_attribute a ON a.attrelid=expected.target AND a.attname=c.name AND a.attnum>0 AND NOT a.attisdropped;
+  IF tr.tgfoid IS DISTINCT FROM pg_catalog.to_regprocedure(expected.signature)
+   OR tr.tgtype IS DISTINCT FROM expected.trigger_type::smallint OR tr.tgenabled IS DISTINCT FROM 'O'::"char"
+   OR tr.tgisinternal OR tr.tgparentid<>0 OR tr.tgnargs<>0 OR tr.tgqual IS NOT NULL
+   OR tr.tgargs IS DISTINCT FROM ''::bytea OR tr.tgconstraint<>0 OR tr.tgconstrrelid<>0 OR tr.tgconstrindid<>0
+   OR tr.tgdeferrable OR tr.tginitdeferred OR tr.tgoldtable IS NOT NULL OR tr.tgnewtable IS NOT NULL
+   OR attribute_count<>cardinality(expected.columns) OR tr.tgattr::text IS DISTINCT FROM attributes THEN
+   RAISE EXCEPTION 'EXP08 first owner history trigger drift: %',expected.trigger_name;
+  END IF;
+ END LOOP;
+END
+$history_triggers$;
+
 DO $history_column$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_catalog.pg_attribute a
@@ -103,9 +130,44 @@ BEGIN
 END
 $$;
 REVOKE ALL ON FUNCTION public._tenant_first_owner_history_guard() FROM PUBLIC,anon,authenticated,service_role;
-DROP TRIGGER IF EXISTS trg_tenant_first_owner_history ON public.tenant_members;
-CREATE TRIGGER trg_tenant_first_owner_history AFTER INSERT OR UPDATE OF is_owner,role,tenant_id
-  ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history();
-DROP TRIGGER IF EXISTS trg_tenant_first_owner_history_immutable ON public.tenants;
-CREATE TRIGGER trg_tenant_first_owner_history_immutable BEFORE INSERT OR UPDATE OF first_owner_seated_at
-  ON public.tenants FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history_guard();
+-- Exact replay retains the original trigger objects and their complete metadata.
+DO $history_trigger_install$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger WHERE tgrelid='public.tenant_members'::regclass
+  AND tgname='trg_tenant_first_owner_history') THEN
+  CREATE TRIGGER trg_tenant_first_owner_history AFTER INSERT OR UPDATE OF is_owner,role,tenant_id
+   ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history();
+ END IF;
+ IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger WHERE tgrelid='public.tenants'::regclass
+  AND tgname='trg_tenant_first_owner_history_immutable') THEN
+  CREATE TRIGGER trg_tenant_first_owner_history_immutable BEFORE INSERT OR UPDATE OF first_owner_seated_at
+   ON public.tenants FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history_guard();
+ END IF;
+END
+$history_trigger_install$;
+-- Admit exact incumbent triggers BEFORE backfill can fire any installed code.
+DO $history_triggers$
+DECLARE expected record; tr pg_catalog.pg_trigger; attributes text; attribute_count integer;
+BEGIN
+ FOR expected IN SELECT * FROM (VALUES
+  ('public.tenant_members'::regclass,'trg_tenant_first_owner_history',
+   'public._tenant_first_owner_history()',21,ARRAY['is_owner','role','tenant_id']::text[]),
+  ('public.tenants'::regclass,'trg_tenant_first_owner_history_immutable',
+   'public._tenant_first_owner_history_guard()',23,ARRAY['first_owner_seated_at']::text[])
+ ) v(target,trigger_name,signature,trigger_type,columns) LOOP
+  SELECT * INTO tr FROM pg_catalog.pg_trigger WHERE tgrelid=expected.target AND tgname=expected.trigger_name;
+  IF NOT FOUND THEN CONTINUE; END IF;
+  SELECT string_agg(a.attnum::text,' ' ORDER BY c.position),count(*) INTO attributes,attribute_count
+   FROM unnest(expected.columns) WITH ORDINALITY c(name,position)
+   JOIN pg_catalog.pg_attribute a ON a.attrelid=expected.target AND a.attname=c.name AND a.attnum>0 AND NOT a.attisdropped;
+  IF tr.tgfoid IS DISTINCT FROM pg_catalog.to_regprocedure(expected.signature)
+   OR tr.tgtype IS DISTINCT FROM expected.trigger_type::smallint OR tr.tgenabled IS DISTINCT FROM 'O'::"char"
+   OR tr.tgisinternal OR tr.tgparentid<>0 OR tr.tgnargs<>0 OR tr.tgqual IS NOT NULL
+   OR tr.tgargs IS DISTINCT FROM ''::bytea OR tr.tgconstraint<>0 OR tr.tgconstrrelid<>0 OR tr.tgconstrindid<>0
+   OR tr.tgdeferrable OR tr.tginitdeferred OR tr.tgoldtable IS NOT NULL OR tr.tgnewtable IS NOT NULL
+   OR attribute_count<>cardinality(expected.columns) OR tr.tgattr::text IS DISTINCT FROM attributes THEN
+   RAISE EXCEPTION 'EXP08 first owner history trigger drift: %',expected.trigger_name;
+  END IF;
+ END LOOP;
+END
+$history_triggers$;

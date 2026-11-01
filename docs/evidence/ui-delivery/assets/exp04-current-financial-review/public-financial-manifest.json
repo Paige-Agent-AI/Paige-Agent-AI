@@ -1,0 +1,435 @@
+{
+  "status": "PASS",
+  "boundary": "Actual public InvoiceDocument and canonical renderer/decoder. Captured controlled native financial/history fields; explicit synthetic issued content/bearer/transport/link/changed-source/error. No actual Auth, hosted source, real document/provider/customer/founder acceptance.",
+  "sourceHashes": {
+    "src/pages/InvoiceDocument.tsx": "4ba288283fb5ed679ae51ba4fb4ca2af26b524c197d2c7aed7479d6d36361ffc",
+    "src/pages/invoice-document.css": "15c797f2cb4cda72e72473cf6c58feac4af5b22e809509c7f31089bc59645626",
+    "src/solo/sales/customerPaymentRequest.ts": "3a2c726b01eb56544c44b985e82c4224eea291195c453502ba67fa32c199d7b5",
+    "supabase/functions/_shared/sales-invoice-document.ts": "94c34fc1ec0bf30b0b7349896b88cc573a40b97253ac45b002bdf30dd0ec9c09",
+    "supabase/functions/_shared/sales-payments/balance-projection.ts": "9b9badc22cb4541d70995ce454a697ea0f80531a9306b7678c1abe5ae66c337c"
+  },
+  "images": {
+    "public-financial-desktop.png": "7117aac1877c5716e646a84e4cb09d9c6308f280b61a2ceb5a7fd81d4e61b21f",
+    "public-financial-refund-mobile.png": "95ec459e3bd908e7c0418d58c181e9cc2198c96688b405bbfa5d93a2dd6baab0",
+    "public-financial-held-mobile.png": "256bbf01f8e9fd4d0e1919da25a36f0bc26877676e96d31676f5e04a0b060cf3"
+  },
+  "cases": [
+    {
+      "width": 1536,
+      "height": 770,
+      "scenario": "refund",
+      "metrics": {
+        "width": 1536,
+        "scrollWidth": 1536,
+        "calls": [
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Open PDF / print",
+            "height": 44.390625
+          },
+          {
+            "text": "Download PDF",
+            "height": 44.390625
+          },
+          {
+            "text": "Refresh payment status",
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "scenario": "refund",
+      "metrics": {
+        "width": 1366,
+        "scrollWidth": 1366,
+        "calls": [
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Open PDF / print",
+            "height": 44.390625
+          },
+          {
+            "text": "Download PDF",
+            "height": 44.390625
+          },
+          {
+            "text": "Refresh payment status",
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "scenario": "refund",
+      "metrics": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "calls": [
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Open PDF / print",
+            "height": 44.390625
+          },
+          {
+            "text": "Download PDF",
+            "height": 44.390625
+          },
+          {
+            "text": "Refresh payment status",
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "scenario": "refund",
+      "metrics": {
+        "width": 900,
+        "scrollWidth": 900,
+        "calls": [
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Open PDF / print",
+            "height": 44.390625
+          },
+          {
+            "text": "Download PDF",
+            "height": 44.390625
+          },
+          {
+            "text": "Refresh payment status",
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scenario": "refund",
+      "metrics": {
+        "width": 390,
+        "scrollWidth": 390,
+        "calls": [
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Open PDF / print",
+            "height": 44.390625
+          },
+          {
+            "text": "Download PDF",
+            "height": 44.390625
+          },
+          {
+            "text": "Refresh payment status",
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scenario": "held",
+      "metrics": {
+        "width": 390,
+        "scrollWidth": 390,
+        "calls": [
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Open PDF / print",
+            "height": 44.390625
+          },
+          {
+            "text": "Download PDF",
+            "height": 44.390625
+          },
+          {
+            "text": "Refresh payment status",
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scenario": "unavailable",
+      "metrics": {
+        "width": 390,
+        "scrollWidth": 390,
+        "calls": [
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Open PDF / print",
+            "height": 44.390625
+          },
+          {
+            "text": "Download PDF",
+            "height": 44.390625
+          },
+          {
+            "text": "Refresh payment status",
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scenario": "creditzero",
+      "metrics": {
+        "width": 390,
+        "scrollWidth": 390,
+        "calls": [
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Open PDF / print",
+            "height": 44.390625
+          },
+          {
+            "text": "Download PDF",
+            "height": 44.390625
+          },
+          {
+            "text": "Refresh payment status",
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scenario": "testlink",
+      "metrics": {
+        "width": 390,
+        "scrollWidth": 390,
+        "calls": [
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Open PDF / print",
+            "height": 44.390625
+          },
+          {
+            "text": "Download PDF",
+            "height": 44.390625
+          },
+          {
+            "text": "Refresh payment status",
+            "height": 44
+          },
+          {
+            "text": "Continue to TEST checkout",
+            "height": 64
+          }
+        ]
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scenario": "error",
+      "metrics": {
+        "width": 390,
+        "scrollWidth": 390,
+        "calls": [
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Open PDF / print",
+            "height": 44.390625
+          },
+          {
+            "text": "Download PDF",
+            "height": 44.390625
+          },
+          {
+            "text": "Refresh payment status",
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scenario": "mismatch",
+      "metrics": {
+        "width": 390,
+        "scrollWidth": 390,
+        "calls": [
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": null,
+            "method": "GET"
+          },
+          {
+            "path": "/functions/v1/sales-invoice-document",
+            "payment": "payment-request",
+            "method": "GET"
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Open PDF / print",
+            "height": 44.390625
+          },
+          {
+            "text": "Download PDF",
+            "height": 44.390625
+          },
+          {
+            "text": "Refresh payment status",
+            "height": 44
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "outside": [],
+  "personallyInspected": [
+    "desktop",
+    "refund mobile",
+    "held mobile"
+  ],
+  "acceptance": "UNVERIFIED"
+}

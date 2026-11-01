@@ -1,5 +1,38 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## November1 — O06 saved-source row authorization proof (development)
+
+O06 remains the ONE PRIMARY; no secondary starts. The existing native
+`systems_check_source_integrity.sql` adds11 actual authenticated row-read cases
+to its original36 assertions. They exercise original run/finding RLS, historical
+and resolved evidence, foreign/operator exclusion, eligible Admin and member
+reads, linked-client/suspended refusal, active-workspace switching, membership
+revocation with the same JWT and reopening the same source after restoration.
+All fixtures roll back; the original36 assertions and product permissions,
+policies, functions, UI and execution behavior remain unchanged. The existing
+canonical CI gate is reused with its label synchronized to47 assertions.
+
+The first genuine full-schema execution on3192/7d3d6ddd ran all47 assertions:
+46PASS/1FAIL, with only the new restoration case returningNULL. The fixture tried
+a direct active-status flip; the original EXP08 suspension contract correctly
+requires its governed reinstatement writer. The correction uses the EXISTING
+owner-authorized suspend/reinstate functions and restores only the selected-
+workspace fixture afterward. No product guard is weakened; the failed run stays
+in history. Corrected-head full-schema execution/review/CI/release are PROOF OWED.
+
+Visual: unchanged. Experiential: after the earlier browser-storage write failure,
+a later bounded chooser read and authorized Owner entry succeeded. Original
+saved-run totals/source survived full reload on the same original route;
+Escape returned to the original invoker, with the existing refresh fallback
+after direct reload. This is one ordinary SOLO Owner case, not role/cohort or
+complete Experience acceptance. The chooser still lists only the already tested
+workspace; the original second-SOLO handoff remains pending through Coordinator.
+No browser storage, role, provider, scan or approval change was made. Founder Acceptance:
+OPEN, one complete Experience review. ALG12 remains Partial; orchestration,
+activation and all nine catalogue states are unchanged. This analytical/source
+read proof does not run a new check, approve a correction or prove an effect.
+All original19 definitions and historical acceptance denominators below remain.
+
 ## October31 — O06 existing source-integrity proof gate (development)
 
 The same PRIMARY O06 retains its original saved-finding/run/source/reopen and

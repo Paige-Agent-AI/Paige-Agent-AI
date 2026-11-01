@@ -86,7 +86,7 @@ const booking = () => ({ id: bookingId, tenant_id: tenant, calendar_id: id(21), 
 const cases = [];
 const check = async (name, run) => { try { await run(); cases.push({ name, status: 'PASS' }); console.log('PASS ' + name); }
   catch (error) { cases.push({ name, status: 'FAIL', error: error.stack }); console.error('FAIL ' + name + ': ' + error.message); } };
-async function execute({ role = 'owner', tool = 'read_calendar_booking', args = { booking_id: bookingId }, result = { data: [booking()], error: null }, afterRead, afterReceipt, tenantResult = tenant, nativeMember = true, nativeAdmin = true, tier = 'tenant', classification = { id: tenant, account_type: 'standalone', parent_tenant_id: null }, afterClassification, activeProtocol = false } = {}) {
+async function execute({ role = 'owner', tool = 'read_calendar_booking', args = { booking_id: bookingId }, result = { data: [booking()], error: null }, afterRead, afterReceipt, receiptFailure, tenantResult = tenant, nativeMember = true, nativeAdmin = true, tier = 'tenant', classification = { id: tenant, account_type: 'standalone', parent_tenant_id: null }, afterClassification, activeProtocol = false } = {}) {
   receipts.length = 0; modelBodies.length = 0; queryShapes.length = 0; executorState.held = null;
   modelCalls = 0; readToolUse = { name: tool, input: args };
   let active = tenant; let classificationRow = classification;
@@ -98,7 +98,15 @@ async function execute({ role = 'owner', tool = 'read_calendar_booking', args = 
     current_user_tenant_id: { data: tenantResult, error: null },
     list_team_bookings: () => { if (afterRead) active = afterRead; if (afterClassification) classificationRow = afterClassification; return result; },
     is_tenant_member: { data: nativeMember, error: null }, is_tenant_admin: { data: nativeAdmin, error: null },
-    ...(afterReceipt ? { record_capability_run: () => { active = afterReceipt; return { data: true, error: null }; } } : {}),
+    record_capability_run: (a) => {
+      // The actual native writer rejects dotted keys. A fixture must not bless
+      // the formerly invalid spelling or hide its real helper-error contract.
+      if (!/^[a-z][a-z0-9_]{1,63}$/.test(a._capability_key)) return { data: null, error: { message: 'CAPABILITY_RUN_KEY_INVALID' } };
+      if (receiptFailure === 'throw') throw new Error('Fixture receipt transport unconfirmed');
+      if (receiptFailure === 'error') return { data: null, error: { message: 'Fixture receipt unconfirmed' } };
+      if (afterReceipt) active = afterReceipt;
+      return { data: true, error: null };
+    },
   } });
   const response = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Read saved booking ' + bookingId }] }, id(100 + cases.length)));
   const wire = await response.text();
@@ -181,7 +189,7 @@ await check('actual agenda Chat reads the bounded native window with one origina
   assert.deepEqual(native[0].parameters, { _from: '2026-10-17T00:00:00.000Z', _to: '2026-10-18T00:00:00.000Z', _host_ids: [actor], _tenant_id: tenant, _booking_id: null });
   assert.deepEqual(native[0].operations.slice(1), [['neq', 'booking_kind', 'class_seat'], ['gt', 'end_at', '2026-10-17T00:00:00.000Z'], ['order', 'start_at', { ascending: true }], ['order', 'id', { ascending: true }], ['limit', 51]]);
   const runs = r.rec.rpc.filter(c => c.name === 'record_capability_run'); assert.equal(runs.length, 1);
-  assert.equal(runs[0].args._capability_key, 'calendar.agenda_read');
+  assert.equal(runs[0].args._capability_key, 'read_calendar_agenda');
   assert.deepEqual(receipts.at(-1).bundle_ref.paige_record_links, [{ destination: 'calendar', record_id: null }]);
   assert.equal(r.rec.functions.length, 0);
 });
@@ -217,5 +225,17 @@ await check('agenda retires model egress when workspace changes while its origin
   assert.equal(r.shapes.filter(c => c.name === 'list_team_bookings').length, 1);
   assert.equal(r.rec.rpc.filter(c => c.name === 'record_capability_run').length, 1); assert.equal(r.rec.functions.length, 0);
 });
+for (const tool of ['read_calendar_booking', 'read_calendar_agenda']) for (const mode of ['error', 'throw']) {
+  await check('actual ' + tool + ' withholds private facts/navigation on original receipt ' + mode, async () => {
+    const r = await execute({ tool, args: tool === 'read_calendar_agenda' ? agendaArgs : { booking_id: bookingId },
+      receiptFailure: mode, activeProtocol: true });
+    assert.equal(r.value?.status, 'unavailable');
+    assert.ok(!JSON.stringify(modelBodies).includes(booking().title)); assert.ok(!r.wire.includes(booking().title));
+    assert.ok(!r.wire.includes('"destination":"calendar"'));
+    assert.equal(r.shapes.filter(c => c.name === 'list_team_bookings').length, 1);
+    assert.equal(r.rec.rpc.filter(c => c.name === 'record_capability_run').length, 1); assert.equal(r.rec.functions.length, 0);
+    assert.ok(!r.rec.rpc.some(c => /create.*booking|execute_crm|send_|approve/.test(c.name)));
+  });
+}
 console.log('RESULT ' + cases.filter(c => c.status === 'PASS').length + ' PASS / ' + cases.filter(c => c.status === 'FAIL').length + ' FAIL');
 if (cases.some(c => c.status === 'FAIL')) process.exitCode = 1;

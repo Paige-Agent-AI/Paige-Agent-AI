@@ -265,6 +265,82 @@ if(calendarTests){
  eq(get('sales.cash.recorded_received'),cash);eq(get('sales.pipeline.open_value'),pipelineResult);
 }
 const schema=run("SELECT string_agg(p.proname||':'||pg_get_functiondef(p.oid)||':'||coalesce(p.proacl::text,''),E'\\n' ORDER BY p.proname) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE '_sales_performance%';");
+let actualCollections=null;
+if(options.includes('--actual-collections')){
+ // Optional original Collections consumer phase AFTER every incumbent metric,
+ // calendar, caller, snapshot and compatibility assertion. Metrics stay intact.
+ const core=read('supabase/tests/fixtures/exp04_invoice_financial_position.sql');
+ const candidate=read('supabase/tests/fixtures/exp04_collections_financial_read.sql');
+ let count=0;const same=(a,b,label)=>{assert.deepEqual(a,b,label);count++;};
+ const refused=(sql,code='42501')=>{assert.throws(()=>run(sql),e=>e.message.includes(code));count++;};
+ const header=value=>`SET request.headers='${JSON.stringify(value).replaceAll("'","''")}';`;
+ const selected={"x-paige-invoice-evidence-version":"2"};
+ const financial=(entity='invoice',limit=50,cursor=null,a=actor,t=tenant,h=selected)=>json(scope(a,t)+header(h)+`SET ROLE authenticated;SELECT list_sales_collection_register('${t}','${entity}',${limit},${cursor?"'"+JSON.stringify(cursor)+"'::jsonb":'NULL'});`);
+ const metadata=()=>run("SELECT jsonb_build_object('owner',proowner,'acl',proacl,'definer',prosecdef,'volatility',provolatile,'config',proconfig,'args',pg_get_function_identity_arguments(oid),'result',pg_get_function_result(oid)) FROM pg_proc WHERE oid='public.list_sales_collection_register(uuid,text,integer,jsonb)'::regprocedure;");
+ const predecessor=()=>run("SELECT md5(pg_get_functiondef('public._list_sales_collection_register_before_provider(uuid,text,integer,jsonb)'::regprocedure));");
+ const originalMetadata=metadata(),originalPredecessor=predecessor();
+ same(run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.list_sales_collection_register(uuid,text,integer,jsonb)'::regprocedure;"),'237a5e1937e63af991a8dcb99d594f35','same actual production original register body');
+ same(run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public._list_sales_collection_register_before_provider(uuid,text,integer,jsonb)'::regprocedure;"),'350d7b4fb48a818ad97e15864c1a13ce','same actual production original predecessor body');
+ same(run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_invoice_balance_rows(uuid,uuid)'::regprocedure;"),'8c69e94f10a5115c7af42b8781b4fd41','same actual production original seven-column source');
+ // Populate required original receipt display fields omitted by this older
+ // reduced metric fixture; no monetary/source identities are changed. This
+ // lets its real native output also traverse the actual existing SDK decoder.
+ run(`UPDATE paige_invoice_payments SET actor_user_id='${actor}',method=CASE WHEN evidence_kind='provider_verified' THEN provider ELSE 'cash' END;`);
+ const legacyInvoices=register().rows,legacyReceipts=register('receipt').rows;
+ const originalMetricBundles=['sales.receivables.outstanding_current','sales.cash.recorded_received'].map(k=>get(k));
+ if(!options.includes('--actual-collections-baseline')){run(core);run(candidate);run(core);run(candidate);}
+ const initial=financial(),test=initial.rows.find(r=>r.id===testInvoice);
+ same(test.remaining_cents,30000,'TEST history cannot hide actual collection debt');
+ same(test.provider_verified_cents,0,'TEST verification is not actual provider money');
+ same(test.test_provider_verified_cents,10000,'native TEST evidence remains separate');
+ same(initial.payment_evidence_version,2,'explicit native financial representation');
+ same(initial.balance_basis,'canonical_receipt_allocations','same original balance basis');
+ same(initial.rows.every(r=>r.payment_evidence_version===2),true,'every actual row retains its representation');
+ same(register().rows,legacyInvoices,'WHOLE unversioned invoice rows remain exact');
+ same(register('receipt').rows,legacyReceipts,'WHOLE unversioned receipt rows remain exact');
+ same(metadata(),originalMetadata,'original public signature/security/ACL unchanged');
+ same(predecessor(),originalPredecessor,'WHOLE original authority/snapshot predecessor unchanged');
+ same(['sales.receivables.outstanding_current','sales.cash.recorded_received'].map(k=>get(k)),originalMetricBundles,'existing metric contracts remain exact; adoption is separate');
+ const mixed=initial.rows.find(r=>r.id===invoice);
+ same([mixed.manual_recorded_cents,mixed.provider_verified_cents,mixed.allocated_cents,mixed.remaining_cents],[40000,100000,140000,210000],'original mixed manual/LIVE financial facts');
+ same(initial.rows.find(r=>r.id===paidInvoice).remaining_cents,0,'original full manual payment remains settled');
+ same(initial.rows.find(r=>r.id===voidInvoice).collection_required,false,'void is never collectible');
+ same(initial.rows.find(r=>r.id===draft).collection_required,false,'draft is never collectible');
+ same(initial.rows.find(r=>r.id===testInvoice).collection_required,true,'actual TEST-only debt stays collectible');
+ const receipts=financial('receipt');
+ same(receipts.rows.find(r=>r.id===id(7,6)).provider_environment,'test','original TEST receipt environment');
+ same(receipts.rows.find(r=>r.id===id(7,3)).provider_environment,'live','original LIVE receipt environment');
+ same(receipts.rows.find(r=>r.id===id(7,1)).provider_environment,null,'manual receipt is not provider verification');
+ same(receipts.rows.every(r=>r.payment_evidence_version===2),true,'every receipt retains its native representation');
+ for(const value of [[],null,'2',{'x-paige-invoice-evidence-version':2},{'x-paige-invoice-evidence-version':'1'},{'x-paige-invoice-evidence-version':'3'},{'x-paige-invoice-evidence-version':null}]){
+  const beforeCount=run('SELECT count(*) FROM paige_sales_export_snapshots;');
+  refused(scope()+header(value)+`SET ROLE authenticated;SELECT list_sales_collection_register('${tenant}');`,'22023');
+  same(run('SELECT count(*) FROM paige_sales_export_snapshots;'),beforeCount,'invalid representation rolls back original snapshot creation');
+ }
+ refused(scope()+`SET request.headers='malformed';SET ROLE authenticated;SELECT list_sales_collection_register('${tenant}');`,'22023');
+ for(const role of ['anon','service_role'])refused(scope()+header(selected)+`SET ROLE ${role};SELECT list_sales_collection_register('${tenant}');`);
+ refused(scope(otherActor,foreign)+header(selected)+`SET ROLE authenticated;SELECT list_sales_collection_register('${tenant}');`);
+ run(`UPDATE tenant_members SET role='member' WHERE user_id='${actor}';`);
+ refused(scope()+header(selected)+`SET ROLE authenticated;SELECT list_sales_collection_register('${tenant}');`);
+ run(`UPDATE tenant_members SET role='owner' WHERE user_id='${actor}';`);
+ const first=financial('invoice',2),next=financial('invoice',2,first.next_cursor);
+ same(next.rows.length,2,'same bounded continuation');
+ same(first.rows.every(r=>!next.rows.some(n=>n.id===r.id)),true,'same original membership/order');
+ refused(scope(otherActor,foreign)+header(selected)+`SET ROLE authenticated;SELECT list_sales_collection_register('${tenant}','invoice',2,'${JSON.stringify(first.next_cursor)}');`);
+ run(`UPDATE paige_sales_export_snapshots SET expires_at=now()-interval '1 second' WHERE id='${first.next_cursor.snapshot_id}';`);
+ refused(scope()+header(selected)+`SET ROLE authenticated;SELECT list_sales_collection_register('${tenant}','invoice',2,'${JSON.stringify(first.next_cursor)}');`);
+ // A full LIVE allocation plus older TEST history must not overstate actual
+ // payment or change the legacy compatibility projection.
+ run(`INSERT INTO paige_invoice_payments(id,tenant_id,invoice_id,actor_user_id,kind,amount_cents,currency,method,received_at,evidence_kind,provider,provider_environment,provider_verified_at)
+  VALUES('${id(7,20)}','${tenant}','${testInvoice}','${actor}','receipt',30000,'usd','stripe',now(),'provider_verified','stripe','live',now());`);
+ const full=financial().rows.find(r=>r.id===testInvoice);
+ same([full.remaining_cents,full.provider_verified_cents,full.test_provider_verified_cents,full.allocated_cents,full.collection_required],[0,30000,10000,30000,false],'full LIVE paid with separate historical TEST');
+ run(`DELETE FROM paige_invoice_payments WHERE id='${id(7,20)}';`);
+ same(financial().rows.find(r=>r.id===testInvoice).remaining_cents,30000,'removing only synthetic LIVE fixture restores original actual debt');
+ same(register().rows,legacyInvoices,'original legacy rows preserved after synthetic control cleanup');
+ actualCollections={status:'PASS',checks:count,scope:'Selected-schema original native register; no provider/Auth/customer acceptance',samples:{invoices:initial,receipts}};
+}
 const report={checks,postgres:run('SHOW server_version;'),migration:forwardPath??migrationPath,migration_sha256:createHash('sha256').update(forward??migration).digest('hex'),schema_fingerprint:createHash('sha256').update(schema).digest('hex'),evidence:'synthetic isolated PostgreSQL; shared issuer/runtime not proven',production:false};
+if(actualCollections)report.actual_collections=actualCollections;
 mkdirSync(new URL('../../work/',import.meta.url),{recursive:true});writeFileSync(new URL('../../work/sales-performance-proof.json',import.meta.url),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }finally{database='postgres';run(`DROP DATABASE ${db} WITH (FORCE);`);}

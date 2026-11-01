@@ -6,6 +6,18 @@ import assert from 'node:assert/strict';
 const [binary,port,user,expectedDirectory,mode]=process.argv.slice(2);
 if(!binary||!/^\d+$/.test(port??'')||!user||!expectedDirectory)throw Error('Explicit local cluster arguments required');
 if(process.argv.includes('--observation-work'))assert(process.argv.includes('--provider-observations'),'event work requires the original observation proof');
+if(process.argv.includes('--provider-cash-position'))assert(process.argv.includes('--observation-work'),'cash evidence requires the original observation/work proof');
+if(process.argv.includes('--provider-disposition'))assert(process.argv.includes('--provider-cash-position')&&process.argv.includes('--accepted-obligation-writers'),'financial disposition requires original cash and accepted-writer proof');
+if(process.argv.includes('--financial-collectibility'))assert(process.argv.includes('--provider-disposition'),'financial collectibility requires the original decision proof');
+if(process.argv.includes('--manual-financial'))assert(process.argv.includes('--financial-collectibility'),'manual financial proof requires the original current financial context');
+if(process.argv.includes('--actual-financial-read'))assert(process.argv.includes('--manual-financial'),'actual financial read proof requires the original manual/current financial proof');
+if(process.argv.includes('--actual-accepted-read'))assert(process.argv.includes('--actual-financial-read'),'actual accepted read proof requires original current financial read proof');
+if(process.argv.includes('--financial-catalogue'))assert(process.argv.includes('--actual-accepted-read'),'catalogue proof requires original accepted target proof');
+if(process.argv.includes('--actual-collections-read'))assert(process.argv.includes('--financial-catalogue'),'current Collections projection proof requires original complete financial proof');
+if(process.argv.includes('--actual-client-financial-read'))assert(process.argv.includes('--actual-collections-read'),'current client query proof requires original current financial proof');
+if(process.argv.includes('--current-payment-projection'))assert(process.argv.includes('--actual-client-financial-read'),'current link proof requires original complete client financial proof');
+if(process.argv.includes('--current-client-transport'))assert(process.argv.includes('--current-payment-projection'),'current client transport proof requires original current link proof');
+if(process.argv.includes('--actual-financial-ledger'))assert(process.argv.includes('--current-client-transport'),'current ledger proof requires original current financial transport proof');
 let database='postgres';
 const args=()=>['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-v','ON_ERROR_STOP=1','-At'];
 const run=sql=>{const p=spawnSync(binary,args(),{input:sql,encoding:'utf8',maxBuffer:4e6,windowsHide:true});if(p.status!==0)throw Error(p.stderr);return p.stdout.trim();};
@@ -118,11 +130,34 @@ try {
   const balance=/CREATE OR REPLACE FUNCTION public\._sales_invoice_balance_rows\([\s\S]*?AS \$\$[\s\S]*?\$\$;/i.exec(balanceSource)?.[0];
   assert(balance,'actual original canonical receipt balance projection');
   run(balance+`REVOKE ALL ON FUNCTION public._sales_invoice_balance_rows(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;`);
+
+  // Current-mode adoption must use the ACTUAL retained production getter,
+  // not the older provider-operations-era sibling. Default historical proof
+  // remains unchanged; no installed product function is edited here.
+  if(mode==='--current'){
+   const currentReader=extract(balanceSource,'_sales_invoice_read');
+   const body=/AS \$\$([\s\S]*?)\$\$;/.exec(currentReader);assert(body);
+   assert.equal(createHash('md5').update(body[1]).digest('hex'),'c1fec742f8ff2a3753b58a9800ce5fab','independently verified current getter source');
+   run(currentReader);
+   assert.equal(run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_invoice_read(uuid,uuid,integer)'::regprocedure;"),'c1fec742f8ff2a3753b58a9800ce5fab');
+  }
   run(`ALTER TABLE public.paige_workspace_events ADD COLUMN IF NOT EXISTS job_attempt_id text,
    ADD COLUMN IF NOT EXISTS llm_trace_id uuid,ADD COLUMN IF NOT EXISTS release_id text,ADD COLUMN IF NOT EXISTS detail jsonb;`);
   run(rail+`REVOKE ALL ON FUNCTION public._record_workspace_rail_event(uuid,uuid,text,uuid,bigint,text,text,text,text,uuid,text,jsonb) FROM PUBLIC,anon,authenticated,service_role;`);
   run(read('supabase/tests/fixtures/exp04_provider_observation.sql'));
   if(process.argv.includes('--observation-work'))run(read('supabase/tests/fixtures/exp04_provider_observation_work.sql'));
+  if(process.argv.includes('--provider-cash-position')){
+   run(read('supabase/tests/fixtures/exp04_invoice_financial_position.sql'));
+   if(!process.argv.includes('--provider-cash-baseline')){
+    let cashSource=read('supabase/tests/fixtures/exp04_invoice_provider_cash_position.sql');
+    if(process.argv.includes('--provider-cash-mutant')){
+     const original='observed_net:=base.live_provider_minor+refund_delta-dispute_debit+dispute_credit;';
+     assert(cashSource.includes(original),'exact cash movement negative-control anchor');
+     cashSource=cashSource.replace(original,'observed_net:=base.live_provider_minor;');
+    }
+    run(cashSource);
+   }
+  }
  }
  const first=randomUUID();
  // --baseline intentionally fails here on current-main: there is no asynchronous operation RPC.
@@ -322,6 +357,11 @@ try {
  assert.equal(run(`SELECT state FROM paige_invoice_provider_operations WHERE id='${paidOp}';`),'outcome_unknown');
  const readback={provider:'stripe',merchant_account_id:'acct_fixtureA',environment:'test',provider_object_id:'cs_test_settlement',provider_transaction_id:'ch_fixture',provider_settlement_id:'txn_fixture',amount_minor:50000,currency:'usd',status:'verified',readback_reference:'req_fixture',invoice_id:invoice,client_id:client,invoice_version:3,issued_snapshot_version:1,provider_received_at:new Date(Date.now()-1000).toISOString()};
  const allocate=(fact=readback,t=tenant)=>service(`SELECT allocate_verified_sales_invoice_payment('${t}','${paidOp}','${paidToken}',${literal(fact)});`);
+ if(process.argv.includes('--observation-work')){
+  const early=JSON.parse(run(service("SELECT public.register_sales_provider_observation_event('evt_earlyCapture','refund.created','acct_fixtureA','test','ch_fixture');")).split('\n').at(-1));
+  assert.equal(early.state,'verification_pending','early adjustment event remains pending before ORIGINAL capture exists');
+  assert.equal(run("SELECT count(*) FROM paige_durable_work WHERE work_kind='sales_provider_observation' AND request_payload->>'event_id'='evt_earlyCapture';"),'0','unlinked early event cannot invent an operation or work');
+ }
  deny(allocate({...readback,amount_minor:50001}),/readback|tuple|conflict/i);
  deny(allocate({...readback,status:'provider_accepted'}),/Invalid|readback/i);
  deny(allocate({...readback,card_number:'4111111111111111'}),/Invalid|readback/i);
@@ -493,10 +533,25 @@ try {
     deny(workChecks.replace('begin;\n',()=> 'begin;\n'+mutant+'\n'),/FAIL: different merchant cannot register event work accepted/);
     assert.equal(run("SELECT pg_get_functiondef('public.register_sales_provider_observation_work(uuid,uuid,text,text,text,text)'::regprocedure);"),definitionBefore,'negative-control connection restores exact original event writer');
     console.log('SALES_PROVIDER_OBSERVATION_WORK_CONTROL_PASS: removing merchant binding caused the exact cross-merchant admission failure; rollback restored the original writer.');
+    // C172 silent-drop negative control: original scopes must remain visible as
+    // verification failures after replacement, without granting retired authority.
+    const eventDefinition=run("SELECT pg_get_functiondef('public.register_sales_provider_observation_event(text,text,text,text,text)'::regprocedure);");
+    const eventAnchor=' select count(*) into matches from public.paige_invoice_provider_operations p';
+    assert(eventDefinition.includes(eventAnchor),'exact original-payment lookup anchor');
+    const silentDrop=eventDefinition.replace(eventAnchor,` if not exists(select 1 from public.tenant_stripe_accounts m
+     where m.stripe_account_id=_merchant_account_id and m.provider_environment=_environment) then
+     return jsonb_build_object('state','other_domain');end if;
+`+eventAnchor);
+    deny(workChecks.replace('begin;\n',()=> 'begin;\n'+silentDrop+';\n'),/FAIL: known original payment with retired merchant scope is refused rather than silently ignored accepted/);
+    assert.equal(run("SELECT pg_get_functiondef('public.register_sales_provider_observation_event(text,text,text,text,text)'::regprocedure);"),eventDefinition,'silent-drop control rolls back to the exact original event resolver');
+    observationProof.ingress_silent_drop_negative_control=true;
+    console.log('SALES_PROVIDER_OBSERVATION_INGRESS_CONTROL_PASS: silently dropping a retired original merchant fails the exact retained-scope assertion; rollback restores the resolver.');
+    // End C172 silent-drop negative control.
    }
    const line=run(workChecks).split('\n').find(x=>x.startsWith('{')&&x.includes('E04_PROVIDER_OBSERVATION_WORK'));
    assert(line,'native work proof summary');observationProof.work=JSON.parse(line);
-   assert.equal(observationProof.work.checks,39,'all native event-work controls executed');
+    assert.equal(observationProof.work.checks,54,'all39 original and15 appended native event-work controls executed');
+    observationProof.work.early_capture_order_case=1;
    const event='evt_workRealSessions';
    const registerEvent=()=>service(`BEGIN;SELECT jsonb_build_object('backend',pg_backend_pid(),'result',public.register_sales_provider_observation_work('${tenant}','${paidOp}','${event}','acct_fixtureA','test','ch_fixture'));SELECT pg_sleep(0.1);COMMIT;`);
    const registered=await Promise.all([execute(registerEvent()),execute(registerEvent())]);
@@ -529,6 +584,103 @@ try {
   }
   console.log('SALES_PROVIDER_OBSERVATION_CONCURRENCY_PASS: two actual-session cases; same facts commit once, changed facts refuse the stale incarnation; original payment and terminal settlement work unchanged.');
  }
+ if(process.argv.includes('--provider-cash-position')){
+  let cashChecks=read('supabase/tests/fixtures/exp04_invoice_provider_cash_checks.sql');
+  for(const [key,value]of Object.entries({INVOICE:invoice,TENANT:tenant,ACTOR:actor,CLIENT:client,OTHER_TENANT:otherTenant})){
+   assert(/^[a-f0-9-]{36}$/i.test(value),'runner-owned cash proof identity');
+   assert(cashChecks.includes('__'+key+'__'),'explicit cash proof input');cashChecks=cashChecks.replaceAll('__'+key+'__',value);
+  }
+  assert(!/__\w+__/.test(cashChecks),'no unresolved cash proof inputs');
+  const cashLine=run(cashChecks).split('\n').find(x=>x.startsWith('{')&&x.includes('E04_PROVIDER_CASH_POSITION'));
+  assert(cashLine,'actual native cash evidence report');
+  const cashProof=JSON.parse(cashLine);assert(cashProof.checks>=25,'all cash evidence controls run');
+  const cashSource=read('supabase/tests/fixtures/exp04_invoice_provider_cash_position.sql');
+  const aclGuard=cashSource.slice(cashSource.indexOf('DO $private_acl$'));
+  assert(aclGuard.startsWith('DO $private_acl$'),'actual new private ACL guard');
+  const cashDefinitionBefore=run("SELECT pg_get_functiondef('public._sales_invoice_financial_position_rows(uuid,uuid,integer)'::regprocedure);");
+  const cashACLBefore=run("SELECT proacl::text FROM pg_proc WHERE oid='public._sales_invoice_financial_position_rows(uuid,uuid,integer)'::regprocedure;");
+  for(const permissionChange of [
+   'REVOKE ALL ON FUNCTION public._sales_invoice_financial_position_rows(uuid,uuid,integer) FROM postgres;',
+   'GRANT EXECUTE ON FUNCTION public._sales_invoice_financial_position_rows(uuid,uuid,integer) TO authenticated;'
+  ])deny('BEGIN;'+permissionChange+aclGuard+'ROLLBACK;',/Private financial evidence permission drift/);
+  assert.equal(run("SELECT pg_get_functiondef('public._sales_invoice_financial_position_rows(uuid,uuid,integer)'::regprocedure);"),cashDefinitionBefore,'guard controls preserve whole function definition');
+  assert.equal(run("SELECT proacl::text FROM pg_proc WHERE oid='public._sales_invoice_financial_position_rows(uuid,uuid,integer)'::regprocedure;"),cashACLBefore,'guard controls roll back exact private ACL');
+  cashProof.private_acl_controls=2;
+  writeFileSync(new URL('../../work/sales-provider-cash-proof.json',import.meta.url),JSON.stringify({
+   ...cashProof,status:'PASS',observed_at:new Date().toISOString(),incumbent_lifecycle_passed:true,
+   source_hashes:Object.fromEntries(['scripts/sql/sales-provider-operation-proof.mjs','supabase/tests/fixtures/exp04_invoice_provider_cash_position.sql','supabase/tests/fixtures/exp04_invoice_provider_cash_checks.sql'].map(f=>[f,createHash('sha256').update(read(f)).digest('hex')])),
+   native_carrier:'UNPUBLISHED',activation:'UNMOUNTED',hosted_authentication:'UNVERIFIED',provider_settlement:'UNVERIFIED',customer_acceptance:'UNVERIFIED'
+  },null,2)+'\n');
+  console.log('SALES_PROVIDER_CASH_POSITION_PASS: '+JSON.stringify(cashProof));
+ }
+ if(process.argv.includes('--provider-disposition')){
+  const {proveProviderDisposition}=await import('./sales-provider-disposition-proof.mjs');
+  const result=await proveProviderDisposition({run,read,execute,actor,tenant,client,invoice,otherTenant,
+   baseline:process.argv.includes('--provider-disposition-baseline')});
+  writeFileSync(new URL('../../work/sales-provider-disposition-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+  console.log('SALES_PROVIDER_DISPOSITION_PASS: '+JSON.stringify({...result,samples:undefined}));
+ }
+if(process.argv.includes('--financial-collectibility')){
+ const {proveFinancialCollectibility}=await import('./sales-financial-collectibility-proof.mjs');
+ const result=await proveFinancialCollectibility({run,read,actor,tenant,client,invoice,otherTenant,
+  baseline:process.argv.includes('--financial-collectibility-baseline')});
+ writeFileSync(new URL('../../work/sales-financial-collectibility-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_FINANCIAL_COLLECTIBILITY_PASS: '+JSON.stringify({...result,samples:undefined}));
+}
+if(process.argv.includes('--manual-financial')){
+ const {proveManualFinancial}=await import('./sales-manual-financial-proof.mjs');
+ const result=await proveManualFinancial({run,read,execute,actor,tenant,client,invoice,otherTenant});
+ writeFileSync(new URL('../../work/sales-manual-financial-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_MANUAL_FINANCIAL_PASS: '+JSON.stringify({...result,samples:undefined}));
+}
+if(process.argv.includes('--actual-financial-read')){
+ const {proveActualFinancialRead}=await import('./sales-actual-financial-read-proof.mjs');
+ const result=proveActualFinancialRead({run,read,actor,tenant,client,invoice,otherTenant});
+ writeFileSync(new URL('../../work/sales-actual-financial-read-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_ACTUAL_FINANCIAL_READ_PASS: '+JSON.stringify({...result,samples:undefined}));
+}
+if(process.argv.includes('--actual-accepted-read')){
+ const {proveActualAcceptedRead}=await import('./sales-actual-accepted-read-proof.mjs');
+ const result=proveActualAcceptedRead({run,read,otherTenant});
+ writeFileSync(new URL('../../work/sales-actual-accepted-read-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_ACTUAL_ACCEPTED_READ_PASS: '+JSON.stringify({...result,sample:undefined}));
+}
+if(process.argv.includes('--financial-catalogue')){
+ const {proveFinancialCatalogue}=await import('./sales-financial-catalogue-proof.mjs');
+ const result=proveFinancialCatalogue({run,read});
+ writeFileSync(new URL('../../work/sales-financial-catalogue-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_FINANCIAL_CATALOGUE_PASS: '+JSON.stringify(result));
+}
+if(process.argv.includes('--actual-collections-read')){
+ const {proveActualCollectionsRead}=await import('./sales-actual-collections-read-proof.mjs');
+ const result=proveActualCollectionsRead({run,read});
+ writeFileSync(new URL('../../work/sales-actual-collections-read-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_ACTUAL_COLLECTIONS_READ_PASS: '+JSON.stringify({...result,sample:undefined}));
+}
+if(process.argv.includes('--actual-client-financial-read')){
+ const {proveActualClientFinancialRead}=await import('./sales-actual-client-financial-read-proof.mjs');
+ const result=proveActualClientFinancialRead({run,read});
+ writeFileSync(new URL('../../work/sales-actual-client-financial-read-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_ACTUAL_CLIENT_FINANCIAL_READ_PASS: '+JSON.stringify({...result,sample:undefined}));
+}
+if(process.argv.includes('--current-payment-projection')){
+ const {proveCurrentPaymentProjection}=await import('./sales-current-payment-projection-proof.mjs');
+ const result=proveCurrentPaymentProjection({run,read});
+ writeFileSync(new URL('../../work/sales-current-payment-projection-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_CURRENT_PAYMENT_PROJECTION_PASS: '+JSON.stringify(result));
+}
+if(process.argv.includes('--current-client-transport')){
+ const {proveCurrentClientFinancialTransport}=await import('./sales-current-client-transport-proof.mjs');
+ const result=proveCurrentClientFinancialTransport({run,read});
+ writeFileSync(new URL('../../work/sales-current-client-transport-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_CURRENT_CLIENT_TRANSPORT_PASS: '+JSON.stringify({...result,sample:undefined}));
+}
+if(process.argv.includes('--actual-financial-ledger')){
+ const {proveActualFinancialLedger}=await import('./sales-actual-financial-ledger-proof.mjs');
+ const result=proveActualFinancialLedger({run,read});
+ writeFileSync(new URL('../../work/sales-actual-financial-ledger-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_ACTUAL_FINANCIAL_LEDGER_PASS: '+JSON.stringify({...result,samples:undefined}));
+}
  run(`UPDATE paige_invoices SET status='void' WHERE id='${invoice}';`);
  assert.equal(publicRequest(),null,'void invoice bearer refused');
  if(observationProof){

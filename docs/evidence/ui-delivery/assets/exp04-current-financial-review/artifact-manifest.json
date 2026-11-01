@@ -1,0 +1,45 @@
+{
+  "scope": "Actual existing Owner Sales components with original native-proof financial data and synthetic identity/document/provider ports. No hosted Auth, real funds or owner acceptance.",
+  "nativeChecks": 31,
+  "renderedStates": 8,
+  "requiredViewportPaigePaths": 8,
+  "additionalMobilePaths": 2,
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE",
+  "images": [
+    {
+      "source": "e04-c191-1793506633568-light-1366-recorded.png",
+      "target": "current-standing-desktop.png",
+      "sha256": "e407c369f8c38a60d792dcd606bc8fc81806a8b56943a9c0d7b805286f790632"
+    },
+    {
+      "source": "e04-c191-1793506633568-financial-review-light-1366-closed.png",
+      "target": "financial-review-desktop.png",
+      "sha256": "43d4d93e0a091f146d02c113c5ec13d0d2263bc34f6221249615ce89a2d1c6d9"
+    },
+    {
+      "source": "e04-c191-1793506845269-financial-review-dark-390-open.png",
+      "target": "financial-review-mobile.png",
+      "sha256": "d22e212a74d35f39d3c549e18b2e1d5912a040a3cdab25bea5c97aa093f15d53"
+    },
+    {
+      "source": "e04-c192-1793509367812-plan-1366-closed.png",
+      "target": "accepted-plan-desktop.png",
+      "sha256": "91fc724eef31595084494883ea7324f73f902930ce97b92d3f1517bcd8d366df"
+    },
+    {
+      "source": "e04-c192-1793509367812-plan-390-closed.png",
+      "target": "accepted-plan-mobile.png",
+      "sha256": "d7d93cecdd704f0bc71ec2e525fe59b09d55c16154c6630b77f1f4ee7c4372b6"
+    },
+    {
+      "source": "e04-c192-1793509367812-held-financial_review_required.png",
+      "target": "accepted-plan-held-mobile.png",
+      "sha256": "7f2dc7b14d2b1364f4baaec079239964cd4e126caf7d23c2b1984f9558d18479"
+    }
+  ],
+  "productionAcceptance": "UNVERIFIED",
+  "sourceFreeze": "Rendered final component sources; native candidate SQL hashes retained in original proof record.",
+  "acceptedTargetChecks": 21,
+  "acceptedTargetRenderedPaths": 15,
+  "acceptedTargetBoundary": "Native exact amounts with synthetic identity/document/SDK ports. Original signature and template content not legal or provider/customer acceptance."
+}

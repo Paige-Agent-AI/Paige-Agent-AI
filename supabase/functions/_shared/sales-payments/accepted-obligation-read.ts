@@ -2,7 +2,7 @@ import {decodeAcceptedCommercialAgreement,type AcceptedCommercialRead} from '../
 import {parsePaymentObligationEvidence,type PaymentObligationEvidence} from './accepted-obligation.ts';
 import {integer,MAX_SCHEDULE,object,only,UUID} from '../sales-collections/primitives.ts';
 
-const heldReasons=['invoice_not_issued','accepted_source_unavailable','commercial_terms_inactive','accepted_source_changed','test_payment_evidence','allocation_conflict','allocation_required'] as const;
+const heldReasons=['invoice_not_issued','accepted_source_unavailable','commercial_terms_inactive','accepted_source_changed','test_payment_evidence','allocation_conflict','allocation_required','financial_review_required','financial_evidence_unavailable'] as const;
 type HeldReason=typeof heldReasons[number];
 
 export type AcceptedPaymentPlanRead=
@@ -22,13 +22,14 @@ export async function readAcceptedInvoicePaymentPlan(tenant:unknown,args:unknown
   only(args,['invoice_id','agreement_id','client_id','invoice_version','invoice_draft_version','issued_snapshot_version','currency']);
   if(!id(args.invoice_id)||!id(args.agreement_id)||!id(args.client_id)||typeof args.currency!=='string'||!/^[a-z]{3}$/.test(args.currency))return refused;
   const expectedVersion=integer(args.invoice_version,1,Number.MAX_SAFE_INTEGER),draftVersion=integer(args.invoice_draft_version,1,Number.MAX_SAFE_INTEGER),issuedVersion=integer(args.issued_snapshot_version,1,Number.MAX_SAFE_INTEGER);
-  const response=await caller.rpc('read_sales_accepted_invoice_obligations',{_expected_tenant_id:tenant,_invoice_id:args.invoice_id,_agreement_id:args.agreement_id});
+  const query=caller.rpc('read_sales_accepted_invoice_obligations',{_expected_tenant_id:tenant,_invoice_id:args.invoice_id,_agreement_id:args.agreement_id}) as ReturnType<Caller['rpc']>&{setHeader?:(name:string,value:string)=>ReturnType<Caller['rpc']>};
+  const response=await(typeof query.setHeader==='function'?query.setHeader('x-paige-invoice-evidence-version','3'):query);
   if(response.error||!object(response.data)||!object(response.data.payment_obligations))return refused;
   const {payment_obligations:observation,...retained}=response.data;
   const accepted=await decodeAcceptedCommercialAgreement(tenant,{invoice_id:args.invoice_id,agreement_id:args.agreement_id},retained);
   if(accepted.state==='refused')return refused;
-  only(observation,['schema_version','tenant_id','client_id','invoice_id','invoice_version','invoice_draft_version','issued_snapshot_version','obligations','state',...(observation.state==='held'?['reason']:[])]);
-  if(observation.schema_version!==1||observation.tenant_id!==tenant||observation.client_id!==args.client_id||observation.invoice_id!==args.invoice_id||!Array.isArray(observation.obligations)||observation.obligations.length>MAX_SCHEDULE)return refused;
+  only(observation,['schema_version','financial_evidence_version','tenant_id','client_id','invoice_id','invoice_version','invoice_draft_version','issued_snapshot_version','obligations','state',...(observation.state==='held'?['reason']:[])]);
+  if(observation.schema_version!==2||observation.financial_evidence_version!==3||observation.tenant_id!==tenant||observation.client_id!==args.client_id||observation.invoice_id!==args.invoice_id||!Array.isArray(observation.obligations)||observation.obligations.length>MAX_SCHEDULE)return refused;
   if(integer(observation.invoice_version,1,Number.MAX_SAFE_INTEGER)!==expectedVersion||integer(observation.invoice_draft_version,1,Number.MAX_SAFE_INTEGER)!==draftVersion||integer(observation.issued_snapshot_version,1,Number.MAX_SAFE_INTEGER)!==issuedVersion)return {state:'stale'};
   if(observation.state==='held'){
    if(observation.obligations.length||!heldReasons.includes(observation.reason as HeldReason))return refused;

@@ -96,10 +96,16 @@ BEGIN
     SELECT prosrc,to_jsonb(p)-'prosrc' INTO old_body,before_metadata FROM pg_proc p WHERE oid=target;
     IF NOT EXISTS(SELECT 1 FROM pg_proc p WHERE oid=target AND prosecdef
       AND proowner='postgres'::regrole AND proconfig=ARRAY['search_path=public']
-      AND proacl::text=CASE WHEN sig='public.accept_tenant_invite(text)'
-        THEN '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'
-        ELSE '{=X/postgres,postgres=X/postgres,authenticated=X/postgres}' END) THEN
-      RAISE EXCEPTION 'EXP08 first owner invitation requires original writer metadata: %',sig;
+      -- Original grant replay may reorder ACL entries. Compare the complete entries,
+      -- including grantors/grantees/privileges/grant options, without changing them.
+      AND ARRAY(SELECT a::text FROM unnest(p.proacl) a ORDER BY 1)=
+        ARRAY(SELECT a::text FROM unnest((CASE WHEN sig='public.accept_tenant_invite(text)'
+          THEN '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'
+          ELSE '{=X/postgres,postgres=X/postgres,authenticated=X/postgres}' END)::pg_catalog.aclitem[]) a ORDER BY 1)) THEN
+      RAISE EXCEPTION 'EXP08 first owner invitation requires original writer metadata: %',sig
+        USING DETAIL=coalesce((SELECT jsonb_build_object('owner',p.proowner::regrole::text,
+          'definer',p.prosecdef,'path',p.proconfig,'acl',p.proacl::text,'source_hash',md5(p.prosrc))::text
+          FROM pg_proc p WHERE oid=target),'original function missing');
     END IF;
     -- Replay is admitted only when removing this exact complete span recovers the exact incumbent.
     IF md5(old_body)<>expected THEN

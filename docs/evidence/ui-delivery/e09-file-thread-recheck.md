@@ -75,3 +75,38 @@ Visual: unchanged JSX/style and bounded incumbent rendered references.
 Experiential: same-customer draft continuity restored in rendered host tests;
 real native intake/answer/reload still owed. Founder Acceptance: NOT_READY /
 NOT_ACCEPTED; complete original42/seven and single final evaluation unchanged.
+
+## October31 — composed original host and Documents regression protection
+
+The original host tests isolated the attachment hook, while the attachment-hook
+tests isolated Documents. The additional owning
+`PaigeChat.private-files.integration.test.tsx` mounts the actual host, selector,
+attachment hook, shell identity provider and original Documents lifecycle
+together. Only Auth/native/Storage/history transports and unrelated owner hooks
+are synthetic; the unit network guard remains enabled. No product, permission,
+shared Chat implementation, provider or database source changes here.
+
+Seven cases cover a returning two-file choice during deferred history, existing
+selection continuity, refused history, changed native thread, business ABA, and
+the full original reservation/status/PUT-upsert-false/finish/readback path before
+one Chat request. Only an exact ordered saved-message manifest clears the local
+selection; a reversed manifest retains it and blocks a duplicate Send. The
+synthetic response is explicitly not evidence of model extraction or production
+file reading. All seven pass; focused test TypeScript and ESLint pass.
+
+The causal negative control at
+`scripts/ci/e09-picker-old-host.config.mts` restores only the prior host null
+reset in the module loader. It changes no on-disk product file. Running the two
+continuity cases with that configuration must fail; normal configuration must
+pass. Initial complete five-case control produced two continuity failures and
+three scope/refusal passes. On the final seven-case source, both continuity
+cases fail under the committed negative configuration (five other cases are
+deliberately skipped). The final normal four-suite run passes113/113:71 original
+host cases,21 original attachment-hook cases,14 original private-Documents cases
+and the seven integrated cases. These counts overlap the prior release's
+256-case evidence and must not be added to it. Prior assertions remain intact.
+
+This is additional automated integration evidence for SAME primary S4, not a
+new UI, release, authenticated upload/answer/reload result, algorithm-maturity
+upgrade or founder acceptance. The original protected customer check and strict
+QA access lifecycle remain open. Current-source tests do not replace that proof.

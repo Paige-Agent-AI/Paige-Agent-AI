@@ -5679,3 +5679,14 @@ keep parser imports off unrelated document routes. The native3154 prerequisite
 and worker release are distinct from mounted single/BULK/Chat review, approved
 facts/separate Memory, saved Mission and actual Work/CRM/reopen proof. No new
 runtime, writer, automatic approval or complete customer-outcome claim follows.
+
+## 2026-11-01 UTC EXP13 - original upload and review client release identity
+
+Original3174/d10 immutable upload, exact-byte inspection, native pending/draft
+read helpers and current-scope fences have a verified production source release
+in [Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and
+the [existing client evidence](../evidence/exp13-knowledge-review-client.md).
+Reuse those original clients for single/BULK/Chat source review; no repeated
+write resolves an unknown effect. Mounted UI, authenticated useful indexing,
+approved facts/separate Memory, saved Mission and actual Work/CRM receipt/reopen
+remain separate unfinished proof. No new runtime, authority or readiness claim.

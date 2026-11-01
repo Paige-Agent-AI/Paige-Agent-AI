@@ -1,6 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { adminClient, json } from '../_shared/systems-check-http.ts';
-import { downloadKnowledgeText, ExtractionError, ExtractionSubmissionUnknown, submitKnowledgeExtraction } from '../_shared/knowledge-extraction.ts';
+import { ExtractionError, ExtractionSubmissionUnknown, submitKnowledgeExtraction } from '../_shared/knowledge-extraction.ts';
+import { readKnowledgeFileMetadata } from '../_shared/knowledge-file-source.ts';
+import { KnowledgeFileTextError } from '../_shared/knowledge-file-text.ts';
 import { KnowledgeIngestScopeError, type KnowledgeScopeCaller } from '../_shared/knowledge-ingest-scope.ts';
 import type { ExtractionRpc } from '../_shared/knowledge-extraction.ts';
 Deno.serve(async (req: Request) => {
@@ -28,11 +30,12 @@ Deno.serve(async (req: Request) => {
   if(timedOut) throw new ExtractionError('input_invalid');
   const bytes=new Uint8Array(size);let offset=0;for(const part of parts){bytes.set(part,offset);offset+=part.length;}
   const body=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
-  const result=await submitKnowledgeExtraction(JSON.parse(body),caller,admin,path=>downloadKnowledgeText(`${url}/storage/v1/object/authenticated/tenant-knowledge/${path.split('/').map(encodeURIComponent).join('/')}`,{Authorization:auth,apikey:key}));
+  const result=await submitKnowledgeExtraction(JSON.parse(body),caller,admin,path=>readKnowledgeFileMetadata(`${url}/storage/v1/object/authenticated/tenant-knowledge/${path.split('/').map(encodeURIComponent).join('/')}`,{Authorization:auth,apikey:key},path));
   return json(200,{ok:true,...result as Record<string,unknown>});
  } catch(error) {
   if(error instanceof ExtractionSubmissionUnknown) return json(503,{ok:false,error:'submission_outcome_unknown',intent_id:error.intentId,reconciliation:'replay_same_intent'});
   if(error instanceof KnowledgeIngestScopeError) return json(error.status,{error:'workspace_access_changed'});
+  if(error instanceof KnowledgeFileTextError) return json(400,{error:error.code});
   if(error instanceof ExtractionError || error instanceof SyntaxError) return json(400,{error:error instanceof ExtractionError?error.code:'input_invalid'});
   return json(409,{error:'extraction_not_accepted'});
  }

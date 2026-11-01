@@ -1,0 +1,33 @@
+{
+  "results": [
+    {
+      "name": "light-1366-closed",
+      "pass": true,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 759.171875,
+        "y": 451.953125,
+        "right": 834.421875,
+        "bottom": 487.953125,
+        "viewport": {
+          "w": 1366,
+          "h": 768
+        },
+        "scrollWidth": 1366,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_WORKSPACE",
+  "voice": "UNEXERCISED",
+  "paige": "PLACEHOLDER",
+  "nativeBrowserZoom": "UNVERIFIED"
+}

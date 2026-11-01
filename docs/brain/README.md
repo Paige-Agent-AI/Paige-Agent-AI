@@ -15,6 +15,24 @@ was used. [Original evidence](../evidence/ui-delivery/exp05-reminder-occurrence-
 This finite prerequisite does not close O01, the full ten/E5, ZION Planning's
 native integration or founder acceptance. Prior histories remain unchanged.
 
+## EXP05 November1 — correct the original inactive workflow step
+
+Verified [#3145/bfd4cda5](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3145)
+native 160005/controller 90c5960f and both-origin web release is recorded in
+[Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and the
+[original release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3145#issuecomment-6553406056). Reuse the same five-argument controller,
+original process/act identity, raw version and full-source comparison; revise only
+the selected configuration of an original inactive draft/paused workflow. A no-op
+has no new audit; stale source refuses. Preserve earlier Tasks and Rails unchanged.
+
+Configuration correction is not authority to arm or execute. Its original audit is
+not a Task/Rail business receipt, and the separate unmounted #3148 consumer is not
+customer proof. This finite prerequisite clears only the published lower-native
+order for E13/E03; it does not admit Planning into ZION's native context, close O01,
+activate recurrence/providers or promote any capability/algorithm. Ordinary current
+actor/tenant/cohort, both-chat result and later-session recovery proof remain owed.
+Prior dated records follow unchanged.
+
 ## EXP09 October30 — the enclosing history reader owns file-context continuity
 
 Verified [#3152/90a99e6f](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3152) source/web release is now recorded in [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log). Removing the enclosing history initializer's null reset preserves the original private Documents lifetime during the SAME customer recheck. Initial unknown identity remains empty; native currentness/admission, genuine scope remounts, different native threads and explicit upload/Send remain authoritative. A retained identifier is never an authorization grant.
@@ -5618,6 +5636,20 @@ Original3109 reviewed0c771919262a6dd914000f4c21680d2fc484ffc9 normally merged62b
 
 Full EXP08 remains STILL CODING: all original18 rows/6 amendments/five lifecycle journeys retained; I2–I5/current management delegation, goals/adaptive coordination, A2c standing execution, both-chat workshop/proactive continuity and production result/receipt/reopen/recovery/role negatives remain built/partial/missing/proof owed according to original matrix. Owner-approved Solo bell/activity amendment is incorporated as MISSING/PROOF OWED; discover original Work/approval/recipient/read-state contracts, never operator notification data or a duplicate engine. Existing E01/E05/domain writers retain custody. ALG01/08/11/12 partial,03/13 gaps, actual evaluation/cost per verified outcome proof owed; no invented maturity. One integrated owner review after complete coding/integration/release; no customer acceptance or new activation asserted.
 
+## EXP08 October31 — lower lifecycle/admission production source receipt
+
+Original3130 reviewed00f75f0c78abea242dde960674e370967772cc61/all13 exactchecks,
+two web successes and non-author SOURCE review6538715894; normal merge21da54c89.
+Native80008/90008/100008/110008 and8 catalogue/ACL plus3 inverse readbacks match;
+normal Chat606/JWTtrue certificate325 source bindings and both production app builds
+are verified. Exact workflow/deployment identities and proof limits are in the
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and
+[original receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3130#issuecomment-6539217377).
+Actual predecessor receipt delivered to original EXP13; it is not worker/fact/Memory/
+Work activation or authenticated outcome acceptance. Full original Team lifecycle,
+both-chat workshop/goals/standing authority and one integrated owner review remain
+STILL CODING. Existing domain writers and all original matrix rows remain authoritative.
+
 ## 2026-10-30 EXP02 — weekly delivery and Billing release readback
 
 Original3132/3140/3142 exact releases, earlier source/customer failures and native/
@@ -5643,3 +5675,60 @@ and the [existing parser evidence](../evidence/exp13-file-text-preparation.md).
 This is the same original Knowledge worker prerequisite; no mounted upload,
 confirmed fact/Memory, saved Mission, actual Work or full FLOW:KNOWLEDGE acceptance
 follows from this mechanical release pointer. No algorithm/availability promotion.
+
+## 2026-10-31 EXP13 - original binary-source native release identity
+
+Verified original3154/eb60 native13, exact managed/production function and ACL
+readback, db-live and web identity are recorded in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse original raw-byte versus extracted-text hashes and opt-in evidence;
+source publication never confirms business facts or Memory. This prerequisite
+clears native-before-worker only. Same single/BULK agreement-to-saved-Mission
+and actual original Work/CRM receipt/reopen remains unfinished; no new store,
+writer, activation, algorithm maturity or customer-readiness claim.
+
+## 2026-11-01 UTC EXP13 - original binary-worker release identity
+
+Original3161/8374 worker source, normal Edge release, all45 production source
+files/configuration and both public web build identities are verified in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the original Knowledge-only callback and immutable source/work identity;
+keep parser imports off unrelated document routes. The native3154 prerequisite
+and worker release are distinct from mounted single/BULK/Chat review, approved
+facts/separate Memory, saved Mission and actual Work/CRM/reopen proof. No new
+runtime, writer, automatic approval or complete customer-outcome claim follows.
+
+## 2026-11-01 UTC EXP13 - original upload and review client release identity
+
+Original3174/d10 immutable upload, exact-byte inspection, native pending/draft
+read helpers and current-scope fences have a verified production source release
+in [Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and
+the [existing client evidence](../evidence/exp13-knowledge-review-client.md).
+Reuse those original clients for single/BULK/Chat source review; no repeated
+write resolves an unknown effect. Mounted UI, authenticated useful indexing,
+approved facts/separate Memory, saved Mission and actual Work/CRM receipt/reopen
+remain separate unfinished proof. No new runtime, authority or readiness claim.
+
+## 2026-11-01 UTC EXP13 - original reviewed Memory release identity
+
+Original3169/3eeb native18 and exact production function/ACL plus both public
+web build identities are recorded in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse original private record/get/forget interfaces and same-intent inspection;
+selected correction/retirement and current-source eligibility preserve original
+Memory and legacy callers. Source publication is not Memory or domain approval.
+Consumer mounting, explicit review, selected Setup facts, saved Mission, actual
+Work/CRM receipt/reopen and customer acceptance remain separate unfinished proof.
+No automatic learning, copied store/runtime or algorithm/readiness promotion.
+
+## 2026-11-01 UTC EXP13 - original reviewed Memory client release identity
+
+Original3185/cbc technical source release is recorded in
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the original native9/5/4 selected-save/read/retirement adapter in the
+[existing client](../../src/lib/paige-memory-review-service.ts)
+with original authority resolution, negative-only scope and exact version CAS.
+Unknown effects require same-intent inspection, never automatic replay.
+Source publication is not business-fact, Memory or consequential-work approval.
+Consumer mounting, selected Setup facts, saved Mission and actual Work/CRM
+receipt/reopen remain unfinished; no automatic learning or readiness promotion.

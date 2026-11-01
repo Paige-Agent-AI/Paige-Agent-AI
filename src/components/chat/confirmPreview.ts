@@ -16,6 +16,8 @@ export type ConfirmEmailPreview = {
   subject: string;
   /** Plain text. Rendered as text — markup in a draft is shown, never interpreted. */
   body_text: string;
+  /** Server-read, fingerprinted rich source. Only the inert review projection may render it. */
+  body_html?: string;
   /** "Approve now, send later": the instant (ISO, UTC) the approved email will go out. Absent = now. */
   send_at?: string;
   /** The files the approved email carries, as the server read and fingerprinted them. Absent = none. */
@@ -75,6 +77,8 @@ export function parseConfirmPreview(raw: unknown): ConfirmEmailPreview | undefin
   const r = raw as Record<string, unknown>;
   if (r.kind !== undefined && r.kind !== "email") return undefined;
   if (!nonEmpty(r.to_address) || !nonEmpty(r.from_address) || !nonEmpty(r.subject) || !nonEmpty(r.body_text)) return undefined;
+  // A declared malformed rich body must not quietly become a plain-text approval.
+  if (r.body_html !== undefined && (!nonEmpty(r.body_html) || r.body_html.length > 1_000_000)) return undefined;
   // A time that is present but unreadable fails closed: an email shown as "sends now" that is really
   // scheduled is worse than no preview (the card falls back to the server's sentence, which names the time).
   const sendAtOk = typeof r.send_at === "string" && r.send_at.length <= 40 && Number.isFinite(Date.parse(r.send_at));
@@ -86,6 +90,7 @@ export function parseConfirmPreview(raw: unknown): ConfirmEmailPreview | undefin
     from_address: r.from_address,
     subject: r.subject,
     body_text: r.body_text,
+    ...(typeof r.body_html === "string" ? { body_html: r.body_html } : {}),
     ...(sendAtOk ? { send_at: r.send_at as string } : {}),
     // Only a well-formed file list passes; anything else is dropped (the summary still names the files).
     ...(parseConfirmAttachments(r.attachments) ? { attachments: parseConfirmAttachments(r.attachments) } : {}),

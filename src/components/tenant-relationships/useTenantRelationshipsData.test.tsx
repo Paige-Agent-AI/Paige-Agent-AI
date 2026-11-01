@@ -188,6 +188,46 @@ describe("tenant relationship adapter sequencing", () => {
     act(() => root.unmount());
   });
 
+  for (const deepLink of [false, true]) {
+    it.each([
+      { timezone: "America/New_York", timezone_verified: true, expectedZone: "America/New_York", expectedVerified: true },
+      { timezone: "America/Chicago", timezone_verified: false, expectedZone: "America/Chicago", expectedVerified: false },
+      { timezone: null, timezone_verified: true, expectedZone: null, expectedVerified: false },
+      { timezone: "", timezone_verified: true, expectedZone: null, expectedVerified: false },
+      { timezone: "America/New_York", timezone_verified: "true", expectedZone: "America/New_York", expectedVerified: false },
+    ])(`reads native recipient metadata and exact version for SOLO ${deepLink ? "detail" : "list"}: %j`, async ({ timezone, timezone_verified, expectedZone, expectedVerified }) => {
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const host = document.createElement("div"); const root = createRoot(host);
+      const key = deepLink ? "clients:tenant-zone:person-zone" : "clients:tenant-zone";
+      await act(async () => root.render(<QueryClientProvider client={client}>{deepLink
+        ? <DeepLinkHarness tenantId="tenant-zone" personId="person-zone" />
+        : <DetailHarness tenantId="tenant-zone" />}</QueryClientProvider>));
+      await vi.waitFor(() => expect(pending.has(key)).toBe(true));
+      const exactVersion = "2026-10-30T18:00:00.123456+00:00";
+      const row = { ...ownerRow(null), timezone, timezone_verified, updated_at: exactVersion };
+      await act(async () => { pending.get(key)!.resolve({ data: deepLink ? row : [row], error: null }); });
+      await vi.waitFor(() => expect(host.querySelector("output")?.getAttribute("data-record")).not.toBe(""));
+      expect(JSON.parse(host.querySelector("output")!.getAttribute("data-record")!)).toMatchObject({ timezone: expectedZone, timezoneVerified: expectedVerified, updatedAt: exactVersion });
+      const selected = selections.filter(s => s.table === "clients");
+      expect(selected.every(s => s.columns.split(",").includes("timezone") && s.columns.split(",").includes("timezone_verified"))).toBe(true);
+      expect(filters).toContainEqual({ table: "clients", column: "tenant_id", value: "tenant-zone" });
+      act(() => root.unmount());
+    });
+  }
+
+  it("does not widen the legacy roster or expose unrequested recipient metadata", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const host = document.createElement("div"); const root = createRoot(host);
+    await act(async () => root.render(<QueryClientProvider client={client}><DetailHarness tenantId="tenant-roster" soloPeople={false} /></QueryClientProvider>));
+    await vi.waitFor(() => expect(pending.has("clients:tenant-roster")).toBe(true));
+    await act(async () => { pending.get("clients:tenant-roster")!.resolve({ data: [{ ...ownerRow(null), timezone: "America/New_York", timezone_verified: true }], error: null }); });
+    await vi.waitFor(() => expect(host.querySelector("output")?.getAttribute("data-record")).not.toBe(""));
+    const record = JSON.parse(host.querySelector("output")!.getAttribute("data-record")!);
+    expect(record).not.toHaveProperty("timezone"); expect(record).not.toHaveProperty("timezoneVerified");
+    expect(selections.every(s => !s.columns.split(",").includes("timezone") && !s.columns.split(",").includes("timezone_verified"))).toBe(true);
+    act(() => root.unmount());
+  });
+
   const ownerCases = [
     { label: "owner only", lead_owner_user_id: "owner-user", assigned_coach_user_id: null, owner: "Assigned owner" },
     { label: "coach only", lead_owner_user_id: null, assigned_coach_user_id: "coach-user", owner: "Unassigned" },
@@ -243,13 +283,13 @@ describe("tenant relationship adapter sequencing", () => {
     act(() => root.unmount());
   });
 
-  it("adds only the native owner ID to both closed SOLO projections", async () => {
+  it("keeps both SOLO projections closed to the original fields plus native recipient metadata", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const host = document.createElement("div");
     const root = createRoot(host);
     await act(async () => root.render(<QueryClientProvider client={client}><DeepLinkHarness tenantId="tenant-owner-fields" personId="contact-owner" /></QueryClientProvider>));
     await vi.waitFor(() => expect(pending.has("clients:tenant-owner-fields:contact-owner")).toBe(true));
-    const exactColumns = "id,first_name,last_name,entity_name,entity_type,client_contact_methods(id,kind,value,label,is_primary,position),title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,portal_access_state,portal_access_changed_at,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,lead_owner_user_id,last_contacted_at,created_at,updated_at";
+    const exactColumns = "id,first_name,last_name,entity_name,entity_type,client_contact_methods(id,kind,value,label,is_primary,position),title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,portal_access_state,portal_access_changed_at,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,lead_owner_user_id,last_contacted_at,created_at,updated_at,timezone,timezone_verified";
     expect(selections).toEqual([{ table: "clients", columns: exactColumns }, { table: "clients", columns: exactColumns }]);
     expect(filters).toEqual([{ table: "clients", column: "tenant_id", value: "tenant-owner-fields" }, { table: "clients", column: "tenant_id", value: "tenant-owner-fields" }, { table: "clients", column: "id", value: "contact-owner" }]);
     expect(from.mock.calls).toEqual([["clients"], ["clients"]]);

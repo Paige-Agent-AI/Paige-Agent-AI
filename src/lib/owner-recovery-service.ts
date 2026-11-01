@@ -30,15 +30,11 @@ const instant = (v: unknown): v is string => typeof v === 'string'
   && Number.isFinite(Date.parse(v));
 const action = (v: unknown): v is OwnerRecoveryAction => v === 'grant_owner' || v === 'revoke_owner' || v === 'set_account_holder';
 
-function capture(client: OwnerRecoveryClient, scope: OwnerRecoveryScope, supplied: OwnerRecoveryIntent) {
-  if (!uuid(scope.actorId) || !uuid(scope.tenantId) || typeof scope.isCurrent !== 'function'
-    || !uuid(supplied.requestId) || !uuid(supplied.targetUserId) || !action(supplied.action)
-    || typeof supplied.reason !== 'string' || [...supplied.reason.trim()].length < 10 || [...supplied.reason.trim()].length > 500) {
+function captureScope(client: OwnerRecoveryClient, scope: OwnerRecoveryScope) {
+  if (!uuid(scope.actorId) || !uuid(scope.tenantId) || typeof scope.isCurrent !== 'function') {
     throw new OwnerRecoveryError('INPUT_INVALID');
   }
   const actor = scope.actorId.toLowerCase(), tenant = scope.tenantId.toLowerCase();
-  const intent: OwnerRecoveryIntent = Object.freeze({requestId: supplied.requestId.toLowerCase(), action: supplied.action,
-    targetUserId: supplied.targetUserId.toLowerCase(), reason: supplied.reason.trim()});
   const current = scope.isCurrent.bind(scope);
   const check = () => {if (current() !== true) throw new OwnerRecoveryError('SCOPE_CHANGED');};
   const resolve = async () => {
@@ -47,8 +43,19 @@ function capture(client: OwnerRecoveryClient, scope: OwnerRecoveryScope, supplie
     check();
     if (!uuid(actual) || actual.toLowerCase() !== actor) throw new OwnerRecoveryError('SCOPE_CHANGED');
   };
-  return {tenant, intent, check, resolve};
+  return {tenant, check, resolve};
 }
+function capture(client: OwnerRecoveryClient, scope: OwnerRecoveryScope, supplied: OwnerRecoveryIntent) {
+  const captured = captureScope(client, scope);
+  if (!uuid(supplied.requestId) || !uuid(supplied.targetUserId) || !action(supplied.action)
+    || typeof supplied.reason !== 'string' || [...supplied.reason.trim()].length < 10 || [...supplied.reason.trim()].length > 500) {
+    throw new OwnerRecoveryError('INPUT_INVALID');
+  }
+  const intent: OwnerRecoveryIntent = Object.freeze({requestId: supplied.requestId.toLowerCase(), action: supplied.action,
+    targetUserId: supplied.targetUserId.toLowerCase(), reason: supplied.reason.trim()});
+  return {...captured, intent};
+}
+
 type Captured = ReturnType<typeof capture>;
 
 function projection(data: unknown, c: Captured): OwnerRecoveryInspection {
@@ -124,4 +131,52 @@ export async function submitOwnerRecovery(client: OwnerRecoveryClient, scope: Ow
     if (error instanceof OwnerRecoveryError && error.code === 'SCOPE_CHANGED') throw error;
     return {state: 'unknown', requestId: c.intent.requestId};
   }
+}
+
+
+/** Reopen only an existing native receipt after reload. The host retains just the
+ * original tenant/request reference; private intent text comes from the admitted
+ * native reader, never URL parameters or a second browser result store. A missing
+ * receipt is an observation only, not authority to resubmit a pending operation.
+ */
+async function reopenReceipt(client: OwnerRecoveryClient, c: ReturnType<typeof captureScope>,
+  request: string): Promise<OwnerRecoveryInspection> {
+  try {
+    await c.resolve(); c.check();
+    const {data, error} = await client.rpc('platform_owner_recovery_receipt', {_tenant: c.tenant, _request: request});
+    c.check(); await c.resolve(); c.check();
+    if (error) throw new OwnerRecoveryError('READ_FAILED');
+    if (!object(data)) throw new OwnerRecoveryError('READBACK_MISMATCH');
+    if (data.status === 'not_found') {
+      if (data.request_id !== request) throw new OwnerRecoveryError('READBACK_MISMATCH');
+      c.check();
+      return {state: 'not_found', requestId: request};
+    }
+    // Admit only the original native action family and its verified full receipt.
+    // These fields do not select or execute an action.
+    const selected = typeof data.action === 'string' && data.action.startsWith('tenant:owner_recovery.')
+      ? data.action.slice('tenant:owner_recovery.'.length) : null;
+    const r = data.receipt;
+    if (!action(selected) || !uuid(data.target_user_id) || !object(r) || typeof r.reason !== 'string'
+      || [...r.reason.replace(/^ +| +$/g, '')].length < 10 || [...r.reason].length > 500) {
+      throw new OwnerRecoveryError('READBACK_MISMATCH');
+    }
+    const intent: OwnerRecoveryIntent = Object.freeze({requestId: request, action: selected,
+      targetUserId: data.target_user_id.toLowerCase(), reason: r.reason});
+    const result = projection(data, {...c, intent});
+    c.check();
+    return result;
+  } catch (error) {throw safeError(error);}
+}
+
+export async function reopenOwnerRecovery(client: OwnerRecoveryClient, scope: OwnerRecoveryScope,
+  requestId: string): Promise<OwnerRecoveryInspection> {
+  const c = captureScope(client, scope);
+  if (!uuid(requestId)) throw new OwnerRecoveryError('INPUT_INVALID');
+  const request = requestId.toLowerCase();
+  try {
+    const result = await reopenReceipt(client, c, request);
+    c.check();
+    return result;
+  } catch (error) {throw safeError(error);}
 }

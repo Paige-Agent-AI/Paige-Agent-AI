@@ -1,3 +1,19 @@
+## EXP08 November1 - original recovery native/source release, full Team Hub still coding
+
+Original [3190/6a9b18109](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3190)
+passed exact-head technical gates and normal native deployment/readback of230008.
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and
+[original co-owner contract](../delivery/exp08-co-owners-entity-owners-contract.md)
+retain actual merge/peer composition,13checks, native39/32 and public build evidence.
+Reuse original Team/Billing/entity writers, stable request/native receipt and private
+recipient notice; the service event reader authorizes no provider send. Reconcile
+UNKNOWN by the original receipt, not another recovery request. Actual downstream
+order receipt is ANT147/ba23844c; E05/E13 retain their native/version/source custody.
+Source/native/web release does not prove an authenticated recovery, mounted recipient
+journey, activation, all-account cohorts or acceptance. Unreleased scoped work-profile
+and both-chat integration remain coding; all18+6/five journeys/goals/proactivity/
+standing authority/shared workshop and one complete owner review remain required.
+
 ## EXP03 November1 — original prepared email first Save source release
 
 Original3172/native19 and3175/native20 source, permissions, normal deployment and
@@ -5772,6 +5788,19 @@ Preserve immutable3182/795/applied210013 history and actual lower native order
 before any future reviewed higher carrier/managed Preview/native source readback.
 Held3177 UI, selected facts/separate Memory, saved Mission and actual Work/CRM
 receipt/reopen/full lifecycle remain unfinished; full EXP13+BULK is not customer-ready.
+
+## 2026-11-01 UTC EXP13 - original internal Knowledge reference release
+
+Original3201/c467 source, exact web release and19-function Edge certificate are
+recorded in [Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the SAME record decoder/canonical map/current-account Knowledge Bucket;
+business_knowledge is an address reference, separate from CURA portal_knowledge.
+No producer/host is mounted and no source or action authority comes from a link.
+Original destination readback and source-version approval must remain separate.
+Initial contract/Edge failures and scratch-cleanup warning remain historical evidence.
+Normal reviewed recovery passed source/configuration, not business execution.
+Held3177 UI, Chat binding, selected facts/separate Memory, saved Mission and actual
+Work/CRM receipt/reopen/full lifecycle remain unfinished; full EXP13+BULK is not ready.
 
 ## 2026-11-01 UTC EXP01 — reviewed Setup producer source release
 

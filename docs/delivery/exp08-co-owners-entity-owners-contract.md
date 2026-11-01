@@ -3071,3 +3071,330 @@ Exact published ce6826dfec2fa085ab746654a19de8dfd22ae42f database job12489834457
 Actual catalogue read preserves BOTH original revoke_platform_access(uuid) and revoke_platform_access(uuid,text DEFAULT NULL) writers (body MD5 0fb5624c04e4d170f3e0826b8b9cfa52 and f0686e66877bd31bc8c1d8b905cac643). A no-effect disposable parser control reproduced that a single UUID cast is STILL ambiguous; explicit UUID,NULL::text resolves the actual two-argument writer. Only the original R16 fixture call and deterministically generated artifact change. Authority, audit effects, both deployed writers and every32 assertion remain unchanged. Canonical --check and packaging --self-test PASS; replacement exact-head full-schema32 remains UNVERIFIED until hosted execution. No native migration/source/ACL/history rewrite, activation or customer proof.
 
 Local scoped work-profile source is preserved separately on its original local branch; it is NOT bundled into this release repair. Required exact-head review/CI/Preview/merge/deployment/readback and the entire original experience remain open. STILL CODING.
+
+
+### Isolated original work-profile native integration preparation — November1
+
+Original same-row4 source and proof follow-up is prepared separately from the
+mounted UI: original inert guarded3arg writer and scoped5arg refusal-only door,
+existing local fixture/runner and self-contained native28 canonical test. No
+profile migration/version/API activation or mounted UI change is in this proof
+increment. Existing source-only controls retain19cases per original/scoped
+door,7scope/seat,4UNKNOWN/retry controls, complete metadata/drift/role checks
+and15observed waits, including first writer COMMIT/ROLLBACK one final audit.
+These are bounded component results, not native28 or customer/Auth proof.
+
+One path and one run step are appended immediately after EXP08's original
+first-owner native step in the EXISTING Spine full-schema job. Removing only
+these6new lines restores the entire incoming workflow byte-for-byte. The
+canonical test expands the original inert SQL twice in one transaction; every
+synthetic Auth/table/function change rolls back. No copied permission helper,
+new DB runner, runtime, ledger or service impersonation. Packaging equality/
+negative controls PASS; actual native28 execution is UNVERIFIED.
+
+Source preparation remains LOCAL until original3190 actual release/readback;
+it does not compete to release its immutable230008 carrier. Normal exact-head
+review/CI/main-peer composition/native compatibility remain required before
+publication/merge; full original18+6/five journeys STILL CODING. Original UI
+084989532 and actual DOM184/controlled-browser32+7+recovery evidence stay on their
+existing local branch, with native/currenttype/Auth/both-chat proof owed.
+
+
+### Actual3190 native/source release and next original profile proof - November1
+
+Original exact70116a/all13checks/Preview/BOTHweb SUCCESS/0threads/final lower
+review5729255467 normally merged6a9b18109bfc8d92e07ea1015f8fe599020179dc,
+treef09009cb5ecc8263acfd38bc5fc3ff364a2a5425. E13 source3198 landed in the
+read/merge race: actual parent01c48b878 plus70116a yields that exact tree,
+19470outside27owned leaves preserved. Its private unversioned Knowledge source
+and existing CI command flags remain; no native/version/runtime/host activation.
+Postmerge lower review5729264700 records actual composition, not old9e5b tree.
+
+Normal deploy-migrations41329445608 lint+deploy SUCCESS; db-live actual6a9.
+Productionxygzy ledger20271126230008 once,43statements, recorded-sourceMD5
+1ce001dfec3d0e8c3080174cc58b2a5c; original carrier SHA256 remains
+b910f0b9d86da9900a7010a6f50a35f67c102e3ab85f91ce0a242e26be9ce83f.
+6public and13generated private body/owner/ABI match compiled source;15private
+helpers/no direct client/service execution, original grant/revoke kernels
+catalogued. Public full named arguments/result/metadata/ACL additionally read.
+No actual recovery/customer data/provider action used as engineering proof.
+
+Own Vercel6a9 deploymentdpl_A5hZLAE7zUeKdkUTDnBsPykzcPf8 READY. Public origins
+at17:08:31UTC both200/version/equalroot/observedbootstrap, actual served build
+b8f46fa6c72f9e800fee7706787533d31ea1bf95-mvy2yl9x/customerUpdate:null.
+First exact6a9 expectation FAILED because direct descendant3184 was already
+READY; it adds only6Master lines, all released executable/native/client bytes
+remain exact. Actual newer deploymentdpl_9TNhxHR8comLP7AvWSNZSCfszMDQ READY.
+No old alias forced, no preview/source claim substituted for production.
+Coordinator-only original E05/E13 handoffba23844c delivered actual source/native
+receipt and ABI; actual receiving ACK remains separate. E03 sender claim/
+reconciliation and E01 Setup/Chat remain their original coding dependencies.
+
+New isolated work-profile native28 proof composes actual mainb8f and all incoming
+E13/Finance/Portal records normally, no UI or new migration. The FULL original
+component runner, departure child and profile child completed EXIT0 at unchanged
+own source: logSHA256d3737b119d748965b49db2a96e193bb7e162e7687f584405e387443a439e66a8.
+All original controls and15 profile waits retained; Auth/table inputs are ports,
+NOT actual full-schema28/customer proof. Earlier stale-handle observation after
+the terminal0 was not a reason to restart. Canonical native28 packaging remains
+PASS; its actual hosted execution still UNVERIFIED before the next PR gate.
+Mounted profile/UNKNOWN UI084989532 remains separately preserved/unreleased,
+with local DOM184 and controlled32+7+1 evidence scoped as recorded. No frontend
+5arg caller is released before its native door/reader integration. All original
+18+6/five journeys/standing authority/goals/workshop/ALG/cohort proof remain
+STILL CODING; no complete owner review or acceptance claim.
+
+
+### Original profile native28 fixture reconciliation - November1
+
+3200/be20c737205dc9f6531d28b03eeb0ab2fb599fc2 actual full-schema job
+124919582696 step90 FAILED at17:23:56UTC: generated native line15 violated
+`tenants_one_toplevel_per_owner`; both synthetic top-level businesses named
+holder...0001. Zero of28 assertions ran. This is our fixture/schema defect,
+not infrastructure, a product authorization verdict or native success. Preceding
+canonical parity, recovery39 and first-owner32 steps completed SUCCESS.
+The still-live job continued later original peer suites; it was not restarted.
+Live log API returned404; the actual rendered GitHub step exposed the exact
+constraint/error/test summary, and the owned inspection tab was closed.
+
+The original template now gives workspace B its existing synthetic owner...0003
+with matching ownerseat...0113. Admin...0002 and target...0004 remain members of
+BOTH workspaces, so the original captured-tenant and replaced-seat negatives
+remain meaningful. All28 assertions, patch/writer bodies, original unique
+constraint and applied migration history are unchanged. Regenerated artifact,
+canonical check and packaging negative controls PASS; actual native28 remains
+UNVERIFIED until the fresh exact-head job executes. No assertion waiver, UI
+mount, new carrier/version/provider or authenticated outcome is included.
+
+
+### Original recovery stable-reference reopen preparation - November1
+
+LOCAL source e8d491067b68615313c610140d5c2891b4eabab6 adds
+`reopenOwnerRecovery` to the ORIGINAL recovery service and its owning tests.
+After reload it admits actual actor/tenant/request, calls ONLY the original
+`platform_owner_recovery_receipt`, validates the same full native projection,
+and derives private intent text only from that admitted receipt. No reason in
+URL, browser result store, new request, approval, writer or resubmission. Missing
+receipt stays `not_found`, never authority to retry an outstanding transaction.
+No new native ABI, carrier or shared host was edited.
+
+Failure-first16 new cases failed while33 original service cases stayed PASS.
+Initial implementation gave1FAIL/71PASS across original service/notice suites:
+a queued context retirement landed between inner and public continuation.
+The original outer lifetime-check pattern repairs it; final2suites72PASS
+(49 service including16new,23 personal notice). Focused ESLint and bounded
+TypeScript check of service+owning test both exit0. This is NOT the whole-app
+compiler or mounted/native/authenticated proof. Current memory1244284KiB free
+is below the prior whole-app compiler attempt; that interrupted broad check
+remains UNVERIFIED, with no peer process stopped or resource abort called PASS.
+
+Raw task transcripts SHA256: before38e443c0eef82795705804aa2adb8d8c02f0244862f94a696e6c08f1c37f174b;
+first implementationcea2446b497077291cfb08be7f839383a92febc6986fb56477d7109316086c75;
+final51659e36d2120d11c4d51c126ec96a77257f8184b7cab671b74d5531bf68166c.
+These are mocked engineering ports, not customer proof. Original Operator,
+recipient/zero-membership host and approved broader bell/activity still need
+mounting and full current-role/tenant/reentry/UNKNOWN/reopen proof. The unused
+SoloApp TopBar is not the actual shell; use the original authenticated hosts,
+no substitute inbox/notification/result/approval store. Full EXP08 STILL CODING.
+
+
+### Original permission effect-time repair preparation - November1
+
+LOCAL inert source in `exp08-team-permission-patch.sql` extends only the
+ORIGINAL two-argument Team permission writer, preserving its effect/audit,
+owner-target refusal, return ABI, grants and complete nonbody metadata. It
+revalidates current actor/workspace/owner authority under the original ordered
+locks. Original target-status behavior stays unchanged. No managed carrier,
+new public grant, original global-role predicate or R16 Operator change.
+
+The owning `exp08-team-permission-currentness.mjs` reuses the original entity
+fixture and original writer/owner source, runs baseline then guarded phase in
+separate disposable databases, and verifies14 authority/behavior cases,
+7 source/ACL/metadata drift refusals and8 actual waits across before/after.
+Legitimate original work remains permitted; refused cases have no write/audit.
+Replay retains complete original nonbody metadata. Individual phases and the
+whole owning child completed exit0; same original parent runner now invokes
+this child after its original departure and profile children. Full original
+parent run is LIVE, not called PASS before its terminal result. These are
+modeled identity/scope/table ports, not full-schema/Auth/customer proof.
+No disposable probe database remains after each completed child.
+
+Local same-row branch normally composes published3200/d654 profile proof and
+preserved recovery-reopen source26ef; one append-only co-owner document conflict
+was resolved by retaining BOTH complete chronologies. Original profile runner,
+workflow and native28 assertions remain intact. Captured tenant/membership
+intent, trusted permission readback/UNKNOWN/no-duplicate caller behavior,
+full-schema permission proof, managed native release and actual mounted/full
+Experience evidence remain required. A safe source guard is not full row4.
+
+Actual3200/d654 database124922317843 is now COMPLETE SUCCESS, with its decoded
+own native step explicitly reporting Files=1/Tests=28/Result:PASS. The whole
+exact verify/comms gates remain running; previousbe20 fixture failure is kept.
+No source merge or native profile activation is inferred from this result.
+
+
+### Scoped original permission receipt and recovery - November1, local preparation
+
+The original9f full lifecycle/component run completed terminal exit0, including
+its original groups and departure/profile/permission children. Raw transcript
+SHA256 fd286a7862189a5bcade05aada30264231a7f1ff7c1ecde4a102640eb3891925,
+164778bytes. Actual currentmain E05 Calendar/Booking source was composed normally
+via4ace and local mergea803125155faf64ea24404c8e049ebebd820ff80; all five peer
+paths and both co-owner evidence chronologies retained. This completed run is
+bounded to its then-current9f inputs, not blanket proof of later code.
+
+New LOCAL inert permission source adds the SAME original setter's four-argument
+overload: `_member_user_id`, `_new_permission`, `_expected_tenant_id`,
+`_expected_membership_id`. Expected values refuse stale captured intent; they
+never select the acting tenant, actor or target. Fresh actual identity/owner,
+ordered seat/profile/tenant locks, original owner-target protection and the
+ORIGINAL2arg validation/effect/audit remain authoritative. The overload delegates
+the only effect, then returns exactly actual `membership_id` and `permission`
+(admin/member) under those locks. Missing/mismatched readback rolls back; it is
+not a made-up success. Both ABIs' complete objects replay unchanged; scoped
+EXECUTE is authenticated-only with empty search_path, no defaults or service lane.
+
+Identical normalized permitted state now returns before a second original update/
+audit, AFTER original owner-target refusal and fresh actor/scope authority. It
+reconciles CURRENT state; no private browser result store, new result/approval
+ledger, automatic UNKNOWN retry or assertion of an unobserved earlier execution.
+The future caller must preserve actual prepared membership/workspace bindings,
+withdraw stale/lost-context output, read the native receipt before claiming saved,
+and handle UNKNOWN truthfully through the existing Team read/reopen flow.
+
+Failure-first scoped proof genuinely failed because4arg did not exist. Its first
+expanded metadata query then failed on ambiguous `oid`; qualified `p.oid` in the
+own proof only, no assertion/source waiver. Latest owning baseline+candidate run
+terminal0:28 authority cases (14 through EACH ABI),7 captured-intent negatives,
+2 excluded-role denials,7 original +7 scoped source/ACL/metadata drift refusals,
+complete both-ABI replay, exact current-state receipt/no duplicate audit, and
+17 observed waits including committed-first and rolled-back-first retries.
+Raw final SHA256 0108c0c67c2423a5d4bd1955c371c80bf9f471f816a41eaef210325151f1607a,
+11424bytes. All own disposable probe databases absent after completion.
+These are modeled identity/scope/table ports, not full-schema/Auth/customer proof.
+
+Native full-schema permission artifact/actual execution, managed carrier/version,
+normal review/exact-head gates/release/readback and mounted permission/profile/
+Operator/recipient/both-chat/cohort recovery remain required. Original3200 now
+4ace source-only CI is separate. No new permission API is advertised as deployed.
+Full original18+6/five journeys remain STILL CODING and not owner-review ready.
+
+
+### Same-row native32 proof packaging and release composition - November1
+
+Prepared `exp08-team-permission-native.template.sql` with32 explicit assertions
+against original actual-schema writer metadata, existing Auth/tenant/member/audit
+shapes, original2arg and scoped4arg behavior, exact current receipt and no-op audit,
+captured scope/reentry/current identity/owner/refusal/role exclusions, and full
+object replay. Both fictional top-level businesses have distinct actual holders;
+the same owner and target still participate in both businesses. One transaction
+rolls back ALL fixture/function changes. Canonical compiler embeds the SAME inert
+patch twice; write/check/negative packaging controls PASS. This does NOT establish
+native32 execution, managed API availability, Auth SDK or customer proof.
+
+Only one original Spine test-path plus one step after the existing own profile
+step is added, preserving all incoming peer workflow lines. Same original row4
+necessary repairs and stable recovery-read client are consolidated into existing
+3200 BEFORE source release, avoiding a competing PR/Preview. Earlier4ace/d654 and
+28native successes remain exact historical/supporting evidence; the composed head
+requires fresh complete review/CI/native28+32. No migration/version, mounted caller,
+new project/provider/approval/task/result store or full Experience readiness.
+
+### November1 — unversioned atomic original Team details composition
+
+Finite own preparation82c9a60e adds `exp08-team-details-bundle.mjs` and its owning
+`exp08-team-details-bundle-proof.mjs`, not a migration/version, release or activation.
+Both reviewed original profile and permission patches are embedded byte-exact in
+ONE DO statement. All original body/ABI/metadata/ACL/overload guards remain;
+outer catalog-qualified checks refuse missing originals, mixed scoped installation
+or a legacy-original/scoped mixture rather than normalizing it. Any later component
+refusal rolls back the earlier component's DDL too. No effect/approval/result store,
+request generator, provider or alternate writer is added.
+
+Causal disposable-PostgreSQL proof demonstrates that separate autocommit components
+leave the profile scoped API installed when the later permission metadata guard
+refuses. The atomic composition refuses the SAME drift with the complete original
+catalog and all rows unchanged. Actual10controls PASS: late metadata and ACL drift,
+first install/nonbody conservation/no data effects, exact full replay, partial
+installation, BOTH scoped ACL drifts, legacy-base mixture and anon/service denial.
+This ports existing original fixture/Auth/table dependencies; it is NOT full-schema,
+managed Preview, real Auth/RLS/customer or actual production execution proof.
+
+Final unversioned bundle SHA256
+`31f67e225fd85dcfe766ae9f6a575d971d5491587622882241bba1f7e8acfeb7`;
+original component SHAs remain `f5ca4cd8ba6d25f8c6f9873cb9174ad08923540cdb40b717a41251b2cfa0af6f`
+and `d9b3aa28a96602086059fb0a3344c977b1c76c272b086cbf5ae42b702e766572`.
+Original3200/e6b head stays frozen; actual native28/32 and whole Spine SUCCESS are
+its bounded engineering evidence. Main verify still running; no source/native release.
+Actual managed carrier/source-frontier/ALL published manifests/peer applied history,
+review/exact CI/ordinary release/readback remain required before mounted callers.
+Preserved local UI4744d1fb5 and its209tests/3controlled states remain a separate
+unpublished native-dependent continuation. Full original18+6/five journeys STILL CODING.
+
+
+Same atomic source-preparation continuation adds a canonical native14 rollback
+artifact/compiler/template using the existing original APIs and schema catalog.
+Its14 actual assertions cover whole install/replay/nonbody conservation, scoped
+role ACLs, late metadata refusal/catalog preservation, ACL refusal/no normalization
+and partial-install refusal/surviving body. No customer identity, provider or
+recovery/workforce action is executed. Canonical/negative packaging and lint PASS;
+local PG16 has no available pgTAP extension, so actual14 execution is UNVERIFIED.
+It is not yet wired into hosted CI and must execute through the original schema
+job when the actual managed carrier is prepared. Native28/32 success never proves
+this new14. No shared workflow, migration version or current3200 head changed.
+
+
+### November1 — compose original owner projections with Team details
+
+Actual production CATALOG-only read independently confirms original rosterded4ae3c
+has no holder-state, held-seat or legal-owner-choice projection; original PAIGE
+reader623d712d and private helpers9ade6efe/8f9d2746 still match the existing INERT
+owner-read patchef1486c9. No customer rows/actions were read. The two write patches
+alone were an incomplete deployment package for the preserved owner UI.
+A new owning PostgreSQL test genuinely FAILED the absent-projection assertion on
+the two-component bundle. SAME bundle now embeds the exact ORIGINAL owner-read DO
+as third component, removing only its exact BEGIN/SET LOCAL/COMMIT shell and keeping
+the original2s lock timeout inside the atomic statement. Original patch bytes and
+private-fact/role predicates are unchanged; no parallel reader or grant is added.
+
+Actual13component controls PASS, including a third-component PAIGE metadata refusal
+that rolls back both writer installations AND the earlier roster projection, private
+holder-helper ACL drift, exact replay and conserved original reader ABIs/ACL/default
+expressions. The original selected ownership-read suite separately exits0: baseline
+29expected failing/32, candidate32PASS, original mutants/ACL/metadata/current-context
+and actual observed read-versus-demotion waits retained. These are ported component
+proofs, never authenticated production or full-schema native result proof.
+
+Native rollback packaging is now16 rather than historical14: both reader metadata
+and third-component refusal checks are included. Packaging correctly caught
+19-vs1 transaction delimiters because JavaScript replacement-string dollar tokens
+expanded original SQL text; callback replacement fixes literal insertion and new
+six-copy dollar-token regression controls PASS. No transaction/count assertion
+was removed. Native16 canonical/self-negative/lint PASS, actual hosted16 execution
+still UNVERIFIED (local pgTAP unavailable). Original generated14/history remains
+in earlier commits; current16 is not an attestation that14 or16 ran.
+
+Final three-component bundle SHA256
+`eec6737365d2271834dc17393486147f3aa77fefcb0cf46b38d155f44ea97f69`;
+third ORIGINAL raw component SHA256
+`03ce407cacbc4638d92ac908eef90f6c34d77116294d438d491bec0b9b09f3b3`.
+No native version/reservation, shared workflow edit, production apply or mounted
+caller activation. Future normal carrier must renew E01/E13 receiving compatibility,
+real schema execution/review/exactCI/frontier/applied-history readback. Full18+6/five
+journeys STILL CODING. E05 actual latest3087 reviewer findingsae5472ed are received:
+original owner retains mixed-read limit and access-class history repairs; all
+27000005/27010005/27020005 applied Preview carriers remain immutable.
+
+
+### November1 — same original3200 full-schema atomic composition wiring
+
+SAME source PR now includes the complete original unversioned atomic read/write
+package and its native16 compiler/template/artifact. One new original test path
+and one step follow profile28 and permission32 in the existing Spine database
+job. No new workflow, migration/version, project, native grant or mounted UI.
+This supersedes only the earlier not-yet-wired16 checkpoint; actual hosted16
+execution remains UNVERIFIED until the new exact head's job returns. All original
+case assertions and earlier10/13/14/16 history are preserved. Existing e6b whole
+required checks passed; current composite source must rerun all exact gates and
+renew review before normal source release. No earlier-head/native-component or
+packaging proof is promoted to full-schema16/Auth/customer outcome proof.

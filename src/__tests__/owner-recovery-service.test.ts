@@ -1,6 +1,6 @@
 import {describe,expect,it,vi} from 'vitest';
 import {createClient} from '@supabase/supabase-js';
-import {inspectOwnerRecovery,submitOwnerRecovery,type OwnerRecoveryIntent} from '../lib/owner-recovery-service';
+import {reopenOwnerRecovery,inspectOwnerRecovery,submitOwnerRecovery,type OwnerRecoveryIntent} from '../lib/owner-recovery-service';
 
 const actor='e8100000-0000-4000-8000-000000000001';
 const tenant='e8100000-0000-4000-8000-000000000002';
@@ -145,5 +145,61 @@ describe('original operator recovery client (synthetic ports, no mounted flow)',
  it('rejects invalid input without authority or native work',async()=>{
   const {client,scope}=fixture();await expect(submitOwnerRecovery(client,scope,{...intent,requestId:'invalid'})).rejects.toMatchObject({code:'INPUT_INVALID'});
   expect(client.getActor).not.toHaveBeenCalled();expect(client.rpc).not.toHaveBeenCalled();
+ });
+});
+
+
+describe('original recovery receipt reopen after losing the in-memory intent',()=>{
+ it.each(['grant_owner','revoke_owner','set_account_holder'] as const)('reopens actual native %s by stable identity without submitting',async selected=>{
+  const {client,scope}=fixture();client.rpc.mockResolvedValue({data:{...native(),action:`tenant:owner_recovery.${selected}`},error:null});
+  await expect(reopenOwnerRecovery(client,scope,request)).resolves.toMatchObject({state:'verified',receipt:{auditId:request,tenantId:tenant,action:selected,targetUserId:target,reason:intent.reason}});
+  expect(client.rpc).toHaveBeenCalledExactlyOnceWith('platform_owner_recovery_receipt',{_tenant:tenant,_request:request});
+ });
+ it('keeps a native not-found observation distinct from permission to retry',async()=>{
+  const {client,scope}=fixture();client.rpc.mockResolvedValue({data:{status:'not_found',request_id:request},error:null});
+  await expect(reopenOwnerRecovery(client,scope,request)).resolves.toEqual({state:'not_found',requestId:request});
+  expect(client.rpc).toHaveBeenCalledTimes(1);
+ });
+ it.each(['tenant','request','action','target','reason','outcome'] as const)('refuses native %s mismatch or malformed receipt',async field=>{
+  const {client,scope}=fixture();const data=native();
+  if(field==='tenant')data.tenant_id=other;
+  if(field==='request')data.audit_id=other;
+  if(field==='action')data.action='tenant:owner_recovery.unsupported';
+  if(field==='target')data.target_user_id=other;
+  if(field==='reason')data.receipt.reason='short';
+  if(field==='outcome')data.receipt.outcome='unknown';
+  client.rpc.mockResolvedValue({data,error:null});
+  await expect(reopenOwnerRecovery(client,scope,request)).rejects.toMatchObject({code:'READBACK_MISMATCH'});
+  expect(client.rpc).toHaveBeenCalledTimes(1);
+ });
+ it('captures scope and selector before the first async boundary',async()=>{
+  const {client,scope}=fixture();let release!:(value:string)=>void;
+  client.getActor.mockImplementationOnce(()=>new Promise(resolve=>{release=resolve;}));
+  const pending=reopenOwnerRecovery(client,scope,request);scope.actorId=other;scope.tenantId=other;release(actor);
+  await expect(pending).resolves.toMatchObject({receipt:{tenantId:tenant,auditId:request}});
+  expect(client.rpc).toHaveBeenCalledExactlyOnceWith('platform_owner_recovery_receipt',{_tenant:tenant,_request:request});
+ });
+ it('refuses actual actor change before reading private recovery reasons',async()=>{
+  const {client,scope}=fixture();client.getActor.mockResolvedValue(other);
+  await expect(reopenOwnerRecovery(client,scope,request)).rejects.toMatchObject({code:'SCOPE_CHANGED'});
+  expect(client.rpc).not.toHaveBeenCalled();
+ });
+ it('withdraws a receipt when context retires while the native read is pending',async()=>{
+  const {client,scope}=fixture();let current=true;scope.isCurrent=()=>current;
+  client.rpc.mockImplementation(async()=>{current=false;return {data:native(),error:null};});
+  await expect(reopenOwnerRecovery(client,scope,request)).rejects.toMatchObject({code:'SCOPE_CHANGED'});
+ });
+ it('refuses an incarnation retired between inner and public continuation',async()=>{
+  const {client,scope}=fixture();let current=true;scope.isCurrent=()=>current;let reads=0;
+  client.getActor.mockImplementation(()=>{const response=Promise.resolve(actor);if(++reads===2)response.then(()=>queueMicrotask(()=>queueMicrotask(()=>{current=false;})));return response;});
+  await expect(reopenOwnerRecovery(client,scope,request)).rejects.toMatchObject({code:'SCOPE_CHANGED'});
+ });
+ it('sanitizes read failure without executing an alternate door',async()=>{
+  const {client,scope}=fixture();client.rpc.mockRejectedValue(Error('private SQL and response'));
+  const error=await reopenOwnerRecovery(client,scope,request).catch(e=>e);
+  expect(error).toMatchObject({code:'READ_FAILED'});expect(error.message).not.toContain('private');expect(client.rpc).toHaveBeenCalledTimes(1);
+ });
+ it('validates the stable request before reading',async()=>{
+  const {client,scope}=fixture();await expect(reopenOwnerRecovery(client,scope,'bad-id')).rejects.toMatchObject({code:'INPUT_INVALID'});expect(client.rpc).not.toHaveBeenCalled();
  });
 });

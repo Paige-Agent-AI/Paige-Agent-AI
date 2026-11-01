@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { DoorView, ReadyCheck, StripAction } from "./governedReply";
+import { EmailBodyPreview } from "@/components/chat/PaigeConfirmCard";
 
 export type GovernedStripState =
   | { phase: "check"; check: ReadyCheck; fromName: string; sending: boolean }
@@ -104,6 +105,7 @@ export function GovernedReplyStrip({ state, onEdit, onConfirm, onAction, onChoos
           )}
           {check.when && <Fact term="When"><b className="font-semibold">{check.when}</b></Fact>}
         </dl>
+        {p.body_html !== undefined && <EmailBodyPreview email={p} />}
         <Foot note={check.uncertain
           // Re-asked after a lost answer: the earlier try may still be going out. Never "nothing has been sent".
           ? "Couldn't confirm the last try went out. Don't send again unless you're sure it didn't."

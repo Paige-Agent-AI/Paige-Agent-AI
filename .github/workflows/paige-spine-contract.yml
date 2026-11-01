@@ -17,6 +17,7 @@ on:
     branches: [main]
     paths:
       - "supabase/functions/_shared/paige-spine/**"
+      - "scripts/proof/exp05-zion-planning-full-schema.mjs"
       - "supabase/migrations/**"
       - "supabase/tests/e09_cura_preparation_readback.sql"
       - "scripts/proof/e09-cura-preparation-concurrency.mjs"
@@ -387,6 +388,9 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_task_creation.sql
 
+      - name: EXP05 ZION Planning candidate full-schema source and private permission installation (rolled back)
+        if: ${{ !cancelled() }}
+        run: node scripts/proof/exp05-zion-planning-full-schema.mjs
       - name: Operations original inactive draft-step correction (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/owner_task_step_revision.sql

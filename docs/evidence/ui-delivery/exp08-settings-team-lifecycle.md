@@ -300,3 +300,22 @@ compatibility when composing that repair. Existing source-owner acknowledgment i
 These observations do not establish release, activation, universal account/customer proof, or
 owner acceptance. All original matrix rows, five lifecycle journeys and full-assignment coding
 and integration remain open; status **STILL CODING**.
+
+
+## 2026-11-01 original I3 floor metadata — unmounted source preparation
+
+Approved co-owner/step-down copy requires the ORIGINAL native active-owner floor.
+The two existing readers now prepare that display-only count over the whole tenant
+membership set, using original owner/admin privacy, not a page/search or role label.
+Strict original Team parser retains nonnegative safe integers and treats all absent/
+malformed values as unknown; it grants no action. No DOM/container/copy/color/icon/
+focus/interaction or mounted action changes. Original approved prototype remains
+controlling; no new prototype decision requested for this inert metadata.
+
+Actual consumer24PASS (14new+10original), original selected native37candidate cases
+and all original privacy/drift/wait controls terminal0; four new semantic mutants
+change BOTH readers and fail their named cases. Atomic13controls PASS; canonical
+native16 packaging/lint/diff PASS. All are isolated engineering proof. NEW hosted
+projection/native carrier/source readback, mounted I3 rendered/keyboard/AT/reload,
+ordinary Auth/cohort and complete Team Hub owner evaluation remain UNVERIFIED.
+No applied migration/authority change or new ledger. Full original scope retained.

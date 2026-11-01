@@ -106,7 +106,9 @@ const connectors = [
 ];
 
 /** Every call is recorded so the drive can assert what the inbox actually invoked. */
-export const harnessLog: { rpc: Array<{ name: string; args: unknown }>; tables: string[] } = { rpc: [], tables: [] };
+let releaseOpeningRead:()=>void=()=>{};
+const openingReadGate=params.get("opening")==="hold"?new Promise<void>(resolve=>{releaseOpeningRead=resolve;}):null;
+export const harnessLog: { rpc: Array<{ name: string; args: unknown }>; tables: string[];releaseOpeningRead:()=>void } = { rpc: [], tables: [],releaseOpeningRead:()=>releaseOpeningRead() };
 (window as unknown as { __harness: typeof harnessLog }).__harness = harnessLog;
 
 const tableRows = (table: string): unknown[] =>
@@ -133,7 +135,7 @@ function builder(table: string) {
   const result = () => ({ data: rowsFor(), error: null, count: rowsFor().length });
   const proxy: Record<string, unknown> = new Proxy({}, {
     get(_t, prop) {
-      if (prop === "then") return (ok: (v: unknown) => unknown, bad?: (e: unknown) => unknown) => Promise.resolve(result()).then(ok, bad);
+      if (prop === "then") return (ok: (v: unknown) => unknown, bad?: (e: unknown) => unknown) => (table==="paige_actions"&&openingReadGate?openingReadGate.then(result):Promise.resolve(result())).then(ok, bad);
       if (prop === "single" || prop === "maybeSingle") return () => Promise.resolve({ data: dialogEntry?rowsFor()[0]??null:null, error: null });
       if ((dialogEntry||table === "paige_suppressions" || (actionEntry&&table==="messages")) && (prop === "eq" || prop === "is")) return (col: string, v: unknown) => { filters.push([col, v]); return proxy; };
       return () => proxy;

@@ -1,5 +1,20 @@
 # Paige Agent AI — Working Doctrine
 
+## MANDATORY OWNER DELIVERY RULE — November 1, 2026
+
+This rule binds the Coordinator and every current and future authorized agent. Pick ONE complete original customer/business outcome and finish it. Do not start or consider another outcome while it is unfinished. REPORT THE COMPLETED OUTCOME, THEN STOP. The owner must explicitly approve the next outcome, one at a time. Preserve the full original assignment as pending scope; it does not authorize starting the next outcome.
+
+Every task must be necessary to finish the ONE selected outcome. Small PRs are implementation increments, not completed outcomes. Do not add unrelated prerequisites, policy cleanup, reporting, speculative improvements, parallel features, tests or approval gates beyond the authorized outcome and genuine applicable engineering/safety requirements.
+
+Complete the necessary implementation and integration, proportionate engineering checks and review, normal safe merge/deployment, then LIVE verification of the useful original result, receipt and durable reopen/recovery. Missing browser, prototype, screenshots, preview login or owner hands-on testing alone must not block an otherwise safe prelaunch release. Preserve actual security, privacy, tenant/authorization, required engineering checks, migration safety and consequential-effect boundaries; never fabricate PASS or acceptance.
+
+If blocked, remain on the SAME outcome and report the exact blocker, accountable owner and needed decision in the existing original record. Do not switch to a secondary outcome, start parallel work or duplicate dependency pings. Work only on what is necessary to finish the selected outcome. Existing meaningful checkpoints suffice; no additional reporting ceremony, timer, checklist or per-PR owner review is created.
+
+The implementing agent reports its own completed outcome to the OWNER in its working chat, to its ORIGINAL LINEAR issue, and to the COORDINATOR, then STOPS for the owner's explicit next-outcome approval. The same implementing agent updates the EXISTING canonical Outcomes records with the actual completed result and verification evidence, keeping unfinished work open and distinguishing released, verified and owner-accepted states. Report the useful result and any actual limitation truthfully. The Coordinator must not create a separate outcome ledger, assign replacement outcome statuses or report completion on an agent's behalf. Existing original records remain with their original owners; no extra reporting work is created.
+
+The Coordinator must follow this rule too: do not scatter or redirect agents, add requirements, or treat PR/test totals as delivery. Agent messages or redirection require the owner's explicit instruction. Only an explicit owner direction changes the authorized outcome or this rule; do not treat technical autonomy, full-assignment scope or a dependency as permission to start another outcome. No new agents, runtime, ledger, provider activation or unrelated authority is granted. Existing assignments and holds remain intact.
+
+
 Standing rules for how work gets done in this repo. These persist across sessions.
 
 ## 00. UI AUTHORITY — THE FIRST RULE. IT OVERRIDES EVERY SECTION BELOW IT.

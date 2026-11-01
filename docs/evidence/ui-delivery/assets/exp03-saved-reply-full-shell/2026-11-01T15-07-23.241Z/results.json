@@ -1,0 +1,23 @@
+{
+  "results": [
+    {
+      "pass": false,
+      "diagnostics": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "visibleText": "PAIGE workspace ready\nSkip to content\nNO\nNORTHWIND STUDIO — FICTIONAL\nClients\nSolo\nDirect PAIGE, or press ⌘\\\n⌘\\\nPeople\nConversations\nCalendar\nPortal\nConversations\n\nNew conversation\nActive\nNeeds attention\n1\nUnread\nMore\n1\n2 conversations\nMost recent\nJR\nJordan Rivera\nAttention\n2 minutes\nSaved original reply words.\nDRAFT READY\nPO\nPriya Okafor\nabout 5 hours\nQuick one — is the deposit refundable if we push the start date?\n\nJordan Rivera\n\nEmail · jordan.rivera@example.com\n\nDRAFT READY\nHuman reply\nLIVE\nPAIGE drafts\nPARTIAL\nGoverned handling\nPROPOSED\nPrimary PAIGE\nLIVE\nEmail\nPARTIAL\nYou write and send every reply.\nJordan Rivera\n· 1 day ago\n\nKitchen refresh — scope questions\n\nHi! Before we sign off on phase two, can you confirm whether the cabinet hardware is in the quote?\n\nPAIGE DRAFTED — AWAITING YOUR APPROVAL\n\nRe: Kitchen refresh — scope questions\n\nSaved original reply words.\n\nReview email\nEdit\n\nOpening saved reply…\n\nNorthwind Studio· studio@northwindstudio.example\nSend\nAttach\nDictate\nDraft with Paige\nSchedule\n\nGoes to Jordan Rivera's main email.\n\nCOLLAPSE\nJO\n\nSELECTED CLIENT\n\nJordan Rivera\nPeople record\nPROFILE · LIVE\nClient context loaded for Jordan Rivera\nOpen People record\nPeople owns this record\nRELATIONSHIP\nProfile and ownership\nEMAIL\njordan.rivera@example.com\nPHONE\nNot reported\nOWNER\nNot assigned\nRELATIONSHIP\nclient_active\nSTATUS\nactive\nSOURCE\nreferral\nSALES CONTEXT\nPipeline, deal, offers\nPIPELINE / DEAL\nNot reported\nSTAGE\nNot reported\nOFFERS / PRODUCTS\nNot reported\n\nNo client-specific sales association is proven in this inbox.\n\nRELATIONSHIP SIGNALS\nTags and campaigns\nNo People tags reported\nCONVERSATION LABELS\nNone reported\nOpen Campaigns\n\nCampaigns owns configuration. This generic link does not carry client selection; membership is not reported here.\n\nCLIENT ACCESS\nPortal access\nINVITATION\nNot reported\nACCESS / ACCOUNT LINK\nNot reported\nREADINESS\nNot reported\nOpen Portal\nRECENT ACTIVITY\nConversation touchpoints\nOutbound · email\nNov 1, 2026, 10:06 AM\nInbound · emai"
+    },
+    {
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'open' !== 'closed'\n"
+    }
+  ],
+  "errors": [],
+  "external": [
+    "https://fonts.googleapis.com"
+  ],
+  "proof": "LOCAL_CONTROLLED_WORKSPACE",
+  "voice": "UNEXERCISED",
+  "paige": "ORIGINAL_SHELL_AND_WORKSPACE_FICTIONAL_PORTS",
+  "nativeBrowserZoom": "UNVERIFIED"
+}

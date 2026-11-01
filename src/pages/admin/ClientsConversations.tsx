@@ -485,6 +485,8 @@ export default function ClientsConversations() {
   const [editingActionDraftSource,setEditingActionDraftSource]=useState<CommsEmailActionDraftSource|undefined>();
   const [editingDraftApprovalId, setEditingDraftApprovalId] = useState<string | undefined>();
   const savedDraftOpenSequence = useRef(0);
+  const savedDraftOpeningRef=useRef<{sequence:number;epoch:AccountEpochToken;threadKey:string;messageId:string}|null>(null);
+  const [savedDraftOpening,setSavedDraftOpening]=useState<typeof savedDraftOpeningRef.current>(null);
   const [reviewDraftRequest, setReviewDraftRequest] = useState<{ id: string; epoch: AccountEpochToken } | null>(null);
   const signatureBeforeDraft = useRef<boolean | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -982,6 +984,8 @@ export default function ClientsConversations() {
   const composerThreadRef = useRef<string | null>(null);
   const savedDraftComposerKey=JSON.stringify([selected?.key,activeUserId,activeTenantId,editingDraftId,subject,body,attachments,scheduledFor,uploading,leadReplyApprovalId]);
   const savedDraftComposerRef=useRef(savedDraftComposerKey);savedDraftComposerRef.current=savedDraftComposerKey;
+  const savedDraftThreadRef=useRef(selected?.key);savedDraftThreadRef.current=selected?.key;
+  const openingSavedDraft=!!savedDraftOpening&&savedDraftOpening.threadKey===selected?.key&&accountEpochRef.current.accept(savedDraftOpening.epoch);
   const composeChannelRef = useRef<ChannelType | "">("");
   useEffect(() => { composeChannelRef.current = composeChannel; }, [composeChannel]);
 
@@ -1199,6 +1203,8 @@ export default function ClientsConversations() {
   };
 
   const openSavedEmailDraft = async (m: MessageRow): Promise<boolean> => {
+    const pending=savedDraftOpeningRef.current;
+    if(pending&&pending.threadKey===selected?.key&&accountEpochRef.current.accept(pending.epoch))return false;
     if (!selected || m.contact_id !== selected.contactId || m.thread_key !== selected.key
       || m.channel_type !== "email" || m.direction !== "outbound" || m.status !== "draft" || governedSendView(m) !== null) {
       toast.error("Reopen the original draft in its conversation before reviewing it."); return false;
@@ -1219,11 +1225,19 @@ export default function ClientsConversations() {
     }
     const sequence=++savedDraftOpenSequence.current,epoch=accountEpochRef.current.capture(),key=savedDraftComposerRef.current;
     const current=()=>savedDraftOpenSequence.current===sequence && accountEpochRef.current.accept(epoch) && savedDraftComposerRef.current===key;
+    const opening={sequence,epoch,threadKey:m.thread_key,messageId:m.id};
+    const openingFocus=document.activeElement;
+    savedDraftOpeningRef.current=opening;setSavedDraftOpening(opening);
+    try{
     let approvalId:string|undefined;
     if (m.action_id) {
       if (!activeTenantId || !selected.contactId) return false;
       const original=await readSavedReplyApproval({tenantId:activeTenantId,contactId:selected.contactId,actionId:m.action_id,messageId:m.id},current);
-      if (!current()) return false;
+      if (!current()) {
+        if(accountEpochRef.current.accept(epoch)&&savedDraftThreadRef.current===m.thread_key)
+          toast.error("Your reply changed while opening the saved email. Keep or clear your current reply, then reopen it.");
+        return false;
+      }
       if (!original) { toast.error("This draft's original approval is unavailable or no longer pending. Reopen its recorded status."); return false; }
       approvalId=original;
     }
@@ -1240,7 +1254,15 @@ export default function ClientsConversations() {
     setBody(m.body_text?.trim() ? m.body_text : readableMessageBody(m));
     setScheduledFor(m.scheduled_for ?? null); restoreAttachments(m.attachments ?? []);
     bottomRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "end" });
+    requestAnimationFrame(()=>{
+      if(savedDraftOpenSequence.current===sequence&&accountEpochRef.current.accept(epoch)&&savedDraftThreadRef.current===m.thread_key
+        &&(document.activeElement===document.body||document.activeElement===openingFocus))
+        document.querySelector<HTMLTextAreaElement>('[data-composer-writing-surface="true"] textarea')?.focus({preventScroll:true});
+    });
     return true;
+    }finally{
+      if(savedDraftOpeningRef.current===opening){savedDraftOpeningRef.current=null;setSavedDraftOpening(value=>value===opening?null:value);}
+    }
   };
 
   const editDraft = (m: MessageRow) => {
@@ -2155,7 +2177,7 @@ export default function ClientsConversations() {
                   onCancelScheduled={cancelScheduled}
                   onCancelGovernedScheduled={cancelGovernedScheduled}
                   cancelPending={cancelPendingFor(m)}
-                  approving={approvingId === m.id}
+                  approving={approvingId === m.id||openingSavedDraft&&savedDraftOpening?.messageId===m.id}
                   sendDisabled={isSolo && handlingMode === "governed"}
                 />
               ) : (
@@ -2172,7 +2194,7 @@ export default function ClientsConversations() {
                     onCancelScheduled={cancelScheduled}
                     onCancelGovernedScheduled={cancelGovernedScheduled}
                     cancelPending={cancelPendingFor(m)}
-                    approving={approvingId === m.id}
+                    approving={approvingId === m.id||openingSavedDraft&&savedDraftOpening?.messageId===m.id}
                     sendDisabled={isSolo && handlingMode === "governed"}
                   />
                 </motion.div>
@@ -2180,13 +2202,14 @@ export default function ClientsConversations() {
             )}
             {followupLocatorConflict&&leadReplyApprovalId&&selected.contactId?<p role="status" className="text-sm text-muted-foreground">The original reply is still open. <button type="button" className="underline" onClick={()=>restoreFollowupOrigin(selected.contactId!,leadReplyApprovalId)}>Return to original reply</button></p>
               :followupLocator.kind==="invalid"?<p role="alert" className="text-sm text-destructive">The selected reply link is invalid. No replacement was selected.</p>:null}
+            {openingSavedDraft?<p role="status" className="text-sm text-muted-foreground">Opening saved reply…</p>:null}
             {activeTenantId&&selected.contactId&&followupLocator.kind!=="invalid"?<LeadReplyDrafts
               key={`${activeUserId}:${activeTenantId}:${selected.contactId}`}
               actorId={activeUserId} tenantId={activeTenantId} contactId={selected.contactId}
               approvalId={followupLocator.kind==="bound"?followupLocator.approvalId:undefined}
               threadKey={isSolo?selected.key:null}
               current={()=>accountEpochRef.current.accept(followupEpoch)}
-              disabled={sending||leadReplyReview.blocksSending||(isSolo&&handlingMode==="governed")}
+              disabled={openingSavedDraft||sending||leadReplyReview.blocksSending||(isSolo&&handlingMode==="governed")}
               recordDisabled={sending||leadReplyReview.blocksSending||followupLocatorConflict||tenantContext.loading||tenantContext.accountContextLoading||tenantContext.accountContextStatus!=="ready"}
               onEdit={(approval,draft)=>{
                 if(!canReplaceFollowupDraft({subject,body,attachmentCount:attachments.length,scheduledFor,editingDraftId,approvalId:leadReplyApprovalId,pending:leadReplyReview.blocksSending})){

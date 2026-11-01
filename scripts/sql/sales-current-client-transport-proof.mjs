@@ -20,7 +20,7 @@ export function proveCurrentClientFinancialTransport({run,read}){
  const signature=kind=>kind==='list'?'client_portal_invoices_calendar_scoped(uuid,uuid,integer,jsonb)':'client_portal_invoice_payment_request(uuid,uuid)';
  const metadata=kind=>run("SELECT ((to_jsonb(p)-'prosrc'-'proargdefaults')||jsonb_build_object('defaults',pg_get_expr(proargdefaults,0)))::text FROM pg_proc p WHERE oid='"+signature(kind)+"'::regprocedure;");
  const settings=(version,who=client,visible=true,raw)=>"SET request.headers="+quote(raw??JSON.stringify(version===null?{}:{'x-paige-invoice-evidence-version':version}))+";SET test.e04_portal_client="+quote(who)+";SET test.e04_portal_visible="+quote(String(visible))+";";
- const call=(kind,{who=client,invoiceId=invoice,business=tenant}={})=>kind==='list'?"public.client_portal_invoices_calendar_scoped('"+business+"','"+who+"',20,NULL)":"public.client_portal_invoice_payment_request('"+invoiceId+"','"+business+"')";
+ const call=(kind,{who=client,invoiceId=invoice,business=tenant,limit=20,after=null}={})=>kind==='list'?"public.client_portal_invoices_calendar_scoped('"+business+"','"+who+"',"+limit+","+(after?quote(JSON.stringify(after))+"::jsonb":"NULL")+")":"public.client_portal_invoice_payment_request('"+invoiceId+"','"+business+"')";
  const point=(kind,version='3',opts={})=>value((opts.before?'BEGIN;':'')+settings(version,opts.actorClient??client,opts.visible!==false,opts.raw)+(opts.before??'')+"SELECT jsonb_build_object('result',"+call(kind,opts)+");"+(opts.before?'ROLLBACK;':'')).result;
  function refuses(kind,version,code,opts={}){
   assert(/^[0-9A-Z]{5}$/.test(code));run((opts.before?'BEGIN;':'')+settings(version,opts.actorClient??client,opts.visible!==false,opts.raw)+(opts.before??'')
@@ -44,6 +44,12 @@ export function proveCurrentClientFinancialTransport({run,read}){
  check('an unrelated held invoice keeps whole currency totals and open count unknown',page.open_count===null&&page.balances.find(b=>b.currency===row.currency).remaining_minor===null);
  check('original calendar object is carried unchanged from explicit calendar port',page.calendar.state==='configured'&&page.calendar.zone==='America/New_York'&&page.calendar.local_date==='2026-11-01');
  check('current original payment reader copies the SAME debt and adjustments',payment.invoice_id===invoice&&payment.remaining_cents===210000&&payment.refund_payable_minor===15000&&payment.credit_minor===20000&&payment.payment_evidence_version===2&&payment.financial_evidence_version===3);
+ check('opaque original page source revision is present without raw private context',/^[a-f0-9]{64}$/.test(page.financial_revision));
+ check('invoice and payment carry the SAME original per-invoice source revision',/^[a-f0-9]{64}$/.test(row.financial_revision)&&payment.financial_revision===row.financial_revision);
+ const firstPage=point('list','3',{limit:1}),secondPage=point('list','3',{limit:1,after:firstPage.next_cursor});
+ check('original page source revision stays stable across unchanged cursor pages',firstPage.financial_revision===page.financial_revision&&secondPage.financial_revision===page.financial_revision&&firstPage.has_more);
+ const sameMoney=point('list','3',{before:"UPDATE paige_invoices SET billing_lifecycle_version=billing_lifecycle_version+1 WHERE id='"+invoice+"';"});
+ check('changed original source changes the page revision even when debt is identical',sameMoney.financial_revision!==page.financial_revision&&sameMoney.invoices.find(r=>r.id===invoice).remaining_minor===row.remaining_minor);
  check('private evidence and authority credentials do not leave either public result',!['_native_sources','source_hash','dispatch_claim_token','merchant_account_id'].some(k=>JSON.stringify({page,payment}).includes(k)));
  for(const kind of ['list','payment']){
   refuses(kind,null,'40001');refuses(kind,'2','40001');check('wrong older financial view refuses with40001: '+kind,true);
@@ -51,6 +57,7 @@ export function proveCurrentClientFinancialTransport({run,read}){
  }
  const inactive="UPDATE tenant_client_agreements SET status='inactive' WHERE id=(SELECT commercial_terms_id FROM paige_agreements WHERE id=(SELECT (billing_draft#>>'{agreement_snapshot,id}')::uuid FROM paige_invoices WHERE id='"+invoice+"'));";
  const heldList=point('list','3',{before:inactive}),heldPayment=point('payment','3',{before:inactive});
+ check('held original source changes the whole page revision',heldList.financial_revision!==page.financial_revision);
  check('held source returns null debt/no due judgment in same public list',heldList.invoices.find(r=>r.id===invoice).remaining_minor===null&&heldList.invoices.find(r=>r.id===invoice).past_due===null);
  check('held source returns null payment amount and never supplies a checkout request',heldPayment.remaining_cents===null&&heldPayment.payment_request===null&&heldPayment.financial_standing!=='recorded');
  refuses('list','3','42501',{who:'ffffffff-ffff-4fff-8fff-ffffffffffff'});check('same original expected-client predicate refuses mismatch under identity port',true);

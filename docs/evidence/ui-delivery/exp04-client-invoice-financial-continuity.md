@@ -137,3 +137,117 @@ exception proof only; no production maturity promotion. ALG02/13 remain within t
 assignment sequence. Orchestration: ordinary scoped reads use existing RPCs; no LayerC
 executor is invented. The original Owner financial decision retains high/confirm Kit,
 canonical invoice/operation identity and Rail receipt, with actual execution proof owed.
+
+
+
+## O5 paired current financial panel and source revisions — November 1
+
+**WORKING TREE / development; not release or authenticated acceptance.** The original
+client financial parser and invoice PaymentPanel now consume the same schema4/current3
+facts. Current requests refuse older valid representations instead of silently adopting
+gross debt. Nullable amounts/open counts stay unknown; Home's original glance declines
+unknown totals. Debt, refund still due, applied credit, net provider receipts and TEST
+history remain separate. Zero says **No amount due**, never an inferred Paid in full.
+Original actor/frame/business/client/session epochs, caller JWT verification, permission
+refusals, focus/visibility refresh, expiry handling and canonical message-draft link remain.
+No sender, financial write, provider request, permission, scheduler or extra Portal UI.
+
+A real controlled pagination failure was reproduced: two reads appended an old first row
+beside a newer aggregate/next page on the same day and representation. The correction
+reuses the existing private all_facts_identity as an opaque original page revision, and
+the existing original financial source identity for per-invoice/payment currentness.
+They grant no access and expose no raw private source context. Changed original source
+refreshes before append; the page revision also retires the selected invoice's old payment
+read even when amounts remain equal. Native metadata/defaults/ACL and old whole replies
+are unchanged. Current three candidate bodies are1a622edb/a79ff547/5addaaad; no production
+function or migration was changed by these source edits.
+
+Final same original native runner: private client24, canonical link15 and public transport35
+PASS with retained financial39/manual27. Added original cursor-revision and equal-money
+changed-source controls; all prior30 public controls remain. Owned cluster STOPPED/DB0.
+Original hook/component regression **198 PASS across10 suites**, including strict revision
+and older-server refusals, same-day source change, receipt/credit/refund mismatch, actual
+zero/held, scope retirement, signout, calendar rollover, focus/reload and recovery.
+The causal failure and earlier183-pass checkpoint remain history, not new acceptance.
+
+Rendered actual component/hook **14 paths PASS**:1536×770,1366×768,1024×768,900×1000
+and390×844 in light/dark, plus held, synthetic credit-zero, error and mismatch/recovery.
+No root overflow, outside request, send or page error; keyboard recovery has visible
+focus and44px target. Original customer navigation primitives render; real PAIGE Chat
+and AppShell authentication are explicitly not mounted. The document-unavailable port is
+intentional: it proves recovery display and DOES NOT accept the current document.
+Desktop, held mobile and credit mobile were personally inspected with Impeccable's
+hierarchy, token, state, responsiveness, focus and recovery checks. Duplicate held-state
+Check again was removed; no new empty adjustment card. Physical device/zoom/AT remain owed.
+
+Images: [desktop](assets/exp04-current-financial-review/portal-financial-desktop.png),
+[held](assets/exp04-current-financial-review/portal-financial-held-mobile.png),
+[credit](assets/exp04-current-financial-review/portal-financial-credit-mobile.png).
+The adjacent portal-financial-manifest.json binds current source/image hashes and boundaries.
+The first render fixtures incorrectly retained a request for zero/held and expected no
+request after recovery despite a real retained settled request; failed attempts remain.
+Correcting those explicit synthetic ports/expectations did not change product controls.
+
+Release hold: the additional original Billing.tsx financial-only source-window request is
+still pending; the file is unedited. Whole-app compiler completes with six pre-existing
+baseline diagnostics plus ONE new exhaustive status-map diagnostic there. This is not
+a green full-app claim. The original current ledger/document projection and finite native
+financial carrier/full-schema ordering are still required. Existing final-head CI/merge/
+deployment/readback, genuine merchant TEST adjustment proof, ordinary Owner/proper linked
+client/second authorized context result/receipt/reload/reopen/recovery and final founder
+acceptance remain separately owed. The single original Owner sign-in handoff is pending.
+O5 sole primary/no secondary, all12 retained,0 full outcomes accepted. ALG01/12 support is
+bounded deterministic reconciliation/recovery, not a maturity promotion; ALG02/13 unchanged.
+
+
+
+## O5 paired document, current ledger and public payment read — November 1
+**LOCAL / UNRELEASED.** The existing canonical ledger and collector now negotiate3,
+copy the SAME native closed13-field financial summary, preserve immutable original
+document/history, and retain unknown amounts. The original three-argument historical
+getter stays byte-exact; the four-argument getter already provides typed unavailable
+recovery and is reused, not replaced. Whole truthful legacy/default2 replies remain;
+misleading adjusted old representations refuse40001. Original Owner/client wrappers,
+minimizer, OID/ABI/defaults/owner/settings/ACL remain unchanged.
+The original public bearer payment request adopts the SAME current summary. Original
+token, expiry, revocation, snapshot/tenant and invoice locks run before header parsing.
+Original Edge service-versus-caller identity and Portal subject checks remain intact.
+No new endpoint, financial engine, receipt ledger, provider request or permission.
+
+The original current document renderer shows actual outstanding, credit and refund still
+due separately; gross historical receipts never imply current payment completion.
+The original public page uses minimal response observation metadata to pair the document
+and payment panel. Changed source/version/standing retires both the old link and displayed
+document, and recovers through Refresh invoice using the same memory-only bearer.
+Unknown shows verification pending, zero says No amount due, and TEST checkout explicitly
+moves no money. Provider acceptance, original request confirmation and balance differ.
+
+Original controlled native ledger+bearer53 PASS, retaining financial39/manual27/private24/
+link15/public35. Public original source/ACL, current/native summary equality, accurate legacy
+whole payloads, private minimization, unsupported/coerced header and unchanged bearer denials
+are covered. The earlier baseline assertion wrongly expected an old server to reject a new
+header; its failure was retained, corrected to actual absent marker/historical debt.
+Actual handler13 and public parser/component37 PASS; frozen cached Deno PASS.
+Earlier document/collector157 PASS remains bounded source proof. Source tests are not Auth.
+
+Actual public component + canonical renderer:11 controlled rendered paths PASS at1536,1366,
+1024,900 and390px, including held/unavailable, credit-zero, TEST link, error and changed-source
+keyboard recovery.0 overflow/outside request/page error;44px actions. Desktop/held/refund-mobile
+personally inspected using Impeccable hierarchy, type/spacing, states, focus and recovery checks.
+Native financial/history fields come from the original controlled PostgreSQL run. Issued
+document/content digest, bearer/network, TEST link/change/error are explicitly synthetic.
+An initial bad harness import, absent synthetic digest and retained money-format expectation
+failed; the real renderer's digest refusal was preserved and the harness was corrected.
+Physical device, real browser zoom/assistive technology and customer verification remain owed.
+
+Images: [current document](assets/exp04-current-financial-review/public-financial-desktop.png),
+[refund mobile](assets/exp04-current-financial-review/public-financial-refund-mobile.png),
+[held mobile](assets/exp04-current-financial-review/public-financial-held-mobile.png).
+Adjacent public-financial-manifest.json binds source/image hashes and explicit boundaries.
+The existing Owner Auth tab has no changed signed-in result; same handoff retained without
+credential/session/role changes or another request. Signed-in Owner/linked-client/second
+authorized ordinary context, correct-merchant TEST settlement/refund/reversal, ordered native
+carrier/full schema, exact review/CI/merge/production readback and founder acceptance stay
+PROOF OWED. Original Billing financial-only custody request remains pending; no source edit.
+O5 remains sole primary; all12 outcomes retained,0 full outcomes accepted. ALG01/12 source
+reconciliation/recovery is PARTIAL; no provider/global maturity or ALG02/13 promotion.

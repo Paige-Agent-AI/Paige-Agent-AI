@@ -101,3 +101,53 @@ describe('original document actual-receivable representation', () => {
     expect(body).not.toMatch(/Current outstanding|= outstanding/);
   });
 });
+
+
+describe('original document current financial summary',()=>{
+ const variants=['paige-invoice-html-v1','paige-invoice-html-v2'].flatMap(renderer=>[false,true].map(portal=>({renderer,portal})));
+ const current=(renderer='paige-invoice-html-v2',portal=false,patch:Record<string,unknown>={},sources:Source[]=[{amount:2500,environment:'test'},{amount:5000,environment:'live'}])=>{
+  const v=projection(sources,renderer,portal),summary={schema_version:3,invoice_id:v.invoice_id,invoice_version:5,currency:'usd',standing:'recorded',
+   outstanding_minor:7000,refund_payable_minor:0,credit_minor:0,manual_recorded_minor:v.manual_recorded_cents,provider_confirmed_minor:v.provider_verified_cents,
+   provider_net_minor:3000,test_provider_minor:v.test_provider_verified_cents,source_hash:'b'.repeat(64),...patch};
+  return {...v,version:5,currency:'usd',financial_evidence_version:3,remaining_cents:summary.outstanding_minor,financial_summary:summary};
+ };
+ it.each(variants)('$renderer portal=$portal uses actual debt after a provider return and retains exact issued facts',({renderer,portal})=>{
+  const v=current(renderer,portal),doc=JSON.stringify(v.document),body=text(v);expect(body).not.toBe('REFUSED');expect(JSON.stringify(v.document)).toBe(doc);
+  expect(body).toContain('Current outstanding');expect(body).toContain('$70.00 USD');expect(body).toContain('Provider net after recorded adjustments: $30.00 USD');
+  expect(body).toContain('Test payments (no money moved): $25.00 USD');expect(body).not.toMatch(/Paid \(|= outstanding|Original invoice total.*= outstanding/);
+  expect(body).toContain('Original retained service');
+ });
+ it.each(variants)('$renderer portal=$portal separates no debt, applied credit and refund still due',({renderer,portal})=>{
+  const body=text(current(renderer,portal,{outstanding_minor:0,credit_minor:6000,refund_payable_minor:1000,provider_net_minor:5000}));
+  expect(body).not.toBe('REFUSED');expect(body).toContain('No amount due');expect(body).toContain('Credit applied: $60.00 USD');
+  expect(body).toContain('Refund still due: $10.00 USD');expect(body).not.toMatch(/Paid \(|Refund completed|= outstanding/);
+ });
+ it.each(variants)('$renderer portal=$portal retains unknown current money and original history without invented zero',({renderer,portal})=>{
+  const body=text(current(renderer,portal,{standing:'needs_review',outstanding_minor:null,refund_payable_minor:null,credit_minor:null,provider_net_minor:null}));
+  expect(body).not.toBe('REFUSED');expect(body).toContain('Verification pending');expect(body).toContain('Recorded payment history');expect(body).not.toMatch(/Current outstanding.*\$0.00|No amount due|Paid \(/);
+ });
+ it.each(variants)('$renderer portal=$portal accepts original gross receipts above principal only with current native financial evidence',({renderer,portal})=>{
+  const v=current(renderer,portal,{outstanding_minor:6500,provider_net_minor:3500},[{amount:2500,environment:'test'},{amount:5000,environment:'live'},{amount:10000,environment:'live'}]);
+  const body=text(v);expect(body).not.toBe('REFUSED');expect(body).toContain('$65.00 USD');expect(body).toContain('Original provider-confirmed receipt');
+  expect(body).not.toContain('= outstanding');expect(v.document.total_cents).toBe(10000);
+  const older={...v,financial_evidence_version:undefined,financial_summary:undefined};expect(renderSalesInvoiceDocument(older)).toBeNull();
+ });
+ it.each(variants)('$renderer portal=$portal retains voided original document and history without a current claim',({renderer,portal})=>{
+  const v={...current(renderer,portal,{standing:'not_applicable',outstanding_minor:null,refund_payable_minor:null,credit_minor:null,provider_net_minor:null,source_hash:null}),status:'void'};
+  expect(text(v)).toContain('Nothing owed: this invoice was voided.');expect(text(v)).not.toMatch(/Current outstanding|= outstanding/);
+ });
+ it.each([{schema_version:2},{invoice_id:'different'},{invoice_version:6},{currency:'eur'},{source_hash:null},{extra:'private'},{outstanding_minor:'7000'}])('refuses incorrect canonical financial identity/shape %j',patch=>{
+  expect(renderSalesInvoiceDocument(current('paige-invoice-html-v2',false,patch))).toBeNull();
+ });
+ it('retains completely corrected human receipts rather than claiming no history exists',()=>{
+  const v=current('paige-invoice-html-v2',false,{outstanding_minor:10000,provider_net_minor:0},[{amount:1000},{amount:1000,correction:true}]);
+  expect(text(v)).toContain('Recorded payments were corrected');expect(text(v)).not.toContain('No payment receipts recorded');expect(text(v)).toContain('Payment correction / reversal');
+ });
+ it.each([undefined,null,1,3])('current financial evidence requires its original payment representation2: %j',marker=>{
+  expect(renderSalesInvoiceDocument({...current(),payment_evidence_version:marker})).toBeNull();
+ });
+ it('cannot ignore an explicit current marker or missing financial summary and fall back to gross debt',()=>{
+  const old=projection([{amount:5000,environment:'live'}]);expect(renderSalesInvoiceDocument({...old,version:5,financial_evidence_version:3})).toBeNull();
+  expect(renderSalesInvoiceDocument({...old,version:5,financial_evidence_version:2})).toBeNull();
+ });
+});

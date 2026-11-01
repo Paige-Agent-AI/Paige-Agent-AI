@@ -113,19 +113,26 @@ function AskForLink({ invoice, businessName }: { invoice: PortalInvoice; busines
 /** Representation/currentness only; native authorization and original balances
  * remain authority. Never convert a legacy TEST simulation into actual debt. */
 function financialPaymentCurrent(invoice: PortalInvoice, payment: Extract<PortalPaymentRead, {state: "ready"}>): boolean {
+  if (payment.financialEvidenceVersion !== invoice.financial_evidence_version) return false;
+  if (invoice.financial_evidence_version === 3 && (payment.financialStanding !== invoice.financial_standing
+    || payment.financialRevision !== invoice.financial_revision
+    || payment.refundPayableMinor !== invoice.refund_payable_minor || payment.creditMinor !== invoice.credit_minor
+    || payment.providerNetMinor !== invoice.provider_net_minor)) return false;
   if (payment.paymentEvidenceVersion !== invoice.payment_evidence_version) return false;
   if (invoice.payment_evidence_version !== 2) return true;
   return payment.remainingMinor === invoice.remaining_minor && payment.testProviderMinor === invoice.test_provider_minor
     && (!payment.request || payment.request.currency === invoice.currency && payment.request.remainingMinor === payment.remainingMinor
-      && (!payment.request.url || payment.request.amountMinor <= payment.remainingMinor));
+      && (!payment.request.url || payment.remainingMinor !== null && payment.request.amountMinor <= payment.remainingMinor));
 }
 
 function PaymentPanel({ invoice, payment, businessName, onRetry, checking }: {
   invoice: PortalInvoice; payment: PaymentView; businessName: string; onRetry: () => void; checking: boolean;
 }) {
   const display = invoiceDisplayState(invoice);
+  const currentFinancial = invoice.financial_evidence_version === 3;
   const observed = payment.state === "ready" ? payment : null;
-  const paymentState = observed && !financialPaymentCurrent(invoice, observed) ? "error" : payment.state;
+  const mismatch = !!observed && !financialPaymentCurrent(invoice, observed);
+  const paymentState = mismatch ? "error" : payment.state;
   const ready = paymentState === "ready" ? observed : null;
   const actualBalance = invoice.payment_evidence_version === 2;
   const remaining = actualBalance ? invoice.remaining_minor : ready ? ready.remainingMinor : invoice.remaining_minor;
@@ -135,7 +142,7 @@ function PaymentPanel({ invoice, payment, businessName, onRetry, checking }: {
   // Payment moves only between the customer and the business's processor; in test mode, it doesn't move.
   const testMode = ready?.environment === "test";
   // A paid part payment made in test mode already says, in its own words, that it moved no money.
-  const testPartSettled = remaining > 0 && request?.state === "settled" && testMode;
+  const testPartSettled = remaining !== null && remaining > 0 && request?.state === "settled" && testMode;
   const caution = testMinor > 0 && !settledByTest && !testPartSettled && (
     <p data-testid="test-caution" className="text-sm text-muted-foreground">
       {actualBalance
@@ -154,6 +161,21 @@ function PaymentPanel({ invoice, payment, businessName, onRetry, checking }: {
     // issued to this customer). Say only what is known; the list is re-read underneath.
     body = (
       <p data-testid="payment-unavailable" className="text-base font-semibold">This invoice isn't available to pay here right now.</p>
+    );
+  } else if (currentFinancial && (display === "verification_pending" || paymentState === "error")) {
+    body = (
+      <div data-testid="payment-financial-pending" role="status" className="space-y-2">
+        <p className="text-xl font-semibold tracking-tight">Verification pending</p>
+        <p className="text-sm text-muted-foreground">{mismatch ? "Financial information changed. Check again for the current balance." : `We can’t confirm the current balance. ${businessName} can help resolve it.`}</p>
+        <Button size="sm" variant="outline" className={QUIET_HOVER} disabled={checking} onClick={onRetry}>Check again</Button>
+      </div>
+    );
+  } else if (currentFinancial && remaining === 0) {
+    body = (
+      <div data-testid="payment-no-amount-due" className="space-y-1">
+        <p className="text-xl font-semibold tracking-tight">No amount due</p>
+        <p className="text-sm text-muted-foreground">This is the current amount owed on this invoice.</p>
+      </div>
     );
   } else if (settledByTest) {
     const real = liveProviderMinor(invoice) > 0 || invoice.manual_recorded_minor > 0;
@@ -175,12 +197,12 @@ function PaymentPanel({ invoice, payment, businessName, onRetry, checking }: {
       </div>
     );
   } else {
-    const owed = formatPaymentMinor(remaining, invoice.currency);
+    const owed = remaining === null ? "Amount unavailable" : formatPaymentMinor(remaining, invoice.currency);
     body = (
       <div className="space-y-3">
         <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span data-testid="payment-owed" className="text-xl font-semibold tracking-tight tabular-nums">{owed} due</span>
-          {remaining < invoice.amount_minor && (
+          {remaining !== null && remaining < invoice.amount_minor && (
             <span className="text-sm text-muted-foreground tabular-nums">of {formatPaymentMinor(invoice.amount_minor, invoice.currency)}</span>
           )}
         </p>
@@ -225,6 +247,7 @@ function PaymentPanel({ invoice, payment, businessName, onRetry, checking }: {
             <p className="text-sm font-medium">
               {testMode
                 ? <>Your test payment of <span className="tabular-nums">{formatPaymentMinor(request.amountMinor, request.currency)}</span> went through. The test payment moved no money.</>
+                : currentFinancial ? <>The original payment request was confirmed. This balance includes recorded adjustments.</>
                 : <>Your payment of <span className="tabular-nums">{formatPaymentMinor(request.amountMinor, request.currency)}</span> was confirmed.</>}
             </p>
             <p className="text-sm">{actualBalance ? `${businessName} hasn't sent a link for the current balance yet.` : `${businessName} hasn't sent a link for the rest yet.`}</p>
@@ -257,13 +280,19 @@ function PaymentPanel({ invoice, payment, businessName, onRetry, checking }: {
     <section aria-labelledby="payment-heading" data-testid="payment-panel" className="space-y-3 rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-3">
         <h2 id="payment-heading" className="text-sm font-semibold text-muted-foreground">Payment</h2>
-        {invoice.status === "issued" && remaining > 0 && (paymentState === "ready") && (
+        {invoice.status === "issued" && display !== "verification_pending" && (currentFinancial || remaining !== null && remaining > 0) && (paymentState === "ready") && (
           <Button size="sm" variant="ghost" className={QUIET_HOVER} disabled={checking} onClick={onRetry}>
             <RotateCw aria-hidden="true" className={`mr-1.5 h-3.5 w-3.5 ${checking ? "animate-spin motion-reduce:animate-none" : ""}`} /> Check again
           </Button>
         )}
       </div>
       {body}
+      {currentFinancial && invoice.financial_standing === "recorded" && !mismatch && paymentState !== "unavailable" && ((invoice.refund_payable_minor ?? 0) > 0 || (invoice.credit_minor ?? 0) > 0) && (
+        <div className="space-y-1 border-t border-border pt-3 text-sm">
+          {typeof invoice.refund_payable_minor === "number" && invoice.refund_payable_minor > 0 && <p data-testid="payment-refund-due"><span className="font-medium">Refund due: {formatPaymentMinor(invoice.refund_payable_minor, invoice.currency)}.</span> This amount is still due back to you.</p>}
+          {typeof invoice.credit_minor === "number" && invoice.credit_minor > 0 && <p data-testid="payment-credit">Credit applied: {formatPaymentMinor(invoice.credit_minor, invoice.currency)}. Already reflected in the balance.</p>}
+        </div>
+      )}
       {caution}
     </section>
   );
@@ -302,7 +331,7 @@ export default function BillingInvoice() {
   const [checking, setChecking] = useState(false);
   const paymentSeq = useRef(0);
   const { refresh: refreshList } = list;
-  const needsPayment = !!invoice && invoice.status === "issued" && invoice.remaining_minor > 0;
+  const needsPayment = !!invoice && invoice.status === "issued" && (invoice.financial_evidence_version === 3 || invoice.remaining_minor !== null && invoice.remaining_minor > 0);
   const readPayment = useCallback(async (quiet = false) => {
     if (!invoice || !tenantId || !pageCurrent()) return;
     const seq = ++paymentSeq.current;
@@ -310,7 +339,7 @@ export default function BillingInvoice() {
     paymentFor.current = viewKey;
     setChecking(true);
     try {
-      const next = await readPortalInvoicePayment({ invoiceId: invoice.id, tenantId, ...(requestContext ? {context: requestContext} : {}) });
+      const next = await readPortalInvoicePayment({ invoiceId: invoice.id, tenantId, ...(requestContext ? {context: requestContext} : {}), ...(invoice.financial_evidence_version === 3 ? {financialVersion: 3 as const} : {}) });
       if (pageCurrent() && seq === paymentSeq.current) {
         setPayment(next);
         // One original list refresh reconciles conflicting representations or a
@@ -323,7 +352,7 @@ export default function BillingInvoice() {
       if (pageCurrent() && seq === paymentSeq.current) setChecking(false);
     }
   }, [invoice, tenantId, requestContext, pageCurrent, viewKey, refreshList]);
-  const paymentKey = invoice ? `${invoice.id}:${invoice.remaining_minor}:${invoice.payable}:${invoice.status}:${invoice.payment_evidence_version ?? "legacy"}:${invoice.test_provider_minor}:${invoice.currency}:${invoice.issued_snapshot_version ?? "legacy"}` : "";
+  const paymentKey = invoice ? JSON.stringify([invoice.id,invoice.remaining_minor,invoice.payable,invoice.status,invoice.payment_evidence_version,invoice.test_provider_minor,invoice.currency,invoice.issued_snapshot_version,invoice.financial_evidence_version,invoice.financial_standing,invoice.refund_payable_minor,invoice.credit_minor,invoice.provider_net_minor,invoice.financial_revision,invoice.financial_page_revision]) : "";
   useEffect(() => {
     if (!needsPayment) { paymentSeq.current += 1; setPayment({ state: "idle" }); setChecking(false); return; }
     void readPayment();

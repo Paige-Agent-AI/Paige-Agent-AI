@@ -4,7 +4,7 @@ DO $source$
 DECLARE p pg_catalog.pg_proc%ROWTYPE;
 BEGIN
  SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public.client_portal_invoice_payment_request(uuid,uuid)');
- IF NOT FOUND OR pg_catalog.md5(p.prosrc) NOT IN('e59ce09de1660f47341787a89b7269ec','3f2c3a9301e8cecee6cc19975a60b976')
+ IF NOT FOUND OR pg_catalog.md5(p.prosrc) NOT IN('e59ce09de1660f47341787a89b7269ec','5addaaad6dbb3186f3b5ff67457ee009')
   OR pg_catalog.pg_get_userbyid(p.proowner)<>'postgres' OR NOT p.prosecdef OR p.proisstrict OR p.proleakproof
   OR p.provolatile<>'v' OR p.proparallel<>'u' OR p.proretset OR p.pronargdefaults<>1 OR p.prorettype<>'jsonb'::regtype
   OR pg_catalog.pg_get_expr(p.proargdefaults,0) IS DISTINCT FROM 'NULL::uuid'
@@ -84,7 +84,7 @@ BEGIN
     'payment_request',_request)
     ||CASE WHEN _evidence_version IN('2','3') THEN jsonb_build_object('payment_evidence_version',2) ELSE '{}'::jsonb END
     ||CASE WHEN _evidence_version='3' THEN jsonb_build_object('financial_evidence_version',3,
-      'financial_standing',_financial->'standing','refund_payable_minor',_financial->'refund_payable_minor',
+      'financial_revision',_financial->'source_hash','financial_standing',_financial->'standing','refund_payable_minor',_financial->'refund_payable_minor',
       'credit_minor',_financial->'credit_minor','provider_net_minor',_financial->'provider_net_minor') ELSE '{}'::jsonb END;
 END;
 $$;

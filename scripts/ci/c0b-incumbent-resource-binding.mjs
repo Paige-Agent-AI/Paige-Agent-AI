@@ -1,3 +1,10 @@
+// EXP04 O5 current document/ledger pairing, 2026-11-01, AUTHOR-REVIEW / LOWER ASSURANCE.
+// Published6d reproduces131 source pins/all29 dispatches; whole Root is unchanged.
+// Renew ONLY these TWO reviewed ledger/document dependency digests after native53,
+// current/legacy/unknown/paging source tests and actual-source controlled render11.
+// Canonical summary and immutable history remain original; no engine or permission.
+// All129 other pins,29 fingerprints, inspector/extractor/validators/hostile controls
+// stay byte-exact. Native carrier/CI/production/provider/Auth/founder proof owed.
 // EXP04 O5 attribution-only CI repair, 2026-11-01, AUTHOR-REVIEW / LOWER ASSURANCE.
 // Composed maincbc57f3 / sourcebb917a6 reproduces131 dependency pins and29 dispatches.
 // Whole Root inverse removes ONE sales_record_provider_disposition WRITE_TARGET row.
@@ -1301,7 +1308,7 @@ const SOURCES = {
   "supabase/functions/_shared/marketplace-authority-containment.ts": "ac5391d46081aa6f3b08382e1420ad944f0519558b8b8d2d0b16dd8cef1cb4c2",
   "supabase/functions/_shared/subagent-authority.ts": "633143a287651772f3c78810397d7a1e753d1d9924c3668693783422be6c8494",
   "supabase/functions/_shared/systems-check-http.ts": "fd5713b29f5127fa0d10e501bd20cd869aa860b816eed500eb19e21e522fcfa6",
-  "supabase/functions/_shared/sales-invoice-ledger.ts": "508b179c8dfb3a10b2605ab19e8e74aa540bcdb6ad4605a2f49504fde710a18e",
+  "supabase/functions/_shared/sales-invoice-ledger.ts": "56d163a76c7b334e1dc70fdeb99b6a5d10e1c78612ee5a5e1bf3f5d6cd9de6ae",
   // E09 Payments round 3 (2026-10-18, pin ec72c112…466b): presentation only. A projection carrying the
   // portal-only test_provider_cents / provider_environment keys tells a TEST receipt as a test that moved
   // no money and does not name the processor; it refuses a test total that contradicts the evidence.
@@ -1325,7 +1332,7 @@ const SOURCES = {
   // ("Business-recorded payments") and the box says when its totals are after corrections. Owner and
   // bearer output unchanged: 240 fixtures byte-identical to the round-2 renderer and 60,000 random
   // projections (24,489 rendered, 10,829 of them void) byte-identical to base dbb8a8842.
-  "supabase/functions/_shared/sales-invoice-document.ts": "770880fad47e861baad40b1a5220f9cc83d5e686f1ff2e3dbcaf09afc152639a",
+  "supabase/functions/_shared/sales-invoice-document.ts": "c10227784c085a23b3db54e34d9701dc97affd2820091498435eef8ae9d2da4e",
   "supabase/functions/_shared/document-pdf.ts": "e88f697d5d79af5feb0d6952fc5029633d488434b232798bc42fffd0fccd9a8e",
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
   // EXP03 Resend retirement (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: one fact's source key changes,

@@ -4,7 +4,7 @@ DO $source$
 DECLARE p pg_catalog.pg_proc%ROWTYPE;
 BEGIN
  SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public.client_portal_invoices_calendar_scoped(uuid,uuid,integer,jsonb)');
- IF NOT FOUND OR pg_catalog.md5(p.prosrc) NOT IN('d283924a7763abeeb27a85960dcfa5ec','f016b6040bcde3d29abce63f173855fb')
+ IF NOT FOUND OR pg_catalog.md5(p.prosrc) NOT IN('d283924a7763abeeb27a85960dcfa5ec','a79ff5475d861a26f92c578effb73060')
   OR pg_catalog.pg_get_userbyid(p.proowner)<>'postgres' OR NOT p.prosecdef OR p.proisstrict OR p.proleakproof
   OR p.provolatile<>'v' OR p.proparallel<>'u' OR p.proretset OR p.pronargdefaults<>2 OR p.prorettype<>'jsonb'::regtype
   OR pg_catalog.pg_get_expr(p.proargdefaults,0) IS DISTINCT FROM '20, NULL::jsonb'
@@ -13,7 +13,7 @@ BEGIN
   OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}' THEN
   RAISE EXCEPTION 'Original client financial transport source/authority changed' USING ERRCODE='23514';END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date,integer)')
-  AND pg_catalog.md5(prosrc)='3e704baa10d98de5c7857d92979afd0e' AND pg_catalog.pg_get_userbyid(proowner)='postgres'
+  AND pg_catalog.md5(prosrc)='1a622edb93cf9041638be41b615020c4' AND pg_catalog.pg_get_userbyid(proowner)='postgres'
   AND NOT prosecdef AND NOT proisstrict AND NOT proleakproof AND provolatile='v' AND proparallel='u' AND NOT proretset
   AND prorettype='jsonb'::regtype AND pronargdefaults=0
   AND proargnames=ARRAY['_tenant','_client','p_limit','p_after','p_as_of','p_payment_evidence_version']
@@ -54,5 +54,6 @@ BEGIN
   facts:=public._client_portal_invoice_facts_for_client(p_tenant_id,p_expected_client_id,p_limit,p_after,(calendar->>'local_date')::date);
  END IF;
  RETURN (facts-'_native_sources')||jsonb_build_object('schema_version',CASE WHEN evidence_version='3' THEN 4 WHEN evidence_version='2' THEN 3 ELSE 2 END,'calendar',
-  jsonb_build_object('state',calendar->'state','zone',calendar->'zone','local_date',calendar->'local_date'));
+  jsonb_build_object('state',calendar->'state','zone',calendar->'zone','local_date',calendar->'local_date'))
+  ||CASE WHEN evidence_version='3' THEN jsonb_build_object('financial_revision',facts#>'{_native_sources,all_facts_identity}') ELSE '{}'::jsonb END;
 END $function$;

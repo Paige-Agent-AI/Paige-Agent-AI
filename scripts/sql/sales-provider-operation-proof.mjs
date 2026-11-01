@@ -17,6 +17,7 @@ if(process.argv.includes('--actual-collections-read'))assert(process.argv.includ
 if(process.argv.includes('--actual-client-financial-read'))assert(process.argv.includes('--actual-collections-read'),'current client query proof requires original current financial proof');
 if(process.argv.includes('--current-payment-projection'))assert(process.argv.includes('--actual-client-financial-read'),'current link proof requires original complete client financial proof');
 if(process.argv.includes('--current-client-transport'))assert(process.argv.includes('--current-payment-projection'),'current client transport proof requires original current link proof');
+if(process.argv.includes('--actual-financial-ledger'))assert(process.argv.includes('--current-client-transport'),'current ledger proof requires original current financial transport proof');
 let database='postgres';
 const args=()=>['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-v','ON_ERROR_STOP=1','-At'];
 const run=sql=>{const p=spawnSync(binary,args(),{input:sql,encoding:'utf8',maxBuffer:4e6,windowsHide:true});if(p.status!==0)throw Error(p.stderr);return p.stdout.trim();};
@@ -662,6 +663,12 @@ if(process.argv.includes('--current-client-transport')){
  const result=proveCurrentClientFinancialTransport({run,read});
  writeFileSync(new URL('../../work/sales-current-client-transport-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
  console.log('SALES_CURRENT_CLIENT_TRANSPORT_PASS: '+JSON.stringify({...result,sample:undefined}));
+}
+if(process.argv.includes('--actual-financial-ledger')){
+ const {proveActualFinancialLedger}=await import('./sales-actual-financial-ledger-proof.mjs');
+ const result=proveActualFinancialLedger({run,read});
+ writeFileSync(new URL('../../work/sales-actual-financial-ledger-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_ACTUAL_FINANCIAL_LEDGER_PASS: '+JSON.stringify({...result,samples:undefined}));
 }
  run(`UPDATE paige_invoices SET status='void' WHERE id='${invoice}';`);
  assert.equal(publicRequest(),null,'void invoice bearer refused');

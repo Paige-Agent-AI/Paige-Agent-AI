@@ -7,11 +7,11 @@ MATERIAL_FLOW_CHANGE: YES: ZION can request the original read-only Planning capa
 FLOW_PROTOTYPE: PASS: original owner-approved Team Hub v3 behavior/v5 presentation and A2 state surface in docs/delivery/exp08-team-hub-agents-contract.md reused, not replaced. Human explicitly approved this exact bounded review-branch connection on October29 after the earlier authorization rejection; this does not approve activation or waive native/receiving review.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: equivalent eligible existing/new SOLO owners and admins review their original Planning records with the same ZION; channel readers, members and foreign accounts gain no private tool.
 VISUAL_DIRECTION: PASS: retain original approved ZION cobalt/Cog/name, personality and existing reply/recovery workspace; no competing specialist interface or visual library.
-AUTOMATED_EVIDENCE: PASS: current-main host/reader/source and original MERIT neighbor214 cases,0 failures/0 skipped; original E08 disposable native authority/source/16mutants/4publication-race pairs pass on current composition. Exact forward carrier/candidate identity and rollback-only10-case framework self-test pass; fresh full managed-schema execution still required. Earlier current-main host/reader164 cases are retained as historical evidence. Source-currentness causal14PASS/3FAIL before correction; exact changed raw versions/nested facts/removal, immutable source snapshot, renewed marker/stage, late final-read retirement and lost-post no-repeat now verified. Actual v2 card controls and original tenant/role/stage negatives retained. Prior115/157-case snapshots remain dated supporting history, not new native/customer proof.
-STATIC_EVIDENCE: PASS: actual current-main composition preserves incoming E08/E13 source and workflows; original published product/reader/candidate bytes are retained. Forward carrier/candidate identity, migration lint and1557-file collision guard pass; changed proof-file ESLint/diff clean. Earlier import/assertion/lint/six-diagnostic comparisons below are dated supporting evidence, not a new full-compiler PASS. Fresh exact-head hosted compiler/CI and managed-schema proof remain required.
+AUTOMATED_EVIDENCE: PASS: fresh current-main217 original host/reader/source/MERIT neighbors; original E08 native assertions/16 mutants plus FOUR observed publication/source/role blocking pairs; fresh run1793555478152 also passes17 actual READ ONLY history/Search controls and FIVE installer source/metadata/ACL drift refusals. Exact original+history carrier identity and11-case rollback-only managed-schema framework self-test pass. Fresh hosted full-schema/Preview execution is still required; no ordinary customer proof inferred.
+STATIC_EVIDENCE: PASS: currentmain55dcbc2c and released Calendar3197 compose normally in cfce3484; original applied Preview27000005/carrier80b1727d remains byte-exact. CLI-created new empty history file safely renumbered27010005; no peer native writer, public reader/post/serializer, locked publication guard, C0b pin or ABI change. Two-carrier lint and focused proof ESLint/diff pass; final exact-head gates remain required.
 RENDERED_EVIDENCE: UNVERIFIED: this draft has no native-compatible ZION production/Preview path yet; no new rendered private Planning result is claimed from Node recording ports or old prototype captures.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: original host and real disposable PostgreSQL source/stage/post/history/revocation/race proofs pass at their stated scope. Actual ordinary authenticated DM/read/post/reopen still requires the native carrier release and compatible browser proof.
-AUTHENTICATED_RUNTIME: UNVERIFIED: native source/stage/publication/history implementation now exists under actual E04 handback/E08 ACK and one local never-applied forward carrier; reviewed release and authenticated integration remain owed. The source-currentness repair is local proof, not native SQL/Auth/customer proof; owner/member/tenant/revoke/reload and existing/new SOLO checks remain required, without account creation or impersonation.
+AUTHENTICATED_RUNTIME: UNVERIFIED: original no-data Preview has27000005 ONCE/users0, not a customer session. Forward27010005 readonly repair is local only pending managed replay, review, CI and production readback. Both chats, owner/admin/member/foreign tenant, current source/revocation/reload and equivalent existing/new SOLO customer proof remain owed without account creation or impersonation.
 KEYBOARD_FOCUS: UNVERIFIED: original Team Hub controls/focus code unchanged; new-result real browser traversal has not run on a native-compatible branch.
 ZOOM_REFLOW: UNVERIFIED: original layouts unchanged; no fresh native-compatible result at physical zoom or narrow viewport is claimed.
 REDUCED_MOTION: UNVERIFIED: no animation changed; actual native-compatible result and existing preference need integration verification.
@@ -32,14 +32,14 @@ MUST_PRESERVE: Original MENTOR/NEXUS/MERIT/CURA/E08 spans, approved identities/p
 ACCEPTANCE_CRITERIA: On a reviewed native-compatible release, authorized owner/admin obtains genuine plans, correct original publication/receipt and later retrieval; member/foreign/channel/revoke/unknown negatives deny without leak or duplicate. Equivalent existing/new SOLO and both chats must be verified before full Experience acceptance.
 MOTION_PURPOSE: NONE: no motion or interaction layout changes.
 PROTECTED_SEAMS: Original domain definition/executor/caller JWT preserved. E05 owns the returned finite native Planning source/guard/stage/history/Search hunks under E04 handback/E08 ACK; original public post/list/serializer/ACL remain exact. Recording-port/disposable SQL proof is separate from actual managed/native/Auth/customer proof. Root/card/Calendar/other writers and personalities unchanged.
-INTERNAL_BUILD_IDENTITY: commit=0f7d6652eb621b275bd41fcd58d030704e350a09; original-source=b89495e23708e71793118dfaa3f942a26af5e283; main=b8f46fa6c72f9e800fee7706787533d31ea1bf95; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271127000005_exp05_zion_planning_source_binding.sql has not passed fresh managed Preview or production application/readback); edge=PROOF_OWED(paige-orchestrator exact source deployment and native compatibility); evidence=original ANT11/ANT147/4db37ea4 and docs/evidence/exp05-zion-planning-host-review.json; final exact head/review/CI recorded in original PR
+INTERNAL_BUILD_IDENTITY: commit=cfce3484b476d2b5d8189c9a14956230c56d60db; source=fc0c114aa905f6fba99cec127f6046c0c8971210; main=55dcbc2c88b45fbe23aa2e218077bfbd90ce3a1d; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(original27000005 applied only in original no-data Preview, forward27010005 fresh managed and production proof pending); edge=PROOF_OWED(paige-orchestrator exact source and native compatibility); evidence=ANT147/47bd38e7/079d6911 plus original review packet and native run1793555478152; final exact head/review/CI in original PR3087
 RELEASE_CHANNEL: development: owner-approved review branch only, not a live capability or new rollout cohort.
 RELEASE_CLASSIFICATION: internal-only: original readonly integration increment; actual E04/E08 custody/native-order dependency cleared, own final review/fresh exact-head CI and production readback remain; no customer release claim.
 CUSTOMER_RELEASE_IDENTITY: none: review branch only, no customer version assigned.
 RELEASE_NOTE_REQUIRED: no: no released functionality yet; actual live release must record its customer outcome.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: source and local tests only; native contract, hosted CI, merge, deployment, activation, authenticated verification and founder acceptance remain distinct pending legs.
 RELEASE_RECOVERY: position=preserve existing production host; reference=ANT161/84080211/d0ab0e63; native refusal prevents private context release; original unknown-post reconciliation retained, no private read replay.
-UNVERIFIED: own native carrier managed-schema proof/final review/fresh hosted exact-head gates, deployment/readback, rendered/authenticated original Planning results/links, universal cohorts, full original ten outcomes/E5-CV1–9 and founder evaluation. NOT_READY; implementation is not complete customer acceptance.
+UNVERIFIED: fresh exact-head managed/full-schema/Preview/review/CI, forward27010005 production readback and original ZION host deployment, rendered/authenticated result/Work links/receipt/reload/recovery through BOTH chats, equivalent eligible SOLO cohorts, all ten outcomes/E5-CV1-9 and founder evaluation. O01 primary/O02 next/0fullyclosed.
 
 Impeccable checks apply to existing Operate context: preserve hierarchy, approved identity and original reply/recovery controls; no visual design changes. Finish/rendered review remains owed on the actual compatible integration. Canonical guidance: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md .
 
@@ -135,3 +135,71 @@ host/native admission/history integration is still unmounted. All ten outcomes,
 E5-CV1–9 and original ALG contracts remain; O01 alone primary/O02next/0fullyclosed.
 
 The first local evidence-guard check on0f7 failed because this record omitted the required migrations/evidence field labels. The labels were corrected to explicit PROOF_OWED before final publication; no missing runtime proof is relabelled PASS.
+
+## November1 — actual read-only history correction and release hold
+
+An additional actual native transaction-mode probe1793554039862 found the SAME
+original saved answers visible in READ WRITE but unavailable in READ ONLY.
+PostgREST uses READ ONLY for STABLE RPCs even on POST; the original list/Search
+doors are STABLE. The historical annotation was calling publication authority
+that takes row locks. Prior normal native/CI passes remain evidence of their
+bounded paths; none closed this previously missing history-mode obligation.
+Primary contract: https://docs.postgrest.org/en/stable/references/transactions.html .
+
+Original3087 was returned to DRAFT/RELEASE HOLD (review5729349487/ANT14747bd38e7).
+The fix changes ONLY its existing private history annotation to STABLE and
+projects the exact pinned original current actor/business/owner-admin/DM/roster
+and Planning source permissions without mutation locks. Original E04 authority,
+unconsumed native source/stage/publication locks, public post/list/serializer/
+Search ABI and all other private helper bodies are unchanged. Unknown canonical
+policy/source changes refuse rather than preserve obsolete permission.
+
+Fresh local native run1793555478152 passes original assertions/16mutants, four
+actually observed publication/source/role blocking pairs in both orders, FIVE
+installer drift refusals and SEVENTEEN READ ONLY history/Search controls. These
+cover the same original IDs, legitimate later completion, consumed-history age,
+source deletion, current plan/item access, demotion, suspension, active-workspace
+change, banned/deleted actor, roster revocation, foreign/member denial, unknown
+policy drift and restored access without another message. The original seat-ended
+trigger deliberately deletes the private DM/turns; this destructive synthetic
+control runs LAST and is never undone by recreating the conversation. Initial
+fixture restoration assumed otherwise and failed; those runs are retained as
+fixture failures, not a product-policy repair. Earlier syntax/restore-delimiter/
+message-count preparation failures likewise remain local historical evidence.
+
+Original applied Preview27000005/80b1727d remains IMMUTABLE, max27000005/users0.
+Fresh changed-head review found no competing new migration; production frontier
+230008 remains once, original E05 migrations absent. Installed CLI created empty
+20261101174638_exp05_zion_planning_readonly_history.sql; only that NEVER-applied
+file was safely renamed20271127010005 and filled with exact correction bytes.
+The existing full-schema proof now replays BOTH exact carriers twice, preserving
+all original ten assertions plus one native STABLE-reader compatibility check.
+Its self-test is PASS; fresh actual managed/full-schema/Preview checks remain owed.
+Fixture DB0/otherclients0; only the owned local server was stopped after proof.
+The restricted-port invocation failed before SQL and is INVALID infrastructure
+proof; authorized loopback runs supply the actual result.
+
+Actual3197 Calendar correction normally merged2ca5/tree64066c and deployed via
+Edge41332728081: actual source certificate selected paige-ai-chat611, all329
+emitted files PASS, verify_jwt=true, matching edge-live. Its certificate separately
+retains temporary runner scratch cleanup permission_denied. Vercel exact2ca5 READY;
+BOTH official origins17:48:02UTC serve exact2ca5-mvy4a8vi/main-Bv2PF6MH.js200/equal
+SHA97a7c57e484fdb9054403f7e52d430c85f7ae2e0c1fdd5351e9bad01fc5df81b.
+Public delivery is not authenticated customer proof. Subsequent55dcbc is E13's
+docs-only release record; all incoming source composed normally.
+
+Same E08→E05→E13 actual release order remains; E13 receiving0f4cd18c read, no E13
+forward slot reserved. Calendar-in-Team-Hub ACK6eab458f is genuine; local adapter
+5440 remains unmounted until original Planning release/readback, then fresh finite
+host/native window. No new identity, provider, approval, registry, Work writer or
+execution system. Orchestration Contract: original caller-JWT planning.list read
+plus original read marker, accepted turn/token native stage, Harness model budget,
+original post/Rail/history; this is a legitimate governed read, not a Layer C
+consequential action. ALG-01 reconciliation/currentness is bounded; ALG-12/13 and
+other original algorithm maturity/customer proof remain unchanged. Capabilities
+stay Limited/Unverified under current permissions, with no Live promotion.
+
+Functional: repaired locally; release and actual customer result still owed.
+Visual: original interface unchanged; native-compatible rendered evidence owed.
+Experiential: both-chat original result/receipt/reload/recovery still OPEN.
+Founder acceptance: NOT_READY/NOT_ACCEPTED; O01 alone primary/O02 next/0of10closed.

@@ -3342,3 +3342,45 @@ local PG16 has no available pgTAP extension, so actual14 execution is UNVERIFIED
 It is not yet wired into hosted CI and must execute through the original schema
 job when the actual managed carrier is prepared. Native28/32 success never proves
 this new14. No shared workflow, migration version or current3200 head changed.
+
+
+### November1 — compose original owner projections with Team details
+
+Actual production CATALOG-only read independently confirms original rosterded4ae3c
+has no holder-state, held-seat or legal-owner-choice projection; original PAIGE
+reader623d712d and private helpers9ade6efe/8f9d2746 still match the existing INERT
+owner-read patchef1486c9. No customer rows/actions were read. The two write patches
+alone were an incomplete deployment package for the preserved owner UI.
+A new owning PostgreSQL test genuinely FAILED the absent-projection assertion on
+the two-component bundle. SAME bundle now embeds the exact ORIGINAL owner-read DO
+as third component, removing only its exact BEGIN/SET LOCAL/COMMIT shell and keeping
+the original2s lock timeout inside the atomic statement. Original patch bytes and
+private-fact/role predicates are unchanged; no parallel reader or grant is added.
+
+Actual13component controls PASS, including a third-component PAIGE metadata refusal
+that rolls back both writer installations AND the earlier roster projection, private
+holder-helper ACL drift, exact replay and conserved original reader ABIs/ACL/default
+expressions. The original selected ownership-read suite separately exits0: baseline
+29expected failing/32, candidate32PASS, original mutants/ACL/metadata/current-context
+and actual observed read-versus-demotion waits retained. These are ported component
+proofs, never authenticated production or full-schema native result proof.
+
+Native rollback packaging is now16 rather than historical14: both reader metadata
+and third-component refusal checks are included. Packaging correctly caught
+19-vs1 transaction delimiters because JavaScript replacement-string dollar tokens
+expanded original SQL text; callback replacement fixes literal insertion and new
+six-copy dollar-token regression controls PASS. No transaction/count assertion
+was removed. Native16 canonical/self-negative/lint PASS, actual hosted16 execution
+still UNVERIFIED (local pgTAP unavailable). Original generated14/history remains
+in earlier commits; current16 is not an attestation that14 or16 ran.
+
+Final three-component bundle SHA256
+`eec6737365d2271834dc17393486147f3aa77fefcb0cf46b38d155f44ea97f69`;
+third ORIGINAL raw component SHA256
+`03ce407cacbc4638d92ac908eef90f6c34d77116294d438d491bec0b9b09f3b3`.
+No native version/reservation, shared workflow edit, production apply or mounted
+caller activation. Future normal carrier must renew E01/E13 receiving compatibility,
+real schema execution/review/exactCI/frontier/applied-history readback. Full18+6/five
+journeys STILL CODING. E05 actual latest3087 reviewer findingsae5472ed are received:
+original owner retains mixed-read limit and access-class history repairs; all
+27000005/27010005/27020005 applied Preview carriers remain immutable.

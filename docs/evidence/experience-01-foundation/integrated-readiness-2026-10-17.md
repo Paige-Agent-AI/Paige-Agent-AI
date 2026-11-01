@@ -1,5 +1,13 @@
 # E01 integrated experience readiness — Day-Two evidence (zCod, 2026-10-17)
 
+November1 full-schema renewal: f69 actual step145 FAILED after43 schema assertions
+passed because its new fixture attempted to reactivate the intentionally revoked
+Admin under that same JWT. Original reinstatement enforcement correctly refused.
+Positive cases now precede revocation; no reinstatement remains, all58 assertion
+strings/expected values and every original negative are unchanged. Candidate/
+parser/client bytes remain exactf69/code22bf. Renewed exact-head CI and actual
+full-schema execution remain required; no product guard or permission is changed.
+
 ### November 1 explicit source-decision review repair
 
 The original outcome/case tables below remain intact. Code22bf1f2be repairs actual

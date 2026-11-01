@@ -136,14 +136,10 @@ SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_stage(gen_random_uuid())$$),'42
 SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000004');
 SELECT is(pg_temp.e01_error($$SELECT public.inspect_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001',auth.uid(),'e0100500-0000-4000-8000-000000000001')$$),'40001','foreign owner cannot inspect another workspace receipt');
 RESET ROLE;
-UPDATE public.tenant_members SET status='suspended' WHERE tenant_id='e0100200-0000-4000-8000-000000000001' AND user_id='e0100100-0000-4000-8000-000000000002';
-SET LOCAL ROLE authenticated;
-SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000002');
-SELECT ok(pg_temp.e01_error($$SELECT public.inspect_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001',auth.uid(),'e0100500-0000-4000-8000-000000000003')$$) IN ('42501','40001'),'same-JWT revoked Admin loses receipt eligibility');
-RESET ROLE;
 -- Explicit source decisions extend the SAME reviewed selection, never authority.
 -- These direct fixture writes only arrange connection-sourced state in rollback.
-UPDATE public.tenant_members SET status='active' WHERE tenant_id='e0100200-0000-4000-8000-000000000001' AND user_id='e0100100-0000-4000-8000-000000000002';
+-- Positive cases precede revocation. A revoked JWT cannot reinstate its own seat,
+-- even through a privileged fixture UPDATE; keep that original guard intact.
 UPDATE public.tenants SET brand=jsonb_set(jsonb_set(brand,'{business_brief,offers}','"Connection before"'),
  '{business_brief,provenance}',coalesce(brand#>'{business_brief,provenance}','{}')||
  '{"offers":{"source":"connection_sourced","confidence":"observed"},"deliveryModel":{"source":"connection_sourced","confidence":"observed"}}')
@@ -185,6 +181,11 @@ SELECT is(pg_temp.e01_save('e0100400-0000-4000-8000-000000000010','e0100500-0000
 SELECT is(public.get_solo_business_context()->'brief'->>'address','Advisory','actual private address getter confirms selected value');
 RESET ROLE;
 SELECT is((SELECT setup_provenance#>>'{address,source}' FROM public.tenant_setup_private_context WHERE tenant_id='e0100200-0000-4000-8000-000000000001'),'owner_confirmed','private override retains original private provenance boundary');
+UPDATE public.tenant_members SET status='suspended' WHERE tenant_id='e0100200-0000-4000-8000-000000000001' AND user_id='e0100100-0000-4000-8000-000000000002';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.e01_as('e0100100-0000-4000-8000-000000000002');
+SELECT ok(pg_temp.e01_error($$SELECT public.inspect_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001',auth.uid(),'e0100500-0000-4000-8000-000000000003')$$) IN ('42501','40001'),'same-JWT revoked Admin loses receipt eligibility');
+RESET ROLE;
 SELECT is((SELECT count(*)::integer FROM e01_original_functions b JOIN pg_proc p USING(oid)
  WHERE b.definition IS DISTINCT FROM md5(pg_get_functiondef(p.oid)) OR b.proowner<>p.proowner
  OR b.proconfig IS DISTINCT FROM p.proconfig OR b.proacl IS DISTINCT FROM p.proacl),0,'full flow retains every original Setup function and ACL');

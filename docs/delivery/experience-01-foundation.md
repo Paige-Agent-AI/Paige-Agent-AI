@@ -1,5 +1,20 @@
 # Experience 01 foundation — ANT-50
 
+### Full-schema fixture ordering correction — November 1
+
+Exactf69 own full-schema step145 FAILED: hosted58 focused +65 modeled-native
+passed, then43 actual schema assertions passed before the fixture aborted at
+composedSQL960 with42501. The original consent/reinstatement trigger correctly
+neutralized the fixture's suspended→active UPDATE under the revoked Admin JWT;
+even SQL rolepostgres does not bypass that rule. This is not a product permission
+outage. Remove the attempted restoration and run the new positive cases before
+the original revocation case. All58 complete assertion strings/expected values
+are identical; the original same-JWT revocation refusal remains. No new actor,
+grant, source function, trigger, caller or production behavior changes. Native
+candidate/parser/client remain byte-exactf69/code22bf. Recomposition and source
+conservation pass; renewed actual58 full-schema execution and ALL final-head CI
+are mandatory. Old43-only failure and original P2 remain in their review history.
+
 ### Explicit source-decision review correction — November 1
 
 Automated review thread `PRRC4436325239` identified a real missing connection-

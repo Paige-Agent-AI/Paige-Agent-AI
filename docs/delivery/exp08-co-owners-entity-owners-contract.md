@@ -3071,3 +3071,30 @@ Exact published ce6826dfec2fa085ab746654a19de8dfd22ae42f database job12489834457
 Actual catalogue read preserves BOTH original revoke_platform_access(uuid) and revoke_platform_access(uuid,text DEFAULT NULL) writers (body MD5 0fb5624c04e4d170f3e0826b8b9cfa52 and f0686e66877bd31bc8c1d8b905cac643). A no-effect disposable parser control reproduced that a single UUID cast is STILL ambiguous; explicit UUID,NULL::text resolves the actual two-argument writer. Only the original R16 fixture call and deterministically generated artifact change. Authority, audit effects, both deployed writers and every32 assertion remain unchanged. Canonical --check and packaging --self-test PASS; replacement exact-head full-schema32 remains UNVERIFIED until hosted execution. No native migration/source/ACL/history rewrite, activation or customer proof.
 
 Local scoped work-profile source is preserved separately on its original local branch; it is NOT bundled into this release repair. Required exact-head review/CI/Preview/merge/deployment/readback and the entire original experience remain open. STILL CODING.
+
+
+### Isolated original work-profile native integration preparation — November1
+
+Original same-row4 source and proof follow-up is prepared separately from the
+mounted UI: original inert guarded3arg writer and scoped5arg refusal-only door,
+existing local fixture/runner and self-contained native28 canonical test. No
+profile migration/version/API activation or mounted UI change is in this proof
+increment. Existing source-only controls retain19cases per original/scoped
+door,7scope/seat,4UNKNOWN/retry controls, complete metadata/drift/role checks
+and15observed waits, including first writer COMMIT/ROLLBACK one final audit.
+These are bounded component results, not native28 or customer/Auth proof.
+
+One path and one run step are appended immediately after EXP08's original
+first-owner native step in the EXISTING Spine full-schema job. Removing only
+these6new lines restores the entire incoming workflow byte-for-byte. The
+canonical test expands the original inert SQL twice in one transaction; every
+synthetic Auth/table/function change rolls back. No copied permission helper,
+new DB runner, runtime, ledger or service impersonation. Packaging equality/
+negative controls PASS; actual native28 execution is UNVERIFIED.
+
+Source preparation remains LOCAL until original3190 actual release/readback;
+it does not compete to release its immutable230008 carrier. Normal exact-head
+review/CI/main-peer composition/native compatibility remain required before
+publication/merge; full original18+6/five journeys STILL CODING. Original UI
+084989532 and actual controlled-browser184/32+7+recovery evidence stay on their
+existing local branch, with native/currenttype/Auth/both-chat proof owed.

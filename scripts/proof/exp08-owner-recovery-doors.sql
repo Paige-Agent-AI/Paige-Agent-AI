@@ -4,17 +4,18 @@ BEGIN;
 SET LOCAL lock_timeout='2s';
 SET LOCAL search_path=pg_catalog;
 DO $original_recovery_doors$
-DECLARE s record; p pg_proc; signature regprocedure;
+DECLARE s record; p pg_proc; signature regprocedure; door_role name;
 BEGIN
   IF current_user<>'postgres' THEN RAISE EXCEPTION 'EXP08 recovery installer requires postgres';END IF;
   IF EXISTS(SELECT 1 FROM pg_proc f JOIN pg_namespace n ON n.oid=f.pronamespace
-    WHERE n.nspname='public' AND f.proname IN('platform_owner_recovery','platform_owner_recovery_receipt','get_owner_recovery_notice','get_my_owner_recovery_notice')
+    WHERE n.nspname='public' AND f.proname IN('platform_owner_recovery','platform_owner_recovery_receipt','get_owner_recovery_notice','get_my_owner_recovery_notice','get_owner_recovery_delivery_event')
       AND NOT (f.oid::regprocedure=ANY(array_remove(ARRAY[
         to_regprocedure('public.platform_owner_recovery(uuid,text,uuid,text,uuid)'),
         to_regprocedure('public.platform_owner_recovery(uuid,text,uuid,text)'),
         to_regprocedure('public.platform_owner_recovery_receipt(uuid,uuid)'),
         to_regprocedure('public.get_owner_recovery_notice(uuid,uuid)'),
-        to_regprocedure('public.get_my_owner_recovery_notice(uuid)')],NULL)))) THEN
+        to_regprocedure('public.get_my_owner_recovery_notice(uuid)'),
+        to_regprocedure('public.get_owner_recovery_delivery_event(uuid,uuid)')],NULL)))) THEN
     RAISE EXCEPTION 'EXP08 original recovery unsupported overload';
   END IF;
   FOR s IN SELECT * FROM (VALUES
@@ -24,7 +25,8 @@ BEGIN
     ('public._exp08_read_owner_recovery(uuid,uuid)','8930f6094db5dc87a55a693b06d60857','jsonb',ARRAY['_tenant','_request']),
     ('public._exp08_read_recovery_notice(uuid,uuid)','a16a4d793c2440aad2bd5b48cec2ee34','jsonb',ARRAY['_expected_tenant','_notice']),
     ('public._exp08_read_recovery_notice_for_recipient(uuid,uuid,uuid,boolean)','ddcdb478a4956181fc99dd8ebee80d0b','jsonb',ARRAY['_expected_tenant','_notice','_recipient','_require_profile']),
-    ('public._exp08_read_my_recovery_notice(uuid)','3502ca4bdad1ba029b73b2b6c0a370af','jsonb',ARRAY['_notice'])
+    ('public._exp08_read_my_recovery_notice(uuid)','3502ca4bdad1ba029b73b2b6c0a370af','jsonb',ARRAY['_notice']),
+    ('public._exp08_read_recovery_delivery_event(uuid,uuid)','ab105e060e570fc095c24f4602f1cca5','jsonb',ARRAY['_tenant','_audit'])
   ) v(signature,body_hash,result_type,argument_names) LOOP
     SELECT * INTO p FROM pg_proc WHERE oid=to_regprocedure(s.signature);
     IF NOT FOUND OR md5(p.prosrc)<>s.body_hash OR p.proowner<>'postgres'::regrole
@@ -74,13 +76,20 @@ $notice$),
 BEGIN
   RETURN public._exp08_read_my_recovery_notice(_notice);
 END;
-$personal$)
+$personal$),
+    ('get_owner_recovery_delivery_event','_tenant uuid,_audit uuid','uuid,uuid',
+      $delivery$
+BEGIN
+  RETURN public._exp08_read_recovery_delivery_event(_tenant,_audit);
+END;
+$delivery$)
   ) v(name,arguments,types,body) LOOP
+    door_role:=CASE WHEN s.name='get_owner_recovery_delivery_event' THEN 'service_role' ELSE 'authenticated' END;
     signature:=to_regprocedure('public.'||s.name||'('||s.types||')');
     IF signature IS NULL THEN
       EXECUTE format('CREATE FUNCTION public.%I(%s) RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path='''' AS %L',s.name,s.arguments,s.body);
       EXECUTE format('REVOKE ALL ON FUNCTION public.%I(%s) FROM PUBLIC,anon,authenticated,service_role',s.name,s.types);
-      EXECUTE format('GRANT EXECUTE ON FUNCTION public.%I(%s) TO authenticated',s.name,s.types);
+      EXECUTE format('GRANT EXECUTE ON FUNCTION public.%I(%s) TO %I',s.name,s.types,door_role);
     END IF;
       -- Validate effective privileges and complete ABI on FIRST creation too;
       -- direct ACL entries alone cannot exclude inherited role access.
@@ -94,10 +103,11 @@ $personal$)
         OR p.proargnames IS DISTINCT FROM ARRAY(SELECT split_part(btrim(a),' ',1) FROM unnest(string_to_array(s.arguments,',')) a)
         OR p.proallargtypes IS NOT NULL OR p.proargmodes IS NOT NULL
         OR p.pronargdefaults<>0 OR p.proargdefaults IS NOT NULL OR p.provariadic<>0 OR p.procost<>100 OR p.prorows<>0
-        OR NOT has_function_privilege('authenticated',p.oid,'EXECUTE')
-        OR has_function_privilege('anon',p.oid,'EXECUTE') OR has_function_privilege('service_role',p.oid,'EXECUTE')
+        OR NOT has_function_privilege(door_role,p.oid,'EXECUTE')
+        OR EXISTS(SELECT 1 FROM pg_roles r WHERE r.rolname IN('anon','authenticated','service_role')
+          AND r.rolname<>door_role AND has_function_privilege(r.oid,p.oid,'EXECUTE'))
         OR EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
-          WHERE a.grantee NOT IN(p.proowner,'authenticated'::regrole) OR a.privilege_type<>'EXECUTE'
+          WHERE a.grantee NOT IN(p.proowner,door_role::regrole) OR a.privilege_type<>'EXECUTE'
             OR (a.is_grantable AND a.grantee<>p.proowner)) THEN
         RAISE EXCEPTION 'EXP08 original recovery public door drift: %',s.name;
       END IF;

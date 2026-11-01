@@ -6,6 +6,7 @@ import {spawn,spawnSync} from 'node:child_process';
 import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 import {verifyOwnerRecoveryBundle} from './exp08-owner-recovery-bundle-proof.mjs';
 import {verifyRecoveryNoticeRetirement} from './exp08-owner-recovery-notice-retirement.mjs';
+import {verifyRecoveryDeliveryEvent} from './exp08-owner-recovery-delivery-proof.mjs';
 assert.equal(process.env.EXP08_DISPOSABLE,'1');
 assert.ok(['127.0.0.1','localhost','::1'].includes(process.env.PGHOST));
 assert.match(process.env.PGPORT??'',/^\d+$/);
@@ -834,6 +835,7 @@ try{
  assert.equal(scalar(`SELECT count(*) FROM public.tenant_members WHERE user_id='${personalFormer}'`),'0');
  results.push({case:'former holder with no seat or selected workspace can reopen only the native personal event without profile/membership mutation',passed:true});
  db.actor=actor;
+ results.push(...await verifyRecoveryDeliveryEvent(db,{reset:revokeFixture,tenant,actor,holder,remaining,reason}));
  if(process.argv.includes('--baseline-notice-retirement')){
   db.run(historicalFunction('781ba0d2a','_exp08_read_recovery_notice'));
  }

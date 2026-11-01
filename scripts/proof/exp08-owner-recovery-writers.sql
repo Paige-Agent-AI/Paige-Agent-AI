@@ -467,6 +467,80 @@ $function$;
 REVOKE ALL ON FUNCTION public._exp08_read_my_recovery_notice(uuid)
   FROM PUBLIC,anon,authenticated,service_role;
 
+-- Original Communications consumer only. The public service wrapper admits two
+-- native IDs, never an actor, address, reason, recipient list or recovery flag.
+-- This is a read of a COMMITTED event, not another recovery admission or sender.
+CREATE OR REPLACE FUNCTION public._exp08_read_recovery_delivery_event(_tenant uuid,_audit uuid)
+RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $function$
+DECLARE
+  a public.paige_audit_log%ROWTYPE; current_event public.paige_audit_log%ROWTYPE;
+  binding jsonb; recipients jsonb := '[]'; recipient_ids uuid[]; notice_ids uuid[];
+  eligible boolean;
+BEGIN
+  PERFORM public._exp08_require_recovery_audit();
+  IF _tenant IS NULL OR _audit IS NULL THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_DELIVERY_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  LOCK TABLE public.tenants IN ROW EXCLUSIVE MODE;
+  -- Snapshot only: never lock the audit ahead of native recipient/member rows.
+  SELECT * INTO a FROM public.paige_audit_log WHERE id=_audit AND tenant_id=_tenant;
+  IF NOT FOUND OR a.actor_role IS DISTINCT FROM 'super_admin'
+    OR a.action NOT IN ('tenant:owner_recovery.grant_owner','tenant:owner_recovery.revoke_owner','tenant:owner_recovery.set_account_holder')
+    OR a.payload->>'request_id' IS DISTINCT FROM _audit::text
+    OR a.payload->>'outcome' IS DISTINCT FROM 'effect_verified'
+    OR coalesce(a.payload->>'notice_status','') NOT IN ('in_app_recorded','no_recipients')
+    OR jsonb_typeof(a.payload->'notices') IS DISTINCT FROM 'array' THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_DELIVERY_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  IF EXISTS(SELECT 1 FROM jsonb_array_elements(a.payload->'notices') x
+    WHERE coalesce(x->>'user_id','') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      OR coalesce(x->>'notification_id','') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_DELIVERY_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  SELECT array_agg((x->>'user_id')::uuid ORDER BY (x->>'user_id')::uuid),
+    array_agg((x->>'notification_id')::uuid ORDER BY (x->>'notification_id')::uuid)
+    INTO recipient_ids,notice_ids FROM jsonb_array_elements(a.payload->'notices') x;
+  IF (SELECT count(DISTINCT u) FROM unnest(recipient_ids) u)<>coalesce(cardinality(recipient_ids),0)
+    OR (SELECT count(DISTINCT n) FROM unnest(notice_ids) n)<>coalesce(cardinality(notice_ids),0)
+    OR ((a.payload->>'notice_status'='no_recipients') IS DISTINCT FROM (coalesce(cardinality(recipient_ids),0)=0)) THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_DELIVERY_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  -- Lock the WHOLE recorded audience before any tenant/notice/audit row, in the
+  -- same order as recovery. No per-recipient subtransaction may release these.
+  PERFORM 1 FROM auth.users WHERE id=ANY(recipient_ids) ORDER BY id FOR SHARE;
+  PERFORM 1 FROM public.tenant_members WHERE tenant_id=_tenant AND user_id=ANY(recipient_ids)
+    ORDER BY user_id FOR SHARE;
+  PERFORM 1 FROM public.tenants WHERE id=_tenant AND archived_at IS NULL FOR SHARE;
+  IF NOT FOUND OR public._solo_shell_tenant(_tenant) IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_DELIVERY_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  PERFORM 1 FROM public.notifications WHERE id=ANY(notice_ids) ORDER BY id FOR SHARE;
+  SELECT * INTO current_event FROM public.paige_audit_log WHERE id=_audit FOR SHARE;
+  IF NOT FOUND OR to_jsonb(current_event) IS DISTINCT FROM to_jsonb(a) THEN
+    RAISE EXCEPTION 'OWNER_RECOVERY_DELIVERY_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
+  FOR binding IN SELECT x FROM jsonb_array_elements(a.payload->'notices') x ORDER BY x->>'user_id' LOOP
+    eligible:=true;
+    BEGIN
+      PERFORM public._exp08_read_recovery_notice_for_recipient(
+        _tenant,(binding->>'notification_id')::uuid,(binding->>'user_id')::uuid,false);
+    EXCEPTION WHEN SQLSTATE '42501' THEN
+      IF SQLERRM<>'OWNER_RECOVERY_NOTICE_UNAVAILABLE' THEN RAISE;END IF;
+      eligible:=false;
+    END;
+    -- Ineligible recorded identities remain available ONLY for original sender
+    -- receipt reconciliation. They confer no dispatch or current business access.
+    recipients:=recipients||jsonb_build_array(jsonb_build_object(
+      'user_id',binding->>'user_id','notification_id',binding->>'notification_id','eligible',eligible));
+  END LOOP;
+  RETURN jsonb_build_object('event','owner_recovery','version',1,'audit_id',a.id,
+    'tenant_id',a.tenant_id,'action',a.action,'recorded_at',a.created_at,'recipients',recipients);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._exp08_read_recovery_delivery_event(uuid,uuid)
+  FROM PUBLIC,anon,authenticated,service_role;
+
 CREATE OR REPLACE FUNCTION public._exp08_apply_owner_recovery(
   _tenant uuid,_act text,_user uuid,_reason text,_request uuid)
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''

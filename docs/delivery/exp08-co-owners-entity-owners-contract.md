@@ -2670,3 +2670,68 @@ signatures, including the existing request-required compatibility overload. No
 managed migration, production endpoint, service event reader, email sender or
 customer-facing mount is activated by these inert source changes. Full Team Hub
 integration and all original matrix outcomes remain **STILL CODING**.
+
+### November 1 — original Communications committed-event reader
+
+Receiving requirement: original Communications handoff ANT-147/e5d474e8. Its
+existing transactional sender records idempotency keys but does not deduplicate
+on them. EXP03 retains the existing receiver/sender atomic claim, original
+email_send_log reconciliation and truthful unknown/accepted outcomes; this reader
+neither sends nor repairs that separate dependency. No email activation is implied.
+
+Prepared original RPC `get_owner_recovery_delivery_event(_tenant uuid,_audit uuid)`
+returns only `{event:'owner_recovery',version:1,audit_id,tenant_id,action,
+recorded_at,recipients:[{user_id,notification_id,eligible}]}`. It admits exactly
+service_role EXECUTE (postgres owner); anon/authenticated have no EXECUTE, and
+all three have no direct private-helper EXECUTE. No caller actor, address,
+recipient list, reason, template, destination, override or new recovery request.
+No written reason, business name, target identity, transaction/backend or audit
+payload reaches the receiver. The receiver uses original server-side current
+identity/address resolution and the canonical Team/personal-notice destination;
+this source does not invent a URL or grant navigation/workspace authority.
+
+The private `_exp08_read_recovery_delivery_event(uuid,uuid)` reads only an exact
+committed, effect-verified native recovery event with its original recorded
+recipient/notice bindings. Its body MD5 is ab105e060e570fc095c24f4602f1cca5.
+The original retirement table gate precedes sorted whole-audience Auth and member
+locks, then live canonical tenant, notice and audit locks; the complete native
+event is rechecked after waits. The existing common recipient predicate handles
+current eligibility with no recipient impersonation or active-workspace selection.
+Recorded ineligible IDs remain solely for original receipt reconciliation;
+`eligible:false` is never dispatch permission. A working post-recovery holder or
+later operator-role loss does not rerun/refuse the already-committed effect.
+The service lookup is not a durable dispatch authorization: EXP03 must retain its
+original delivery-time authorization, suppression, provider gates and no-blind-
+retry/unknown reconciliation. Provider acceptance remains distinct from delivery.
+
+Failing-first absent RPC: exp08-service-event-missing-door-baseline.log SHA256
+655c5a9e2f65d53fd99a9cb29d2013a15648a8917c82163c68e528e8b092ad02.
+First implemented run failed the TEST'S expected alphabetic JSON key order, raw
+exp08-service-event-current.log SHA256
+8e0b83105fff4386acd304230d93ec3aa942f3683f4f83fe0881ec7dbde42c83.
+Sorting that expected closed whitelist corrected only the fixture; no output
+field was waived or product code changed for that failure.
+Final author local211 PASS/0 FAIL (all earlier194 retained), raw
+exp08-service-event-key-order-corrected.log SHA256
+152350bd8bf394f64f0a9731edb888fb400a3cc43767f67d3c5aa2158aad8fa9.
+Controls include exact closed output, zero writes/replay, wrong/null IDs, client
+and private-role refusals, ban/delete/role/suspension/edited-binding negatives,
+archived tenant refusal and actual committed/rolled-back Auth lock waits.
+Atomic fresh-clone install/replay and late prerequisite rollback remain covered;
+static preflight now admits thirteen helpers and six role-specific public doors.
+These remain minimal-schema PG16 local controls, not actual production-schema,
+authenticated customer, hosted CI or production/release proof. Source-only review
+found no material issue; exact immutable renewal remains separate.
+
+Production catalogue reconciliation also returned the original unstarted
+Planning compatibility window to EXP05 in ANT-11/510f194f after the explicit E04
+handback. No overlap with this recovery source. Existing guard a75a322d43e4cde08f5142d1eabf6ddb,
+stage a933da55e5f23d33ec62f90f9ec03c73, post bd0e68f3c3e88976786d716dc4a870a6,
+and history list425c6d84055788cc651001b8fe13199d were read from actual production;
+original ACL/signatures remain. This clears source custody only, not Planning
+implementation, native compatibility or both-chat acceptance. No E08 lease held.
+
+A fresh EXP08-only Supabase preview creation confirmation expired without
+creating a branch. No peer branch, production mutation, cost bypass or native
+activation was used. Full-schema/retirement/UI/email/Setup and all original
+full-assignment coding/integration and release gates remain **STILL CODING**.

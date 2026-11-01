@@ -1,5 +1,20 @@
 # Paige Agent AI — Working Doctrine
 
+## MANDATORY OWNER DELIVERY RULE — November 1, 2026
+
+This rule binds the Coordinator and every current and future authorized agent. Finish ONE complete original customer/business outcome at a time. Preserve the full original assignment; sequence it rather than narrowing it.
+
+Every next task must directly finish that primary outcome, repair a genuine defect affecting it, or deliver a necessary prerequisite for a named original receiving owner/outcome. Small PRs are increments, not completed outcomes. Do not substitute policy cleanup, extra reporting, speculative improvements, unrelated features or ever-growing proof work for delivering the working result. No Coordinator or agent may invent work, tests, approval requirements or release gates beyond the authorized assignment and applicable genuine engineering/safety requirements.
+
+Complete the necessary implementation and integration, proportionate engineering checks and review, normal safe merge/deployment, then LIVE verification of the useful original result, receipt and durable reopen/recovery. Missing browser, prototype, screenshots, preview login or owner hands-on testing alone must not block an otherwise safe prelaunch release. Preserve actual security, privacy, tenant/authorization, required engineering checks, migration safety and consequential-effect boundaries; never fabricate PASS or acceptance.
+
+If externally blocked, first finish all meaningful work on the SAME outcome. Only when none remains may ONE bounded secondary original outcome proceed; identify the exact external blocker, accountable owner/pending request and reason in the existing original checkpoint, then return when unblocked. Do not duplicate dependency pings. At existing meaningful checkpoints keep the original outcome, remaining work and real blocker current; this creates no additional reporting ceremony, timer, checklist or per-PR owner review.
+
+Owner-facing reports must lead with the named outcome, what actually works, exactly what remains, the real blocker and accountable owner, and the next step to completion. Describe closeness from that remaining work; do not substitute PR counts, test totals, activity logs or invented completion percentages.
+
+The Coordinator must follow this rule too: do not scatter or redirect agents, add requirements, or treat PR/test totals as delivery. Agent messages or redirection require the owner's explicit instruction. Only an explicit owner direction changes the authorized outcome or this rule; genuine urgent correctness/security repairs remain permitted. No new agents, runtime, ledger, provider activation or unrelated authority is granted. Existing assignments and holds remain intact.
+
+
 Standing rules for how work gets done in this repo. These persist across sessions.
 
 ## 00. UI AUTHORITY — THE FIRST RULE. IT OVERRIDES EVERY SECTION BELOW IT.

@@ -6,10 +6,11 @@ PAIGE_UI_DESIGN: PASS: Existing project skill and routed protected-seam/layout/a
 MATERIAL_FLOW_CHANGE: YES: Existing Add dialog supports multiple permitted files, per-file progress/review and reopening original pending records. Source disclosure is separate from editable review and approved domain facts.
 FLOW_PROTOTYPE: UNVERIFIED: Prior actual component prototypes exercised original Add/Bulk/Pending and source panel on synthetic ports; current source composition requires renewed rendered/state/finish evidence before release. No routine owner design question is pending.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Eligible existing and future SOLO operators upload permitted single or bulk PDF/DOCX/text, inspect original source/coverage, edit the Knowledge review and reopen unfinished records. No upload implies contractual acceptance, business-fact/Memory confirmation or Work authorization.
-AUTOMATED_EVIDENCE: PASS: Current11 focused suites306 tests PASS, including224 original client controls and actual component cases. Ports are explicitly synthetic, not native authentication or deployed persistence.
-STATIC_EVIDENCE: UNVERIFIED: Ten UI/test paths481add36del restored from original owned781862fa6 onto reviewed client1b85fc850 and worker6b. Final source review, scoped types/lint and Impeccable finish remain owed.
+VISUAL_DIRECTION: PASS: Preserve the existing SOLO Knowledge Library and Add dialog, established tokens, form geometry and navigation. Source observers add no visible controls or visual redesign; current complete rendered finish remains separate proof.
+AUTOMATED_EVIDENCE: PASS: Exact source6a8be79d06913f04511dcc142a2204fd7ffc575f twelve focused suites343 tests PASS, including original client and actual component controls. Ports are explicitly synthetic, not native authentication or deployed persistence.
+STATIC_EVIDENCE: PASS: Exact6a8 NON-AUTHOR bounded source review6553287238 clear after repaired pending-resume finding; lint/diff and pinned Impeccable detector[] pass. Scoped strict5-to-5 inherited diagnostic parity is not strict/global typecheck PASS. Current rendered finish remains owed.
 RENDERED_EVIDENCE: UNVERIFIED: Renew current actual-component and complete SOLO shell four required sizes/both themes/PAIGE open and closed/cohort proof; previous dated partial fixtures do not certify this head.
-BEHAVIORAL_EVIDENCE: PARTIAL: Automated component cases cover separate per-file paths, pending reopening, source disclosure and focus return. Real browser interruption/selection/cancel/late response/reload and later-session source/index/fact/plan/Work are still required.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: Automated component cases cover separate per-file paths, pending reopening, source disclosure and focus return. Current real browser interruption/selection/cancel/late response/reload and later-session source/index/fact/plan/Work proof remains required under the existing usage-review hold.
 AUTHENTICATED_RUNTIME: UNVERIFIED: No customer agreement, credentials, QA account, impersonation, provider effect or authenticated source mutation used. Existing designated ordinary customer proof remains owed.
 KEYBOARD_FOCUS: UNVERIFIED: Current full keyboard path and dialog/pagination focus renewal owed; original tests retain boundary coverage.
 ZOOM_REFLOW: UNVERIFIED: Current browser zoom/reflow and real scroll-owner/clipping/reachability proof owed.
@@ -17,14 +18,22 @@ REDUCED_MOTION: UNVERIFIED: Existing motion preferences retained; current browse
 STATE_COVERAGE: UNVERIFIED: Current complete mounted validation/loading/partial/refused/unknown/cancel/recovery/error/workspace departure and existing/new account states remain acceptance requirements.
 TRUTHFUL_STATE_LABELS: PASS: Stored source, parsed text, reviewed Knowledge, publication and unknown effects are separate. Source remains untrusted data. Approved facts, Memory, Mission and actual Work are not advertised as delivered here.
 SOLO_UI: YES: Preserve original all-eligible-tenant role/current-context gates, effective delegated authority and known-good comparison; no founder-specific product code.
-UNVERIFIED: Worker3161 remains unmerged; client source-only increment remains unpublished. Current UI prototype/finish/review/exact CI/managed Preview/release/source readback/authenticated reopen and the full joined fact/Memory/plan/Work integrations remain owed.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: Current complete SOLO shell geometry and state drive held by the existing automatic browser usage review; historical component fixture is not current proof.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Current complete shell and PAIGE coexistence, clipping, reachability and focus evidence held by the existing browser usage review.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: Current full-shell geometry/themes/state drive held; historical partial fixture does not certify this source.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: Current full-shell PAIGE-open geometry, scroll owner and keyboard evidence held by the existing browser usage review.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Current complete tablet shell and source-review reachability drive held; no current rendered acceptance claim.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Current tablet shell with PAIGE open, reflow and clipping evidence held by the existing browser usage review.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Current narrow complete shell, themes, keyboard and state evidence held; prior component geometry is historical only.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Current narrow shell with PAIGE open, zoom/reflow/focus/recovery evidence held by the existing browser usage review.
+UNVERIFIED: Worker3161 and client3174 production source releases are verified separately; this UI remains DRAFT3177. Current prototype/finish/exact CI/release/authenticated reopen and the full joined fact/Memory/plan/actual Work integrations remain owed. FLOW_PROTOTYPE stays UNVERIFIED and its required gate remains failed until actual proof; no owner waiver or browser workaround is inferred.
 
-INTERNAL_BUILD_IDENTITY: local-composition; deployment=LOCAL_ONLY; environment=development; migrations=prerequisite3154/130013_APPLIED; edge=PROOF_OWED(worker3161_unmerged); evidence=docs/evidence/exp13-knowledge-review-client.md
+INTERNAL_BUILD_IDENTITY: source=6a8be79d06913f04511dcc142a2204fd7ffc575f; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp13-knowledge-bulk-review.md
 RELEASE_CHANNEL: development: local consumer composition only, not customer availability.
 RELEASE_CLASSIFICATION: internal-only: incomplete joined customer workflow.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release name, announcement or founder test request.
 RELEASE_NOTE_REQUIRED: no: local preparation; eventual customer release governed separately.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED:306 modeled tests do not prove deployed useful business outcome or owner acceptance.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED:343 modeled tests and bounded source review do not prove current rendered UI, deployed useful business outcome, source retrieval, original host reference persistence or owner acceptance.
 RELEASE_RECOVERY: position=forward-fix preserving original source/work identities and inspect-before-repeat; reference=docs/evidence/exp13-knowledge-review-client.md
 
 The separate UI increment owns only five original Knowledge components and five
@@ -237,3 +246,18 @@ the existing automatic approval-review usage hold. No alternate browser path.
 This UI source is NOT released or customer-ready. Full single/BULK agreements →
 reviewed facts/separate Memory → saved Mission → actual Work/CRM/receipt/reopen
 remains NOT READY; original E01/E02/E05/E08 integration boundaries remain.
+
+## Exact hosted UI evidence refusal — retained release hold
+
+Original3177/6a8 hosted UI evidence job124747347739/run41272285814 FAILED.
+Unmodified local validator reproduces its thirteen record failures: missing
+visual direction/eight viewport fields, stale identity/migration notation and
+unsupported behavioral label, plus the genuine unverified prototype requirement.
+Complete the current metadata with actual source identity, honest UNVERIFIED
+viewport/behavioral states and N.A. SQL/Edge delta. The SAME unchanged validator
+now still FAILS only FLOW_PROTOTYPE. That is the actual current proof hold, not
+a record-format defect to suppress: no PASS, WAIVED or owner waiver is invented.
+The existing browser usage-review hold cannot be bypassed through another
+surface or a changed CI marker. Source-only draft remains blocked from release.
+No UI code changed in this evidence repair; original343 source tests and bounded
+review remain supporting proof only, not fresh full-head runtime acceptance.

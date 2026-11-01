@@ -2828,3 +2828,13 @@ no material finding; it performed no execution. ESLint/full-app typecheck proces
 is still pending; no PASS inferred. The future host's actual signed-in resolver,
 permanently invalidated lifetime, mounted accessible UI and authenticated server
 flow remain required. No complete notice journey or customer readiness claimed.
+
+Client static-result follow-up: focused ESLint on the two new files completed
+exit0. The full-app TypeScript command completed exit1 with six diagnostics in
+unchanged outside-owned files. Exact normalized diagnostic multiplicities were
+compared with the existing unchanged tsc-baseline.txt: all six are within its
+original allowances, zero new diagnostics and zero diagnostics in the new client
+or tests. Raw TSC log SHA256
+b7acea54d36c767a85c0f5ff08c3f1ff2be0787daf8c12537f39aed43c24bd6d.
+This is not a claim of a clean full-app typecheck; the existing required CI
+ratchet and all other exact-head gates still apply, with no baseline edit.

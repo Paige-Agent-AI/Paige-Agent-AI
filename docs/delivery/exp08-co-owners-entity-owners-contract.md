@@ -3194,3 +3194,34 @@ full-schema PASS. Canonical --write/--check/--self-test PASS only packaging.
 No workflow/current3190 head, applied source/native slot, managed fixture/account
 or authorization changed. Native26 actual CI execution and full released
 caller/Auth/cohort proof remain UNVERIFIED. Full original EXP08 STILL CODING.
+
+
+### Original work-profile UNKNOWN/reopen repair — November1
+
+Finite original b83d2335/8aa67d7e source window is preserved in local
+8836a0c89bc4177de4ff525d036934d362d0aee0. Source audit found that an unconfirmed
+editor could close/reopen against cached roster values; new mounted test
+reproduced it (expected2reads,actual1). Existing scoped loader now rereads on
+that close, retaining unknown draft while open and preventing stale reentry.
+The incumbent Modal busy rule is used while saving, not a new confirmation.
+
+Original guarded setter reconciles identical normalized fields only AFTER
+identity/current scope/live seat/owner authority under its existing locks.
+It returns the existing original receipt and makes no additional UPDATE/audit;
+different permitted fields use the byte-conserved original effect/audit code.
+Actual original no-op retry counterexample initially failed, with3dependent
+counts. After repair4recovery controls PASS; original19-per-door/7scope,
+all metadata/drift/role controls and15actual waits PASS. New committed-first
+and rolled-back-first sessions each leave1actual original audit after a
+second waiting scoped request. No identity/owner shortcut for same-value reads.
+
+Current11selected UI suites184PASS and focused3/60PASS overlap, not additive.
+New controlled real-SoloApp recovery-only run exit0/1state proves lost response
+after fictional committed state, Close/reread/reopen actual fields/unchanged
+Save disabled/1attempt. Original32frame report and previous failure evidence
+are retained. A Windows cp1252 preparation failure prevented the first UI edit;
+its stale1FAIL/58PASS was retained, then correct UTF8 edit verified, no waiver.
+Native28 template/artifact is canonical with2new duplicate checks; actual
+full-schema execution and broad type/Auth/production/both-chat proof remain
+UNVERIFIED. Current3190 release head/gates unchanged; no migration/native apply.
+Full original18+6/five journeys STILL CODING.

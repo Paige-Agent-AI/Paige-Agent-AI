@@ -13,7 +13,7 @@ MUST_PRESERVE: Original three-argument Team RPC/audit, contact editor and its se
 ACCEPTANCE_CRITERIA: Holder/self can edit/save/reopen native values; Admin/co-owner can inspect another owner's read-only fields and Close; native refusal/unknown preserves draft and cannot claim success; tenant/actor/unmount invalidates stale completion
 MOTION_PURPOSE: NONE: retain existing reduced-motion-aware dialog transition; no new animation
 PROTECTED_SEAMS: Affected: scoped roster presentation, owner edit authority, original work-profile readback, dialog focus/accessibility and responsive geometry. Unaffected: Auth/account choice writers, entitlement/paywall/provisioning/Billing, shared approval/Trust/Harness/Spine runtime, Rail/Memory writers, Chat transcripts/stream/popout/history, Live, Vault/credentials, providers/sends, durable scheduler and all domain writers. Server authority remains independent of presentation.
-AUTOMATED_EVIDENCE: PASS: current original11 neighboring Team/contact/departure/modal and profile suites181/181; prior180/180, failing-first and fixture/mock-reset failures retained below, not added as independent populations
+AUTOMATED_EVIDENCE: PASS: current11 selected Team/contact/lifecycle/profile suites184/184 and overlapping3 focused suites60/60; older181/180 populations and failing-first evidence retained below, never summed
 STATIC_EVIDENCE: UNVERIFIED: current four changed UI/contract/test/transport files ESLint exit0; title-authority guard and SOLO parity guard plus parity mutation self-test PASS; whole-app compiler previously resource-stopped, no current clean type result
 RENDERED_EVIDENCE: PASS: current real SoloApp controlled-browser32 captures, two fictional contexts, both themes, four viewports with PAIGE open/closed; geometry/focus only, no authenticated customer claim
 BEHAVIORAL_EVIDENCE: PASS: current11 suites181 cases and original controlled-browser7 states; synthetic transport only, native/authenticated persistence and context recovery remain owed
@@ -33,7 +33,7 @@ SOLO_1024X768_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus i
 SOLO_900X1000_PAIGE_CLOSED: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
 SOLO_900X1000_PAIGE_OPEN: PASS: real SoloApp controlled-browser geometry/focus in both fictional contexts and both themes; no customer proof
 UNVERIFIED: Full-schema/current native carrier, real authenticated role/cohort/save/reload/refusal, actual AT/native zoom and production release remain owed; isolated tests never close them
-INTERNAL_BUILD_IDENTITY: 3e8bdd1d86c1797bd276e19c0aefea362cfb0a3f; original scoped work-profile363190d10 source preserved plus native70116a merge; controlled-browser driver selector/diagnostics verified locally; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original co-owner contract
+INTERNAL_BUILD_IDENTITY: 8836a0c89bc4177de4ff525d036934d362d0aee0; original scoped profile and unconfirmed-save recovery source; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original co-owner contract
 RELEASE_CHANNEL: development: same original outcome4, not deployed
 RELEASE_CLASSIFICATION: internal-only: integration increment of the full EXP08 assignment
 CUSTOMER_RELEASE_IDENTITY: none: full Team Hub integration and one owner review remain unfinished
@@ -149,3 +149,38 @@ The broader pre-existing8/9px typography and10/12px radius advisories are not
 concealed by an unqualified visual/contrast PASS and are not silently redesigned.
 Local source reviewer is AUTHOR-REVIEW / LOWER ASSURANCE; native/AT/contrast
 measurements and full release assurance remain distinct.
+
+
+## Unconfirmed original save closes through a fresh roster read
+
+Causal mounted test first FAILED: close only cleared selection, leaving one
+roster read and stale values available for another edit. The original parent
+now withdraws rows through its existing scoped loader after an unconfirmed
+dialog closes; only its actual fresh roster can reopen the editor. While the
+dialog is open, the unknown draft remains; during a pending call, existing
+Modal busy/Close/Escape semantics preserve the request until it settles.
+The original setter, after current authority/locks/owner checks, returns its
+original native receipt for identical normalized current values without a
+second UPDATE/audit. Different permitted details still use original effects.
+No parallel operation/result record, request key, permission or ledger exists.
+
+Selected disposable SQL initially FAILED the duplicate-audit control and its
+three dependent counts; after repair,4recovery controls PASS alongside all
+original19-per-door,7scope,metadata/drift/role controls and15observed waits.
+The2new waits release an actual first original writer by COMMIT or ROLLBACK;
+the second scoped writer waits, then each final result has exactly1audit.
+This is component evidence, not full-schema/Auth/customer proof.
+
+Actual current11selected UI suites184PASS and focused3/60PASS overlap. New
+real-SoloApp --recovery-only drive terminal exit0 verifies committed-but-lost
+response, retained draft/no false success, Close, actual original roster reread,
+reopened committed field, disabled unchanged Save and ONE total write attempt.
+[Recovery report](assets/exp08-owner-work-profile/recovery-report.json) SHA256
+`010bd4fbf3d7de6442e6af5096f7836e618dacf312d7e27be9e6724a1cc95633`; actual reopened screenshot beside it was inspected. Original
+32geometry/7state report and captures remain unchanged and separately scoped.
+The recovery transport is fictional; off-machine1 was BLOCKED, not a send.
+
+Prepared full-schema proof now plans28, adding duplicate-receipt/audit controls
+to the original26; canonical generation/negative controls PASS. Actual native28
+execution, current broad compiler, both-chat consumer and authenticated cohorts
+remain UNVERIFIED. Original source-only follow-up is not published or released.

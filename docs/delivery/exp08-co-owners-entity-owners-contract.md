@@ -3096,5 +3096,5 @@ Source preparation remains LOCAL until original3190 actual release/readback;
 it does not compete to release its immutable230008 carrier. Normal exact-head
 review/CI/main-peer composition/native compatibility remain required before
 publication/merge; full original18+6/five journeys STILL CODING. Original UI
-084989532 and actual controlled-browser184/32+7+recovery evidence stay on their
+084989532 and actual DOM184/controlled-browser32+7+recovery evidence stay on their
 existing local branch, with native/currenttype/Auth/both-chat proof owed.

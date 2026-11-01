@@ -145,3 +145,30 @@ standard-font warnings retained. New exact CI/review/managed source still owed.
 All57 current open-PR file manifests plus3115page2 had no peer binary-adapter
 source overlap. Separate shared paige-browser render check FAILED on eab2;
 exact cause remains unverified until actual failure evidence, no UI bypass.
+
+Exact ed828 required verify41256374310/124700500926 reached its final checks:
+parser/Deno ratchet and the separate shared browser-capture check PASS, but
+existing client-memory authorization smoke failed seven Metric/Evidence cases.
+Unmodified local smoke reproduced1236PASS/7FAIL; worker changes none of its
+Metric/Spine/Chat sources. UTC November1 has no completed days in this_month,
+so the original reader correctly returns needs_input before any RPC. This is
+a date-dependent authorization fixture defect, not a production period repair.
+
+Actual original E02 receiving ACK/finite custody handback ANT138/219ce13a
+authorizes only two smoke fixture periods to last_30_days and explicit boundary
+controls in the same original smoke file. Eleven new per-call-clock assertions
+prove October31/November2 this_month bounds, November1 this_month needs_input
+with zero RPCs/no monetary or evidence projection, and November1 last_30_days
+through the same original issuer/resolver. No global clock, production reader,
+issuer, Spine, Chat, permissions, provider, or existing assertion is changed.
+
+With new controls but original two periods, FULL smoke1247PASS/7FAIL (before
+log SHA256ab716353adc6fc31703d888fed3057238343495a598407b0a8ccb1dfd6e30ee3).
+Changing only those two periods yields FULL1254PASS/0FAIL (after log SHA256
+81ad4b9d916028aa8443b1fe0782a4fe536b18dba251e50ec2725240b4378629).
+Removing the37-line block and reversing only those periods recovers the entire
+original smoke exactly; all original assertions and authorization negatives
+remain. First conservation probe used the host's wrong default text encoding
+and failed before comparison; explicit UTF8 comparison then passes. New exact
+head source review/required CI/managed packaging/release remain mandatory;
+the ed828 failed run remains FAIL and full customer outcome NOT READY.

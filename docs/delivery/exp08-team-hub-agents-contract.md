@@ -2879,3 +2879,75 @@ fresh run is separate. No assertions weakened. Current managed preview, final
 review/exact-head CI, release/source readback, broader retirement/full-schema and
 actual authenticated result/receipt/reopen/recovery remain owed. Original full
 18+6/five journeys/full EXP08 **STILL CODING**, no owner review or acceptance.
+
+### October31 — original Hub currentness source released; full row4 remains open
+
+The preceding packaged-carrier pending states are dated engineering checkpoints.
+Actual [PR3166 release receipt6541891075](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3166#issuecomment-6541891075)
+now controls this increment: reviewed `5c3962ac14325d86de0d81ae8e16b16a40d5a789`,
+distinct non-author cumulative **SOURCE-ONLY** review6541511787/no reviewer execution,
+all13 exact-head checks and both web statuses SUCCESS, zero review threads. Normal
+merge `ce7ca87993c6dae0756ae1bb00a6eb17c9e1aee7`/tree
+`bee541acb79ed3d91404be014bf4fd5174b5c8b5` exactly equals the reviewed head; every
+leaf of that inspected main/reviewed-head union and its history is conserved.
+Pending unpublished peer branches retain their separate source custody.
+
+Fresh COMPLETE original parent passed/exit0:191 core record entries (not191 distinct
+tests), then normal original60 departure controls plus102 Hub integration controls,
+61 outer entries. Both successful fixture disposal receipts are present. Raw log
+SHA256 `973ae6db30cff0fe55a2f0637c064a378ee1513c7092ffa64158a7beab9f79db`.
+Original Hub401 and departure41 UI tests passed. Earlier startup/interrupted runs
+remain FAIL; the one interrupted owned database was explicitly verified postgres-owned
+with zero clients before cleanup. Final owned catalogue is postgres-only/zero other
+clients, and that owned test server stopped normally. No assertion was waived.
+
+Normal production migration41190027311/deploy124504828306 succeeded. Native150008
+recorded ONCE/18 statements; ledger statements MD5
+`04c8c7e273164556223e3d31f74a9449`. Independent read-only production catalogue matches
+ALL10 expected candidate **prosrc** hashes and original owner/ACL/flags/volatility/
+search paths/arguments/defaults exactly against the verified managed no-data Preview.
+`db-live` independently resolves ce7ca8799. No history rewrite, grant normalization,
+table/data/Auth/profile/Setup/Work/domain-writer or provider change.
+
+Vercel `dpl_9p6sDVrZSWLWcELePTDr6RRpFPWh` is READY/production/exactce7ca8799.
+Both official origins at2026-10-31T09:49:26.538Z serve version/root/bootstrap/app/
+SoloEntry200 with equal bytes, build
+`ce7ca87993c6dae0756ae1bb00a6eb17c9e1aee7-mvw7vej3`, customerUpdate:null.
+Protected local web report SHA256
+`bf33a207e17c5b4520af70c2267bf2e815b73da19c703726583ebf9f844e01fd` and full
+production certificate retained. Edge delta NOT_APPLICABLE/zero functions-path change;
+certified `edge-live` remains bac91a397b491e41a36aa9c731f104d040663fc7.
+Post-merge whole-main reruns were separately pending at this receipt, never reported
+as the reviewed-head checks. Actual receipt handed to existing EXP13 and Coordinator;
+delivery does not infer receiving acceptance or activate another Experience.
+
+Current original matrix delta (all original rows1–18/amendments1–6 remain retained):
+
+| Original rows | Current disposition and actual original producer/consumer | Still owed |
+|---|---|---|
+| 4 | PARTIAL / source-released: original Team removal14 and Hub admission/message/channel/DM/file15 writers, unchanged authority/cleanup/audit seams -> existing Settings Team/Hub | Authenticated authorized result/refusal/receipt/reopen/recovery; original R9/R12 recovery, Setup protection and broader retirement composition |
+| 5,10 | BUILT bounded source / PROOF OWED: same native collaboration/files/current-identity helpers -> original hook/UI/Storage read-now gates, no new store or role grant | Actual private/foreign/stale/suspended/reentry and Storage-byte/device proof; native ports are not Auth/RLS acceptance |
+| 16 | PARTIAL / PROOF OWED: original canonical provisioning and shared admission helpers -> one current/future SOLO implementation, unchanged role/consent gates | Actual eligible cohorts, roles/configuration/provider differences, isolation/cache/in-flight/reentry proof; no account-specific fork or new QA identity |
+| 18 | PARTIAL:3166 normal reviewed release/database/web source readback verified | All remaining original coding/integration and one complete accessible owner review; no owner acceptance or full Experience readiness |
+
+All other original dispositions, five lifecycle journeys and ALG maturity remain
+unchanged. No new financial cap, personnel score, workforce activity, standing
+authority or model-routing claim. Full original task/artifact workshop, goals,
+proactivity, broader actions and complete both-chat continuity remain in scope.
+
+Next SAME-row4 grounding is read-only, not a competing writer: production has NO
+`platform_owner_recovery` or `remove_solo_team_co_owner` overload. Original private
+I1 `_tenant_account_holder_state` remains actual8f9d27463a4c825994f165a5777aca1f and
+must be reused. Approved co-owner contract§5.4a/R9/R12 recovery remains coding;
+R16 original Operator powers stay as shipped. Current `notify-team-event` supports
+only four legacy events and refuses unknown events; the required original I3
+owner_recovery consumer is absent. Coordinator routed the existing Communications
+lead for actual receiving ownership/ABI; no notifier takeover, new ledger/runtime
+or external activation. Original Setup§5.4 receiving custody remains pending.
+All18+6/five journeys/full EXP08 **STILL CODING**, no integrated owner review yet.
+
+Reusable source-readback lesson: compare the guard's actual `prosrc` hash, not a
+different `pg_get_functiondef` digest. For SQL connector reads, use one SELECT or
+an explicit aggregate per requested result; multiple statement calls can return
+only the last result. Keep authenticated outcome proof separate from every source,
+managed/native and public asset result above.

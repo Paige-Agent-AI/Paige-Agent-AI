@@ -45,3 +45,49 @@ Native1d4 job123565771267/run40907392432 confirms the protected-setting repair: 
 Full-schema Preview, exact final-head review and required checks, normal production deployment and native readback remain mandatory. No edit of an applied Preview migration is allowed; a later functional correction requires a reviewed forward.
 
 Functional: local source and bounded catalogue proof only. Visual/experiential: no changed mounted UI; public Billing contract remains compatible, original Portal integration and both-chat/reload proof owed. ALG01/12 source identity/refusal support only, ALG02 incomplete, ALG13 unverified; no maturity/catalogue promotion. Founder acceptance NOT_READY; all twelve original outcomes remain required.
+
+
+
+## O5 native financial prerequisite — November 1, 2026
+IMPLEMENTED LOCALLY; whole-carrier first application/full managed schema and production
+readback are UNVERIFIED. Paired current consumer source remains separate in #3179.
+
+The CLI-scaffolded, never-applied220004 forward carries19 already reviewed original
+source fragments in ONE transaction. It verifies25 deployed function body/ABI/owner/
+permission contracts before applying and52 afterwards, including the unchanged historical
+three-argument getter and original four-argument client-facts adapter.27 new private or
+service-only overloads extend the original financial position/provider operations/C4;
+there is no second ledger, authority system, scheduler, sender or provider adapter.
+
+Original operation records gain observation revision/pointer columns, default0/null for
+eligible existing and new records. Preexisting unbound observation/disposition journal
+history refuses adoption instead of being silently assigned revision0. Original receipts,
+accepted terms, invoice/document identity, assignments, allocations and audit history stay
+in their canonical records. No business-data backfill or account-specific implementation.
+A repeated direct application is refused by preconditions; ordinary applied migration
+history skips it. No applied migration is renamed, reset or repaired.
+
+Current outstanding/refund/credit/provider-net and unknown-source handling reuse the SAME
+canonical position, accepted-target validator, original writers, reads, Collections, client
+facts, link projection and immutable ledger. Accurate legacy replies remain compatible;
+inaccurate adjusted legacy representations fail recoverably. Original service-vs-caller,
+business/client relationship, permission and document grants remain unchanged.
+
+Current-mode controlled PostgreSQL proof explicitly loads/verifies actual production
+getter c1fec before/after adoption:53 ledger/bearer plus retained financial39/manual27/
+private24/link15/public35 PASS. Schema/actor/provider/signing ports remain synthetic.
+The earlier d662 selected-source result is historical and not actual-getter/full-schema
+acceptance. Carrier source fragments match those tested bytes; first-apply proof is still
+required. The original43 observation +39 C4 work assertions are preserved and run against
+installed native code; their historical rollback-install path remains for older schemas.
+Original full-schema manual16 assertions remain, with10 current read/document/history/
+role/foreign/version/no-new-receipt cases appended. They are not yet carrier acceptance.
+
+Release order: existing lower E03/E13 20/21 migrations, unchanged own210004 catalogue,
+then own220004; exact review/CI/genuine Preview and native source/ACL/schema/history
+readback precede current3 web/Edge consumers. Review is AUTHOR-REVIEW / LOWER ASSURANCE,
+never non-author or customer acceptance. No provider activation, signature, charge, send
+or extra permanent QA account. O5 alone is primary within all twelve; proper signed-in
+Owner/linked-client/second context, actual merchant TEST settlement/refund/reversal,
+receipts/reload/reopen/recovery and founder acceptance remain separately owed.
+ALG01/12 bounded source reconciliation/recovery stays PARTIAL; no global maturity change.

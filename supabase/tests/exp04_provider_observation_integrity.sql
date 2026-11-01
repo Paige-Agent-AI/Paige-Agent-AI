@@ -5,9 +5,16 @@ begin;
 set local lock_timeout='2s';
 set local statement_timeout='10s';
 set local idle_in_transaction_session_timeout='10s';
+-- Use the real installed carrier when present; historical baseline still
+-- installs only the original rollback fixture. ALL43+39 assertions below run.
+select to_regprocedure('public._sales_invoice_financial_read_version()') is not null as e04_financial_native \gset
+\if :e04_financial_native
+-- Native migration52-contract postcondition and original behavior controls apply.
+\else
 \ir fixtures/exp04_provider_observation.sql
 \if :{?e04_observation_work}
 \ir fixtures/exp04_provider_observation_work.sql
+\endif
 \endif
 
 

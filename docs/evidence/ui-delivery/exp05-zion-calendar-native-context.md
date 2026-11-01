@@ -75,3 +75,14 @@ Earlier invalid tooling/fixture attempts, the two real omitted-source adapter
 failures, the corrected TypeScript closure-spread error and the proof-generator
 dollar-token substitution failure remain in private run evidence. They are not
 silently relabeled as successful checks.
+
+## Final Calendar publication concurrency proof
+
+Native run1793564973638 additionally passes FOUR real Calendar source/role
+publication blocking pairs in both orders, original-message retry and revoked
+history masking, alongside ALL original Planning pairs and23 READ ONLY controls.
+The first added race failed: the existing final ended-seat negative had already
+canonically deleted the original DM/turns, so publication correctly returned
+not_found. The harness now runs Calendar's SAME original conversation before
+that unchanged destructive negative. No recreated DM, extended deadline,
+weakened assertion, native limit or production code was used to obtain the pass.

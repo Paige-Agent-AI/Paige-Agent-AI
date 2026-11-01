@@ -51,7 +51,7 @@ const result=spawnSync(psql,['-X',...connection,'-d','postgres','-v','ON_ERROR_S
 writeFileSync(join(run,'stdout.txt'),result.stdout??'');writeFileSync(join(run,'stderr.txt'),result.stderr??'');
 const contractLine=(result.stdout??'').split(/\r?\n/).find(line=>line.startsWith('EXP05_NATIVE_CONTRACT:'));
 const contract=contractLine?JSON.parse(contractLine.slice('EXP05_NATIVE_CONTRACT:'.length)):null;
-let proofError=null,races=[],readOnlyHistory=[];
+let proofError=null,races=[],calendarRaces=[],readOnlyHistory=[];
 if(result.status===0){
  try{
   assert(contract?.length===14,'Successful proof includes the actual native source/metadata contract');
@@ -60,6 +60,15 @@ if(result.status===0){
    assert(line,'Original fixture exported its synthetic concurrency context');
    const context=JSON.parse(line.slice('EXP05_RACE_CONTEXT:'.length));
    races=await provePlanningConcurrency(psql,[...connection,'-d','exp08_team_hub_a2b_proof'],context);
+   if(process.argv.includes('--calendar')){
+    const calendarLine=(result.stdout??'').split(/\r?\n/).find(l=>l.startsWith('EXP05_CALENDAR_RACE_CONTEXT:'));
+    assert(calendarLine,'Calendar extension exported its original synthetic context');
+    calendarRaces=await provePlanningConcurrency(psql,[...connection,'-d','exp08_team_hub_a2b_proof'],
+     JSON.parse(calendarLine.slice('EXP05_CALENDAR_RACE_CONTEXT:'.length)),{source:'calendar'});
+   }
+   // The incumbent final history control ends the seat and canonically deletes
+   // its DM/turns. Preserve that destructive negative LAST, after Calendar has
+   // used the same original conversation; never recreate it to bypass cleanup.
    readOnlyHistory=provePlanningReadOnlyHistory(psql,[...connection,'-d','exp08_team_hub_a2b_proof'],context);
   }
  }catch(error){proofError=error.stack??String(error);}
@@ -73,7 +82,7 @@ if(result.status===0){
 }
 if(contract)writeFileSync(join(run,'native-contract.json'),JSON.stringify(contract,null,2)+'\n');
 const exit=result.status===0&&!proofError?0:1;
-writeFileSync(join(run,'result.json'),JSON.stringify({exit,error:proofError??result.error?.message??null,races,readOnlyHistory,
+writeFileSync(join(run,'result.json'),JSON.stringify({exit,error:proofError??result.error?.message??null,races,calendarRaces,readOnlyHistory,
  inputs:[...inputs].map(([path,value])=>({path:relative(repo,path),sha256:value.sha256})),
  proof:'Original E08 reduced-schema disposable fixture plus EXP05 extension; no customer/full-schema/production claim'},null,2));
 console.log((result.stdout??'').split(/\r?\n/).filter(line=>line.startsWith('PASS:')).join('\n'));
@@ -81,4 +90,5 @@ if(result.status!==0)console.error((result.stderr??'').slice(-6000));
 if(proofError)console.error(proofError);
 if(exit===0&&concurrent)console.log('PASS: four actual native source/role publication blocking pairs; same original retry/history; disposable database dropped');
 if(exit===0&&concurrent)console.log(`PASS: ${readOnlyHistory.length} actual read-only original history/Search positive, revocation and recovery controls; no new messages`);
+if(exit===0&&calendarRaces.length)console.log('PASS: four additional actual Calendar source/role publication blocking pairs, same-message retry and history masking');
 console.log(`Evidence: ${run}`);process.exitCode=exit;

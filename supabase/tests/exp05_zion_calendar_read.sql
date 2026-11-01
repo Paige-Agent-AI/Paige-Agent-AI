@@ -172,3 +172,28 @@ COMMIT;
 -- Restore the exact original roster before the incumbent Planning publication
 -- race and READ ONLY controls run. Their accepted bindings must stay current.
 UPDATE public.paige_subagents SET config=(:'e5calroster')::jsonb WHERE tenant_id IS NULL AND slug='zion';
+\if :{?exp05_concurrent}
+BEGIN;
+CREATE FUNCTION pg_temp.calendar_race_context(actor text,tenant text,args jsonb) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE dm text; question text; token text; accepted jsonb; binding jsonb; cases jsonb:='[]'; n integer;
+BEGIN
+ dm:=pg_temp.j(actor,format('public.team_hub_open_agent_dm(%L::uuid,''zion'')',tenant))->>'channel_id';
+ binding:=pg_temp.calendar_binding(actor,tenant,args,1);
+ FOR n IN 0..3 LOOP
+  token:=pg_temp.tok('E5-calendar-concurrent-'||n);
+  question:=pg_temp.post(actor,tenant,dm,'Review original concurrent Calendar records '||n)#>>'{message,id}';
+  accepted:=pg_temp.accept(tenant,actor,dm,question,'zion','dm',token);
+  PERFORM pg_temp.check(accepted->>'ok'='true' AND pg_temp.planning_stage(accepted->>'turn_id',token,binding)->>'ok'='true',
+   'EXP05 Calendar concurrent proof uses the same original accepted source binding');
+  cases:=cases||jsonb_build_array(jsonb_build_object('turn',accepted->>'turn_id','question',question,'token',token,'request',gen_random_uuid()));
+ END LOOP;
+ RETURN jsonb_build_object('actor',actor,'tenant',tenant,'channel',dm,'item','e5ca0000-0000-4000-8000-000000000001','cases',cases);
+END $$;
+SELECT pg_temp.calendar_race_context(:'u3',:'ta',(:'e5calargs')::jsonb) AS e5calrace \gset
+COMMIT;
+\o
+\pset format unaligned
+\pset tuples_only on
+SELECT 'EXP05_CALENDAR_RACE_CONTEXT:'||(:'e5calrace')::jsonb::text;
+\o /dev/null
+\endif

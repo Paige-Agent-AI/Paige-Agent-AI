@@ -77,3 +77,63 @@ Current metadata above uses the governed status grammar and keeps local, native 
 > RELEASE_TRUTH_BOUNDARY: PARTIAL local source integration; PROOF OWED for native producer, release, actual provider and authorized customer outcome; clients.portal status is unchanged
 
 The original Spine registry correctly rejected an unbound mutation. The unfinished public Spine entry is removed; its original Owner UI Capability Kit declaration remains high/confirm on the existing invoice executor. No validator was relaxed and no LIVE binding was fabricated. Genuine Chat registration/execution remains O5 integration work.
+
+
+## O5 current financial source and payment-link reconciliation — November 1
+
+**LOCAL / INERT CANDIDATE**, not merged/native/deployed/authenticated acceptance.
+The SAME private client query now copies the original invoice financial3 summary,
+retaining outstanding debt, refund payable, credit and net provider receipts separately.
+Unknown source facts remain null, including currency totals/open count; they never become
+zero or a paid judgment. Original actor/relationship/calendar/paging authority is unchanged.
+The original public list negotiates schema4/financial3, and the original per-invoice
+payment request negotiates the same financial3 facts. Accurate legacy whole replies
+remain compatible; adjusted or unknown old representations explicitly refuse40001.
+No new financial calculation, endpoint, ledger, permission or provider operation.
+
+The original checkout-link projection now additionally reuses the canonical current
+financial position and accepted-obligation validator before exposing the original URL.
+Changed target or unresolved source withholds that URL while preserving actual provider
+state. It does not cancel an externally copied checkout session or claim settlement.
+The actual production predecessor body228a194c was read independently; it lacked this
+validation. No production function was changed by catalogue inspection.
+
+Original disposable PostgreSQL runner, explicit current mode: private client24,
+canonical link15 and public transport30 controls PASS, alongside retained financial39
+and manual27. Exact public OIDs/defaults/return/owner/flags/settings/ACL, original
+source hashes, accurate old whole replies, adjustment/held states, malformed and coerced
+headers, replay, private-data minimization and explicit rollback-only other-tenant
+records are checked. All fixtures roll back; the owned cluster is stopped with no
+remaining non-template database. Resolver/calendar/identity/signing/provider ports and
+owner execution are synthetic: these are NOT original Auth, merchant or customer proof.
+Native pgcrypto executes in its real extensions namespace; no hash or clock shim.
+Earlier setup/fixture failures remain recorded and were not waived.
+
+The existing Sales Collections workflow gains one additive original-runner step and
+proof-artifact block. Removing the additions restores every previous workflow command
+and default runner byte. No guard, baseline, lock, timeout, negative test or grant is
+loosened. The prior38f required authorization smoke failure19.8 was our missing
+sales_record_provider_disposition attribution row. ONE canonical WRITE_TARGET entry
+repairs it without changing ID resolution, admission, tool exposure, approval or execution.
+Current-main composition preserves the incoming Communications pins. Before renewing
+29 enclosing dispatch fingerprints, the original inspector reproduces131 dependency
+pins/all29 old scalars and the exact whole Root inverse. Only identity15 changes;
+all dispatches, controls, helpers, imports, other identities, validator and hostile
+assertions stay exact. Original source guards now284PASS/0FAIL. Sequential review is
+**AUTHOR-REVIEW / LOWER ASSURANCE**, never a non-author review or permission to activate.
+
+Remaining same-O5 work: pair the existing client financial parser/PaymentPanel and
+Owner document/ledger with these original current facts; receive the pending financial-only
+Billing list span; reconcile actual native frontier and publish a finite guarded financial
+carrier; exact final-head hosted CI/review/normal release and native/web/Edge readback.
+Actual Owner tab still has no new authenticated result; original sign-in handoff remains
+pending. Genuine merchant TEST settlement/refund/reversal, ordinary Owner and properly
+linked client result/receipt/reload/recovery, authorized second context and final founder
+acceptance remain UNVERIFIED. No real payment, signing, message, provider activation,
+identity or permission change. O5 remains the sole primary; all12 outcomes remain open.
+
+Algorithm support: ALG01/12 gain deterministic source reconciliation/duplicate and
+exception proof only; no production maturity promotion. ALG02/13 remain within the full
+assignment sequence. Orchestration: ordinary scoped reads use existing RPCs; no LayerC
+executor is invented. The original Owner financial decision retains high/confirm Kit,
+canonical invoice/operation identity and Rail receipt, with actual execution proof owed.

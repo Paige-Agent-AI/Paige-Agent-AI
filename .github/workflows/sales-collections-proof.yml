@@ -11,6 +11,8 @@ on:
       - 'scripts/sql/sales-collections-proof.*'
       - 'scripts/sql/sales-commercial-create-proof.mjs'
       - 'scripts/sql/sales-provider-operation-proof.mjs'
+      - 'scripts/sql/sales-*-proof.mjs'
+      - 'supabase/tests/fixtures/exp04_*.sql'
       - 'scripts/sql/sales-accepted-obligation-proof.mjs'
       - 'supabase/tests/fixtures/exp04_accepted_obligation_types.json'
       - 'supabase/tests/fixtures/exp04_reviewed_commercial_native.sql'
@@ -34,6 +36,8 @@ on:
       - 'scripts/sql/sales-collections-proof.*'
       - 'scripts/sql/sales-commercial-create-proof.mjs'
       - 'scripts/sql/sales-provider-operation-proof.mjs'
+      - 'scripts/sql/sales-*-proof.mjs'
+      - 'supabase/tests/fixtures/exp04_*.sql'
       - 'scripts/sql/sales-accepted-obligation-proof.mjs'
       - 'supabase/tests/fixtures/exp04_accepted_obligation_types.json'
       - 'supabase/tests/fixtures/exp04_reviewed_commercial_native.sql'
@@ -86,6 +90,10 @@ jobs:
         env:
           PGPASSWORD: isolated-test-password
         run: node scripts/sql/sales-provider-operation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --current --accepted-obligation-writers --provider-observations --observation-self-test --observation-work
+      - name: Source-pinned current financial and client/link projections (synthetic ports)
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-provider-operation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --current --accepted-obligation-writers --provider-observations --observation-self-test --observation-work --provider-cash-position --provider-disposition --financial-collectibility --manual-financial --actual-financial-read --actual-accepted-read --financial-catalogue --actual-collections-read --actual-client-financial-read --current-payment-projection --current-client-transport
       - name: Accepted dated obligations, exact target source, service-only admission and stale refusals
         env:
           PGPASSWORD: isolated-test-password
@@ -111,6 +119,23 @@ jobs:
         with:
           name: sales-provider-observation-proof
           path: work/sales-provider-observation-proof.json
+          if-no-files-found: error
+      - name: Preserve original current-financial source proofs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sales-current-financial-source-proofs
+          path: |
+            work/sales-provider-disposition-proof.json
+            work/sales-financial-collectibility-proof.json
+            work/sales-manual-financial-proof.json
+            work/sales-actual-financial-read-proof.json
+            work/sales-actual-accepted-read-proof.json
+            work/sales-financial-catalogue-proof.json
+            work/sales-actual-collections-read-proof.json
+            work/sales-actual-client-financial-read-proof.json
+            work/sales-current-payment-projection-proof.json
+            work/sales-current-client-transport-proof.json
           if-no-files-found: error
       - name: Sales Performance canonical sums, business-calendar overdue, balance equivalence and tenant gates
         env:

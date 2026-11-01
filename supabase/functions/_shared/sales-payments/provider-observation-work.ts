@@ -36,8 +36,8 @@ function parseContext(value:unknown,work:ObservationClaim){
   provider_settlement_id:s.provider_settlement_id,readback_reference:s.readback_reference};
  return {claim,settlement,observationVersion:row.observation_version};
 }
-/** Internal GET-only continuation; deliberately UNMOUNTED until its canonical native
- * carrier and ingress are released. No sender, timer, dispatch, refund or credit API.
+/** Internal GET-only continuation, consumed only under the original endpoint's
+ * explicit server activation gate. No sender, timer, dispatch, refund or credit API.
  * Observed means source evidence was retained; it never means a financial action ran. */
 export async function reconcileSalesProviderObservationWork(admin:SalesPaymentAdmin,stripe:StripeAdjustmentClient,limit=3):Promise<{
  claimed:number;observed:number;verificationPending:number;unverified:number;

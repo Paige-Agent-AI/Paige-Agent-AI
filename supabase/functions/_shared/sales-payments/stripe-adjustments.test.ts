@@ -112,3 +112,33 @@ describe('source-bound post-settlement Stripe observations, without a financial 
   expect(await read(ports({...capture(),disputed:true},[refund()],[dispute]))).toMatchObject({state:'outcome_unknown'});
  });
 });
+
+describe('same adjustment reader before native capture commit',()=>{
+ const pendingOperation={...operation,state:'outcome_unknown' as const};
+ const captured=()=>({state:'capture_observed',provider_object_id:'cs_test_original',provider_transaction_id:'ch_original',provider_settlement_id:'txn_capture',amount_minor:80000,currency:'usd',provider_received_at:new Date(1760000000*1000).toISOString()});
+ const pending=(client:StripeAdjustmentClient,source:Record<string,unknown>=captured(),op:ProviderOperation=pendingOperation)=>Reflect.apply(readStripePaymentAdjustments,undefined,[request,op,source,client,Date.now()+40_000,{captureObservation:true}]);
+ it('reads actual early refund evidence without fabricating a native settlement identity',async()=>{
+  const client=ports(),source=captured(),before=JSON.stringify(source);
+  expect(await pending(client,source)).toMatchObject({state:'observed',provider_transaction_id:'ch_original',refunds:[{id:'re_original',amount_minor:10000}]});
+  expect(source).not.toHaveProperty('id');expect(source).not.toHaveProperty('readback_reference');expect(JSON.stringify(source)).toBe(before);
+  expect(client.retrieveCharge).toHaveBeenCalledTimes(2);
+ });
+ it('retains the existing native-settlement requirement when the new mode is not requested',async()=>{
+  expect(await Reflect.apply(readStripePaymentAdjustments,undefined,[request,pendingOperation,captured(),ports()])).toMatchObject({state:'outcome_unknown'});
+ });
+ it.each([{state:'settled'},{state:'prepared'},{state:'cancelled'},{environment:'live'},{tenant_id:'other'}])('refuses an ineligible or differently scoped precommit operation %j',async patch=>{
+  const client=ports();expect(await pending(client,captured(),{...pendingOperation,...patch} as ProviderOperation)).toMatchObject({state:'outcome_unknown'});
+  expect(client.listRefunds).not.toHaveBeenCalled();
+ });
+ it.each([{state:'verified'},{amount_minor:79999},{currency:'eur'},{provider_object_id:'cs_test_other'},{provider_received_at:'not-a-date'},{provider_settlement_id:'not-a-balance'}])('withholds malformed initial capture %j',async patch=>{
+  const client=ports();expect(await pending(client,{...captured(),...patch})).toMatchObject({state:'outcome_unknown'});
+ });
+ it('binds the first captured chronology to the fresh provider source',async()=>{
+  expect(await pending(ports(),{...captured(),provider_received_at:new Date(1760000001*1000).toISOString()})).toMatchObject({state:'outcome_unknown'});
+ });
+ it('keeps the original provider source-change fence in precommit reconciliation',async()=>{
+  const source=capture();const client=ports(source);
+  client.retrieveCharge.mockResolvedValueOnce(source).mockResolvedValueOnce({...source,amount_refunded:20000});
+  expect(await pending(client)).toMatchObject({state:'outcome_unknown'});
+ });
+});

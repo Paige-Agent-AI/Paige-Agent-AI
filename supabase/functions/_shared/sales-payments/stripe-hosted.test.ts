@@ -44,3 +44,39 @@ describe('tenant direct hosted request adapter',()=>{
  it('zero matching recovery objects does not prove provider refusal',async()=>{const sdk=client();sdk.listSessions.mockResolvedValue({data:[],has_more:false});expect(await readStripeHostedRequest(request,op,sdk,null,1700000000)).toMatchObject({state:'outcome_unknown'});});
  it('cannot swap a persisted provider identity',async()=>{const sdk=client();expect(await readStripeHostedRequest(request,{...op,provider_operation_id:'cs_test_persisted'},sdk,'cs_test_a')).toMatchObject({state:'outcome_unknown'});expect(sdk.retrieveSession).not.toHaveBeenCalled();});
 });
+
+describe('captured payment awaiting its atomic first observation',()=>{
+ const recover=(value:unknown,changes:Record<string,unknown>={})=>{
+  const sdk=client(value),operation={...op,state:'outcome_unknown' as const,...changes};
+  return {sdk,read:()=>Reflect.apply(readStripeHostedRequest,undefined,[request,operation,sdk,'cs_test_a',undefined,Date.now()+40_000,{captureObservation:true}])};
+ };
+ it('retains a genuine original capture after an early refund without calling it settled',async()=>{
+  const value=settled();value.payment_intent.latest_charge.amount_refunded=100;
+  const f=recover(value);expect(await f.read()).toMatchObject({state:'capture_observed',provider_object_id:'cs_test_a',provider_transaction_id:'ch_a',provider_settlement_id:'txn_a',amount_minor:50000,currency:'usd'});
+  expect(f.sdk.createSession).not.toHaveBeenCalled();
+ });
+ it('retains an original captured payment with an early dispute for combined observation only',async()=>{
+  const value=settled();value.payment_intent.latest_charge.disputed=true;
+  const f=recover(value);expect(await f.read()).toMatchObject({state:'capture_observed',provider_transaction_id:'ch_a'});
+  expect(f.sdk.createSession).not.toHaveBeenCalled();
+ });
+ it('requires the same combined completion even when no adjustment is yet reported',async()=>{
+  const f=recover(settled());expect(await f.read()).toMatchObject({state:'capture_observed',provider_transaction_id:'ch_a'});
+  expect(f.sdk.createSession).not.toHaveBeenCalled();
+ });
+ it.each([{amount_refunded:-1},{amount_refunded:50001},{amount_refunded:100,refunded:true},{refunded:'false'},{disputed:'false'}])('withholds malformed adjustment facts %j',async patch=>{
+  const value=settled();Object.assign(value.payment_intent.latest_charge,patch);
+  expect(await recover(value).read()).toMatchObject({state:'outcome_unknown'});
+ });
+ it('does not turn pending original settlement evidence into a capture',async()=>{
+  const value=settled();value.payment_intent.latest_charge.balance_transaction.status='pending';
+  expect(await recover(value).read()).toMatchObject({state:'provider_accepted'});
+ });
+ it('retains metadata/amount/fee scope checks in the combined path',async()=>{
+  const value=settled();value.payment_intent.latest_charge.application_fee_amount=100 as never;
+  expect(await recover(value).read()).toMatchObject({state:'outcome_unknown'});
+ });
+ it('does not observe a never-dispatched preparation through the recovery-only path',async()=>{
+  expect(await recover(settled(),{state:'prepared'}).read()).toMatchObject({state:'outcome_unknown'});
+ });
+});

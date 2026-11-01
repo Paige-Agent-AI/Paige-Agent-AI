@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded2026-11-01 UTC — EXP04 O5 accurate unissued Collections standing and original invoice recovery.**
+
+| Increment | Exact source and observed production release | Useful result and remaining proof |
+| --- | --- | --- |
+| [#3206](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3206) | Reviewed `2e42ddc1168a66754ae6d1385800325b4ddaf83d`; separate AUTHOR-REVIEW / LOWER ASSURANCE5729956690 and5730196247. All11 terminal checks:10SUCCESS and intended schema-free Preview SKIP; both Vercel contexts SUCCESS,0threads. Actual normal merge `1a28ed786ba7a6293eb1c6bd0c744366cd62840f`, tree`d564798757ccc86d955c9eb07c3ca83fb62ac8f9`;26 own leaves and19,538 incoming leaves exact. Vercel `dpl_Auw7JHqxW5rPnNb8zS1Z3Crg51pX` READY. Both public origins at20:50:07UTC served build`1a28ed786ba7a6293eb1c6bd0c744366cd62840f-mvyaybu7`, actual main-CZ5FJHgp.js SHA256`8ac0ff4636f8035256776d12e06daf706c64f1410ac66be6513c52c20fea259f`, root/module200, customerUpdate:null. Native/Edge delta NOT_APPLICABLE. | Original Collections distinguishes draft/void/issued history and restores the connected opener.55 focused cases,21 neutral renders and static guards pass. Ordinary signed-in Owner draft/detail/focus/reload and same-invoice Finance→Sales navigation/reload verified; later source-equal descendant96b1f5f2801acc7364367edecce1e58889e4942c independently bound to actual deployment/assets. One lazy-load failure recovered through original Try again/Reload; one selector timeout retained. Private actual account evidence stays in protected ANT-52/5c50d1c5; neutral UI evidence in exp04-collections-lifecycle-standing.md. No issued obligation, provider payment, activation, independent QA or founder acceptance claimed. O5 UNFINISHED; all other original outcomes QUEUED for explicit next approval. Customer release identity NONE. |
+
 **Recorded2026-11-01 UTC - EXP08 original row4 owner-recovery native/source release.**
 
 | Increment | Exact source and observed production release | Useful result and remaining proof |

@@ -1,3 +1,34 @@
+# Current O5-only checkpoint — November 1, 2026
+
+The owner selected ONLY **O5 payment processing**. Finish the useful payment result, receipt, reopen and recovery; report to the owner/original Linear/Coordinator, then STOP. Every other original outcome is QUEUED until explicit owner approval. Historical sequences below are preserved as dated evidence and do not authorize starting another outcome. The complete original twelve-outcome matrix remains in ANT-51.
+
+Released #3206 at `1a28ed786ba7a6293eb1c6bd0c744366cd62840f` repairs unissued/void Collections standing and opener focus. Exact source/review/CI/web readback is retained in the Master shipped log and original PR. Ordinary signed-in Owner draft → Collections → Finance → exact Sales invoice → reload/focus was verified on that release and a source-equal descendant, with actual protected evidence in ANT-52. This is a read-only draft/continuity leg, not payment settlement, independent QA or owner acceptance.
+
+The SAME O5 completion candidate extends existing Stripe ingress/reconciliation behind a default-OFF server gate and optional isolated Sales credentials. It reuses the original immutable request/payment/observation/Work/Rail records. Historical captured-only facts are never passed to the standalone allocator: the original Work now has one service-only transaction that retains its first capture and the complete current refund/dispute snapshot together, or rolls back all original effects. No new ledger, scheduler, processor, approval or provider write is introduced. CLI-created forward `20271130000004` remains LOCAL/UNAPPLIED until actual release. See [bounded source and proof](../evidence/ui-delivery/exp04-stripe-observation-recovery.md).
+
+**Current acceptance: O5 UNFINISHED.** Exact-head hosted checks, source/native/Edge release/readback, authorized PAIGE Stripe TEST configuration and original merchant/eligible invoice, genuine settlement/adjustment/retry evidence and signed-in Owner receipt/reload/recovery remain owed. Source tests are engineering proof. Activation is OFF; no provider setting, live payment, signature, customer message or new QA identity has been changed.
+
+## O5 orchestration contract
+
+1. Event/request: original reviewed invoice payment request, then actual signed provider event or existing scheduled GET-only reconciliation.
+2. Entry: original Sales payment review/request and existing internal webhook/reconciliation doors; Chat/Live admission is unchanged.
+3. Original source: paige_invoices, accepted obligation/request, paige_invoice_provider_operations and paige_invoice_payments; original Spine `sales_invoice.payment_request` and merchant registrations retained. No registry promotion is inferred.
+4. Path: canonical Trust/Kit/native review/execution for the original request; original Sales provider adapter and existing durable Work for reconciliation. Ordinary provider GETs are not forced through a new Layer C engine.
+5. Authorization: original actor/tenant/client/invoice/merchant/version binding; recovery is service-only with no customer identity and the exact original Work attempt/claim. No new tenant or role authority.
+6. Risk/approval: original HIGH/confirm payment request remains governed; a signature or plan draft grants no charge authority. Observation records provider facts only and cannot issue charge/refund/send commands.
+7. Execution/receipt: original allocation and observation journal, original Work identity/completion, original system-attributed Rail; atomic wrapper commits all or none.
+8. Readback/idempotency: scoped fresh provider GETs, metadata/account/environment/amount/currency/capture source fences, complete bounded refund/dispute pages; original native identity/CAS/replay and exact source guards.
+9. Recovery: partial/changed source, unknown outcome or expired lease cannot claim settlement; a lost acknowledgment uses the same Work/immutable receipts. Retry never creates a second obligation or payment command.
+10. User result: existing Sales/Finance/client financial DTOs keep gross capture, TEST/manual evidence, actual net, debt, refund payable and credit distinct. Genuine provider/client readback remains required before calling the outcome complete.
+
+## Canonical Algorithm Support for this O5 change
+
+- **ALG-01:** bounded deterministic reconciliation/deduplication over original operation, Work, observation journal and provider identities. The new atomic transaction closes early adjusted-capture recovery; source tests and real local concurrency do not raise production/provider maturity.
+- **ALG-12:** existing unknown/lease/source mismatch/exhaustion signals remain explainable and fail closed, with current receipt/status recovery. No invented score or success.
+- **ALG-02 / ALG-13:** no onboarding progression or new next-best-action algorithm is implemented by this payment repair. Their original register status is unchanged; no other outcome is started.
+
+---
+
 # C144 - original received-payment assignments and retained corrections
 
 Status: LOCAL source preparation, not merged/deployed/activated or accepted. Same full O1-O12; O1-O4 first, O5/O9 next, then O6-O8/O10-O12.

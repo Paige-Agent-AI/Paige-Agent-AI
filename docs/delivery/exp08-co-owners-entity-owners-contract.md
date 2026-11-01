@@ -3330,3 +3330,15 @@ Actual managed carrier/source-frontier/ALL published manifests/peer applied hist
 review/exact CI/ordinary release/readback remain required before mounted callers.
 Preserved local UI4744d1fb5 and its209tests/3controlled states remain a separate
 unpublished native-dependent continuation. Full original18+6/five journeys STILL CODING.
+
+
+Same atomic source-preparation continuation adds a canonical native14 rollback
+artifact/compiler/template using the existing original APIs and schema catalog.
+Its14 actual assertions cover whole install/replay/nonbody conservation, scoped
+role ACLs, late metadata refusal/catalog preservation, ACL refusal/no normalization
+and partial-install refusal/surviving body. No customer identity, provider or
+recovery/workforce action is executed. Canonical/negative packaging and lint PASS;
+local PG16 has no available pgTAP extension, so actual14 execution is UNVERIFIED.
+It is not yet wired into hosted CI and must execute through the original schema
+job when the actual managed carrier is prepared. Native28/32 success never proves
+this new14. No shared workflow, migration version or current3200 head changed.

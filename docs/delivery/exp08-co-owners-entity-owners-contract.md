@@ -3535,3 +3535,13 @@ replacement/negative controls. Native67 canonical write/check/self-test PASS;
 actual hosted67 is UNVERIFIED, not borrowed from earlier542/native16SUCCESS.
 No new runtime, notice/receipt ledger, host, provider or version/apply. SAME3203
 is the sole next source integration; full18+6/five journeys STILL CODING.
+
+
+Consolidated UI guard initially FAILED because the recognized original Solo Team
+contract brings the previously unmounted notice record into Solo routing: missing
+release-governance fields/eight frame dispositions and SOLO_UI:NO were explicit.
+Record corrected to actual local source identity/channel, no native/Edge change,
+PARTIAL claims and ALL EIGHT frames UNVERIFIED; no render/acceptance or gate waiver.
+The pre-push review API request correctly refused an unpublished commit after the
+local gate stopped the push; no review receipt or release was established there.
+Fresh exact published-head technical review remains required.

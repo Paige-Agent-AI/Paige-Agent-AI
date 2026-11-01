@@ -17,7 +17,7 @@ ZOOM_REFLOW: UNVERIFIED: no interface changed or rendered; later Solo host must 
 REDUCED_MOTION: UNVERIFIED: no motion introduced; later mounted host remains responsible for its real reduced-motion behavior.
 STATE_COVERAGE: PASS: source tests cover verified read/unread, same-state convergence, null/malformed/expanded/foreign replies, actor/context loss, unknown no-retry, native recipient/reentry/retirement and serial commit/rollback/revocation waits. UI states remain unverified.
 TRUTHFUL_STATE_LABELS: PASS: local/inert/unmounted; no deployed API, complete bell, authenticated outcome, non-author assurance or full Experience acceptance claimed.
-SOLO_UI: NO: no visible Solo interface file is edited; this is a future personal recipient/bell consumer contract, not a mounted surface.
+SOLO_UI: YES: original Solo Team contract is a recognized consumer path in this consolidated preparation; only inert metadata/client source changes, no new DOM or mounted action.
 UNVERIFIED: native full-schema/managed carrier, independent technical release gates, actual native/source readback, original E01 host, durable UI reload/reconcile and authorized existing-account role/cohort proof. All18original rows+6amendments/five journeys remain open.
 
 ## Source and evidence boundaries
@@ -55,3 +55,22 @@ Canonical compiler checks16/39/12/67, literal replacements and strict transactio
 conservation; packaging/negative controls PASS. Hosted67 is UNVERIFIED pending the
 new exact-head schema job; earlier542 installation16SUCCESS is bounded history.
 No mounted UI/native version/apply or authenticated customer proof is supplied.
+
+## Consolidated Solo consumer evidence routing
+
+
+INTERNAL_BUILD_IDENTITY: ba7094a9b5e4d106ddde06c20925998f4030fcc1; deployment=local-source-only; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/delivery/exp08-co-owners-entity-owners-contract.md
+RELEASE_CHANNEL: development: isolated source/component preparation, no native migration, mounted surface or production activation in this change.
+RELEASE_CLASSIFICATION: internal-only: source and native proof preparation for the incomplete original Team-management outcome.
+CUSTOMER_RELEASE_IDENTITY: none: full original Team Hub integration and owner acceptance remain unfinished.
+RELEASE_NOTE_REQUIRED: NO: no completed customer outcome or customer-facing release is announced by this source preparation.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source/count/recipient proof preparation only; native67 execution, new native projection release, mounted UI, real Auth/cohorts and full outcome acceptance remain PROOF OWED.
+RELEASE_RECOVERY: position=preserve applied history and original native writers, refuse unexpected source/ABI/ACL and forward-fix source before activation; reference=docs/delivery/exp08-co-owners-entity-owners-contract.md
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no new count/recipient UI is mounted or rendered in this source preparation; original approved Team host must provide fresh geometry, keyboard and Auth proof before full owner review.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no new count/recipient UI is mounted or rendered in this source preparation; original approved Team host must provide fresh geometry, keyboard and Auth proof before full owner review.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no new count/recipient UI is mounted or rendered in this source preparation; original approved Team host must provide fresh geometry, keyboard and Auth proof before full owner review.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no new count/recipient UI is mounted or rendered in this source preparation; original approved Team host must provide fresh geometry, keyboard and Auth proof before full owner review.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no new count/recipient UI is mounted or rendered in this source preparation; original approved Team host must provide fresh geometry, keyboard and Auth proof before full owner review.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no new count/recipient UI is mounted or rendered in this source preparation; original approved Team host must provide fresh geometry, keyboard and Auth proof before full owner review.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no new count/recipient UI is mounted or rendered in this source preparation; original approved Team host must provide fresh geometry, keyboard and Auth proof before full owner review.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no new count/recipient UI is mounted or rendered in this source preparation; original approved Team host must provide fresh geometry, keyboard and Auth proof before full owner review.

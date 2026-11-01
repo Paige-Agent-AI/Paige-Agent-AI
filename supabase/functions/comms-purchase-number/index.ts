@@ -114,21 +114,31 @@ Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth) return json({ error: "unauthorized" }, 401);
   const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: auth } } });
-  const { data: { user } } = await userClient.auth.getUser();
-  if (!user) return json({ error: "unauthorized" }, 401);
+  const { data: { user }, error: authError } = await userClient.auth.getUser();
+  if (authError || !user) return json({ error: "unauthorized" }, 401);
 
   const admin = createClient(supabaseUrl, serviceKey);
 
-  const { data: isOwner } = await userClient.rpc("is_platform_owner");
-  const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-  if (isOwner !== true && isAdmin !== true) {
-    return json({ error: "forbidden" }, 403);
-  }
-
-  const { data: tenantId } = await userClient.rpc("current_user_tenant_id");
+  const scope = await Promise.resolve(userClient.rpc("current_user_tenant_id")).catch(() => null);
+  if (!scope || scope.error) return json({ error: "calling_authority_unavailable" }, 503);
+  const tenantId = scope.data;
   if (!tenantId || typeof tenantId !== "string") {
     return json({ needs_config: true, error: "tenant_not_resolved" });
   }
+
+  // The original tenant-admin predicate, never the tenant-agnostic global admin role.
+  try {
+    const owner = await userClient.rpc("is_platform_owner");
+    if (owner.error) return json({ error: "calling_authority_unavailable" }, 503);
+    if (owner.data !== true) {
+      const role = await admin.rpc("is_tenant_admin_as", { _actor: user.id, _tenant: tenantId });
+      if (role.error) return json({ error: "calling_authority_unavailable" }, 503);
+      if (role.data !== true) return json({ error: "forbidden" }, 403);
+    }
+    const current = await userClient.rpc("current_user_tenant_id");
+    if (current.error) return json({ error: "calling_authority_unavailable" }, 503);
+    if (current.data !== tenantId) return json({ error: "workspace_changed" }, 409);
+  } catch { return json({ error: "calling_authority_unavailable" }, 503); }
 
   if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) {
     return json({ error: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
@@ -247,6 +257,19 @@ Deno.serve(async (req) => {
   }
 
   // ── Buy the number into the tenant's subaccount through the ONE seam (§18). ──
+  // Re-prove the original scope after the awaited quote/credential reads, before spending.
+  try {
+    const owner = await userClient.rpc("is_platform_owner");
+    if (owner.error) return json({ error: "calling_authority_unavailable" }, 503);
+    if (owner.data !== true) {
+      const role = await admin.rpc("is_tenant_admin_as", { _actor: user.id, _tenant: tenantId });
+      if (role.error) return json({ error: "calling_authority_unavailable" }, 503);
+      if (role.data !== true) return json({ error: "forbidden" }, 403);
+    }
+    const current = await userClient.rpc("current_user_tenant_id");
+    if (current.error) return json({ error: "calling_authority_unavailable" }, 503);
+    if (current.data !== tenantId) return json({ error: "workspace_changed" }, 409);
+  } catch { return json({ error: "calling_authority_unavailable" }, 503); }
   const { smsUrl, statusCallback } = stampedWebhookUrls(supabaseUrl, subRow.inbound_webhook_secret);
   const bought = await purchaseNumber(creds.data.accountSid, creds.data.authToken, phoneNumber, {
     smsUrl,

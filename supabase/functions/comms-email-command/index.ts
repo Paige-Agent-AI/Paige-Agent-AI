@@ -9,7 +9,7 @@ import { readCommsEmailAttachmentSources, copyCommsEmailAttachmentsToGoverned, p
 import { resolveCommsEmailParties, readCommsEmailReadiness, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
 import { readLeadReplyApproval, verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, type LeadReplyApprovalAdmin, type VerifiedLeadReplyApproval } from "./lead-reply-approval.ts";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../_shared/comms-email/adapter.ts";
-import { parseCommsEmailDraftSource, commsEmailDraftSourcesEqual, type CommsEmailDraftSource } from "../_shared/comms-email/draft-source.ts";
+import { parseCommsEmailDraftSource, commsEmailDraftSourcesEqual, parseCommsEmailActionDraftSource, type CommsEmailActionDraftSource, type CommsEmailDraftSource } from "../_shared/comms-email/draft-source.ts";
 import { readCommsEmailDraftProposal } from "../_shared/comms-email/draft-proposal.ts";
 import { saveOriginalEmailDraft } from "./save-draft.ts";
 import { sha256Hex } from "../_shared/webhookSig.ts";
@@ -46,13 +46,14 @@ Deno.serve(async req => {
   const admin = createClient(url, serviceKey);
   const { data: { user }, error: userError } = await caller.auth.getUser();
   if (userError || !user) return refusedBeforeDispatch(401, "UNAUTHENTICATED");
-  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string; approval_id?: string; send_at?: string; cancel?: true; save_draft?:true; attachments?: unknown; draft_source?: CommsEmailDraftSource }, command: ReturnType<typeof parseCommsEmailCommand>;
+  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string; approval_id?: string; send_at?: string; cancel?: true; save_draft?:true; attachments?: unknown; draft_source?: CommsEmailDraftSource; action_draft_source?:CommsEmailActionDraftSource }, command: ReturnType<typeof parseCommsEmailCommand>;
   try {
     const raw = await req.text();
     if (raw.length > 100000) throw new TypeError("BODY_TOO_LARGE");
     const parsed = object(JSON.parse(raw));
-    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id", "send_at", "cancel", "save_draft", "attachments", "draft_source"].includes(key))) throw new TypeError("INVALID_BODY");
-    if (parsed.save_draft!==undefined && (parsed.save_draft!==true || parsed.draft_source===undefined || parsed.approved_fingerprint!==undefined || parsed.cancel!==undefined)) throw new TypeError("INVALID_DRAFT_SAVE");
+    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id", "send_at", "cancel", "save_draft", "attachments", "draft_source", "action_draft_source"].includes(key))) throw new TypeError("INVALID_BODY");
+    if (parsed.save_draft!==undefined && (parsed.save_draft!==true || (parsed.draft_source===undefined&&parsed.action_draft_source===undefined) || parsed.approved_fingerprint!==undefined || parsed.cancel!==undefined)) throw new TypeError("INVALID_DRAFT_SAVE");
+    if(parsed.action_draft_source!==undefined&&(parsed.save_draft!==true||parsed.draft_source!==undefined))throw new TypeError("INVALID_ACTION_DRAFT_SAVE");
     if (typeof parsed.expected_tenant_id !== "string" || !UUID.test(parsed.expected_tenant_id) || typeof parsed.operation_id !== "string" || !UUID.test(parsed.operation_id)) throw new TypeError("INVALID_SCOPE");
     // Cancel of a scheduled send: exactly { expected_tenant_id, operation_id, cancel: true } — no command,
     // no approval, no time. It is answered further down, after the workspace/seat/profile checks.
@@ -67,6 +68,8 @@ Deno.serve(async req => {
       if (parsed.approval_id !== undefined && (typeof parsed.approval_id !== "string" || !UUID.test(parsed.approval_id))) throw new TypeError("INVALID_APPROVAL");
       command = parseCommsEmailCommand(parsed.command);
       const draftSource = parsed.draft_source === undefined ? undefined : parseCommsEmailDraftSource(parsed.draft_source);
+      const actionSource=parsed.action_draft_source===undefined?undefined:parseCommsEmailActionDraftSource(parsed.action_draft_source);
+      if(actionSource&&actionSource.approval_id!==String(parsed.approval_id??"").toLowerCase())throw new TypeError("INVALID_ACTION_DRAFT_SAVE");
       // "Approve now, send later": a top-level send time, never part of the command (the command and its
       // content digest are unchanged). Raising a card checks the window (2 min .. 30 days ahead); a
       // confirm only canonicalizes it — the STORED call's time is what runs, and the execute step below
@@ -82,12 +85,13 @@ Deno.serve(async req => {
       // A saved source (including an explicit empty list removing its files) uses the original
       // source/approval reader and the same fingerprinted file verification below. Unbound legacy
       // lead replies retain their original restriction; a source locator grants no authority.
-      if (parsed.attachments !== undefined && parsed.approval_id !== undefined && !draftSource) return refusedBeforeDispatch(400, "COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED");
+      if (parsed.attachments !== undefined && parsed.approval_id !== undefined && !draftSource && !actionSource) return refusedBeforeDispatch(400, "COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED");
       // The binding, the unique index and send-message all compare the operation id as lowercase
       // text; an uppercase id from a direct caller would otherwise never match its own binding.
       const { send_at: _requestedSendAt, ...rest } = parsed;
       body = { ...rest, expected_tenant_id: parsed.expected_tenant_id.toLowerCase(), operation_id: parsed.operation_id.toLowerCase(),
         ...(draftSource ? { draft_source: draftSource } : {}),
+        ...(actionSource ? { action_draft_source:actionSource } : {}),
         ...(typeof parsed.approval_id === "string" ? { approval_id: parsed.approval_id.toLowerCase() } : {}),
         ...(sendAt !== undefined ? { send_at: sendAt } : {}) };
     }
@@ -98,7 +102,7 @@ Deno.serve(async req => {
   // The files named, checked against the SERVER-derived tenant before anything is read: a path in
   // another business, the Team Hub or the governed folder is refused here, with no storage call at all.
   let attachmentPaths: string[] | null = null;
-  if (body.attachments !== undefined && !body.draft_source) {
+  if (body.attachments !== undefined && !body.draft_source && !body.action_draft_source) {
     try { attachmentPaths = parseCommsEmailAttachmentRequest(body.attachments, tenantId); }
     catch { return refusedBeforeDispatch(400, "COMMS_EMAIL_ATTACHMENTS_INVALID"); }
   }
@@ -145,7 +149,7 @@ Deno.serve(async req => {
   // Unsent edits use the same original source and current authority, but never enter
   // send reconciliation, approval redemption, provider readiness or dispatch.
   if (body.save_draft===true) {
-    const saved=await saveOriginalEmailDraft({tenantId,actorUserId:user.id,operationId:body.operation_id,source:body.draft_source!,
+    const saved=await saveOriginalEmailDraft({tenantId,actorUserId:user.id,operationId:body.operation_id,source:body.draft_source,actionSource:body.action_draft_source,
       command,approvalId:body.approval_id,attachments:body.attachments,sendAt:body.send_at},
       {admin:admin as unknown as CommsEmailAdmin & LeadReplyApprovalAdmin,caller:caller as unknown as CommsEmailAdmin,
         storage:admin.storage as unknown as CommsEmailStorage,stillCurrent});

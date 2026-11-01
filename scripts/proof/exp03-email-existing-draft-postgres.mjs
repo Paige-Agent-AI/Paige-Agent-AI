@@ -50,11 +50,14 @@ function seedOriginalAction(kind='owner.lead_followup') {
  UPDATE public.messages SET action_id='${action}' WHERE id='${draft}';`);
 }
 function concurrentPrepare(tag,options){
+ return concurrentSQL(tag,prepareSQL(options));
+}
+function concurrentSQL(tag,sql){
  const child=spawn(db.psql,db.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});let out='',err='';
  child.stdout.on('data',chunk=>{out+=chunk;});child.stderr.on('data',chunk=>{err+=chunk;});
  const completed=new Promise((resolve,reject)=>{child.on('error',reject);child.on('close',code=>resolve({code,out,err}));});
  completed.catch(()=>{});
- child.stdin.end(`SET application_name=${quote(tag)};SET statement_timeout='10s';${prepareSQL(options)}`);
+ child.stdin.end(`SET application_name=${quote(tag)};SET statement_timeout='10s';${sql}`);
  return {child,completed};
 }
 async function observeWait(tags){
@@ -138,6 +141,131 @@ $function$;
    const p={actor,tenant,id:saveId,message:draft,version:expected,contact,connector,subject:'Saved subject',text:'Saved unsent words.',html:'<p>Saved unsent words.</p>',files:[],time:null,approval:null,...over};
    return `SET ROLE service_role;SELECT public.save_comms_email_draft(${[p.actor,p.tenant,p.id,p.message,p.version,p.contact,p.connector,p.subject,p.text,p.html,JSON.stringify(p.files),p.time,p.approval].map(v=>v===null?'NULL':quote(v)).join(',')});`;
   };
+  // The original action/approval entry can exist before there is any Messages
+  // draft. Exercise that real entry separately; default shipped coverage stays
+  // intact. This is a disposable native fixture, never customer/provider proof.
+  const proveActionEntry=async()=>{
+   seedOriginalAction();
+   db.run(`DELETE FROM public.messages;ALTER TABLE public.paige_pending_approvals ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT '${version}',ADD COLUMN IF NOT EXISTS draft_content jsonb NOT NULL DEFAULT '{"channel":"email"}';
+    CREATE TRIGGER proof_approval_version BEFORE UPDATE ON public.paige_pending_approvals FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();`);
+   if(process.argv.includes('--action-current-source')){
+    const carrier=read('scripts/proof/exp03-email-saved-outcome-carrier.sql');
+    const definitions=JSON.parse(carrier.split('$e03_definitions$')[1]);
+    const core=definitions.find(item=>item.signature==='prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)');
+    assert(core&&core.full_md5==='7e93cb7be01f5bbe37ae3e70d94aac5d');
+    db.run(core.definition);
+    assert.equal(db.run(`SELECT md5(pg_get_functiondef('${signature}'::regprocedure))`),core.full_md5,'same source generation independently read back from production');checks++;
+   }
+   if(process.argv.includes('--action-candidate')){
+    const compiled=process.argv.includes('--action-use-carrier');
+    let patch=read(compiled?'scripts/proof/exp03-action-email-save-carrier.sql':'scripts/proof/exp03-action-email-save-patch.sql');
+    if(process.argv.includes('--action-published')){
+     const published=read('supabase/migrations/20271126200003_exp03_saved_action_first_save.sql');
+     assert.equal(published,patch,'published migration is the exact reviewed and exercised compiled carrier');patch=published;checks++;
+    }
+    const catalogue=()=>db.run(`SELECT jsonb_agg(to_jsonb(p) ORDER BY oid) FROM pg_proc p WHERE p.pronamespace='public'::regnamespace`);
+    const original=catalogue(),rows=businessState();
+    assert.throws(()=>db.run(`BEGIN;GRANT EXECUTE ON FUNCTION ${signature} TO authenticated;${patch};COMMIT;`),/action-save original prepare source drift|saved action original drift/);
+    assert.equal(catalogue(),original,'late prepare-metadata refusal rolls back the preceding Save source replacement and grant');assert.equal(businessState(),rows);checks++;
+    if(compiled){
+     const terminal='END $exp03_saved_action$;';assert.equal(patch.split(terminal).length,2);
+     // Exercise rollback while BOTH original bodies would actually change, not
+     // against an already-installed no-op replay of the compiled carrier.
+     assert.throws(()=>db.run('BEGIN;'+patch.replace(terminal,"RAISE EXCEPTION 'EXP03 forced action carrier late failure';"+terminal)+'COMMIT;'),/forced action carrier late failure/);
+     assert.equal(catalogue(),original);assert.equal(businessState(),rows);checks++;
+    }
+    const metadata=()=>db.run(`SELECT jsonb_agg(to_jsonb(p)-'prosrc' ORDER BY oid) FROM pg_proc p WHERE oid IN ('public.save_comms_email_draft(uuid,uuid,uuid,uuid,timestamptz,uuid,uuid,text,text,text,jsonb,timestamptz,uuid)'::regprocedure,'${signature}'::regprocedure)`);
+    const before=metadata();db.run(patch);
+    assert.equal(metadata(),before,'same original OIDs, owner, security mode, path and exact ACLs');checks++;
+    if(compiled){
+     const installed=catalogue(),business=businessState();db.run(patch);
+     assert.equal(catalogue(),installed,'compiled same-head replay preserves every original source/OID/ACL');assert.equal(businessState(),business);checks++;
+    }
+    if(process.argv.includes('--export-action-candidate')){
+     const exported=db.run(`SELECT jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'definition',pg_get_functiondef(p.oid),'full_md5',md5(pg_get_functiondef(p.oid)),'owner',pg_get_userbyid(p.proowner),'definer',p.prosecdef,'settings',p.proconfig,'acl',p.proacl::text) ORDER BY p.oid::regprocedure::text) FROM pg_proc p WHERE oid IN ('public.save_comms_email_draft(uuid,uuid,uuid,uuid,timestamptz,uuid,uuid,text,text,text,jsonb,timestamptz,uuid)'::regprocedure,'${signature}'::regprocedure)`);
+     writeFileSync('../exp03-action-email-native-candidate.json',JSON.stringify(JSON.parse(exported),null,2)+'\n','utf8');
+    }
+   }
+   const first=JSON.parse(db.run(saveSQL(version,{message:null,approval})).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(first.outcome,'draft_saved','first save of the original action creates its unsent Messages draft');checks++;
+   assert.equal(db.run(`SELECT count(*) FROM public.messages WHERE action_id='${action}' AND status='draft' AND NOT (meta?'comms_email_binding')`),'1');checks++;
+   assert.equal(db.run(`SELECT status FROM public.paige_pending_approvals WHERE id='${approval}'`),'pending');checks++;
+   const savedSource={message_id:first.message_id,updated_at:first.updated_at};
+   assert.equal(db.run(`SELECT count(*) FROM public.paige_audit_log WHERE action='comms.email_draft_saved'`),'1');checks++;
+   const replay=JSON.parse(db.run(saveSQL(version,{message:null,approval})).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(replay.replayed,true);assert.equal(replay.message_id,first.message_id);assert.equal(replay.receipt_id,first.receipt_id);checks++;
+   refuse(()=>db.run(saveSQL(version,{message:null,approval,text:'Other words.'})),/COMMS_EMAIL_DRAFT_SAVE_REPLAY_MISMATCH/);
+   refuse(()=>db.run(saveSQL(version,{message:null,approval,id:operation})),/COMMS_EMAIL_DRAFT_SOURCE_CHANGED|COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED/);
+   refuse(()=>prepare({legacy:true,source:null,governance:{...governance,approval_id:approval}}),/COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED/);
+   const reopened=JSON.parse(db.run(`SELECT jsonb_build_object('subject',subject,'body',body_text,'action',action_id,'thread',thread_key) FROM public.messages WHERE id='${first.message_id}'`));
+   assert.deepEqual(reopened,{subject:'Saved subject',body:'Saved unsent words.',action,thread:`contact:${tenant}:${contact}`});checks++;
+   const second=JSON.parse(db.run(saveSQL(savedSource.updated_at,{message:first.message_id,approval,id:operation,text:'Second saved edit.'})).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(second.message_id,first.message_id);assert.notEqual(second.updated_at,first.updated_at);checks++;
+   refuse(()=>db.run(saveSQL(first.updated_at,{message:first.message_id,approval,id:otherActor})),/COMMS_EMAIL_DRAFT_SOURCE_CHANGED/);
+   const resetEntry=()=>{seedOriginalAction();db.run('DELETE FROM public.messages');};
+   for(const [change,reason]of [
+    // The original attached send guard itself forbids manufacturing approved
+    // without a verified send. Declined is a legitimate closed-state setup.
+    [`UPDATE public.paige_pending_approvals SET status='declined'`,/OWNED_FLOW_REQUIRED/],
+    [`UPDATE public.paige_pending_approvals SET draft_content='{"channel":"sms"}'`,/OWNED_FLOW_REQUIRED/],
+    [`UPDATE public.paige_pending_approvals SET updated_at=now()`,/SOURCE_CHANGED/],
+    [`UPDATE public.paige_pending_approvals SET metadata=metadata||'{"governed_send":{}}'`,/OWNED_FLOW_REQUIRED/],
+    [`UPDATE public.paige_actions SET action_kind='comms-draft-reply'`,/OWNED_FLOW_REQUIRED/],
+    [`UPDATE public.paige_actions SET contact_id='${other}'`,/OWNED_FLOW_REQUIRED/],
+    [`UPDATE public.paige_actions SET status='executed'`,/OWNED_FLOW_REQUIRED/],
+    [`UPDATE public.paige_action_kinds SET executor='other'`,/OWNED_FLOW_REQUIRED/],
+    [`UPDATE public.profiles SET active_tenant_id='${other}' WHERE user_id='${actor}'`,/WORKSPACE_CHANGED/],
+    [`UPDATE public.tenant_members SET role='member' WHERE user_id='${actor}'`,/AUTHORITY_UNAVAILABLE/],
+    [`UPDATE public.channel_connectors SET active=false`,/SOURCE_UNAVAILABLE/],
+    [`UPDATE public.channel_connectors SET mailbox_class='personal',mailbox_owner_user_id='${otherActor}'`,/SOURCE_UNAVAILABLE/],
+   ]){resetEntry();db.run(change);refuse(()=>db.run(saveSQL(version,{message:null,approval})),reason);}
+   for(const role of ['anon','authenticated']){resetEntry();refuse(()=>db.run(saveSQL(version,{message:null,approval}).replace('SET ROLE service_role',`SET ROLE ${role}`)),/permission denied for function/);}
+   resetEntry();db.run(`ALTER TABLE public.paige_audit_log ADD CONSTRAINT proof_first_save_receipt CHECK (action<>'comms.email_draft_saved')`);
+   refuse(()=>db.run(saveSQL(version,{message:null,approval})),/proof_first_save_receipt/);
+   db.run('ALTER TABLE public.paige_audit_log DROP CONSTRAINT proof_first_save_receipt');
+   resetEntry();const accepted=JSON.parse(db.run(saveSQL(version,{message:null,approval})).split(/\r?\n/).find(x=>x.startsWith('{')));
+   const prepared=prepare({source:{message_id:accepted.message_id,updated_at:accepted.updated_at},governance:{...governance,approval_id:approval}});
+   assert.equal(prepared.message_id,accepted.message_id);assert.equal(db.run('SELECT count(*) FROM public.messages'),'1');checks++;
+   for(const rival of ['save','legacy-review']){
+    resetEntry();
+    const blocker=await db.holdArchive(`SELECT id FROM public.paige_pending_approvals WHERE id='${approval}' FOR UPDATE`,[],{manualRelease:true});
+    const tags=['first-save-'+rival,'rival-'+rival];
+    const a=concurrentSQL(tags[0],saveSQL(version,{message:null,approval}));
+    const b=concurrentSQL(tags[1],rival==='save'?saveSQL(version,{message:null,approval,id:operation}):prepareSQL({legacy:true,source:null,governance:{...governance,approval_id:approval}}));
+    try{await observeWait(tags);}finally{blocker.release();}
+    await blocker.completed;const answers=await Promise.all([a.completed,b.completed]);
+    assert.equal(answers.filter(r=>r.code===0).length,1,'one original save or review wins the approval lock');checks++;
+    assert(answers.filter(r=>r.code!==0).every(r=>/COMMS_EMAIL_DRAFT_SOURCE_CHANGED|COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED/.test(r.err)),'loser refuses; no duplicate or deadlock');checks++;
+    assert.equal(db.run('SELECT count(*) FROM public.messages'),'1');assert.equal(db.run(`SELECT count(*) FROM public.messages WHERE provider_message_id IS NOT NULL`),'0');checks++;
+   }
+   // An acknowledged first-save replay must use the SAME message-before-approval
+   // order as an edit of its now-existing source. Hold that row in an actual
+   // editor session, observe replay waiting, then let the editor save normally.
+   resetEntry();
+   const originalSave=JSON.parse(db.run(saveSQL(version,{message:null,approval})).split(/\r?\n/).find(x=>x.startsWith('{')));
+   const editor=spawn(db.psql,db.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});let editorOut='',editorErr='',ackReplay;
+   const edited=new Promise((resolve,reject)=>{editor.on('error',reject);editor.on('close',code=>resolve({code,out:editorOut,err:editorErr}));});edited.catch(()=>{});
+   editor.stderr.on('data',chunk=>{editorErr+=chunk;});
+   let timer;
+   const held=new Promise((resolve,reject)=>{timer=setTimeout(()=>reject(Error('Original edit row lock not observed')),8000);editor.on('error',reject);editor.stdout.on('data',chunk=>{editorOut+=chunk;if(editorOut.includes('action_edit_row_held'))resolve();});});
+   try{
+    editor.stdin.write(`BEGIN;SET application_name='action-edit-current-source';SET statement_timeout='10s';SELECT id FROM public.messages WHERE id='${originalSave.message_id}' FOR UPDATE;SELECT 'action_edit_row_held';\n`);
+    await held;clearTimeout(timer);
+    ackReplay=concurrentSQL('action-first-save-ack-replay',saveSQL(version,{message:null,approval}));
+    await observeWait(['action-first-save-ack-replay']);
+    editor.stdin.end(saveSQL(originalSave.updated_at,{message:originalSave.message_id,approval,id:operation,text:'Newer saved words.'})+'COMMIT;');
+    const [editResult,replayResult]=await Promise.all([edited,ackReplay.completed]);
+    assert.equal(editResult.code,0,'newer original source edit finishes without deadlock');checks++;
+    assert.notEqual(replayResult.code,0);assert.match(replayResult.err,/COMMS_EMAIL_DRAFT_SOURCE_CHANGED/,'old acknowledgment cannot overwrite a newer edit or deadlock');checks++;
+    assert.equal(db.run(`SELECT body_text FROM public.messages WHERE id='${originalSave.message_id}'`),'Newer saved words.');
+    assert.equal(db.run(`SELECT count(*) FROM public.paige_audit_log WHERE action='comms.email_draft_saved'`),'2');checks++;
+   }finally{clearTimeout(timer);if(editor.exitCode===null)editor.kill();await edited.catch(()=>{});if(ackReplay){if(ackReplay.child.exitCode===null)ackReplay.child.kill();await ackReplay.completed.catch(()=>{});}}
+   console.log(JSON.stringify({checks,scope:'original action first unsent save; synthetic native fixture only'}));
+   // This opt-in proof does not claim the remaining default or whole-carrier
+   // assertions ran. The finally block still disposes its own database.
+   process.exitCode=0;
+  };
+  if(process.argv.includes('--action-entry'))await proveActionEntry();else{
   const saved=JSON.parse(db.run(saveSQL()).split(/\r?\n/).find(x=>x.startsWith('{')));
   assert.equal(saved.outcome,'draft_saved');assert.equal(saved.message_id,draft);checks++;
   assert.equal(db.run(`SELECT status||':'||subject||':'||(meta?'comms_email_binding')::text||':'||(meta->>'keep') FROM public.messages WHERE id='${draft}'`),'draft:Saved subject:false:7');checks++;
@@ -418,6 +546,14 @@ $function$;
     ['public.claim_comms_email_send(uuid,uuid,boolean)','a9dfb75621838268a961152d19de954d'],
    ];
    for(const [sig,hash]of currentBodyPins){assert.equal(db.run(`SELECT md5(prosrc) FROM pg_proc WHERE oid=${quote(sig)}::regprocedure`),hash,'exact reviewed native body: '+sig);checks++;}
+   if(process.argv.includes('--action-after-whole')){
+    await proveActionEntry();
+    // Historical140003 source assertions above remain. Current repository SQL
+    // fixtures must now identify the actually installed200003 generation, with
+    // exactly one identity rather than an old-or-new source allowance.
+    currentBodyPins[0]=[signature,'682c2fe410521c7bfd23ec8b26a95a90'];
+    assert.equal(db.run(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${signature}'::regprocedure`),currentBodyPins[0][1]);checks++;
+   }
    const pinAssertions=(sql,sig,hash)=>sql.includes(`'${sig}'::regprocedure,'${hash}'`)
     ||sql.includes(`md5(prosrc)='${hash}' FROM pg_proc WHERE oid='${sig}'::regprocedure`);
    for(const [file,indexes]of [
@@ -435,6 +571,7 @@ $function$;
    writeFileSync('../exp03-saved-email-native-candidate.json',JSON.stringify(candidate,null,2)+'\n','utf8');checks++;
   }
   console.log(JSON.stringify({checks,overloadFullMd5:db.run(`SELECT md5(pg_get_functiondef('${signature16}'::regprocedure))`),scope:'original native prepare/actor/governance/version trigger/schedule/files wrappers; inbound original producer/approval guard/read/claim/record/replay and unsent save; synthetic domain/storage/provider result, not real bytes/provider verification; commercial/Auth SDK/RLS/customer proof unexercised'}));
+  }
  }
 }finally{
  const r=spawnSync(db.psql,db.args('postgres'),{input:`DROP DATABASE ${db.database} WITH (FORCE);`,encoding:'utf8',timeout:60000});

@@ -29,6 +29,13 @@ describe("structured errors reach their copy", () => {
     expect(message).toContain("current sending-domain state");
     expect(message).not.toContain("try again in a moment"); expect(message).not.toContain("untrusted server sentence");
   });
+  it.each(["change your sending number", "rename that number"])("names changed native number authority without generic replay advice: %s", async (action) => {
+    const {code,message}=await resolveFunctionError({error:null,data:{error:{code:"NUMBER_AUTHORITY_CHANGED",message:"untrusted native error detail"}},action});
+    expect(code).toBe("NUMBER_AUTHORITY_CHANGED");
+    expect(message).toContain("Nothing was changed");expect(message).toContain("permission or active business changed");expect(message).toContain("check your access");
+    expect(message).not.toMatch(/try again|retry/i);expect(message).not.toContain("untrusted native error detail");
+  });
+
   it("reads a plain string code", async () => {
     const { code, message } = await resolveFunctionError({
       error: invokeError(409), data: { error: "number_unavailable" }, action: "buy that number",

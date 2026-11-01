@@ -60,7 +60,7 @@ SELECT pg_temp.ok(5, (SELECT md5(prosrc)='6f73777a47948368222f1d0e216fa325' AND 
    FROM pg_proc WHERE oid='public.claim_due_scheduled_messages(integer)'::regprocedure),
   'the lease is this migration''s body and keeps its service_role-only grant');
 SELECT pg_temp.ok(2, (SELECT pronargdefaults=0 FROM pg_proc WHERE oid='public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz)'::regprocedure)
-  AND (SELECT md5(prosrc)='f7fbbd2a430bf391f43dc6ca7e2692ee' FROM pg_proc WHERE oid='public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure),
+  AND (SELECT md5(prosrc)='682c2fe410521c7bfd23ec8b26a95a90' FROM pg_proc WHERE oid='public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure),
   'the scheduled overload has no default; the original 13-argument prepare matches the reviewed current saved-source composition');
 SELECT pg_temp.ok(3, (SELECT count(*)=4 AND bool_and(md5(p.prosrc)=e.body) FROM (VALUES
    ('public.read_comms_email_send_result(uuid,uuid,uuid)'::regprocedure,'d12d25b1d3859f5383dfde5bf4106060'),

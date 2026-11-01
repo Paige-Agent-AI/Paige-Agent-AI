@@ -32,6 +32,14 @@ writer conflict; corrected only that call, retained the failure, then full53+8+5
 the verified local cluster stopped. Two corresponding actual-schema cases added; runtime pending.
 No native installation, host mount, customer approval or receiver incorporation is inferred.
 
+Actual cdf database job124964915831 FAILED before native/schema execution:42 client controls PASS,
+installed real-SDK control FAIL because that isolated job never installed locked project dependencies
+(`ERR_MODULE_NOT_FOUND @supabase/supabase-js`). Add standard npm ci ONLY inside original E01 proof
+step, then the unchanged runner. No test removed/skipped/substituted, no other workflow span changed.
+Current058 repeats the same setup failure; all fresh final-head required checks and actual schema
+execution are still required. Local causal old-cdf source with the new integrity tests genuinely
+FAILS future captured revision inspection; repaired058 bytes restored exactly/guardPASS/clusterSTOPPED.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: Existing foundation and original integrated-readiness packet now map the full ten outcomes, all original cases, exact writer/source/CAS/receipt, recovery and dependencies; implementation/native/review/release/customer evidence remain separate.
 PAIGE_UI_DESIGN: PASS: Project skill, upstream/accessibility/quality/review references inspected for scope; this candidate adds closed input validation and inert native proof only. No component, route, control, visual state, token or mounted writer is changed; actual host delivery retains every applicable UI gate.

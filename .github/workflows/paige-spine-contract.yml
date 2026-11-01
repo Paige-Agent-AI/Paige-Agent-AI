@@ -901,7 +901,9 @@ jobs:
       # above — the expensive part is `supabase start` + `db reset` (§24).
       - run: supabase test db supabase/tests/business_context_readiness.sql
       - name: Original EXP01 reviewed Setup receipt full-schema authority
-        run: node scripts/proof/exp01-reviewed-setup-full-schema.mjs
+        run: |
+          npm ci
+          node scripts/proof/exp01-reviewed-setup-full-schema.mjs
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/secure_browser_control_plane_security.sql
       # PC-1 — concurrent budget enforcement: 12 racing service-role callers against a day

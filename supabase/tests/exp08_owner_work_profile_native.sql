@@ -28,7 +28,9 @@ INSERT INTO public.profiles(user_id,active_tenant_id)
 CREATE TEMP TABLE exp08_profile_metadata AS SELECT oid,to_jsonb(p)-'prosrc' AS metadata FROM pg_proc p
  WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure),
- '1d99e171c55d259c18961068a7829fea','actual original writer source matches guarded prerequisite');
+ CASE WHEN to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)') IS NULL
+ THEN '1d99e171c55d259c18961068a7829fea' ELSE 'fa3fe99d089bd1ea2566a8c4f934f9bb' END,
+ 'actual original writer source matches guarded prerequisite or exact released repair');
 -- CANONICAL original scoped profile SHA256 f5ca4cd8ba6d25f8c6f9873cb9174ad08923540cdb40b717a41251b2cfa0af6f
 -- INERT EXP08 original I2 owner work-profile authority candidate.
 -- No managed version, independent effect writer, approval or activation. Scoped execution stays authenticated-only.

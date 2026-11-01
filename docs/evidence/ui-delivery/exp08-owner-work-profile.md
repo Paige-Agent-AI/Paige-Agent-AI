@@ -286,3 +286,31 @@ supporting evidence, not an applied-carrier claim. E13original28000013 actual
 release/readback precedes this native forward; E05planned29000005 remains higher.
 No changed applied history, idle lease or source takeover. Carrier+approved editor
 are the single next end-to-end Team-details release, followed by live verification.
+
+### Exact source-release join and activation compatibility
+
+Prerequisite PR3203 normal-merged96b1f5f2801acc7364367edecce1e58889e4942c;
+Vercel production dpl_Aq1rRpYsKHFb2p7Mgioxj1PiqMb2 READY, BOTH official
+hosts/version/root/bootstrap200 and exact96b1 read back at20:53UTC. This is
+SOURCE prerequisite proof, not the teammate-details native/UI outcome.
+Normal local800d receives that main plus all incoming policy/Collections changes.
+
+Before outcome publication, actual candidate-installed disposable catalogs
+reproduced BOTH old profile28/permission32 prerequisite-pin assertions FALSE:
+profilefa3fe99d089bd1ea2566a8c4f934f9bb and permission6ee3f516ba9bd0531230cd5167de4fe7
+are the exact reviewed repaired ORIGINAL bodies, not the prepatch bodies. The
+same first assertion now selects the exact original pin when its scoped overload
+is absent, or the exact reviewed repaired pin when it exists. Original baseline
+pins, all28/32 cases, negative errors/ACL/metadata controls remain. Real catalog
+baseline/current plus actual body mutants8PASS; mutant bodies refuse in BOTH
+states. Both original canonical packagers/check/self-testsPASS. This is ported
+catalog engineering proof, not actual full-schema/Auth/customer proof.
+
+Carrier+approved editor publish as ONE teammate-details outcome candidate.
+Original lower native forwards E01 27040001/27040002 and E13 28000013 must reach
+actual ordered production handback before this higher native forward. Isolated
+Preview is not production activation; receive incoming source and reconcile
+Preview normally before release. No applied migration/history rewrite. QA custody
+request ANT147/3f19953c is pending; do not borrow another agent's tab/authority.
+Outcome remains UNFINISHED until actual native+UI release and useful LIVE
+save/result/reopen/recovery verification. No next outcome is authorized meanwhile.

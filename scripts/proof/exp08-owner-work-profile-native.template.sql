@@ -27,7 +27,9 @@ INSERT INTO public.profiles(user_id,active_tenant_id)
 CREATE TEMP TABLE exp08_profile_metadata AS SELECT oid,to_jsonb(p)-'prosrc' AS metadata FROM pg_proc p
  WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure),
- '1d99e171c55d259c18961068a7829fea','actual original writer source matches guarded prerequisite');
+ CASE WHEN to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)') IS NULL
+ THEN '1d99e171c55d259c18961068a7829fea' ELSE 'fa3fe99d089bd1ea2566a8c4f934f9bb' END,
+ 'actual original writer source matches guarded prerequisite or exact released repair');
 \ir ../../scripts/proof/exp08-owner-work-profile-patch.sql
 SELECT ok(NOT EXISTS(SELECT 1 FROM exp08_profile_metadata m JOIN pg_proc p ON p.oid=m.oid WHERE to_jsonb(p)-'prosrc' IS DISTINCT FROM m.metadata),
  'original writer OID and complete nonbody metadata conserved');

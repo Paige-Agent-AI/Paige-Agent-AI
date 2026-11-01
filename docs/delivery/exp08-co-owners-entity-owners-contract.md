@@ -3027,3 +3027,39 @@ Current3190/c998 checks remain separate; code6848acd3c is LOCAL/unpublished.
 All original18+6/five lifecycle journeys remain required; full EXP08 STILL CODING.
 
 Final isolated log SHA256: `f313215ce5c680cb0b6cf11529f2377ed4ae533d3535c6cd9d4fe439e74bda61`.
+### Native32 packaging correction and released Finance composition — November 1
+
+Exact3190/c998 full-schema database-contract124885725310 FAILED. Original recovery39
+step87 SUCCESS; first-owner32 step88 executed3/3 PASS, then could not resolve the
+external scripts/proof include from the native test runner. Remaining29 were NOT
+REACHED, not passed or assertion failures. Exact named-step evidence is retained
+in the successor workspace; no raw CI credentials/customer data copied.
+
+The native test is now a deterministic self-contained artifact generated from
+`exp08-first-owner-native.template.sql` and the SAME original history/invitation
+candidate scripts. Template is byte-identical (canonical LF) to the previous32
+fixture. Only its four include lines expand to original candidate bytes/hash
+markers; all32 assertions and the single outer BEGIN/ROLLBACK are retained. New
+compiler --check enforces complete equality before the same Supabase test command.
+--self-test passes plan/include refusal and source-change detection. It never
+connects to a database or generates/applies a migration. No assertion or runtime
+source/permission was weakened; corrected full-schema execution is still PENDING.
+
+Actual released E04 main17e74cefc3382d0a67d240dd7a1005ec0bf56547 is now composed.
+Fresh production readback confirms native210004/220004/230004 and frontier230004;
+EXP08 recovery230008 remains absent in production. Original public grant/revoke
+bodies/ACL and work-profile1d99 source are unchanged. All19,464 incoming leaves
+outside the frozen EXP08-owned set are exact. The only overlapping merge is the
+Spine workflow; its complete incoming file is recovered by removing exactly the
+nine own recovery/first-owner path/step lines. All peer Finance steps are intact.
+Applied recovery carrier remains byte-identical SHA256b910f0b9d86da9900a7010a6f50a35f67c102e3ab85f91ce0a242e26be9ce83f.
+Managed Preview must now establish the actual new production prerequisite through
+its normal update path; no reset/renumber/history rewrite or blanket include-all.
+
+Separate unpublished owner work-profile/UI follow-up is preserved locally; it is
+not included to clear this failed gate. Its full original no-argument lifecycle
+proof completed exit0/878122ms with all incumbent groups, departure and isolated
+new work-profile controls. That is component engineering evidence, not native32,
+authenticated behavior or release clearance. Local UI31 controls pass; neighboring
+UI176PASS/1FAIL exposes a selection-lifetime regression still under repair, so
+that UI is unfinished/unreleased. Full original18+6/five journeys STILL CODING.

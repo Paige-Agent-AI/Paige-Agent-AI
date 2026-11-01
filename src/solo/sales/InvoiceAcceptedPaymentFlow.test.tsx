@@ -1,3 +1,4 @@
+import {withInvoiceFinancialFixture} from '../../../scripts/live-drive/harness/sales-invoice-lifecycle/fixture';
 // Actual original components and retained-record decoder; synthetic SDK ports.
 // No authenticated identity, native write, provider or settlement proof.
 import React,{act} from 'react';
@@ -11,7 +12,7 @@ vi.mock('../../../supabase/functions/_shared/sales-payments/accepted-obligation-
  const original=await importOriginal<typeof import('../../../supabase/functions/_shared/sales-payments/accepted-obligation-read')>();
  return{...original,readAcceptedInvoicePaymentPlan:(...args:Parameters<typeof original.readAcceptedInvoicePaymentPlan>)=>{const pending=original.readAcceptedInvoicePaymentPlan(...args);h.pending=pending;return pending}};
 });
-vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:h.rpc,functions:{invoke:h.invoke},auth:{
+vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:(name:string,args:Record<string,unknown>)=>Promise.resolve(h.rpc(name,args)).then(r=>({...r,data:name==='read_sales_invoice'?withInvoiceFinancialFixture(r.data):r.data})),functions:{invoke:h.invoke},auth:{
  getSession:async()=>({data:{session:{user:{id:'66666666-6666-4666-8666-666666666666'}}}}),
  onAuthStateChange:(callback:(event:string,session:{user:{id:string}}|null)=>void)=>{h.callbacks.add(callback);return{data:{subscription:{unsubscribe(){h.callbacks.delete(callback)}}}}},
 }}}));

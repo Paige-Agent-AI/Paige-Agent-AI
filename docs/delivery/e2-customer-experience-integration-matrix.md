@@ -4,13 +4,18 @@
 
 The same PRIMARY O06 retains its original saved-finding/run/source/reopen and
 ordinary-role/cohort acceptance. Its existing
-`supabase/tests/systems_check_source_integrity.sql` declares35 native assertions
-but was not invoked by the rebuilt-database workflow. The bounded correction
-wires that unchanged file through the existing `supabase test db`/pg_prove runner
-and includes its existing path in the main-push trigger. No assertion, fixture,
-denominator, authorization function, native grant, product UI or action changes.
+`supabase/tests/systems_check_source_integrity.sql` originally declared35 native
+assertions but was not invoked by the rebuilt-database workflow. Its first hosted
+run passed27 assertions, then correctly refused the legacy coach-fixture member;
+eight later assertions were not reached. The approved role-retirement contract
+`20270504000000_retire_title_role_from_functions.sql` grants no coach-title
+authority. The corrected fixture adds an explicit member-refusal assertion and
+uses the existing authorized admin for the original positive source-bound action.
+All original business/security assertions remain; plan35 becomes36. No production
+permission, function, grant, UI or action behavior changes. The existing canonical
+`supabase test db`/pg_prove runner and main-push path are reused.
 
-Functional: workflow wiring is local; actual35-assertion full-schema execution,
+Functional: corrected36-assertion full-schema execution,
 exact-head review/CI and release remain **PROOF OWED**. Visual: unchanged.
 Experiential: ordinary customer role/foreign/revoked/current-context and second
 authorized SOLO/reload/recovery proof remain owed; native fixtures do not replace

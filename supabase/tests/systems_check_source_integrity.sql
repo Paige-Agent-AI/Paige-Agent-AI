@@ -3,7 +3,7 @@
 
 BEGIN;
 
-SELECT plan(35);
+SELECT plan(36);
 
 SELECT ok(
   NOT has_table_privilege('authenticated', 'public.paige_systems_check_run', 'INSERT,UPDATE,DELETE'),
@@ -231,10 +231,14 @@ SELECT is((SELECT evidence->>'source' FROM public.paige_systems_check_finding WH
 
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000003","role":"authenticated"}', true);
+-- The retired coach title never grants permission (20270504000000). This legacy
+-- fixture is an ordinary member; keep its refusal before the authorized action case.
+SELECT ok(pg_temp.expect_approval_denied('tenant', 8100001, 'd1000000-0000-0000-0000-00000000f002'), 'legacy coach fixture member cannot approve a source-bound action');
+SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
 SELECT is(
   public.approve_systems_check_finding('tenant', 8100001, 'd1000000-0000-0000-0000-00000000f002') ->> 'action_status',
   'done',
-  'active tenant coach may approve a correctly source-bound remediation action'
+  'active tenant admin may approve a correctly source-bound remediation action'
 );
 
 RESET ROLE;

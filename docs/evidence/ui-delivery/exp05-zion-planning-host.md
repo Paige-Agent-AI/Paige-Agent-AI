@@ -53,3 +53,16 @@ provider/currentness and final post/recovery contracts remain. Existing foundati
 hold. Capabilities retain their current status; actual registered read is
 planning.list, with no operations.department Spine key verified. Full O01,
 same ZION/both chats, original ten/E5 and founder acceptance remain OPEN.
+
+November1 current candidate: actual E04 handback58ca8d6b and E08 ACK510f194f
+clear the original Planning custody hold. ORIGINAL #3087 now carries a closed
+raw-version source descriptor and native-validated canonical Planning-item Work
+links through the same stage/post/history path. This changes result availability
+and original-record navigation, not layout, identity, motion or approval UI.
+Host178 PASS; native original E08 fixture plus new source/revocation/rearm checks
+PASS as bounded engineering evidence only. Search revocation negative remains a
+RELEASE HOLD under exact requestaddb61da; no protected Search/CI edit before its
+receiving scope is clear. Native source is UNVERSIONED/INERT, no migration or
+production activation. Actual compatible desktop/narrow/keyboard/rendered link,
+reload, permissions and both-chat customer evidence remain UNVERIFIED. No new
+visual-quality, customer-outcome, catalogue-Live or founder-acceptance claim.

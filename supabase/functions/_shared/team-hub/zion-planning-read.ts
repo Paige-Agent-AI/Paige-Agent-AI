@@ -1,12 +1,13 @@
 // ZION's server-only composition of the EXISTING Planning definition/executor.
 // No host admission, new RPC, authorization store, model call or execution path.
-// E04 owns native source staging/currentness/history; its forward contract is
-// required before this preparation may publish a real ZION planning result.
+// Native source staging/currentness/history must accept the original source
+// binding before this preparation may disclose a real ZION planning result.
 import {
   mentorPlanReadTools, planReadArgumentsFor, readMentorPlan,
   type MentorPlanRead, type MentorPlanReadDeps, type MentorPlanScope,
 } from "./mentor-plan-read.ts";
 import { createWeeklyDraftDeadline } from "../paige-orchestration/weekly-draft-deadline.ts";
+import { captureZionPlanningSource, type ZionPlanningSource } from "./zion-planning-source.ts";
 
 export type ZionPlanningScope = MentorPlanScope & { agent: "zion"; where: "agent_dm" };
 export type ZionPlanningDeps = Omit<MentorPlanReadDeps, "isCurrent"> & {
@@ -14,9 +15,9 @@ export type ZionPlanningDeps = Omit<MentorPlanReadDeps, "isCurrent"> & {
   isCurrent: (scope: Readonly<ZionPlanningScope>) => Promise<boolean>;
   // Consume the host's ONE total private-read budget, never a per-tool reset.
   takeRead: () => boolean;
-  // Same original accepted turn/token and service-only native stage. No rows,
-  // credentials, private text or invented Work links belong in this callback.
-  stageReadContext: (scope: Readonly<ZionPlanningScope>) => Promise<boolean>;
+  // Same original accepted turn/token and service-only native stage. Only the
+  // closed original ID/version projection, never private text or authority.
+  stageReadContext: (scope: Readonly<ZionPlanningScope>, source: ZionPlanningSource) => Promise<boolean>;
 };
 
 const unavailable = (): MentorPlanRead => ({
@@ -65,6 +66,7 @@ export async function readZionPlans(scope: ZionPlanningScope, deps: ZionPlanning
     const within = createWeeklyDraftDeadline(5000, () => !retired && !deps.signal?.aborted);
     const current = () => within(() => deps.isCurrent(snapshot));
     let identity: string | null = null;
+    let source: ZionPlanningSource | null = null;
     try {
       if (await current() !== true || (initial && deps.takeRead() !== true)) return null;
       const read = await within(() => readMentorPlan(snapshot, {
@@ -76,6 +78,8 @@ export async function readZionPlans(scope: ZionPlanningScope, deps: ZionPlanning
           if (rpc !== "plan_list" || reply.error) return reply;
           // Preserve raw source versions and all nested facts before any await
           // can let a caller reuse/mutate its response object.
+          source = captureZionPlanningSource(snapshot, args, reply.data);
+          if (!source) return { data: null, error: { code: "42501" } };
           const data = structuredClone(reply.data);
           identity = JSON.stringify(data);
           return { ...reply, data };
@@ -85,8 +89,8 @@ export async function readZionPlans(scope: ZionPlanningScope, deps: ZionPlanning
         signal: deps.signal,
       }, name, args));
       if (read.model.success !== true) return { model: read.model, identity: null };
-      if (identity === null || await current() !== true
-        || await within(() => deps.stageReadContext(snapshot)) !== true
+      if (identity === null || source === null || await current() !== true
+        || await within(() => deps.stageReadContext(snapshot, source!)) !== true
         || await current() !== true) return null;
       return { model: read.model, identity };
     } catch { return null; }

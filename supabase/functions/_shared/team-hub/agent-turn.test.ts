@@ -136,7 +136,7 @@ function world(opts: Opts = {}) {
           ];
           case "plan_list": return opts.planListError
             ? { __rpc: { data: null, error: { message: "PLAN_FORBIDDEN" } } }
-            : (opts.planList ?? { plans: [{ id: PLAN_ROW, title: "Launch week", horizon: "week", items: [{ id: PLAN_ITEM, title: "Confirm venue", status: "not_started", due_at: "2026-10-30" }] }], loose_items: [] });
+            : (opts.planList ?? { plans: [{ id: PLAN_ROW, tenant_id: TENANT, updated_at: "2026-10-31T00:00:00.000001Z", title: "Launch week", horizon: "week", items: [{ id: PLAN_ITEM, tenant_id: TENANT, plan_id: PLAN_ROW, updated_at: "2026-10-31T00:00:00.000002Z", title: "Confirm venue", status: "not_started", due_at: "2026-10-30" }] }], loose_items: [] });
           case "current_user_tenant_id": return opts.tenantPin ?? TENANT;
           case "team_hub_post_agent_message": {
             postAttempt += 1;
@@ -1646,8 +1646,14 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
       assert.deepEqual(Object.keys(args).sort(), ["p_read_tools", "p_record_links", "p_token_hash", "p_turn_id"]);
       assert.equal(args.p_turn_id, TURN);
       assert.equal(args.p_token_hash, sha(TOKEN));
-      assert.deepEqual(args.p_read_tools, ["plan_list"]);
-      assert.deepEqual(args.p_record_links, [], "never invent an unsupported Planning link");
+      const [binding] = args.p_read_tools as any[];
+      assert.equal(binding.tool, "plan_list"); assert.equal(binding.version, 1);
+      assert.equal(binding.arguments.horizon, "week");
+      assert.equal(binding.source.plans[0].updated_at, "2026-10-31T00:00:00.000001Z");
+      assert.equal(binding.source.plans[0].items[0].updated_at, "2026-10-31T00:00:00.000002Z");
+      assert.ok(!JSON.stringify(binding).includes("Confirm venue"));
+      assert.deepEqual(args.p_record_links, [{ destination: "operations_work", record_id: PLAN_ITEM, record_kind: "planning_item" }],
+        "only original items use the existing typed Work route");
       return { ok: true };
     } });
     const m = model([{ tool_calls: [{ name: "plan_list", args: { horizon: "week" } }] }, { content: planningAnswer }]);
@@ -1846,7 +1852,7 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
   });
 
   it("a changed original Planning version during model work prevents publication under unchanged authority", async () => {
-    const source = { plans: [], loose_items: [{ id: TURN, tenant_id: TENANT, title: "Confirm venue",
+    const source = { plans: [], loose_items: [{ id: TURN, tenant_id: TENANT, plan_id: null, title: "Confirm venue",
       updated_at: "2026-10-31T00:00:00.000001Z" }] };
     const w = zionWorld({ planList: source }), m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }, { content: planningAnswer }]);
     const complete = m.make(w.calls); let round = 0;

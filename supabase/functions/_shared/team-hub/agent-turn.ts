@@ -69,7 +69,8 @@ import { meritServiceReadTools, readMeritService, type MeritServiceScope, type M
 import { curaServiceReadTools, readCuraServiceStanding } from "./cura-service-read.ts";
 import { readCalendarAccountShape, type CalendarBookingReadCaller } from "../calendar-booking-read.ts";
 import { mergeRecordLinks, type ReadRecordLink } from "../paige-turn/record-links.ts";
-import { readZionPlans, zionPlanReadTools, type ZionPlanningScope } from "./zion-planning-read.ts";
+import { readZionPlans, zionPlanReadTools, type ZionPlanningDeps, type ZionPlanningScope } from "./zion-planning-read.ts";
+import { zionPlanningRecordLinks } from "./zion-planning-source.ts";
 import { createWeeklyDraftDeadline } from "../paige-orchestration/weekly-draft-deadline.ts";
 
 // ---------------------------------------------------------------- the request
@@ -837,7 +838,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
       }) === true;
     } catch { return false; }
   };
-  const zionReadDeps = {
+  const zionReadDeps: ZionPlanningDeps = {
     caller, signal: deps.signal, isCurrent: currentZionScope,
     takeRead: () => {
       if (zionReadsUsed >= MAX_PRIVATE_READS) return false;
@@ -851,9 +852,9 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
           detail: { channel: "team_hub_agent", tool, read_only: true } });
       } catch { return false; }
     },
-    stageReadContext: async () => {
+    stageReadContext: async (_scope, source) => {
       const staged = await rpcSafe(service, "team_hub_stage_agent_read_context", {
-        p_turn_id: turnId, p_token_hash: hash, p_read_tools: ["plan_list"], p_record_links: [],
+        p_turn_id: turnId, p_token_hash: hash, p_read_tools: [source], p_record_links: zionPlanningRecordLinks(source),
       });
       return !!staged && !staged.error && object(staged.data)?.ok === true;
     },

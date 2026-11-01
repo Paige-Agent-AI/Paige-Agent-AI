@@ -7,18 +7,20 @@ import { readZionPlans, zionPlanReadTools, type ZionPlanningDeps, type ZionPlann
 const TENANT = "11111111-1111-4111-8111-111111111111";
 const ACTOR = "22222222-2222-4222-8222-222222222222";
 const PLAN = "55555555-5555-4555-8555-555555555555";
+const VERSION = "2026-10-31T00:00:00.000001Z";
 const scope = (): ZionPlanningScope => ({ agent: "zion", where: "agent_dm", tenantId: TENANT, actorId: ACTOR, storedTools: ["plan_list"] });
 function ports(over: Partial<ZionPlanningDeps> = {}) {
   const events: string[] = [], rpcArgs: Array<{ name: string; args?: Record<string, unknown> }> = [];
   const deps: { -readonly [K in keyof ZionPlanningDeps]: ZionPlanningDeps[K] } = {
     caller: { rpc: async (name, args) => {
       events.push(`rpc:${name}`); rpcArgs.push({ name, args });
-      return { data: name === "current_user_tenant_id" ? TENANT : { plans: [{ id: PLAN, title: "Prepare launch", items: [] }], loose_items: [] }, error: null };
+      return { data: name === "current_user_tenant_id" ? TENANT : { plans: [{ id: PLAN, tenant_id: TENANT, updated_at: VERSION, title: "Prepare launch", items: [] }], loose_items: [] }, error: null };
     } },
     isCurrent: async captured => { events.push("scope"); return captured.tenantId === TENANT && captured.actorId === ACTOR; },
     takeRead: () => { events.push("budget"); return true; },
     recordRead: async tool => { assert.equal(tool, "plan_list"); events.push("receipt"); return true; },
-    stageReadContext: async captured => { events.push("stage"); return captured.tenantId === TENANT; },
+    stageReadContext: async (captured, binding) => { events.push("stage"); assert.equal(binding.tool, "plan_list");
+      assert.equal(binding.source.plans[0]?.updated_at, VERSION); return captured.tenantId === TENANT; },
     ...over,
   };
   return { deps, events, rpcArgs };
@@ -72,6 +74,23 @@ describe("ZION reuses the original Planning reader behind current native publica
     assert.equal(await read.revalidate(), false);
   });
 
+  it("withholds missing, foreign or oversized source versions before pin, stage or model disclosure", async () => {
+    for (const raw of [
+      { plans: [{ id: PLAN, tenant_id: TENANT, title: "PRIVATE", items: [] }], loose_items: [] },
+      { plans: [{ id: PLAN, tenant_id: ACTOR, updated_at: VERSION, items: [] }], loose_items: [] },
+      { plans: [{ id: PLAN, tenant_id: TENANT, updated_at: VERSION, items: Array.from({ length: 120 }, (_, i) => ({
+        id: `33333333-3333-4333-8333-${String(i).padStart(12, "0")}`, tenant_id: TENANT, plan_id: PLAN, updated_at: VERSION,
+      })) }], loose_items: [] },
+    ]) {
+      const p = ports({ caller: { rpc: async () => ({ data: raw, error: null }) } });
+      const read = await readZionPlans(scope(), p.deps, "plan_list", {});
+      assert.equal(privateRows(read), false);
+      assert.ok(!p.events.includes("stage"));
+      assert.ok(!JSON.stringify(read.model).includes("PRIVATE"));
+      assert.equal(await read.revalidate(), false);
+    }
+  });
+
   it("keeps the original receipt refusal ahead of the domain RPC", async () => {
     const p = ports({ recordRead: async () => false });
     const read = await readZionPlans(scope(), p.deps, "plan_list", {});
@@ -102,8 +121,8 @@ describe("ZION reuses the original Planning reader behind current native publica
 
   it("requires the same original Planning source, including raw versions and nested facts, before publication", async () => {
     for (const change of ["version", "nested", "removed"] as const) {
-      const source = { plans: [{ id: PLAN, title: "Prepare launch", updated_at: "2026-10-31T00:00:00.000001Z",
-        items: [{ id: ACTOR, status: "open" }] }], loose_items: [] };
+      const source = { plans: [{ id: PLAN, tenant_id: TENANT, title: "Prepare launch", updated_at: VERSION,
+        items: [{ id: ACTOR, tenant_id: TENANT, plan_id: PLAN, updated_at: VERSION, status: "open" }] }], loose_items: [] };
       const p = ports();
       p.deps.caller = { rpc: async (name, args) => {
         p.rpcArgs.push({ name, args });
@@ -142,7 +161,7 @@ describe("ZION reuses the original Planning reader behind current native publica
   });
 
   it("retains the original source snapshot when the caller reuses a response object during staging", async () => {
-    const source = { plans: [{ id: PLAN, title: "Prepare launch", updated_at: "2026-10-31T00:00:00.000001Z", items: [] }], loose_items: [] };
+    const source = { plans: [{ id: PLAN, tenant_id: TENANT, title: "Prepare launch", updated_at: VERSION, items: [] }], loose_items: [] };
     const p = ports();
     p.deps.caller = { rpc: async name => ({ data: name === "current_user_tenant_id" ? TENANT : source, error: null }) };
     p.deps.stageReadContext = async () => { source.plans[0].updated_at = "2026-10-31T00:00:00.000002Z"; return true; };

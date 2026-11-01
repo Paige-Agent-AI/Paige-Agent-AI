@@ -1632,3 +1632,55 @@ not waived. operations.department stays PARTIAL; no capability/algorithm maturit
 promotion. ALG-01/08/11 reused, ALG-12/13 truthful limitations. Weekly execution,
 full automation lifecycle, both-chat ZION/recovery, all ten outcomes/E5-CV1–9
 and complete founder evaluation remain OPEN. STILL CODING / NOT_READY.
+
+
+## November 1 — original Planning custody received; native candidate still inert
+
+Actual E04 handback ANT51/58ca8d6b and E08 source ACK ANT11/510f194f
+clear the original guard/stage/necessary-history custody dependency. EXP05
+received it in ANT11/62e26c80 and continues the ORIGINAL #3087 branch, preserving
+all ten outcomes and E5-CV1–CV9. No competing lead, public RPC or Work writer.
+
+The host now passes a closed projection of original caller-JWT plan_list IDs,
+raw versions, original query and frozen roster to the SAME four-argument,
+service-only stage before model exposure. Existing typed Planning-item Work
+references are native-validated and survive later CRM staging. Private native
+validation compares current original rows; original post/list/serializer remain
+unchanged. Legitimate historical edits retain the original answer; revoked
+source access masks it. Original ended-turn rearm binds the new accepted token
+and fresh source without inheriting expired observations. No service plan_list,
+new grant, provider, scheduler, approval, execution or second source of truth.
+
+Engineering evidence: 178 host/source recording-port tests PASS; changed host
+and source modules pass cached Deno type checking. Existing E08 A2b assertions,
+16 mutants, P1 and uncapped admission controls run unchanged before the new
+native extension. Native source/ACL/metadata conservation, exact replay,
+20 original-query filter comparisons, raw microsecond version changes, foreign
+records, role/roster/expiry, typed links, mixed CRM, original post retry, rearm
+and later-history revocation controls PASS in the existing isolated local
+fixture. Its synthetic role ports are declared; managed full-schema, concurrent
+writers and ordinary customer proof are separate obligations.
+
+Release HOLD: a causally reproduced negative against exact original Search
+source d71b872a shows that a newly source-revoked Planning reply can still
+appear there. The finite additional search/CI source request is ANT11/addb61da
+and ANT147/5814a977. No protected Search or shared CI edit was taken before
+acknowledgment. The candidate SQL is UNVERSIONED/INERT under scripts/proof,
+not a deployable migration. Choose a genuinely free forward carrier only after
+actual lower-owner ordering/readback; no speculative slot or applied-history
+rewrite. Prior f790 CI/reviews are supporting history, not successor clearance.
+
+Orchestration Contract: original private asking message/accepted turn/token →
+planning.list read under asker JWT → original capability-read marker → native
+source stage → bounded model response → current native publication → SAME
+message/readback/history and canonical Work references. This is a read path,
+not a Layer C business effect or a business-execution Rail receipt.
+
+Functional: LOCAL SOURCE/PARTIAL PROOF; not merged/deployed/activated.
+Visual: existing approved interface preserved; compatible rendered evidence owed.
+Experiential: useful both-chat result, original record/receipt, reload/recovery,
+existing/new equivalent SOLO cohorts and full customer outcome remain OPEN.
+Founder acceptance: NOT_READY / NOT_ACCEPTED; 0/10 fully complete. O01 remains
+sole PRIMARY; O02 NEXT. ALG-01 has bounded reconciliation/source-version support;
+ALG-02/03/08/11/12/13 retain original maturity and proof gaps. Capabilities stay
+at their existing status; no Live promotion. No intermediate founder test.

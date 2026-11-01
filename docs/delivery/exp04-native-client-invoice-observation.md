@@ -901,3 +901,38 @@ Memory-to-Work permission inference, shared source takeover or activation.
 Final staging additionally caught a trailing blank at the new SQL file EOF; it
 was corrected before adoption. The original failed whitespace result is retained;
 no function body, authority, algorithm or test assertion changed for that repair.
+
+### C191 — Current financial screens and original decision review (local, INERT)
+
+O5 remains the sole primary; all original O1–O12 remain assigned and none has full customer/founder acceptance. Visible-Flow-Impact: yes.
+
+The original caller-JWT invoice read/list now negotiate financial evidence v3. A closed native summary distinguishes actual outstanding debt, refund owed, credits, human-recorded receipts, original LIVE confirmations, provider net after verified adjustments and separate TEST facts. Unknown standing is null, never zero. The unchanged private historical reader remains available to original journal/document consumers; public legacy reads preserve exact payloads only when their representation remains financially accurate, otherwise refuse/reload.
+
+The same original invoice history exposes a minimal per-original-payment decision context without opening the service-only observation reader or exposing provider secrets. Invoice register, saved-record focus, record inspection and the existing bounded invoice workspace consume native standing. New requests abstain on unknown debt. The original payment-history form now prepares an explicit debt/credit decision and exact reason, through the existing canonical approval dialog. That dialog inspects native v2 before/after debt and refund consequences, and requires an exact durable financial receipt before reporting success. The result row never replaces a fresh current-balance read. One-time share links survive that read and remain scoped to the original workspace/account/invoice.
+
+Orchestration contract:
+1. Event/request: owner inspects an original provider adjustment and chooses its financial treatment.
+2. Entry: existing Sales invoice records and canonical review dialog; Chat/Live/Hub are not newly admitted.
+3. Originals: paige_invoices, original payment/provider-operation/observation rows and paige_invoice_operations; existing sales_invoice.record_provider_disposition registration remains UNAVAILABLE.
+4. Execution: existing sales-invoice-command / Capability Kit / execute_sales_invoice_command governed path. No new event runtime or forced Layer C hop for reads/drafts.
+5. Authority: current ordinary actor JWT, original tenant guard, current membership/role, same invoice/customer and source-version binding.
+6. Approval: existing high-risk confirm action; exact native financial consequence retained with original fingerprint.
+7. Work/receipt: same immutable operation identity, original command journal and Rail capability-run receipt.
+8. Reconciliation: original observed provider evidence only; this decision makes no provider call, moves no funds and sends no notification.
+9. Recovery: stale sources refuse; unknown financial amounts remain unknown; lost acknowledgment retains/replays the original operation and validates its receipt.
+10. Display: source-backed current standing, separate evidence, exact review, original decision reference and truthful completion notice followed by current read.
+
+Verification: native selected-schema read suite 31 PASS, following existing disposition 55, collectibility/context 39 and manual allocation/reversal 27 PASS. The native run preserves original public OIDs, argument names/defaults, ACLs and authority; rejects foreign/revoked/anonymous/service access and private/public metadata drift; retains document/payment identities, exact observations and decision identity on replay. Fixture/table/identity/signing/provider ports are synthetic; no hosted Auth or real Stripe execution is established. Frozen original Deno graph check and scoped production ESLint pass. Focused UI/contract run: 244 PASS before the final share-link regression addition; final composed root run is separately recorded, never assumed green.
+
+Visual/interaction evidence uses the existing SOLO tokens, Geist typography, bounded invoice workspace, original scroll owners and canonical compact PAIGE overlay/fold behavior. Initial eight synthetic rendered states pass; complete required viewport/PAIGE review, final source review, hosted CI, native carrier/order, merge, deployment/readback and ordinary signed-in two-cohort QA remain separately owed. A real wrapped-textarea label defect was repaired. Attempts to click the background behind compact PAIGE were invalid test navigation, corrected to the original header fold action without changing the shared shell.
+
+E02 receiving requirement was posted to the original ANT-147 thread: listInvoiceRecords current native projection / nullable outstanding must be represented accurately in the existing Finance view. No Finance writer/UI file changed. Existing E09 bounded financial/header/currentness clearance remains; Portal, Collections, original document/Chat read contracts and exact accepted-installment target reads still require paired integration before O5 can close.
+
+ALG maturity is unchanged in the original register. ALG-01 reconciliation/idempotency and ALG-12 exception/recovery have bounded additional source proof, not production acceptance; the other original applicable algorithm gaps remain. No invented score, scheduler, payment ledger, provider adapter or approval engine.
+
+Review/release state: AUTHOR-REVIEW / LOWER ASSURANCE only until a genuine independent review is recorded; no author evidence is called non-author acceptance. This candidate is not a versioned native carrier or activation. The current Owner browser is signed out with one normal existing-account handoff pending; no credentials, memberships or workspace identities were changed.
+
+
+C191 rendered readback: all 16 cases PASS (eight states plus the eight required viewport/PAIGE paths); two additional 390px financial approval/recovery paths PASS. At <=1080px PAIGE is a foreground overlay; the original header fold control is used before returning to the retained invoice. No shared-shell edit or background force click. Scoped regression: original 22-file run retained 636 PASS/5 FAIL from outdated accepted-flow SDK fixtures; those same five original assertions pass after the fixture declares the new native projection. Final whole-run result remains separately recorded. Broad app tsc probe stopped without a result during constrained host memory and is not a PASS.
+
+C191 final source checks: all 642 tests across the original 22-file root set PASS. Earlier 636/5 failure is preserved, followed by the same five original accepted-flow assertions passing with the declared current SDK projection. Final local review remains AUTHOR-REVIEW / LOWER ASSURANCE; hosted exact-head CI and independent customer acceptance are not inferred.

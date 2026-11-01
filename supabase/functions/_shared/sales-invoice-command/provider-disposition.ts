@@ -72,3 +72,29 @@ export function providerDispositionResultMatches(value:unknown,command:SalesInvo
   &&review.outstanding_before_minor===review.outstanding_after_minor
   &&review.refund_payable_before_minor===review.refund_payable_after_minor;
 }
+
+export type ProviderPaymentFinancialReview=Readonly<{
+ provider_operation_id:string;observation_id:string|null;observation_version:number;disposition_version:number;
+ captured_minor:number;retained_minor:number|null;returned_minor:number|null;verification_pending:boolean;
+ commercial_review_required:boolean;credit_minor:number;decision_operation_id:string|null;decision_current:boolean;
+}>;
+/** Closed caller-visible context from the original invoice read, never service observation access. */
+export function readProviderPaymentFinancialReview(value:unknown,paymentId:unknown,captured:unknown):ProviderPaymentFinancialReview|null{
+ if(!value||typeof value!=='object'||Array.isArray(value))return null;
+ const r=value as Record<string,unknown>,fields=['provider_operation_id','observation_id','observation_version','disposition_version',
+  'captured_minor','retained_minor','returned_minor','verification_pending','commercial_review_required','credit_minor','decision_operation_id','decision_current'];
+ if(Object.keys(r).length!==fields.length||Object.keys(r).some(k=>!fields.includes(k))
+  ||r.provider_operation_id!==paymentId||typeof paymentId!=='string'||!UUID.test(paymentId)
+  ||r.captured_minor!==captured||!amount(captured)||Number(captured)<1
+  ||!Number.isSafeInteger(r.observation_version)||Number(r.observation_version)<0||Number(r.observation_version)>=Number.MAX_SAFE_INTEGER
+  ||!Number.isSafeInteger(r.disposition_version)||Number(r.disposition_version)<0||Number(r.disposition_version)>=Number.MAX_SAFE_INTEGER
+  ||typeof r.verification_pending!=='boolean'||typeof r.commercial_review_required!=='boolean'||typeof r.decision_current!=='boolean'
+  ||!amount(r.credit_minor)||Number(r.credit_minor)>Number(captured))return null;
+ if(r.observation_version===0?r.observation_id!==null:typeof r.observation_id!=='string'||!UUID.test(r.observation_id))return null;
+ if(r.disposition_version===0?r.decision_operation_id!==null||r.credit_minor!==0||r.decision_current!==false:
+  typeof r.decision_operation_id!=='string'||!UUID.test(r.decision_operation_id))return null;
+ if(r.decision_current&&r.observation_version===0)return null;
+ if(r.verification_pending?r.retained_minor!==null||r.returned_minor!==null:
+  !amount(r.retained_minor)||!amount(r.returned_minor)||Number(r.retained_minor)+Number(r.returned_minor)!==captured)return null;
+ return Object.freeze({...r}) as ProviderPaymentFinancialReview;
+}

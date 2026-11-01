@@ -10,6 +10,7 @@ if(process.argv.includes('--provider-cash-position'))assert(process.argv.include
 if(process.argv.includes('--provider-disposition'))assert(process.argv.includes('--provider-cash-position')&&process.argv.includes('--accepted-obligation-writers'),'financial disposition requires original cash and accepted-writer proof');
 if(process.argv.includes('--financial-collectibility'))assert(process.argv.includes('--provider-disposition'),'financial collectibility requires the original decision proof');
 if(process.argv.includes('--manual-financial'))assert(process.argv.includes('--financial-collectibility'),'manual financial proof requires the original current financial context');
+if(process.argv.includes('--actual-financial-read'))assert(process.argv.includes('--manual-financial'),'actual financial read proof requires the original manual/current financial proof');
 let database='postgres';
 const args=()=>['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-v','ON_ERROR_STOP=1','-At'];
 const run=sql=>{const p=spawnSync(binary,args(),{input:sql,encoding:'utf8',maxBuffer:4e6,windowsHide:true});if(p.status!==0)throw Error(p.stderr);return p.stdout.trim();};
@@ -613,6 +614,12 @@ if(process.argv.includes('--manual-financial')){
  const result=await proveManualFinancial({run,read,execute,actor,tenant,client,invoice,otherTenant});
  writeFileSync(new URL('../../work/sales-manual-financial-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
  console.log('SALES_MANUAL_FINANCIAL_PASS: '+JSON.stringify({...result,samples:undefined}));
+}
+if(process.argv.includes('--actual-financial-read')){
+ const {proveActualFinancialRead}=await import('./sales-actual-financial-read-proof.mjs');
+ const result=proveActualFinancialRead({run,read,actor,tenant,client,invoice,otherTenant});
+ writeFileSync(new URL('../../work/sales-actual-financial-read-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+ console.log('SALES_ACTUAL_FINANCIAL_READ_PASS: '+JSON.stringify({...result,samples:undefined}));
 }
  run(`UPDATE paige_invoices SET status='void' WHERE id='${invoice}';`);
  assert.equal(publicRequest(),null,'void invoice bearer refused');

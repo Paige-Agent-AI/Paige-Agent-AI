@@ -1,3 +1,4 @@
+import {withInvoiceFinancialFixture} from '../../../scripts/live-drive/harness/sales-invoice-lifecycle/fixture';
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -9,7 +10,7 @@ const h = vi.hoisted(() => ({
   authChanged: null as null | ((event: string, session: { user: { id: string } } | null) => void),
 }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {
-  rpc: h.rpc,
+  rpc:(name:string,args:Record<string,unknown>)=>Promise.resolve(h.rpc(name,args)).then(r=>({...r,data:name==='read_sales_invoice'?withInvoiceFinancialFixture(r.data):r.data})),
   auth: {
     getSession: async () => ({ data: { session: h.actor ? { user: { id: h.actor } } : null } }),
     onAuthStateChange: (callback: typeof h.authChanged) => {

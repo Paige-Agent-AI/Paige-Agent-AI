@@ -180,3 +180,8 @@
 .sb-focused-invoice>.sb-panel{min-height:0;overflow:auto}
 .sb-focused-invoice .sb-paper{overflow-wrap:anywhere}
 .sb-focused-invoice>.sb-detail-grid>.sb-panel>button{margin:18px}
+
+/* Source-backed actual debt; refunds and historical provider totals remain distinct. */
+.sb-financial-standing{padding:4px 0 16px;border-bottom:1px solid var(--border)}.sb-financial-standing h3{font-size:16px;font-weight:600;margin:0 0 16px}.sb-financial-standing dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 20px;margin:0}.sb-financial-standing dt,.sb-financial-standing dd{margin:0;line-height:1.5}.sb-financial-standing dd{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;overflow-wrap:anywhere}.sb-financial-standing p{max-width:65ch;line-height:1.6;margin:16px 0}.sb-financial-standing .btn{min-height:44px}.sb-financial-standing .sb-financial-evidence{padding-top:16px}.sb-financial-standing .sb-financial-evidence dl{font-size:13px}@media(max-width:420px){.sb-financial-standing dl{column-gap:12px}.sb-financial-standing dd{max-width:140px}}
+
+.sb-financial-decision{padding:16px 0;border-top:1px solid var(--border)}.sb-financial-decision form{display:grid;gap:16px}.sb-financial-decision fieldset{border:0;padding:0;margin:0;min-width:0;display:grid;gap:8px}.sb-financial-decision legend{font-weight:600;margin-bottom:8px}.sb-financial-decision fieldset label{display:flex;flex-direction:row;align-items:center;gap:12px;min-height:44px}.sb-financial-decision input[type=radio]{width:18px;height:18px;min-height:0;flex-shrink:0;accent-color:var(--violet)}.sb-financial-decision .btn{min-height:44px}

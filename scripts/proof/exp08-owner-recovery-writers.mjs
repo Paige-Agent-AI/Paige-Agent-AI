@@ -7,14 +7,14 @@ import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 assert.equal(process.env.EXP08_DISPOSABLE,'1');
 assert.ok(['127.0.0.1','localhost','::1'].includes(process.env.PGHOST));
 assert.match(process.env.PGPORT??'',/^\d+$/);
-assert.ok(process.argv.slice(2).every(x=>x==='--baseline-02126')&&process.argv.length<=3,'Unknown proof option');
+assert.ok(process.argv.slice(2).every(x=>['--baseline-02126','--baseline-notice-order'].includes(x))&&process.argv.length<=3,'Unknown proof option');
 const baseline=process.argv.includes('--baseline-02126');
 const historical=baseline?spawnSync('git',['show','02126ee52:scripts/proof/exp08-owner-recovery-writers.sql'],{encoding:'utf8',windowsHide:true}):null;
 if(historical)assert.equal(historical.status,0,historical.stderr);
 const candidate=historical?.stdout??readFileSync(new URL('./exp08-owner-recovery-writers.sql',import.meta.url),'utf8');
 const source=name=>readFileSync(new URL('../../supabase/migrations/'+name,import.meta.url),'utf8');
 function original(file,name,argumentPrefix=''){
- const s=source(file),a=s.indexOf('CREATE OR REPLACE FUNCTION public.'+name+'('+argumentPrefix);
+ const s=source(file),a=s.toLowerCase().indexOf(('CREATE OR REPLACE FUNCTION public.'+name+'('+argumentPrefix).toLowerCase());
  assert.ok(a>=0,name);const tail=s.slice(a),tag=tail.match(/AS\s+(\$[a-z_]*\$)/i);
  assert.ok(tag,name);const end=tail.indexOf(tag[1]+';',tag.index+tag[0].length);
  assert.ok(end>0,name);return tail.slice(0,end+tag[1].length+1).replace(/\r\n/g,'\n');
@@ -40,7 +40,7 @@ function session(input){
  const p=spawn(db.psql,db.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});
  let out='',err='';p.stdout.on('data',d=>{out+=d;});p.stderr.on('data',d=>{err+=d;});
  const done=new Promise((resolve,reject)=>{p.on('error',reject);p.on('close',code=>resolve({code,out,err}));});
- p.stdin.write(input+'\n');return {p,done,out:()=>out};
+ p.stdin.write(input+'\n');return {p,done,out:()=>out,err:()=>err};
 }
 async function until(predicate){
  const deadline=Date.now()+10000;
@@ -91,14 +91,14 @@ try{
  END$$;
  CREATE SCHEMA auth;
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('test.actor',true),'')::uuid$$;
- CREATE TYPE public.app_role AS ENUM('super_admin','platform_admin','admin');
+ CREATE TYPE public.app_role AS ENUM('super_admin','platform_admin','admin','user','developer');
  CREATE TYPE public.tenant_role AS ENUM('owner','admin','member');
- CREATE TABLE auth.users(id uuid PRIMARY KEY,deleted_at timestamptz,banned_until timestamptz);
+ CREATE TABLE auth.users(id uuid PRIMARY KEY,email text UNIQUE,deleted_at timestamptz,banned_until timestamptz);
  CREATE TABLE public.user_roles(user_id uuid,role public.app_role,PRIMARY KEY(user_id,role));
  CREATE TABLE public.tenants(id uuid PRIMARY KEY,name text DEFAULT 'Synthetic business',owner_user_id uuid,account_type text,archived_at timestamptz,company boolean DEFAULT false,
  platform_fee_bps integer,parent_tenant_id uuid,stripe_customer_id text,stripe_subscription_id text);
- CREATE TABLE public.tenant_members(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,user_id uuid,is_owner boolean,status text,
- role public.tenant_role DEFAULT 'member',business_owner_id uuid,updated_at timestamptz DEFAULT now());
+ CREATE TABLE public.tenant_members(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,user_id uuid,is_owner boolean,status text,
+ role public.tenant_role DEFAULT 'member',business_owner_id uuid,updated_at timestamptz DEFAULT now(),joined_at timestamptz DEFAULT now(),UNIQUE(tenant_id,user_id));
  CREATE TABLE public.paige_audit_log(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),actor_user_id uuid,actor_role text,
  action text NOT NULL,target_type text,target_id uuid,payload jsonb NOT NULL DEFAULT '{}',tenant_id uuid,
  created_at timestamptz NOT NULL DEFAULT now());
@@ -444,6 +444,105 @@ try{
  assert.equal(scalar(`SELECT count(*) FROM public.paige_audit_log WHERE id='${failed}'`),'0');
  results.push({case:'late native notice failure rolls back pointer, domain/recovery audits and all notices together',passed:true});
  db.run('DROP TRIGGER fixture_notice_failure ON public.notifications;DROP FUNCTION public.fixture_notice_failure()');
+ // Original107 before real released remover/notice-reader lock composition.
+ db.run(`CREATE TABLE public.audit_logs(user_id uuid,entity text,action text,entity_id uuid,data jsonb);
+ CREATE TABLE public.app_settings_owner(owner_email text);
+ CREATE FUNCTION public.is_platform_admin(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
+ CREATE FUNCTION public.agency_can_manage_child(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
+ CREATE FUNCTION public.agency_team_role(uuid,uuid) RETURNS text LANGUAGE sql AS $$SELECT NULL::text$$;
+ ${original('20260714144656_tier_rail_phaseB_agency_standing.sql','current_user_tenant_id')}
+ ${original('20270509000000_nothing_reads_the_retired_title_role.sql','map_tenant_role_to_app_role')}
+ ${original('20271115040008_exp08_team_lifecycle.sql','sync_tenant_member_to_user_roles')}
+ ${original('20251020145501_8b37061e-d124-4d12-9907-7b62f110979b.sql','prevent_owner_admin_removal')}
+ ${original('20271115040008_exp08_team_lifecycle.sql','remove_solo_team_member')}
+ REVOKE ALL ON FUNCTION public.remove_solo_team_member(uuid,uuid) FROM PUBLIC,anon,service_role;
+ GRANT EXECUTE ON FUNCTION public.remove_solo_team_member(uuid,uuid) TO authenticated;
+ REVOKE ALL ON FUNCTION public.sync_tenant_member_to_user_roles(),public.prevent_owner_admin_removal() FROM PUBLIC,anon,authenticated,service_role;
+ GRANT EXECUTE ON FUNCTION public.sync_tenant_member_to_user_roles(),public.prevent_owner_admin_removal() TO service_role;`);
+ await db.exec(source('20271126140008_exp08_departure_currentness.sql'));
+ assert.equal(scalar("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.remove_solo_team_member(uuid,uuid)'::regprocedure"),'cc631b7a8e2f6dc0bb711118493e62ae');
+ db.run(`CREATE TRIGGER fixture_original_role_sync AFTER INSERT OR UPDATE OR DELETE ON public.tenant_members
+ FOR EACH ROW EXECUTE FUNCTION public.sync_tenant_member_to_user_roles();
+ CREATE TRIGGER fixture_original_role_protection BEFORE UPDATE OR DELETE ON public.user_roles
+ FOR EACH ROW EXECUTE FUNCTION public.prevent_owner_admin_removal();`);
+ if(process.argv.includes('--baseline-notice-order')){
+  const old=spawnSync('git',['show','d580be7e9:scripts/proof/exp08-owner-recovery-writers.sql'],{encoding:'utf8',windowsHide:true});
+  assert.equal(old.status,0,old.stderr);
+  const fn=old.stdout.match(/CREATE OR REPLACE FUNCTION public\._exp08_read_recovery_notice\([\s\S]*?\$function\$;/);
+  assert.ok(fn);db.run(fn[0]);
+ }
+ const removeCall=target=>`SELECT public.remove_solo_team_member('${target}','${tenant}')`;
+ const identityPrefix=who=>`SELECT set_config('test.actor','${who}',false);`;
+ function removalFixture(id){
+  reset();db.run('TRUNCATE public.audit_logs');
+  db.run(`INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status,role) VALUES('${tenant}','${holder}',false,'active','member')`);
+  const result=JSON.parse(scalar(apply(id,'grant_owner')));
+  db.run(`INSERT INTO public.tenant_members(tenant_id,user_id,is_owner,status,role) VALUES('${tenant}','${actor}',true,'active','owner')`);
+  return result.receipt.notices.find(x=>x.user_id===holder).notification_id;
+ }
+ {
+  const notice=removalFixture('e8000000-0000-4000-8000-000000092011');
+  db.run(`UPDATE public.tenant_members SET is_owner=false,role='member' WHERE tenant_id='${tenant}' AND user_id='${holder}'`);
+  const lock=`hashtextextended('exp08_notice_removal_barrier:${db.database}',0)`;
+  db.run(`CREATE FUNCTION public.fixture_remove_barrier() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN
+  IF OLD.user_id='${holder}' THEN RAISE NOTICE 'exp08_original_removal_member_held';PERFORM pg_advisory_xact_lock(${lock});END IF;
+  RETURN OLD;END$$;
+  CREATE TRIGGER fixture_remove_barrier BEFORE DELETE ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public.fixture_remove_barrier()`);
+  const barrier=session(`BEGIN;SELECT pg_advisory_xact_lock(${lock});SELECT 'exp08_remove_barrier_ready';`);
+  let remover,reader;
+  try{
+   await until(()=>barrier.out().includes('exp08_remove_barrier_ready'));
+   remover=session(`${identityPrefix(actor)}${removeCall(holder)};`);remover.p.stdin.end();
+   await until(()=>remover.err().includes('exp08_original_removal_member_held'));
+   const name='exp08_notice_removal_reader_'+Date.now();
+   reader=session(`SET application_name='${name}';${identityPrefix(holder)}SELECT public._exp08_read_recovery_notice('${tenant}','${notice}');`);reader.p.stdin.end();
+   await until(()=>scalar(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='${name}' AND wait_event_type='Lock' AND cardinality(pg_blocking_pids(pid))>0)`)==='t');
+   barrier.p.stdin.end('COMMIT;\n');assert.equal((await barrier.done).code,0);
+   const [removed,readResult]=await Promise.all([remover.done,reader.done]);
+   console.log(JSON.stringify({phase:'original-removal-before-notice-read',removerCode:removed.code,readerCode:readResult.code,removerError:removed.err.trim(),readerError:readResult.err.trim()}));
+   assert.equal(removed.code,0,removed.err);assert.notEqual(readResult.code,0);
+   assert.match(readResult.err,/OWNER_RECOVERY_NOTICE_UNAVAILABLE/);assert.doesNotMatch(removed.err+readResult.err,/deadlock detected|40P01/);
+   assert.equal(scalar(`SELECT count(*) FROM public.tenant_members WHERE tenant_id='${tenant}' AND user_id='${holder}'`),'0');
+   assert.equal(scalar(`SELECT active_tenant_id IS NULL FROM public.profiles WHERE user_id='${holder}'`),'t');
+   assert.equal(scalar('SELECT count(*) FROM public.audit_logs'),'1');
+   results.push({case:'actual released remover first completes original profile cleanup; waiting stale notice read refuses without deadlock',passed:true});
+  }finally{
+   if(!barrier.p.stdin.destroyed)barrier.p.stdin.end('ROLLBACK;\n');await barrier.done;
+   for(const c of [remover,reader].filter(Boolean)){if(!c.p.stdin.destroyed)c.p.stdin.end();await c.done;}
+   db.run('DROP TRIGGER fixture_remove_barrier ON public.tenant_members;DROP FUNCTION public.fixture_remove_barrier()');
+  }
+ }
+ {
+  const notice=removalFixture('e8000000-0000-4000-8000-000000092014');
+  const reader=session(`BEGIN;${identityPrefix(holder)}SELECT public._exp08_read_recovery_notice('${tenant}','${notice}');SELECT 'exp08_notice_read_held';`);
+  let remover;
+  try{
+   await until(()=>reader.out().includes('exp08_notice_read_held'));
+   const name='exp08_notice_owner_remover_'+Date.now();
+   remover=session(`SET application_name='${name}';${identityPrefix(actor)}${removeCall(holder)};`);remover.p.stdin.end();
+   await until(()=>scalar(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='${name}' AND wait_event_type='Lock' AND cardinality(pg_blocking_pids(pid))>0)`)==='t');
+   reader.p.stdin.end('COMMIT;\n');assert.equal((await reader.done).code,0);
+   const r=await remover.done;assert.notEqual(r.code,0);assert.match(r.err,/an owner cannot be removed/);assert.doesNotMatch(r.err,/deadlock detected|40P01/);
+   results.push({case:'notice reader first completes legitimate owner read; actual remover then retains original owner refusal without deadlock',passed:true});
+  }finally{if(!reader.p.stdin.destroyed)reader.p.stdin.end('ROLLBACK;\n');await reader.done;if(remover){if(!remover.p.stdin.destroyed)remover.p.stdin.end();await remover.done;}}
+ }
+ for(const readerFirst of [true,false]){
+  reset();seat();db.run('TRUNCATE public.audit_logs');
+  db.run(`INSERT INTO auth.users(id) VALUES('${former}');INSERT INTO public.profiles VALUES('${former}','${tenant}')`);
+  db.actor='';db.run(`UPDATE public.tenants SET owner_user_id='${former}' WHERE id='${tenant}'`);db.actor=actor;
+  const id=readerFirst?'e8000000-0000-4000-8000-000000092012':'e8000000-0000-4000-8000-000000092013';
+  const result=JSON.parse(scalar(apply(id)));const notice=result.receipt.notices.find(x=>x.user_id===former).notification_id;
+  const readSQL=`${identityPrefix(former)}SELECT public._exp08_read_recovery_notice('${tenant}','${notice}');`;
+  const removeSQL=`${identityPrefix(holder)}${removeCall(former)};`;
+  const first=session((readerFirst?'BEGIN;':'')+(readerFirst?readSQL:removeSQL)+(readerFirst?"SELECT 'exp08_former_read_held';":''));
+  let second;
+  try{
+   if(readerFirst){await until(()=>first.out().includes('exp08_former_read_held'));second=session(removeSQL);second.p.stdin.end();const r=await second.done;assert.notEqual(r.code,0);assert.match(r.err,/not on this workspace/);assert.doesNotMatch(r.err,/deadlock detected|40P01/);first.p.stdin.end('COMMIT;\n');assert.equal((await first.done).code,0);}
+   else{first.p.stdin.end();const r=await first.done;assert.notEqual(r.code,0);assert.match(r.err,/not on this workspace/);second=session(readSQL);second.p.stdin.end();const readResult=await second.done;assert.equal(readResult.code,0,readResult.err);}
+   assert.equal(scalar(`SELECT active_tenant_id='${tenant}'::uuid FROM public.profiles WHERE user_id='${former}'`),'t');
+   results.push({case:'holder without seat '+(readerFirst?'reader first':'original remover first')+' retains scoped event and original not-on-team refusal without profile change',passed:true});
+  }finally{if(!first.p.stdin.destroyed)first.p.stdin.end('ROLLBACK;\n');await first.done;if(second){if(!second.p.stdin.destroyed)second.p.stdin.end();await second.done;}}
+ }
  console.log(JSON.stringify({source:baseline?'historical02126':'current candidate',scope:'LOCAL private recovery, durable audit/in-app notices and read-now detail; public RPC, mounted UI, email and Billing-dependent revoke NOT implemented',
   ports:'Auth uid/minimal tables/is_company_workspace/is_tenant_owner; original super-admin/I1 holder-state/eligibility source reused',
   candidateSha256:createHash('sha256').update(candidate).digest('hex'),cases:results},null,2));

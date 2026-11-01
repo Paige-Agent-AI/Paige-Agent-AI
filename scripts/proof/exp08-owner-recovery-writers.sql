@@ -320,11 +320,13 @@ BEGIN
   PERFORM 1 FROM auth.users WHERE id=actor AND deleted_at IS NULL
     AND (banned_until IS NULL OR banned_until<=statement_timestamp()) FOR SHARE;
   IF NOT FOUND THEN RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';END IF;
-  PERFORM 1 FROM public.profiles WHERE user_id=actor AND active_tenant_id=_expected_tenant FOR SHARE;
-  IF NOT FOUND THEN RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';END IF;
   SELECT jsonb_build_object('id',m.id,'status',m.status,'is_owner',m.is_owner,'role',m.role,'updated_at',m.updated_at),
     m.is_owner AND m.status='active' INTO member_state,active_owner FROM public.tenant_members m
     WHERE tenant_id=_expected_tenant AND user_id=actor FOR SHARE;
+  -- Original removal locks membership before clearing this same profile pointer.
+  -- Even an eventually refused stale reader must retain that order.
+  PERFORM 1 FROM public.profiles WHERE user_id=actor AND active_tenant_id=_expected_tenant FOR SHARE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';END IF;
   SELECT name INTO business_name FROM public.tenants WHERE id=_expected_tenant AND archived_at IS NULL FOR SHARE;
   IF NOT FOUND OR public._solo_shell_tenant(_expected_tenant) IS DISTINCT FROM true THEN
     RAISE EXCEPTION 'OWNER_RECOVERY_NOTICE_UNAVAILABLE' USING ERRCODE='42501';

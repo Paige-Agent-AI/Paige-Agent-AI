@@ -2331,3 +2331,30 @@ composition, public wrapper/detail host/bell admission/mark-read and E03 email
 receipt integration remain required. No fire_team_event/provider dispatch or new
 sender/runtime/ledger. E02 effect-binding ABI is unchanged; revoke still unavailable.
 Full original assignment **STILL CODING**, no new release or owner-review readiness.
+
+Distinct SOURCE-ONLY review ofd580 found P2: the detail reader's profile-before-
+membership order inverted the original member remover's membership-before-profile
+cleanup. Preserved d580 source GENUINELY deadlocks against the real released
+remover in the new regression, raw `exp08-owner-recovery-notice-removal-baseline.log`
+SHA256 `7e028876bc925760f097c1b6255c5c2d322a6b3dcbfc7fc3f11b931f18d4f400`.
+This is an inert local source finding, not a production incident. No assertion
+or source guard was waived; the corrected reader locks membership before profile
+and checks the actual current workspace after its wait.
+
+Original107 controls stay before four native composition cases, final111 PASS.
+The test loads the ORIGINAL remover plus actual released140008 carrier and checks
+its production bodycc631b7a. Original role-map/sync/protection functions and real
+triggers run; Auth/table/company/owner/agency standing remain explicit ports.
+An actual membership-before-profile barrier makes removal-first finish cleanup
+while the stale read refuses without deadlock. Reader-first completes a legitimate
+owner read and preserves the original remover's owner refusal. Both orders of the
+original holder-without-seat case retain its scoped event and the original
+not-on-team refusal without clearing a nonexistent seat's profile. No copied
+remover, new writer, new schema/runtime or production effect; all fixtures disposed.
+
+Final raw `exp08-owner-recovery-notice-removal-final.log` SHA256
+`25fd57aac3721be8563bccb64bc22b99a3df857aabb357c53ac35e10382e2ec3`;
+candidate SHA256 `d4ef55fcd5c78acc3c42214c0727d0bcca3da943d26cd0487c10401985f9e9c2`.
+Source review renewal is owed. The earlier107 PASS remains historical and does not
+prove this lock composition. Other full-native/lifecycle/privacy/metadata/reader/
+receiver/public-door and complete assignment requirements remain unchanged.

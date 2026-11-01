@@ -3062,3 +3062,12 @@ those incoming files are composed normally. Unfinished work-profile/UI follow-up
 remains separate and unpublished. Full original18+6/five journeys STILL CODING.
 
 Final selected ACL replay log SHA256: `d7cdec7c00461dd8e3a151ae98d448dceb0122e13a4846025ee07257cfcd9362`.
+
+
+### Native32 original revocation overload repair — November 1
+
+Exact published ce6826dfec2fa085ab746654a19de8dfd22ae42f database job124898344576 ran recovery39 SUCCESS and all first-owner32 assertions:29 PASS/3 FAIL. Test12 failed PostgreSQL42725 because an untyped one-argument revoke_platform_access call is ambiguous;13/18 correctly then failed because the original revocation never occurred. No infrastructure attribution or assertion waiver.
+
+Actual catalogue read preserves BOTH original revoke_platform_access(uuid) and revoke_platform_access(uuid,text DEFAULT NULL) writers (body MD5 0fb5624c04e4d170f3e0826b8b9cfa52 and f0686e66877bd31bc8c1d8b905cac643). A no-effect disposable parser control reproduced that a single UUID cast is STILL ambiguous; explicit UUID,NULL::text resolves the actual two-argument writer. Only the original R16 fixture call and deterministically generated artifact change. Authority, audit effects, both deployed writers and every32 assertion remain unchanged. Canonical --check and packaging --self-test PASS; replacement exact-head full-schema32 remains UNVERIFIED until hosted execution. No native migration/source/ACL/history rewrite, activation or customer proof.
+
+Local scoped work-profile source is preserved separately on its original local branch; it is NOT bundled into this release repair. Required exact-head review/CI/Preview/merge/deployment/readback and the entire original experience remain open. STILL CODING.

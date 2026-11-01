@@ -1,8 +1,9 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useOwnerTaskAutomations } from "./data/useOwnerTaskAutomations";
 import { OwnerTaskProcessHistory } from "./owner-task-process-history";
-import type { OwnerTaskReview } from "./data/ownerTaskAutomation";
+import { OwnerTaskPurposeEditor } from './owner-task-purpose-editor';
+import { reviewedOwnerTaskRevision, type OwnerTaskReview, type OwnerTaskRevision } from "./data/ownerTaskAutomation";
 
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 /** Presentation guard only; the native writer independently validates every reviewed byte. */
@@ -21,7 +22,7 @@ function reviewableOwnerTask(r: OwnerTaskReview): boolean {
   });
 }
 /** Display only known literal task fields; this never admits an execution. */
-function SavedProcessDesign({ review }: { review: OwnerTaskReview }) {
+function SavedProcessDesign({ review, renderEdit }: { review: OwnerTaskReview; renderEdit?: (step: Record<string,unknown>) => ReactNode }) {
   const literal = (value: unknown, limit: number): value is string => {
     if (typeof value !== "string" || value.length > limit * 2) return false;
     const chars = [...value];
@@ -53,6 +54,7 @@ function SavedProcessDesign({ review }: { review: OwnerTaskReview }) {
             {config && "description" in config && description === null && <p>Saved description needs review.</p>}</>
             : <p>Literal task details need review. No ready task is inferred.</p>}
         {extra && <p>Additional saved settings are not displayed. This preview does not verify their execution support.</p>}
+        {renderEdit?.(step)}
       </li>;
     })}</ol>
     {review.acts.length > steps.length && <p>{review.acts.length - steps.length} additional saved {review.acts.length - steps.length === 1 ? "step is" : "steps are"} not shown. Review the complete process before making a decision.</p>}
@@ -68,7 +70,10 @@ function stateWords(r: OwnerTaskReview): string {
 }
 const feedbackWords = (feedback: NonNullable<ReturnType<typeof useOwnerTaskAutomations>["feedback"]>) => {
   switch (feedback.result.status) {
-    case "saved": return feedback.action === "arm" ? "Enabled for future contacts. No task was created. Refresh to read the current configuration."
+    case "saved": return feedback.action === 'revise_step' ? feedback.result.revision?.changed
+      ? 'Task purpose saved. Nothing was enabled or executed. Refresh to read the original configuration.'
+      : 'No changes were needed. Refresh to read the original configuration.'
+      : feedback.action === "arm" ? "Enabled for future contacts. No task was created. Refresh to read the current configuration."
       : "Paused for future contacts. Existing approvals and completed tasks remain. Refresh to read the current configuration.";
     case "unknown": return "The outcome could not be confirmed. The process may have changed. Refresh before making another decision.";
     case "stale": return "This process changed since you reviewed it. Refresh and review the current version.";
@@ -83,6 +88,9 @@ export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuard
   const a = useOwnerTaskAutomations(), id = useId(), { pathname } = useLocation();
   const base = pathname.match(/^(\/solo\/[^/]+)(?:\/|$)/)?.[1];
   const [review, setReview] = useState<{ item: OwnerTaskReview; scope: string } | null>(null);
+  const [edit,setEdit] = useState<{item:OwnerTaskReview;actId:string;scope:string}|null>(null);
+  const [proposal,setProposal] = useState<{scope:string;processId:string;revision:OwnerTaskRevision}|null>(null);
+  const restoreEdit = useRef<HTMLButtonElement|null>(null);
   const historySourceRef = useRef<HTMLButtonElement | null>(null);
   const closeHistory = () => {
     a.closeHistory();
@@ -100,12 +108,17 @@ export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuard
   const sourceRef = useRef<HTMLButtonElement | null>(null), scopeRef = useRef(a.scopeKey);
   scopeRef.current = a.scopeKey;
   const selected = review?.scope === a.scopeKey && a.read.status === "ready" && a.read.items.includes(review.item) && !a.needsRefresh ? review.item : null;
+  const editing = edit?.scope === a.scopeKey && a.read.status === 'ready' && a.read.items.includes(edit.item) && !a.needsRefresh ? edit : null;
+  const retained = proposal?.scope === a.scopeKey && a.read.status === 'ready' && a.read.items.some(r=>r.id===proposal.processId) ? proposal : null;
+  useEffect(()=>{setEdit(null);setProposal(null);restoreEdit.current=null;},[a.scopeKey]);
+  useLayoutEffect(()=>{if(!editing && !a.busy && restoreEdit.current?.isConnected){restoreEdit.current.focus();restoreEdit.current=null;}},[editing,a.busy]);
   useLayoutEffect(() => {
     const reason = a.busy ? "Wait for the current process decision to finish."
+      : editing ? 'Save or cancel your task changes before leaving.'
       : selected ? "Finish or cancel the process review before leaving." : null;
     onNavigationGuardChange?.(() => reason);
     return () => onNavigationGuardChange?.(null);
-  }, [a.busy, selected, onNavigationGuardChange]);
+  }, [a.busy, selected, editing, onNavigationGuardChange]);
   useEffect(() => { if (selected) cancelRef.current?.focus(); }, [selected]);
   const cancel = () => { setReview(null); sourceRef.current?.focus(); };
   const submit = async (item: OwnerTaskReview, action: "arm" | "pause") => {
@@ -113,10 +126,16 @@ export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuard
     await a.control(item, action);
     if (scopeRef.current === scope) refreshRef.current?.focus();
   };
+  const revise = async (item:OwnerTaskReview, revision:OwnerTaskRevision) => {
+    const scope=a.scopeKey;restoreEdit.current=refreshRef.current;setEdit(null);setProposal({scope,processId:item.id,revision});
+    const result=await a.control(item,'revise_step',revision);
+    if(scopeRef.current!==scope)return;
+    if(result.status==='saved'||result.status==='refused')setProposal(null);
+  };
   return <section className="sa-panel sa-owner-tasks" aria-labelledby={`${id}-title`} aria-busy={a.busy || a.read.status === "loading"}>
     <header className="sa-panel-head"><div><h2 id={`${id}-title`}>Internal task processes</h2>
       <p>A new contact can prepare internal tasks for your approval.</p></div>
-      <button type="button" className="sa-ctl" ref={refreshRef} disabled={a.busy || a.read.status === "loading"}
+      <button type="button" className="sa-ctl" ref={refreshRef} disabled={a.busy || !!editing || a.read.status === "loading"}
         onClick={() => { setReview(null); void a.refresh(); }}>Refresh</button></header>
     {a.busy && <p className="sa-empty" role="status">Saving the reviewed configuration…</p>}
     {a.feedback && <p className="sa-empty" role="status">{feedbackWords(a.feedback)}</p>}
@@ -130,6 +149,16 @@ export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuard
         <ul className="sa-rules">{a.read.items.map(r => {
           const supported = reviewableOwnerTask(r), legacy = r.process.state === "live" && stateWords(r) === "Activation unverified";
           const canEnable = supported && ["draft", "paused"].includes(String(r.process.state));
+          const editStep = (step:Record<string,unknown>) => typeof step.id==='string' && reviewedOwnerTaskRevision(r,{act_id:step.id,config:{title:'Review task'}})
+            ? <div className="sa-rule-controls">
+              <button type="button" className="sa-ctl" aria-label={`Edit task purpose, step ${String(step.position)}`}
+                aria-describedby={`${id}-${r.id}-name`} disabled={a.busy||a.needsRefresh||!!editing||!!selected}
+                onClick={event=>{a.closeHistory();setProposal(null);sourceRef.current=event.currentTarget;
+                  setEdit({item:r,actId:step.id as string,scope:a.scopeKey});}}>Edit task purpose</button>
+              {editing?.item===r&&editing.actId===step.id&&<OwnerTaskPurposeEditor key={`${a.scopeKey}:${String(step.id)}`}
+                review={r} actId={step.id} onCancel={()=>{restoreEdit.current=sourceRef.current;setEdit(null);}}
+                onSave={revision=>void revise(r,revision)} />}
+            </div> : null;
           return <li className="sa-rule sa-owner-task-rule" key={r.id}><div className="sa-rule-copy">
             <h3 className="sa-rule-sentence" id={`${id}-${r.id}-name`}>{String(r.process.name)}</h3>
             <p className="sa-rule-meta">When a contact is created · {a.needsRefresh ? "Last read: " : ""}{supported ? stateWords(r) : "Unsupported configuration"} · {supported ? "Each task needs your approval" : "Execution support is not verified"}</p>
@@ -137,21 +166,26 @@ export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuard
               {r.acts.length > 1 && <strong>Step {String(step.position)}</strong>}
               {object(step.config) && typeof step.config.title === "string" && <p className="sa-rule-sentence sa-owner-task-title">{step.config.title}</p>}
               {object(step.config) && typeof step.config.description === "string" && <p className="sa-note sa-owner-task-description">{step.config.description}</p>}
+              {editStep(step)}
             </div>)}
             {!supported && <><p className="sa-note">This configuration cannot be enabled here. You can pause it.</p>
-              <details className="sa-owner-task-config"><summary>Inspect saved configuration</summary>
-                <SavedProcessDesign review={r} /></details></>}
+              <details className="sa-owner-task-config"><summary aria-disabled={editing?.item===r||undefined}
+                onClick={event=>{if(editing?.item===r)event.preventDefault();}}>Inspect saved configuration</summary>
+                <SavedProcessDesign review={r} renderEdit={editStep} /></details></>}
             {legacy && <p className="sa-note">This older process has no verified activation. Pause it, then review it again.</p>}
+            {retained?.processId===r.id&&!a.busy&&<details className="sa-owner-task-config"><summary>Your last proposal</summary>
+              <p>{retained.revision.config.title}</p>{retained.revision.config.description&&<p>{retained.revision.config.description}</p>}
+              <p className="sa-note">Retained only in this workspace; not reapplied. Refresh and compare the original configuration before another decision.</p></details>}
             <div className="sa-rule-controls">
-              {canEnable && <button type="button" className="sa-ctl" disabled={a.busy || a.needsRefresh} aria-expanded={selected === r}
+              {canEnable && <button type="button" className="sa-ctl" disabled={a.busy || a.needsRefresh || !!editing} aria-expanded={selected === r}
                 aria-describedby={`${id}-${r.id}-name`}
                 aria-controls={selected === r ? `${id}-${r.id}-review` : undefined}
                 onClick={e => { a.closeHistory(); sourceRef.current = e.currentTarget; setReview({ item: r, scope: a.scopeKey }); }}>Review to enable</button>}
               {r.process.state !== "paused" && (r.process.state === "live" || !supported) && <button type="button" className="sa-ctl"
                 aria-describedby={`${id}-${r.id}-name`}
-                disabled={a.busy || a.needsRefresh} onClick={() => void submit(r, "pause")}>Pause future contacts</button>}
+                disabled={a.busy || a.needsRefresh || !!editing} onClick={() => void submit(r, "pause")}>Pause future contacts</button>}
             </div>
-            <div className="sa-rule-controls"><button type="button" className="sa-ctl sa-owner-task-history-open" disabled={a.busy || a.needsRefresh}
+            <div className="sa-rule-controls"><button type="button" className="sa-ctl sa-owner-task-history-open" disabled={a.busy || a.needsRefresh || !!editing}
               aria-expanded={a.history.status !== "closed" && a.history.processId === r.id}
               aria-controls={a.history.status !== "closed" && a.history.processId === r.id ? `${id}-${r.id}-history` : undefined}
               aria-describedby={`${id}-${r.id}-name`}

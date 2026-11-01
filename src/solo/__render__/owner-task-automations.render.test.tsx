@@ -140,7 +140,7 @@ for (const css of [freshCss, operationsCss]) {
 const stylesAvailable = freshCss ? existsSync(freshCss) : existsSync(assets);
 const scenes = ["draft", "review", "unknown"] as const;
 const sizes = [[1536, 770], [1366, 768], [1024, 768], [900, 1000], [390, 768]] as const;
-type Scene = typeof scenes[number];
+type Scene = typeof scenes[number] | 'correction' | 'correction-unknown' | 'unsupported-purpose';
 const title = "Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. "
   + "Preserve the complete request and check these long reference details: " + "contactreference".repeat(12);
 const description = "Read the contact record and confirm the next internal task before taking any action.\n"
@@ -151,7 +151,7 @@ const digest = (bytes: string | Buffer) => createHash("sha256").update(bytes).di
 const sourcePaths = ["src/components/tenant-shell/TenantCommandCenterShell.tsx", "src/solo/SoloApp.tsx",
   "src/solo/SoloScreenBoundary.tsx", "src/solo/solo-tokens.css", "src/solo/SoloPaigeWorkspace.tsx", "src/solo/settings.tsx",
   "src/solo/settings-integrations.tsx", "src/solo/settings-automations.tsx", "src/solo/owner-task-automations.tsx",
-  "src/solo/data/useOwnerTaskAutomations.ts", "src/solo/data/ownerTaskAutomation.ts", "src/components/tenant-shell/tenant-command-center-shell.css",
+  "src/solo/data/useOwnerTaskAutomations.ts", "src/solo/data/ownerTaskAutomation.ts", "src/solo/owner-task-purpose-editor.tsx", "src/solo/owner-task-purpose-editor.css", "src/components/tenant-shell/tenant-command-center-shell.css",
   "src/solo/solo-paige-workspace.css", "src/solo/settings.css", "src/solo/settings-integrations.css",
   "src/solo/__render__/owner-task-automations.render.test.tsx",
   "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2"];
@@ -187,14 +187,14 @@ function compiledCss(hostKind: "settings" | "operations" = "settings"): string {
       "src/solo/solo-tokens.css", "src/components/tenant-shell/tenant-command-center-shell.css",
       "src/solo/solo-paige-workspace.css", "src/solo/settings-integrations.css",
       "src/solo/operations/operations-workspace.css", "src/solo/operations/operations-delivery-inspection.css",
-      "src/solo/operations/operations-views.css",
+      "src/solo/operations/operations-views.css", "src/solo/owner-task-purpose-editor.css",
     ].map(path => readFileSync(path, "utf8")).join("\n");
   }
   const files = freshCss ? [] : readdirSync(assets).filter(f => f.endsWith(".css"));
   const picked = ["main-", "SoloEntry-", "PaigeAIChat-"].map(prefix => files.find(f => f.startsWith(prefix)));
   if (!freshCss && picked.some(f => !f)) throw new Error("Current build is missing a required shell/chat CSS bundle");
   return (freshCss ? readFileSync(freshCss, "utf8") : (picked as string[]).map(f => readFileSync(`${assets}/${f}`, "utf8")).join("\n")) + "\n"
-    + ["src/solo/solo-tokens.css", "src/components/tenant-shell/tenant-command-center-shell.css", "src/solo/solo-paige-workspace.css", "src/solo/settings.css", "src/solo/settings-integrations.css"]
+    + ["src/solo/solo-tokens.css", "src/components/tenant-shell/tenant-command-center-shell.css", "src/solo/solo-paige-workspace.css", "src/solo/settings.css", "src/solo/settings-integrations.css", "src/solo/owner-task-purpose-editor.css"]
       .map(path => readFileSync(path, "utf8")).join("\n");
 }
 function page(html: string, css: string, theme: string): string {
@@ -224,6 +224,7 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
   h.steps = Array.from({ length: stepCount }, (_, index) => ({ ...h.step,
     id: `00000000-0000-4000-8000-${String(index + 104).padStart(12, "0")}`, position: index + 1,
     config: { title: index === 0 ? title : `Review internal responsibility ${index + 1}`, description } }));
+  if(scene==='unsupported-purpose')h.steps[0].config={title,description,assignee_user_id:'unsupported-original-setting'};
   const network = vi.fn(() => { throw new Error("No network permitted in rendered fixture"); });
   vi.stubGlobal("fetch", network);
   const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
@@ -262,16 +263,23 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
     expect(host.querySelector(".sa-owner-tasks")).toBeTruthy();
     expect(host.querySelector(".sa-owner-task-title")?.textContent).toBe(title);
     expect(host.querySelector(".sa-owner-task-description")?.textContent).toBe(description);
-    expect(host.querySelectorAll(".sa-owner-task-step")).toHaveLength(stepCount);
-    if (stepCount > 1) {
+    if(scene!=='unsupported-purpose')expect(host.querySelectorAll(".sa-owner-task-step")).toHaveLength(stepCount);
+    if (stepCount > 1 && scene!=='unsupported-purpose') {
       const lastStep = host.querySelectorAll(".sa-owner-task-step").item(stepCount - 1);
       expect(lastStep?.textContent).toContain(`Step ${stepCount}`);
       expect(lastStep?.textContent).toContain(`Review internal responsibility ${stepCount}`);
     }
-    expect(controls(host, "Review to enable")).toHaveLength(1);
+    expect(controls(host, "Review to enable")).toHaveLength(scene==='unsupported-purpose'?0:1);
+    if(scene==='unsupported-purpose'){
+      expect(host.querySelector('[aria-label="Edit task purpose, step 1"]')).toBeNull();
+      expect(host.querySelector('.sa-task-purpose-editor')).toBeNull();expect(host.textContent).toContain('Additional saved settings are not displayed.');
+      const summary=host.querySelector<HTMLElement>('.sa-owner-task-config summary')!;
+      await act(async()=>{summary.click();await flush();});
+      expect((h.steps[0].config as Record<string,unknown>).assignee_user_id).toBe('unsupported-original-setting');
+    }
     expect(h.controls).toHaveLength(0);
     let focus: string | null = null;
-    if (scene !== "draft") {
+    if (scene === "review" || scene === "unknown") {
       await act(async () => { controls(host, "Review to enable")[0].click(); await flush(); });
       expect(controls(host, "Enable future contacts")).toHaveLength(1);
       expect(document.activeElement).toBe(controls(host, "Cancel")[0]); focus = "Cancel";
@@ -287,6 +295,22 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
       expect(controls(host, "Review to enable")[0].disabled).toBe(true);
       expect(controls(host, "Enable future contacts")).toHaveLength(0);
       expect(document.activeElement).toBe(controls(host, "Refresh")[0]); focus = "Refresh";
+    }
+    if (scene === 'correction' || scene === 'correction-unknown') {
+      const edit=host.querySelector<HTMLButtonElement>('[aria-label="Edit task purpose, step 1"]')!;
+      await act(async()=>{edit.click();await flush();});
+      const input=host.querySelector<HTMLInputElement>('.sa-task-purpose-editor input')!;
+      expect(input.value).toBe(title);expect(document.activeElement).toBe(input);focus='Task title';
+      expect(controls(host,'Refresh')[0].disabled).toBe(true);expect(h.controls).toHaveLength(0);
+      if(scene==='correction-unknown'){
+        await act(async()=>{host.querySelector('form.sa-task-purpose-editor')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));await flush();});
+        expect(h.controls).toHaveLength(1);expect(h.controls[0]._action).toBe('revise_step');
+        expect(h.controls[0]._expected_acts).toEqual({reviewed_acts:h.steps.map(({id,position,action_kind,tool_key,config})=>({id,position,action_kind,tool_key,config})),
+          revision:{act_id:h.step.id,config:{title,description}}});
+        expect(host.querySelector('.sa-task-purpose-editor')).toBeNull();expect(controls(host,'Review to enable')[0].disabled).toBe(true);
+        expect(host.textContent).toContain('Your last proposal');expect(host.textContent).toContain('The outcome could not be confirmed.');
+        expect(document.activeElement).toBe(controls(host,'Refresh')[0]);focus='Refresh';
+      }
     }
     if (verifyNavigation) {
       expect(hostKind).toBe("operations"); expect(scene).toBe("review");
@@ -318,6 +342,34 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
 }
 
 describe("owner task full-shell rendered fixture", () => {
+  it.skipIf(!operationsCss)('serializes original draft correction and unknown reentry in the actual Operations host',async()=>{
+    assertIncumbentFrame();const sources=operationsSources(),css=compiledCss('operations'),records=[];
+    mkdirSync(output,{recursive:true});
+    const cases:{theme:'light'|'dark';width:number;height:number;open:boolean;scene:'correction'|'correction-unknown'}[]=
+      sizes.slice(0,4).flatMap(([width,height])=>[false,true].map(open=>({theme:'light',width,height,open,scene:'correction'} as const)));
+    for(const [theme,width,height,scene] of [['light',390,844,'correction'],['dark',1366,768,'correction'],['dark',390,844,'correction'],
+      ['light',1366,768,'correction-unknown'],['light',390,844,'correction-unknown'],['dark',390,844,'correction-unknown']] as const)cases.push({theme,width,height,open:false,scene});
+    for(const {theme,width,height,open,scene} of cases){
+      const result=await capture(scene,width,height,theme,open,2,'operations');
+      const name=`operations-2-${theme}-${width}x${height}-${open?'open':'closed'}-${scene}.html`,html=page(result.html,css,theme);writeFileSync(`${output}/${name}`,html);
+      records.push({name,theme,width,height,open,scene,focus:result.focus,htmlSha256:digest(html),simulatedControls:result.simulatedControls,realEffects:0});
+    }
+    expect(records).toHaveLength(14);expect(operationsSources()).toEqual(sources);
+    writeFileSync(`${output}/correction-render-manifest.json`,JSON.stringify({proofClass:'SYNTHETIC_ACTUAL_OPERATIONS_CORRECTION_HOST',sources,compiledCssSha256:digest(css),
+      originalTaskHookAndCaller:true,authenticatedQa:'UNVERIFIED',records},null,2));
+  },180_000);
+  it.skipIf(!operationsCss)('retains unsupported original settings without offering a destructive purpose editor',async()=>{
+    const sources=operationsSources(),css=compiledCss('operations'),records=[];
+    mkdirSync(output,{recursive:true});
+    for(const [theme,width,height] of [['light',1366,768],['dark',390,844]] as const){
+      const result=await capture('unsupported-purpose',width,height,theme,false,2,'operations');
+      const name=`operations-2-${theme}-${width}x${height}-closed-unsupported-purpose.html`,html=page(result.html,css,theme);writeFileSync(`${output}/${name}`,html);
+      records.push({name,theme,width,height,open:false,scene:'unsupported-purpose',htmlSha256:digest(html),simulatedControls:result.simulatedControls,realEffects:0});
+    }
+    expect(operationsSources()).toEqual(sources);
+    writeFileSync(`${output}/purpose-denial-render-manifest.json`,JSON.stringify({proofClass:'SYNTHETIC_ORIGINAL_SETTINGS_PRESERVATION',sources,
+      authenticatedQa:'UNVERIFIED',records},null,2));
+  },60_000);
   it.skipIf(!operationsCss)("keeps actual Operations route and Playbooks navigation held until the original review is cancelled", async () => {
     assertIncumbentFrame();
     const result = await capture("review", 1366, 768, "light", false, 2, "operations", true);

@@ -48,6 +48,29 @@ const locator = (id = "22222222-2222-4222-8222-222222222222") => ({
   updatedAt: "2026-10-20T00:00:00Z", approvalStatus: "approved",
 });
 const sameSession = (): AuthSnapshot => ({ user: { id: 'owner', last_sign_in_at: '2026-10-25T14:00:00Z' } });
+describe('original draft correction interaction lifetime',()=>{
+  const revision={act_id:processId,config:{title:'Review the delivery scope'}};
+  it('forwards the exact revision through the original control and requires a deliberate original reread',async()=>{
+    const h=await loaded(),original=item(h.result.current.read);
+    m.control.mockResolvedValue({status:'saved',state:'draft',revision:{changed:true,configurationAuditId:'audit',updatedAt:'2026-10-30T12:00:00.123456Z'}});
+    await act(async()=>{await h.result.current.control(original,'revise_step',revision);});
+    expect(m.control).toHaveBeenCalledExactlyOnceWith(expect.anything(),original,'revise_step',expect.anything(),expect.any(Function),revision);
+    expect(h.result.current.needsRefresh).toBe(true);expect(h.result.current.feedback?.action).toBe('revise_step');
+    expect(item(h.result.current.read)).toBe(original);expect(m.read).toHaveBeenCalledTimes(1);
+    expect((await h.result.current.control(original,'revise_step',revision)).status).toBe('refused');expect(m.control).toHaveBeenCalledTimes(1);
+    const reread={...original,updatedAt:'2026-10-30T12:00:00.123456Z'};m.read.mockResolvedValue({status:'ready',items:[reread],hasMore:false});
+    await act(async()=>{await h.result.current.refresh();});expect(item(h.result.current.read)).toBe(reread);expect(h.result.current.needsRefresh).toBe(false);
+  });
+  it('does not start a second correction or retain an old-workspace acknowledgement',async()=>{
+    const h=await loaded(),original=item(h.result.current.read),pending=deferred<OwnerTaskControl>();let request!:Promise<OwnerTaskControl>;
+    m.control.mockReturnValueOnce(pending.promise);
+    act(()=>{request=h.result.current.control(original,'revise_step',revision);});
+    expect((await h.result.current.control(original,'revise_step',revision)).status).toBe('busy');expect(m.control).toHaveBeenCalledTimes(1);
+    m.context={...m.context,activeTenantId:'other'};h.rerender();
+    await act(async()=>{pending.resolve({status:'unknown'});await request;});
+    expect(h.result.current.feedback).toBeNull();expect(h.result.current.needsRefresh).toBe(false);expect(m.control).toHaveBeenCalledTimes(1);
+  });
+});
 const historyReview = (id = processId): OwnerTaskReview => ({
   ...review(), id, process: { ...review().process, id, state: "paused" },
 });

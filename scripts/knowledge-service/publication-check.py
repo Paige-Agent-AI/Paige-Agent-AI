@@ -1,7 +1,9 @@
 import argparse,pathlib,subprocess,time,uuid
-p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql'); p.add_argument('--binary-source',action='store_true'); p.add_argument('--binary-baseline',action='store_true'); p.add_argument('--binary-migration',default='supabase/migrations/20271126130013_knowledge_binary_source_evidence.sql'); p.add_argument('--source-quotation-proof',action='store_true'); p.add_argument('--source-quotation-baseline',action='store_true'); p.add_argument('--source-binding-proof',action='store_true'); p.add_argument('--source-binding-baseline',action='store_true'); a=p.parse_args()
+p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql'); p.add_argument('--binary-source',action='store_true'); p.add_argument('--binary-baseline',action='store_true'); p.add_argument('--binary-migration',default='supabase/migrations/20271126130013_knowledge_binary_source_evidence.sql'); p.add_argument('--source-quotation-proof',action='store_true'); p.add_argument('--source-quotation-baseline',action='store_true'); p.add_argument('--source-binding-proof',action='store_true'); p.add_argument('--source-binding-baseline',action='store_true'); p.add_argument('--source-evidence-carrier-file'); p.add_argument('--source-evidence-install-guards',action='store_true'); a=p.parse_args()
 if a.binary_source and (not a.expected_data_directory or not a.publication_recovery): p.error('binary source proof requires the verified disposable data directory and original publication recovery')
 if (a.source_quotation_proof or a.source_quotation_baseline or a.source_binding_proof or a.source_binding_baseline) and not a.expected_data_directory: p.error('Source proof requires a verified disposable data directory')
+if a.source_evidence_carrier_file and (not a.source_binding_proof or a.source_binding_baseline or a.source_quotation_baseline): p.error('Source carrier requires native binding proof without absence baselines')
+if a.source_evidence_install_guards and not a.source_evidence_carrier_file: p.error('Source install guards require the same guarded carrier')
 root=pathlib.Path(__file__).resolve().parents[2]; db='knowledge_publish_test_'+uuid.uuid4().hex
 base=[a.psql,'-X','-h','127.0.0.1','-p',a.port,'-U',a.user,'-v','ON_ERROR_STOP=1']
 def run(args):
@@ -36,10 +38,12 @@ try:
     if rejected.returncode==0 or 'KNOWLEDGE_BINARY_SOURCE_DRIFT' not in rejected.stderr: raise RuntimeError('source/ACL fault was not refused: '+rejected.stdout+rejected.stderr)
     print('PASS: transactional source/ACL drift refused; fixture fault rolled back')
  if a.source_quotation_proof or a.source_quotation_baseline or a.source_binding_proof or a.source_binding_baseline:
-  if not a.source_quotation_baseline: run(['-d',db,'-f','scripts/knowledge-service/native-source-quotation.sql'])
+  if a.source_evidence_carrier_file:
+   run(['-d',db,'-f',a.source_evidence_carrier_file]); run(['-d',db,'-f',a.source_evidence_carrier_file])
+  elif not a.source_quotation_baseline: run(['-d',db,'-f','scripts/knowledge-service/native-source-quotation.sql'])
   run(['-d',db,'-f','scripts/knowledge-service/native-source-quotation-behavior.sql'])
  if a.source_binding_proof or a.source_binding_baseline:
-  if not a.source_binding_baseline: run(['-d',db,'-f','scripts/knowledge-service/native-source-binding.sql'])
+  if not a.source_binding_baseline and not a.source_evidence_carrier_file: run(['-d',db,'-f','scripts/knowledge-service/native-source-binding.sql'])
   run(['-d',db,'-f','scripts/knowledge-service/native-source-binding-behavior.sql'])
   if not a.source_binding_baseline:
    # Real original authority/document locks, not a mocked readiness response.
@@ -80,5 +84,41 @@ try:
       if process.poll() is None:
        try: process.communicate(timeout=3)
        except subprocess.TimeoutExpired: process.kill(); process.communicate()
+ if a.source_evidence_install_guards:
+  # Real DDL faults ONLY in this verified disposable database. Each rejected
+  # connection closes its transaction; every original definition/ACL is reread.
+  quote='public.knowledge_utf16_excerpt_matches(text,integer,integer,text)'
+  binding='public.lock_knowledge_source_evidence(uuid,uuid,jsonb,jsonb)'
+  reader='public.read_tenant_knowledge(uuid,uuid,integer,integer)'
+  authority='public.lock_knowledge_extraction_authority(uuid,uuid)'
+  snapshots="SELECT jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'definition',pg_get_functiondef(p.oid),'acl',p.proacl::text,'owner',p.proowner) ORDER BY p.oid::regprocedure::text) FROM pg_proc p WHERE p.oid IN ('"+quote+"'::regprocedure,'"+binding+"'::regprocedure,'"+reader+"'::regprocedure,'"+authority+"'::regprocedure,'public.knowledge_utf16_length(text)'::regprocedure,'public.knowledge_actor_authorized(uuid,uuid)'::regprocedure)"
+  before=subprocess.check_output(base+['-d',db,'-Atc',snapshots],text=True,encoding='utf-8').strip()
+  original_quote=(root/'scripts/knowledge-service/native-source-quotation.sql').read_text(encoding='utf8')
+  default_fault=original_quote[original_quote.index('CREATE FUNCTION '):original_quote.index('REVOKE ALL')].replace('CREATE FUNCTION ','CREATE OR REPLACE FUNCTION ',1).replace('p_quote text','p_quote text DEFAULT NULL',1)
+  faults=[
+   'ALTER FUNCTION '+quote+' VOLATILE',
+   'ALTER FUNCTION '+quote+' SECURITY DEFINER',
+   'ALTER FUNCTION '+quote+' STRICT',
+   'ALTER FUNCTION '+quote+' PARALLEL UNSAFE',
+   'ALTER FUNCTION '+quote+" SET search_path='public'",
+   'ALTER FUNCTION '+quote+' OWNER TO pg_monitor',
+   default_fault,
+   'GRANT EXECUTE ON FUNCTION '+quote+' TO PUBLIC',
+   'GRANT EXECUTE ON FUNCTION '+binding+' TO service_role',
+   'GRANT EXECUTE ON FUNCTION '+binding+' TO pg_monitor',
+   'ALTER FUNCTION '+binding+' SECURITY DEFINER',
+   'ALTER FUNCTION '+authority+' SECURITY INVOKER',
+   'ALTER FUNCTION public.knowledge_utf16_length(text) STABLE',
+   'GRANT EXECUTE ON FUNCTION '+reader+' TO pg_monitor',
+   'REVOKE EXECUTE ON FUNCTION '+reader+' FROM authenticated',
+   "CREATE OR REPLACE FUNCTION public.lock_knowledge_source_evidence(p_actor uuid,p_tenant uuid,p_reference jsonb,p_excerpts jsonb) RETURNS jsonb LANGUAGE sql SET search_path='' AS $$ SELECT '{}'::jsonb $$",
+  ]
+  for index,fault in enumerate(faults):
+   rejected=subprocess.run(base+['-d',db,'-c','BEGIN','-c',fault,'-f',a.source_evidence_carrier_file],cwd=root,text=True,capture_output=True,encoding='utf-8')
+   if rejected.returncode==0 or 'KNOWLEDGE_SOURCE_INSTALL_DRIFT' not in rejected.stderr:
+    raise RuntimeError('Source installation fault was not refused: '+str(index)+' '+rejected.stdout+rejected.stderr)
+   after=subprocess.check_output(base+['-d',db,'-Atc',snapshots],text=True,encoding='utf-8').strip()
+   if after!=before: raise RuntimeError('Source installation refusal changed original definitions or ACLs: '+str(index))
+   print('PASS: private source install fault '+str(index)+' refused; all six definitions/ACLs/owners restored')
  print('PASS: native Knowledge publication SQL')
 finally: run(['-d','postgres','-c','DROP DATABASE '+db])

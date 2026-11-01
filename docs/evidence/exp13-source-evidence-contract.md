@@ -223,3 +223,51 @@ exist but source-admitted proposal/claim/resume/settlement is STILL MISSING; no
 producer-built decision, raw-RPC shortcut or blind non-idempotent create retry.
 This integration candidate is not mounted/published/applied or a usable saved
 game plan/task outcome. The full original assignment remains ACTIVE/NOT READY.
+
+## Current guarded installation candidate — same source-to-Mission prerequisite
+
+Normally composed original7bae with actual main8ead at localef2888251. Resolve
+only original publication runner/evidence conflicts by preserving ALL incoming
+binary/recovery controls and prior evidence, then adding the existing source
+proof blocks. Complete incoming runner insertion inverse and evidence prefix
+are exact. A broad staged whitespace check flagged six incoming peer EOF blanks;
+those peer files were preserved, not rewritten. Own six-path diffcheck passes.
+
+Fresh production CODE catalogue proves both new private helper names absent.
+Original read4 body9ee43, UTF16-length ac0ec, actor a058 and authority788d match
+their original metadata/ACLs. Authority788d uses original user/tenant/member/
+role/profile locks with membership before profile; earlier62bf hash shorthand is
+not evidence of a production source change. No customer document row was read.
+
+Build-source-evidence-carrier.py composes the SAME two candidate bodies into
+native-source-evidence-install.sql: one transaction, exact dependency/body/
+owner/language/security/defaults/path/parallel/ACL guards before installation,
+existing-body drift refusal and post-install verification. Both helpers remain
+PRIVATE SECURITY INVOKER with no PUBLIC/anon/authenticated/service-role execute
+grant. Installation is repeatable without changing incoming Knowledge functions,
+stores, authority, schemas, approval or receipts. The SQL remains unversioned,
+unpublished and unapplied; no future migration slot or idle hold is reserved.
+
+Fresh original publication-check.py against the verified OWN disposable PG16
+cluster at55479 ran recovery + binary source + quotation/ICU + permitted binding
+and both REAL source/member lock races, plus16 installation-fault refusals.
+Changed body/volatility/definer/strictness/parallel/path/owner/defaults, public/
+service/unexpected-role grants and original dependency permission drift all
+refuse; all six exact definitions/ACLs/owners read back unchanged after EACH
+rolled-back fault. Whole guarded installation also replays twice. Native83689
+exit0; disposable database DROPPED and exact own server STOPPED. Raw logSHA256
+35d5d3456f03ef7b61db8cef60414fa99ca9e4550ed02e099999ff09c1d98278,
+candidateSHA2569c9162f8f81f7f24a754835771201a0bf3f7a6eaf2f909d31ed8c56b70de1677.
+First default client was socket-permission denied; its separately launched
+short-lived server then exited before the first elevated read. Both failures
+are retained. Start/verify/test/stop in ONE authorized command used the same
+existing isolated cluster, with no PID-file deletion or peer process action.
+
+Identity/member/vector/receipt fixture ports remain MODELED. This is native
+synthetic evidence, not full Supabase replay, production migration, authenticated
+customer role/access or an E02/E01/E05 writer result. Distinct exact-source review,
+normal managed carrier/order/CI/release and authoritative production readback
+remain owed. E02 must call this private source validator in ITS original writer
+transaction and separately enforce the E01 selected-fact/domain-confirmation
+receipt and current action/CAS. Source evidence alone is never fact/Memory or
+task authority. SAME full original/BULK primary and all other scope remain open.

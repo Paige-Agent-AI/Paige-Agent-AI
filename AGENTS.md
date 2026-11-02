@@ -1,5 +1,20 @@
 # Paige agent delivery rules
 
+## MANDATORY OWNER DELIVERY RULE — November 1, 2026
+
+This rule binds the Coordinator and every current and future authorized agent. Pick ONE complete original customer/business outcome and finish it. Do not start or consider another outcome while it is unfinished. REPORT THE COMPLETED OUTCOME, THEN STOP. The owner must explicitly approve the next outcome, one at a time. Preserve the full original assignment as pending scope; it does not authorize starting the next outcome.
+
+Every task must be necessary to finish the ONE selected outcome. Small PRs are implementation increments, not completed outcomes. Do not add unrelated prerequisites, policy cleanup, reporting, speculative improvements, parallel features, tests or approval gates beyond the authorized outcome and genuine applicable engineering/safety requirements.
+
+Complete the necessary implementation and integration, proportionate engineering checks and review, normal safe merge/deployment, then LIVE verification of the useful original result, receipt and durable reopen/recovery. Missing browser, prototype, screenshots, preview login or owner hands-on testing alone must not block an otherwise safe prelaunch release. Preserve actual security, privacy, tenant/authorization, required engineering checks, migration safety and consequential-effect boundaries; never fabricate PASS or acceptance.
+
+If blocked, remain on the SAME outcome and report the exact blocker, accountable owner and needed decision in the existing original record. Do not switch to a secondary outcome, start parallel work or duplicate dependency pings. Work only on what is necessary to finish the selected outcome. Existing meaningful checkpoints suffice; no additional reporting ceremony, timer, checklist or per-PR owner review is created.
+
+The implementing agent reports its own completed outcome to the OWNER in its working chat, to its ORIGINAL LINEAR issue, and to the COORDINATOR, then STOPS for the owner's explicit next-outcome approval. The same implementing agent updates the EXISTING canonical Outcomes records with the actual completed result and verification evidence, keeping unfinished work open and distinguishing released, verified and owner-accepted states. Report the useful result and any actual limitation truthfully. The Coordinator must not create a separate outcome ledger, assign replacement outcome statuses or report completion on an agent's behalf. Existing original records remain with their original owners; no extra reporting work is created.
+
+The Coordinator must follow this rule too: do not scatter or redirect agents, add requirements, or treat PR/test totals as delivery. Agent messages or redirection require the owner's explicit instruction. Only an explicit owner direction changes the authorized outcome or this rule; do not treat technical autonomy, full-assignment scope or a dependency as permission to start another outcome. No new agents, runtime, ledger, provider activation or unrelated authority is granted. Existing assignments and holds remain intact.
+
+
 These instructions apply to Codex, Claude, and every other implementation agent working in this repository.
 
 ## Owner standing delegation, complete outcomes, and release policy (2026-10-14)
@@ -14,7 +29,7 @@ These are owner-directed requirements for **every active and future PAIGE agent*
 
 **Mandatory holds still apply.** Never bypass an unresolved material review finding, an exhausted review exception under this file, failed required CI/Preview, unauthorized RLS/identity/credential or privileged production action, destructive database change, live external send or provider spend/payment, or gated effectful Chat, Computer, Research or recurring-work activation. The full product mandate authorizes building, **not** automatic execution of previously prohibited production effects. Routine rebases, non-destructive migration renumbering, tests and ordinary reviewed release housekeeping belong to the agent and should not generate repetitive owner approval requests.
 
-Publish exact PR/head, non-author review, required CI, merge SHA, production web/Edge/migration readback, authenticated QA and remaining owner decisions to the original coding conversation and canonical Linear record. Continue independent safe work while a narrow security/permission dependency is held.
+Publish exact PR/head, non-author review, required CI, merge SHA, production web/Edge/migration readback, authenticated QA and remaining owner decisions to the original coding conversation and canonical Linear record. If blocked, remain on the selected outcome and report the blocker; do not switch outcomes. After completion report to the owner, original Linear issue and Coordinator, then stop for explicit owner approval of the next outcome.
 
 ## Mandatory routing
 

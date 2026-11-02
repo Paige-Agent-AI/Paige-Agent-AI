@@ -52,7 +52,7 @@ or modify it. No E01 migration number is reserved; candidate remains UNVERSIONED
 Independent non-author review: dedicated setup_contract_review agent did not write
 code. Its initial discovery/host findings were confirmed; correction and host-refresh
 findings are being repaired and causally tested. Final exact-head clearance OWED.
-Proof so far:61 focused parser/client controls;77 actual local native assertions
+Proof so far:61 focused parser/client controls;79 actual local native assertions
 with explicitly MODELED identity/source-reader dependencies;9 mounted recovery/edit
 tests and original63 Setup tests PASS. The mounted receipt is invalidated when a
 later original manual save advances CAS; matching own-save readback retains it.
@@ -74,6 +74,10 @@ events without deletion; legitimate replay is preserved. The old installer genui
 failed the new refusal control. Repaired77 local native assertions include two real
 observed installation/write orderings; full-schema/current-head CI and independent
 renewed review remain owed. Production approval APIs remain absent, not activated.
+
+Final local replay phase: run the verified installer AFTER legitimate approval,
+reopen its identical original receipt and assert one approval event. All79 local
+assertions PASS, cluster stopped. No native/client/UI source change in this phase.
 
 Capability routing: E01 owns original Setup/direct human save; E13 owns canonical
 Knowledge source validation. Reuse original Setup scope/getters/writer/meta/audit;

@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: explicit source quotation, selected editable facts, s
 FLOW_PROTOTYPE: UNVERIFIED: production source-validator prerequisite is absent; original R2 prelaunch policy preserves genuine engineering gates while allowing later live browser proof.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized workspace user chooses document facts, adopts or corrects selected values and explicitly saves original Setup with its original approval receipt.
 VISUAL_DIRECTION: PASS: preserve incumbent Setup inline Operate sections, labels, fields and buttons; no new visual world, shell or decorative motion.
-AUTOMATED_EVIDENCE: PASS: 61 focused client/parser,77 actual local native checks with MODELED identity/source-reader dependencies,9 mounted recovery/edit/source-selection tests and original63 host regressions (72 combined). Full-schema100 composed assertions on the latest source are UNRUN; no production proof inferred.
+AUTOMATED_EVIDENCE: PASS: 61 focused client/parser,79 actual local native checks with MODELED identity/source-reader dependencies,9 mounted recovery/edit/source-selection tests and original63 host regressions (72 combined). Full-schema100 composed assertions on the latest source are UNRUN; no production proof inferred.
 STATIC_EVIDENCE: PASS: ESLint on own component/client/tests and diff whitespace; actual project tsc-ratchet baseline10/current6/no new errors without baseline edits. Exact final-head hosted CI is separately required.
 RENDERED_EVIDENCE: UNVERIFIED: actual ordinary authenticated Setup browser path and viewport captures have not run; dependency installation and production release remain owed.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: mounted DOM controls are modeled tests; ordinary live selected save/readback/full reload remains unrun.
@@ -25,7 +25,7 @@ MUST_PRESERVE: Original manual Setup/legal owners/provenance/role authority, E13
 ACCEPTANCE_CRITERIA: Actual selected values and subset persist; original receipt/readback survives full reload; stale-source/current-role/CAS/UNKNOWN recovery produces no duplicate or unintended effect.
 MOTION_PURPOSE: NONE: no motion change; incumbent behavior preserved.
 PROTECTED_SEAMS: AFFECTED: scope/role/Setup source approval/CAS/readback/receipt/reload/accessibility/scoped Settings geometry; local controls described above, live proof owed. UNAFFECTED: Auth/provisioning/entitlement/billing, Chat/Live, Vault/credentials/providers, Spine execution, Work scheduling, Memory and external effects.
-INTERNAL_BUILD_IDENTITY: 79c765e51e0f9e1a1ed0e52d59b8c0abeffbdd3f; deployment=not-deployed; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp01-reviewed-setup-preparation.md; supporting composed source identity, final review/check head separately recorded in original PR.
+INTERNAL_BUILD_IDENTITY: 85478bd85739b4df3868bd469fa986b4a18cd530; deployment=not-deployed; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp01-reviewed-setup-preparation.md; supporting implementation identity, final review/check head separately recorded in original PR.
 RELEASE_CHANNEL: development: source preparation with original validator prerequisite not installed; no customer activation or announcement.
 RELEASE_CLASSIFICATION: internal-only: necessary original Setup outcome integration; customer result not yet verified.
 CUSTOMER_RELEASE_IDENTITY: none: selected customer outcome is unfinished and owner acceptance remains open.
@@ -66,3 +66,8 @@ controls pass, including both real observed lock-wait orderings. Identity/source
 reader dependencies remain modeled. No production functions were installed and no
 customer records were inspected or changed. Renewed exact-head review/full-schema
 and all engineering checks remain mandatory before release.
+
+The completed local sequence additionally replays the verified installer AFTER an
+actual original Setup approval exists, then reopens the identical receipt and
+checks exactly one original audit event remains. All79 local assertions pass;
+this adds proof only, with native/client/UI implementation blobs unchanged.

@@ -275,6 +275,9 @@ try{
  assert.equal(afterDecision.brief.deliveryModel,decisionContext.brief.deliveryModel,'unselected connection value is preserved');checks++;
  assert.equal(scalar(`SELECT count(*) FROM paige_audit_log WHERE payload->>'requestId'='${overrideRequest}'`),'1');checks++;
  assert.equal(JSON.parse(scalar(caller+decisionSave(override,overrideRequest))).receiptId,decisionReceipt.receiptId);checks++;
+ install();
+ assert.equal(JSON.parse(scalar(caller+discovery)).approval.inspection.receiptId,decisionReceipt.receiptId,'verified replay retains the real saved receipt');checks++;
+ assert.equal(scalar(`SELECT count(*) FROM paige_audit_log WHERE payload->>'requestId'='${overrideRequest}'`),'1','replay neither deletes nor duplicates the original approval');checks++;
  console.log(JSON.stringify({checks,result:'PASS',scope:'candidate + original Setup write bodies in modeled dependency fixture; NOT full-schema/customer/role completeness',originalSourceRef}));
 } finally {
  db.run(`DROP DATABASE ${db.database}`,[],'postgres');

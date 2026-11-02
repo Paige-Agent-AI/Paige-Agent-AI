@@ -1,6 +1,6 @@
 ---
 name: code-review-and-quality
-description: Conducts multi-axis code review. Use before merging any change. Use when reviewing code written by yourself, another agent, or a human. Use when you need to assess code quality across multiple dimensions before it enters the main branch.
+description: Conducts multi-axis code review. Use before merging any change, as a non-author review agent reviewing another agent's or a human's changes. Use when you need to assess code quality across multiple dimensions before it enters the main branch.
 ---
 
 # Code Review and Quality
@@ -8,6 +8,8 @@ description: Conducts multi-axis code review. Use before merging any change. Use
 ## Overview
 
 Multi-dimensional code review with quality gates. Every change gets reviewed before merge — no exceptions. Review covers five axes: correctness, readability, architecture, security, and performance.
+
+**Reviewer independence (owner, 2026-11-02):** Follow `AGENTS.md` → "Merge gate — Independent Review". The implementing lead uses one of its own review agents who did not implement, co-author or help write the changes. Review the exact final head and record the non-author review and findings before merge. Author/self-review does not satisfy the gate. Do not request or wait for Codex's automated PR review to satisfy this requirement; existing material findings and all other release gates remain binding.
 
 **The approval standard:** Approve a change when it definitely improves overall code health, even if it isn't perfect. Perfect code doesn't exist — the goal is continuous improvement. Don't block a change because it isn't exactly how you would have written it. If it improves the codebase and follows the project's conventions, approve it.
 
@@ -268,7 +270,7 @@ When resolving review disputes, apply this hierarchy:
 
 ## Honesty in Review
 
-When reviewing code — whether written by you, another agent, or a human:
+When independently reviewing code written by another agent or a human:
 
 - **Don't rubber-stamp.** "LGTM" without evidence of review helps no one.
 - **Don't soften real issues.** "This might be a minor concern" when it's a bug that will hit production is dishonest.

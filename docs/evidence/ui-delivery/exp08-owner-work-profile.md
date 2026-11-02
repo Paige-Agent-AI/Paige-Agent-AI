@@ -395,3 +395,43 @@ Empty-success scoped lintSHAe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495
 Current fresh rendered/AT/zoom and authenticated customer proof remain UNVERIFIED;
 no browser-only release veto or owner acceptance inferred. Native carrier is
 still byte-exact70caa720; actual final review/ALLCI/normal release/LIVE result owed.
+
+
+### Same outcome — actual application compiler repair, November 2
+
+Required exact8cc verify124990664391 genuinely FAILED compiler step100 and
+title-authority steps162/163. Direct frozen8cc compiler terminated2: six existing
+baseline diagnostics and two owned TS2339 on the parent saved-work receipt.
+A source-extracted callback compiler control reproduces strict:false1FAIL /
+strict:true1PASS. The first field-capture-only attempt still failed and is retained.
+Final source explicitly discriminates the work receipt with its existing job_title
+field before capturing the two fields for the React updater. No cast, widened
+receipt/type/parser, compiler baseline or authority change. Permission receipt
+branch, native receipt validation, currentness and original refresh stay intact.
+
+Final actual callback compiler2PASS and three incumbent mounted suites82PASS,
+84PASS total; two-file ESLint0. These are engineering controls, not authenticated
+production proof. Original emitted proof logs (SHA256):
+
+- exp08-8cc-compiler-resume.log: 7a7e2a3e29a6a3843f2b95b902dc5441e8ee8dab1c189500f9580d4c26408d95
+
+- exp08-receipt-compiler-causal-before.log: 7defef781dafcba5458d966421278df5a4cd520e97ee9cb0abc1d4623378812d
+
+- exp08-receipt-compiler-after.log: 508c7e5cc82aeabf9c084aa293e0620f4534bfebdb9055653c25967b113bacc2
+
+- exp08-receipt-compiler-after-final.log: 270a6e34bf61b573123a1f25cbff8cad35cecc6e6e7566f77b6e01589a864c1a
+
+Normal main37c6c8a5 composition preserves ALL incoming outside-own leaves, both
+workflows, current review policy and original Knowledge/Chat source exactly. Own
+Preview-applied28010008 remains byte-exact SHA70caa720; no historical migration
+rewrite. Current owner-authorized E13 validator prerequisite has resumed under
+ANT21/04511da6; its active order/readback belongs the original owner. No E13
+source activation by EXP08.
+
+Release is still BLOCKED by the actual title-authority R0 dynamic-SQL replay
+failures; original guard/baseline/assertions remain unchanged, finite source-custody
+request ANT147/b2c37f9d pending. Final current-head non-author review is required
+by the newly incorporated AGENTS rule; older author reviews retain LOWER labels.
+ALL required exact-head CI, normal native+web release/readback and the authorized
+live result/receipt/reopen/recovery remain owed. No completed outcome or owner
+acceptance is claimed; all other original outcomes remain pending.

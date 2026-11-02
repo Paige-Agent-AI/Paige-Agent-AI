@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: A requested fresh unsent email can reach the original
 FLOW_PROTOTYPE: UNVERIFIED: Actual NEXUS email admission/card/result integration remains with EXP08; no candidate customer walkthrough or provider effect has been exercised.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An authorized workspace owner/admin asks to save an email unsent, then reopens the exact original draft before a separate send approval.
 VISUAL_DIRECTION: PASS: Preserve original Team Hub and Conversations design; no new visible surface, sender, approval channel, icon, personality or runtime.
-AUTOMATED_EVIDENCE: PASS: Original six domain suites212 assertions passed before additional handler/empty-files cases; latest original three suites172 assertions passed. Final native235 original plus26 fresh controls261 passed, including atomic installer rollback, exact published bytes and real concurrent saves; original assertions retained. Original source failures remain below; these are local synthetic proofs only.
+AUTOMATED_EVIDENCE: PASS: Final six original domain suites214 assertions and complete native235 original plus26 fresh controls261 passed, including atomic installer rollback, exact published bytes and real concurrent saves; original assertions retained. Original source failures remain below; these are local synthetic proofs only.
 STATIC_EVIDENCE: PASS: Changed source/test ESLint and diff whitespace passed. Original production Save13/prepare13/actor source and restricted metadata read back unchanged before development. Final compiler/required CI/review remain owed.
 RENDERED_EVIDENCE: UNVERIFIED: No new frontend code. Actual released NEXUS email flow is not rendered or authenticated by these domain tests.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Local real-handler/native behavior is separate from the complete customer journey, including original email/receipt return.
@@ -20,11 +20,21 @@ TRUTHFUL_STATE_LABELS: PASS: Saving never approves, schedules dispatch or sends.
 SOLO_UI: NO: Domain-only producer increment; no Solo interface file or Team Hub consumer changes. The eventual integrated outcome still owes original Solo live verification.
 UNVERIFIED: Required exact-head CI/managed Preview, non-author review, compatible native release/readback and complete authenticated NEXUS flow. This increment is not outcome completion, whole EXP03 readiness or owner acceptance.
 
+INTERNAL_BUILD_IDENTITY: source=c20f05a0358d72f8e75cfa2bd65965438e43b01b; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271130010003 compatible original-owner order); edge=PROOF_OWED(comms-email-command and containing paige-ai-chat closure); evidence=scripts/proof/exp03-email-existing-draft-postgres.mjs and original domain tests
+RELEASE_CHANNEL: development: local producer proof only; exact-head engineering gates, normal release and live integrated verification remain separate.
+RELEASE_CLASSIFICATION: minor: additive first unsent save through the original email writer; no existing signature or grant changes.
+CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement proposed for this producer increment.
+RELEASE_NOTE_REQUIRED: no: necessary original writer integration within the selected outcome, with internal evidence retained.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: local first-save producer; PROOF OWED: required CI, Preview, release, E08 integration and authenticated approved-send outcome; no provider acceptance inferred.
+RELEASE_RECOVERY: position=original source rollback or reviewed forward fix while preserving committed drafts/receipts and applied migration history; reference=original repository release governance and journey14.60.
+
 ## Source and retained failures
 
 The new owner-approved ONE outcome is NEXUS Team Hub prepare → save → reopen → exact recipient/content approval → send once → original email and truthful receipt/recovery. EXP03 owns email; EXP08 owns actual DM admission/private context/card/result/return integration. No new sender, store, approval system, registry or runtime.
 
 Baseline original chat test reproduced fresh-save1FAIL/75PASS. Adapter first-save reproduced1FAIL/9PASS. Native original published source refused the requested new draft with COMMS_EMAIL_DRAFT_SAVE_INVALID after210 retained action controls. The first standalone compiled fixture attempt lacked original inbound prerequisites; the complete original whole-carrier route was then used. A new explicit empty-file-list case reproduced1FAIL/76PASS and was repaired without inventing a source. The original handler fixture initially omitted the already-imported save function from its injected runtime; adding the real production import exposed and verified that path,85PASS. Earlier production/CI/viewport/history evidence is unchanged.
+
+The first new UI attestation failed the unchanged validator because its seven release-governance fields were absent. Added the actual source/local/not-deployed/proof-owed values; no checker or product guard changed. The first restricted compiler run was interrupted after no terminal result; normal-process compiler renewal remains a separate required check, not a baseline waiver.
 
 One failed local cluster initialization was stopped; the existing owned isolated fixture was reused. No managed database or customer row was written. Two source-generation anchor assertions failed before writing the candidate; corrected exact original anchors were used. CLI creation first failed on telemetry filesystem permission, then succeeded through ordinary engineering permissions. The empty CLI-created file was forward-named before any apply; original applied200003 is immutable.
 

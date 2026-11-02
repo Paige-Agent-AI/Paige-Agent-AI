@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded2026-11-01 UTC — EXP03 original saved-email opening and durable unsent flow.**
+
+| Increment | Exact source and observed production release | Useful result and remaining proof |
+| --- | --- | --- |
+| [#3193](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3193) | Reviewed `dc6ca1a568919147e165b4c4b4128d5c108d5129`; AUTHOR-REVIEW / LOWER ASSURANCE6563617587/6564066500. All11 terminal checks:10SUCCESS plus schema-free PreviewSKIP; both web statusesSUCCESS. Normal merge `d7596d976468c27ea1b18b6766eb6f176a5a2fed`, tree `a454b1ed40d186a8464c4ced11c318b76e681ac7` exactly matches reviewed union with actual2be680762,87own/19579outside leaves conserved. Production `dpl_3Gf66HTELZsRxki7VvpyxPKA3Nat` READY/exactd759; public canonical build `d7596d976468c27ea1b18b6766eb6f176a5a2fed-mvyc6dtq`, root and `/assets/main-DxkyrHsc.js` read back, bootstrapSHA256 `75bb056b327d9b3c635ac8c34acfd244f9c5f0ab98b8e499567a6c8ce258e954`. Actual authenticated official alias loads the same bootstrap; its unauthenticated version endpoint returned protectionHTML and is excluded. Native/Edge delta NOT_APPLICABLE; original200003 remains appliedONCE with original Save/prepare source and restricted ACL. | Existing owner authenticated: opening progress and editor focus; original draft edited and unsentSave acknowledged; leave/empty composer/full document reload/same source reopened EXACT747characters; same words retained during original To/From/subject review, exited withoutSend. Authoritative metadata separately confirms ONE original message and ONE receipt for the current save operation with exact actor/tenant/action/approval/version backlinks, draft/pending/providerIDabsent. Historical first-save receipt remains history. Original failed3bb gate and frame/oracle corrections remain in [original evidence](evidence/ui-delivery/exp03-saved-reply-opening.md) and [journey14.59](delivery/exp03-grow-my-business-journey.md). This verifies the bounded Conversations unsent flow, not provider execution, full role/cohort/revoke, native zoom, actual Team Hub email integration, complete O12B/both-chat or full EXP03/owner acceptance. No customer version or announcement. |
+
 **Recorded2026-11-01 UTC - EXP08 original row4 owner-recovery native/source release.**
 
 | Increment | Exact source and observed production release | Useful result and remaining proof |

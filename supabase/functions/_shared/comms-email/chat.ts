@@ -28,7 +28,7 @@ const DESCRIPTIONS: Record<string, Record<string, unknown>> = {
   subject: { type: "string", minLength: 1, maxLength: COMMS_EMAIL_SUBJECT_MAX, description: "One-line subject, no line breaks." },
   body: { type: "string", minLength: 1, maxLength: COMMS_EMAIL_BODY_MAX, description: "The email body as plain text. Blank lines separate paragraphs. No HTML." },
   draft_source:{...kitProperties.draft_source as object,description:"Only an exact original draft id and raw updated_at from a current permitted source read. Never guess or truncate its version; absent creates a fresh email."},
-  save_draft:{...kitProperties.save_draft as object,description:"True only when asked to save unsent changes to the exact saved source. This does not approve, schedule dispatch or send an email."},
+  save_draft:{...kitProperties.save_draft as object,description:"True only when asked to save an unsent email. With draft_source, updates that exact saved version; without a source, creates one new Messages draft. Never invent a source version. This does not approve, schedule dispatch or send an email."},
   attachments:{...kitProperties.attachments as object,description:"Existing permitted upload paths only. Omit to retain a saved source's files; [] explicitly removes them from that draft. Never URLs or provider identifiers."},
   connector_id: { type: "string", format: "uuid", description: "Omit unless this tool returned a list of sender addresses and the person chose one; then pass that choice's connector_id." },
   send_at: { ...kitProperties.send_at as object, description: "Only when the person asked for a later time. First read the business time zone with read_business_time_zone and confirm the time in words with the person. Then give it as ISO 8601 with the UTC offset in force on the TARGET date in that zone (daylight saving can differ from today's offset), 2 minutes to 30 days ahead. Leave it out to send on approval." },
@@ -268,9 +268,8 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
     if(!modelPinned){
     if(own(modelArgs,"draft_source"))source=parseCommsEmailDraftSource(modelArgs.draft_source);
     if(own(modelArgs,"save_draft")&&typeof modelArgs.save_draft!=="boolean")throw Error("invalid_save");
-    if(saveDraft&&!source)throw Error("save_requires_source");
     if(own(modelArgs,"attachments")){
-      const paths=source&&Array.isArray(modelArgs.attachments)&&modelArgs.attachments.length===0?[]:parseCommsEmailAttachmentRequest(modelArgs.attachments,tenantId);
+      const paths=(source||saveDraft)&&Array.isArray(modelArgs.attachments)&&modelArgs.attachments.length===0?[]:parseCommsEmailAttachmentRequest(modelArgs.attachments,tenantId);
       files=paths.map(path=>({path}));
     }
     }
@@ -302,7 +301,7 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
   const origin = hasOrigin ? readOrigin(ctx.followupOrigin) : null;
   let turn: Turn;
   try { turn = canonical(ctx.turn) as Turn; } catch { return refuse("unclaimable"); }
-  if(source&&(!uuid(userId)||!uuid(turn?.thread_id)||!isCurrent(true)))return refuse("unclaimable");
+  if((source||saveDraft)&&(!uuid(userId)||!uuid(turn?.thread_id)||!isCurrent(true)))return refuse("unclaimable");
   if(saveDraft&&(hasPin||ctx.approved.size>0))return refuse("unclaimable");
   if (hasOrigin && (!origin || origin.tenantId !== uuid(tenantId) || origin.actorId !== uuid(userId) || origin.threadId !== uuid(turn?.thread_id))) return refuse("unclaimable");
   if (!isCurrent(original)) return refuse("unclaimable");
@@ -396,7 +395,7 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
       command = parseCommsEmailCommand({ action: COMMS_EMAIL_ACTION, contact_id: modelArgs.contact_id, connector_id: modelArgs.connector_id ?? null, subject: modelArgs.subject, body: modelArgs.body });
       if (origin && command.contact_id !== origin.contactId) return refuse("unclaimable");
       body = { expected_tenant_id: tenantId, operation_id: await commsEmailOperationId(tenantId, userId, command, turn, origin ? { action_id: origin.actionId, approval_id: origin.approvalId } : undefined, sendAt), command, ...(origin ? { approval_id: origin.approvalId } : {}), ...(sendAt ? { send_at: sendAt } : {}) };
-      if(source||files!==undefined){
+      if(source||files!==undefined||saveDraft){
         body.operation_id=await commsEmailOperationId(tenantId,userId,command,turn,origin?{action_id:origin.actionId,approval_id:origin.approvalId}:undefined,sendAt,{...(source?{source}:{}),...(files!==undefined?{files}:{}),...(saveDraft?{save_draft:true}:{})});
         if(source)body.draft_source=source;if(files!==undefined)body.attachments=files;if(saveDraft)body.save_draft=true;
       }
@@ -421,9 +420,9 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
     if(saveDraft){
       if(result.ok===true&&result.outcome==="draft_saved"&&result.operation_id===body.operation_id&&typeof result.receipt_id==="string"&&UUID.test(result.receipt_id)){
         const saved=parseCommsEmailDraftSource(result.draft_source);
-        if(saved.message_id!==source?.message_id)throw Error("saved_source_changed");
+        if(source&&saved.message_id!==source.message_id)throw Error("saved_source_changed");
         return {content:{success:true,outcome:"draft_saved",draft_source:saved,receipt_id:result.receipt_id,replayed:result.replayed===true,delivery_confirmed:false,
-          note:"Saved the unsent changes on the original draft. Nothing was sent or approved. Reopen this draft to review its saved version before sending."}};
+          note:"Saved the unsent email in Conversations. Nothing was sent or approved. Reopen this exact draft to review its saved version before sending."}};
       }
       return {content:{success:false,outcome:result.outcome==="refused"?"refused":"outcome_unknown",delivery_confirmed:false,
         note:"This save has no verified completed result. Reopen the original draft and check its saved version and recorded status before further changes. Do not retry a different operation automatically."}};

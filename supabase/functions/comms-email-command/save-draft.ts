@@ -10,7 +10,7 @@ export async function saveOriginalEmailDraft(input:{tenantId:string;actorUserId:
   command:CommsEmailCommand;approvalId?:string;attachments?:unknown;sendAt?:string},
   d:{admin:CommsEmailAdmin & LeadReplyApprovalAdmin;caller:CommsEmailAdmin;storage:CommsEmailStorage;stillCurrent:()=>Promise<boolean>}) {
   const refused=(code:string)=>({ok:false,outcome:"refused",code});
-  if((!input.source&&!input.actionSource)||(input.source&&input.actionSource)
+  if((!input.source&&!input.actionSource&&input.approvalId!==undefined)||(input.source&&input.actionSource)
     ||(input.actionSource&&input.actionSource.approval_id!==input.approvalId))return refused("COMMS_EMAIL_DRAFT_SOURCE_INVALID");
   let originalApproval:VerifiedLeadReplyApproval|undefined;
   if(input.approvalId!==undefined){
@@ -18,11 +18,11 @@ export async function saveOriginalEmailDraft(input:{tenantId:string;actorUserId:
     if(typeof checked==="string")return refused(checked);originalApproval=checked;
   }
   let draft:{connectorId:string;bodyHtml:string;attachmentPaths:string[]|null};
-  if(input.actionSource){
+  if(input.actionSource||!input.source){
     // First unsent save: no private body is read through a service client and
     // nothing is copied to the approval JSON. The original native writer locks
     // and proves this exact approval/version/action again before materializing.
-    if(!originalApproval)return refused("COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED");
+    if(input.actionSource&&!originalApproval)return refused("COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED");
     try{
       const parties=await resolveCommsEmailParties(d.admin,{tenantId:input.tenantId,actorUserId:input.actorUserId,contactId:input.command.contact_id,connectorId:input.command.connector_id});
       if(parties.kind!=="resolved")return refused("COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE");
@@ -62,7 +62,7 @@ export async function saveOriginalEmailDraft(input:{tenantId:string;actorUserId:
   const unknown=()=>({ok:false,outcome:"outcome_unknown",code:"COMMS_EMAIL_DRAFT_SAVE_UNVERIFIED",operation_id:input.operationId});
   try{
     const result=await d.admin.rpc("save_comms_email_draft",{_actor:input.actorUserId,_tenant:input.tenantId,_save_id:input.operationId,
-      _message_id:input.source?.message_id??null,_expected_updated_at:input.source?.updated_at??input.actionSource!.updated_at,_contact:input.command.contact_id,
+      _message_id:input.source?.message_id??null,_expected_updated_at:input.source?.updated_at??input.actionSource?.updated_at??null,_contact:input.command.contact_id,
       _connector:draft.connectorId,_subject:input.command.subject,_text:input.command.body,_html:draft.bodyHtml,
       _attachments:files,_send_at:input.sendAt??null,_approval:input.approvalId??null});
     if(result.error){

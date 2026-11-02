@@ -52,7 +52,7 @@ Deno.serve(async req => {
     if (raw.length > 100000) throw new TypeError("BODY_TOO_LARGE");
     const parsed = object(JSON.parse(raw));
     if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id", "send_at", "cancel", "save_draft", "attachments", "draft_source", "action_draft_source"].includes(key))) throw new TypeError("INVALID_BODY");
-    if (parsed.save_draft!==undefined && (parsed.save_draft!==true || (parsed.draft_source===undefined&&parsed.action_draft_source===undefined) || parsed.approved_fingerprint!==undefined || parsed.cancel!==undefined)) throw new TypeError("INVALID_DRAFT_SAVE");
+    if (parsed.save_draft!==undefined && (parsed.save_draft!==true || parsed.approved_fingerprint!==undefined || parsed.cancel!==undefined)) throw new TypeError("INVALID_DRAFT_SAVE");
     if(parsed.action_draft_source!==undefined&&(parsed.save_draft!==true||parsed.draft_source!==undefined))throw new TypeError("INVALID_ACTION_DRAFT_SAVE");
     if (typeof parsed.expected_tenant_id !== "string" || !UUID.test(parsed.expected_tenant_id) || typeof parsed.operation_id !== "string" || !UUID.test(parsed.operation_id)) throw new TypeError("INVALID_SCOPE");
     // Cancel of a scheduled send: exactly { expected_tenant_id, operation_id, cancel: true } — no command,
@@ -103,7 +103,7 @@ Deno.serve(async req => {
   // another business, the Team Hub or the governed folder is refused here, with no storage call at all.
   let attachmentPaths: string[] | null = null;
   if (body.attachments !== undefined && !body.draft_source && !body.action_draft_source) {
-    try { attachmentPaths = parseCommsEmailAttachmentRequest(body.attachments, tenantId); }
+    try { attachmentPaths = body.save_draft===true&&Array.isArray(body.attachments)&&body.attachments.length===0?[]:parseCommsEmailAttachmentRequest(body.attachments, tenantId); }
     catch { return refusedBeforeDispatch(400, "COMMS_EMAIL_ATTACHMENTS_INVALID"); }
   }
   // A cancel is a brake, not a send: it is not held behind the provider kill switch.

@@ -185,7 +185,7 @@ jobs:
       - name: EXP03 original number authority after native lock waits and exact source recovery in disposable PostgreSQL
         run: node scripts/proof/exp03-number-current-authority-postgres.mjs 5432 --currentness
       - name: EXP03 saved email whole atomic carrier, original source approval receipt and refusal recovery
-        run: node --experimental-strip-types scripts/proof/exp03-email-existing-draft-postgres.mjs 5432 --whole-carrier --action-after-whole --action-candidate --action-current-source --action-use-carrier --action-published
+        run: node --experimental-strip-types scripts/proof/exp03-email-existing-draft-postgres.mjs 5432 --whole-carrier --action-after-whole --action-candidate --action-current-source --action-use-carrier --action-published --fresh-after-whole --fresh-candidate --fresh-published
       - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
         run: node scripts/proof/operator-account-archive.mjs --postgres
       - name: Operator provider retirement SQL proof

@@ -60,6 +60,7 @@ import "./settings-setup.css";
 import { KnowledgeLibrary } from "./knowledge/KnowledgeLibrary";
 import { RepresentativePhonePicker } from "./setup-representative-phone";
 import { BusinessTimeZoneSetting } from "./setup-business-time-zone";
+import { ReviewedSetupFacts } from "./ReviewedSetupFacts";
 import { resolveSetupSubtabRoute, setupSubtabPath } from "./setup-subtab-route";
 import { settingsScrollOwner } from "./settings-scroll-owner";
 import { PeopleEmailPreferences } from "./settings-people-email-preferences";
@@ -1390,6 +1391,10 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
             id={`setup-panel-${tab}`}
             aria-labelledby={`setup-tab-${tab}`}
           >
+            {tab === "business-profile" && <ReviewedSetupFacts tenantId={data.activeTenantId}
+              brief={data.brief} contextRevision={data.contextRevision} canEdit={data.canEdit}
+              disabled={editing || data.loading || data.saving || data.saveOutcomeUnknown} refreshing={data.loading}
+              onSaved={() => void data.refresh()}/>}
             {tab === "business-profile" && (
               <BusinessProfile
                 key={data.activeTenantId}

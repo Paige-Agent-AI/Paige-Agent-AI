@@ -1681,6 +1681,8 @@ Three confirmed tier-seam bugs plus a fourth that had been hiding under an unrel
 
 ## 39. The peer-gate — every §32-verified change also gets an INDEPENDENT adversarial read of the REAL diff.
 
+**Current reviewer rule (owner, 2026-11-02):** The implementing lead uses one of its own review agents who did not implement, co-author or help write the changes. Review the exact final head and record the non-author review and findings before merge, as required by `AGENTS.md` → "Merge gate — Independent Review". Author/self-review is not a substitute. Codex's automated PR review is not a required merge gate; do not request or wait for it to satisfy this requirement. Existing material findings and all other release gates remain binding. Preserve the historical evidence below.
+
 **Directive (owner: Antonio, 2026-08-04, ref #214):** A §32 `BEGIN..ROLLBACK` proof tests
 **what its assertions test** — and nothing else. A proof can be **fully GREEN and still miss an
 entire class of defect**, because it only ever exercises the checks its author thought to write.

@@ -66,6 +66,7 @@ export function KnowledgeSourceEvidencePanel({client, scope, review}: Props) {
     if (button && !button.disabled) button.focus();
   }, [offset, currentView.phase]);
   return <section className="space-y-3">
+    {review.pending_review?.coverage==='partial'&&<p className="text-sm" role="status">Full document coverage is not verified. The extracted text is ready for review; compare it with your original before publishing. Open source references to check reading limits.</p>}
     <Button type="button" variant="outline" aria-expanded={open} aria-controls={id} onClick={() => void toggle()}>
       {open ? 'Hide source references' : 'View source references'}
     </Button>
@@ -77,7 +78,9 @@ export function KnowledgeSourceEvidencePanel({client, scope, review}: Props) {
         <p>These are extracted source excerpts, not confirmed business facts. Edits in your review do not change these excerpts.</p>
         {evidence.format === 'pdf' && <p>Text layer only; no OCR. Some pages or content may be missing.</p>}
         {evidence.format === 'docx' && <p>Main document text only. Paragraph references are not page numbers; other document elements may be missing.</p>}
+        {evidence.format === 'pdf' && <p>Readable page references: {evidence.segments.filter(segment=>segment.kind==='page').length}. This is not a total page count.</p>}
         {evidence.limits.includes('PAGE_LIMIT') && <p>The reading reached its page limit.</p>}
+        {evidence.limits.includes('TEXT_LIMIT') && <p>The reader reached its text limit. Some source text was not extracted.</p>}
         {evidence.limits.includes('EMPTY_PDF_PAGES') && <p>Some pages had no readable text.</p>}
         <ol className="space-y-3">
           {evidence.segments.slice(offset, offset + PAGE_SIZE).map(segment => {

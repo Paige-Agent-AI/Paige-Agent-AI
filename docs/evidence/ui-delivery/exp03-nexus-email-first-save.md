@@ -22,7 +22,7 @@ UNVERIFIED: Required exact-head CI/managed Preview, non-author review, compatibl
 
 INTERNAL_BUILD_IDENTITY: source=c20f05a0358d72f8e75cfa2bd65965438e43b01b; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271130010003 compatible original-owner order); edge=PROOF_OWED(comms-email-command and containing paige-ai-chat closure); evidence=scripts/proof/exp03-email-existing-draft-postgres.mjs and original domain tests
 RELEASE_CHANNEL: development: local producer proof only; exact-head engineering gates, normal release and live integrated verification remain separate.
-RELEASE_CLASSIFICATION: minor: additive first unsent save through the original email writer; no existing signature or grant changes.
+RELEASE_CLASSIFICATION: minor-candidate: additive first unsent save through the original email writer; no existing signature or grant changes.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement proposed for this producer increment.
 RELEASE_NOTE_REQUIRED: no: necessary original writer integration within the selected outcome, with internal evidence retained.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: local first-save producer; PROOF OWED: required CI, Preview, release, E08 integration and authenticated approved-send outcome; no provider acceptance inferred.
@@ -34,7 +34,7 @@ The new owner-approved ONE outcome is NEXUS Team Hub prepare → save → reopen
 
 Baseline original chat test reproduced fresh-save1FAIL/75PASS. Adapter first-save reproduced1FAIL/9PASS. Native original published source refused the requested new draft with COMMS_EMAIL_DRAFT_SAVE_INVALID after210 retained action controls. The first standalone compiled fixture attempt lacked original inbound prerequisites; the complete original whole-carrier route was then used. A new explicit empty-file-list case reproduced1FAIL/76PASS and was repaired without inventing a source. The original handler fixture initially omitted the already-imported save function from its injected runtime; adding the real production import exposed and verified that path,85PASS. Earlier production/CI/viewport/history evidence is unchanged.
 
-The first new UI attestation failed the unchanged validator because its seven release-governance fields were absent. Added the actual source/local/not-deployed/proof-owed values; no checker or product guard changed. The first restricted compiler run was interrupted after no terminal result; normal-process compiler renewal remains a separate required check, not a baseline waiver.
+The first new UI attestation failed the unchanged validator because its seven release-governance fields were absent; the second used the unsupported classification word minor. Added the actual source/local/not-deployed/proof-owed values and canonical minor-candidate classification; no checker or product guard changed. The first restricted compiler run was interrupted after no terminal result; normal-process compiler renewal remains a separate required check, not a baseline waiver.
 
 One failed local cluster initialization was stopped; the existing owned isolated fixture was reused. No managed database or customer row was written. Two source-generation anchor assertions failed before writing the candidate; corrected exact original anchors were used. CLI creation first failed on telemetry filesystem permission, then succeeded through ordinary engineering permissions. The empty CLI-created file was forward-named before any apply; original applied200003 is immutable.
 

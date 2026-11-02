@@ -1,5 +1,16 @@
 # Config Registry — infra & integration state
 
+## November2 — original Team-details native delivery identity
+
+Production3221/439d88d17 installs20271128020008 once through normal41508732318.
+Original get_paige_team_context/get_solo_team_workspace, two-/four-argument
+set_solo_team_member_permission and three-/five-argument
+set_solo_team_member_work_profile have exact reviewed bodies/ABI/owner/ACL/defaults;
+only authenticated has client EXECUTE, with original private reader dependencies.
+No Edge configuration, environment/secret or provider change; personal-notice API not installed here.
+Native/source readback is not genuine customer save/reload/role-cohort proof.
+Exact receipt and recovery boundary: Master4.0 and exp08-owner-work-profile evidence.
+
 ## EXP02 original Systems host private purpose — October27 UTC, source verified
 
 Existing systems-check-run-onboarding155 now includes its private manual Work

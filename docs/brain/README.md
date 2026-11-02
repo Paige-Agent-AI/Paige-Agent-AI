@@ -16,6 +16,17 @@ zoom, other-role/revoke/provider and actual Team Hub email integration remain
 separate unfinished proof/integration. Full EXP03 stays STILL CODING; the owner
 requires report and stop after this bounded flow, with the next outcome approved.
 
+## EXP08 November2 — teammate-details delivery identity
+
+Original3221/439d88d17 now has exact-head13 checks, own NON-AUTHOR5741445655,
+normal native41508732318/28020008 ONCE and six-body/ABI/ACL readback, production
+Vercel9jAE and both-origin exact439d served build verified. Master4.0 records this
+and preceding3203/96b1 source identity. Reuse original Team writers/receipts;
+personal-notice API is excluded. Live customer save/access/reload/reopen remains
+UNVERIFIED under original session/target handback3f19953c; no outcome acceptance.
+Full18+6/five journeys remain pending; only teammate details is authorized, then
+report to owner/original Linear/Coordinator and STOP for next-outcome approval.
+
 ## EXP08 November1 - original recovery native/source release, full Team Hub still coding
 
 Original [3200/27ba09d13](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3200)

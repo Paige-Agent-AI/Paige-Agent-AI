@@ -1,5 +1,9 @@
 # Lessons Learned — recurring traps
 
+### Preserve unmerged applied Preview history while repairing native representation (2026-11-02, EXP08)
+
+An unmerged carrier can already be applied in its ephemeral Preview: preserve that branch/file/ledger, then use a fresh never-applied carrier from actual released main for a lawful supersession; never rewrite or blindly replay the old Preview state. Literal original definitions let the unchanged authority guard inspect the real code. Check lifecycle exclusion before membership locks: actual original archive tests reproduced both old40P01 deadlocks and proved both repaired orderings with stale refusal/one-effect audits. Scope metadata claims to properties actually guarded and read back; the current defaults matched, but arbitrary COST/support drift is not exhaustively guarded. Engineering fixtures, deployed source and an authenticated useful result remain separate. Existing EXP08 evidence preserves causal failures and receipts.
+
 ### A deterministic customer read can reuse the original conservative route (2026-10-29, EXP09)
 
 The original `resolveTurnRoute` already gives a genuinely unrun advisory classifier an `unclassified_default` operational floor. For one explicitly selected public page, prepare the exact native-authorized call through the original ToolDef and execute it in the existing read loop before the first model response; do not invent classifier output, attachment facts, a second router or tool registry. This floor grants no authority: retain native actor/business/relationship/intent/URL binding, every original per-call gate and a closed handle-once customer boundary. A DOM/source test is not real HTTP or customer proof. The [existing UI evidence](../evidence/ui-delivery/e09-cura-public-link.md) records local tests, genuine red findings, reviewed source-pin renewal and the still-open native/release gates.

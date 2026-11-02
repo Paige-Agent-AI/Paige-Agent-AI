@@ -53,13 +53,20 @@ Independent non-author review: dedicated setup_contract_review agent did not wri
 code. Its initial discovery/host findings were confirmed; correction and host-refresh
 findings are being repaired and causally tested. Final exact-head clearance OWED.
 Proof so far:61 focused parser/client controls;69 actual local native assertions
-with explicitly MODELED identity/source-reader dependencies;8 mounted recovery/edit
+with explicitly MODELED identity/source-reader dependencies;9 mounted recovery/edit
 tests and original63 Setup tests PASS. The mounted receipt is invalidated when a
 later original manual save advances CAS; matching own-save readback retains it.
 Lost save acknowledgment followed by full client destruction discovers the same
 receipt with one modeled save. New full-schema assertions UNRUN; fresh
 exact-head CI/production native/source/readback/authenticated result all OWED.
 No local fixture is customer acceptance.
+
+Windows-source quotation repair: genuine old mounted8PASS1FAIL proved textarea
+CRLF normalization shifted original quotation offsets. Browser-normalized offsets
+now map back to unchanged canonical UTF16 source; no source/hash normalization.
+Same9 mounted controls and original63 host regressions PASS. The complete incoming
+Knowledge repair3219/main37c6 is composed normally with no peer file modifications.
+Prior1fa exact-head checks/review are supporting only; all fresh final-head gates owed.
 
 Capability routing: E01 owns original Setup/direct human save; E13 owns canonical
 Knowledge source validation. Reuse original Setup scope/getters/writer/meta/audit;

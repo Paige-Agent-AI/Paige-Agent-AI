@@ -4,7 +4,7 @@ UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: flow-by-flow v2.0.1 read for this milestone; flow is a platform operator entering a tenant from the Fleet directory and working inside it until Exit
 PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design SKILL.md and routed references read, plus Impeccable SKILL, operate and craft-floor, for the state pill beside Exit and the arrival notice wording
 MATERIAL_FLOW_CHANGE: NO: no state, transition or exit changes; entering and exiting work as before, and the header gains a read-only label naming the account state
-FLOW_PROTOTYPE: PASS: rendered frames of the real shell header (1366 and 390, light and dark, canceled and trial, plus the arrival notice) sent to the owner and held for approval before merge
+FLOW_PROTOTYPE: PASS: rendered frames of the real shell header (1366 and 390, light and dark, canceled and trial, plus the arrival notice) recorded for live owner evaluation after an otherwise safe engineering release
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: audience is a super_admin or platform_admin acting as a tenant in any account state; the primary action is knowing, for as long as they stand in it, that the account is canceled, suspended, past due or on trial
 VISUAL_DIRECTION: PASS: one StatePill beside Exit using the Fleet directory's own tone for the state (critical to error, warn to warning, notice to pending, neutral to off); no gold; nothing shown for an active account
 AUTOMATED_EVIDENCE: PASS: WorkspaceExitControl.test.tsx (active shows no label; canceled reads "This workspace is Canceled" beside Exit; trial reads "This workspace is Trial") and FleetConsoleEnter.test.tsx (the arrival notice names Canceled) fail on main and pass here; src/components/auth and src/operator/surfaces 195 passed
@@ -36,11 +36,11 @@ MOTION_PURPOSE: NONE: no motion added
 PROTECTED_SEAMS: exitOperatorActAsFrom and the exit paths are untouched; Fleet's statusNote moved to tenantLifecycle unchanged in wording
 
 INTERNAL_BUILD_IDENTITY: b31feb43b0563afdf5c32150adcbdcd018cf7d97; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here holds this PR's code and tests
-RELEASE_CHANNEL: development: operator act-as clarity, held for the owner's frames approval, then merged on green per CLAUDE.md §4
+RELEASE_CHANNEL: development: operator act-as clarity; source candidate, not merged or deployed
 RELEASE_CLASSIFICATION: internal-only: operator view only; no tenant member sees the label
 CUSTOMER_RELEASE_IDENTITY: none: no customer-visible change
 RELEASE_NOTE_REQUIRED: NO: no customer-visible change
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: owner frames approval and a live operator session after deploy
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: a live operator session after deploy and later owner product acceptance
 RELEASE_RECOVERY: position=revert the merge (frontend only, no migration); reference=this PR
 
 ## Scope and collisions

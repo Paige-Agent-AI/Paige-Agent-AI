@@ -2989,6 +2989,44 @@ normal release and authenticated/cohort outcomes remain owed. Applied recovery
 migration bytes are unchanged. Full18+6/five-journey EXP08 remains STILL CODING.
 
 
+### Original §4.11 accepted owner work-profile rule — November 1, inert integration
+
+Owner accepted the holder-or-self default under §10.5 on October27. Fresh
+production source still returns original writer body1d99e171c55d259c18961068a7829fea,
+postgres/SECURITY DEFINER/public,pg_temp/authenticated-only. The new inert
+`exp08-owner-work-profile-patch.sql` inserts marked admission into that ORIGINAL
+writer, retaining three-argument ABI, JSON receipt, trim/120/2000 limits and audit.
+Only current holder or affected owner edits an owner seat (including role-only
+owner evidence). Admin/Member behavior stays original. Current Auth, sorted
+actor/target seats, profile scope and tenant pointer are locked/re-resolved before
+effect, following original departure/revoke membership-before-profile/tenant order.
+Title/responsibilities never confer authority. No new writer/approval/runtime.
+Exact inverse source and complete non-body metadata are conserved on replay.
+
+Final isolated PostgreSQL16 component exit0/46357ms:19/19 repaired cases; original
+baseline retains exactly six expected failures;5 source/ACL/path/security/volatility
+drift controls refuse without overwrite;4 permission/identity mutants killed;
+6 actual observed waits PASS (role loss, target becomes owner, identity ban,
+workspace switch, holder pointer change, permitted wait). Refusals leave no
+profile/audit effect; permitted wait writes one original audit. Identity negatives
+now isolate otherwise permitted Admin-to-Member edits: an earlier identity mutant
+survived because owner denial masked that check, a proof gap repaired without
+weakening assertions. Unknown-selector setup failure and telemetry extraction
+TypeError are retained as engineering setup/evidence errors, not product proof.
+Only the run-created database was disposed. Auth/scope helpers remain explicit
+ports; this is not full-schema, SDK/RLS/customer/cohort/production proof.
+
+Normal CI preserves all original groups and invokes this component in its own
+created/disposed child database after original departure proof; local selection
+is `--only-work-profile`. No applied file, native version, managed database or
+visible UI changed. Native carrier/composition, original title baseline, approved
+I3 read-only/editor/refusal copy, original Team/Spine caller integration and actual
+role/cohort/reopen proof remain owed. Current MemberEditor surfaces server errors
+raw, so this inert code prefix needs its approved authored mapping before release.
+Current3190/c998 checks remain separate; code6848acd3c is LOCAL/unpublished.
+All original18+6/five lifecycle journeys remain required; full EXP08 STILL CODING.
+
+Final isolated log SHA256: `f313215ce5c680cb0b6cf11529f2377ed4ae533d3535c6cd9d4fe439e74bda61`.
 ### Native32 packaging correction and released Finance composition — November 1
 
 Exact3190/c998 full-schema database-contract124885725310 FAILED. Original recovery39
@@ -3063,6 +3101,47 @@ remains separate and unpublished. Full original18+6/five journeys STILL CODING.
 
 Final selected ACL replay log SHA256: `d7cdec7c00461dd8e3a151ae98d448dceb0122e13a4846025ee07257cfcd9362`.
 
+
+### Original work-profile captured scope/seat — local November1 integration
+
+Fresh production has ONLY original3arg work-profile/body1d99; no managed scoped
+overload exists. Local negative proof confirms the legacy current-workspace API
+cannot receive the prior reviewed workspace or target seat. A4arg prototype
+closed the workspace boundary but left3 membership-incarnation cases failing.
+It was never versioned, published or applied. The final inert overload is
+`set_solo_team_member_work_profile(_member_user_id uuid,_job_title text,
+_responsibilities text,_expected_tenant_id uuid,_expected_membership_id uuid)`.
+Both expected values are refusal-only: actual current tenant+user selects the
+locked target; supplied membership UUID only compares against it. Auth, current
+role, sorted seats, profile and tenant are held/re-resolved before delegating all
+effects to the SAME original3arg writer/audit/receipt. No second effect writer,
+store/approval/runtime/service impersonation. Original3arg ABI/legitimate callers
+remain; no scoped-to-unscoped fallback. New5arg execution is authenticated-only,
+postgres/SECURITY DEFINER/empty path; exact body/metadata/ACL replay is admitted,
+unknown drift refused without repair. No4arg installation history exists to alter.
+
+Final selected component exits0: original19 cases through BOTH doors,7 captured
+scope/seat controls, complete both-overload metadata replay,5 additional scoped
+body/ACL/grant-option/path/security refusals,2 direct anon/service role denials,
+6 original plus7 scoped actual database waits. Workspace switch, same person in
+both workspaces, missing/foreign capture and membership replacement refuse with
+no profile/audit effect; permitted original writer produces one original audit.
+Earlier original5 drift/4 mutants and all original controls remain. Initial
+Python quoting and SQL fixture-separator errors are setup failures, not product
+proof. This is disposable Auth/scope-port engineering evidence, not full-schema,
+SDK/RLS/customer/cohort or production proof. Only the created database is disposed.
+
+Mounted MemberEditor now submits BOTH captured fields, verifies the same original
+receipt and requires fresh Team after a stale membership refusal. Causal client
+expectation1FAIL→updated integration; all11 neighboring suites181/181 PASS.
+Scoped local transport follows the same declared shape. Original shared Team
+Chat/C0b consumer still needs its named receiving contract/custody and native
+roster membership_id producer; no shared Chat edit/takeover was made. Original
+native carrier/title baseline, owner projection, real browser/AT/type/native/Auth
+proof and all other I2/I3/I4/I5 integration remain owed. Render/resource holds
+are not cleared by these component tests. Full18+6/five journeys STILL CODING.
+
+Scoped component log SHA256: `f35fbb00a97a32b27c696f002ff8d7fece0a04405b582440d9b5da0825196dfc`.
 
 ### Native32 original revocation overload repair — November 1
 
@@ -3299,6 +3378,80 @@ necessary repairs and stable recovery-read client are consolidated into existing
 28native successes remain exact historical/supporting evidence; the composed head
 requires fresh complete review/CI/native28+32. No migration/version, mounted caller,
 new project/provider/approval/task/result store or full Experience readiness.
+
+### Original owner profile actual local render — November1
+
+Original own driver now terminal exit0 with32 real-SoloApp frames and7controlled
+states, report SHA256181758a4ccc9745e064bc09050d682725b94639fdf6cd5e434e74403fc7c57c4.
+Both fictional contexts/themes/four Solo viewports/PAIGE open+closed were rendered
+with actual dialog bounds/no horizontal overflow, approved read-only fields and
+explanation, heading focus/Close/Escape/Team-row return. Holder/self synthetic
+save and unknown metadata/receipt/transport/refusal preserve truthful results.
+Original selector failure is retained: real page rendered,0pageerrors, driver
+wrongly expected Taylor Reed instead of actual Taylor Reed, edit details. Only
+that selector/diagnostic changed. No product control/assertion/timeout waiver.
+Three actual representative captures inspected; no redesign of approved UI.
+Impeccable4.1.0 exit0/0anti-patterns/68existing advisory notes, focused lint0,
+original title-authority guard and SOLO parity+all mutation controls PASS.
+Whole-app type/real Auth/native/AT/nativezoom remain UNVERIFIED; controlled
+render and component evidence do not complete those claims. Existing181/11
+neighbor tests remain one bounded population.
+
+Exact published native3190/70116a independently has current hosted recovery39
+step88SUCCESS and original first-owner32 step89SUCCESS; full job/verify still
+running at this checkpoint, no release/production claim. Calendar receiving
+contract ACK via Coordinator6eab458f is finite and later, requiring exact
+baseline/hunk publication; no host lease held or action/provider activation.
+All original18+6/five journeys remain STILL CODING; no owner increment review.
+
+
+### Original scoped work-profile native proof preparation — November1
+
+Coordinator-only42537837 finite window: original canonical profile patch plus new
+self-contained rollback-only native26 template/artifact/packaging script. It
+uses actual native tables/writers/role switching, no ported current-tenant or
+permission functions.26 assertions declare source/nonbody metadata, original
+3arg and scoped5arg compatibility/receipts/audits, holder/self versus Admin
+owner editing, missing/foreign tenant/seat, same actor+target across2workspaces,
+actual native membership deletion/reentry, banned actor, anon/service denial
+and complete two-overload replay. All synthetic Auth/table changes roll back.
+Banned actor uses the CURRENT reentered seat so another refusal cannot mask
+missing identity enforcement. This is test source preparation, NOT an executed
+full-schema PASS. Canonical --write/--check/--self-test PASS only packaging.
+No workflow/current3190 head, applied source/native slot, managed fixture/account
+or authorization changed. Native26 actual CI execution and full released
+caller/Auth/cohort proof remain UNVERIFIED. Full original EXP08 STILL CODING.
+
+
+### Original work-profile UNKNOWN/reopen repair — November1
+
+Finite original b83d2335/8aa67d7e source window is preserved in local
+8836a0c89bc4177de4ff525d036934d362d0aee0. Source audit found that an unconfirmed
+editor could close/reopen against cached roster values; new mounted test
+reproduced it (expected2reads,actual1). Existing scoped loader now rereads on
+that close, retaining unknown draft while open and preventing stale reentry.
+The incumbent Modal busy rule is used while saving, not a new confirmation.
+
+Original guarded setter reconciles identical normalized fields only AFTER
+identity/current scope/live seat/owner authority under its existing locks.
+It returns the existing original receipt and makes no additional UPDATE/audit;
+different permitted fields use the byte-conserved original effect/audit code.
+Actual original no-op retry counterexample initially failed, with3dependent
+counts. After repair4recovery controls PASS; original19-per-door/7scope,
+all metadata/drift/role controls and15actual waits PASS. New committed-first
+and rolled-back-first sessions each leave1actual original audit after a
+second waiting scoped request. No identity/owner shortcut for same-value reads.
+
+Current11selected UI suites184PASS and focused3/60PASS overlap, not additive.
+New controlled real-SoloApp recovery-only run exit0/1state proves lost response
+after fictional committed state, Close/reread/reopen actual fields/unchanged
+Save disabled/1attempt. Original32frame report and previous failure evidence
+are retained. A Windows cp1252 preparation failure prevented the first UI edit;
+its stale1FAIL/58PASS was retained, then correct UTF8 edit verified, no waiver.
+Native28 template/artifact is canonical with2new duplicate checks; actual
+full-schema execution and broad type/Auth/production/both-chat proof remain
+UNVERIFIED. Current3190 release head/gates unchanged; no migration/native apply.
+Full original18+6/five journeys STILL CODING.
 
 ### November1 — unversioned atomic original Team details composition
 
@@ -3545,3 +3698,41 @@ PARTIAL claims and ALL EIGHT frames UNVERIFIED; no render/acceptance or gate wai
 The pre-push review API request correctly refused an unpublished commit after the
 local gate stopped the push; no review receipt or release was established there.
 Fresh exact published-head technical review remains required.
+
+
+### Joined approved Team details consumer — original same-outcome continuation
+
+UI branch normal composition fb01faa5d (4744 +f3) preserves all original editor,
+contact drafts, scoped profile/permission/UNKNOWN reread behavior and all incoming
+E01/E05/E13 source. Actual12selected suites223PASS, focused6file lint0; original
+UI assets/source exact4744 except three incoming native count/type lines. Shared
+contract resolution retains entire incoming text plus only three original UI
+history inserts; no rewrite of observed tests/releases. Same original evidence
+packet records exact log SHA and all current proof boundaries. Published3203/f3
+remains frozen in actual native67/engineering gates. No new carrier/version/host
+activation or separate customer release. Live/browser proof follows safe release,
+not a generic premerge hold; missing installed native APIs remain real integration
+work. All original18+6/five journeys and one complete owner review remain required.
+
+
+Joined original MemberEditor recovery repair: actual7FAIL/26oldPASS/5uncaught ->
+33PASS/0uncaught, then12neighbor suites230PASS and scoped6file lint0. A throwing
+or unavailable original host validity callback refuses before dispatch and cannot
+strand saving after settlement: same lifetime enters existing explicit-reopen,
+with usable Close/retained draft/no duplicate or late success. Cross-lifetime
+withdrawal, original native effects/receipts/contact and permissions unchanged.
+Existing owner-profile evidence retains exact failure/final logs and post-release
+live proof boundary. No separate infrastructure/outcome or release/API activation.
+
+
+Current original Team-details flow now has its actual native carrier on the SAME
+consumer branch: CLI-empty/never-applied20261101201952 forward-renamed28010008,
+existing reviewed Team bundle +original personal notice setter BYTE-EXACT in one
+transaction, no additional mechanism. SHA70caa72050f1c60d8a1b06d9cf51bb185143be971f3d6c53a23bc4768827eb51;
+version/definer/ACL lintsPASS. Fresh61/61published manifests/prodfrontier27030005
+and four original metadata hashes verified. Lower E13published28000013 actual
+release/readback first; proposed E05Calendar29000005 higher. No actual managed
+or production apply yet, no applied rewrite/version waiver. Exact carrier/native
+CI/review and ordinary ordered release precede live outcome verification. This
+finishes the existing editor flow's missing activation rather than adding another
+supporting module; no new outcome/runtime/task/store/provider or owner review.

@@ -656,7 +656,10 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
       setSelected((current) => current?.membership_id === saved.membership_id ? { ...current, permission: saved.permission } : current);
       return;
     }
-    if (saved) setSelected((current) => (current ? { ...current, job_title: saved.job_title, responsibilities: saved.responsibilities } : current));
+    if (saved && "job_title" in saved) {
+      const { job_title, responsibilities } = saved;
+      setSelected((current) => (current ? { ...current, job_title, responsibilities } : current));
+    }
     return team.refresh();
   };
   // A selection is a snapshot taken when the row was clicked. Once the roster no longer carries it,

@@ -32,14 +32,14 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Current native-readiness integration has
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Current native-readiness integration has no fresh authorized viewport drive; original controlled32 geometry/focus captures and report below remain historical evidence only.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Current native-readiness integration has no fresh authorized viewport drive; original controlled32 geometry/focus captures and report below remain historical evidence only.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Current native-readiness integration has no fresh authorized viewport drive; original controlled32 geometry/focus captures and report below remain historical evidence only.
-UNVERIFIED: Replacement exact-head engineering CI/review, native plus UI production release, legitimate existing-account role/cohort save/result/reload/reopen/recovery, actual AT/native zoom remain owed; no outcome or owner acceptance claim.
-INTERNAL_BUILD_IDENTITY: source=9a775066b990071f2dcbc56603be0767c494299b; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(unchanged20271128010008 normal production release); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp08-owner-work-profile.md
-RELEASE_CHANNEL: development: single teammate-details release composition, not production
-RELEASE_CLASSIFICATION: internal-only: integration increment of the full EXP08 assignment
+UNVERIFIED: Legitimate existing-account role/cohort save/result/receipt/reload/reopen/recovery, actual AT/native zoom remain owed under original session/eligible target handback; no completed outcome or owner acceptance claim. Exact source/review/CI/native/web release is verified below.
+INTERNAL_BUILD_IDENTITY: source=439d88d17f31326452a0e3d0239ac7388b83df9d; reviewed=b3b4091bc9ca1f4e3d2fedb70565382754c4c1a0; deployment=dpl_9jAE3DgeHkDQ1BjQhuVLZPPAZRVJ; environment=production; migrations=20271128020008(APPLIED_ONCE); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp08-owner-work-profile.md
+RELEASE_CHANNEL: production: verified original teammate-details source/native/web delivery
+RELEASE_CLASSIFICATION: internal-only: unversioned original selected-outcome delivery identity
 CUSTOMER_RELEASE_IDENTITY: none: full Team Hub integration and one owner review remain unfinished
 RELEASE_NOTE_REQUIRED: no: no standalone customer release or announcement
-RELEASE_TRUTH_BOUNDARY: PARTIAL: development integration only; native/Auth/customer results PROOF OWED
-RELEASE_RECOVERY: position=local revert before publication; reference=original EXP08 contract and exact Git history, applied recovery carrier immutable
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: native/source/web verified; genuine authorized teammate save/access/receipt/reopen/recovery and owner acceptance remain UNVERIFIED
+RELEASE_RECOVERY: position=inspect exact current native state and use reviewed forward repair; preserve applied28020008 and old unmerged Preview28010008 immutable; client revert only through normal reviewed release, no blind business-effect replay
 
 ## Flow and pre-edit source custody
 
@@ -490,3 +490,48 @@ session/resource custody ANT147/3f19953c remain pending for genuine live save,
 receipt/reload/reopen/recovery; no fabricated workforce data or account switching.
 Only this selected outcome is authorized. Report to owner, original Linear and
 Coordinator when complete, then STOP; all other original18+6/five journeys pending.
+
+### Exact production delivery identity — November 2, 2026, 19:22:45 UTC
+
+Original3221 exactb3b4091bc9ca1f4e3d2fedb70565382754c4c1a0 has own distinct
+NON-AUTHOR5741445655, all13 terminal exact-head checks/two web statuses SUCCESS
+and zero review threads. Native full-schema28/32/16/67, actual compiler100,
+whole application Test122, unchanged title guard162/selftest163 all SUCCESS.
+Normal merge439d88d17f31326452a0e3d0239ac7388b83df9d/tree49d55a60ad27a4cf941e3b9d75801abff0482f51
+is WHOLE-TREE EXACT reviewedb3; incoming55e/all19,657 outside-owned blobs conserved.
+Complete original local E08 entry terminal0/logSHA256
+f488e57c0b5771fceae94fae586f73f92113d7825797057c92f32916421d2367 covers
+owner-read37 anew, original profile/permission/currentness/mutants, atomic14 and
+actual archive both-order/no-duplicate controls. The separate lost terminal remains
+historical uncertainty, not borrowed proof. All created fixtures disposed; verified
+own55489 cluster STOPPED with onlypostgres database left; old55488 untouched.
+
+Normal deploy-migrations41508732318 lint125494687527/deploy125495045539 SUCCESS;
+db-live439d. Actual production28020008 ONCE/24statements, recorded-sourceMD5
+066703b22b5811ba86cfe6cd0f5f6853/fileSHA256
+681eb57613267af409a39554285020020b77bb41bcbe7f5305b17173950e40c1.
+All6 final bodies/reviewed ABI/owner/ACL/defaults/identity arguments/search paths
+EXACT managed Preview, mismatch0; explicit COST100/rows0/supportnone readback.
+This is bounded metadata protection, not exhaustive arbitrary pg_proc drift proof.
+Old28010008 is absent production and remains immutable in preserved unmerged3214;
+personal-notice API excluded. Original private helpers and domain writers retained.
+
+Verceldpl_9jAE3DgeHkDQ1BjQhuVLZPPAZRVJ production READY/exact439d. BOTHofficial
+origins version/root/bootstrap/reachable actual identity module200; build
+439d88d17f31326452a0e3d0239ac7388b83df9d-mvzn7m7b/customerUpdate:null.
+RootSHA256 b3038b4b59dc421c53670554389b54cd68d167d218e4dd05d30025c196c50d40;
+bootstrapmain-Deu12c34.js SHAfe48d1bec74c30561aab84c7efda5ea4a2a17b01d506e9a32bc75e3cb7e4aaec;
+reachablemain-BJaNq0Rh.js SHA18014938f1d09b72ecde0afc4e94abeb4e20df1ffbf4b6a3e088b3ad89c950e7
+contains the EXACT buildId. Initial first-bootstrap-only literal assertion failed;
+actual bounded import traversal found that exact identity in the second served
+module on BOTH origins. The identity requirement was verified, not removed.
+
+Post-main duplicate CI41508732173/Spine41508732254 were RUNNING at initial release
+receipt, not asserted PASS. Edge delta N/A. This record closes source-delivery
+identity only: no real customer save/access/receipt/reload/reopen/recovery or owner
+acceptance has been demonstrated. Existing ordinary-session/eligible target
+handoffANT147/3f19953c and real intended work facts remain pending. Coordinator
+release receipt for original EXP13: ANT147/f65fffad. No new account, borrowed
+session, fabricated workforce facts or consequential grant is used as proof.
+Only the same teammate-details outcome remains active; finish its actual live
+result, report all3 then STOP. Full18+6/five journeys are still pending.

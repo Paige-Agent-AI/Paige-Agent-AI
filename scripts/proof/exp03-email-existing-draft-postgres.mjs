@@ -278,6 +278,12 @@ $function$;
     const before=metadata();db.run(patch);assert.equal(metadata(),before);checks++;
     assert.equal(db.run(`SELECT md5(pg_get_functiondef('${sig}'::regprocedure))`),'195f827f04a3cffe6ba18b98b3075225');checks++;
     const catalogue=originalCatalogue();db.run(read('scripts/proof/exp03-fresh-email-save-patch.sql'));assert.equal(originalCatalogue(),catalogue);checks++;
+    const acl=read('supabase/migrations/20271130010103_exp03_saved_email_explicit_acl.sql');
+    const beforeAcl=originalCatalogue(),beforeBusiness=businessState();
+    db.run(acl);assert.equal(originalCatalogue(),beforeAcl,'explicit declaration preserves every function/OID/source/ACL');assert.equal(businessState(),beforeBusiness);checks++;
+    db.run(acl);assert.equal(originalCatalogue(),beforeAcl,'ACL declaration replay is an exact no-op');checks++;
+    assert.throws(()=>db.run(acl.replace('END $after_acl$;',"RAISE EXCEPTION 'forced ACL late rollback';END $after_acl$;")),/forced ACL late rollback/);
+    assert.equal(originalCatalogue(),beforeAcl);assert.equal(businessState(),beforeBusiness);checks++;
    }
    const freshId='c0000000-0000-4000-8000-000000000001';
    const freshSQL=(over={})=>saveSQL(null,{message:null,approval:null,id:freshId,...over});

@@ -83,6 +83,6 @@ View-as-Client resolves the displayed tenant from the existing RLS-protected `cl
 
 ## Review and limitations
 
-- Fresh exact-head Codex review, CI comparison, thread dispositions, merge identity, and Vercel production deployment are pending. The Live-Path gate keeps this PR Draft, so no Ready-triggered review, merge, or deployment occurs in this return.
+- Review by the author's own separately spun-up agent who did not help write the code, CI comparison, thread dispositions, merge identity, and Vercel production deployment remain unverified. The Live-Path gate keeps this PR Draft, so no merge or deployment occurred in that recorded return.
 - Authenticated production restoration, account/thread switching, keyboard drive, and responsive rendered evidence remain explicitly unverified.
 - A browser reload intentionally clears these in-memory drafts. Persisted drafts require a separate owner decision.

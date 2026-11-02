@@ -1,5 +1,6 @@
 import {act} from 'react';
 import {createRoot, type Root} from 'react-dom/client';
+import {webcrypto} from 'node:crypto';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {ReviewedSetupPanel,ReviewedSetupFacts} from './ReviewedSetupFacts';
 import {cleanSoloSetupBrief} from './settings-setup-contract';
@@ -19,7 +20,7 @@ const recorded={status:'recorded',receiptId,current:true,receipt:{schemaVersion:
  updatedAt:'2026-11-02T12:00:00Z',contextRevision:1}};
 let root:Root|null=null,host:HTMLDivElement;
 beforeEach(()=>{(globalThis as {IS_REACT_ACT_ENVIRONMENT?:boolean}).IS_REACT_ACT_ENVIRONMENT=true;});
-afterEach(async()=>{if(root)await act(async()=>root?.unmount());root=null;host?.remove();vi.restoreAllMocks();});
+afterEach(async()=>{if(root)await act(async()=>root?.unmount());root=null;host?.remove();vi.restoreAllMocks();vi.unstubAllGlobals();});
 async function render(port:ReviewedSetupPort){host=document.createElement('div');document.body.append(host);root=createRoot(host);
  await act(async()=>root?.render(<ReviewedSetupPanel port={port} actorId={actorId} tenantId={tenantId}
   brief={cleanSoloSetupBrief(null)} contextRevision={0} canEdit disabled={false} onSaved={()=>{}}/>));}
@@ -112,4 +113,30 @@ it('lost save acknowledgement then complete client destruction reopens the same 
  await act(async()=>root?.unmount());root=null;host.remove();await render(port);await click('Review facts or reopen receipt');
  expect(host.textContent).toContain(receiptId);expect(host.textContent).toContain('offers: Advisory');
  expect(rpc.mock.calls.filter(c=>c[0]==='save_solo_reviewed_business_facts')).toHaveLength(1);
+});
+it('selected Windows-newline document passage retains exact original UTF16 offsets and quotation',async()=>{
+ let digestComplete:Promise<ArrayBuffer>|null=null;
+ vi.stubGlobal('crypto',{randomUUID:()=>webcrypto.randomUUID(),subtle:{digest:(...args:Parameters<typeof webcrypto.subtle.digest>)=>{
+  digestComplete=webcrypto.subtle.digest(...args);return digestComplete;
+ }}});
+ const doc={id:proposal.facts[0].reference.documentId,tenant_id:tenantId,revision:2,title:'Neutral service note',summary:null,
+  category:null,tags:[],source:'paste',source_url:null,chunk_count:1,created_at:'2026-11-02T12:00:00Z',updated_at:'2026-11-02T12:00:00Z',
+  share_to_network:false,network_review_status:'none',content:'Line one\r\nAdvisory'};
+ const rpc=vi.fn(async(name:string,args:Record<string,unknown>)=>({data:name==='read_solo_reviewed_business_facts'?{proposal:null,approval:null}:
+  name==='read_tenant_knowledge'?{tenant_id:tenantId,documents:[doc]}:
+  {...proposal,reviewId:args._review_id,facts:args._facts},error:null}));
+ await render({getScope:async()=>({actorId,tenantId}),rpc});await click('Review facts or reopen receipt');await click('Choose a Knowledge document');
+ const select=host.querySelector<HTMLSelectElement>(`#reviewed-source-${actorId}`)!;
+ await act(async()=>{select.value=doc.id;select.dispatchEvent(new Event('change',{bubbles:true}));
+  await vi.waitFor(()=>expect(digestComplete).not.toBeNull());await digestComplete;});
+ const input=host.querySelector<HTMLTextAreaElement>('#reviewed-value')!;
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(input,'Advisory');input.dispatchEvent(new Event('input',{bubbles:true}));});
+ const decision=host.querySelector<HTMLSelectElement>('#reviewed-decision')!;
+ await act(async()=>{decision.value='adopt';decision.dispatchEvent(new Event('change',{bubbles:true}));});
+ const source=host.querySelector<HTMLTextAreaElement>('#reviewed-source-text')!;
+ expect(source.value).toBe('Line one\nAdvisory');source.setSelectionRange(9,17);
+ await click('Add selected passage for review');await act(async()=>host.querySelector<HTMLInputElement>('input[type=checkbox]')!.click());
+ await click('Review selected facts');
+ const facts=rpc.mock.calls.find(c=>c[0]==='stage_solo_reviewed_business_facts')![1]._facts as typeof proposal.facts;
+ expect(facts[0].excerpts).toEqual([{start:10,end:18,text:'Advisory'}]);vi.unstubAllGlobals();
 });

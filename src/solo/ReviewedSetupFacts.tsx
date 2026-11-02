@@ -82,7 +82,18 @@ export function ReviewedSetupPanel({port,actorId,tenantId,brief,contextRevision,
  });
  const add=()=>{
   const control=sourceText.current;if(!source||!control||!value.trim()||!decision)return;
-  const start=control.selectionStart,end=control.selectionEnd;
+  // HTML textareas normalize CR/CRLF, but Knowledge hashes and quotation offsets
+  // refer to the unchanged canonical UTF16 text. Map only that browser newline
+  // normalization; never rewrite the source or infer a different selected quote.
+  if(control.value!==source.content.replace(/\r\n?/g,'\n')){setNotice('The displayed source changed. Choose the document again.');return;}
+  const originalOffset=(boundary:number)=>{
+   let original=0,displayed=0;
+   while(displayed<boundary&&original<source.content.length){
+    original+=source.content[original]==='\r'&&source.content[original+1]==='\n'?2:1;displayed++;
+   }
+   return original;
+  };
+  const start=originalOffset(control.selectionStart),end=originalOffset(control.selectionEnd);
   if(end<=start||end-start>12000){setNotice('Select up to 12,000 characters of supporting source text.');return;}
   const fact:ReviewedSetupFact={field,value:value.trim(),sourceDecision:decision,reference:{contractVersion:1,tenantId,
    documentId:source.id,revision:source.revision,contentSha256:source.hash},excerpts:[{start,end,text:source.content.slice(start,end)}]};

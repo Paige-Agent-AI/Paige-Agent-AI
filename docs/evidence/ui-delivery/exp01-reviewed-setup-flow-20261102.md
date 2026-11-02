@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: explicit source quotation, selected editable facts, s
 FLOW_PROTOTYPE: UNVERIFIED: production source-validator prerequisite is absent; original R2 prelaunch policy preserves genuine engineering gates while allowing later live browser proof.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized workspace user chooses document facts, adopts or corrects selected values and explicitly saves original Setup with its original approval receipt.
 VISUAL_DIRECTION: PASS: preserve incumbent Setup inline Operate sections, labels, fields and buttons; no new visual world, shell or decorative motion.
-AUTOMATED_EVIDENCE: PASS: 61 focused client/parser,69 actual local native checks with MODELED identity/source-reader dependencies,9 mounted recovery/edit/source-selection tests and original63 host regressions (72 combined). Full-schema100 composed assertions are UNRUN; no production proof inferred.
+AUTOMATED_EVIDENCE: PASS: 61 focused client/parser,77 actual local native checks with MODELED identity/source-reader dependencies,9 mounted recovery/edit/source-selection tests and original63 host regressions (72 combined). Full-schema100 composed assertions on the latest source are UNRUN; no production proof inferred.
 STATIC_EVIDENCE: PASS: ESLint on own component/client/tests and diff whitespace; actual project tsc-ratchet baseline10/current6/no new errors without baseline edits. Exact final-head hosted CI is separately required.
 RENDERED_EVIDENCE: UNVERIFIED: actual ordinary authenticated Setup browser path and viewport captures have not run; dependency installation and production release remain owed.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: mounted DOM controls are modeled tests; ordinary live selected save/readback/full reload remains unrun.
@@ -56,3 +56,13 @@ source/hash is never normalized or replaced. Same test now9PASS; original63 host
 cases remain PASS. Native/source-validator code is unchanged. Incoming Knowledge
 repair3219/main37c6 is composed normally, all9 peer files preserved byte-exact and
 outside this PR's12-file owning diff. All exact-head CI/review must be renewed.
+
+Subsequent NON-AUTHOR authority review qualified its earlier source clearance:
+the original first-install audit provenance boundary was incomplete. The candidate
+now atomically excludes concurrent ordinary audit writes, refuses unexpected prior
+events without deleting history, and preserves legitimate verified replay. A
+genuine negative control failed on the old installer; repaired77 local native
+controls pass, including both real observed lock-wait orderings. Identity/source
+reader dependencies remain modeled. No production functions were installed and no
+customer records were inspected or changed. Renewed exact-head review/full-schema
+and all engineering checks remain mandatory before release.

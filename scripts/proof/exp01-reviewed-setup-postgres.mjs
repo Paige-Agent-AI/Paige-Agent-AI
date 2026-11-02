@@ -101,6 +101,21 @@ try{
   const run=spawnSync(db.psql,db.args(),{input:candidate,encoding:'utf8',timeout:30000});
   if(run.status!==0)throw Error('Candidate installation in disposable fixture: '+run.stderr);
  };
+ const poison=`INSERT INTO public.paige_audit_log(id,actor_user_id,actor_role,action,target_type,target_id,tenant_id,payload)
+ VALUES('60000000-0000-4000-8000-000000000099','${actor}','admin','solo_setup.reviewed_facts_approved',
+ 'solo_business_brief','${tenant}','${tenant}','{"requestId":"50000000-0000-4000-8000-000000000099"}')`;
+ db.run(caller+poison);
+ assert.throws(install,/SETUP_REVIEW_AUDIT_PROVENANCE/,'first install must refuse pre-existing actor-written approval events');checks++;
+ assert.equal(scalar("SELECT count(*) FROM paige_audit_log WHERE id='60000000-0000-4000-8000-000000000099'"),'1','refusal preserves prior evidence');checks++;
+ db.run("DELETE FROM paige_audit_log WHERE id='60000000-0000-4000-8000-000000000099'");
+ const browserFirst=await raceHeld(caller+poison,candidate,'e01_audit_before_install');
+ assert.notEqual(browserFirst.status,0);assert.match(browserFirst.error,/SETUP_REVIEW_AUDIT_PROVENANCE/);checks++;
+ assert.equal(scalar("SELECT count(*) FROM paige_audit_log WHERE id='60000000-0000-4000-8000-000000000099'"),'1');checks++;
+ db.run("DELETE FROM paige_audit_log WHERE id='60000000-0000-4000-8000-000000000099'");
+ const candidateBody=candidate.replace(/^BEGIN;$/m,'').replace(/^COMMIT;$/m,'');
+ const installerFirst=await raceHeld(candidateBody,caller+poison,'e01_audit_after_install');
+ assert.notEqual(installerFirst.status,0);assert.match(installerFirst.error,/row-level security/);checks++;
+ assert.equal(scalar("SELECT count(*) FROM paige_audit_log WHERE id='60000000-0000-4000-8000-000000000099'"),'0');checks++;
  install();install();checks++;
  // Every failed reinstall runs in a disconnected, rolled-back transaction.
  // Do not silently repair drift in original source, ACLs or a partial install.

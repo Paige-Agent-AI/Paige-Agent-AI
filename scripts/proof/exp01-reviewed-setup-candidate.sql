@@ -99,7 +99,16 @@ ALTER TABLE public.tenant_setup_business_context_meta
 -- These two original audit events are authored only by the native transaction.
 -- A restrictive policy composes with, rather than replaces, original audit rules.
 DO $audit_event_policy$ BEGIN
+ -- Establish provenance atomically on first installation. Existing actor-event
+ -- INSERT permission is not proof that earlier events came from this writer.
+ -- Hold the ordinary audit write boundary through the policy installation;
+ -- refuse contamination without deleting evidence. Verified replay keeps all
+ -- original legitimate events and the pinned restrictive policy unchanged.
+ LOCK TABLE public.paige_audit_log IN SHARE ROW EXCLUSIVE MODE;
  IF NOT EXISTS(SELECT 1 FROM pg_policy WHERE polrelid='public.paige_audit_log'::regclass AND polname='exp01_reviewed_facts_server_events') THEN
+  IF EXISTS(SELECT 1 FROM public.paige_audit_log WHERE action IN ('solo_setup.reviewed_facts_staged','solo_setup.reviewed_facts_approved')) THEN
+   RAISE EXCEPTION 'SETUP_REVIEW_AUDIT_PROVENANCE';
+  END IF;
   CREATE POLICY exp01_reviewed_facts_server_events ON public.paige_audit_log
    AS RESTRICTIVE FOR INSERT TO authenticated
    WITH CHECK (action <> ALL (ARRAY['solo_setup.reviewed_facts_staged'::text,'solo_setup.reviewed_facts_approved'::text]));

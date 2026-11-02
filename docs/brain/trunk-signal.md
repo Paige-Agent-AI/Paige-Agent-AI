@@ -466,15 +466,7 @@ its history is readable:
 Both rows for the old head disappeared and neither ever reported. **A push during a running review
 does not queue behind it and does not complete against the old head — it cancels it.**
 
-**Why that costs more than a cycle.** The auto-triggered review fires on exactly one event, *Draft
-marked ready*; a `@codex review` comment produces a *Manual request*. `AGENTS.md` § *Merge gate*
-item 3 requires a requested review **plus** the auto-triggered exact-head one. So a push while the
-auto review is in flight destroys the one pass you cannot ask for again, and the head is left holding
-a half-gate — which is exactly the state that let a P1 through once already.
-
-**What to do instead:** finish the review before you push. If a hook or a deadline forces a commit,
-commit **without pushing**, or accept that the round is spent and say so on the PR rather than
-claiming the in-flight findings still apply. They do not; they were never delivered.
+The author spins up a separate review agent who did not help write the code. That agent reviews the exact final changes and verifies fixes. Automated Codex PR review is optional and asynchronous; no agent waits for its status, approval or follow-up, and it is never a merge or release gate. Assess useful findings on their merits. Preserve applicable engineering CI and safety controls.
 
 ---
 

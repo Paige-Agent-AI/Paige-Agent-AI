@@ -7,10 +7,8 @@ import assert from 'node:assert/strict';
 import { OperatorPostgresFixture } from './operator-postgres-fixture.mjs';
 const read=p=>readFileSync(p,'utf8').replaceAll('\r\n','\n');
 const port=Number(process.argv[2]??55461);
-const originalSourceRef=process.env.EXP01_SOURCE_VALIDATOR_REF;
-if(!originalSourceRef||!/^[a-f0-9]{40}$/.test(originalSourceRef))throw Error('Supply the inspected, pinned original E13 source commit in EXP01_SOURCE_VALIDATOR_REF');
-const source=spawnSync('git',['show',`${originalSourceRef}:supabase/migrations/20271126210013_knowledge_source_writer_validation.sql`],{encoding:'utf8'});
-assert.equal(source.status,0,'exact original E13 candidate source available locally');
+const sourcePath='supabase/migrations/20271128000013_knowledge_source_evidence_forward.sql';
+const source={stdout:read(sourcePath)};
 const fn=(sql,name)=>{
  const start=new RegExp(`create or replace function public\\.${name}\\s*\\(`,'i').exec(sql);
  assert.ok(start,`original ${name} present`);
@@ -278,7 +276,7 @@ try{
  install();
  assert.equal(JSON.parse(scalar(caller+discovery)).approval.inspection.receiptId,decisionReceipt.receiptId,'verified replay retains the real saved receipt');checks++;
  assert.equal(scalar(`SELECT count(*) FROM paige_audit_log WHERE payload->>'requestId'='${overrideRequest}'`),'1','replay neither deletes nor duplicates the original approval');checks++;
- console.log(JSON.stringify({checks,result:'PASS',scope:'candidate + original Setup write bodies in modeled dependency fixture; NOT full-schema/customer/role completeness',originalSourceRef}));
+ console.log(JSON.stringify({checks,result:'PASS',scope:'candidate + original Setup write bodies in modeled dependency fixture; NOT full-schema/customer/role completeness',sourcePath}));
 } finally {
  db.run(`DROP DATABASE ${db.database}`,[],'postgres');
 }

@@ -71,3 +71,17 @@ The completed local sequence additionally replays the verified installer AFTER a
 actual original Setup approval exists, then reopens the identical receipt and
 checks exactly one original audit event remains. All79 local assertions pass;
 this adds proof only, with native/client/UI implementation blobs unchanged.
+
+Ordered native release preparation after E13's real release: original3204 merged
+55e30aaca504758c7994b0d8b97bcacb32578ec9 and private native bodyc875eff4 was
+independently read back, postgres-only INVOKER/empty search path. Actual main43d270
+with E08's28020008 was normally composed, incoming peer source conserved. All54
+published open heads were refreshed; E05's29000005 and E04's30000004 remain theirs.
+The CLI created EMPTY20261102215424; before content/application it was moved to
+reserved NEVER-APPLIED20271128030001. The carrier equals the reviewed own candidate
+after its first descriptive comment; the original full-schema runner asserts this
+and exercises that exact carrier/replay against the normally rebuilt released E13
+validator. No historical migration changed. First local rerun completed assertions
+but failed at its result logger's stale variable; fixed only that logger and rerun.
+All fresh final-head review/CI, native deployment and authenticated approval/save/
+receipt/full-reload proof remain required; this preparation is not a usable result.

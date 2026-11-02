@@ -1,4 +1,86 @@
-# EXP01 reviewed Setup producer preparation — unmounted draft
+# EXP01 reviewed Setup approval, receipt and reopen
+
+## November 2 selected outcome — implementation in progress
+
+OWNER_INTENT: Original ANT-50 progressive editable business-profile / governed Setup
+outcomes (original matrix rows4/5; original case IDs preserved): choose permitted
+document/version-bound quotations, explicitly select and adopt/correct fact values,
+approve saving through the ORIGINAL Setup writer, read its durable approval/CAS
+receipt, fully reload and reopen the same original result. Owner approval is
+ANT-50/5bcd16af; actual sole-lead ACK7ac50220. All other outcomes remain pending.
+
+MUST_NOT_HAPPEN: No automatic fact/Memory approval, agreement acceptance, Mission,
+Task or external effect. No replacement validator/receipt store, browser private-fact
+storage, copied peer source, source-change bypass, stale CAS or blind UNKNOWN retry.
+
+MUST_PRESERVE: Original manual Setup and legal-owner/provenance/role rules; E13
+Knowledge/Memory producers and UI; E02/E05 original consumers; Chat/Live, financial,
+private-file, Root, Team Hub, storage and all applied migration history.
+
+ACCEPTANCE_CRITERIA: Actual selected subset and corrected values persist via original
+Setup; unselected fields remain unchanged; an authoritative original receipt survives
+full reload; stale source/role/workspace/CAS refuses; interrupted acknowledgment is
+inspected under the SAME staged review UUID before explicit retry; close/back never
+approves. Authenticated useful-result proof is NOT YET RUN.
+
+VISUAL_DIRECTION: Existing Setup section/field/button tokens, inline Operate flow;
+no new dashboard/world, animation, shell geometry or global scrolling policy.
+Flow-by-Flow + Paige UI Design + Impeccable applied. Impeccable context ran once for
+SoloBusinessContextSetup; reported stale sidecar, which is not repaired in this task.
+FLOW_PROTOTYPE: UNVERIFIED; owner prelaunch policy permits safe engineering and
+release before browser proof, without waiving authority/security/functional gates.
+MOTION_PURPOSE: No new motion; incumbent reduced-motion behavior retained.
+
+Implementation: isolated ReviewedSetupFacts panel mounted only in original Setup
+Business profile. Original Knowledge reader supplies current full document content;
+selected UTF16 quotation offsets and SHA256 bind the reviewed canonical text.
+Fact rows begin unchecked; value/decision edits clear selection. Stage binds the
+chosen subset; final approval is separate. A staged review can return to edit after
+UNKNOWN inspection. The server-staged review UUID is the host's save request UUID.
+New read_solo_reviewed_business_facts(uuid,uuid) discovers ONLY the current actor's
+original proposal and original audited approval through the SAME private Setup
+metadata; no browser facts or duplicate ledger. Existing inspect revalidates source
+and returns only historical status after drift. Current receipt takes precedence
+over equal-timestamp historical audit events. Authoritative host refresh preserves
+the receipt panel while disabling its controls; settled role denial removes it.
+
+Dependency: E13 private validator PR3204 remains draft/uninstalled at this checkpoint.
+The owner explicitly authorized its existing prerequisite release in the E01 chat;
+actual decision is recorded ANT-21/04511da6 and ANT-50/52171090. E01 does not release
+or modify it. No E01 migration number is reserved; candidate remains UNVERSIONED.
+
+Independent non-author review: dedicated setup_contract_review agent did not write
+code. Its initial discovery/host findings were confirmed; correction and host-refresh
+findings are being repaired and causally tested. Final exact-head clearance OWED.
+Proof so far:61 focused parser/client controls;69 actual local native assertions
+with explicitly MODELED identity/source-reader dependencies;8 mounted recovery/edit
+tests and original63 Setup tests PASS. The mounted receipt is invalidated when a
+later original manual save advances CAS; matching own-save readback retains it.
+Lost save acknowledgment followed by full client destruction discovers the same
+receipt with one modeled save. New full-schema assertions UNRUN; fresh
+exact-head CI/production native/source/readback/authenticated result all OWED.
+No local fixture is customer acceptance.
+
+Capability routing: E01 owns original Setup/direct human save; E13 owns canonical
+Knowledge source validation. Reuse original Setup scope/getters/writer/meta/audit;
+no Harness executor/job is added. Existing business_profile.propose_brief_update is
+the model proposal seam, NOT an invoked/activated tool here. No provider/model is
+called, so provider connection and ALG11 cost routing are N/A. Direct human editing
+does not register a second Chat approval gate. Receipt proves Setup only. Existing
+Setup surface remains PARTIAL until live integration/result proof. ALG01 maps to
+same-identity inspect/current-source/CAS reconciliation and repeated/negative tests;
+ALG02 first value and ALG12 failure quality remain bounded proof owed; ALG13 next
+actions are outside this outcome. No algorithm maturity is inferred.
+
+PROTECTED_SEAMS: AFFECTED: tenant/actor/current-role, original Setup write/readback,
+approval receipt/source authority, UNKNOWN/reload, accessibility and scoped Settings
+geometry. UNCHANGED: authentication/provisioning/billing/entitlement, Chat transcript,
+Live, provider/Vault/credentials, Spine execution, Work scheduling, Memory and external
+effects. Four viewports × PAIGE open/closed, actual keyboard/zoom/reduced-motion and
+ordinary authenticated cohort negatives remain UNVERIFIED, not falsely passed.
+
+Prior dated preparation/history follows unchanged; its pause was superseded only
+for this selected original outcome by the November2 owner approval above.
 
 Current controlling delivery scope: ONE original durable Chat→Knowledge writer release
 for E13, then report/STOP for owner approval. All Setup-native/other work paused;

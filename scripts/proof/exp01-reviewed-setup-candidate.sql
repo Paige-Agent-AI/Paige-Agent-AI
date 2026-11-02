@@ -51,7 +51,8 @@ BEGIN
   ('public.lock_solo_reviewed_setup_facts(uuid,uuid,jsonb)','c457ff083335ebf09cde5483aa983812',false,ARRAY[]::text[]),
   ('public.stage_solo_reviewed_business_facts(uuid,uuid,uuid,text,bigint,jsonb)','9bbd60edf98a4517bd09fed190b004b8',true,ARRAY['authenticated']::text[]),
   ('public.inspect_solo_reviewed_business_facts(uuid,uuid,uuid)','baf098fd4fc9fe690f91e44e979628f0',true,ARRAY['authenticated']::text[]),
-  ('public.save_solo_reviewed_business_facts(uuid,uuid,uuid,uuid,text,bigint,jsonb,text)','3d6285cf1b28baca8dcbc38764a3fc54',true,ARRAY['authenticated']::text[])
+  ('public.save_solo_reviewed_business_facts(uuid,uuid,uuid,uuid,text,bigint,jsonb,text)','3d6285cf1b28baca8dcbc38764a3fc54',true,ARRAY['authenticated']::text[]),
+  ('public.read_solo_reviewed_business_facts(uuid,uuid)','5479a819f26fd40714903a006721d688',true,ARRAY['authenticated']::text[])
  ) v(signature,body_hash,definer,grantees) LOOP
   SELECT * INTO f FROM pg_proc WHERE oid=to_regprocedure(expected.signature);
   IF NOT FOUND THEN CONTINUE; END IF;
@@ -69,7 +70,7 @@ BEGIN
    RAISE EXCEPTION 'SETUP_REVIEW_INSTALLED_DRIFT';
   END IF;
  END LOOP;
- IF installed NOT IN (0,5) THEN RAISE EXCEPTION 'SETUP_REVIEW_PARTIAL_INSTALL'; END IF;
+ IF installed NOT IN (0,6) THEN RAISE EXCEPTION 'SETUP_REVIEW_PARTIAL_INSTALL'; END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_class WHERE oid='public.paige_audit_log'::regclass AND relrowsecurity) THEN
   RAISE EXCEPTION 'SETUP_REVIEW_AUDIT_DRIFT'; END IF;
  IF (SELECT count(*) FROM pg_policy WHERE polrelid='public.paige_audit_log'::regclass
@@ -303,4 +304,45 @@ BEGIN
 END $save$;
 REVOKE ALL ON FUNCTION public.save_solo_reviewed_business_facts(uuid,uuid,uuid,uuid,text,bigint,jsonb,text) FROM PUBLIC,anon,service_role;
 GRANT EXECUTE ON FUNCTION public.save_solo_reviewed_business_facts(uuid,uuid,uuid,uuid,text,bigint,jsonb,text) TO authenticated;
+-- Original metadata discovery, not a second receipt ledger. Only the current
+-- actor's staged review and latest original audit identity can be discovered.
+CREATE OR REPLACE FUNCTION public.read_solo_reviewed_business_facts(
+ _expected_tenant_id uuid,_expected_actor_id uuid
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $discover$
+DECLARE context jsonb; proposal jsonb; approval jsonb; request uuid;
+BEGIN
+ context:=public.lock_solo_reviewed_setup_scope(_expected_tenant_id,_expected_actor_id);
+ SELECT reviewed_fact_proposal INTO proposal FROM public.tenant_setup_business_context_meta
+  WHERE tenant_id=_expected_tenant_id;
+ IF proposal->>'actorId' IS DISTINCT FROM auth.uid()::text
+  OR proposal->>'tenantId' IS DISTINCT FROM _expected_tenant_id::text
+  OR proposal->>'expectedUpdatedAt' IS DISTINCT FROM context->'brief'->>'updatedAt'
+  OR proposal->>'expectedContextRevision' IS DISTINCT FROM context->>'contextRevision' THEN
+  proposal:=NULL;
+ ELSIF proposal IS NOT NULL THEN
+  BEGIN
+   PERFORM public.lock_solo_reviewed_setup_facts(_expected_tenant_id,auth.uid(),proposal->'facts');
+  EXCEPTION WHEN SQLSTATE '40001' OR SQLSTATE '42501' OR SQLSTATE '22023' OR SQLSTATE 'P0001' THEN
+   proposal:=NULL;
+  END;
+ END IF;
+ -- Prefer the original current receipt, even when multiple audit events have
+ -- equal transaction timestamps. Inspect still requires its real actor audit.
+ SELECT (reviewed_fact_approval->>'requestId')::uuid INTO request
+  FROM public.tenant_setup_business_context_meta WHERE tenant_id=_expected_tenant_id
+   AND reviewed_fact_approval->>'actorId'=auth.uid()::text;
+ IF request IS NULL THEN
+  SELECT (payload->>'requestId')::uuid INTO request FROM public.paige_audit_log
+   WHERE tenant_id=_expected_tenant_id AND actor_user_id=auth.uid()
+    AND action='solo_setup.reviewed_facts_approved'
+   ORDER BY created_at DESC,id DESC LIMIT 1;
+ END IF;
+ IF request IS NOT NULL THEN
+  approval:=jsonb_build_object('requestId',request,'inspection',
+   public.inspect_solo_reviewed_business_facts(_expected_tenant_id,auth.uid(),request));
+ END IF;
+ RETURN jsonb_build_object('proposal',proposal,'approval',approval);
+END $discover$;
+REVOKE ALL ON FUNCTION public.read_solo_reviewed_business_facts(uuid,uuid) FROM PUBLIC,anon,service_role;
+GRANT EXECUTE ON FUNCTION public.read_solo_reviewed_business_facts(uuid,uuid) TO authenticated;
 COMMIT;

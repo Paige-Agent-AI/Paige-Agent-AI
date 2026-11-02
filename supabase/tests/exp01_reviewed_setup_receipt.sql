@@ -12,7 +12,7 @@ CREATE TEMP TABLE e01_original_functions AS
 -- EXP01_INSTALL_CANDIDATE
 CREATE TEMP TABLE e01_candidate_functions AS SELECT oid,md5(pg_get_functiondef(oid)) definition,proowner,proconfig,proacl
  FROM pg_proc WHERE proname IN ('lock_solo_reviewed_setup_scope','lock_solo_reviewed_setup_facts',
- 'stage_solo_reviewed_business_facts','save_solo_reviewed_business_facts','inspect_solo_reviewed_business_facts');
+ 'stage_solo_reviewed_business_facts','save_solo_reviewed_business_facts','inspect_solo_reviewed_business_facts','read_solo_reviewed_business_facts');
 -- EXP01_REPLAY_CANDIDATE
 SELECT is((SELECT count(*)::integer FROM e01_original_functions b JOIN pg_proc p USING(oid)
  WHERE b.definition IS DISTINCT FROM md5(pg_get_functiondef(p.oid)) OR b.proowner<>p.proowner
@@ -90,6 +90,10 @@ SELECT is(public.inspect_solo_reviewed_business_facts('e0100200-0000-4000-8000-0
 SELECT is(pg_temp.e01_error($$SELECT public.stage_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001','e0100100-0000-4000-8000-000000000002',gen_random_uuid(),NULL,0,'[]')$$),'42501','client cannot impersonate another approving actor');
 SELECT is(pg_temp.e01_error($$SELECT public.inspect_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000002',auth.uid(),gen_random_uuid())$$),'40001','expected workspace cannot select a foreign business');
 INSERT INTO e01_state VALUES('proposal',pg_temp.e01_stage('e0100400-0000-4000-8000-000000000001'));
+SELECT is(public.read_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001',auth.uid())->'proposal',
+ (SELECT value FROM e01_state WHERE name='proposal'),'reload discovers exact server-staged review without client state');
+SELECT is(public.read_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001',auth.uid())->'approval','null'::jsonb,
+ 'staged facts never fabricate an approval receipt');
 SELECT is(public.get_solo_business_context()->'brief'->>'offers','Before','staging reviewed evidence does not approve or save a fact');
 SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_save('e0100400-0000-4000-8000-000000000001','e0100500-0000-4000-8000-000000000001','["industry"]')$$),'40001','unreviewed field selection refuses before original writer');
 RESET ROLE;
@@ -104,6 +108,10 @@ UPDATE e01_state SET value=pg_temp.e01_stage('e0100400-0000-4000-8000-0000000000
 SELECT is(pg_temp.e01_error($$SELECT pg_temp.e01_save('e0100400-0000-4000-8000-000000000001','e0100500-0000-4000-8000-000000000001')$$),'40001','superseded review cannot approve the newer selection');
 INSERT INTO e01_state VALUES('saved',pg_temp.e01_save('e0100400-0000-4000-8000-000000000002','e0100500-0000-4000-8000-000000000001'));
 SELECT is((SELECT value->>'current' FROM e01_state WHERE name='saved'),'true','actual owner save returns a current original receipt');
+SELECT is(public.read_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001',auth.uid())#>'{approval,inspection}',
+ (SELECT value FROM e01_state WHERE name='saved'),'destroyed client state reopens the same native receipt without another save');
+SELECT is(public.read_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001',auth.uid())->'proposal','null'::jsonb,
+ 'approved proposal is cleared from discovery');
 SELECT is(public.get_solo_business_context()->'brief'->>'offers','Advisory','actual original getter verifies saved selected value');
 SELECT is((SELECT jsonb_array_length(value->'receipt'->'selectedFacts') FROM e01_state WHERE name='saved'),1,'receipt contains only explicitly selected facts from the two-fact review');
 SELECT is(public.get_solo_business_context()->'brief'->>'deliveryModel','Unselected current value','reviewed but unselected field remains unchanged through original writer');

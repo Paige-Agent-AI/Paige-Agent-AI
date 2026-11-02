@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { prepareReviewedSetup, inspectReviewedSetup } from '../../src/solo/data/reviewed-setup-client.ts';
+import { prepareReviewedSetup, inspectReviewedSetup, readReviewedSetup } from '../../src/solo/data/reviewed-setup-client.ts';
 const actorId='10000000-0000-4000-8000-000000000001',tenantId='20000000-0000-4000-8000-000000000001';
 const requestId='50000000-0000-4000-8000-000000000001',receiptId='60000000-0000-4000-8000-000000000001';
 const clone=v=>JSON.parse(JSON.stringify(v));
@@ -21,6 +21,24 @@ function fixture(){
   handle:()=>prepareReviewedSetup(client,scope,selection)};
 }
 const code=c=>e=>e?.code===c;
+
+test('full reload discovers original staged selection and authoritative receipt, without a write',async()=>{
+ const f=fixture();f.client.rpc=async(name,args)=>{f.calls.push({name,args});return {data:{proposal:f.selection,
+  approval:{requestId,inspection:f.recorded}},error:null};};
+ const reopened=await readReviewedSetup(f.client,f.scope);
+ assert.equal(reopened.proposal.reviewId,f.selection.reviewId);
+ assert.equal(reopened.approval.receipt.receiptId,receiptId);
+ assert.deepEqual(f.calls.map(c=>c.name),['read_solo_reviewed_business_facts']);
+});
+test('discovery withholds facts after actor/workspace change during its await',async()=>{
+ const f=fixture();f.client.rpc=async()=>{f.leave();return {data:{proposal:f.selection,approval:null},error:null};};
+ await assert.rejects(readReviewedSetup(f.client,f.scope),code('SCOPE_CHANGED'));
+});
+test('discovery never accepts another actors staged selection',async()=>{
+ const f=fixture();const proposal=clone(f.selection);proposal.actorId=requestId;
+ f.client.rpc=async()=>({data:{proposal,approval:null},error:null});
+ await assert.rejects(readReviewedSetup(f.client,f.scope),code('READBACK_MISMATCH'));
+});
 test('explicit stage never approves; explicit selected save uses original ABI and authoritative inspection',async()=>{
  const f=fixture(),h=f.handle();await h.stage();assert.deepEqual(f.calls.map(c=>c.name),['stage_solo_reviewed_business_facts']);
  const r=await h.approve(requestId,['offers']);assert.equal(r.receipt.receiptId,receiptId);

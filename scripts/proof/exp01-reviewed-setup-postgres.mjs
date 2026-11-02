@@ -131,6 +131,9 @@ try{
  denied(caller+save,/SETUP_REVIEW_CONFLICT/);
  denied(caller+stage.replace("'field','offers'","'field',NULL"),/SETUP_REVIEW_INVALID/);
  db.run(caller+stage);assert.equal(scalar(`SELECT brand#>>'{business_brief,offers}' FROM tenants`),'Before');checks++;
+ const discovery=`SELECT read_solo_reviewed_business_facts('${tenant}','${actor}')`;
+ assert.equal(JSON.parse(scalar(caller+discovery)).proposal.reviewId,review);checks++;
+ assert.equal(JSON.parse(scalar(caller+discovery)).approval,null);checks++;
  db.run(caller+stage);assert.equal(scalar("SELECT count(*) FROM paige_audit_log WHERE action='solo_setup.reviewed_facts_staged'"),'1');checks++;
  denied(caller+save.replace("'[\"offers\"]'","'[\"industry\"]'"),/SETUP_REVIEW_SELECTION_CHANGED/);
  db.run(`UPDATE tenant_knowledge_docs SET revision=2`);
@@ -246,6 +249,8 @@ try{
  db.run(caller+decisionStage(override,withDecisions));
  denied(caller+decisionStage(override,`jsonb_set(${withDecisions},'{0,sourceDecision}','"adopt"')`),/SETUP_REVIEW_ID_REUSED/);
  const decisionReceipt=JSON.parse(scalar(caller+decisionSave(override,overrideRequest)));
+ assert.equal(JSON.parse(scalar(caller+discovery)).approval.inspection.receiptId,decisionReceipt.receiptId);checks++;
+ assert.equal(JSON.parse(scalar(caller+discovery)).proposal,null);checks++;
  assert.equal(decisionReceipt.current,true);checks++;
  assert.equal(decisionReceipt.receipt.selectedFacts[0].sourceDecision,'override');checks++;
  const afterDecision=JSON.parse(scalar(caller+'SELECT public.get_solo_business_context()'));

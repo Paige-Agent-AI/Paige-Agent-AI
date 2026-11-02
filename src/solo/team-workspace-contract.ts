@@ -129,6 +129,64 @@ export type TeamWorkspaceRecord = {
   business_owner_options?: TeamBusinessOwnerOption[];
 };
 
+/** The atomic native package adds this projection after BOTH scoped doors.
+ * Availability only; the original RPC independently resolves the actual authority. */
+export function teamDetailsAvailable(workspace: TeamWorkspaceRecord): boolean {
+  return typeof workspace.viewer_is_account_holder === "boolean";
+}
+
+/** Presentation only: the original RPC re-resolves the actual authority before writing. */
+export function canEditWorkProfile(member: TeamMemberRecord, workspace: TeamWorkspaceRecord, viewerId: string | null): boolean {
+  if (!teamDetailsAvailable(workspace) || !workspace.can_manage_profiles || !["active", "suspended"].includes(member.status)) return false;
+  if (!member.is_owner && member.permission !== "owner") return true;
+  return Boolean(viewerId && (member.user_id === viewerId || workspace.viewer_is_account_holder === true));
+}
+
+export function ownerWorkProfileExplanation(member: TeamMemberRecord, workspace: TeamWorkspaceRecord): string {
+  const person = memberVisibleIdentity(member).primary;
+  if (member.is_account_holder === true) return `Only ${person} edits the account holder's details.`;
+  const holder = workspace.members.find((row) => row.is_account_holder === true);
+  return holder ? `Only ${memberVisibleIdentity(holder).primary}, the account holder, or ${person} can edit these details.`
+    : `Only the account holder or ${person} can edit these details.`;
+}
+
+/** SQL btrim's default is a space, not JavaScript's broader Unicode whitespace set. */
+export function verifiedWorkProfileReceipt(value: unknown, membershipId: string, title: string, responsibilities: string): { job_title: string; responsibilities: string } | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const receipt = value as Record<string, unknown>;
+  if (Object.keys(receipt).sort().join(",") !== "job_title,membership_id,responsibilities" || receipt.membership_id !== membershipId) return null;
+  const stored = (text: string) => text.replace(/^ +| +$/g, "") || null;
+  if (receipt.job_title !== stored(title) || receipt.responsibilities !== stored(responsibilities)) return null;
+  return { job_title: receipt.job_title as string | null ?? "", responsibilities: receipt.responsibilities as string | null ?? "" };
+}
+
+export function workProfileRefusal(message: string | undefined, ownerExplanation: string): string {
+  if (message?.startsWith("TEAM_OWNER_PROFILE_FORBIDDEN:")) return `${ownerExplanation} Reopen Team to check the current access.`;
+  if (message?.startsWith("TEAM_MEMBER_IDENTITY_UNAVAILABLE:")) return "Your account access could not be confirmed. Reopen Team before trying again.";
+  if (message === "authentication required in an active workspace" || message === "only an owner or admin may update work details") return "Your access to these work details could not be confirmed. Reopen Team to check your access.";
+  if (message === "team member not found in this workspace") return "This person is no longer on the current team. Reopen Team to see the current roster.";
+  if (message === "this team membership changed before this could run; nothing was changed") return "This person's team membership changed. Reopen Team before trying again.";
+  if (message === "your active workspace changed before this could run; nothing was changed") return "Your workspace changed. Reopen Team before trying again.";
+  if (message === "job title must be 120 characters or fewer" || message === "responsibilities must be 2000 characters or fewer" || message === "Work details could not be saved.") return message;
+  return "The save could not be confirmed. Reopen Team to check the current work details before trying again.";
+}
+
+/** Closed projection of the ORIGINAL scoped permission writer's current-state receipt. */
+export type TeamPermissionReceipt = { membership_id: string; permission: "admin" | "member" };
+export function verifiedTeamPermissionReceipt(value: unknown, membershipId: string, wanted: string): TeamPermissionReceipt | null {
+  if (!membershipId || (wanted !== "admin" && wanted !== "member") || !value || typeof value !== "object" || Array.isArray(value)) return null;
+  const receipt = value as Record<string, unknown>;
+  if (Object.keys(receipt).sort().join(",") !== "membership_id,permission" || receipt.membership_id !== membershipId || receipt.permission !== wanted) return null;
+  return { membership_id: membershipId, permission: wanted };
+}
+export function teamPermissionRefusal(message: unknown): string {
+  if (message === "this team membership changed before this could run; nothing was changed" || message === "team member not found in this workspace") return "This person's team membership changed. Reopen Team before trying again.";
+  if (message === "your active workspace changed before this could run; nothing was changed") return "Your workspace changed. Reopen Team before trying again.";
+  if (typeof message === "string" && /only the tenant owner|the owner permission cannot be changed here|TEAM_MEMBER_IDENTITY_UNAVAILABLE|authentication required/.test(message)) return "Your access to this permission change could not be confirmed. Reopen Team to check the current access.";
+  if (message === "permission must be Admin or Member") return "Choose Admin or Member. Nothing was changed.";
+  return "The access change could not be confirmed. Reopen Team to check the current access before trying again.";
+}
+
 /** Who may change this person's addresses. The server decides for real (`set_user_contact_methods`);
  *  this only decides what to offer, and mirrors the same rule: yourself; an owner or an admin, anyone
  *  on the team, the owner included (an admin holds the owner's powers except removing the owner). */

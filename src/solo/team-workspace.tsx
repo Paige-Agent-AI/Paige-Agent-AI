@@ -10,6 +10,14 @@ import { Modal, NoticeBar, PermissionCards, RowMenu, TeamPicker, TeamSwitch, typ
 import { DepartureReview, type DepartureOutcome } from "./team-departure";
 import {
   canActOn,
+  teamDetailsAvailable,
+  canEditWorkProfile,
+  ownerWorkProfileExplanation,
+  verifiedWorkProfileReceipt,
+  verifiedTeamPermissionReceipt,
+  teamPermissionRefusal,
+  type TeamPermissionReceipt,
+  workProfileRefusal,
   inviteLifecycle,
   inviteIsFinished,
   deliveryPresentation,
@@ -32,6 +40,7 @@ import {
 export { Modal } from "./team-controls";
 
 const PAGE_SIZE = 25;
+type TeamEditorSaved = { job_title: string; responsibilities: string } | TeamPermissionReceipt;
 
 function initials(member: TeamMemberRecord): string {
   return (member.full_name || member.email || "?").split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
@@ -129,7 +138,7 @@ function useTeamWorkspace(search: string, permission: string, viewerId: string |
   };
 }
 
-export function MemberEditor({ member, workspace, onClose, onSaved, onContactDirtyChange, canRemove, onRequestRemoval }: { member: TeamMemberRecord; workspace: TeamWorkspaceRecord; onClose: () => void; onSaved: (saved?: { job_title: string; responsibilities: string }) => void | Promise<void>; /** Raised while contact edits are unsaved: a roster reload must not take them. */ onContactDirtyChange?: (dirty: boolean) => void; /** The viewer may remove this person (canActOn); the drawer is opened by the parent. */ canRemove?: boolean; onRequestRemoval?: () => void }) {
+export function MemberEditor({ member, workspace, onClose, onSaved, onContactDirtyChange, canRemove, onRequestRemoval, viewerId = null, isCurrent = () => true }: { member: TeamMemberRecord; workspace: TeamWorkspaceRecord; onClose: (needsReconcile?: boolean) => void; onSaved: (saved?: TeamEditorSaved) => void | Promise<void>; /** Raised while contact edits are unsaved: a roster reload must not take them. */ onContactDirtyChange?: (dirty: boolean) => void; /** The viewer may remove this person (canActOn); the drawer is opened by the parent. */ canRemove?: boolean; onRequestRemoval?: () => void; viewerId?: string | null; /** Negative-only original host context guard. */ isCurrent?: () => boolean }) {
   const [title, setTitle] = useState(member.job_title ?? "");
   const [responsibilities, setResponsibilities] = useState(member.responsibilities ?? "");
   const [savedTitle, setSavedTitle] = useState(member.job_title ?? "");
@@ -137,22 +146,42 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
   const [saveConfirmed, setSaveConfirmed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [permissionDraft, setPermissionDraft] = useState<string | null>(null);
+  const detailsAvailable = teamDetailsAvailable(workspace);
+  const canEdit = canEditWorkProfile(member, workspace, viewerId);
+  const ownerReadOnly = (member.is_owner || member.permission === "owner") && !canEdit;
+  const ownerExplanation = ownerWorkProfileExplanation(member, workspace);
+  const [saveNeedsReopen, setSaveNeedsReopen] = useState(false);
+  const permissionNeedsRefresh = useRef(false);
+  const preserveDraftOnPermission = useRef(false);
+  const close = () => onClose(!detailsAvailable || saveNeedsReopen || permissionNeedsRefresh.current);
+  const writeInFlight = useRef(false);
+  const lifetime = useRef(0);
+  const currentGuard = useRef(isCurrent);
+  useLayoutEffect(() => { currentGuard.current = isCurrent; });
+  // An unavailable host context is refusal, never an escaping event exception.
+  const contextIsCurrent = () => { try { return currentGuard.current() === true; } catch { return false; } };
+  const requireReopen = () => { writeInFlight.current = false; setSaving(false); setSaveNeedsReopen(true); };
+  useLayoutEffect(() => { lifetime.current += 1; return () => { lifetime.current += 1; }; }, [member.membership_id, workspace.tenant_id, viewerId]);
   const errors = validateWorkProfile(title, responsibilities);
   const permission = permissionPresentation(member.permission, member.is_owner);
   const identity = memberVisibleIdentity(member);
   const dirty = title !== savedTitle || responsibilities !== savedResponsibilities;
   const [contactDirty, setContactDirty] = useState(false);
-  const reportContactDirty = useCallback((next: boolean) => { setContactDirty(next); onContactDirtyChange?.(next); }, [onContactDirtyChange]);
+  const reportContactDirty = useCallback((next: boolean) => { setContactDirty(next); if (writeInFlight.current && next) preserveDraftOnPermission.current = true; onContactDirtyChange?.(next); }, [onContactDirtyChange]);
   // Leaving (close, removal, switch) releases the parent's hold.
   useEffect(() => () => onContactDirtyChange?.(false), [onContactDirtyChange]);
   useBeforeUnloadGuard(dirty || contactDirty || saving || permissionDraft !== null);
 
   const save = async () => {
-    if (!workspace.can_manage_profiles || !dirty || Object.keys(errors).length) return;
+    if (!canEdit || saveNeedsReopen || writeInFlight.current || !dirty || Object.keys(errors).length) return;
+    if (!contextIsCurrent()) { requireReopen(); return; }
+    writeInFlight.current = true;
+    const requestLifetime = lifetime.current;
     setSaving(true);
     // WRAPPED: an escaping rejection would skip `setSaving(false)` and leave Save and the way into
     // removal disabled, with nothing said, until the dialog is closed and reopened.
-    let data: { job_title?: string | null; responsibilities?: string | null } | null = null;
+    let data: unknown = null;
+    let transportUnknown = false;
     let error: { message?: string } | null = null;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- migration RPC awaits generated types
@@ -160,15 +189,31 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
         _member_user_id: member.user_id,
         _job_title: title,
         _responsibilities: responsibilities,
+        _expected_tenant_id: workspace.tenant_id,
+        _expected_membership_id: member.membership_id,
       }));
     } catch (thrown) {
+      transportUnknown = true;
       error = { message: thrown instanceof Error ? thrown.message : "We could not reach the server, so the result of this is unknown. Reopen Team to see the current values." };
     }
+    if (requestLifetime !== lifetime.current) return;
+    if (!contextIsCurrent()) { requireReopen(); return; }
+    writeInFlight.current = false;
     setSaving(false);
-    if (error) { toast.error(error.message ?? "The save did not complete. Please try again."); return; }
-
-    const nextTitle = typeof data?.job_title === "string" ? data.job_title : data?.job_title === null ? "" : title.trim();
-    const nextResponsibilities = typeof data?.responsibilities === "string" ? data.responsibilities : data?.responsibilities === null ? "" : responsibilities.trim();
+    if (error) {
+      const message = workProfileRefusal(error.message, ownerExplanation);
+      if (transportUnknown || message.includes("Reopen Team")) setSaveNeedsReopen(true);
+      toast.error(message);
+      return;
+    }
+    const receipt = verifiedWorkProfileReceipt(data, member.membership_id, title, responsibilities);
+    if (!receipt) {
+      setSaveNeedsReopen(true);
+      toast.error("The save could not be confirmed. Reopen Team to check the current work details before trying again.");
+      return;
+    }
+    const nextTitle = receipt.job_title;
+    const nextResponsibilities = receipt.responsibilities;
     setTitle(nextTitle);
     setSavedTitle(nextTitle);
     setResponsibilities(nextResponsibilities);
@@ -188,20 +233,50 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
     await onSaved({ job_title: nextTitle, responsibilities: nextResponsibilities });
   };
   const changePermission = async () => {
-    if (!permissionDraft) return;
+    if (!permissionEditable || saveNeedsReopen || writeInFlight.current || (permissionDraft !== "admin" && permissionDraft !== "member")) return;
+    if (!contextIsCurrent()) { requireReopen(); return; }
+    const wanted = permissionDraft, membershipId = member.membership_id, tenantId = workspace.tenant_id, userId = member.user_id;
+    const requestLifetime = lifetime.current;
+    const current = () => requestLifetime === lifetime.current && contextIsCurrent();
+    const withdraw = () => { if (requestLifetime === lifetime.current) requireReopen(); };
+    writeInFlight.current = true;
+    preserveDraftOnPermission.current = dirty || contactDirty;
     setSaving(true);
-    // WRAPPED: a transport rejection that skips `setSaving(false)` would wedge every control in this
-    // dialog with nothing said.
+    let data: unknown = null;
     let error: { message?: string } | null = null;
+    let transportUnknown = false;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- migration RPC awaits generated types
-      ({ error } = await (supabase as any).rpc("set_solo_team_member_permission", { _member_user_id: member.user_id, _new_permission: permissionDraft }));
-    } catch (thrown) {
-      error = { message: thrown instanceof Error ? thrown.message : "We could not reach the server, so the result of this is unknown. Reopen Team to see the current values." };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- original scoped RPC awaits generated types
+      ({ data, error } = await (supabase as any).rpc("set_solo_team_member_permission", {
+        _member_user_id: userId, _new_permission: wanted,
+        _expected_tenant_id: tenantId, _expected_membership_id: membershipId,
+      }));
+    } catch {
+      transportUnknown = true;
+      error = {};
     }
-    setSaving(false);
-    if (error) { toast.error(error.message ?? "The permission change did not complete. Please try again."); return; }
-    toast.success(`Permission changed to ${permissionPresentation(permissionDraft, false).label}.`); setPermissionDraft(null); onSaved(); onClose();
+    if (!current()) { withdraw(); return; }
+    if (error) {
+      const message = teamPermissionRefusal(transportUnknown ? null : error.message);
+      if (transportUnknown || message.includes("Reopen Team")) setSaveNeedsReopen(true);
+      writeInFlight.current = false; setSaving(false); toast.error(message); return;
+    }
+    const receipt = verifiedTeamPermissionReceipt(data, membershipId, wanted);
+    if (!receipt) {
+      setSaveNeedsReopen(true); writeInFlight.current = false; setSaving(false);
+      toast.error(teamPermissionRefusal(null)); return;
+    }
+    permissionNeedsRefresh.current = true;
+    try { await onSaved(receipt); }
+    catch {
+      if (!current()) { withdraw(); return; }
+      setSaveNeedsReopen(true); writeInFlight.current = false; setSaving(false);
+      toast.error("Permission was verified. Reopen Team to see the current access."); return;
+    }
+    if (!current()) { withdraw(); return; }
+    writeInFlight.current = false; setSaving(false); setPermissionDraft(null);
+    toast.success(`${permissionPresentation(receipt.permission, false).label} access confirmed.`);
+    if (!preserveDraftOnPermission.current) onClose(true);
   };
 
   // REMOVAL moved to the departure review drawer (approved design, EXP08). This dialog only offers
@@ -210,24 +285,28 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onContactDir
   const firstName = member.full_name?.trim() ? member.full_name.trim().split(/\s+/)[0] : identity.primary;
   // Stage 0 (live): change_user_role refuses a target without an active seat, so a suspended
   // person's permission can't be changed directly. The control is not offered; the reason is.
-  const permissionEditable = workspace.can_change_permissions && permission.mutable && !suspended;
+  const permissionEditable = detailsAvailable && workspace.can_change_permissions && permission.mutable && !suspended;
   return <Modal title={identity.primary} description={`${member.email ?? "Email unavailable"} · ${suspended ? "Suspended" : "Active"}`}
     wide
-    onClose={onClose}>
+    initialFocusTitle={ownerReadOnly}
+    busy={saving}
+    onClose={close}>
     <div className="stw-modal-body">
       <div className="stw-person-summary"><span className="stw-avatar" data-hue={avatarHue(member)}>{initials(member)}</span><div><strong>{identity.primary}</strong>{identity.secondary && <span>{identity.secondary}</span>}</div><span className="stw-perm" data-tone={permissionTone(member.permission, member.is_owner)}>{permission.label}</span></div>
       <TeamMemberContact member={member} workspace={workspace} onDirtyChange={reportContactDirty}/>
       <div className="stw-separation-note"><ShieldCheck/><span><strong>Permission and title are separate.</strong> Changing someone’s title never changes their access.</span></div>
-      <label>Title<input value={title} disabled={!workspace.can_manage_profiles || saving} maxLength={121} onChange={(e) => { setTitle(e.target.value); setSaveConfirmed(false); }} placeholder="e.g. Client Success Manager"/>{errors.title && <small role="alert">{errors.title}</small>}</label>
-      <label>Responsibilities<textarea value={responsibilities} disabled={!workspace.can_manage_profiles || saving} maxLength={2001} onChange={(e) => { setResponsibilities(e.target.value); setSaveConfirmed(false); }} rows={5} placeholder="What this person owns, decides, and hands off."/>{errors.responsibilities && <small role="alert">{errors.responsibilities}</small>}</label>
+      <label>Title<input value={title} readOnly={ownerReadOnly} aria-describedby={ownerReadOnly ? "stw-owner-profile-explanation" : undefined} className={ownerReadOnly ? "stw-work-readonly" : undefined} disabled={!detailsAvailable || !workspace.can_manage_profiles || saving} maxLength={121} onChange={(e) => { if (canEdit) { setTitle(e.target.value); if (writeInFlight.current) preserveDraftOnPermission.current = true; setSaveConfirmed(false); } }} placeholder="e.g. Client Success Manager"/>{errors.title && <small role="alert">{errors.title}</small>}</label>
+      <label>Responsibilities<textarea value={responsibilities} readOnly={ownerReadOnly} aria-describedby={ownerReadOnly ? "stw-owner-profile-explanation" : undefined} className={ownerReadOnly ? "stw-work-readonly" : undefined} disabled={!detailsAvailable || !workspace.can_manage_profiles || saving} maxLength={2001} onChange={(e) => { if (canEdit) { setResponsibilities(e.target.value); if (writeInFlight.current) preserveDraftOnPermission.current = true; setSaveConfirmed(false); } }} rows={5} placeholder="What this person owns, decides, and hands off."/>{errors.responsibilities && <small role="alert">{errors.responsibilities}</small>}</label>
+      {ownerReadOnly && <p id="stw-owner-profile-explanation" className="stw-owner-profile-explanation">{ownerExplanation}</p>}
+      {(!detailsAvailable || saveNeedsReopen) && <div className="stw-separation-note" role="alert"><AlertTriangle/><span>{saveNeedsReopen ? "Close these details, then reopen the person from Team to check the current state before another change." : "Close these details, then reopen the person from Team before changing work details or access."}</span></div>}
       {saveConfirmed && <div className="stw-separation-note" role="status"><ShieldCheck/><span>Work details saved. Permission was not changed.</span></div>}
       {permissionEditable
         ? <div className="stw-permission-change"><div className="stw-fieldlabel" id="stw-ed-perm-l">Permission</div>
-          <PermissionCards value={permissionDraft ?? member.permission} labelledBy="stw-ed-perm-l" onChange={(next) => setPermissionDraft(next === member.permission ? null : next)} />
-          {permissionDraft && permissionDraft !== member.permission && <div className="stw-confirm"><p>Change access from {permission.label} to {permissionPresentation(permissionDraft, false).label}? This changes authorization, not the title.</p><button type="button" className="stw-btn secondary" onClick={() => setPermissionDraft(null)}>Cancel</button><button type="button" className="stw-btn primary" disabled={saving} onClick={changePermission}>Confirm access change</button></div>}</div>
+          <PermissionCards value={permissionDraft ?? member.permission} labelledBy="stw-ed-perm-l" disabled={saving || saveNeedsReopen} onChange={(next) => { if (writeInFlight.current || saveNeedsReopen) return; if (!contextIsCurrent()) { requireReopen(); return; } setPermissionDraft(next === member.permission ? null : next); }} />
+          {permissionDraft && permissionDraft !== member.permission && <div className="stw-confirm"><p>Change access from {permission.label} to {permissionPresentation(permissionDraft, false).label}? This changes authorization, not the title.</p><button type="button" className="stw-btn secondary" disabled={saving || saveNeedsReopen} onClick={() => setPermissionDraft(null)}>Cancel</button><button type="button" className="stw-btn primary" disabled={saving || saveNeedsReopen} onClick={changePermission}>Confirm access change</button></div>}</div>
         : <div className="stw-permission-change"><div className="stw-fieldlabel">Permission</div><p className="stw-perm-ro"><span className="stw-perm" data-tone={permissionTone(member.permission, member.is_owner)}>{permission.label}</span><span className="stw-muted">{member.is_owner || member.permission === "owner" ? "Owner access is protected here." : suspended && workspace.can_change_permissions && permission.mutable ? `Reinstate ${firstName} before changing their permission.` : !permission.mutable ? "This access level isn't changed from Team settings." : "Only the owner changes permissions."}</span></p></div>}
     </div>
-    <footer className="stw-modal-actions">{canRemove && onRequestRemoval && <button type="button" className="stw-quiet stw-danger-link" disabled={saving} onClick={onRequestRemoval}>Remove from team…</button>}<button type="button" className="stw-btn secondary" onClick={onClose}>{dirty || contactDirty ? "Cancel" : "Close"}</button>{workspace.can_manage_profiles && <button type="button" className="stw-btn primary" disabled={saving || !dirty || Object.keys(errors).length > 0} onClick={save}>{saving ? "Saving…" : "Save work details"}</button>}</footer>
+    <footer className="stw-modal-actions">{canRemove && onRequestRemoval && <button type="button" className="stw-quiet stw-danger-link" disabled={saving || saveNeedsReopen} onClick={onRequestRemoval}>Remove from team…</button>}<button type="button" className="stw-btn secondary" disabled={saving} onClick={close}>{dirty || contactDirty ? "Cancel" : "Close"}</button>{canEdit && <button type="button" className="stw-btn primary" disabled={saving || saveNeedsReopen || !dirty || Object.keys(errors).length > 0} onClick={save}>{saving ? "Saving…" : "Save work details"}</button>}</footer>
   </Modal>;
 }
 
@@ -561,12 +640,26 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
   const conversations = useConversationAccess(workspace, viewerId);
   // The last known roster, so the editor can outlive the null flash of a refetch.
   const lastWorkspace = useRef<TeamWorkspaceRecord | null>(null);
-  const closeEditor = useCallback(() => setSelected(null), []);
+  const closeEditor = (needsReconcile = false) => {
+    setSelected(null);
+    // An unconfirmed write must not reopen from the old selected/roster snapshot.
+    // The existing scoped loader withdraws rows until its actual read completes.
+    if (needsReconcile && mayPublish(currentScope)) void team.refresh();
+  };
   const openEditor = (member: TeamMemberRecord) => { setNotice(null); setSelected(member); };
   // Applied to the snapshot BEFORE the refresh is started, so the editor remounts onto the saved
   // values rather than the ones they replaced (the save flow the owner hit on production).
-  const handleSaved = (saved?: { job_title: string; responsibilities: string }) => {
-    if (saved) setSelected((current) => (current ? { ...current, job_title: saved.job_title, responsibilities: saved.responsibilities } : current));
+  const handleSaved = (saved?: TeamEditorSaved) => {
+    if (saved && "permission" in saved) {
+      // Keep unsaved work/contact drafts mounted. The native receipt changes only
+      // this selected membership; Close owns the eventual original roster reread.
+      setSelected((current) => current?.membership_id === saved.membership_id ? { ...current, permission: saved.permission } : current);
+      return;
+    }
+    if (saved && "job_title" in saved) {
+      const { job_title, responsibilities } = saved;
+      setSelected((current) => (current ? { ...current, job_title, responsibilities } : current));
+    }
     return team.refresh();
   };
   // A selection is a snapshot taken when the row was clicked. Once the roster no longer carries it,
@@ -828,7 +921,7 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
           <p className="stw-rule">She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.</p>
         </div>{openPaige && <button type="button" className="stw-btn secondary" onClick={openPaige}>Open Paige</button>}</section>
     </>}
-    {editorWorkspace && selected && (selectedLive || (contactHold && !workspace)) && <MemberEditor member={selected} workspace={editorWorkspace} onClose={closeEditor} onSaved={handleSaved} onContactDirtyChange={setContactHold}
+    {editorWorkspace && selected && (selectedLive || (contactHold && !workspace)) && <MemberEditor key={`${editorWorkspace.tenant_id}:${selected.membership_id}:${viewerId}`} member={selected} workspace={editorWorkspace} viewerId={viewerId} isCurrent={() => mayPublish(viewerId ? `${editorWorkspace.tenant_id}:${viewerId}` : null)} onClose={closeEditor} onSaved={handleSaved} onContactDirtyChange={setContactHold}
       canRemove={canActOn(editorWorkspace.viewer_permission, viewerId, selected)} onRequestRemoval={() => openDeparture(selected)}/>}
     {!team.invalidated && inviteWorkspace && (!workspace || workspace.can_manage_invitations) && <InviteDialog workspace={inviteWorkspace} onClose={() => setInviteWorkspace(null)} onInvited={({ email, conversations: on, emailed }) => {
       if (!mayPublish(currentScope)) return;

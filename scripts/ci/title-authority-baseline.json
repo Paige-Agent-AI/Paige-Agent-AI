@@ -37,16 +37,16 @@
     {
       "function": "public.get_paige_team_context()",
       "purpose": "display",
-      "reason": "Hands PAIGE the roster's and pending invitations' work identity as context; what the caller may see is decided by role and is_owner, and the payload declares custom_work_identity_changes_authority = false.",
-      "defined_in": "20260901150000_solo_paige_team_invitation_context.sql",
-      "fingerprint": "0e9986152d7ebfbc"
+      "reason": "Hands PAIGE the roster's and pending invitations' work identity as context; what the caller may see is decided by role and is_owner, and the payload declares custom_work_identity_changes_authority = false. Re-read for EXP08 literal Team-details source: existing descriptive fields, exact permitted no-change reconciliation and owner/privacy projection remain governed by original role/holder checks; the retirement table exclusion now precedes Auth/member locks. No title grants access.",
+      "defined_in": "20271128020008_exp08_team_details_guarded_native.sql",
+      "fingerprint": "f532287b9c7fff9b"
     },
     {
       "function": "public.get_solo_team_workspace(text, text, integer, integer)",
       "purpose": "search",
-      "reason": "Returns each member's title and responsibilities for the Team roster and matches the owner's search text against them (ILIKE); roster access is decided first, from role and is_owner.",
-      "defined_in": "20261107000000_the_headline_is_the_furthest_the_email_got.sql",
-      "fingerprint": "fda0872a8c6e04ae"
+      "reason": "Returns each member's title and responsibilities for the Team roster and matches the owner's search text against them (ILIKE); roster access is decided first, from role and is_owner. Re-read for EXP08 literal Team-details source: existing descriptive fields, exact permitted no-change reconciliation and owner/privacy projection remain governed by original role/holder checks; the retirement table exclusion now precedes Auth/member locks. No title grants access.",
+      "defined_in": "20271128020008_exp08_team_details_guarded_native.sql",
+      "fingerprint": "eb4c04814b36a6ad"
     },
     {
       "function": "public.resend_solo_team_invite(uuid, uuid, uuid)",
@@ -58,9 +58,9 @@
     {
       "function": "public.set_solo_team_member_work_profile(uuid, text, text)",
       "purpose": "write",
-      "reason": "Writes the two columns only after is_tenant_admin() authorizes the caller, then echoes the saved values back; nothing branches on them.",
-      "defined_in": "20260901001520_solo_team_workspace.sql",
-      "fingerprint": "9bae5500ae6446a1"
+      "reason": "Writes the two columns only after is_tenant_admin() authorizes the caller, then echoes the saved values back; nothing branches on them. Re-read for EXP08 literal Team-details source: existing descriptive fields, exact permitted no-change reconciliation and owner/privacy projection remain governed by original role/holder checks; the retirement table exclusion now precedes Auth/member locks. No title grants access.",
+      "defined_in": "20271128020008_exp08_team_details_guarded_native.sql",
+      "fingerprint": "41c34400b8c41ee7"
     },
     {
       "function": "public.team_hub_list_conversations(uuid)",

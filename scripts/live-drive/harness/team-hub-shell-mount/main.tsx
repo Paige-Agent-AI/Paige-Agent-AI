@@ -14,6 +14,7 @@
  *   /solo/4120/team-hub?theme=dark&tenant=b     (tenant b, Juniper Row Consulting)
  */
 import { StrictMode } from "react";
+import { Toaster } from "sonner";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -40,6 +41,7 @@ createRoot(document.getElementById("root")!).render(
             <Routes><Route path="/solo/:account/*" element={<SoloApp />} /></Routes>
           </BrowserRouter>
         </TenantProvider>
+        <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,

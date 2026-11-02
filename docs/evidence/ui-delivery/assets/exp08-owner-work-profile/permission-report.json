@@ -1,0 +1,26 @@
+{
+  "scope": "real SoloApp / synthetic local transport / no customer/Auth/provider proof",
+  "geometry": [],
+  "states": [
+    {
+      "mode": "permission-success",
+      "attempts": 1,
+      "reopened": true,
+      "errors": []
+    },
+    {
+      "mode": "permission-drafts",
+      "attempts": 1,
+      "reopened": true,
+      "errors": []
+    },
+    {
+      "mode": "permission-unknown",
+      "attempts": 1,
+      "reopened": true,
+      "errors": []
+    }
+  ],
+  "failures": [],
+  "offMachineRequests": 3
+}

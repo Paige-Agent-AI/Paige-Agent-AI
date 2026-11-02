@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/
  * right-hand drawer (a full-width sheet on a phone); `role="alertdialog"` is for the brief blocking
  * decision (suspend).
  */
-export function Modal({ title, description, onClose, onEscape, busy, wide, variant = "dialog", role = "dialog", titleRef, children }: { title: string; description: string; onClose: () => void; onEscape?: () => boolean; /** A request is in flight and must not be interrupted: the close control is DISABLED, not merely inert. */ busy?: boolean; /** Opens at the wider size from the first frame, so content arriving later never resizes it. */ wide?: boolean; variant?: "dialog" | "drawer"; role?: "dialog" | "alertdialog"; titleRef?: React.Ref<HTMLHeadingElement>; children: React.ReactNode }) {
+export function Modal({ title, description, onClose, onEscape, busy, wide, variant = "dialog", role = "dialog", titleRef, initialFocusTitle, children }: { title: string; description: string; onClose: () => void; onEscape?: () => boolean; /** A request is in flight and must not be interrupted: the close control is DISABLED, not merely inert. */ busy?: boolean; /** Opens at the wider size from the first frame, so content arriving later never resizes it. */ wide?: boolean; variant?: "dialog" | "drawer"; role?: "dialog" | "alertdialog"; titleRef?: React.Ref<HTMLHeadingElement>; initialFocusTitle?: boolean; children: React.ReactNode }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   // The key handler and the focus capture read the latest callbacks through refs so the effect can
@@ -76,7 +76,7 @@ export function Modal({ title, description, onClose, onEscape, busy, wide, varia
   const drawer = variant === "drawer";
   return <div className={drawer ? "stw-modal-backdrop is-drawer" : "stw-modal-backdrop"} role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target && !busy) onClose(); }}>
     <section ref={dialogRef} className={drawer ? "stw-drawer" : wide ? "stw-modal is-wide" : "stw-modal"} role={role} aria-modal="true" aria-labelledby="stw-modal-title" aria-describedby="stw-modal-desc">
-      <header><div><h2 id="stw-modal-title" ref={titleRef} tabIndex={-1}>{title}</h2><p id="stw-modal-desc">{description}</p></div><button ref={closeRef} type="button" className="stw-icon-btn" onClick={onClose} disabled={busy} aria-label="Close"><X /></button></header>
+      <header><div><h2 id="stw-modal-title" ref={titleRef} tabIndex={-1} data-initial-focus={initialFocusTitle ? "" : undefined}>{title}</h2><p id="stw-modal-desc">{description}</p></div><button ref={closeRef} type="button" className="stw-icon-btn" onClick={onClose} disabled={busy} aria-label="Close"><X /></button></header>
       {children}
     </section>
   </div>;
@@ -216,10 +216,10 @@ export function NoticeBar({ notice, onDismiss }: { notice: TeamNotice | null; on
 }
 
 /** Two-option permission cards, a radiogroup with arrow-key movement. Replaces the permission <select>. */
-export function PermissionCards({ value, onChange, labelledBy, adminDisabledReason }: { value: string; onChange: (value: "member" | "admin") => void; labelledBy: string; adminDisabledReason?: string | null }) {
+export function PermissionCards({ value, onChange, labelledBy, adminDisabledReason, disabled = false }: { value: string; onChange: (value: "member" | "admin") => void; labelledBy: string; adminDisabledReason?: string | null; disabled?: boolean }) {
   const options: { v: "member" | "admin"; label: string; hint: string; disabled: boolean }[] = [
-    { v: "member", label: "Member", hint: "Works in the business. Can't manage people.", disabled: false },
-    { v: "admin", label: "Admin", hint: adminDisabledReason ?? "Also manages members and invitations.", disabled: Boolean(adminDisabledReason) },
+    { v: "member", label: "Member", hint: "Works in the business. Can't manage people.", disabled },
+    { v: "admin", label: "Admin", hint: adminDisabledReason ?? "Also manages members and invitations.", disabled: disabled || Boolean(adminDisabledReason) },
   ];
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
   return <div className="stw-seg" role="radiogroup" aria-labelledby={labelledBy}
@@ -227,12 +227,13 @@ export function PermissionCards({ value, onChange, labelledBy, adminDisabledReas
       if (!["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
       event.preventDefault();
       const enabled = options.filter((o) => !o.disabled);
+      if (!enabled.length) return;
       const at = enabled.findIndex((o) => o.v === value);
       const next = enabled[(at + (event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : enabled.length - 1)) % enabled.length];
       onChange(next.v);
       refs.current[next.v]?.focus();
     }}>
-    {options.map((o) => <button key={o.v} ref={(n) => { refs.current[o.v] = n; }} type="button" role="radio" aria-checked={value === o.v} aria-disabled={o.disabled || undefined} tabIndex={value === o.v ? 0 : -1}
+    {options.map((o) => <button key={o.v} ref={(n) => { refs.current[o.v] = n; }} type="button" role="radio" aria-checked={value === o.v} aria-disabled={o.disabled || undefined} disabled={disabled} tabIndex={!disabled && value === o.v ? 0 : -1}
       onClick={() => { if (!o.disabled) onChange(o.v); }}>
       <strong><span className="stw-radio" aria-hidden="true" />{o.label}</strong><span>{o.hint}</span>
     </button>)}

@@ -647,6 +647,8 @@ try {
       ['security','ALTER FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) SECURITY INVOKER;'],
       ['volatility','ALTER FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) STABLE;'],
     ]) {
+      // Restore the complete pre-install pair before a controlled source mutant.
+      sql('DROP FUNCTION IF EXISTS public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid);');
       sql(originalFunction(profileSource,'set_solo_team_member_work_profile'));
       sql('REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) FROM anon;');
       sql(change);
@@ -661,12 +663,23 @@ try {
       ['holder exception removed','AND NOT public.is_tenant_account_holder(_actor,_tenant)','AND true'],
       ['identity currentness removed','IF NOT FOUND OR NOT EXISTS','IF false AND NOT FOUND OR false AND NOT EXISTS'],
     ]) {
+      // Restore the complete pre-install pair before a controlled source mutant.
+      sql('DROP FUNCTION IF EXISTS public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid);');
       sql(originalFunction(profileSource,'set_solo_team_member_work_profile'));
       sql('REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) FROM anon;');
-      const mutant=patch.replaceAll(from,to);assert.notEqual(mutant,patch,name);sql(mutant);
+      const mutant=patch.replaceAll(from,to);assert.notEqual(mutant,patch,name);
+      const beforeFault=sql("SELECT jsonb_agg(to_jsonb(p) ORDER BY oid) FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname='set_solo_team_member_work_profile'");
+      sql(mutant,database,true,/EXP08 owner work profile original source drift|EXP08 scoped work profile original door drift/);
+      assert.equal(sql("SELECT jsonb_agg(to_jsonb(p) ORDER BY oid) FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname='set_solo_team_member_work_profile'"),beforeFault,'Guarded installer must roll back the corrupted source');
+      sql(patch);
+      // The original behavioral mutant still runs against the actual installed body,
+      // independently of the installer's new exact-result source check.
+      const definition=JSON.parse(sql("SELECT to_json(pg_get_functiondef('public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure))"));
+      const fault=definition.replaceAll(from,to);assert.notEqual(fault,definition,name);sql(fault);
       const failed=cases().filter(r=>!r.passed).map(r=>r.case_name);assert.ok(failed.length,`${name}: survived`);
       console.log(JSON.stringify({phase:'owner-work-profile-mutant',name,killed_by:failed}));
     }
+    sql('DROP FUNCTION IF EXISTS public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid);');
     sql(originalFunction(profileSource,'set_solo_team_member_work_profile'));
     sql(patch);assert.ok(cases().every(r=>r.passed));
 
@@ -1287,4 +1300,9 @@ if(!onlyWorkProfile&&!onlyOwnerRead&&!onlyBilling&&!onlyOwnerHistory&&!onlyHubId
   const permission=spawnSync(process.execPath,[fileURLToPath(new URL('./exp08-team-permission-currentness.mjs',import.meta.url))],{env:process.env,stdio:'inherit',windowsHide:true,timeout:330000});
   if(permission.error)throw permission.error;
   assert.equal(permission.status,0,'Original Team permission authority/currentness controls must pass');
+  for(const name of ['exp08-team-details-bundle-proof.mjs','exp08-team-details-retirement-proof.mjs']){
+    const proof=spawnSync(process.execPath,[fileURLToPath(new URL('./'+name,import.meta.url))],{env:{...process.env,OPERATOR_PROOF_PSQL:executable},stdio:'inherit',windowsHide:true,timeout:330000});
+    if(proof.error)throw proof.error;
+    assert.equal(proof.status,0,'Original Team atomic source/retirement concurrency controls must pass: '+name);
+  }
 }

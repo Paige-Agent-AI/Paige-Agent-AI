@@ -250,14 +250,16 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
   payment_processor_connected: {
     title: "Payment processor declaration",
     area: "sales",
-    label: "Marketing › Sales",
-    path: (a) => `/solo/${acct(a)}/growth/sales`,
+    label: "Sales › Payments",
+    path: (a) => `/solo/${acct(a)}/sales/payments?view=invoices`,
+    caveat: "Payment setup cannot be changed here. A declaration does not verify a processor connection.",
   },
   payment_method_options: {
     title: "Accepted payment methods",
     area: "sales",
-    label: "Marketing › Sales",
-    path: (a) => `/solo/${acct(a)}/growth/sales`,
+    label: "Sales › Payments",
+    path: (a) => `/solo/${acct(a)}/sales/payments?view=invoices`,
+    caveat: "Payment setup cannot be changed here. A declaration does not verify a processor connection.",
   },
   comms_configured: {
     title: "Email and phone setup",

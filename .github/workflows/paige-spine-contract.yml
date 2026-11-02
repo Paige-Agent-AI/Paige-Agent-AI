@@ -48,6 +48,10 @@ on:
       - "supabase/tests/exp08_owner_work_profile_native.sql"
       - "supabase/tests/exp08_team_permission_native.sql"
       - "supabase/tests/exp08_team_details_bundle_native.sql"
+      - "supabase/tests/exp08_owner_recovery_notice_state_native.sql"
+      - "scripts/proof/exp08-owner-recovery-notice-state-native.template.sql"
+      - "scripts/proof/exp08-owner-recovery-notice-state-native-proof.mjs"
+      - "scripts/proof/exp08-owner-recovery-notice-state-recipient.template.sql"
       - "supabase/tests/record_capability_run_single_overload.sql"
       - "supabase/tests/mcp_tool_catalog_tenant_scope.sql"
       - "supabase/tests/mcp_oauth_refuses_the_rest_facet.sql"
@@ -690,6 +694,12 @@ jobs:
           node scripts/proof/exp08-team-details-bundle-native-proof.mjs --check
           node scripts/proof/exp08-team-details-bundle-native-proof.mjs --self-test
           supabase test db supabase/tests/exp08_team_details_bundle_native.sql
+      - name: Original EXP08 personal notice read-state full-schema installation
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/proof/exp08-owner-recovery-notice-state-native-proof.mjs --check
+          node scripts/proof/exp08-owner-recovery-notice-state-native-proof.mjs --self-test
+          supabase test db supabase/tests/exp08_owner_recovery_notice_state_native.sql
       - run: supabase test db supabase/tests/solo_team_invite_workspace_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_recipient_binding.sql
       # Additive E09 customer-safe relationship/profile foundation; no new CI database.
@@ -901,7 +911,9 @@ jobs:
       # above — the expensive part is `supabase start` + `db reset` (§24).
       - run: supabase test db supabase/tests/business_context_readiness.sql
       - name: Original EXP01 reviewed Setup receipt full-schema authority
-        run: node scripts/proof/exp01-reviewed-setup-full-schema.mjs
+        run: |
+          npm ci
+          node scripts/proof/exp01-reviewed-setup-full-schema.mjs
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/secure_browser_control_plane_security.sql
       # PC-1 — concurrent budget enforcement: 12 racing service-role callers against a day

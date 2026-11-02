@@ -24,6 +24,7 @@ export default defineConfig({
       { find: /^@\/integrations\/supabase\/client$/, replacement: stubs },
       { find: /^@\/hooks\/useTenantContext$/, replacement: stubs },
       { find: /^@\/hooks\/useUserRoles$/, replacement: stubs },
+      { find: /^@\/hooks\/usePaigeThreads$/, replacement: path.join(repo,"scripts/live-drive/harness/settings-mount/paige-threads-stub.ts") },
       { find: /^\.\/useTenantRelationshipsData$/, replacement: stubs },
       { find: "@", replacement: path.join(repo, "src") },
     ],

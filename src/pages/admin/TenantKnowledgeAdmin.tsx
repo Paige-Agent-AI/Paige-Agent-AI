@@ -198,13 +198,14 @@ export function AddDocDialog({
   onIngested,
   onReview,
   initialMode = "paste",
-  tenantId,
+  tenantId, embedded = false, controlIdPrefix, onInteractionStart,
 }: {
   onClose: () => void;
   onIngested?: (title: string, docId?: string) => void;
   onReview?: () => void;
   initialMode?: AddMode;
   tenantId?: string;
+  embedded?: boolean; controlIdPrefix?: string; onInteractionStart?: () => void;
 }) {
   const [mode, setMode] = useState<AddMode>(initialMode);
   const [title, setTitle] = useState("");
@@ -272,6 +273,7 @@ export function AddDocDialog({
     const u = url.trim();
     if (!u) return toast.error("Add a link to fetch");
     if (!/^https:\/\//i.test(u)) return toast.error("Only secure https:// links can be added");
+    onInteractionStart?.();
     pending.current = true;
     const submittedTenant = currentTenant.current;
     setOutcome(null);
@@ -281,6 +283,7 @@ export function AddDocDialog({
       const { data, error } = await supabase.functions.invoke("kb-ingest-url", {
         body: {
           url: u,
+          ...(tenantId ? { tenant_id: tenantId } : {}),
           title: title.trim() || undefined,
           category: category.trim() || undefined,
           tags: tagList(),
@@ -342,12 +345,10 @@ export function AddDocDialog({
   const submit = mode === "url" ? submitUrl : mode === "file" ? submitFile : submitPaste;
   const review = () => { onReview?.(); onClose(); };
 
-  return (
-    <DialogContent className="max-w-2xl">
-      <DialogHeader><DialogTitle>Teach Paige something new</DialogTitle></DialogHeader>
+  const form = (
       <div className="space-y-4">
-        {/* Mode toggle */}
-        <div className="inline-flex rounded-lg border p-0.5 bg-muted/40">
+        {/* Existing callers retain all three legacy modes; the unified URL pane fixes its mode. */}
+        {!embedded && <div className="inline-flex rounded-lg border p-0.5 bg-muted/40">
           <button
             type="button"
             onClick={() => setMode("paste")}
@@ -369,12 +370,12 @@ export function AddDocDialog({
           >
             Upload a file
           </button>
-        </div>
+        </div>}
 
         {mode === "url" ? (
           <div>
-            <Label>Link *</Label>
-            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com/your-methodology" />
+            <Label htmlFor={controlIdPrefix ? `${controlIdPrefix}-url` : undefined}>Link *</Label>
+            <Input id={controlIdPrefix ? `${controlIdPrefix}-url` : undefined} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com/your-methodology" />
             <p className="text-xs text-muted-foreground mt-1">Paige fetches the page, then chunks and learns it. Secure https links only.</p>
           </div>
         ) : null}
@@ -395,17 +396,17 @@ export function AddDocDialog({
         ) : null}
 
         <div>
-          <Label>Title {mode === "paste" ? "*" : "(optional)"}</Label>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Discovery call script" />
+          <Label htmlFor={controlIdPrefix ? `${controlIdPrefix}-title` : undefined}>Title {mode === "paste" ? "*" : "(optional)"}</Label>
+          <Input id={controlIdPrefix ? `${controlIdPrefix}-title` : undefined} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Discovery call script" />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className={embedded ? "grid gap-3 sm:grid-cols-2" : "grid grid-cols-2 gap-3"}>
           <div>
-            <Label>Category</Label>
-            <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. onboarding" />
+            <Label htmlFor={controlIdPrefix ? `${controlIdPrefix}-category` : undefined}>Category</Label>
+            <Input id={controlIdPrefix ? `${controlIdPrefix}-category` : undefined} value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. onboarding" />
           </div>
           <div>
-            <Label>Tags (comma separated)</Label>
-            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="intake, discovery, methodology" />
+            <Label htmlFor={controlIdPrefix ? `${controlIdPrefix}-tags` : undefined}>Tags (comma separated)</Label>
+            <Input id={controlIdPrefix ? `${controlIdPrefix}-tags` : undefined} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="intake, discovery, methodology" />
           </div>
         </div>
         {mode === "paste" && (
@@ -432,7 +433,7 @@ export function AddDocDialog({
               Submit this doc for review. If approved it joins the shared canon every practice can draw on.
             </p>
           </div>
-          <Switch checked={share} onCheckedChange={setShare} />
+          <Switch aria-label={embedded ? "Share this source to the network" : undefined} checked={share} onCheckedChange={setShare} />
         </div>
         {outcome && outcome.kind !== "complete" && <p role="status" className="text-sm text-foreground">{outcome.message}</p>}
         <div className="flex items-center justify-end gap-2">
@@ -441,6 +442,11 @@ export function AddDocDialog({
           <Button onClick={outcome?.kind === "partial" || outcome?.kind === "unknown" ? review : submit} disabled={busy}>{busy ? (progress ?? "Working…") : outcome?.kind === "partial" || outcome?.kind === "unknown" ? "Review knowledge" : "Add & teach"}</Button>
         </div>
       </div>
+  );
+  return embedded ? <section className="min-w-0">{form}</section> : (
+    <DialogContent className="max-w-2xl">
+      <DialogHeader><DialogTitle>Teach Paige something new</DialogTitle></DialogHeader>
+      {form}
     </DialogContent>
   );
 }

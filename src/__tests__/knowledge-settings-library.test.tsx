@@ -3,12 +3,13 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({ docs: [] as unknown[], loading: false, error: null as string|null,
-  reload: vi.fn(), loadMore: vi.fn(), hasMore: false, read: vi.fn(), remove: vi.fn(), confirm: vi.fn(), flow: vi.fn() }));
+  reload: vi.fn(), loadMore: vi.fn(), hasMore: false, read: vi.fn(), remove: vi.fn(), confirm: vi.fn(), flow: vi.fn(), pending: vi.fn() }));
 const identity = vi.hoisted(() => ({ activeUserId: 'actor-a', activeTenantId: 'test-tenant-a', loading: false, accountContextStatus: 'ready' }));
 vi.mock('@/hooks/useTenantContext', () => ({ useTenantContext: () => identity }));
 vi.mock("@/hooks/useKnowledgeDocuments", () => ({ useKnowledgeDocuments: () => state }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 vi.mock("@/lib/knowledge-service", () => ({ readKnowledge: state.read, deleteKnowledge: state.remove }));
+vi.mock("@/lib/knowledge-extraction-service",async(original)=>({...await original<typeof import('@/lib/knowledge-extraction-service')>(),listKnowledgePendingReviews:state.pending}));
 vi.mock("@/hooks/useConfirm", () => ({ useConfirm: () => ({ confirm: state.confirm, dialog: null }) }));
 vi.mock("@/components/knowledge/KnowledgeMetadataEditor", () => ({ KnowledgeMetadataEditor: () => null }));
 vi.mock("@/pages/admin/TenantKnowledgeAdmin", () => ({ AddDocDialog: () => null }));
@@ -18,9 +19,24 @@ const doc = { id:"document-a", tenant_id:"test-tenant-a", revision:2, title:"Int
 let container: HTMLDivElement, root: Root;
 async function render(tenant="test-tenant-a") { identity.activeTenantId=tenant; await act(async () => root.render(<KnowledgeLibrary tenantId={tenant} account="test-account" />)); }
 async function click(text: string) { const b=[...container.querySelectorAll("button")].find(b=>b.textContent?.includes(text)); expect(b).toBeTruthy(); await act(async()=>b!.click()); }
-beforeEach(()=>{ Object.assign(identity,{activeUserId:'actor-a',activeTenantId:'test-tenant-a',loading:false,accountContextStatus:'ready'});state.flow.mockReset(); (globalThis as {IS_REACT_ACT_ENVIRONMENT?:boolean}).IS_REACT_ACT_ENVIRONMENT=true; container=document.createElement("div"); document.body.append(container);root=createRoot(container);state.docs=[doc];state.loading=false;state.error=null;state.hasMore=false;state.read.mockReset().mockResolvedValue([doc]);state.remove.mockReset();state.confirm.mockReset().mockResolvedValue(true); });
+beforeEach(()=>{ Object.assign(identity,{activeUserId:'actor-a',activeTenantId:'test-tenant-a',loading:false,accountContextStatus:'ready'});state.flow.mockReset();state.reload.mockReset();state.pending.mockReset().mockResolvedValue({items:[],nextCursor:null}); (globalThis as {IS_REACT_ACT_ENVIRONMENT?:boolean}).IS_REACT_ACT_ENVIRONMENT=true; container=document.createElement("div"); document.body.append(container);root=createRoot(container);state.docs=[doc];state.loading=false;state.error=null;state.hasMore=false;state.read.mockReset().mockResolvedValue([doc]);state.remove.mockReset();state.confirm.mockReset().mockResolvedValue(true); });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 describe("Settings canonical Knowledge library",()=>{
+  it('refreshes published documents when unfinished-status refresh completes',async()=>{
+    await render();expect(state.reload).not.toHaveBeenCalled();await click('Reload unfinished documents');
+    expect(state.pending).toHaveBeenCalledTimes(2);expect(state.reload).toHaveBeenCalledOnce();expect(container.textContent).toContain('Checked 0 unfinished documents: 0 ready for review.');
+  });
+  it('refreshes both original lists through the main library refresh button',async()=>{
+    await render();await act(async()=>container.querySelector<HTMLButtonElement>('button[aria-label="Refresh knowledge"]')!.click());
+    expect(state.reload).toHaveBeenCalledOnce();expect(state.pending).toHaveBeenCalledTimes(2);
+  });
+  it('has one Knowledge intake button and no separate Link entry',async()=>{
+    await render();
+    const actions=container.querySelector('.knowledge-library__actions');
+    expect(actions?.querySelectorAll('button')).toHaveLength(1);
+    expect(actions?.querySelector('button')?.textContent?.trim()).toBe('Knowledge');
+    expect(actions?.querySelector('[aria-label="Add a web link"]')).toBeNull();
+  });
   it('opens correction only from current exact content and freezes its original revision', async()=>{
     await render(); await click('Intake guide'); await click('Correct content');
     const flow=state.flow.mock.lastCall![0];

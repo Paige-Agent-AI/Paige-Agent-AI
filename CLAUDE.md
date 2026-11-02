@@ -1,5 +1,20 @@
 # Paige Agent AI — Working Doctrine
 
+## MANDATORY OWNER DELIVERY RULE — November 1, 2026
+
+This rule binds the Coordinator and every current and future authorized agent. Pick ONE complete original customer/business outcome and finish it. Do not start or consider another outcome while it is unfinished. REPORT THE COMPLETED OUTCOME, THEN STOP. The owner must explicitly approve the next outcome, one at a time. Preserve the full original assignment as pending scope; it does not authorize starting the next outcome.
+
+Every task must be necessary to finish the ONE selected outcome. Small PRs are implementation increments, not completed outcomes. Do not add unrelated prerequisites, policy cleanup, reporting, speculative improvements, parallel features, tests or approval gates beyond the authorized outcome and genuine applicable engineering/safety requirements.
+
+Complete the necessary implementation and integration, proportionate engineering checks and review, normal safe merge/deployment, then LIVE verification of the useful original result, receipt and durable reopen/recovery. Missing browser, prototype, screenshots, preview login or owner hands-on testing alone must not block an otherwise safe prelaunch release. Preserve actual security, privacy, tenant/authorization, required engineering checks, migration safety and consequential-effect boundaries; never fabricate PASS or acceptance.
+
+If blocked, remain on the SAME outcome and report the exact blocker, accountable owner and needed decision in the existing original record. Do not switch to a secondary outcome, start parallel work or duplicate dependency pings. Work only on what is necessary to finish the selected outcome. Existing meaningful checkpoints suffice; no additional reporting ceremony, timer, checklist or per-PR owner review is created.
+
+The implementing agent reports its own completed outcome to the OWNER in its working chat, to its ORIGINAL LINEAR issue, and to the COORDINATOR, then STOPS for the owner's explicit next-outcome approval. The same implementing agent updates the EXISTING canonical Outcomes records with the actual completed result and verification evidence, keeping unfinished work open and distinguishing released, verified and owner-accepted states. Report the useful result and any actual limitation truthfully. The Coordinator must not create a separate outcome ledger, assign replacement outcome statuses or report completion on an agent's behalf. Existing original records remain with their original owners; no extra reporting work is created.
+
+The Coordinator must follow this rule too: do not scatter or redirect agents, add requirements, or treat PR/test totals as delivery. Agent messages or redirection require the owner's explicit instruction. Only an explicit owner direction changes the authorized outcome or this rule; do not treat technical autonomy, full-assignment scope or a dependency as permission to start another outcome. No new agents, runtime, ledger, provider activation or unrelated authority is granted. Existing assignments and holds remain intact.
+
+
 Standing rules for how work gets done in this repo. These persist across sessions.
 
 ## 00. UI AUTHORITY — THE FIRST RULE. IT OVERRIDES EVERY SECTION BELOW IT.
@@ -14,7 +29,7 @@ Standing rules for how work gets done in this repo. These persist across session
 
 **Claude Code owns the user interface — design and engineering both — and executes it in a fixed
 order: FLOW-BY-FLOW first, then IMPECCABLE. Impeccable is the priority authority on anything the
-user sees.** The owner approves the design before it ships. There is no third party in this loop.
+user sees.** The owner directs intended function and retains final acceptance of the live experience. There is no third party in this loop.
 
 ### The order, and it is not optional
 
@@ -25,8 +40,9 @@ user sees.** The owner approves the design before it ships. There is no third pa
    decides HOW the interface looks and behaves. Read its `SKILL.md`, then the playbook for the
    request, then `reference/craft-floor.md` immediately before any UI edit. Its OPERATE mode
    governs settings/tools/dashboard surfaces; its refuse-list is binding, not advisory.
-3. **Owner approval** — the owner sees the design and approves it BEFORE production. A design he
-   has not seen is not finished, however green the build is.
+3. **Live verification and owner acceptance** — after proportionate engineering tests, technical
+   review and genuine required CI, merge/deploy safely, verify live and show the owner the released
+   experience. Unrun prototype/browser/customer proof stays `UNVERIFIED`; acceptance remains open.
 
 ### What this means in practice
 
@@ -64,7 +80,6 @@ It is no longer an authority that outranks CC's judgement or Impeccable's craft 
   no seam, or a value no tenant-scoped read may return (§9). Name the exact impossibility.
 - **The backend must change for the design to work** — a new table, column, RPC, edge function,
   index or policy. Name it and stop.
-- **Owner approval before production**, per the quote above.
 - Every material boundary §69 lists: missing authority or a credential, spending money, accepting a
   legal term, a destructive real-data action, a material product decision, unbounded scope.
 
@@ -89,11 +104,11 @@ judging or proposing design, **is void and is DELETED on sight rather than recon
   the interface against Impeccable's craft floor, and are expected to.
 
 **Sections that survive and are NOT touched:** §11's token / gold-budget / AA rules and §23's
-contrast and light-vs-dark rules remain binding **constraints CC designs within**; §69's gates;
+contrast and light-vs-dark rules remain binding **constraints CC designs within**; §69's engineering review and evidence requirements;
 §70's usability gate; §13 honesty; §28 approved-frozen; §58 anti-regression.
 
-**The test, every time:** *"Did I run Flow-by-Flow, then Impeccable, and can the owner SEE and
-approve this before it ships?"* If the answer is a description instead of a design, it isn't done.
+**The test, every time:** *"Did I run Flow-by-Flow, then Impeccable, complete engineering review
+and required CI, release safely, and show the live result with truthful evidence?"*
 
 
 ## 0. SESSION START — READ THE MASTER PROJECT REFERENCE FIRST (single source of truth).
@@ -229,9 +244,9 @@ His words, and note the weariness in them: *"I have to explain this every single
 agent that comes on the team."* So it is written here, where it reloads, instead of being explained
 again.
 
-§69's flow-by-flow gates — Gate 1 (approve the prototype before production UI) and Gate 2 (authorize
-before ready-state/merge) — read as a licence to stop and wait. **Pre-launch they are not.** The
-owner ruled: *"we go all the way to Gate B… you just merge it to main or merge it live on prod."*
+Safe prelaunch release follows engineering checks and technical review, then live verification;
+unrun prototype/browser evidence is recorded truthfully without a premerge proof requirement.
+The owner ruled: *"we go all the way to Gate B… you just merge it to main or merge it live on prod."*
 
 - **Build through to merge and MERGE, on every substantive slice, without asking.** Prototype where a
   prototype genuinely helps you get it right — then keep going. Do not park a green, verified branch
@@ -1666,6 +1681,8 @@ Three confirmed tier-seam bugs plus a fourth that had been hiding under an unrel
 
 ## 39. The peer-gate — every §32-verified change also gets an INDEPENDENT adversarial read of the REAL diff.
 
+**Current reviewer rule (owner, 2026-11-02):** The implementing lead uses one of its own review agents who did not implement, co-author or help write the changes. Review the exact final head and record the non-author review and findings before merge, as required by `AGENTS.md` → "Merge gate — Independent Review". Author/self-review is not a substitute. Codex's automated PR review is not a required merge gate; do not request or wait for it to satisfy this requirement. Existing material findings and all other release gates remain binding. Preserve the historical evidence below.
+
 **Directive (owner: Antonio, 2026-08-04, ref #214):** A §32 `BEGIN..ROLLBACK` proof tests
 **what its assertions test** — and nothing else. A proof can be **fully GREEN and still miss an
 entire class of defect**, because it only ever exercises the checks its author thought to write.
@@ -2426,27 +2443,14 @@ a delivery requirement, not process language.
 - **Flow coverage — not file completion — is the definition of done.** A green build, a rendered
   screenshot, or a seeded fixture is not proof that the actor can reach their goal. Prove first-use and
   the central action, not only the populated happy path.
-- **The two owner gates bind — EXCEPT pre-launch, where §4 overrides them. Read §4 before you stop.**
-  Gate 1 is approval of appearance and intended function, via a `flow-prototype` surface for any major
-  UI/UX change — no post-hoc approval, and an unanswered question is not approval. Gate 2 is explicit
-  authorization immediately before ready-state, merge, deployment, or any other irreversible production
-  action. Between them, continue autonomously through ordinary implementation, tests, review, fixes,
-  draft PR and verification.
-
-  **The pre-launch override (owner: Antonio, 2026-09-05) — it lifts THESE TWO APPROVAL GATES and
-  nothing else.** While the platform has no live customers, §4's *"go all the way to main"* ruling
-  outranks Gate 1's prototype approval and Gate 2's merge/ready-state authorization, and the correct
-  action at each is to **keep going and merge**. Build the prototype where it genuinely helps you get
-  the thing right — that is what it is for — then ship, and tell the owner what to go look at on the
-  LIVE site. A green, verified branch parked behind a request for sign-off is the failure this
-  override exists to stop, and a Vercel preview handed over in place of a merge is not a deliverable.
-  **The material boundaries in the next bullet are NOT lifted — every one of them still stops you,
-  pre-launch included**, and several have nothing to do with reversibility: an ownership deadlock,
-  missing authority or a credential, spending money, accepting a licence or other legal term, a
-  destructive real-data action, a material product decision, unbounded scope, a confirmed defect
-  needing an owner choice. A reversible action you lack the authority or the money to take is still
-  one you do not take. This override buys exactly one thing — the right to stop asking *"may I merge
-  this?"* The two gates return the moment real customers onboard.
+- **Safe prelaunch release, then live proof (owner, 2026-11-01).** Complete implementation,
+  proportionate engineering tests, technical review and genuine required CI; then normal merge/deploy
+  and verify live. Missing prototype/browser/customer evidence alone does not block safe release and
+  remains `UNVERIFIED` or `PROOF OWED`, with full outcome/final owner acceptance open. Prototype where
+  it helps design; never fabricate evidence or bypass browser permission. Security/privacy/tenant
+  isolation, effect approval, functional tests and native migration order remain mandatory. A genuine
+  material finding needs repair or precise disposition, not a status relabel. §4's live delivery
+  direction does not authorize provider spend, legal acceptance or destructive real-data effects.
 - **Stop only at a material boundary:** ownership deadlock, missing authority or credential, spending,
   legal acceptance, a destructive real-data action, a material product decision, unbounded scope, or a
   confirmed defect needing an owner choice. Consolidate into ONE decision gate.
@@ -2454,10 +2458,8 @@ a delivery requirement, not process language.
   structural or rendered proof, authenticated runtime proof, and `UNVERIFIED` with its reason. Preview
   success is not authenticated production proof.
 
-**Installation.** The skill ships as two folders that must both be present and on the same version
-(`flow-by-flow` and its required sibling `flow-prototype`) — that pairing is Gate 5 in the skill's own
-`references/verification.md`, and `flow-by-flow` cannot complete its mandatory approval step without
-`flow-prototype`. Install to `~/.claude/skills/` (personal) or `.claude/skills/` (repo). **A session
+**Installation.** Read the installed `flow-by-flow` skill and its `flow-prototype` sibling for
+material flow work. Install to `~/.claude/skills/` (personal) or `.claude/skills/` (repo). **A session
 that cannot find the skill says so plainly and does not silently improvise its own process** — that
 admission is itself required by §13.
 

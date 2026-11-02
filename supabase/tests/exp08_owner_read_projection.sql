@@ -47,9 +47,10 @@ BEGIN
  'self_billing','other_billing_private','revoked_billing','foreign_billing','entity_label','private_legal_fields',
  'held_seat','holder_options','options_private','pending_option','expired_option','individual_excluded',
  'foreign_entity_excluded','search_paging','invitations_preserved','conversations_off','suspended_viewer','no_actor','no_workspace',
- 'missing_identity','soft_deleted_identity','banned_identity','expired_ban','unsupported_tier'] LOOP
+ 'missing_identity','soft_deleted_identity','banned_identity','expired_ban','unsupported_tier',
+ 'owner_floor_filtered','owner_floor_suspended','owner_floor_role_label','owner_floor_foreign','owner_floor_zero'] LOOP
   IF only_cases IS NOT NULL AND NOT(n=ANY(only_cases)) THEN CONTINUE; END IF;
-  actor:=CASE WHEN n IN ('admin','coowner','member','owner_label_only') THEN n WHEN n IN ('self_billing','other_billing_private','options_private','holder_missing','holder_paused','holder_archived') THEN 'admin' ELSE 'holder' END;
+  actor:=CASE WHEN n IN ('admin','coowner','member','owner_label_only') THEN n WHEN n IN ('self_billing','other_billing_private','options_private','holder_missing','holder_paused','holder_archived','owner_floor_zero') THEN 'admin' ELSE 'holder' END;
   PERFORM proof.owner_read_setup(actor);expected_state:='working';
   BEGIN
    IF n='holder_missing' THEN UPDATE public.tenants SET owner_user_id=NULL;expected_state:='none'; END IF;
@@ -67,6 +68,11 @@ BEGIN
    IF n='banned_identity' THEN UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id=auth.uid(); END IF;
    IF n='expired_ban' THEN UPDATE auth.users SET banned_until=now()-interval '1 second' WHERE id=auth.uid(); END IF;
    IF n='unsupported_tier' THEN UPDATE public.tenants SET account_type='agency' WHERE id='e8000000-0000-4000-8000-000000060010'; END IF;
+   IF n='owner_floor_filtered' THEN UPDATE public.tenant_members SET is_owner=true WHERE user_id='e8000000-0000-4000-8000-000000060300'; END IF;
+   IF n='owner_floor_suspended' THEN UPDATE public.tenant_members SET is_owner=true,status='suspended' WHERE user_id='e8000000-0000-4000-8000-000000060300'; END IF;
+   IF n='owner_floor_role_label' THEN UPDATE public.tenant_members SET role='owner' WHERE user_id='e8000000-0000-4000-8000-000000060300'; END IF;
+   IF n='owner_floor_zero' THEN UPDATE public.tenant_members SET status='suspended' WHERE user_id='e8000000-0000-4000-8000-000000060100'; expected_state:='paused'; END IF;
+
    IF n IN ('suspended_viewer','no_actor','no_workspace') THEN
     BEGIN PERFORM public.get_solo_team_workspace();RAISE EXCEPTION 'reader admitted invalid caller'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
     PERFORM proof.assert_true(public.get_paige_team_context() IS NULL,'context must abstain');
@@ -80,7 +86,14 @@ BEGIN
     PERFORM proof.assert_true(w->'viewer_is_account_holder'=c->'viewer_is_account_holder' AND w->'account_holder_state'=c->'account_holder_state','same holder facts in both readers');
     PERFORM proof.assert_true((w->>'viewer_is_account_holder')::boolean=(actor='holder' AND n<>'unsupported_tier'),'holder is not a role label');
     PERFORM proof.assert_true(CASE WHEN actor IN ('member','owner_label_only') OR n='unsupported_tier' THEN w->'account_holder_state'='null'::jsonb ELSE w->>'account_holder_state'=expected_state END,'state visibility/current source');
+    PERFORM proof.assert_true(w ? 'active_owner_count' AND c ? 'active_owner_count' AND w->'active_owner_count'=c->'active_owner_count','both original readers carry the same native full-set owner-floor metadata');
+    IF actor IN ('member','owner_label_only') OR n='unsupported_tier' THEN
+     PERFORM proof.assert_true(w->'active_owner_count'='null'::jsonb AND c->'active_owner_count'='null'::jsonb,'owner-floor metadata uses original private ownership admission, not a role label');
+    END IF;
     CASE n
+     WHEN 'owner_floor_filtered' THEN PERFORM proof.assert_true(w->>'active_owner_count'='2' AND public.get_solo_team_workspace(NULL,'all',1,0)->>'active_owner_count'='2' AND public.get_solo_team_workspace('unmatchable','all',25,0)->>'active_owner_count'='2','two real owners persist across first page and empty search');
+     WHEN 'owner_floor_suspended','owner_floor_role_label','owner_floor_foreign' THEN PERFORM proof.assert_true(w->>'active_owner_count'='1','suspended owners, display-only Owner labels and the other tenant owner never inflate the native floor');
+     WHEN 'owner_floor_zero' THEN PERFORM proof.assert_true(w->>'active_owner_count'='0','zero active owners is distinct from missing/unknown metadata');
      WHEN 'member','owner_label_only' THEN PERFORM proof.assert_true(holder->'business_owner'='null'::jsonb AND w->'owner_seats_held'='[]'::jsonb AND w->'business_owner_options'='[]'::jsonb,'member/role-only private data withheld');
      WHEN 'self_billing' THEN PERFORM proof.assert_true(member->'billing_contact'='true'::jsonb,'self sees own designation');
      WHEN 'other_billing_private' THEN PERFORM proof.assert_true(holder->'billing_contact'='null'::jsonb,'admin cannot inspect another billing designation');

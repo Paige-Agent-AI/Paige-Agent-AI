@@ -23,7 +23,7 @@ export interface PersonalOwnerRecoveryNotice {
   recordedAt: string;
   isRead: boolean;
 }
-type NoticeErrorCode = 'INPUT_INVALID' | 'SCOPE_CHANGED' | 'UNAVAILABLE' | 'READ_FAILED' | 'READBACK_MISMATCH';
+type NoticeErrorCode = 'INPUT_INVALID' | 'SCOPE_CHANGED' | 'UNAVAILABLE' | 'READ_FAILED' | 'READBACK_MISMATCH' | 'STATE_UNKNOWN';
 export class OwnerRecoveryNoticeError extends Error {
   constructor(public readonly code: NoticeErrorCode) {
     super('This ownership notice could not be verified.');
@@ -45,16 +45,16 @@ function noticeAction(value: unknown): OwnerRecoveryNoticeAction | null {
   }
 }
 
-export async function readPersonalOwnerRecoveryNotice(
-  client: PersonalRecoveryNoticeClient, scope: PersonalRecoveryNoticeScope, noticeId: string,
-): Promise<PersonalOwnerRecoveryNotice> {
+function capturePersonalNotice(client: PersonalRecoveryNoticeClient, scope: PersonalRecoveryNoticeScope, noticeId: string) {
   if (!uuid(scope.actorId) || !uuid(noticeId) || typeof scope.isCurrent !== 'function') {
     throw new OwnerRecoveryNoticeError('INPUT_INVALID');
   }
   const actor = scope.actorId.toLowerCase(), notice = noticeId.toLowerCase();
   const isCurrent = scope.isCurrent.bind(scope);
   const check = () => {
-    if (isCurrent() !== true) throw new OwnerRecoveryNoticeError('SCOPE_CHANGED');
+    let current = false;
+    try { current = isCurrent() === true; } catch { /* Departed or unavailable host context. */ }
+    if (!current) throw new OwnerRecoveryNoticeError('SCOPE_CHANGED');
   };
   const resolve = async () => {
     check();
@@ -62,6 +62,13 @@ export async function readPersonalOwnerRecoveryNotice(
     check();
     if (!uuid(actual) || actual.toLowerCase() !== actor) throw new OwnerRecoveryNoticeError('SCOPE_CHANGED');
   };
+  return {notice, check, resolve};
+}
+
+export async function readPersonalOwnerRecoveryNotice(
+  client: PersonalRecoveryNoticeClient, scope: PersonalRecoveryNoticeScope, noticeId: string,
+): Promise<PersonalOwnerRecoveryNotice> {
+  const {notice, check, resolve} = capturePersonalNotice(client, scope, noticeId);
   try {
     await resolve();
     check();
@@ -93,5 +100,44 @@ export async function readPersonalOwnerRecoveryNotice(
     if (error instanceof OwnerRecoveryNoticeError) throw error;
     // The view never renders native SQL, response bodies or transport details.
     throw new OwnerRecoveryNoticeError('READ_FAILED');
+  }
+}
+
+
+export interface PersonalOwnerRecoveryNoticeReadState {
+  noticeId: string;
+  isRead: boolean;
+  readAt: string | null;
+}
+
+/** Only the original notice row's read state. The native door reuses the original
+ * personal-recipient predicate. No workspace grant, approval or recovery action.
+ * UNKNOWN requires reading the SAME notice; this function never retries a write.
+ */
+export async function setPersonalOwnerRecoveryNoticeRead(
+  client: PersonalRecoveryNoticeClient, scope: PersonalRecoveryNoticeScope,
+  noticeId: string, isRead: boolean,
+): Promise<PersonalOwnerRecoveryNoticeReadState> {
+  const {notice, check, resolve} = capturePersonalNotice(client, scope, noticeId);
+  if (typeof isRead !== 'boolean') throw new OwnerRecoveryNoticeError('INPUT_INVALID');
+  try {
+    await resolve(); check();
+    const {data, error} = await client.rpc('set_my_owner_recovery_notice_read', {_notice: notice, _is_read: isRead});
+    check(); await resolve(); check();
+    if (error) {
+      const code = object(error) ? error.code : null;
+      throw new OwnerRecoveryNoticeError(code === '42501' ? 'UNAVAILABLE' : code === '22023' ? 'INPUT_INVALID' : 'STATE_UNKNOWN');
+    }
+    if (!object(data) || Object.keys(data).sort().join(',') !== 'is_read,notification_id,read_at'
+      || data.notification_id !== notice || data.is_read !== isRead
+      || (isRead ? !timestamp(data.read_at) : data.read_at !== null)) {
+      throw new OwnerRecoveryNoticeError('STATE_UNKNOWN');
+    }
+    check();
+    return {noticeId: notice, isRead, readAt: isRead ? String(data.read_at) : null};
+  } catch (error) {
+    check();
+    if (error instanceof OwnerRecoveryNoticeError) throw error;
+    throw new OwnerRecoveryNoticeError('STATE_UNKNOWN');
   }
 }

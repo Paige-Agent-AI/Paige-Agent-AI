@@ -1,17 +1,21 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, BookOpen, BrainCircuit, FileText, Link2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, BookOpen, BrainCircuit, FileText, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { KnowledgeMetadataEditor } from "@/components/knowledge/KnowledgeMetadataEditor";
-import { AddDocDialog } from "@/pages/admin/TenantKnowledgeAdmin";
 import { AddKnowledgeFlow } from "@/solo/knowledge/AddKnowledgeFlow";
+import { KnowledgeIntakeDialog } from "@/solo/knowledge/KnowledgeIntakeDialog";
+import { KnowledgePendingReviews } from "@/solo/knowledge/KnowledgePendingReviews";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useKnowledgeDocuments } from "@/hooks/useKnowledgeDocuments";
 import { useConfirm } from "@/hooks/useConfirm";
 import { supabase } from "@/integrations/supabase/client";
-import { deleteKnowledge, readKnowledge, type KnowledgeDocument } from "@/lib/knowledge-service";
+import { deleteKnowledge, readKnowledge, type KnowledgeDocument, type KnowledgeRpcClient } from "@/lib/knowledge-service";
 import "./knowledge-library.css";
 
 type Props = { tenantId: string | null | undefined; account: string; requestedDocumentId?: string | null; onDocumentChange?: (id: string | null) => void };
+// Widen the generated RPC-name union to the original validated Knowledge port.
+// This is the same caller client, with unchanged authentication and RLS.
+const knowledgeClient = supabase as unknown as KnowledgeRpcClient;
 /** A workspace change disposes drafts and in-flight views before the next one mounts. */
 export function KnowledgeLibrary(props: Props) {
   const identity = useTenantContext();
@@ -33,7 +37,8 @@ function WorkspaceLibrary({ tenantId, account, requestedDocumentId, onDocumentCh
   const [detailError, setDetailError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [linking, setLinking] = useState(false);
+  const [pendingEpoch, setPendingEpoch] = useState(0);
+  const reloadSources = () => { void library.reload(); setPendingEpoch(value => value + 1); };
   const [editing, setEditing] = useState(false);
   const [correcting, setCorrecting] = useState<KnowledgeDocument | null>(null);
   const correctionTrigger = useRef<HTMLButtonElement>(null);
@@ -56,7 +61,7 @@ function WorkspaceLibrary({ tenantId, account, requestedDocumentId, onDocumentCh
     setSelected(null); setDetailError(null); setSourceFailed(false); setUncertainDelete(false);
     if (!tenantId || !requestedDocumentId) { setDetailLoading(false); return; }
     setDetailLoading(true); setNotice(null);
-    void readKnowledge(supabase, tenantId, { documentId: requestedDocumentId }).then(rows => {
+    void readKnowledge(knowledgeClient, tenantId, { documentId: requestedDocumentId }).then(rows => {
       if (!mounted.current || generation.current !== mine) return;
       const found = rows.find(row => row.id === requestedDocumentId && row.tenant_id === tenantId);
       if (found) setSelected(found);
@@ -80,7 +85,7 @@ function WorkspaceLibrary({ tenantId, account, requestedDocumentId, onDocumentCh
     const mine = ++generation.current;
     setSelected(document); setDetailLoading(true); setDetailError(null);
     try {
-      const rows = await readKnowledge(supabase, tenantId, { documentId: document.id });
+      const rows = await readKnowledge(knowledgeClient, tenantId, { documentId: document.id });
       if (!mounted.current || generation.current !== mine) return;
       const found = rows.find(d => d.id === document.id && d.tenant_id === tenantId);
       if (!found) {
@@ -101,7 +106,7 @@ function WorkspaceLibrary({ tenantId, account, requestedDocumentId, onDocumentCh
     if (!approved) { deletePending.current = false; return; }
     setDeleting(true); setNotice(null);
     try {
-      const result = await deleteKnowledge(supabase, tenantId, target.id, target.revision);
+      const result = await deleteKnowledge(knowledgeClient, tenantId, target.id, target.revision);
       if (!mounted.current) return;
       setNotice(`Document removed. Original uploaded files were retained.${result.outcome === "capability_completed_unrecorded" ? " The outcome receipt could not be recorded; do not repeat the deletion." : ""}`);
       back(); void library.reload();
@@ -139,8 +144,8 @@ function WorkspaceLibrary({ tenantId, account, requestedDocumentId, onDocumentCh
         </aside>
       </div>
     </> : <>
-      <header className="knowledge-library__header"><div><h2 ref={heading} tabIndex={-1}>Knowledge</h2><p>Knowledge Paige can use for this business.</p></div><div className="knowledge-library__actions">{/* Link ingestion stays on the legacy direct path until governed URL extraction ships with format parity. */}<Dialog open={linking} onOpenChange={setLinking}><DialogTrigger asChild><button className="knowledge-library__secondary" aria-label="Add a web link"><Link2 aria-hidden /> Link</button></DialogTrigger>{linking && <AddDocDialog key={`${tenantId}:link`} tenantId={tenantId} initialMode="url" onClose={() => { setLinking(false); void library.reload(); }} onReview={() => void library.reload()} />}</Dialog><Dialog open={adding} onOpenChange={setAdding}><DialogTrigger asChild><button className="knowledge-library__primary"><Plus aria-hidden /> Add Knowledge</button></DialogTrigger>{adding && <AddKnowledgeFlow key={tenantId} tenantId={tenantId} onClose={() => { setAdding(false); void library.reload(); }} onPublished={() => { setAdding(false); void library.reload(); }} />}</Dialog></div></header>
-      <div className="knowledge-library__tools"><label><span>Search documents</span><div className="knowledge-library__search"><Search aria-hidden /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Title, summary or tag" /></div></label><label><span>Category</span><select value={category} onChange={e => setCategory(e.target.value)}><option value="">All categories</option>{categories.map(c => <option key={c}>{c}</option>)}</select></label><button onClick={() => void library.reload()} disabled={library.loading} aria-label="Refresh knowledge"><RefreshCw aria-hidden /></button></div>
+      <header className="knowledge-library__header"><div><h2 ref={heading} tabIndex={-1}>Knowledge</h2><p>Knowledge Paige can use for this business.</p></div><div className="knowledge-library__actions"><Dialog open={adding} onOpenChange={open => { setAdding(open); if (!open) reloadSources(); }}><DialogTrigger asChild><button className="knowledge-library__primary"><Plus aria-hidden /> Knowledge</button></DialogTrigger>{adding && <KnowledgeIntakeDialog key={tenantId} tenantId={tenantId} onClose={() => { setAdding(false); reloadSources(); }} onPublished={() => { setAdding(false); reloadSources(); }} />}</Dialog></div></header>
+      <div className="knowledge-library__tools"><label><span>Search documents</span><div className="knowledge-library__search"><Search aria-hidden /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Title, summary or tag" /></div></label><label><span>Category</span><select value={category} onChange={e => setCategory(e.target.value)}><option value="">All categories</option>{categories.map(c => <option key={c}>{c}</option>)}</select></label><button onClick={reloadSources} disabled={library.loading} aria-label="Refresh knowledge"><RefreshCw aria-hidden /></button></div>
       {library.error && <div className="knowledge-library__notice" role="alert"><p>Knowledge could not be loaded. Check your workspace and try again.</p><button onClick={() => void library.reload()} disabled={library.loading}>Retry library</button></div>}
       {library.loading && !library.docs.length ? <p role="status">Loading knowledge…</p> : !library.error && !library.docs.length ? <div className="knowledge-library__empty"><BookOpen aria-hidden /><h3>Your business knowledge starts here</h3><p>Add a document, a link or a short note.</p></div> : <>
         <p className="knowledge-library__count" role="status">{visible.length} shown · {library.docs.length} loaded{library.hasMore ? " · Search and categories apply to loaded documents" : ""}</p>
@@ -149,6 +154,7 @@ function WorkspaceLibrary({ tenantId, account, requestedDocumentId, onDocumentCh
         {library.hasMore && <button onClick={() => void library.loadMore()} disabled={library.loading}>{library.loading ? "Loading…" : "Load more documents"}</button>}
       </>}
     </>}
+    {!selected && <KnowledgePendingReviews key={`${tenantId}:${pendingEpoch}`} tenantId={tenantId} onPublished={() => void library.reload()} onRefreshed={() => void library.reload()} />}
     {dialog}
   </section>;
 }

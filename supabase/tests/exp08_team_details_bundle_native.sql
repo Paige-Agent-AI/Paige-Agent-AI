@@ -8,7 +8,7 @@ SELECT p.oid,(to_jsonb(p)-'prosrc'-'proargdefaults')||jsonb_build_object('proarg
 WHERE p.oid IN (to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text)'),to_regprocedure('public.set_solo_team_member_permission(uuid,text)'),to_regprocedure('public.get_solo_team_workspace(text,text,integer,integer)'),to_regprocedure('public.get_paige_team_context()'));
 SELECT is((SELECT count(*)::integer FROM exp08_details_original_catalog),4,'all ORIGINAL Team details write/read doors are present');
 SELECT lives_ok($install$
--- Canonical original atomic bundle SHA256 eec6737365d2271834dc17393486147f3aa77fefcb0cf46b38d155f44ea97f69
+-- Canonical original atomic bundle SHA256 0709a1aac2f0cfc91a2b4c34d467003da762b4c8b8fc292c0a29235cba3ddbb8
 -- INERT original Team details bundle; no versioned carrier, apply or activation.
 -- Original write components and projection DO remain byte-exact inside ONE atomic statement.
 DO $exp08_details_bundle$
@@ -361,6 +361,12 @@ BEGIN
    'viewer_is_account_holder',public._solo_shell_tenant(_tenant) AND public.is_tenant_account_holder(_actor,_tenant),
    'account_holder_state',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
     THEN public._tenant_account_holder_state(_tenant) ELSE NULL END,
+   -- Display only: exactly the ORIGINAL revoke_co_owner active-owner floor set.
+   -- Read the whole tenant membership set, never the filtered/paginated roster.
+   'active_owner_count',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
+    THEN (SELECT count(*) FROM public.tenant_members active_owner
+      WHERE active_owner.tenant_id=_tenant AND active_owner.is_owner=true AND active_owner.status='active')
+    ELSE NULL END,
    'members',coalesce((SELECT jsonb_agg(m.value || jsonb_build_object(
     'is_account_holder',public._solo_shell_tenant(_tenant) AND EXISTS(SELECT 1 FROM public.tenants t
       WHERE t.id=_tenant AND t.owner_user_id=tm.user_id AND tm.is_owner
@@ -456,7 +462,7 @@ CREATE TEMP TABLE exp08_details_installed_catalog AS
 SELECT jsonb_agg(to_jsonb(p) ORDER BY p.oid) AS snapshot FROM pg_catalog.pg_proc p
 WHERE p.pronamespace='public'::regnamespace AND p.proname IN ('set_solo_team_member_work_profile','set_solo_team_member_permission','get_solo_team_workspace','get_paige_team_context');
 SELECT lives_ok($replay$
--- Canonical original atomic bundle SHA256 eec6737365d2271834dc17393486147f3aa77fefcb0cf46b38d155f44ea97f69
+-- Canonical original atomic bundle SHA256 0709a1aac2f0cfc91a2b4c34d467003da762b4c8b8fc292c0a29235cba3ddbb8
 -- INERT original Team details bundle; no versioned carrier, apply or activation.
 -- Original write components and projection DO remain byte-exact inside ONE atomic statement.
 DO $exp08_details_bundle$
@@ -809,6 +815,12 @@ BEGIN
    'viewer_is_account_holder',public._solo_shell_tenant(_tenant) AND public.is_tenant_account_holder(_actor,_tenant),
    'account_holder_state',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
     THEN public._tenant_account_holder_state(_tenant) ELSE NULL END,
+   -- Display only: exactly the ORIGINAL revoke_co_owner active-owner floor set.
+   -- Read the whole tenant membership set, never the filtered/paginated roster.
+   'active_owner_count',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
+    THEN (SELECT count(*) FROM public.tenant_members active_owner
+      WHERE active_owner.tenant_id=_tenant AND active_owner.is_owner=true AND active_owner.status='active')
+    ELSE NULL END,
    'members',coalesce((SELECT jsonb_agg(m.value || jsonb_build_object(
     'is_account_holder',public._solo_shell_tenant(_tenant) AND EXISTS(SELECT 1 FROM public.tenants t
       WHERE t.id=_tenant AND t.owner_user_id=tm.user_id AND tm.is_owner
@@ -902,7 +914,7 @@ ALTER FUNCTION public.set_solo_team_member_permission(uuid,text) STRICT;
 CREATE TEMP TABLE exp08_details_drift_catalog AS
 SELECT jsonb_agg(to_jsonb(p) ORDER BY p.oid) AS snapshot FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname IN ('set_solo_team_member_work_profile','set_solo_team_member_permission','get_solo_team_workspace','get_paige_team_context');
 SELECT throws_ok($metadata_drift$
--- Canonical original atomic bundle SHA256 eec6737365d2271834dc17393486147f3aa77fefcb0cf46b38d155f44ea97f69
+-- Canonical original atomic bundle SHA256 0709a1aac2f0cfc91a2b4c34d467003da762b4c8b8fc292c0a29235cba3ddbb8
 -- INERT original Team details bundle; no versioned carrier, apply or activation.
 -- Original write components and projection DO remain byte-exact inside ONE atomic statement.
 DO $exp08_details_bundle$
@@ -1255,6 +1267,12 @@ BEGIN
    'viewer_is_account_holder',public._solo_shell_tenant(_tenant) AND public.is_tenant_account_holder(_actor,_tenant),
    'account_holder_state',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
     THEN public._tenant_account_holder_state(_tenant) ELSE NULL END,
+   -- Display only: exactly the ORIGINAL revoke_co_owner active-owner floor set.
+   -- Read the whole tenant membership set, never the filtered/paginated roster.
+   'active_owner_count',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
+    THEN (SELECT count(*) FROM public.tenant_members active_owner
+      WHERE active_owner.tenant_id=_tenant AND active_owner.is_owner=true AND active_owner.status='active')
+    ELSE NULL END,
    'members',coalesce((SELECT jsonb_agg(m.value || jsonb_build_object(
     'is_account_holder',public._solo_shell_tenant(_tenant) AND EXISTS(SELECT 1 FROM public.tenants t
       WHERE t.id=_tenant AND t.owner_user_id=tm.user_id AND tm.is_owner
@@ -1347,7 +1365,7 @@ SELECT is((SELECT jsonb_agg(to_jsonb(p) ORDER BY p.oid) FROM pg_catalog.pg_proc 
 ALTER FUNCTION public.set_solo_team_member_permission(uuid,text) CALLED ON NULL INPUT;
 GRANT EXECUTE ON FUNCTION public.set_solo_team_member_permission(uuid,text,uuid,uuid) TO anon;
 SELECT throws_ok($acl_drift$
--- Canonical original atomic bundle SHA256 eec6737365d2271834dc17393486147f3aa77fefcb0cf46b38d155f44ea97f69
+-- Canonical original atomic bundle SHA256 0709a1aac2f0cfc91a2b4c34d467003da762b4c8b8fc292c0a29235cba3ddbb8
 -- INERT original Team details bundle; no versioned carrier, apply or activation.
 -- Original write components and projection DO remain byte-exact inside ONE atomic statement.
 DO $exp08_details_bundle$
@@ -1700,6 +1718,12 @@ BEGIN
    'viewer_is_account_holder',public._solo_shell_tenant(_tenant) AND public.is_tenant_account_holder(_actor,_tenant),
    'account_holder_state',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
     THEN public._tenant_account_holder_state(_tenant) ELSE NULL END,
+   -- Display only: exactly the ORIGINAL revoke_co_owner active-owner floor set.
+   -- Read the whole tenant membership set, never the filtered/paginated roster.
+   'active_owner_count',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
+    THEN (SELECT count(*) FROM public.tenant_members active_owner
+      WHERE active_owner.tenant_id=_tenant AND active_owner.is_owner=true AND active_owner.status='active')
+    ELSE NULL END,
    'members',coalesce((SELECT jsonb_agg(m.value || jsonb_build_object(
     'is_account_holder',public._solo_shell_tenant(_tenant) AND EXISTS(SELECT 1 FROM public.tenants t
       WHERE t.id=_tenant AND t.owner_user_id=tm.user_id AND tm.is_owner
@@ -1794,7 +1818,7 @@ ALTER FUNCTION public.get_paige_team_context() STABLE;
 CREATE TEMP TABLE exp08_details_reader_drift AS
 SELECT jsonb_agg(to_jsonb(p) ORDER BY p.oid) AS snapshot FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname IN ('set_solo_team_member_work_profile','set_solo_team_member_permission','get_solo_team_workspace','get_paige_team_context');
 SELECT throws_ok($reader_drift$
--- Canonical original atomic bundle SHA256 eec6737365d2271834dc17393486147f3aa77fefcb0cf46b38d155f44ea97f69
+-- Canonical original atomic bundle SHA256 0709a1aac2f0cfc91a2b4c34d467003da762b4c8b8fc292c0a29235cba3ddbb8
 -- INERT original Team details bundle; no versioned carrier, apply or activation.
 -- Original write components and projection DO remain byte-exact inside ONE atomic statement.
 DO $exp08_details_bundle$
@@ -2147,6 +2171,12 @@ BEGIN
    'viewer_is_account_holder',public._solo_shell_tenant(_tenant) AND public.is_tenant_account_holder(_actor,_tenant),
    'account_holder_state',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
     THEN public._tenant_account_holder_state(_tenant) ELSE NULL END,
+   -- Display only: exactly the ORIGINAL revoke_co_owner active-owner floor set.
+   -- Read the whole tenant membership set, never the filtered/paginated roster.
+   'active_owner_count',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
+    THEN (SELECT count(*) FROM public.tenant_members active_owner
+      WHERE active_owner.tenant_id=_tenant AND active_owner.is_owner=true AND active_owner.status='active')
+    ELSE NULL END,
    'members',coalesce((SELECT jsonb_agg(m.value || jsonb_build_object(
     'is_account_holder',public._solo_shell_tenant(_tenant) AND EXISTS(SELECT 1 FROM public.tenants t
       WHERE t.id=_tenant AND t.owner_user_id=tm.user_id AND tm.is_owner
@@ -2239,7 +2269,7 @@ SELECT is((SELECT jsonb_agg(to_jsonb(p) ORDER BY p.oid) FROM pg_catalog.pg_proc 
 ALTER FUNCTION public.get_paige_team_context() VOLATILE;
 DROP FUNCTION public.set_solo_team_member_permission(uuid,text,uuid,uuid);
 SELECT throws_ok($partial$
--- Canonical original atomic bundle SHA256 eec6737365d2271834dc17393486147f3aa77fefcb0cf46b38d155f44ea97f69
+-- Canonical original atomic bundle SHA256 0709a1aac2f0cfc91a2b4c34d467003da762b4c8b8fc292c0a29235cba3ddbb8
 -- INERT original Team details bundle; no versioned carrier, apply or activation.
 -- Original write components and projection DO remain byte-exact inside ONE atomic statement.
 DO $exp08_details_bundle$
@@ -2592,6 +2622,12 @@ BEGIN
    'viewer_is_account_holder',public._solo_shell_tenant(_tenant) AND public.is_tenant_account_holder(_actor,_tenant),
    'account_holder_state',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
     THEN public._tenant_account_holder_state(_tenant) ELSE NULL END,
+   -- Display only: exactly the ORIGINAL revoke_co_owner active-owner floor set.
+   -- Read the whole tenant membership set, never the filtered/paginated roster.
+   'active_owner_count',CASE WHEN public._solo_shell_tenant(_tenant) AND $MANAGE$
+    THEN (SELECT count(*) FROM public.tenant_members active_owner
+      WHERE active_owner.tenant_id=_tenant AND active_owner.is_owner=true AND active_owner.status='active')
+    ELSE NULL END,
    'members',coalesce((SELECT jsonb_agg(m.value || jsonb_build_object(
     'is_account_holder',public._solo_shell_tenant(_tenant) AND EXISTS(SELECT 1 FROM public.tenants t
       WHERE t.id=_tenant AND t.owner_user_id=tm.user_id AND tm.is_owner

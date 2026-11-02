@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: native Cancel/Escape returns to the original connected cont
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original account epochs and stale UI result negatives are tested; original command approval/decline, runner, RLS, Spine, Trust, LayerC, provider, INT346 and Rail implementations are not edited.
 INTERNAL_BUILD_IDENTITY: branch=codex/e2-systems-dialog-return; source-base=253997ce3ecd3f65f0c13428505efa2390f56d0c; component-blob=6ee9d5f93ccb104478dbcfd2271d0f1aa4affdb5; styles-blob=73f074c81edda44f4c9b19fae91e1073b84cb07d; incoming-main=03edfad8a4d7829e6d77f513918369f5ce2bbb71; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-systems-dialog-return/oct24-native-confirmation.json
-RELEASE_CHANNEL: development: original-component source repair; normal reviewed production web release follows actual rendered proof and every required exact-head gate.
+RELEASE_CHANNEL: development: original-component source repair; normal reviewed production web release follows proportionate engineering verification and every required exact-head gate. Verify the released interface afterward.
 RELEASE_CLASSIFICATION: internal-only: bounded interaction/scope repair, no customer capability launch.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement.
 RELEASE_NOTE_REQUIRED: no: sanitized engineering receipts only.
@@ -77,9 +77,10 @@ workspace/drawer/alertdialog/CSS. No backend/provider/business action was submit
 Automatic approval review rejected the synthetic Confirm control under read-only
 scope; no alternative path or indirect approval was used. Native pending-decision
 proof stays UNVERIFIED; the indefinitely pending fixture/source tests are separate.
-Later browser input stalls/kernel reset prevent complete native signoff, not a
-product-success or safe-cessation claim. Actual release remains held for missing
-rendered/zoom/source-scope proof and final review/exact-head gates.
+Later browser input stalls/kernel reset prevented complete native signoff, not a
+product-success or safe-cessation claim. Rendered/zoom/source-scope proof remains
+UNVERIFIED for post-release verification. Final technical review, exact-head
+engineering checks and material authorization or functional findings remain gates.
 
 ## Algorithm, orchestration and Capabilities
 

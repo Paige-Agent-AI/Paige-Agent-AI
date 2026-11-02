@@ -1302,9 +1302,9 @@ Billing (§5.8) · Spine (rename) · Chat (`paige-ai-chat`, `action-risk.ts`; la
 | I0 | **Merged and applied (`51ede67eb`).** `20271116020008` (PR #2945) is on `origin/main` as squash `51ede67eb`, byte-identical to `8587262ea`, and `db-live` = `51ede67eb` (read 2026-10-26) | Done for merge and apply. **Still owed, as I1's first production read (not run in round 5; no production query was made):** `is_tenant_account_holder` exists and `authenticated` cannot execute it, and md5(prosrc) of `grant_co_owner`, `revoke_co_owner` and `guard_tenant_owner_only_columns` equals the `51ede67eb` bodies |
 | I1 | `20271120010008` (was `20271116030008`, then `20271116110008`, then `20271116130008`, then `20271117020008`, then `20271117170008`, then `20271118200008`, then `20271119020008`; see §5): §5.1, §5.2, §5.3, `peek_tenant_invite`; round 2 (2026-10-27): one transaction + md5 incumbent guard on the 10 replaced bodies, no invitee `updated_by` stamp, the live-owner-invitation address rule (S6), the tier-correct `create_tenant_invite_token` Owner sentence, `solo-team-invitations` owner refusals by HINT (S5), peek only while valid; round 3 (2026-10-27): the address rule on every seat-creating kind (S-A) with normalised addresses (S-C), no resend after the legal owner is deleted (S-B), accept locks before the sender check (S-D), cases for V5/V15/V16/V21/V24 (S-E); round 4 (2026-10-27): the seat-side rule (B1), the address rule's conditions pinned (S1); round 5 (2026-10-27): renamed `20271117170008`, the seat-side rule counts only an owner invitation accept would still honour and fires on UPDATE OF `tenant_id`, `user_id`, HINT asserted, #227 residual stated; round 6 (2026-10-27): renamed `20271118200008`, the seat-side rule counts an owner invitation only for a person whose address is confirmed (N1: accept refuses an unconfirmed one) | pgTAP cases 1, 2, 6, 7, 12, 13 failing first then mutants: **184 cases (58 kept, 52 production holes, 74 new); 95/95 mutants killed (incl. T01, the trigger back to INSERT only, and S21, the confirmed-address condition dropped), 4/4 controls survive; incumbent guard refuses each of 10 drifted bodies** (round 7, CI fix: whitespace-normalised fingerprints, every drift named in one error, the repository replay's `peek_tenant_invite` accepted; review fix: line breaks kept, so a statement joined onto a comment is refused) (round 3 read 144 / 68; round 4 169 / 84; round 5 182 / 94); Vitest for S5 (mutant-checked); §5.11 sweep incl. `proowner` of every postgres-owned token writer; pre-merge owner-token count (0 on 2026-10-27); `db-live`. **Deferred to I2, stated:** `tenants.first_owner_seated_at` (§5.1); re-emitting the CHECK writers that clear `is_owner` (§5.11; interim case 7.13). **Unchanged in I1, I2 scope:** a super admin can still seat the first owner of a holderless Solo standalone account through a `subaccount_owner` token, which skips R9's reason, recovery audit and notice (§5.4b gates it); and (#227 residual, round 5) that path keys on "no active owner", so on a business whose holder is paused for billing with no other active owner an agency's or the platform's token seats a new owner beside the paused holder (§5.3, "#227 residual"). **OWNER DECISION OWED: remove Agency Team's Owner option (I3) — it never produced an owner** |
 | I2 | `20271116040008`: §5.4, §5.4a, §5.4b, ~~§5.4c (database part)~~ (withdrawn, R16), §5.4d, §5.5–§5.8, Setup guards, the I1 deferrals (`first_owner_seated_at`; the CHECK writers) | cases 3, 4, 5, 8, 9, 10, 11, 14, 15, 18 (~~16, 17~~ withdrawn, R16); renamed-fact consumers; whole-suite baseline in a base worktree (§71.3); production reads: tenants by holder state, the `first_owner_seated_at` backfill result (§10.12), live platform-minted `subaccount_owner` tokens on owned Solo-shell tenants, and whether any billing-paused holder could reach the promotional grant (§5.4d); `db-live`. **Recorded, to lock in I2 (S4, not built in I1):** Setup's `save_solo_setup_context` can rename, delete (including by leaving the id out of the saved list) or reset the representative of a legal-owner record that has a pending owner invitation or a seat; I2 must refuse those with the §4.10 Setup sentence. **Also I2 scope:** the platform's `subaccount_owner` first-owner path on a holderless Solo standalone skips R9's reason and notice (§5.4b); and the inline record's `created_by`/`updated_by` FK on the account holder (§5.3) |
-| I3 | §5.10 (~~including `admin-delete-user` (§5.4c)~~ withdrawn, R16), and the Agency Team Owner option if the owner rules to remove it | Vitest; **rendered frames of every §4 screen, light and dark, 1366 and 390, shown to the owner before merge (§00)**; the prototype keyboard probe re-run against the built screens; `edge-live` |
+| I3 | §5.10 (~~including `admin-delete-user` (§5.4c)~~ withdrawn, R16), and the Agency Team Owner option if the owner rules to remove it | Vitest, proportionate source/functional/security checks, technical review and exact-head required CI before safe prelaunch merge/deploy; `edge-live` readback. After safe deployment verify LIVE, including every §4 screen in light/dark at1366/390 and keyboard behavior; unrun browser/AT proof remains UNVERIFIED and full owner acceptance stays open |
 | I4 | §7 | chat tests, C0b, `edge-live` |
-| I5 | tier matrix, master reference §4/§10, decision log R1–R16 with the §58 reversals (including R16 reversing B3, D-A, D-B), B1–B3 and D-A–D-H, brain | same commit (§66). **Owed:** authenticated drive on a **purpose-built Solo test tenant** (§63; never the owner's real accounts) with a second test account: invite an owner (person, legal owner), accept, Make an Owner, Make Admin, step down (holder working, paused, none; and the floor), held seat, name a representative both ways, PAIGE card approved and declined, a recovery call on a holder-less test tenant, a platform `subaccount_owner` mint on a never-owned and an owned test tenant, ~~`revoke_platform_access` and `admin-delete-user` on a test co-owner (refused) and on the same account after recovery on a holder-less test tenant~~ (withdrawn, R16; instead: `admin-delete-user` on a test representative after acceptance succeeds and leaves the legal owner's seat held), the Agency Team screen's Owner choice showing the agency sentence, and the promotional grant restoring a test holder's deleted seat. `UNVERIFIED` until then |
+| I5 | tier matrix, master reference §4/§10, decision log R1–R16 with the §58 reversals (including R16 reversing B3, D-A, D-B), B1–B3 and D-A–D-H, brain | same commit (§66). **Owed:** authenticated drive on the already-authorized existing ordinary Solo account and a second legitimately available authorized cohort, without creating QA accounts, impersonating or borrowing session authority: invite an owner (person, legal owner), accept, Make an Owner, Make Admin, step down (holder working, paused, none; and the floor), held seat, name a representative both ways, PAIGE card approved and declined, a recovery call on a holder-less test tenant, a platform `subaccount_owner` mint on a never-owned and an owned test tenant, ~~`revoke_platform_access` and `admin-delete-user` on a test co-owner (refused) and on the same account after recovery on a holder-less test tenant~~ (withdrawn, R16; instead: `admin-delete-user` on a test representative after acceptance succeeds and leaves the legal owner's seat held), the Agency Team screen's Owner choice showing the agency sentence, and the promotional grant restoring a test holder's deleted seat. `UNVERIFIED` until then |
 
 Each increment: spec-compliance review, then the adversarial peer-gate on the real diff (§39).
 
@@ -3398,3 +3398,150 @@ case assertions and earlier10/13/14/16 history are preserved. Existing e6b whole
 required checks passed; current composite source must rerun all exact gates and
 renew review before normal source release. No earlier-head/native-component or
 packaging proof is promoted to full-schema16/Auth/customer outcome proof.
+
+
+### November1 — original personal notice read/unread preparation
+
+Finite own next-slice df0cb280 prepares inert
+`set_my_owner_recovery_notice_read(_notice uuid,_is_read boolean) -> jsonb`.
+It updates ONLY original `notifications.is_read/read_at` after the SAME released
+private personal-recipient predicate, then revalidates before returning exactly
+`{notification_id,is_read,read_at}`. It accepts no tenant, actor, reason, audience,
+permission, approval or recovery intent. One Auth UPDATE lock follows the original
+retirement table gate and precedes original recipient/member/tenant/notice locks;
+same-actor marks serialize before a notice SHARE-to-UPDATE upgrade. Legacy timestamp
+inconsistency is healed once; same-state replay does not update again or change time.
+Original dependency source/ABI/ACL/security metadata and own replay are guarded.
+No notification store, owner effect, result ledger, runtime, grant or sender is added.
+
+Actual production CATALOG only confirms original user-owned notifications has
+read state but mutable metadata/title/action_url; those values never grant native
+resource access. Three original private helper hashes3502ca4b/ddcdb478/defee9e1
+and private/empty-path/volatile metadata were read before preparing this source.
+No customer notices/accounts were queried or changed.
+
+The original full ported recovery runner now executes the owning17 new cases
+BEFORE its late legal-owner FK fixture. Actual full229cases PASS/terminal0,
+including3observed native mark waits: first commit, first rollback and identity
+revocation first. Same-state updates, native audience/ban/soft-delete/foreign/
+retired/forged-binding refusals, zero-seat holder-of-record without workspace
+access, member reentry refusal, excluded SDK roles, source/ACL drift and unchanged
+business/audit data are covered. These are controlled Auth/table/RLS ports, NOT
+production or authenticated customer proof. The first run misplaced this hook
+after the legal-owner FK fixture and got a protected TRUNCATE failure; the hook
+moved before that fixture, without CASCADE or relaxing a constraint. The second
+run's direct pointer seed met the ORIGINAL protected ownership refusal; the
+fixture now seeds through the ORIGINAL native recovery door, then ports an
+already-lost seat. Both failures are retained, not called product-native defects.
+
+The existing personal notice service adds a strict current-state setter using
+actual actor resolution, captured original lifetime and SAME notice reference;
+missing/foreign/expanded/wrong-state/malformed or interrupted results are UNKNOWN,
+never success or automatic retry. Original GET is the recovery path. Capturing
+the common read scope preserves original reader behavior; a newly thrown context
+callback counterexample2FAIL/22PASS is repaired to sanitized SCOPE_CHANGED before
+any dispatch. New method missing-before22FAIL/23oldPASS is retained. Final3client
+suites96PASS (72original +24new), focused4file lint and bounded strict service/test
+compilation exit0; not whole-app TypeScript clearance. No UI is mounted and no
+native version/managed/production apply or full bell/global unread claim exists.
+
+Original3200/1b remains frozen independently: hosted original profile28,
+permission32 AND new atomic16 steps SUCCESS; whole database/verify still running
+at this checkpoint. Its source release is not activation of this next read-state
+RPC. E01 recipient/zero-seat/broader bell host and full native/schema/role/customer
+read/reload/reconcile proof remain required. Full18+6/five journeys STILL CODING.
+
+
+### Personal notice stored-state readback follow-up
+
+Own sequential source review added an AFTER-trigger timestamp counterexample.
+The unreleased RETURNING-based receipt failed against the actual stored timestamp
+(exp08-notice-state-after-trigger-before.log, terminal exit1). The fix revalidates
+original personal eligibility after UPDATE and then reads the actual stored row
+while original locks remain held; actor, notice, requested state and timestamp
+consistency must all agree before a receipt. No authority or source guard waived.
+The SAME original full ported runner subsequently exited0:230cases ALL PASS,
+including18own and3observed native waits. Exact final log
+exp08-notice-state-after-trigger-final.log SHA256
+ d08021b8bc328beb59e08317c1f9ea7495c4e1ea0281c453541be0415b2d75d4.
+Earlier229/17 remains historical evidence. Client96 and bounded TypeScript
+unchanged; owning proof lint and diff check exit0. This is isolated SQL-role
+engineering proof, not full-schema, genuine Auth or production acceptance.
+Source remains unpublished/unversioned/unmounted. Whole original Team Hub remains
+STILL CODING; original3200 release checks and downstream host contracts separate.
+
+
+### Personal notice actual-schema packet preparation
+
+Added canonical exp08-owner-recovery-notice-state-native-proof.mjs/template and
+self-contained supabase/tests/exp08_owner_recovery_notice_state_native.sql.
+The rollback-only16 checks cover the ORIGINAL three dependency catalogs,
+installation/replay, exact new ABI/security metadata/auth-only ACL, unchanged
+private bodies, own ACL/metadata and dependency drift refusal, plus actual
+anon/service-role/no-Auth-identity refusal. No Auth user or customer row is
+created. Compiler --write/--check/--self-test and focused ESLint exit0; literal
+dollar sequences, wrong plan/missing marker/source transaction drift are checked.
+Packaging is NOT execution: local pgTAP is unavailable, actual full-schema
+hosted16 is UNVERIFIED. No workflow, native carrier/version, Preview or production
+apply changed. This packet extends the same original notice-read outcome only;
+original released predicate and sender/domain ownership remain untouched.
+
+
+Native16 packet is now wired into the SAME original Spine database-contract
+job after the original atomic Team details proof. Three owning path filters
+and six-line command step only: removing these9 lines restores ENTIRE actual
+27ba incoming workflow byte-exact, including E01 Setup and original invite/E09
+steps. No workflow policy/runner/provider/auth source changed. Canonical checks
+and negative controls still exit0; hosted execution remains UNVERIFIED pending
+publication and exact-head CI. Source window returned after this finite change.
+
+
+### Original I3 owner-floor metadata and recipient execution proof preparation
+
+The approved owner-details/step-down reasons require a full native owner count,
+not the filtered/paginated roster. Fresh production catalog read confirmed original
+Team/PAIGE reader MD5s ded4ae3cb9d57f2c1ed0cef52493590b /623d712d745867ed8f7d29374e3a6078;
+neither inert projection nor count was applied. Six added projection lines expose
+active_owner_count only under the ORIGINAL private owner/admin admission, using
+EXACT original revoke_co_owner tenant/is_owner=true/status=active set. No writer,
+authority, ownership definition or applied history changes. Missing/invalid count
+normalizes to null; zero remains zero. This metadata cannot authorize revocation.
+
+Failing-first consumer14FAIL/10originalPASS ->24PASS. Original native selected
+reader proof before implementation failed for missing count. Final same runner
+6503 exits0,37candidate cases retain ALL32original plus5floor/filter/suspended/
+role-label/foreign/zero cases. Four new floor mutants change BOTH readers and
+are killed by their named semantic cases, not merely by disagreement. Original
+privacy/ACL/replay/drift/native-wait/race-mutant coverage remains;57records.
+Final log exp08-owner-floor-native-mutants-final.log SHA256
+96c4bcc962979ed5bec1c255961593ad9ff137de7b6610d31ce19ac50c2a2417.
+Earlier53record run73695 also terminal0 is supporting history. Atomic13 controls
+remainPASS (bundle log SHA f4ac66f476a6633c55c6c97fa91be14b94d96021b1e635a8e1953153f5fc614c).
+New unversioned atomic bundle SHA256
+0709a1aac2f0cfc91a2b4c34d467003da762b4c8b8fc292c0a29235cba3ddbb8;
+profile/permission components unchanged, original projection component now
+3d7cb26d757bcbf909e293a4f8d1d80c6a9cc5df2b442e5e7f9673c5a457ee41.
+Canonical atomic16/check/negative controls and focused lint PASS; NEW full-schema
+execution, actual native carrier, mounted approved I3 states and Auth cohorts
+remain UNVERIFIED. The earlier542 atomic16 does not clear this changed projection.
+
+Personal read-state native packet expands from16 installation controls to67:
+SAME original16 + ENTIRE READ-ONLY original recovery native39 fixture/assertions
++12 actual recipient execution/repeated-value/native-tuple/foreign/refusal/GET/
+zero-seat-no-business-access controls. It reuses the ORIGINAL four fictional SQL
+Auth rows and one rollback fixture business; adds no QA accounts. Compiler checks
+16/39/12 and total67, exact transaction shell, source preservation and literal
+replacement/negative controls. Native67 canonical write/check/self-test PASS;
+actual hosted67 is UNVERIFIED, not borrowed from earlier542/native16SUCCESS.
+No new runtime, notice/receipt ledger, host, provider or version/apply. SAME3203
+is the sole next source integration; full18+6/five journeys STILL CODING.
+
+
+Consolidated UI guard initially FAILED because the recognized original Solo Team
+contract brings the previously unmounted notice record into Solo routing: missing
+release-governance fields/eight frame dispositions and SOLO_UI:NO were explicit.
+Record corrected to actual local source identity/channel, no native/Edge change,
+PARTIAL claims and ALL EIGHT frames UNVERIFIED; no render/acceptance or gate waiver.
+The pre-push review API request correctly refused an unpublished commit after the
+local gate stopped the push; no review receipt or release was established there.
+Fresh exact published-head technical review remains required.

@@ -52,8 +52,10 @@ Finance integration and routine UI improvements; no intermediate founder design 
 Prove a formerly missing source appears on the owning page, refresh rereads, leaving
 the tab removes it, refused/error/unavailable never becomes zero, and workspace
 changes cannot retain source facts. Existing hook/parser/Finance regression suites
-remain required. Native viewport/theme/keyboard/zoom and finish review are separate
-release gates; source fixtures do not establish authenticated acceptance. Existing
+remain required, with a separate technical finish review before safe release.
+Verify native viewport/theme/keyboard/zoom and authenticated behavior on the
+released interface; unrun proof stays UNVERIFIED. Source fixtures do not establish
+authenticated acceptance. Existing
 protected fixtures, consequential effects and provider/spend holds remain binding.
 
 Source baseline: `100a6d0ea9bdbafc0296aceb3f85259f4d7771ad`, development channel,

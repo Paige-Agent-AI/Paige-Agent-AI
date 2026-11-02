@@ -45,7 +45,7 @@ SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: exact comparison flow not driven.
 
 Review finding4384709082 correctly identified the missing visible-flow declaration
 and dedicated evidence. This record and the correction commit trailer route the
-actual flow for review; they do not silently close the remaining prototype gate.
+actual flow for technical review. Changed-flow live verification remains PROOF OWED.
 Original weekly native captures/design are preserved, not relabeled as new proof.
 Impeccable clarification check: outcome, current/proposed time, authorization and
 next permitted action are distinct. Source-only finish review leaves actual

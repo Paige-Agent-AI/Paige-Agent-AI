@@ -27,7 +27,7 @@ MOTION_PURPOSE: NONE: no motion change; incumbent behavior preserved.
 PROTECTED_SEAMS: AFFECTED: scope/role/Setup source approval/CAS/readback/receipt/reload/accessibility/scoped Settings geometry; local controls described above, live proof owed. UNAFFECTED: Auth/provisioning/entitlement/billing, Chat/Live, Vault/credentials/providers, Spine execution, Work scheduling, Memory and external effects.
 INTERNAL_BUILD_IDENTITY: 0ca14c34c934fe7d4924b458bd7dd4cfd9861610; deployment=not-deployed; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp01-reviewed-setup-preparation.md; supporting code identity, final review/check head separately recorded in original PR.
 RELEASE_CHANNEL: development: source preparation with original validator prerequisite not installed; no customer activation or announcement.
-RELEASE_CLASSIFICATION: internal: necessary original Setup outcome integration; customer result not yet verified.
+RELEASE_CLASSIFICATION: internal-only: necessary original Setup outcome integration; customer result not yet verified.
 CUSTOMER_RELEASE_IDENTITY: none: selected customer outcome is unfinished and owner acceptance remains open.
 RELEASE_NOTE_REQUIRED: no: source preparation does not satisfy customer announcement gate.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: selected Setup save/receipt/reopen is not production installed or authenticated-result verified.

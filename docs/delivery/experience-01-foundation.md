@@ -1,5 +1,31 @@
 # Experience 01 foundation — ANT-50
 
+### November 3 owner-selected ONE outcome — safe Setup context saves
+
+Actual receiving ACK [6a5a70ab](https://linear.app/paigeagentai/issue/ANT-50#comment-6a5a70ab-e41a-449e-b32b-6d4f3342847e)
+and finite source window [f618992d](https://linear.app/paigeagentai/issue/ANT-50#comment-f618992d-c947-4cbc-85be-1e869a5eb74d)
+select original outcomes4/5 legal-owner §5.4/I2 protection. Only two guard insertions
+in original `save_solo_setup_context` refuse destructive identity changes or omitted
+protected owners; the original CAS/private/legal/provenance/Admin branches remain
+byte-exact. Existing seated links, held vacancy and current live Owner invitations
+protect records; actual post-wait expiry is inspected. Harmless permitted edits and
+expired/revoked/used invitations remain usable. No E08 lifecycle writer or trigger,
+authority/store/provider or frontend component is added.
+
+Current inert candidate preserves original ABI/OID/defaults/owner/config/ACL. Isolated
+PostgreSQL70 checks/four actual blocking races PASS; old writer specifically fails
+seated omission. These dependency tables/identity/CAS are MODELED. The original
+full-schema proof now composes immutable historical receipt install/replay, then the
+guarded writer before all original100 receipt assertions, plus real-schema owning
+cases. Composition/client preparation PASS; actual full-schema runtime, nonauthor
+review, exact CI, ordered release, native readback and ordinary useful saved-result
+reopen are still owed. No version or release is inferred from this candidate.
+
+Prior selected-fact receipt outcome is COMPLETE independently (original final
+packet942f7193/result04f894e9, final mainf2ad8b49). Full original10 outcomes/23 cases
+and amendments remain STILL CODING/NOT READY/NOT ACCEPTED. Complete this ONE safe-save
+outcome, report to owner/original records/Coordinator, then STOP. Timers OFF.
+
 ### November 2 owner-selected ONE outcome — reviewed Setup save, receipt and reopen
 
 Owner next-outcome approval ANT-50/5bcd16af and actual receiving ACK7ac50220

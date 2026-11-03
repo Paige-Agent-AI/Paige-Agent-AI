@@ -3,9 +3,11 @@
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
+import {originalSetupWriter,bodyHash,guardedWriter} from './build-exp01-setup-owner-guard.mjs';
 for(const args of [
  ['scripts/proof/build-exp01-reviewed-setup-guards.mjs','--check'],
  ['scripts/proof/build-exp01-chat-knowledge-guards.mjs','--check'],
+ ['scripts/proof/build-exp01-setup-owner-guard.mjs','--check'],
  ['--experimental-strip-types','--test','scripts/proof/exp01-reviewed-setup-contract.test.mjs','scripts/proof/exp01-reviewed-setup-client.test.mjs'],
  ['--experimental-strip-types','--test','scripts/proof/exp01-chat-knowledge-client.test.mjs'],
 ]) {
@@ -31,9 +33,30 @@ const candidate=body(carrier);
 const test=read('supabase/tests/exp01_reviewed_setup_receipt.sql');
 assert.equal(test.split('-- EXP01_INSTALL_CANDIDATE').length,2);
 assert.equal(test.split('-- EXP01_REPLAY_CANDIDATE').length,2);
-const receiptSql=test.replace('-- EXP01_INSTALL_CANDIDATE',()=>candidate)
+const historicalReceiptSql=test.replace('-- EXP01_INSTALL_CANDIDATE',()=>candidate)
  .replace('-- EXP01_REPLAY_CANDIDATE',()=>candidate);
-assert.equal(receiptSql.split(candidate).length,3,'both candidate inserts are byte-exact, including dollar-quoted SQL');
+assert.equal(historicalReceiptSql.split(candidate).length,3,'both candidate inserts are byte-exact, including dollar-quoted SQL');
+// Rollback-only historical installer proof: validate the known current writer,
+// restore its exact predecessor, exercise the immutable receipt install/replay,
+// then upgrade ONLY that writer before all original role/receipt operations.
+// Applied migration history and all 100 original assertions stay untouched.
+const ownerCandidate=body(read('scripts/proof/exp01-setup-owner-guard-candidate.sql'));
+const historyPrelude='\n'+ownerCandidate+'\n'+originalSetupWriter()+'\n';
+const liveUpgrade=`\n${ownerCandidate}
+SELECT is(md5(prosrc),'${bodyHash(guardedWriter)}','all receipt behavior runs against exact guarded original writer')
+ FROM pg_proc WHERE oid='public.save_solo_setup_context(jsonb,jsonb,text,uuid)'::regprocedure;
+SELECT is((SELECT count(*)::integer FROM e01_original_functions b JOIN pg_proc p USING(oid)
+ WHERE b.proowner<>p.proowner OR b.proconfig IS DISTINCT FROM p.proconfig OR b.proacl IS DISTINCT FROM p.proacl),0,
+ 'intentional one-writer upgrade retains original OIDs and authority');
+UPDATE e01_original_functions b SET definition=md5(pg_get_functiondef(p.oid)) FROM pg_proc p
+ WHERE b.oid=p.oid AND p.oid='public.save_solo_setup_context(jsonb,jsonb,text,uuid)'::regprocedure;
+`;
+const upgradePoint="SELECT ok(NOT has_function_privilege('anon'";
+assert.equal(historicalReceiptSql.split(upgradePoint).length,2);
+const receiptSql=historicalReceiptSql.replace('BEGIN;',()=> 'BEGIN;'+historyPrelude)
+ .replace(upgradePoint,()=>liveUpgrade+upgradePoint);
+assert.equal(receiptSql.replace(historyPrelude,'').replace(liveUpgrade,''),historicalReceiptSql,
+ 'all original receipt assertions, including historical source invariance, are byte-exact and in order');
 const hostCandidateSource=read('scripts/proof/exp01-chat-knowledge-candidate.sql');
 const hostCarrierSource=read('supabase/migrations/20271127040001_exp01_chat_knowledge_links.sql');
 assert.equal(hostCarrierSource.slice(hostCarrierSource.indexOf('\n')),hostCandidateSource.slice(hostCandidateSource.indexOf('\n')),
@@ -59,8 +82,12 @@ assert.equal(hostSql.split(hostCandidate).length,3,'host native bodies are byte-
 // Rollback-only host negatives restore their savepoint, never reinstate a seat.
 const hostInsertion="UPDATE public.tenant_members SET status='suspended' WHERE tenant_id='e0100200-0000-4000-8000-000000000001' AND user_id='e0100100-0000-4000-8000-000000000002';";
 assert.equal(receiptSql.split(hostInsertion).length,2);
-const sql=receiptSql.replace(hostInsertion,()=>hostSql+'\n'+hostInsertion);
-assert.equal(sql.replace(hostSql+'\n',''),receiptSql,'all original receipt assertions and order are unchanged');
+const ownerTest=read('supabase/tests/exp01_setup_owner_protection.sql');
+assert.equal(ownerTest.split('-- EXP01_OWNER_BASELINE_WRITER').length,2);
+const ownerSql=ownerTest.replace('-- EXP01_OWNER_BASELINE_WRITER',()=>originalSetupWriter());
+const additionalSql=hostSql+'\n'+ownerSql+'\n';
+const sql=receiptSql.replace(hostInsertion,()=>additionalSql+hostInsertion);
+assert.equal(sql.replace(additionalSql,''),receiptSql,'all original receipt assertions and order are unchanged');
 assert.match(sql,/^BEGIN;/m);assert.match(sql,/ROLLBACK;\s*$/);
 mkdirSync('.cache',{recursive:true});const output='.cache/exp01-reviewed-setup-full-schema.sql';
 writeFileSync(output,sql);
@@ -81,6 +108,10 @@ if(process.argv.includes('--emit-only')){
   if(causal.status!==0)throw Error('Original EXP01 disposable concurrency/authority proof failed');
   const psql=process.env.OPERATOR_PROOF_PSQL||'psql';
   const localEnv={...process.env,PGPASSWORD:decodeURIComponent(url.password)};
+  const ownerConcurrency=spawnSync(process.execPath,['scripts/proof/exp01-setup-owner-guard-postgres.mjs',url.port,'--self-test'],
+   {stdio:'inherit',timeout:120000,env:localEnv});
+  if(ownerConcurrency.error)throw ownerConcurrency.error;
+  if(ownerConcurrency.status!==0)throw Error('Setup legal-owner causal/concurrency proof failed');
   const directory=spawnSync(psql,['-X','-h',url.hostname,'-p',url.port,'-U','postgres','-d','postgres','-Atc','SHOW data_directory'],{
    encoding:'utf8',timeout:10000,env:localEnv,
   });

@@ -1577,7 +1577,7 @@ const ANCESTRY_SOURCES = {
  // stay exact. Restoring main8e97's helper reproduces old8465 digest, all120 source
  // pins and all29 dispatches. Renew this inspected helper only; no extractor,
  // metadata, dispatch scalar or other dependency changes. Hostile controls retained.
- "supabase/functions/_shared/paige-turn/record-links.ts": "7481c45c6df044ea94081e798857f9263c5901d7e00ca0f2a26bad2b8408f28f",
+ "supabase/functions/_shared/paige-turn/record-links.ts": "f9eb0bd7050072a0b2c893dcff5a330e5317f0021da16513b3e8d6a52dbfbab2",
  // Original extraction input/acknowledgment validation remains authoritative.
  // EXP13 October31: exact0b5a helper independently reviewed before this renewal.
  // Original-main458e reproduced; only this source input changed across131

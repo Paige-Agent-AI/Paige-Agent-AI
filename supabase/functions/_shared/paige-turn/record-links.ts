@@ -70,7 +70,7 @@ function one(value: unknown): ReadRecordLink | null {
     return { destination, record_id: v.record_id.toLowerCase() };
   }
   const typedPlanning = Object.prototype.hasOwnProperty.call(v, "record_kind");
-  if (typedPlanning && (destination !== "operations_work" || !["planning_item", "planning_plan"].includes(String(v.record_kind)))) return null;
+  if (typedPlanning && (destination !== "operations_work" || (v.record_kind !== "planning_item" && v.record_kind !== "planning_plan"))) return null;
   if (destination !== "contacts" && destination !== "sales_agreements" && destination !== "sales_invoices" && destination !== "pipeline" && destination !== "operations_work" && destination !== "business_game_plan" && destination !== "business_knowledge" && destination !== "portal_knowledge" && destination !== "systems_check") return { destination, record_id: null };
   const record_id = typeof v.record_id === "string" && UUID.test(v.record_id) ? v.record_id.toLowerCase() : null;
   if (typedPlanning) return v.record_kind === "planning_plan" ? record_id ? { destination, record_id, record_kind: "planning_plan" } : null : { destination, record_id, record_kind: "planning_item" };

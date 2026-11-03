@@ -71,6 +71,8 @@ import {
   type TeamHubFile,
 } from "./team-hub-contract";
 import { agentTurnKey, attachmentScope, teamHubNavigation, useTeamHub, type AgentTurn, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub, type TurnStateRead } from "./useTeamHub";
+import { useNexusEmailDrafts, type NexusEmailDraftView } from "./useNexusEmailDrafts";
+import { TeamHubEmailDraft } from "./TeamHubEmailDraft";
 import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, dmRequestPrefill, endsWithRedirect, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
 import { AgentDmEmpty, AgentDmNote, AgentFailRow, AgentGlyph, AgentPlate, AgentProfilePanel, AgentTag, AgentTyping, BringInRow, PrivateNote, PrivateOthersNote } from "./TeamHubAgents";
 import { TeamHubApprovalCard, type TeamHubApprovalAct } from "./TeamHubApproval";
@@ -158,6 +160,7 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
   // New arrivals found by a refresh are announced as a count through the hub's one live region.
   // Attachment progress (Uploading 2 files, File ready, File refused: …) goes through the same one region.
   const hub = useTeamHub(tenantId, { onTenantRefresh, onIncoming: announce, onAttachment: announce });
+  const nexusEmails = useNexusEmailDrafts(hub, tenantId);
 
   if (hub.status === "account_unavailable") {
     // The server's `unavailable` (A1): not a canonical SOLO workspace. One honest state, no controls.
@@ -192,7 +195,7 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
     }
     return <HubSkeleton />;
   }
-  return <ReadyHub hub={hub} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct}
+  return <ReadyHub hub={hub} nexusEmails={nexusEmails} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct}
     referenceSearch={referenceSearch} referenceKey={referenceKey} />;
 }
 
@@ -272,9 +275,10 @@ const localDay = (instant: string | null) => {
   return Number.isNaN(date.getTime()) ? "" : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
-function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
+function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
   hub: TeamHub; announce: (text: string) => void; announcement: string; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
   referenceSearch: string; referenceKey: string;
+  nexusEmails: NexusEmailDraftView;
 }) {
   const overview = hub.overview!;
   const people = overview.people;
@@ -884,6 +888,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     onBringIn: bringIn,
     onApprovalAct: onApprovalAct ?? actOnCardHere,
     cardNotices,
+    emailDrafts: nexusEmails,
   };
 
   const closeForm = (returnTo: "channel" | "dm") => {
@@ -1313,6 +1318,9 @@ function Conversation({ hub, people, meId, active, onBack, onOpenThread, announc
             <span className="th-label-wide">How {title} works</span><span className="th-label-narrow">Profile</span></button>
         </div>
       </header>
+      {dmAgent === "nexus" && agent.emailDrafts?.state === "unavailable" && <div className="th-email-load-notice" role="status">
+        Prepared emails couldn’t load. <button type="button" className="th-link" onClick={agent.emailDrafts.refresh}>Try again</button>
+      </div>}
       {stream.status === "loading" ? <StreamSkeleton rows={3} /> : <Stream hub={hub} people={people} meId={meId} title={title} kind="agent_dm" agentDm={dmAgent}
         pending={pending} onRetry={onRetry} onDiscard={onDiscard} onOpenThread={onOpenThread} taskReads={taskReads} agent={agent} />}
       {composer}
@@ -1605,6 +1613,7 @@ type AgentView = {
   onApprovalAct?: TeamHubApprovalHandler;
   /** A2b: what the last act on a card came to, by message id, where the card itself can't say it. */
   cardNotices?: Record<string, string>;
+  emailDrafts?: NexusEmailDraftView;
 };
 
 /** Where a row sits: the rows around it (the stream, or a thread's root and replies) and its kind of place. */
@@ -1787,6 +1796,9 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
         ? <AgentChip key={index} agent={part.agent} /> : <span key={index}>{part.text}</span>)}</p>}
       {place?.agentDm && isAsker && message.source_backed_read && !!message.record_links?.length
         && <PaigeRecordLinks links={message.record_links} account={activeTenant} />}
+      {agentKey === "nexus" && place?.agentDm === "nexus" && isAsker && agent?.emailDrafts?.drafts[message.id]
+        && <TeamHubEmailDraft key={`${meId}:${message.id}`} draft={agent.emailDrafts.drafts[message.id]}
+          account={activeTenant} act={agent.emailDrafts.act} />}
       {privatePart && !place?.agentDm && <p className="th-text th-text--fixed">{FIXED_PRIVATE_LINE}</p>}
       {privatePart && isAsker && privateStatus && agent && message.asked_in_message_id && <PrivateNote agent={agentKey} status={privateStatus} online={agent.online}
         onOpenDm={() => agent.onOpenDm(agentKey)}

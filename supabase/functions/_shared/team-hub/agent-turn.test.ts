@@ -7,6 +7,7 @@
 // in supabase/tests/exp08_team_hub_agents_a1.sql, and no authenticated drive is claimed here.
 // Keep O01's regression in this original explicitly enumerated hosted suite.
 import "./zion-responsibility-context.test.ts";
+import "./zion-task-record-links.test.ts";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -1301,9 +1302,51 @@ describe("A2b: private card reads revalidate the current authority", () => {
     for (const check of staged) {
       assert.deepEqual(check.args.p_read_tools, ["crm_list_tasks"]);
       assert.equal(check.args.p_turn_id, TURN);
-      assert.deepEqual(check.args, staged[0].args, "every check binds the same accepted token and tools");
+      assert.equal(check.args.p_token_hash, staged[0].args.p_token_hash, "same original accepted token");
+      assert.ok(JSON.stringify(check.args.p_record_links) === "[]" ||
+        JSON.stringify(check.args.p_record_links) === JSON.stringify([{ destination: "operations_work", record_id: TASK }]),
+        "only the original Task reference or a subsequent authority recheck");
     }
+    const linked = staged.filter(check => (check.args.p_record_links as unknown[]).length);
+    assert.equal(linked.length, 1, "original successful read stages its reference once before model continuation");
     assert.ok(w.calls.indexOf(staged[0]) < w.calls.indexOf(named(w, "team_hub_post_agent_message")[0]));
+  });
+});
+
+describe("O01 ZION original Task reference admission", () => {
+  it("stages the original native Task before its private result reaches the next model attempt", async () => {
+    const w = dmWorld(), m = model([{ tool_calls: [LIST] }, FINAL]);
+    const complete = m.make(w.calls);
+    m.make = calls => async (request, options) => {
+      if (m.requests.length === 1) {
+        const links = named(w, "team_hub_stage_agent_read_context").filter(c =>
+          JSON.stringify(c.args.p_record_links) === JSON.stringify([{ destination: "operations_work", record_id: TASK }]));
+        assert.equal(links.length, 1);
+        assert.equal(links[0].args.p_turn_id, TURN);
+      }
+      return complete(request, options);
+    };
+    assert.equal((await runDm(w, m)).body.outcome, "posted");
+    assert.equal(w.invokes.length, 0, "read references do not execute domain actions");
+  });
+  for (const failure of ["refused", "lost"] as const) it(`withholds private continuation and publication on ${failure} native Task-reference admission`, async () => {
+    const w = dmWorld(), m = model([{ tool_calls: [LIST] }, FINAL]), original = w.service.rpc;
+    w.service.rpc = (name, args = {}) => {
+      if (name === "team_hub_stage_agent_read_context" && (args.p_record_links as unknown[] | undefined)?.length) {
+        w.calls.push({ who: "service", name, args });
+        if (failure === "lost") return Promise.reject(Error("native response lost"));
+        return Promise.resolve({ data: { ok: false }, error: null });
+      }
+      return original(name, args);
+    };
+    const r = await runDm(w, m);
+    assert.equal(r.body.outcome, "no_reply"); assert.equal(m.requests.length, 1);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0); assert.equal(w.invokes.length, 0);
+  });
+  it("preserves PAIGE's existing read path without adding ZION Task-reference admission", async () => {
+    const w = dmWorld({ agent: "paige" }), m = model([{ tool_calls: [LIST] }, FINAL]);
+    assert.equal((await runDm(w, m, "paige")).body.outcome, "posted");
+    assert.ok(named(w, "team_hub_stage_agent_read_context").every(c => !(c.args.p_record_links as unknown[]).length));
   });
 });
 

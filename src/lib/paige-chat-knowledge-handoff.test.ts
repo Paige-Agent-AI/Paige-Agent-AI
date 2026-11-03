@@ -26,10 +26,13 @@ function fixture(){
     }
     if(name==='inspect_paige_chat_knowledge_intake')return {data:intakes.get(String(args._extraction_work_id))??{status:'absent_at_read'},error:null};
     if(name==='save_paige_chat_knowledge_link'){
+      // Original native publication Work starts at revision0, independently of intake revision1.
+      if(!publications.has(String(args._publication_work_id))&&args._expected_link_revision!==0)return {data:null,error:{code:'40001',message:'CHAT_KNOWLEDGE_LINK_CONFLICT'}};
+      const paired=[...intakes.values()].find(value=>(value as {reference:{documentId:unknown}}).reference.documentId===args._document_id) as {reference:{extractionWorkId:string}};
       const reference={schemaVersion:1,actorId,tenantId,threadId,turnId:null,documentId:args._document_id,
         documentRevision:args._document_revision,sourceSha256:args._source_sha256,textSha256:'b'.repeat(64),
-        extractionWorkId:id(10),extractionIntentId:args._extraction_intent_id,publicationWorkId:args._publication_work_id,
-        publicationIntentId:id(30),generationId:args._publication_work_id,publicationOutcome:'capability_succeeded',linkRevision:2};
+        extractionWorkId:paired.reference.extractionWorkId,extractionIntentId:args._extraction_intent_id,publicationWorkId:args._publication_work_id,
+        publicationIntentId:id(30),generationId:args._publication_work_id,publicationOutcome:'capability_succeeded',linkRevision:1};
       const result={status:'recorded',current:true,reference};publications.set(String(args._publication_work_id),result);
       if(losePublication)throw Error('lost publication acknowledgment');
       return {data:result,error:null};
@@ -66,7 +69,7 @@ describe('original Chat Knowledge observer handoff',()=>{
     const f=fixture();await Promise.all([f.host.acknowledgeExtraction(f.ack(),f.context()),f.host.verifyPublication(f.pub(),f.context())]);
     const write=f.calls.find(c=>c.name==='save_paige_chat_knowledge_link')!;
     expect(write.args._thread_id).toBe(threadId);expect(write.args._turn_id).toBeNull();
-    expect(write.args._extraction_intent_id).toBe(id(40));expect(write.args._expected_link_revision).toBe(1);
+    expect(write.args._extraction_intent_id).toBe(id(40));expect(write.args._expected_link_revision).toBe(0);
     expect(f.host.getRows()[0].phase).toBe('published_linked');
   });
   it('does not attach a different document publication to the selected file',async()=>{
@@ -130,4 +133,14 @@ describe('original Chat Knowledge observer handoff',()=>{
     await f.host.inspect();expect(f.host.getRows()[0].phase).toBe('link_unconfirmed');
     await f.host.retryIntake(0);expect(f.calls.filter(c=>c.name==='stage_paige_chat_knowledge_intake')).toHaveLength(1);
   });
+});
+
+
+it('keeps intake and publication revisions separate for every file in a bulk selection',async()=>{
+ const f=fixture();await Promise.all([f.host.acknowledgeExtraction(f.ack(0),f.context(0)),f.host.acknowledgeExtraction(f.ack(1),f.context(1))]);
+ await Promise.all([f.host.verifyPublication(f.pub(0),f.context(0)),f.host.verifyPublication(f.pub(1),f.context(1))]);
+ expect(f.host.getRows().map(row=>row.phase)).toEqual(['published_linked','published_linked']);
+ const writes=f.calls.filter(c=>c.name==='save_paige_chat_knowledge_link');expect(writes).toHaveLength(2);
+ expect(writes.map(c=>c.args._expected_link_revision)).toEqual([0,0]);expect(writes.map(c=>c.args._publication_work_id)).toEqual([id(50),id(51)]);
+ expect(f.calls.filter(c=>c.name==='stage_paige_chat_knowledge_intake')).toHaveLength(2);
 });

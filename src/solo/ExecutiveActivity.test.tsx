@@ -41,8 +41,23 @@ it("does not invent a named specialist or credit an unknown actor to PAIGE or a 
   feed.items = [event("unknown"), event("agent", { byPaige: true })]; render(); open();
   expect(detail().textContent).toContain("Actor not recorded");
   choose("agent");
-  expect(detail().textContent).toContain("PAIGE team · specialist not recorded");
+  expect(detail().textContent).toContain("Actor not verified");
+  expect(detail().textContent).not.toContain("PAIGE team");
   expect(detail().textContent).not.toContain("VERA");
+});
+it.each([null, "   "])("keeps an unnamed native agent classification out of named-team activity (%s)", actorAgent => {
+  feed.items = [event("named", { byPaige: true, actorAgent: "VERA" }),
+    event("unverified", { byPaige: true, actorAgent }), event("person", { byPerson: true })];
+  render(); open();
+  const filter = (value: string) => act(() => { const select = dialog().querySelector("select")!;
+    select.value = value; select.dispatchEvent(new Event("change", { bubbles: true })); });
+  filter("paige");
+  expect([...dialog().querySelectorAll("[data-activity-id]")].map(e => e.getAttribute("data-activity-id"))).toEqual(["named"]);
+  filter("unattributed");
+  expect([...dialog().querySelectorAll("[data-activity-id]")].map(e => e.getAttribute("data-activity-id"))).toEqual(["unverified"]);
+  choose("unverified"); expect(detail().textContent).toContain("Actor not verified");
+  filter("people");
+  expect([...dialog().querySelectorAll("[data-activity-id]")].map(e => e.getAttribute("data-activity-id"))).toEqual(["person"]);
 });
 it("filters only the returned sample by original actor attribution", () => {
   render(); open();
@@ -137,5 +152,34 @@ it("reveals an off-viewport invoker after responsive inspection", async () => {
   } finally {
     Object.defineProperty(document, "elementFromPoint", { configurable: true, value: original });
     vi.restoreAllMocks();
+  }
+});
+
+it.each([
+  { label: "own closing scrim", className: "exec-activity-scrim", state: "closed", returnToPaige: true },
+  { label: "open history scrim", className: "exec-activity-scrim", state: "open", returnToPaige: false },
+  { label: "another closing overlay", className: "other-overlay", state: "closed", returnToPaige: false },
+])("recovers focus through only its closing history scrim ($label)", async ({ className, state, returnToPaige }) => {
+  const workspace = document.createElement("aside"); workspace.id = "tenant-paige-workspace";
+  workspace.innerHTML = '<header><button type="button">Existing PAIGE control</button></header>';
+  const scrim = document.createElement("div"); scrim.className = className;
+  scrim.setAttribute("data-state", state); document.body.append(workspace, scrim);
+  const target = workspace.querySelector("button")!;
+  vi.spyOn(target, "getBoundingClientRect").mockReturnValue(new DOMRect(10, 10, 44, 44));
+  const original = document.elementFromPoint;
+  Object.defineProperty(document, "elementFromPoint", { configurable: true, value: () => scrim });
+  try {
+    render(); open();
+    const trigger = host.querySelector<HTMLButtonElement>("[data-activity-inspect]")!;
+    vi.spyOn(trigger, "getBoundingClientRect").mockReturnValue(new DOMRect(10, 500, 160, 44));
+    Object.defineProperty(trigger, "scrollIntoView", { configurable: true, value: vi.fn() });
+    act(() => [...dialog().querySelectorAll("button")].find(b => b.textContent === "Close")!.click());
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+    expect(dialog()).toBeNull(); expect(document.activeElement).toBe(returnToPaige ? target : trigger);
+    expect(trigger.scrollIntoView).toHaveBeenCalledTimes(returnToPaige ? 0 : 1);
+    expect(feed.refresh).not.toHaveBeenCalled();
+  } finally {
+    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: original });
+    workspace.remove(); scrim.remove(); vi.restoreAllMocks();
   }
 });

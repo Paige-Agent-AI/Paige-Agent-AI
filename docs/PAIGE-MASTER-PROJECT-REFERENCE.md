@@ -860,6 +860,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded November 3, 2026 UTC — EXP08 original unsent NEXUS email release identity.**
+
+| Increment | Exact reviewed source and production release | Proof boundary and original outcome |
+| --- | --- | --- |
+| [#3239](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3239) | Reviewed `2c75311ae6b1ca2e1343f261e44080f0d64444b1`, functional product `70152b873b73dcdb2edfa65e1303ead7fca6e969`; own distinct NON-AUTHOR exact-head review SOURCE-CLEAR, both late causal sender/hidden-edit findings repaired and review threads resolved. ALL13 exact-head checks, genuine Supabase Preview and both web statuses SUCCESS; ci41641579642, Spine41641579841, UI41641579848, final Preview125937304300. Normal merge `b07ac386671979f88106bcbc4c68ae6c1674cc42`, tree `fa940e60b0e64f32ed88e4aaf361fd978b01f31d` exactly equals reviewed union. Native-first41638860301 attempt2 and normal postmerge41648649067 SUCCESS; immutable `20271130020008_exp08_nexus_unsent_email_handoff` / `20271130020009_exp08_nexus_email_lock_order_forward` ONCE,28/5 statements MD5fe0ab65b5c9301d20f32eab40b089637/4a99a400708b6dded0420b1f325a58ae. Edge41648649121 attempt2/125965018062 source/config PASS340/340; original Chat619 ACTIVE/JWTtrue and normal edge-liveb07. Certificate13236892859 ZIP SHA256a813dcc59df4bbf0f3b2ab2c6ac7c1da1506a4b36f2b798d9e47a0dba9688ed9. Production `dpl_67UWwhaPhSF5ZrbBVMYePRLGU9af` READY/exactb07; all three official origins return identical observed main-to-SoloEntry-to-TeamHub asset chain200 at14:07UTC, build `b07ac386671979f88106bcbc4c68ae6c1674cc42-mw0r2ypx`, customerUpdate:null. | Original private NEXUS preparation and explicit save-only handoff to ORIGINAL Messages, protected original save receipt/reference and same-draft reopen/edit/source return are deployed. At source cutover14:07UTC, authenticated outcome proof was still owed; later actual customer verification belongs to the original [ANT-161](https://linear.app/paigeagentai/issue/ANT-161), Coordinator ANT-147 selected-outcome thread1d02cdb0 and canonical Outcomes, not inferred from this source readback. Failed first native lock attempt fully rolled back and holder released naturally; failed first Edge source download did not certify old618. Original-job retries preserved all guards. Successful source certificate retains scratch cleanup permission_denied/incomplete. No email send/schedule/approval/provider activation, customer publication or owner acceptance. Full original18+6/five journeys remain assigned, STILL CODING. |
+
+This mechanical closeout records only the preceding released identity and its cutover proof boundary. It changes no product, policy, capability, activation, algorithm maturity or acceptance status and is not logged recursively.
+
 **Recorded November 3, 2026 UTC — EXP02 O13 recorded-activity keyboard return correction.**
 
 | Increment | Exact reviewed source and production release | Proof boundary and original outcome |
@@ -976,6 +984,15 @@ Full original EXP03, all50-state applicability/enforcement, both-chat integratio
 ALG maturity and owner acceptance remain **STILL CODING / NOT ACCEPTED**. No
 provider effect, customer release identity, announcement or activation is implied.
 This closeout records only these preceding deliveries and is not logged recursively.
+
+**Recorded 2026-11-03 UTC — EXP02 O13 missing-time and failed-read truth repair.**
+
+| Increment | Exact reviewed source and observed production release | Useful result and remaining proof |
+| --- | --- | --- |
+| [#3244](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3244#issuecomment-6596923447) | Reviewed `c66544d5516776d52098c4b13a857bb483144524`; own NON-AUTHOR source6596273090/final composition6596880216 CLEAR. All10 applicable exact-head checks and both web statuses SUCCESS; intended schema-free Preview SKIPPED/0threads. Verify125746653301/41584331267 and actual full Test step122 SUCCESS, no manual retry/cancellation. Normal merge `3e10a49725e90669aa99caa6bf73195911bd6365`, tree`934abcef26b2458ba87d3ae1ccfdc89d66e01152` equals reviewed union over`a7629d743664de5be8956bd0e3be0934b1ba9ac5`; all4 own and19,779 outside leaves/modes/types conserved. Production `dpl_5obW8VudzMXwYFvUxkS6Sn7NWXhG` READY/exact merge. Both official origins at2026-11-03T06:19:43.607Z returned root/version/observedbootstrap200, build`3e10a49725e90669aa99caa6bf73195911bd6365-mw0aqd8l`, equal bootstrap SHA256`e5cd2e5b901199c172d821b4d002630d8056285525556ca5fea4f7db484fab9f`, no customer update. Own migrations/Edge NOT_APPLICABLE. | Absent native time stays absent; malformed response/rows and failed reads withhold prior facts instead of displaying an empty sample.99 owning local controls, causal RED-to-GREEN and unchanged SOLO guards passed. Customer source/recovery/native rendering remains UNVERIFIED after page-control timeouts; historical two focus FAILs preserved. Original result/receipt/exact-event consumer and protected native read/grant remain unreleased. O13 INCOMPLETE; founder acceptance OPEN. Production/internal-only, no customer version or announcement, provider/permission/action/algorithm/catalogue activation. |
+
+This row records only the preceding3244 release, not the unreleased O13 consumer
+or native proposal carried in later development. Original writers remain intact.
 
 **Recorded 2026-11-03 UTC — EXP02 O13 original recorded-event inspection; keyboard correction still owed.**
 

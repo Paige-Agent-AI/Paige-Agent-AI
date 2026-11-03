@@ -10,6 +10,7 @@ import { useBusinessReview, type ReviewDomain } from "./data/useBusinessReview";
 import { useSoloPendingActions } from "./data/useSoloPendingActions";
 import { useSoloActivityFeed } from "./data/useSoloActivityFeed";
 import { ExecutiveActivity } from "./ExecutiveActivity";
+import { readActivityReturn, type ActivityReturn } from "./executive-activity-return";
 import { useBusinessGamePlanMissions } from "./data/useBusinessGamePlanMissions";
 import { businessCalendarHeldNote, businessDateLabel, useBusinessCalendarDay } from "./data/useBusinessTimeZone";
 import { clearPaigeSurfaceScope } from "./paigeClientScope";
@@ -63,6 +64,7 @@ type ExecutiveProps = {
 
 type ReviewReturn = {
   version: 1; scope: string; address: string; destination: string; ordinal: number; scroll: number; sources: string[];
+  activity?: ActivityReturn;
 };
 function reviewReturn(value: unknown, scope: string, address: string): ReviewReturn | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -72,7 +74,8 @@ function reviewReturn(value: unknown, scope: string, address: string): ReviewRet
     && Number.isInteger(b.ordinal) && b.ordinal >= 0 && b.ordinal < 100
     && Number.isFinite(b.scroll) && b.scroll >= 0 && b.scroll <= 1_000_000
     && Array.isArray(b.sources) && b.sources.length <= 16
-    && b.sources.every(s => typeof s === 'string' && /^exec-domain-[a-z_]+$/.test(s)) ? b : null;
+    && b.sources.every(s => typeof s === 'string' && /^exec-domain-[a-z_]+$/.test(s))
+    && (b.activity === undefined || readActivityReturn(b.activity) !== null) ? b : null;
 }
 
 export function ExecutiveOverview(props: ExecutiveProps) {
@@ -98,7 +101,16 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
   };
   const review = useBusinessReview(accountEpoch ?? null, period);
   const pending = useSoloPendingActions(accountEpoch ?? null);
-  const activity = useSoloActivityFeed(accountEpoch ?? null);
+  const activityValues = new URLSearchParams(location.search).getAll("activity_event");
+  const activityEvent = activityValues.length === 0 ? null : activityValues.length === 1 ? activityValues[0] : "invalid-activity-locator";
+  const activity = useSoloActivityFeed(accountEpoch ?? null, activityEvent === "" ? null : activityEvent);
+  const selectActivity = (id: string | null) => {
+    const query = new URLSearchParams(location.search);
+    query.delete("activity_event");
+    if (id !== null) query.set("activity_event", id);
+    const search = query.toString() ? "?" + query.toString() : "";
+    if (search !== location.search) navigate({ pathname: location.pathname, search, hash: location.hash }, { replace: true, state: location.state });
+  };
   const missions = useBusinessGamePlanMissions(accountEpoch ?? null);
   const calendar = useBusinessCalendarDay(accountEpoch ?? null);
   const snapshot = review.state === "ready" ? review.snapshot : null;
@@ -135,15 +147,24 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
     if (!returnScope || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.defaultPrevented) return;
     const opener = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href]') : null;
     const node = root.current;
-    if (!opener || !node || !node.contains(opener) || opener.hasAttribute('download') || (opener.target && opener.target !== '_self')) return;
+    const activityDialog = opener?.hasAttribute("data-activity-record-link") ? opener.closest<HTMLElement>(".exec-activity") : null;
+    if (!opener || !node || (!node.contains(opener) && !activityDialog) || opener.hasAttribute('download') || (opener.target && opener.target !== '_self')) return;
     const target = new URL(opener.href);
     if (target.origin !== window.location.origin || !target.pathname.startsWith(`/solo/${account}/`) || target.pathname === location.pathname) return;
     if (location.state !== null && (typeof location.state !== 'object' || Array.isArray(location.state))) return;
     const destination = target.pathname + target.search + target.hash;
     const peers = [...node.querySelectorAll<HTMLAnchorElement>('a[href]')].filter(a => a.getAttribute('href') === opener.getAttribute('href'));
     const bookmark: ReviewReturn = { version: 1, scope: returnScope, address, destination,
-      ordinal: peers.indexOf(opener), scroll: node.scrollTop,
+      ordinal: activityDialog ? 0 : peers.indexOf(opener), scroll: node.scrollTop,
       sources: [...node.querySelectorAll('section.exec-domain')].filter(section => section.querySelector(':scope > details.exec-provenance[open]')).map(section => section.getAttribute('aria-labelledby')!) };
+    if (activityDialog) {
+      const original = activityDialog.querySelector<HTMLElement>("[data-activity-original-id]");
+      const reading = readActivityReturn({ eventId: original?.dataset.activityOriginalId, filter: original?.dataset.activityFilter,
+        listScroll: activityDialog.querySelector<HTMLElement>(".exec-activity-list")?.scrollTop ?? 0,
+        detailScroll: original?.scrollTop ?? 0 });
+      if (!reading || reading.eventId.toLowerCase() !== activityEvent?.toLowerCase()) return;
+      bookmark.activity = reading;
+    }
     // One display bookmark on the ORIGINAL history entry; no metrics, drafts or business records.
     // The existing Link performs the only destination navigation after this replacement.
     navigate({ pathname: location.pathname, search: location.search, hash: location.hash }, {
@@ -160,7 +181,8 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
     // The incumbent folded shell can automatically focus its command on a route
     // change. Its existing content-focus guard respects this destination's focus.
     // A real newer interaction, including one on that command, still wins.
-    if (newerInput.current || (active && active !== document.body && active !== node && !active.matches('[data-tenant-paige-command]'))) return;
+    const activityFocus = bookmark.activity && active instanceof Element && active.closest(".exec-activity");
+    if (newerInput.current || (active && active !== document.body && active !== node && !activityFocus && !active.matches('[data-tenant-paige-command]'))) return;
     // Reopening source details above the viewport must not add a second native
     // scroll-anchoring adjustment to the explicit original reading position.
     const priorAnchor = node.style.overflowAnchor;
@@ -175,8 +197,10 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
       const to = new URL(a.href); return to.pathname + to.search + to.hash === bookmark.destination;
     });
     const focus = peers[bookmark.ordinal] ?? node.querySelector('h1');
-    focus?.focus({ preventScroll: true });
-    node.scrollTop = peers[bookmark.ordinal] ? bookmark.scroll : 0;
+    // The original activity inspector restores its own reading position only
+    // after the SAME event has been reauthorized; do not focus behind its dialog.
+    if (!bookmark.activity) focus?.focus({ preventScroll: true });
+    node.scrollTop = bookmark.activity || peers[bookmark.ordinal] ? bookmark.scroll : 0;
     let frame = window.requestAnimationFrame(() => {
       frame = window.requestAnimationFrame(() => { node.style.overflowAnchor = priorAnchor; });
     });
@@ -251,7 +275,9 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
             <p className="exec-note">Prepared is not completed. Any available approval uses the existing PAIGE confirmation card and its current permissions.</p>
           </section>
 
-          <ExecutiveActivity feed={activity} timezone={snapshot?.period.timezone ?? "UTC"} />
+          <ExecutiveActivity feed={activity} timezone={snapshot?.period.timezone ?? "UTC"} account={account}
+            selection={{ eventId: activityEvent, onChange: selectActivity }}
+            restore={navigationType === "POP" && returnScope ? reviewReturn(location.state?.executiveReviewReturn, returnScope, address)?.activity : undefined} />
 
           <nav className="exec-context-links" aria-label="Governance and business context">
             <Destination destination="systems_check" account={account} />

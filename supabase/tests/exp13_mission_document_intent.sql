@@ -27,13 +27,13 @@ INSERT INTO public.tenant_knowledge_docs(id,tenant_id,title,content,created_by,r
 
 CREATE TEMP TABLE e13_state(name text PRIMARY KEY,value jsonb);
 GRANT SELECT,INSERT,UPDATE ON e13_state TO authenticated;
-INSERT INTO e13_state VALUES('intent',jsonb_build_object('contractVersion',1,'sources',jsonb_build_array(jsonb_build_object(
+INSERT INTO e13_state SELECT 'intent',jsonb_build_object('contractVersion',1,'sources',jsonb_build_array(jsonb_build_object(
  'reference',jsonb_build_object('contractVersion',1,'tenantId',d.tenant_id,'documentId',d.id,'revision',d.revision,
   'contentSha256',encode(sha256(convert_to(d.content,'UTF8')),'hex')),
  'title',d.title,'excerpts',jsonb_build_array(jsonb_build_object('start',0,'end',public.knowledge_utf16_length(d.content),'text',d.content)))),
  'steps',jsonb_build_array(jsonb_build_object('id','e1304400-0000-4000-8000-000000000001','title','Prepare the draft','description','Recommendation for review',
  'responsible',jsonb_build_object('kind','specialist','alias','MENTOR'),'dueOn',NULL,'dependencies','[]'::jsonb,
- 'sourceIds',jsonb_build_array(d.id),'basis','recommendation','proposedTask',jsonb_build_object('action','task.create','assigneeUserId',NULL)))))
+ 'sourceIds',jsonb_build_array(d.id),'basis','recommendation','proposedTask',jsonb_build_object('action','task.create','assigneeUserId',NULL))))
  FROM public.tenant_knowledge_docs d WHERE id='e1303300-0000-4000-8000-000000000001';
 CREATE FUNCTION pg_temp.e13_intent() RETURNS jsonb LANGUAGE sql SECURITY INVOKER AS $$SELECT value FROM e13_state WHERE name='intent'$$;
 CREATE FUNCTION pg_temp.e13_create(k uuid,i jsonb) RETURNS jsonb LANGUAGE sql SECURITY INVOKER AS $$

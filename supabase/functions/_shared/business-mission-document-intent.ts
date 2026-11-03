@@ -124,4 +124,3 @@ export function normalizeDocumentWorkIntent(value: unknown, expectedTenantId: st
   if (steps.some(s => cyclic(s.id))) return invalid();
   return { ok: true, intent: { contractVersion: 1, sources, steps } };
 }
-

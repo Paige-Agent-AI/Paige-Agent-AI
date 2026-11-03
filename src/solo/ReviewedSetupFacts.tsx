@@ -6,6 +6,7 @@ import {readReviewedSetup, inspectReviewedSetup, prepareReviewedSetup,
   type ReviewedSetupInspection, type ReviewedSetupPort, type ReviewedSetupScope} from './data/reviewed-setup-client';
 import {REVIEWED_SETUP_FACT_FIELDS, type ReviewedSetupFact, type ReviewedSetupSelection,
   type SoloSetupBrief} from './settings-setup-contract';
+import './reviewed-setup-facts.css';
 
 type Snapshot={tenantId:string|null; brief:SoloSetupBrief; contextRevision:number|null; canEdit:boolean; disabled:boolean; refreshing?:boolean; onSaved:()=>void};
 /** The original Settings host owns its workspace and ordinary editor. This
@@ -123,7 +124,7 @@ export function ReviewedSetupPanel({port,actorId,tenantId,brief,contextRevision,
   rememberReceipt(result);setSelection(null);setUnknown(false);handle.current=null;onSaved();setNotice('Original approval receipt verified.');
  });
  const close=()=>{lifetime.current.generation++;handle.current=null;setOpen(false);setSource(null);setRows([]);setSelection(null);setReceipt(null);setUnknown(false);setNotice('');};
- return <section className="setup-section" aria-label="Review document facts"><fieldset disabled={disabled}>
+ return <section className="setup-section reviewed-setup-facts" aria-label="Review document facts"><fieldset disabled={disabled}>
   <h2>Review document facts</h2>
   {!open?<button type="button" className="btn btn-s" onClick={()=>{setOpen(true);void discover();}}>Review facts or reopen receipt</button>:<>
    <p>Save only the facts you choose into your business profile.</p>

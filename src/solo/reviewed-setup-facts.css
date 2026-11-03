@@ -1,0 +1,38 @@
+/* Original Setup review only: preserve global tokens and every save/recovery action. */
+.paige-solo .reviewed-setup-facts fieldset { min-inline-size: 0; }
+.paige-solo .reviewed-setup-facts button {
+  min-width: 44px;
+  min-height: 44px;
+  height: auto;
+  max-width: 100%;
+  margin: 4px 8px 4px 0;
+  padding: 8px 12px;
+  border-radius: var(--r-s);
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: normal;
+}
+.paige-solo .reviewed-setup-facts .setup-source-actions { gap: 8px; }
+.paige-solo .reviewed-setup-facts .setup-source-actions button { margin: 0; }
+.paige-solo .reviewed-setup-facts :is(select, textarea) {
+  min-height: 44px;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.paige-solo .reviewed-setup-facts label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.paige-solo .reviewed-setup-facts :is(button, select, textarea, input):focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 3px;
+}
+.paige-solo .reviewed-setup-facts button.btn-p { color: var(--ink-inv); }
+.paige-solo[data-theme="dark"] .reviewed-setup-facts button.btn-p:hover {
+  background: var(--violet-2);
+  border-color: var(--violet-2);
+}

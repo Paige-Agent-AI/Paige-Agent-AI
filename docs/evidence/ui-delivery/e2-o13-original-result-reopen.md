@@ -61,3 +61,23 @@ The owner-approved canonical native foundation3248 is now composed as a necessar
 Impeccable: applied existing-world hardening/craft floor, functional information hierarchy, token reuse, wrapping, complete source/error/retry states, truthful copy and newer-input/focus preservation. The pinned detector initially found0 blocking patterns/one24px type-ramp advisory; revised to the existing21px scale, without suppressing the advisory. Own NON-AUTHOR review of92028 found a real portal-scoping issue: the new link remained inline because the original Executive-root link styling does not reach the dialog portal. Added portal-scoped inline-flex/alignment, original link treatment and visible focus, with declared44px link/disclosure targets. Actual rendered dimensions, both-theme focus, contrast and reduced-motion checks remain UNVERIFIED, not assumed from declarations or mounted tests. Canonical skill: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md . Final independent corrective review is owed on the new exact head; no material finding is waived.
 
 Functional: local consumer/adapter verified; approved canonical native release in progress. Visual: existing world extended, native rendered proof owed. Experiential: controlled original-record return/reload/revocation pass; authenticated continuity owed. Founder Acceptance: OPEN. Algorithm Support: no new scoring/prediction; ALG03/06/11/12 maturity unchanged and ALG13 remains Unverified. No verified supporting algorithm is identified for exact receipt/URL validation; it is deterministic contract enforcement. Orchestration Contract: read-only original capability/source → current authorization → original event/domain receipt → existing semantic record → same-event reauthorization/recovery; no effect, new work record or receipt is created.
+
+November3 actual ordinary AntonioOwner Chrome read: original25-row inspection
+loads and source matches current productiond5f5190c6abd23daba9988527cf107317fd032ae,
+both official origins at13:19:04UTC/bootstrapmain-CcArJY1N.js/SHA25621116de36f4b422bec7e13c0647253e153a361b73e92b530af85c880d00963b9.
+Desktop→390x844→Escape produces another genuine FAIL: focus remains on Inspect
+activity behind the PAIGE composer. The composer remains empty/unchanged, no
+message or business record is written, and own viewport override is reset.
+Private original observation is preserved in
+outputs/e2-o13-20261103-antonio-focus-before-consumer.json. The earlier immediate
+transition observation and strict heading-selector error are not customer PASS.
+
+Bounded correction: only the existing visible PAIGE header fallback may be chosen
+through this history dialog's own CLOSED scrim while it exits. The covered
+original invoker, OPEN scrim and other overlays receive no visibility exception.
+The positive causal control FAILS on predecessor with11 original controls PASS;
+the repair plus open/foreign-overlay negatives passes84 controls across four
+owning component/journey suites. Counts overlap earlier222; no new total is
+inferred. This models the closing-scrim condition; actual corrected native
+keyboard/resize, two-context geometry and owner acceptance remain UNVERIFIED.
+No shared Dialog, Chat-shell, drafts, registry, writer or orchestration changes.

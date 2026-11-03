@@ -104,13 +104,17 @@ export function ExecutiveActivity({ feed, timezone, account, selection, restore 
     // A narrow PAIGE overlay may now cover the original page invoker. Keep
     // keyboard recovery in its EXISTING visible workspace, without folding it,
     // changing the composer or focusing a control behind the overlay.
-    const visible = (element: HTMLElement) => {
+    const visible = (element: HTMLElement, throughClosingHistory = false) => {
       const r = element.getBoundingClientRect();
       const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-      return r.width > 0 && r.height > 0 && !!hit && (element === hit || element.contains(hit));
+      // Radix's closing history scrim can still intercept this point. Only the
+      // existing PAIGE header may be selected through OUR closing scrim; never
+      // treat the original invoker behind PAIGE, or another overlay, as visible.
+      const closingHistory = throughClosingHistory && hit?.closest('.exec-activity-scrim[data-state="closed"]');
+      return r.width > 0 && r.height > 0 && !!hit && (element === hit || element.contains(hit) || !!closingHistory);
     };
     if (visible(trigger.current)) return;
-    const target = [...document.querySelectorAll<HTMLButtonElement>("#tenant-paige-workspace header button")].find(visible);
+    const target = [...document.querySelectorAll<HTMLButtonElement>("#tenant-paige-workspace header button")].find(button => visible(button, true));
     if (target) { event.preventDefault(); target.focus({ preventScroll: true }); return; }
     // A resize can move the invoker outside its EXISTING scroll owner. Radix's
     // default return prevents scrolling, leaving keyboard focus out of view.

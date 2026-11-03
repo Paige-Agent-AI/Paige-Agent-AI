@@ -139,3 +139,32 @@ it("reveals an off-viewport invoker after responsive inspection", async () => {
     vi.restoreAllMocks();
   }
 });
+
+it.each([
+  { label: "own closing scrim", className: "exec-activity-scrim", state: "closed", returnToPaige: true },
+  { label: "open history scrim", className: "exec-activity-scrim", state: "open", returnToPaige: false },
+  { label: "another closing overlay", className: "other-overlay", state: "closed", returnToPaige: false },
+])("recovers focus through only its closing history scrim ($label)", async ({ className, state, returnToPaige }) => {
+  const workspace = document.createElement("aside"); workspace.id = "tenant-paige-workspace";
+  workspace.innerHTML = '<header><button type="button">Existing PAIGE control</button></header>';
+  const scrim = document.createElement("div"); scrim.className = className;
+  scrim.setAttribute("data-state", state); document.body.append(workspace, scrim);
+  const target = workspace.querySelector("button")!;
+  vi.spyOn(target, "getBoundingClientRect").mockReturnValue(new DOMRect(10, 10, 44, 44));
+  const original = document.elementFromPoint;
+  Object.defineProperty(document, "elementFromPoint", { configurable: true, value: () => scrim });
+  try {
+    render(); open();
+    const trigger = host.querySelector<HTMLButtonElement>("[data-activity-inspect]")!;
+    vi.spyOn(trigger, "getBoundingClientRect").mockReturnValue(new DOMRect(10, 500, 160, 44));
+    Object.defineProperty(trigger, "scrollIntoView", { configurable: true, value: vi.fn() });
+    act(() => [...dialog().querySelectorAll("button")].find(b => b.textContent === "Close")!.click());
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+    expect(dialog()).toBeNull(); expect(document.activeElement).toBe(returnToPaige ? target : trigger);
+    expect(trigger.scrollIntoView).toHaveBeenCalledTimes(returnToPaige ? 0 : 1);
+    expect(feed.refresh).not.toHaveBeenCalled();
+  } finally {
+    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: original });
+    workspace.remove(); scrim.remove(); vi.restoreAllMocks();
+  }
+});

@@ -23,7 +23,7 @@ READY deployment and both official served-source reads were verified.
 [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3244#issuecomment-6596923447).
 Native customer behavior for this repair remains UNVERIFIED, not inferred from CI.
 
-Current consumer is local, not released: same original Rail family, exact original
+Current consumer is published DRAFT#3246, not released: same original Rail family, exact original
 event URL, shared typed evidence validator, original saved-target/domain receipt
 inspection, current-account semantic Play link, existing Executive return bookmark
 and original Operating Fabric/Chat adapter. Integrated222 controls/9 owning suites
@@ -32,16 +32,20 @@ and original type ratchet passed (baseline10/current6, no new errors); these are
 source/DOM cases, not authenticated acceptance. No accomplished-work aggregate,
 current approval, target achievement or causal business improvement is inferred.
 
-The proposed native exact-event signature/new authenticated function grant is
-**UNINSTALLED / OWNER DECISION PENDING**. It preserves the existing list ABI and
-owner-only target receipt/revision readers. Its written non-author review and24
-rollback reduced-schema observations are not full-schema or customer proof.
+The owner explicitly **APPROVED** the bounded native history-read grant on
+November3. Production installation/readback remains owed. Native foundation
+#3248 exact0438987811068a6beb8a4a57d0ae713d6dc3ac13 has own NON-AUTHOR6604585715
+CLEAR; fresh required CI and genuine Preview are in progress. Its fresh20010
+carrier preserves the original list ABI and owner-only target receipt/revision
+readers. Earlier Preview-applied15013 remains immutable in superseded#3247.
+Actual test-only57 full-schema35 PASS is separate from the earlier24 modeled
+reduced-schema observations, current native execution and customer proof.
 Original source/result disposition request928fb46c remains unacknowledged; no
 new domain-writer authority or peer source lease is inferred. Consumer release
 must follow the actual legitimate native prerequisite, current-source review,
 exact-head CI and production readback; no privilege or activation bypass.
 
-Functional: consumer local, native dependency held, full O13 INCOMPLETE.
+Functional: consumer published, approved native release/readback pending, full O13 INCOMPLETE.
 Visual: existing Executive world retained; changed native rendered desktop/narrow,
 zoom and reduced-motion proof UNVERIFIED after page-control timeouts.
 Experiential: controlled exact-event/reload/record/Back/refusal recovery passes;

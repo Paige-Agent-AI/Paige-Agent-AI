@@ -13,6 +13,8 @@ export interface PaymentExecutionPorts {
  persist(claim:ClaimedPayment,result:HostedPaymentReadback):Promise<void>;
  readSafe():Promise<Record<string,unknown>>;
  stripe:StripeHostedClient;
+ /** Original native operation selects GET-only recovery; dispatch never uses it. */
+ stripeForReadback?:(environment:'test'|'live')=>StripeHostedClient;
  publicOrigin:string;
 }
 const uncertain=()=>({ok:false,outcome:'outcome_unknown',code:'PAYMENT_READBACK_REQUIRED'});
@@ -42,7 +44,9 @@ export async function reconcilePayment(ports:PaymentExecutionPorts):Promise<Reco
   if(['settled','failed','expired','cancelled'].includes(claim.operation.state))return await ports.readSafe();
   const started=Date.parse(claim.dispatchStartedAt);
   if(!claim.claimToken||!Number.isFinite(started))return uncertain();
-  const result=await readStripeHostedRequest(claim.request,claim.operation,ports.stripe,
+  const stripe=ports.stripeForReadback?.(claim.operation.environment)??ports.stripe;
+  if(stripe.environment!==claim.operation.environment)return uncertain();
+  const result=await readStripeHostedRequest(claim.request,claim.operation,stripe,
    claim.operation.provider_operation_id,Math.max(0,Math.floor(started/1000)-60));
   await ports.persist(claim,result);
   return await ports.readSafe();

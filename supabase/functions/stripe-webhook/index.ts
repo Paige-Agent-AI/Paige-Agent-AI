@@ -1,6 +1,6 @@
 import type {SalesPaymentAdmin} from "../_shared/sales-payments/database-port.ts";
 import {routeSalesStripeIngress,verifySalesStripeIngress} from "../_shared/sales-payments/stripe-ingress.ts";
-import {salesStripeSecret,salesStripeObservationsEnabled} from "../_shared/sales-payments/stripe-configuration.ts";
+import {salesStripeSecret,salesStripeReadbackSecret,salesStripeObservationsEnabled} from "../_shared/sales-payments/stripe-configuration.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
@@ -445,7 +445,7 @@ serve(async (req) => {
     // financial result. No raw event body or provider error enters Sales evidence.
     const salesEvent=await routeSalesStripeIngress(supabaseAdmin as unknown as SalesPaymentAdmin,event,
       verifiedAccount==="sales"?"legacy":verifiedAccount,salesStripeSecret(name=>Deno.env.get(name)),
-      salesStripeObservationsEnabled(name=>Deno.env.get(name)));
+      salesStripeObservationsEnabled(name=>Deno.env.get(name)),environment=>salesStripeReadbackSecret(name=>Deno.env.get(name),environment));
     if(salesEvent.handled)return new Response(JSON.stringify({code:salesEvent.code}),{status:salesEvent.status,headers:{...corsHeaders,"Content-Type":"application/json","Cache-Control":"no-store"}});
 
     // A Sales-only signing secret authorizes no platform billing or provisioning.

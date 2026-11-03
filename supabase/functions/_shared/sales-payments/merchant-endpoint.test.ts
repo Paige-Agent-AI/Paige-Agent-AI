@@ -7,7 +7,7 @@ import * as command from './merchant-command.ts';
 import {admitMerchantCommand} from './merchant-admission.ts';
 import {merchantApprovalStore} from './merchant-approval-store.ts';
 import {recordCapabilityRun} from '../capability-record.ts';
-import {salesStripeSecret} from './stripe-configuration.ts';
+import {salesStripeSecret,salesStripeReadbackSecret} from './stripe-configuration.ts';
 const tenant='10000000-0000-4000-8000-000000000001',actor='30000000-0000-4000-8000-000000000001',operation='20000000-0000-4000-8000-000000000001';
 const source=readFileSync(new URL('../../tenant-stripe-connect/index.ts',import.meta.url),'utf8').replace(/^import .*;\r?$/gm,'');
 const js=transformSync(source,{loader:'ts',format:'esm'}).code;
@@ -60,7 +60,7 @@ function fixture(initial:Row|null=null,environmentOverrides:Record<string,string
   accountLinks={create:async()=>{calls.push('POST:link');return {url:'https://connect.stripe.com/setup/test'};}};
  }
  let handler:(req:Request)=>Promise<Response>=async()=>new Response();
- const deps={createClient:()=>client,Stripe:Provider,readStripeMerchant,...onboarding,...command,admitMerchantCommand,merchantApprovalStore,recordCapabilityRun,salesStripeSecret,Deno:{serve:(fn:typeof handler)=>{handler=fn;},env:{get:(key:string)=>Object.hasOwn(environmentOverrides,key)?environmentOverrides[key]:({SUPABASE_URL:'https://test.invalid',SUPABASE_SERVICE_ROLE_KEY:'synthetic-only',STRIPE_SECRET_KEY:initial?.provider_environment==='live'?'sk_live_SYNTHETIC_NOT_A_CREDENTIAL':'sk_test_SYNTHETIC_NOT_A_CREDENTIAL',PUBLIC_SITE_URL:'https://app.paigeagent.ai'} as Row)[key]}},console:{warn:(...args:unknown[])=>logs.push(args),error:(...args:unknown[])=>logs.push(args)}};
+ const deps={createClient:()=>client,Stripe:Provider,readStripeMerchant,...onboarding,...command,admitMerchantCommand,merchantApprovalStore,recordCapabilityRun,salesStripeSecret,salesStripeReadbackSecret,Deno:{serve:(fn:typeof handler)=>{handler=fn;},env:{get:(key:string)=>Object.hasOwn(environmentOverrides,key)?environmentOverrides[key]:({SUPABASE_URL:'https://test.invalid',SUPABASE_SERVICE_ROLE_KEY:'synthetic-only',STRIPE_SECRET_KEY:initial?.provider_environment==='live'?'sk_live_SYNTHETIC_NOT_A_CREDENTIAL':'sk_test_SYNTHETIC_NOT_A_CREDENTIAL',PUBLIC_SITE_URL:'https://app.paigeagent.ai'} as Row)[key]}},console:{warn:(...args:unknown[])=>logs.push(args),error:(...args:unknown[])=>logs.push(args)}};
  new Function(...Object.keys(deps),js)(...Object.values(deps));
  const send=async(body:Row)=>{const result=await handler(new Request('https://test.invalid',{method:'POST',headers:{Authorization:'Bearer synthetic-session'},body:JSON.stringify(body)}));return {status:result.status,body:await result.json() as Row};};
  const request={command:{action:'merchant.start_onboarding',provider:'stripe'},expected_tenant_id:tenant,operation_id:operation};
@@ -108,6 +108,32 @@ describe('actual merchant endpoint synthetic SDK/database ports',()=>{
 });
 
 describe('Sales-only configured credential in the actual merchant endpoint',()=>{
+ it('preserves GET-only recovery of an original LIVE reservation while new Sales setup uses TEST',async()=>{
+  const initial={...pending,provider_environment:'live'};
+  const f=fixture(initial,{STRIPE_SECRET_KEY:'sk_live_SYNTHETIC_PLATFORM',SALES_STRIPE_SECRET_KEY:'sk_test_SYNTHETIC_SALES'});
+  expect(await f.send({action:'refresh_status',expected_tenant_id:tenant})).toMatchObject({status:200,body:{provider_environment:'live',state:'outcome_unknown'}});
+  expect(f.providerKeys).toEqual(['sk_live_SYNTHETIC_PLATFORM']);expect(f.calls).toContain('GET:list');
+  expect(f.tables.tenant_stripe_accounts[0]).toEqual(initial);expect(f.calls.some(c=>c.startsWith('POST:'))).toBe(false);
+  expect(f.tables.paige_pending_confirmations).toHaveLength(0);
+ });
+ it('cannot borrow the LIVE recovery credential to mint a new LIVE merchant handoff during TEST setup',async()=>{
+  const f=fixture({...pending,stripe_account_id:'acct_fixture',provider_environment:'live'},{STRIPE_SECRET_KEY:'sk_live_SYNTHETIC_PLATFORM',SALES_STRIPE_SECRET_KEY:'sk_test_SYNTHETIC_SALES'});
+  expect(await f.send({...f.request,command:{action:'merchant.login_link',provider:'stripe'}})).toMatchObject({status:409,body:{code:'PROVIDER_ENVIRONMENT_MISMATCH'}});
+  expect(f.providerKeys).toEqual([]);expect(f.calls.some(c=>c.startsWith('POST:'))).toBe(false);
+  expect(f.tables.paige_pending_confirmations).toHaveLength(0);
+ });
+ it('can recover the exact older LIVE reservation without turning it into a TEST-ready merchant',async()=>{
+  const f=fixture({...pending,provider_environment:'live'},{STRIPE_SECRET_KEY:'sk_live_SYNTHETIC_PLATFORM',SALES_STRIPE_SECRET_KEY:'sk_test_SYNTHETIC_SALES'});
+  f.recoverAccount();
+  expect(await f.send({action:'refresh_status',expected_tenant_id:tenant})).toMatchObject({status:200,body:{provider_environment:'live',state:'unverified',connected:true,recovery_reason:'PROVIDER_ENVIRONMENT_UNVERIFIED'}});
+  expect(f.tables.tenant_stripe_accounts[0]).toMatchObject({stripe_account_id:'acct_fixture',provider_environment:'live',binding_version:2});
+  expect(f.calls.some(c=>c.startsWith('POST:'))).toBe(false);expect(f.tables.paige_pending_confirmations).toHaveLength(0);
+ });
+ it('cannot recover using LIVE when the Sales namespace has been explicitly disabled',async()=>{
+  const f=fixture({...pending,provider_environment:'live'},{STRIPE_SECRET_KEY:'sk_live_SYNTHETIC_PLATFORM',SALES_STRIPE_SECRET_KEY:''});
+  expect(await f.send({action:'refresh_status',expected_tenant_id:tenant})).toMatchObject({status:503,body:{code:'PROVIDER_UNAVAILABLE'}});
+  expect(f.providerKeys).toEqual([]);expect(f.calls.some(c=>c.startsWith('GET:')||c.startsWith('POST:'))).toBe(false);
+ });
  it('shows TEST setup while the unrelated platform billing key remains LIVE',async()=>{
   const f=fixture(null,{STRIPE_SECRET_KEY:'sk_live_SYNTHETIC_PLATFORM',SALES_STRIPE_SECRET_KEY:'sk_test_SYNTHETIC_SALES'});
   expect(await f.send({action:'status',expected_tenant_id:tenant})).toMatchObject({status:200,body:{provider_environment:'test',state:'not_connected'}});

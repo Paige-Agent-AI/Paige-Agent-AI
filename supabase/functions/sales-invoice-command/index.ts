@@ -1,4 +1,6 @@
-import {salesStripeSecret} from '../_shared/sales-payments/stripe-configuration.ts';
+import {salesStripeSecret,salesStripeReadbackSecret} from '../_shared/sales-payments/stripe-configuration.ts';
+import {salesStripeClient} from '../_shared/sales-payments/stripe-client.ts';
+const paymentReadback=(environment:'test'|'live')=>salesStripeClient(salesStripeReadbackSecret(name=>Deno.env.get(name),environment));
 import type {SalesPaymentAdmin} from "../_shared/sales-payments/database-port.ts";
 import { preparePaymentReview,executeInvoicePaymentRequest,paymentExecutionPorts } from "../_shared/sales-payments/invoice-payment-adapter.ts";
 import { parseCanonicalPaymentRequestCommand,paymentRequestIntentFromCommand,paymentRequestReviewSummary } from "../_shared/sales-payments/request-command.ts";
@@ -74,7 +76,7 @@ Deno.serve(async req => {
         if(saved.state==='prepared'){
           preparedPaymentRecovery=true;preparedPaymentCommand={...exact};
         }else {
-          const result=await reconcilePayment(paymentExecutionPorts(paymentAdmin,paymentCaller,salesStripeSecret(name=>Deno.env.get(name)),PAIGE_APP_ORIGIN));
+          const result=await reconcilePayment(paymentExecutionPorts(paymentAdmin,paymentCaller,salesStripeSecret(name=>Deno.env.get(name)),PAIGE_APP_ORIGIN,paymentReadback));
           return response(200,{...result,replayed:true,capability:"sales_create_payment_request"});
         }
       }catch {return response(503,{ok:false,outcome:"outcome_unknown",code:"PAYMENT_READBACK_REQUIRED",operation_id:body.operation_id});}
@@ -237,7 +239,7 @@ Deno.serve(async req => {
   }
   if(decided.action==='invoice.payment_request') {
     try {
-      const result=await executeInvoicePaymentRequest(paymentAdmin,{...paymentCaller,operationId:args.operation_id},parseCanonicalPaymentRequestCommand(decided),governance,salesStripeSecret(name=>Deno.env.get(name)),PAIGE_APP_ORIGIN);
+      const result=await executeInvoicePaymentRequest(paymentAdmin,{...paymentCaller,operationId:args.operation_id},parseCanonicalPaymentRequestCommand(decided),governance,salesStripeSecret(name=>Deno.env.get(name)),PAIGE_APP_ORIGIN,paymentReadback);
       return response(result.ok===true?200:503,{...result,capability});
     }catch {return response(503,{ok:false,outcome:"outcome_unknown",code:"PAYMENT_READBACK_REQUIRED",operation_id:args.operation_id});}
   }

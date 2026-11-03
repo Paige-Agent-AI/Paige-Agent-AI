@@ -7,6 +7,8 @@ import { createRequestKeyKeeper } from "./mission-retry";
 import { useBusinessGamePlanMissions, type StrategicPlay } from "./data/useBusinessGamePlanMissions";
 import { MissionTargetsPanel } from "./MissionTargetsPanel";
 import { useOptionalTenantContext } from "@/hooks/useTenantContext";
+import { MissionDocumentSteps } from './MissionDocumentSteps';
+import { normalizeDocumentWorkIntent } from '../../supabase/functions/_shared/business-mission-document-intent';
 
 type Props = { workspaceId?: string | null; openPaige?: () => void; onNotice?: (message: string) => void;
   selectedPlayId?: string | null; onSelectPlay?: (id: string) => void; onClosePlay?: () => void };
@@ -41,6 +43,9 @@ function formFrom(detail: BusinessMissionDetail): Form {
     missingInformation: detail.brief.missing_information,
     nextAction: detail.mission.next_action,
     revisionReason: "",
+    ...(!['source_changed', 'source_unavailable'].includes(detail.brief.document_work_intent_status ?? '')
+      && Object.prototype.hasOwnProperty.call(detail.brief, 'document_work_intent')
+      ? {documentWorkIntent: detail.brief.document_work_intent} : {}),
   };
 }
 
@@ -209,6 +214,12 @@ function ScopedPlanInMotion({ workspaceId, openPaige, onNotice, selectedPlayId, 
       setError("Add a short reason for this revision.");
       return;
     }
+    const hasDocumentIntent = Object.prototype.hasOwnProperty.call(form, 'documentWorkIntent');
+    const documentIntent = hasDocumentIntent ? normalizeDocumentWorkIntent(form.documentWorkIntent, workspaceId ?? '') : null;
+    if (documentIntent?.ok === false) {
+      setError('Complete each agreement step, check its source references and dates, and remove any circular dependencies.');
+      return;
+    }
     setBusy(true); setError(null);
     const payload = {
       title: form.title,
@@ -222,6 +233,7 @@ function ScopedPlanInMotion({ workspaceId, openPaige, onNotice, selectedPlayId, 
       assumptions: form.assumptions,
       missing_information: form.missingInformation,
       next_action: text(form.nextAction) || null,
+      ...(documentIntent?.ok === true ? {document_work_intent: documentIntent.intent} : {}),
       ...(drawer === "edit" && selected ? {
         mission_id: selected.mission.id,
         expected_revision: selected.mission.revision,
@@ -350,6 +362,9 @@ function ScopedPlanInMotion({ workspaceId, openPaige, onNotice, selectedPlayId, 
                   <Field label="How Paige may help - not a grant of authority" value={form.ownerAuthority} onChange={(value) => setForm({ ...form, ownerAuthority: value })} area />
                   <Field label="Assumptions (one per line)" value={form.assumptions.join("\n")} onChange={(value) => setForm({ ...form, assumptions: lines(value) })} area />
                   <Field label="Missing information (one per line)" value={form.missingInformation.join("\n")} onChange={(value) => setForm({ ...form, missingInformation: lines(value) })} area />
+                  <MissionDocumentSteps tenantId={workspaceId} value={form.documentWorkIntent}
+                    status={drawer === 'edit' ? selected?.brief.document_work_intent_status : undefined} disabled={busy}
+                    onChange={value => setForm(current => ({...current, documentWorkIntent: value}))}/>
                   {drawer === "edit" && <Field label="Why this changed" value={form.revisionReason} onChange={(value) => setForm({ ...form, revisionReason: value })} />}
                   {error && <div className="ov-err" role="alert">{error}</div>}
                 </div>
@@ -387,6 +402,7 @@ function PlayDetail({ workspaceId, detail, pending, setPending, reason, setReaso
     <div className="pim-detail-stage">{proposed && detail.mission.request_source === "paige_chat" ? "Awaiting owner approval" : state === "stopped" ? "Archived" : state === "completed" ? "Complete" : state[0].toUpperCase() + state.slice(1)} - revision {detail.mission.revision}</div>
     <MissionTargetsPanel workspaceId={workspaceId} mission={detail.mission} />
     <Fact label="Desired outcome" value={detail.brief.desired_outcome} /><Fact label="Horizon" value={detail.brief.deadline_on || "Open horizon"} /><Fact label="Starting point" value={detail.brief.baseline} /><Fact label="Approach" value={detail.brief.strategy} /><Fact label="Success criteria" value={detail.brief.success_definition} /><Fact label="Next meaningful step" value={detail.mission.next_action || "Not set"} /><Fact label="Next owner" value="Owner" />
+    <MissionDocumentSteps tenantId={workspaceId} value={detail.brief.document_work_intent} status={detail.brief.document_work_intent_status} disabled={busy}/>
     {state === "blocked" && detail.mission.state_reason && <div className="pim-blocker"><AlertTriangle />{detail.mission.state_reason}</div>}
     {(state === "completed" || state === "stopped") && detail.mission.outcome_summary && <Fact label="Recorded outcome" value={detail.mission.outcome_summary} />}
     <div className="ov-note"><Info /><span>Source: canonical Business Game Plan record, revision {detail.mission.revision}. Mind and durable Memory are unavailable for this play.</span></div>

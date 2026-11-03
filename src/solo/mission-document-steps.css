@@ -1,0 +1,29 @@
+.mission-document-steps {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.mission-document-steps .ov-field > span,
+.mission-document-steps legend {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.mission-document-steps .fin {
+  min-width: 0;
+  width: 100%;
+  font-size: 14px;
+}
+.mission-document-steps .sd-btn {
+  min-height: 36px;
+  font-size: 13px;
+  white-space: normal;
+}
+.mission-document-steps label:not(.ov-field) {
+  min-height: 32px;
+  padding-block: 4px;
+}
+@media (pointer: coarse) {
+  .mission-document-steps .sd-btn,
+  .mission-document-steps label:not(.ov-field) { min-height: 44px; }
+}

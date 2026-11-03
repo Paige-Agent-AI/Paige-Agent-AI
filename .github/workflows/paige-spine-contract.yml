@@ -99,6 +99,7 @@ on:
       - "scripts/proof/exp01-reviewed-setup-candidate.sql"
       - "supabase/tests/team_authority_readiness.sql"
       - "supabase/tests/business_mission_foundation.sql"
+      - "supabase/tests/exp13_mission_document_intent.sql"
       - "supabase/tests/zion_role_remap.sql"
       - "supabase/tests/zion_planning_instructions.sql"
       - "supabase/tests/business_mission_numeric_targets.sql"
@@ -931,6 +932,8 @@ jobs:
       - run: supabase test db supabase/tests/team_authority_readiness.sql
       # Business Mission owner/RLS/lifecycle proof and true concurrent replay/CAS proof.
       - run: supabase test db supabase/tests/business_mission_foundation.sql
+      - run: supabase test db supabase/tests/exp13_mission_document_intent.sql
+      - run: node scripts/proof/exp13-mission-source-concurrency.mjs
       - name: Mission-linked numeric targets — caller scope, real issuer, revisions and replay (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/business_mission_numeric_targets.sql

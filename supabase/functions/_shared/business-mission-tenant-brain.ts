@@ -13,6 +13,8 @@
  * `get_business_mission` projector returns the requested persisted state.
  */
 
+import { normalizeDocumentWorkIntent, type DocumentWorkIntent } from './business-mission-document-intent.ts';
+
 type RpcError = { message?: string } | null;
 
 export type MissionRpcPort = {
@@ -329,6 +331,7 @@ function verifyPersistedChange(
   canonical: CanonicalMission,
   requestSource: "paige_chat" | "owner_ui",
   threadId?: string | null,
+  documentCheck?: { tenantId: string; expected: DocumentWorkIntent | null; explicit: boolean; preservedHash?: string | null },
 ): boolean {
   const missionId = stringValue(writeResult.mission_id);
   const resultRevision = integerValue(writeResult.revision);
@@ -379,6 +382,27 @@ function verifyPersistedChange(
     if (!valuesEqual(canonical.brief[field], expected)) return false;
   }
   if (tool === "mission_revise" && !valuesEqual(canonical.brief.revision_reason, args.revision_reason)) return false;
+  if (documentCheck) {
+    const actual = canonical.brief.document_work_intent;
+    if (documentCheck.preservedHash !== undefined) {
+      if (canonical.brief.document_work_intent_hash !== documentCheck.preservedHash) return false;
+      if (documentCheck.preservedHash !== null && documentCheck.expected === null) {
+        // The original getter intentionally withholds inaccessible quotations.
+        // Its native digest can prove unchanged retention, never permission to
+        // reveal those quotations or to create work from them.
+        if (actual === null) return ['source_changed', 'source_unavailable'].includes(String(canonical.brief.document_work_intent_status));
+        return normalizeDocumentWorkIntent(actual, documentCheck.tenantId).ok;
+      }
+    }
+    if (documentCheck.explicit && documentCheck.expected === null
+      && Object.prototype.hasOwnProperty.call(canonical.brief, 'document_work_intent_status')
+      && (canonical.brief.document_work_intent_status !== 'none' || canonical.brief.document_work_intent_hash !== null)) return false;
+    // Legacy source-free getters may omit the new nullable column. An explicit
+    // clear requires actual readback; omission cannot prove a new field saved.
+    if (actual === undefined && !documentCheck.explicit && documentCheck.expected === null) return true;
+    const parsed = normalizeDocumentWorkIntent(actual, documentCheck.tenantId);
+    if (!parsed.ok || JSON.stringify(parsed.intent) !== JSON.stringify(documentCheck.expected)) return false;
+  }
   return true;
 }
 
@@ -400,6 +424,9 @@ function writerFor(tool: MissionToolName, args: Record<string, unknown>, request
       p_next_action: args.next_action ?? null,
       p_request_source: requestSource,
       p_request_thread_id: requestSource === "paige_chat" ? threadId ?? null : null,
+      ...(Object.prototype.hasOwnProperty.call(args, 'document_work_intent') ? {
+        p_document_work_intent_present: true, p_document_work_intent: args.document_work_intent,
+      } : {}),
     },
   };
   if (tool === "mission_revise") return {
@@ -420,6 +447,9 @@ function writerFor(tool: MissionToolName, args: Record<string, unknown>, request
       p_revision_reason: args.revision_reason,
       p_title: args.title ?? null,
       p_next_action: args.next_action ?? null,
+      ...(Object.prototype.hasOwnProperty.call(args, 'document_work_intent') ? {
+        p_document_work_intent_present: true, p_document_work_intent: args.document_work_intent,
+      } : {}),
     },
   };
   return {
@@ -454,6 +484,18 @@ export async function executeVerifiedMissionMutation(input: {
     return { success: false, verified: false, code: "ACTIVE_ACCOUNT_CHANGED" };
   }
 
+  const args = { ...input.args };
+  const explicitIntent = Object.prototype.hasOwnProperty.call(args, 'document_work_intent');
+  let expectedIntent: DocumentWorkIntent | null = null;
+  let preservedIntentHash: string | null | undefined;
+  if (explicitIntent) {
+    if (input.tool === 'mission_transition') return { success: false, verified: false, code: 'MISSION_DOCUMENT_INTENT_INVALID' };
+    const normalized = normalizeDocumentWorkIntent(args.document_work_intent, tenantId);
+    if (normalized.ok === false) return { success: false, verified: false, code: normalized.code };
+    expectedIntent = normalized.intent;
+    args.document_work_intent = normalized.intent;
+  }
+
   const requestKey = stringValue(input.args.request_key);
   if (!requestKey) {
     return { success: false, verified: false, code: "MISSION_REQUEST_KEY_MISSING" };
@@ -464,13 +506,25 @@ export async function executeVerifiedMissionMutation(input: {
     if (!selectedId) return { success: false, verified: false, code: "MISSION_ID_REQUIRED" };
     const selected = await readMissionForTenant(input.caller, tenantId, selectedId, input.observedAt ?? new Date());
     if (!selected.ok) return { success: false, verified: false, code: "code" in selected ? selected.code : "MISSION_READ_FAILED" };
+    if (input.tool === 'mission_revise' && !explicitIntent) {
+      const previous = normalizeDocumentWorkIntent(selected.canonical.brief.document_work_intent ?? null, tenantId);
+      if (!previous.ok) return { success: false, verified: false, code: 'MISSION_DOCUMENT_INTENT_INVALID' };
+      expectedIntent = previous.intent;
+      if (Object.prototype.hasOwnProperty.call(selected.canonical.brief, 'document_work_intent_hash')) {
+        const hash = selected.canonical.brief.document_work_intent_hash;
+        if (hash !== null && (typeof hash !== 'string' || !/^[0-9a-f]{64}$/.test(hash))) {
+          return { success: false, verified: false, code: 'MISSION_DOCUMENT_INTENT_INVALID' };
+        }
+        preservedIntentHash = hash as string | null;
+      }
+    }
     // Do not reject a revision mismatch here. The existing RPC distinguishes a stale
     // new request from a same-request receipt replay. Pre-rejecting would make a retry
     // unable to recover its verified readback and Rail evidence after the first commit.
   }
 
   const requestSource = input.requestSource ?? "paige_chat";
-  const writer = writerFor(input.tool, input.args, requestSource, input.threadId);
+  const writer = writerFor(input.tool, args, requestSource, input.threadId);
   let writeData: unknown;
   try {
     const { data, error } = await input.caller.rpc(writer.name, writer.args);
@@ -524,7 +578,8 @@ export async function executeVerifiedMissionMutation(input: {
     missionId,
     input.observedAt ?? new Date(),
   );
-  if (!readback.ok || !verifyPersistedChange(input.tool, input.args, writeResult, readback.canonical, requestSource, input.threadId)) {
+  if (!readback.ok || !verifyPersistedChange(input.tool, args, writeResult, readback.canonical, requestSource, input.threadId,
+    { tenantId, expected: expectedIntent, explicit: explicitIntent, preservedHash: preservedIntentHash })) {
     return {
       success: false,
       verified: false,

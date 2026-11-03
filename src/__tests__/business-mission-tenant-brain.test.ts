@@ -13,6 +13,15 @@ const TENANT_ID = "22222222-2222-4222-8222-222222222222";
 const ACTOR_ID = "33333333-3333-4333-8333-333333333333";
 const REQUEST_KEY = "44444444-4444-4444-8444-444444444444";
 
+const documentIntent = () => ({
+  contractVersion: 1,
+  sources: [{ reference: { contractVersion: 1, tenantId: TENANT_ID, documentId: '66666666-6666-4666-8666-666666666666', revision: 2, contentSha256: 'a'.repeat(64) },
+    title: 'Synthetic engagement', excerpts: [{ start: 0, end: 5, text: 'Start' }] }],
+  steps: [{ id: '77777777-7777-4777-8777-777777777777', title: 'Hold kickoff', description: 'Confirm the required inputs.',
+    responsible: { kind: 'unassigned' }, dueOn: null, dependencies: [], sourceIds: ['66666666-6666-4666-8666-666666666666'],
+    basis: 'source_obligation', proposedTask: { action: 'task.create', assigneeUserId: null } }],
+});
+
 const resolveBusinessMissionContext = (
   input: Omit<Parameters<typeof resolveBusinessMissionContextImpl>[0], "expectedTenantId">,
 ) => resolveBusinessMissionContextImpl({ expectedTenantId: TENANT_ID, ...input });
@@ -721,5 +730,81 @@ describe("Business Game Plan owner-action and archive contracts", () => {
     const proof = readFileSync("supabase/tests/business_mission_foundation.sql", "utf8");
     expect(proof).toContain("public.get_business_mission((SELECT id FROM mission_id))");
     expect(proof).not.toContain("SELECT closure_outcome FROM public.business_missions");
+  });
+});
+
+describe('original Mission document intent persistence', () => {
+  async function revise(supplied: Record<string, unknown>, beforeIntent: unknown, afterIntent: unknown,
+    metadata: {before?: Record<string, unknown>; after?: Record<string, unknown>} = {}) {
+    const before = canonical({ mission: { revision: 3 }, brief: { version: 2, document_work_intent: beforeIntent, ...metadata.before } });
+    const after = canonical({ mission: { revision: 4 }, brief: { version: 4, document_work_intent: afterIntent, ...metadata.after } });
+    const caller = rpcPort({
+      current_user_tenant_id: { data: TENANT_ID, error: null },
+      get_business_mission: [{ data: before, error: null }, { data: after, error: null }],
+      revise_business_mission_brief: { data: { ok: true, mission_id: MISSION_ID, revision: 4, state: 'active' }, error: null },
+    });
+    const recordRun = vi.fn(async () => true);
+    const result = await executeVerifiedMissionMutation({ caller, actorId: ACTOR_ID, tool: 'mission_revise', recordRun,
+      args: { ...Object.fromEntries(Object.entries(before.brief).filter(([key]) => key !== 'document_work_intent')),
+        ...supplied, mission_id: MISSION_ID, expected_revision: 3, request_key: REQUEST_KEY } });
+    return { result, caller, recordRun };
+  }
+
+  it('forwards an explicitly reviewed intent through the original writer and verifies exact canonical readback', async () => {
+    const intent = documentIntent();
+    const { result, caller, recordRun } = await revise({ document_work_intent: intent }, null, intent);
+    expect(result).toMatchObject({ success: true, verified: true });
+    expect(caller.calls.find(([name]) => name === 'revise_business_mission_brief')?.[1]).toMatchObject({
+      p_document_work_intent_present: true, p_document_work_intent: intent,
+    });
+    expect(recordRun).toHaveBeenCalledOnce();
+  });
+
+  it('refuses a save/read disagreement and does not turn a missing source or changed step into Rail success', async () => {
+    for (const after of [null, { ...documentIntent(), steps: [] }, { ...documentIntent(), sources: [] }]) {
+      const { result, recordRun } = await revise({ document_work_intent: documentIntent() }, null, after);
+      expect(result).toMatchObject({ success: false, verified: false, mutationMayHavePersisted: true, code: 'MISSION_READBACK_MISMATCH' });
+      expect(recordRun).not.toHaveBeenCalled();
+    }
+  });
+
+  it('preserves the original saved intent for an older client that omits the field', async () => {
+    const preserved = await revise({}, documentIntent(), documentIntent());
+    expect(preserved.result).toMatchObject({ success: true, verified: true });
+    expect(preserved.caller.calls.find(([name]) => name === 'revise_business_mission_brief')?.[1]).not.toHaveProperty('p_document_work_intent_present');
+    const dropped = await revise({}, documentIntent(), null);
+    expect(dropped.result).toMatchObject({ success: false, verified: false, mutationMayHavePersisted: true });
+    expect(dropped.recordRun).not.toHaveBeenCalled();
+  });
+
+  it('admits an explicit clear but rejects invalid or foreign intent before the original write', async () => {
+    const cleared = await revise({ document_work_intent: null }, documentIntent(), null);
+    expect(cleared.result).toMatchObject({ success: true, verified: true });
+    expect(cleared.caller.calls.find(([name]) => name === 'revise_business_mission_brief')?.[1]).toMatchObject({ p_document_work_intent_present: true, p_document_work_intent: null });
+    const wrong = documentIntent(); wrong.sources[0].reference.tenantId = MISSION_ID;
+    for (const bad of [{}, wrong, { ...documentIntent(), approved: true }]) {
+      const refused = await revise({ document_work_intent: bad }, null, bad);
+      expect(refused.result).toMatchObject({ success: false, verified: false, code: 'MISSION_DOCUMENT_INTENT_INVALID' });
+      expect(refused.caller.calls.some(([name]) => name === 'revise_business_mission_brief')).toBe(false);
+      expect(refused.recordRun).not.toHaveBeenCalled();
+    }
+  });
+
+  it('verifies original opaque intent identity when inaccessible quotations are withheld on both reads', async () => {
+    const before={document_work_intent_status:'source_unavailable',document_work_intent_hash:'a'.repeat(64)};
+    const kept=await revise({},null,null,{before,after:before});
+    expect(kept.result).toMatchObject({success:true,verified:true});
+    for (const hash of ['b'.repeat(64),null]) {
+      const lost=await revise({},null,null,{before,after:{...before,document_work_intent_hash:hash}});
+      expect(lost.result).toMatchObject({success:false,verified:false,mutationMayHavePersisted:true});
+      expect(lost.recordRun).not.toHaveBeenCalled();
+    }
+  });
+
+  it('does not confuse redaction of a retained intent with verification that an explicit clear succeeded', async () => {
+    const redacted={document_work_intent_status:'source_unavailable',document_work_intent_hash:'a'.repeat(64)};
+    const result=await revise({document_work_intent:null},null,null,{before:redacted,after:redacted});
+    expect(result.result).toMatchObject({success:false,verified:false,mutationMayHavePersisted:true});
+    expect(result.recordRun).not.toHaveBeenCalled();
   });
 });

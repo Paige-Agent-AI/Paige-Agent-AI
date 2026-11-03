@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: UNVERIFIED: No rendered candidate prototype/browser drive yet. N
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An authorized existing SOLO actor reviews a source-backed plan, edits its proposed steps, saves and reopens the same original record.
 VISUAL_DIRECTION: PASS: Extend the existing game-plan world; one original drawer, no menu or competing workspace. Owned text uses14px/body,13px/labels; source text wraps;36px buttons and44px coarse-pointer targets.
 AUTOMATED_EVIDENCE: PASS: Bounded current local suites54PASS, original assertions retained; actual SQL structural29PASS, including UTF16/injected text/closed schema/date/dependency controls. These are not native installation or authenticated customer proof.
-STATIC_EVIDENCE: PASS: Scoped ESLint0; whole app type ratchet baseline10/current6/0NEW; app-mode ES2020 module compilerPASS. No baseline changed. Full production build/carrier proof remains owed.
+STATIC_EVIDENCE: PASS: Scoped ESLint0; whole app type ratchet baseline10/current6/0NEW; app-mode ES2020 module compilerPASS; actual production buildPASS after current-main composition and review repairs. No baseline changed. Full native carrier proof remains owed.
 RENDERED_EVIDENCE: UNVERIFIED: New plan component has not been rendered in a managed Preview or live authenticated account.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Actual saved plan/receipt/reload/reopen and original Task creation are unverified. React ports prove only bounded UI forwarding and response retirement.
 AUTHENTICATED_RUNTIME: UNVERIFIED: Prospective native forward is NOT installed. Source/step approval binding through the original Task writer remains missing.
@@ -27,13 +27,13 @@ ACCEPTANCE_CRITERIA: Reviewed sources remain bound to exact canonical text/versi
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: E02 named Mission types/normalization/forward/readback/PlanInMotion window only; original Knowledge validator unchanged. CRM writer/admission, Source trusted-writer adapter, role expansion and new effect authority are not implemented here.
 
-INTERNAL_BUILD_IDENTITY: Development base normally fast-forwarded to current f29dbfeeaa82f861fc785b85b042a999a4e9d0ac with all incoming leaves preserved; candidate identity is its subsequent immutable Git/PR head, not that base; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLIED(20271130020013); edge=NOT_DEPLOYED(business-mission-action dependency); evidence=this record plus original ANT21/ANT147/ANT161.
+INTERNAL_BUILD_IDENTITY: Development base normally fast-forwarded to current f29dbfeeaa82f861fc785b85b042a999a4e9d0ac with all incoming leaves preserved; candidate identity is its subsequent immutable Git/PR head, not that base; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271130020013 not installed); edge=PROOF_OWED(business-mission-action dependency bundle not released); evidence=this record plus original ANT21/ANT147/ANT161.
 RELEASE_CHANNEL: development: unpublished candidate; no cohort activation or production installation.
 RELEASE_CLASSIFICATION: internal-only: incomplete slice of the SAME joined outcome, not another customer outcome.
 CUSTOMER_RELEASE_IDENTITY: none: whole outcome incomplete and no customer-publication approval.
 RELEASE_NOTE_REQUIRED: no: internal candidate; no customer announcement.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source implementation/local controls only; PROOF OWED native persistence and saved-plan usability; original governed source/plan-to-Task connection remains unfinished. No new LIVE claim.
-RELEASE_RECOVERY: position=unapplied forward/candidate can be corrected before publication; applied original carriers and immutable rows remain intact; reference=original Mission/source contracts and this evidence.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source implementation/local controls only; native persistence and saved-plan usability are proof owed and original governed source/plan-to-Task connection remains unfinished. No new LIVE claim.
+RELEASE_RECOVERY: position=unapplied guarded forward with original applied carriers and immutable rows intact; reference=original Mission/source contracts and this evidence.
 
 ## Scope, ownership and reuse
 
@@ -67,6 +67,7 @@ The existing drawer body remains the scroll owner. No replacement menu, navigati
 - A local full compiler run found four owned ES2020/discriminant errors; they were repaired without changing the baseline. Subsequent whole ratchet is baseline10/current6/0NEW. Scoped ESLint is0errors/0warnings. No full-schema/carrier success is inferred.
 - NON-AUTHOR source review requested changes for a source-lock/owner-revocation race and missing explicit removal of withheld steps. The prospective original create/revise now recheck original Mission ownership after the original source locks, with original owner-context/Knowledge bodies and ACLs unchanged. A new two-session proof observes actual blocking and verifies revoked create/revise have no committed effects in the existing disposable full-schema CI stack; runtime result is still owed. The withheld-intent editor now has explicit removal without displaying hidden content; its new UI control genuinely failed9PASS/1FAIL before repair and passes10/10 afterward. No released customer source was affected by these unpublished findings.
 - New original full-schema rollback test contains33 assertions for saved source/steps/readback, exact committed replay, version/title/quotation/CAS disagreement, legacy omission, explicit clear, immutable history, staleness/redaction, tenant A-B-A and role revocation. It is wired beside the original unchanged34-assertion Mission suite, together with the two-session test. Execution is UNVERIFIED until the real full-schema job runs; structural PostgreSQL checks do not substitute for it.
+- Fresh publication scan resolves all58 current open PR heads plus current main, with59/59 complete migration manifests; highest published and actual production frontier are both20271130010103. Proposed30020013 remains absent in production. All original lower E03 carriers are already installed. This is ordering/absence evidence, not candidate installation.
 
 ## Established-world and craft review
 

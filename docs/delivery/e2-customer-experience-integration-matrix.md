@@ -1,5 +1,60 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## November3 — O13 is the one authorized outcome; original result/reopen integration
+
+The owner authorized the next outcome after the O06 customer-verification report.
+**O13 alone is active; O06_CUSTOMER_VERIFIED_OWNER_ACCEPTANCE_PENDING is the
+preceding reported state.** [O06 original final proof](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3211#issuecomment-6592544760)
+supersedes older pending O06 observations below without rewriting their history.
+All other original outcomes/nine analytics remain queued. Finish O13, report the
+useful completed result, then STOP for the owner's next explicit approval.
+
+Original O13: actor-attributed accountable activity and receipts. The existing
+Rail/domain records remain authoritative. Released #3231 inspection and #3240
+focus repair do not prove original business completion or full recovery; two real
+earlier offscreen-focus FAILs are retained. #3242 mechanical Master closeout is
+actually released as7f5f23f08cea8c2b312568e1151205500eec5af0 with exact review,
+required CI, READY deployment and both official version/bootstrap readbacks.
+That closeout adds no customer capability or recursive log. #3244's absent-time/
+malformed-read correction is actually released as3e10a49725e90669aa99caa6bf73195911bd6365,
+tree934abcef26b2458ba87d3ae1ccfdc89d66e01152 matching independent review;
+all10 applicable exact-head checks and both web statuses passed. Exact production
+READY deployment and both official served-source reads were verified.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3244#issuecomment-6596923447).
+Native customer behavior for this repair remains UNVERIFIED, not inferred from CI.
+
+Current consumer is published DRAFT#3246, not released: same original Rail family, exact original
+event URL, shared typed evidence validator, original saved-target/domain receipt
+inspection, current-account semantic Play link, existing Executive return bookmark
+and original Operating Fabric/Chat adapter. Integrated222 controls/9 owning suites
+passed together (overlapping earlier counts), scoped lint0/0, production build
+and original type ratchet passed (baseline10/current6, no new errors); these are controlled
+source/DOM cases, not authenticated acceptance. No accomplished-work aggregate,
+current approval, target achievement or causal business improvement is inferred.
+
+The owner explicitly **APPROVED** the bounded native history-read grant on
+November3. Production installation/readback remains owed. Native foundation
+#3248 exact0438987811068a6beb8a4a57d0ae713d6dc3ac13 has own NON-AUTHOR6604585715
+CLEAR; fresh required CI and genuine Preview are in progress. Its fresh20010
+carrier preserves the original list ABI and owner-only target receipt/revision
+readers. Earlier Preview-applied15013 remains immutable in superseded#3247.
+Actual test-only57 full-schema35 PASS is separate from the earlier24 modeled
+reduced-schema observations, current native execution and customer proof.
+Original source/result disposition request928fb46c remains unacknowledged; no
+new domain-writer authority or peer source lease is inferred. Consumer release
+must follow the actual legitimate native prerequisite, current-source review,
+exact-head CI and production readback; no privilege or activation bypass.
+
+Functional: consumer published, approved native release/readback pending, full O13 INCOMPLETE.
+Visual: existing Executive world retained; changed native rendered desktop/narrow,
+zoom and reduced-motion proof UNVERIFIED after page-control timeouts.
+Experiential: controlled exact-event/reload/record/Back/refusal recovery passes;
+two ordinary customer contexts and persisted original Chat evidence remain owed.
+Founder Acceptance: OPEN. Algorithm Support and existing PARTIAL Executive/nine
+catalogue readiness unchanged. Orchestration: original read-only Rail/Fabric and
+domain receipt readers; no new writer, approval, job or executor.
+[Bounded consumer evidence](../evidence/ui-delivery/e2-o13-original-result-reopen.md).
+
 ## November1 — O06 saved-source proof released; live acceptance remains open
 
 O06 remains the ONE PRIMARY. The existing native

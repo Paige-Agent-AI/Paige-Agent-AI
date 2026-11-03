@@ -50,6 +50,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { readActivityEvidence, type ActivityEvidenceRead } from "../../../supabase/functions/_shared/paige-context/activity-evidence";
 
 /** How many recent events a feed carries. Both surfaces render a short list. */
 const MAX_ITEMS = 25;
@@ -109,7 +110,18 @@ export interface SoloActivityFeed {
    */
   error: string | null;
   refresh: () => void;
+  /** Optional to preserve existing consumers/fixtures; the hook always supplies it. */
+  inspection?: SoloActivityInspection;
 }
+
+export type SoloActivityInspection = {
+  eventId: string | null;
+  status: "idle" | "loading" | "ready" | "not_found" | "forbidden" | "unavailable";
+  item: SoloActivityItem | null;
+  evidence: ActivityEvidenceRead;
+};
+const inspectionState = (eventId: string | null, status: SoloActivityInspection["status"]): SoloActivityInspection =>
+  ({ eventId, status, item: null, evidence: { state: "not_provided" } });
 
 /**
  * The §16 department slugs, seeded in `paige_departments` and verified live 2026-09-01.
@@ -212,11 +224,12 @@ export function classifySoloActivityError(
  *   slow earlier poll can never overwrite a newer answer) but NOT the switch guard, because
  *   nothing tells this hook the workspace moved.
  */
-export function useSoloActivityFeed(workspaceId?: string | null): SoloActivityFeed {
+export function useSoloActivityFeed(workspaceId?: string | null, inspectedEventId: string | null = null): SoloActivityFeed {
   const [items, setItems] = useState<SoloActivityItem[]>([]);
   const [status, setStatus] = useState<SoloActivityStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  const [inspection, setInspection] = useState(() => inspectionState(inspectedEventId, inspectedEventId === null ? "idle" : "loading"));
   const mounted = useRef(false);
   // Monotonic request counter. Bumped on a workspace change (in render) and again per read; a
   // response is honoured only while it still matches.
@@ -228,6 +241,13 @@ export function useSoloActivityFeed(workspaceId?: string | null): SoloActivityFe
   // React commits the frame before it runs and the old workspace's activity is briefly painted
   // under the new one's heading. Clearing during render means that frame never exists.
   const scopeKey = workspaceId ?? "";
+  const inspectionKey = JSON.stringify([scopeKey, inspectedEventId]);
+  const [renderedInspection, setRenderedInspection] = useState(inspectionKey);
+  if (renderedInspection !== inspectionKey) {
+    requestSeq.current += 1;
+    setRenderedInspection(inspectionKey);
+    setInspection(inspectionState(inspectedEventId, inspectedEventId === null ? "idle" : "loading"));
+  }
   const [renderedScope, setRenderedScope] = useState<string>(scopeKey);
   if (renderedScope !== scopeKey) {
     requestSeq.current += 1; // anything in flight for the old workspace is now stale
@@ -255,6 +275,7 @@ export function useSoloActivityFeed(workspaceId?: string | null): SoloActivityFe
         if (readError) {
           // Never turn a refused or failed read into "nothing happened" (§13).
           setItems([]);
+          setInspection(inspectionState(inspectedEventId, inspectedEventId === null ? "idle" : classifySoloActivityError(readError)));
           setStatus(classifySoloActivityError(readError));
           setError(readError.message || "could not load recent activity");
           return;
@@ -268,9 +289,39 @@ export function useSoloActivityFeed(workspaceId?: string | null): SoloActivityFe
         setItems(parsed as SoloActivityItem[]);
         setStatus("ready");
         setError(null);
+        if (inspectedEventId === null) return;
+        const settle = (next: SoloActivityInspection) => {
+          if (mounted.current && requestSeq.current === seq) setInspection(next);
+        };
+        if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(inspectedEventId)) {
+          settle(inspectionState(inspectedEventId, "unavailable"));
+          return;
+        }
+        try {
+          // Extend the SAME caller-JWT/native family; never read raw Rail tables,
+          // guess a domain UUID or replace a missing exact event with a recent one.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- new overload awaits shared generated schema
+          const original = await supabase.rpc("get_solo_rail_activity" as any, { p_limit: 1, p_event_id: inspectedEventId });
+          if (!mounted.current || requestSeq.current !== seq) return;
+          if (original.error) {
+            const next = classifySoloActivityError(original.error);
+            settle(inspectionState(inspectedEventId, next));
+            if (next === "forbidden") { setItems([]); setStatus(next); setError("Recorded activity is not authorized"); }
+            return;
+          }
+          if (!Array.isArray(original.data) || original.data.length > 1) throw new Error("invalid exact activity");
+          if (original.data.length === 0) { settle(inspectionState(inspectedEventId, "not_found")); return; }
+          const raw = original.data[0] as Record<string, unknown>;
+          const item = toActivityItem(raw);
+          if (!item || item.id.toLowerCase() !== inspectedEventId.toLowerCase()) throw new Error("mismatched exact activity");
+          const evidence = readActivityEvidence(raw.evidence, item.id);
+          if (evidence.state === "invalid") throw new Error("invalid activity evidence");
+          settle({ eventId: inspectedEventId, status: "ready", item, evidence });
+        } catch { settle(inspectionState(inspectedEventId, "unavailable")); }
       } catch (err) {
         if (!mounted.current || requestSeq.current !== seq) return;
         setItems([]);
+        setInspection(inspectionState(inspectedEventId, inspectedEventId === null ? "idle" : "unavailable"));
         setStatus("unavailable");
         setError(err instanceof Error ? err.message : "could not load recent activity");
       }
@@ -289,10 +340,10 @@ export function useSoloActivityFeed(workspaceId?: string | null): SoloActivityFe
       clearInterval(id);
       window.removeEventListener("focus", onFocus);
     };
-  }, [tick, workspaceId]);
+  }, [tick, workspaceId, inspectedEventId]);
 
   return useMemo(
-    () => ({ items, loading: status === "loading", status, error, refresh }),
-    [items, status, error, refresh],
+    () => ({ items, loading: status === "loading", status, error, refresh, inspection }),
+    [items, status, error, refresh, inspection],
   );
 }

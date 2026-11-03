@@ -66,6 +66,18 @@ PROTECTED_SEAMS: affected original actor/tenant scope, read acknowledgment, inte
 
 ## Orchestration, algorithms and availability
 
+Successor b21 received independent NON-AUTHOR PASS5746932643. Its required
+contract CI genuinely failed the restrictive enclosing-source fingerprints;
+that failure is preserved. Actual incoming73bf0efc reproduces all131 dependency
+pins and29 dispatches. Exact inspector decomposition changes ONLY enclosing
+identity[15] for all29; every dispatch branch, dominating control, helper,
+import and other identity stays equal. Renew only those separately reviewed
+literal scalars plus a dated source/review comment. Removing those changes
+restores the entire original verifier byte-exact, including all dependency
+pins, metadata, inspector and hostile controls. Actual restrictive registry
+self-test passes after renewal; final composed-head NON-AUTHOR review and
+hosted CI remain required. E04's released19-file incoming change is preserved.
+
 Orchestration Contract: original Chat request -> registered read adapter ->
 original Planning RPC -> existing read receipt -> original response/history.
 No Layer C action is executed by a read-only responsibilities question. Refused

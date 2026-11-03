@@ -190,7 +190,7 @@ try:
       errors='\n'.join(err for out,err in outputs)
       cycle='deadlock detected' in errors
       if cycle!=expect_cycle or 'statement timeout' in errors:raise RuntimeError('Unexpected '+prefix+' ordering: '+errors)
-      allowed=('CHAT_KNOWLEDGE_SOURCE_UNAVAILABLE','KNOWLEDGE_REVISION_CONFLICT','KNOWLEDGE_PUBLICATION_NOT_READY','KNOWLEDGE_PUBLICATION_WORK_NOT_FOUND','CHAT_KNOWLEDGE_SOURCE_CHANGED','CHAT_KNOWLEDGE_SOURCE_NOT_READY','KNOWLEDGE_REVIEW_NOT_READY','KNOWLEDGE_WORK_NOT_CLAIMABLE')
+      allowed=('KNOWLEDGE_REVIEW_CONFLICT','CHAT_KNOWLEDGE_SOURCE_UNAVAILABLE','KNOWLEDGE_REVISION_CONFLICT','KNOWLEDGE_PUBLICATION_NOT_READY','KNOWLEDGE_PUBLICATION_WORK_NOT_FOUND','CHAT_KNOWLEDGE_SOURCE_CHANGED','CHAT_KNOWLEDGE_SOURCE_NOT_READY','KNOWLEDGE_REVIEW_NOT_READY','KNOWLEDGE_WORK_NOT_CLAIMABLE')
       for process,(out,err) in zip(peers,outputs):
        if process.returncode and not ('deadlock detected' in err or any(code in err for code in allowed)):raise RuntimeError('Unexpected native refusal '+prefix+': '+err)
       print('PASS: '+prefix+(' original native deadlock reproduced' if cycle else ' native overlap completes or preserves original safe refusal'))

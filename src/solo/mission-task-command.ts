@@ -57,11 +57,11 @@ function decodeMissionTaskInspection(r:Record<string,unknown>,tenantId:string,mi
   if(r.inspection!==true)return {kind:'unavailable',message:missionTaskNotice(r.code)};
   if(r.status==='not_created'||r.status==='historical_unavailable'||r.status==='ambiguous')return {kind:r.status};
   const t=r.task,o=r.origin,receipt=r.receipt;
-  if(r.status!=='available'||!object(t)||t.tenant_id!==tenantId||!uuid(t.id)||typeof t.title!=='string'||!(summary&&!Object.hasOwn(t,'description')||t.description===null||typeof t.description==='string')
+  if(r.status!=='available'||!object(t)||t.tenant_id!==tenantId||!uuid(t.id)||typeof t.title!=='string'||!(summary&&!Object.prototype.hasOwnProperty.call(t,'description')||t.description===null||typeof t.description==='string')
    ||!uuid(t.assignee_user_id)||!['pending','in_progress','completed','cancelled'].includes(String(t.status))||typeof t.updated_at!=='string'||!Number.isFinite(Date.parse(t.updated_at))
    ||!(t.due_date===null||typeof t.due_date==='string'&&Number.isFinite(Date.parse(t.due_date)))||!object(o)||o.missionId!==missionId||o.stepId!==stepId||!Number.isSafeInteger(o.missionRevision)||!Number.isSafeInteger(o.briefVersion)
    ||Number(o.missionRevision)<1||Number(o.briefVersion)<1||typeof o.intentSha256!=='string'||!/^[0-9a-f]{64}$/.test(o.intentSha256)||!object(receipt)||receipt.receipt_recorded!==true||!uuid(receipt.correlation_id))return {kind:'unavailable',message:'The original task readback was incomplete. Check again before creating work.'};
-  return {kind:'available',task:{id:t.id,title:t.title,...(Object.hasOwn(t,'description')?{description:t.description as string|null}:{}),status:String(t.status),assignee_user_id:t.assignee_user_id,due_date:t.due_date as string|null,updated_at:t.updated_at},
+  return {kind:'available',task:{id:t.id,title:t.title,...(Object.prototype.hasOwnProperty.call(t,'description')?{description:t.description as string|null}:{}),status:String(t.status),assignee_user_id:t.assignee_user_id,due_date:t.due_date as string|null,updated_at:t.updated_at},
    origin:{missionRevision:Number(o.missionRevision),briefVersion:Number(o.briefVersion),intentSha256:o.intentSha256},receipt:{correlation_id:receipt.correlation_id}};
 }
 /** Inspection never submits a command for execution, including after a lost response. */

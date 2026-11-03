@@ -165,3 +165,11 @@ Final owning mounted/client/served-Edge suites now ALL55PASS (three suites, one
 worker), including both keyboard focus and removed-step historical recovery.
 Scoped ESLint and diff check PASS. Earlier worker-start failures are retained;
 no test/authentication bypass was added. Native30 freshCI remains proof owed.
+
+
+Final local type-ratchet identified exactly2 NEW owned client errors: Object.hasOwn
+is outside the existing app TypeScript library. Both checks now use the supported
+Object.prototype.hasOwnProperty.call with identical semantics. No tsconfig/baseline
+or unrelated source changed; fresh required typecheck remains authoritative.
+Incoming released E02native20010/d05c99f main is normally composed in parentc254
+and this Task candidate, preserving all incoming8 files and all applied bytes.

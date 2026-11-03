@@ -8,6 +8,7 @@ const signatures=[
  ['stage_solo_reviewed_business_facts','uuid,uuid,uuid,text,bigint,jsonb',true,['authenticated']],
  ['inspect_solo_reviewed_business_facts','uuid,uuid,uuid',true,['authenticated']],
  ['save_solo_reviewed_business_facts','uuid,uuid,uuid,uuid,text,bigint,jsonb,text',true,['authenticated']],
+ ['read_solo_reviewed_business_facts','uuid,uuid',true,['authenticated']],
 ];
 const rows=signatures.map(([name,args,definer,grantees])=>{
  const start=new RegExp(`CREATE OR REPLACE FUNCTION public\\.${name}\\(`).exec(source);assert.ok(start);
@@ -38,7 +39,7 @@ ${rows.join(',\n')}
    RAISE EXCEPTION 'SETUP_REVIEW_INSTALLED_DRIFT';
   END IF;
  END LOOP;
- IF installed NOT IN (0,5) THEN RAISE EXCEPTION 'SETUP_REVIEW_PARTIAL_INSTALL'; END IF;
+ IF installed NOT IN (0,6) THEN RAISE EXCEPTION 'SETUP_REVIEW_PARTIAL_INSTALL'; END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_class WHERE oid='public.paige_audit_log'::regclass AND relrowsecurity) THEN
   RAISE EXCEPTION 'SETUP_REVIEW_AUDIT_DRIFT'; END IF;
  IF (SELECT count(*) FROM pg_policy WHERE polrelid='public.paige_audit_log'::regclass
@@ -63,4 +64,4 @@ assert.equal(source.split(begin).length,2);assert.equal(source.split(end).length
 const result=source.slice(0,source.indexOf(begin)+begin.length)+'\n'+guard+'\n'+source.slice(source.indexOf(end));
 if(process.argv.includes('--check'))assert.equal(result,source,'native source guard must match exact current bodies');
 else writeFileSync(path,result);
-console.log('Exact five-function install/replay guard '+(process.argv.includes('--check')?'PASS':'generated'));
+console.log('Exact six-function install/replay guard '+(process.argv.includes('--check')?'PASS':'generated'));

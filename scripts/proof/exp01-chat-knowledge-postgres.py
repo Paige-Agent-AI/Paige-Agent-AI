@@ -5,6 +5,7 @@ import argparse, pathlib, subprocess, uuid, ast, re, time, json
 p=argparse.ArgumentParser()
 p.add_argument('--psql',required=True);p.add_argument('--port',default='55461')
 p.add_argument('--expected-data-directory',required=True);p.add_argument('--without-candidate',action='store_true')
+p.add_argument('--auth-lock-migration',help='Prove native Auth/Knowledge lock fairness in this disposable fixture')
 a=p.parse_args();root=pathlib.Path(__file__).resolve().parents[2]
 base=[a.psql,'-X','-h','127.0.0.1','-p',a.port,'-U','postgres','-v','ON_ERROR_STOP=1']
 def sql(db,statement=None,file=None):
@@ -62,6 +63,81 @@ try:
    if run.returncode==0 or 'CHAT_KNOWLEDGE_' not in run.stderr:raise RuntimeError('Install fault not refused: '+fault+' '+run.stderr[-2000:])
    if sql(db,snapshots)[0]!=before:raise RuntimeError('Refused install changed original eight function definitions/metadata')
  print('PASS:',len(faults)*2,'original and forward installation source/config/permission/storage/index faults refused and rolled back')
+ if a.auth_lock_migration:
+  # Reuse this original save writer and producer fixture. Only Auth's ordinary
+  # session bookkeeping columns are modelled; no provider or live identity use.
+  sql(db,'ALTER TABLE auth.users ADD COLUMN recovery_sent_at timestamptz, ADD COLUMN recovery_token text, ADD COLUMN updated_at timestamptz')
+  actor_id='10000000-0000-0000-0000-000000000001'
+  actor_setup="SELECT set_config('test.actor','"+actor_id+"',false);SET ROLE authenticated;"
+  def peer(label,body):
+   return subprocess.Popen(base+['-d',db,'-Atc',"SET application_name='auth_fair_"+label+"';"+body],cwd=root,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding='utf8')
+  def wait_for(label,predicate):
+   end=time.monotonic()+8
+   while time.monotonic()<end:
+    if sql(db,"SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='auth_fair_"+label+"' AND "+predicate+")::integer")[0].strip()=='1':return
+    time.sleep(.03)
+   raise RuntimeError('Expected local concurrency state absent: '+label+' '+predicate)
+  def fairness(label,expect_timeout):
+   sql(db,'UPDATE public.paige_durable_work SET chat_source_link=NULL WHERE id=public.test_chat_work()')
+   peers=[]
+   try:
+    peers.append(peer(label+'_first',actor_setup+'BEGIN;SELECT public.test_chat_save();SELECT pg_sleep(2);COMMIT;'))
+    wait_for(label+'_first',"wait_event='PgSleep'")
+    peers.append(peer(label+'_auth',"SET statement_timeout='4s';UPDATE auth.users SET recovery_sent_at=clock_timestamp(),recovery_token='local-fixture-only',updated_at=clock_timestamp() WHERE id='"+actor_id+"';SELECT 'AUTH_COMPLETED';"))
+    wait_for(label+'_auth','cardinality(pg_blocking_pids(pid))>0')
+    peers.append(peer(label+'_later',actor_setup+'BEGIN;SELECT public.test_chat_save();SELECT pg_sleep(4);COMMIT;'))
+    wait_for(label+'_later','cardinality(pg_blocking_pids(pid))>0')
+    auth_out,auth_err=peers[1].communicate(timeout=7)
+    if expect_timeout:
+     if peers[1].returncode==0 or 'statement timeout' not in auth_err:raise RuntimeError('Old shared-lock cohort did not reproduce Auth starvation: '+auth_out+auth_err)
+    else:
+     if peers[1].returncode or 'AUTH_COMPLETED' not in auth_out:raise RuntimeError('Native Auth update failed behind later Knowledge caller: '+auth_err)
+     wait_for(label+'_later',"wait_event='PgSleep'")
+    first_out,first_err=peers[0].communicate(timeout=8)
+    later_out,later_err=peers[2].communicate(timeout=8)
+    if peers[0].returncode or peers[2].returncode:raise RuntimeError(first_err+later_err)
+    refs=[json.loads(next(line for line in out.splitlines() if line.startswith('{'))) for out in (first_out,later_out)]
+    if refs[0]!=refs[1] or refs[0]['reference']['linkRevision']!=1:raise RuntimeError('Concurrent host references or receipt revisions diverged')
+   finally:
+    for process in peers:
+     if process.poll() is None:process.terminate();process.communicate(timeout=5)
+   print('PASS: '+label+' actual save/Auth/later-save ordering and original single reference')
+  fairness('old_shared_baseline',True)
+  migration=root/a.auth_lock_migration
+  before_lock_acl=sql(db,"SELECT proacl::text FROM pg_proc WHERE oid='public.lock_knowledge_extraction_authority(uuid,uuid)'::regprocedure")[0]
+  for _ in range(2):sql(db,file=migration)
+  if sql(db,"SELECT proacl::text FROM pg_proc WHERE oid='public.lock_knowledge_extraction_authority(uuid,uuid)'::regprocedure")[0]!=before_lock_acl:raise RuntimeError('Auth lock migration changed privileges')
+  fairness('serialized_candidate',False)
+  # A committed ban or soft deletion still wins before a later save. The exact
+  # original authorization predicate runs after the same actor-row lock.
+  for field,value in [('banned_until',"clock_timestamp()+interval '1 hour'"),('deleted_at','clock_timestamp()')]:
+   sql(db,'UPDATE auth.users SET banned_until=NULL,deleted_at=NULL')
+   holder=peer(field+'_holder',"BEGIN;UPDATE auth.users SET "+field+'='+value+" WHERE id='"+actor_id+"';SELECT pg_sleep(1);COMMIT;")
+   waiter=None
+   try:
+    wait_for(field+'_holder',"wait_event='PgSleep'")
+    waiter=peer(field+'_save',actor_setup+'SELECT public.test_chat_save();')
+    wait_for(field+'_save','cardinality(pg_blocking_pids(pid))>0')
+    holder.communicate(timeout=6);out,err=waiter.communicate(timeout=6)
+    if holder.returncode or waiter.returncode==0 or 'CHAT_KNOWLEDGE_SCOPE_CHANGED' not in err:raise RuntimeError('Auth ban/deletion barrier lost: '+field+err)
+   finally:
+    for process in [holder,waiter]:
+     if process and process.poll() is None:process.terminate();process.communicate(timeout=5)
+   print('PASS: native save refuses after committed '+field)
+  sql(db,'UPDATE auth.users SET banned_until=NULL,deleted_at=NULL')
+  holder=peer('other_user_holder',actor_setup+'BEGIN;SELECT public.test_chat_save();SELECT pg_sleep(2);COMMIT;')
+  try:
+   wait_for('other_user_holder',"wait_event='PgSleep'")
+   out,_=sql(db,"SET statement_timeout='500ms';SELECT public.lock_knowledge_extraction_authority('10000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-000000000003')")
+   if out.strip().splitlines()[-1]!='t':raise RuntimeError('Unrelated actor lost independent authority')
+   # Cancellation rolls back only the local fixture transaction and releases
+   # its Auth lock. Never reuse this helper against a customer database.
+   sql(db,"SELECT pg_cancel_backend(pid) FROM pg_stat_activity WHERE application_name='auth_fair_other_user_holder' AND wait_event='PgSleep'")
+   holder.communicate(timeout=5)
+   sql(db,"SET statement_timeout='500ms';UPDATE auth.users SET updated_at=clock_timestamp() WHERE id='"+actor_id+"'")
+  finally:
+   if holder.poll() is None:holder.terminate();holder.communicate(timeout=5)
+  print('PASS: different actors remain independent; canceled save releases Auth lock')
  actor="SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);"
  def reset():
   sql(db,"UPDATE public.paige_durable_work SET chat_source_link=NULL WHERE id=public.test_chat_work() OR id=(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='chat');UPDATE public.tenant_members SET status='active' WHERE user_id='10000000-0000-0000-0000-000000000001'")

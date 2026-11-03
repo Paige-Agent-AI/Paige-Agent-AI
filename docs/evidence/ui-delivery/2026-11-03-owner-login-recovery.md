@@ -33,3 +33,60 @@ RELEASE_RECOVERY: position=Revert this narrow frontend patch if it regresses the
 - Current native OAuth integration delegates code exchange to Supabase Auth. Fresh Google exchange failure is independently reproduced; application-side replay and a responsible recent code change are unverified.
 - Read-only production checks found active original access for both owner-designated businesses. No ownership, roles, identities, credentials, configuration, billing or tenant data changed.
 - Other implementation lanes remain paused by owner order. Reviewer independent_rule_review did not edit or co-author these changes and approved the exact five code/test blobs with zero material findings.
+
+## Confirmed lock cause and recovery — November 3, 18:11 UTC
+
+The earlier upstream-root-cause uncertainty is superseded by a captured database
+blocker. During the separately owner-authorized native recovery request at
+18:07:36 UTC, `supabase_auth_admin` was waiting 7.9 seconds to update the affected
+user's recovery fields. PostgreSQL identified a blocking PostgREST transaction
+executing `save_paige_chat_knowledge_link`. Its shared authority helper locks
+`auth.users FOR SHARE`; continuous same-actor saves formed a reader cohort ahead
+of native Auth writes. No missing membership or Chrome-specific cause was found.
+
+Independent review approved narrow reversible containment. Actual save function
+ACL was `{postgres=X/postgres,authenticated=X/postgres}` and definition hash
+`5d77dd7ee0004925752d37fdd102b406`. Only authenticated EXECUTE on that function was
+temporarily revoked with exact-source/ACL guards. Active saves drained before
+cancellation was needed; no backend was canceled and no data was deleted. Native
+Google login then succeeded at 18:11:38 UTC. The live chooser showed the original
+two owner-designated businesses with their unchanged Owner/Admin roles. The owner
+separately confirmed login worked. Endpoint containment remains distinct from the
+permanent repair and must not be silently restored by an unrelated release.
+
+The permanent migration changes only the helper's Auth-row lock from FOR SHARE
+to FOR NO KEY UPDATE. This strengthens same-actor serialization, preserves the
+ban/deletion barrier, original authorization predicates, remaining lock order,
+function ownership and ACL. Original body `788d27bc980fee58e6272c3e53ca6096` becomes
+`3f61f700706ae3d80dbde0164954e46c`; unexpected source/configuration aborts.
+
+Actual original Chat-save concurrency proof passed in a verified disposable
+PostgreSQL 16 cluster, using the existing producer/dependency fixture (not full
+Supabase schema or customer/provider proof):
+
+- Old shared-lock baseline: queued native-style Auth update times out behind a
+  later same-user save cohort.
+- Candidate: Auth finishes before the later Knowledge transaction releases;
+  both saves retain the same original reference and link revision.
+- Committed ban and soft deletion still refuse the actual save.
+- Another actor remains independent; cancellation releases the Auth lock.
+- Migration replay retains the original ACL; original 53 host assertions,
+  16 installation fault refusals and five existing concurrency pairs also pass.
+
+Command: `python scripts/proof/exp01-chat-knowledge-postgres.py --psql <local-psql>
+--port 55479 --expected-data-directory <verified-disposable-directory>
+--auth-lock-migration supabase/migrations/20271130020015_knowledge_auth_lock_fairness.sql`.
+The same proof is included in the existing database-contract job.
+
+Attribution: the shared authority-lock helper was present in the October 1
+Knowledge migration (commit `9312da119203373ef82351b2deba07ed7601b5bd`, author
+`ZCode Knowledge Lane`). The Chat-link writer was released by EXP01 November 1
+(`0f306aa8a3384353c5047ccf4810060c0e852a9a`), with original Chat document presentation
+integrated by EXP13 November 2 (`e8f3eb27a37379045bbce6aca8ec266b2477bdc6`).
+This identifies the source chain, not the unverified initiator of the continuous
+requests. No recent EXP09 Auth source change was established as this incident's
+cause. All original agents remain paused and the hourly timer remains off.
+
+Permanent repair source/review/CI/merge/deployment and restoration of the exact
+paused grant remain separately verified release steps; do not infer them from
+the successful containment login.

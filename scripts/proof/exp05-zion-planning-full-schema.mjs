@@ -180,7 +180,7 @@ if(calendarMode){
  const task=readFileSync(join(repo,'supabase/migrations/20271130030005_exp05_zion_original_task_references.sql'),'utf8').replace(/\r\n/g,'\n');
  const latestTask=unwrap(task);
  const hunks=[...task.matchAll(/\('([^']+)',(\d+),'([a-f0-9]{32})','([a-f0-9]{32})',\$old\$([\s\S]*?)\$old\$,\$new\$([\s\S]*?)\$new\$\)/g)];
- assert.equal(hunks.length,6,'Exactly six guarded original Task-reference hunks');
+ assert.equal(hunks.length,8,'Exactly eight guarded original Task-reference hunks');
  const pins=[...new Map(hunks.map(([,sig,,before,after])=>[sig,`('${sig}','${before}','${after}')`])).values()];
  assert.equal(pins.length,4,'Exactly four incumbent native functions');
  const values=hunks.map(([,sig,n,,,old,next])=>`('${sig}',${n},$task_old$${old}$task_old$,$task_new$${next}$task_new$)`);

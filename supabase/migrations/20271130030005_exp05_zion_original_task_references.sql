@@ -11,7 +11,7 @@ DECLARE sig text; predecessor text; expected text; old_text text; new_text text;
 BEGIN
  FOR sig,predecessor,expected IN SELECT DISTINCT name,before_hash,after_hash FROM (VALUES
  ('public._team_hub_assert_agent_read_scope(public.team_hub_agent_turns)','b5f07681ee7e96548b77e61d71106639','5545c370d54a7baef54ba37f9619e729'),
- ('public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)','472d97fce1007aae021c4902af8701f5','248bbd994b75ee02c1d2493d58a3d64c'),
+ ('public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)','472d97fce1007aae021c4902af8701f5','437b5c12b5261b73a38e6a34104c5387'),
  ('public._team_hub_planning_read_annotations(public.team_hub_agent_turns)','3450c2fe42682d9091e3e316ecde0f00','f31a93f9774a628bb1c0c24128fd4674'),
  ('public._team_hub_agent_read_annotations(uuid)','38913fe72f92611a32cb564f68cf836d','7e3bf4f645aec0eb0563b2cfbecc5bb3')
  ) known(name,before_hash,after_hash) LOOP
@@ -43,13 +43,22 @@ BEGIN
    END LOOP;
   END IF;
   IF t.consumed_at IS NULL AND (t.read_context->>'expires_at')::timestamptz<=clock_timestamp() THEN$new$),
- ('public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)',0,'472d97fce1007aae021c4902af8701f5','248bbd994b75ee02c1d2493d58a3d64c',$old$   WHERE value->>'record_kind'='planning_item' OR value->>'destination'='calendar';$old$,$new$   WHERE value->>'record_kind'='planning_item' OR value->>'destination'='calendar'
+ ('public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)',0,'472d97fce1007aae021c4902af8701f5','437b5c12b5261b73a38e6a34104c5387',$old$   WHERE value->>'record_kind'='planning_item' OR value->>'destination'='calendar';$old$,$new$   WHERE value->>'record_kind'='planning_item' OR value->>'destination'='calendar'
     OR (t.agent_key='zion' AND value->>'destination'='operations_work' AND jsonb_typeof(value->'record_id')='string' AND NOT (value ? 'record_kind'));$new$),
- ('public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)',1,'472d97fce1007aae021c4902af8701f5','248bbd994b75ee02c1d2493d58a3d64c',$old$    WHEN 'operations_work' THEN link->>'record_kind'='planning_item' AND planning IS NOT NULL
+ ('public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)',1,'472d97fce1007aae021c4902af8701f5','437b5c12b5261b73a38e6a34104c5387',$old$    WHEN 'operations_work' THEN link->>'record_kind'='planning_item' AND planning IS NOT NULL
      AND planning->'items' @> jsonb_build_array(ref)$old$,$new$    WHEN 'operations_work' THEN CASE WHEN link->>'record_kind'='planning_item' THEN planning IS NOT NULL
      AND planning->'items' @> jsonb_build_array(ref)
      ELSE t.agent_key='zion' AND (tools ? 'crm_list_tasks' OR tools ? 'crm_get_task')
       AND EXISTS(SELECT 1 FROM public.tasks r WHERE r.id=ref AND r.tenant_id=t.tenant_id) END$new$),
+ ('public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)',2,'472d97fce1007aae021c4902af8701f5','437b5c12b5261b73a38e6a34104c5387',$old$ IF planning IS NOT NULL OR calendar IS NOT NULL THEN
+  SELECT jsonb_agg(DISTINCT tool ORDER BY tool) INTO tools$old$,$new$ IF planning IS NOT NULL OR calendar IS NOT NULL OR (t.agent_key='zion' AND (
+  p_read_tools ? 'crm_list_tasks' OR p_read_tools ? 'crm_get_task' OR (t.read_context->>'token_hash'=t.token_hash
+   AND ((t.read_context->'tools') ? 'crm_list_tasks' OR (t.read_context->'tools') ? 'crm_get_task')))) THEN
+  SELECT jsonb_agg(DISTINCT tool ORDER BY tool) INTO tools$new$),
+ ('public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)',3,'472d97fce1007aae021c4902af8701f5','437b5c12b5261b73a38e6a34104c5387',$old$ IF planning IS NOT NULL OR calendar IS NOT NULL THEN
+  SELECT coalesce(jsonb_agg(value ORDER BY value),'[]') INTO links$old$,$new$ IF planning IS NOT NULL OR calendar IS NOT NULL OR (t.agent_key='zion'
+  AND (tools ? 'crm_list_tasks' OR tools ? 'crm_get_task')) THEN
+  SELECT coalesce(jsonb_agg(value ORDER BY value),'[]') INTO links$new$),
  ('public._team_hub_planning_read_annotations(public.team_hub_agent_turns)',0,'3450c2fe42682d9091e3e316ecde0f00','f31a93f9774a628bb1c0c24128fd4674',$old$md5(p.prosrc)='b5f07681ee7e96548b77e61d71106639'$old$,$new$md5(p.prosrc)='5545c370d54a7baef54ba37f9619e729'$new$),
  ('public._team_hub_planning_read_annotations(public.team_hub_agent_turns)',1,'3450c2fe42682d9091e3e316ecde0f00','f31a93f9774a628bb1c0c24128fd4674',$old$ RETURN '{}'::jsonb;$old$,$new$ FOR item IN SELECT value FROM jsonb_array_elements(coalesce(t.read_context->'record_links','[]'::jsonb)) LOOP
   IF item->>'destination'='operations_work' AND jsonb_typeof(item->'record_id')='string' AND NOT (item ? 'record_kind') THEN

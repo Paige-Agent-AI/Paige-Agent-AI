@@ -37,6 +37,32 @@ SELECT pg_temp.check(pg_temp.task_stage((:'e5taskturn')::jsonb->>'turn_id',:'e5t
  'O01 original native Task references refuse a foreign tenant');
 SELECT pg_temp.check(pg_temp.task_stage((:'e5taskturn')::jsonb->>'turn_id',:'e5tasktoken','["crm_list_tasks"]',(:'e5tasklink')::jsonb)->>'ok'='true',
  'O01 original CRM read admits its same-tenant native Task reference');
+SELECT pg_temp.task_stage((:'e5taskturn')::jsonb->>'turn_id',:'e5tasktoken','["crm_list_tasks"]','[]') AS e5taskrecheck \gset
+SELECT pg_temp.check((:'e5taskrecheck')::jsonb->>'ok'='true'
+ AND (SELECT read_context->'record_links' @> (:'e5tasklink')::jsonb FROM public.team_hub_agent_turns
+  WHERE id=((:'e5taskturn')::jsonb->>'turn_id')::uuid),
+ 'O01 actual Task-first empty authority recheck preserves original Task references BEFORE Planning or Calendar');
+INSERT INTO public.tasks(id,user_id,title,tenant_id)
+ SELECT ('e5050000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,:'u3','Original fixture cap Task',:'ta'
+ FROM generate_series(100,108) n;
+SELECT pg_temp.post(:'u3',:'ta',:'e5taskdm','Review original bounded Task references')#>>'{message,id}' AS e5taskcapq \gset
+SELECT pg_temp.tok('E05-original-task-reference-cap') AS e5taskcaptoken \gset
+SELECT pg_temp.accept(:'ta',:'u3',:'e5taskdm',:'e5taskcapq','zion','dm',:'e5taskcaptoken') AS e5taskcapturn \gset
+SELECT jsonb_agg(jsonb_build_object('destination','operations_work','record_id',id) ORDER BY id) AS e5taskcaplinks
+ FROM public.tasks WHERE id BETWEEN 'e5050000-0000-4000-8000-000000000100'::uuid AND 'e5050000-0000-4000-8000-000000000105'::uuid \gset
+SELECT pg_temp.task_stage((:'e5taskcapturn')::jsonb->>'turn_id',:'e5taskcaptoken','["crm_list_tasks"]',(:'e5taskcaplinks')::jsonb) AS e5taskcapfirst \gset
+SELECT pg_temp.check((:'e5taskcapfirst')::jsonb->>'ok'='true','O01 original Task-only six-reference stage admitted');
+SELECT jsonb_agg(jsonb_build_object('destination','operations_work','record_id',id) ORDER BY id) AS e5taskcapmore
+ FROM public.tasks WHERE id BETWEEN 'e5050000-0000-4000-8000-000000000106'::uuid AND 'e5050000-0000-4000-8000-000000000108'::uuid \gset
+SELECT pg_temp.task_stage((:'e5taskcapturn')::jsonb->>'turn_id',:'e5taskcaptoken','["crm_get_task"]',(:'e5taskcapmore')::jsonb) AS e5taskcapsecond \gset
+SELECT pg_temp.check((:'e5taskcapsecond')::jsonb->>'ok'='true' AND
+ (SELECT jsonb_array_length(read_context->'record_links')=6 AND read_context->'tools' @> '["crm_list_tasks","crm_get_task"]'
+  AND jsonb_array_length(read_context->'tools')=2 FROM public.team_hub_agent_turns WHERE id=((:'e5taskcapturn')::jsonb->>'turn_id')::uuid),
+ 'O01 accumulated Task-only sources retain the original six-reference bound');
+SELECT pg_temp.task_stage((:'e5taskcapturn')::jsonb->>'turn_id',:'e5taskcaptoken','["crm_list_tasks","crm_get_task"]','[]') AS e5taskcaprecheck \gset
+SELECT pg_temp.check((:'e5taskcaprecheck')::jsonb->>'ok'='true' AND
+ (SELECT read_context->'record_links'=(:'e5taskcaplinks')::jsonb FROM public.team_hub_agent_turns WHERE id=((:'e5taskcapturn')::jsonb->>'turn_id')::uuid),
+ 'O01 actual empty recheck retains the original bounded Task-only references');
 SELECT pg_temp.planning_binding(:'u3',:'ta','{"limit":1}') AS e5taskplan \gset
 SELECT pg_temp.check(pg_temp.planning_stage((:'e5taskturn')::jsonb->>'turn_id',:'e5tasktoken',(:'e5taskplan')::jsonb)->>'ok'='true',
  'O01 existing original Planning source shares the SAME turn');

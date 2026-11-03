@@ -49,7 +49,7 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: the current isolated390px review drive d
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: the current isolated390px review drive does not establish this exact viewport and PAIGE-panel state; no customer geometry claim.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: the current isolated390px review drive does not establish this exact viewport and PAIGE-panel state; no customer geometry claim.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: the current isolated390px review drive does not establish this exact viewport and PAIGE-panel state; no customer geometry claim.
-INTERNAL_BUILD_IDENTITY: source=ff6efd5574aed92c00f24df64bbe13c2a76dc12a; deployment=none; environment=local; migrations=PROOF_OWED(original atomic50009 and catalogue-only50010 production installation after exact review and normal native order); edge=PROOF_OWED(paige-ai-chat shared read projection production binding); evidence=docs/evidence/ui-delivery/exp05-o02-weekly-plan-review.md
+INTERNAL_BUILD_IDENTITY: source=a327cab3f608f1abad744d8192417b8629c5e348; deployment=none; environment=local; migrations=PROOF_OWED(original atomic50009 and catalogue-only50010 production installation after exact review and normal native order); edge=PROOF_OWED(paige-ai-chat shared read projection production binding); evidence=docs/evidence/ui-delivery/exp05-o02-weekly-plan-review.md
 RELEASE_CHANNEL: development: safe O02 successor candidate; historical rejected PR3251 and its applied Preview remain unchanged.
 RELEASE_CLASSIFICATION: internal-only: O02 implementation under required review and engineering gates; customer publication excluded.
 CUSTOMER_RELEASE_IDENTITY: none: O02 has no verified customer release or owner acceptance.

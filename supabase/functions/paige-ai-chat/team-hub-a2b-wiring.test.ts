@@ -5,7 +5,7 @@
 //   - the card-act route: after the verified actor and the ingress rate limit, before the chat schema,
 //     handed the asker's session, the service role, the verified actor, the control hint and invokeAs,
 //     and NO model seam (no model runs on Approve / Not now);
-//   - invokeAs: the asker's own JWT on a door call, handed to BOTH Team Hub routes;
+//   - invokeAs: the asker's own JWT on a door call, handed to all THREE Team Hub routes;
 //   - the one choke point (plan D10): every approval/decline token passes through
 //     withoutTeamHubCardTokens before either set exists, and nothing below re-reads the raw field to
 //     build them;
@@ -42,6 +42,15 @@ const CARD_SEAM = "    if (isTeamHubCardActRequest(rawData)) {\n"
   + "      return new Response(JSON.stringify(cardAct.body),\n"
   + "        { status: cardAct.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });\n"
   + "    }\n";
+const EMAIL_SEAM = "    if (isNexusEmailDraftRequest(rawData)) {\n"
+  + "      // New native RPCs await generated types. Adapt only the closed host ports;\n"
+  + "      // runtime clients and caller JWT remain the existing original ones.\n"
+  + "      const draft = await runNexusEmailDraft({ caller: supabaseClient as unknown as NexusEmailDraftHostDeps['caller'],\n"
+  + "        service: supabase as unknown as NexusEmailDraftHostDeps['service'], userId: user.id,\n"
+  + "        signal: req.signal, controlHint, invokeAs: teamHubInvokeAs }, rawData);\n"
+  + "      return new Response(JSON.stringify(draft),\n"
+  + "        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });\n"
+  + "    }\n";
 
 describe("the Team Hub card-act route in paige-ai-chat", () => {
   it("imports the card modules once, from their one home", () => {
@@ -71,17 +80,33 @@ describe("the Team Hub card-act route in paige-ai-chat", () => {
   });
 });
 
-describe("invokeAs, handed to both Team Hub routes", () => {
+describe("the explicit unsent email route in paige-ai-chat", () => {
+  it("uses the same verified caller and service ports, request signal/control and caller-JWT door without a model seam", () => {
+    at("import { isNexusEmailDraftRequest } from '../_shared/team-hub/nexus-email-contract.ts';");
+    at("import { runNexusEmailDraft, type NexusEmailDraftHostDeps } from '../_shared/team-hub/nexus-email-act.ts';");
+    const seam = at(EMAIL_SEAM);
+    assert.ok(at("if (authError || !user) {") < seam);
+    assert.ok(at("if (rateLimitCheck === false) {") < seam);
+    assert.ok(at("      } else rawData = await req.json();") < seam);
+    assert.ok(at(CARD_SEAM) < seam);
+    assert.ok(seam < at("      validatedData = messageSchema.parse(rawData);"));
+    assert.equal(EMAIL_SEAM.includes("fabricCompletion"), false);
+    assert.equal(EMAIL_SEAM.includes("complete:"), false);
+  });
+});
+
+describe("invokeAs, handed to all three Team Hub routes", () => {
   it("is a door call carrying the asker's own Authorization header, never the service key", () => {
     const i = at(INVOKE_AS);
     assert.equal(CHAT.slice(i, i + INVOKE_AS.length).includes("supabaseServiceKey"), false);
     assert.ok(at("    const authHeader = req.headers.get('Authorization');") < i);
   });
-  it("is defined before both routes and handed to each", () => {
+  it("is defined before all three routes and handed to each", () => {
     const i = at(INVOKE_AS);
     assert.ok(i < at(AGENT_SEAM));
     assert.ok(i < at(CARD_SEAM));
-    assert.equal(CHAT.split("invokeAs: teamHubInvokeAs").length - 1, 2);
+    assert.ok(i < at(EMAIL_SEAM));
+    assert.equal(CHAT.split("invokeAs: teamHubInvokeAs").length - 1, 3);
   });
 });
 

@@ -38,7 +38,9 @@
 // that was not consumed, so "ended" proves nothing was posted and "not found" means it was. A reply
 // is reported as posted only when the read-back finds it.
 //
-// NOTHING IS KEPT. No memory, no Knowledge, no chat thread. Traces are metadata-only. Before any Team
+// No machine-derived memory, Knowledge or Chat thread is created. An admitted NEXUS email
+// preparation stays on its original private turn; only a later explicit handoff can save through
+// the original Messages writer. Traces are metadata-only. Before any Team
 // Hub text reaches the model, the server records the same team_hub_read_conversation receipt PAIGE's
 // own read records, which is the marker that stops machine-derived memory for this person (increment 4
 // contract section 5); if it cannot be recorded, the turn ends before the model runs.
@@ -75,6 +77,8 @@ import { readZionCalendar, zionCalendarReadTools, type ZionCalendarDeps, type Zi
 import { zionTaskRecordLinks } from "./zion-task-record-links.ts";
 import type { ContextIdentity } from "../paige-context/mod.ts";
 import { createWeeklyDraftDeadline } from "../paige-orchestration/weekly-draft-deadline.ts";
+import { createNexusEmailPreparation, nexusEmailPreparationFromAnswer, NEXUS_EMAIL_PREPARATION_PROMPT } from "./nexus-email-prepare.ts";
+import type { NexusEmailPreparation } from "./nexus-email-contract.ts";
 
 // ---------------------------------------------------------------- the request
 
@@ -1070,9 +1074,15 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   const where: Where = whereKind === "agent_dm"
     ? { kind: "agent_dm", visibility: "private", label: `DM with ${agentName(agent) ?? "an agent"}` }
     : { kind: whereKind, visibility: conv.visibility === "private" ? "private" : "team", label: conversationLabel({ kind: conv.kind as "channel" | "dm", name: conv.name, dm_user_id: conv.dm_user_id }, names) };
+  // Preparation is text on this ORIGINAL private turn, not an offered email
+  // writer. Native actor/DM/role/roster/current-token checks own admission.
+  const nexusPreparation = createNexusEmailPreparation({ agent, where: whereKind, turnId, tokenHash: hash,
+    storedTools: storedDm }, { service, signal: deps.signal });
+  const canPrepareEmail = await nexusPreparation.current();
   const messages: ChatMessage[] = [
     { role: "system", content: buildAgentSystemPrompt({ agent, tenantName, askerName, askerUserId: userId, where, privateFollowUp: req.privateFollowUp, personality, tools, privateRoute }) },
   ];
+  if (canPrepareEmail) messages.push({ role: "system", content: NEXUS_EMAIL_PREPARATION_PROMPT });
   if (here) messages.push({ role: "system", content: `${req.privateFollowUp ? "The conversation the question was asked in" : "This conversation"}, newest messages:\n${here}` });
   if (dmHistory) messages.push({ role: "system", content: `Your DM with ${askerName}, newest messages:\n${dmHistory}` });
   // JSON mode on OpenAI's Responses API needs the word "json" in the input messages themselves: the
@@ -1089,6 +1099,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   let control: "private" | "act" | null = null;
   let text = "";
   let bringIn: BringInSuggestion[] = [];
+  let emailPreparation: NexusEmailPreparation | null = null;
   const writes = mutatingTools();
   for (let round = 0; round < MAX_ROUNDS && control === null; round++) {
     if (deps.signal?.aborted) return endedWithoutPost("no_reply");
@@ -1098,7 +1109,8 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
       result = await deps.complete({ cognitive_class: "operational", job: "team_hub_agent_turn", messages, tools: toolDefs.length ? toolDefs : undefined,
         response_format: { type: "json_object" }, max_tokens: 900 },
         { trace, signal: deps.signal, beforeProviderAttempt: async () => !deps.signal?.aborted && (!cardReadTools.size || await currentCardReadScope()) && (!mentorReadsUsed || await currentMentorScope())
-          && (!domainChecks.length || await currentPrivateScope(privateScope)) && (!zionReads.length || await currentZionModelScope()) });
+          && (!domainChecks.length || await currentPrivateScope(privateScope)) && (!zionReads.length || await currentZionModelScope())
+          && (!canPrepareEmail || await nexusPreparation.current()) });
     } catch { return endedWithoutPost("no_reply"); }
     const choice = object((object(result?.response)?.choices as unknown[] | undefined)?.[0]);
     const message = object(choice?.message);
@@ -1107,6 +1119,11 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     const calls = (Array.isArray(message.tool_calls) ? message.tool_calls : []).map(object).filter((c): c is Record<string, any> => !!c && typeof object(c.function)?.name === "string");
     if (!calls.length) {
       // The final answer: its route is the control (honoured only where it is allowed).
+      if (canPrepareEmail) {
+        const candidate = nexusEmailPreparationFromAnswer(text);
+        if (candidate === "invalid") return endedWithoutPost("no_reply");
+        emailPreparation = candidate;
+      }
       const answer = parseAgentAnswer(text);
       text = answer.reply;
       bringIn = answer.bringIn;
@@ -1303,6 +1320,10 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     for (const check of mentorRevalidations) if (deps.signal?.aborted || !await check()) return endedWithoutPost("no_reply");
     if (!await currentMentorScope()) return endedWithoutPost("no_reply");
   }
+  // Fail closed before publication. The original native post's UPDATE also
+  // revalidates this preparation atomically; its original end door can retire it
+  // after revocation. No Messages write or send occurs in this model turn.
+  if (emailPreparation && !await nexusPreparation.stage(emailPreparation)) return endedWithoutPost("no_reply");
 
   // 7. The body. The fixed lines are the server's, never the model's: the private-part line is appended by
   // the definer (p_private_answer), the DM redirect line here (A2b, D7).

@@ -10,8 +10,11 @@ import type { ActivityEvidenceRead } from "../../supabase/functions/_shared/paig
 import type { ActivityReturn, ActorFilter } from "./executive-activity-return";
 import "./executive-activity.css";
 
+function namedSpecialist(item: SoloActivityItem) {
+  return item.byPaige && !!item.actorAgent?.trim();
+}
 function matches(item: SoloActivityItem, filter: ActorFilter) {
-  return filter === "all" || (filter === "paige" ? item.byPaige : filter === "people" ? item.byPerson : !item.byPaige && !item.byPerson);
+  return filter === "all" || (filter === "paige" ? namedSpecialist(item) : filter === "people" ? item.byPerson : !namedSpecialist(item) && !item.byPerson);
 }
 function OriginalResult({ read, account }: { read?: ActivityEvidenceRead; account?: string | null }) {
   if (!read || read.state !== "ready") return <><h4>Business result not provided</h4>
@@ -44,8 +47,10 @@ function OriginalResult({ read, account }: { read?: ActivityEvidenceRead; accoun
   </>;
 }
 function actor(item: SoloActivityItem) {
-  return item.byPaige ? item.actorAgent?.trim() || "PAIGE team · specialist not recorded"
-    : item.byPerson ? "Person" : "Actor not recorded";
+  // Some original owner-UI runs carry the legacy agent classification without
+  // identifying a specialist. Preserve that record without claiming PAIGE acted.
+  return namedSpecialist(item) ? item.actorAgent!.trim()
+    : item.byPerson ? "Person" : item.byPaige ? "Actor not verified" : "Actor not recorded";
 }
 function recordedTime(item: SoloActivityItem, timezone: string) {
   // Only a source instant with an explicit zone is a date; never substitute read time.

@@ -4,14 +4,14 @@ UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original O13 only; eligible business actor inspects a recorded event, checks its original result/receipts, opens the original Play and returns to the same authorized event.
 PAIGE_UI_DESIGN: PASS: installed project skill and routed modules applied to the existing Executive reading workspace; no replacement design system or navigation owner.
 MATERIAL_FLOW_CHANGE: YES: exact-event reopening beyond the latest sample and original result/receipt inspection with reauthorization on return.
-FLOW_PROTOTYPE: UNVERIFIED: actual mounted flow and source states exercised; supported native browser control currently times out, so rendered prototype/live proof remains owed.
+FLOW_PROTOTYPE: UNVERIFIED: actual mounted flow and source states exercised; both authorized browser sessions are restored, but this candidate is not released and its native rendered flow remains owed.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized SOLO Owner/Admin inspects who recorded work and the evidence establishing a saved result; readers must not mistake successful reads or saved targets for business achievement.
 VISUAL_DIRECTION: PASS: preserve existing Executive tokens, fonts, list/detail composition, Radix dialog, responsive scroll owners and original semantic record links. Two compact saved-revision facts and expandable receipts replace an undifferentiated explanation.
-AUTOMATED_EVIDENCE: PASS: 222 tests across nine owning suites passed together, exit0; parser, real mounted hook, original Executive journey, receipt presentation, source adapter and existing neighboring mount behavior. Six discriminating context controls failed against the prior adapter, then passed after integration. Counts overlap earlier runs and are not summed.
+AUTOMATED_EVIDENCE: PASS: latest227 tests across nine owning suites passed together, exit0; parser, real mounted hook, original Executive journey, receipt presentation, source adapter and existing neighboring mount behavior. Three actor-attribution controls failed before the latest correction (13 incumbent controls passed), then pass. Earlier six discriminating context controls and closing-scrim causal failure remain preserved. Counts overlap earlier runs and are not summed.
 STATIC_EVIDENCE: PASS: scoped ESLint0 errors/0 warnings, whitespace, production Vite build and original type ratchet passed; baseline10/current6 means no NEW type error, not zero existing errors. Earlier build/type failures came from missing existing packages in the prior dependency-cache junction. Repointing only this checkout to the existing identical-lockfile current cache resolved them; initial denied junction creation/build failure is retained. No externalization, source stub, baseline relaxation or product workaround applied. Existing Rollup annotation/large-chunk warnings remain visible.
 RENDERED_EVIDENCE: UNVERIFIED: mounted DOM is controlled evidence, not native rendering. Fresh desktop/narrow/theme captures of this candidate remain owed after page-control timeouts.
 BEHAVIORAL_EVIDENCE: PASS: controlled actual Executive/hook/parser journey reopens exact older event, reloads original URL, navigates to current-account original Play and returns with fresh same-event read, reading position and focus. Refusal or mismatched/missing result withholds facts and never substitutes a recent event.
-AUTHENTICATED_RUNTIME: UNVERIFIED: owner approved the bounded history read-access grant on November3. The canonical native foundation3248 must release and pass actual production readback before this consumer. No candidate customer proof or original native receipt match is claimed.
+AUTHENTICATED_RUNTIME: UNVERIFIED: owner approved the bounded history read-access grant and ONE labelled QA Play/count target on November3. Original production owner UI saved that unapproved proposed Play and active targetv1, paused the SAME targetv2, verified both original receipts and retained them on fresh-tab reopen. These are original-domain prerequisite facts, not this unreleased consumer's receipt correlation or O13 completion. Foundation3248 must release and pass actual production readback first.
 KEYBOARD_FOCUS: UNVERIFIED: mounted return/source-link/newer-input controls pass; actual native keyboard, resize/close and screen-reader behavior remain owed. Prior real offscreen-focus failures are retained in the preceding evidence, not overwritten.
 ZOOM_REFLOW: UNVERIFIED: native 200-percent zoom/reflow and changed receipt-content reachability have not been exercised.
 REDUCED_MOTION: UNVERIFIED: no new animation source; actual native reduced-motion timing remains unrun.
@@ -90,3 +90,29 @@ source total rather than adding to it; the focused84 overlaps. Scoped lint0/0
 and original UI evidence guard pass. Fresh exact-head hosted native/whole CI and
 actual corrected customer recovery are still owed. The source-only E04 receiver
 assertion defect and its correction are preserved in the native evidence packet.
+
+## November3 actual unnamed-actor finding and bounded correction
+
+Authorized original-domain proof confirms a real proposed Play, paused targetv2,
+its immutable activev1 and both original saved-change receipts after fresh-tab
+reopen. No Play approval, resume, retirement, provider, send, automation or money
+action occurred. The target retains the original editor's observed November3
+single-day period; attempted date fills did not persist and are not reported as
+a quarter-period save. Those automation inputs do not establish a product defect.
+The original older history event is genuinely outside the latest25 after the
+legitimate writes, providing the exact-event reopen case without fake events.
+
+The actual history also shows an unnamed native agent classification as PAIGE
+team. Original owner-UI Play creation records its run without the target door's
+explicit owner prefix. Therefore an absent specialist is not a verified performer.
+Only this original Executive view now labels such entries Actor not verified and
+includes them under Unattributed. Named original specialists and explicit Person
+remain unchanged; all records remain visible under Everyone. The original source
+and shared hook classifications are preserved, not rewritten or guessed from text.
+This agrees with the existing context adapter's conservative unnamed-actor rule.
+The causal predecessor run has3 FAIL/13 PASS; the corrected integrated run has
+227 PASS/9suites/exit0, superseding225, in outputs/e2-o13-actor-final-227.log.
+No new producer, native body/grant, registry, reader, action or algorithm maturity.
+Actual candidate rendering, filter behavior, result/receipt correlation, focus,
+Chat persistence and recovery in both ordinary workspaces remain owed after
+reviewed release. This evidence does not close O13 or founder acceptance.

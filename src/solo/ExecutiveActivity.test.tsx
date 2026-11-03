@@ -41,8 +41,23 @@ it("does not invent a named specialist or credit an unknown actor to PAIGE or a 
   feed.items = [event("unknown"), event("agent", { byPaige: true })]; render(); open();
   expect(detail().textContent).toContain("Actor not recorded");
   choose("agent");
-  expect(detail().textContent).toContain("PAIGE team · specialist not recorded");
+  expect(detail().textContent).toContain("Actor not verified");
+  expect(detail().textContent).not.toContain("PAIGE team");
   expect(detail().textContent).not.toContain("VERA");
+});
+it.each([null, "   "])("keeps an unnamed native agent classification out of named-team activity (%s)", actorAgent => {
+  feed.items = [event("named", { byPaige: true, actorAgent: "VERA" }),
+    event("unverified", { byPaige: true, actorAgent }), event("person", { byPerson: true })];
+  render(); open();
+  const filter = (value: string) => act(() => { const select = dialog().querySelector("select")!;
+    select.value = value; select.dispatchEvent(new Event("change", { bubbles: true })); });
+  filter("paige");
+  expect([...dialog().querySelectorAll("[data-activity-id]")].map(e => e.getAttribute("data-activity-id"))).toEqual(["named"]);
+  filter("unattributed");
+  expect([...dialog().querySelectorAll("[data-activity-id]")].map(e => e.getAttribute("data-activity-id"))).toEqual(["unverified"]);
+  choose("unverified"); expect(detail().textContent).toContain("Actor not verified");
+  filter("people");
+  expect([...dialog().querySelectorAll("[data-activity-id]")].map(e => e.getAttribute("data-activity-id"))).toEqual(["person"]);
 });
 it("filters only the returned sample by original actor attribution", () => {
   render(); open();

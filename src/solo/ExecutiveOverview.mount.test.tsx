@@ -10,7 +10,7 @@ import { withTargetAndFinanceFixtures } from '../../scripts/live-drive/harness/e
 const mocks = vi.hoisted(() => ({ review: vi.fn(), pending: vi.fn(), activity: vi.fn(), missions: vi.fn(), calendar: vi.fn(), prefill: vi.fn() }));
 vi.mock("./data/useBusinessReview", () => ({ useBusinessReview: mocks.review }));
 vi.mock("./data/useSoloPendingActions", () => ({ useSoloPendingActions: mocks.pending }));
-vi.mock("./data/useSoloActivityFeed", () => ({ useSoloActivityFeed: mocks.activity, elapsedLabel: () => "just now" }));
+vi.mock("./data/useSoloActivityFeed", async original => ({ ...await original<typeof import("./data/useSoloActivityFeed")>(), useSoloActivityFeed: mocks.activity }));
 vi.mock("./data/useBusinessGamePlanMissions", () => ({ useBusinessGamePlanMissions: mocks.missions }));
 vi.mock("./data/useBusinessTimeZone", async (original) => ({ ...await original<typeof import("./data/useBusinessTimeZone")>(), useBusinessCalendarDay: mocks.calendar }));
 vi.mock("@/lib/paigePromptHandoff", () => ({ handOffPaigePrompt: mocks.prefill }));
@@ -418,7 +418,10 @@ describe("Executive — integrated customer flow", () => {
   });
   it("attributes a recorded human act to Person and unknown actors to neither person nor PAIGE", async () => {
     mocks.activity.mockReturnValue({ status: "ready", items: [{ id: "1", title: "Business zone saved", byPaige: false, byPerson: true, actorAgent: null, occurredAt: "2026-10-13T14:00:00Z" }, { id: "2", title: "Legacy event", byPaige: false, byPerson: false, actorAgent: null, occurredAt: "2026-10-13T14:00:00Z" }], refresh: vi.fn() }); await mount();
-    expect(text()).toContain("Person · Recorded"); expect(text()).toContain("Unattributed · Recorded");
+    const events = host.querySelectorAll(".exec-activity-preview > li");
+    expect(events[0].textContent).toContain("Person");
+    expect(events[1].textContent).toContain("Actor not recorded");
+    expect(events[1].textContent).not.toMatch(/PAIGE|Person/);
   });
   it("keeps unavailable activity distinct from no recorded events", async () => {
     mocks.activity.mockReturnValue({ status: "forbidden", items: [], refresh: vi.fn() }); await mount();

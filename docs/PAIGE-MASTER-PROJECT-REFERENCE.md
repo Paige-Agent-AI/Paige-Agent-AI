@@ -860,6 +860,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded November 3, 2026 UTC — EXP02 O13 recorded-activity keyboard return correction.**
+
+| Increment | Exact reviewed source and production release | Proof boundary and original outcome |
+| --- | --- | --- |
+| [#3240](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3240) | Reviewed `8073e9eacb156addfad297a4cbfefc9955dd74a1`; own distinct NON-AUTHOR [6595357546](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3240#issuecomment-6595357546) and incoming-main composition [6595866376](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3240#issuecomment-6595866376) CLEAR. All10 applicable exact-head checks and both web statuses SUCCESS; schema-free Supabase Preview intentionally SKIPPED. Whole [ci41577362987](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/41577362987), verify125723884188 including full Test, terminal SUCCESS without retry/cancellation. Normal merge `b52fba6b0429943c90d4d97ba9b51ce5db2ccf04`, tree `49b1df62910b0de425ca300ef8a163610d1c5ddf` exactly equals reviewed union. Production `dpl_2xdX5myS4kY68fsM48ByTemaXAzX` READY/exact merge; both official origins at2026-11-03T05:02:21.956Z return version/root/observed bootstrap200, build `b52fba6b0429943c90d4d97ba9b51ce5db2ccf04-mw07zpop`, matching bootstrap SHA256 `3d7082b3537c3b4fd511935d55d73a0743cc3dbece19e9d6b685dd81ef5d6109` and no customer update. Own migrations/Edge NOT_APPLICABLE. [Actual receipt6595997540](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3240#issuecomment-6595997540). | Original offscreen activity invoker is revealed through its existing scroll owner before keyboard return; existing visible PAIGE-overlay fallback remains. Strong regression RED on predecessor, then89 owning controls PASS; corrected controlled light/dark390 and eight required panel/viewport captures preserve the design and synthetic draft. Corrected authenticated keyboard recapture remains UNVERIFIED after browser input timeouts; loading the new bootstrap proves delivery only. Original predecessor's two genuine focus FAIL observations remain preserved. Native200-percent zoom and definitive reduced-motion timing UNVERIFIED. Full O13 original result/receipt linkage and durable exact-event reopen remain incomplete; founder acceptance OPEN. No domain action, new receipt, permission, provider, catalogue/algorithm promotion, customer release identity or announcement. |
+
+This mechanical closeout records only the preceding release identity and actual proof boundary; it changes no product, policy, capability, activation or acceptance status and is not logged recursively.
+
 **Recorded November 2, 2026 EST — EXP13 original Chat-to-Knowledge connection release.**
 
 | Increment | Exact reviewed source and production release | Proof boundary and original outcome |

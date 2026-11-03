@@ -223,8 +223,41 @@ SELECT ok((SELECT provolatile='s' AND NOT prosrc LIKE '%FOR SHARE%' AND NOT pros
  assert(sql.includes(prior.slice(prior.indexOf('CREATE TEMP TABLE e5_calendar_entry'),prior.indexOf('SELECT * FROM finish();'))),
   'All original nineteen Calendar/Planning assertions and inverses retained byte-exact');
 }
+if(calendarMode){
+ // Rewind ONLY O02's six Plan-reference hunks inside the existing rollback.
+ // All 23 prior Task/Calendar/Planning assertions still run against their exact base.
+ const weekly=readFileSync(join(repo,'supabase/migrations/20271130050006_exp05_weekly_plan_original_references.sql'),'utf8').replace(/\r\n/g,'\n');
+ const weeklyBody=weekly.replace(/^begin;\n/m,'').replace(/\ncommit;\s*$/,'\n');
+ const pairs=[...weekly.matchAll(/definition:=replace\(definition,\$old(\d+)\$([\s\S]*?)\$old\1\$,\$new\1\$([\s\S]*?)\$new\1\$\);/g)];
+ assert.equal(pairs.length,6,'Exactly six closed Plan-reference hunks');
+ const values=pairs.map(([,n,old,next])=>`(${n},$week_old$${old}$week_old$,$week_new$${next}$week_new$)`).join(',\n');
+ const rewind=`CREATE TEMP TABLE e5_weekly_entry AS SELECT oid,to_jsonb(p) full_metadata FROM pg_proc p WHERE pronamespace='public'::regnamespace;
+DO $week_inverse$ DECLARE p pg_proc; replacement text; h record;
+BEGIN
+ SELECT * INTO p FROM pg_proc WHERE oid='public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)'::regprocedure;
+ replacement:=p.prosrc;
+ FOR h IN SELECT * FROM (VALUES ${values}) v(ordinal,old_text,new_text) ORDER BY ordinal DESC LOOP
+  IF (length(replacement)-length(replace(replacement,h.new_text,'')))/length(h.new_text)<>1 THEN RAISE EXCEPTION 'Weekly Plan inverse drift'; END IF;
+  replacement:=replace(replacement,h.new_text,h.old_text);
+ END LOOP;
+ IF md5(replace(replacement,E'\\r\\n',E'\\n'))<>'437b5c12b5261b73a38e6a34104c5387' THEN RAISE EXCEPTION 'Weekly Plan complete inverse drift'; END IF;
+ EXECUTE replace(pg_get_functiondef(p.oid),p.prosrc,replacement);
+END $week_inverse$;`;
+ const extra=`${weeklyBody}
+SELECT ok(NOT EXISTS(SELECT 1 FROM e5_weekly_entry b FULL JOIN pg_proc p USING(oid)
+ WHERE (b.oid IS NOT NULL OR p.pronamespace='public'::regnamespace) AND b.full_metadata IS DISTINCT FROM to_jsonb(p)),
+ 'O02 exact full installed source/metadata restored; no outside function changed');
+SELECT ok(has_function_privilege('authenticated','public.save_weekly_plan_review_scoped(uuid,uuid,uuid,jsonb)','EXECUTE')
+ AND has_function_privilege('authenticated','public.get_weekly_plan_review_result_scoped(uuid,uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.save_weekly_plan_review_scoped(uuid,uuid,uuid,jsonb)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.save_weekly_plan_review_scoped(uuid,uuid,uuid,jsonb)','EXECUTE')
+ AND NOT has_function_privilege('authenticated','private.planning_weekly_review_scope(uuid,uuid)','EXECUTE'),
+ 'O02 explicit human/native save and recovery remain scoped, private helper sealed');
+`;
+ sql=sql.replace('SELECT plan(23);',()=>`SELECT plan(25);\n${rewind}`).replace('SELECT * FROM finish();',()=>`${extra}SELECT * FROM finish();`);
+}
 if(process.argv.includes('--self-test')){
- assert(sql.startsWith(`BEGIN;\nSELECT plan(${calendarMode?23:13});`));assert(sql.endsWith('ROLLBACK;\n'));
+ assert(sql.startsWith(`BEGIN;\nSELECT plan(${calendarMode?25:13});`));assert(sql.endsWith('ROLLBACK;\n'));
  assert.equal((sql.match(/^BEGIN;$/gm)??[]).length,1);assert.equal((sql.match(/^COMMIT;$/gm)??[]).length,0);
  assert.equal(sql.split(body).length,3,'Exact candidate bytes embedded twice without transaction wrappers');
  assert(!/INSERT INTO (public|auth)\./i.test(sql));

@@ -13,6 +13,7 @@ const run=join(repo,'work','planning-native-proof',`run-${Date.now()}`);mkdirSyn
 const inputs=new Map();
 const taskLinksMode=!['--red','--search-red','--links-red'].some(flag=>process.argv.includes(flag));
 const calendarMode=process.argv.includes('--calendar')||taskLinksMode;
+const weeklyPlanLinksMode=process.argv.includes('--weekly-plan-links');
 function materialize(path){
  path=resolve(path);if(inputs.has(path))return inputs.get(path).copy;
  const source=readFileSync(path,'utf8').replace(/\r\n/g,'\n');
@@ -23,6 +24,11 @@ function materialize(path){
   const anchor="RESET ROLE;\n\\c postgres\nDROP DATABASE exp08_team_hub_a2b_proof;\n\\echo 'PASS: EXP08 Team Hub agents A2b proof complete; disposable database dropped'";
   assert.equal(sql.split(anchor).length,2,'Exactly one final disposable cleanup');
   sql=sql.replace(anchor,`\\ir '${join(repo,'supabase/tests/exp05_zion_planning_read.sql').replaceAll('\\','/')}'\n${calendarMode ? `\\ir '${join(repo,'supabase/tests/exp05_zion_calendar_read.sql').replaceAll('\\','/')}'\n` : ''}${taskLinksMode ? `\\ir '${join(repo,'supabase/tests/exp05_zion_task_references.sql').replaceAll('\\','/')}'\n` : ''}\\if :{?exp05_concurrent}\n\\echo 'EXP05 retained original disposable fixture only for concurrent probes'\n\\else\n${anchor}\n\\endif`);
+ }
+ if(path===join(repo,'supabase/tests/exp08_team_hub_a2b_cards.sql')&&weeklyPlanLinksMode){
+  const hold='\\if :{?exp05_concurrent}';
+  assert.equal(sql.split(hold).length,2,'Exactly one original fixture retention boundary');
+  sql=sql.replace(hold,`\\ir '${join(repo,'supabase/tests/exp05_weekly_plan_references.sql').replaceAll('\\','/')}'\n${hold}`);
  }
  // Incumbent sed commands extract SQL text only. Feed the exact same ranges
  // through SQL literals on Windows; preserve every original drift/mutant probe.

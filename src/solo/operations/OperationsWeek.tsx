@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { PlanItem } from "@/hooks/usePlanList";
 import { businessCalendarHeldNote, useBusinessCalendarDay } from "../data/useBusinessTimeZone";
@@ -6,9 +6,11 @@ import type { CrmWorkRecord } from "./operations-native-work";
 import { operationsWeek } from "./operations-week";
 import type { TeamMemberRecord } from "../team-workspace-contract";
 import { OperationsWeeklyWorkload } from "./OperationsWeeklyWorkload";
+import { OperationsWeeklyPlanReview, type WeeklyPlanReviewEntry } from "./OperationsWeeklyPlanReview";
 import "./operations-week.css";
 
 type Props = { tenantId: string; items: PlanItem[]; tasks: CrmWorkRecord[]; members?: TeamMemberRecord[];
+  weeklyPlanning?: WeeklyPlanReviewEntry;
   onInspectItem: (item: PlanItem) => void; onInspectTask?: (task: CrmWorkRecord) => void;
   onOpenBusinessTimeZone?: () => void; businessTimeZoneRef?: (node: HTMLButtonElement | null) => void };
 const dateLabel = (date: string, options: Intl.DateTimeFormatOptions) =>
@@ -18,9 +20,16 @@ const dateLabel = (date: string, options: Intl.DateTimeFormatOptions) =>
 export function OperationsWeek(props: Props) {
   return <ScopedWeek key={props.tenantId} {...props} />;
 }
-function ScopedWeek({ tenantId, items, tasks, members = [], onInspectItem, onInspectTask, onOpenBusinessTimeZone, businessTimeZoneRef }: Props) {
+function ScopedWeek({ tenantId, items, tasks, members = [], onInspectItem, onInspectTask, onOpenBusinessTimeZone, businessTimeZoneRef, weeklyPlanning }: Props) {
   const { day, refresh } = useBusinessCalendarDay(tenantId);
   const [offset, setOffset] = useState(0);
+  const reviewGuard = useRef<(() => string | null) | null>(null);
+  const [weekHold, setWeekHold] = useState<string | null>(null);
+  const chooseWeek = (next: number) => {
+    const hold = reviewGuard.current?.();
+    if (hold) { setWeekHold(hold); return; }
+    setWeekHold(null); setOffset(next);
+  };
   const week = operationsWeek(tenantId, items, tasks, day, offset);
   if (week.kind === "withheld") return <section className="ops-week ops-week-held" aria-label="Work week">
     <h2>Work week</h2><p role="status">{week.reason === "loading" ? "Reading your business calendar…"
@@ -49,11 +58,13 @@ function ScopedWeek({ tenantId, items, tasks, members = [], onInspectItem, onIns
   const weekend = week.days.slice(5);
   return <section className="ops-week" aria-label="Work week">
     <header><h2>{dateLabel(week.days[0].date, { month: "short", day: "numeric" })}–{dateLabel(week.days[6].date, { month: "short", day: "numeric", year: "numeric" })}</h2>
-      <nav aria-label="Displayed work week"><button type="button" aria-label="Previous work week" onClick={() => setOffset(value => value - 1)}><ChevronLeft size={16} aria-hidden /></button>
-        <button type="button" onClick={() => setOffset(0)} disabled={offset === 0}>This week</button>
-        <button type="button" aria-label="Next work week" onClick={() => setOffset(value => value + 1)}><ChevronRight size={16} aria-hidden /></button></nav></header>
+      <nav aria-label="Displayed work week"><button type="button" aria-label="Previous work week" onClick={() => chooseWeek(offset - 1)}><ChevronLeft size={16} aria-hidden /></button>
+        <button type="button" onClick={() => chooseWeek(0)} disabled={offset === 0}>This week</button>
+        <button type="button" aria-label="Next work week" onClick={() => chooseWeek(offset + 1)}><ChevronRight size={16} aria-hidden /></button></nav></header>
+    {weekHold && <p role="status">{weekHold}</p>}
     <p className="ops-week-zone">Business calendar · {week.zone}. Recorded dates do not reserve Calendar time.</p>
-    <OperationsWeeklyWorkload tenantId={tenantId} week={week} members={members} onInspectItem={onInspectItem} onInspectTask={onInspectTask} />
+    {weeklyPlanning ? <OperationsWeeklyPlanReview {...weeklyPlanning} onGuardChange={guard => { reviewGuard.current = guard; weeklyPlanning.onGuardChange(guard); }} tenantId={tenantId} week={week} items={items} tasks={tasks} members={members} />
+      : <OperationsWeeklyWorkload tenantId={tenantId} week={week} members={members} onInspectItem={onInspectItem} onInspectTask={onInspectTask} />}
     <div className="ops-week-grid">{days(week.days.slice(0, 5))}</div>
     {weekend.some(date => date.deadlines.length || date.reminders.length) && <div className="ops-week-weekend">{days(weekend)}</div>}
     <footer>{shown.length} dated {shown.length === 1 ? "commitment" : "commitments"} in this week from the sources shown.

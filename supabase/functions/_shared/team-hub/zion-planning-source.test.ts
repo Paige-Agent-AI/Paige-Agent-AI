@@ -29,7 +29,8 @@ describe("ZION's closed original Planning source binding", () => {
     scope.storedTools.push("unrelated");
     assert.equal(result.source.plans[0].updated_at, VERSION);
     assert.deepEqual(result.roster_tools, ["crm_list_tasks", "plan_list"]);
-    assert.deepEqual(zionPlanningRecordLinks(result), [{ destination: "operations_work", record_id: ITEM, record_kind: "planning_item" }]);
+    assert.deepEqual(zionPlanningRecordLinks(result), [{ destination: "operations_work", record_id: ITEM, record_kind: "planning_item" },
+      { destination: "operations_work", record_id: PLAN, record_kind: "planning_plan" }, { destination: "operations_weekly_plan", record_id: null }]);
     scope.storedTools.pop();
   });
 

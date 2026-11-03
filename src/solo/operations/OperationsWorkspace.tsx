@@ -36,6 +36,8 @@ import { OperationsPlaybooks, type ProcedureReference } from "./OperationsPlaybo
 import { operationsBundleMatchesTenant } from "./operations-source-contract";
 import { parseWeeklyPlanningSource, readWeeklyPlanningSource } from "./operations-weekly-source";
 import { parseOperationsTaskFocus } from "./operations-task-focus";
+import { parseOperationsPlanFocus, readOperationsPlanSource, type OperationsPlanSource } from "./operations-plan-source";
+import { OperationsWeeklyPlanReceipt } from "./OperationsWeeklyPlanReceipt";
 import { OperationsDeliveryInspection } from "./OperationsDeliveryInspection";
 import { OperationsDeliveryReviewQueue } from "./OperationsDeliveryReviewQueue";
 import { planningWorkDeliveryScope } from "./operations-work-delivery-scope";
@@ -50,7 +52,7 @@ type Destination = typeof DESTINATIONS[number];
 const WORK_SET_LABELS: Record<OperationsWorkSet, string> = {
   attention: "Needs attention", deadlines: "Next deadlines", timing: "Timing to confirm", reminders: "Recorded reminders",
 };
-type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?: PlanItemStatus; weeklySource?: boolean; planningReference?: boolean } | { kind: "plan"; id: string; view: Destination } | {kind:"crm";id:string;view:Destination;record:CrmWorkRecord} | {kind:"crm_recovery";id:string;view:Destination} | {kind:"crm_focus";id:string;view:Destination} | {kind:"delivery_review";id:string;view:Destination;review:PendingDeliveryReview} | {kind:"delivery_recovery";id:string;view:Destination;target:RecoveryTarget} | null;
+type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?: PlanItemStatus; weeklySource?: boolean; planningReference?: boolean } | { kind: "plan"; id: string; view: Destination; linked?: boolean } | {kind:"crm";id:string;view:Destination;record:CrmWorkRecord} | {kind:"crm_recovery";id:string;view:Destination} | {kind:"crm_focus";id:string;view:Destination} | {kind:"delivery_review";id:string;view:Destination;review:PendingDeliveryReview} | {kind:"delivery_recovery";id:string;view:Destination;target:RecoveryTarget} | null;
 
 type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void; onOpenAgreements?: () => void;
   onOpenBusinessTimeZone?: () => void;
@@ -95,6 +97,7 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
   const overviewInspectionReturn = useRef<OperationsWorkSet | null>(null);
   const desiredDestination = view === undefined ? destination : DESTINATIONS.find(name => name.toLowerCase() === view) ?? "Overview";
   const editorGuard = useRef<(() => string | null) | null>(null);
+  const weeklyPlanGuard = useRef<(() => string | null) | null>(null);
   const crmInspectionHeld = useRef(false);
   const crmReviewHeld = useRef(false);
   const [navigationNotice, setNavigationNotice] = useState("");
@@ -108,6 +111,8 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
     if (original) return original;
     if (crmInspectionHeld.current && (!editorGuard.current || crmReviewHeld.current))
       return "Review unsaved changes or close this task before leaving it.";
+    const weeklyReason = weeklyPlanGuard.current?.();
+    if (weeklyReason) return weeklyReason;
     try {
       if (Array.from(deliveryGuards.current).some(check => !check(false))) return "Finish or inspect the current delivery decision before leaving.";
     } catch { return "The current delivery decision could not be checked. Keep this inspection open."; }
@@ -133,6 +138,10 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
   }, [onNavigationGuardChange, navigationReason, checkNavigation]);
   const registerEditorGuard = useCallback((guard: (() => string | null) | null) => {
     editorGuard.current = guard;
+    onNavigationGuardChange?.(navigationReason, checkNavigation);
+  }, [onNavigationGuardChange, navigationReason, checkNavigation]);
+  const registerWeeklyPlanGuard = useCallback((guard: (() => string | null) | null) => {
+    weeklyPlanGuard.current = guard;
     onNavigationGuardChange?.(navigationReason, checkNavigation);
   }, [onNavigationGuardChange, navigationReason, checkNavigation]);
   const registerProcessGuard = useCallback((guard: (() => string | null) | null) => {
@@ -185,6 +194,7 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
   const mounted = useRef(true);
   useLayoutEffect(() => { mounted.current = true; return () => { mounted.current = false; selectionEpoch.current += 1; }; }, []);
   const [weeklySource, setWeeklySource] = useState<{ id: string | null; phase: "idle" | "reading" | "verified" | "unavailable"; item: PlanItem | null }>({ id: null, phase: "idle", item: null });
+  const [planFocus, setPlanFocus] = useState<{ id: string; phase: "reading" | "verified" | "unavailable"; plan: OperationsPlanSource | null } | null>(null);
   const [taskFocus, setTaskFocus] = useState<{id:string|null;phase:"idle"|"reading"|"verified"|"empty"|"unavailable"|"refused"|"cancelled";task:CrmWorkRecord|null}>({id:null,phase:"idle",task:null});
   // A not-yet-released initial read has no draft to retain; a newer query may retire it.
   crmInspectionHeld.current = inspection?.kind === "crm" || inspection?.kind === "crm_recovery" ||
@@ -332,7 +342,29 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
       await Promise.all([source.refresh({ silent: true }), readLinkedItem(inspection.id, true)]);
     } else await source.refresh({ silent: true });
   };
-  const selectedPlan = inspection?.view === destination && inspection.kind === "plan" ? plans.find((plan) => plan.id === inspection.id) : null;
+  const linkedPlan = inspection?.kind === "plan" && inspection.linked === true;
+  const selectedPlan = inspection?.view === destination && inspection.kind === "plan" ? linkedPlan
+    ? planFocus?.id === inspection.id && planFocus.phase === "verified" ? planFocus.plan : null
+    : plans.find((plan) => plan.id === inspection.id) : null;
+  const readLinkedPlan = useCallback(async (id: string) => {
+    const epoch = ++selectionEpoch.current;
+    const current = () => mounted.current && epoch === selectionEpoch.current;
+    setPlanFocus({ id, phase: "reading", plan: null });
+    const plan = await readOperationsPlanSource({ actorId: userId, tenantId, planId: id }, current);
+    if (current()) setPlanFocus({ id, phase: plan ? "verified" : "unavailable", plan });
+  }, [userId, tenantId]);
+  useEffect(() => {
+    if (destination !== "Projects") return;
+    const target = parseOperationsPlanFocus(weeklySourceSearch);
+    if (checkNavigation()) return;
+    if (!target) { if (linkedPlan) { selectionEpoch.current += 1; setInspection(null); setPlanFocus(null); } return; }
+    if (target.kind === "invalid") { selectionEpoch.current += 1; setInspection(null); setPlanFocus(null); setNavigationNotice("This plan reference is unavailable. Open the original plan again."); return; }
+    if (creatingWork || creatingProject || inspection && !linkedPlan) { setNavigationNotice("Finish or close the current inspection before opening this plan."); return; }
+    rememberInvoker(); setInspection({ kind: "plan", id: target.id, view: "Projects", linked: true });
+    void readLinkedPlan(target.id);
+    // Only accepted URL/scope changes may apply the original reference.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [destination, weeklySourceSearch, weeklySourceKey, readLinkedPlan, checkNavigation]);
   const selectedCrm = inspection?.view === destination && inspection.kind === "crm_focus"
     ? taskFocus.id===inspection.id?taskFocus.task:null
     : inspection?.view === destination && (inspection.kind === "crm" || inspection.kind === "crm_recovery") && !crm.error && !crm.forbidden
@@ -385,6 +417,8 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
     {crm.loading && <p role="status">Reading CRM tasks…</p>}
     {!crmAvailable && !crm.loading && <div className="ops-inline-notice" role="status">CRM tasks couldn’t be verified for this workspace. <button type="button" onClick={()=>void crm.refresh()}>Retry CRM tasks</button></div>}
     <OperationsOverview {...props} tenantId={tenantId} crmTasks={crmTasks} onInspectCrmTask={inspectCrm}
+      weeklyPlanning={userId && workReadable ? { actorId: userId, openByLink: new URLSearchParams(weeklySourceSearch).get("weeklyPlan") === "review",
+        onGuardChange: registerWeeklyPlanGuard, onSaved: id => { rememberInvoker(); setInspection({ kind: "plan", id, view: "Overview", linked: true }); void readLinkedPlan(id); } } : undefined}
       onOpenBusinessTimeZone={onOpenBusinessTimeZone ? () => { if (!checkNavigation()) onOpenBusinessTimeZone(); } : undefined}
       businessTimeZoneRef={businessTimeZoneRef}
       nativeWorkState={workReadable ? 'ready' : source.loading || crm.loading ? 'loading' : 'unavailable'}
@@ -489,6 +523,7 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
       onNavigationGuardChange?.(navigationReason,checkNavigation);
       selectionEpoch.current += 1; setInspection(null); closeCrmReview(); setCrmFeedback(""); setNavigationNotice("");
       if (linkedInspection) onWeeklySourceDismiss?.();
+      if (linkedPlan) onWeeklySourceDismiss?.();
       if (taskFocusOrigin) onTaskFocusDismiss?.();
     } }}>
       <SheetContent className="ops-detail-sheet paige-solo" data-pg={portalTheme} data-theme={portalTheme}
@@ -511,7 +546,7 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
           if(fallback){event.preventDefault();fallback.focus();}
         }
       }}>
-        <SheetHeader><SheetTitle className={linkedInspection || linkedTask || inspection?.kind === "crm_recovery" ? "pr-8 break-words" : undefined}>{inspection?.kind === "crm_recovery" ? `Recover the earlier task change${selectedCrm ? `: ${selectedCrm.title}` : ""}` : selectedItem?.title ?? selectedPlan?.title ?? (taskDetailsCurrent?selectedCrm?.title:undefined) ?? (linkedTask
+        <SheetHeader><SheetTitle className={linkedInspection || linkedTask || inspection?.kind === "crm_recovery" ? "pr-8 break-words" : undefined}>{inspection?.kind === "crm_recovery" ? `Recover the earlier task change${selectedCrm ? `: ${selectedCrm.title}` : ""}` : selectedItem?.title ?? selectedPlan?.title ?? (linkedPlan ? planFocus?.phase === "reading" ? "Reading original plan" : "This plan could not be verified" : undefined) ?? (taskDetailsCurrent?selectedCrm?.title:undefined) ?? (linkedTask
           ? taskFocus.phase==="reading"?"Reading current task":taskFocus.phase==="empty"?"This task isn’t available in this workspace":"Current task details are unavailable"
           : linkedInspection
           ? weeklySource.phase === "reading" ? "Reading current work" : "This work is unavailable"
@@ -588,14 +623,18 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
             item={selectedItem} members={people.members} peopleReady={!people.loading && !people.error && !people.partial} theme={portalTheme}
             registerCloseGuard={registerDeliveryGuard} onSubmitted={()=>setReviewEpoch(n=>n+1)} />}
         </div>}
+        {linkedPlan && !selectedPlan && <p role="status">{planFocus?.phase === "reading" ? "Reading the original plan with your current permissions…" : <>This plan is unavailable in your current workspace. <button type="button" onClick={() => void readLinkedPlan(inspection!.id)}>Check original plan again</button></>}</p>}
         {selectedPlan && <div className="ops-detail-content"><p>Status: {selectedPlan.status}</p>
+          {selectedPlan.summary && <p className="ops-plan-summary">{selectedPlan.summary}</p>}
+          <OperationsWeeklyPlanReceipt key={`${tenantId}:${selectedPlan.id}:${selectedPlan.updated_at}`} actorId={userId} tenantId={tenantId} planId={selectedPlan.id} />
           <OperationsAssignee member={people.members.find(person => person.user_id === selectedPlan.owner_user_id)} />
           <OperationsProjectEditor key={`${tenantId}:${selectedPlan.id}`} plan={selectedPlan} actorId={userId} tenantId={tenantId}
-            members={people.members} refresh={() => source.refresh({ silent: true })} sourceError={Boolean(source.error) || !matches} />
+            members={people.members} refresh={async () => { if (linkedPlan) await readLinkedPlan(selectedPlan.id); else await source.refresh({ silent: true }); }} sourceError={linkedPlan ? planFocus?.phase !== "verified" : Boolean(source.error) || !matches} />
           <button type="button" disabled={people.loading || Boolean(people.error) || Boolean(source.error) || !matches} onClick={() => {
             projectCreationInvoker.current = inspectionInvoker.current;
             setCreatingProject({ project: selectedPlan }); setInspection(null);
           }}>Add milestone</button>
+          {linkedPlan && planFocus?.plan?.itemsPartial && <p>Showing 200 visible work items from this plan. More items exist beyond this read.</p>}
           <ol className="ops-detail-work">{selectedPlan.items.map((item) => <li key={item.id}><button type="button" onClick={() => inspectItem(item)}>{item.title}</button><span>{item.status.replace(/_/g, " ")}</span></li>)}</ol></div>}
       </SheetContent>
     </Sheet>

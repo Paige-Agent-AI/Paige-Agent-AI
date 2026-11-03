@@ -1,0 +1,17 @@
+.paige-solo .ops-week-plan fieldset{border:0;padding:0;margin:0;min-width:0}
+.paige-solo .ops-week-plan label{display:grid;gap:.4rem;font-size:.875rem}
+.paige-solo .ops-week-plan textarea{width:100%;resize:vertical;min-height:4rem;padding:.75rem;border:1px solid var(--pg-line);border-radius:7px;background:var(--pg-workspace);color:var(--pg-ink);font:inherit}
+.paige-solo .ops-week-plan textarea:focus-visible{outline:2px solid var(--pg-violet);outline-offset:2px}
+.paige-solo .ops-week-plan-capacity{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:1rem;margin-block:1rem}
+.paige-solo .ops-week-plan-work{list-style:none;padding:0;margin:0}
+.paige-solo .ops-week-plan-work>li{padding-block:1rem;border-top:1px solid var(--pg-line)}
+.paige-solo .ops-week-plan .ops-week-plan-select{display:flex;flex-direction:row;align-items:flex-start;gap:.75rem;cursor:pointer}
+.paige-solo .ops-week-plan-select input{width:1.25rem;height:1.25rem;min-height:1.25rem;flex-shrink:0;margin-top:.15rem;accent-color:var(--pg-violet)}
+.paige-solo .ops-week-plan-select span{overflow-wrap:anywhere;min-width:0}
+.paige-solo .ops-week-plan-select small{display:block;color:var(--pg-muted);margin-top:.25rem}
+.paige-solo .ops-week-plan-constraints{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));gap:.75rem;margin-top:.75rem;align-items:end}
+.paige-solo .ops-week-plan-proposal{margin-block:1.25rem;border-block:1px solid var(--pg-line);padding-block:1rem}
+.paige-solo .ops-week-plan-proposal h3{font-size:1rem;margin:0 0 .5rem}
+.paige-solo .ops-week-plan-proposal li{margin-block:.75rem;overflow-wrap:anywhere}
+.paige-solo .ops-week-plan-proposal li span{display:block;color:var(--pg-muted);font-size:.875rem}
+.paige-solo .ops-plan-summary{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}

@@ -1,3 +1,14 @@
+// EXP08 original unsent email integration, November3, 2026.
+// Immutable sourcee3096c8d3a7f071b34d916f1c440fc8be67729b0; own distinct
+// NON-AUTHOR reviewer /root/review_exp08_composition inspected the exact Root
+// two-import/closed-dispatch diff. Full UI/native review remains HOLD for
+// separately recorded repairs, not merge clearance. Actual mainf208 reproduces
+// all131 dependency pins/29 dispatches. Complete Root inverse exact; only
+// enclosing identity[15] changes, all branches/controls/helpers/imports exact.
+// Renew ONLY29 tool-keyed scalars; original dependency pins/metadata/extractor/
+// validators/hostile controls and all peer source retained byte-exact.
+// Final exact-head independent review, requiredCI/Preview, normal release and
+// authenticated outcome proof remain mandatory. No action authority granted.
 // EXP13 internal Knowledge reference preparation, 2026-11-01.
 // Immutable pre-renewal cf19c67a3/code20af07050; NON-AUTHOR source review
 // 6561518651 and composed-source/two-digest review6561622793 precede renewal.
@@ -776,7 +787,7 @@ const CONTRACTS = {
     // rows (growth_hosting_*) land inside the canonical authentication prefix this fingerprint
     // covers. Dispatch logic, identity and authority unchanged; recomputed with the proof's own
     // inspector on the exact head.
-    "fingerprint": "cb361c2a1df9ce514fccc66b61dce7e105d50ec9db07b3b30a78e8df4897ab2f"
+    "fingerprint": "a30dd11ad11e0fbc5cf1c30f2bb792841b5ac867dd2b258a55120b3c14e23b8b"
   },
   "calendar_book_meeting": {
     "key": "calendar.book_meeting",
@@ -788,7 +799,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "b5f0357aca9dfcc0de7ce2e5f39bf60b699fb8325889c841bd9497c458af65c3"
+    "fingerprint": "b090ffdc4eb7883c58eb0454ac8c7e2e5869490ad47e6234ea14c8f5ceedd98b"
   },
   "calendar_link_send": {
     "key": "calendar.link_send",
@@ -800,7 +811,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "b84cafba5897ed55775279be7efb9f93a953a565505297d1384a0e59c62f7004"
+    "fingerprint": "b43597e5bcf1360ff391431a120bc263e739ac731d416c8cf74c9016e4e196ed"
   },
   "propose_business_brief_update": {
     "key": "business_profile.propose_brief_update",
@@ -812,7 +823,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "d406fb30c960679130ea3626da10770f1aaa5549521e7df6e766c9a53a222624"
+    "fingerprint": "1213fd9666b5c71cfe22da7bfead1afe14e7b4c2818d540e52b116c7492afd87"
   },
   "update_business_profile": {
     "key": "business_profile.update_legacy",
@@ -824,7 +835,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "f5b7d66252f1a396425475d91af94130076418cc6c345ceaea63d183348a76f7"
+    "fingerprint": "7d6c11ecf299f48190a0a271d0be71735ca28f56393442a5dd0594bc05caaca4"
   },
   "capability_status": {
     "key": "platform_meta.capability_status",
@@ -836,7 +847,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "e69b4847dcf9cafbbbc1b2d47fd9438a16af0486af25a9ce4572f4ee9b899bb8"
+    "fingerprint": "861a902c86a06dec980f8b8d3b8a1fffc54591b3fc780b74da582a95a8858ca2"
   },
   "improvement_propose": {
     "key": "platform_meta.improvement_propose",
@@ -848,7 +859,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "68ef7af34330307b2f282d0cae7693294578ff0b3fc2f3c007f2a8ef3bd21fb0"
+    "fingerprint": "60c1261352b5d207f9fe22f939df16d711bcee1dafe2fc0d2ea50c378b676be4"
   },
   "improvement_decide": {
     "key": "platform_meta.improvement_decide",
@@ -860,7 +871,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "0e95a713b6cc943e671cd4ab31c06d5d7fea319b2d5efece4795bf4e156e7c86"
+    "fingerprint": "5d1850f51373615b1911ae3a27d8e88544a88bb720e16b7e7dd9e200e844f169"
   },
   "list_subagents": {
     "key": "agents.list",
@@ -872,7 +883,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "0903dc5fc96562d33dc1f7405d0fee12a54cce2934f575a36f5ac2b1983bfd08"
+    "fingerprint": "61f46b574cf239c7cf247e00fd537318d49188a2dfd1902fd9e22525d96d0904"
   },
   "delegate_to_subagent": {
     "key": "agents.delegate",
@@ -884,7 +895,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "0903dc5fc96562d33dc1f7405d0fee12a54cce2934f575a36f5ac2b1983bfd08"
+    "fingerprint": "61f46b574cf239c7cf247e00fd537318d49188a2dfd1902fd9e22525d96d0904"
   },
   "forge_subagent": {
     "key": "agents.forge",
@@ -896,7 +907,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "abc16ded695b5331b258b62b11b9fc4907b15bd36af8ad4fd9efc86c243bf2c2"
+    "fingerprint": "5e56a4320a3e2e84dc741d90ccc312242eb9cb7cfe591a1750a7b9293a10b29d"
   },
   "author_event_kind": {
     "key": "crm_clients.author_event_kind",
@@ -908,7 +919,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "140d7af0f18386d7983d3c4e49d31e698b4231051389d4994ed290651646031f"
+    "fingerprint": "aca5cfed6997d260958acc446dcc23571a26209b46c65f4ead47214bcaa1e6e2"
   },
   "crm_add_note": {
     "key": "crm_clients.add_note",
@@ -920,7 +931,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "b1cc16772d25b3921bae2b86af8adb16aadf7953d05751ed9d8572fcab316a51"
+    "fingerprint": "1b6aaedd1e3f6007ae29321f9e295219cb4dd851dcfec922f4010aa4be737920"
   },
   "crm_file_document": {
     "key": "crm_clients.file_document",
@@ -932,7 +943,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "dbe86c6d794f6559a9d5193a16d104574855f47193f7feac7bc1470c9c8b623a"
+    "fingerprint": "201c6f645643ea65f6a9e9ecdcf82a546f85a2980a04a4b63106746dac8d783d"
   },
   "update_client_data": {
     "key": "crm_clients.update_client_data",
@@ -944,7 +955,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "412b5830e20c1ac382db291a47fd6899b2f3f60ab991ab41e2e361ff661bbeee"
+    "fingerprint": "3d557912ed15b9e16a4a1292db355e4e323165bd9237965d37df91ed6aacbcbe"
   },
   "pipeline_configure": {
     "key": "sales.pipeline_configure",
@@ -956,7 +967,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "014056501d23e4b89ff6f55f59568e9c6300ae6db0a40bc8fb0c1297c2fd6d0b"
+    "fingerprint": "53879c9a4a2754f63c4ef8e61c037747f8d721948e8476bfbadb589f6ad3a7da"
   },
   "deep_research": {
     "key": "research_knowledge.deep_research",
@@ -968,7 +979,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "research_provider",
-    "fingerprint": "f204fc68835d371c07dac0194adf04d00e03f2973853ba8a12c942021186d1bb"
+    "fingerprint": "d631b4d00681d260992643521458927301be33ebc636964e9d7d4eb16e529c0c"
   },
   "web_search": {
     "key": "research_knowledge.web_search",
@@ -980,7 +991,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "research_provider",
-    "fingerprint": "dff40a1b50ed2ba1b89256ac283aef5151a28265b6a91239349aac7ff3e0c9d0"
+    "fingerprint": "1b9e1e91806cda3b75815e4be12ff133a47ae5f8583a748edeeb7430e08b0585"
   },
   "web_fetch": {
     "key": "research_knowledge.web_fetch",
@@ -992,7 +1003,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "271d4ee06fd7f1ec1b21fa937f5c0aeb152b9391c5aa749c9bde0f9370c98d0d"
+    "fingerprint": "3ff78581cc99b3232e6d3d5cd47a24efe9a1bdbe983024bc6696552ac68595ed"
   },
   "save_to_knowledge_base": {
     "key": "research_knowledge.save_to_knowledge_base",
@@ -1004,7 +1015,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "fb7bfe6f5b9a3713eb9b1372bc62e5ee3891ad3c3f51abbcd55533e1112d2731"
+    "fingerprint": "191ceda9ccc2e9f46e8fcf583d21239b51daf70986ff87e8c008afe164e80e51"
   },
   "automation_draft": {
     "key": "automations.automation_draft",
@@ -1016,7 +1027,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "f2b8350c27027a7b2f4e9ac770a5a79f4a7b01bc1ca1b72370b641f7fd136f8d"
+    "fingerprint": "496eb2348dbc59d14507fc3ac70b1b4d8743f3e462ed279831191efa96910fff"
   },
   "comms_connection_summary": {
     "key": "communications.comms_connection_summary",
@@ -1028,7 +1039,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "c7415d98020c5bf51c24cdee0630e5bc16da92a99e33387fa3d1dece4797fa85"
+    "fingerprint": "ac60ada129bf9718c1625a0dc8c9a66f3c20238a6ecef2d808e83577a1b8733b"
   },
   "comms_registration_status": {
     "key": "communications.comms_registration_status",
@@ -1040,7 +1051,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "1f7773c93947e58cca28f6c393061450bbd9818ed9b5700aac93411832259541"
+    "fingerprint": "c2f5403d758c0f32e063a0dcec1c867b02a3a2bf21baeee234f757c426ed3646"
   },
   "comms_list_numbers": {
     "key": "communications.comms_list_numbers",
@@ -1052,7 +1063,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "d74167504dba6d117ee1a344785cb4e2bbeeea0242d63a04992f577ba903739b"
+    "fingerprint": "77fab9abdab64ab671efc1029c2b94ca80d5f468169614fc329a41d7995704be"
   },
   "comms_search_numbers": {
     "key": "communications.comms_search_numbers",
@@ -1064,7 +1075,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "9ef6c12aed4ffa51f46d27ba8a953cbee78882b46c2201d5e8e768b17959ae25"
+    "fingerprint": "fea3f7fab5e0a25898d8605f82c9c930c94bbb292ea70a78038ad4abc2d7b7f0"
   },
   "comms_buy_number": {
     "key": "communications.comms_buy_number",
@@ -1076,7 +1087,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "7a8ad7e1e14a89aa203d70fd987034c2bd0b08f93b73b2bd18340ca697b3c7c1"
+    "fingerprint": "12d5d8b91b4f992cd56a1532fca008077dc6ec3651ed1ed0dd7a42ca10f216b1"
   },
   "comms_draft_registration": {
     "key": "communications.comms_draft_registration",
@@ -1088,7 +1099,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "b371597fecf1ec443f27b57efebb3aa251f0f418489641b3f54f6f69b7fec325"
+    "fingerprint": "8b1d13daf8f28921a1cde21395dfe4d1b916f908917d6992e6d02b1bdf2ca7f5"
   },
   "comms_name_number": {
     "key": "communications.comms_name_number",
@@ -1100,7 +1111,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "07a9423ae1211f3e69d847ad8fe67ef1dfa951fbbb65dc260875d42ebbf2d3ee"
+    "fingerprint": "f2f384dd2f44ab9f3b72865571e9fcae0825b7aea661f5e553ce8bac87e1ef9f"
   },
   "comms_set_primary_number": {
     "key": "communications.comms_set_primary_number",
@@ -1112,7 +1123,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "c4a887fe93295a81b7b902a4b48b59ac3fdd8fda661081f2b9e517ca9d83e225"
+    "fingerprint": "86ffbb34210dba56203d2073f4b70ac8476133b8eea193c38166e9e11ad68578"
   }
 };
 const SOURCES = {

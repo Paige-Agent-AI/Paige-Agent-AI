@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 import {verifyNexusEmailDeparture} from './exp08-nexus-email-departure.mjs';
+import {verifyNexusEmailRetirement} from './exp08-nexus-email-retirement.mjs';
 const db=new OperatorPostgresFixture(Number(process.argv[2]));
 db.prefix=()=>"SET statement_timeout='15s';SET application_name='exp08_nexus_email_component';";
 const run=db.run.bind(db);
@@ -187,7 +188,8 @@ $function$;
  check(scalar(`SELECT consumed_at IS NOT NULL AND posted_message_id IS NULL AND email_draft IS NULL FROM public.team_hub_agent_turns WHERE id='${pending}'`)==='t','retired turn contains no unpublished private preparation or effect');
  db.run(`UPDATE public.tenant_members SET team_hub_access=true WHERE user_id='${actor}';`);
  const departure=await verifyNexusEmailDeparture(db,{actor,tenant,reply,channel});
- console.log(JSON.stringify({passed:checks,departure,evidence:'isolated native component with abridged tables; NOT full-schema/Auth/customer/provider proof'}));
+ const retirement=await verifyNexusEmailRetirement(db,{actor,tenant,channel});
+ console.log(JSON.stringify({passed:checks,departure,retirement,evidence:'isolated native component with abridged tables; NOT full-schema/Auth/customer/provider proof'}));
 }catch(error){failed=true;console.error('Original component failure:',error);throw error;
 }finally{
  try{db.run(`DROP DATABASE ${db.database}`,[],'postgres');console.log('Own disposable component database disposed');}

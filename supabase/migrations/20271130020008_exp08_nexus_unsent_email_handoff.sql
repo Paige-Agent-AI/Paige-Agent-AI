@@ -50,12 +50,16 @@ BEGIN
  -- Comms helper: retirement exclusion → identity → membership → profile.
  -- A publication trigger may already hold its turn. Never wait on a departure's
  -- membership lock while retaining that child; refusal releases it for removal.
- LOCK TABLE public.tenants IN ROW EXCLUSIVE MODE;
- PERFORM 1 FROM auth.users WHERE id=t.asker_user_id FOR SHARE;
  BEGIN
+  LOCK TABLE public.tenants IN ROW EXCLUSIVE MODE NOWAIT;
+  PERFORM 1 FROM auth.users WHERE id=t.asker_user_id FOR SHARE NOWAIT;
   PERFORM 1 FROM public.tenant_members WHERE tenant_id=t.tenant_id AND user_id=t.asker_user_id
    AND status='active' AND role IN ('owner','admin') FOR SHARE NOWAIT;
   IF NOT FOUND THEN RAISE EXCEPTION 'Private email preparation unavailable' USING ERRCODE='42501'; END IF;
+  -- A publication already holding child tables cannot wait on a withdrawing
+  -- parent. Prehold the remaining ORIGINAL Comms authority rows as well.
+  PERFORM 1 FROM public.tenants WHERE id=t.tenant_id FOR SHARE NOWAIT;
+  PERFORM 1 FROM public.profiles WHERE user_id=t.asker_user_id FOR SHARE NOWAIT;
  EXCEPTION WHEN lock_not_available THEN
   RAISE EXCEPTION 'Private email preparation unavailable' USING ERRCODE='42501';
  END;

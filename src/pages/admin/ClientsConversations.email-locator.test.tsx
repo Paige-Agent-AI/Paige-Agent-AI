@@ -6,7 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import ClientsConversations from "./ClientsConversations";
-const db=vi.hoisted(()=>({from:vi.fn(),rpc:vi.fn(),invoke:vi.fn(),getUser:vi.fn(),allowed:true,listIncludesRaw:false,refresh:[] as (()=>void)[]}));
+const db=vi.hoisted(()=>({from:vi.fn(),rpc:vi.fn(),invoke:vi.fn(),getUser:vi.fn(),allowed:true,listIncludesRaw:false,contentWait:null as Promise<unknown>|null,refresh:[] as (()=>void)[]}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{from:db.from,rpc:db.rpc,functions:{invoke:db.invoke},auth:{getUser:db.getUser,onAuthStateChange:()=>({data:{subscription:{unsubscribe:vi.fn()}}})},
   channel:()=>{const c={on:(_kind:unknown,_options:unknown,cb:()=>void)=>{db.refresh.push(cb);return c;},subscribe:()=>c};return c;},removeChannel:vi.fn()}}));
 vi.mock("@/hooks/useTenantContext",()=>({useTenantContext:()=>({activeTenantId:"11111111-1111-4111-8111-111111111111",activeUserId:"22222222-1111-4111-8111-111111111111",loading:false,accountContextLoading:false,accountContextStatus:"ready"})}));
@@ -31,9 +31,9 @@ const prepared=()=>({ok:true,tenant_id:tenantId,actor_id:actorId,turn_id:turn,co
 let host:HTMLDivElement,root:Root;
 async function flush(){for(let i=0;i<12;i++)await act(async()=>{await new Promise(resolve=>setTimeout(resolve,0));});}
 beforeEach(()=>{
-  db.allowed=true;db.listIncludesRaw=false;db.refresh=[];db.from.mockReset();db.rpc.mockReset();db.invoke.mockReset();db.getUser.mockResolvedValue({data:{user:{id:actorId}},error:null});
+  db.allowed=true;db.listIncludesRaw=false;db.contentWait=null;db.refresh=[];db.from.mockReset();db.rpc.mockReset();db.invoke.mockReset();db.getUser.mockResolvedValue({data:{user:{id:actorId}},error:null});
   Element.prototype.scrollIntoView=vi.fn();
-  db.rpc.mockImplementation(async(name)=>({data:name==="current_user_tenant_id"?tenantId:name==="team_hub_email_draft"?prepared():name==="read_message_content"?native():null,error:null}));
+  db.rpc.mockImplementation(async(name)=>({data:name==="current_user_tenant_id"?tenantId:name==="team_hub_email_draft"?prepared():name==="read_message_content"?db.contentWait?await db.contentWait:native():null,error:null}));
   db.from.mockImplementation(table=>{const filters:unknown[][]=[];const q:Record<string,unknown>={};
     const result=()=>({data:db.listIncludesRaw&&table==="messages"?[row]:db.listIncludesRaw&&table==="threads"?[thread]:table==="channel_connectors"?[{id:connector,channel_type:"email",provider:"gmail",display_name:"Original mailbox",from_address:"sender@tests.invalid",status:"active",active:true}]:[],error:null,count:table==="threads"?1:0});
     for(const method of ["select","eq","order","limit","not","is","or","gt","in","gte"])q[method]=(...args:unknown[])=>{filters.push([method,...args]);return q;};
@@ -73,4 +73,14 @@ it("a temporary unavailable read withholds local unsaved edits and restores them
   expect(host.textContent).not.toContain("LOCAL USER EDIT");expect(host.querySelector('textarea[aria-label="Original message editor"]')).toBeNull();
   db.allowed=true;await act(async()=>Array.from(host.querySelectorAll("button")).find(b=>b.textContent==="Retry original draft")!.click());await flush();
   expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Original message editor"]')?.value).toBe("LOCAL USER EDIT");expect(db.invoke).not.toHaveBeenCalled();
+});
+it("closing a delayed Retry cannot reveal the original editor before a later native refusal",async()=>{
+  await mount();await act(async()=>Array.from(host.querySelectorAll("button")).find(b=>b.textContent==="Keep local edit")!.click());
+  db.allowed=false;await act(async()=>{for(const refresh of db.refresh)refresh();});await flush();
+  let release!:(v:unknown)=>void;db.contentWait=new Promise(resolve=>{release=resolve;});
+  await act(async()=>Array.from(host.querySelectorAll("button")).find(b=>b.textContent==="Retry original draft")!.click());await flush();
+  await act(async()=>Array.from(host.querySelectorAll("button")).find(b=>b.textContent==="Close draft link")!.click());
+  expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Original message editor"]')?.value??"").not.toContain("LOCAL USER EDIT");
+  await act(async()=>release({ok:false,code:"MAILBOX_INACTIVE"}));await flush();
+  expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Original message editor"]')?.value??"").not.toContain("LOCAL USER EDIT");expect(db.invoke).not.toHaveBeenCalled();
 });

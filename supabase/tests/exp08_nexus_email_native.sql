@@ -37,7 +37,7 @@ BEGIN
  UPDATE public.profiles SET active_tenant_id=probe.tenant_id WHERE user_id=owner_id;
  UPDATE public.profiles SET active_tenant_id=other_tenant WHERE user_id=other_id;
  INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name) VALUES(contact,tenant_id,owner_id,'Proof','Contact');
- INSERT INTO public.client_contact_methods(tenant_id,client_id,kind,value,is_primary) VALUES(tenant_id,contact,'email','recipient@tests.invalid',true);
+ INSERT INTO public.client_contact_methods(tenant_id,client_id,kind,value,is_primary,position) VALUES(tenant_id,contact,'email','recipient@tests.invalid',true,0);
  INSERT INTO public.channel_connectors(id,tenant_id,channel_type,provider,from_address,status,active,mailbox_class)
  VALUES(connector,tenant_id,'email','gmail','sender@tests.invalid','active',true,'shared_support');
  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',owner_id,'role','authenticated')::text,true);

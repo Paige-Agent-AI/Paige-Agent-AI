@@ -558,7 +558,7 @@ export default function ClientsConversations() {
   const emailLocator=useMemo(()=>parseSavedEmailLocator(searchParams),[searchParams]);
   const emailLocatorKey=JSON.stringify([activeTenantId,activeUserId,emailLocator]);
   const emailLocatorCurrent=useRef(emailLocatorKey);emailLocatorCurrent.current=emailLocatorKey;
-  const locatedEmailRows=useRef<{key:string;message:MessageRow;thread:DbThread;revalidate:()=>Promise<MessageRow|null>;retire:()=>void}|null>(null);
+  const locatedEmailRows=useRef<{key:string;message:MessageRow;thread:DbThread;revalidate:()=>Promise<MessageRow|null>;checking:()=>boolean;retire:()=>void}|null>(null);
   const withheldEmail=useRef<{key:string;messageId:string;threadKey:string|null}|null>(null);
   const locatedEditingId=useRef(editingDraftId);locatedEditingId.current=editingDraftId;
   const [emailLocation,setEmailLocation]=useState<{key:string;state:"loading"|"loaded"|"opened"|"unavailable";message?:MessageRow}>({key:"",state:"loading"});
@@ -1439,7 +1439,7 @@ export default function ClientsConversations() {
       const original=threadsFromDb([thread.data])[0];
       if(!original||original.thread_key!==message.thread_key||original.contact_id!==emailLocator.contactId){if(locatedEmailRows.current?.key===key)locatedEmailRows.current.retire();setEmailLocation({key,state:"unavailable"});return;}
       withheldEmail.current=null;
-      locatedEmailRows.current={key,message,thread:original,revalidate,retire};
+      locatedEmailRows.current={key,message,thread:original,revalidate,checking:()=>checking!==null,retire};
       setRows(rows=>[...rows.filter(r=>r.id!==message.id),message]);
       setDbThreads(rows=>[...rows.filter(r=>r.thread_key!==original.thread_key),original]);
       pendingSelectRef.current=original.thread_key;setView("all");setLabelFilter(null);setSearch("");
@@ -2407,7 +2407,8 @@ export default function ClientsConversations() {
               :"Editing the original saved email. Nothing has been sent."}</span>
         {emailLocator.kind==="bound"&&(emailLocation.state==="unavailable"||emailLocation.state==="opened"&&emailLocatorConflict)?<Button variant="outline" size="sm" onClick={()=>setEmailLocationRetry(n=>n+1)}>Retry original draft</Button>:null}
         {emailHubReturn?<Link className="underline underline-offset-2 focus-visible:ring-2 focus-visible:ring-ring" to={emailHubReturn.to}>Return to NEXUS</Link>:null}
-        <Button variant="ghost" size="sm" onClick={()=>{if(emailLocation.key===emailLocatorKey&&emailLocation.state==="unavailable"&&emailLocator.kind==="bound"&&locatedEditingId.current===emailLocator.messageId)resetComposer();setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("email_draft");next.delete("hub_message");return next;},{replace:true});}}>Close draft link</Button>
+        <Button variant="ghost" size="sm" onClick={()=>{if(emailLocator.kind==="bound"&&locatedEditingId.current===emailLocator.messageId
+          &&(emailLocation.key!==emailLocatorKey||emailLocation.state!=="opened"||locatedEmailRows.current?.checking()))resetComposer();setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("email_draft");next.delete("hub_message");return next;},{replace:true});}}>Close draft link</Button>
       </div>:null}
       {/* The three-column conversation shell (§18 one home) — pure layout: the §36 first-run
           swap, the railOpen 3↔2-col toggle, and the mobile contact Sheet. The container feeds it

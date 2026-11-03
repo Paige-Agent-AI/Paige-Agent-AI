@@ -6,6 +6,7 @@ p=argparse.ArgumentParser()
 p.add_argument('--psql',required=True);p.add_argument('--port',default='55461')
 p.add_argument('--expected-data-directory',required=True);p.add_argument('--without-candidate',action='store_true')
 p.add_argument('--auth-lock-migration',help='Prove native Auth/Knowledge lock fairness in this disposable fixture')
+p.add_argument('--containment-release-migration',help='Prove exact original save ACL restoration after the lock repair')
 a=p.parse_args();root=pathlib.Path(__file__).resolve().parents[2]
 base=[a.psql,'-X','-h','127.0.0.1','-p',a.port,'-U','postgres','-v','ON_ERROR_STOP=1']
 def sql(db,statement=None,file=None):
@@ -104,9 +105,32 @@ try:
    print('PASS: '+label+' actual save/Auth/later-save ordering and original single reference')
   fairness('old_shared_baseline',True)
   migration=root/a.auth_lock_migration
+  release=root/a.containment_release_migration if a.containment_release_migration else None
+  save_signature='public.save_paige_chat_knowledge_link(uuid,uuid,uuid,uuid,uuid,uuid,integer,uuid,text,integer)'
+  save_acl_query="SELECT proacl::text FROM pg_proc WHERE oid='"+save_signature+"'::regprocedure"
+  original_save_acl=sql(db,save_acl_query)[0]
+  if release:
+   sql(db,'REVOKE EXECUTE ON FUNCTION '+save_signature+' FROM authenticated')
+   paused_save_acl=sql(db,save_acl_query)[0]
+   try:sql(db,file=release)
+   except RuntimeError as error:
+    if 'KNOWLEDGE_SAVE_AUTH_REPAIR_REQUIRED' not in str(error):raise
+   else:raise RuntimeError('Save permission reopened before Auth repair')
+   if sql(db,save_acl_query)[0]!=paused_save_acl:raise RuntimeError('Refused release changed paused ACL')
   before_lock_acl=sql(db,"SELECT proacl::text FROM pg_proc WHERE oid='public.lock_knowledge_extraction_authority(uuid,uuid)'::regprocedure")[0]
   for _ in range(2):sql(db,file=migration)
   if sql(db,"SELECT proacl::text FROM pg_proc WHERE oid='public.lock_knowledge_extraction_authority(uuid,uuid)'::regprocedure")[0]!=before_lock_acl:raise RuntimeError('Auth lock migration changed privileges')
+  if release:
+   for fault in [
+    'GRANT EXECUTE ON FUNCTION '+save_signature+' TO service_role',
+    'ALTER FUNCTION '+save_signature+' SECURITY INVOKER',
+   ]:
+    run=subprocess.run(base+['-d',db],input='BEGIN;'+fault+';'+release.read_text(encoding='utf8')+'COMMIT;',cwd=root,text=True,capture_output=True,encoding='utf8')
+    if run.returncode==0 or 'KNOWLEDGE_SAVE_CONTAINMENT_DRIFT' not in run.stderr:raise RuntimeError('Unexpected save source/ACL accepted: '+fault)
+    if sql(db,save_acl_query)[0]!=paused_save_acl:raise RuntimeError('Refused drift changed paused ACL')
+   for _ in range(2):sql(db,file=release)
+   if sql(db,save_acl_query)[0]!=original_save_acl:raise RuntimeError('Containment release did not restore exact original ACL')
+   print('PASS: pre-repair release refused; source/ACL drift refused; exact paused ACL restored and replayed')
   fairness('serialized_candidate',False)
   # A committed ban or soft deletion still wins before a later save. The exact
   # original authorization predicate runs after the same actor-row lock.

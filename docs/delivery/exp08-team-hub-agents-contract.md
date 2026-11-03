@@ -3014,3 +3014,12 @@ invented. This does NOT close row4 or any other original18+6 outcome, the five
 journeys, ALG or customer proof. Mounted R9/R12, first-owner/Setup/profile,
 private/both-chat/cohort/reentry and full lifecycle work remain required.
 Full EXP08 STILL CODING; one complete owner review follows full integration.
+
+
+### November3 — ONE selected unsent NEXUS email continuity outcome (STILL CODING)
+
+Latest owner chose the next outcome after the prior teammate-details permission proof could not proceed without legitimate Owner authority. That predecessor remains BLOCKED/PARTIAL; all original18+6 rows and five journeys remain pending scope. This outcome covers applicable rows7/9/11/13/14/16: native private NEXUS subject/body preparation → explicit existing recipient/permitted sender → ORIGINAL Messages Save13 → verified original receipt reference → exact current-source reopen/edit in the existing Messages editor → scoped return to the original NEXUS message. Same original artifact remains available through existing PAIGE/Communications readers; no private transcript export, new store/writer/approval/runtime/provider or automatic send.
+
+Original producer3224/a4f3f6195 is released per current Coordinator native/Edge/web receipts; that is a dependency release, not authenticated consumer proof. New native20271130020008 is UNAPPLIED. Current local owning host206/component-native45/locator8/recipient-scope6/inline-UI5 controls and app build/type-ratchet evidence are bounded engineering proof. Full-schema execution, exact final non-author review, required CI/Preview, normal release/readback and authenticated loop are owed. EXP10 exact closed roster receiver compatibility is routed via Coordinator/e7c9d1e7; no assertion or original registration removed. E05 native Task-only accumulation refinement97d10c99 is disjoint and preserved.
+
+Owner-supplied EXP03 amendment is incorporated: full email outcome still requires exact approval and a separately authorized send-once/actual receipt leg after applicable Hub integration. This selected UNSENT outcome does not activate that leg or unblock full send validation. Complete only this outcome, update existing original evidence/Outcomes, report to owner/ANT161/Coordinator, then STOP for explicit next approval. Evidence: docs/evidence/ui-delivery/exp08-nexus-unsent-email-continuity.md.

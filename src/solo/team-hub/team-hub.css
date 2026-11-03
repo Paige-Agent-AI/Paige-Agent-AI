@@ -628,3 +628,21 @@ button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-under
   .th-hub .th-ap-card [data-confirm-part="controls"] button{padding:0 11px}
   .th-hub .th-ap-card[data-card-mode="decide"] [data-confirm-part="status"] p:first-child{white-space:nowrap}
 }
+/* Original NEXUS preparation → explicit unsent handoff. The transcript remains
+   the only scroll owner; no new approval treatment, gold action or palette. */
+.th-email-draft{min-width:0;margin-top:12px;padding-top:12px;border-top:1px solid var(--pg-line);color:var(--pg-ink)}
+.th-email-summary{display:flex;align-items:center;gap:8px;min-height:40px;cursor:pointer;font-size:13px;font-weight:600;list-style:none}
+.th-email-summary::-webkit-details-marker{display:none}
+.th-email-summary span{flex:1;min-width:0;overflow-wrap:anywhere}
+.th-email-summary>svg:last-child{color:var(--pg-muted)}
+.th-email-draft details[open] .th-email-summary>svg:last-child{transform:rotate(90deg)}
+.th-email-body{padding:8px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.6}
+.th-email-help,.th-email-recipient{margin:6px 0;color:var(--pg-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.th-email-fields{display:grid;gap:8px;min-width:0;margin:10px 0}
+.th-email-fields fieldset{min-width:0;margin:0;padding:0;border:0}
+.th-email-fields legend,.th-email-fields>label{margin-bottom:4px;color:var(--pg-muted);font-size:12px}
+.th-email-footer{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;min-width:0;margin-top:8px}
+.th-email-footer>a{min-height:40px}
+.th-email-status{display:inline-flex;align-items:center;gap:6px;color:var(--pg-muted);font-size:12px}
+.th-email-feedback{display:flex;align-items:flex-start;gap:7px;margin:8px 0 0;color:var(--pg-muted);font-size:12px;line-height:1.5}
+.th-email-load-notice{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding:0 16px;color:var(--pg-muted);font-size:12px}

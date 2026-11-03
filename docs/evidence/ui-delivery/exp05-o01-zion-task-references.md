@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: YES: original Task UUID references survive real authority 
 FLOW_PROTOTYPE: UNVERIFIED: no new rendered prototype. This repairs existing approved original-record navigation; safe release follows technical review/CI, with live corrected answer and navigation still owed under the November1 owner policy.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible existing or future SOLO owner/admin inspects the actual Tasks ZION read and reopens the same original answer without repeated work.
 VISUAL_DIRECTION: NOT_APPLICABLE: existing conversation, specialist and native Work presentation unchanged.
-AUTOMATED_EVIDENCE: PASS: actual original host suite177 tests/29 suites/zero fail/skip; owning Deno graph and scoped projector lint pass. Actual original hosted default native command passes the complete original E08/E05 fixture, all16 incumbent mutants, four-body complete metadata/ACL/OID conservation/replay, Task-first empty-recheck and Task-only accumulated six-link controls, all12 real publication blocking pairs and23 READ ONLY history/Search controls. This disposable synthetic database is not production or customer proof.
-STATIC_EVIDENCE: PASS: frozen reviewed artifact/native body hash and exact source conditions match; original full-schema generator preserves all19 assertions and adds4 latest-Task checks,23 total. Structural self-test passes; actual hosted full-schema execution and exact-head review/CI remain required before release.
+AUTOMATED_EVIDENCE: PASS: fresh joined original Task and Planning host command221 tests/33 suites/zero fail/skip; owning Deno graph and scoped projector lint pass. Actual original hosted default native command with the NEW earlier carrier passes the complete original E08/E05 fixture, all16 incumbent mutants, four-body complete metadata/ACL/OID conservation/replay, Task-first empty-recheck and Task-only accumulated six-link controls, all12 real publication blocking pairs and23 READ ONLY history/Search controls. The original disposable database was dropped and owned server stopped. This synthetic database is not production or customer proof.
+STATIC_EVIDENCE: PASS: complete guarded SQL after BEGIN is byte-exact reviewed0b9, SHA256 8d25a9f070ec9d6a1a2c7a3e1626cc7350a8a7d2c0bf741b002c08479b9c9708. Only owning carrier locators change in existing proof code; original full-schema generator preserves19+4 assertions,23 total. Genuine CLI-created new carrier passes migration lint with zero warnings; structural self-test passes. Fresh actual hosted full-schema, managed Preview, exact-head non-author review and required CI remain mandatory.
 RENDERED_EVIDENCE: UNVERIFIED: no corrected production Task controls rendered yet. Original pre-correction Task/Planning inspectors were privately inspected; no layout change.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: controlled host/native integration passes; corrected ordinary customer Task answer, original control and reopen proof remain owed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: post-deploy original read/receipt/Task link/reopen and a second legitimate equivalent SOLO cohort remain owed. Earlier exact two-question QA authorization is consumed; no further saved message or business action is inferred.
@@ -29,6 +29,43 @@ SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: corrected live controls not rendered; layo
 UNVERIFIED: actual full-schema CI, production native/Edge source, corrected ordinary-owner model/record/receipt/reopen and second cohort are not established by synthetic proof. O01/full E5-CV1–E5-CV9/EXP05/founder acceptance remain incomplete.
 
 ## Canonical producer, admission and recovery
+
+### November3 - new earlier release vehicle, original applied candidate retained
+
+Only O01 remains active. Original #3241 exact
+`0b9dc6cd5586adc185c72e9308af2bba64f92a34` has independent NON-AUTHOR
+5747271482 PASS/all13 required checks and both web statuses SUCCESS; these
+are historical source evidence, not the new candidate's gates. Its existing
+Preview applied `20271130030005` ONCE/four statements, statements MD5
+`60e396daef8451d08d07a8ff83fba354`, and retains exact reviewed four bodies.
+That file/branch/history is unchanged; no applied carrier is renamed or rewritten.
+
+The genuinely NEW carrier was created by Supabase CLI2.109.1 as
+`20261103051204_exp05_zion_original_task_references_earlier.sql`, then its EMPTY,
+never-applied file was safely reconciled to `20271130010105` before copying
+the complete original guarded SQL. Header/order and two existing proof-file
+locators differ; all six owning host/projector/read/concurrency blobs are exact
+0b9. Source base is actual main `b52fba6b0429943c90d4d97ba9b51ce5db2ccf04`;
+all58 open PR manifests were inspected with no proposed-slot collision. Actual
+production has1569 versions/frontier30010103, both own slots absent at preflight.
+
+This avoids putting the old higher carrier on main ahead of E08's immutable
+20008/20009 and E13's immutable20013. Existing source/order receiving request
+ANT147/42062233 is pending; no production cutover or acknowledgment is inferred.
+Fresh head/Preview/review/CI and actual compatibility remain required. Native
+must be applied and read back FIRST through the existing ordinary release
+workflow: old host/new native is compatible, new host/old native refuses valid
+Task references. No second migration engine, ledger, permission or provider path.
+
+Fresh original native run1793682829053 proves the earlier carrier's actual
+contract,12 blocking pairs and23 READ ONLY controls, with all43 input sources
+retained. A first local CLI invocation was sandbox-blocked at its standard
+telemetry path and created no file; the authorized normal invocation succeeded.
+A first type-check could not resolve a pinned dependency in the sandbox;
+the same owning check with normal dependency access passed. Both setup failures
+are retained, not called product failures or successful tests. New production
+source, corrected model answer, original record/receipt/reopen and second-cohort
+acceptance remain PROOF OWED. Other outcomes remain pending.
 
 The original registered `crm_clients.list_tasks` / `crm_list_tasks` and
 `crm_clients.task_read` / `crm_get_task` remain the only Task producers. The
@@ -85,7 +122,7 @@ Visual: existing approved conversation and record controls retained.
 Experiential: corrected two-chat customer result/receipt/reopen still owed.
 Founder Acceptance: NOT_READY / NOT_ACCEPTED. Only O01 is active.
 
-INTERNAL_BUILD_IDENTITY: dda9b1686783015c5e58711da93b988843e24851; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271130010105_exp05_zion_original_task_references_earlier.sql); edge=PROOF_OWED(original paige-ai-chat ZION Task stage); evidence=ANT147/97d10c99 and owning177/native12race/23readonly controls plus final PR review/CI
+INTERNAL_BUILD_IDENTITY: a3ae5cdd599bd7c20a621a556982ba9156ae66a6; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271130010105_exp05_zion_original_task_references_earlier.sql); edge=PROOF_OWED(original paige-ai-chat ZION Task stage); evidence=ANT147/42062233 plus original97d10c99, fresh221/native12race/23readonly controls and final PR review/CI
 RELEASE_CHANNEL: development: canonical reviewed-artifact composition only; production and authenticated proof owed.
 RELEASE_CLASSIFICATION: internal-only: necessary O01 original-record continuity repair, not complete EXP05.
 CUSTOMER_RELEASE_IDENTITY: none: no complete customer outcome/owner acceptance or announcement authority inferred.

@@ -4,9 +4,9 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PlanInMotion } from "./PlanInMotion";
 import {MemoryRouter,Routes,Route} from "react-router-dom";
 
-const h = vi.hoisted(() => ({ actor: "test-owner", tenant: "test-tenant-a", ready: true, detail: vi.fn(), mutate: vi.fn(), source: vi.fn(), inspectTask: vi.fn(), submitTask: vi.fn(), listTasks: vi.fn() }));
+const h = vi.hoisted(() => ({ actor: "test-owner", tenant: "test-tenant-a", ready: true, detail: vi.fn(), mutate: vi.fn(), source: vi.fn(), inspectTask: vi.fn(), submitTask: vi.fn(), listTasks: vi.fn(), people: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({supabase: {rpc: vi.fn()}}));
-vi.mock('./operations/useOperationsPeople',()=>({useOperationsPeople:()=>({members:[{user_id:h.actor,full_name:'Current owner',email:'owner@tests.invalid',status:'active'}],loading:false,error:null,refresh:vi.fn()})}));
+vi.mock('./operations/useOperationsPeople',()=>({useOperationsPeople:()=>{h.people();return {members:[{user_id:h.actor,full_name:'Current owner',email:'owner@tests.invalid',status:'active'}],loading:false,error:null,refresh:vi.fn(),partial:false};}}));
 vi.mock('./mission-task-command',async()=>({...await vi.importActual('./mission-task-command'),inspectMissionTaskEffect:h.inspectTask,submitMissionTaskOperation:h.submitTask,listMissionTaskEffects:h.listTasks}));
 
 vi.mock('../../supabase/functions/_shared/knowledge-source-evidence', () => ({readKnowledgeSourceEvidence: h.source}));
@@ -19,7 +19,7 @@ let host: HTMLDivElement, root: Root;
 const render = async (workspace = h.tenant) => { await act(async () => { root.render(<PlanInMotion workspaceId={workspace} />); }); };
 const open = async () => { await act(async () => host.querySelector<HTMLButtonElement>(".pim-card")!.click()); };
 const detail = (title: string) => ({ mission: { id: "play", title, state: "active", revision: 1 }, brief: { desired_outcome: "Private owner direction", constraints: [], assumptions: [], missing_information: [] } });
-beforeEach(() => { h.actor = "test-owner"; h.tenant = "test-tenant-a"; h.ready = true; h.detail.mockReset(); h.mutate.mockReset(); h.source.mockReset(); h.inspectTask.mockReset(); h.submitTask.mockReset(); h.listTasks.mockReset(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
+beforeEach(() => { h.actor = "test-owner"; h.tenant = "test-tenant-a"; h.ready = true; h.detail.mockReset(); h.mutate.mockReset(); h.source.mockReset(); h.inspectTask.mockReset(); h.submitTask.mockReset(); h.listTasks.mockReset(); h.people.mockClear(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 it("retires a private drawer immediately on workspace/actor or unresolved-account change", async () => {
   h.detail.mockResolvedValue(detail("Private Play A")); await render(); await open();
@@ -249,4 +249,25 @@ it('finds historical Tasks for removed stable steps while a newer valid plan int
  await act(async()=>root.render(<MemoryRouter initialEntries={['/solo/9000001/command-center']}><Routes><Route path="/solo/:account/*" element={<PlanInMotion workspaceId={h.tenant}/>}/></Routes></MemoryRouter>));await open();
  expect(record.brief.document_work_intent).not.toBeNull();expect(button('Find saved tasks')).toBeDefined();await act(async()=>button('Find saved tasks').click());
  expect(host.textContent).toContain('Earlier approved work');expect(host.querySelector('a[href*="77777777"]')).not.toBeNull();expect(button('Review task')).toBeDefined();expect(h.submitTask).not.toHaveBeenCalled();
+});
+
+
+it('keeps a source-free original plan independent of Team and Task reads',async()=>{
+ const record=documentPlan();h.detail.mockResolvedValue({...record,brief:{...record.brief,version:1,document_work_intent:null,document_work_intent_status:'none'}});
+ await render();await open();expect(host.textContent).toContain('Engagement plan');
+ expect(h.people).not.toHaveBeenCalled();expect(h.listTasks).not.toHaveBeenCalled();expect(h.inspectTask).not.toHaveBeenCalled();expect(h.submitTask).not.toHaveBeenCalled();
+ expect(button('Find saved tasks')).toBeUndefined();
+});
+it('discovers original task history without a Team dependency when sources are withheld or removed',async()=>{
+ const record=documentPlan();h.listTasks.mockResolvedValue({kind:'page',records:[],nextOffset:null});
+ for(const status of ['source_changed','source_unavailable','none']){
+  h.detail.mockResolvedValue({...record,brief:{...record.brief,document_work_intent:null,document_work_intent_status:status}});
+  await render();await open();expect(h.people).not.toHaveBeenCalled();expect(button('Find saved tasks')).toBeDefined();
+  await act(async()=>button('Find saved tasks').click());expect(host.textContent).toContain('No task results are recorded for this plan.');
+  await act(async()=>host.querySelector<HTMLButtonElement>('button[aria-label="Close"]')!.click());
+ }
+ expect(h.listTasks).toHaveBeenCalledTimes(3);expect(h.submitTask).not.toHaveBeenCalled();
+});
+it('still obtains the original current Team roster for source-backed task review',async()=>{
+ taskPlan();await render();await open();expect(h.people).toHaveBeenCalled();expect(h.submitTask).not.toHaveBeenCalled();
 });

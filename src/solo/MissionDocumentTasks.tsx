@@ -10,18 +10,29 @@ import {buildMissionTaskOperation,inspectMissionTaskEffect,listMissionTaskEffect
 
 type RenderTask=(step:DocumentWorkStep)=>ReactNode;
 type Props={tenantId:string|null|undefined;detail:BusinessMissionDetail;disabled:boolean;children:(renderTask:RenderTask)=>ReactNode};
+type People=ReturnType<typeof useOperationsPeople>;
+type ScopedProps=Props&{actorId:string;tenantId:string};
+const needsTaskHistory=(detail:BusinessMissionDetail)=>detail.brief.version>1||!detail.brief.document_work_intent&&(detail.brief.document_work_intent_status==='source_changed'||detail.brief.document_work_intent_status==='source_unavailable');
+
 type Review={stepId:string;phase:'checking'|'review'|'submitting'|'approval'|'result'|'unknown'|'refused';inspection?:MissionTaskInspection;operation?:MissionTaskOperation;fingerprint?:string;summary?:string;message?:string};
 
 /** Original plan step list owns this inline consumer. Native Tasks/Trust own effects. */
 export function MissionDocumentTasks(props:Props){
  const identity=useOptionalTenantContext();
  if(!identity?.activeUserId||identity.loading||identity.accountContextStatus!=='ready'||identity.activeTenantId!==props.tenantId)return props.children(()=>null);
- return <ScopedMissionTasks key={JSON.stringify([identity.activeUserId,props.tenantId,props.detail.mission.id,props.detail.mission.revision,props.detail.brief.document_work_intent_hash])}
-  {...props} actorId={identity.activeUserId} tenantId={identity.activeTenantId!}/>;
+ const currentSources=!!props.detail.brief.document_work_intent&&props.detail.brief.document_work_intent_status==='available';
+ if(!currentSources&&!needsTaskHistory(props.detail))return props.children(()=>null);
+ const key=JSON.stringify([identity.activeUserId,props.tenantId,props.detail.mission.id,props.detail.mission.revision,props.detail.brief.document_work_intent_hash]);
+ const scoped={...props,actorId:identity.activeUserId,tenantId:identity.activeTenantId!};
+ return currentSources?<RosterMissionTasks key={key} {...scoped}/>:<ScopedMissionTasks key={key} {...scoped}/>;
 }
-function ScopedMissionTasks({tenantId,actorId,detail,disabled,children}:Props&{actorId:string;tenantId:string}){
- const {account}=useParams<{account:string}>();
+/** Person lookup belongs only to current source-backed work review, never legacy plan/history reads. */
+function RosterMissionTasks(props:ScopedProps){
  const people=useOperationsPeople();
+ return <ScopedMissionTasks {...props} people={people}/>;
+}
+function ScopedMissionTasks({tenantId,actorId,detail,disabled,children,people}:ScopedProps&{people?:People}){
+ const {account}=useParams<{account:string}>();
  const [review,setReview]=useState<Review|null>(null),[localDate,setLocalDate]=useState(''),[reason,setReason]=useState('');
  const [recovered,setRecovered]=useState<{phase:'idle'|'loading'|'ready'|'failed';rows:Array<{stepId:string;inspection:MissionTaskInspection}>;next:number|null;message?:string}>({phase:'idle',rows:[],next:null});
  const lifecycle=useRef({live:true,sequence:0}),pending=useRef(false);
@@ -57,7 +68,7 @@ function ScopedMissionTasks({tenantId,actorId,detail,disabled,children}:Props&{a
   const schedule=parseMissionTaskLocalDate(localDate,reason);
   const operation=review.phase==='approval'?review.operation:schedule&&buildMissionTaskOperation(detail,step.id,actorId,tenantId,schedule);
   if(!operation){setReview({...review,message:'Choose a valid date and time with a scheduling note, or leave the task undated. The saved plan must be active and its sources available.'});return;}
-  const assignee=people.members.find(person=>person.user_id===operation.command.patch.assignee_user_id&&person.status==='active');
+  const assignee=people?.members.find(person=>person.user_id===operation.command.patch.assignee_user_id&&person.status==='active');
   if(!assignee){setReview({...review,message:'The proposed person could not be verified. Refresh the team or revise and save the plan.'});return;}
   pending.current=true;const token=++lifecycle.current.sequence;
   setReview({...review,phase:'submitting',operation,message:undefined});
@@ -75,12 +86,12 @@ function ScopedMissionTasks({tenantId,actorId,detail,disabled,children}:Props&{a
  const renderTask:RenderTask=step=>{
   const selected=review?.stepId===step.id?review:null;
   if(!selected)return <button ref={node=>{if(node)triggers.current.set(step.id,node);else triggers.current.delete(step.id);}} type="button" className="sd-btn sd-btn-sm" disabled={disabled||busy} onClick={()=>{setLocalDate('');setReason('');void inspect(step);}}>Review task</button>;
-  const assigneeId=missionTaskAssignee(step,actorId),person=people.members.find(row=>row.user_id===assigneeId&&row.status==='active');
-  const name=person?memberVisibleIdentity(person).primary:people.loading?'Checking responsible person…':'Proposed person unavailable';
+  const assigneeId=missionTaskAssignee(step,actorId),person=people?.members.find(row=>row.user_id===assigneeId&&row.status==='active');
+  const name=person?memberVisibleIdentity(person).primary:people?.loading?'Checking responsible person…':'Proposed person unavailable';
   const inspection=selected.inspection;
   const taskLink=inspection?.kind==='available'?routeLinkTarget({destination:'operations_work',record_id:inspection.task.id},'solo',account):null;
   const schedule=parseMissionTaskLocalDate(localDate,reason);
-  const canCreate=detail.mission.state==='active'&&detail.brief.document_work_intent_status==='available'&&!!person&&!people.loading;
+  const canCreate=detail.mission.state==='active'&&detail.brief.document_work_intent_status==='available'&&!!person&&!people?.loading;
   return <div ref={reviewFocus} tabIndex={-1} role="group" className="space-y-3" aria-label={`Task for ${step.title}`}>
    {selected.phase==='checking'&&<p role="status">Checking the original task…</p>}
    {(selected.phase==='review'||selected.phase==='approval')&&<>
@@ -95,8 +106,8 @@ function ScopedMissionTasks({tenantId,actorId,detail,disabled,children}:Props&{a
      <p className="text-sm">{!localDate?'The task will have no due date.':schedule?`Chosen task time: ${schedule.dueAt} · device timezone ${schedule.timeZone}.`:'Enter a valid time in your device timezone and a scheduling note.'}</p>
     </>}
     {selected.phase==='approval'&&<><p role="status">{selected.summary}</p>{selected.operation?.command.patch.metadata.mission_source_v1.schedule.reason&&<p className="text-sm break-words">Scheduling note: {selected.operation.command.patch.metadata.mission_source_v1.schedule.reason}</p>}<p className="text-sm">{selected.operation?.command.patch.due_date?`Task time: ${selected.operation.command.patch.due_date} · ${selected.operation.command.patch.metadata.mission_source_v1.schedule.timeZone}`:'No task due date.'}</p></>}
-    {!canCreate&&<p role="status">{detail.mission.state!=='active'?'Activate the reviewed plan before creating new work.':people.error??'Refresh the responsible person and current source before creating work.'}</p>}
-    {people.error&&<button className="sd-btn sd-btn-sm" type="button" onClick={()=>void people.refresh()}>Refresh team</button>}
+    {!canCreate&&<p role="status">{detail.mission.state!=='active'?'Activate the reviewed plan before creating new work.':people?.error??'Refresh the responsible person and current source before creating work.'}</p>}
+    {people?.error&&<button className="sd-btn sd-btn-sm" type="button" onClick={()=>void people?.refresh()}>Refresh team</button>}
     <button className="sd-btn sd-btn-sm" type="button" disabled={disabled||!canCreate||!!localDate&&!schedule} onClick={()=>void create(step)}>{selected.phase==='approval'?'Approve task':'Create task'}</button>
    </>}
    {selected.phase==='submitting'&&<p role="status">Creating your task… Closing may leave this request running; reopen this step to check its result.</p>}
@@ -117,7 +128,7 @@ function ScopedMissionTasks({tenantId,actorId,detail,disabled,children}:Props&{a
    </div>}
   </div>;
  };
- const needsRecovery=detail.brief.version>1||!detail.brief.document_work_intent&&(detail.brief.document_work_intent_status==='source_changed'||detail.brief.document_work_intent_status==='source_unavailable');
+ const needsRecovery=needsTaskHistory(detail);
  return <>{children(renderTask)}{needsRecovery&&<section className="mission-document-steps space-y-3" aria-label="Saved tasks for this plan">
   <h4>Saved tasks</h4>
   <p className="text-sm">Existing work keeps its own record and receipt across plan revisions.</p>

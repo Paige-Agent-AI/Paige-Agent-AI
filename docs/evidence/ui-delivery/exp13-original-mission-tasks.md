@@ -182,3 +182,8 @@ workspace; original Task member/foreign-active-scope controls remain. No invalid
 pointer, trigger/identity bypass or synthetic authority is manufactured. This
 supersedes only the preceding proposed30-case fixture description, retains its
 history, and changes no applied/native/runtime source. Fresh31 hosted proof owed.
+
+
+November 3 incumbent compatibility repair: exact 32a3f1c required verify run41655701917 failed11 original Mission workspace/truthfulness tests. A local failing-first run reproduced the same11 failures and missing required TenantContext export in the original Team hook. The new consumer unnecessarily mounted that hook on source-free legacy plans. Repair is limited to this consumer: current source-backed Task person review retains the SAME Team reader; source-free legacy plans do not mount it, and revised/redacted-source original Task history remains independently readable. Original incumbent tests/mocks, Team/context hooks, native carriers, writer/approval contracts and grants are unchanged. Added mounted controls cover source-free views, removed/redacted history without a Team read, and positive original-roster use. Required new exact-head review/CI and live release proof remain owed; the prior11 failures are retained as FAIL.
+
+After the repair: the two UNCHANGED incumbent suites plus owning Mission scope/client suites ran83 PASS; original CRM Edge suite ran15 PASS (98 across5 suites). Scoped ESLint0 and diff-check PASS. Prior causal run remains11 FAIL/29 PASS. New exact-head hosted CI remains mandatory.

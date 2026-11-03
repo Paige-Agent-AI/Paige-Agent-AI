@@ -5,13 +5,14 @@ import {createRoot,type Root} from 'react-dom/client';
 import {MemoryRouter} from 'react-router-dom';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 
-const api=vi.hoisted(()=>({rpc:vi.fn(),getUser:vi.fn(),prepare:vi.fn(),upload:vi.fn(),submit:vi.fn(),read:vi.fn(),draft:vi.fn(),extraction:vi.fn()}));
+const api=vi.hoisted(()=>({rpc:vi.fn(),getUser:vi.fn(),prepare:vi.fn(),upload:vi.fn(),submit:vi.fn(),read:vi.fn(),draft:vi.fn(),extraction:vi.fn(),review:vi.fn(),restore:vi.fn(),status:vi.fn()}));
 const identity=vi.hoisted(()=>({activeTenantId:'00000000-0000-4000-8000-000000000002',activeUserId:'00000000-0000-4000-8000-000000000001',loading:false,accountContextStatus:'ready'}));
 vi.mock('@/hooks/useTenantContext',()=>({useTenantContext:()=>identity}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{auth:{getUser:api.getUser},rpc:api.rpc,storage:{from:()=>({})}}}));
 vi.mock('@/lib/knowledge-extraction-service',async original=>({...await original<typeof import('@/lib/knowledge-extraction-service')>(),
   prepareKnowledgeUploadSelection:api.prepare,uploadKnowledgeFileOnce:api.upload,submitKnowledgeExtraction:api.submit,
-  readKnowledgeDraftForDocument:api.draft,readKnowledgeExtractionForDocument:api.extraction}));
+  readKnowledgeDraftForDocument:api.draft,readKnowledgeExtractionForDocument:api.extraction,
+  readKnowledgeExtractionReview:api.review,readKnowledgePendingReviewTarget:api.restore,readKnowledgeExtractionStatus:api.status}));
 vi.mock('@/lib/knowledge-service',async original=>({...await original<typeof import('@/lib/knowledge-service')>(),readKnowledge:api.read}));
 import {ChatKnowledgeDocuments} from './ChatKnowledgeDocuments';
 import {saveComposerKnowledgeIntake,readComposerKnowledgeIntake,clearComposerKnowledgeIntake,setComposerDraftSessionScope} from '@/lib/paigeComposerScopeState';
@@ -46,6 +47,7 @@ beforeEach(()=>{
   api.getUser.mockReset();api.getUser.mockResolvedValue({data:{user:{id:actorId}},error:null});
   api.read.mockReset();api.read.mockResolvedValue([]);
   api.extraction.mockReset();
+  api.review.mockReset();api.restore.mockReset();api.status.mockReset();
   api.draft.mockReset();api.draft.mockImplementation(async(_c,_s,doc:string,revision:number)=>({id:doc,tenant_id:tenantId,revision,
     title:names[Number(doc.slice(-12))-20],content:'',summary:null,category:null,tags:[]}));
   api.prepare.mockReset();api.prepare.mockImplementation(async(_s,_a,inputs:{name:string;mime:string;bytes:Uint8Array}[])=>inputs.map((input,index)=>({phase:'prepared',
@@ -101,6 +103,24 @@ it('passes both original files through the existing bulk review and annotates th
   // The original constructor's one thread is adopted only on leaving the flow.
   expect(adopt).not.toHaveBeenCalled();await click('Close');await click('Close');
   expect(adopt).toHaveBeenCalledExactlyOnceWith(threadId,'original-chat-incarnation');
+});
+it.each([1,2])('keeps %s selected files inside the one original Chat dialog',async(count)=>{
+  await render();await click('Knowledge documents');
+  await choose(Array.from({length:count},(_,index)=>file(names[index],`Synthetic source ${index}`)));
+  expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
+  expect(api.upload).not.toHaveBeenCalled();expect(api.submit).not.toHaveBeenCalled();
+});
+it('keeps an original file text review and its return inside the same Chat dialog',async()=>{
+  const review={phase:'awaiting_review',record_state:'draft',revision:1,tenant_id:tenantId,document_id:id(20),extraction_work_id:id(10),
+    pending_review:{extracted_content:'Editable synthetic agreement',reviewed_content:null}};
+  api.review.mockResolvedValue(review);api.extraction.mockResolvedValue(review);api.status.mockResolvedValue({work_status:'succeeded'});
+  api.restore.mockResolvedValue({id:id(20),tenant_id:tenantId,revision:1,title:names[0],content:'',tags:[]});
+  await render();await click('Knowledge documents');await choose([file(names[0],'Synthetic source')]);await click('Upload and read files');
+  await click('Open reading');
+  expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
+  expect([...document.querySelectorAll('textarea')].some(e=>e.value==='Editable synthetic agreement')).toBe(true);
+  await click('Close');expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
+  expect(document.body.textContent).toContain(names[0]);expect(api.upload).toHaveBeenCalledTimes(1);expect(api.submit).toHaveBeenCalledTimes(1);
 });
 it('reopens the native conversation inventory after component destruction without re-uploading',async()=>{
   await render();await click('Knowledge documents');await choose([file(names[0],'First source')]);await click('Upload and read files');await act(settle);

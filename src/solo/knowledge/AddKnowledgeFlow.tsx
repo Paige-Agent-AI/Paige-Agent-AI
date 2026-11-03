@@ -442,7 +442,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
 
   const restoreFocus = (event: Event) => { if (returnFocus) { event.preventDefault(); returnFocus()?.focus(); } };
   if (!target && mode === "file" && step === "choose") {
-    return <BulkKnowledgeUploadFlow tenantId={tenantId} onClose={close} onBack={() => setMode("paste")} onPublished={onPublished} returnFocus={returnFocus} attachedSelection={attachedSelection} sourceLifetime={sourceLifetime} {...observers.current} />;
+    return <BulkKnowledgeUploadFlow embedded={embedded} tenantId={tenantId} onClose={close} onBack={() => setMode("paste")} onPublished={onPublished} returnFocus={returnFocus} attachedSelection={attachedSelection} sourceLifetime={sourceLifetime} {...observers.current} />;
   }
   const uploadPhase = step === "extracting" && mode === "file" && submittedInput.current === null;
   if (!targetValid) {

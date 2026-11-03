@@ -52,7 +52,7 @@ RELEASE_RECOVERY: position=inspect original native source/work/Chat link before 
 1. Outcome: the owner's WHOLE agreement-to-working-plan result above, not a button.
 2. E13 owns source intake/Knowledge and this host mount. E01 owns Chat producer and
    Setup/CAS; E02 original Mission; E03 governed task command; E05 original Work.
-   Current E01 Setup3220 has no overlapping PaigeAIChat hunk. Original finite
+   Current E01 Setup3223 has no overlapping PaigeAIChat hunk. Original finite
    Chat reservation is ANT161/d71a0e17; owner receiving ACK ANT21/7aa3de6a.
 3. Reuse current caller/authority/native Work/parsing/indexing contracts and
    original Harness/receipt/recovery layers. No general runner is activated.
@@ -131,3 +131,18 @@ can be inspected; existing conversations remain usable. No source bytes/text or
 new storage key is introduced. Exact committed-head review remains pending.
 Final committed-head review, exact CI, merge/release and authenticated source-use
 proof remain separate. No completed game-plan/task outcome is claimed here.
+
+## Original dialog containment repair
+
+A subsequent material review found the original Add → Bulk invocation dropped
+the existing embedded prop. Actual single-file and two-file controls each failed
+with two real dialog elements. The narrow repair forwards that same prop; Bulk
+already forwards it to the original per-file review. No replacement frame,
+focus trap, upload or parser is added, and standalone callers keep their modal.
+
+The current real-component Chat control also opens the original editable file
+review and returns to the file list with exactly one dialog and one original
+upload/extraction. Current Chat/Add/Bulk suites:109 tests PASS; scoped ESLint0.
+Prior five-suite117 and type-ratchet10baseline/6current/0new remain supporting
+earlier-head checks, not final-head release evidence. The new immutable head needs
+renewed NON-AUTHOR review and exact CI. Rendered/authenticated proof stays owed.

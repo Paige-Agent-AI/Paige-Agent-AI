@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: Three explicitly approved synthetic formats p
 KEYBOARD_FOCUS: UNVERIFIED: No interaction/focus code changes; final whole-flow keyboard proof pending.
 ZOOM_REFLOW: UNVERIFIED: No layout changes; actual whole-flow device/zoom proof remains separate.
 REDUCED_MOTION: UNVERIFIED: No motion changes or new preference proof.
-STATE_COVERAGE: PASS: Original exact actor/tenant/source/version/intake validation, unknown-effect inspection, no re-upload/publication and original result readback retained. Tests now enforce initial native publication revision0 separately from intake1.
+STATE_COVERAGE: PASS: Owning mounted/handoff/session controls retain exact actor/tenant/source/version validation and lost-acknowledgment inspection without another upload/publication. Native-compatible ports enforce publication revision0 separately from intake1.
 TRUTHFUL_STATE_LABELS: PASS: Saved source, indexed text, Chat reading link and published-text link stay distinct. No source tests/PR or toast makes the whole outcome complete.
 SOLO_UI: YES: Original Chat Knowledge documents dialog only; no layout or navigation addition.
 UNVERIFIED: Final tests/lint/review/exactCI/normal release and actual published link/reload, saved Mission and original Tasks/receipts remain owed.
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: First publication annotation uses its own revision0, return
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: Native/SQL/grants/auth/source readers and Setup untouched; only two owning Chat caller functions, one retry caller and their tests.
 
-INTERNAL_BUILD_IDENTITY: Current original mainfded22618d1078433622d6bf61f359b366b830ba base; exact candidate is subsequent immutable Git/PR head; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original ANT21/ANT147/ANT161.
+INTERNAL_BUILD_IDENTITY: Current original main base fded22618d1078433622d6bf61f359b366b830ba; exact candidate is subsequent immutable Git/PR head; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original ANT21/ANT147/ANT161.
 RELEASE_CHANNEL: development: original Chat caller repair, production promotion pending normal gates.
 RELEASE_CLASSIFICATION: internal-only: necessary repair within the SAME unfinished outcome.
 CUSTOMER_RELEASE_IDENTITY: none: no customer-publication decision or complete outcome.

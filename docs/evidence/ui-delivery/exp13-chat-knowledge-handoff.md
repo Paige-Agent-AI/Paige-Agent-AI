@@ -146,3 +146,23 @@ upload/extraction. Current Chat/Add/Bulk suites:109 tests PASS; scoped ESLint0.
 Prior five-suite117 and type-ratchet10baseline/6current/0new remain supporting
 earlier-head checks, not final-head release evidence. The new immutable head needs
 renewed NON-AUTHOR review and exact CI. Rendered/authenticated proof stays owed.
+
+## Original dictation contract renewal
+
+Exact4bb hosted full suite41557388288 failed one of26400 cases:26392 passed,
+one failed, seven pending. The actual failure artifact13197401274 identifies the
+original DictationComposer contract's exact four-term Live.disabled string.
+The already reviewed runtime deliberately adds the fifth Knowledge recovery
+blocker. Local unchanged incumbent reproduces6PASS/1FAIL; this is retained.
+
+The runtime guard is unchanged. The original test now parses its actual TSX
+expression and checks all32 combinations of all four original blockers plus
+recovery. The other six contracts and original dictation assertions remain.
+Independent NON-AUTHOR controls fail if any blocker is removed or if the guard
+always enables/disables. Current contract plus real Chat attachment suites21PASS;
+scoped ESLint0/diffcheckPASS. This repairs a stale source-text assertion, not an
+approval/CI baseline or test exemption. Fresh exact-head CI is still required.
+
+The slow full-run log's repeated Suspense warnings were not the identified test
+failure. Original Growth render75PASS and independent253-module dependency trace
+are supporting diagnosis only; no speculative runtime patch was made.

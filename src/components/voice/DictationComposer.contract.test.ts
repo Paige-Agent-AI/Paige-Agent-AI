@@ -130,15 +130,33 @@ describe("dictation composer scope and send contract", () => {
       paigeAiChat.indexOf("const composerTextarea"),
       paigeAiChat.indexOf("const attachButton"),
     );
-    const liveConversation = paigeAiChat.slice(
-      paigeAiChat.indexOf("<PaigeLiveConversation"),
-      paigeAiChat.indexOf("/>\n  ) : null", paigeAiChat.indexOf("<PaigeLiveConversation")),
-    );
     expect(paigeAiChat).toContain("if (dictationActive || !composerScope.writable) return;\n    if (chip.autoSend)");
     expect(paigeAiChat).toContain("&& composerScope.writable\n    && !dictationActive;");
     expect(paigeAiChat).toContain("const pickCommand = (c: QuickChip) => {\n    if (dictationActive || !composerScope.writable) return;");
     expect(composerTextarea).toContain("disabled={composerBlocked}");
-    expect(liveConversation).toContain("disabled={composerBlocked || dictationActive || isLoading || interactiveAuthorityPending}");
+    // Check the actual guard's behavior, so adding another legitimate blocker
+    // cannot invalidate this contract's original dictation/authority controls.
+    const source = ts.createSourceFile("PaigeAIChat.tsx", paigeAiChat, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const liveGuards: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isJsxSelfClosingElement(node) && node.tagName.getText(source) === "PaigeLiveConversation") {
+        for (const attribute of node.attributes.properties) {
+          if (ts.isJsxAttribute(attribute) && attribute.name.getText(source) === "disabled"
+            && attribute.initializer && ts.isJsxExpression(attribute.initializer) && attribute.initializer.expression) {
+            liveGuards.push(attribute.initializer.expression.getText(source));
+          }
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    expect(liveGuards).toHaveLength(1);
+    const flags = ["composerBlocked", "dictationActive", "isLoading", "interactiveAuthorityPending", "knowledgeRecoveryPending"];
+    const blocked = new Function(...flags, `return (${liveGuards[0]});`);
+    for (let mask = 0; mask < 2 ** flags.length; mask++) {
+      const values = flags.map((_, index) => Boolean(mask & (1 << index)));
+      expect(blocked(...values)).toBe(values.some(Boolean));
+    }
     expect(paigeLiveConversation).toContain("disabled={working || Boolean(disabled)}");
     expect(paigeAiChat).toContain("disabled={composerSendBlocked}");
     expect(paigeAiChat).toContain("disabled={!composerScope.writable || dictationActive}");

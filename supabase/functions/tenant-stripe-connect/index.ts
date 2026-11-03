@@ -1,3 +1,4 @@
+import {salesStripeSecret} from '../_shared/sales-payments/stripe-configuration.ts';
 // One merchant door: scoped reads, shared Trust/Kit approval, canonical Stripe binding and Rail.
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import Stripe from 'https://esm.sh/stripe@17.5.0?target=deno';
@@ -36,7 +37,7 @@ Deno.serve(async req=>{
   await scope();
   const tenant=await admin.from('tenants').select('id,account_number').eq('id',tenantId).single();if(tenant.error||!tenant.data)throw Error('WORKSPACE_CHANGED');
   const stored=await admin.from('tenant_stripe_accounts').select('*').eq('tenant_id',tenantId).maybeSingle();if(stored.error)throw Error('STORAGE_UNAVAILABLE');row=stored.data;loaded=true;
-  const stripeKey=Deno.env.get('STRIPE_SECRET_KEY')??'',match=/^(?:sk|rk)_(test|live)_/.exec(stripeKey)?.[1];environment=match==='test'||match==='live'?match:null;
+  const stripeKey=salesStripeSecret(name=>Deno.env.get(name)),match=/^(?:sk|rk)_(test|live)_/.exec(stripeKey)?.[1];environment=match==='test'||match==='live'?match:null;
   const output=()=>merchantStatus(tenantId!,row,true,environment,Date.now());
   if(action==='status'){await scope();return json(200,{...output(),ok:true,outcome:'available'});}
   if(!environment)return json(503,{...output(),ok:false,outcome:'refused',code:'PROVIDER_UNAVAILABLE',state:'unverified',recovery_reason:'PROVIDER_UNAVAILABLE'});

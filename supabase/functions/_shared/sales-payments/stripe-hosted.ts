@@ -9,6 +9,12 @@ export interface HostedPaymentReadback {
  provider_transaction_id?:string;provider_settlement_id?:string;amount_minor?:number;currency?:string;
  provider_received_at?:string;expires_at?:string;
 }
+export interface CapturedPaymentReadback {
+ state:'capture_observed';provider_object_id:string;provider_transaction_id:string;provider_settlement_id:string;
+ amount_minor:number;currency:string;provider_received_at:string;
+}
+export type StripePaymentObservationReadback=HostedPaymentReadback|CapturedPaymentReadback;
+export type CaptureObservationOptions={captureObservation:true};
 /** Adapter to the existing Stripe client, not a provider gateway or an authority resolver.
  * Its caller must already have canonical actor/Trust/merchant readiness and a persisted dispatch claim.
  * No raw Stripe response or credentials leave this module. */
@@ -46,7 +52,9 @@ function hostedUrl(value:unknown):string|undefined {
  if(typeof value!=='string'||value.length>4096)return;
  try {const url=new URL(value);if(url.protocol==='https:'&&url.hostname==='checkout.stripe.com'&&!url.username&&!url.password&&!url.port)return value;}catch { /* No external URL guessing. */ }
 }
-function project(request:PaymentRequest,op:ProviderOperation,value:unknown):HostedPaymentReadback {
+function project(request:PaymentRequest,op:ProviderOperation,value:unknown):HostedPaymentReadback;
+function project(request:PaymentRequest,op:ProviderOperation,value:unknown,captureObservation:true):StripePaymentObservationReadback;
+function project(request:PaymentRequest,op:ProviderOperation,value:unknown,captureObservation=false):StripePaymentObservationReadback {
  const session=record(value),expected=metadata(request,op),live=op.environment==='live';
  if(!session||typeof session.id!=='string'||!/^cs_(test_|live_)?[A-Za-z0-9]+$/.test(session.id)||
   session.livemode!==live||session.mode!=='payment'||session.client_reference_id!==op.id||
@@ -72,11 +80,17 @@ function project(request:PaymentRequest,op:ProviderOperation,value:unknown):Host
   charge.livemode!==live||charge.status!=='succeeded'||charge.paid!==true||charge.captured!==true||
   !Number.isSafeInteger(charge.created)||Number(charge.created)<=0||Number(charge.created)>Math.floor(Date.now()/1000)||
   charge.amount!==request.amount_minor||charge.amount_captured!==request.amount_minor||charge.currency!==request.currency||
-  charge.payment_intent!==intent.id||charge.amount_refunded!==0||charge.refunded!==false||charge.disputed!==false||
+  charge.payment_intent!==intent.id||
   (charge.application_fee_amount!==null&&charge.application_fee_amount!==0)||charge.transfer!==null||charge.transfer_data!==null||
   typeof balance.id!=='string'||!/^txn_[A-Za-z0-9]+$/.test(balance.id)||balance.source!==charge.id||balance.type!=='charge'||
   balance.amount!==request.amount_minor||balance.currency!==request.currency)return unknown();
+ if(captureObservation){
+  if(!Number.isSafeInteger(charge.amount_refunded)||Number(charge.amount_refunded)<0||Number(charge.amount_refunded)>request.amount_minor
+   ||typeof charge.refunded!=='boolean'||charge.refunded!==(charge.amount_refunded===request.amount_minor)||typeof charge.disputed!=='boolean')return unknown();
+ }else if(charge.amount_refunded!==0||charge.refunded!==false||charge.disputed!==false)return unknown();
  if(balance.status!=='available')return {state:'provider_accepted',...base};
+ if(captureObservation)return {state:'capture_observed',...base,provider_transaction_id:charge.id,provider_settlement_id:balance.id,
+  amount_minor:request.amount_minor,currency:request.currency,provider_received_at:new Date(Number(charge.created)*1000).toISOString()};
  return {state:'settled',...base,provider_transaction_id:charge.id,provider_settlement_id:balance.id,amount_minor:request.amount_minor,currency:request.currency,provider_received_at:new Date(Number(charge.created)*1000).toISOString()};
 }
 export async function createStripeHostedRequest(request:PaymentRequest,op:ProviderOperation,client:StripeHostedClient,publicOrigin:string):Promise<HostedPaymentReadback> {
@@ -97,8 +111,11 @@ export async function createStripeHostedRequest(request:PaymentRequest,op:Provid
 }
 /** Recovery never dispatches. If the provider identity was lost, bounded account-scoped listing
  * locates the immutable reference. Truncation/zero/multiple matches remain unknown; no blind retry. */
-export async function readStripeHostedRequest(request:PaymentRequest,op:ProviderOperation,client:StripeHostedClient,objectId:string|null,createdAfter?:number,deadline=Date.now()+40_000):Promise<HostedPaymentReadback> {
+export function readStripeHostedRequest(request:PaymentRequest,op:ProviderOperation,client:StripeHostedClient,objectId:string|null,createdAfter?:number,deadline?:number):Promise<HostedPaymentReadback>;
+export function readStripeHostedRequest(request:PaymentRequest,op:ProviderOperation,client:StripeHostedClient,objectId:string|null,createdAfter:number|undefined,deadline:number|undefined,options:CaptureObservationOptions):Promise<StripePaymentObservationReadback>;
+export async function readStripeHostedRequest(request:PaymentRequest,op:ProviderOperation,client:StripeHostedClient,objectId:string|null,createdAfter?:number,deadline=Date.now()+40_000,options?:CaptureObservationOptions):Promise<StripePaymentObservationReadback> {
  bind(request,op,client);
+ if(options?.captureObservation===true&&!['dispatching','provider_accepted','customer_action_required','outcome_unknown'].includes(op.state))return unknown();
  if(op.provider_operation_id!==null&&objectId!==op.provider_operation_id)return unknown();
  try {
   let id=objectId;
@@ -119,7 +136,7 @@ export async function readStripeHostedRequest(request:PaymentRequest,op:Provider
   if(!/^cs_(test_|live_)?[A-Za-z0-9]+$/.test(id))return unknown();
   if(Date.now()>=deadline)return unknown();
   const value=await client.retrieveSession(id,{expand:['payment_intent.latest_charge.balance_transaction']},{stripeAccount:op.merchant_id});
-  if(record(value)?.id!==id)return unknown();return project(request,op,value);
+  if(record(value)?.id!==id)return unknown();return options?.captureObservation===true?project(request,op,value,true):project(request,op,value);
  }catch {return unknown();}
 }
 
@@ -160,15 +177,26 @@ function providerBalance(value:unknown,source:string,amount:number,currency:stri
 }
 /** The native original-operation reader must supply the already verified settlement.
  * Provider event payloads and user-entered refund amounts are never accepted as its source.
- * Native persistence/financial interpretation is a separate, not-yet-mounted contract. */
-export async function readStripePaymentAdjustments(request:PaymentRequest,op:ProviderOperation,settlement:VerifiedSettlement,client:StripeAdjustmentClient,deadline=Date.now()+40_000):Promise<StripePaymentAdjustments> {
+ * Native persistence/financial interpretation remains in the original gated writers. */
+export function readStripePaymentAdjustments(request:PaymentRequest,op:ProviderOperation,settlement:VerifiedSettlement,client:StripeAdjustmentClient,deadline?:number):Promise<StripePaymentAdjustments>;
+export function readStripePaymentAdjustments(request:PaymentRequest,op:ProviderOperation,settlement:CapturedPaymentReadback,client:StripeAdjustmentClient,deadline:number|undefined,options:CaptureObservationOptions):Promise<StripePaymentAdjustments>;
+export async function readStripePaymentAdjustments(request:PaymentRequest,op:ProviderOperation,settlement:VerifiedSettlement|CapturedPaymentReadback,client:StripeAdjustmentClient,deadline=Date.now()+40_000,options?:CaptureObservationOptions):Promise<StripePaymentAdjustments> {
  try {
   bind(request,op,client);
+  if(options?.captureObservation===true){
+   if(!['dispatching','provider_accepted','customer_action_required','outcome_unknown'].includes(op.state)||settlement.state!=='capture_observed'
+    ||!/^cs_(test_|live_)?[A-Za-z0-9]+$/.test(settlement.provider_object_id)
+    ||(op.provider_operation_id!==null&&settlement.provider_object_id!==op.provider_operation_id)
+    ||!minor(settlement.amount_minor)||settlement.amount_minor!==request.amount_minor||settlement.currency!==request.currency
+    ||!/^ch_[A-Za-z0-9]+$/.test(settlement.provider_transaction_id)||!/^txn_[A-Za-z0-9]+$/.test(settlement.provider_settlement_id)
+    ||!Number.isFinite(Date.parse(settlement.provider_received_at))||Date.now()>=deadline)return adjustmentUnknown();
+  }else{
   if(op.state!=='settled'||settlement.state!=='verified'||settlement.tenant_id!==request.tenant_id||
    settlement.operation_id!==op.id||settlement.provider!==op.provider||settlement.merchant_id!==op.merchant_id||settlement.environment!==op.environment||
    !minor(settlement.amount_minor)||settlement.amount_minor!==request.amount_minor||settlement.currency!==request.currency||
    !/^ch_[A-Za-z0-9]+$/.test(settlement.provider_transaction_id)||!/^txn_[A-Za-z0-9]+$/.test(settlement.provider_settlement_id)||
    !settlement.id||!settlement.readback_reference||Date.now()>=deadline)return adjustmentUnknown();
+  }
   const sourceFingerprint=(value:unknown)=>{
    const row=record(value),payment=record(row?.payment_intent),entry=record(row?.balance_transaction),meta=record(payment?.metadata);
    return JSON.stringify([
@@ -178,8 +206,8 @@ export async function readStripePaymentAdjustments(request:PaymentRequest,op:Pro
     ...Object.keys(metadata(request,op)).map(key=>meta?.[key]),
    ]);
   };
-  const options={stripeAccount:op.merchant_id},params={expand:['payment_intent','balance_transaction']};
-  const raw=await client.retrieveCharge(settlement.provider_transaction_id,params,options),charge=record(raw),intent=record(charge?.payment_intent);
+  const stripeOptions={stripeAccount:op.merchant_id},params={expand:['payment_intent','balance_transaction']};
+  const raw=await client.retrieveCharge(settlement.provider_transaction_id,params,stripeOptions),charge=record(raw),intent=record(charge?.payment_intent);
   if(!charge||!intent||charge.id!==settlement.provider_transaction_id||charge.object!=='charge'||charge.livemode!==(op.environment==='live')||
    charge.status!=='succeeded'||charge.paid!==true||charge.captured!==true||charge.amount!==request.amount_minor||charge.amount_captured!==request.amount_minor||
    charge.currency!==request.currency||!providerTime(charge.created)||!Number.isSafeInteger(charge.amount_refunded)||Number(charge.amount_refunded)<0||Number(charge.amount_refunded)>request.amount_minor||
@@ -187,6 +215,7 @@ export async function readStripePaymentAdjustments(request:PaymentRequest,op:Pro
    (charge.application_fee_amount!==null&&charge.application_fee_amount!==0)||charge.transfer!==null||charge.transfer_data!==null||
    typeof intent.id!=='string'||!/^pi_[A-Za-z0-9]+$/.test(intent.id)||intent.livemode!==(op.environment==='live')||intent.status!=='succeeded'||
    intent.amount!==request.amount_minor||intent.amount_received!==request.amount_minor||intent.currency!==request.currency||!matchesMetadata(intent.metadata,metadata(request,op)))return adjustmentUnknown();
+  if(options?.captureObservation===true&&(settlement.state!=='capture_observed'||new Date(Number(charge.created)*1000).toISOString()!==settlement.provider_received_at))return adjustmentUnknown();
   const captureBalance=providerBalance(charge.balance_transaction,charge.id as string,request.amount_minor,request.currency,'charge');
   if(captureBalance.id!==settlement.provider_settlement_id||captureBalance.status!=='available')return adjustmentUnknown();
   const originalSourceFingerprint=sourceFingerprint(raw);
@@ -195,7 +224,7 @@ export async function readStripePaymentAdjustments(request:PaymentRequest,op:Pro
    for(let page=0;page<10;page++){
     if(Date.now()>=deadline)throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
     const scope={charge:settlement.provider_transaction_id,limit:100,...(cursor?{starting_after:cursor}:{})};
-    const result=record(await(kind==='refunds'?client.listRefunds({...scope,expand:['data.balance_transaction','data.failure_balance_transaction']},options):client.listDisputes(scope,options)));
+    const result=record(await(kind==='refunds'?client.listRefunds({...scope,expand:['data.balance_transaction','data.failure_balance_transaction']},stripeOptions):client.listDisputes(scope,stripeOptions)));
     if(!result||result.object!=='list'||!Array.isArray(result.data)||result.data.length>100||typeof result.has_more!=='boolean')throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
     for(const item of result.data){const row=record(item);if(!row||typeof row.id!=='string'||ids.has(row.id))throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');ids.add(row.id);rows.push(row);}
     if(result.has_more===false)return rows;
@@ -233,7 +262,7 @@ export async function readStripePaymentAdjustments(request:PaymentRequest,op:Pro
   const succeeded=refunds.filter(row=>row.status==='succeeded').reduce((sum,row)=>sum+row.amount_minor,0),inFlight=refunds.filter(row=>row.status==='pending'||row.status==='requires_action').reduce((sum,row)=>sum+row.amount_minor,0);
   // Provider consistency only, never a receivable or available-cash calculation.
   if(Number(charge.amount_refunded)<succeeded||Number(charge.amount_refunded)>succeeded+inFlight||Date.now()>=deadline)return adjustmentUnknown();
-  const latest=await client.retrieveCharge(settlement.provider_transaction_id,params,options);
+  const latest=await client.retrieveCharge(settlement.provider_transaction_id,params,stripeOptions);
   if(sourceFingerprint(latest)!==originalSourceFingerprint||Date.now()>=deadline)return adjustmentUnknown();
   return {state:'observed',provider_transaction_id:settlement.provider_transaction_id,provider_settlement_id:settlement.provider_settlement_id,refunds,disputes};
  }catch {return adjustmentUnknown();}

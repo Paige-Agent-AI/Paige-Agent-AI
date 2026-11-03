@@ -19,7 +19,7 @@ export async function verifySalesStripeIngress(body:string,signature:string,lega
  * merchant, immutable payment and durable work; the original GET-only reader
  * supplies financial evidence later. No event amount/status becomes a balance. */
 export async function routeSalesStripeIngress(admin:SalesPaymentAdmin,event:unknown,
- verifiedPlatform:'legacy'|'v2',secret:string,observationsEnabled:boolean):Promise<{
+ verifiedPlatform:'legacy'|'v2',secret:string,observationsEnabled:boolean,readbackSecret?:(environment:'test'|'live')=>string):Promise<{
  handled:boolean;status:number;code:string;
 }> {
  if(observationsEnabled&&verifiedPlatform==='legacy'&&event&&typeof event==='object'&&!Array.isArray(event)){
@@ -30,5 +30,10 @@ export async function routeSalesStripeIngress(admin:SalesPaymentAdmin,event:unkn
    if(registered.handled)return registered;
   }
  }
- return routeVerifiedSalesStripeEvent(admin,event,verifiedPlatform,secret);
+ // Called only AFTER canonical signature verification. The original adapter
+ // still resolves native operation/customer/merchant scope before provider GET.
+ // This selector is never used by platform Billing or any provider POST.
+ const value=event&&typeof event==='object'&&!Array.isArray(event)?event as Record<string,unknown>:null;
+ const selected=readbackSecret&&typeof value?.livemode==='boolean'?readbackSecret(value.livemode?'live':'test'):secret;
+ return routeVerifiedSalesStripeEvent(admin,event,verifiedPlatform,selected);
 }

@@ -39,7 +39,7 @@ function parseContext(value:unknown,work:ObservationClaim){
 /** Internal GET-only continuation, consumed only under the original endpoint's
  * explicit server activation gate. No sender, timer, dispatch, refund or credit API.
  * Observed means source evidence was retained; it never means a financial action ran. */
-export async function reconcileSalesProviderObservationWork(admin:SalesPaymentAdmin,stripe:StripeAdjustmentClient,limit=3):Promise<{
+export async function reconcileSalesProviderObservationWork(admin:SalesPaymentAdmin,stripe:StripeAdjustmentClient,limit=3,stripeForReadback?:(environment:'test'|'live')=>StripeAdjustmentClient):Promise<{
  claimed:number;observed:number;verificationPending:number;unverified:number;
 }>{
  if(!Number.isInteger(limit)||limit<1||limit>3)throw Error('PROVIDER_OBSERVATION_BATCH_INVALID');
@@ -54,7 +54,9 @@ export async function reconcileSalesProviderObservationWork(admin:SalesPaymentAd
    if(r.error)throw Error('PROVIDER_OBSERVATION_LEASE_UNAVAILABLE');return parseContext(r.data,work);};
   try{
    const before=await context();
-   const result=await readStripePaymentAdjustments(before.claim.request,before.claim.operation,before.settlement,stripe,deadline);
+   const reader=stripeForReadback?.(before.claim.operation.environment)??stripe;
+   if(reader.environment!==before.claim.operation.environment)throw Error('PROVIDER_ENVIRONMENT_MISMATCH');
+   const result=await readStripePaymentAdjustments(before.claim.request,before.claim.operation,before.settlement,reader,deadline);
    const after=await context();
    // Retain the incarnation read BEFORE the provider request. A later heartbeat
    // cannot upgrade old facts to a new source version or merchant binding.

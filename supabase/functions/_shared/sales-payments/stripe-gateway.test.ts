@@ -2,7 +2,7 @@ import {describe,it,expect,vi} from 'vitest';
 import {readFileSync} from 'node:fs';
 import {transformSync} from 'esbuild';
 import {verifySalesStripeIngress,routeSalesStripeIngress} from './stripe-ingress.ts';
-import {salesStripeSecret,salesStripeObservationsEnabled} from './stripe-configuration.ts';
+import {salesStripeSecret,salesStripeReadbackSecret,salesStripeObservationsEnabled} from './stripe-configuration.ts';
 const forbidden=vi.hoisted(()=>vi.fn(()=>{throw Error('Provider reads are outside signal registration');}));
 vi.mock('./stripe-client.ts',()=>({salesStripeClient:forbidden}));
 const source=readFileSync(new URL('../../stripe-webhook/index.ts',import.meta.url),'utf8');
@@ -27,7 +27,7 @@ function gateway(options:{enabled?:string;native?:unknown}={}){
  let handler:((req:Request)=>Promise<Response>)|undefined;
  const modules:Record<string,unknown>={
   '../_shared/sales-payments/stripe-ingress.ts':{verifySalesStripeIngress,routeSalesStripeIngress},
-  '../_shared/sales-payments/stripe-configuration.ts':{salesStripeSecret,salesStripeObservationsEnabled},
+  '../_shared/sales-payments/stripe-configuration.ts':{salesStripeSecret,salesStripeReadbackSecret,salesStripeObservationsEnabled},
   'https://deno.land/std@0.190.0/http/server.ts':{serve:(fn:typeof handler)=>{handler=fn;}},
   'https://esm.sh/stripe@18.5.0':SDK,
   'https://esm.sh/@supabase/supabase-js@2.57.2':{createClient:()=>({rpc,from:table})},

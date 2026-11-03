@@ -1,0 +1,48 @@
+/* Original Executive world in the shared Dialog portal. No new shell or palette. */
+.exec-activity[data-pg] { width:min(1040px,calc(100vw - 32px)); max-width:none; height:min(720px,calc(100dvh - 32px)); max-height:calc(100dvh - 32px); display:flex; flex-direction:column; gap:0; padding:0; overflow:hidden; background:var(--pg-canvas); color:var(--pg-ink); font-family:var(--pg-font-ui); border:1px solid var(--pg-line); border-radius:13px; box-shadow:none; }
+.exec-activity-scrim { background:var(--pg-scrim,rgba(16,14,20,.48)); }
+.exec-activity-heading { flex:none; padding:24px 64px 20px 28px; border-bottom:1px solid var(--pg-line); }
+.exec-activity-heading h2 { color:var(--pg-ink); font-size:21px; font-weight:650; letter-spacing:-.02em; line-height:1.3; margin:0; }
+.exec-activity-heading p { color:var(--pg-ink-2); font-size:14px; line-height:1.6; margin:8px 0 0; }
+.exec-activity button,.exec-activity select { font:inherit; color:var(--pg-ink); background:var(--pg-surface); border:1px solid var(--pg-line); border-radius:8px; min-height:44px; padding:8px 12px; cursor:pointer; }
+.exec-activity button { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.exec-activity button:hover { background:var(--pg-raised); }
+.exec-activity :is(button,select):focus-visible { outline:2px solid var(--pg-violet); outline-offset:3px; }
+.exec-activity > button:last-child { width:44px; padding:0; inset-block-start:12px; inset-inline-end:12px; opacity:1; }
+.exec-activity ::selection { background:var(--pg-violet); color:var(--pg-canvas); }
+.exec-activity-toolbar { padding:12px 28px; display:flex; align-items:center; flex-wrap:wrap; gap:12px 16px; border-bottom:1px solid var(--pg-line); font-size:14px; }
+.exec-activity-toolbar label { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.exec-activity-toolbar span { color:var(--pg-ink-2); font-variant-numeric:tabular-nums; }
+.exec-activity-toolbar button { margin-inline-start:auto; }
+.exec-activity-workspace { display:grid; grid-template-columns:minmax(210px,.85fr) minmax(0,1.8fr); min-height:0; flex:1; }
+.exec-activity-list { overflow:auto; min-width:0; padding:12px; border-inline-end:1px solid var(--pg-line); scrollbar-color:var(--pg-line) transparent; }
+.exec-activity-list button { display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:6px; text-align:start; width:100%; background:transparent; border-color:transparent; padding:14px; margin-block-end:4px; overflow-wrap:anywhere; }
+.exec-activity-list button[aria-pressed="true"] { background:var(--pg-spine); border-color:var(--pg-line); }
+.exec-activity-list strong { font-size:14px; line-height:1.5; font-weight:600; }
+.exec-activity-list small { font-size:12px; color:var(--pg-ink-2); line-height:1.55; }
+.exec-activity-detail { overflow:auto; min-width:0; padding:28px; scrollbar-color:var(--pg-line) transparent; }
+.exec-activity-detail h3 { margin:12px 0; font-size:21px; line-height:1.4; font-weight:600; letter-spacing:-.02em; overflow-wrap:anywhere; }
+.exec-activity-detail h4 { font-size:14px; line-height:1.5; font-weight:600; margin:0 0 8px; }
+.exec-activity-detail p { max-width:70ch; line-height:1.65; overflow-wrap:anywhere; }
+.exec-activity-attribution,.exec-activity-time { margin:0; color:var(--pg-ink-2); font-size:14px; }
+.exec-activity-detail section { margin-block-start:28px; }
+.exec-activity-prose { white-space:pre-wrap; margin:0; font-size:16px; }
+.exec-activity-result { padding-block-start:20px; border-top:1px solid var(--pg-line); }
+.exec-activity-result p { margin:0; color:var(--pg-ink-2); font-size:14px; }
+.exec-activity-footnote { flex:none; margin:0; padding:14px 28px; color:var(--pg-ink-2); font-size:13px; line-height:1.6; border-top:1px solid var(--pg-line); }
+.exec-activity-state { padding:28px; color:var(--pg-ink-2); line-height:1.6; font-size:14px; min-width:0; overflow:auto; }
+.exec-recorded > .exec-activity-state { padding:0; }
+.exec-activity-state h3 { color:var(--pg-ink); font-size:18px; }
+.exec-activity-state button { margin-block-start:8px; }
+@media (max-width:640px) {
+  .exec-activity[data-pg] { width:calc(100vw - 16px); height:calc(100dvh - 16px); max-height:calc(100dvh - 16px); }
+  .exec-activity-heading { padding:20px 56px 16px 20px; }
+  .exec-activity-toolbar { padding:12px 20px; gap:10px; }
+  .exec-activity-toolbar select { font-size:16px; max-width:100%; }
+  .exec-activity-toolbar button { margin-inline-start:0; }
+  .exec-activity-workspace { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(100px,150px) minmax(0,1fr); }
+  .exec-activity-list { border-inline-end:0; border-bottom:1px solid var(--pg-line); }
+  .exec-activity-detail { padding:20px; }
+  .exec-activity-footnote { padding:12px 20px; }
+}
+@media (prefers-reduced-motion:reduce) { .exec-activity[data-pg] { animation:none; transition:none; } }

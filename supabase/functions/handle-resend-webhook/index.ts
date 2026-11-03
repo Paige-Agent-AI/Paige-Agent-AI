@@ -2,8 +2,7 @@
 //
 // WHY THIS IS NEW RATHER THAN AN EXTENSION. The platform already has ONE email-truth table
 // (`public.email_send_log`) and one suppression receiver (`handle-email-suppression`) — but that
-// receiver is Mailgun-shaped, arrives via the Go API, and is verified with the Lovable webhook
-// helper. Resend signs with Svix and speaks a different event vocabulary, so its events need their
+// retired receiver was Mailgun-shaped. Resend signs with Svix and speaks a different event vocabulary, so its events need their
 // own door. Source outcomes still append to the existing email_send_log. A private processing
 // journal deduplicates signed receipt identities and retains early arrivals; it is not a second
 // delivery history, tenant read surface, or notification store.

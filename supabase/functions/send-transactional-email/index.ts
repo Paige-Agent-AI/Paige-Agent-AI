@@ -20,8 +20,7 @@ const limiterClient = () =>
 // To update, re-run the email domain setup flow.
 const SITE_NAME = "Paige Agent AI"
 // SENDER_DOMAIN is the verified sender subdomain FQDN (e.g., "notify.example.com").
-// It MUST match the subdomain delegated to Lovable's nameservers — never the root domain.
-// The email API looks up this exact domain; a mismatch causes "No email domain record found".
+// It must match the PAIGE platform's verified SendGrid sending domain.
 const SENDER_DOMAIN = "paigeagent.ai"
 // FROM_DOMAIN is the domain shown in the From: header. It MUST align with SENDER_DOMAIN
 // (same subdomain, or the SENDER_ROOT). A different subdomain (e.g., mail.example.com while
@@ -664,7 +663,7 @@ Deno.serve(async (req) => {
   // tenant's invites/notifications show their own name in the From header.
   // Explicit fromOverride / replyToOverride always win.
   //
-  // SENDER-DOMAIN ALIGNMENT GUARD: the Lovable Email API rejects sends whose
+  // SENDER-DOMAIN ALIGNMENT GUARD: outgoing messages must use a From-address whose
   // From-address domain does not align with the verified sender_domain. A
   // tenant override pointing at an unregistered domain (e.g. portal.mogulmakeracademy.com
   // while sender_domain is paigeagent.ai) used to silently fail with
@@ -715,11 +714,8 @@ Deno.serve(async (req) => {
   if (replyToOverride) resolvedReplyTo = replyToOverride
 
   // 6. Send directly through Paige's platform SendGrid transport (owner ruling 2026-10-26:
-  // everything off Resend). The old async path (enqueue_email → process-email-queue, which
-  // sent via Lovable) was never deployed, so transactional email silently never left the
-  // building — "sent" only ever meant "queued into a black hole." Send inline, record the
-  // REAL outcome, and retire the Lovable worker (#79). The key is the restricted Mail Send
-  // key, never the admin key.
+  // everything off Resend). Send inline and record the actual provider outcome.
+  // The credential is the restricted Mail Send key, never the admin key.
   const SENDGRID_MAIL_SEND_API_KEY = Deno.env.get('SENDGRID_MAIL_SEND_API_KEY')
 
   // IDEMPOTENCY — PERSISTED, DELIBERATELY NOT ACTED ON, and that is the §37 answer rather than a

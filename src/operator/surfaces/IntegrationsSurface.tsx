@@ -86,7 +86,7 @@ export const INTEGRATIONS: readonly IntegrationShelf[] = [
     { name: "Cal.com", kind: "OAuth", state: "planned", does: "Open-source booking", note: "" },
   ]},
   { cat: "Models and voice", items: [
-    { name: "Anthropic", kind: "Key", state: "live", does: "The model she thinks with", note: "Replaced the Lovable gateway" },
+    { name: "Anthropic", kind: "Key", state: "live", does: "The model she thinks with", note: "Direct provider connection" },
     { name: "OpenAI", kind: "Key", state: "planned", does: "Alternative or fallback model", note: "Routing lives in Settings · Mind" },
     { name: "Google Gemini", kind: "Key", state: "planned", does: "Alternative model", note: "" },
     { name: "ElevenLabs", kind: "Key", state: "planned", does: "Her voice, spoken", note: "", blocks: "Her speaking on a call" },

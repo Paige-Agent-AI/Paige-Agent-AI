@@ -1,5 +1,27 @@
 # Experience 01 foundation — ANT-50
 
+### November 3 actual-schema checkpoint — same safe-save outcome
+
+Exact c3a82154ed1095ee675da0435c64e0935f928673 dedicated original Setup
+full-schema step125949897016 PASS at13:51:55–13:53:38UTC:137 assertions,
+original100 retained plus37 protection/compatibility checks, with real native
+Owner/Admin/member/foreign scopes and held-owner selected-fact receipt/recovery.
+Focused70/four observed blocking waits also PASS. Own distinct NON-AUTHOR source,
+composition and proof-repair review CLEAR; no coauthoring. OWN managedPreview
+carrier20271130020014 recordedONCE, body898434290f8bd6325e54b4c2795f7f48,
+SHA256734bceb413a460a6aa41a1dd8e14f14a7cb5ed96261e46dac5d61181704b5781
+now immutable. Eleven other inspected Setup/receipt/E13-validator API definitions
+and selected complete metadata match production.
+
+Whole c3 database job remains FAIL solely from old NEXUS tools10/expected9
+regression. Original owner E08 normally merged the reviewed exact compatibility
+fix in mainb07ac3866; normal E01 main composition reuses ALL incoming source
+unchanged and conserves all owning runtime/proof/carrier blobs. Fresh composed
+head review/whole CI, lower10→13→own14 ordered production release/readback and
+ordinary useful saved-result/reopen remain owed. No gate waiver or customer
+acceptance. Original full10/23/amendments pending; finish this ONE outcome,
+report thenSTOP. Earlier preparation and failure history below is preserved.
+
 ### November 3 owner-selected ONE outcome — safe Setup context saves
 
 Actual receiving ACK [6a5a70ab](https://linear.app/paigeagentai/issue/ANT-50#comment-6a5a70ab-e41a-449e-b32b-6d4f3342847e)

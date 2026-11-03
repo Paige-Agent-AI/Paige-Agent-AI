@@ -101,6 +101,7 @@ on:
       - "supabase/tests/business_mission_foundation.sql"
       - "supabase/tests/exp13_mission_document_intent.sql"
       - "supabase/tests/exp13_mission_original_tasks.sql"
+      - "scripts/proof/exp13-mission-task-concurrency.mjs"
       - "supabase/tests/zion_role_remap.sql"
       - "supabase/tests/zion_planning_instructions.sql"
       - "supabase/tests/business_mission_numeric_targets.sql"
@@ -936,6 +937,8 @@ jobs:
       - run: supabase test db supabase/tests/exp13_mission_document_intent.sql
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/exp13_mission_original_tasks.sql
+        if: ${{ !cancelled() }}
+      - run: node scripts/proof/exp13-mission-task-concurrency.mjs
         if: ${{ !cancelled() }}
       - run: node scripts/proof/exp13-mission-source-concurrency.mjs
         if: ${{ !cancelled() }}

@@ -28,7 +28,7 @@ export async function proveWeeklyPlanReviewSave({db,read,definition,actor,admin,
  const seed=read('20260907000000_skills_s2_cat10_operations_process.sql');
  const copy=seed.match(/weekly_priorities_plan\$s\$,\s*\$s\$Weekly Priorities Plan\$s\$,\s*\$s\$([\s\S]*?)\$s\$/)?.[1];assert(copy,'Original catalogue copy');
  await db.exec(`CREATE TABLE public.paige_skills(id uuid,slug text,name text,description text,category text,scoping text,created_by text,risk_level text,status text,metadata jsonb);
- INSERT INTO public.paige_skills VALUES('0c0db79a-b1f3-4bba-9a1e-0fb94781473a','weekly_priorities_plan','Weekly Priorities Plan',${literal(copy)},'operations_process','platform','system','draft','active','{}');`);
+ INSERT INTO public.paige_skills VALUES('${randomUUID()}','weekly_priorities_plan','Weekly Priorities Plan',${literal(copy)},'operations_process','platform','system','draft','active','{}');`);
  await db.exec('CREATE TRIGGER trg_paige_durable_work_identity BEFORE UPDATE ON public.paige_durable_work FOR EACH ROW EXECUTE FUNCTION public._paige_durable_work_protect_identity();');
  const atomic=readFileSync(new URL('../../supabase/migrations/20271130050009_exp05_reviewed_weekly_plan_atomic.sql',import.meta.url),'utf8');
  // Exact producer component; the SAME installer's navigation component runs in
@@ -38,6 +38,7 @@ export async function proveWeeklyPlanReviewSave({db,read,definition,actor,admin,
  const signature='public.plan_create_scoped(uuid,uuid,text,text,date,date,text,uuid,text)';
  const metadata=async()=>(await db.query(`SELECT (to_jsonb(p)-'prosrc'-'proargdefaults')||jsonb_build_object('proargdefaults',pg_get_expr(proargdefaults,0)) AS value FROM pg_proc p WHERE oid='${signature}'::regprocedure`)).rows[0].value;
  const prior=await metadata();await db.exec(migration);assert.deepEqual(await metadata(),prior,'native receipt forward retains original ABI/OID/owner/ACL/config');checks++;
+ await db.exec(read('20271130050010_exp05_weekly_plan_catalogue_identity.sql'));
  check(await scalar(`(SELECT metadata#>>'{catalogue_coverage,state}'='limited' AND description LIKE '%does not execute work%' AND risk_level='draft' FROM public.paige_skills)`),'same canonical catalogue states Limited/manual only; original risk and activation unchanged');
  const task=randomUUID(),request=randomUUID();
  await db.exec(`INSERT INTO public.tenant_business_time_zones(tenant_id,time_zone) VALUES('${tenant}','America/New_York');

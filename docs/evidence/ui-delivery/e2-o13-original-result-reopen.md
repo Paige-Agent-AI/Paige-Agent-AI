@@ -116,4 +116,3 @@ No new producer, native body/grant, registry, reader, action or algorithm maturi
 Actual candidate rendering, filter behavior, result/receipt correlation, focus,
 Chat persistence and recovery in both ordinary workspaces remain owed after
 reviewed release. This evidence does not close O13 or founder acceptance.
-

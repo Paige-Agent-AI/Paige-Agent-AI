@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: UNVERIFIED: mounted return/source-link/newer-input controls pass
 ZOOM_REFLOW: UNVERIFIED: native 200-percent zoom/reflow and changed receipt-content reachability have not been exercised.
 REDUCED_MOTION: UNVERIFIED: no new animation source; actual native reduced-motion timing remains unrun.
 STATE_COVERAGE: PASS: controlled loading, true empty sample, recorded-only, original-result, unavailable/missing/foreign/mismatched/malformed, forbidden, stale response/workspace, retry, exact-URL reload and source-return states.
-TRUTHFUL_STATE_LABELS: PASS: original target revision/state are historical saved work; a recorded operation outcome does not establish current approval, completed business work, goal achievement or improvement. Unknown/legacy receipts stay absent; no accomplished-work aggregate is manufactured.
+TRUTHFUL_STATE_LABELS: PASS: parser and presentation controls verify that original target revision/state are historical saved work. A recorded operation outcome does not establish current approval, completed business work, goal achievement or improvement. Unsupported/legacy receipts stay absent and no accomplished-work aggregate is manufactured.
 SOLO_UI: YES: original Executive shared SOLO product, caller-JWT Rail family, current-account semantic resolver; no account-specific code, flags, fixtures or permission exception.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: fresh native candidate capture unavailable.
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: fresh native candidate capture unavailable.
@@ -33,13 +33,13 @@ MUST_PRESERVE: Original Rail/domain writers, caller authority, historical first 
 ACCEPTANCE_CRITERIA: A permitted actor reopens the same original event beyond the latest sample, sees native-verified original saved work and separate domain/Rail receipts where supported, follows its current-account canonical record, returns with fresh authority and reading context, and recovers truthfully after missing/refused/unavailable reads. Confirm persisted conversation and reload in both designated ordinary customer contexts before outcome closure.
 MOTION_PURPOSE: NONE: existing dialog/focus behavior retained; no new animated data or decorative motion.
 PROTECTED_SEAMS: IMPACTED: same caller-JWT Rail read/result parsing, original source reread, current actor/workspace guards and existing Executive history bookmark/semantic links. UNCHANGED: business/domain writers, approval/effect authority, privileged grants in this consumer, Chat/Live runtime, model/provider routing, Knowledge/Memory and billing.
-INTERNAL_BUILD_IDENTITY: c66544d5516776d52098c4b13a857bb483144524; identity-role=supporting source baseline; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLIED; evidence=docs/evidence/ui-delivery/e2-o13-original-result-reopen.md
+INTERNAL_BUILD_IDENTITY: c66544d5516776d52098c4b13a857bb483144524; identity-role=supporting source baseline; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(existing review consumer awaits legitimate native interface and ordinary deployment); evidence=docs/evidence/ui-delivery/e2-o13-original-result-reopen.md
 RELEASE_CHANNEL: development: consumer source only; dependent native read interface is proposed and uninstalled.
 RELEASE_CLASSIFICATION: internal-only: necessary O13 integration; no completed customer release.
 CUSTOMER_RELEASE_IDENTITY: none: full useful result and customer acceptance are not established.
 RELEASE_NOTE_REQUIRED: NO: no customer announcement earned by local source/tests.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: original native result, exact-event and persisted conversation continuity in production. Source preparation does not promote algorithms, nine analytics capabilities or the existing PARTIAL Executive surface.
-RELEASE_RECOVERY: position=do not deploy the consumer before its actual native prerequisite; use a bounded consumer revert/forward fix if later readback fails; reference=docs/delivery/e2-customer-experience-integration-matrix.md
+RELEASE_RECOVERY: position=hold consumer deployment before its actual native prerequisite and use a bounded consumer revert/forward fix for a later failed readback; reference=docs/delivery/e2-customer-experience-integration-matrix.md
 
 ## Flow, routing and ownership
 

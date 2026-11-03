@@ -19,7 +19,7 @@ STATE_COVERAGE: UNVERIFIED: Query and fragment errors, sanitized denial/expiry/p
 TRUTHFUL_STATE_LABELS: PASS: No success claim, provisioning claim, account grant or provider repair inferred.
 SOLO_UI: NO: Public shared authentication entrance; no authenticated Solo shell or PAIGE panel layout changed.
 UNVERIFIED: Google exchange root cause, repaired production release and successful owner login remain open; no account recreation or authorization bypass.
-INTERNAL_BUILD_IDENTITY: c9a771b21da76b184b70d09b5aa11a60b6fda3de; deployment=UNVERIFIED; environment=production-target; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=PR3259
+INTERNAL_BUILD_IDENTITY: c9a771b21da76b184b70d09b5aa11a60b6fda3de; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=PR3259
 RELEASE_CHANNEL: development: Owner-authorized incident repair through normal independent review and exact-head CI.
 RELEASE_CLASSIFICATION: PATCH: Existing sign-in recovery and branding repair, no new capability or provider activation.
 CUSTOMER_RELEASE_IDENTITY: none: Internal incident repair, no customer version designation approved.

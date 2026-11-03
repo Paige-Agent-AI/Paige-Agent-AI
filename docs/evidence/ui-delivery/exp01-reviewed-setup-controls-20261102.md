@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: baseline ordinaryOwner stage/reload/inspect w
 KEYBOARD_FOCUS: UNVERIFIED: scoped visible focus ring and44px controls implemented; real keyboard confirmation pending deployment, no final approval clicked.
 ZOOM_REFLOW: UNVERIFIED: current900x1000 baseline has no root overflow; new control wrapping at all four required sizes remains to be confirmed. No global scroll/overflow change.
 REDUCED_MOTION: UNVERIFIED: no new animation or transition; no new reduced-motion claim.
-STATE_COVERAGE: PASS: existing stage/explicit approval/absence/current/historical/UNKNOWN and role/workspace fences remain byte-unchanged; original72 mounted regression controls pass.
+STATE_COVERAGE: PASS: src/solo/ReviewedSetupFacts.test.tsx and src/solo/SoloBusinessContextSetup.test.tsx execute72 cases, including lost acknowledgment, server discovery, correction, later manual-CAS invalidation and role settlement; state logic is unchanged.
 TRUTHFUL_STATE_LABELS: PASS: stage is not approval; no success/receipt, Memory, Mission or Work authority is inferred from a source, checkbox, unreturned result or unanswered question.
 SOLO_UI: YES: same shared original Business-profile review; no account-specific code or new eligibility rule.
 UNVERIFIED: final head review/CI, normal web release, post-release computed contrast/geometry/keyboard checks and actual saved fact/receipt/full reload.
@@ -51,3 +51,7 @@ The first pinned design-detector attempt failed ENOTFOUND against the package
 registry before scanning. The same repository-pinned4.1.0 detector then completed
 with network access: exit0/no findings on both owning UI files. No rule, package
 pin, dependency baseline or source check was weakened.
+
+The first UI evidence check rejected the state-coverage sentence as unresolved
+prose. It now points to the two actual executed test files and names their cases;
+the original validator and every test remain unchanged.

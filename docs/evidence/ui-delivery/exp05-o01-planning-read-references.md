@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: Planning facts and original record controls are retur
 FLOW_PROTOTYPE: UNVERIFIED: no new rendered prototype; this repairs the original approved read/navigation flow. November 1 owner policy permits safe reviewed release with actual live proof still owed.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an equivalently eligible existing or future SOLO owner can inspect the original responsibilities PAIGE actually read, instead of receiving unlinked Planning facts.
 VISUAL_DIRECTION: NOT_APPLICABLE: existing conversation and original Work record presentation retained.
-AUTOMATED_EVIDENCE: PASS: actual owning zion-planning-source.test.ts hosted-suite command locally passes40 tests/4 suites, including eight cases executing the real original dispatcher/collector/persisted projection spans with controlled original RPC/recorder ports. Original source and controlled-port proof are not authenticated database/model proof.
+AUTOMATED_EVIDENCE: PASS: actual owning zion-planning-source.test.ts hosted-suite command locally passes44 tests/4 suites, including eleven cases executing the real original dispatcher/collector/persisted projection spans with controlled original RPC/recorder ports. Original source and controlled-port proof are not authenticated database/model proof.
 STATIC_EVIDENCE: PASS: scoped ESLint and diff checks pass. Both actual full original Chat Deno2.9.8 graphs report the same11 diagnostics against f29dbfeeaa82f861fc785b85b042a999a4e9d0ac, zero new diagnostic identities/counts; standalone Chat graph is not clean. Removing only the three declared spans restores all incoming Root bytes exactly. Required hosted ratchet and independent exact-head review remain separate gates.
 RENDERED_EVIDENCE: UNVERIFIED: genuine pre-correction owner answer and reload were inspected privately; post-correction answer/controls are not yet rendered. No layout changed.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: original Task and ZION Planning controls open their original records, and original answers reopen; the corrected Chat Planning receipt/reference behavior still needs live proof.
@@ -36,6 +36,17 @@ writer, store or ledger. `finishPlanningChatRead` finishes the existing read;
 `recordCapabilityRun` records only its original actor/tenant/thread/call identity
 with read_only detail. The existing weekly deadline helper bounds acknowledgment
 to at most2000ms and the original remaining request budget. No retry or job.
+The incumbent caller-JWT current_user_tenant_id check runs before and after
+receipt acknowledgment inside that same elapsed budget. Currentness is never
+inferred from captured row IDs or from the service recorder's acknowledgment.
+
+Independent NON-AUTHOR review of bfb864c37666ff10362bc7d92dbdf7124d105f87
+found that its early completion skipped the incumbent post-read currentness
+check. That head was held, never released. Genuine transition controls first
+failed against it; successor source8900c990cd37fe131c7cbc41e412b3ec17fad94d
+adds the original currentness checks before/after the recorder, including lost
+authority response. All44 controls now pass, same11 base/head diagnostics and
+three-span inverse pass. The successor still requires exact-head re-review/CI.
 
 The projector accepts only original same-tenant Planning IDs/parents, excludes
 result-injected references, and reuses the original six-link collector. Only
@@ -72,10 +83,10 @@ Visual: original approved controls retained, no redesign.
 Experiential: corrected receipt/reference/reopen live proof owed.
 Founder Acceptance: NOT_READY / NOT_ACCEPTED; only O01 is active.
 
-INTERNAL_BUILD_IDENTITY: beaddacba33ac80134b6c73cd8a78c28307b3d50; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original paige-ai-chat Planning read completion); evidence=owning40-case suite and ANT147/d5453b9f/e71a9f60 plus PR exact-head review/CI
+INTERNAL_BUILD_IDENTITY: 8900c990cd37fe131c7cbc41e412b3ec17fad94d; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original paige-ai-chat Planning read completion); evidence=owning44-case suite and ANT147/d5453b9f/e71a9f60 plus PR3235 exact-head review/CI
 RELEASE_CHANNEL: development: source preparation only; production and authenticated proof owed.
 RELEASE_CLASSIFICATION: internal-only: necessary repair within selected O01, not a finished Experience.
 CUSTOMER_RELEASE_IDENTITY: none: useful complete outcome and founder acceptance remain owed.
 RELEASE_NOTE_REQUIRED: no: no customer announcement or release-name authority inferred.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: corrected production receipt/reference/reopen is not yet established.
-RELEASE_RECOVERY: position=forward-fix; reference=beaddacba33ac80134b6c73cd8a78c28307b3d50 and original stored conversation/read protocol; no saved answer rewrite or business action replay.
+RELEASE_RECOVERY: position=forward-fix; reference=8900c990cd37fe131c7cbc41e412b3ec17fad94d and original stored conversation/read protocol; no saved answer rewrite or business action replay.

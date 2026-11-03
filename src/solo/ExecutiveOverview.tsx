@@ -8,7 +8,8 @@ import type { ReadLinkDestination } from "../../supabase/functions/_shared/paige
 import type { SnapshotPeriodKey } from "../../supabase/functions/_shared/paige-context/snapshot";
 import { useBusinessReview, type ReviewDomain } from "./data/useBusinessReview";
 import { useSoloPendingActions } from "./data/useSoloPendingActions";
-import { useSoloActivityFeed, elapsedLabel } from "./data/useSoloActivityFeed";
+import { useSoloActivityFeed } from "./data/useSoloActivityFeed";
+import { ExecutiveActivity } from "./ExecutiveActivity";
 import { useBusinessGamePlanMissions } from "./data/useBusinessGamePlanMissions";
 import { businessCalendarHeldNote, businessDateLabel, useBusinessCalendarDay } from "./data/useBusinessTimeZone";
 import { clearPaigeSurfaceScope } from "./paigeClientScope";
@@ -250,11 +251,7 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
             <p className="exec-note">Prepared is not completed. Any available approval uses the existing PAIGE confirmation card and its current permissions.</p>
           </section>
 
-          <section className="exec-recorded" aria-labelledby="exec-recorded-title">
-            <h2 id="exec-recorded-title">Recorded activity</h2>
-            {activity.status === "loading" ? <p className="exec-note" role="status">Reading recorded activity…</p> : activity.status !== "ready" ? <div role="status"><p className="exec-note">{activity.status === "forbidden" ? "Activity is not authorized for this role." : "Recorded activity could not be read."}</p><button type="button" className="exec-text-button" onClick={activity.refresh}>Try again</button></div> : !activity.items.length ? <p className="exec-note">No recent activity returned by the recorded feed.</p> : <ul className="exec-work-list">{activity.items.slice(0, 4).map((item) => <li key={item.id}><strong>{item.title}</strong><small>{item.byPaige ? item.actorAgent ?? "PAIGE" : item.byPerson ? "Person" : "Unattributed"} · Recorded {elapsedLabel(item.occurredAt)}</small>{item.summary && <p>{item.summary}</p>}</li>)}</ul>}
-            <p className="exec-note">Existing receipts and recorded events only. Viewing this page records no business action.</p>
-          </section>
+          <ExecutiveActivity feed={activity} timezone={snapshot?.period.timezone ?? "UTC"} />
 
           <nav className="exec-context-links" aria-label="Governance and business context">
             <Destination destination="systems_check" account={account} />

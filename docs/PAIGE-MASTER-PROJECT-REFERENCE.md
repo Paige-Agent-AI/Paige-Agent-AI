@@ -860,6 +860,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded November 2, 2026 EST — EXP13 original Chat-to-Knowledge connection release.**
+
+| Increment | Exact reviewed source and production release | Proof boundary and original outcome |
+| --- | --- | --- |
+| [#3227](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3227) | Reviewed `ed3224768a48465d697f1b4b0905509863e0f096`; own distinct NON-AUTHOR [6593617712](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3227#issuecomment-6593617712) and incoming composition [6594292624](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3227#issuecomment-6594292624) APPROVE. All applicable exact-head checks, genuine full unit run [41564156695](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/41564156695) and both web statuses SUCCESS. Normal merge `f29dbfeeaa82f861fc785b85b042a999a4e9d0ac`, tree `711d682b58112a464992bc85671ddd19ae39489c`; all eleven reviewed paths and every incoming leaf preserved. Production `dpl_CuT7XSNJ32Kg1rcEWpjUcrKE5fwT` READY/exact merge. Three official origins at November3 03:00UTC returned version/root/observed bootstrap200, exact `f29dbfeeaa82f861fc785b85b042a999a4e9d0ac-mw03mhph` and matching bootstrap SHA256 `fadfe34bd1de0600cba2ab6ba0731e1d1ec543d11b31a4d542b2edd2f6079ee5`; customerUpdate:null. SQL/Edge delta NONE; managed schema Preview genuinely SKIPPED. | Existing SOLO Chat now opens original single/bulk Knowledge review and durable original Chat source-link/recovery adapters. No new writer/store, automatic business fact/Memory approval or Task effect. Ordinary designated account verifies one dialog, original link-list read and multiple-file chooser. Synthetic transfer was refused by the browser extension before file selection, so actual new Chat upload/save/link/reload is still UNVERIFIED. Original direct Knowledge proof remains separate. The SAME joined agreement-to-editable-text-to-saved-plan-to-real-Tasks outcome is INCOMPLETE; no owner acceptance or full EXP13 readiness. [Original evidence](evidence/ui-delivery/exp13-chat-knowledge-handoff.md), [owning outcome](https://linear.app/paigeagentai/issue/ANT-21). |
+
+This closeout records the preceding release identity and its actual proof boundary only; it changes no product, policy, capability, activation or acceptance status and is not logged recursively.
+
 **Recorded November 2, 2026 EST — EXP01 original Setup reviewed-fact receipt release.**
 
 | Increment | Exact reviewed source and production release | Proof boundary and original outcome |

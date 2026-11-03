@@ -19,13 +19,13 @@ STATE_COVERAGE: PASS: Guard rejects prohibited runtime additions even with the g
 TRUTHFUL_STATE_LABELS: PASS: Source deletion, deployed endpoint retirement, OAuth success and owner acceptance remain separate.
 SOLO_UI: NO: Operator provider note and obsolete backend implementations; no authenticated Solo shell change.
 UNVERIFIED: Exact-head CI, production retirement/readback and repaired owner login remain open. No queue replay, account creation, credential rotation or permission mutation.
-INTERNAL_BUILD_IDENTITY: owner-directed-retirement; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(five original function retirements); evidence=This record and original R2 owner instruction
+INTERNAL_BUILD_IDENTITY: 802ce22b5f9d3777e2dcf05760e861198a0134c3; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(five original function retirements); evidence=This record and original R2 owner instruction
 RELEASE_CHANNEL: development: Independently reviewed candidate, normal exact-head checks and authorized release remain required.
 RELEASE_CLASSIFICATION: PATCH: Delete prohibited obsolete implementations and remove stale provider branding, preserving the existing native writers.
 CUSTOMER_RELEASE_IDENTITY: none: Internal incident repair without an owner-approved customer version.
 RELEASE_NOTE_REQUIRED: no: Internal retirement, not a newly advertised capability.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: Source removal is implemented; production endpoint absence and original customer login are not inferred.
-RELEASE_RECOVERY: position=Forward-fix through PAIGE-owned native implementations; never restore prohibited vendor code; reference=Owner November3 rule in AGENTS.md and CLAUDE.md.
+RELEASE_RECOVERY: position=Forward-fix through PAIGE-owned native implementations without restoring prohibited vendor code; reference=Owner November3 rule in AGENTS.md and CLAUDE.md.
 
 ## Production dependency evidence before retirement
 

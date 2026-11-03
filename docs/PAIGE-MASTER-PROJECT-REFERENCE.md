@@ -8746,6 +8746,25 @@ Recovery: reviewed additive forward correction preserving original records.
 
 ## 5. Current focus + known gaps
 
+**November 3, 2026 — EXP08 ONE original file-sharing outcome, DEVELOPMENT.**
+Permitted attachment → original Hub message → full reload/manual reopen → download
+SAME bytes reuses the original file/Storage/message pipeline. Two delayed-download
+tests first reproduced navigation after departure/unmount, then24 attachment
+controls PASS. Forward-only candidate20018 repairs original file admission: the
+existing retirement tenant-catalog exclusion precedes advisory/authority waits,
+then current identity/seat/profile/channel are rechecked. Owning disposable file
+proof41 PASS retains all prior controls and adds25 actual wait/withdrawal/rollback,
+same-file retry, source/metadata drift and original retirement-gate cases, including
+actual causal40P01 with the exclusion removed. No actual Storage bytes/customer
+Auth/full archive proof inferred. Final own NON-AUTHOR review/exact CI/native+web
+readback and actual MMA upload/post/reload/reopen/download remain PENDING. Local
+full typecheck failed outside changed paths; no baseline-PASS or gate waiver.
+Existing MMA Edge became signed out before file selection; no upload/post occurred.
+[Original evidence](evidence/ui-delivery/exp08-team-hub-increment3.md) retains limits.
+No new runtime/store, Knowledge save, provider or access expansion. Prior unsent
+email remains COMPLETE. Full18+6/five journeys STILL CODING; finish/report this
+outcome and STOP for next-outcome approval; existing timer remains paused.
+
 **Admin scope (security, 2026-10-26).** Until stage 1 ships, every `has_role(auth.uid(),'admin')` check that is pinned to `current_user_tenant_id()` still answers "admin somewhere": a person who owns business A and is a plain member of B passes it while switched into B (about 90 policies and 55 functions; 0 such people on production today). Stage 0 (above, §4, not merged) closes only the readers that bound no tenant, took the tenant from the caller, or (`record_rail_event`) took it from a portal relationship. **Still open after stage 0, stage 1 class (current workspace):** the tenant-bound readers (e.g. `paige_coach_assignments` "Admins write staff assignments", `clients_admins_full`, `record_rail_event`'s staff path); `lender_research_results` "Admins can manage all research results" lets X, admin of their current workspace A, still INSERT a row about a client of B (`client_user_id` = B's client), which B's admins then see through the client link — planting, not reading; MCP admin tools resolve the business from the person's ACTIVE business (`actorTenantId()`), not the connection's (tokens store no business), so an `admin.read` token granted as owner of A lists B's team after the person switches to B. **Storage (S7), partly done:** the paige-generated staff write/update policies now guard their uuid cast and fail closed, but the sibling `paige_generated member upload/update/delete` policies and about 20 other storage policies (comms-attachments, growth-assets, studio-deliverables, tenant-knowledge, tenant-brand) still cast the first folder to uuid with no guard, so an upload to a non-uuid folder still raises 22P02 — fail-closed, not a leak; follow-up. Also open: the seat sync still minting global `admin` (stage 3); the owner decisions O-1..O-7 plus who besides the person and the platform owner may read `get_profile_with_pii_log`; user-keyed tables with no tenant column (`client_goals`, `lender_research_results`, `rag_documents`) let the admins of every business a person is a client of see them (S6); `agency_enter_subaccount` leaves permanent admin seats (S2, 0 child tenants); a role written by `grant_tenant_member_role`/`change_user_role` still fires the reverse sync, which upserts a consent-pending seat in the CALLER's current workspace when that differs from the named one. **Production defects found, not changed:** `suspend_user`, `reactivate_user` and `admin_set_meta_capi_token` insert a `paige_audit_log.metadata` column that does not exist (42703), so they fail for everyone including super_admin; `match_rag_documents` raises 42702 ("id" is ambiguous) once any document matches (0 published embedded documents today); `_assert_billing_admin` raises 22P02 for every caller (`'owner'::app_role` is not an enum value), so the five `admin_*_customer_subscription` functions behind ContactBillingPanel never run.
 
 **EXP08 Manage My Team / Team Hub — receiving lead and coordination (2026-10-23).** The owner has

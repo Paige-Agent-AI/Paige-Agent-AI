@@ -1,3 +1,17 @@
+## EXP08 November3 — original file sharing, one outcome in progress
+
+Original row10 reuses the existing private Storage/file/message pipeline. Current
+repair fences delayed download completion after departure/unmount and original
+upload admission after its uploader advisory wait. Two causal UI baseline failures
+become24 attachment controls PASS; original native wait/drift controls, final own
+NON-AUTHOR review/exact CI/release and authenticated upload/post/reload/reopen/SAME
+bytes remain pending. No new runtime/store, Knowledge save, provider, approval or
+permission authority. Original [attachment evidence](../evidence/ui-delivery/exp08-team-hub-increment3.md)
+retains chronology and limits. Existing MMA Edge session became signed out before
+selection; no file posted or download claimed. Full EXP08 STILL CODING; finish
+this outcome/report/STOP, then owner approves the next. Prior completed email
+receipt below remains intact.
+
 ## EXP08 November3 — original unsent NEXUS email release identity
 
 Original [3239](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3239)

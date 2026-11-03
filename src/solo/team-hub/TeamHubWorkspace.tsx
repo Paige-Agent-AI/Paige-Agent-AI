@@ -2373,7 +2373,7 @@ function WorkPanel({ hub, people, conversations, headingRef, onClose, onJump }: 
 const FILE_DISCLOSURE_ID = "th-file-disclosure";
 
 /** How file rows mint their URLs and speak, without threading both through every message row. */
-const FileAccess = createContext<{ sign: (path: string, download?: string) => Promise<string | null>; announce: (text: string) => void }>({
+const FileAccess = createContext<{ sign: (path: string, download?: string) => Promise<string | null | undefined>; announce: (text: string) => void }>({
   sign: async () => null, announce: () => undefined,
 });
 
@@ -2481,15 +2481,20 @@ function MessageFiles({ files }: { files: TeamHubFile[] }) {
  */
 function FileRow({ file }: { file: TeamHubFile }) {
   const access = useContext(FileAccess);
+  const lifetime = useRef(0);
+  useLayoutEffect(() => { lifetime.current += 1; return () => { lifetime.current += 1; }; }, [file.path]);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const errorId = `th-file-error-${file.id}`;
   const download = async () => {
     if (busy) return;
+    const generation = lifetime.current;
     setBusy(true);
     setFailed(false);
     const url = await access.sign(file.path, file.name);
+    if (lifetime.current !== generation) return;
     setBusy(false);
+    if (url === undefined) return;
     if (!url) { setFailed(true); access.announce(TEAM_HUB_DOWNLOAD_FAILED); return; }
     teamHubNavigation.assign(url);
   };
@@ -2520,7 +2525,7 @@ function FileThumb({ file }: { file: TeamHubFile }) {
   const current = useRef({ path: file.path, reminted: false });
   const mint = useCallback((path: string) => {
     void sign(path).then((next) => {
-      if (current.current.path !== path) return;
+      if (current.current.path !== path || next === undefined) return;
       if (next) setUrl(next); else setBroken(true);
     });
   }, [sign]);

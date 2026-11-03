@@ -224,7 +224,11 @@ jobs:
             # nothing to delete") — for a RETIRED name that absence IS the desired end state
             # (a prior run or a dashboard removal already deleted it), so it is a success
             # here, never a deploy-blocking failure. Any other failure remains loud.
-            out="$(supabase functions delete "$fn" --project-ref "$ref" --yes 2>&1)"; rc=$?
+            # `|| rc=$?` (not `; rc=$?`): under `shell: bash -e` a failing command substitution
+            # in a plain assignment aborts the step before rc is read — exactly what felled the
+            # first cut of this fix. The || arm suspends -e and still captures the status.
+            rc=0
+            out="$(supabase functions delete "$fn" --project-ref "$ref" --yes 2>&1)" || rc=$?
             echo "$out"
             if [ $rc -eq 0 ]; then
               echo "✓ deleted $fn at the provider (retired in source)"

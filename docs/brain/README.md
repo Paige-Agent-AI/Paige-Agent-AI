@@ -1,3 +1,15 @@
+## EXP13 November2 — original Chat Knowledge release identity
+
+Original3227 normally merged `f29dbfeeaa82f861fc785b85b042a999a4e9d0ac`
+after own NON-AUTHOR review and all applicable exact-head checks. Production is
+READY and all three official origins returned that exact build/root/bootstrap.
+The ordinary account confirms the original one-dialog/list/bulk-picker entry;
+the extension refused synthetic file transfer before selection, so actual new
+Chat upload/save/link/reload remains UNVERIFIED. This is the release identity
+closeout only. The SAME saved-game-plan/actual-Tasks outcome remains unfinished;
+full EXP13 and owner acceptance are separate. See [Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log)
+and [original source evidence](../evidence/ui-delivery/exp13-chat-knowledge-handoff.md).
+
 ## EXP03 November1 — saved-email opening release and authenticated continuity
 
 Original [3193/d7596d976](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3193)

@@ -370,6 +370,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 import { specialistStepLabel, specialistAssignmentSummary, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../_shared/paige-turn/record-links.ts";
+import { finishPlanningChatRead } from "../_shared/planning/read-record-links.ts";
 import { crmResultReferenceMetadata } from "../_shared/paige-turn/crm-result-reference.ts";
 import { answerClaim, answerClaimBound, answerTurnsAfterAdmission, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
 import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "../_shared/paige-turn/route.ts";
@@ -18650,6 +18651,24 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   : { success: false, ...(planningIsWrite ? { not_applied: true } : {}), error: friendly,
                     note: planningIsWrite ? "The database refused this change. Nothing was applied." : "The planning records could not be read." }) });
             } else {
+              // O01 original Planning read: receipt before facts and references.
+              if (tc.function.name === "plan_list") {
+                const receiptRunId = await stableRunId(["plan_list", tid ?? "", user.id, `${payloadThreadId ?? ""}:${tc.id}`]);
+                const read = await finishPlanningChatRead({ tenantId: tid, runId: receiptRunId, signal: req.signal,
+                  receiptBudgetMs: WALL_CLOCK_MS - (Date.now() - startedAt),
+                  isCurrent: async () => {
+                    const scope = await supabaseClient.rpc("current_user_tenant_id");
+                    return !!tid && !scope.error && scope.data === tid;
+                  },
+                  recordRead: () => recordCapabilityRun(supabase, { tenantId: tid, actorId: user.id,
+                    capabilityKey: "plan_list", outcome: "capability_succeeded", runId: receiptRunId,
+                    detail: { channel: "paige_chat", tool: "plan_list", read_only: true } }),
+                }, rpcData);
+                if (read.model.status === "available") readRecordLinkSource.set(tc, read.links);
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(read.model) });
+                continue;
+              }
+              // O01 Planning read complete; original write branches below unchanged.
               let verifiedRecord: Record<string, unknown> | null = null;
               let recordLocator: { table: string; id: string } | null = null;
               if (!planningIsWrite) {
@@ -20585,6 +20604,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       && readRecordLinkSource.has(tc)) {
                     const links = readRecordLinkSource.get(tc);
                     if (links?.length) readLinkTrace.splice(0, readLinkTrace.length, ...mergeRecordLinks(readLinkTrace, links));
+                    if (tc.function?.name === "plan_list" && links?.length) {
+                      const planningNavigationReady = links.some(candidate => readLinkTrace.some(link => link.destination === "operations_work"
+                        && link.record_kind === "planning_item" && link.record_id === candidate.record_id));
+                      res.content = JSON.stringify({ ...parsed, navigation_note: planningNavigationReady
+                        ? "The interface supplies Open work item controls for the original Planning items included below. It displays at most six references; do not promise a control for every item or invent an address."
+                        : "The original Planning items were read, but their opening controls are not in this response's bounded selection. Do not promise a control or invent an address." });
+                    }
                     // Describe the actual bounded outgoing selection, never a candidate
                     // reference dropped by its six-link cap. The model receives no URL.
                     if (tc.function?.name === "crm_get_task" && parsed?.found === true && parsed?.task?.id) {

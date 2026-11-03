@@ -1,4 +1,14 @@
-# Current O5-only release checkpoint — November 2, 2026 ET
+# Current O5-only source release checkpoint — November 2, 2026 ET
+
+Original-record recovery isolation #3232 is released as `73bf0efc99658f114f88f746bfc905399d2464c5`, exact reviewed current-main union tree `1d441177b46b1dbeb1b2ccb98d6d1d8f89b3b9ae`. Reviewed head `82a7d9e9d67254c39514424d54f143cc21b8b19e` has own NON-AUTHOR5746713137 CLEAR, all12 exact checks including genuine managed Preview/full-schema database and both web statuses SUCCESS. Normal Edge41572924586 and certificate13201948144 independently match113 original source bindings/72 paths/four API downloads and actual invoice253/reconcile56/webhook151/merchant47 with original JWT options. Native/financial ABI delta is NOT_APPLICABLE. Vercel MCP `dpl_3SXTDY6svWATHfJAguVwki77Ma5o` READY and three official public origins verify exact73bf-mw04w3zw/root/module. [Actual source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3232#issuecomment-6594821301). This mechanical closeout records that identity; no new runtime, authority or capability-status change.
+
+**O5 remains INCOMPLETE.** Correct PAIGE TEST connector and zero existing TEST merchant/webhook inventory are actual provider GET evidence. Secure application TEST key entry remains blocked to the legitimate tool by403/no setter; human entry is requested directly in existing secure Supabase settings. A proposed persistent TEST callback was automatically rejected for insufficient exact configuration/secret-custody approval; follow-up GET confirms zero endpoints, and explicit conditional approval is pending. No retry/bypass, credential setting, observation activation, merchant creation, payment/refund, signature or customer message occurred. Latest live IAB attach failed; earlier protected ordinary Owner draft/Finance evidence stays separately valid. Actual original TEST payment/refund/balances/receipts/reopen remain UNVERIFIED. Main postmerge CI is separate from the completed source-head checks.
+
+Finish ONLY O5, verify the useful original result/receipt/reopen/recovery, report to owner/original Linear/Coordinator, then STOP. Other11 remain queued for explicit owner approval. Customer release identity and founder acceptance remain absent. Earlier checkpoints below are retained as dated history.
+
+---
+
+# Earlier O5-only release checkpoint — November 2, 2026 ET
 
 Original payment-recovery #3217 is released as `40d7777a797baea973c5115e9f0e261d4881827a`, exact reviewed tree of `0b92e427b72966ca591fdbcfd478051707e142b4`. Required own NON-AUTHOR5745591477 CLEAR; all13 source-head checks and both web statuses passed. Native30000004 is present ONCE with exact body/private ACL; normal native/Edge workflows succeeded and certified db-live/edge-live40d. All four deployed Edge source/configuration rows independently match113 source bindings/72 paths. Vercel MCP and the three official public origins verify the exact production build. [Actual release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3217#issuecomment-6593309470). This is the mechanical identity closeout, with no new runtime or authority change.
 

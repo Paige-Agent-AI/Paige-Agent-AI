@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: UNVERIFIED: controls unchanged, current guard runtime keyboard o
 ZOOM_REFLOW: UNVERIFIED: controls unchanged, current guard runtime reflow observation owed.
 REDUCED_MOTION: UNVERIFIED: no motion change; current runtime observation unrun.
 STATE_COVERAGE: PASS: scoped save/CAS/refusal/current invitation expiry and harmless edits covered by focused proof; actual-schema/role and customer recovery claims remain unverified.
-TRUTHFUL_STATE_LABELS: PASS: candidate is inert/unversioned, not released or owner accepted; prior reviewed-fact receipt outcome remains complete independently.
+TRUTHFUL_STATE_LABELS: PASS: carrier is prospective/unapplied, not released or owner accepted; prior reviewed-fact receipt outcome remains complete independently.
 SOLO_UI: YES: original SOLO Settings Setup native writer, existing and future eligible workspaces, no account-specific implementation.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: current guard not rendered.
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: current guard not rendered.
@@ -27,8 +27,8 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: current guard not rendered.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: current guard not rendered.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: current guard not rendered.
 UNVERIFIED: actual full-schema CI, independent review, versioned ordered release, native source readback, ordinary useful save/receipt/reopen and final owner acceptance.
-INTERNAL_BUILD_IDENTITY: working-tree; deployment=none; environment=inert-candidate; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=original ANT-50/f618992d and owning proof scripts
-RELEASE_CHANNEL: internal: prelaunch engineering candidate; no customer announcement
+INTERNAL_BUILD_IDENTITY: c0a793f899ba1c8c8d145593b13d053b9c5aca39; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=original ANT-50/f618992d and owning proof scripts; prospective unapplied carrier20271130020014_exp01_setup_owner_protection_forward
+RELEASE_CHANNEL: development: prelaunch engineering candidate; no customer announcement
 RELEASE_CLASSIFICATION: safety-fix: original Setup legal-owner identity protection
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer release or announcement
 RELEASE_NOTE_REQUIRED: no: internal prelaunch implementation, no marketed capability claim

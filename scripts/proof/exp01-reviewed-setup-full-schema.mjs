@@ -40,7 +40,10 @@ assert.equal(historicalReceiptSql.split(candidate).length,3,'both candidate inse
 // restore its exact predecessor, exercise the immutable receipt install/replay,
 // then upgrade ONLY that writer before all original role/receipt operations.
 // Applied migration history and all 100 original assertions stay untouched.
-const ownerCandidate=body(read('scripts/proof/exp01-setup-owner-guard-candidate.sql'));
+const ownerCandidateSource=read('scripts/proof/exp01-setup-owner-guard-candidate.sql');
+assert.equal(read('supabase/migrations/20271130020014_exp01_setup_owner_protection_forward.sql'),ownerCandidateSource,
+ 'new forward carrier is byte-exact reviewed owner-guard candidate');
+const ownerCandidate=body(ownerCandidateSource);
 const historyPrelude='\n'+ownerCandidate+'\n'+originalSetupWriter()+'\n';
 const liveUpgrade=`\n${ownerCandidate}
 SELECT is(md5(prosrc),'${bodyHash(guardedWriter)}','all receipt behavior runs against exact guarded original writer')

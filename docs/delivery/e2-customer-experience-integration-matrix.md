@@ -16,13 +16,19 @@ earlier offscreen-focus FAILs are retained. #3242 mechanical Master closeout is
 actually released as7f5f23f08cea8c2b312568e1151205500eec5af0 with exact review,
 required CI, READY deployment and both official version/bootstrap readbacks.
 That closeout adds no customer capability or recursive log. #3244's absent-time/
-malformed-read correction is a separate same-outcome release in progress.
+malformed-read correction is actually released as3e10a49725e90669aa99caa6bf73195911bd6365,
+tree934abcef26b2458ba87d3ae1ccfdc89d66e01152 matching independent review;
+all10 applicable exact-head checks and both web statuses passed. Exact production
+READY deployment and both official served-source reads were verified.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3244#issuecomment-6596923447).
+Native customer behavior for this repair remains UNVERIFIED, not inferred from CI.
 
 Current consumer is local, not released: same original Rail family, exact original
 event URL, shared typed evidence validator, original saved-target/domain receipt
 inspection, current-account semantic Play link, existing Executive return bookmark
 and original Operating Fabric/Chat adapter. Integrated222 controls/9 owning suites
-passed together (overlapping earlier counts), scoped lint0/0; these are controlled
+passed together (overlapping earlier counts), scoped lint0/0, production build
+and original type ratchet passed (baseline10/current6, no new errors); these are controlled
 source/DOM cases, not authenticated acceptance. No accomplished-work aggregate,
 current approval, target achievement or causal business improvement is inferred.
 

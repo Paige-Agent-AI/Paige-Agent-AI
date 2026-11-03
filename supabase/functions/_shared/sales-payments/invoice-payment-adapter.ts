@@ -13,7 +13,23 @@ const object=(v:unknown):Record<string,unknown>|null=>v!==null&&typeof v==='obje
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function sameObservation(left:unknown,right:unknown):boolean {
  if(left===right)return true;
- if(Array.isArray(left))return Array.isArray(right)&&left.length===right.length&&left.every((v,i)=>sameObservation(v,right[i]));
+ if(Array.isArray(left)){
+  if(!Array.isArray(right)||left.length!==right.length)return false;
+  // Refunds, disputes and their balance transactions are ID sets. The original
+  // native writer orders them canonically; compare every fact without requiring
+  // provider order (or mutating either snapshot), and never accept duplicate IDs.
+  const byId=new Map<string,unknown>(),seen=new Set<string>();
+  for(const entry of right){
+   const id=object(entry)?.id;
+   if(typeof id!=='string'||byId.has(id))return false;
+   byId.set(id,entry);
+  }
+  return left.every(entry=>{
+   const id=object(entry)?.id;
+   if(typeof id!=='string'||seen.has(id)||!byId.has(id))return false;
+   seen.add(id);return sameObservation(entry,byId.get(id));
+  });
+ }
  const a=object(left),b=object(right);
  return !!a&&!!b&&Object.keys(a).length===Object.keys(b).length&&Object.keys(a).every(k=>Object.hasOwn(b,k)&&sameObservation(a[k],b[k]));
 }

@@ -922,6 +922,7 @@ jobs:
         run: |
           npm ci
           node scripts/proof/exp01-reviewed-setup-full-schema.mjs
+        if: ${{ !cancelled() }}
       - name: Knowledge saves preserve native Auth update progress
         run: |
           python3 scripts/proof/exp01-chat-knowledge-postgres.py \

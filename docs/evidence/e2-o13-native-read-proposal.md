@@ -2,6 +2,25 @@
 
 ## November3 actual production-order forward composition
 
+Actual first forward CI exposed the direct-display-body source assumption in
+the original E04 client-status test (step58) and its real composer rerun (step60).
+The original reader now delegates the SAME projection to its private row helper.
+No runtime arithmetic/authority failure is inferred from that source assertion;
+the original runtime probes after it were not reached. Native35 was SKIPPED
+after the earlier failure, not passed. Correct only that source-chain assertion
+and the equivalent original E02 read-label assertion: retain the legacy direct
+case OR the exact reviewed complete wrapper and helper body hashes, with its
+actual shared-display call. Arbitrary changed delegates still fail. Original
+owner/PAIGE native probes, all source/refusal checks and32 label assertions remain.
+
+The existing E08 receiver test is also composed byte-exact from original9e6a
+alongside its already-applied native files. Its original eight-read prefix,
+three exact supported ordered compositions, unknown/duplicate/missing/reordered/
+wrong-access/version refusals, other-agent isolation and replay are preserved;
+there is no new registration, permission, provider effect or assertion waiver.
+Both native migration files and O13's Preview-applied20010 bytes remain unchanged.
+Fresh NON-AUTHOR review and ALL exact-head native/required CI remain owed.
+
 The preceding15013 candidate is ACTUALLY applied once in its own managed Preview,
 so it is preserved unchanged at3247/d5e36e509bb231ac517a489e7040b59c6a8132c1.
 Own NON-AUTHOR6604365661 CLEAR independently verified its four original function

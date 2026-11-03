@@ -173,3 +173,12 @@ Object.prototype.hasOwnProperty.call with identical semantics. No tsconfig/basel
 or unrelated source changed; fresh required typecheck remains authoritative.
 Incoming released E02native20010/d05c99f main is normally composed in parentc254
 and this Task candidate, preserving all incoming8 files and all applied bytes.
+
+
+Non-author fixture review correctly rejected candidate30's direct nonmember
+profile selection before that assertion could run: original profile guard must
+refuse it. Candidate31 now ASSERTS that exact native refusal and unchanged original
+workspace; original Task member/foreign-active-scope controls remain. No invalid
+pointer, trigger/identity bypass or synthetic authority is manufactured. This
+supersedes only the preceding proposed30-case fixture description, retains its
+history, and changes no applied/native/runtime source. Fresh31 hosted proof owed.

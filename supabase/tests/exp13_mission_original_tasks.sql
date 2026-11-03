@@ -1,7 +1,7 @@
 -- ORIGINAL full Supabase schema only. Synthetic fixtures, always rolled back.
 -- These are source-backed draft plans; no Task, Memory or business fact approval.
 BEGIN;
-SELECT plan(30);
+SELECT plan(31);
 
 
 
@@ -91,11 +91,9 @@ SELECT throws_ok($q$SELECT pg_temp.e13_task_run(jsonb_set(pg_temp.e13_task_comma
 SELECT throws_ok($q$SELECT public.execute_crm_command('e1332200-0000-4000-8000-000000000001','e1331100-0000-4000-8000-000000000002',pg_temp.e13_task_command(),'unassigned-member')$q$,'42501','CRM_FORBIDDEN','member cannot bypass original Task action authority');
 SELECT throws_ok($q$SELECT public.execute_crm_command('e1332200-0000-4000-8000-000000000001','e1331100-0000-4000-8000-000000000003',pg_temp.e13_task_command(),'other-business')$q$,'42501','CRM_ACTIVE_ACCOUNT_CHANGED','foreign active workspace refuses before plan admission');
 RESET ROLE;
-UPDATE public.profiles SET active_tenant_id='e1332200-0000-4000-8000-000000000001' WHERE user_id='e1331100-0000-4000-8000-000000000003';
-SET LOCAL ROLE service_role;
-SELECT throws_ok($q$SELECT public.execute_crm_command('e1332200-0000-4000-8000-000000000001','e1331100-0000-4000-8000-000000000003',pg_temp.e13_task_command(),'foreign-nonmember')$q$,'42501','CRM_FORBIDDEN','matching active scope never grants a foreign nonmember Task authority');
-RESET ROLE;
-UPDATE public.profiles SET active_tenant_id='e1332200-0000-4000-8000-000000000002' WHERE user_id='e1331100-0000-4000-8000-000000000003';
+SELECT throws_ok($q$UPDATE public.profiles SET active_tenant_id='e1332200-0000-4000-8000-000000000001' WHERE user_id='e1331100-0000-4000-8000-000000000003'$q$,
+ '42501','active_tenant_id must be a tenant you belong to or manage','foreign nonmember cannot select the plan workspace');
+SELECT is((SELECT active_tenant_id FROM public.profiles WHERE user_id='e1331100-0000-4000-8000-000000000003'),'e1332200-0000-4000-8000-000000000002'::uuid,'refused foreign selection preserves original active workspace');
 SET LOCAL ROLE service_role;
 
 SELECT is(pg_temp.e13_task_inspect()->>'status','not_created','fresh step has no original Task effect');

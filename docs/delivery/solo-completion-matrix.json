@@ -728,7 +728,7 @@
       "frontend_asset": "src/solo/settings-integrations-social.tsx, src/solo/data/useSocialConnections.ts",
       "backend_seam": "paige-social start/select/disconnect/decline + paige-social-callback + social_connection_status/access RPCs",
       "authority_model": "one-exact owner confirmation fingerprint before any provider URL; profile readback is the connection authority; disconnect deletes provider profile first",
-      "provider_dependency": "Upload-Post adapter (gated on provider key); fails closed unavailable without it",
+      "provider_dependency": "Zernio adapter (sole provider since the Upload-Post retirement, ANT-164 3f511055); fails closed unavailable without ZERNIO_API_KEY",
       "readback": "card state never shows verified without provider readback",
       "receipt_evidence": "recordCapabilityRun rail outcomes",
       "entitlement_dependency": "none",

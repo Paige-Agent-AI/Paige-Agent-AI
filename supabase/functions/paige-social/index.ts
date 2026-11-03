@@ -1,16 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../_shared/capability-record.ts";
-import { buildSocialProfileKey, SOCIAL_OAUTH_PLATFORMS, uploadPostSocialAdapter } from "../_shared/social-provider/upload-post.ts";
+import { buildSocialProfileKey, SOCIAL_OAUTH_PLATFORMS, SocialProviderError } from "../_shared/social-provider/mod.ts";
 import { governSocialMutation } from "../_shared/social-provider/governance.ts";
-import { SocialProviderError } from "../_shared/social-provider/mod.ts";
 import { zernioSocialAdapter } from "../_shared/social-provider/zernio.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const RETURN_PATH = /^\/solo\/[A-Za-z0-9_-]+\/settings\/integrations\/?$/;
-// The provider Paige runs on is whichever adapter carries a vaulted key. Zernio is the
-// selected provider (owner decision 2026-10-29); the doors stay provider-neutral.
-const adapter = zernioSocialAdapter.isConfigured() ? zernioSocialAdapter : uploadPostSocialAdapter;
+// Zernio is the SOLE social provider (owner directive ANT-164 3f511055, Nov 2 2026 — Zernio sole
+// aggregator, Upload-Post retired). No vaulted ZERNIO_API_KEY means the honest
+// SOCIAL_PROVIDER_UNAVAILABLE refusal below, never a second provider.
+const adapter = zernioSocialAdapter;
 
 type Json = Record<string, unknown>;
 

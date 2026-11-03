@@ -71,6 +71,29 @@ it("returns from the original departmental record to fresh same-event readback a
   expect(document.activeElement).toBe(article()?.querySelector("a"));
   expect(h.calls.filter(call => call.p_event_id === id)).toHaveLength(2); expect(h.prompt).not.toHaveBeenCalled();
 });
+it("returns to expanded original receipts before restoring a narrow reading position", async () => {
+  // A real narrow pane clamps scrollTop when the collapsed receipt reduces its height.
+  const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTop")!;
+  const positions = new WeakMap<Element, number>();
+  Object.defineProperty(Element.prototype, "scrollTop", { configurable: true,
+    get() { return positions.get(this) ?? 0; },
+    set(value: number) { positions.set(this, this.matches(".exec-activity-detail") && !this.querySelector("details")?.open
+      ? Math.min(value, 200) : value); },
+  });
+  try {
+    await mount(address);
+    await act(async () => { article()!.querySelector("summary")!.click(); });
+    expect(article()!.querySelector("details")!.open).toBe(true);
+    article()!.scrollTop = 350;
+    await openDepartment(); await back();
+    expect(article()!.querySelector("details")!.open).toBe(true);
+    expect(article()!.scrollTop).toBe(350);
+    expect(document.activeElement).toBe(article()?.querySelector("a"));
+    expect(article()?.textContent).toContain(receipt);
+    expect(h.calls.filter(call => call.p_event_id === id)).toHaveLength(2);
+    expect(h.prompt).not.toHaveBeenCalled();
+  } finally { Object.defineProperty(Element.prototype, "scrollTop", descriptor); }
+});
 it("reauthorizes on return and withholds previously verified facts after refusal", async () => {
   await mount(address); await openDepartment(); h.mode = "forbidden"; await back();
   expect(dialog()?.textContent).toContain("not authorized"); expect(article()).toBeNull();

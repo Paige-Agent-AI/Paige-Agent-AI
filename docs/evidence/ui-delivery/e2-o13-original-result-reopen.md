@@ -116,3 +116,59 @@ No new producer, native body/grant, registry, reader, action or algorithm maturi
 Actual candidate rendering, filter behavior, result/receipt correlation, focus,
 Chat persistence and recovery in both ordinary workspaces remain owed after
 reviewed release. This evidence does not close O13 or founder acceptance.
+
+## November3 released consumer proof and receipt-return correction
+
+The preceding preparation records remain historical. Native3248 and consumer3246
+are released; exact identities, reviews, required CI, native/web/Edge source
+readbacks and retained failures are in the existing Master Shipped Delivery Log.
+Mechanical3254 closed those rows at production4f3daed2f6987546e5cec9004b0187f7c7216791,
+with no executable or authority change. Both existing authorized ordinary Owner
+cohorts now exercised the original consumer; no new account or role was created.
+
+Actual useful proof: historical targetv1 Active and currentv2 Paused each match
+their ORIGINAL immutable revision, saved-change receipt and separate Rail receipt.
+The same original Play opens through the current-account semantic link; it remains
+unapproved and its target remains paused. Both original domain histories/receipts
+match, and each exact event survives full reload. Older events beyond the latest25
+reopen in both cohorts; reciprocal foreign-event reads refuse without substitution
+or foreign source/result links. Recorded-only legacy results remain unverified.
+No additional business write, provider, approval or execution occurred.
+
+Actual Chat proof in one authorized cohort: ONE read-only history question settled
+with two original read steps, explaining recorded/queued/blocked work versus
+receipt-verified completion and missing evidence. The entire2098-character rendered
+answer body is EXACT after full reload and explicit original-history picker reopen;
+composer remains empty. Raw whole-message text differs in transient duration/Done/
+time metadata and is NOT called exact. The protected monthly request is untouched.
+
+Visual/interaction: actual released desktop and390px narrow receipt frames, loaded
+product font,44px source/disclosure/close controls and existing scroll ownership
+were inspected. Both cohorts have four required width geometry checks; the first
+also covers PAIGE open/closed. Actual reduced-motion preference is honored. Earlier
+focus failures are historical; the first cohort's corrected desktop→390 Escape
+returns visible/hit-tested PAIGE focus. A stale scaled narrow frame and two tablet
+capture timeouts are excluded, not promoted to exact raster proof.
+
+**New genuine FAIL:** with receipts expanded in the second cohort, source→original
+Play→Back restores the same event/filter/list/focus but COLLAPSES the receipts;
+detail reading position clamps387.2→281.6. Fresh settled read confirms this is not
+timezone hydration. Private observations remain local under outputs; customer
+record identities are not published. This blocks O13 recovery completion.
+
+Necessary correction preserves only a validated OPTIONAL boolean in the ORIGINAL
+actor/account/address-bound display bookmark. After fresh authorized SAME-event
+readback, restore the disclosure height BEFORE scroll/focus. Existing bookmarks
+without the boolean remain compatible; malformed flags, different-event state,
+refused/unavailable reads and newer user input cannot restore private facts or
+steal focus. No new navigation, storage, registry, ledger, runtime or native grant.
+
+The actual user-journey regression first FAILS on released source (six incumbent
+cases pass), then the repair passes89 controls across four original owning suites,
+including real height-clamp modeling and existing refusal/newer-input guards.
+Counts overlap earlier227 and are not summed. This is LOCAL/source evidence, not
+the repaired live result. Exact-head non-author review, required CI, normal safe
+release and original counterexample recapture remain owed before O13 closure.
+Impeccable context/hardening/craft floor preserve the incumbent world; no visual
+redesign, CSS, type, motion or customer claim is introduced. No algorithm maturity,
+nine-capability readiness or founder acceptance is promoted by this repair.

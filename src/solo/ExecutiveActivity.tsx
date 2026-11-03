@@ -28,7 +28,7 @@ function OriginalResult({ read, account }: { read?: ActivityEvidenceRead; accoun
       : evidence.recordedOutcome === "capability_outcome_unknown" || evidence.recordedOutcome === "capability_completed_unrecorded"
         ? "The result was not confirmed." : "An operation outcome was recorded."}</p>
     <p>Current approval and underlying business completion are not verified by this entry.</p>
-    <details><summary>Original activity receipt</summary><code>{evidence.railReceiptId}</code></details>
+    <details data-activity-receipts><summary>Original activity receipt</summary><code>{evidence.railReceiptId}</code></details>
   </>;
   const result = evidence.businessResult;
   const reference = evidence.recordLinks[0];
@@ -40,7 +40,7 @@ function OriginalResult({ read, account }: { read?: ActivityEvidenceRead; accoun
     <p>The original saved revision and its receipt match. This does not mean the business target was achieved.</p>
     {target?.status === "exact" ? <Link data-activity-record-link className="exec-link" to={target.to}>{target.label}<ArrowUpRight size={16} aria-hidden /></Link>
       : <p>The original record link is unavailable in this workspace.</p>}
-    <details><summary>Original receipts</summary><dl className="exec-activity-receipts">
+    <details data-activity-receipts><summary>Original receipts</summary><dl className="exec-activity-receipts">
       <div><dt>Saved-change receipt</dt><dd><code>{result.receiptId}</code></dd></div>
       <div><dt>Activity receipt</dt><dd><code>{evidence.railReceiptId}</code></dd></div>
     </dl></details>
@@ -97,6 +97,10 @@ export function ExecutiveActivity({ feed, timezone, account, selection, restore 
   const missing = selectedId !== null && !rows.some(item => item.id === selectedId);
   const restoreReading = useCallback(() => {
     if (!restore || restored.current || !open || !selected || restore.eventId !== selected.id || !list.current || !detail.current) return false;
+    // Restore disclosure height only after fresh same-event authority, BEFORE
+    // scrollTop: the collapsed narrow pane otherwise clamps the saved position.
+    const receipts = detail.current.querySelector<HTMLDetailsElement>("[data-activity-receipts]");
+    if (receipts) receipts.open = restore.receiptsOpen === true;
     list.current.scrollTop = restore.listScroll;
     detail.current.scrollTop = restore.detailScroll;
     (detail.current.querySelector<HTMLElement>("[data-activity-record-link]") ?? detail.current.querySelector<HTMLElement>("h3"))?.focus({ preventScroll: true });

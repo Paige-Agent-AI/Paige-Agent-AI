@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ExecutiveActivity } from "./ExecutiveActivity";
 import type { SoloActivityFeed, SoloActivityInspection, SoloActivityItem } from "./data/useSoloActivityFeed";
 import { readActivityEvidence } from "../../supabase/functions/_shared/paige-context/activity-evidence";
-import type { ActivityReturn } from "./executive-activity-return";
+import { readActivityReturn, type ActivityReturn } from "./executive-activity-return";
 
 vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: "light" }) }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -54,7 +54,8 @@ it("keeps a recorded read receipt distinct from verified business completion", (
 });
 it.each(["loading", "not_found", "unavailable", "forbidden"] as const)("withholds the original result during %s without selecting a different event", status => {
   feed.inspection = { eventId: id, status, item: null, evidence: { state: "not_provided" } };
-  render(); expect(article()).toBeNull(); expect(dialog().querySelector("[data-activity-record-link]")).toBeNull();
+  render({ eventId: id, filter: "all", listScroll: 160, detailScroll: 240, receiptsOpen: true });
+  expect(article()).toBeNull(); expect(dialog().querySelector("[data-activity-record-link]")).toBeNull();
   if (status !== "loading") expect(dialog().textContent).toContain("Retry original read");
 });
 it("withholds an inconsistent original identity even if a consumer supplies ready", () => {
@@ -68,10 +69,22 @@ it("restores the original reading panes and source-link focus after original rea
   expect(document.activeElement).toBe(article()?.querySelector("a"));
 });
 it("respects newer keyboard interaction while the original read is pending", () => {
-  const restore: ActivityReturn = { eventId: id, filter: "all", listScroll: 160, detailScroll: 240 };
+  const restore: ActivityReturn = { eventId: id, filter: "all", listScroll: 160, detailScroll: 240, receiptsOpen: true };
   feed.inspection = { eventId: id, status: "loading", item: null, evidence: { state: "not_provided" } };
   render(restore); const select = dialog().querySelector("select")!;
   act(() => { select.focus(); select.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true })); });
   feed.inspection = { eventId: id, status: "ready", item, evidence: verified() } satisfies SoloActivityInspection;
   render(restore); expect(document.activeElement).toBe(select); expect(article()?.scrollTop).toBe(0);
+  expect(article()?.querySelector("details")?.open).toBe(false);
+});
+it("does not apply another event's disclosure or reading position", () => {
+  render({ eventId: target, filter: "all", listScroll: 160, detailScroll: 240, receiptsOpen: true });
+  expect(article()?.querySelector("details")?.open).toBe(false);
+  expect(article()?.scrollTop).toBe(0);
+});
+it("keeps old display bookmarks compatible and rejects malformed disclosure flags", () => {
+  const bookmark = { eventId: id, filter: "all", listScroll: 160, detailScroll: 240 };
+  expect(readActivityReturn(bookmark)).toEqual(bookmark);
+  for (const receiptsOpen of [true, false]) expect(readActivityReturn({ ...bookmark, receiptsOpen })).not.toBeNull();
+  for (const receiptsOpen of ["true", 1, null, {}]) expect(readActivityReturn({ ...bookmark, receiptsOpen })).toBeNull();
 });

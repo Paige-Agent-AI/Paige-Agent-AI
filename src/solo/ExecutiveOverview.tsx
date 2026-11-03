@@ -161,7 +161,8 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
       const original = activityDialog.querySelector<HTMLElement>("[data-activity-original-id]");
       const reading = readActivityReturn({ eventId: original?.dataset.activityOriginalId, filter: original?.dataset.activityFilter,
         listScroll: activityDialog.querySelector<HTMLElement>(".exec-activity-list")?.scrollTop ?? 0,
-        detailScroll: original?.scrollTop ?? 0 });
+        detailScroll: original?.scrollTop ?? 0,
+        receiptsOpen: original?.querySelector<HTMLDetailsElement>("[data-activity-receipts]")?.open ?? false });
       if (!reading || reading.eventId.toLowerCase() !== activityEvent?.toLowerCase()) return;
       bookmark.activity = reading;
     }

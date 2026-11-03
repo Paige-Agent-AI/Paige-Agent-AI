@@ -860,6 +860,19 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded November 2, 2026 EST — EXP01 original Setup reviewed-fact receipt release.**
+
+| Increment | Exact reviewed source and production release | Proof boundary and original outcome |
+| --- | --- | --- |
+| [#3223](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3223) | Reviewed `68f837239539b80dca1a8c5c0e667d4bf1d6042d`; distinct NON-AUTHOR reviews [5744361580](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3223#pullrequestreview-5744361580) and final composition [5745469400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3223#pullrequestreview-5745469400) CLEAR. All 13 exact-head checks and both web statuses SUCCESS, including full-schema 100 assertions and 79 causal controls with their stated modeled-dependency limits. Normal merge `621f1b9d2f34035253bd421ab950979a8ac5537a`, tree `6dd88ebe7877efde3edea248d62edc03f291e2e5`, preserves all 14 owning blobs and the entire incoming Master at `6ad99235098305e3f8b82f5bf96e363fff1af083`. Normal [migration deployment 41554734963](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/41554734963) SUCCESS; `db-live` equals the merge. Forward `20271129010001` recorded ONCE, SHA256 `633f0f63592027db757042260c067a9d256011d62e6aaa287139f45d43f38242`; six complete native definitions/ABI/owners/settings/ACL equal managed Preview, five original Setup functions plus the released E13 validator unchanged. Four public authenticated-only functions and two private postgres-only helpers retain empty search paths; original private metadata has no browser SELECT/UPDATE. Vercel `dpl_3Bws4jGVR2ESFTapg4fBNAFRH1NM` production READY, exact merge; both official origins at November 2 19:44:42 EST return version/root/observed bootstrap/imported application 200 and build `621f1b9d2f34035253bd421ab950979a8ac5537a-mvzyroj1`, equal bootstrap `d70654049e7675a73c346ba9b27318e34f132b0aecfd614ae553885264a95b78` and application `846a24b8ac0b579995c7be707adc6354b92461390cafcb5747f08e2717449fbc`. Edge delta N/A; customerUpdate:null. | Original Business-profile review, explicit selected-fact approval, canonical document/revision/text-hash/quotation binding, original Setup CAS save and authoritative audit receipt/discovery are released through the existing writer and stores. Same staged identity is inspected after interruption/UNKNOWN; source, actor, workspace, authority and CAS changes refuse or withhold historical facts. Knowledge publication, Memory approval, Mission intent and Work authority remain distinct. Ordinary authenticated review entry and original receipt-absence discovery verified at release; actual selected approval/save/receipt/full reload and broader recovery/cohort evidence are tracked separately in the [original ANT-50 producer/outcome packet](https://linear.app/paigeagentai/issue/ANT-50#comment-942f7193-12e0-451d-a66a-5bcefb222496). No customer completion or owner acceptance follows from installation. Full original EXP01 23 cases and amendments remain pending; only the selected Setup outcome continues, then report/STOP. |
+
+The original #3220 / `d964ae7645732e9ad06286ec8b922b4280718e71` and its
+Preview-applied `20271128030001` remain unchanged historical source. The separate
+forward carrier follows E05's actual higher release without rewriting applied
+history. This mechanical row records only the preceding release identity and proof
+boundary; it changes no product, policy, capability, activation or acceptance status
+and is not logged recursively.
+
 **Recorded 2026-11-02 UTC — EXP05 O01 original Calendar responsibilities in ZION.**
 
 | Increment | Exact reviewed source and observed production release | Useful behavior and remaining proof |

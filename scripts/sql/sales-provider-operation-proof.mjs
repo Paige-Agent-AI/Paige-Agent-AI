@@ -681,6 +681,12 @@ if(process.argv.includes('--actual-financial-ledger')){
  writeFileSync(new URL('../../work/sales-actual-financial-ledger-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
  console.log('SALES_ACTUAL_FINANCIAL_LEDGER_PASS: '+JSON.stringify({...result,samples:undefined}));
 }
+ if(process.argv.includes('--capture-observation')){
+  const {proveCaptureObservation}=await import('./sales-capture-observation-proof.mjs');
+  const result=await proveCaptureObservation({run,read,execute,actor,tenant,client,otherTenant,baseline:process.argv.includes('--capture-observation-baseline')});
+  writeFileSync(new URL('../../work/sales-capture-observation-proof.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
+  console.log('SALES_CAPTURE_OBSERVATION_PASS: '+JSON.stringify(result));
+ }
  run(`UPDATE paige_invoices SET status='void' WHERE id='${invoice}';`);
  assert.equal(publicRequest(),null,'void invoice bearer refused');
  if(observationProof){

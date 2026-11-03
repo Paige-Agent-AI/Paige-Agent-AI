@@ -246,7 +246,7 @@ longer exists).
 | Google Search Console | marketing/public presence | `UNAVAILABLE` | prohibited | platform OAuth + tenant verified-site source and authenticated read proof required |
 | Google Business Profile | marketing/public presence | `UNAVAILABLE` | prohibited | Google project approval + tenant consent/location selection + receipts/readback required |
 | Microsoft 365 / Outlook | productivity/documents | `DEFERRED` | prohibited | not wired; sequenced after Google parity |
-| Stripe | finance/accounting/payments | `PARTIAL` | confirm | four merchant Spine/Chat declarations reuse governed Express setup/resume and safe reads; authenticated merchant/TEST payment proof owed; deployed direct-charge substrate (#1769/#1779) and Billing remain separate |
+| Stripe | finance/accounting/payments | `PARTIAL` | confirm | governed merchant/request substrate retained; O5 source connects original adjustment ingress/recovery behind default-OFF activation and optional isolated Sales credentials; native/Edge release readback and authorized genuine TEST settlement/refund/Owner proof remain owed; platform Billing remains separate |
 | PayPal | finance/accounting/payments | `UNAVAILABLE` | prohibited | visible disabled Finance tile and non-executing GET readback normalizer; approved partner seller onboarding/delegated transport absent; no connector or payment claim |
 | QuickBooks | finance/accounting/payments | `PROOF_OWED` | confirm | controlled reads/native statement classification; legacy lifecycle contained; company integration proof owed |
 | Plaid | finance/accounting/payments | `PARTIAL` | read | controlled company/account projection and item-wide read normalization; Settings activation/eligibility proof owed; separate Funding vertical preserved |

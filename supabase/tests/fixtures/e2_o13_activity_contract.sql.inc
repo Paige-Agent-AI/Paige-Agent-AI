@@ -13,7 +13,25 @@ CREATE TEMP TABLE o13_raw_grants_before AS SELECT r,t,privilege,
   CROSS JOIN unnest(ARRAY['public.paige_client_events','public.paige_workspace_events',
     'public.business_mission_mutation_receipts','public.business_mission_target_versions']) t
   CROSS JOIN unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE']) privilege;
-\ir ../../migrations/20271130020010_e02_original_activity_result_forward.sql
+-- Supabase's pgTAP container mounts tests, not sibling migration files. Replay
+-- the actual canonical statement the local migration runner already recorded.
+-- Refuse a missing, differently named, split or changed installer; no fallback
+-- definition or assertion is substituted for the complete guarded migration.
+DO $replay_source$
+BEGIN
+  IF NOT EXISTS (
+    SELECT FROM supabase_migrations.schema_migrations
+    WHERE version='20271130020010' AND name='e02_original_activity_result_forward'
+      AND cardinality(statements)=1
+      AND md5(statements[1])='a1d090aeec534545d74cfeef7097e042'
+  ) THEN
+    RAISE EXCEPTION 'O13 canonical installer source is missing or changed';
+  END IF;
+END
+$replay_source$;
+SELECT statements[1] FROM supabase_migrations.schema_migrations
+WHERE version='20271130020010'
+\gexec
 
 SELECT ok((SELECT p.oid=b.oid AND p.proacl IS NOT DISTINCT FROM b.proacl
   AND p.proowner=b.proowner AND p.prosecdef=b.prosecdef AND p.provolatile=b.provolatile

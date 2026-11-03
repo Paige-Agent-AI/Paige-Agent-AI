@@ -2,6 +2,18 @@
 
 ## November3 actual production-order forward composition
 
+The actual6e8e670 full-schema step156 ran eight original assertions successfully
+then stopped at the fixture include: Supabase's test container mounts the tests
+directory, not the sibling migration directory. The additional27 did not run;
+this is FAIL, not a native35 PASS. The preceding E04 steps58/60 actually pass.
+Correct only the replay source: require the isolated migration history's exact
+20010 version/name, one statement and MD5a1d090aeec534545d74cfeef7097e042,
+then replay that complete recorded statement through psql gexec. The same managed
+Preview independently reports that exact source identity. A missing, split or
+changed source aborts; no fallback definition or assertion waiver is introduced.
+All35 controls, existing workflow, application code and applied migration bytes
+remain unchanged. Fresh exact-head NON-AUTHOR review and required CI are owed.
+
 Actual first forward CI exposed the direct-display-body source assumption in
 the original E04 client-status test (step58) and its real composer rerun (step60).
 The original reader now delegates the SAME projection to its private row helper.

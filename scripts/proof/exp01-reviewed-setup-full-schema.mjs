@@ -44,8 +44,57 @@ const ownerCandidateSource=read('scripts/proof/exp01-setup-owner-guard-candidate
 assert.equal(read('supabase/migrations/20271130020014_exp01_setup_owner_protection_forward.sql'),ownerCandidateSource,
  'new forward carrier is byte-exact reviewed owner-guard candidate');
 const ownerCandidate=body(ownerCandidateSource);
-const historyPrelude='\n'+ownerCandidate+'\n'+originalSetupWriter()+'\n';
+// Version19 intentionally upgrades this private scope. The immutable historical
+// installer still requires its exact predecessor. Rewind ONLY inside the existing
+// rollback-only proof, then reapply the exact forward before receipt behavior.
+const authOrderSource=read('supabase/migrations/20271130020019_knowledge_auth_lock_order.sql');
+const scopeRepair=/\('lock_solo_reviewed_setup_scope','([a-f0-9]+)','([a-f0-9]+)',\$old\$([\s\S]*?)\$old\$,\$new\$([\s\S]*?)\$new\$\)/.exec(authOrderSource);
+assert.ok(scopeRepair,'exact reviewed scope pair comes from the immutable forward');
+const [scopeOldHash,scopeNewHash,scopeOldBody,scopeNewBody]=scopeRepair.slice(1);
+assert.equal(scopeOldHash,'cfd3332240798913d006d58f31f2f54e');
+assert.equal(scopeNewHash,'6ed364c089ce05eb089f6230fbbe8c76');
+const scopeHistory=`
+CREATE TEMP TABLE e01_auth_order_current_functions AS
+ SELECT p.oid,to_jsonb(p)-'prosrc' metadata,md5(p.prosrc) body_hash FROM pg_proc p
+ WHERE p.oid=ANY(ARRAY[
+ 'public.submit_tenant_knowledge_publication(uuid,uuid,uuid,integer,uuid,text)'::regprocedure,
+ 'public.start_knowledge_extraction(uuid)'::regprocedure,
+ 'public.complete_knowledge_extraction(uuid,text,integer,integer,text,text,jsonb)'::regprocedure,
+ 'public.lock_knowledge_review_target(uuid,uuid,uuid,integer)'::regprocedure,
+ 'public.start_knowledge_publication(uuid)'::regprocedure,
+ 'public.stage_knowledge_publication(uuid,text,integer,integer,jsonb)'::regprocedure,
+ 'public.complete_knowledge_publication(uuid,text,integer,integer)'::regprocedure,
+ 'public.lock_solo_reviewed_setup_scope(uuid,uuid)'::regprocedure]);
+DO $scope_history$
+DECLARE target regprocedure:='public.lock_solo_reviewed_setup_scope(uuid,uuid)'::regprocedure;
+ before_meta jsonb; definition text; current_body text;
+BEGIN
+ SELECT to_jsonb(p)-'prosrc',pg_get_functiondef(p.oid),prosrc
+ INTO before_meta,definition,current_body FROM pg_proc p WHERE p.oid=target::oid;
+ IF (md5(current_body)='${scopeNewHash}' AND current_body=$current_scope$${scopeNewBody}$current_scope$
+  AND (before_meta->>'proowner')::oid='postgres'::regrole
+  AND before_meta->>'prosecdef'='false' AND before_meta->>'provolatile'='v'
+  AND before_meta->'proconfig'=to_jsonb(ARRAY['search_path=""']::text[])
+  AND (SELECT proacl IS NOT DISTINCT FROM ARRAY['postgres=X/postgres']::aclitem[] FROM pg_proc WHERE oid=target::oid)) IS DISTINCT FROM TRUE THEN
+  RAISE EXCEPTION 'SETUP_AUTH_ORDER_CURRENT_SOURCE_DRIFT';
+ END IF;
+ EXECUTE replace(definition,current_body,$prior_scope$${scopeOldBody}$prior_scope$);
+ IF (SELECT md5(prosrc) FROM pg_proc WHERE oid=target::oid) IS DISTINCT FROM '${scopeOldHash}'
+  OR (SELECT to_jsonb(p)-'prosrc' FROM pg_proc p WHERE oid=target::oid) IS DISTINCT FROM before_meta THEN
+  RAISE EXCEPTION 'SETUP_AUTH_ORDER_HISTORY_READBACK_FAILED';
+ END IF;
+END $scope_history$;
+`;
+const historyPrelude='\n'+ownerCandidate+'\n'+originalSetupWriter()+'\n'+scopeHistory;
+
 const liveUpgrade=`\n${ownerCandidate}
+${authOrderSource}
+SELECT is((SELECT count(*)::integer FROM e01_auth_order_current_functions b LEFT JOIN pg_proc p USING(oid)
+ WHERE p.oid IS NULL OR b.metadata IS DISTINCT FROM to_jsonb(p)-'prosrc' OR b.body_hash IS DISTINCT FROM md5(p.prosrc)),0,
+ 'full-schema historical replay restores all eight exact current functions and OIDs/metadata');
+SELECT is((SELECT count(*)::integer FROM e01_auth_order_current_functions),8,'all eight repaired functions are captured');
+SELECT is(md5(prosrc),'${scopeNewHash}','all receipt behavior uses exact Auth-first reviewed Setup scope')
+ FROM pg_proc WHERE oid='public.lock_solo_reviewed_setup_scope(uuid,uuid)'::regprocedure;
 SELECT is(md5(prosrc),'${bodyHash(guardedWriter)}','all receipt behavior runs against exact guarded original writer')
  FROM pg_proc WHERE oid='public.save_solo_setup_context(jsonb,jsonb,text,uuid)'::regprocedure;
 SELECT is((SELECT count(*)::integer FROM e01_original_functions b JOIN pg_proc p USING(oid)

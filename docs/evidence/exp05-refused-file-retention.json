@@ -1,0 +1,168 @@
+{
+  "base": "dd6496a8f659d653b7249506c1ec5dc719433ed6",
+  "evidence_class": "local real-component/hook source tests; synthetic Auth/history/file/transport; not customer or rendered proof",
+  "files": {
+    "src/components/dashboard/PaigeAIChat.tsx": "3a6b64979c590a5596949b3d1125141eb2d0c73d72451a9709bfed044e9cc17d",
+    "src/hooks/useChatDocumentUpload.ts": "77eaa1cc851dd497b14442dc6de106b8e6844cc27454d2aad3c4e4aa63d66c89",
+    "src/components/dashboard/PaigeAIChat.attachments.test.tsx": "332fda95233adeed18202a21284b4910a9903bc77db06882be525d739c53696e",
+    "src/hooks/useChatDocumentUpload.test.tsx": "4e484151e7890f5223fe5700c5855b3cb40ca3cf391e2822daffc05dbb880fcf",
+    "scripts/live-drive/harness/paige-chat-mount/attachment.vite.config.ts": "49be0a63f63e4ffabdb3cfad593186522f37aad4c09a382e465c0b2f97e69fbe",
+    "scripts/live-drive/harness/paige-chat-mount/solo-main.tsx": "340380be456d9c8318551af3af2d97435c0a998ab70c04c479e7dbf258deeba4",
+    "scripts/live-drive/harness/paige-chat-mount/solo-stubs.ts": "ac294f2ee09283616c1ca7e440ab52519e5aba8c975d41739057a3ae00081324"
+  },
+  "reports": [
+    {
+      "name": "refused-file-red",
+      "sha256": "26150631b1c27d95caeea34aac7aa8019f9059b468312bd5ab5e90ce5027f096",
+      "success": false,
+      "passed": 49,
+      "failed": 8,
+      "pending": 0,
+      "total": 57
+    },
+    {
+      "name": "refused-file-green",
+      "sha256": "30308f31fbd71c6b7c791e2f2cc3f41cc698318913e24885ababd23f97277be7",
+      "success": false,
+      "passed": 199,
+      "failed": 1,
+      "pending": 0,
+      "total": 200
+    },
+    {
+      "name": "refused-file-guard-recheck",
+      "sha256": "3c5ee98c233ebbb93e0f79c88f3ac030d4579338bf4c796e81188a43a8b1ffbb",
+      "success": true,
+      "passed": 1,
+      "failed": 0,
+      "pending": 51,
+      "total": 52
+    },
+    {
+      "name": "refused-file-manual-send-red",
+      "sha256": "e09eb03005b8a88ea367808482b898902265b67b7e9129c28bd8cefe4983f2d2",
+      "success": false,
+      "passed": 0,
+      "failed": 1,
+      "pending": 15,
+      "total": 16
+    },
+    {
+      "name": "refused-file-final",
+      "sha256": "730f9772f199d10a34a2ec96f73a012c431280f1c2032043d4bfe7aa556b00a6",
+      "success": true,
+      "passed": 200,
+      "failed": 0,
+      "pending": 0,
+      "total": 200
+    }
+  ],
+  "strict": {
+    "base": "35fff3a88118e053d049be3bea0c2b99178fe929",
+    "baseExit": 2,
+    "candidateExit": 2,
+    "baseDiagnosticLines": 24,
+    "candidateDiagnosticLines": 24,
+    "locationNormalizationOnly": true,
+    "newDiagnosticSignatures": [],
+    "allFourCandidateFilesRestored": true
+  },
+  "rendered": "PARTIAL: actual native desktop light/dark captures; full file recovery and responsive finish remain UNVERIFIED",
+  "release": "NOT_MERGED/NOT_DEPLOYED",
+  "strict_prior_dd6496": {
+    "base": "dd6496a8f659d653b7249506c1ec5dc719433ed6",
+    "baseExit": 2,
+    "candidateExit": 2,
+    "baseDiagnosticLines": 24,
+    "candidateDiagnosticLines": 24,
+    "locationNormalizationOnly": true,
+    "newDiagnosticSignatures": [],
+    "allFourCandidateFilesRestored": true
+  },
+  "current_main_composition": {
+    "main": "35fff3a88118e053d049be3bea0c2b99178fe929",
+    "all_seven_tested_product_test_harness_hashes_unchanged": true,
+    "scope": "source byte preservation and fresh strict comparison, not relabeled full-tree test/render/runtime proof"
+  },
+  "native_prototype_cache_isolation": {
+    "prior_frozen_source": "f8056c5cc8f2231246295254507af54c0cb61f04",
+    "reason": "initial native page remained blank; isolate original prototype optimizer cache from shared worktree dependency directory; after reload actual composer rendered",
+    "scope": "test-only cacheDir; production sources and all owning tests remain byte-exact",
+    "file": "scripts/live-drive/harness/paige-chat-mount/attachment.vite.config.ts",
+    "current_sha256": "6d8767d2bd4b30349ab943b0d3854e91a318db8aa0cc1eb19f8b685507174a75",
+    "proof_boundary": "test-only optimizer cache and actual local partial desktop observations; no full material-flow or customer proof inferred"
+  },
+  "native_partial_20261026": {
+    "source": "cea14727997758458880e3324bc0cc9d9b7b40f5",
+    "environment": "original isolated actual-component mount, synthetic Auth/history/transport, explicit invalid test service URL/key and off-origin network blocked",
+    "actual_viewport": { "width": 1536, "height": 791, "horizontal_document_overflow": false },
+    "screenshots": [
+      { "path": "docs/evidence/ui-delivery/assets/exp05-refused-file-retention/readonly-continuation-cea147.jpg", "sha256": "be695796763c6a8d4184e4311d2c14cbd3bface0f490ad7d7d902252f6c3b0b8", "format": "JPEG", "width": 1536, "height": 791, "theme": "light", "scope": "saved original refusal and offline file-free continuation" },
+      { "path": "docs/evidence/ui-delivery/assets/exp05-refused-file-retention/readonly-reload-dark-cea147.jpg", "sha256": "d41f78e11f4423ba90476362e89e35737d0ed5d582e2ef33a5772c8bfc76c392", "format": "JPEG", "width": 1536, "height": 791, "theme": "dark", "scope": "original saved refusal, no selected or restored file" }
+    ],
+    "observed": ["accurate original recovery refusal", "file-free keyboard question receives explicit offline read-only answer", "reload reads fixed original refusal, not persistence of the new answer", "textarea/voice/attachment/Clear/Send tab order", "settled Clear returns focus to textarea"],
+    "finish_findings": ["settled keyboard Send leaves body focused", "file chooser rejects current Chrome local-file permission; one-file chooser observed, no upload", "390x844 override left actual DOM and raster at1536x791, INVALID as narrow proof; override reset"],
+    "full_material_flow": "UNVERIFIED",
+    "customer_proof": "UNVERIFIED"
+  },
+  "subsequent_main_composition": {
+    "main": "d08a2f206d479c3727898cb68466758075382898",
+    "scope": "preserve incoming E08 public-source changes and native order; original source evidence is not relabeled as newly executed full-tree proof"
+  },
+  "known_refusal_focus_correction": {
+    "source": "c1567707fce0ac168e8aa0d7601fbb8014a526ae",
+    "causal_red": { "passed": 3, "failed": 1, "pending": 16, "sha256": "7b127a20571c43e68607ab94d647d8528b31eab4af2ac6294d382ee59bc9f4ba" },
+    "focused_green": { "passed": 4, "failed": 0, "pending": 16, "sha256": "42f7faae3ecd11e71e5020fb489e723d86171fc301413e3d902b38e4660e0791" },
+    "five_suite_green": { "passed": 204, "failed": 0, "pending": 0, "sha256": "db651568e91bdf918833e7c2d8a4732873e1a1db90aa33babc00d4cbc873662c" },
+    "native_observation": "keyboard Send of a file-free exact known refusal; after settlement focus is the enabled Message PAIGE textarea",
+    "screenshot": { "path": "docs/evidence/ui-delivery/assets/exp05-refused-file-retention/known-refusal-focus-c156.jpg", "format": "JPEG", "width": 1536, "height": 791, "sha256": "f5bdd0d6838f95a07ef6c822238984e8f7adf7521461553005b07cccec0e99d1" },
+    "boundaries": "no focus steal from another control, retired workspace or unknown response; successful/general Send unchanged; full file/narrow/customer proof still UNVERIFIED",
+    "strict": { "base": "abc8c75b7337949361a1be03996f2d354a8f6722", "baseExit": 2, "candidateExit": 2, "baseDiagnosticLines": 24, "candidateDiagnosticLines": 24, "newDiagnosticSignatures": [], "locationNormalizationOnly": true, "allFourCandidateFilesRestored": true }
+  },
+  "current_main_9186_composition": {
+    "base": "9186eab1efb91a39427b88b211ff18bbe8c58590",
+    "composed": "cf9e6c369f019dc060f169d258b4a01af213bcf2",
+    "tree": "19ae97ebe64565a93d6abf990749ab9a11bc6518",
+    "all_seven_owning_blobs_unchanged_from": "5649cd07afc6c673666a2859bf36bee63b4a7bab",
+    "executed_files": {
+      "src/components/dashboard/PaigeAIChat.tsx": "f6f94460e9b49f621e36a8013bf45f757747b8cd3e7b49556c57e22f7df0389b",
+      "src/hooks/useChatDocumentUpload.ts": "77eaa1cc851dd497b14442dc6de106b8e6844cc27454d2aad3c4e4aa63d66c89",
+      "src/components/dashboard/PaigeAIChat.attachments.test.tsx": "03bc07d7d70f6a4b830a088961682ec255681c87e47a39ae88b912b25c7ac942",
+      "src/hooks/useChatDocumentUpload.test.tsx": "4e484151e7890f5223fe5700c5855b3cb40ca3cf391e2822daffc05dbb880fcf",
+      "scripts/live-drive/harness/paige-chat-mount/attachment.vite.config.ts": "6d8767d2bd4b30349ab943b0d3854e91a318db8aa0cc1eb19f8b685507174a75",
+      "scripts/live-drive/harness/paige-chat-mount/solo-main.tsx": "340380be456d9c8318551af3af2d97435c0a998ab70c04c479e7dbf258deeba4",
+      "scripts/live-drive/harness/paige-chat-mount/solo-stubs.ts": "ac294f2ee09283616c1ca7e440ab52519e5aba8c975d41739057a3ae00081324"
+    },
+    "locked_versions": {
+      "typescript": "5.9.3",
+      "pdfjs": "5.5.207",
+      "vitest": "4.1.11"
+    },
+    "source_tests": {
+      "passed": 204,
+      "failed": 0,
+      "skipped": 0,
+      "sha256": "8580659a216c1e083ed556b2f0cc87d5c29d0954d940d6b380530b001e88af67"
+    },
+    "strict": {
+      "original_diagnostics": 19,
+      "current_diagnostics": 19,
+      "added": 0,
+      "source_files_never_modified": true,
+      "sha256": "1eb6d8c38bad26a9044d239b21891b7018b8e49b135c9667cb268148d52b0d75",
+      "clean_strict": false
+    },
+    "scoped_lint": "PASS",
+    "material_flow_gate": {
+      "result": "FAIL",
+      "exit": 1,
+      "sha256": "1750ba2c2f42274bb4943f512ad5b69e76f35ba98a6c4431648be00e0cb26fe7",
+      "reason": "Original full native file/prototype/narrow/zoom/focus proof still owed; no waiver"
+    },
+    "browser_calls": 0,
+    "production_actions": 0,
+    "merged": false,
+    "deployed": false,
+    "customer_acceptance": "UNVERIFIED"
+  }
+}

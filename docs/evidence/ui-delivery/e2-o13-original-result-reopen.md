@@ -81,3 +81,12 @@ owning component/journey suites. Counts overlap earlier222; no new total is
 inferred. This models the closing-scrim condition; actual corrected native
 keyboard/resize, two-context geometry and owner acceptance remain UNVERIFIED.
 No shared Dialog, Chat-shell, drafts, registry, writer or orchestration changes.
+
+Final same-O13 composition includes corrective native source6e8e6700203843a11e8ec1932cf1ef5f5be2f269
+without changing applied migration bytes. Fresh integrated owning command now
+records225 PASS/9suites/exit0 in outputs/e2-o13-final-consumer-225.log, including
+the three new closing/open/foreign-scrim controls. This supersedes the earlier222
+source total rather than adding to it; the focused84 overlaps. Scoped lint0/0
+and original UI evidence guard pass. Fresh exact-head hosted native/whole CI and
+actual corrected customer recovery are still owed. The source-only E04 receiver
+assertion defect and its correction are preserved in the native evidence packet.

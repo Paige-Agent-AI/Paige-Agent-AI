@@ -36,6 +36,24 @@ function fixture(claims:unknown[]=[c]){
  return{rpc,config,admin:{rpc,from:()=>{throw Error('No parallel reader');}} as SalesPaymentAdmin};
 }
 beforeEach(()=>{vi.clearAllMocks();h.read.mockResolvedValue(snapshot);});
+it('selects the retained original LIVE settlement environment for adjustment GETs',async()=>{
+ const f=fixture(),live={environment:'live'} as StripeAdjustmentClient,select=vi.fn(()=>live);
+ for(const source of [f.config.before,f.config.after]){
+  source.dispatch.environment='live';source.dispatch.command.environment='live';source.settlement.environment='live';
+ }
+ expect((await reconcileSalesProviderObservationWork(f.admin,stripe,3,select)).observed).toBe(1);
+ expect(select).toHaveBeenCalledExactlyOnceWith('live');expect(h.read.mock.calls[0][3]).toBe(live);
+});
+it('requires native source validation before selecting any adjustment recovery client',async()=>{
+ const f=fixture(),select=vi.fn();f.config.before.settlement.provider_transaction_id='ch_substituted';
+ expect((await reconcileSalesProviderObservationWork(f.admin,stripe,3,select)).unverified).toBe(1);
+ expect(select).not.toHaveBeenCalled();expect(h.read).not.toHaveBeenCalled();
+});
+it('rejects the wrong adjustment reader mode before GET or completion',async()=>{
+ const f=fixture(),select=vi.fn(()=>({environment:'live'} as StripeAdjustmentClient));
+ expect((await reconcileSalesProviderObservationWork(f.admin,stripe,3,select)).unverified).toBe(1);
+ expect(h.read).not.toHaveBeenCalled();expect(f.rpc.mock.calls.some(([n])=>n==='complete_sales_provider_observation_work')).toBe(false);
+});
 it('observes current GET-only facts and retains the pre-read source version through canonical C4 completion',async()=>{
  const f=fixture();expect(await reconcileSalesProviderObservationWork(f.admin,stripe)).toEqual({claimed:1,observed:1,verificationPending:0,unverified:0});
  expect(h.read).toHaveBeenCalledWith(expect.objectContaining({id:op,tenant_id:tenant}),expect.objectContaining({state:'settled'}),context.settlement,stripe,expect.any(Number));

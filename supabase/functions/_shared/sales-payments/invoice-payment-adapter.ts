@@ -106,11 +106,11 @@ export async function preparePaymentReview(admin:SalesPaymentAdmin,caller:Paymen
  if(saved.error||saved.data!==binding.version)throw new Error('MERCHANT_BINDING_CHANGED');
  return buildPaymentRequestCommand(intent,invoice,binding,observation,Date.now(),obligationSource);
 }
-export function paymentExecutionPorts(admin:SalesPaymentAdmin,caller:PaymentCaller,secret:string,origin:string):PaymentExecutionPorts {
+export function paymentExecutionPorts(admin:SalesPaymentAdmin,caller:PaymentCaller,secret:string,origin:string,stripeForReadback?:PaymentExecutionPorts['stripeForReadback']):PaymentExecutionPorts {
  const scope={_expected_tenant_id:caller.tenantId,_operation_id:caller.operationId};
  const checked=(value:unknown)=>parseClaimedPayment(value,caller.tenantId,caller.actorId,caller.operationId);
  const readInternal=async()=>{const r=await admin.rpc('read_sales_invoice_payment_dispatch',scope);if(r.error)throw new Error('PAYMENT_READBACK_UNAVAILABLE');return checked(r.data);};
- return {stillCurrent:caller.stillCurrent,stripe:salesStripeClient(secret),publicOrigin:origin,
+ return {stillCurrent:caller.stillCurrent,stripe:salesStripeClient(secret),publicOrigin:origin,stripeForReadback,
   claim:async()=>{
    const result=await admin.rpc('claim_sales_invoice_payment_request',{...scope,_claim_token:crypto.randomUUID()});
    if(result.error?.code==='40001'){
@@ -138,9 +138,9 @@ export function paymentExecutionPorts(admin:SalesPaymentAdmin,caller:PaymentCall
   readSafe:async()=>{const r=await admin.rpc('read_sales_invoice_payment_request',{...scope,_actor_user_id:caller.actorId});if(r.error)throw new Error('PAYMENT_READBACK_UNAVAILABLE');return safePaymentOperation(r.data);},
  };
 }
-export async function executeInvoicePaymentRequest(admin:SalesPaymentAdmin,caller:PaymentCaller,command:PaymentRequestCommand,governance:Record<string,unknown>,secret:string,origin:string) {
+export async function executeInvoicePaymentRequest(admin:SalesPaymentAdmin,caller:PaymentCaller,command:PaymentRequestCommand,governance:Record<string,unknown>,secret:string,origin:string,stripeForReadback?:PaymentExecutionPorts['stripeForReadback']) {
  const prepared=await admin.rpc('prepare_sales_invoice_payment_request',{_actor_user_id:caller.actorId,_expected_tenant_id:caller.tenantId,_operation_id:caller.operationId,_command:command,_governance:governance});
  if(prepared.error)return {ok:false,outcome:databaseAnswered(prepared.error)?'refused':'outcome_unknown',code:databaseAnswered(prepared.error)?'PAYMENT_PREPARATION_REFUSED':'PAYMENT_READBACK_REQUIRED'};
- const ports=paymentExecutionPorts(admin,caller,secret,origin);
+ const ports=paymentExecutionPorts(admin,caller,secret,origin,stripeForReadback);
  return object(prepared.data)?.state==='prepared'?dispatchPreparedPayment(ports):reconcilePayment(ports);
 }

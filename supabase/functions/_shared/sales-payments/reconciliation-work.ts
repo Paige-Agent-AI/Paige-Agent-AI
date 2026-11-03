@@ -5,7 +5,7 @@ import {persistProviderPaymentReadback,persistCapturedPaymentObservation} from '
 const object=(v:unknown):Record<string,unknown>|null=>v!==null&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:null;
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Internal durable-work caller. No customer arguments, new authority, or provider POST. */
-export async function reconcileSalesPaymentWork(admin:SalesPaymentAdmin,stripe:StripeHostedClient,limit=3,captureObservation=false):Promise<{claimed:number;completed:number;checking:number;unverified:number}>{
+export async function reconcileSalesPaymentWork(admin:SalesPaymentAdmin,stripe:StripeHostedClient,limit=3,captureObservation=false,stripeForReadback?:(environment:'test'|'live')=>StripeHostedClient):Promise<{claimed:number;completed:number;checking:number;unverified:number}>{
  const batch=await admin.rpc('claim_sales_payment_reconciliation_work',{_limit:limit});const body=object(batch.data);
  if(batch.error||!body||!Array.isArray(body.claims)||body.claims.length>limit)throw Error('PAYMENT_WORK_UNAVAILABLE');
  const counts={claimed:body.claims.length,completed:0,checking:0,unverified:0};
@@ -25,13 +25,15 @@ export async function reconcileSalesPaymentWork(admin:SalesPaymentAdmin,stripe:S
    if(!['settled','failed','expired','cancelled'].includes(state)){
     const merchant=await admin.from('tenant_stripe_accounts').select('stripe_account_id,binding_version,provider_environment').eq('tenant_id',claim.operation.tenant_id).maybeSingle();
     if(merchant.error||merchant.data?.stripe_account_id!==claim.operation.merchant_id||merchant.data?.binding_version!==claim.operation.merchant_version||merchant.data?.provider_environment!==claim.operation.environment)throw Error('MERCHANT_BINDING_CHANGED');
+    const reader=stripeForReadback?.(claim.operation.environment)??stripe;
+    if(reader.environment!==claim.operation.environment)throw Error('PROVIDER_ENVIRONMENT_MISMATCH');
     const createdAfter=Math.max(0,Math.floor(Date.parse(claim.dispatchStartedAt)/1000)-60),deadline=Date.now()+40_000;
     let result=captureObservation
-     ?await readStripeHostedRequest(claim.request,claim.operation,stripe,claim.operation.provider_operation_id,createdAfter,deadline,{captureObservation:true})
-     :await readStripeHostedRequest(claim.request,claim.operation,stripe,claim.operation.provider_operation_id,createdAfter);
+     ?await readStripeHostedRequest(claim.request,claim.operation,reader,claim.operation.provider_operation_id,createdAfter,deadline,{captureObservation:true})
+     :await readStripeHostedRequest(claim.request,claim.operation,reader,claim.operation.provider_operation_id,createdAfter);
     if(result.state==='capture_observed'){
-     if(!captureObservation||!adjustmentClient(stripe))throw Error('PAYMENT_ADJUSTMENT_READBACK_UNAVAILABLE');
-     const snapshot=await readStripePaymentAdjustments(claim.request,claim.operation,result,stripe,deadline,{captureObservation:true});
+     if(!captureObservation||!adjustmentClient(reader))throw Error('PAYMENT_ADJUSTMENT_READBACK_UNAVAILABLE');
+     const snapshot=await readStripePaymentAdjustments(claim.request,claim.operation,result,reader,deadline,{captureObservation:true});
      await heartbeat();
      if(snapshot.state==='observed'){
       await persistCapturedPaymentObservation(admin,claim,lease,result,snapshot);

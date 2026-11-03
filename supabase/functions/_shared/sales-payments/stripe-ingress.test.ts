@@ -27,6 +27,16 @@ describe('original canonical Stripe signature boundary',()=>{
 describe('existing Sales adjustment and payment routes',()=>{
  const event={id:'evt_refund',account:'acct_fixture',livemode:false,type:'charge.refunded'};
  const admin={} as never;
+ it('selects read-only recovery by the verified event environment instead of the TEST dispatch default',async()=>{
+  const live={...event,livemode:true},select=vi.fn(()=> 'synthetic-original-live');
+  await routeSalesStripeIngress(admin,live,'legacy','synthetic-test',false,select);
+  expect(select).toHaveBeenCalledExactlyOnceWith('live');expect(ports.route).toHaveBeenCalledWith(admin,live,'legacy','synthetic-original-live');
+ });
+ it('does not select a recovery credential from a malformed event mode',async()=>{
+  const malformed={...event,livemode:'true'},select=vi.fn();
+  await routeSalesStripeIngress(admin,malformed,'legacy','synthetic-test',false,select);
+  expect(select).not.toHaveBeenCalled();expect(ports.route).toHaveBeenCalledWith(admin,malformed,'legacy','synthetic-test');
+ });
  it('leaves the deployed route unchanged while observation activation is disabled',async()=>{
   expect(await routeSalesStripeIngress(admin,event,'legacy','synthetic',false)).toEqual(other);
   expect(ports.adjust).not.toHaveBeenCalled();expect(ports.route).toHaveBeenCalledWith(admin,event,'legacy','synthetic');

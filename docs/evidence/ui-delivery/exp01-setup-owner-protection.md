@@ -29,7 +29,7 @@ SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: current guard not rendered.
 UNVERIFIED: actual full-schema CI, independent review, versioned ordered release, native source readback, ordinary useful save/receipt/reopen and final owner acceptance.
 INTERNAL_BUILD_IDENTITY: c0a793f899ba1c8c8d145593b13d053b9c5aca39; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=original ANT-50/f618992d and owning proof scripts; prospective unapplied carrier20271130020014_exp01_setup_owner_protection_forward
 RELEASE_CHANNEL: development: prelaunch engineering candidate; no customer announcement
-RELEASE_CLASSIFICATION: safety-fix: original Setup legal-owner identity protection
+RELEASE_CLASSIFICATION: internal-only: prelaunch original Setup legal-owner identity protection
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer release or announcement
 RELEASE_NOTE_REQUIRED: no: internal prelaunch implementation, no marketed capability claim
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: actual schema, release, ordinary useful result and reopen; full EXP01 remains STILL CODING

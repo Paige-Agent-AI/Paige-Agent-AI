@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: Original immutable Mission briefs may retain source v
 FLOW_PROTOTYPE: UNVERIFIED: No rendered candidate prototype/browser drive yet. November1 safe-release ordering does not waive functional, privacy, authority, review or CI gates.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An authorized existing SOLO actor reviews a source-backed plan, edits its proposed steps, saves and reopens the same original record.
 VISUAL_DIRECTION: PASS: Extend the existing game-plan world; one original drawer, no menu or competing workspace. Owned text uses14px/body,13px/labels; source text wraps;36px buttons and44px coarse-pointer targets.
-AUTOMATED_EVIDENCE: PASS: Current six bounded source/UI suites123PASS after meaningful failing-first model-contract and Knowledge continuation controls. Original exact4cc hosted full-schema passes original34/new33 and actual two-session owner-revocation race. New-head full CI remains owed; these are not authenticated customer proof.
+AUTOMATED_EVIDENCE: PASS: Current six bounded source/UI suites126PASS after meaningful failing-first model-contract, Knowledge continuation and escaped-text controls. Original exact4cc hosted full-schema passes original34/new33 and actual two-session owner-revocation race. New-head full CI remains owed; these are not authenticated customer proof.
 STATIC_EVIDENCE: PASS: Scoped ESLint0; whole app type ratchet baseline10/current6/0NEW; app-mode ES2020 module compilerPASS; actual production buildPASS after current-main composition and review repairs. No baseline changed. Full native carrier proof remains owed.
 RENDERED_EVIDENCE: UNVERIFIED: New plan component has not been rendered in a managed Preview or live authenticated account.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Actual saved plan/receipt/reload/reopen and original Task creation are unverified. React ports prove only bounded UI forwarding and response retirement.
@@ -125,6 +125,14 @@ The earlier four-path snapshot had own independent non-author source APPROVE,
 baseline10/current6/zero new; genuine incumbent273controlsPASS. The expanded
 Knowledge producer requires fresh review/static checks/whole exact-head CI.
 No Task admission, customer action/provider effect or joined readiness is claimed.
+
+Independent expanded review found a real serialization defect in the unpublished
+candidate: raw UTF16 budgeting could drop the sole CSV/escaped-text document while
+reporting success and no cursor. Root's causal controls reproduce2FAIL/43PASS;
+serialized-size range selection now retains the document and advancing cursor,
+or refuses explicitly when no valid range fits. All45Knowledge controls and all
+six owning suites126PASS. The earlier123 count is dated predecessor evidence,
+not a clearance of this repaired source. New exact-head review/CI remain required.
 
 Actual development-only original-component rendering earlier exercised390px in
 both themes and1280px dark: no document horizontal overflow, editable step title,

@@ -10,6 +10,18 @@ const row={id,tenant_id:tenant,revision:2,title:'Guide',summary:null,category:nu
 const port=(data:unknown,error:unknown=null)=>({rpc:vi.fn().mockResolvedValue({data,error})});
 
 describe('original Knowledge source identity and text continuation',()=>{
+ it.each(['"quoted",value\\path\n','short\nlines\n','\\\\""'])('retains an advancing document when JSON escaping expands %j',async(unit)=>{
+  const content=unit.repeat(2500),caller=port({tenant_id:tenant,documents:[{...row,content}]});
+  const hash=createHash('sha256').update(content).digest('hex');let cursor=0,joined='',reads=0;
+  do {
+   const result=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{document_id:id,
+    ...(cursor?{content_offset:cursor,expected_revision:2,expected_content_sha256:hash}:{})}});
+   expect(result.success).toBe(true);expect(result.documents).toHaveLength(1);expect(JSON.stringify(result).length).toBeLessThan(16000);
+   const doc=(result.documents as Array<Record<string,unknown>>)[0];joined+=doc.content;
+   if(++reads>20)throw Error('continuation did not finish');cursor=doc.next_content_offset as number;
+  }while(cursor!==null);
+  expect(joined).toBe(content);
+ });
  it('reads the complete long source in bounded same-version ranges without another native reader',async()=>{
   const content='Synthetic agreement\n'+'x'.repeat(19000)+'😀\nFINAL OBLIGATION: deliver the final report.';
   const caller=port({tenant_id:tenant,documents:[{...row,content}]});

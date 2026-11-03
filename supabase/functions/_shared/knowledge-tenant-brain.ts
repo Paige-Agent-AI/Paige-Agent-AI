@@ -80,11 +80,15 @@ export async function executeKnowledgeTool(input: {caller: KnowledgeRpcPort; exp
           const split=(at:number)=>at>0&&at<content.length&&content.charCodeAt(at-1)>=0xd800&&content.charCodeAt(at-1)<=0xdbff&&content.charCodeAt(at)>=0xdc00&&content.charCodeAt(at)<=0xdfff;
           if (start>=content.length||split(start)) return failure('KNOWLEDGE_TEXT_RANGE_INVALID');
           Object.assign(doc,{source_reference:reference,factConfirmation:'not_asserted',originalFileEvidence:'unavailable'});
-          const budget=Math.min(Number(args.content_limit??12000),Math.max(0,13500-JSON.stringify(doc).length));
-          let end=Math.min(content.length,start+budget);if(split(end))end--;
-          if(end<=start)return failure('KNOWLEDGE_TEXT_RANGE_INVALID');
-          Object.assign(doc,{content:content.slice(start,end),content_truncated:start>0||end<content.length,
+          const range=(end:number)=>({content:content.slice(start,end),content_truncated:start>0||end<content.length,
             content_utf16_start:start,content_utf16_end:end,content_utf16_length:content.length,next_content_offset:end<content.length?end:null});
+          // Quotes, backslashes and short lines expand during JSON serialization.
+          // Keep the sole document AND an advancing cursor instead of dropping it.
+          let low=start+1,high=Math.min(content.length,start+Number(args.content_limit??12000)),end=start;
+          while(low<=high){const probe=Math.floor((low+high)/2),safe=split(probe)?probe-1:probe;
+            if(safe>start&&JSON.stringify([...documents,{...doc,...range(safe)}]).length<=14500){end=safe;low=probe+1;}else high=probe-1;}
+          if(end<=start)return failure('KNOWLEDGE_TEXT_RANGE_INVALID');
+          Object.assign(doc,range(end));
         }
         if (JSON.stringify([...documents,doc]).length > 15000) { truncated=true; break; }
         documents.push(doc);

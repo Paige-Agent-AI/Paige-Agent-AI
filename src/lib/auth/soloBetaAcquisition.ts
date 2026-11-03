@@ -43,6 +43,17 @@ export function isVerifiedSoloEntitlement(row: { plan_slug?: string | null; stat
 
 export type SoloAuthRecoveryState = "expired" | "denied" | "provider_error";
 
+export function soloAuthRecoveryFromUrl(search: string, hash: string): SoloAuthRecoveryState | null {
+  const query = new URLSearchParams(search);
+  const fragment = new URLSearchParams(hash.replace(/^#/, ""));
+  const classify = (params: URLSearchParams) => soloAuthRecoveryState({
+    error: params.get("error"),
+    errorCode: params.get("error_code"),
+    description: params.get("error_description"),
+  });
+  return classify(query) ?? classify(fragment);
+}
+
 export function soloAuthRecoveryState(input: { error?: string | null; errorCode?: string | null; description?: string | null }): SoloAuthRecoveryState | null {
   const value = `${input.error ?? ""} ${input.errorCode ?? ""} ${input.description ?? ""}`.toLowerCase();
   if (!value.trim()) return null;

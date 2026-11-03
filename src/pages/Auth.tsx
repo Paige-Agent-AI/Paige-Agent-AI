@@ -24,7 +24,7 @@ import {
 import { readableTextOn, isColorDark } from "@/lib/brand/contrast";
 import { shouldPauseForWorkspaceChoiceAtLogin } from "@/lib/auth/accountSelection";
 import { operatorChooserTarget } from "@/lib/auth/operatorTarget";
-import { isSoloBetaPlan, soloAuthRecoveryState, soloBetaDisplayIntent, soloBetaSignupPath } from "@/lib/auth/soloBetaAcquisition";
+import { isSoloBetaPlan, soloAuthRecoveryFromUrl, soloBetaDisplayIntent, soloBetaSignupPath } from "@/lib/auth/soloBetaAcquisition";
 import { signUpWithReferral } from "@/lib/signUpWithReferral";
 import {
   DEFAULT_SIGNUP_PHONE_COUNTRY,
@@ -84,11 +84,7 @@ const Auth = () => {
   const [consentSms, setConsentSms] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const authRecovery = soloAuthRecoveryState({
-    error: searchParams.get("error"),
-    errorCode: searchParams.get("error_code"),
-    description: searchParams.get("error_description"),
-  });
+  const authRecovery = soloAuthRecoveryFromUrl(searchParams.toString(), window.location.hash);
 
   // Plan intent (task #66 reorder). When a prospect picks a plan on /pricing while
   // signed out, they arrive here as /auth?mode=signup&plan=<slug>&billing=<period>.
@@ -173,10 +169,10 @@ const Auth = () => {
   }, [isClientInvite, searchParams]);
 
   useEffect(() => {
-    if (searchParams.get("mode") === "signup" && !isClientInvite && !isSoloBetaPlan(searchParams.get("plan"))) {
+    if (!authRecovery && searchParams.get("mode") === "signup" && !isClientInvite && !isSoloBetaPlan(searchParams.get("plan"))) {
       navigate(soloBetaSignupPath(), { replace: true });
     }
-  }, [isClientInvite, navigate, searchParams]);
+  }, [authRecovery, isClientInvite, navigate, searchParams]);
 
   const redirectByRole = useCallback(async (userId: string) => {
     setRoutingError(null);
@@ -445,7 +441,7 @@ const Auth = () => {
   // straight to checkout). A client-invite OAuth never carries a platform plan (§9),
   // and its invite-target return (oauthRedirectTo → /join/:token) is left untouched.
   const oauthRedirectWithPlan = (): string => {
-    if (isClientInvite) return oauthRedirectTo;
+    if (isClientInvite || isLogin) return oauthRedirectTo;
     const planSlug = searchParams.get("plan");
     if (!isSoloBetaPlan(planSlug)) return authRedirectWithPlan(window.location.origin, soloBetaDisplayIntent());
     const intent: PlanIntent = {
@@ -545,15 +541,15 @@ const Auth = () => {
     const recoveryCopy = authRecovery === "expired"
       ? "That verification link has expired or is no longer valid."
       : authRecovery === "denied"
-        ? "Sign-in permission was not granted. Nothing was provisioned."
-        : "The identity provider could not complete sign-in. Nothing was provisioned.";
+        ? "Sign-in permission was not granted."
+        : "The identity provider could not complete sign-in.";
     return (
       <div className="relative min-h-screen flex items-center justify-center px-4 text-center" style={goldTheme}>
         <div className="w-full max-w-md space-y-5 rounded-2xl border border-white/15 bg-white/5 p-8 text-[#F8F5EE]">
           <h1 className="text-2xl font-semibold">We could not verify your identity</h1>
-          <p className="text-sm text-[#F8F5EE]/75">{recoveryCopy} Start the Solo signup again, or sign in if you already have an account.</p>
-          <Button className="w-full" onClick={() => navigate(soloBetaSignupPath(), { replace: true })}>Restart Solo signup</Button>
-          <Button variant="outline" className="w-full" onClick={() => navigate("/auth?mode=login", { replace: true })}>Sign in instead</Button>
+          <p className="text-sm text-[#F8F5EE]/75">{recoveryCopy} Start a fresh sign-in to your existing account, or restart signup if you are creating an account.</p>
+          <Button className="w-full" onClick={() => { setIsLogin(true); navigate("/auth?mode=login", { replace: true }); }}>Try signing in again</Button>
+          <Button variant="outline" className="w-full" onClick={() => { setIsLogin(false); navigate(soloBetaSignupPath(), { replace: true }); }}>Restart Solo signup</Button>
         </div>
       </div>
     );

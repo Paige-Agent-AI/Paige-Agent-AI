@@ -111,6 +111,15 @@ $function$;
  check(scalar("SELECT NOT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='public.team_hub_agent_turns'::regclass AND attname='email_draft' AND NOT attisdropped)")==='t','unsafe prerequisite policy refuses atomically before any new column');
  db.run('DROP POLICY fixture_unsafe_message_insert ON public.messages;');
  db.run(read('supabase/migrations/20271130020008_exp08_nexus_unsent_email_handoff.sql'));
+ // Genuine managedPreview already installed the initial carrier. Exercise the
+ // guarded forward, never rewrite that history to contain the reviewed repair.
+ const forward=read('supabase/migrations/20271130020009_exp08_nexus_email_lock_order_forward.sql');
+ check(scalar("SELECT md5(pg_get_functiondef('public._team_hub_email_scope(public.team_hub_agent_turns)'::regprocedure))")==='7ea5a9d739309b2d255f8ff98194f276','immutable Preview predecessor source exact');
+ db.run('GRANT EXECUTE ON FUNCTION public._team_hub_email_scope(public.team_hub_agent_turns) TO authenticated;');
+ refused(()=>db.run(forward),'55000');
+ db.run('REVOKE EXECUTE ON FUNCTION public._team_hub_email_scope(public.team_hub_agent_turns) FROM authenticated;');
+ db.run(forward);
+ refused(()=>db.run(forward),'55000');
  check(scalar("SELECT jsonb_agg(to_jsonb(p) ORDER BY p.oid) FROM pg_proc p WHERE p.oid IN ('public._comms_email_actor(uuid,uuid)'::regprocedure,'public._team_hub_visible(uuid,uuid,uuid)'::regprocedure,'public._team_hub_is_active(uuid,uuid)'::regprocedure,'public._team_hub_participates(uuid,uuid)'::regprocedure,'public.save_comms_email_draft(uuid,uuid,uuid,uuid,timestamptz,uuid,uuid,text,text,text,jsonb,timestamptz,uuid)'::regprocedure)")===originals,'all five original bodies/OIDs/ABIs/ACLs/catalog metadata conserved');
  check(scalar("SELECT config->'personality'='{"+ '"preserve":"original"' +"}'::jsonb AND config->'team_hub_tools'='{"+ '"preserve":"original"' +"}'::jsonb AND config#>'{capability_scope,tools}' @> '[\"growth_page_publish\",\"integrations_list\"]'::jsonb FROM public.paige_subagents WHERE slug='nexus'")==='t','all incoming identity/shared/tools conserved');
  refused(()=>db.run(as('authenticated',actor,`SELECT public.team_hub_stage_email_draft('${turn}','${token}','Project update','Ready for review.');`)),'42501');

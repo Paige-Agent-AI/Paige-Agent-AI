@@ -929,7 +929,7 @@ jobs:
             --psql "$(command -v psql)" --port 54322 \
             --expected-data-directory "$(psql -X -h 127.0.0.1 -p 54322 -U postgres -d postgres -Atc 'SHOW data_directory')" \
             --auth-lock-migration supabase/migrations/20271130020015_knowledge_auth_lock_fairness.sql \
-            --containment-release-migration supabase/migrations/20271130020016_knowledge_save_containment_release.sql
+            --containment-release-migration supabase/migrations/20271130020017_knowledge_save_release_contract.sql
         env:
           PGPASSWORD: postgres
         if: ${{ !cancelled() }}

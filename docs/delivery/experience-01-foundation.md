@@ -1,5 +1,21 @@
 # Experience 01 foundation — ANT-50
 
+### November 2 owner-selected ONE outcome — reviewed Setup save, receipt and reopen
+
+Owner next-outcome approval ANT-50/5bcd16af and actual receiving ACK7ac50220
+supersede the Setup pause only for original matrix outcomes4/5's reviewed-fact
+approval/save/receipt/reopen amendment. Completed Chat producer remains delivered.
+Reuse3194; mount original Setup review, retain explicit unchecked selection and
+adopt/override, original CAS/writer/source authority, and same-intent UNKNOWN
+inspection through full client destruction. Dedicated NON-AUTHOR review is in flight.
+E13's existing private validator remains required, not copied or bypassed; owner
+explicitly authorized its bounded prerequisite release (ANT-21/04511da6).
+Current source is preparation, NOT a completed customer outcome or production API.
+Exact-head engineering/full-schema, normal ordered native release/readback and actual
+authenticated selected save/receipt/reload remain owed. Full original10/23/amendments
+remain pending, STILL CODING/NOT READY/NOT ACCEPTED. No timer or second outcome.
+Current proof/remaining work: [existing evidence](../evidence/ui-delivery/exp01-reviewed-setup-preparation.md).
+
 ### November 1 owner-selected ONE outcome — Chat source writer release
 
 Only active delivery: original durable Chat→Knowledge writer for E13, including

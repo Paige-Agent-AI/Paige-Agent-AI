@@ -12,8 +12,7 @@ for(const args of [
  const run=spawnSync(process.execPath,args,{stdio:'inherit',timeout:30000});
  if(run.status!==0)throw Error('Original EXP01 receipt preparation proof failed');
 }
-const originalSourceRef='7955df03da6873286f290d4148c1f0fcda77c91e';
-const sourcePath='supabase/migrations/20271126210013_knowledge_source_writer_validation.sql';
+const sourcePath='supabase/migrations/20271128000013_knowledge_source_evidence_forward.sql';
 const read=p=>readFileSync(p,'utf8').replaceAll('\r\n','\n');
 function body(sql){
  const begin=/^BEGIN;\s*$/gmi,end=/^COMMIT;\s*$/gmi;
@@ -22,19 +21,17 @@ function body(sql){
  assert.ok(sql.search(begin)<sql.search(end),'original transaction order');
  return sql.replace(begin,'-- Original outer BEGIN supplied by rollback-only proof').replace(end,'-- Original COMMIT suppressed inside rollback-only proof');
 }
-// A shallow Actions checkout does not contain this original unmerged source.
-// Fetch only its immutable object; never choose a moving branch or apply it.
-if(spawnSync('git',['cat-file','-e',`${originalSourceRef}^{commit}`],{stdio:'ignore'}).status!==0){
- const fetch=spawnSync('git',['fetch','--no-tags','--depth=1','origin',originalSourceRef],{encoding:'utf8',timeout:60000});
- if(fetch.status!==0)throw Error('Pinned original E13 source fetch failed; no substitution');
-}
-const source=spawnSync('git',['show',`${originalSourceRef}:${sourcePath}`],{encoding:'utf8',maxBuffer:1024*1024});
-if(source.status!==0)throw Error('Pinned original E13 source object unavailable; do not substitute a helper or bypass the dependency guard');
-const candidate=body(read('scripts/proof/exp01-reviewed-setup-candidate.sql'));
+// The original E13 validator is now a released migration in the normal rebuild.
+// Exercise the exact prospective Setup carrier, never an alternate installer.
+const candidateSource=read('scripts/proof/exp01-reviewed-setup-candidate.sql');
+const carrier=read('supabase/migrations/20271129010001_exp01_reviewed_setup_receipt_forward.sql');
+assert.equal(carrier.slice(carrier.indexOf('\n')),candidateSource.slice(candidateSource.indexOf('\n')),
+ 'Setup carrier is byte-exact reviewed candidate after its descriptive first comment');
+const candidate=body(carrier);
 const test=read('supabase/tests/exp01_reviewed_setup_receipt.sql');
 assert.equal(test.split('-- EXP01_INSTALL_CANDIDATE').length,2);
 assert.equal(test.split('-- EXP01_REPLAY_CANDIDATE').length,2);
-const receiptSql=test.replace('-- EXP01_INSTALL_CANDIDATE',()=>body(source.stdout.replaceAll('\r\n','\n'))+'\n'+candidate)
+const receiptSql=test.replace('-- EXP01_INSTALL_CANDIDATE',()=>candidate)
  .replace('-- EXP01_REPLAY_CANDIDATE',()=>candidate);
 assert.equal(receiptSql.split(candidate).length,3,'both candidate inserts are byte-exact, including dollar-quoted SQL');
 const hostCandidateSource=read('scripts/proof/exp01-chat-knowledge-candidate.sql');
@@ -68,7 +65,7 @@ assert.match(sql,/^BEGIN;/m);assert.match(sql,/ROLLBACK;\s*$/);
 mkdirSync('.cache',{recursive:true});const output='.cache/exp01-reviewed-setup-full-schema.sql';
 writeFileSync(output,sql);
 if(process.argv.includes('--emit-only')){
- console.log(JSON.stringify({result:'COMPOSED_ONLY',output,originalSourceRef,bytes:Buffer.byteLength(sql),runtime:'UNVERIFIED'}));
+ console.log(JSON.stringify({result:'COMPOSED_ONLY',output,sourcePath,bytes:Buffer.byteLength(sql),runtime:'UNVERIFIED'}));
 }else{
  try{
   const status=spawnSync('supabase',['status','--output','json'],{encoding:'utf8',timeout:30000});
@@ -77,7 +74,7 @@ if(process.argv.includes('--emit-only')){
   assert.ok(['127.0.0.1','localhost','[::1]'].includes(url.hostname)&&url.port==='54322'
    &&url.username==='postgres'&&url.pathname==='/postgres','only existing CI loopback54322/postgres');
   const causal=spawnSync(process.execPath,['scripts/proof/exp01-reviewed-setup-postgres.mjs','54322'],{
-   stdio:'inherit',timeout:60000,env:{...process.env,EXP01_SOURCE_VALIDATOR_REF:originalSourceRef,
+   stdio:'inherit',timeout:60000,env:{...process.env,
     PGPASSWORD:decodeURIComponent(url.password)},
   });
   if(causal.error)throw causal.error;

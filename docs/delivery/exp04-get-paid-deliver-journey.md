@@ -1,4 +1,14 @@
-# Current O5-only checkpoint — November 2, 2026
+# Current O5-only release checkpoint — November 2, 2026 ET
+
+Original payment-recovery #3217 is released as `40d7777a797baea973c5115e9f0e261d4881827a`, exact reviewed tree of `0b92e427b72966ca591fdbcfd478051707e142b4`. Required own NON-AUTHOR5745591477 CLEAR; all13 source-head checks and both web statuses passed. Native30000004 is present ONCE with exact body/private ACL; normal native/Edge workflows succeeded and certified db-live/edge-live40d. All four deployed Edge source/configuration rows independently match113 source bindings/72 paths. Vercel MCP and the three official public origins verify the exact production build. [Actual release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3217#issuecomment-6593309470). This is the mechanical identity closeout, with no new runtime or authority change.
+
+**O5 remains INCOMPLETE.** No provider configuration or observation activation was performed. Actual PAIGE TEST application readiness, authorized original test payment/refund, provider-backed balances/receipts and ordinary Owner reopen/recovery remain unverified. The fresh live public PAIGE QA tab shows its normal Sign In form; existing designated account access is requested. Owner is reconnecting TEST tool access, which is distinct from the application's merchant connection and activation. No Vercel login or preview-browser gate is imposed. Earlier C248 bounded draft/read/reload proof remains separately valid; it does not prove settlement on this release. Main postmerge checks remain separately tracked, never borrowed from source-head greens.
+
+Finish ONLY this payment outcome, verify the useful result/receipt/reopen/recovery, report to owner/original Linear/Coordinator, then STOP. Other11 remain queued for explicit owner approval. Customer release identity and founder acceptance remain absent.
+
+---
+
+# Historical source-candidate checkpoint — November 2, 2026
 
 The owner selected ONLY **O5 payment processing**. Finish the useful payment result, receipt, reopen and recovery; report to the owner/original Linear/Coordinator, then STOP. Every other original outcome is QUEUED until explicit owner approval. Historical sequences below are preserved as dated evidence and do not authorize starting another outcome. The complete original twelve-outcome matrix remains in ANT-51.
 

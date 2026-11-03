@@ -117,10 +117,10 @@ function ScopedMissionTasks({tenantId,actorId,detail,disabled,children}:Props&{a
    </div>}
   </div>;
  };
- const needsRecovery=!detail.brief.document_work_intent&&(detail.brief.document_work_intent_status==='source_changed'||detail.brief.document_work_intent_status==='source_unavailable'||detail.brief.version>1);
+ const needsRecovery=detail.brief.version>1||!detail.brief.document_work_intent&&(detail.brief.document_work_intent_status==='source_changed'||detail.brief.document_work_intent_status==='source_unavailable');
  return <>{children(renderTask)}{needsRecovery&&<section className="mission-document-steps space-y-3" aria-label="Saved tasks for this plan">
   <h4>Saved tasks</h4>
-  <p className="text-sm">Existing work keeps its own record and receipt. Source details stay hidden while unavailable.</p>
+  <p className="text-sm">Existing work keeps its own record and receipt across plan revisions.</p>
   <button className="sd-btn sd-btn-sm" type="button" disabled={disabled||busy} onClick={()=>void loadRecovered()}>Find saved tasks</button>
   {recovered.phase==='loading'&&<p role="status">Checking this plan's original task results…</p>}
   {recovered.message&&<p role="alert">{recovered.message}</p>}

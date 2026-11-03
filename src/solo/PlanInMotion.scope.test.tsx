@@ -243,3 +243,10 @@ it('keeps keyboard focus in the inline Task review and returns it to the step',a
  const group=host.querySelector('[aria-label^="Task for "]');expect(group).not.toBeNull();expect(document.activeElement).toBe(group);
  await act(async()=>button('Close task review').click());expect(document.activeElement).toBe(button('Review task'));
 });
+
+it('finds historical Tasks for removed stable steps while a newer valid plan intent remains',async()=>{
+ const record=taskPlan();h.listTasks.mockResolvedValue({kind:'page',records:[{stepId:'99999999-9999-4999-8999-999999999999',inspection:{kind:'available',task:{id:'77777777-7777-4777-8777-777777777777',title:'Earlier approved work',status:'in_progress'},origin:{missionRevision:2,briefVersion:1,intentSha256:'b'.repeat(64)},receipt:{correlation_id:'88888888-8888-4888-8888-888888888888'}}}],nextOffset:null});
+ await act(async()=>root.render(<MemoryRouter initialEntries={['/solo/9000001/command-center']}><Routes><Route path="/solo/:account/*" element={<PlanInMotion workspaceId={h.tenant}/>}/></Routes></MemoryRouter>));await open();
+ expect(record.brief.document_work_intent).not.toBeNull();expect(button('Find saved tasks')).toBeDefined();await act(async()=>button('Find saved tasks').click());
+ expect(host.textContent).toContain('Earlier approved work');expect(host.querySelector('a[href*="77777777"]')).not.toBeNull();expect(button('Review task')).toBeDefined();expect(h.submitTask).not.toHaveBeenCalled();
+});

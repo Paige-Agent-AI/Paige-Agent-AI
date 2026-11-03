@@ -141,3 +141,27 @@ focus repair control itself passed; a normal serial-thread rerun is in progress.
 Actual browser postrepair click timed out before input; final rendered correction
 and real assistive behavior remain UNVERIFIED. Neither is a gate bypass nor an
 assertion that simulated Task results prove saved customer work.
+
+
+Exact569b non-author review caught a further historical-reopen gap: a VALID new
+intent that removes/replaces a stable step hid original Task recovery. Genuine
+new mounted control FAILS before repair. All revised original briefs now expose
+the same bounded read-only history discovery, alongside unchanged current-step
+review. No raw retired source/description, automatic work creation or native
+writer/migration change is added.
+
+Actual7a full-schema results: original29pgTAP28PASS/1FAIL, solely foreign actor's
+profile selecting another active business is refused by ORIGINAL active-account
+gate before membership (actualCRM_ACTIVE_ACCOUNT_CHANGED, fixture wrongly expected
+CRM_FORBIDDEN). The corrected30-case fixture retains that refusal and adds an
+independent same-active-scope foreign-nonmember CRM_FORBIDDEN control. No native
+authorization or assertion was removed/weakened. All remaining28 controls passed,
+including source-redacted original Task discovery and private helper. Real original
+Task cross-actor lock/one-effect/schedule/source-change/recovery proof PASS, original
+Mission source races PASS. Fresh30 runtime and final exact-headCI remain required.
+
+
+Final owning mounted/client/served-Edge suites now ALL55PASS (three suites, one
+worker), including both keyboard focus and removed-step historical recovery.
+Scoped ESLint and diff check PASS. Earlier worker-start failures are retained;
+no test/authentication bypass was added. Native30 freshCI remains proof owed.

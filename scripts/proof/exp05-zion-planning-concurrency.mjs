@@ -7,10 +7,11 @@ import { randomUUID } from 'node:crypto';
 export async function provePlanningConcurrency(psql,connection,context,options={}){
  assert(connection.includes('exp08_team_hub_a2b_proof'),'Original disposable database only');
  const calendar=options.source==='calendar';
- assert(options.source===undefined||calendar,'Only original Planning or Calendar fixture');
- const label=calendar?'Calendar':'Planning';
+ const task=options.source==='task';
+ assert(options.source===undefined||calendar||task,'Only original Planning, Calendar or Task fixture');
+ const label=calendar?'Calendar':task?'Task':'Planning';
  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
- for(const key of calendar?['actor','tenant','channel','item']:['actor','tenant','channel','plan','item'])assert(uuid.test(context[key]),key);
+ for(const key of task?['actor','tenant','channel','item','foreign_tenant']:calendar?['actor','tenant','channel','item']:['actor','tenant','channel','plan','item'])assert(uuid.test(context[key]),key);
  assert(context.cases.length===4);
  const args=['-X','-q','-A','-t','-v','ON_ERROR_STOP=1',...connection];
  const sql=q=>execFileSync(psql,args,{input:q,encoding:'utf8',windowsHide:true,timeout:15000}).trim();
@@ -35,15 +36,17 @@ export async function provePlanningConcurrency(psql,connection,context,options={
  const post=c=>`SELECT public.team_hub_post_agent_message(p_expected_tenant=>'${context.tenant}'::uuid,p_channel_id=>'${context.channel}'::uuid,p_agent_key=>'zion',p_body=>'Original concurrent ${label} answer.',p_client_request_id=>'${c.request}'::uuid,p_parent_message_id=>NULL::uuid,p_asked_in_message_id=>'${c.question}'::uuid,p_intent=>'dm',p_turn_token=>'${c.token}');`;
  const count=c=>Number(sql(`SELECT count(*) FROM public.team_hub_messages WHERE asked_in_message_id='${c.question}' AND author_kind='agent';`));
  const sourceChange=calendar?`UPDATE public.internal_bookings SET end_at='2026-11-03T10:30:00.123457Z' WHERE id='${context.item}';`
+  :task?`UPDATE public.tasks SET tenant_id='${context.foreign_tenant}' WHERE id='${context.item}';`
   :`UPDATE public.plan_items SET updated_at='2026-11-01T00:00:00.123457Z',title='Changed original work' WHERE id='${context.item}';`;
  const restoreSource=calendar?`UPDATE public.internal_bookings SET end_at='2026-11-03T10:30:00.123456Z' WHERE id='${context.item}';`
+  :task?`UPDATE public.tasks SET tenant_id='${context.tenant}' WHERE id='${context.item}';`
   :`UPDATE public.plan_items SET updated_at='2026-11-01T00:00:00.123456Z',title='Original concurrent work' WHERE id='${context.item}';`;
  const roleChange=`UPDATE public.tenant_members SET role='member' WHERE tenant_id='${context.tenant}' AND user_id='${context.actor}';`;
  const results=[];
  try{
   for(let i=0;i<4;i++){
    const c=context.cases[i];for(const key of ['turn','question','request'])assert(uuid.test(c[key]));
-   assert((calendar?/^turn-token-E5-calendar-concurrent-[0-3]-k{32}$/:/^turn-token-E5-concurrent-[0-3]-k{32}$/).test(c.token),'Exact incumbent synthetic opaque token, never a credential');
+   assert((calendar?/^turn-token-E5-calendar-concurrent-[0-3]-k{32}$/:task?/^turn-token-E5-task-concurrent-[0-3]-k{32}$/:/^turn-token-E5-concurrent-[0-3]-k{32}$/).test(c.token),'Exact incumbent synthetic opaque token, never a credential');
    sql(`${restoreSource}
     UPDATE public.tenant_members SET role='admin',status='active' WHERE tenant_id='${context.tenant}' AND user_id='${context.actor}';`);
    const publicationFirst=i%2===0,change=i<2?'source':'role',mutation=change==='source'?sourceChange:roleChange;
@@ -61,6 +64,16 @@ export async function provePlanningConcurrency(psql,connection,context,options={
     if(publicationFirst){
      assert.equal(second.err,'',JSON.stringify(second));assert.equal(count(c),1,'One committed original reply');
      if(change==='source'){
+      if(task){
+       // A foreign Task scope is a real access refusal, not a stale version.
+       // Keep that refusal, then restore authority before replaying the SAME post.
+       sql(`BEGIN; ${auth} DO $task_refusal$ BEGIN BEGIN ${post(c).replace(/^SELECT/,'PERFORM')}
+        RAISE EXCEPTION 'Expected foreign Task replay refusal';
+        EXCEPTION WHEN SQLSTATE '42501' THEN IF SQLERRM<>'Original Task reference unavailable' THEN RAISE; END IF;
+        END; END $task_refusal$; COMMIT;`);
+       assert.equal(count(c),1,'Scope refusal did not repeat the original post');
+       sql(restoreSource);
+      }
       const retry=sql(`BEGIN; ${auth} ${post(c)} COMMIT;`);
       assert(retry.includes('"ok": true'),'Original retry still resolves the consumed authorized message');
       assert.equal(count(c),1,'No second reply after lost acknowledgement');
@@ -72,14 +85,14 @@ export async function provePlanningConcurrency(psql,connection,context,options={
       assert(!message.body.includes(`Original concurrent ${label} answer`));
      }
     }else{
-     assert.match(second.err,change==='source'?(calendar?/Original Calendar source changed/:/Original Planning source changed/):/Invoice workspace or authority unavailable/);
+     assert.match(second.err,change==='source'?(calendar?/Original Calendar source changed/:task?/Original Task reference unavailable/:/Original Planning source changed/):/Invoice workspace or authority unavailable/);
      assert.equal(count(c),0,'Prior source/role change prevents private publication');
      assert.equal(sql(`SELECT consumed_at IS NULL FROM public.team_hub_agent_turns WHERE id='${c.turn}';`),'t');
     }
     results.push({change,order:publicationFirst?'publication-first':'change-first',actualBlockingPair:true,
      originalMessages:publicationFirst?1:0});
    }catch(error){
-    throw new Error(JSON.stringify({source:label,case:i,first:a.output(),firstError:a.error(),second:b.output(),secondError:b.error()}),{cause:error});
+    throw new Error(JSON.stringify({source:label,case:i,cause:error.stack??String(error),first:a.output(),firstError:a.error(),second:b.output(),secondError:b.error()}),{cause:error});
    }finally{
     for(const s of [a,b]){if(s.child.exitCode===null)s.child.kill();sessions.delete(s.child);}
    }

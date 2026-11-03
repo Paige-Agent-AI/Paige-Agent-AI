@@ -115,3 +115,27 @@ it("returns keyboard focus to the existing visible PAIGE workspace when its over
     workspace.remove(); vi.restoreAllMocks();
   }
 });
+
+it("reveals an off-viewport invoker after responsive inspection", async () => {
+  render(); open();
+  const trigger = host.querySelector<HTMLButtonElement>("[data-activity-inspect]")!;
+  // JSDOM has no viewport layout. Model the browser's existing scroll port;
+  // the actual released failure is separately reproduced in both SOLO contexts.
+  let inView = false;
+  vi.spyOn(trigger, "getBoundingClientRect").mockImplementation(() => new DOMRect(10, inView ? 10 : 1200, 160, 44));
+  Object.defineProperty(trigger, "scrollIntoView", { configurable: true, value: () => { inView = true; } });
+  const original = document.elementFromPoint;
+  Object.defineProperty(document, "elementFromPoint", { configurable: true, value: () => inView ? trigger : null });
+  try {
+    act(() => [...dialog().querySelectorAll("button")].find(b => b.textContent === "Close")!.click());
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+    expect(dialog()).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    const r = trigger.getBoundingClientRect();
+    expect(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)).toBe(trigger);
+    expect(feed.refresh).not.toHaveBeenCalled();
+  } finally {
+    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: original });
+    vi.restoreAllMocks();
+  }
+});

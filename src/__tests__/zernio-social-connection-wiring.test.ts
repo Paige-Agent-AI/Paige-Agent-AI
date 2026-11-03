@@ -27,9 +27,9 @@ describe("Zernio provider wiring", () => {
 
   it("the publisher injects the sole provider too — Upload-Post is out of the publish path", () => {
     expect(publisher).toContain("adapter: zernioSocialAdapter");
-    // Zernio's publishing arm does not exist yet; the door must record its refusal honestly
-    // rather than reach for a removed provider.
-    expect(adapter).toContain("provider_publishing_unavailable");
+    // EXP07's posting arm (owner-approved November 3) replaced the honest 501 refusal:
+    // publishing now goes through Zernio with publication-scoped idempotency (below).
+    expect(adapter).not.toContain("provider_publishing_unavailable");
   });
 
   it("keeps the strict redirect-parameter contract and verifies Zernio by readback", () => {
@@ -55,8 +55,15 @@ describe("Zernio provider wiring", () => {
     expect(adapter).toContain('envKey("ZERNIO_API_KEY")');
   });
 
-  it("refuses publishing until its own governed slice ships", () => {
-    expect(adapter).toContain("provider_publishing_unavailable");
-    expect(adapter).not.toContain("/posts");
+  it("publishes through the sole provider with publication-scoped idempotency (owner-approved November 3)", () => {
+    expect(adapter).toContain('request("/posts"');
+    expect(adapter).toContain('"Idempotency-Key": input.externalId');
+    expect(adapter).toContain("publishNow: true");
+    expect(adapter).toContain('"provider_idempotency_or_dedup_conflict"');
+    expect(adapter).not.toContain("provider_publishing_unavailable");
+    // The publish door injects Zernio alone — no retired-provider fallback anywhere.
+    const publishDoor = read("supabase/functions/social-publish-command/index.ts");
+    expect(publishDoor).toContain("zernioSocialAdapter");
+    expect(publishDoor).not.toContain("uploadPostSocialAdapter");
   });
 });

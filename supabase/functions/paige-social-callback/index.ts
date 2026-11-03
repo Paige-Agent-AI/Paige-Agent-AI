@@ -1,14 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { recordCapabilityRun, stableRunId } from "../_shared/capability-record.ts";
-import { uploadPostSocialAdapter } from "../_shared/social-provider/upload-post.ts";
 import { SocialProviderError } from "../_shared/social-provider/mod.ts";
 import { zernioSocialAdapter } from "../_shared/social-provider/zernio.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TOKEN = /^[0-9a-f]{64}$/;
 const RETURN_PATH = /^\/solo\/[A-Za-z0-9_-]+\/settings\/integrations\/?$/;
-// Same provider selection as paige-social: whichever adapter carries a vaulted key.
-const adapter = zernioSocialAdapter.isConfigured() ? zernioSocialAdapter : uploadPostSocialAdapter;
+// Same sole-provider rule as paige-social (ANT-164 3f511055: Zernio sole aggregator, Upload-Post
+// retired). Unconfigured Zernio fails closed through the honest unavailable path, never a fallback.
+const adapter = zernioSocialAdapter;
 
 function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;

@@ -34,7 +34,7 @@ const MIGRATIONS = "supabase/migrations";
 
 /** Values that are deliberately NOT tables. Each says what it is, so none is a silent exemption. */
 const NON_TABLE_LABELS = new Map([
-  ["external_provider", "a third-party system (e.g. Zapier, or a social platform via Upload-Post); the record lives outside this database"],
+  ["external_provider", "a third-party system (e.g. Zapier, or a social platform via the sole Social provider); the record lives outside this database"],
   ["marketplace", "an install, which spans several rows rather than one table"],
   ["knowledge_base", "the tenant's knowledge corpus, addressed by its own ids"],
   ["n8n_workflow", "a workflow in n8n; the record is not ours"],

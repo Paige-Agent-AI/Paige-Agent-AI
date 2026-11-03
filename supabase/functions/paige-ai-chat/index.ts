@@ -19547,7 +19547,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         propose_business_brief_update: "tenants",
         // 2026-09-12 repair — the evaluation loop + social publish, newly classified (action-risk.ts).
         // `improvement_propose` INSERTs and `improvement_decide` UPDATEs the proposals row, so both
-        // name that table; `social_post` reaches an external social platform via Upload-Post with no
+        // name that table; `social_post` reaches an external social platform via the sole provider
+        // (Zernio) with no
         // durable local record, so it names the provider the way `zapier_run_action` does.
         improvement_propose: "paige_improvement_proposals",
         improvement_decide: "paige_improvement_proposals",

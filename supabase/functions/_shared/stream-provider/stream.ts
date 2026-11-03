@@ -57,7 +57,7 @@ function mapVideo(v: Record<string, unknown>): StreamVideoMetadata {
   };
 }
 
-// Deno's env is reached through globalThis (upload-post.ts's pattern) so the module type-checks
+// Deno's env is reached through globalThis (the social-provider adapters' pattern) so the module type-checks
 // and unit tests load it outside the Deno runtime; the values exist only in the edge environment.
 const deno = (globalThis as { Deno?: { env?: { get(key: string): string | undefined } } }).Deno;
 const env = (key: string) => deno?.env?.get(key);

@@ -33,7 +33,7 @@ export function planningReadRecordLinks(tenantId: string, result: unknown): Read
  * capability recorder must acknowledge the lookup before facts reach the model.
  * A read receipt is not a completed Task, reminder delivery or business action. */
 export async function finishPlanningChatRead(context: {
-  tenantId: string | null; runId: string; recordRead: () => Promise<boolean>;
+  tenantId: string | null; runId: string; recordRead: () => Promise<boolean>; isCurrent: () => Promise<boolean>;
   receiptBudgetMs?: number; signal?: AbortSignal;
 }, result: unknown): Promise<{ model: Record<string, unknown>; links: ReadRecordLink[] }> {
   const tenant = uuid(context.tenantId), data = object(result);
@@ -62,8 +62,10 @@ export async function finishPlanningChatRead(context: {
   let recorded = false;
   try {
     const within = createWeeklyDraftDeadline(budget, () => !context.signal?.aborted);
+    if (await within(context.isCurrent) !== true) return unavailable("The current workspace could not be verified. Read Planning again in the intended workspace; nothing was changed.");
     recorded = await within(context.recordRead);
-  } catch { /* unknown/expired receipt: withhold facts */ }
+    if (recorded === true && await within(context.isCurrent) !== true) return unavailable("The current workspace changed or could not be verified. Read Planning again in the intended workspace; nothing was changed.");
+  } catch { recorded = false; /* unknown/expired receipt or scope: withhold facts */ }
   if (recorded !== true) return unavailable("The Planning lookup returned, but its read receipt could not be confirmed. Try the read again later; nothing was changed.");
   return { model: { status: "available", success: true, plans: data.plans, loose_items: data.loose_items,
     read_receipt: { run_id: context.runId, recorded: true, observed_at: observedAt, kind: "read_only" } },

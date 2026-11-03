@@ -41,7 +41,7 @@ describe("original Planning read receipt before model disclosure", () => {
   const runId = id(99);
   it("acknowledges the original receipt and preserves genuine source rows and typed references", async () => {
     const raw = { plans: [], loose_items: [item(1)] }; let calls = 0;
-    const result = await finishPlanningChatRead({ tenantId: tenant, runId, recordRead: async () => { calls++; return true; } }, raw);
+    const result = await finishPlanningChatRead({ tenantId: tenant, runId, isCurrent: async () => true, recordRead: async () => { calls++; return true; } }, raw);
     assert.equal(calls, 1); assert.equal(result.model.status, "available");
     assert.deepEqual(result.model.loose_items, raw.loose_items); assert.deepEqual(result.links, [link(1)]);
     const receipt = result.model.read_receipt as { run_id: string; recorded: boolean; kind: string; observed_at: string };
@@ -49,12 +49,12 @@ describe("original Planning read receipt before model disclosure", () => {
     assert.ok(Number.isFinite(Date.parse(receipt.observed_at)));
   });
   it("distinguishes an authoritative empty read from an unavailable lookup", async () => {
-    const result = await finishPlanningChatRead({ tenantId: tenant, runId, recordRead: async () => true }, { plans: [], loose_items: [] });
+    const result = await finishPlanningChatRead({ tenantId: tenant, runId, isCurrent: async () => true, recordRead: async () => true }, { plans: [], loose_items: [] });
     assert.equal(result.model.status, "available"); assert.deepEqual(result.links, []);
     assert.deepEqual(result.model.plans, []); assert.deepEqual(result.model.loose_items, []);
   });
   for (const failure of [false, "unknown"] as const) it(`withholds facts and references on ${failure} receipt`, async () => {
-    const result = await finishPlanningChatRead({ tenantId: tenant, runId, recordRead: async () => {
+    const result = await finishPlanningChatRead({ tenantId: tenant, runId, isCurrent: async () => true, recordRead: async () => {
       if (failure === "unknown") throw Error("response lost"); return false;
     } }, { plans: [], loose_items: [item(1)] });
     assert.equal(result.model.status, "unavailable"); assert.equal(result.model.success, false);
@@ -66,25 +66,35 @@ describe("original Planning read receipt before model disclosure", () => {
     { plans: null, loose_items: [] }, { success: false, plans: [], loose_items: [] }]) {
     it("rejects scope/refusal/shape drift before recording or disclosing facts " + JSON.stringify(raw), async () => {
       let recorded = false;
-      const result = await finishPlanningChatRead({ tenantId: tenant, runId, recordRead: async () => { recorded = true; return true; } }, raw);
+      const result = await finishPlanningChatRead({ tenantId: tenant, runId, isCurrent: async () => true, recordRead: async () => { recorded = true; return true; } }, raw);
       assert.equal(recorded, false); assert.equal(result.model.status, "unavailable"); assert.deepEqual(result.links, []);
     });
   }
   it("does not start a receipt after the existing request budget or cancellation", async () => {
     for (const options of [{ receiptBudgetMs: 0 }, { signal: AbortSignal.abort() }]) {
       let called = false;
-      const result = await finishPlanningChatRead({ tenantId: tenant, runId, ...options,
+      const result = await finishPlanningChatRead({ tenantId: tenant, runId, isCurrent: async () => true, ...options,
         recordRead: async () => { called = true; return true; } }, { plans: [], loose_items: [] });
       assert.equal(called, false); assert.equal(result.model.status, "unavailable");
     }
   });
   it("does not release facts when a completed receipt arrives after interruption", async () => {
     const controller = new AbortController(); let release!: (value: boolean) => void;
-    const pending = finishPlanningChatRead({ tenantId: tenant, runId, signal: controller.signal,
-      recordRead: () => new Promise<boolean>(resolve => { release = resolve; }) }, { plans: [], loose_items: [item(1)] });
-    await Promise.resolve(); controller.abort(); release(true);
+    let started!: () => void; const receiptStarted = new Promise<void>(resolve => { started = resolve; });
+    const pending = finishPlanningChatRead({ tenantId: tenant, runId, isCurrent: async () => true, signal: controller.signal,
+      recordRead: () => new Promise<boolean>(resolve => { release = resolve; started(); }) }, { plans: [], loose_items: [item(1)] });
+    await receiptStarted; controller.abort(); release(true);
     const result = await pending;
     assert.equal(result.model.status, "unavailable"); assert.deepEqual(result.links, []);
     assert.equal("loose_items" in result.model, false);
+  });
+  it("withholds an acknowledged read when the final currentness check throws", async () => {
+    let checks = 0;
+    const result = await finishPlanningChatRead({ tenantId: tenant, runId, recordRead: async () => true,
+      isCurrent: async () => { if (++checks === 2) throw Error("authority response lost"); return true; } },
+      { plans: [], loose_items: [item(1)] });
+    assert.equal(checks, 2); assert.equal(result.model.status, "unavailable");
+    assert.equal("loose_items" in result.model, false); assert.equal("read_receipt" in result.model, false);
+    assert.deepEqual(result.links, []);
   });
 });

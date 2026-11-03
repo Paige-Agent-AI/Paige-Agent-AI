@@ -18642,6 +18642,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 const receiptRunId = await stableRunId(["plan_list", tid ?? "", user.id, `${payloadThreadId ?? ""}:${tc.id}`]);
                 const read = await finishPlanningChatRead({ tenantId: tid, runId: receiptRunId, signal: req.signal,
                   receiptBudgetMs: WALL_CLOCK_MS - (Date.now() - startedAt),
+                  isCurrent: async () => {
+                    const scope = await supabaseClient.rpc("current_user_tenant_id");
+                    return !!tid && !scope.error && scope.data === tid;
+                  },
                   recordRead: () => recordCapabilityRun(supabase, { tenantId: tid, actorId: user.id,
                     capabilityKey: "plan_list", outcome: "capability_succeeded", runId: receiptRunId,
                     detail: { channel: "paige_chat", tool: "plan_list", read_only: true } }),

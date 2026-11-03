@@ -17,7 +17,7 @@ const producerEnd = source.indexOf("// O01 Planning read complete;", producerSta
 assert.ok(producerStart > 0 && producerEnd > producerStart, "original successful dispatch is inspectable");
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 const producer = new AsyncFunction("tc", "tid", "user", "payloadThreadId", "finishPlanningChatRead", "stableRunId", "recordCapabilityRun",
-  "supabase", "rpcData", "readRecordLinkSource", "toolResults", "req", "WALL_CLOCK_MS", "startedAt",
+  "supabase", "rpcData", "readRecordLinkSource", "toolResults", "req", "WALL_CLOCK_MS", "startedAt", "supabaseClient",
   `for (const once of [true]) { ${source.slice(producerStart, producerEnd)} }`);
 const begin = source.indexOf("// E4-S3 — only references held by an admitted read");
 const end = source.indexOf("} catch { /* keep ok */ }", begin);
@@ -30,14 +30,20 @@ const metadata = new Function("readLinkTrace", "readRecordLinks", "stepTrace", "
   "interactiveEffects", "payloadRequestIntentId", "crmResultReferenceMetadata",
   `return ${source.slice(metadataStart, metadataEnd + "\n      });".length).replace("const assistantTurnMetadata = ", "")}`);
 
-async function dispatch(input: unknown, options: { tool?: string; tenant?: string; receipt?: boolean | "unknown" } = {}) {
+async function dispatch(input: unknown, options: { tool?: string; tenant?: string; receipt?: boolean | "unknown";
+  scopeChange?: "before_receipt" | "during_receipt" | "unavailable" } = {}) {
   const tc = { id: "original-read-1", function: { name: options.tool ?? "plan_list" } }, map = new Map(), results: Array<{ content: string }> = [];
   const records: Array<Record<string, unknown>> = [], keys: string[][] = [];
+  let currentTenant = options.scopeChange === "before_receipt" ? foreign : options.tenant ?? tenant, scopeReads = 0;
   await producer(tc, options.tenant ?? tenant, { id: "00000000-0000-4000-8000-000000000010" }, "original-thread",
     finishPlanningChatRead, async (parts: string[]) => { keys.push(parts); return runId; },
-    async (_service: unknown, record: Record<string, unknown>) => { records.push(record); if (options.receipt === "unknown") throw Error("response lost"); return options.receipt ?? true; },
-    {}, input, map, results, { signal: new AbortController().signal }, 20_000, Date.now());
-  return { tc, map, records, keys, result: results[0], parsed: results[0] ? JSON.parse(results[0].content) : null };
+    async (_service: unknown, record: Record<string, unknown>) => { records.push(record);
+      if (options.scopeChange === "during_receipt") currentTenant = foreign;
+      if (options.receipt === "unknown") throw Error("response lost"); return options.receipt ?? true; },
+    {}, input, map, results, { signal: new AbortController().signal }, 20_000, Date.now(),
+    { rpc: async (name: string) => { assert.equal(name, "current_user_tenant_id"); scopeReads++;
+      return options.scopeChange === "unavailable" ? { data: null, error: { message: "unavailable" } } : { data: currentTenant, error: null }; } });
+  return { tc, map, records, keys, scopeReads, result: results[0], parsed: results[0] ? JSON.parse(results[0].content) : null };
 }
 function collect(read: Awaited<ReturnType<typeof dispatch>>, previous: unknown[] = []) {
   const trace = [...previous];
@@ -55,10 +61,19 @@ describe("Planning original dispatch → read receipt → collector → durable 
     assert.deepEqual(readRecordLinks(result.saved.bundleRef.paige_record_links), expected);
     assert.equal(JSON.stringify(result.saved).includes(item.title), false, "persist references, not source payload");
     assert.equal(read.records.length, 1); assert.equal(read.records[0].runId, runId);
+    assert.equal(read.scopeReads, 2, "original current-tenant read before and after receipt await");
     assert.equal(read.records[0].capabilityKey, "plan_list"); assert.equal(read.records[0].outcome, "capability_succeeded");
     assert.deepEqual(read.records[0].detail, { channel: "paige_chat", tool: "plan_list", read_only: true });
     assert.equal(read.parsed.read_receipt.run_id, runId); assert.equal(read.parsed.read_receipt.kind, "read_only");
     assert.ok(read.keys[0].includes("original-thread:original-read-1"), "original call identity, no new operation");
+  });
+  for (const scopeChange of ["before_receipt", "during_receipt", "unavailable"] as const) it(`withholds original facts on actual caller scope transition ${scopeChange}`, async () => {
+    const read = await dispatch(raw, { scopeChange }), result = collect(read);
+    assert.equal(read.parsed.status, "unavailable");
+    assert.equal("loose_items" in read.parsed, false); assert.equal("read_receipt" in read.parsed, false);
+    assert.deepEqual(result.trace, []); assert.equal(result.saved.bundleRef, null);
+    assert.equal(read.records.length, scopeChange === "during_receipt" ? 1 : 0);
+    assert.ok(read.scopeReads > 0, "not a comparison with only the captured tenant");
   });
   for (const receipt of [false, "unknown"] as const) it(`withholds facts/references when the original read receipt is ${receipt}`, async () => {
     const read = await dispatch(raw, { receipt }), result = collect(read);

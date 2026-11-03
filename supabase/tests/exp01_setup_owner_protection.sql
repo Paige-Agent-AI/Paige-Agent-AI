@@ -79,6 +79,16 @@ SELECT is(pg_temp.e01_owner_snapshot(),(SELECT value FROM e01_state WHERE name='
 SET LOCAL ROLE authenticated;
 SELECT lives_ok($$SELECT pg_temp.e01_owner_save('label')$$,'held harmless authorized label edit remains usable');
 SELECT is((SELECT item->>'displayName' FROM jsonb_array_elements(public.get_solo_setup_context()->'businessOwners') item WHERE item->>'id'='e0100600-0000-4000-8000-000000000002'),'Permitted owner label','held original authoritative readback confirms harmless edit');
+-- The completed fact-approval consumer must pass the protected owner unchanged,
+-- not drop its identity fields or treat publication as permission to remove it.
+INSERT INTO e01_state VALUES('guard_owners',public.get_solo_business_context()->'businessOwners');
+UPDATE e01_state SET value=pg_temp.e01_stage('e0100400-0000-4000-8000-000000000101') WHERE name='proposal';
+SELECT is(pg_temp.e01_save('e0100400-0000-4000-8000-000000000101','e0100500-0000-4000-8000-000000000101','["address"]')->>'current',
+ 'true','explicit selected-fact approval still saves through original Setup with a held legal owner');
+SELECT is(public.get_solo_business_context()->'businessOwners',(SELECT value FROM e01_state WHERE name='guard_owners'),
+ 'reviewed-fact receipt preserves exact held legal-owner fields and provenance');
+SELECT is(public.inspect_solo_reviewed_business_facts('e0100200-0000-4000-8000-000000000001',auth.uid(),
+ 'e0100500-0000-4000-8000-000000000101')->>'current','true','held-owner save is recovered through the original same-request receipt');
 RESET ROLE;
 ROLLBACK TO SAVEPOINT exp01_guard_held;
 RELEASE SAVEPOINT exp01_guard_held;

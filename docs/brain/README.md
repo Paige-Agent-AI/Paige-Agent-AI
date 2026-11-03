@@ -1,3 +1,20 @@
+## EXP08 November3 — original unsent NEXUS email release identity
+
+Original [3239](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3239)
+normally merged `b07ac386671979f88106bcbc4c68ae6c1674cc42`, exactly reviewed2c
+tree, after own NON-AUTHOR source review and ALL13 exact-head checks plus both
+web statuses. Immutable native20008/20009 are installed ONCE. Original Chat619
+JWTtrue has actual340/340 source/config PASS and normal edge-liveb07. Production
+web dpl_67UWwhaPhSF5ZrbBVMYePRLGU9af is READY/exactb07; all three official origins
+serve the same observed main-to-SoloEntry-to-TeamHub chain. Source cutover14:07UTC
+alone does not prove authenticated Save/reload/reopen. Later actual customer
+receipts belong to original ANT-161/ANT-147 and canonical Outcomes. Full18+6/five
+journeys remain STILL CODING; no email send, provider activation, customer
+publication or owner acceptance. Exact identities and actual failed-attempt
+boundaries are in [Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log)
+and [original evidence](../evidence/ui-delivery/exp08-nexus-unsent-email-continuity.md).
+This is the preceding source identity closeout only, with no recursive shipped row.
+
 ## EXP13 November2 — original Chat Knowledge release identity
 
 Original3227 normally merged `f29dbfeeaa82f861fc785b85b042a999a4e9d0ac`

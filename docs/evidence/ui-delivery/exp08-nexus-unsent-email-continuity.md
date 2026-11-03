@@ -1,6 +1,8 @@
 # EXP08 — prepare, save and resume one unsent NEXUS email
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
+
+Chronology: the engineering/customer checklist below is the retained pre-merge checkpoint. The dated production source cutover at the end records the actual preceding release identity only; later authenticated results remain in the original Linear/Outcomes records. No historical UNVERIFIED claim is silently promoted.
 FLOW_BY_FLOW: PASS: original ANT-161 matrix rows7/9/11/13/14/16; selected outcome and finite source contract in ANT-147 comments1d02cdb0,5d68add0,f1bb9d71. This is one outcome, not full Team Hub completion.
 PAIGE_UI_DESIGN: PASS: project UI skill, five modules, quality/accessibility/review references consulted; existing approved Hub and original Messages controls remain the visual direction. Impeccable context run once for TeamHubWorkspace; finish checks remain owed.
 MATERIAL_FLOW_CHANGE: YES: NEXUS private-DM preparation, explicit exact-content handoff to the original email writer, same-draft persistence/recovery and source return.
@@ -36,13 +38,13 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: browser drive owed.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: browser drive owed.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: browser drive owed.
 
-INTERNAL_BUILD_IDENTITY: source=70152b873b73dcdb2edfa65e1303ead7fca6e969; deployment=none; environment=local; migrations=APPLIED(20271130020008_exp08_nexus_unsent_email_handoff,20271130020009_exp08_nexus_email_lock_order_forward); edge=PROOF_OWED(repaired paige-ai-chat application deployment/source readback not run); evidence=docs/evidence/ui-delivery/exp08-nexus-unsent-email-continuity.md
-RELEASE_CHANNEL: development: repaired application unmerged; native prerequisite separately installed in production.
-RELEASE_CLASSIFICATION: internal-only: unsent Hub and original Messages integration candidate under technical review, with no customer publication.
+INTERNAL_BUILD_IDENTITY: source=b07ac386671979f88106bcbc4c68ae6c1674cc42; deployment=dpl_67UWwhaPhSF5ZrbBVMYePRLGU9af; environment=production; migrations=APPLIED(20271130020008_exp08_nexus_unsent_email_handoff,20271130020009_exp08_nexus_email_lock_order_forward); edge=APPLIED(paige-ai-chat@v619); evidence=docs/evidence/ui-delivery/exp08-nexus-unsent-email-continuity.md
+RELEASE_CHANNEL: production: preceding reviewed application/native/Edge/web source installation verified at14:07UTC.
+RELEASE_CLASSIFICATION: internal-only: original unsent Hub/Messages integration source release, with no customer publication.
 CUSTOMER_RELEASE_IDENTITY: none: not released or owner accepted.
 RELEASE_NOTE_REQUIRED: no: no completed customer release to announce.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: application Edge/web installation and authenticated save/reload/reopen/edit/source return are excluded from LIVE claims. Native prerequisite20008/20009 is production-installed with exact source/metadata readback, separately from the unmerged application.
-RELEASE_RECOVERY: position=retain existing application until final repaired source gates pass, preserve immutable applied native carriers and use reviewed forward fixes; reference=original main d5f5190c6abd23daba9988527cf107317fd032ae and ordinary migration workflow41638860301 attempt2
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: at source cutover14:07UTC the affected original Hub/Messages authenticated save/reload/reopen/edit/source-return runtime had not yet been driven. LIVE customer-outcome claims are excluded from source verification alone. Subsequent authenticated evidence belongs to original Linear/Outcomes, not this mechanical source identity closeout.
+RELEASE_RECOVERY: position=preserve immutable applied native carriers and original saved Messages records, use a reviewed forward application fix if needed without duplicate draft submission; reference=production b07ac386671979f88106bcbc4c68ae6c1674cc42 and original Edge41648649121 attempt2 plus native41638860301 attempt2
 
 ## Source and privacy boundary
 
@@ -115,3 +117,9 @@ Before merge, TWO actual late material review threads returned at12:51:58: PRRT_
 Finite repair uses ORIGINAL emailProvidersFor for unsent sender recognition without credentials/readiness/provider execution; private/unsupported mailboxes remain excluded. A narrowly matching actor/tenant/locator/message/selected-thread hold prevents automatic fallback from clearing the withheld original editor. Fresh same-actor native permission remains required before showing it; existing Close/account retirement clearing remains. Sender11, original hosted host+structural238/30 and mounted Messages7 PASS. The latter verifies an actual second inbox thread plus Retry and delayed Retry→Close/refusal; initial red failures remain historical. These are controlled engineering cases, not browser/Auth/customer proof. Source declarations and native receipt are ANT147/84aaaf30; BOTH production-applied migrations, original domain writer/provider policy, Root/verifier and peer source remain unchanged. Final repaired-head NON-AUTHOR review, ALL fresh exact-head gates, Edge/web/readback and authenticated outcome remain owed.
 
 Exacte588 own NON-AUTHOR re-review SOURCE-CLEAR, independently sender11/mounted7 PASS; no edits/coauthoring. Its actual UI evidence check41641108420 failed the record grammar: installed native state must use APPLIED(exact identifiers), and recovery requires only the substantive position/reference fields. Corrected ONLY those two record fields; the validator and all functional source remain unchanged. Repaired local build/scoped lint and original app ratchet10baseline/6current/0new also PASS. Fresh final-head review/checks remain required, not borrowed frome588 or9e.
+
+### November3 production source cutover — preceding PR3239 identity only
+
+Normal merge b07ac386671979f88106bcbc4c68ae6c1674cc42 has reviewed2c75311ae6b1ca2e1343f261e44080f0d64444b1 exact tree fa940e60b0e64f32ed88e4aaf361fd978b01f31d. Own distinct NON-AUTHOR exact-head source review CLEAR; both late causal findings resolved; ALL13 checks, genuine Preview125937304300 and both web statuses SUCCESS. Native20008/20009 remain immutable/ONCE; normal postmerge41648649067 SUCCESS. Chat619 ACTIVE/JWTtrue source/config340/340 PASS through original41648649121 attempt2, normal edge-liveb07. First Edge attempt source readback failed and left old618 uncertified; no guard was waived. Certificate13236892859 ZIP SHA256a813dcc59df4bbf0f3b2ab2c6ac7c1da1506a4b36f2b798d9e47a0dba9688ed9; scratch cleanup permission_denied/incomplete retained. Production web dpl_67UWwhaPhSF5ZrbBVMYePRLGU9af READY/exactb07; three official origins expose identical observed main/SoloEntry/TeamHub chain200 at14:07UTC. No customer update, send, approval, provider or routing activation.
+
+This dated source-only cutover supersedes earlier unmerged/undeployed identity statements, while preserving them as chronology. At14:07UTC authenticated customer proof was owed; subsequent actual result/receipt/reload/reopen evidence belongs to original ANT-161, Coordinator ANT-147/1d02cdb0 and canonical Outcomes. It is not inferred from build/source proof. All original18+6/five journeys, previous teammate-details BLOCKED/PARTIAL and owner acceptance remain separate. No standing authority, consequential action wave or full-assignment readiness is promoted.

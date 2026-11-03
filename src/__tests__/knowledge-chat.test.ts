@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import { executeKnowledgeTool, normalizeKnowledgeArgs } from '../../supabase/functions/_shared/knowledge-tenant-brain';
 import { classifySpentApproval, sayWhatTheCardSays, buildApprovalOutcome } from '../../supabase/functions/_shared/approval-outcome';
 import { confirmFingerprint } from '../../supabase/functions/_shared/confirm-fingerprint';
@@ -7,6 +8,74 @@ const tenant='11111111-1111-4111-8111-111111111111';
 const id='22222222-2222-4222-8222-222222222222';
 const row={id,tenant_id:tenant,revision:2,title:'Guide',summary:null,category:null,tags:[],source:'paste',source_url:null,chunk_count:1,content:'private'};
 const port=(data:unknown,error:unknown=null)=>({rpc:vi.fn().mockResolvedValue({data,error})});
+
+describe('original Knowledge source identity and text continuation',()=>{
+ it.each(['"quoted",value\\path\n','short\nlines\n','\\\\""'])('retains an advancing document when JSON escaping expands %j',async(unit)=>{
+  const content=unit.repeat(2500),caller=port({tenant_id:tenant,documents:[{...row,content}]});
+  const hash=createHash('sha256').update(content).digest('hex');let cursor=0,joined='',reads=0;
+  do {
+   const result=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{document_id:id,
+    ...(cursor?{content_offset:cursor,expected_revision:2,expected_content_sha256:hash}:{})}});
+   expect(result.success).toBe(true);expect(result.documents).toHaveLength(1);expect(JSON.stringify(result).length).toBeLessThan(16000);
+   const doc=(result.documents as Array<Record<string,unknown>>)[0];joined+=doc.content;
+   if(++reads>20)throw Error('continuation did not finish');cursor=doc.next_content_offset as number;
+  }while(cursor!==null);
+  expect(joined).toBe(content);
+ });
+ it('reads the complete long source in bounded same-version ranges without another native reader',async()=>{
+  const content='Synthetic agreement\n'+'x'.repeat(19000)+'😀\nFINAL OBLIGATION: deliver the final report.';
+  const caller=port({tenant_id:tenant,documents:[{...row,content}]});
+  const expected=createHash('sha256').update(content).digest('hex');let cursor=0,joined='',reads=0;
+  do {
+   const result=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{document_id:id,
+    ...(cursor?{content_offset:cursor,expected_revision:2,expected_content_sha256:expected}:{})}});
+   expect(result.success).toBe(true);
+   const doc=(result.documents as Array<Record<string,unknown>>)[0];
+   expect(doc.source_reference).toEqual({contractVersion:1,tenantId:tenant,documentId:id,revision:2,contentSha256:expected});
+   expect(doc.content_utf16_start).toBe(cursor);expect(doc.content_utf16_length).toBe(content.length);
+   joined+=String(doc.content);reads++;if(reads>5)throw Error('reader did not advance');
+   expect(JSON.stringify(result).length).toBeLessThan(16000);
+   cursor=doc.next_content_offset as number;
+  }while(cursor!==null);
+  expect(joined).toBe(content);expect(joined).toContain('FINAL OBLIGATION');expect(reads).toBeGreaterThan(1);
+  expect(caller.rpc).toHaveBeenCalledTimes(reads);
+  for(const call of caller.rpc.mock.calls)expect(call).toEqual(['read_tenant_knowledge',{p_expected_tenant:tenant,p_doc_id:id,p_limit:1,p_offset:0}]);
+ });
+ it('refuses version/hash changes before returning a continuation body',async()=>{
+  for(const changed of [{revision:3},{content:'private CHANGED'}]){
+   const result=await executeKnowledgeTool({caller:port({tenant_id:tenant,documents:[{...row,...changed}]}),expectedTenantId:tenant,tool:'read_tenant_knowledge',
+    args:{document_id:id,content_offset:1,expected_revision:2,expected_content_sha256:createHash('sha256').update('private').digest('hex')}});
+   expect(result).toMatchObject({success:false,code:'KNOWLEDGE_SOURCE_CHANGED'});expect(JSON.stringify(result)).not.toContain('private');
+  }
+ });
+ it('rejects unbound continuation and malformed ranges before any native call',async()=>{
+  const caller=port(null);
+  for(const args of [{content_offset:1},{document_id:id,content_offset:1},{document_id:id,content_offset:-1},{document_id:id,content_limit:12001},{document_id:id,content_limit:0}])
+   expect(await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args})).toMatchObject({success:false,not_applied:true});
+  expect(caller.rpc).not.toHaveBeenCalled();
+ });
+ it.each([
+  {content:'😀',offset:0,limit:12000,expected:'😀',next:null},
+  {content:'😀B',offset:0,limit:2,expected:'😀',next:2},
+  {content:'A😀',offset:1,limit:2,expected:'😀',next:null},
+ ])('reads a whole two-unit character at the range boundary %j',async({content,offset,limit,expected,next})=>{
+  const caller=port({tenant_id:tenant,documents:[{...row,content}]});
+  const first=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{document_id:id}});
+  const reference=(first.documents as Array<Record<string,unknown>>|undefined)?.[0]?.source_reference as {contentSha256:string}|undefined;
+  const result=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{document_id:id,content_offset:offset,content_limit:limit,
+   ...(offset?{expected_revision:row.revision,expected_content_sha256:reference?.contentSha256}:{}),}});
+  expect(result.success).toBe(true);
+  expect((result.documents as Array<Record<string,unknown>>)[0]).toMatchObject({content:expected,content_utf16_start:offset,next_content_offset:next});
+ });
+ it('does not split a surrogate pair or expose content in the ordinary metadata list',async()=>{
+  const content='A😀B',caller=port({tenant_id:tenant,documents:[{...row,content}]});
+  const first=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{document_id:id,content_limit:2}});
+  expect((first.documents as Array<Record<string,unknown>>)[0]).toMatchObject({content:'A',content_utf16_end:1,next_content_offset:1});
+  const list=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{}});
+  expect((list.documents as Array<Record<string,unknown>>)[0]).not.toHaveProperty('content');
+  expect((list.documents as Array<Record<string,unknown>>)[0]).not.toHaveProperty('source_reference');
+ });
+});
 describe('governed Knowledge adapter',()=>{
  it('resumed approvals preserve verified change with missing receipt only for the Knowledge consumer',()=>{
   const spentContent=JSON.stringify({success:false,verified:true,railRecorded:false,outcome:'capability_completed_unrecorded'});

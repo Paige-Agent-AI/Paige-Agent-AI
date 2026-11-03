@@ -12,8 +12,12 @@
  * parameters: the callback therefore verifies Zernio rows by reading the profile
  * back and requiring the requested platform's account to be present.
  *
- * Publishing does not exist here yet — createPost always refuses. The publishing
- * arm ships as its own governed slice after connections are proven live.
+ * The posting arm (owner-approved November 3): one POST /v1/posts call, publishNow,
+ * the publication row's UUID as the Idempotency-Key (one approval = one provider post;
+ * a retry can never double-publish), per-platform outcomes mapped honestly — only
+ * platformResults prove anything; an accepted-but-unproven post is the processing
+ * outcome with the provider's own post id, and a 409 or transport failure after send
+ * is an uncertain outcome for reconciliation, never a clean failure.
  */
 import { envKey } from "../env-key.ts";
 import { NeedsConfigError } from "../provider-types.ts";
@@ -280,8 +284,64 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
       throw error;
     }
   },
-  async createPost(): Promise<never> {
-    // Publishing is its own governed slice; this arm refuses until that slice ships.
-    throw new SocialProviderError("provider_publishing_unavailable", 501, "Social publishing is not enabled for this provider yet.");
+  async createPost(input) {
+    assertProfileKey(input.providerProfileKey);
+    const requested = connectPlatform(input.platform);
+    // The publication row's UUID is the Idempotency-Key: one approved publication = one
+    // provider post, and a retry of the same publication can never create a second. Zernio
+    // matches on the key ALONE (not the body), so the key must never be reused for
+    // different content — the door guarantees that by construction.
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.externalId)) {
+      throw new SocialProviderError("invalid_publication_id", 400, "The publication identifier is invalid.");
+    }
+    const content = typeof input.text === "string" && input.text.trim() ? input.text.trim().slice(0, 6000) : "";
+    const profileId = await resolveProfileId(input.providerProfileKey);
+    const providerPath = requested === "google_business" ? "google-business" : requested;
+    try {
+      const payload = await request("/posts", {
+        method: "POST",
+        headers: { "Idempotency-Key": input.externalId },
+        body: JSON.stringify({ profileId, content, platforms: [providerPath], publishNow: true }),
+      }) as Record<string, unknown>;
+      // 200 = idempotent retry of the original answer; 201 = created; 207 = inline publish.
+      // Every 2xx carries the post object; only platformResults prove per-platform outcomes.
+      const post = payload.post && typeof payload.post === "object" && !Array.isArray(payload.post)
+        ? payload.post as Record<string, unknown> : payload;
+      const postId = text(post.id, 128);
+      const mapped: Array<{ platform: string; success: boolean; postId: string | null; postUrl: string | null; error: string | null }> = [];
+      for (const row of listOf(payload.platformResults)) {
+        const platform = normalizePlatform(row.platform);
+        const status = typeof row.status === "string" ? row.status.toLowerCase() : "";
+        const url = /^https:\/\//.test(String(row.platformPostUrl ?? "")) ? String(row.platformPostUrl) : null;
+        if (!platform) continue;
+        mapped.push({
+          platform,
+          success: status === "published",
+          postId: text(row.platformPostId, 200) ?? postId,
+          postUrl: url,
+          error: text(row.error, 300),
+        });
+      }
+      if (mapped.length) {
+        return { kind: "published" as const, results: mapped };
+      }
+      const status = text(post.status, 40) ?? "";
+      if (postId && ["publishing", "published", "partial", "pending", "processing"].includes(status)) {
+        // Accepted but not yet proven per-platform — the honest processing outcome with the
+        // provider's own post id as the reconciliation handle.
+        return { kind: "processing" as const, requestId: postId };
+      }
+      return { kind: "unknown" as const, requestId: postId, reason: "provider_answered_without_results" };
+    } catch (error) {
+      if (error instanceof SocialProviderError) {
+        // A 409 here means either the first attempt with this key is STILL processing or the
+        // provider's content dedup refused — the post may exist either way, so this is an
+        // uncertain outcome for reconciliation, never a clean failure.
+        if (error.status === 409) return { kind: "unknown" as const, requestId: null, reason: "provider_idempotency_or_dedup_conflict" };
+        throw error;
+      }
+      // A transport failure AFTER the request was sent is an unknown outcome, never a failure.
+      return { kind: "unknown" as const, requestId: null, reason: error instanceof Error ? error.name : "transport_uncertain" };
+    }
   },
 };

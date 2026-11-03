@@ -1,6 +1,7 @@
 // social-publish-command — THE one door for publishing saved content to a connected social
 // channel (EXP07 row 10). The handler is _shared/social-publish-command/door.ts; this file only
-// wires the two Supabase clients and the provider adapter. verify_jwt is the default, and the
+// wires the two Supabase clients and the provider adapter. Zernio is the sole
+// Social provider (owner decision, locked November 2) — no alternate fallback. verify_jwt is the default, and the
 // handler verifies the caller's JWT again (getUser) and resolves the workspace server-side.
 //
 // Product controls this door preserves (owner directive 2026-10-25): the workspace's own

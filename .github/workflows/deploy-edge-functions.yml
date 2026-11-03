@@ -220,8 +220,16 @@ jobs:
           while IFS= read -r fn; do
             [ -z "$fn" ] && continue
             echo "::group::delete $fn"
-            if supabase functions delete "$fn" --project-ref "$ref" --yes; then
+            # The CLI exits non-zero when the function is already gone ("does not exist ...
+            # nothing to delete") — for a RETIRED name that absence IS the desired end state
+            # (a prior run or a dashboard removal already deleted it), so it is a success
+            # here, never a deploy-blocking failure. Any other failure remains loud.
+            out="$(supabase functions delete "$fn" --project-ref "$ref" --yes 2>&1)"; rc=$?
+            echo "$out"
+            if [ $rc -eq 0 ]; then
               echo "✓ deleted $fn at the provider (retired in source)"
+            elif echo "$out" | grep -q "nothing to delete"; then
+              echo "✓ $fn already absent at the provider — the retirement's end state is already in place"
             else
               echo "::error::failed to delete $fn — it may still be callable in production"
               fail=1

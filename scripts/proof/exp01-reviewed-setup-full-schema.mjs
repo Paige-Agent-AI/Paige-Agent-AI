@@ -111,14 +111,14 @@ if(process.argv.includes('--emit-only')){
   if(causal.status!==0)throw Error('Original EXP01 disposable concurrency/authority proof failed');
   const psql=process.env.OPERATOR_PROOF_PSQL||'psql';
   const localEnv={...process.env,PGPASSWORD:decodeURIComponent(url.password)};
-  const ownerConcurrency=spawnSync(process.execPath,['scripts/proof/exp01-setup-owner-guard-postgres.mjs',url.port,'--self-test'],
-   {stdio:'inherit',timeout:120000,env:localEnv});
-  if(ownerConcurrency.error)throw ownerConcurrency.error;
-  if(ownerConcurrency.status!==0)throw Error('Setup legal-owner causal/concurrency proof failed');
   const directory=spawnSync(psql,['-X','-h',url.hostname,'-p',url.port,'-U','postgres','-d','postgres','-Atc','SHOW data_directory'],{
    encoding:'utf8',timeout:10000,env:localEnv,
   });
   if(directory.status!==0||!directory.stdout.trim())throw Error('Original local host-proof database identity unavailable');
+  const ownerConcurrency=spawnSync(process.execPath,['scripts/proof/exp01-setup-owner-guard-postgres.mjs',url.port,'--self-test'],
+   {stdio:'inherit',timeout:120000,env:{...localEnv,OPERATOR_PROOF_EXPECTED_DATA_DIRECTORY:directory.stdout.trim()}});
+  if(ownerConcurrency.error)throw ownerConcurrency.error;
+  if(ownerConcurrency.status!==0)throw Error('Setup legal-owner causal/concurrency proof failed');
   const hostNative=spawnSync(process.platform==='win32'?'python':'python3',[
    'scripts/proof/exp01-chat-knowledge-postgres.py','--psql',psql,'--port',url.port,'--expected-data-directory',directory.stdout.trim(),
   ],{stdio:'inherit',timeout:120000,env:localEnv});

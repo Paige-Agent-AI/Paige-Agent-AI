@@ -19,10 +19,18 @@ if(process.argv.includes('--self-test')){
  process.exit(0);
 }
 const probe=spawnSync(process.env.OPERATOR_PROOF_PSQL??'psql',['-X','-h','127.0.0.1','-p',String(port),'-U','postgres','-d','postgres','-Atc',
- "SELECT current_database()||'/'||current_user||'/'||host(inet_server_addr())"],{encoding:'utf8',timeout:10000});
+ "SELECT json_build_object('database',current_database(),'user',current_user,'address',host(inet_server_addr()),'directory',current_setting('data_directory'))"],{encoding:'utf8',timeout:10000});
 if(probe.error)throw probe.error;
 assert.equal(probe.status,0,'local-only PostgreSQL probe: '+probe.stderr);
-assert.equal(probe.stdout.trim(),'postgres/postgres/127.0.0.1');
+const identity=JSON.parse(probe.stdout);
+assert.equal(identity.database,'postgres');assert.equal(identity.user,'postgres');
+if(port===54322){
+ // The client still connects ONLY to hard-coded loopback54322. Docker reports
+ // its container address, not the host's loopback address. Match the exact
+ // existing CI stack directory independently read by the parent runner.
+ assert.ok(process.env.CI&&process.env.OPERATOR_PROOF_EXPECTED_DATA_DIRECTORY);
+ assert.equal(identity.directory,process.env.OPERATOR_PROOF_EXPECTED_DATA_DIRECTORY);
+}else assert.equal(identity.address,'127.0.0.1');
 const db=new OperatorPostgresFixture(port);
 const tenant='e0110200-0000-4000-8000-000000000001',actor='e0110100-0000-4000-8000-000000000001';
 const owner='e0110600-0000-4000-8000-000000000001',replacement='e0110100-0000-4000-8000-000000000002';

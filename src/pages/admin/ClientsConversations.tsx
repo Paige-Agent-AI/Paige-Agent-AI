@@ -558,7 +558,9 @@ export default function ClientsConversations() {
   const emailLocator=useMemo(()=>parseSavedEmailLocator(searchParams),[searchParams]);
   const emailLocatorKey=JSON.stringify([activeTenantId,activeUserId,emailLocator]);
   const emailLocatorCurrent=useRef(emailLocatorKey);emailLocatorCurrent.current=emailLocatorKey;
-  const locatedEmailRows=useRef<{key:string;message:MessageRow;thread:DbThread}|null>(null);
+  const locatedEmailRows=useRef<{key:string;message:MessageRow;thread:DbThread;revalidate:()=>Promise<MessageRow|null>;retire:()=>void}|null>(null);
+  const withheldEmail=useRef<{key:string;messageId:string;threadKey:string|null}|null>(null);
+  const locatedEditingId=useRef(editingDraftId);locatedEditingId.current=editingDraftId;
   const [emailLocation,setEmailLocation]=useState<{key:string;state:"loading"|"loaded"|"opened"|"unavailable";message?:MessageRow}>({key:"",state:"loading"});
   const [emailLocationRetry,setEmailLocationRetry]=useState(0);
   const emailLocatorConflict=emailLocator.kind!=="none" && (emailLocator.kind!=="bound" || emailLocation.key!==emailLocatorKey
@@ -593,13 +595,19 @@ export default function ClientsConversations() {
       sb.rpc("current_user_tenant_id"),
     ]);
     if (!accountEpochRef.current.accept(epoch)) return;
+    const pin=locatedEmailRows.current;
+    const pinned=pin&&pin.key===emailLocatorCurrent.current?await pin.revalidate():null;
+    if (!accountEpochRef.current.accept(epoch)) return;
+    if(pin&&pin.key===emailLocatorCurrent.current&&!pinned)pin.retire();
     if (msgRes.error) {
       toast.error("Couldn't load conversations.");
       setMessageLoadFailure(msgRes.error.message || "Conversation messages are unavailable.");
     } else {
       setMessageLoadFailure(null);
-      const messages=messageRowsFromDb(msgRes.data),pin=locatedEmailRows.current;
-      setRows(pin&&pin.key===emailLocatorCurrent.current&&!messages.some(m=>m.id===pin.message.id)?[...messages,pin.message]:messages);
+      const withheld=withheldEmail.current;
+      const messages=messageRowsFromDb(msgRes.data).filter(m=>withheld?.key!==emailLocatorCurrent.current||m.id!==withheld.messageId);
+      setRows(pin&&pin.key===emailLocatorCurrent.current
+        ?pinned?[...messages.filter(m=>m.id!==pinned.id),pinned]:messages.filter(m=>m.id!==pin.message.id):messages);
     }
     if (connRes.error) {
       setConnectorReadReported(false);
@@ -641,12 +649,19 @@ export default function ClientsConversations() {
     // Web ahead of migration 20271111010000 (E09 Slice 7): the inbox still loads, every client reads open.
     if (missingPortalAccessColumns(error)) ({ data, error } = await pull(withoutPortalAccessColumns(THREAD_COLS)));
     if (!accountEpochRef.current.accept(epoch)) return;
+    const pin=locatedEmailRows.current;
+    const pinned=pin&&pin.key===emailLocatorCurrent.current?await pin.revalidate():null;
+    if (!accountEpochRef.current.accept(epoch)) return;
+    if(pin&&pin.key===emailLocatorCurrent.current&&!pinned)pin.retire();
     if (error) {
       toast.error("Couldn't load the inbox.");
       setThreadLoadFailure(error.message || "The conversation queue is unavailable.");
     } else {
-      const threads=threadsFromDb(data),pin=locatedEmailRows.current;
-      setDbThreads(pin&&pin.key===emailLocatorCurrent.current&&!threads.some(t=>t.thread_key===pin.thread.thread_key)?[...threads,pin.thread]:threads);
+      const withheld=withheldEmail.current;
+      const threads=threadsFromDb(data).filter(t=>withheld?.key!==emailLocatorCurrent.current||t.thread_key!==withheld.threadKey);
+      setDbThreads(pin&&pin.key===emailLocatorCurrent.current
+        ?pinned?threads.some(t=>t.thread_key===pin.thread.thread_key)?threads:[...threads,pin.thread]
+          :threads.filter(t=>t.thread_key!==pin.thread.thread_key):threads);
       setThreadLoadFailure(null);
     }
     setThreadsReady(true); // gate the ?contact deep-link on a real first threads pull
@@ -1386,9 +1401,7 @@ export default function ClientsConversations() {
       const [user,tenant]=await Promise.all([supabase.auth.getUser(),sb.rpc("current_user_tenant_id")]);
       return current()&&!user.error&&!tenant.error&&user.data.user?.id===activeUserId&&tenant.data===activeTenantId;
     };
-    setEmailLocation({key,state:"loading"});
-    void(async()=>{
-      const message=await readLocatedSavedEmail(emailLocator,activeTenantId,activeUserId,{
+    const readOriginal=()=>readLocatedSavedEmail(emailLocator,activeTenantId,activeUserId,{
         current,identity,
         readContent:id=>sb.rpc("read_message_content",{p_message_id:id}),
         readHub:id=>sb.rpc("team_hub_email_draft",{p_expected_tenant:activeTenantId,p_message_id:id}),
@@ -1398,22 +1411,42 @@ export default function ClientsConversations() {
           return {...r,data:r.data?messageRowsFromDb([r.data])[0]:null};
         },
       });
+    const retire=()=>{
+      const pin=locatedEmailRows.current;
+      if(!pin||pin.key!==key||pin.retire!==retire)return;
+      withheldEmail.current={key,messageId:emailLocator.messageId,threadKey:pin.thread.thread_key};
+      locatedEmailRows.current=null;
+      setRows(rows=>rows.filter(row=>row.id!==emailLocator.messageId));
+      setDbThreads(rows=>rows.filter(row=>row.thread_key!==pin.thread.thread_key));
+      // Withhold the editor while permission is unverified. Keep any local
+      // unsaved edit private until a successful same-actor source recheck;
+      // the original CAS still refuses an intervening native version change.
+      setEmailLocation({key,state:"unavailable"});
+    };
+    // One in-flight ORIGINAL read shared by the existing message/thread refresh;
+    // settled results are never cached as current permission.
+    let checking:Promise<MessageRow|null>|null=null;
+    const revalidate=()=>checking??(checking=readOriginal().finally(()=>{checking=null;}));
+    setEmailLocation({key,state:"loading"});
+    void(async()=>{
+      const message=await revalidate();
       if(!current())return;
-      if(!message){setEmailLocation({key,state:"unavailable"});return;}
+      if(!message){if(locatedEmailRows.current?.key===key)locatedEmailRows.current.retire();if(withheldEmail.current?.key!==key)withheldEmail.current={key,messageId:emailLocator.messageId,threadKey:null};setEmailLocation({key,state:"unavailable"});return;}
       const thread=await sb.from("threads").select(THREAD_COLS).eq("tenant_id",activeTenantId)
         .eq("contact_id",emailLocator.contactId).eq("thread_key",message.thread_key).maybeSingle();
       if(!current())return;
-      if(thread.error||!thread.data||!await identity()){if(current())setEmailLocation({key,state:"unavailable"});return;}
+      if(thread.error||!thread.data||!await identity()){if(current()){if(locatedEmailRows.current?.key===key)locatedEmailRows.current.retire();setEmailLocation({key,state:"unavailable"});}return;}
       const original=threadsFromDb([thread.data])[0];
-      if(!original||original.thread_key!==message.thread_key||original.contact_id!==emailLocator.contactId){setEmailLocation({key,state:"unavailable"});return;}
-      locatedEmailRows.current={key,message,thread:original};
+      if(!original||original.thread_key!==message.thread_key||original.contact_id!==emailLocator.contactId){if(locatedEmailRows.current?.key===key)locatedEmailRows.current.retire();setEmailLocation({key,state:"unavailable"});return;}
+      withheldEmail.current=null;
+      locatedEmailRows.current={key,message,thread:original,revalidate,retire};
       setRows(rows=>[...rows.filter(r=>r.id!==message.id),message]);
       setDbThreads(rows=>[...rows.filter(r=>r.thread_key!==original.thread_key),original]);
       pendingSelectRef.current=original.thread_key;setView("all");setLabelFilter(null);setSearch("");
       setEmailLocation({key,state:"loaded",message});
-    })().catch(()=>{if(current())setEmailLocation({key,state:"unavailable"});});
+    })().catch(()=>{if(current()){if(locatedEmailRows.current?.key===key)locatedEmailRows.current.retire();setEmailLocation({key,state:"unavailable"});}});
     return()=>{alive=false;};
-  },[emailLocator,emailLocatorKey,activeTenantId,activeUserId,tenantContext.loading,tenantContext.accountContextLoading,tenantContext.accountContextStatus,emailLocationRetry]);
+  },[emailLocator,emailLocatorKey,activeTenantId,activeUserId,tenantContext.loading,tenantContext.accountContextLoading,tenantContext.accountContextStatus,emailLocationRetry,resetComposer]);
   useEffect(()=>{
     if(emailLocation.key!==emailLocatorKey||emailLocation.state!=="loaded"||!emailLocation.message
       ||selected?.key!==emailLocation.message.thread_key)return;
@@ -2100,6 +2133,11 @@ export default function ClientsConversations() {
             action={<Button variant="outline" size="sm" disabled={retrying} onClick={() => void retryConversations()}>{retrying ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}Retry</Button>}
           />
         </div>
+      ) : emailLocator.kind!=="none" && (emailLocation.key!==emailLocatorKey || emailLocation.state==="loading"
+        || emailLocation.state==="unavailable" || tenantContext.loading || tenantContext.accountContextLoading || tenantContext.accountContextStatus!=="ready") ? (
+        <div className="grid flex-1 place-items-center p-4" role="alert"><EmptyState icon={AlertTriangle} title="Original email unavailable"
+          description="The saved email could not be verified with your current access. Its private preview is withheld."
+          action={<Button variant="outline" size="sm" onClick={()=>setEmailLocationRetry(n=>n+1)}>Retry original draft</Button>} /></div>
       ) : !selected ? (
         <div className="grid flex-1 place-items-center">
           <EmptyState
@@ -2369,7 +2407,7 @@ export default function ClientsConversations() {
               :"Editing the original saved email. Nothing has been sent."}</span>
         {emailLocator.kind==="bound"&&(emailLocation.state==="unavailable"||emailLocation.state==="opened"&&emailLocatorConflict)?<Button variant="outline" size="sm" onClick={()=>setEmailLocationRetry(n=>n+1)}>Retry original draft</Button>:null}
         {emailHubReturn?<Link className="underline underline-offset-2 focus-visible:ring-2 focus-visible:ring-ring" to={emailHubReturn.to}>Return to NEXUS</Link>:null}
-        <Button variant="ghost" size="sm" onClick={()=>setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("email_draft");next.delete("hub_message");return next;},{replace:true})}>Close draft link</Button>
+        <Button variant="ghost" size="sm" onClick={()=>{if(emailLocation.key===emailLocatorKey&&emailLocation.state==="unavailable"&&emailLocator.kind==="bound"&&locatedEditingId.current===emailLocator.messageId)resetComposer();setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("email_draft");next.delete("hub_message");return next;},{replace:true});}}>Close draft link</Button>
       </div>:null}
       {/* The three-column conversation shell (§18 one home) — pure layout: the §36 first-run
           swap, the railOpen 3↔2-col toggle, and the mobile contact Sheet. The container feeds it

@@ -46,6 +46,19 @@ CREATE FUNCTION public._team_hub_email_scope(t public.team_hub_agent_turns)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE c public.team_hub_channels; config jsonb;
 BEGIN
+ -- Compose with ORIGINAL departure/permission ordering without changing the
+ -- Comms helper: retirement exclusion → identity → membership → profile.
+ -- A publication trigger may already hold its turn. Never wait on a departure's
+ -- membership lock while retaining that child; refusal releases it for removal.
+ LOCK TABLE public.tenants IN ROW EXCLUSIVE MODE;
+ PERFORM 1 FROM auth.users WHERE id=t.asker_user_id FOR SHARE;
+ BEGIN
+  PERFORM 1 FROM public.tenant_members WHERE tenant_id=t.tenant_id AND user_id=t.asker_user_id
+   AND status='active' AND role IN ('owner','admin') FOR SHARE NOWAIT;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Private email preparation unavailable' USING ERRCODE='42501'; END IF;
+ EXCEPTION WHEN lock_not_available THEN
+  RAISE EXCEPTION 'Private email preparation unavailable' USING ERRCODE='42501';
+ END;
  PERFORM public._comms_email_actor(t.asker_user_id,t.tenant_id);
  IF NOT coalesce(public._team_hub_participates(t.tenant_id,t.asker_user_id),false) THEN
   RAISE EXCEPTION 'Private email preparation unavailable' USING ERRCODE='42501'; END IF;

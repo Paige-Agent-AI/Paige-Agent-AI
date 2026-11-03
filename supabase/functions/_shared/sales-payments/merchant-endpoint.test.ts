@@ -7,12 +7,14 @@ import * as command from './merchant-command.ts';
 import {admitMerchantCommand} from './merchant-admission.ts';
 import {merchantApprovalStore} from './merchant-approval-store.ts';
 import {recordCapabilityRun} from '../capability-record.ts';
+import {salesStripeSecret} from './stripe-configuration.ts';
 const tenant='10000000-0000-4000-8000-000000000001',actor='30000000-0000-4000-8000-000000000001',operation='20000000-0000-4000-8000-000000000001';
 const source=readFileSync(new URL('../../tenant-stripe-connect/index.ts',import.meta.url),'utf8').replace(/^import .*;\r?$/gm,'');
 const js=transformSync(source,{loader:'ts',format:'esm'}).code;
 type Row=Record<string,unknown>;
-function fixture(initial:Row|null=null){
+function fixture(initial:Row|null=null,environmentOverrides:Record<string,string>={}){
  const tables:Record<string,Row[]>={profiles:[{user_id:actor,active_tenant_id:tenant}],tenants:[{id:tenant,account_number:100}],tenant_stripe_accounts:initial?[{...initial}]:[],paige_pending_confirmations:[],paige_audit_log:[]};
+ const providerKeys:string[]=[];
  const calls:string[]=[],logs:unknown[]=[],receiptArgs:Row[]=[],creates:Row[]=[],queries:{table:string;op:string;filters:string[]}[]=[];
  let active=tenant,lane='confirm',receiptFails=false,readbackFails=false,auditFails=false,providerError:unknown=null,listError:unknown=null,recover=false,switchOnCreate=false;
  let onCreate:()=>Promise<void>=async()=>{};
@@ -53,16 +55,16 @@ function fixture(initial:Row|null=null){
   return {data:null,error:{}};
  }};
  class Provider{
-  constructor(_key:string,_options:unknown){}
+  constructor(_key:string,_options:unknown){providerKeys.push(_key)}
   accounts={create:async(_params:Row,_options:Row)=>{calls.push('POST:create');creates.push({params:_params,options:_options});await onCreate();if(switchOnCreate)active='other';if(providerError)throw providerError;return {...account,metadata:{...account.metadata,..._params.metadata as Row}};},list:async()=>{calls.push('GET:list');if(listError)throw listError;return {data:recover?[{...account,metadata:{tenant_id:tenant,onboarding_id:operation,provider_environment:initial?.provider_environment??'test'}}]:[],has_more:false};},retrieve:async()=>{calls.push('GET:retrieve');return account;},createLoginLink:async()=>{calls.push('POST:login');return {url:'https://connect.stripe.com/express/test'};}};
   accountLinks={create:async()=>{calls.push('POST:link');return {url:'https://connect.stripe.com/setup/test'};}};
  }
  let handler:(req:Request)=>Promise<Response>=async()=>new Response();
- const deps={createClient:()=>client,Stripe:Provider,readStripeMerchant,...onboarding,...command,admitMerchantCommand,merchantApprovalStore,recordCapabilityRun,Deno:{serve:(fn:typeof handler)=>{handler=fn;},env:{get:(key:string)=>({SUPABASE_URL:'https://test.invalid',SUPABASE_SERVICE_ROLE_KEY:'synthetic-only',STRIPE_SECRET_KEY:initial?.provider_environment==='live'?'sk_live_SYNTHETIC_NOT_A_CREDENTIAL':'sk_test_SYNTHETIC_NOT_A_CREDENTIAL',PUBLIC_SITE_URL:'https://app.paigeagent.ai'} as Row)[key]}},console:{warn:(...args:unknown[])=>logs.push(args),error:(...args:unknown[])=>logs.push(args)}};
+ const deps={createClient:()=>client,Stripe:Provider,readStripeMerchant,...onboarding,...command,admitMerchantCommand,merchantApprovalStore,recordCapabilityRun,salesStripeSecret,Deno:{serve:(fn:typeof handler)=>{handler=fn;},env:{get:(key:string)=>Object.hasOwn(environmentOverrides,key)?environmentOverrides[key]:({SUPABASE_URL:'https://test.invalid',SUPABASE_SERVICE_ROLE_KEY:'synthetic-only',STRIPE_SECRET_KEY:initial?.provider_environment==='live'?'sk_live_SYNTHETIC_NOT_A_CREDENTIAL':'sk_test_SYNTHETIC_NOT_A_CREDENTIAL',PUBLIC_SITE_URL:'https://app.paigeagent.ai'} as Row)[key]}},console:{warn:(...args:unknown[])=>logs.push(args),error:(...args:unknown[])=>logs.push(args)}};
  new Function(...Object.keys(deps),js)(...Object.values(deps));
  const send=async(body:Row)=>{const result=await handler(new Request('https://test.invalid',{method:'POST',headers:{Authorization:'Bearer synthetic-session'},body:JSON.stringify(body)}));return {status:result.status,body:await result.json() as Row};};
  const request={command:{action:'merchant.start_onboarding',provider:'stripe'},expected_tenant_id:tenant,operation_id:operation};
- return {tables,calls,queries,logs,creates,receiptArgs,send,request,failReceipt:()=>{receiptFails=true;},failReadback:()=>{readbackFails=true;},failAudit:()=>{auditFails=true;},setLane:(value:string)=>{lane=value;},setError:(error:unknown)=>{providerError=error;},setListError:(error:unknown)=>{listError=error;},recoverAccount:()=>{recover=true;},switchAfterCreate:()=>{switchOnCreate=true;},createHook:(fn:()=>Promise<void>)=>{onCreate=fn;},account};
+ return {tables,calls,queries,logs,creates,receiptArgs,providerKeys,send,request,failReceipt:()=>{receiptFails=true;},failReadback:()=>{readbackFails=true;},failAudit:()=>{auditFails=true;},setLane:(value:string)=>{lane=value;},setError:(error:unknown)=>{providerError=error;},setListError:(error:unknown)=>{listError=error;},recoverAccount:()=>{recover=true;},switchAfterCreate:()=>{switchOnCreate=true;},createHook:(fn:()=>Promise<void>)=>{onCreate=fn;},account};
 }
 const pending={tenant_id:tenant,stripe_account_id:null,provider_environment:'test',binding_version:1,onboarding_id:operation,onboarding_claim:'40000000-0000-4000-8000-000000000001'};
 describe('actual merchant endpoint synthetic SDK/database ports',()=>{
@@ -103,4 +105,25 @@ describe('actual merchant endpoint synthetic SDK/database ports',()=>{
  it.each(['merchant.start_onboarding','merchant.login_link'])('fresh restricted provider facts cannot return cached Ready during %s',async action=>{const cached={tenant_id:tenant,stripe_account_id:'acct_fixture',provider_environment:'test',binding_version:2,charges_enabled:true,payouts_enabled:true,details_submitted:true,sales_payment_permission:true,sales_readback_at:new Date().toISOString(),requirements:{disabled_reason:null}};const f=fixture(cached);const intent={...f.request,command:{action,provider:'stripe'}};const p=await f.send(intent);f.account.charges_enabled=false;f.account.capabilities.card_payments='inactive';const result=await f.send({...intent,approved_fingerprint:p.body.fingerprint});expect(result).toMatchObject({status:200,body:{state:'restricted',charges_enabled:false,sales_payment_permission:false}});expect(f.calls.indexOf('record_sales_merchant_onboarding_readback')).toBeLessThan(f.calls.indexOf(action==='merchant.login_link'?'POST:login':'POST:link'));});
  it('fresh disabled requirements override a cached Ready row without exposing requirements',async()=>{const f=fixture({tenant_id:tenant,stripe_account_id:'acct_fixture',provider_environment:'test',binding_version:2,charges_enabled:true,payouts_enabled:true,details_submitted:true,sales_payment_permission:true,sales_readback_at:new Date().toISOString(),requirements:{disabled_reason:null}});const p=await f.send(f.request);f.account.requirements.disabled_reason='requirements.past_due';const result=await f.send({...f.request,approved_fingerprint:p.body.fingerprint});expect(result.body.state).toBe('restricted');expect(result.body.requirements).toBeUndefined();expect(result.body.disabled_reason).toBeUndefined();});
  it('failed fresh readback persist cannot generate a hosted link or return cached Ready',async()=>{const f=fixture({tenant_id:tenant,stripe_account_id:'acct_fixture',provider_environment:'test',binding_version:2,charges_enabled:true,payouts_enabled:true,details_submitted:true,sales_payment_permission:true,sales_readback_at:new Date().toISOString(),requirements:{disabled_reason:null}});const p=await f.send(f.request);f.failReadback();const result=await f.send({...f.request,approved_fingerprint:p.body.fingerprint});expect(result).toMatchObject({status:503,body:{ok:false,state:'unverified'}});expect(result.body.url).toBeUndefined();expect(f.calls).not.toContain('POST:link');});
+});
+
+describe('Sales-only configured credential in the actual merchant endpoint',()=>{
+ it('shows TEST setup while the unrelated platform billing key remains LIVE',async()=>{
+  const f=fixture(null,{STRIPE_SECRET_KEY:'sk_live_SYNTHETIC_PLATFORM',SALES_STRIPE_SECRET_KEY:'sk_test_SYNTHETIC_SALES'});
+  expect(await f.send({action:'status',expected_tenant_id:tenant})).toMatchObject({status:200,body:{provider_environment:'test',state:'not_connected'}});
+  expect(f.providerKeys).toEqual([]);expect(f.calls.some(c=>c.startsWith('POST:'))).toBe(false);
+ });
+ it('reads only the canonically bound TEST merchant using the Sales key',async()=>{
+  const f=fixture({...pending,stripe_account_id:'acct_fixture'},{STRIPE_SECRET_KEY:'sk_live_SYNTHETIC_PLATFORM',SALES_STRIPE_SECRET_KEY:'sk_test_SYNTHETIC_SALES'});
+  expect(await f.send({action:'refresh_status',expected_tenant_id:tenant})).toMatchObject({status:200,body:{provider_environment:'test',state:'ready'}});
+  expect(f.providerKeys).toEqual(['sk_test_SYNTHETIC_SALES']);expect(f.calls).toContain('GET:retrieve');
+  expect(f.calls.some(c=>c.startsWith('POST:'))).toBe(false);
+ });
+ it('refuses a reviewed setup after its Sales credential changes without creating an account',async()=>{
+  const keys={SALES_STRIPE_SECRET_KEY:'sk_test_SYNTHETIC_SALES_A'};const f=fixture(null,keys);
+  const proposal=await f.send(f.request);expect(proposal.status).toBe(202);
+  keys.SALES_STRIPE_SECRET_KEY='sk_test_SYNTHETIC_SALES_B';
+  expect((await f.send({...f.request,approved_fingerprint:proposal.body.fingerprint})).body.outcome).toBe('refused');
+  expect(f.calls.some(c=>c.startsWith('POST:'))).toBe(false);expect(f.tables.tenant_stripe_accounts).toHaveLength(0);
+ });
 });

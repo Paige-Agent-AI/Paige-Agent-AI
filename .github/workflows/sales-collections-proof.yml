@@ -93,7 +93,7 @@ jobs:
       - name: Source-pinned current financial and client/link projections (synthetic ports)
         env:
           PGPASSWORD: isolated-test-password
-        run: node scripts/sql/sales-provider-operation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --current --accepted-obligation-writers --provider-observations --observation-self-test --observation-work --provider-cash-position --provider-disposition --financial-collectibility --manual-financial --actual-financial-read --actual-accepted-read --financial-catalogue --actual-collections-read --actual-client-financial-read --current-payment-projection --current-client-transport --actual-financial-ledger
+        run: node scripts/sql/sales-provider-operation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --current --accepted-obligation-writers --provider-observations --observation-self-test --observation-work --provider-cash-position --provider-disposition --financial-collectibility --manual-financial --actual-financial-read --actual-accepted-read --financial-catalogue --actual-collections-read --actual-client-financial-read --current-payment-projection --current-client-transport --actual-financial-ledger --capture-observation
       - name: Accepted dated obligations, exact target source, service-only admission and stale refusals
         env:
           PGPASSWORD: isolated-test-password
@@ -137,6 +137,7 @@ jobs:
             work/sales-current-payment-projection-proof.json
             work/sales-current-client-transport-proof.json
             work/sales-actual-financial-ledger-proof.json
+            work/sales-capture-observation-proof.json
           if-no-files-found: error
       - name: Sales Performance canonical sums, business-calendar overdue, balance equivalence and tenant gates
         env:

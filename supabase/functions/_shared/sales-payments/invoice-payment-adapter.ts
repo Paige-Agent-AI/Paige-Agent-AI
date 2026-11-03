@@ -5,12 +5,52 @@ import {salesStripeClient} from './stripe-client.ts';
 import {parseClaimedPayment,safePaymentOperation} from './operation-projection.ts';
 import {dispatchPreparedPayment,reconcilePayment,type PaymentExecutionPorts} from './request-execution.ts';
 import {databaseAnswered} from '../approval-outcome.ts';
-import {verifiedSettlementInput} from './settlement-readback.ts';
+import {verifiedSettlementInput,observedCaptureInput} from './settlement-readback.ts';
 import type {ClaimedPayment} from './request-execution.ts';
-import type {HostedPaymentReadback} from './stripe-hosted.ts';
+import type {HostedPaymentReadback,CapturedPaymentReadback,StripePaymentAdjustments} from './stripe-hosted.ts';
 import {parseInvoicePaymentFinancialContext,type InvoicePaymentFinancialContext} from './accepted-obligation.ts';
 const object=(v:unknown):Record<string,unknown>|null=>v!==null&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:null;
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function sameObservation(left:unknown,right:unknown):boolean {
+ if(left===right)return true;
+ if(Array.isArray(left)){
+  if(!Array.isArray(right)||left.length!==right.length)return false;
+  // Refunds, disputes and their balance transactions are ID sets. The original
+  // native writer orders them canonically; compare every fact without requiring
+  // provider order (or mutating either snapshot), and never accept duplicate IDs.
+  const byId=new Map<string,unknown>(),seen=new Set<string>();
+  for(const entry of right){
+   const id=object(entry)?.id;
+   if(typeof id!=='string'||byId.has(id))return false;
+   byId.set(id,entry);
+  }
+  return left.every(entry=>{
+   const id=object(entry)?.id;
+   if(typeof id!=='string'||seen.has(id)||!byId.has(id))return false;
+   seen.add(id);return sameObservation(entry,byId.get(id));
+  });
+ }
+ const a=object(left),b=object(right);
+ return !!a&&!!b&&Object.keys(a).length===Object.keys(b).length&&Object.keys(a).every(k=>Object.hasOwn(b,k)&&sameObservation(a[k],b[k]));
+}
 export interface PaymentCaller {tenantId:string;actorId:string;operationId:string;stillCurrent:()=>Promise<boolean>}
+export interface PaymentWorkLease {_expected_tenant_id:string;_work_id:string;_server_idempotency_key:string;_attempt_count:number}
+/** One native transaction; never send a captured-only observation to the standalone allocator. */
+export async function persistCapturedPaymentObservation(admin:SalesPaymentAdmin,claim:ClaimedPayment,lease:PaymentWorkLease,
+ capture:CapturedPaymentReadback,snapshot:Extract<StripePaymentAdjustments,{state:'observed'}>):Promise<void> {
+ if(lease._expected_tenant_id!==claim.operation.tenant_id||snapshot.provider_transaction_id!==capture.provider_transaction_id
+  ||snapshot.provider_settlement_id!==capture.provider_settlement_id)throw Error('PAYMENT_OBSERVATION_SCOPE_CHANGED');
+ const response=await admin.rpc('complete_sales_capture_observation_work',{...lease,
+  _capture:observedCaptureInput(claim,capture,`initial-work-${lease._work_id}`),_snapshot:snapshot});
+ const receipt=object(response.data),observation=object(receipt?.observation);
+ if(response.error||!receipt||receipt.state!=='reconciled'||receipt.effect!=='capture_and_provider_observation'
+  ||receipt.operation_id!==claim.operation.id||receipt.work_id!==lease._work_id||receipt.work_status!=='succeeded'
+  ||typeof receipt.replayed!=='boolean'||typeof receipt.allocation_payment_id!=='string'||!uuid.test(receipt.allocation_payment_id)
+  ||!observation||observation.state!=='observed'||observation.effect!=='provider_observation_only'
+  ||observation.provider_operation_id!==claim.operation.id||typeof observation.observation_id!=='string'||!uuid.test(observation.observation_id)
+  ||observation.observation_version!==1||observation.rail_recorded!==true||typeof observation.source_hash!=='string'
+  ||!/^[a-f0-9]{64}$/.test(observation.source_hash)||!sameObservation(observation.snapshot,snapshot))throw Error('PAYMENT_OBSERVATION_READBACK_UNAVAILABLE');
+}
 export async function persistProviderPaymentReadback(admin:SalesPaymentAdmin,claim:ClaimedPayment,result:HostedPaymentReadback,reference:string):Promise<void> {
  const scope={_expected_tenant_id:claim.operation.tenant_id,_operation_id:claim.operation.id,_claim_token:claim.claimToken};
  if(result.state==='settled'){

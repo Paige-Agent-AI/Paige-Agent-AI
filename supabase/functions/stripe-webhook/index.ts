@@ -1,5 +1,6 @@
 import type {SalesPaymentAdmin} from "../_shared/sales-payments/database-port.ts";
-import { routeVerifiedSalesStripeEvent } from "../_shared/sales-payments/stripe-event-adapter.ts";
+import {routeSalesStripeIngress,verifySalesStripeIngress} from "../_shared/sales-payments/stripe-ingress.ts";
+import {salesStripeSecret,salesStripeObservationsEnabled} from "../_shared/sales-payments/stripe-configuration.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
@@ -7,7 +8,6 @@ import { upsertBillingAccount } from "../_shared/platform-billing.ts";
 import { findSoleClientByEmailAnyWorkspace } from "../_shared/contact-methods.ts";
 
 import { reconcilePaymentSetup } from "../_shared/payment-setup-reconciliation.ts";
-import { verifyStripeWebhook } from "../_shared/stripe-webhook-signature.ts";
 import { SOLO_BETA_OFFER_CODE } from "../_shared/solo-beta-offer.ts";
 import { readInvoiceSubscriptionId } from "../_shared/solo-beta-stripe-shapes.ts";
 
@@ -420,8 +420,8 @@ serve(async (req) => {
     // Verify webhook signature — try V2 secret first, fall back to legacy.
     // Either Stripe account can fire this endpoint; whichever signing secret
     // verifies the payload tells us which account it came from.
-    const verified = await verifyStripeWebhook(
-      body, signature, stripe, stripeV2, webhookSecret, webhookSecretV2, Stripe.createSubtleCryptoProvider(),
+    const verified = await verifySalesStripeIngress(
+      body, signature, stripe, stripeV2, webhookSecret, webhookSecretV2, Deno.env.get("SALES_STRIPE_WEBHOOK_SECRET")??"", Stripe.createSubtleCryptoProvider(),
     );
     if (!verified) {
       logStep("Webhook signature verification failed (both accounts)");
@@ -443,8 +443,13 @@ serve(async (req) => {
     // Sales reconciliation must run after authentication and before the legacy insert-first
     // dedup gate. Failed allocation returns retryable 503; no event can consume an unpersisted
     // financial result. No raw event body or provider error enters Sales evidence.
-    const salesEvent=await routeVerifiedSalesStripeEvent(supabaseAdmin as unknown as SalesPaymentAdmin,event,verifiedAccount,Deno.env.get("STRIPE_SECRET_KEY")??"");
+    const salesEvent=await routeSalesStripeIngress(supabaseAdmin as unknown as SalesPaymentAdmin,event,
+      verifiedAccount==="sales"?"legacy":verifiedAccount,salesStripeSecret(name=>Deno.env.get(name)),
+      salesStripeObservationsEnabled(name=>Deno.env.get(name)));
     if(salesEvent.handled)return new Response(JSON.stringify({code:salesEvent.code}),{status:salesEvent.status,headers:{...corsHeaders,"Content-Type":"application/json","Cache-Control":"no-store"}});
+
+    // A Sales-only signing secret authorizes no platform billing or provisioning.
+    if(verifiedAccount==="sales")return new Response(JSON.stringify({code:"OTHER_SALES_EVENT"}),{status:200,headers:{...corsHeaders,"Content-Type":"application/json","Cache-Control":"no-store"}});
 
     // The account's single Stripe endpoint stays the ingress. Route only signed,
     // live Solo events into the dedicated recoverable/atomic lifecycle before the

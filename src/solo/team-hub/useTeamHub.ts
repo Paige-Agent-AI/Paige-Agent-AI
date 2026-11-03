@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { parseNexusEmailDraftAnswer, parseNexusEmailDraftBatch, parseNexusEmailDraftRequest,
+  type NexusEmailDraft, type NexusEmailDraftAnswer, type NexusEmailDraftRequest } from "../../../supabase/functions/_shared/team-hub/nexus-email-contract";
 import {
   beginRefusalReason,
   compareMessages,
@@ -412,6 +414,36 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       }
     }
     return result;
+  }, []);
+
+  const readEmailDrafts = useCallback(async (conversationId: string, messageIds: readonly string[]): Promise<readonly NexusEmailDraft[] | null> => {
+    const actorId = live.current.overview?.me.user_id;
+    const epoch = navigationEpoch.current;
+    const current = () => alive.current && navigationEpoch.current === epoch && live.current.activeId === conversationId
+      && live.current.overview?.me.user_id === actorId && live.current.status === "ready";
+    if (!actorId || !current() || messageIds.length > 50) return null;
+    const answer = await call("team_hub_email_drafts", { p_message_ids: [...messageIds] });
+    if (!current()) return null;
+    const value = answer.data && typeof answer.data === "object" ? answer.data as Record<string, unknown> : null;
+    if (value?.ok === false && typeof value.code === "string" && ENDS_HUB.has(value.code as TeamHubRefusal)) {
+      settle({ kind: "refused", code: value.code as TeamHubRefusal }); return null;
+    }
+    return answer.error ? null : parseNexusEmailDraftBatch(answer.data, { tenantId, actorId, conversationId, messageIds });
+  }, [call, settle, tenantId]);
+
+  const actOnEmailDraft = useCallback(async (request: NexusEmailDraftRequest, signal?: AbortSignal): Promise<NexusEmailDraftAnswer> => {
+    const actorId = live.current.overview?.me.user_id, conversationId = live.current.activeId;
+    const epoch = navigationEpoch.current;
+    const current = () => alive.current && !signal?.aborted && navigationEpoch.current === epoch
+      && live.current.activeId === conversationId && live.current.overview?.me.user_id === actorId && live.current.status === "ready";
+    const body = { teamHubEmailDraft: request };
+    if (!actorId || !conversationId || !current() || !parseNexusEmailDraftRequest(body)) return { ok: false, outcome: "refused" };
+    try {
+      const answer = await supabase.functions.invoke("paige-ai-chat", { body, signal });
+      if (!current()) return { ok: false, outcome: request.intent === "inspect" ? "unavailable" : "unknown" };
+      return !answer.error && parseNexusEmailDraftAnswer(answer.data, request.messageId)
+        || { ok: false, outcome: request.intent === "inspect" ? "unavailable" : "unknown" };
+    } catch { return { ok: false, outcome: request.intent === "inspect" ? "unavailable" : "unknown" }; }
   }, []);
 
   const loadStream = useCallback(async (channelId: string, mode: "open" | "refresh" | "older", unreadAtOpen = 0): Promise<LoadReport<TeamHubMessagePage>> => {
@@ -1623,6 +1655,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     checkTurn,
     openAgentDm,
     actOnCard,
+    readEmailDrafts,
+    actOnEmailDraft,
   };
 }
 

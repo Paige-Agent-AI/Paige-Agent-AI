@@ -1,0 +1,61 @@
+# EXP08 — prepare, save and resume one unsent NEXUS email
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: original ANT-161 matrix rows7/9/11/13/14/16; selected outcome and finite source contract in ANT-147 comments1d02cdb0,5d68add0,f1bb9d71. This is one outcome, not full Team Hub completion.
+PAIGE_UI_DESIGN: PASS: project UI skill, five modules, quality/accessibility/review references consulted; existing approved Hub and original Messages controls remain the visual direction. Impeccable context run once for TeamHubWorkspace; finish checks remain owed.
+MATERIAL_FLOW_CHANGE: YES: NEXUS private-DM preparation, explicit exact-content handoff to the original email writer, same-draft persistence/recovery and source return.
+FLOW_PROTOTYPE: UNVERIFIED: the integrated source is mounted in the original Hub and Messages; real browser drive still owed. Mocked UI is not customer proof.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO owner/admin prepares a one-recipient business email with NEXUS, chooses an existing contact, saves unsent and resumes the same original Messages draft after reload.
+VISUAL_DIRECTION: PASS: preserve original approved Hub layout and NEXUS magenta/Megaphone/name; reuse original inline grouping, labels, buttons, CustomerSelector and Messages editor. No redesign or additional primary destination.
+AUTOMATED_EVIDENCE: PASS: original explicit hosted agent-turn206; original Messages locator8; recipient scope6; inline UI5 (initial invalid classification fixture failure retained and corrected). Original Hub/approval protected suites415 PASS in the combined421 run; no domain writer or approval assertion removed. Local native45 PASS on real original Save13/authority functions with abridged tables, NOT full schema/Auth/customer/provider proof. New rolled-back full-schema native composition is wired into the SAME existing database-contract job; hosted execution still owed.
+STATIC_EVIDENCE: PARTIAL: app tsc ratchet baseline10/current6/0 new; production build PASS; capability declaration233/232/1 incumbent/0 disagreement; native definer/ACL/version guards and SOLO parity SP1-SP5 PASS. Owning lint0 errors/1 incumbent-style ref-cleanup warning. Full Root Deno initially found1 new TS2589, repaired with the closed native RPC port adapter; now11 diagnostics remain, baseline comparison still owed. Required hosted exact-head gates have not run.
+RENDERED_EVIDENCE: UNVERIFIED: interface not yet mounted.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: interface not yet mounted.
+AUTHENTICATED_RUNTIME: UNVERIFIED: no customer Save/reload/reopen/result claim. Production producer release is a dependency receipt, not this consumer's proof.
+KEYBOARD_FOCUS: UNVERIFIED: browser path, focus restoration and announcements owed after mounting.
+ZOOM_REFLOW: UNVERIFIED: real 200% text and zoom/reflow owed.
+REDUCED_MOTION: UNVERIFIED: preserve existing motion; actual reduced-motion drive owed.
+STATE_COVERAGE: UNVERIFIED: prepared, contact selection, saving, saved, unknown, refused, permission/connection unavailable, close/Back, reload and workspace-switch planned; complete browser evidence owed.
+TRUTHFUL_STATE_LABELS: PASS: consumer is STILL CODING, not released. No saved/sent claim from model output; only a matching ORIGINAL protected Messages execution stamp plus original audit receipt may say saved. Missing mailbox/read failures remain unavailable. UNKNOWN reconciles the SAME original operation before any retry.
+SOLO_UI: YES: existing Team Hub private NEXUS DM and canonical Messages editor; one build for all eligible existing/future SOLO accounts.
+UNVERIFIED: full-schema native execution, independent technical/finish review, required exact-head CI/Preview, release/readback and authenticated save/reload/reopen/edit/Hub return remain owed. EXP10 exact roster-receiver compatibility is requested in ANT147/e7c9d1e7; no assertion waived.
+
+OWNER_INTENT: Latest owner explicitly selected a next outcome. Sole EXP08 successor chose ONLY useful unsent-email continuity. Prepare with NEXUS, explicitly hand off the selected content, save ONE original draft, leave/reload and reopen/edit SAME draft. Report to owner/original Linear/Coordinator and stop. Later EXP03 approval/send-once/receipt leg is retained in full assignment, not activated here.
+MUST_NOT_HAPPEN: No email send/schedule/provider call, automatic private-transcript export, Knowledge/Memory save, duplicate email after UNKNOWN, guessed recipient/source/version, role workaround, new QA identity, account fork, second approval/task/runtime/store/result ledger or domain-writer takeover.
+MUST_PRESERVE: All original18+6/five journeys and prior teammate-details BLOCKED/PARTIAL evidence; approved identities/tokens/design; original Work/Harness/Trust/Model Fabric; all peer source-read spans and source/ACL guards; original Messages writer, operation identity, mailbox policy, raw CAS and audit receipt. No applied-history rewrite.
+ACCEPTANCE_CRITERIA: An eligible ordinary authenticated user obtains an unsent NEXUS preparation, sees recipient/subject/body before selecting Save, saves via original writer, gets actual receipt, fully reloads and resumes the SAME message/version through original Messages, returns to originating Hub and retains applicable both-chat artifact continuity. Wrong tenant/role, stale/revoked context, missing connector and UNKNOWN are honestly refused/reconciled. Source/release/authenticated proof/owner acceptance remain distinct.
+MOTION_PURPOSE: NONE: no new animation planned; retain existing feedback and reduced-motion behavior.
+PROTECTED_SEAMS: Affected: tenant/workspace/client isolation, current auth/account choice, authority/approval boundary, original Spine/Comms dispatch, canonical save/readback, existing audit reference/Memory privacy, idempotency/recovery, Hub history hydration, responsive/accessibility and sensitive-data boundaries. Test each in the integrated candidate. Not affected: signup/billing/provisioning, Chat streaming/popout/scroll, Live, Secure Browser/Vault, provider connection activation, external sending/payment, scheduler/automation. No related cleanup.
+
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: browser drive owed.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: browser drive owed.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: browser drive owed.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: browser drive owed.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: browser drive owed.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: browser drive owed.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: browser drive owed.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: browser drive owed.
+
+INTERNAL_BUILD_IDENTITY: local codex/exp08-nexus-email-draft-20261102; integrated base72deb5377cc47a7adc2e7a36f8a6d6f83a06719a; current origin/mainf208ef951 fetched but not yet composed; deployment=NONE; migrations=NOT_APPLIED; edge=NOT_DEPLOYED.
+RELEASE_CHANNEL: development: source integration not customer-reachable.
+RELEASE_CLASSIFICATION: capability: intended original Hub/Communications integration; unfinished.
+CUSTOMER_RELEASE_IDENTITY: none: not released or owner accepted.
+RELEASE_NOTE_REQUIRED: no: no completed customer release to announce.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED
+RELEASE_RECOVERY: existing main retained; guarded new UNAPPLIED forward only, original producer3224/history and peer sources preserved.
+
+## Source and privacy boundary
+
+Original producer3224 merged a4f3f6195; Coordinator9df0be4c records native/Edge/web readback. Fresh metadata-only production read confirms frontier20271130010103, original Save13 full195f827f04a3cffe6ba18b98b3075225 and unchanged restricted ACL. Native Save still requires an existing active permitted email mailbox. No mailbox was activated.
+
+The prepared subject/body stays on the ORIGINAL accepted Hub turn, visible only through the original asker's authorized private DM. A person selects the exact prepared text and existing recipient before Save; the model cannot invoke that handoff. Durable email content, raw source version and execution receipt remain in ORIGINAL Messages/audit. Any Hub result is only a verified reference to that original result. No second artifact, approval or execution store is introduced.
+
+Applicable algorithms: ALG01 deterministic scope/currentness, original operation idempotency and reconciliation (bounded source tests); ALG11 existing shared Model Fabric only. No scheduler/ranking/evaluation/router replacement; authenticated verified-outcome latency/cost and quality remain owed.
+
+Impeccable source: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md . Context consulted; craft floor before UI edits, detector and independent finish review still owed. No rendered/visual PASS inferred from this packet.
+
+### November3 source integration checkpoint
+
+Native private preparation and original result reference are on the original accepted turn only. The model gets no email writer tool. Human Save independently resolves current tenant/actor/private DM/role/roster and selected contact/mailbox, reuses original Comms dispatch/operation/Save13, and verifies the native original result before reporting success. Current Messages navigation uses exact original message/contact IDs, original mailbox read (twice), current authenticated identity/workspace and optional native Hub backlink before opening the ONE incumbent editor. Raw source microseconds remain exact; malformed/duplicate/conflicting locators and revoked/unavailable sources hold without opening a replacement. A pre-existing composer is preserved. Existing 500-row refreshes retain only the explicitly verified source outside their window; a link itself grants no access.
+
+Impeccable detector:0 blocking findings/22 existing stylesheet scale advisories; all new styles use approved tokens and existing controls. No rendered PASS or finish-review receipt inferred. Shared source currentness remains subject to normal main composition. E05 Task accumulation refinement ACK97d10c99 is disjoint; CI native step declaredc5a6fdbb; original EXP10 receiver not edited pending its finite disposition.

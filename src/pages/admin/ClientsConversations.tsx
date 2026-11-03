@@ -97,6 +97,9 @@ import {
   type AccountEpochToken,
 } from "./conversations/solo/soloConversationModel";
 import { missingPortalAccessColumns, withoutPortalAccessColumns } from "@/lib/client-portal-access";
+import { parseSavedEmailLocator } from "@/solo/team-hub/team-hub-email-links";
+import { readLocatedSavedEmail } from "./conversations/savedEmailLocator";
+import { routeLinkTarget } from "@/lib/links/workspaceLinks";
 
 // ── Connector (channel_connectors row — kept local, not in shared) ─────────────────
 interface Connector {
@@ -552,6 +555,14 @@ export default function ClientsConversations() {
   // ── Deep-link: read ?filter=<view> once; unknown slug → keep default (never blank). ─
   const [searchParams,setSearchParams] = useSearchParams();
   const followupLocator=useMemo(()=>parseFollowupLocator(searchParams),[searchParams]);
+  const emailLocator=useMemo(()=>parseSavedEmailLocator(searchParams),[searchParams]);
+  const emailLocatorKey=JSON.stringify([activeTenantId,activeUserId,emailLocator]);
+  const emailLocatorCurrent=useRef(emailLocatorKey);emailLocatorCurrent.current=emailLocatorKey;
+  const locatedEmailRows=useRef<{key:string;message:MessageRow;thread:DbThread}|null>(null);
+  const [emailLocation,setEmailLocation]=useState<{key:string;state:"loading"|"loaded"|"opened"|"unavailable";message?:MessageRow}>({key:"",state:"loading"});
+  const [emailLocationRetry,setEmailLocationRetry]=useState(0);
+  const emailLocatorConflict=emailLocator.kind!=="none" && (emailLocator.kind!=="bound" || emailLocation.key!==emailLocatorKey
+    || emailLocation.state!=="opened" || editingDraftId!==emailLocator.messageId || selectedKey!==emailLocation.message?.thread_key);
   useEffect(() => {
     const v = searchParams.get("filter");
     if (v && (INBOX_VIEWS as string[]).includes(v) && (v !== "attention" || isSolo)) setView(v as InboxView);
@@ -561,11 +572,11 @@ export default function ClientsConversations() {
   // Command Center and other Paige-governed entry points can open the ONE
   // existing compose surface directly; no duplicate quick-email modal.
   useEffect(() => {
-    if (searchParams.get("compose") === "1") {
+    if (searchParams.get("compose") === "1" && emailLocator.kind === "none") {
       setComposeContact(null);
       setComposeOpen(true);
     }
-  }, [searchParams]);
+  }, [searchParams,emailLocator]);
 
   // ── message pull (500-row) + connectors + composer resources (R2: one reconciled load) ─
   const load = useCallback(async () => {
@@ -587,7 +598,8 @@ export default function ClientsConversations() {
       setMessageLoadFailure(msgRes.error.message || "Conversation messages are unavailable.");
     } else {
       setMessageLoadFailure(null);
-      setRows(messageRowsFromDb(msgRes.data));
+      const messages=messageRowsFromDb(msgRes.data),pin=locatedEmailRows.current;
+      setRows(pin&&pin.key===emailLocatorCurrent.current&&!messages.some(m=>m.id===pin.message.id)?[...messages,pin.message]:messages);
     }
     if (connRes.error) {
       setConnectorReadReported(false);
@@ -633,7 +645,8 @@ export default function ClientsConversations() {
       toast.error("Couldn't load the inbox.");
       setThreadLoadFailure(error.message || "The conversation queue is unavailable.");
     } else {
-      setDbThreads(threadsFromDb(data));
+      const threads=threadsFromDb(data),pin=locatedEmailRows.current;
+      setDbThreads(pin&&pin.key===emailLocatorCurrent.current&&!threads.some(t=>t.thread_key===pin.thread.thread_key)?[...threads,pin.thread]:threads);
       setThreadLoadFailure(null);
     }
     setThreadsReady(true); // gate the ?contact deep-link on a real first threads pull
@@ -674,7 +687,7 @@ export default function ClientsConversations() {
   // don't re-fire it (mirrors the ?filter= pattern above). ─────────────────────────────────────
   useEffect(() => {
     const cid = searchParams.get("contact");
-    if (!cid || !cid.trim() || followupLocator.kind === "invalid" || followupHoldRef.current) return;
+    if (!cid || !cid.trim() || emailLocator.kind!=="none" || followupLocator.kind === "invalid" || followupHoldRef.current) return;
     if (!threadsReady) return;                          // wait for a real first threads pull
     const contactIntent = JSON.stringify([cid,followupLocator]);
     if (contactSeekHandledRef.current === contactIntent) return;  // act on each contact-param exactly once
@@ -709,7 +722,7 @@ export default function ClientsConversations() {
         setComposeOpen(true);
       }
     })();
-  }, [searchParams, followupLocator, threadsReady, dbThreads, loadThreads]);
+  }, [searchParams, followupLocator, emailLocator, threadsReady, dbThreads, loadThreads]);
 
   // ── realtime: messages + threads (§7 two-way, live unread/snooze/archive) ───────────
   useEffect(() => {
@@ -1358,6 +1371,59 @@ export default function ClientsConversations() {
     onRefresh: () => { void load(); void loadThreads(); },
   });
   const checkSavedDraft = governedReply.check;
+  const openLocatedEmail=useRef(openSavedEmailDraft);openLocatedEmail.current=openSavedEmailDraft;
+  useEffect(()=>{
+    if(emailLocator.kind!=="bound" || !activeTenantId || !activeUserId || tenantContext.loading
+      || tenantContext.accountContextLoading || tenantContext.accountContextStatus!=="ready")return;
+    let alive=true;
+    const key=emailLocatorKey,epoch=accountEpochRef.current.capture();
+    const current=()=>alive&&emailLocatorCurrent.current===key&&accountEpochRef.current.accept(epoch);
+    // ORIGINAL caller-RLS reads. Navigation never creates a replacement draft.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb=supabase as any;
+    const identity=async()=>{
+      if(!current())return false;
+      const [user,tenant]=await Promise.all([supabase.auth.getUser(),sb.rpc("current_user_tenant_id")]);
+      return current()&&!user.error&&!tenant.error&&user.data.user?.id===activeUserId&&tenant.data===activeTenantId;
+    };
+    setEmailLocation({key,state:"loading"});
+    void(async()=>{
+      const message=await readLocatedSavedEmail(emailLocator,activeTenantId,activeUserId,{
+        current,identity,
+        readContent:id=>sb.rpc("read_message_content",{p_message_id:id}),
+        readHub:id=>sb.rpc("team_hub_email_draft",{p_expected_tenant:activeTenantId,p_message_id:id}),
+        readRow:async id=>{
+          const r=await sb.from("messages").select(`tenant_id, ${MESSAGE_COLS}, ${GOVERNED_SEND_COLS}`)
+            .eq("tenant_id",activeTenantId).eq("id",id).maybeSingle();
+          return {...r,data:r.data?messageRowsFromDb([r.data])[0]:null};
+        },
+      });
+      if(!current())return;
+      if(!message){setEmailLocation({key,state:"unavailable"});return;}
+      const thread=await sb.from("threads").select(THREAD_COLS).eq("tenant_id",activeTenantId)
+        .eq("contact_id",emailLocator.contactId).eq("thread_key",message.thread_key).maybeSingle();
+      if(!current())return;
+      if(thread.error||!thread.data||!await identity()){if(current())setEmailLocation({key,state:"unavailable"});return;}
+      const original=threadsFromDb([thread.data])[0];
+      if(!original||original.thread_key!==message.thread_key||original.contact_id!==emailLocator.contactId){setEmailLocation({key,state:"unavailable"});return;}
+      locatedEmailRows.current={key,message,thread:original};
+      setRows(rows=>[...rows.filter(r=>r.id!==message.id),message]);
+      setDbThreads(rows=>[...rows.filter(r=>r.thread_key!==original.thread_key),original]);
+      pendingSelectRef.current=original.thread_key;setView("all");setLabelFilter(null);setSearch("");
+      setEmailLocation({key,state:"loaded",message});
+    })().catch(()=>{if(current())setEmailLocation({key,state:"unavailable"});});
+    return()=>{alive=false;};
+  },[emailLocator,emailLocatorKey,activeTenantId,activeUserId,tenantContext.loading,tenantContext.accountContextLoading,tenantContext.accountContextStatus,emailLocationRetry]);
+  useEffect(()=>{
+    if(emailLocation.key!==emailLocatorKey||emailLocation.state!=="loaded"||!emailLocation.message
+      ||selected?.key!==emailLocation.message.thread_key)return;
+    const key=emailLocatorKey;
+    void openLocatedEmail.current(emailLocation.message).then(opened=>{
+      if(emailLocatorCurrent.current===key)setEmailLocation(value=>value.key===key?{...value,state:opened?"opened":"unavailable"}:value);
+    });
+  },[emailLocation,emailLocatorKey,selected?.key]);
+  const emailHubReturn=emailLocator.kind==="bound"&&emailLocator.hubMessageId&&emailLocation.key===emailLocatorKey&&emailLocation.state==="opened"
+    ?routeLinkTarget({destination:"team_hub",record_id:emailLocator.hubMessageId},"solo",soloAccountAddress):null;
   useEffect(() => {
     if (!reviewDraftRequest) return;
     setReviewDraftRequest(null);
@@ -1579,6 +1645,7 @@ export default function ClientsConversations() {
   // ── Send a fresh reply (or an edited draft) into the selected thread ──────────────
   const send = async () => {
     if(governedReply.blocksEditing)return;
+    if(emailLocatorConflict){toast.error("Open the selected original email before continuing. No replacement was selected.");return;}
     if (leadReplyApprovalId) { if(followupLocatorConflict){toast.error("Return to the original reply before approving it.");return;}await leadReplyReview.prepare(); return; }
     if (followupLocator.kind !== "none" && !(editingDraftId && followupLocator.kind==="bound" && followupLocator.approvalId===editingDraftApprovalId && followupLocator.contactId===selected?.contactId)) { toast.error("Open the selected original reply before sending. No replacement was selected."); return; }
     if (!selected) return;
@@ -1868,7 +1935,7 @@ export default function ClientsConversations() {
       || (composeChannel === "email" && !subject.trim())
       || attachments.length > 10
       || suppressions.some((suppression) => suppression.channel === composeChannel)
-    ) || portalUnreachable || leadReplyReview.blocksSending || followupLocator.kind === "invalid" || (followupLocator.kind === "bound" && !leadReplyApprovalId && followupLocator.approvalId!==editingDraftApprovalId),
+    ) || portalUnreachable || emailLocatorConflict || leadReplyReview.blocksSending || followupLocator.kind === "invalid" || (followupLocator.kind === "bound" && !leadReplyApprovalId && followupLocator.approvalId!==editingDraftApprovalId),
     sendOnEnter: isSolo,
     placeholder: portalMode
       ? `Message ${selected.name} in their client portal…`
@@ -1954,7 +2021,7 @@ export default function ClientsConversations() {
     onDictateError: (msg) => toast.error(msg),
     editingDraft: !!editingDraftId || !!editingActionDraftSource,
     onCancelEdit: editingActionDraftSource?cancelLeadReply:resetComposer,
-    onSaveDraft: composeChannel==="email" && ((editingDraftId&&editingDraftSource)||editingActionDraftSource) ? ()=>{if(!leadReplyReview.blocksSending)void governedReply.saveDraft();} : undefined,
+    onSaveDraft: composeChannel==="email" && ((editingDraftId&&editingDraftSource)||editingActionDraftSource) ? ()=>{if(!emailLocatorConflict&&!leadReplyReview.blocksSending)void governedReply.saveDraft();} : undefined,
     savingDraft: governedReply.savingDraft,
     saveUnconfirmed: governedReply.saveUnconfirmed,
     draftSaveNote: governedReply.draftSaveNote,
@@ -2295,6 +2362,15 @@ export default function ClientsConversations() {
       {/* The email check's announcements live outside any one conversation, so a jump to the thread a
           send landed on (or no thread at all) never drops what is being said. */}
       {governedReply.liveRegion}
+      {emailLocator.kind!=="none"?<div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-2 text-sm" role="status">
+        <span>{emailLocator.kind==="invalid"?"This saved email link is invalid. No replacement was opened."
+          :emailLocation.key!==emailLocatorKey||emailLocation.state==="loading"||emailLocation.state==="loaded"?"Opening the original saved email…"
+            :emailLocation.state==="unavailable"||emailLocatorConflict?"The selected draft could not be opened here. Check your workspace, mailbox access and any reply already open."
+              :"Editing the original saved email. Nothing has been sent."}</span>
+        {emailLocator.kind==="bound"&&(emailLocation.state==="unavailable"||emailLocation.state==="opened"&&emailLocatorConflict)?<Button variant="outline" size="sm" onClick={()=>setEmailLocationRetry(n=>n+1)}>Retry original draft</Button>:null}
+        {emailHubReturn?<Link className="underline underline-offset-2 focus-visible:ring-2 focus-visible:ring-ring" to={emailHubReturn.to}>Return to NEXUS</Link>:null}
+        <Button variant="ghost" size="sm" onClick={()=>setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("email_draft");next.delete("hub_message");return next;},{replace:true})}>Close draft link</Button>
+      </div>:null}
       {/* The three-column conversation shell (§18 one home) — pure layout: the §36 first-run
           swap, the railOpen 3↔2-col toggle, and the mobile contact Sheet. The container feeds it
           the rendered LEFT rail, the container-owned MIDDLE pane, and the RIGHT contact panel. */}
@@ -2313,7 +2389,7 @@ export default function ClientsConversations() {
                 : <Button variant="outline" size="sm" asChild><Link to={connectionsHref}>Open Connections</Link></Button>}
             />
           }
-          showFirstRun={isFirstRun && !loadFailure}
+          showFirstRun={isFirstRun && !loadFailure && emailLocator.kind==="none"}
           threadList={<ConversationsThreadList {...listModel} />}
           activeThread={activeThread}
           clientContext={soloClientContext}

@@ -68,6 +68,8 @@ import { isTeamHubAgentTurnRequest, runTeamHubAgentTurn } from '../_shared/team-
 // EXP08 Team Hub agents A2b: Approve / Not now on a Team Hub card (its own closed request and module),
 // and the one choke point that keeps a Team Hub card's bare token from being redeemed in this chat.
 import { isTeamHubCardActRequest, runTeamHubCardAct } from '../_shared/team-hub/card-act.ts';
+import { isNexusEmailDraftRequest } from '../_shared/team-hub/nexus-email-contract.ts';
+import { runNexusEmailDraft, type NexusEmailDraftHostDeps } from '../_shared/team-hub/nexus-email-act.ts';
 
 // Three read tools with no shared definition yet. Each is defined once, here, and used by this chat's
 // tool list and by the Team Hub agent turn (handed to it below), so Team Hub never keeps a second copy.
@@ -1455,6 +1457,18 @@ serve(async (req) => {
         signal: req.signal, controlHint, invokeAs: teamHubInvokeAs }, rawData);
       return new Response(JSON.stringify(cardAct.body),
         { status: cardAct.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    // EXP08: a person's explicit exact-content unsent handoff, never a model
+    // tool or send approval. Original actor/ingress checks already ran; native
+    // DM/current role/roster and ORIGINAL Comms writer/receipt decide the result.
+    if (isNexusEmailDraftRequest(rawData)) {
+      // New native RPCs await generated types. Adapt only the closed host ports;
+      // runtime clients and caller JWT remain the existing original ones.
+      const draft = await runNexusEmailDraft({ caller: supabaseClient as unknown as NexusEmailDraftHostDeps['caller'],
+        service: supabase as unknown as NexusEmailDraftHostDeps['service'], userId: user.id,
+        signal: req.signal, controlHint, invokeAs: teamHubInvokeAs }, rawData);
+      return new Response(JSON.stringify(draft),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     let validatedData;
     try {

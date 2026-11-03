@@ -69,10 +69,12 @@ beforeEach(()=>{
     }
     if(name==='inspect_paige_chat_knowledge_intake')return {data:nativeIntakes.get(String(args._extraction_work_id))??{status:'absent_at_read'},error:null};
     if(name==='save_paige_chat_knowledge_link'){
+      // Original native publication Work starts at revision0, independently of intake revision1.
+      if(!nativePublications.has(String(args._publication_work_id))&&args._expected_link_revision!==0)return {data:null,error:{code:'40001',message:'CHAT_KNOWLEDGE_LINK_CONFLICT'}};
       const result={status:'recorded',current:true,reference:{schemaVersion:1,actorId,tenantId,threadId,turnId:null,
         documentId:args._document_id,documentRevision:args._document_revision,sourceSha256:args._source_sha256,textSha256:'b'.repeat(64),
         extractionWorkId:id(10),extractionIntentId:args._extraction_intent_id,publicationWorkId:args._publication_work_id,
-        publicationIntentId:id(60),generationId:args._publication_work_id,publicationOutcome:'capability_succeeded',linkRevision:2}};
+        publicationIntentId:id(60),generationId:args._publication_work_id,publicationOutcome:'capability_succeeded',linkRevision:1}};
       nativePublications.set(String(args._publication_work_id),result);if(loseLink)throw Error('Link committed; acknowledgment lost');
       return{data:result,error:null};
     }

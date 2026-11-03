@@ -99,11 +99,12 @@ export function createChatKnowledgeHandoff(
       if (!row.intake || row.intake.linkRevision !== 1) { update(index, {phase: 'link_unconfirmed'}); return; }
       try {
         const capturedScope = scope(context);
+        // Publication Work starts at0; the confirmed intake's revision1 is a different row.
         const handle = prepareChatKnowledgeLink(port, capturedScope, {
           publicationWorkId: publication.workId, documentId: publication.documentId,
           documentRevision: publication.revision, extractionIntentId: row.intake.extractionIntentId,
           sourceSha256: row.intake.sourceSha256, turnId: row.intake.turnId,
-          expectedLinkRevision: 1,
+          expectedLinkRevision: 0,
         });
         const result = await handle.save();
         if (!capturedScope.isCurrent()) {update(index,{phase:'link_unconfirmed'});return;}
@@ -160,7 +161,7 @@ export function createChatKnowledgeHandoff(
       const result = await prepareChatKnowledgeLink(port, scope(), {
         publicationWorkId: publication.workId, documentId: publication.documentId,
         documentRevision: publication.revision, extractionIntentId: intake.extractionIntentId,
-        sourceSha256: intake.sourceSha256, turnId: intake.turnId, expectedLinkRevision: 1,
+        sourceSha256: intake.sourceSha256, turnId: intake.turnId, expectedLinkRevision: 0,
       }).save();
       if (!current()) return;
       if (result.status !== 'recorded' || !result.current) throw Error('Link unconfirmed');

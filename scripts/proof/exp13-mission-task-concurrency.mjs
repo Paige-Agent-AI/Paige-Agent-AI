@@ -58,6 +58,10 @@ try{
  await race(`UPDATE public.tenant_knowledge_docs SET content='Changed source version',revision=revision+1 WHERE id='${source}'`,execute(actor,command(2),randomUUID()),'source-change',/CRM_MISSION_SOURCE_CHANGED/);
  assert.equal(run(`SELECT count(*) FROM public.tasks WHERE tenant_id='${tenant}';`),'2','changed source creates no third Task');
  assert.equal(run(`SELECT count(*) FROM public.crm_command_results WHERE tenant_id='${tenant}' AND action='task.create';`),'2','changed source creates no receipt');
+ const recovered=JSON.parse(run(`BEGIN;${service}SELECT public.read_crm_command_result('${tenant}','${peer}',${literal({action:'task.inspect_mission_result',mission_id:mission,offset:0})},'inspect-existing-only');COMMIT;`).split('\n').find(s=>s.startsWith('{')&&s.includes('listing')));
+ assert.equal(recovered.listing,true);assert.equal(recovered.records.length,2);assert.equal(recovered.has_more,false);assert.equal(recovered.next_offset,null);
+ assert.deepEqual(new Set(recovered.records.map(r=>r.stepId)),new Set(steps.slice(0,2)));assert.equal(recovered.records.every(r=>r.status==='available'&&r.receipt.receipt_recorded&&!Object.hasOwn(r.task,'description')),true);
+ assert.equal(run(`SELECT count(*) FROM public.tasks WHERE tenant_id='${tenant}';`),'2','read-only recovery creates no work');
  console.log('PASS: original cross-actor Task race, real tenant/source waits, one original effect, explicit schedule, read-only receipt recovery and stale-source refusal');
 }finally{
  for(const name of names)run(`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE application_name='${name}' AND pid<>pg_backend_pid();`);

@@ -4,10 +4,10 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PlanInMotion } from "./PlanInMotion";
 import {MemoryRouter,Routes,Route} from "react-router-dom";
 
-const h = vi.hoisted(() => ({ actor: "test-owner", tenant: "test-tenant-a", ready: true, detail: vi.fn(), mutate: vi.fn(), source: vi.fn(), inspectTask: vi.fn(), submitTask: vi.fn() }));
+const h = vi.hoisted(() => ({ actor: "test-owner", tenant: "test-tenant-a", ready: true, detail: vi.fn(), mutate: vi.fn(), source: vi.fn(), inspectTask: vi.fn(), submitTask: vi.fn(), listTasks: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({supabase: {rpc: vi.fn()}}));
 vi.mock('./operations/useOperationsPeople',()=>({useOperationsPeople:()=>({members:[{user_id:h.actor,full_name:'Current owner',email:'owner@tests.invalid',status:'active'}],loading:false,error:null,refresh:vi.fn()})}));
-vi.mock('./mission-task-command',async()=>({...await vi.importActual('./mission-task-command'),inspectMissionTaskEffect:h.inspectTask,submitMissionTaskOperation:h.submitTask}));
+vi.mock('./mission-task-command',async()=>({...await vi.importActual('./mission-task-command'),inspectMissionTaskEffect:h.inspectTask,submitMissionTaskOperation:h.submitTask,listMissionTaskEffects:h.listTasks}));
 
 vi.mock('../../supabase/functions/_shared/knowledge-source-evidence', () => ({readKnowledgeSourceEvidence: h.source}));
 vi.mock("@/hooks/useTenantContext", () => ({ useOptionalTenantContext: () => ({ activeUserId: h.actor, activeTenantId: h.tenant, accountContextStatus: h.ready ? "ready" : "resolving", loading: !h.ready }) }));
@@ -19,7 +19,7 @@ let host: HTMLDivElement, root: Root;
 const render = async (workspace = h.tenant) => { await act(async () => { root.render(<PlanInMotion workspaceId={workspace} />); }); };
 const open = async () => { await act(async () => host.querySelector<HTMLButtonElement>(".pim-card")!.click()); };
 const detail = (title: string) => ({ mission: { id: "play", title, state: "active", revision: 1 }, brief: { desired_outcome: "Private owner direction", constraints: [], assumptions: [], missing_information: [] } });
-beforeEach(() => { h.actor = "test-owner"; h.tenant = "test-tenant-a"; h.ready = true; h.detail.mockReset(); h.mutate.mockReset(); h.source.mockReset(); h.inspectTask.mockReset(); h.submitTask.mockReset(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
+beforeEach(() => { h.actor = "test-owner"; h.tenant = "test-tenant-a"; h.ready = true; h.detail.mockReset(); h.mutate.mockReset(); h.source.mockReset(); h.inspectTask.mockReset(); h.submitTask.mockReset(); h.listTasks.mockReset(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 it("retires a private drawer immediately on workspace/actor or unresolved-account change", async () => {
   h.detail.mockResolvedValue(detail("Private Play A")); await render(); await open();
@@ -215,4 +215,25 @@ it('does not create from an unsaved editor, an inactive plan or a deleted histor
  await act(async()=>host.querySelector<HTMLButtonElement>('button[aria-label="Close"]')!.click());
  h.detail.mockResolvedValue({...record,mission:{...record.mission,state:'paused'}});await open();h.inspectTask.mockResolvedValue({kind:'not_created'});
  await act(async()=>button('Review task').click());expect(button('Create task').disabled).toBe(true);expect(h.submitTask).not.toHaveBeenCalled();
+});
+
+it('recovers original Task links after source redaction on a cold plan reopen without exposing source or requesting creation',async()=>{
+ const record=taskPlan();h.detail.mockResolvedValue({...record,brief:{...record.brief,document_work_intent:null,document_work_intent_status:'source_changed'}});
+ h.listTasks.mockResolvedValue({kind:'page',records:[{stepId:'33333333-3333-4333-8333-333333333333',inspection:{kind:'available',task:{id:'77777777-7777-4777-8777-777777777777',title:'Permitted original Task',status:'pending'},origin:{missionRevision:4,briefVersion:3,intentSha256:'a'.repeat(64)},receipt:{correlation_id:'88888888-8888-4888-8888-888888888888'}}}],nextOffset:null});
+ await act(async()=>root.render(<MemoryRouter initialEntries={['/solo/9000001/command-center']}><Routes><Route path="/solo/:account/*" element={<PlanInMotion workspaceId={h.tenant}/>}/></Routes></MemoryRouter>));await open();
+ expect(button('Find saved tasks')).toBeDefined();await act(async()=>button('Find saved tasks').click());
+ expect(h.listTasks).toHaveBeenCalledExactlyOnceWith(h.actor,h.tenant,record.mission.id,0);
+ expect(host.textContent).toContain('Permitted original Task');expect(host.querySelector('a[href*="77777777"]')).not.toBeNull();
+ expect(host.textContent).not.toContain('PRIVATE_QUOTATION');expect(host.textContent).not.toContain('Synthetic engagement');expect(h.submitTask).not.toHaveBeenCalled();expect(h.inspectTask).not.toHaveBeenCalled();
+});
+
+it('clears saved Task rows on revoked recovery and discards late recovery across workspace A-B-A',async()=>{
+ const record=taskPlan();h.detail.mockResolvedValue({...record,brief:{...record.brief,document_work_intent:null,document_work_intent_status:'source_unavailable'}});
+ const row={stepId:'33333333-3333-4333-8333-333333333333',inspection:{kind:'available',task:{id:'77777777-7777-4777-8777-777777777777',title:'Recovered private work',status:'pending'},origin:{missionRevision:4,briefVersion:3,intentSha256:'a'.repeat(64)},receipt:{correlation_id:'88888888-8888-4888-8888-888888888888'}}};
+ h.listTasks.mockResolvedValueOnce({kind:'page',records:[row],nextOffset:20});await render();await open();await act(async()=>button('Find saved tasks').click());
+ expect(host.textContent).toContain('Recovered private work');h.listTasks.mockResolvedValueOnce({kind:'unavailable',message:'Current access was revoked'});await act(async()=>button('Load more saved tasks').click());
+ expect(h.listTasks).toHaveBeenLastCalledWith(h.actor,h.tenant,record.mission.id,20);expect(host.textContent).not.toContain('Recovered private work');expect(host.textContent).toContain('Current access was revoked');
+ let late!:(value:unknown)=>void;h.listTasks.mockImplementationOnce(()=>new Promise(done=>{late=done;}));await act(async()=>button('Find saved tasks').click());
+ const original=h.tenant;h.tenant='44444444-4444-4444-8444-444444444444';await render();h.tenant=original;await render();await open();
+ await act(async()=>late({kind:'page',records:[row],nextOffset:null}));expect(host.textContent).not.toContain('Recovered private work');expect(h.submitTask).not.toHaveBeenCalled();
 });

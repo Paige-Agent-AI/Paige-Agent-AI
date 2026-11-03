@@ -79,3 +79,39 @@ duplicate dispatch, include-all, migration rewrite or new engine is authorized.
 The same disposable full-schema CI now includes the owning Task concurrency proof: actual two-owner tenant-lock wait, one committed original effect, cross-actor inspection, explicitly chosen native schedule and source-row wait/currentness refusal. Syntax check only locally; runtime remains NOTRUN until genuine CI. No provider/customer execution or alternate auth kernel. Canonical business-algorithm maturity is not established: NO VERIFIED SUPPORTING ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED. Original deterministic version/hash/CAS/approval/record logic is identified in the source paths above.
 
 Actual local evidence validator also rejected three field formats after this record was added: SHA lacked a word boundary and two fields containing the supported unknown-state terminology lacked explicit source references. Exact SHA spacing and actual test paths were supplied; the validator and product remain unchanged.
+
+
+## Non-author findings and forward recovery repair
+
+Exact826f38 non-author review requested two material repairs, retained here.
+The actual CRM422 confirmed-native `outcome:failed` envelope initially failed five
+client controls; closed known pre-effect refusals now show actionable source/plan
+review guidance. An explicit outcome_unknown takes precedence over contradictory
+approval/success fields; lost transport never auto-replays.
+
+Cold reopen with source-redacted intent initially failed one mounted control.
+Task recovery now discovers ORIGINAL creation results through the SAME private
+CRM reader and authenticated door, separately from unavailable source text.
+New CLI-created guarded forward20271130040013 follows both immutable E13 carriers;
+it does not alter their already-applied bytes. Twenty-row explicit continuation
+returns only permission-checked current Task summaries and original receipt/origin,
+without source quotations or Task descriptions. Existing step inspector and native
+Task creation/hash/approval/idempotency/role gates remain unchanged. Revoked or
+late workspace responses are withheld; a failed refresh clears displayed rows.
+No new store, grant, executor, approval channel or effect is introduced.
+
+Actual served-handler32 controls PASS; original single-inspection17 controls are
+retained, with list paging/foreign/malformed/revoked/late-scope and zero-effect
+controls added. Three owning mounted/client/Edge suites52 PASS before the final
+additional mounted revocation/ABA test. Original native29 assertions and real
+Task-race/source-retirement recovery remain required in fresh normal full-schema
+CI. Rollback native29 baseline returned expired connector confirmation, INVALID /
+NOTRUN; it is not relabelled a failing-first runtime proof.
+
+Published91af hosted database job125943156908 FAIL is retained. Its FIRST failure
+was production-grant reproduction: source lacked already-installed E08 native8/9,
+so downstream Mission/Task functions were never installed and many native tests
+could not run. This is not cleared by prior17 development controls. Incomingmain
+b07ac386 contains the original installed carriers and canonical receiver proof;
+normal complete-main integration and renewed exact-head CI are required. No
+assertion, grant-reproduction check or source-safety gate was removed.

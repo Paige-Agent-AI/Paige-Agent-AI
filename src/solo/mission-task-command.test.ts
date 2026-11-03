@@ -1,6 +1,7 @@
 import {beforeEach,expect,it,vi} from 'vitest';
+import {executorFailureSpeech} from '../../supabase/functions/_shared/crm-command/executor-error';
 import type {BusinessMissionDetail} from '@/types/businessMission';
-import {buildMissionTaskOperation,inspectMissionTaskEffect,parseMissionTaskLocalDate,submitMissionTaskOperation} from './mission-task-command';
+import {buildMissionTaskOperation,inspectMissionTaskEffect,listMissionTaskEffects,parseMissionTaskLocalDate,submitMissionTaskOperation} from './mission-task-command';
 const h=vi.hoisted(()=>({auth:vi.fn(),invoke:vi.fn()}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{auth:{getUser:h.auth},functions:{invoke:h.invoke}}}));
 const actor='11111111-1111-4111-8111-111111111111',tenant='22222222-2222-4222-8222-222222222222',mission='33333333-3333-4333-8333-333333333333',step='44444444-4444-4444-8444-444444444444',doc='55555555-5555-4555-8555-555555555555';
@@ -53,4 +54,43 @@ it('withholds late actor changes and malformed scope before result display',asyn
  h.auth.mockResolvedValueOnce({data:{user:{id:actor}},error:null}).mockResolvedValueOnce({data:{user:{id:doc}},error:null});
  expect(await inspectMissionTaskEffect(actor,tenant,mission,step)).toMatchObject({kind:'unavailable'});
  expect(await inspectMissionTaskEffect(actor,tenant,'malformed',step)).toMatchObject({kind:'unavailable'});expect(h.invoke).toHaveBeenCalledOnce();
+});
+
+it.each(['CRM_MISSION_PLAN_CHANGED','CRM_MISSION_STEP_CHANGED','CRM_MISSION_SOURCE_CHANGED','CRM_MISSION_NOT_ACTIVE','CRM_MISSION_TASK_EXISTS'])('preserves the original confirmed native refusal envelope %s',async code=>{
+ const body={ok:false,outcome:'failed',code,...executorFailureSpeech(code,[],'refused')};
+ h.invoke.mockResolvedValue({data:null,error:{context:new Response(JSON.stringify(body),{status:422})}});
+ const result=await submitMissionTaskOperation(operation());expect(result).toMatchObject({kind:'refused'});expect(result).not.toMatchObject({kind:'uncertain'});
+ expect(h.invoke).toHaveBeenCalledOnce();
+});
+it('keeps original lost-execution envelope uncertain even with an owned refusal-shaped code',async()=>{
+ const code='CRM_MISSION_SOURCE_CHANGED';h.invoke.mockResolvedValue({data:{ok:false,outcome:'failed',code,...executorFailureSpeech(code,[],'lost')},error:null});
+ expect(await submitMissionTaskOperation(operation())).toMatchObject({kind:'uncertain'});expect(h.invoke).toHaveBeenCalledOnce();
+});
+
+const recovered=(stepId=step)=>({stepId,inspection:true,status:'available',task:{id:doc,tenant_id:tenant,title:'Existing permitted work',status:'pending',assignee_user_id:actor,due_date:null,updated_at:'2026-11-03T12:00:00Z'},origin:{missionId:mission,stepId,missionRevision:2,briefVersion:1,intentSha256:'a'.repeat(64)},receipt:{receipt_recorded:true,correlation_id:doc}});
+const page=(records:unknown[]=[],offset=0)=>({listing:true,missionId:mission,offset,records,has_more:false,next_offset:null});
+it('recovers original result summaries after source redaction without raw text or execution',async()=>{
+ h.invoke.mockResolvedValue({data:page([recovered()]),error:null});
+ const result=await listMissionTaskEffects(actor,tenant,mission);expect(result).toMatchObject({kind:'page',nextOffset:null,records:[{stepId:step,inspection:{kind:'available',task:{title:'Existing permitted work'}}}]});
+ expect(JSON.stringify(result)).not.toContain('description');expect(h.invoke).toHaveBeenCalledExactlyOnceWith('crm-command',{body:{expected_tenant_id:tenant,inspect_mission_task:{mission_id:mission,offset:0}}});
+});
+it('uses only the original exact paging continuation and withholds corrupt or foreign summaries',async()=>{
+ const records=Array.from({length:20},(_,i)=>recovered(`00000000-0000-4000-8000-${String(i).padStart(12,'0')}`));
+ h.invoke.mockResolvedValue({data:{...page(records),has_more:true,next_offset:20},error:null});
+ expect(await listMissionTaskEffects(actor,tenant,mission)).toMatchObject({kind:'page',nextOffset:20,records:expect.any(Array)});
+ const invalid=[{...page(records),has_more:true,next_offset:21},page([recovered(),recovered()]),{...page(),missionId:doc},page([{...recovered(),task:{...recovered().task,tenant_id:doc}}]),page([{...recovered(),origin:{...recovered().origin,missionId:doc}}]),page([{...recovered(),status:'not_created'}])];
+ for(const data of invalid){h.invoke.mockResolvedValue({data,error:null});expect(await listMissionTaskEffects(actor,tenant,mission)).toMatchObject({kind:'unavailable'});}
+ h.invoke.mockResolvedValue({data:page([],20),error:null});expect(await listMissionTaskEffects(actor,tenant,mission,20)).toMatchObject({kind:'page',records:[]});
+ expect(h.invoke.mock.lastCall?.[1].body.inspect_mission_task).toEqual({mission_id:mission,offset:20});
+});
+it('withholds revoked, late actor, malformed and failed recovery without a Task write',async()=>{
+ h.invoke.mockResolvedValue({data:{inspection:true,ok:false,code:'CRM_FORBIDDEN'},error:null});expect(await listMissionTaskEffects(actor,tenant,mission)).toMatchObject({kind:'unavailable'});
+ h.invoke.mockResolvedValue({data:page([recovered()]),error:null});h.auth.mockResolvedValueOnce({data:{user:{id:actor}},error:null}).mockResolvedValueOnce({data:{user:{id:doc}},error:null});
+ expect(await listMissionTaskEffects(actor,tenant,mission)).toMatchObject({kind:'unavailable'});
+ h.invoke.mockRejectedValue(Error('interrupted'));expect(await listMissionTaskEffects(actor,tenant,mission)).toMatchObject({kind:'unavailable'});
+ const calls=h.invoke.mock.calls.length;expect(await listMissionTaskEffects(actor,tenant,mission,-1)).toMatchObject({kind:'unavailable'});expect(h.invoke).toHaveBeenCalledTimes(calls);
+ expect(h.invoke.mock.calls.every(call=>!call[1].body.command)).toBe(true);
+});
+it('keeps an explicit unknown outcome uncertain even with a contradictory approval',async()=>{
+ h.invoke.mockResolvedValue({data:{outcome:'approval_required',fingerprint:'must-not-approve',outcome_unknown:true},error:null});expect(await submitMissionTaskOperation(operation())).toMatchObject({kind:'uncertain'});
 });

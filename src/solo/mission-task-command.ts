@@ -3,7 +3,7 @@ import type {BusinessMissionDetail,DocumentWorkStep} from '@/types/businessMissi
 import {normalizeDocumentWorkIntent} from '../../supabase/functions/_shared/business-mission-document-intent';
 export type MissionTaskSchedule={dueAt:string|null;timeZone:string|null;reason:string|null};
 export type MissionTaskOperation={actorId:string;tenantId:string;key:string;command:{action:'task.create';patch:{title:string;description:string;assignee_user_id:string;due_date:string|null;metadata:{mission_source_v1:{contractVersion:1;missionId:string;missionRevision:number;briefVersion:number;intentSha256:string;stepId:string;schedule:MissionTaskSchedule}}}}};
-export type MissionTaskInspection={kind:'available';task:{id:string;title:string;description:string|null;status:string;assignee_user_id:string;due_date:string|null;updated_at:string};origin:{missionRevision:number;briefVersion:number;intentSha256:string};receipt:{correlation_id:string}}
+export type MissionTaskInspection={kind:'available';task:{id:string;title:string;description?:string|null;status:string;assignee_user_id:string;due_date:string|null;updated_at:string};origin:{missionRevision:number;briefVersion:number;intentSha256:string};receipt:{correlation_id:string}}
  | {kind:'not_created'|'historical_unavailable'|'ambiguous'}|{kind:'unavailable';message:string};
 export type MissionTaskSubmission={kind:'approval';fingerprint:string;summary:string}|{kind:'acknowledged'}|{kind:'uncertain'|'refused';message:string};
 const object=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v);
@@ -15,6 +15,8 @@ export function missionTaskNotice(code:unknown):string {
  if(code==='CRM_ACTIVE_ACCOUNT_CHANGED')return 'The workspace changed. Reopen this plan in the intended workspace.';
  if(['CRM_MISSION_PLAN_CHANGED','CRM_MISSION_STEP_CHANGED','CRM_MISSION_SOURCE_CHANGED'].includes(String(code)))return 'The saved plan or source changed. Reopen and review the current plan before creating work.';
  if(code==='CRM_MISSION_NOT_ACTIVE')return 'Activate the reviewed plan before creating its tasks.';
+ if(code==='CRM_MISSION_SCHEDULE_INVALID')return 'Review the chosen task time, timezone and scheduling note before creating work.';
+ if(code==='CRM_MISSION_SOURCE_UNAVAILABLE'||code==='CRM_MISSION_SOURCE_FORBIDDEN')return 'This plan source cannot currently be read. Review your Knowledge access before creating work.';
  if(code==='CRM_MISSION_SOURCE_BUSY')return 'The source is busy. Check the original task, then review again.';
  return 'The task could not be verified. Reopen the plan and check your current access.';
 }
@@ -51,25 +53,47 @@ async function invoke(body:Record<string,unknown>,actorId:string){
  if(after.error||after.data.user?.id!==actorId||error||!object(data))throw Error('CRM_READBACK_UNAVAILABLE');
  return data;
 }
+function decodeMissionTaskInspection(r:Record<string,unknown>,tenantId:string,missionId:string,stepId:string,summary=false):MissionTaskInspection{
+  if(r.inspection!==true)return {kind:'unavailable',message:missionTaskNotice(r.code)};
+  if(r.status==='not_created'||r.status==='historical_unavailable'||r.status==='ambiguous')return {kind:r.status};
+  const t=r.task,o=r.origin,receipt=r.receipt;
+  if(r.status!=='available'||!object(t)||t.tenant_id!==tenantId||!uuid(t.id)||typeof t.title!=='string'||!(summary&&!Object.hasOwn(t,'description')||t.description===null||typeof t.description==='string')
+   ||!uuid(t.assignee_user_id)||!['pending','in_progress','completed','cancelled'].includes(String(t.status))||typeof t.updated_at!=='string'||!Number.isFinite(Date.parse(t.updated_at))
+   ||!(t.due_date===null||typeof t.due_date==='string'&&Number.isFinite(Date.parse(t.due_date)))||!object(o)||o.missionId!==missionId||o.stepId!==stepId||!Number.isSafeInteger(o.missionRevision)||!Number.isSafeInteger(o.briefVersion)
+   ||Number(o.missionRevision)<1||Number(o.briefVersion)<1||typeof o.intentSha256!=='string'||!/^[0-9a-f]{64}$/.test(o.intentSha256)||!object(receipt)||receipt.receipt_recorded!==true||!uuid(receipt.correlation_id))return {kind:'unavailable',message:'The original task readback was incomplete. Check again before creating work.'};
+  return {kind:'available',task:{id:t.id,title:t.title,...(Object.hasOwn(t,'description')?{description:t.description as string|null}:{}),status:String(t.status),assignee_user_id:t.assignee_user_id,due_date:t.due_date as string|null,updated_at:t.updated_at},
+   origin:{missionRevision:Number(o.missionRevision),briefVersion:Number(o.briefVersion),intentSha256:o.intentSha256},receipt:{correlation_id:receipt.correlation_id}};
+}
 /** Inspection never submits a command for execution, including after a lost response. */
 export async function inspectMissionTaskEffect(actorId:string,tenantId:string,missionId:string,stepId:string):Promise<MissionTaskInspection>{
  if(![actorId,tenantId,missionId,stepId].every(uuid))return {kind:'unavailable',message:'Reopen the current saved plan.'};
  try{
   const r=await invoke({expected_tenant_id:tenantId,inspect_mission_task:{mission_id:missionId,step_id:stepId}},actorId);
-  if(r.inspection!==true)return {kind:'unavailable',message:missionTaskNotice(r.code)};
-  if(r.status==='not_created'||r.status==='historical_unavailable'||r.status==='ambiguous')return {kind:r.status};
-  const t=r.task,o=r.origin,receipt=r.receipt;
-  if(r.status!=='available'||!object(t)||t.tenant_id!==tenantId||!uuid(t.id)||typeof t.title!=='string'||!(t.description===null||typeof t.description==='string')
-   ||!uuid(t.assignee_user_id)||typeof t.status!=='string'||typeof t.updated_at!=='string'||!Number.isFinite(Date.parse(t.updated_at))
-   ||!(t.due_date===null||typeof t.due_date==='string')||!object(o)||o.missionId!==missionId||o.stepId!==stepId||!Number.isSafeInteger(o.missionRevision)||!Number.isSafeInteger(o.briefVersion)
-   ||typeof o.intentSha256!=='string'||!object(receipt)||receipt.receipt_recorded!==true||!uuid(receipt.correlation_id))return {kind:'unavailable',message:'The original task readback was incomplete. Check again before creating work.'};
-  return {kind:'available',task:{id:t.id,title:t.title,description:t.description as string|null,status:t.status,assignee_user_id:t.assignee_user_id,due_date:t.due_date as string|null,updated_at:t.updated_at},
-   origin:{missionRevision:Number(o.missionRevision),briefVersion:Number(o.briefVersion),intentSha256:o.intentSha256},receipt:{correlation_id:receipt.correlation_id}};
+  return decodeMissionTaskInspection(r,tenantId,missionId,stepId);
  }catch{return {kind:'unavailable',message:'The original task could not be checked. No new task was requested.'};}
+}
+export type MissionTaskPage={kind:'page';records:Array<{stepId:string;inspection:MissionTaskInspection}>;nextOffset:number|null}|{kind:'unavailable';message:string};
+/** Original result references remain inspectable when source projection is redacted. */
+export async function listMissionTaskEffects(actorId:string,tenantId:string,missionId:string,offset=0):Promise<MissionTaskPage>{
+ if(![actorId,tenantId,missionId].every(uuid)||!Number.isSafeInteger(offset)||offset<0||offset>2147483647)return {kind:'unavailable',message:'Reopen the current saved plan.'};
+ try{
+  const r=await invoke({expected_tenant_id:tenantId,inspect_mission_task:{mission_id:missionId,offset}},actorId);
+  if(r.listing!==true||r.missionId!==missionId||r.offset!==offset||!Array.isArray(r.records)||r.records.length>20||typeof r.has_more!=='boolean'
+    ||(r.has_more?(r.records.length!==20||r.next_offset!==offset+20):r.next_offset!==null))return {kind:'unavailable',message:'The saved task references could not be verified. No new task was requested.'};
+  const records:Array<{stepId:string;inspection:MissionTaskInspection}>=[],seen=new Set<string>();
+  for(const item of r.records){
+   if(!object(item)||!uuid(item.stepId)||seen.has(item.stepId))return {kind:'unavailable',message:'The original task references were incomplete.'};
+   const inspection=decodeMissionTaskInspection(item,tenantId,missionId,item.stepId,true);
+   if(inspection.kind==='unavailable'||inspection.kind==='not_created')return {kind:'unavailable',message:'The original task readback was incomplete.'};
+   seen.add(item.stepId);records.push({stepId:item.stepId,inspection});
+  }
+  return {kind:'page',records,nextOffset:r.has_more?Number(r.next_offset):null};
+ }catch{return {kind:'unavailable',message:'The saved tasks could not be checked. No new task was requested.'};}
 }
 export async function submitMissionTaskOperation(operation:MissionTaskOperation,approvedFingerprint?:string):Promise<MissionTaskSubmission>{
  try{
   const r=await invoke({expected_tenant_id:operation.tenantId,command:operation.command,idempotency_key:operation.key,...(approvedFingerprint?{approved_fingerprint:approvedFingerprint}:{})},operation.actorId);
+  if(r.outcome_unknown===true)return unknownResult();
   if(r.outcome==='approval_required'&&typeof r.fingerprint==='string'&&r.fingerprint.length>0)return {kind:'approval',fingerprint:r.fingerprint,summary:typeof r.summary==='string'?r.summary:'Review the exact task.'};
   if(r.ok===true){
    const t=r.readback,o=r.mission_source_v1,b=operation.command.patch.metadata.mission_source_v1;
@@ -79,7 +103,12 @@ export async function submitMissionTaskOperation(operation:MissionTaskOperation,
     ||o.missionRevision!==b.missionRevision||o.briefVersion!==b.briefVersion||o.intentSha256!==b.intentSha256)return unknownResult();
    return {kind:'acknowledged'};
   }
-  if(r.outcome_unknown===true||!['refused','setup_required'].includes(String(r.outcome)))return unknownResult();
+  // The SAME original door reports database-confirmed pre-effect refusals as failed.
+  // An absent database answer sets outcome_unknown and was handled above.
+  const ownedRefusal=['CRM_MISSION_SOURCE_INVALID','CRM_MISSION_PLAN_CHANGED','CRM_MISSION_STEP_CHANGED','CRM_MISSION_NOT_ACTIVE','CRM_MISSION_SCHEDULE_INVALID',
+   'CRM_MISSION_SOURCE_CHANGED','CRM_MISSION_SOURCE_UNAVAILABLE','CRM_MISSION_SOURCE_FORBIDDEN','CRM_MISSION_FORBIDDEN','CRM_MISSION_SOURCE_BUSY',
+   'CRM_MISSION_TASK_EXISTS','CRM_MISSION_PREVIOUS_EFFECT_UNAVAILABLE','CRM_MISSION_ORIGIN_RESERVED'].includes(String(r.code));
+  if(!['refused','setup_required'].includes(String(r.outcome))&&!(r.outcome==='failed'&&ownedRefusal))return unknownResult();
   return {kind:'refused',message:missionTaskNotice(r.code)};
  }catch{return unknownResult();}
 }

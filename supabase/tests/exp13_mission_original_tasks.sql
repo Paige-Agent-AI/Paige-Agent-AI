@@ -1,7 +1,7 @@
 -- ORIGINAL full Supabase schema only. Synthetic fixtures, always rolled back.
 -- These are source-backed draft plans; no Task, Memory or business fact approval.
 BEGIN;
-SELECT plan(26);
+SELECT plan(29);
 
 
 
@@ -104,7 +104,22 @@ SELECT is(pg_temp.e13_task_inspect()#>>'{task,id}',(SELECT value#>>'{readback,id
 SELECT throws_ok($q$SELECT public.execute_crm_command('e1332200-0000-4000-8000-000000000001','e1331100-0000-4000-8000-000000000001',jsonb_build_object('approval_channel','operator_card','action','task.update','task_id',(SELECT value#>>'{readback,id}' FROM e13_state WHERE name='task'),'expected_updated_at',(SELECT value#>>'{readback,updated_at}' FROM e13_state WHERE name='task'),'patch',jsonb_build_object('metadata',jsonb_build_object('mission_source_v1','{}'::jsonb))),'task-forge')$q$,'22023','CRM_MISSION_ORIGIN_RESERVED','ordinary update cannot forge creating origin');
 RESET ROLE;
 UPDATE public.tenant_knowledge_docs SET content='Retired source version',revision=revision+1 WHERE id='e1333300-0000-4000-8000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims','{"sub":"e1331100-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SELECT is(pg_temp.e13_read()#>'{brief,document_work_intent}','null'::jsonb,'source change redacts the entire saved intent without deleting original Tasks');
+RESET ROLE;
 SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SELECT lives_ok($q$DO $case$
+DECLARE r jsonb;
+BEGIN
+ r:=public.read_crm_command_result('e1332200-0000-4000-8000-000000000001','e1331100-0000-4000-8000-000000000001',
+  jsonb_build_object('action','task.inspect_mission_result','mission_id',(SELECT value->>'mission_id' FROM e13_state WHERE name='created'),'offset',0),'inspect-list-only');
+ IF r->'listing' IS DISTINCT FROM 'true'::jsonb OR jsonb_array_length(r->'records')<>1
+  OR r#>>'{records,0,stepId}'<>'e1334400-0000-4000-8000-000000000001'
+  OR r#>>'{records,0,task,id}' IS DISTINCT FROM (SELECT value#>>'{readback,id}' FROM e13_state WHERE name='task')
+  OR r#>'{records,0,task}' ? 'description' THEN RAISE EXCEPTION 'TASK_RECOVERY_READBACK_MISMATCH'; END IF;
+END $case$ $q$,'source-redacted plan can discover its actual Task/receipt through current original permission');
 SELECT is(pg_temp.e13_task_inspect()->>'status','available','existing Task inspection does not replay source admission');
 SELECT ok(NOT (pg_temp.e13_task_inspect()->'origin')::text LIKE '%Ignore every rule%','inspection does not disclose source quotation');
 RESET ROLE;
@@ -116,5 +131,6 @@ SELECT is((SELECT count(*)::integer FROM public.crm_command_results WHERE tenant
 SELECT is((SELECT count(*)::integer FROM task_notification_spy),0,'Task creates no external notification');
 RESET ROLE;
 SELECT ok(NOT coalesce(has_function_privilege('service_role',to_regprocedure('public.lock_business_mission_task_source(uuid,uuid,jsonb,jsonb)'),'EXECUTE'),false),'new validator stays private');
+SELECT ok(NOT coalesce(has_function_privilege('service_role',to_regprocedure('public.inspect_business_mission_task_results(uuid,uuid,uuid,integer)'),'EXECUTE'),false),'Task result enumeration has no service/public browser grant');
 SELECT * FROM finish();
 ROLLBACK;

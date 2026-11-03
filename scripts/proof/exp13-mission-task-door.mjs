@@ -36,4 +36,19 @@ r=await run(body,{error:{message:'CRM_FORBIDDEN'}});assert.equal(r.response.stat
 r=await run(body,{error:{message:'private unsupported source text'}});assert.equal(r.response.status,503);assert.equal(JSON.stringify(r.result).includes('private unsupported'),false);
 r=await run(body,{data:{ok:true,outcome:'succeeded',readback:{id:id(5)}}});assert.equal(r.response.status,503);
 r=await run(body,{user:null});assert.equal(r.response.status,401);assert.equal(r.rec.rpc.length,0);
+const listBody={expected_tenant_id:tenant,inspect_mission_task:{mission_id:mission,offset:0}};
+const row={stepId:step,...available};delete row.task.description;
+const page=(records=[],offset=0)=>({listing:true,missionId:mission,offset,records,has_more:false,next_offset:null});
+r=await run(listBody,{data:page([row])});assert.equal(r.response.status,200);assert.equal(r.result.records[0].task.id,available.task.id);assert.equal('description' in r.result.records[0].task,false);
+assert.deepEqual(r.rec.rpc.filter(x=>x.client==='service').map(x=>x.args._command),[{action:'task.inspect_mission_result',mission_id:mission,offset:0}]);
+const rows=Array.from({length:20},(_,i)=>{const stepId=id(100+i);return {...row,stepId,origin:{...row.origin,stepId}};});
+r=await run(listBody,{data:{...page(rows),has_more:true,next_offset:20}});assert.equal(r.response.status,200);assert.equal(r.result.next_offset,20);
+r=await run({...listBody,inspect_mission_task:{mission_id:mission,offset:20}},{data:page([],20)});assert.equal(r.response.status,200);assert.equal(r.result.records.length,0);
+for(const invalid of [{...page(),missionId:id(99)},{...page(rows),has_more:true,next_offset:19},page([row,row]),page([{...row,task:{...row.task,tenant_id:id(99)}}]),page([{...row,origin:{...row.origin,missionId:id(99)}}])]){
+ r=await run(listBody,{data:invalid});assert.equal(r.response.status,503);assert.equal(JSON.stringify(r.result).includes('Synthetic working task'),false);
+}
+for(const offset of [-1,0.5,2147483648,'0']){r=await run({...listBody,inspect_mission_task:{mission_id:mission,offset}});assert.equal(r.response.status,400);assert.equal(r.rec.rpc.length,0);}
+r=await run({...listBody,inspect_mission_task:{mission_id:mission,offset:0,step_id:step}});assert.equal(r.response.status,400);assert.equal(r.rec.rpc.length,0);
+r=await run(listBody,{error:{message:'CRM_FORBIDDEN'}});assert.equal(r.response.status,403);assert.equal(JSON.stringify(r.result).includes('Synthetic working task'),false);
+reads=0;r=await run(listBody,{data:page([row]),scope:()=>({data:++reads===1?tenant:id(99),error:null})});assert.equal(r.response.status,409);assert.equal(JSON.stringify(r.result).includes('Synthetic working task'),false);
 console.log(`PASS ${count} actual served Mission Task inspection controls; zero execution/approval writes`);

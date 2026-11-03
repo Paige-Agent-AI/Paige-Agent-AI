@@ -5,7 +5,7 @@ import type {BusinessMissionDetail,DocumentWorkStep} from '@/types/businessMissi
 import {routeLinkTarget} from '@/lib/links/workspaceLinks';
 import {useOperationsPeople} from './operations/useOperationsPeople';
 import {memberVisibleIdentity} from './team-workspace-contract';
-import {buildMissionTaskOperation,inspectMissionTaskEffect,missionTaskAssignee,parseMissionTaskLocalDate,submitMissionTaskOperation,
+import {buildMissionTaskOperation,inspectMissionTaskEffect,listMissionTaskEffects,missionTaskAssignee,parseMissionTaskLocalDate,submitMissionTaskOperation,
  type MissionTaskInspection,type MissionTaskOperation} from './mission-task-command';
 
 type RenderTask=(step:DocumentWorkStep)=>ReactNode;
@@ -23,9 +23,20 @@ function ScopedMissionTasks({tenantId,actorId,detail,disabled,children}:Props&{a
  const {account}=useParams<{account:string}>();
  const people=useOperationsPeople();
  const [review,setReview]=useState<Review|null>(null),[localDate,setLocalDate]=useState(''),[reason,setReason]=useState('');
+ const [recovered,setRecovered]=useState<{phase:'idle'|'loading'|'ready'|'failed';rows:Array<{stepId:string;inspection:MissionTaskInspection}>;next:number|null;message?:string}>({phase:'idle',rows:[],next:null});
  const lifecycle=useRef({live:true,sequence:0}),pending=useRef(false);
  useLayoutEffect(()=>{const marker=lifecycle.current;marker.live=true;return()=>{marker.live=false;marker.sequence++;};},[]);
- const busy=review?.phase==='checking'||review?.phase==='submitting';
+ const busy=review?.phase==='checking'||review?.phase==='submitting'||recovered.phase==='loading';
+ const loadRecovered=async(offset=0)=>{
+  if(disabled||pending.current)return;
+  pending.current=true;const token=++lifecycle.current.sequence;
+  setRecovered(previous=>({phase:'loading',rows:offset?previous.rows:[],next:null}));
+  const result=await listMissionTaskEffects(actorId,tenantId,detail.mission.id,offset);
+  if(!lifecycle.current.live||token!==lifecycle.current.sequence)return;
+  pending.current=false;
+  if(result.kind==='unavailable'){setRecovered({phase:'failed',rows:[],next:null,message:result.message});return;}
+  setRecovered(previous=>({phase:'ready',rows:[...new Map([...(offset?previous.rows:[]),...result.records].map(row=>[row.stepId,row])).values()],next:result.nextOffset}));
+ };
  const inspect=async(step:DocumentWorkStep)=>{
   if(disabled||pending.current)return;
   pending.current=true;const token=++lifecycle.current.sequence;
@@ -55,7 +66,7 @@ function ScopedMissionTasks({tenantId,actorId,detail,disabled,children}:Props&{a
   }
   pending.current=false;setReview({stepId:step.id,phase:result.kind==='uncertain'?'unknown':'refused',operation,message:result.message});
  };
- return children(step=>{
+ const renderTask:RenderTask=step=>{
   const selected=review?.stepId===step.id?review:null;
   if(!selected)return <button type="button" className="sd-btn sd-btn-sm" disabled={disabled||busy} onClick={()=>{setLocalDate('');setReason('');void inspect(step);}}>Review task</button>;
   const assigneeId=missionTaskAssignee(step,actorId),person=people.members.find(row=>row.user_id===assigneeId&&row.status==='active');
@@ -99,5 +110,25 @@ function ScopedMissionTasks({tenantId,actorId,detail,disabled,children}:Props&{a
     <button className="sd-btn sd-btn-sm" type="button" onClick={()=>{lifecycle.current.sequence++;setReview(null);}}>Close task review</button>
    </div>}
   </div>;
- });
+ };
+ const needsRecovery=!detail.brief.document_work_intent&&(detail.brief.document_work_intent_status==='source_changed'||detail.brief.document_work_intent_status==='source_unavailable'||detail.brief.version>1);
+ return <>{children(renderTask)}{needsRecovery&&<section className="mission-document-steps space-y-3" aria-label="Saved tasks for this plan">
+  <h4>Saved tasks</h4>
+  <p className="text-sm">Existing work keeps its own record and receipt. Source details stay hidden while unavailable.</p>
+  <button className="sd-btn sd-btn-sm" type="button" disabled={disabled||busy} onClick={()=>void loadRecovered()}>Find saved tasks</button>
+  {recovered.phase==='loading'&&<p role="status">Checking this plan's original task results…</p>}
+  {recovered.message&&<p role="alert">{recovered.message}</p>}
+  {recovered.phase==='ready'&&recovered.rows.length===0&&<p role="status">No task results are recorded for this plan.</p>}
+  <ul className="space-y-4">{recovered.rows.map(({stepId,inspection})=>{
+   const link=inspection.kind==='available'?routeLinkTarget({destination:'operations_work',record_id:inspection.task.id},'solo',account):null;
+   return <li key={stepId} className="space-y-2">
+    {inspection.kind==='available'?<>
+     <h5 className="break-words">{inspection.task.title}</h5><p className="text-sm">{inspection.task.status.replace('_',' ')} · created from plan revision {inspection.origin.missionRevision}, brief {inspection.origin.briefVersion}</p>
+     <p className="text-sm">Original receipt: {inspection.receipt.correlation_id.slice(-8)}</p>
+     {link?.status==='exact'&&<a className="sd-btn sd-btn-sm" href={link.to}>{link.label}</a>}
+    </>:<p role="status">{inspection.kind==='ambiguous'?'This step has more than one historical result to inspect.':'An earlier task result exists, but the task is deleted or unavailable.'} Another task will not be created.</p>}
+   </li>;
+  })}</ul>
+  {recovered.next!==null&&<button className="sd-btn sd-btn-sm" type="button" disabled={disabled||busy} onClick={()=>void loadRecovered(recovered.next!)}>Load more saved tasks</button>}
+ </section>}</>;
 }

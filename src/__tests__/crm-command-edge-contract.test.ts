@@ -11,7 +11,7 @@ describe("canonical CRM action door", () => {
   it("inspects saved Mission step results through the actual served door without execution",()=>{
     const output=execFileSync(process.execPath,["--import","./scripts/knowledge-scope/register.mjs","scripts/proof/exp13-mission-task-door.mjs"],
       {cwd:process.cwd(),encoding:"utf8",windowsHide:true,timeout:60000});
-    expect(output).toContain("PASS 17 actual served Mission Task inspection controls; zero execution/approval writes");
+    expect(output).toContain("PASS 32 actual served Mission Task inspection controls; zero execution/approval writes");
   },65000);
 
   it("renders canonical create summaries through the actual approval handler without changing the approved command", () => {

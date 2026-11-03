@@ -237,3 +237,9 @@ it('clears saved Task rows on revoked recovery and discards late recovery across
  const original=h.tenant;h.tenant='44444444-4444-4444-8444-444444444444';await render();h.tenant=original;await render();await open();
  await act(async()=>late({kind:'page',records:[row],nextOffset:null}));expect(host.textContent).not.toContain('Recovered private work');expect(h.submitTask).not.toHaveBeenCalled();
 });
+
+it('keeps keyboard focus in the inline Task review and returns it to the step',async()=>{
+ taskPlan();h.inspectTask.mockResolvedValue({kind:'not_created'});await render();await open();await act(async()=>button('Review task').click());
+ const group=host.querySelector('[aria-label^="Task for "]');expect(group).not.toBeNull();expect(document.activeElement).toBe(group);
+ await act(async()=>button('Close task review').click());expect(document.activeElement).toBe(button('Review task'));
+});

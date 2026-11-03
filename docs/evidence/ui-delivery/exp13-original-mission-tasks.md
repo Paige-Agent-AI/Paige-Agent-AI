@@ -115,3 +115,29 @@ could not run. This is not cleared by prior17 development controls. Incomingmain
 b07ac386 contains the original installed carriers and canonical receiver proof;
 normal complete-main integration and renewed exact-head CI are required. No
 assertion, grant-reproduction check or source-safety gate was removed.
+
+
+Bounded keyboard finish: actual390px component review lost focus when its trigger
+was replaced. The corrected mounted control genuinely failed1/17 before repair
+(the earlier wrong-title selector run is retained as invalid causal evidence).
+The inline named review group now receives focus after inspection/result changes,
+and closing returns focus to its original step button. Original Modal focus trap
+and layout remain unchanged; this does not claim screen-reader or authenticated
+runtime acceptance. C0b incumbent-only86 controls PASS on received b07 source.
+
+
+Actual managedPreview7a50 applied13/30013/40013 eachONCE. Authoritative readback
+of40013: private reader body9fae5fa40c050629239b24e852e683b9 /
+definitionc032bc65d91968fb6fa5373f472708cc; new private summary helper body
+1e2dfbc219dea8ba153b69b1b4d80026 / definition732f779f99300e4446494fe256aea7a8.
+Both postgres-only EXECUTE/emptysearchpath/volatile/unsafe, original readerdefiner
+and new helperinvoker retained. These are Preview installation receipts only;
+production remains20009 with allE13carriers absent. Allthree applied carriers
+are now immutable.
+
+The first final local forks run completed32 controls in two suites but failed to
+start the client-suite worker (timeout); it is retained as FAIL, not54PASS. The
+focus repair control itself passed; a normal serial-thread rerun is in progress.
+Actual browser postrepair click timed out before input; final rendered correction
+and real assistive behavior remain UNVERIFIED. Neither is a gate bypass nor an
+assertion that simulated Task results prove saved customer work.

@@ -25,6 +25,12 @@ function ScopedMissionTasks({tenantId,actorId,detail,disabled,children}:Props&{a
  const [review,setReview]=useState<Review|null>(null),[localDate,setLocalDate]=useState(''),[reason,setReason]=useState('');
  const [recovered,setRecovered]=useState<{phase:'idle'|'loading'|'ready'|'failed';rows:Array<{stepId:string;inspection:MissionTaskInspection}>;next:number|null;message?:string}>({phase:'idle',rows:[],next:null});
  const lifecycle=useRef({live:true,sequence:0}),pending=useRef(false);
+ const reviewFocus=useRef<HTMLDivElement>(null),triggers=useRef(new Map<string,HTMLButtonElement>()),lastReviewStep=useRef<string|null>(null);
+ const selectedStep=review?.stepId,selectedPhase=review?.phase;
+ useLayoutEffect(()=>{
+  if(selectedStep){lastReviewStep.current=selectedStep;reviewFocus.current?.focus();}
+  else if(lastReviewStep.current){triggers.current.get(lastReviewStep.current)?.focus();lastReviewStep.current=null;}
+ },[selectedStep,selectedPhase]);
  useLayoutEffect(()=>{const marker=lifecycle.current;marker.live=true;return()=>{marker.live=false;marker.sequence++;};},[]);
  const busy=review?.phase==='checking'||review?.phase==='submitting'||recovered.phase==='loading';
  const loadRecovered=async(offset=0)=>{
@@ -68,14 +74,14 @@ function ScopedMissionTasks({tenantId,actorId,detail,disabled,children}:Props&{a
  };
  const renderTask:RenderTask=step=>{
   const selected=review?.stepId===step.id?review:null;
-  if(!selected)return <button type="button" className="sd-btn sd-btn-sm" disabled={disabled||busy} onClick={()=>{setLocalDate('');setReason('');void inspect(step);}}>Review task</button>;
+  if(!selected)return <button ref={node=>{if(node)triggers.current.set(step.id,node);else triggers.current.delete(step.id);}} type="button" className="sd-btn sd-btn-sm" disabled={disabled||busy} onClick={()=>{setLocalDate('');setReason('');void inspect(step);}}>Review task</button>;
   const assigneeId=missionTaskAssignee(step,actorId),person=people.members.find(row=>row.user_id===assigneeId&&row.status==='active');
   const name=person?memberVisibleIdentity(person).primary:people.loading?'Checking responsible person…':'Proposed person unavailable';
   const inspection=selected.inspection;
   const taskLink=inspection?.kind==='available'?routeLinkTarget({destination:'operations_work',record_id:inspection.task.id},'solo',account):null;
   const schedule=parseMissionTaskLocalDate(localDate,reason);
   const canCreate=detail.mission.state==='active'&&detail.brief.document_work_intent_status==='available'&&!!person&&!people.loading;
-  return <div className="space-y-3" aria-label={`Task for ${step.title}`}>
+  return <div ref={reviewFocus} tabIndex={-1} role="group" className="space-y-3" aria-label={`Task for ${step.title}`}>
    {selected.phase==='checking'&&<p role="status">Checking the original task…</p>}
    {(selected.phase==='review'||selected.phase==='approval')&&<>
     <p>Task: <strong>{step.title}</strong></p><p className="whitespace-pre-wrap break-words">{step.description}</p>

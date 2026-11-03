@@ -7,6 +7,12 @@
 // in supabase/tests/exp08_team_hub_agents_a1.sql, and no authenticated drive is claimed here.
 // Keep O01's regression in this original explicitly enumerated hosted suite.
 import "./zion-responsibility-context.test.ts";
+// Keep this outcome's controls in the existing hosted host suite, without a
+// parallel workflow/test registry or borrowing a helper-only green result.
+import "./nexus-email-prepare.test.ts";
+import "./nexus-email-contract.test.ts";
+import "./nexus-email-draft.test.ts";
+import "./nexus-email-act.test.ts";
 import "./zion-task-record-links.test.ts";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -82,6 +88,8 @@ type Opts = {
   sourceIn?: string; sourceThread?: string | null; stage?: (args: Record<string, unknown>) => unknown;
   agentDmKey?: string; authorityRows?: unknown[]; authorityRowsFn?: () => unknown[]; planList?: unknown; planListError?: boolean; tenantPin?: string;
   nativeReadStage?: (args: Record<string, unknown>) => unknown;
+  nativeEmailScope?: () => unknown;
+  stageEmailDraft?: (args: Record<string, unknown>) => unknown;
   personaTenant?: () => string; accountRows?: unknown;
   calendarRows?: () => unknown; calendarError?: unknown;
 };
@@ -201,6 +209,8 @@ function world(opts: Opts = {}) {
         const a: any = opts.accept ? opts.accept(args) : { ok: true, turn_id: TURN };
         return Promise.resolve(a && a.__rpc ? a.__rpc : { data: a, error: null });
       }
+      if (name === "team_hub_email_draft_scope") return Promise.resolve({ data: opts.nativeEmailScope?.() ?? { ok: false }, error: null });
+      if (name === "team_hub_stage_email_draft") return Promise.resolve({ data: opts.stageEmailDraft?.(args) ?? { ok: true }, error: null });
       if (name === "team_hub_stage_agent_suggestions") return Promise.resolve({ data: opts.stage ? opts.stage(args) : { ok: true }, error: null });
       if (name === "team_hub_stage_agent_read_context") {
         if (opts.nativeReadStage) {
@@ -251,6 +261,61 @@ function model(script: Script) {
 function turn(extra: Record<string, unknown> = {}) {
   return { teamHubAgentTurn: { conversationId: LAUNCH, sourceMessageId: ASK, threadRootId: null, agent: "merit", ...extra } };
 }
+
+describe("NEXUS unsent preparation on the original accepted private turn", () => {
+  const preparation = { subject: "Project update", body: "The outline is ready for review." };
+  const nexusConfig = { slug: "nexus", config: { ...MERIT_CONFIG,
+    capability_scope: { mode: "allowlist", access: "card", tools: [PINNED_READ_TOOL, "comms_send_email"] } } };
+  const setup = (extra: Opts = {}) => world({ sourceIn: MERIT_DM, agentDmKey: "nexus", config: nexusConfig,
+    nativeEmailScope: () => ({ ok: true }), ...extra });
+  const request = () => turn({ conversationId: MERIT_DM, agent: "nexus" });
+  const prepared = () => model([{ content: JSON.stringify({ reply: "Review this unsent email.", route: "answer", email_draft: preparation }) }]);
+
+  it("stages only subject/body before the original post and never offers or invokes an email writer", async () => {
+    const w = setup(), m = prepared();
+    const result = await run(w, m, request());
+    assert.equal(result.body.outcome, "posted");
+    const stage = w.calls.findIndex(c => c.name === "team_hub_stage_email_draft");
+    const post = w.calls.findIndex(c => c.name === "team_hub_post_agent_message");
+    assert.ok(stage >= 0 && post > stage);
+    assert.equal(w.calls[stage].args.p_subject, preparation.subject);
+    assert.equal(w.calls[stage].args.p_body, preparation.body);
+    assert.ok(m.requests[0].request.messages.some(msg => msg.content?.includes("UNSENT EMAIL PREPARATION")));
+    assert.ok(!m.requests[0].request.tools?.some(t => t.function.name === "comms_send_email"));
+    assert.ok(!w.calls.some(c => c.name === "comms-email-command"));
+    assert.equal(w.calls[post].args.p_body, "Review this unsent email.");
+  });
+  it("missing native permission leaves the ordinary reply usable and does not stage a model-authored draft", async () => {
+    const w = setup({ nativeEmailScope: () => ({ ok: false }) }), m = prepared();
+    assert.equal((await run(w, m, request())).body.outcome, "posted");
+    assert.ok(!m.requests[0].request.messages.some(msg => msg.content?.includes("UNSENT EMAIL PREPARATION")));
+    assert.ok(!w.calls.some(c => c.name === "team_hub_stage_email_draft"));
+  });
+  it("an ordinary NEXUS answer does not create a preparation or original email", async () => {
+    const w = setup(), m = model([{ content: JSON.stringify({ reply: "One clear next step.", route: "answer" }) }]);
+    assert.equal((await run(w, m, request())).body.outcome, "posted");
+    assert.ok(!w.calls.some(c => c.name === "team_hub_stage_email_draft"));
+  });
+  it("malformed model preparation and native stage refusal cannot produce a published prepared result", async () => {
+    const invalid = setup();
+    const bad = model([{ content: JSON.stringify({ reply: "Prepared.", route: "answer", email_draft: { ...preparation, status: "saved" } }) }]);
+    assert.equal((await run(invalid, bad, request())).body.outcome, "no_reply");
+    assert.ok(!invalid.calls.some(c => c.name === "team_hub_stage_email_draft" || c.name === "team_hub_post_agent_message"));
+    const refused = setup({ stageEmailDraft: () => ({ ok: false }) });
+    assert.equal((await run(refused, prepared(), request())).body.outcome, "no_reply");
+    assert.ok(!refused.calls.some(c => c.name === "team_hub_post_agent_message"));
+    assert.ok(refused.calls.some(c => c.name === "team_hub_end_agent_turn"));
+  });
+  it("native scope withdrawal is checked on every actual provider attempt", async () => {
+    let allowed = true;
+    const w = setup({ nativeEmailScope: () => ({ ok: allowed }) });
+    const result = await runTeamHubAgentTurn({ caller: w.caller, service: w.service, userId: SAM,
+      complete: async (_input, options) => { allowed = false; assert.equal(await options.beforeProviderAttempt?.(), false); return { ok: false }; },
+    }, request());
+    assert.equal(result.body.outcome, "no_reply");
+    assert.ok(!w.calls.some(c => c.name === "team_hub_post_agent_message" || c.name === "team_hub_stage_email_draft"));
+  });
+});
 async function run(w: ReturnType<typeof world>, m: ReturnType<typeof model>, body: unknown = turn(), extra: Partial<AgentTurnDeps> = {}) {
   return runTeamHubAgentTurn({ caller: w.caller, service: w.service, userId: SAM, complete: m.make(w.calls), random: () => new Uint8Array(32).fill(7), ...extra }, body);
 }

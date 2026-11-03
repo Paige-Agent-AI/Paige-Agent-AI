@@ -178,8 +178,7 @@ export function toActivityItem(raw: unknown): SoloActivityItem | null {
     id: r.id,
     title: r.title,
     summary: typeof r.summary === "string" && r.summary.trim() ? r.summary : null,
-    // Anything that is not explicitly Paige is reported as a person. The safe direction:
-    // over-crediting Paige for a person's work is the misattribution that matters here.
+    // Neither actor is inferred when the source does not explicitly name one.
     byPaige: r.actor_type === "paige_agent",
     byPerson: r.actor_type === "owner_staff",
     // This coercion is a WHITELIST — it builds a new object rather than spreading — so a column the
@@ -187,7 +186,8 @@ export function toActivityItem(raw: unknown): SoloActivityItem | null {
     // this change shipped attribution the RPC returned and no Solo surface could render.
     actorAgent: typeof r.actor_agent === "string" && r.actor_agent.trim() ? r.actor_agent : null,
     departmentSlug: departmentSlugOf(r as { to_department?: string | null; from_department?: string | null }),
-    occurredAt: typeof r.occurred_at === "string" ? r.occurred_at : new Date().toISOString(),
+    // Absence stays absent. Substituting read time fabricates a fresh event on every poll.
+    occurredAt: typeof r.occurred_at === "string" ? r.occurred_at : "",
   };
 }
 
@@ -254,16 +254,23 @@ export function useSoloActivityFeed(workspaceId?: string | null): SoloActivityFe
         if (!mounted.current || requestSeq.current !== seq) return;
         if (readError) {
           // Never turn a refused or failed read into "nothing happened" (§13).
+          setItems([]);
           setStatus(classifySoloActivityError(readError));
           setError(readError.message || "could not load recent activity");
           return;
         }
-        const rows = Array.isArray(data) ? (data as unknown[]) : [];
-        setItems(rows.map(toActivityItem).filter((i): i is SoloActivityItem => i !== null));
+        // A successful transport is not evidence of a valid native row list.
+        // Only an actual empty array proves that this returned sample is empty.
+        if (!Array.isArray(data)) throw new Error("Recorded activity response unavailable");
+        const rows = data as unknown[];
+        const parsed = rows.map(toActivityItem);
+        if (parsed.some(item => item === null)) throw new Error("Recorded activity row unavailable");
+        setItems(parsed as SoloActivityItem[]);
         setStatus("ready");
         setError(null);
       } catch (err) {
         if (!mounted.current || requestSeq.current !== seq) return;
+        setItems([]);
         setStatus("unavailable");
         setError(err instanceof Error ? err.message : "could not load recent activity");
       }

@@ -108,6 +108,12 @@ describe("toActivityItem — a row must earn its line", () => {
     expect(item?.departmentSlug).toBe("operations_pmo");
   });
 
+  it.each([undefined, null, 42])("never substitutes read time for a missing source instant (%s)", (occurred_at) => {
+    const item = toActivityItem({ ...base, occurred_at });
+    expect(item?.occurredAt).toBe("");
+    expect(elapsedLabel(item!.occurredAt)).toBe("");
+  });
+
   it("credits Paige only for actor_type 'paige_agent'", () => {
     expect(toActivityItem({ ...base, actor_type: "paige_agent" })?.byPaige).toBe(true);
     expect(toActivityItem({ ...base, actor_type: "owner_staff" })?.byPaige).toBe(false);

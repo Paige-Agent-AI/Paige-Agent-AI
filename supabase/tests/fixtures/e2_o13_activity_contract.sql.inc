@@ -1,7 +1,7 @@
 -- ISOLATED FULL-SCHEMA CI ONLY. Included inside the original attribution test's
 -- BEGIN/ROLLBACK. No migrations, production grants, providers or real accounts.
--- Candidate statement bytes match the reviewed, still-uninstalled proposal;
--- only its extra trailing blank line is normalized in the test include.
+-- Reapply the SAME guarded canonical migration inside this transaction.
+-- Tests exercise actual installed code and native idempotency; no second definition.
 CREATE TEMP TABLE o13_reader_before AS SELECT p.oid, p.proacl, p.proowner,
   p.prosecdef,p.provolatile,p.proconfig,p.prorettype,p.proretset,p.proargtypes,
   p.proallargtypes,p.proargmodes,p.proargnames,
@@ -13,7 +13,7 @@ CREATE TEMP TABLE o13_raw_grants_before AS SELECT r,t,privilege,
   CROSS JOIN unnest(ARRAY['public.paige_client_events','public.paige_workspace_events',
     'public.business_mission_mutation_receipts','public.business_mission_target_versions']) t
   CROSS JOIN unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE']) privilege;
-\ir e2_o13_activity_results.proposal.sql.inc
+\ir ../../migrations/20271130015013_e02_original_activity_result_read.sql
 
 SELECT ok((SELECT p.oid=b.oid AND p.proacl IS NOT DISTINCT FROM b.proacl
   AND p.proowner=b.proowner AND p.prosecdef=b.prosecdef AND p.provolatile=b.provolatile
@@ -23,13 +23,13 @@ SELECT ok((SELECT p.oid=b.oid AND p.proacl IS NOT DISTINCT FROM b.proacl
   AND p.proargmodes IS NOT DISTINCT FROM b.proargmodes AND p.proargnames IS NOT DISTINCT FROM b.proargnames
   AND pg_get_expr(p.proargdefaults,0) IS NOT DISTINCT FROM b.defaults
   FROM pg_proc p CROSS JOIN o13_reader_before b WHERE p.oid=b.oid),
-  'O13 proposal preserves original list OID, ABI, defaults, owner, settings and ACL');
+  'O13 canonical replay preserves original list OID, ABI, defaults, owner, settings and ACL');
 SELECT ok((SELECT bool_and(can_act=has_table_privilege(r,t,privilege)) FROM o13_raw_grants_before),
-  'O13 proposal creates no new raw-table permission');
+  'O13 canonical replay creates no new raw-table permission');
 SELECT ok(NOT has_function_privilege('anon','public.get_solo_rail_activity(integer,uuid)','EXECUTE')
   AND NOT has_function_privilege('service_role','public.get_solo_rail_activity(integer,uuid)','EXECUTE')
   AND has_function_privilege('authenticated','public.get_solo_rail_activity(integer,uuid)','EXECUTE'),
-  'O13 proposed exact signature has only the intended ordinary authenticated grant');
+  'O13 exact signature has only the intended ordinary authenticated grant');
 SELECT ok((SELECT bool_and(NOT has_function_privilege(r,f,'EXECUTE'))
   FROM unnest(ARRAY['anon','authenticated','service_role']) r CROSS JOIN unnest(ARRAY[
     'public._solo_rail_activity_rows(integer,uuid,boolean)',

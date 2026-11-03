@@ -1,5 +1,53 @@
 # Original O13 — isolated full-schema read-contract proposal proof
 
+## November3 owner-approved canonical release preparation
+
+The owner explicitly approved the bounded history read-access grant in the
+original EXP02 conversation. O13 remains the ONLY active outcome. The earlier
+pending/uninstalled statements below describe the initial proposal checkpoint,
+not a continuing permission hold. No business write or consequential effect is
+authorized by this history-read approval.
+
+Actual exact57d968653311094c01cdbccd8bb6f741ed93f39e hosted
+database-contract125770351495 step156 executed the original eight plus27 new
+assertions: Files1/Tests35/PASS. All11 applicable checks were successful. This
+proves the initial rollback-only proposal against the genuine full schema;
+it does not prove the new canonical migration or customer behavior.
+
+The CLI generated20261103125138. Its never-applied carrier is now
+`20271130015013_e02_original_activity_result_read.sql`, above current production
+30010105 and below already published E08/E13 pending20008/20009/20013. No applied
+or peer file is renamed. The source keeps the reviewed four function bodies;
+new declarations become CREATE OR REPLACE for guarded replay. A single atomic
+DO statement checks the incumbent source/complete definition, role/settings,
+all pre/post original metadata and48 per-role/table/operation privileges.
+Existing extension bodies/authority must match exactly before replay; private
+helpers have no API-role access and only authenticated receives the new exact
+signature. Any guard or DDL failure rolls back the entire statement. Schema
+cache notification follows inside the same transaction.
+
+The temporary proposal definition is REMOVED. The original test's explicit
+include now replays the ONE canonical migration inside its original rollback
+transaction, retaining all35 controls and proving idempotent OID/metadata/ACL
+conservation. All fixture accounts/records roll back. The original private8f
+artifact and its earlier24 reduced-schema observations remain unchanged.
+Migration lint passes with0 warnings; required current-head native/full-schema,
+managed Preview, own NON-AUTHOR review and all release gates remain owed.
+
+Capability routing: the intended job is original O13 actor-attributed history,
+original result/receipt and durable reopen. E02 owns this read-side integration;
+S06 Rail, Mission/targets and other departments keep their original writers.
+Existing caller-JWT Rail/Trust plus original owner-only target readers are real
+dependencies; no new Harness/Layer C execution is needed for ordinary reads.
+The existing callable family is extended, with no raw-table read or service-role
+customer impersonation. Existing `business.operating_snapshot` consumes it;
+the catalogue stays PARTIAL until real usefulness is verified. Browser and
+conversation consume the same original source; no alternate reader, ledger,
+runtime or pipeline is created. ALG maturity and the nine analytics stay unchanged.
+Useful customer result, receipt correlation, persisted Chat, exact older reopen,
+reload/Back/recovery, two authorized ordinary contexts, visual/accessibility proof
+and founder acceptance remain distinct and open.
+
 ## Purpose and authority
 
 The one active outcome is O13: accountable actor-attributed history, original

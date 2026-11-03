@@ -9,8 +9,8 @@ SELECT is(public._workspace_event_display('capability_run','capability_succeeded
 SELECT ok(NOT has_function_privilege('anon','public._workspace_event_display(text,text,text)','EXECUTE'),'anonymous direct display invocation remains denied');
 SELECT ok(NOT has_function_privilege('authenticated','public._workspace_event_display(text,text,text)','EXECUTE'),'authenticated direct display invocation remains denied');
 -- Same O13 proof, in this existing isolated full-schema runner/transaction.
--- The proposed read extension exists ONLY until the final ROLLBACK, never in
--- migrations or managed Preview. Protected production grant remains held.
+-- The owner-approved canonical extension is replayed and tested in the original
+-- isolated transaction; all synthetic accounts/records still roll back.
 \ir fixtures/e2_o13_activity_contract.sql.inc
 SELECT * FROM finish();
 ROLLBACK;

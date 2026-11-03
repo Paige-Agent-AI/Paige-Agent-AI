@@ -1,7 +1,56 @@
--- PRIVATE O13 CONTRACT PROPOSAL. NOT a migration, installed API or release.
--- Original Rail and original owner-only target readers only. No raw detail/payload,
--- actor/contact identifiers, table grant, writer, approval or execution.
-create function public._solo_rail_activity_evidence(_event uuid,_audience text,_visibility text)
+-- EXP02 original O13: source-backed activity result, receipt and exact reopen.
+-- CLI-created20261103125138; this carrier has NEVER been applied or published.
+-- Renumbered after actual30010105, before existing E08/E13 pending20008/20009/20013.
+-- Owner explicitly approved the bounded authenticated read-access grant Nov3.
+-- One atomic DO statement: any guard/DDL/postcondition failure rolls back ALL.
+-- Original list OID/complete metadata and48 raw privileges are conserved.
+-- Same Rail gate and original owner-only target receipt/revision readers.
+-- No business writer, provider/action activation, table grant or second ledger.
+DO $install$
+DECLARE legacy pg_catalog.pg_proc; baseline jsonb; grants_before jsonb;
+ candidate pg_catalog.pg_proc; spec record;
+BEGIN
+ SELECT * INTO legacy FROM pg_catalog.pg_proc
+ WHERE oid=to_regprocedure('public.get_solo_rail_activity(integer)');
+ IF legacy.oid IS NULL OR legacy.proowner<>'postgres'::regrole
+  OR NOT legacy.prosecdef OR legacy.provolatile<>'s'
+  OR legacy.proconfig IS DISTINCT FROM ARRAY['search_path=public']::text[]
+  OR legacy.pronargdefaults<>1 OR pg_get_expr(legacy.proargdefaults,0)<>'50'
+  OR md5(legacy.prosrc) NOT IN ('140399b24d9c8726ef42aa655936188d','4be4093980839256c98ece6ccd915eab')
+  OR (md5(legacy.prosrc)='140399b24d9c8726ef42aa655936188d' AND md5(pg_get_functiondef(legacy.oid))<>'f4c8583c1d2b4311db6bf62f33e39abb')
+  OR (SELECT array_agg(a.grantee::regrole::text ORDER BY a.grantee::regrole::text)
+      FROM pg_catalog.aclexplode(legacy.proacl) a WHERE a.privilege_type='EXECUTE' AND NOT a.is_grantable)
+     IS DISTINCT FROM ARRAY['authenticated','postgres','service_role']::text[]
+  OR EXISTS(SELECT 1 FROM pg_catalog.aclexplode(legacy.proacl) a
+     WHERE a.is_grantable OR a.privilege_type<>'EXECUTE') THEN
+  RAISE EXCEPTION 'O13 original reader source, authority or ABI drift';
+ END IF;
+ baseline:=to_jsonb(legacy)-'prosrc';
+ SELECT jsonb_object_agg(r||':'||t||':'||privilege,has_table_privilege(r,t,privilege))
+ INTO grants_before FROM unnest(ARRAY['anon','authenticated','service_role']) r
+ CROSS JOIN unnest(ARRAY['public.paige_client_events','public.paige_workspace_events',
+  'public.business_mission_mutation_receipts','public.business_mission_target_versions']) t
+ CROSS JOIN unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE']) privilege;
+ FOR spec IN SELECT * FROM (VALUES
+ ('public._solo_rail_activity_evidence(uuid,text,text)','c66e3e33572b04ebeea983367918bda0',ARRAY['search_path=""']::text[],ARRAY['postgres']::text[]),
+ ('public._solo_rail_activity_rows(integer,uuid,boolean)','a4200333a5ebfe365a8d84049865ab52',ARRAY['search_path=public']::text[],ARRAY['postgres']::text[]),
+ ('public.get_solo_rail_activity(integer,uuid)','1aa2c99ba12a2852ba5ae0164c2f9208',ARRAY['search_path=""']::text[],ARRAY['authenticated','postgres']::text[])
+ ) s(signature,body_hash,settings,roles) LOOP
+  SELECT * INTO candidate FROM pg_catalog.pg_proc WHERE oid=to_regprocedure(spec.signature);
+  IF candidate.oid IS NOT NULL AND (md5(candidate.prosrc)<>spec.body_hash
+   OR candidate.proowner<>'postgres'::regrole OR NOT candidate.prosecdef
+   OR candidate.provolatile<>'s' OR candidate.proconfig IS DISTINCT FROM spec.settings
+   OR candidate.pronargdefaults<>0
+   OR (SELECT array_agg(a.grantee::regrole::text ORDER BY a.grantee::regrole::text)
+       FROM pg_catalog.aclexplode(candidate.proacl) a WHERE a.privilege_type='EXECUTE' AND NOT a.is_grantable)
+       IS DISTINCT FROM spec.roles
+   OR EXISTS(SELECT 1 FROM pg_catalog.aclexplode(candidate.proacl) a
+       WHERE a.is_grantable OR a.privilege_type<>'EXECUTE')) THEN
+   RAISE EXCEPTION 'O13 existing extension source or authority drift: %',spec.signature;
+  END IF;
+ END LOOP;
+ EXECUTE $ddl$
+create or replace function public._solo_rail_activity_evidence(_event uuid,_audience text,_visibility text)
 returns jsonb language plpgsql stable security definer set search_path='' as $evidence$
 declare w public.paige_workspace_events%rowtype; proof jsonb; result jsonb; revision jsonb;
  answer jsonb; source uuid; revision_number integer;
@@ -155,10 +204,43 @@ begin return query select q.id,q.event_kind,q.surface,q.actor_type,q.actor_agent
 $legacy$;
 
 -- SAME canonical function family, explicit exact event (null means current sample).
--- Proposed same authenticated role, not installed or activation-authorized by this file.
-create function public.get_solo_rail_activity(p_limit integer,p_event_id uuid)
+-- Owner authorized this bounded authenticated-only history read on November 3, 2026.
+create or replace function public.get_solo_rail_activity(p_limit integer,p_event_id uuid)
 returns table(id uuid,event_kind text,surface text,actor_type text,actor_agent text,audience text,visibility text,from_department text,to_department text,title text,summary text,occurred_at timestamptz,evidence jsonb) language plpgsql stable security definer set search_path='' as $extended$
 begin return query select q.* from public._solo_rail_activity_rows(p_limit,p_event_id,true) q; end
 $extended$;
 revoke all on function public.get_solo_rail_activity(integer,uuid) from public,anon,service_role;
 grant execute on function public.get_solo_rail_activity(integer,uuid) to authenticated;
+
+
+ $ddl$;
+ IF (SELECT to_jsonb(p)-'prosrc' FROM pg_catalog.pg_proc p WHERE p.oid=legacy.oid)
+    IS DISTINCT FROM baseline
+  OR (SELECT md5(p.prosrc) FROM pg_catalog.pg_proc p WHERE p.oid=legacy.oid)<>'4be4093980839256c98ece6ccd915eab'
+ THEN RAISE EXCEPTION 'O13 original reader complete metadata was changed'; END IF;
+ IF (SELECT jsonb_object_agg(r||':'||t||':'||privilege,has_table_privilege(r,t,privilege))
+ FROM unnest(ARRAY['anon','authenticated','service_role']) r
+ CROSS JOIN unnest(ARRAY['public.paige_client_events','public.paige_workspace_events',
+  'public.business_mission_mutation_receipts','public.business_mission_target_versions']) t
+ CROSS JOIN unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE']) privilege)
+ IS DISTINCT FROM grants_before THEN RAISE EXCEPTION 'O13 raw-table privilege changed'; END IF;
+ FOR spec IN SELECT * FROM (VALUES
+ ('public._solo_rail_activity_evidence(uuid,text,text)','c66e3e33572b04ebeea983367918bda0',ARRAY['search_path=""']::text[],ARRAY['postgres']::text[]),
+ ('public._solo_rail_activity_rows(integer,uuid,boolean)','a4200333a5ebfe365a8d84049865ab52',ARRAY['search_path=public']::text[],ARRAY['postgres']::text[]),
+ ('public.get_solo_rail_activity(integer,uuid)','1aa2c99ba12a2852ba5ae0164c2f9208',ARRAY['search_path=""']::text[],ARRAY['authenticated','postgres']::text[])
+ ) s(signature,body_hash,settings,roles) LOOP
+  SELECT * INTO candidate FROM pg_catalog.pg_proc WHERE oid=to_regprocedure(spec.signature);
+  IF candidate.oid IS NULL OR md5(candidate.prosrc)<>spec.body_hash
+   OR candidate.proowner<>'postgres'::regrole OR NOT candidate.prosecdef
+   OR candidate.provolatile<>'s' OR candidate.proconfig IS DISTINCT FROM spec.settings
+   OR candidate.pronargdefaults<>0
+   OR (SELECT array_agg(a.grantee::regrole::text ORDER BY a.grantee::regrole::text)
+       FROM pg_catalog.aclexplode(candidate.proacl) a WHERE a.privilege_type='EXECUTE' AND NOT a.is_grantable)
+       IS DISTINCT FROM spec.roles
+   OR EXISTS(SELECT 1 FROM pg_catalog.aclexplode(candidate.proacl) a
+       WHERE a.is_grantable OR a.privilege_type<>'EXECUTE') THEN
+   RAISE EXCEPTION 'O13 installed extension source or authority mismatch: %',spec.signature;
+  END IF;
+ END LOOP;
+ PERFORM pg_catalog.pg_notify('pgrst','reload schema');
+END $install$;

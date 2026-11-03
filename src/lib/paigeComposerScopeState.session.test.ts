@@ -10,6 +10,9 @@ const freshStore = async () => {
   vi.resetModules();
   return import("./paigeComposerScopeState");
 };
+const knowledgeIntake={extractionWorkId:'00000000-0000-4000-8000-000000000010',
+  documentId:'00000000-0000-4000-8000-000000000020',extractionIntentId:'00000000-0000-4000-8000-000000000030',
+  sourceSha256:'a'.repeat(64),expectedSourceRevision:1,turnId:null,expectedLinkRevision:0 as const};
 
 describe("optional same-tab composer recovery", () => {
   beforeEach(() => {
@@ -285,5 +288,115 @@ describe("optional same-tab composer recovery", () => {
     store.setComposerDraftSessionScope(owner);
     store.writeComposerDraft(handle, "Still editable");
     expect(store.readComposerDraft(handle)).toBe("Still editable");
+  });
+  it('retains only original native intake parameters across a cold reload with an empty draft',async()=>{
+    let store=await freshStore();store.setComposerDraftSessionScope(owner);
+    expect(store.saveComposerKnowledgeIntake(handle,knowledgeIntake)).toBe(true);
+    const raw=JSON.parse(sessionStorage.getItem(cacheKey)!);
+    expect(raw.entries[0]).toMatchObject({text:'',knowledgeIntake});
+    store=await freshStore();expect(store.readComposerKnowledgeIntake(handle)).toBeNull();store.setComposerDraftSessionScope(owner);
+    expect(store.readComposerKnowledgeIntake(handle)).toEqual(knowledgeIntake);
+    expect(store.readComposerKnowledgeIntake({...handle,conversationId:'different'})).toBeNull();
+  });
+  it('expires unsent text while keeping unresolved native-effect recovery until inspected',async()=>{
+    let store=await freshStore();store.setComposerDraftSessionScope(owner);store.writeComposerDraft(handle,'Private unsent thought');
+    expect(store.saveComposerKnowledgeIntake(handle,knowledgeIntake)).toBe(true);vi.advanceTimersByTime(25*60*60*1000);
+    store=await freshStore();store.setComposerDraftSessionScope(owner);
+    expect(store.readComposerDraft(handle)).toBe('');expect(store.readComposerKnowledgeIntake(handle)).toEqual(knowledgeIntake);
+    expect(sessionStorage.getItem(cacheKey)).not.toContain('Private unsent thought');
+  });
+  it('refuses dispatch recovery if storage is unavailable and never overwrites an unresolved intent',async()=>{
+    const store=await freshStore();store.setComposerDraftSessionScope(owner);
+    expect(store.saveComposerKnowledgeIntake(handle,knowledgeIntake)).toBe(true);
+    expect(store.saveComposerKnowledgeIntake(handle,{...knowledgeIntake,sourceSha256:'b'.repeat(64)})).toBe(false);
+    expect(store.clearComposerKnowledgeIntake(handle,'00000000-0000-4000-8000-000000000099')).toBe(false);
+    expect(store.readComposerKnowledgeIntake(handle)).toEqual(knowledgeIntake);
+    vi.spyOn(Storage.prototype,'setItem').mockImplementation(()=>{throw Error('Storage unavailable');});
+    expect(store.saveComposerKnowledgeIntake({...handle,conversationId:'new-chat'},knowledgeIntake)).toBe(false);
+    expect(store.readComposerKnowledgeIntake({...handle,conversationId:'new-chat'})).toBeNull();
+  });
+  it('does not lose native recovery when the unsent text is cleared or consumed',async()=>{
+    let store=await freshStore();store.setComposerDraftSessionScope(owner);store.writeComposerDraft(handle,'Draft');
+    store.saveComposerKnowledgeIntake(handle,knowledgeIntake);store.takeComposerDraft(handle);store.clearComposerDraft(handle);
+    store=await freshStore();store.setComposerDraftSessionScope(owner);expect(store.readComposerKnowledgeIntake(handle)).toEqual(knowledgeIntake);
+    expect(store.clearComposerKnowledgeIntake(handle,knowledgeIntake.extractionWorkId)).toBe(true);
+    store=await freshStore();store.setComposerDraftSessionScope(owner);expect(store.readComposerKnowledgeIntake(handle)).toBeNull();
+  });
+  it('withholds foreign actor/workspace recovery and purges it on sign-out',async()=>{
+    const store=await freshStore();store.setComposerDraftSessionScope(owner);
+    expect(store.saveComposerKnowledgeIntake({...handle,userId:'another'},knowledgeIntake)).toBe(false);
+    expect(store.saveComposerKnowledgeIntake({...handle,tenantId:'another'},knowledgeIntake)).toBe(false);
+    store.saveComposerKnowledgeIntake(handle,knowledgeIntake);store.setComposerDraftSessionScope({kind:'clear'});
+    expect(store.readComposerKnowledgeIntake(handle)).toBeNull();store.setComposerDraftSessionScope(owner);
+    expect(store.readComposerKnowledgeIntake(handle)).toBeNull();expect(sessionStorage.getItem(cacheKey)).toBeNull();
+  });
+  it('rejects a modified cache containing source text or invalid native parameters',async()=>{
+    let store=await freshStore();store.setComposerDraftSessionScope(owner);store.saveComposerKnowledgeIntake(handle,knowledgeIntake);
+    const raw=JSON.parse(sessionStorage.getItem(cacheKey)!);raw.entries[0].knowledgeIntake.sourceText='Must not become an upload queue';
+    sessionStorage.setItem(cacheKey,JSON.stringify(raw));store=await freshStore();store.setComposerDraftSessionScope(owner);
+    expect(store.readComposerKnowledgeIntake(handle)).toBeNull();expect(sessionStorage.getItem(cacheKey)).toBeNull();
+  });
+  it('keeps an already-dispatched intake recoverable when a later draft cache write fails',async()=>{
+    let store=await freshStore();store.setComposerDraftSessionScope(owner);store.saveComposerKnowledgeIntake(handle,knowledgeIntake);
+    vi.spyOn(Storage.prototype,'setItem').mockImplementation(()=>{throw Error('Later quota failure');});
+    store.writeComposerDraft(handle,'New unsent thought');vi.restoreAllMocks();
+    store=await freshStore();store.setComposerDraftSessionScope(owner);
+    expect(store.readComposerKnowledgeIntake(handle)).toEqual(knowledgeIntake);
+    expect(store.readComposerDraft(handle)).toBe('');
+  });
+  it.each(['draft','unresolved','workspace'] as const)('does not erase native recovery when later cache reads and writes both become unavailable: %s',async(change)=>{
+    let store=await freshStore();store.setComposerDraftSessionScope(owner);
+    expect(store.saveComposerKnowledgeIntake(handle,knowledgeIntake)).toBe(true);
+    vi.spyOn(Storage.prototype,'setItem').mockImplementation(()=>{throw Error('Write unavailable');});
+    vi.spyOn(Storage.prototype,'getItem').mockImplementation(()=>{throw Error('Read unavailable');});
+    store.writeComposerDraft(handle,'New draft');
+    if(change==='unresolved')store.setComposerDraftSessionScope({kind:'unresolved'});
+    if(change==='workspace')store.setComposerDraftSessionScope({...owner,tenantId:'test-tenant-b'});
+    vi.restoreAllMocks();
+    store=await freshStore();store.setComposerDraftSessionScope(owner);
+    expect(store.readComposerKnowledgeIntake(handle)).toEqual(knowledgeIntake);
+    expect(store.readComposerDraft(handle)).toBe('');
+  });
+  it('never evicts unresolved native pointers to fit expanded ordinary draft text',async()=>{
+    let store=await freshStore();store.setComposerDraftSessionScope(owner);
+    const handles=Array.from({length:8},(_,index)=>({...handle,conversationId:`thread-${index}`}));
+    for(const target of handles)expect(store.saveComposerKnowledgeIntake(target,knowledgeIntake)).toBe(true);
+    for(const target of handles)store.writeComposerDraft(target,'\n'.repeat(20_000));
+    store=await freshStore();store.setComposerDraftSessionScope(owner);
+    expect(handles.map(target=>store.readComposerKnowledgeIntake(target))).toEqual(handles.map(()=>knowledgeIntake));
+    expect(handles.every(target=>store.readComposerDraft(target)==='')).toBe(true);
+  });
+  it('withholds a cold unreadable recovery cache until inspection can resume',async()=>{
+    let store=await freshStore();store.setComposerDraftSessionScope(owner);
+    expect(store.saveComposerKnowledgeIntake(handle,knowledgeIntake)).toBe(true);
+    store=await freshStore();
+    vi.spyOn(Storage.prototype,'getItem').mockImplementation(()=>{throw Error('Read unavailable');});
+    vi.spyOn(Storage.prototype,'setItem').mockImplementation(()=>{throw Error('Write unavailable');});
+    store.setComposerDraftSessionScope(owner);store.writeComposerDraft(handle,'New input');
+    expect(store.readComposerKnowledgeRecoveryState(handle)).toBe('unavailable');
+    expect(store.saveComposerKnowledgeIntake(handle,knowledgeIntake)).toBe(false);
+    expect(store.readComposerKnowledgeIntake(handle)).toBeNull();
+    store.setComposerDraftSessionScope({kind:'unresolved'});vi.restoreAllMocks();
+    store.setComposerDraftSessionScope(owner);
+    expect(store.readComposerKnowledgeRecoveryState(handle)).toBe('pending');
+    expect(store.readComposerKnowledgeIntake(handle)).toEqual(knowledgeIntake);
+    store=await freshStore();store.setComposerDraftSessionScope(owner);
+    expect(store.readComposerKnowledgeIntake(handle)).toEqual(knowledgeIntake);
+  });
+  it('withholds recovery during transient resolution without erasing the original native intent',async()=>{
+    let store=await freshStore();store.setComposerDraftSessionScope(owner);store.saveComposerKnowledgeIntake(handle,knowledgeIntake);
+    store.setComposerDraftSessionScope({kind:'unresolved'});expect(store.readComposerKnowledgeIntake(handle)).toBeNull();
+    store=await freshStore();store.setComposerDraftSessionScope(owner);expect(store.readComposerKnowledgeIntake(handle)).toEqual(knowledgeIntake);
+    store.setComposerDraftSessionScope({kind:'unresolved'});store.setComposerDraftSessionScope({kind:'clear'});
+    store.setComposerDraftSessionScope(owner);expect(store.readComposerKnowledgeIntake(handle)).toBeNull();
+  });
+  it('retains opaque pending metadata across same-actor A to B to cold A without exposing another scope',async()=>{
+    let store=await freshStore();store.setComposerDraftSessionScope(owner);store.saveComposerKnowledgeIntake(handle,knowledgeIntake);
+    const second={...owner,tenantId:'test-tenant-b'};store.setComposerDraftSessionScope(second);
+    expect(store.readComposerKnowledgeIntake(handle)).toBeNull();store=await freshStore();store.setComposerDraftSessionScope(second);
+    expect(store.readComposerKnowledgeIntake(handle)).toBeNull();store.setComposerDraftSessionScope(owner);
+    expect(store.readComposerKnowledgeIntake(handle)).toEqual(knowledgeIntake);
+    store.setComposerDraftSessionScope({...owner,userId:'test-user-b'});store.setComposerDraftSessionScope(owner);
+    expect(store.readComposerKnowledgeIntake(handle)).toBeNull();
   });
 });

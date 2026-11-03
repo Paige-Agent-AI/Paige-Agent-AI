@@ -55,6 +55,7 @@ import { ThreadRail } from "@/components/dashboard/paige/ThreadRail";
 import { PanelLeft } from "lucide-react";
 import { useChatDocumentUpload, type AttachedDocument, type AttachedDocKind } from "@/hooks/useChatDocumentUpload";
 import { DocumentAttachmentChip } from "@/components/chat/DocumentAttachmentChip";
+import { ChatKnowledgeDocuments } from "@/components/chat/ChatKnowledgeDocuments";
 import { DocumentMessageBubble } from "@/components/chat/DocumentMessageBubble";
 import { MessageAudioButton } from "@/components/chat/MessageAudioButton";
 import { PaigeArtifactCard, type PaigeArtifact } from "@/components/paige/chat/PaigeArtifactCard";
@@ -91,6 +92,7 @@ import { createAnchoredTranscriptScroll, messageScrollAnchorKey } from "@/compon
 import {
   acceptComposerDelivery,
   clearComposerDraft,
+  clearComposerKnowledgeIntake,
   COMPOSER_FOCUS_NONE,
   composerDraftKey,
   composerDraftHandlesMatch,
@@ -100,6 +102,9 @@ import {
   initialComposerConversation,
   moveComposerDraft,
   readComposerDraft,
+  readComposerKnowledgeIntake,
+  readComposerKnowledgeRecoveryState,
+  saveComposerKnowledgeIntake,
   restoreComposerDraft,
   resolveComposerScopeState,
   shouldClearComposerDraft,
@@ -689,6 +694,7 @@ const PaigeAIChatInner = ({
   const composerScopeRef = useRef(composerScope);
   composerScopeRef.current = composerScope;
   const draft = useComposerDraft(composerScope);
+  const knowledgeRecoveryPending = soloTenantSafety && activeThreadId===null && draft.knowledgeRecoveryState!=='ready';
   const input = draft.value;
   const setInput = draft.setValue;
   // Ask PAIGE from any surface puts its question in this composer (never sends it); see
@@ -2506,6 +2512,9 @@ const PaigeAIChatInner = ({
   const handleSend = async (overrideText?: string, approvedFingerprints?: string[], declinedFingerprints?: string[], voiceSink?: LiveVoiceSink, opts?: { answer?: { askId: string; skipped: boolean } }) => {
     const originDraft = composerScope.writableHandle;
     if (dictationActive || !originDraft) { voiceSink?.failed(); return; }
+    if(soloTenantSafety&&activeThreadId===null&&readComposerKnowledgeRecoveryState(originDraft)!=='ready'){
+      voiceSink?.failed();toast({title:'Check the original conversation first',description:draft.knowledgeRecoveryState==='unavailable'?'Browser recovery is unavailable. Reload when storage is available, or open an existing conversation.':'Open Knowledge documents to recover its original conversation before sending.'});return;
+    }
     if (overrideText === undefined && (isProcessingFile || processingFileNow?.())) { voiceSink?.failed(); return; }
     const text = (overrideText ?? (soloTenantSafety ? readComposerDraft(originDraft) : input)).trim();
     // Allow a send with text OR an attachment alone (#480). An override (confirm
@@ -2898,7 +2907,7 @@ const PaigeAIChatInner = ({
         ? `${traceDepartments} ${traceDepartments === 1 ? "department" : "departments"} worked on this`
         : `${visibleSteps.length} ${visibleSteps.length === 1 ? "step" : "steps"} so far`;
   const composerBlocked = !composerScope.writable;
-  const composerSendBlocked = composerBlocked || dictationActive || isProcessingFile
+  const composerSendBlocked = composerBlocked || dictationActive || isProcessingFile || knowledgeRecoveryPending
     || (soloTenantSafety && submissionPreflightRef.current);
   const stopInteractiveButton = soloTenantSafety && isLoading ? (
     <Button type="button" variant="outline" size="icon" aria-label="Stop PAIGE response"
@@ -2991,6 +3000,38 @@ const PaigeAIChatInner = ({
       {cd ? <span aria-hidden className="text-[11.5px] leading-none">＋</span> : <Paperclip className="w-4 h-4" />}
     </Button>
   );
+  // Knowledge is an explicit destination, separate from sending an analysis
+  // attachment. The original flow accepts one or many files and owns review.
+  const knowledgeDocumentsButton = soloTenantSafety && enableHistory && !platform
+    && !clientId && scopedUserId && activeTenantId ? (
+    <ChatKnowledgeDocuments key={requestScopeEpoch} actorId={scopedUserId} tenantId={activeTenantId}
+      threadId={activeThreadId} originEpoch={requestScopeEpoch} account={activeTenant?.account_number}
+      disabled={composerBlocked || dictationActive || isProcessingFile || isLoading || submissionPreflightRef.current || draft.knowledgeRecoveryState==='unavailable'}
+      attachedFile={attachedDoc?.file}
+      recoveryIntake={draft.knowledgeRecoveryIntake}
+      onBeforeFirstValue={(input,originEpoch)=>{
+        const handle=composerScope.visibleHandle;
+        return !!handle&&activeThreadId===null&&originEpoch===requestScopeRef.current.epoch
+          &&composerDraftHandlesMatch(handle,requestScopeRef.current.handle)&&saveComposerKnowledgeIntake(handle,input);
+      }}
+      onAdoptThread={(id, originEpoch) => {
+        const originDraft = composerScope.visibleHandle;
+        if (!originDraft || activeThreadId !== null || originEpoch !== requestScopeRef.current.epoch
+          || !composerDraftHandlesMatch(originDraft, requestScopeRef.current.handle)) return;
+        const pending=readComposerKnowledgeIntake(originDraft);
+        if(pending)clearComposerKnowledgeIntake(originDraft,pending.extractionWorkId);
+        // The original native intake constructor supplied this actual thread.
+        // Adopt it through the same lazy-thread event/draft transfer as Send.
+        if (originDraft.conversationId === conversationStateRef.current.newConversationId)
+          moveComposerDraft(originDraft, {...originDraft, conversationId:id});
+        hydratedFromRef.current = id;
+        applyConversationEvent({type:"lazy-thread-created",id});
+        setActiveThreadId(id);
+        // This original hook only invalidates the actor/tenant history query;
+        // no message or turn is manufactured for a saved document.
+        threadsApi.onTurnPersisted();
+      }}/>
+  ) : null;
 
   /* Tap-to-dictate — neutral/indigo mic, never gold. Dictated words append into
      the composer; the operator edits before sending. The callback closes over the
@@ -3054,6 +3095,7 @@ const PaigeAIChatInner = ({
   const ensureLiveThread = useCallback(async () => {
     if (activeThreadId) return activeThreadId;
     const originDraft = composerScope.visibleHandle;
+    if(originDraft&&readComposerKnowledgeRecoveryState(originDraft)!=='ready')throw Error('Original document conversation needs inspection');
     const originScope = requestScopeRef.current;
     const id = await threadsApi.ensureThread("Live Conversation");
     if (
@@ -3074,7 +3116,7 @@ const PaigeAIChatInner = ({
 
   const liveConversationButton = soloTenantSafety && enableHistory && liveConversation ? (
     <PaigeLiveConversation
-      disabled={composerBlocked || dictationActive || isLoading || interactiveAuthorityPending}
+      disabled={composerBlocked || dictationActive || isLoading || interactiveAuthorityPending || knowledgeRecoveryPending}
       contextEpoch={scopeEpoch}
       threadId={activeThreadId}
       ensureThread={ensureLiveThread}
@@ -3985,8 +4027,8 @@ const PaigeAIChatInner = ({
                 />
               </div>
             )}
-            <div role="status" aria-live="polite" className={isProcessingFile ? "mb-2 px-1 text-xs text-muted-foreground" : "sr-only"}>
-              {isProcessingFile ? "Preparing attachment…" : attachedDoc ? `${attachedDoc.name} attached` : ""}
+            <div role="status" aria-live="polite" className={isProcessingFile||knowledgeRecoveryPending ? "mb-2 px-1 text-xs text-muted-foreground" : "sr-only"}>
+              {isProcessingFile ? "Preparing attachment…" : knowledgeRecoveryPending ? draft.knowledgeRecoveryState==='unavailable'?'Browser recovery is unavailable. Reload when storage is available, or open an existing conversation.':'Open Knowledge documents to check the original conversation for your saved file.' : attachedDoc ? `${attachedDoc.name} attached` : ""}
             </div>
             {soloTenantSafety && renderComposerContext && <div data-solo-contextual-suggestion className="min-w-0">
               {renderComposerContext({ threadId: activeThreadId, ready: composerScope.status === "ready-new" || composerScope.status === "ready-thread", busy: isLoading,
@@ -4029,6 +4071,7 @@ const PaigeAIChatInner = ({
                   </div>
                   <div className="flex min-w-0 items-center gap-1.5 px-2.5 pb-2 pt-1.5">
                     {attachButton}
+                    {knowledgeDocumentsButton}
                     {/* CD's other two tool keys. Neither has a seam behind it yet, so
                         each is rendered in CD's shape and DISABLED, saying what it is
                         waiting on — never a control that looks live and does nothing
@@ -4112,6 +4155,7 @@ const PaigeAIChatInner = ({
                     {micButton}
                     {liveConversationButton}
                     {attachButton}
+                    {knowledgeDocumentsButton}
                     {clearComposerButton}
                     {stopInteractiveButton}
                     <Button
@@ -4130,6 +4174,7 @@ const PaigeAIChatInner = ({
                 <>
                   {composerTextarea}
                   {attachButton}
+                  {knowledgeDocumentsButton}
                   {clearComposerButton}
                   {micButton}
                   {stopInteractiveButton}

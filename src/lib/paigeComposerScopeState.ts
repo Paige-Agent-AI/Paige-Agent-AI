@@ -1,6 +1,7 @@
 import { useCallback, useSyncExternalStore, type SetStateAction } from "react";
 
 import { composerScopeIdentityKey, createComposerScopeIdentity, type ComposerScopeIdentity } from "./paigeComposerScopeIdentity.ts";
+import type {ChatKnowledgeIntakeSelection} from './paige-chat-knowledge-service';
 export { COMPOSER_FOCUS_NONE, COMPOSER_SCOPE_FIELDS, composerScopeIdentityKey, createComposerScopeIdentity, type ComposerScopeIdentity, type ComposerScopeFieldCoverage } from "./paigeComposerScopeIdentity.ts";
 
 export type ComposerConversation =
@@ -328,6 +329,9 @@ export function shouldClearComposerDraft(input: Readonly<{
 
 type Listener = () => void;
 const drafts = new Map<string, string>();
+// Recovery pointers within the original composer cache, never source content,
+// effect results, approval or a replay queue. Native Work remains authoritative.
+const knowledgeIntakes = new Map<string, Readonly<ChatKnowledgeIntakeSelection> | null>();
 const draftRevisions = new Map<string, number>();
 const listeners = new Map<string, Set<Listener>>();
 
@@ -345,10 +349,24 @@ const DRAFT_SESSION_LIMIT = 8;
 const DRAFT_TEXT_LIMIT = 20_000;
 const DRAFT_CACHE_LIMIT = 200_000;
 type SessionOwner = Readonly<{ tenantId: string; userId: string }>;
-type SessionDraft = Readonly<{ key: string; text: string; updatedAt: number }>;
+type SessionDraft = Readonly<{ key: string; text: string; updatedAt: number; knowledgeIntake?: Readonly<ChatKnowledgeIntakeSelection> }>;
+const knowledgeWorkIdValid = (value: unknown): value is string => typeof value === 'string'
+  && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(value);
+function knowledgeIntakeValid(value: unknown): value is ChatKnowledgeIntakeSelection {
+  if(!value||typeof value!=='object'||Array.isArray(value))return false;
+  const v=value as Record<string,unknown>;
+  return Object.keys(v).length===7&&knowledgeWorkIdValid(v.extractionWorkId)&&knowledgeWorkIdValid(v.documentId)
+    &&knowledgeWorkIdValid(v.extractionIntentId)&&typeof v.sourceSha256==='string'&&/^[a-f0-9]{64}$/.test(v.sourceSha256)
+    &&(v.expectedSourceRevision===null||(Number.isSafeInteger(v.expectedSourceRevision)&&Number(v.expectedSourceRevision)>0&&Number(v.expectedSourceRevision)<=2147483647))
+    &&v.turnId===null&&v.expectedLinkRevision===0;
+}
 let sessionOwner: SessionOwner | null = null;
 const draftTouchedAt = new Map<string, number>();
 let persistedDraftKeys = new Set<string>();
+// A successful metadata-only write/read establishes this existing cache as safe
+// to retain if browser storage later becomes temporarily unreadable.
+let knowledgeRecoveryCacheProtected = false;
+let sessionReadUnavailable = false;
 
 export type ComposerDraftReloadProtection = "disabled" | "protected" | "unavailable";
 
@@ -386,24 +404,61 @@ function sessionOwns(key: string, owner: SessionOwner): boolean {
   return parts?.[0] === owner.tenantId && parts[1] === owner.userId;
 }
 
+function knowledgeOnlyCache(owner:SessionOwner): SessionDraft[] | null {
+  try{
+    const raw=window.sessionStorage.getItem(DRAFT_SESSION_KEY);
+    if(!raw||raw.length>DRAFT_CACHE_LIMIT)return null;
+    const cache=JSON.parse(raw),seen=new Set<string>(),now=Date.now();
+    if(cache?.version!==1||cache.owner?.userId!==owner.userId||!Array.isArray(cache.entries)
+      ||!cache.entries.length||cache.entries.length>DRAFT_SESSION_LIMIT)return null;
+    for(const entry of cache.entries){
+      if(!entry||Object.keys(entry).length!==4||typeof entry.key!=='string'
+        ||sessionKeyParts(entry.key)?.[1]!==owner.userId||seen.has(entry.key)||entry.text!==''
+        ||!knowledgeIntakeValid(entry.knowledgeIntake)||!Number.isFinite(entry.updatedAt)||entry.updatedAt>now)return null;
+      seen.add(entry.key);
+    }
+    return cache.entries;
+  }catch{return null;}
+}
+
+function preserveKnowledgeOnlyCache(owner:SessionOwner): boolean {
+  if(!sessionReadUnavailable&&!knowledgeRecoveryCacheProtected&&!knowledgeOnlyCache(owner))return false;
+  // The remaining cache contains no text that could be resurrected. Retain its
+  // native pointers on a later storage failure, while text remains unprotected.
+  publishPersistedDraftKeys([]);return true;
+}
+
 function discardSessionCache(): void {
+  knowledgeRecoveryCacheProtected=false;
+  sessionReadUnavailable=false;
   publishPersistedDraftKeys([]);
   try { window.sessionStorage.removeItem(DRAFT_SESSION_KEY); } catch { /* Current memory still works. */ }
 }
 
 function persistSessionDrafts(): void {
   if (!sessionOwner) return;
+  // An unreadable cold cache may contain an unresolved native effect. Inspect
+  // its original owner/contents before replacing or removing it.
+  if(sessionReadUnavailable){publishPersistedDraftKeys([]);return;}
   const now = Date.now();
   const entries: SessionDraft[] = [];
+  const hasPending=[...knowledgeIntakes].some(([key,value])=>value&&sessionKeyParts(key)?.[1]===sessionOwner!.userId);
   // Reverse edit order also breaks same-millisecond ties in favor of new input.
-  for (const [key, updatedAt] of [...draftTouchedAt].reverse()) {
-    const text = drafts.get(key);
-    if (text && sessionOwns(key, sessionOwner) && text.length <= DRAFT_TEXT_LIMIT
-      && updatedAt <= now && now - updatedAt < DRAFT_SESSION_TTL) {
-      entries.push({ key, text, updatedAt });
+  const touched = new Map(draftTouchedAt);
+  for(const [key,workId] of knowledgeIntakes) if(workId&&!touched.has(key))touched.set(key,now);
+  for (const [key, updatedAt] of [...touched].reverse()) {
+    const value = drafts.get(key), knowledgeIntake = knowledgeIntakes.get(key);
+    // While a native constructor is unresolved, the SAME cache holds only its
+    // small recovery metadata. Ordinary text stays editable in memory and the
+    // original unload guard truthfully reports that text as unprotected.
+    const text = !hasPending&&value&&value.length<=DRAFT_TEXT_LIMIT&&now-updatedAt<DRAFT_SESSION_TTL ? value : '';
+    const ownMetadata=knowledgeIntake&&sessionKeyParts(key)?.[1]===sessionOwner.userId;
+    if (((text&&sessionOwns(key,sessionOwner))||ownMetadata) && updatedAt <= now) {
+      entries.push({ key, text, updatedAt, ...(knowledgeIntake?{knowledgeIntake}:{}) });
     }
   }
-  entries.sort((a, b) => b.updatedAt - a.updatedAt);
+  // Do not evict unresolved native pointers in favor of ordinary text drafts.
+  entries.sort((a, b) => Number(!!b.knowledgeIntake)-Number(!!a.knowledgeIntake)||b.updatedAt-a.updatedAt);
   try {
     if (entries.length === 0) discardSessionCache();
     else {
@@ -416,69 +471,83 @@ function persistSessionDrafts(): void {
       }
       if (retained.length) {
         window.sessionStorage.setItem(DRAFT_SESSION_KEY, raw);
-        publishPersistedDraftKeys(retained.map(entry => entry.key));
+        knowledgeRecoveryCacheProtected=hasPending;
+        publishPersistedDraftKeys(retained.filter(entry=>entry.text.length>0).map(entry => entry.key));
       }
       else discardSessionCache();
     }
   } catch {
-    // If setItem fails but removal works, an older text must not return on reload.
-    discardSessionCache();
+    // A failed first save still rolls back before dispatch. A later read/write
+    // refusal must not erase an already protected metadata-only cache.
+    if(!preserveKnowledgeOnlyCache(sessionOwner))discardSessionCache();
   }
 }
 
 export function setComposerDraftSessionScope(scope: ComposerDraftSessionScope): void {
   const next = scope.kind === "ready" && scope.tenantId && scope.userId
     ? { tenantId: scope.tenantId, userId: scope.userId } : null;
-  if (next && sessionOwner?.tenantId === next.tenantId && sessionOwner.userId === next.userId) return;
+  if (next && sessionOwner?.tenantId === next.tenantId && sessionOwner.userId === next.userId&&!sessionReadUnavailable) return;
   const previous = sessionOwner;
   sessionOwner = null;
   if (previous) {
     // Retain monotonic revisions: an old refused send cannot resurrect retired text,
     // including an actor/workspace A→B→A transition.
-    for (const key of draftRevisions.keys()) {
+    for (const key of new Set([...draftRevisions.keys(),...knowledgeIntakes.keys()])) {
       if (sessionKeyParts(key)?.[1] !== previous.userId) continue;
       draftRevisions.set(key, (draftRevisions.get(key) ?? 0) + 1);
-      // Preserve existing same-actor workspace drafts in memory. Only the
-      // currently verified workspace may be retained for reload.
+      // Preserve existing same-actor workspace drafts in memory. Raw text is
+      // reloadable only for the verified workspace; opaque native pointers stay
+      // withheld until their exact actor/tenant/focus is verified again.
       if (!next || next.userId !== previous.userId) {
         drafts.delete(key);
+        if(scope.kind!=='unresolved')knowledgeIntakes.delete(key);
         draftTouchedAt.delete(key);
       }
       emit(key);
     }
-    discardSessionCache();
+    if(scope.kind==='clear'||(next&&next.userId!==previous.userId)||!preserveKnowledgeOnlyCache(previous))discardSessionCache();
   }
   if (!next) {
     // A cold unresolved identity cannot read a cache or destroy one before auth
     // resolves. An authoritative sign-out/ineligible verdict must remove it.
-    if (scope.kind === "clear") discardSessionCache();
+    if (scope.kind === "clear") {
+      for(const key of knowledgeIntakes.keys()){knowledgeIntakes.delete(key);emit(key);}
+      discardSessionCache();
+    }
     return;
   }
   sessionOwner = next;
+  for(const key of knowledgeIntakes.keys())if(sessionKeyParts(key)?.[1]!==next.userId){knowledgeIntakes.delete(key);emit(key);}
+  let cacheReadCompleted=false;
   try {
     const raw = window.sessionStorage.getItem(DRAFT_SESSION_KEY);
+    cacheReadCompleted=true;sessionReadUnavailable=false;
     if (raw) {
       if (raw.length > DRAFT_CACHE_LIMIT) throw new Error("Oversized draft cache");
       const cache = JSON.parse(raw);
-      if (cache?.version !== 1 || cache.owner?.tenantId !== next.tenantId
+      if (cache?.version !== 1 || (cache.owner?.tenantId !== next.tenantId&&!knowledgeOnlyCache(next))
         || cache.owner?.userId !== next.userId || !Array.isArray(cache.entries)
         || cache.entries.length > DRAFT_SESSION_LIMIT) throw new Error("Invalid draft cache");
       const seen = new Set<string>();
       const now = Date.now();
       for (const entry of cache.entries) {
-        if (!entry || typeof entry.key !== "string" || !sessionOwns(entry.key, next)
-          || seen.has(entry.key) || typeof entry.text !== "string" || !entry.text.length
+        if (!entry || typeof entry.key !== "string" || (!sessionOwns(entry.key,next)
+          &&!(entry.text===''&&knowledgeIntakeValid(entry.knowledgeIntake)&&sessionKeyParts(entry.key)?.[1]===next.userId))
+          || seen.has(entry.key) || typeof entry.text !== "string" || (!entry.text.length&&!knowledgeIntakeValid(entry.knowledgeIntake))
           || entry.text.length > DRAFT_TEXT_LIMIT || !Number.isFinite(entry.updatedAt)
-          || entry.updatedAt > now || now - entry.updatedAt >= DRAFT_SESSION_TTL) {
+          || (entry.knowledgeIntake!==undefined&&!knowledgeIntakeValid(entry.knowledgeIntake))
+          || entry.updatedAt > now || (now-entry.updatedAt>=DRAFT_SESSION_TTL&&!entry.knowledgeIntake)) {
           throw new Error("Invalid draft entry");
         }
         seen.add(entry.key);
       }
+      knowledgeRecoveryCacheProtected=cache.entries.length>0&&cache.entries.every((entry:SessionDraft)=>entry.text===''&&!!entry.knowledgeIntake);
       const currentEdits = [...draftTouchedAt];
       for (const entry of [...cache.entries as SessionDraft[]].reverse()) {
+        if(entry.knowledgeIntake&&!knowledgeIntakes.has(entry.key))knowledgeIntakes.set(entry.key,Object.freeze({...entry.knowledgeIntake}));
         // Any in-memory revision, including an explicit empty tombstone, wins.
         if (draftRevisions.has(entry.key)) continue;
-        drafts.set(entry.key, entry.text);
+        if(entry.text&&sessionOwns(entry.key,next)&&now-entry.updatedAt<DRAFT_SESSION_TTL)drafts.set(entry.key, entry.text);
         draftRevisions.set(entry.key, 1);
         draftTouchedAt.set(entry.key, entry.updatedAt);
         emit(entry.key);
@@ -489,8 +558,14 @@ export function setComposerDraftSessionScope(scope: ComposerDraftSessionScope): 
         draftTouchedAt.set(key, at);
       }
     }
-  } catch { discardSessionCache(); }
+  } catch {
+    if(!cacheReadCompleted){sessionReadUnavailable=true;publishPersistedDraftKeys([]);}
+    else discardSessionCache();
+  }
   persistSessionDrafts();
+  // A parked native pointer becomes readable only after canonical scope binds.
+  // Notify the existing composer subscribers even if its text did not change.
+  for(const key of knowledgeIntakes.keys())emit(key);
 }
 
 export function composerDraftKey(handle: ComposerDraftHandle): string {
@@ -525,6 +600,38 @@ function writeKey(key: string, value: string): void {
 
 export function readComposerDraft(handle: ComposerDraftHandle): string {
   return readKey(composerDraftKey(handle));
+}
+
+export function readComposerKnowledgeIntake(handle: ComposerDraftHandle): Readonly<ChatKnowledgeIntakeSelection> | null {
+  const key=composerDraftKey(handle);
+  return sessionOwner&&sessionOwns(key,sessionOwner)?knowledgeIntakes.get(key)??null:null;
+}
+
+export function readComposerKnowledgeRecoveryState(handle:ComposerDraftHandle):'ready'|'pending'|'unavailable'{
+  if(!sessionOwner||!sessionOwns(composerDraftKey(handle),sessionOwner))return 'ready';
+  return sessionReadUnavailable?'unavailable':readComposerKnowledgeIntake(handle)?'pending':'ready';
+}
+
+/** Retain the original Work UUID BEFORE a first-value native constructor. A
+ * storage failure is a refusal to dispatch, never permission to lose recovery. */
+export function saveComposerKnowledgeIntake(handle: ComposerDraftHandle, input: ChatKnowledgeIntakeSelection): boolean {
+  if(sessionReadUnavailable)return false;
+  const key=composerDraftKey(handle),previous=knowledgeIntakes.get(key);
+  if(!sessionOwner||!sessionOwns(key,sessionOwner)||!knowledgeIntakeValid(input)
+    ||(previous&&Object.keys(input).some(key=>previous[key as keyof ChatKnowledgeIntakeSelection]!==input[key as keyof ChatKnowledgeIntakeSelection])))return false;
+  if(!previous&&[...knowledgeIntakes].filter(([candidate,value])=>value&&sessionKeyParts(candidate)?.[1]===sessionOwner!.userId).length>=DRAFT_SESSION_LIMIT)return false;
+  knowledgeIntakes.set(key,Object.freeze({...input}));persistSessionDrafts();
+  const stored=knowledgeOnlyCache(sessionOwner)?.find(entry=>entry.key===key)?.knowledgeIntake;
+  if(stored&&Object.keys(input).every(key=>stored[key as keyof ChatKnowledgeIntakeSelection]===input[key as keyof ChatKnowledgeIntakeSelection])){emit(key);return true;}
+  if(previous===undefined)knowledgeIntakes.delete(key);else knowledgeIntakes.set(key,previous);
+  persistSessionDrafts();emit(key);return false;
+}
+
+/** CAS clears only this native pointer after authoritative inspection/adoption. */
+export function clearComposerKnowledgeIntake(handle: ComposerDraftHandle, workId: string): boolean {
+  const key=composerDraftKey(handle);
+  if(!sessionOwner||!sessionOwns(key,sessionOwner)||knowledgeIntakes.get(key)?.extractionWorkId!==workId)return false;
+  knowledgeIntakes.set(key,null);persistSessionDrafts();emit(key);return true;
 }
 
 export function writeComposerDraft(handle: ComposerDraftHandle, value: string): void {
@@ -606,6 +713,11 @@ export function useComposerDraft(state: ComposerScopeState) {
   const value = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const getReloadSnapshot = useCallback(() => reloadProtectionForKey(visibleKey), [visibleKey]);
   const reloadProtection = useSyncExternalStore(subscribe, getReloadSnapshot, getReloadSnapshot);
+  const getKnowledgeSnapshot=useCallback(()=>visibleKey&&sessionOwner&&sessionOwns(visibleKey,sessionOwner)
+    ?knowledgeIntakes.get(visibleKey)??null:null,[visibleKey]);
+  const knowledgeRecoveryIntake=useSyncExternalStore(subscribe,getKnowledgeSnapshot,getKnowledgeSnapshot);
+  const getKnowledgeStateSnapshot=useCallback(()=>state.visibleHandle?readComposerKnowledgeRecoveryState(state.visibleHandle):'ready',[state.visibleHandle]);
+  const knowledgeRecoveryState=useSyncExternalStore(subscribe,getKnowledgeStateSnapshot,getKnowledgeStateSnapshot);
 
   const setValue = useCallback((next: SetStateAction<string>) => {
     const writableHandle = state.writableHandle;
@@ -623,6 +735,8 @@ export function useComposerDraft(state: ComposerScopeState) {
   return {
     value,
     reloadProtection,
+    knowledgeRecoveryIntake,
+    knowledgeRecoveryState,
     setValue,
     visibleHandle: state.visibleHandle,
     writableHandle: state.writableHandle,

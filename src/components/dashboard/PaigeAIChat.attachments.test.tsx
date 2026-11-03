@@ -59,6 +59,7 @@ vi.mock("@/components/paige/live/PaigeLiveConversation", () => ({
 import { PaigeAIChat } from "./PaigeAIChat";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { supabase } from "@/integrations/supabase/client";
+import {setComposerDraftSessionScope,saveComposerKnowledgeIntake} from '@/lib/paigeComposerScopeState';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -118,6 +119,7 @@ describe("INT-338 real composer attachment integration", () => {
     host.remove();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    setComposerDraftSessionScope({kind:'clear'});
   });
 
   const render = async (extra: Record<string, unknown> = {}) => {
@@ -136,6 +138,11 @@ describe("INT-338 real composer attachment integration", () => {
       await settle();
     });
   };
+  it("offers original Knowledge document intake without sending a Chat turn", async () => {
+    await render();
+    expect(host.querySelector('button[aria-label="Knowledge documents"]')).not.toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+  });
   const textarea = () => host.querySelector<HTMLTextAreaElement>("textarea")!;
   const send = () => host.querySelector<HTMLButtonElement>('button[aria-label="Send message"]')!;
   const type = async (value: string) => {
@@ -152,6 +159,17 @@ describe("INT-338 real composer attachment integration", () => {
     const f = new File([], name, { type: name.endsWith(".pdf") ? "application/pdf" : "image/png" });
     Object.defineProperties(f, { size: { value: 3 }, arrayBuffer: { value: read } }); return f;
   };
+  it('withholds Send, Enter and first-value Live while an original document conversation is unknown',async()=>{
+    setComposerDraftSessionScope({kind:'ready',tenantId:harness.tenantId!,userId:harness.userId!});
+    const handle={tenantId:harness.tenantId!,userId:harness.userId!,conversationId:'new-chat',focusedClientId:'none',focusedBusinessMissionId:'none'};
+    expect(saveComposerKnowledgeIntake(handle,{extractionWorkId:'00000000-0000-4000-8000-000000000010',documentId:'00000000-0000-4000-8000-000000000020',
+      extractionIntentId:'00000000-0000-4000-8000-000000000030',sourceSha256:'a'.repeat(64),expectedSourceRevision:1,turnId:null,expectedLinkRevision:0})).toBe(true);
+    await render({liveConversation:true});await type('Continue with my saved agreement');expect(send().disabled).toBe(true);
+    await act(async()=>{textarea().dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await settle();});
+    await expect(harness.liveEnsureThread!()).rejects.toThrow('needs inspection');
+    expect(harness.ensureThread).not.toHaveBeenCalled();expect(fetch).not.toHaveBeenCalled();
+    expect(textarea().value).toBe('Continue with my saved agreement');
+  });
   const stage = async (f: File, route: "paste" | "drop" = "paste") => {
     const e = new Event(route, { bubbles: true, cancelable: true });
     Object.defineProperty(e, route === "paste" ? "clipboardData" : "dataTransfer", { value: { files: [f], items: [], types: ["Files"] } });

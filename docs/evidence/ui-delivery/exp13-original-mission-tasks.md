@@ -8,14 +8,14 @@ FLOW_PROTOTYPE: UNVERIFIED: New Task review has not yet been driven in a rendere
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Eligible authorized SOLO user reviews exact saved source versions, person and chosen time or no date, then creates and reopens original work.
 VISUAL_DIRECTION: PASS: Existing game-plan world and inline progressive review inside its original step list; established fields/buttons, wrapping and source hierarchy, no menu or nested modal.
 AUTOMATED_EVIDENCE: PASS: Current three client/served-door suites41PASS, including original CRM summary/locator controls and17 actual inspection-handler cases. Real native rollback predecessor12FAIL/17 then candidate17PASS/0FAIL. Expanded26-native negatives and concurrent native proof remain owed.
-STATIC_EVIDENCE: UNVERIFIED: Scoped ESLint has no errors; current type ratchet and production build are running. Earlier invented route-kind error and failed real link control were repaired to the original untyped CRM Task route without changing shared routing.
+STATIC_EVIDENCE: UNVERIFIED: Scoped ESLint has no errors; current type ratchet is running; supporting production build finished successfully in6m32s before the final evidence and copy changes. Earlier invented route-kind error and failed real link control were repaired to the original untyped CRM Task route without changing shared routing.
 RENDERED_EVIDENCE: UNVERIFIED: New Task consumer is not yet browser-rendered in either theme; no visual proof inferred from React tests.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: Actual browser Task approval, receipt, navigation and reload remain owed; automated unknown/ABA/closed-plan/old-version controls are bounded source evidence.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: Source controls are src/solo/PlanInMotion.scope.test.tsx; production Task deployment is not installed. Actual browser Task approval, receipt, navigation and reload remain owed; automated unknown/ABA/closed-plan/old-version controls are bounded source evidence.
 AUTHENTICATED_RUNTIME: UNVERIFIED: Candidate Task migration/Edge/UI are not installed in production. No customer Task or provider action occurred.
 KEYBOARD_FOCUS: UNVERIFIED: Native buttons/labels/status/alerts retained; actual tab order, focus return and screen-reader drive remain owed.
 ZOOM_REFLOW: UNVERIFIED: Existing single-column source/step review and wrapping retained; actual zoom and narrow-screen inspection remains owed.
 REDUCED_MOTION: UNVERIFIED: No motion introduced; actual preference drive remains owed.
-STATE_COVERAGE: PASS: Source controls cover initial inspection, review, original approval, acknowledged independent readback, refusal, unknown inspection without replay, historical deletion, closed plan, unsaved editor exclusion, old creating provenance and late ABA response retirement.
+STATE_COVERAGE: PASS: src/solo/PlanInMotion.scope.test.tsx and src/solo/mission-task-command.test.ts source controls cover initial inspection, review, original approval, acknowledged independent readback, refusal, unknown inspection without replay, historical deletion, closed plan, unsaved editor exclusion, old creating provenance and late ABA response retirement.
 TRUTHFUL_STATE_LABELS: PASS: Upload and plan save do not approve Tasks, facts, Memory or agreement terms. Only original Task and receipt readback can show saved work; earlier plan versions remain historical.
 SOLO_UI: YES: Existing Business Game Plan step list and canonical Operations Task destination for all eligible SOLO accounts.
 UNVERIFIED: Current full-schema26-native and concurrent controls; final non-author consumer review/exact CI; native/Edge/web production release and ordinary authorized source-to-Task result/receipt/full reload. Whole outcome incomplete.
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Ordinary authorized user performs the complete joined flow 
 MOTION_PURPOSE: NONE: no new motion.
 PROTECTED_SEAMS: Affected scope/authentication, action authority, native read/write, receipt/idempotency/recovery, privacy, original route navigation, responsive/accessibility are covered by the named controls and outstanding runtime proof. Entitlement/signup/billing/provisioning, Chat stream/Live, Vault credentials, provider activation and recurring runner are unchanged.
 
-INTERNAL_BUILD_IDENTITY: Supporting reviewed native head91af46002c9580b33f398eb026fa02e8aedecbce; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(production20271130030013_not_installed); edge=PROOF_OWED(crm-command_original_Task_admission_deployment); evidence=ANT147/d347f8fc_and_this_record
+INTERNAL_BUILD_IDENTITY: Supporting reviewed native head 91af46002c9580b33f398eb026fa02e8aedecbce; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(production20271130030013_not_installed); edge=PROOF_OWED(crm-command_original_Task_admission_deployment); evidence=ANT147/d347f8fc_and_this_record
 RELEASE_CHANNEL: development: Task consumer remains local; original native/door PR3250 depends on original Mission PR3236.
 RELEASE_CLASSIFICATION: internal-only: necessary increment of the same unfinished customer outcome.
 CUSTOMER_RELEASE_IDENTITY: none: no completed outcome or customer-publication approval.
@@ -77,3 +77,5 @@ published/local/native manifests before Task30030013 cutover. No peer freeze,
 duplicate dispatch, include-all, migration rewrite or new engine is authorized.
 
 The same disposable full-schema CI now includes the owning Task concurrency proof: actual two-owner tenant-lock wait, one committed original effect, cross-actor inspection, explicitly chosen native schedule and source-row wait/currentness refusal. Syntax check only locally; runtime remains NOTRUN until genuine CI. No provider/customer execution or alternate auth kernel. Canonical business-algorithm maturity is not established: NO VERIFIED SUPPORTING ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED. Original deterministic version/hash/CAS/approval/record logic is identified in the source paths above.
+
+Actual local evidence validator also rejected three field formats after this record was added: SHA lacked a word boundary and two fields containing the supported unknown-state terminology lacked explicit source references. Exact SHA spacing and actual test paths were supplied; the validator and product remain unchanged.

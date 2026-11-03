@@ -969,6 +969,15 @@ ALG maturity and owner acceptance remain **STILL CODING / NOT ACCEPTED**. No
 provider effect, customer release identity, announcement or activation is implied.
 This closeout records only these preceding deliveries and is not logged recursively.
 
+**Recorded 2026-11-03 UTC — EXP02 O13 original recorded-event inspection; keyboard correction still owed.**
+
+| Increment | Exact reviewed source and observed production release | Useful result and remaining proof |
+| --- | --- | --- |
+| [#3231](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3231#issuecomment-6595268728) | Reviewed `2dc7995601c21894ecf6f9496ceb46667d99ae8d`; own NON-AUTHOR source6594038691 and final current-main review6595044193 CLEAR. All10 applicable exact-head checks and both web statuses SUCCESS; intended schema-free Preview SKIPPED, zero threads. Original cancelled CI attempt retained; unchanged attempt2/41567252214 actually SUCCESS. Normal merge `f208ef9512e7d803ea78882561f3973cc53a9be8`, tree`947f18d2b42cb7a94f3f737c27b7bb3eeb68cd28` exactly reviewed union over`86e2c956ac4140331ad9db3138efe6cae6d86078`;7 own and19,765 outside leaves conserved. Production `dpl_9VukeyrZgVtkVQ9QjVQu9MKFs5oy` READY/exact commit; both official origins at2026-11-03T03:58:43.475Z served build`f208ef9512e7d803ea78882561f3973cc53a9be8-mw05oyj5`, version/root/observed bootstrap200, equal SHA256`16c4ffd8e7135be20167dc20d119b4c018d2673fef87d6703201791925fe5760`, no customer update. Native/Edge delta NOT_APPLICABLE. | Original source facts can be inspected in the shared Dialog with actor filtering, source time/summary and explicit missing-result disclosure. Actual two existing authorized SOLO Owner contexts loaded the same build and rendered four required widths plus390 in both existing themes without horizontal overflow. **FAIL:** desktop-to390 Escape leaves focused invoker outside the visible area in both contexts; correction is locally89PASS with controlled visible-return proof, not yet released/customer-verified. [Correction evidence](evidence/ui-delivery/e2-o13-visible-focus-return.md). Original domain/result/receipt linkage and durable exact-event reopen remain pending contract928fb46c. O13 INCOMPLETE; founder acceptance OPEN. No action, permission, provider, catalogue/algorithm promotion, customer version or announcement. |
+
+This row records the preceding delivery's actual source/release and proof boundary;
+it does not close O13 or alter any original writer, permission or activation state.
+
 **Recorded 2026-11-01 UTC — EXP02 O06 original finding destinations.**
 
 | Increment | Exact reviewed source and observed production release | Delivery and proof boundary |

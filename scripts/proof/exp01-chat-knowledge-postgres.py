@@ -5,6 +5,7 @@ import argparse, pathlib, subprocess, uuid, ast, re, time, json
 p=argparse.ArgumentParser()
 p.add_argument('--psql',required=True);p.add_argument('--port',default='55461')
 p.add_argument('--expected-data-directory',required=True);p.add_argument('--without-candidate',action='store_true')
+p.add_argument('--auth-order-migration',help='Prove forward Auth-first ordering against the original native entry points')
 p.add_argument('--auth-lock-migration',help='Prove native Auth/Knowledge lock fairness in this disposable fixture')
 p.add_argument('--containment-release-migration',help='Prove exact original save ACL restoration after the lock repair')
 a=p.parse_args();root=pathlib.Path(__file__).resolve().parents[2]
@@ -139,6 +140,136 @@ try:
    for _ in range(2):sql(db,file=release)
    if sql(db,save_acl_query)[0]!=original_save_acl:raise RuntimeError('Containment release did not restore exact original ACL')
    print('PASS: pre-repair release refused; source/ACL drift refused; exact paused ACL restored and replayed')
+  if a.auth_order_migration:
+   # Original Setup scope and selection lock; only context projection/access ports
+   # are modelled here. Full-schema Setup remains the existing CI proof.
+   def original_function(path,name):
+    source=(root/path).read_text(encoding='utf8')
+    start=re.search(r'create or replace function public\.'+name+r'\(',source,re.I).start()
+    delimiter=re.search(r'as\s+(\$(?:\w+)?\$)',source[start:],re.I)
+    end=source.index(delimiter.group(1)+';',start+delimiter.end())+len(delimiter.group(1))+1
+    return source[start:end]
+   sql(db,"ALTER TABLE public.tenants ADD COLUMN owner_user_id uuid;CREATE TABLE public.tenant_setup_business_context_meta(tenant_id uuid PRIMARY KEY);INSERT INTO public.tenant_setup_business_context_meta SELECT id FROM public.tenants;CREATE FUNCTION public.solo_setup_assert_canonical_tenant() RETURNS uuid LANGUAGE sql AS $$SELECT public.current_user_tenant_id()$$;CREATE FUNCTION public.get_solo_business_context() RETURNS jsonb LANGUAGE sql AS $$SELECT jsonb_build_object('tenantId',public.current_user_tenant_id())$$;")
+   sql(db,original_function('supabase/migrations/20261103000000_solo_setup_business_context.sql','solo_setup_lock_expected_tenant'))
+   sql(db,original_function('supabase/migrations/20261046000000_solo_setup_persistence_repair.sql','solo_setup_access_scope'))
+   sql(db,original_function('supabase/migrations/20271129010001_exp01_reviewed_setup_receipt_forward.sql','lock_solo_reviewed_setup_scope'))
+   sql(db,'REVOKE ALL ON FUNCTION public.lock_solo_reviewed_setup_scope(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role')
+   sql(db,"UPDATE public.tenant_members SET role='admin' WHERE user_id='"+actor_id+"' AND tenant_id='00000000-0000-0000-0000-000000000001'") # disposable delegated Setup actor only
+   t="'00000000-0000-0000-0000-000000000001'"
+   extraction="(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='chat-pending')"
+   publication='public.test_chat_work()'
+   original_state=sql(db,"SELECT jsonb_agg(to_jsonb(w)) FROM public.paige_durable_work w WHERE id IN ("+extraction+","+publication+")")[0].strip()
+   def reset_work():
+    sql(db,"UPDATE public.paige_durable_work w SET status=x.status,terminal_outcome=x.terminal_outcome,settled_at=x.settled_at,dispatch_started_attempt=x.dispatch_started_attempt,attempt_count=x.attempt_count,lease_until=now()+interval '10 minutes',chat_source_link=NULL FROM jsonb_populate_recordset(NULL::public.paige_durable_work,'"+original_state.replace("'","''")+"'::jsonb) x WHERE w.id=x.id")
+   cases=[
+    ('extract_start',extraction,"UPDATE public.paige_durable_work SET status='claimed',dispatch_started_attempt=0,attempt_count=1 WHERE id="+extraction,"SELECT public.start_knowledge_extraction("+extraction+")",'SELECT public.test_chat_stage()'),
+    ('extract_complete',extraction,"UPDATE public.paige_durable_work SET dispatch_started_attempt=attempt_count WHERE id="+extraction,"SELECT public.complete_knowledge_extraction(w.id,w.idempotency_key,w.attempt_count,(w.request_payload->>'revision')::integer,'Pending original source',w.request_payload->>'input_hash',NULL) FROM public.paige_durable_work w WHERE id="+extraction,'SELECT public.test_chat_stage()'),
+    ('review',extraction,'',"SELECT public.lock_knowledge_review_target("+t+",d.id,d.extraction_work_id,d.revision) FROM public.tenant_knowledge_docs d WHERE extraction_work_id="+extraction,'SELECT public.test_chat_stage()'),
+    ('publish_start',publication,"UPDATE public.paige_durable_work SET status='claimed',terminal_outcome=NULL,settled_at=NULL WHERE id="+publication,"SELECT public.start_knowledge_publication("+publication+")",'SELECT public.test_chat_save()'),
+    ('publish_stage',publication,'',"SELECT public.stage_knowledge_publication(w.id,w.idempotency_key,w.attempt_count,(w.request_payload->>'revision')::integer,'[]') FROM public.paige_durable_work w WHERE id="+publication,'SELECT public.test_chat_save()'),
+    ('publish_complete',publication,"UPDATE public.paige_durable_work SET status='claimed',terminal_outcome=NULL,settled_at=NULL,dispatch_started_attempt=attempt_count WHERE id="+publication,"SELECT public.complete_knowledge_publication(w.id,w.idempotency_key,w.attempt_count,(w.request_payload->>'revision')::integer) FROM public.paige_durable_work w WHERE id="+publication,'SELECT public.test_chat_save()'),
+    ('setup',None,'',"SELECT public.lock_solo_reviewed_setup_scope("+t+",'"+actor_id+"')",'SELECT public.test_chat_save()'),
+   ]
+   def ordering(label,expect_cycle):
+    for name,target,preparation,operation,chat in cases:
+     reset_work()
+     if preparation:sql(db,preparation)
+     peers=[]
+     try:
+      prefix=label+'_'+name
+      peers.append(peer(prefix+'_gate',"BEGIN;SELECT 1 FROM auth.users WHERE id='"+actor_id+"' FOR NO KEY UPDATE;SELECT pg_sleep(3);COMMIT;"))
+      wait_for(prefix+'_gate',"wait_event='PgSleep'")
+      peers.append(peer(prefix+'_chat',actor_setup+"BEGIN;SET LOCAL statement_timeout='8s';"+chat+';ROLLBACK;'))
+      wait_for(prefix+'_chat','cardinality(pg_blocking_pids(pid))>0')
+      peers.append(peer(prefix+'_native',"SELECT set_config('test.actor','"+actor_id+"',false);BEGIN;SET LOCAL statement_timeout='8s';"+operation+';ROLLBACK;'))
+      try:wait_for(prefix+'_native','cardinality(pg_blocking_pids(pid))>0')
+      except RuntimeError:
+       if peers[-1].poll() is not None:raise RuntimeError('Native call exited before lock: '+peers[-1].communicate()[1])
+       raise
+      outputs=[process.communicate(timeout=12) for process in peers]
+      errors='\n'.join(err for out,err in outputs)
+      cycle='deadlock detected' in errors
+      if cycle!=expect_cycle or 'statement timeout' in errors:raise RuntimeError('Unexpected '+prefix+' ordering: '+errors)
+      allowed=('CHAT_KNOWLEDGE_SOURCE_UNAVAILABLE','KNOWLEDGE_REVISION_CONFLICT','KNOWLEDGE_PUBLICATION_NOT_READY','KNOWLEDGE_PUBLICATION_WORK_NOT_FOUND','CHAT_KNOWLEDGE_SOURCE_CHANGED','CHAT_KNOWLEDGE_SOURCE_NOT_READY','KNOWLEDGE_REVIEW_NOT_READY','KNOWLEDGE_WORK_NOT_CLAIMABLE')
+      for process,(out,err) in zip(peers,outputs):
+       if process.returncode and not ('deadlock detected' in err or any(code in err for code in allowed)):raise RuntimeError('Unexpected native refusal '+prefix+': '+err)
+      print('PASS: '+prefix+(' original native deadlock reproduced' if cycle else ' native overlap completes or preserves original safe refusal'))
+     finally:
+      for process in peers:
+       if process.poll() is None:process.terminate();process.communicate(timeout=5)
+   # Exact native publication replay versus native recovery, which deliberately
+   # does not acquire the interactive actor mutex. No provider is called.
+   sql(db,"SELECT set_config('test.actor','"+actor_id+"',false);INSERT INTO public.extract_test VALUES('pub-order',public.test_extract('70000000-0000-4000-8000-000000000091',NULL,NULL,'Recovery ordering source'),NULL);UPDATE public.extract_test SET started=public.start_knowledge_extraction((result->>'work_id')::uuid) WHERE name='pub-order';SELECT public.complete_knowledge_extraction((result->>'work_id')::uuid,started->>'server_key',1,1,'Recovery ordering source',started->>'input_hash') FROM public.extract_test WHERE name='pub-order';SELECT public.save_tenant_knowledge_review("+t+",(result->>'document_id')::uuid,(result->>'work_id')::uuid,2,'Recovery ordering source','{\"title\":\"Recovery ordering source\",\"summary\":null,\"category\":null,\"tags\":[]}') FROM public.extract_test WHERE name='pub-order';UPDATE public.extract_test SET started=started||jsonb_build_object('publication',public.submit_tenant_knowledge_publication("+t+",(result->>'document_id')::uuid,(result->>'work_id')::uuid,3,'60000000-0000-4000-8000-000000000091',encode(sha256(convert_to('Recovery ordering source','UTF8')),'hex'))) WHERE name='pub-order';")
+   pub_order="(SELECT (started#>>'{publication,work_id}')::uuid FROM public.extract_test WHERE name='pub-order')"
+   order_doc="(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub-order')"
+   replay="SELECT public.submit_tenant_knowledge_publication("+t+",(result->>'document_id')::uuid,(result->>'work_id')::uuid,3,'60000000-0000-4000-8000-000000000091',encode(sha256(convert_to('Recovery ordering source','UTF8')),'hex')) FROM public.extract_test WHERE name='pub-order'"
+   def publication_recovery(label,expect_cycle):
+    sql(db,"UPDATE public.paige_durable_work SET lease_until=now()+interval '10 minutes' WHERE status IN ('claimed','expired');UPDATE public.paige_durable_work SET lease_until=now()-interval '1 minute',dispatch_started_attempt=0 WHERE id="+pub_order)
+    count=lambda:int(sql(db,"SELECT deadlocks FROM pg_stat_database WHERE datname=current_database()")[0])
+    before=count();peers=[]
+    try:
+     peers.append(peer(label+'_doc',"BEGIN;SELECT 1 FROM public.tenant_knowledge_docs WHERE id="+order_doc+" FOR UPDATE;SELECT pg_sleep(3);ROLLBACK;"))
+     wait_for(label+'_doc',"wait_event='PgSleep'")
+     peers.append(peer(label+'_replay',actor_setup+"BEGIN;SET LOCAL statement_timeout='8s';"+replay+';ROLLBACK;'))
+     wait_for(label+'_replay','cardinality(pg_blocking_pids(pid))>0')
+     peers.append(peer(label+'_recover',"BEGIN;SET LOCAL statement_timeout='8s';SELECT public.recover_knowledge_publication(25);ROLLBACK;"))
+     if expect_cycle:wait_for(label+'_recover','cardinality(pg_blocking_pids(pid))>0')
+     else:
+      skipped_out,skipped_err=peers[-1].communicate(timeout=2)
+      if peers[-1].returncode or re.search(r'[0-9a-f]{8}-[0-9a-f-]{27,}',skipped_out):raise RuntimeError('Native recovery did not safely skip replay-locked Work: '+skipped_err)
+     results=[process.communicate(timeout=12) for process in peers]
+     errors='\n'.join(err for out,err in results)
+     if 'statement timeout' in errors:raise RuntimeError('Publication replay/recovery stalled: '+errors)
+     # Recovery catches SQL exceptions; native database statistics reveal a
+     # deadlock even when the recovery victim intentionally returns safely.
+     until=time.monotonic()+3
+     while count()==before and time.monotonic()<until:time.sleep(.05)
+     cycle=count()>before
+     if cycle!=expect_cycle:raise RuntimeError('Wrong publication replay/recovery deadlock result '+label+': '+errors)
+     for process,(out,err) in zip(peers,results):
+      if process.returncode and 'deadlock detected' not in err:raise RuntimeError('Unexpected replay/recovery refusal: '+err)
+    finally:
+     for process in peers:
+      if process.poll() is None:process.terminate();process.communicate(timeout=5)
+    if not expect_cycle:
+     recovered=sql(db,"BEGIN;SELECT public.recover_knowledge_publication(25);ROLLBACK;")[0]
+     target_id=sql(db,'SELECT '+pub_order)[0].strip()
+     if recovered.count(target_id)!=1:raise RuntimeError('Skipped publication Work was not recoverable afterward')
+    print('PASS: '+label+(' native replay/recovery deadlock reproduced' if cycle else ' same-intent replay and native recovery both finish without deadlock'))
+   publication_recovery('document_first_baseline',True)
+   ordering('work_first_baseline',True)
+   order_migration=root/a.auth_order_migration
+   order_snapshot="SELECT jsonb_agg(to_jsonb(p) ORDER BY p.oid) FROM pg_proc p WHERE proname IN ('submit_tenant_knowledge_publication','start_knowledge_extraction','complete_knowledge_extraction','lock_knowledge_review_target','start_knowledge_publication','stage_knowledge_publication','complete_knowledge_publication','lock_solo_reviewed_setup_scope')"
+   before_order=sql(db,order_snapshot)[0]
+   for fault in [
+    'ALTER FUNCTION public.lock_solo_reviewed_setup_scope(uuid,uuid) RESET ALL',
+    'GRANT EXECUTE ON FUNCTION public.lock_solo_reviewed_setup_scope(uuid,uuid) TO authenticated',
+    "CREATE OR REPLACE FUNCTION public.lock_solo_reviewed_setup_scope(p_tenant uuid,p_actor uuid) RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$ BEGIN RETURN NULL; END $$",
+   ]:
+    result=subprocess.run(base+['-d',db],input='BEGIN;'+fault+';'+order_migration.read_text(encoding='utf8')+'COMMIT;',cwd=root,text=True,capture_output=True,encoding='utf8')
+    if result.returncode==0 or 'KNOWLEDGE_AUTH_ORDER_' not in result.stderr:raise RuntimeError('Forward ordering drift not refused: '+fault+result.stderr)
+    if sql(db,order_snapshot)[0]!=before_order:raise RuntimeError('Forward ordering drift refusal failed to roll back earlier replacements')
+   print('PASS: forward ordering source/config/ACL drift refuses atomically before partial release')
+   for _ in range(2):sql(db,file=order_migration)
+   ordering('auth_first_candidate',False)
+   publication_recovery('work_before_document_candidate',False)
+   reset_work()
+   # Different actors sharing one tenant must not take SHARE then upgrade UPDATE.
+   second_actor='10000000-0000-0000-0000-000000000099'
+   sql(db,"INSERT INTO auth.users(id) VALUES('"+second_actor+"');INSERT INTO public.profiles VALUES('"+second_actor+"',"+t+");INSERT INTO public.tenant_members VALUES("+t+",'"+second_actor+"','active','admin',false)")
+   holders=[]
+   try:
+    holders.append(peer('setup_actor_one',"SELECT set_config('test.actor','"+actor_id+"',false);BEGIN;SELECT public.lock_solo_reviewed_setup_scope("+t+",'"+actor_id+"');SELECT pg_sleep(2);ROLLBACK;"))
+    wait_for('setup_actor_one',"wait_event='PgSleep'")
+    holders.append(peer('setup_actor_two',"SELECT set_config('test.actor','"+second_actor+"',false);BEGIN;SET LOCAL statement_timeout='5s';SELECT public.lock_solo_reviewed_setup_scope("+t+",'"+second_actor+"');ROLLBACK;"))
+    wait_for('setup_actor_two','cardinality(pg_blocking_pids(pid))>0')
+    for process in holders:
+     out,err=process.communicate(timeout=8)
+     if process.returncode:raise RuntimeError('Different-actor Setup overlap failed: '+err)
+   finally:
+    for process in holders:
+     if process.poll() is None:process.terminate();process.communicate(timeout=5)
+   print('PASS: original Setup scope preserves profile/tenant order across two actors in one tenant (context projection ports modelled)')
   fairness('serialized_candidate',False)
   # A committed ban or soft deletion still wins before a later save. The exact
   # original authorization predicate runs after the same actor-row lock.

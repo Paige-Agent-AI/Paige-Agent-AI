@@ -90,3 +90,27 @@ cause. All original agents remain paused and the hourly timer remains off.
 Permanent repair source/review/CI/merge/deployment and restoration of the exact
 paused grant remain separately verified release steps; do not infer them from
 the successful containment login.
+
+
+### November 3 forward lock-order correction (release still pending)
+
+The stronger actor lock also requires Auth-before-Work ordering in seven existing
+entry points. Native overlap tests reproduced the old deadlock for extraction
+start/completion, review, publication start/stage/completion and reviewed Setup.
+Forward migration `20271130020019_knowledge_auth_lock_order.sql` takes only the
+actor Auth lock first, then retains original authorization/state/receipt logic.
+Workers discover actor/tenant provisionally and verify identity after Work lock;
+review uses the current reviewing actor; Setup keeps its profile/tenant order.
+All eight affected function OIDs, metadata and existing ACLs are preserved.
+
+A separate native test reproduced the pre-existing publication same-intent replay
+versus recovery cycle: document→publication Work versus Work→document. The same
+forward migration prelocks only the exact existing tenant/actor/intent publication
+Work before its document; original replay validation remains afterward. Recovery
+continues using its original SKIP LOCKED behavior and no new scheduler is added.
+
+Applied Preview migrations 20015/20016/20017 remain immutable. Version 20017 adds
+the null-safe release contract after the earlier recorded 20016. Production save
+permission remains contained until the complete reviewed release/readback.
+The final native proof, independent review, exact-head CI and live save/reopen
+are required release evidence, not inferred from these reproduced baselines.

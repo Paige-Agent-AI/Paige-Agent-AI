@@ -1,3 +1,32 @@
+## EXP03 November1 — saved-email opening release and authenticated continuity
+
+Original [3193/d7596d976](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3193)
+passed exact-head engineering checks and normal web release/readback; exact source,
+review, failed-gate history and production identity are in Master4.0 and original
+journey14.59. The existing ordinary owner edited the original draft, saved unsent,
+left, fully reloaded and reopened EXACT747characters; one original message and one
+current-save receipt retain exact source/actor/business/approval/version links.
+Original inline review retains plain words in the composer; its strip shows
+To/From/subject rather than duplicating the plain body. No Send now was used.
+Opening progress, interrupted-read words and focus reuse the original reader and
+account epoch. Test read settlement is distinct from animation-frame completion;
+explicit frame control retains positive focus and no-focus-theft assertions.
+No new runtime, writer, approval, scheduler, provider or permission path. Native
+zoom, other-role/revoke/provider and actual Team Hub email integration remain
+separate unfinished proof/integration. Full EXP03 stays STILL CODING; the owner
+requires report and stop after this bounded flow, with the next outcome approved.
+
+## EXP08 November2 — teammate-details delivery identity
+
+Original3221/439d88d17 now has exact-head13 checks, own NON-AUTHOR5741445655,
+normal native41508732318/28020008 ONCE and six-body/ABI/ACL readback, production
+Vercel9jAE and both-origin exact439d served build verified. Master4.0 records this
+and preceding3203/96b1 source identity. Reuse original Team writers/receipts;
+personal-notice API is excluded. Live customer save/access/reload/reopen remains
+UNVERIFIED under original session/target handback3f19953c; no outcome acceptance.
+Full18+6/five journeys remain pending; only teammate details is authorized, then
+report to owner/original Linear/Coordinator and STOP for next-outcome approval.
+
 ## EXP08 November1 - original recovery native/source release, full Team Hub still coding
 
 Original [3200/27ba09d13](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3200)

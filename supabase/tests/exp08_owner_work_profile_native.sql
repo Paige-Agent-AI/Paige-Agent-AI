@@ -28,61 +28,80 @@ INSERT INTO public.profiles(user_id,active_tenant_id)
 CREATE TEMP TABLE exp08_profile_metadata AS SELECT oid,to_jsonb(p)-'prosrc' AS metadata FROM pg_proc p
  WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure;
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure),
- '1d99e171c55d259c18961068a7829fea','actual original writer source matches guarded prerequisite');
--- CANONICAL original scoped profile SHA256 f5ca4cd8ba6d25f8c6f9873cb9174ad08923540cdb40b717a41251b2cfa0af6f
--- INERT EXP08 original I2 owner work-profile authority candidate.
--- No managed version, independent effect writer, approval or activation. Scoped execution stays authenticated-only.
-DO $profile_patch$
-DECLARE target regprocedure:=to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text)');
- p pg_proc; original text; changed text; definition text; metadata jsonb;
- scoped pg_proc; scoped_target regprocedure;
- scope_body constant text:=$scope_body$
-DECLARE
- _actor uuid:=auth.uid();
- _tenant uuid:=public.current_user_tenant_id();
+ CASE WHEN to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)') IS NULL
+ THEN '1d99e171c55d259c18961068a7829fea' ELSE 'd00b695756e429b597f0789c27714b48' END,
+ 'actual original writer source matches guarded prerequisite or exact current candidate');
+-- CANONICAL original scoped profile SHA256 31a6dcfbca3af46350d94e8074dae52a68f1045252c55cbba3101858daf9cef8
+-- Original standalone proof component remains atomic.
+DO $exp08_literal_profile_component$
 BEGIN
- IF _actor IS NULL OR _tenant IS NULL THEN
-  RAISE EXCEPTION 'authentication required in an active workspace' USING ERRCODE='42501';
- END IF;
- -- Refusal only: this argument never selects the workspace the writer acts on.
- IF _expected_tenant_id IS DISTINCT FROM _tenant THEN
-  RAISE EXCEPTION 'your active workspace changed before this could run; nothing was changed' USING ERRCODE='42501';
- END IF;
- IF NOT public.is_tenant_admin(_tenant) THEN
-  RAISE EXCEPTION 'only an owner or admin may update work details' USING ERRCODE='42501';
- END IF;
- PERFORM 1 FROM auth.users u WHERE u.id=_actor FOR SHARE;
+ EXECUTE $exp08_literal_profile_sql$-- Literal original Team native source; no provider or business-data operation.
+DO $exp08_literal_guard$
+DECLARE p pg_catalog.pg_proc; before_state boolean:=true; after_state boolean:=true;
+BEGIN
+ IF current_user<>'postgres' THEN RAISE EXCEPTION 'EXP08 native installer requires postgres'; END IF;
+ SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text)');
  IF NOT FOUND THEN
-  RAISE EXCEPTION 'TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was changed' USING ERRCODE='42501';
+  after_state:=false; before_state:=false;
+ ELSE
+  IF p.proowner::regrole::text IS DISTINCT FROM 'postgres' OR NOT p.prosecdef
+   OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}' OR p.proconfig IS DISTINCT FROM ARRAY['search_path=public, pg_temp']::text[]
+   OR p.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
+   OR p.prokind<>'f' OR p.provolatile<>'v'
+   OR p.proisstrict IS DISTINCT FROM false OR p.proleakproof IS DISTINCT FROM false
+   OR p.proparallel<>'u' OR p.proretset IS DISTINCT FROM false
+   OR p.pronargdefaults<>0 OR pg_catalog.pg_get_function_arguments(p.oid) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text'
+   OR pg_catalog.pg_get_function_result(p.oid) IS DISTINCT FROM 'jsonb' THEN RAISE EXCEPTION 'EXP08 owner work profile original metadata drift'; END IF;
+  IF pg_catalog.md5(p.prosrc)<>'d00b695756e429b597f0789c27714b48' THEN after_state:=false; END IF;
+  IF pg_catalog.md5(p.prosrc)<>'1d99e171c55d259c18961068a7829fea' THEN before_state:=false; END IF;
+  IF pg_catalog.md5(p.prosrc) NOT IN ('d00b695756e429b597f0789c27714b48','1d99e171c55d259c18961068a7829fea') THEN RAISE EXCEPTION 'EXP08 owner work profile original source drift'; END IF;
  END IF;
- IF EXISTS(SELECT 1 FROM auth.users u WHERE u.id=_actor AND
-   (u.deleted_at IS NOT NULL OR (u.banned_until IS NOT NULL AND u.banned_until>clock_timestamp()))) THEN
-  RAISE EXCEPTION 'TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was changed' USING ERRCODE='42501';
+ SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)');
+ IF NOT FOUND THEN
+  after_state:=false;
+ ELSE
+  IF p.proowner::regrole::text IS DISTINCT FROM 'postgres' OR NOT p.prosecdef
+   OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}' OR p.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
+   OR p.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
+   OR p.prokind<>'f' OR p.provolatile<>'v'
+   OR p.proisstrict IS DISTINCT FROM false OR p.proleakproof IS DISTINCT FROM false
+   OR p.proparallel<>'u' OR p.proretset IS DISTINCT FROM false
+   OR p.pronargdefaults<>0 OR pg_catalog.pg_get_function_arguments(p.oid) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text, _expected_tenant_id uuid, _expected_membership_id uuid'
+   OR pg_catalog.pg_get_function_result(p.oid) IS DISTINCT FROM 'jsonb' THEN RAISE EXCEPTION 'EXP08 scoped work profile original door drift'; END IF;
+  IF pg_catalog.md5(p.prosrc)<>'79e324a971d7f5f89d4ff8e63cb4353b' THEN after_state:=false; END IF;
+  before_state:=false;
+  IF pg_catalog.md5(p.prosrc) NOT IN ('79e324a971d7f5f89d4ff8e63cb4353b') THEN RAISE EXCEPTION 'EXP08 scoped work profile original door drift'; END IF;
  END IF;
- -- Same lock order as original Team departure/profile/revoke: Auth, sorted seats, profile, tenant.
- PERFORM 1 FROM public.tenant_members m WHERE m.tenant_id=_tenant
-  AND m.user_id IN (_actor,_member_user_id) ORDER BY m.user_id FOR UPDATE;
- PERFORM 1 FROM public.profiles p WHERE p.user_id=_actor FOR SHARE;
- PERFORM 1 FROM public.tenants t WHERE t.id=_tenant FOR SHARE;
- IF public.current_user_tenant_id() IS DISTINCT FROM _tenant OR _expected_tenant_id IS DISTINCT FROM _tenant THEN
-  RAISE EXCEPTION 'your active workspace changed before this could run; nothing was changed' USING ERRCODE='42501';
- END IF;
- IF NOT public.is_tenant_admin(_tenant) THEN
-  RAISE EXCEPTION 'only an owner or admin may update work details' USING ERRCODE='42501';
- END IF;
- -- Captured membership is refusal-only too: identify the target by actual tenant/user first.
- IF _expected_membership_id IS NULL OR NOT EXISTS(SELECT 1 FROM public.tenant_members m
-   WHERE m.tenant_id=_tenant AND m.user_id=_member_user_id AND m.id=_expected_membership_id) THEN
-  RAISE EXCEPTION 'this team membership changed before this could run; nothing was changed' USING ERRCODE='42501';
- END IF;
- -- One original writer, audit and receipt. This overload performs no independent effects.
- RETURN public.set_solo_team_member_work_profile(_member_user_id,_job_title,_responsibilities);
-END;
-$scope_body$;
+ IF pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid)') IS NOT NULL THEN RAISE EXCEPTION 'EXP08 unexpected intermediate scoped overload'; END IF;
+ IF NOT before_state AND NOT after_state THEN RAISE EXCEPTION 'EXP08 Team details partial installation'; END IF;
+END $exp08_literal_guard$;
+CREATE OR REPLACE FUNCTION public.set_solo_team_member_work_profile(_member_user_id uuid, _job_title text, _responsibilities text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  _actor uuid := auth.uid();
+  _tenant uuid := public.current_user_tenant_id();
+  _row public.tenant_members;
+BEGIN
+  IF _actor IS NULL OR _tenant IS NULL THEN
+    RAISE EXCEPTION 'authentication required in an active workspace' USING ERRCODE = '42501';
+  END IF;
+  IF NOT public.is_tenant_admin(_tenant) THEN
+    RAISE EXCEPTION 'only an owner or admin may update work details' USING ERRCODE = '42501';
+  END IF;
+  IF char_length(COALESCE(trim(_job_title), '')) > 120 THEN
+    RAISE EXCEPTION 'job title must be 120 characters or fewer';
+  END IF;
+  IF char_length(COALESCE(trim(_responsibilities), '')) > 2000 THEN
+    RAISE EXCEPTION 'responsibilities must be 2000 characters or fewer';
+  END IF;
 
- anchor constant text:=$anchor$  UPDATE public.tenant_members tm
-  SET job_title = NULLIF(trim(_job_title), ''),$anchor$;
- guard constant text:=$guard$  -- exp08_owner_work_profile_v1: preserve identity, scope and sorted seats before an owner edit.
+  -- exp08_owner_work_profile_v1: preserve identity, scope and sorted seats before an owner edit.
+  -- Original retirement exclusion precedes Auth/member row locks.
+  LOCK TABLE public.tenants IN ROW EXCLUSIVE MODE;
   PERFORM 1 FROM auth.users u WHERE u.id=_actor FOR SHARE;
   IF NOT FOUND OR NOT EXISTS(SELECT 1 FROM auth.users u WHERE u.id=_actor
     AND u.deleted_at IS NULL AND (u.banned_until IS NULL OR u.banned_until<=clock_timestamp())) THEN
@@ -117,60 +136,125 @@ $scope_body$;
       'responsibilities',_row.responsibilities);
   END IF;
 
-$guard$;
+  UPDATE public.tenant_members tm
+  SET job_title = NULLIF(trim(_job_title), ''),
+      responsibilities = NULLIF(trim(_responsibilities), ''),
+      updated_at = now()
+  WHERE tm.tenant_id = _tenant
+    AND tm.user_id = _member_user_id
+    AND tm.status IN ('active', 'suspended')
+  RETURNING tm.* INTO _row;
+
+  IF _row.id IS NULL THEN
+    RAISE EXCEPTION 'team member not found in this workspace';
+  END IF;
+
+  INSERT INTO public.audit_logs (user_id, entity, action, entity_id, data)
+  VALUES (_actor, 'tenant_member', 'work_profile_updated', _row.id,
+          jsonb_build_object('tenant_id', _tenant, 'target_user_id', _member_user_id));
+
+  RETURN jsonb_build_object(
+    'membership_id', _row.id,
+    'job_title', _row.job_title,
+    'responsibilities', _row.responsibilities
+  );
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.set_solo_team_member_work_profile(_member_user_id uuid, _job_title text, _responsibilities text, _expected_tenant_id uuid, _expected_membership_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+ _actor uuid:=auth.uid();
+ _tenant uuid:=public.current_user_tenant_id();
 BEGIN
- SELECT * INTO p FROM pg_proc WHERE oid=target;
- IF NOT FOUND OR p.proowner<>'postgres'::regrole OR NOT p.prosecdef OR p.provolatile<>'v'
-  OR p.proconfig IS DISTINCT FROM ARRAY['search_path=public, pg_temp']::text[]
-  OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}'
-  OR p.prolang<>(SELECT oid FROM pg_language WHERE lanname='plpgsql') OR p.prokind<>'f'
-  OR p.proisstrict OR p.proleakproof OR p.proparallel<>'u' OR p.proretset OR p.prorettype<>'jsonb'::regtype
-  OR pg_get_function_arguments(target) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text' THEN
-  RAISE EXCEPTION 'EXP08 owner work profile original metadata drift';
+ IF _actor IS NULL OR _tenant IS NULL THEN
+  RAISE EXCEPTION 'authentication required in an active workspace' USING ERRCODE='42501';
  END IF;
- original:=p.prosrc; metadata:=to_jsonb(p)-'prosrc';
- IF md5(original)<>'1d99e171c55d259c18961068a7829fea' THEN
-  IF length(original)-length(replace(original,guard,''))<>length(guard)
-   OR md5(replace(original,guard,''))<>'1d99e171c55d259c18961068a7829fea' THEN
-   RAISE EXCEPTION 'EXP08 owner work profile original source drift';
-  END IF;
+ -- Refusal only: this argument never selects the workspace the writer acts on.
+ IF _expected_tenant_id IS DISTINCT FROM _tenant THEN
+  RAISE EXCEPTION 'your active workspace changed before this could run; nothing was changed' USING ERRCODE='42501';
+ END IF;
+ IF NOT public.is_tenant_admin(_tenant) THEN
+  RAISE EXCEPTION 'only an owner or admin may update work details' USING ERRCODE='42501';
+ END IF;
+ -- Original retirement exclusion precedes Auth/member row locks.
+ LOCK TABLE public.tenants IN ROW EXCLUSIVE MODE;
+ PERFORM 1 FROM auth.users u WHERE u.id=_actor FOR SHARE;
+ IF NOT FOUND THEN
+  RAISE EXCEPTION 'TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was changed' USING ERRCODE='42501';
+ END IF;
+ IF EXISTS(SELECT 1 FROM auth.users u WHERE u.id=_actor AND
+   (u.deleted_at IS NOT NULL OR (u.banned_until IS NOT NULL AND u.banned_until>clock_timestamp()))) THEN
+  RAISE EXCEPTION 'TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was changed' USING ERRCODE='42501';
+ END IF;
+ -- Same lock order as original Team departure/profile/revoke: Auth, sorted seats, profile, tenant.
+ PERFORM 1 FROM public.tenant_members m WHERE m.tenant_id=_tenant
+  AND m.user_id IN (_actor,_member_user_id) ORDER BY m.user_id FOR UPDATE;
+ PERFORM 1 FROM public.profiles p WHERE p.user_id=_actor FOR SHARE;
+ PERFORM 1 FROM public.tenants t WHERE t.id=_tenant FOR SHARE;
+ IF public.current_user_tenant_id() IS DISTINCT FROM _tenant OR _expected_tenant_id IS DISTINCT FROM _tenant THEN
+  RAISE EXCEPTION 'your active workspace changed before this could run; nothing was changed' USING ERRCODE='42501';
+ END IF;
+ IF NOT public.is_tenant_admin(_tenant) THEN
+  RAISE EXCEPTION 'only an owner or admin may update work details' USING ERRCODE='42501';
+ END IF;
+ -- Captured membership is refusal-only too: identify the target by actual tenant/user first.
+ IF _expected_membership_id IS NULL OR NOT EXISTS(SELECT 1 FROM public.tenant_members m
+   WHERE m.tenant_id=_tenant AND m.user_id=_member_user_id AND m.id=_expected_membership_id) THEN
+  RAISE EXCEPTION 'this team membership changed before this could run; nothing was changed' USING ERRCODE='42501';
+ END IF;
+ -- One original writer, audit and receipt. This overload performs no independent effects.
+ RETURN public.set_solo_team_member_work_profile(_member_user_id,_job_title,_responsibilities);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid) TO authenticated;
+DO $exp08_literal_guard$
+DECLARE p pg_catalog.pg_proc; before_state boolean:=true; after_state boolean:=true;
+BEGIN
+ IF current_user<>'postgres' THEN RAISE EXCEPTION 'EXP08 native installer requires postgres'; END IF;
+ SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text)');
+ IF NOT FOUND THEN
+  after_state:=false; before_state:=false;
  ELSE
- IF length(original)-length(replace(original,anchor,''))<>length(anchor) THEN
-  RAISE EXCEPTION 'EXP08 owner work profile original anchor drift';
+  IF p.proowner::regrole::text IS DISTINCT FROM 'postgres' OR NOT p.prosecdef
+   OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}' OR p.proconfig IS DISTINCT FROM ARRAY['search_path=public, pg_temp']::text[]
+   OR p.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
+   OR p.prokind<>'f' OR p.provolatile<>'v'
+   OR p.proisstrict IS DISTINCT FROM false OR p.proleakproof IS DISTINCT FROM false
+   OR p.proparallel<>'u' OR p.proretset IS DISTINCT FROM false
+   OR p.pronargdefaults<>0 OR pg_catalog.pg_get_function_arguments(p.oid) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text'
+   OR pg_catalog.pg_get_function_result(p.oid) IS DISTINCT FROM 'jsonb' THEN RAISE EXCEPTION 'EXP08 owner work profile original metadata drift'; END IF;
+  IF pg_catalog.md5(p.prosrc)<>'d00b695756e429b597f0789c27714b48' THEN after_state:=false; END IF;
+  before_state:=false;
+  IF pg_catalog.md5(p.prosrc) NOT IN ('d00b695756e429b597f0789c27714b48') THEN RAISE EXCEPTION 'EXP08 owner work profile original source drift'; END IF;
  END IF;
- changed:=replace(original,anchor,guard||anchor);
- IF replace(changed,guard,'') IS DISTINCT FROM original THEN RAISE EXCEPTION 'EXP08 owner work profile conservation failed'; END IF;
- definition:=pg_get_functiondef(target);
- IF position(original IN definition)=0 THEN RAISE EXCEPTION 'EXP08 owner work profile definition drift'; END IF;
- EXECUTE replace(definition,original,changed);
- IF (SELECT to_jsonb(q)-'prosrc' FROM pg_proc q WHERE q.oid=target) IS DISTINCT FROM metadata THEN
-  RAISE EXCEPTION 'EXP08 owner work profile metadata changed';
- END IF;
- END IF;
- IF pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid)') IS NOT NULL THEN
-  RAISE EXCEPTION 'EXP08 scoped work profile unexpected intermediate overload';
- END IF;
- scoped_target:=pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)');
- SELECT * INTO scoped FROM pg_catalog.pg_proc WHERE oid=scoped_target;
- IF FOUND THEN
-  IF scoped.prosrc IS DISTINCT FROM scope_body OR scoped.proowner<>'postgres'::regrole OR NOT scoped.prosecdef
-   OR scoped.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
-   OR scoped.provolatile<>'v' OR scoped.prokind<>'f' OR scoped.proisstrict OR scoped.proleakproof
-   OR scoped.proparallel<>'u' OR scoped.proretset OR scoped.prorettype<>'jsonb'::regtype
-   OR scoped.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[] OR scoped.pronargdefaults<>0
-   OR pg_catalog.pg_get_function_arguments(scoped.oid) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text, _expected_tenant_id uuid, _expected_membership_id uuid'
-   OR ARRAY(SELECT a::text FROM pg_catalog.unnest(scoped.proacl) a ORDER BY 1) IS DISTINCT FROM
-      ARRAY(SELECT a::text FROM pg_catalog.unnest('{postgres=X/postgres,authenticated=X/postgres}'::pg_catalog.aclitem[]) a ORDER BY 1) THEN
-   RAISE EXCEPTION 'EXP08 scoped work profile original door drift';
-  END IF;
+ SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)');
+ IF NOT FOUND THEN
+  after_state:=false; before_state:=false;
  ELSE
-  EXECUTE pg_catalog.format($create_scoped$CREATE FUNCTION public.set_solo_team_member_work_profile(_member_user_id uuid,_job_title text,_responsibilities text,_expected_tenant_id uuid,_expected_membership_id uuid)
-   RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path='' AS %L$create_scoped$,scope_body);
-  REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
-  GRANT EXECUTE ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid) TO authenticated;
+  IF p.proowner::regrole::text IS DISTINCT FROM 'postgres' OR NOT p.prosecdef
+   OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}' OR p.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
+   OR p.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
+   OR p.prokind<>'f' OR p.provolatile<>'v'
+   OR p.proisstrict IS DISTINCT FROM false OR p.proleakproof IS DISTINCT FROM false
+   OR p.proparallel<>'u' OR p.proretset IS DISTINCT FROM false
+   OR p.pronargdefaults<>0 OR pg_catalog.pg_get_function_arguments(p.oid) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text, _expected_tenant_id uuid, _expected_membership_id uuid'
+   OR pg_catalog.pg_get_function_result(p.oid) IS DISTINCT FROM 'jsonb' THEN RAISE EXCEPTION 'EXP08 scoped work profile original door drift'; END IF;
+  IF pg_catalog.md5(p.prosrc)<>'79e324a971d7f5f89d4ff8e63cb4353b' THEN after_state:=false; END IF;
+  before_state:=false;
+  IF pg_catalog.md5(p.prosrc) NOT IN ('79e324a971d7f5f89d4ff8e63cb4353b') THEN RAISE EXCEPTION 'EXP08 scoped work profile original door drift'; END IF;
  END IF;
-END
-$profile_patch$;
+ IF NOT after_state THEN RAISE EXCEPTION 'EXP08 literal native result could not be verified'; END IF;
+END $exp08_literal_guard$;
+$exp08_literal_profile_sql$;
+END $exp08_literal_profile_component$;
 
 SELECT ok(NOT EXISTS(SELECT 1 FROM exp08_profile_metadata m JOIN pg_proc p ON p.oid=m.oid WHERE to_jsonb(p)-'prosrc' IS DISTINCT FROM m.metadata),
  'original writer OID and complete nonbody metadata conserved');
@@ -254,60 +338,77 @@ SELECT throws_ok($$SELECT public.set_solo_team_member_work_profile(NULL,NULL,NUL
 RESET ROLE;
 CREATE TEMP TABLE exp08_profile_before_replay AS SELECT jsonb_agg(to_jsonb(p) ORDER BY oid) AS metadata FROM pg_proc p
  WHERE oid IN('public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure,'public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)'::regprocedure);
--- CANONICAL original scoped profile SHA256 f5ca4cd8ba6d25f8c6f9873cb9174ad08923540cdb40b717a41251b2cfa0af6f
--- INERT EXP08 original I2 owner work-profile authority candidate.
--- No managed version, independent effect writer, approval or activation. Scoped execution stays authenticated-only.
-DO $profile_patch$
-DECLARE target regprocedure:=to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text)');
- p pg_proc; original text; changed text; definition text; metadata jsonb;
- scoped pg_proc; scoped_target regprocedure;
- scope_body constant text:=$scope_body$
-DECLARE
- _actor uuid:=auth.uid();
- _tenant uuid:=public.current_user_tenant_id();
+-- CANONICAL original scoped profile SHA256 31a6dcfbca3af46350d94e8074dae52a68f1045252c55cbba3101858daf9cef8
+-- Original standalone proof component remains atomic.
+DO $exp08_literal_profile_component$
 BEGIN
- IF _actor IS NULL OR _tenant IS NULL THEN
-  RAISE EXCEPTION 'authentication required in an active workspace' USING ERRCODE='42501';
- END IF;
- -- Refusal only: this argument never selects the workspace the writer acts on.
- IF _expected_tenant_id IS DISTINCT FROM _tenant THEN
-  RAISE EXCEPTION 'your active workspace changed before this could run; nothing was changed' USING ERRCODE='42501';
- END IF;
- IF NOT public.is_tenant_admin(_tenant) THEN
-  RAISE EXCEPTION 'only an owner or admin may update work details' USING ERRCODE='42501';
- END IF;
- PERFORM 1 FROM auth.users u WHERE u.id=_actor FOR SHARE;
+ EXECUTE $exp08_literal_profile_sql$-- Literal original Team native source; no provider or business-data operation.
+DO $exp08_literal_guard$
+DECLARE p pg_catalog.pg_proc; before_state boolean:=true; after_state boolean:=true;
+BEGIN
+ IF current_user<>'postgres' THEN RAISE EXCEPTION 'EXP08 native installer requires postgres'; END IF;
+ SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text)');
  IF NOT FOUND THEN
-  RAISE EXCEPTION 'TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was changed' USING ERRCODE='42501';
+  after_state:=false; before_state:=false;
+ ELSE
+  IF p.proowner::regrole::text IS DISTINCT FROM 'postgres' OR NOT p.prosecdef
+   OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}' OR p.proconfig IS DISTINCT FROM ARRAY['search_path=public, pg_temp']::text[]
+   OR p.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
+   OR p.prokind<>'f' OR p.provolatile<>'v'
+   OR p.proisstrict IS DISTINCT FROM false OR p.proleakproof IS DISTINCT FROM false
+   OR p.proparallel<>'u' OR p.proretset IS DISTINCT FROM false
+   OR p.pronargdefaults<>0 OR pg_catalog.pg_get_function_arguments(p.oid) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text'
+   OR pg_catalog.pg_get_function_result(p.oid) IS DISTINCT FROM 'jsonb' THEN RAISE EXCEPTION 'EXP08 owner work profile original metadata drift'; END IF;
+  IF pg_catalog.md5(p.prosrc)<>'d00b695756e429b597f0789c27714b48' THEN after_state:=false; END IF;
+  IF pg_catalog.md5(p.prosrc)<>'1d99e171c55d259c18961068a7829fea' THEN before_state:=false; END IF;
+  IF pg_catalog.md5(p.prosrc) NOT IN ('d00b695756e429b597f0789c27714b48','1d99e171c55d259c18961068a7829fea') THEN RAISE EXCEPTION 'EXP08 owner work profile original source drift'; END IF;
  END IF;
- IF EXISTS(SELECT 1 FROM auth.users u WHERE u.id=_actor AND
-   (u.deleted_at IS NOT NULL OR (u.banned_until IS NOT NULL AND u.banned_until>clock_timestamp()))) THEN
-  RAISE EXCEPTION 'TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was changed' USING ERRCODE='42501';
+ SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)');
+ IF NOT FOUND THEN
+  after_state:=false;
+ ELSE
+  IF p.proowner::regrole::text IS DISTINCT FROM 'postgres' OR NOT p.prosecdef
+   OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}' OR p.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
+   OR p.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
+   OR p.prokind<>'f' OR p.provolatile<>'v'
+   OR p.proisstrict IS DISTINCT FROM false OR p.proleakproof IS DISTINCT FROM false
+   OR p.proparallel<>'u' OR p.proretset IS DISTINCT FROM false
+   OR p.pronargdefaults<>0 OR pg_catalog.pg_get_function_arguments(p.oid) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text, _expected_tenant_id uuid, _expected_membership_id uuid'
+   OR pg_catalog.pg_get_function_result(p.oid) IS DISTINCT FROM 'jsonb' THEN RAISE EXCEPTION 'EXP08 scoped work profile original door drift'; END IF;
+  IF pg_catalog.md5(p.prosrc)<>'79e324a971d7f5f89d4ff8e63cb4353b' THEN after_state:=false; END IF;
+  before_state:=false;
+  IF pg_catalog.md5(p.prosrc) NOT IN ('79e324a971d7f5f89d4ff8e63cb4353b') THEN RAISE EXCEPTION 'EXP08 scoped work profile original door drift'; END IF;
  END IF;
- -- Same lock order as original Team departure/profile/revoke: Auth, sorted seats, profile, tenant.
- PERFORM 1 FROM public.tenant_members m WHERE m.tenant_id=_tenant
-  AND m.user_id IN (_actor,_member_user_id) ORDER BY m.user_id FOR UPDATE;
- PERFORM 1 FROM public.profiles p WHERE p.user_id=_actor FOR SHARE;
- PERFORM 1 FROM public.tenants t WHERE t.id=_tenant FOR SHARE;
- IF public.current_user_tenant_id() IS DISTINCT FROM _tenant OR _expected_tenant_id IS DISTINCT FROM _tenant THEN
-  RAISE EXCEPTION 'your active workspace changed before this could run; nothing was changed' USING ERRCODE='42501';
- END IF;
- IF NOT public.is_tenant_admin(_tenant) THEN
-  RAISE EXCEPTION 'only an owner or admin may update work details' USING ERRCODE='42501';
- END IF;
- -- Captured membership is refusal-only too: identify the target by actual tenant/user first.
- IF _expected_membership_id IS NULL OR NOT EXISTS(SELECT 1 FROM public.tenant_members m
-   WHERE m.tenant_id=_tenant AND m.user_id=_member_user_id AND m.id=_expected_membership_id) THEN
-  RAISE EXCEPTION 'this team membership changed before this could run; nothing was changed' USING ERRCODE='42501';
- END IF;
- -- One original writer, audit and receipt. This overload performs no independent effects.
- RETURN public.set_solo_team_member_work_profile(_member_user_id,_job_title,_responsibilities);
-END;
-$scope_body$;
+ IF pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid)') IS NOT NULL THEN RAISE EXCEPTION 'EXP08 unexpected intermediate scoped overload'; END IF;
+ IF NOT before_state AND NOT after_state THEN RAISE EXCEPTION 'EXP08 Team details partial installation'; END IF;
+END $exp08_literal_guard$;
+CREATE OR REPLACE FUNCTION public.set_solo_team_member_work_profile(_member_user_id uuid, _job_title text, _responsibilities text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  _actor uuid := auth.uid();
+  _tenant uuid := public.current_user_tenant_id();
+  _row public.tenant_members;
+BEGIN
+  IF _actor IS NULL OR _tenant IS NULL THEN
+    RAISE EXCEPTION 'authentication required in an active workspace' USING ERRCODE = '42501';
+  END IF;
+  IF NOT public.is_tenant_admin(_tenant) THEN
+    RAISE EXCEPTION 'only an owner or admin may update work details' USING ERRCODE = '42501';
+  END IF;
+  IF char_length(COALESCE(trim(_job_title), '')) > 120 THEN
+    RAISE EXCEPTION 'job title must be 120 characters or fewer';
+  END IF;
+  IF char_length(COALESCE(trim(_responsibilities), '')) > 2000 THEN
+    RAISE EXCEPTION 'responsibilities must be 2000 characters or fewer';
+  END IF;
 
- anchor constant text:=$anchor$  UPDATE public.tenant_members tm
-  SET job_title = NULLIF(trim(_job_title), ''),$anchor$;
- guard constant text:=$guard$  -- exp08_owner_work_profile_v1: preserve identity, scope and sorted seats before an owner edit.
+  -- exp08_owner_work_profile_v1: preserve identity, scope and sorted seats before an owner edit.
+  -- Original retirement exclusion precedes Auth/member row locks.
+  LOCK TABLE public.tenants IN ROW EXCLUSIVE MODE;
   PERFORM 1 FROM auth.users u WHERE u.id=_actor FOR SHARE;
   IF NOT FOUND OR NOT EXISTS(SELECT 1 FROM auth.users u WHERE u.id=_actor
     AND u.deleted_at IS NULL AND (u.banned_until IS NULL OR u.banned_until<=clock_timestamp())) THEN
@@ -342,60 +443,125 @@ $scope_body$;
       'responsibilities',_row.responsibilities);
   END IF;
 
-$guard$;
+  UPDATE public.tenant_members tm
+  SET job_title = NULLIF(trim(_job_title), ''),
+      responsibilities = NULLIF(trim(_responsibilities), ''),
+      updated_at = now()
+  WHERE tm.tenant_id = _tenant
+    AND tm.user_id = _member_user_id
+    AND tm.status IN ('active', 'suspended')
+  RETURNING tm.* INTO _row;
+
+  IF _row.id IS NULL THEN
+    RAISE EXCEPTION 'team member not found in this workspace';
+  END IF;
+
+  INSERT INTO public.audit_logs (user_id, entity, action, entity_id, data)
+  VALUES (_actor, 'tenant_member', 'work_profile_updated', _row.id,
+          jsonb_build_object('tenant_id', _tenant, 'target_user_id', _member_user_id));
+
+  RETURN jsonb_build_object(
+    'membership_id', _row.id,
+    'job_title', _row.job_title,
+    'responsibilities', _row.responsibilities
+  );
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.set_solo_team_member_work_profile(_member_user_id uuid, _job_title text, _responsibilities text, _expected_tenant_id uuid, _expected_membership_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+ _actor uuid:=auth.uid();
+ _tenant uuid:=public.current_user_tenant_id();
 BEGIN
- SELECT * INTO p FROM pg_proc WHERE oid=target;
- IF NOT FOUND OR p.proowner<>'postgres'::regrole OR NOT p.prosecdef OR p.provolatile<>'v'
-  OR p.proconfig IS DISTINCT FROM ARRAY['search_path=public, pg_temp']::text[]
-  OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}'
-  OR p.prolang<>(SELECT oid FROM pg_language WHERE lanname='plpgsql') OR p.prokind<>'f'
-  OR p.proisstrict OR p.proleakproof OR p.proparallel<>'u' OR p.proretset OR p.prorettype<>'jsonb'::regtype
-  OR pg_get_function_arguments(target) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text' THEN
-  RAISE EXCEPTION 'EXP08 owner work profile original metadata drift';
+ IF _actor IS NULL OR _tenant IS NULL THEN
+  RAISE EXCEPTION 'authentication required in an active workspace' USING ERRCODE='42501';
  END IF;
- original:=p.prosrc; metadata:=to_jsonb(p)-'prosrc';
- IF md5(original)<>'1d99e171c55d259c18961068a7829fea' THEN
-  IF length(original)-length(replace(original,guard,''))<>length(guard)
-   OR md5(replace(original,guard,''))<>'1d99e171c55d259c18961068a7829fea' THEN
-   RAISE EXCEPTION 'EXP08 owner work profile original source drift';
-  END IF;
+ -- Refusal only: this argument never selects the workspace the writer acts on.
+ IF _expected_tenant_id IS DISTINCT FROM _tenant THEN
+  RAISE EXCEPTION 'your active workspace changed before this could run; nothing was changed' USING ERRCODE='42501';
+ END IF;
+ IF NOT public.is_tenant_admin(_tenant) THEN
+  RAISE EXCEPTION 'only an owner or admin may update work details' USING ERRCODE='42501';
+ END IF;
+ -- Original retirement exclusion precedes Auth/member row locks.
+ LOCK TABLE public.tenants IN ROW EXCLUSIVE MODE;
+ PERFORM 1 FROM auth.users u WHERE u.id=_actor FOR SHARE;
+ IF NOT FOUND THEN
+  RAISE EXCEPTION 'TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was changed' USING ERRCODE='42501';
+ END IF;
+ IF EXISTS(SELECT 1 FROM auth.users u WHERE u.id=_actor AND
+   (u.deleted_at IS NOT NULL OR (u.banned_until IS NOT NULL AND u.banned_until>clock_timestamp()))) THEN
+  RAISE EXCEPTION 'TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was changed' USING ERRCODE='42501';
+ END IF;
+ -- Same lock order as original Team departure/profile/revoke: Auth, sorted seats, profile, tenant.
+ PERFORM 1 FROM public.tenant_members m WHERE m.tenant_id=_tenant
+  AND m.user_id IN (_actor,_member_user_id) ORDER BY m.user_id FOR UPDATE;
+ PERFORM 1 FROM public.profiles p WHERE p.user_id=_actor FOR SHARE;
+ PERFORM 1 FROM public.tenants t WHERE t.id=_tenant FOR SHARE;
+ IF public.current_user_tenant_id() IS DISTINCT FROM _tenant OR _expected_tenant_id IS DISTINCT FROM _tenant THEN
+  RAISE EXCEPTION 'your active workspace changed before this could run; nothing was changed' USING ERRCODE='42501';
+ END IF;
+ IF NOT public.is_tenant_admin(_tenant) THEN
+  RAISE EXCEPTION 'only an owner or admin may update work details' USING ERRCODE='42501';
+ END IF;
+ -- Captured membership is refusal-only too: identify the target by actual tenant/user first.
+ IF _expected_membership_id IS NULL OR NOT EXISTS(SELECT 1 FROM public.tenant_members m
+   WHERE m.tenant_id=_tenant AND m.user_id=_member_user_id AND m.id=_expected_membership_id) THEN
+  RAISE EXCEPTION 'this team membership changed before this could run; nothing was changed' USING ERRCODE='42501';
+ END IF;
+ -- One original writer, audit and receipt. This overload performs no independent effects.
+ RETURN public.set_solo_team_member_work_profile(_member_user_id,_job_title,_responsibilities);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid) TO authenticated;
+DO $exp08_literal_guard$
+DECLARE p pg_catalog.pg_proc; before_state boolean:=true; after_state boolean:=true;
+BEGIN
+ IF current_user<>'postgres' THEN RAISE EXCEPTION 'EXP08 native installer requires postgres'; END IF;
+ SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text)');
+ IF NOT FOUND THEN
+  after_state:=false; before_state:=false;
  ELSE
- IF length(original)-length(replace(original,anchor,''))<>length(anchor) THEN
-  RAISE EXCEPTION 'EXP08 owner work profile original anchor drift';
+  IF p.proowner::regrole::text IS DISTINCT FROM 'postgres' OR NOT p.prosecdef
+   OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}' OR p.proconfig IS DISTINCT FROM ARRAY['search_path=public, pg_temp']::text[]
+   OR p.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
+   OR p.prokind<>'f' OR p.provolatile<>'v'
+   OR p.proisstrict IS DISTINCT FROM false OR p.proleakproof IS DISTINCT FROM false
+   OR p.proparallel<>'u' OR p.proretset IS DISTINCT FROM false
+   OR p.pronargdefaults<>0 OR pg_catalog.pg_get_function_arguments(p.oid) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text'
+   OR pg_catalog.pg_get_function_result(p.oid) IS DISTINCT FROM 'jsonb' THEN RAISE EXCEPTION 'EXP08 owner work profile original metadata drift'; END IF;
+  IF pg_catalog.md5(p.prosrc)<>'d00b695756e429b597f0789c27714b48' THEN after_state:=false; END IF;
+  before_state:=false;
+  IF pg_catalog.md5(p.prosrc) NOT IN ('d00b695756e429b597f0789c27714b48') THEN RAISE EXCEPTION 'EXP08 owner work profile original source drift'; END IF;
  END IF;
- changed:=replace(original,anchor,guard||anchor);
- IF replace(changed,guard,'') IS DISTINCT FROM original THEN RAISE EXCEPTION 'EXP08 owner work profile conservation failed'; END IF;
- definition:=pg_get_functiondef(target);
- IF position(original IN definition)=0 THEN RAISE EXCEPTION 'EXP08 owner work profile definition drift'; END IF;
- EXECUTE replace(definition,original,changed);
- IF (SELECT to_jsonb(q)-'prosrc' FROM pg_proc q WHERE q.oid=target) IS DISTINCT FROM metadata THEN
-  RAISE EXCEPTION 'EXP08 owner work profile metadata changed';
- END IF;
- END IF;
- IF pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid)') IS NOT NULL THEN
-  RAISE EXCEPTION 'EXP08 scoped work profile unexpected intermediate overload';
- END IF;
- scoped_target:=pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)');
- SELECT * INTO scoped FROM pg_catalog.pg_proc WHERE oid=scoped_target;
- IF FOUND THEN
-  IF scoped.prosrc IS DISTINCT FROM scope_body OR scoped.proowner<>'postgres'::regrole OR NOT scoped.prosecdef
-   OR scoped.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
-   OR scoped.provolatile<>'v' OR scoped.prokind<>'f' OR scoped.proisstrict OR scoped.proleakproof
-   OR scoped.proparallel<>'u' OR scoped.proretset OR scoped.prorettype<>'jsonb'::regtype
-   OR scoped.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[] OR scoped.pronargdefaults<>0
-   OR pg_catalog.pg_get_function_arguments(scoped.oid) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text, _expected_tenant_id uuid, _expected_membership_id uuid'
-   OR ARRAY(SELECT a::text FROM pg_catalog.unnest(scoped.proacl) a ORDER BY 1) IS DISTINCT FROM
-      ARRAY(SELECT a::text FROM pg_catalog.unnest('{postgres=X/postgres,authenticated=X/postgres}'::pg_catalog.aclitem[]) a ORDER BY 1) THEN
-   RAISE EXCEPTION 'EXP08 scoped work profile original door drift';
-  END IF;
+ SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)');
+ IF NOT FOUND THEN
+  after_state:=false; before_state:=false;
  ELSE
-  EXECUTE pg_catalog.format($create_scoped$CREATE FUNCTION public.set_solo_team_member_work_profile(_member_user_id uuid,_job_title text,_responsibilities text,_expected_tenant_id uuid,_expected_membership_id uuid)
-   RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path='' AS %L$create_scoped$,scope_body);
-  REVOKE ALL ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
-  GRANT EXECUTE ON FUNCTION public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid) TO authenticated;
+  IF p.proowner::regrole::text IS DISTINCT FROM 'postgres' OR NOT p.prosecdef
+   OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}' OR p.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
+   OR p.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
+   OR p.prokind<>'f' OR p.provolatile<>'v'
+   OR p.proisstrict IS DISTINCT FROM false OR p.proleakproof IS DISTINCT FROM false
+   OR p.proparallel<>'u' OR p.proretset IS DISTINCT FROM false
+   OR p.pronargdefaults<>0 OR pg_catalog.pg_get_function_arguments(p.oid) IS DISTINCT FROM '_member_user_id uuid, _job_title text, _responsibilities text, _expected_tenant_id uuid, _expected_membership_id uuid'
+   OR pg_catalog.pg_get_function_result(p.oid) IS DISTINCT FROM 'jsonb' THEN RAISE EXCEPTION 'EXP08 scoped work profile original door drift'; END IF;
+  IF pg_catalog.md5(p.prosrc)<>'79e324a971d7f5f89d4ff8e63cb4353b' THEN after_state:=false; END IF;
+  before_state:=false;
+  IF pg_catalog.md5(p.prosrc) NOT IN ('79e324a971d7f5f89d4ff8e63cb4353b') THEN RAISE EXCEPTION 'EXP08 scoped work profile original door drift'; END IF;
  END IF;
-END
-$profile_patch$;
+ IF NOT after_state THEN RAISE EXCEPTION 'EXP08 literal native result could not be verified'; END IF;
+END $exp08_literal_guard$;
+$exp08_literal_profile_sql$;
+END $exp08_literal_profile_component$;
 
 SELECT is((SELECT jsonb_agg(to_jsonb(p) ORDER BY oid) FROM pg_proc p WHERE oid IN('public.set_solo_team_member_work_profile(uuid,text,text)'::regprocedure,'public.set_solo_team_member_work_profile(uuid,text,text,uuid,uuid)'::regprocedure)),
  (SELECT metadata FROM exp08_profile_before_replay),'replay preserves both complete original/scoped function objects');

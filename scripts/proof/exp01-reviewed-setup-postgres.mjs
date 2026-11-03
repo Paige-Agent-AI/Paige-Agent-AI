@@ -7,10 +7,8 @@ import assert from 'node:assert/strict';
 import { OperatorPostgresFixture } from './operator-postgres-fixture.mjs';
 const read=p=>readFileSync(p,'utf8').replaceAll('\r\n','\n');
 const port=Number(process.argv[2]??55461);
-const originalSourceRef=process.env.EXP01_SOURCE_VALIDATOR_REF;
-if(!originalSourceRef||!/^[a-f0-9]{40}$/.test(originalSourceRef))throw Error('Supply the inspected, pinned original E13 source commit in EXP01_SOURCE_VALIDATOR_REF');
-const source=spawnSync('git',['show',`${originalSourceRef}:supabase/migrations/20271126210013_knowledge_source_writer_validation.sql`],{encoding:'utf8'});
-assert.equal(source.status,0,'exact original E13 candidate source available locally');
+const sourcePath='supabase/migrations/20271128000013_knowledge_source_evidence_forward.sql';
+const source={stdout:read(sourcePath)};
 const fn=(sql,name)=>{
  const start=new RegExp(`create or replace function public\\.${name}\\s*\\(`,'i').exec(sql);
  assert.ok(start,`original ${name} present`);
@@ -101,6 +99,21 @@ try{
   const run=spawnSync(db.psql,db.args(),{input:candidate,encoding:'utf8',timeout:30000});
   if(run.status!==0)throw Error('Candidate installation in disposable fixture: '+run.stderr);
  };
+ const poison=`INSERT INTO public.paige_audit_log(id,actor_user_id,actor_role,action,target_type,target_id,tenant_id,payload)
+ VALUES('60000000-0000-4000-8000-000000000099','${actor}','admin','solo_setup.reviewed_facts_approved',
+ 'solo_business_brief','${tenant}','${tenant}','{"requestId":"50000000-0000-4000-8000-000000000099"}')`;
+ db.run(caller+poison);
+ assert.throws(install,/SETUP_REVIEW_AUDIT_PROVENANCE/,'first install must refuse pre-existing actor-written approval events');checks++;
+ assert.equal(scalar("SELECT count(*) FROM paige_audit_log WHERE id='60000000-0000-4000-8000-000000000099'"),'1','refusal preserves prior evidence');checks++;
+ db.run("DELETE FROM paige_audit_log WHERE id='60000000-0000-4000-8000-000000000099'");
+ const browserFirst=await raceHeld(caller+poison,candidate,'e01_audit_before_install');
+ assert.notEqual(browserFirst.status,0);assert.match(browserFirst.error,/SETUP_REVIEW_AUDIT_PROVENANCE/);checks++;
+ assert.equal(scalar("SELECT count(*) FROM paige_audit_log WHERE id='60000000-0000-4000-8000-000000000099'"),'1');checks++;
+ db.run("DELETE FROM paige_audit_log WHERE id='60000000-0000-4000-8000-000000000099'");
+ const candidateBody=candidate.replace(/^BEGIN;$/m,'').replace(/^COMMIT;$/m,'');
+ const installerFirst=await raceHeld(candidateBody,caller+poison,'e01_audit_after_install');
+ assert.notEqual(installerFirst.status,0);assert.match(installerFirst.error,/row-level security/);checks++;
+ assert.equal(scalar("SELECT count(*) FROM paige_audit_log WHERE id='60000000-0000-4000-8000-000000000099'"),'0');checks++;
  install();install();checks++;
  // Every failed reinstall runs in a disconnected, rolled-back transaction.
  // Do not silently repair drift in original source, ACLs or a partial install.
@@ -131,6 +144,9 @@ try{
  denied(caller+save,/SETUP_REVIEW_CONFLICT/);
  denied(caller+stage.replace("'field','offers'","'field',NULL"),/SETUP_REVIEW_INVALID/);
  db.run(caller+stage);assert.equal(scalar(`SELECT brand#>>'{business_brief,offers}' FROM tenants`),'Before');checks++;
+ const discovery=`SELECT read_solo_reviewed_business_facts('${tenant}','${actor}')`;
+ assert.equal(JSON.parse(scalar(caller+discovery)).proposal.reviewId,review);checks++;
+ assert.equal(JSON.parse(scalar(caller+discovery)).approval,null);checks++;
  db.run(caller+stage);assert.equal(scalar("SELECT count(*) FROM paige_audit_log WHERE action='solo_setup.reviewed_facts_staged'"),'1');checks++;
  denied(caller+save.replace("'[\"offers\"]'","'[\"industry\"]'"),/SETUP_REVIEW_SELECTION_CHANGED/);
  db.run(`UPDATE tenant_knowledge_docs SET revision=2`);
@@ -246,6 +262,8 @@ try{
  db.run(caller+decisionStage(override,withDecisions));
  denied(caller+decisionStage(override,`jsonb_set(${withDecisions},'{0,sourceDecision}','"adopt"')`),/SETUP_REVIEW_ID_REUSED/);
  const decisionReceipt=JSON.parse(scalar(caller+decisionSave(override,overrideRequest)));
+ assert.equal(JSON.parse(scalar(caller+discovery)).approval.inspection.receiptId,decisionReceipt.receiptId);checks++;
+ assert.equal(JSON.parse(scalar(caller+discovery)).proposal,null);checks++;
  assert.equal(decisionReceipt.current,true);checks++;
  assert.equal(decisionReceipt.receipt.selectedFacts[0].sourceDecision,'override');checks++;
  const afterDecision=JSON.parse(scalar(caller+'SELECT public.get_solo_business_context()'));
@@ -255,7 +273,10 @@ try{
  assert.equal(afterDecision.brief.deliveryModel,decisionContext.brief.deliveryModel,'unselected connection value is preserved');checks++;
  assert.equal(scalar(`SELECT count(*) FROM paige_audit_log WHERE payload->>'requestId'='${overrideRequest}'`),'1');checks++;
  assert.equal(JSON.parse(scalar(caller+decisionSave(override,overrideRequest))).receiptId,decisionReceipt.receiptId);checks++;
- console.log(JSON.stringify({checks,result:'PASS',scope:'candidate + original Setup write bodies in modeled dependency fixture; NOT full-schema/customer/role completeness',originalSourceRef}));
+ install();
+ assert.equal(JSON.parse(scalar(caller+discovery)).approval.inspection.receiptId,decisionReceipt.receiptId,'verified replay retains the real saved receipt');checks++;
+ assert.equal(scalar(`SELECT count(*) FROM paige_audit_log WHERE payload->>'requestId'='${overrideRequest}'`),'1','replay neither deletes nor duplicates the original approval');checks++;
+ console.log(JSON.stringify({checks,result:'PASS',scope:'candidate + original Setup write bodies in modeled dependency fixture; NOT full-schema/customer/role completeness',sourcePath}));
 } finally {
  db.run(`DROP DATABASE ${db.database}`,[],'postgres');
 }

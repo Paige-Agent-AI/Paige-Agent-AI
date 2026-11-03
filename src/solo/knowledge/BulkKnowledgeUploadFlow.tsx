@@ -7,11 +7,11 @@ import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {AddKnowledgeFlow} from './AddKnowledgeFlow';
 import {prepareKnowledgeUploadSelection,uploadKnowledgeFileOnce,inspectKnowledgeUploadedFile,submitKnowledgeExtraction,
-  readKnowledgeExtractionReview,readKnowledgePendingReviewTarget,type ExtractionClient,type ExtractionInput,
+  readKnowledgeExtractionReview,readKnowledgeExtractionStatus,readKnowledgePendingReviewTarget,type ExtractionClient,type ExtractionInput,
   type ExtractionSubmission,type KnowledgeUploadSelectionRow,type KnowledgeReviewTarget} from '@/lib/knowledge-extraction-service';
 import {knowledgeExtractionAcknowledgment,notifyKnowledgeObserver,type KnowledgeFlowObservers} from './knowledge-flow-observers';
 
-type Phase=KnowledgeUploadSelectionRow['phase']|'uploading'|'upload_unknown'|'read_unavailable'|'source_changed'|'stored'|'submission_unknown'|'submitted'|'published'|'not_started';
+type Phase=KnowledgeUploadSelectionRow['phase']|'uploading'|'upload_unknown'|'read_unavailable'|'source_changed'|'stored'|'submission_unknown'|'submitted'|'status_unavailable'|'published'|'not_started';
 type Row=Omit<KnowledgeUploadSelectionRow,'phase'>&{phase:Phase;input?:ExtractionInput;submission?:ExtractionSubmission};
 /** A local File selection captured by the existing Chat/composer incarnation.
  * This is input, never write authority or a durable source/approval receipt.
@@ -19,7 +19,7 @@ type Row=Omit<KnowledgeUploadSelectionRow,'phase'>&{phase:Phase;input?:Extractio
  */
 export type KnowledgeAttachedSelection=Readonly<{actorId:string;tenantId:string;files:readonly File[];isCurrent:()=>boolean}>;
 type Props=KnowledgeFlowObservers&{tenantId:string;onClose:()=>void;onBack:()=>void;onPublished?:()=>void;returnFocus?:()=>HTMLElement|null;attachedSelection?:KnowledgeAttachedSelection;sourceLifetime?:()=>boolean;embedded?:boolean;onInteractionStart?:()=>void};
-const labels:Record<Phase,string>={prepared:'Ready to upload',duplicate:'Duplicate in this selection · skipped',refused:'Unsupported or invalid file · not uploaded',uploading:'Uploading and verifying source',upload_unknown:'Upload unconfirmed · inspect original',read_unavailable:'Source readback unavailable',source_changed:'Stored bytes differ · reading refused',stored:'Stored source · not yet read',submission_unknown:'Reading submission unconfirmed',submitted:'Reading status unavailable · inspect original',published:'Reviewed text published',not_started:'Not started'};
+const labels:Record<Phase,string>={prepared:'Ready to upload',duplicate:'Duplicate in this selection · skipped',refused:'Unsupported or invalid file · not uploaded',uploading:'Uploading and verifying source',upload_unknown:'Upload unconfirmed · inspect original',read_unavailable:'Source readback unavailable',source_changed:'Stored bytes differ · reading refused',stored:'Stored source · not yet read',submission_unknown:'Reading submission unconfirmed',submitted:'Reading status unavailable · inspect original',status_unavailable:'Reading status unavailable · open original',published:'Reviewed text published',not_started:'Not started'};
 const readingLabels:Record<ExtractionSubmission['status'],string>={claimed:'requested · open to check progress',succeeded:'finished · review required',failed:'failed · inspect original',blocked:'paused · inspect original',cancelled:'cancelled · inspect original',expired:'needs recovery · inspect original',outcome_unknown:'unconfirmed · inspect original'};
 /** A finite attended transfer loop. Original Storage, extraction work, reviews
  * and publication own all durable effects; this component stores no batch ledger.
@@ -29,6 +29,7 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
   const observers=useRef({onExtractionAcknowledged,onPublicationVerified});
   const notifiedExtractions=useRef(new Set<string>()),notifiedPublications=useRef(new Set<string>());
   const [rows,setRows]=useState<Row[]>([]),[busy,setBusy]=useState(false),[notice,setNotice]=useState<string|null>(null),[target,setTarget]=useState<KnowledgeReviewTarget|null>(null);
+  const [checking,setChecking]=useState(false);
   const currentRows=useRef<Row[]>([]),live=useRef(true),stopping=useRef(false),running=useRef(false),selectedIndex=useRef<number|null>(null);
   const fileRows=useRef(new Map<number,HTMLLIElement>()),returningToFile=useRef(false);
   const actor=useRef(identity.activeUserId),scopeToken=useRef({tenantId,actor:identity.activeUserId});
@@ -44,7 +45,9 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
     catch{selectionRetired.current=true;}
     return !selectionRetired.current;
   };
-  if(scopeToken.current.tenantId!==tenantId||scopeToken.current.actor!==identity.activeUserId)scopeToken.current={tenantId,actor:identity.activeUserId};
+  // Returning to the same workspace cannot revive a retired file selection.
+  if(scopeToken.current.tenantId!==tenantId||scopeToken.current.actor!==identity.activeUserId){selectionRetired.current=true;scopeToken.current={tenantId,actor:identity.activeUserId};}
+  if(identity.activeTenantId!==tenantId||identity.loading||identity.accountContextStatus!=='ready')selectionRetired.current=true;
   const incarnation=scopeToken.current;
   const current=()=>live.current&&scopeToken.current===incarnation&&identity.accountContextStatus==='ready'&&!identity.loading&&identity.activeTenantId===tenantId&&identity.activeUserId===actor.current&&sourceCurrent();
   const scope=()=>({tenantId,isCurrent:current});
@@ -66,7 +69,7 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
     if(chosen.length>20||chosen.reduce((n,f)=>n+f.size,0)>20*1024*1024){setNotice('Choose up to 20 files, at most 20 MB total. Each file can be up to 2 MB.');return;}
     running.current=true;stopping.current=false;setBusy(true);setNotice('Checking selected files…');
     try{
-      const inputs=[], failedReads=new Set<number>();
+      const inputs:{name:string;mime:string;bytes:Uint8Array}[]=[], failedReads=new Set<number>();
       for(const file of chosen){
         if(!current())return;
         if(stopping.current){setNotice('Selection preparation stopped. No files were uploaded.');return;}
@@ -138,9 +141,33 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
     try{
       const review=await readKnowledgeExtractionReview(client,scope(),ref);
       const restored=await readKnowledgePendingReviewTarget(client,scope(),{documentId:ref.documentId,workId:ref.workId,revision:review.revision,title:row.name,recordState:review.record_state,reviewAvailable:review.pending_review!==null,status:row.submission!.status});
-      if(current()){selectedIndex.current=index;setTarget(restored);setNotice(null);}
+      if(current()){
+        if(review.phase==='awaiting_review'&&review.pending_review)patch(index,{phase:'submitted',submission:{...row.submission!,status:'succeeded'}});
+        selectedIndex.current=index;setTarget(restored);setNotice(null);
+      }
     }catch{if(current())setNotice('This reading changed or could not be read. Open its current record under Unfinished documents. No new reading was started.');}
     finally{running.current=false;if(current())setBusy(false);}
+  };
+  const checkReadings=async()=>{
+    if(running.current||!current())return;
+    running.current=true;setBusy(true);setChecking(true);setNotice('Checking original reading statuses…');
+    let unavailable=false;
+    try{
+      for(let index=0;index<currentRows.current.length;index++){
+        if(!current())return;
+        const row=currentRows.current[index],ref=row.submission?.reference;
+        if(!ref||!['submitted','status_unavailable'].includes(row.phase))continue;
+        try{
+          const status=await readKnowledgeExtractionStatus(client,scope(),ref);
+          if(!current())return;
+          patch(index,{phase:'submitted',submission:{...row.submission!,status:status.work_status}});
+        }catch{
+          if(!current())return;
+          unavailable=true;patch(index,{phase:'status_unavailable'});
+        }
+      }
+      if(current())setNotice(unavailable?'Some reading statuses could not be checked. Open the original reading or check again. No reading was restarted.':'Reading statuses updated. Open each finished reading to review its text.');
+    }finally{running.current=false;if(current()){setBusy(false);setChecking(false);}}
   };
   if(!current())return <KnowledgeDialogFrame embedded={embedded} title="Workspace changed" description="Reopen Knowledge in your current workspace to inspect the original files."><Button onClick={close}>Close</Button></KnowledgeDialogFrame>;
   const reviewIndex=selectedIndex.current;
@@ -163,9 +190,9 @@ export function BulkKnowledgeUploadFlow({tenantId,onClose,onBack,onPublished,ret
       {['upload_unknown','read_unavailable'].includes(row.phase)&&<Button variant="outline" disabled={busy} onClick={()=>void run(index,'inspect')}>Inspect original</Button>}
       {row.phase==='stored'&&<Button disabled={busy} onClick={()=>void run(index,'submit')}>Read stored source</Button>}
       {row.phase==='submission_unknown'&&<Button disabled={busy} onClick={()=>void run(index,'submit')}>Reconcile same reading</Button>}
-      {row.phase==='submitted'&&<Button variant="outline" disabled={busy} onClick={()=>void open(index)}>Open reading</Button>}
+      {['submitted','status_unavailable'].includes(row.phase)&&<Button variant="outline" disabled={busy} onClick={()=>void open(index)}>Open reading</Button>}
     </div></li>)}</ul>
     <p className="text-sm">Closing stops the next upload. A transfer already started may still finish. Reopen unfinished documents, or reselect the same files with the same names and types to inspect their original paths.</p>
-    <div className="flex flex-wrap justify-end gap-2">{!embedded&&!started&&!attachedSelection&&<Button variant="outline" disabled={busy} onClick={onBack}>Pasted text</Button>}<Button variant="outline" onClick={close}>Close</Button>{busy?<Button variant="outline" onClick={()=>{stopping.current=true;}}>Stop remaining uploads</Button>:rows.some(r=>r.phase==='prepared')&&<Button onClick={()=>void run()}>Upload and read files</Button>}</div>
+    <div className="flex flex-wrap justify-end gap-2">{!embedded&&!started&&!attachedSelection&&<Button variant="outline" disabled={busy} onClick={onBack}>Pasted text</Button>}{rows.some(row=>row.submission&&['submitted','status_unavailable'].includes(row.phase))&&<Button variant="outline" disabled={busy} onClick={()=>void checkReadings()}>{checking?'Checking reading status…':'Check reading status'}</Button>}<Button variant="outline" onClick={close}>Close</Button>{busy?!checking&&<Button variant="outline" onClick={()=>{stopping.current=true;}}>Stop remaining uploads</Button>:rows.some(r=>r.phase==='prepared')&&<Button onClick={()=>void run()}>Upload and read files</Button>}</div>
   </KnowledgeDialogFrame>;
 }

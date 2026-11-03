@@ -1,18 +1,19 @@
 // @vitest-environment jsdom
 import React,{act} from 'react';import {createRoot,type Root} from 'react-dom/client';import {beforeEach,afterEach,expect,it,vi} from 'vitest';
 import type {KnowledgeFlowObservers} from '@/solo/knowledge/knowledge-flow-observers';
-const api=vi.hoisted(()=>({prepare:vi.fn(),upload:vi.fn(),inspect:vi.fn(),submit:vi.fn(),review:vi.fn(),restore:vi.fn()}));
+const api=vi.hoisted(()=>({prepare:vi.fn(),upload:vi.fn(),inspect:vi.fn(),submit:vi.fn(),review:vi.fn(),restore:vi.fn(),status:vi.fn()}));
 const tenant='11111111-1111-4111-8111-111111111111';
-vi.mock('@/hooks/useTenantContext',()=>({useTenantContext:()=>({activeTenantId:'11111111-1111-4111-8111-111111111111',activeUserId:'22222222-2222-4222-8222-222222222222',loading:false,accountContextStatus:'ready'})}));
+const identity=vi.hoisted(()=>({activeTenantId:'11111111-1111-4111-8111-111111111111',activeUserId:'22222222-2222-4222-8222-222222222222',loading:false,accountContextStatus:'ready'}));
+vi.mock('@/hooks/useTenantContext',()=>({useTenantContext:()=>identity}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{storage:{from:()=>({})}}}));
-vi.mock('@/lib/knowledge-extraction-service',async(original)=>({...await original<typeof import('@/lib/knowledge-extraction-service')>(),prepareKnowledgeUploadSelection:api.prepare,uploadKnowledgeFileOnce:api.upload,inspectKnowledgeUploadedFile:api.inspect,submitKnowledgeExtraction:api.submit,readKnowledgeExtractionReview:api.review,readKnowledgePendingReviewTarget:api.restore}));
+vi.mock('@/lib/knowledge-extraction-service',async(original)=>({...await original<typeof import('@/lib/knowledge-extraction-service')>(),prepareKnowledgeUploadSelection:api.prepare,uploadKnowledgeFileOnce:api.upload,inspectKnowledgeUploadedFile:api.inspect,submitKnowledgeExtraction:api.submit,readKnowledgeExtractionReview:api.review,readKnowledgePendingReviewTarget:api.restore,readKnowledgeExtractionStatus:api.status}));
 vi.mock('@/solo/knowledge/AddKnowledgeFlow',()=>({AddKnowledgeFlow:({onPublished,onClose,onPublicationVerified,replacementTarget,sourceLifetime}:{onPublished:()=>void;onClose:()=>void;replacementTarget:{id:string;revision:number};sourceLifetime:()=>boolean}&KnowledgeFlowObservers)=><><button onClick={()=>{onPublicationVerified?.(Object.freeze({tenantId:tenant,documentId:replacementTarget.id,revision:replacementTarget.revision+1,workId:'published-'+replacementTarget.id,generationId:'published-'+replacementTarget.id,outcome:'capability_succeeded'}),{isCurrent:sourceLifetime});onPublished();}}>Verified original publication</button><button onClick={onClose}>Return to files</button></>}));
 import {BulkKnowledgeUploadFlow} from '@/solo/knowledge/BulkKnowledgeUploadFlow';
 import {Dialog} from '@/components/ui/dialog';
 import {KnowledgeDialogFrame} from '@/components/knowledge/KnowledgeDialogFrame';
 let root:Root,host:HTMLDivElement;
 const rows=()=>['Agreement.pdf','Notes.txt'].map((name,i)=>({phase:'prepared',name,intentId:`intent-${i}`,source:{path:tenant+`/source-${i}`,bytes:new Uint8Array([i]),mime:'text/plain'}}));
-beforeEach(()=>{host=document.createElement('div');document.body.append(host);root=createRoot(host);api.prepare.mockResolvedValue(rows());api.upload.mockImplementation(async(_c,_s,source)=>({phase:'stored',path:source.path}));api.inspect.mockImplementation(async(_c,_s,source)=>({phase:'stored',path:source.path}));api.submit.mockResolvedValue({reference:{tenantId:tenant,documentId:'doc',workId:'work'},status:'claimed'});});
+beforeEach(()=>{Object.assign(identity,{activeTenantId:tenant,activeUserId:'22222222-2222-4222-8222-222222222222',loading:false,accountContextStatus:'ready'});host=document.createElement('div');document.body.append(host);root=createRoot(host);api.prepare.mockResolvedValue(rows());api.upload.mockImplementation(async(_c,_s,source)=>({phase:'stored',path:source.path}));api.inspect.mockImplementation(async(_c,_s,source)=>({phase:'stored',path:source.path}));api.submit.mockResolvedValue({reference:{tenantId:tenant,documentId:'doc',workId:'work'},status:'claimed'});});
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.resetAllMocks();});
 const click=async(text:string)=>{const b=[...document.body.querySelectorAll('button')].find(b=>b.textContent===text);expect(b).toBeTruthy();await act(async()=>b!.click());};
 const render=async(onPublished?:()=>void,observers:KnowledgeFlowObservers={},embedded=false)=>{const flow=<BulkKnowledgeUploadFlow embedded={embedded} tenantId={tenant} onClose={()=>{}} onBack={()=>{}} onPublished={onPublished} {...observers}/>;await act(async()=>root.render(<Dialog open>{embedded?<KnowledgeDialogFrame title="Knowledge" description="Original embedded source review.">{flow}</KnowledgeDialogFrame>:flow}</Dialog>));};
@@ -20,13 +21,14 @@ it.each([false,true])('returns keyboard focus to the same file after closing its
   const intent='30000000-0000-4000-8000-000000000001',documentId='40000000-0000-4000-8000-000000000001',workId='50000000-0000-4000-8000-000000000001';
   api.prepare.mockResolvedValue([{phase:'prepared',name:'Notes.txt',intentId:intent,source:{path:`${tenant}/22222222-2222-4222-8222-222222222222/${intent}.txt`,bytes:new TextEncoder().encode('Source'),mime:'text/plain'}}]);
   api.submit.mockResolvedValue({reference:{tenantId:tenant,documentId,workId,intentId:intent,revision:1},status:'claimed',replayed:false});
-  api.review.mockResolvedValue({revision:2,record_state:'draft',pending_review:{}});
+  api.review.mockResolvedValue({phase:'awaiting_review',revision:2,record_state:'draft',pending_review:{}});
   api.restore.mockResolvedValue({id:documentId,tenant_id:tenant,revision:2,title:'Reviewed',content:'Source',tags:[]});
   await render(undefined,{},true);await choose([new File(['Source'],'Notes.txt')]);await click('Upload and read files');
   const opener=Array.from(document.body.querySelectorAll('button')).find(b=>b.textContent==='Open reading')!;
   opener.focus();await click('Open reading');if(published)await click('Verified original publication');await click('Return to files');
   const restored=published?document.body.querySelector('li'):Array.from(document.body.querySelectorAll('button')).find(b=>b.textContent==='Open reading');
   expect(restored).toBeTruthy();expect(document.activeElement).toBe(restored);
+  if(!published)expect(document.body.textContent).toContain('Last confirmed reading: finished · review required');
 });
 async function choose(files=[new File(['one'],'Agreement.pdf'),new File(['two'],'Notes.txt')]){const input=document.body.querySelector('input[type="file"]')!;Object.defineProperty(input,'files',{configurable:true,value:files});await act(async()=>{input.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,25));});}
 it.each([
@@ -87,4 +89,34 @@ it('does not notify or start another file after close while an admission acknowl
   await render(undefined,{onExtractionAcknowledged:observer});await choose();await click('Upload and read files');await click('Close');
   await act(async()=>resolve({reference:{tenantId:tenant,documentId:'doc',workId:'work',intentId:'intent-0'},status:'claimed',replayed:false}));
   expect(observer).not.toHaveBeenCalled();expect(api.upload).toHaveBeenCalledOnce();expect(api.submit).toHaveBeenCalledOnce();
+});
+function bindOriginalReadings(){
+  const prepared=rows().map((row,index)=>({...row,intentId:`30000000-0000-4000-8000-00000000000${index+1}`}));api.prepare.mockResolvedValue(prepared);
+  api.submit.mockImplementation(async(_client,_scope,input)=>{const n=prepared.findIndex(row=>row.intentId===input.intent_id)+1;return {reference:{tenantId:tenant,documentId:`40000000-0000-4000-8000-00000000000${n}`,workId:`50000000-0000-4000-8000-00000000000${n}`,intentId:input.intent_id,revision:1},status:'claimed',replayed:false};});
+}
+it('checks every original reading without another upload or submission and keeps unknown work unconfirmed',async()=>{
+  bindOriginalReadings();api.status.mockResolvedValueOnce({work_status:'succeeded'}).mockResolvedValueOnce({work_status:'outcome_unknown'});
+  await render();await choose();await click('Upload and read files');await click('Check reading status');
+  expect(api.status.mock.calls.map(c=>c[2].workId)).toEqual(['50000000-0000-4000-8000-000000000001','50000000-0000-4000-8000-000000000002']);
+  expect(document.body.textContent).toContain('finished · review required');expect(document.body.textContent).toContain('unconfirmed · inspect original');
+  expect(api.upload).toHaveBeenCalledTimes(2);expect(api.submit).toHaveBeenCalledTimes(2);expect(api.review).not.toHaveBeenCalled();expect(api.restore).not.toHaveBeenCalled();
+});
+it('isolates one unavailable status while checking the other original file',async()=>{
+  bindOriginalReadings();api.status.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({work_status:'succeeded'});
+  await render();await choose();await click('Upload and read files');await click('Check reading status');
+  expect(document.body.textContent).toContain('Reading status unavailable · open original');expect(document.body.textContent).toContain('finished · review required');
+  expect(document.body.querySelectorAll('li button')).toHaveLength(2);expect(api.upload).toHaveBeenCalledTimes(2);expect(api.submit).toHaveBeenCalledTimes(2);
+});
+it('stops the read-only batch check after close and rejects a late status response',async()=>{
+  bindOriginalReadings();let settle!:(v:unknown)=>void;api.status.mockImplementationOnce(()=>new Promise(resolve=>{settle=resolve;}));
+  await render();await choose();await click('Upload and read files');await click('Check reading status');await click('Close');
+  await act(async()=>settle({work_status:'succeeded'}));expect(api.status).toHaveBeenCalledOnce();expect(api.upload).toHaveBeenCalledTimes(2);expect(api.submit).toHaveBeenCalledTimes(2);
+});
+it('permanently retires a status check after an observed workspace departure even when A returns with the same props',async()=>{
+  bindOriginalReadings();let settle!:(v:unknown)=>void;api.status.mockImplementationOnce(()=>new Promise(resolve=>{settle=resolve;}));
+  await render();await choose();await click('Upload and read files');await click('Check reading status');
+  identity.activeTenantId='66666666-6666-4666-8666-666666666666';await render();identity.activeTenantId=tenant;await render();
+  await act(async()=>settle({work_status:'succeeded'}));
+  expect(document.body.textContent).toContain('Workspace changed');expect(api.status).toHaveBeenCalledOnce();expect(api.status.mock.calls[0][1].isCurrent()).toBe(false);
+  expect(api.upload).toHaveBeenCalledTimes(2);expect(api.submit).toHaveBeenCalledTimes(2);
 });

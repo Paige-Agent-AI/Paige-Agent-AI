@@ -1,0 +1,13 @@
+{
+  "scope": "real SoloApp / synthetic local transport / no customer/Auth/provider proof",
+  "geometry": [],
+  "states": [
+    {
+      "mode": "committed-unknown",
+      "attempts": 1,
+      "errors": []
+    }
+  ],
+  "failures": [],
+  "offMachineRequests": 1
+}

@@ -27,7 +27,9 @@ INSERT INTO public.profiles(user_id,active_tenant_id)
 CREATE TEMP TABLE exp08_permission_metadata AS SELECT oid,to_jsonb(p)-'prosrc' AS metadata FROM pg_proc p
  WHERE oid='public.set_solo_team_member_permission(uuid,text)'::regprocedure;
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.set_solo_team_member_permission(uuid,text)'::regprocedure),
- 'aab67c9a70880f160de550e4361a6142','actual original permission source matches guarded prerequisite');
+ CASE WHEN to_regprocedure('public.set_solo_team_member_permission(uuid,text,uuid,uuid)') IS NULL
+ THEN 'aab67c9a70880f160de550e4361a6142' ELSE '22955528946ff6e78d915bffd1ebd43a' END,
+ 'actual original permission source matches guarded prerequisite or exact current candidate');
 \ir ../../scripts/proof/exp08-team-permission-patch.sql
 SELECT ok(NOT EXISTS(SELECT 1 FROM exp08_permission_metadata m JOIN pg_proc p ON p.oid=m.oid WHERE to_jsonb(p)-'prosrc' IS DISTINCT FROM m.metadata),
  'original permission writer complete nonbody metadata conserved');

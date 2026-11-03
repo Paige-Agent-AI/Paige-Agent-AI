@@ -80,6 +80,7 @@ type Opts = {
   agentDmKey?: string; authorityRows?: unknown[]; authorityRowsFn?: () => unknown[]; planList?: unknown; planListError?: boolean; tenantPin?: string;
   nativeReadStage?: (args: Record<string, unknown>) => unknown;
   personaTenant?: () => string; accountRows?: unknown;
+  calendarRows?: () => unknown; calendarError?: unknown;
 };
 /** A raw client answer (`{ data, error }`), for the transport failures the Supabase client returns instead of throwing. */
 const raw = (data: unknown, error: { message?: string; code?: string } | null, commit = false) => ({ __rpc: { data, error }, commit });
@@ -101,8 +102,15 @@ function world(opts: Opts = {}) {
   let stagedRead: Record<string, unknown> | null = null;
   const postedByRequest = new Map<string, Msg>();
   const caller = {
+    auth: { getUser: async () => ({ data: { user: { id: SAM } }, error: null }) },
     rpc(name: string, args: Record<string, unknown> = {}) {
       calls.push({ who: "caller", name, args });
+      if (name === "list_team_bookings") {
+        const result = Promise.resolve({ data: opts.calendarRows?.() ?? [], error: opts.calendarError ?? null });
+        const query = Object.assign(result, { select: () => query, eq: () => query, neq: () => query, gt: () => query,
+          order: () => query, limit: () => query, abortSignal: () => query });
+        return query;
+      }
       const answer = (() => {
         switch (name) {
           case "paige_agreement_overview": return opts.domainRead?.(name, args) ?? [];
@@ -138,6 +146,8 @@ function world(opts: Opts = {}) {
             ? { __rpc: { data: null, error: { message: "PLAN_FORBIDDEN" } } }
             : (opts.planList ?? { plans: [{ id: PLAN_ROW, tenant_id: TENANT, updated_at: "2026-10-31T00:00:00.000001Z", title: "Launch week", horizon: "week", items: [{ id: PLAN_ITEM, tenant_id: TENANT, plan_id: PLAN_ROW, updated_at: "2026-10-31T00:00:00.000002Z", title: "Confirm venue", status: "not_started", due_at: "2026-10-30" }] }], loose_items: [] });
           case "current_user_tenant_id": return opts.tenantPin ?? TENANT;
+          case "is_tenant_admin": return ["owner", "admin"].includes(opts.domainRole ?? "");
+          case "is_tenant_member": return ["owner", "admin", "member"].includes(opts.domainRole ?? "");
           case "team_hub_post_agent_message": {
             postAttempt += 1;
             let after: unknown;
@@ -165,7 +175,8 @@ function world(opts: Opts = {}) {
         }
       })();
       if (answer && typeof answer === "object" && "__rpc" in (answer as object)) return Promise.resolve((answer as any).__rpc);
-      return Promise.resolve({ data: answer, error: null });
+      const result = Promise.resolve({ data: answer, error: null });
+      return Object.assign(result, { abortSignal: () => result });
     },
     from(_table: string) {
       const response = Promise.resolve({ data: [{ id: TENANT, account_type: "standalone", parent_tenant_id: null }], error: null });
@@ -1640,6 +1651,102 @@ const zionWorld = (opts: Opts = {}) => world({ sourceIn: MERIT_DM, mentions: [],
   stageReads: () => ({ ok: false, code: "not_allowed" }), nativeReadStage: () => ({ ok: true }), ...opts });
 const zionTurn = () => turn({ conversationId: MERIT_DM, agent: "zion" });
 const planningAnswer = JSON.stringify({ reply: "Your saved plan includes Confirm venue. Nothing was changed.", route: "answer" });
+
+const calendarArgs = { from: "2026-11-02T00:00:00-05:00", to: "2026-11-09T00:00:00-05:00", view: "mine" };
+const calendarBooking = { id: PLAN_ITEM, tenant_id: TENANT, calendar_id: null, host_user_id: SAM, contact_id: null,
+  title: "Saved discovery call", start_at: "2026-11-03T15:00:00.123456Z", end_at: "2026-11-03T15:30:00.123456Z",
+  timezone: "America/New_York", status: "confirmed", booking_kind: "single" };
+const zionCalendarWorld = (opts: Opts = {}) => zionWorld({ calendarRows: () => [calendarBooking], config: { slug: "zion", config: {
+  ...ZION_PLANNING_CONFIG, capability_scope: { ...ZION_PLANNING_CONFIG.capability_scope,
+    tools: [...ZION_PLANNING_CONFIG.capability_scope.tools, "read_calendar_agenda"] },
+} }, ...opts });
+describe("EXP05 original ZION Calendar host integration — controlled SDK/native/model ports", () => {
+  it("stages original Calendar references before model disclosure and retains one read receipt through revalidation", async () => {
+    let staged = 0;
+    const w = zionCalendarWorld({ nativeReadStage: args => {
+      const source = (args.p_read_tools as Array<Record<string, any>>)[0];
+      assert.equal(source.tool, "read_calendar_agenda");
+      assert.deepEqual(source.source.source_ids, [PLAN_ITEM]);
+      assert.deepEqual(args.p_record_links, [{ destination: "calendar", record_id: null }]);
+      staged++; return { ok: true };
+    } });
+    const m = model([{ tool_calls: [{ name: "read_calendar_agenda", args: calendarArgs }] },
+      { content: JSON.stringify({ reply: "Your saved discovery call is recorded. Nothing was changed.", route: "answer" }) }]);
+    const complete = m.make(w.calls);
+    const r = await run(w, m, zionTurn(), { complete: async (request, options) => {
+      if (m.requests.length > 0) assert.ok(staged > 0, "no facts reach model before original native staging");
+      return complete(request, options);
+    } });
+    assert.ok(m.requests[0].request.tools!.some(t => t.function.name === "read_calendar_agenda"));
+    assert.equal(r.body.outcome, "posted", JSON.stringify({ staged, calls: w.calls.map(c => c.name), results: toolResults(m) })); assert.equal(staged, 2);
+    assert.equal(named(w, "list_team_bookings").length, 2);
+    assert.deepEqual(named(w, "list_team_bookings")[0].args, { _from: "2026-11-02T05:00:00.000Z",
+      _to: "2026-11-09T05:00:00.000Z", _host_ids: [SAM], _tenant_id: TENANT, _booking_id: null });
+    assert.equal(named(w, "record_capability_run").filter(c => c.args._capability_key === "read_calendar_agenda").length, 1);
+    assert.ok(promptText(m).includes("Saved discovery call"));
+    assert.equal(w.calls.filter(c => /create.*booking|send|plan_create/.test(c.name)).length, 0);
+  });
+  for (const failure of ["receipt", "stage", "unknown-stage"] as const) it(`withholds Calendar facts and publication on ${failure}`, async () => {
+    const w = zionCalendarWorld({ ...(failure === "receipt" ? { recordFails: ["read_calendar_agenda"] }
+      : { nativeReadStage: () => failure === "stage" ? { ok: false, code: "not_allowed" } : raw(null, TRANSPORT) }) });
+    const m = model([{ tool_calls: [{ name: "read_calendar_agenda", args: calendarArgs }] }]);
+    const r = await run(w, m, zionTurn());
+    assert.equal(r.body.outcome, "no_reply"); assert.equal(m.requests.length, 1);
+    assert.equal(promptText(m).includes("Saved discovery call"), false);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    assert.equal(named(w, "list_team_bookings").length, 1);
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, failure === "receipt" ? 0 : 1);
+  });
+  it("does not offer Calendar from a roster alone without current owner/admin authority", async () => {
+    for (const opts of [{ domainRole: "member" }, { accountRows: [] }, { personaTenant: () => SECRET_CHANNEL }]) {
+      const w = zionCalendarWorld(opts), m = model([{ content: "I cannot verify access to Calendar here." }]);
+      await run(w, m, zionTurn());
+      assert.ok(!m.requests[0].request.tools?.some(t => t.function.name === "read_calendar_agenda"));
+      assert.equal(named(w, "list_team_bookings").length, 0);
+    }
+  });
+  it("reports a known native context limit without disclosing unadmitted Calendar facts", async () => {
+    const w = zionCalendarWorld({ nativeReadStage: () => ({ ok: false, code: "context_limit" }) });
+    const m = model([{ tool_calls: [{ name: "read_calendar_agenda", args: calendarArgs }] },
+      { content: JSON.stringify({ reply: "This review needs a narrower Calendar window. Nothing was changed.", route: "answer" }) }]);
+    const r = await run(w, m, zionTurn());
+    assert.equal(r.body.outcome, "posted"); assert.equal(toolResults(m)[0].status, "limited");
+    assert.equal(promptText(m).includes("Saved discovery call"), false);
+    assert.equal(named(w, "list_team_bookings").length, 1);
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 1);
+  });
+  it("rechecks original staged sources before an actual provider retry and withholds revoked context", async () => {
+    const w = zionCalendarWorld({ nativeReadStage: args => typeof (args.p_read_tools as unknown[])[0] === "string"
+      ? { ok: false, code: "not_allowed" } : { ok: true } });
+    const m = model([{ tool_calls: [{ name: "read_calendar_agenda", args: calendarArgs }] },
+      { content: "This response must not be attempted with revoked source facts." }]);
+    const complete = m.make(w.calls);
+    const r = await run(w, m, zionTurn(), { complete: async (request, options) => {
+      if (m.requests.length) {
+        assert.equal(await options?.beforeProviderAttempt?.(), false, "original native source refusal fences the provider attempt");
+        throw Error("source access retired before provider retry");
+      }
+      return complete(request, options);
+    } });
+    assert.equal(r.body.outcome, "no_reply"); assert.equal(m.requests.length, 1);
+    const stages = named(w, "team_hub_stage_agent_read_context");
+    assert.equal(stages.length, 2); assert.deepEqual(stages[1].args.p_read_tools, ["read_calendar_agenda"]);
+    assert.equal(named(w, "list_team_bookings").length, 1); assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+  });
+  for (const calendarFirst of [false, true]) it(`shares the original three-read budget with ${calendarFirst ? "Calendar first" : "Planning first"}`, async () => {
+    const calendar = { name: "read_calendar_agenda", args: calendarArgs }, plan = { name: "plan_list", args: {} };
+    const w = zionCalendarWorld();
+    const m = model([{ tool_calls: calendarFirst ? [calendar, plan, calendar, plan] : [plan, calendar, plan, calendar] },
+      { content: JSON.stringify({ reply: "Here are the verified records. The remaining read needs a follow-up.", route: "answer" }) }]);
+    const r = await run(w, m, zionTurn());
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(named(w, "list_team_bookings").length, calendarFirst ? 4 : 2, "initial reads plus revalidation only; no refused fourth read");
+    assert.equal(named(w, "plan_list").length, calendarFirst ? 2 : 4);
+    assert.match(toolResults(m).at(-1).message, /read limit/);
+    assert.equal(named(w, "record_capability_run").filter(c => c.args._capability_key === "read_calendar_agenda").length, calendarFirst ? 2 : 1);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 1);
+  });
+});
 
 describe("EXP05 ZION Planning read host composition — native contract proof still owed", () => {
   for (const planningFirst of [false, true]) it(`keeps the verified mixed-source answer when ${planningFirst ? "Planning precedes CRM" : "CRM precedes Planning"} and a fourth source is refused`, async () => {

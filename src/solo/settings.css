@@ -771,3 +771,7 @@
 .stw-group[data-kind="approvals"] { --stw-hue: var(--k-automation); }
 .stw-group[data-kind="mailboxes"] { --stw-hue: color-mix(in srgb, var(--k-automation), var(--k-integration)); }
 .stw-group[data-kind] h3 svg { color: var(--stw-hue); }
+
+/* EXP08 approved owner-details state: read-only fields keep their original geometry. */
+.stw-modal input.stw-work-readonly, .stw-modal textarea.stw-work-readonly { border-style: dashed; color: var(--pg-muted); box-shadow: none; }
+.stw-owner-profile-explanation { margin: 0; color: var(--pg-muted); font: 400 var(--pg-t-body)/1.5 var(--pg-font-ui); overflow-wrap: anywhere; }

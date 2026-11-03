@@ -1,5 +1,9 @@
 # Decision Log — chronological one-liners
 
+## November2 — EXP08 teammate-details exact production identity, not customer acceptance
+
+- Original3221 reviewedb3b4091bc/own distinct NON-AUTHOR5741445655/all13 exact checks/two web statuses SUCCESS normally merged439d88d17, whole tree49d55a60ad exact reviewed source. Native41508732318 SUCCESS/db-live439d/28020008 ONCE/24statements; all six final bodies and reviewed ABI/ACL metadata exact. Vercel9jAE READY; both official origins19:22:45UTC exact439d-mvzn7m7b and reachable identity module200. Master4.0 and existing owner-profile evidence retain exact receipt, prior3203 source and original failures. Historical3214/applied28010008 preserved immutable; personal-notice state excluded pending. Actual customer save/receipt/reopen/cohorts remain UNVERIFIED under original3f custody/real target, not a complete outcome, full EXP08 or owner acceptance. Only same teammate-details outcome; finish/report all3/STOP, other original outcomes pending.
+
 ## October28 — EXP08 Team Hub agents A2b: approval cards in agent DMs, two owner rulings
 
 - **Built (migration `20271121140008`):** ZION hand-over / cancel, NEXUS page publish and PAIGE any of the three arrive as the APPROVED-FROZEN A2 card in the asker's DM; the card is the door's own proposal row, asker-only Approve / Not now, outcome posted in the thread; summaries name the task and the person. **Owner rulings ("go with your recommendations"):** the "That didn't go through just now. Try again." line under a card stays; a channel redirect's Open DM opens the DM with the asker's request prefilled, unsent. **Owner question answered:** every agent gets cards, in waves through the same path (MERIT next), each confirmed by its domain lead in ANT-161. **Lesson:** a harness frame review caught three defects no test did (a lowercase reason fragment, a silent refused Approve, focus dropped to the page); render the real hook path before asking for sign-off.

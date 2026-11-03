@@ -18,6 +18,8 @@ on:
     paths:
       - "supabase/functions/_shared/paige-spine/**"
       - "scripts/proof/exp05-zion-planning-full-schema.mjs"
+      - "scripts/proof/exp05-zion-calendar-read-candidate.sql"
+      - "supabase/tests/fixtures/exp05-zion-calendar-original-native.json"
       - "supabase/migrations/**"
       - "supabase/tests/e09_cura_preparation_readback.sql"
       - "scripts/proof/e09-cura-preparation-concurrency.mjs"
@@ -389,9 +391,9 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_task_creation.sql
 
-      - name: EXP05 ZION Planning candidate full-schema source and private permission installation (rolled back)
+      - name: EXP05 ZION Planning and Calendar full-schema source and private permissions (rolled back)
         if: ${{ !cancelled() }}
-        run: node scripts/proof/exp05-zion-planning-full-schema.mjs
+        run: node scripts/proof/exp05-zion-planning-full-schema.mjs --calendar
       - name: Operations original inactive draft-step correction (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/owner_task_step_revision.sql
@@ -911,7 +913,9 @@ jobs:
       # above — the expensive part is `supabase start` + `db reset` (§24).
       - run: supabase test db supabase/tests/business_context_readiness.sql
       - name: Original EXP01 reviewed Setup receipt full-schema authority
-        run: node scripts/proof/exp01-reviewed-setup-full-schema.mjs
+        run: |
+          npm ci
+          node scripts/proof/exp01-reviewed-setup-full-schema.mjs
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/secure_browser_control_plane_security.sql
       # PC-1 — concurrent budget enforcement: 12 racing service-role callers against a day

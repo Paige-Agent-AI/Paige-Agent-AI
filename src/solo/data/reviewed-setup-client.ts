@@ -88,6 +88,33 @@ export async function inspectReviewedSetup(client: ReviewedSetupPort, inputScope
   if (scope.isCurrent() !== true) throw new ReviewedSetupError('SCOPE_CHANGED');
   return result;
 }
+
+/** Discover original server-staged identity after a complete page reload. The
+ * proposal is not approval; an uncertain save is inspected using its staged
+ * review UUID before any explicit retry. No private facts enter browser storage. */
+export async function readReviewedSetup(client: ReviewedSetupPort, inputScope: ReviewedSetupScope) {
+  const scope = captureScope(inputScope);
+  await resolve(client, scope);
+  const response = await client.rpc('read_solo_reviewed_business_facts', {
+    _expected_tenant_id: scope.tenantId, _expected_actor_id: scope.actorId,
+  });
+  await resolve(client, scope);
+  if (response.error) throw new ReviewedSetupError('INSPECTION_FAILED');
+  const data = response.data;
+  if (!object(data) || !exact(data, ['proposal', 'approval'])) throw new ReviewedSetupError('READBACK_MISMATCH');
+  const proposal = data.proposal === null ? null : parseReviewedSetupSelection(data.proposal);
+  if (proposal && (proposal.actorId !== scope.actorId || proposal.tenantId !== scope.tenantId))
+    throw new ReviewedSetupError('READBACK_MISMATCH');
+  let approval: ReviewedSetupInspection | null = null;
+  if (data.approval !== null) {
+    if (!object(data.approval) || !exact(data.approval, ['requestId', 'inspection']) || !uuid(data.approval.requestId))
+      throw new ReviewedSetupError('READBACK_MISMATCH');
+    approval = parseInspection(data.approval.inspection, scope, data.approval.requestId);
+    if (approval.status !== 'recorded') throw new ReviewedSetupError('READBACK_MISMATCH');
+  }
+  if (scope.isCurrent() !== true) throw new ReviewedSetupError('SCOPE_CHANGED');
+  return { proposal, approval };
+}
 /** Explicit actions only. This ephemeral single-review handle is no durable
  * approval ledger. The original native APIs resolve ALL authority and effects. */
 export function prepareReviewedSetup(client: ReviewedSetupPort, inputScope: ReviewedSetupScope, input: unknown) {

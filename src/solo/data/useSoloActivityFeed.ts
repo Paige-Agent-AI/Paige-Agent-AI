@@ -263,7 +263,9 @@ export function useSoloActivityFeed(workspaceId?: string | null): SoloActivityFe
         // Only an actual empty array proves that this returned sample is empty.
         if (!Array.isArray(data)) throw new Error("Recorded activity response unavailable");
         const rows = data as unknown[];
-        setItems(rows.map(toActivityItem).filter((i): i is SoloActivityItem => i !== null));
+        const parsed = rows.map(toActivityItem);
+        if (parsed.some(item => item === null)) throw new Error("Recorded activity row unavailable");
+        setItems(parsed as SoloActivityItem[]);
         setStatus("ready");
         setError(null);
       } catch (err) {

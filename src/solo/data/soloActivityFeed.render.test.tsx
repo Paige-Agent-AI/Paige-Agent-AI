@@ -208,7 +208,7 @@ describe("the activity feed renders what was recorded", () => {
     expect(container.querySelector('[data-testid="copy"]')?.textContent).toContain("Nothing recorded yet");
   });
 
-  it.each([null, {}, "not a row list"])("withholds malformed successful responses instead of claiming no activity (%j)", async (data) => {
+  it.each([null, {}, "not a row list", [null], [{}], ["not a row"]].map(data => ({ data })))("withholds malformed successful responses instead of claiming no activity (%j)", async ({ data }) => {
     harness.result = { data, error: null };
     await render();
     expect(state()).toBe("unavailable");

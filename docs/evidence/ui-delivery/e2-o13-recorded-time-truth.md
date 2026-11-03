@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: existing unavailable, retry and missing-time states; n
 FLOW_PROTOTYPE: NOT_REQUIRED: bounded repair of existing source/error states, with actual mounted-hook regression proof.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO actor reads the original permitted Rail sample and distinguishes unavailable facts from zero.
 VISUAL_DIRECTION: PASS: original Executive/shared components and themes; no CSS, font, motion or geometry change.
-AUTOMATED_EVIDENCE: PASS: seven new controls FAIL on predecessor with24 original controls PASS, then96 controls across four original suites PASS/exit0 after repair. First CLI attempt used an unsupported option and did not run tests; excluded from causal evidence.
+AUTOMATED_EVIDENCE: PASS: first seven controls FAIL on predecessor with24 original controls PASS; three additional malformed-array controls then FAIL against the intermediate non-array-only repair. Final99 controls across four original suites PASS/exit0. First CLI attempt used an unsupported option and did not run tests; excluded from causal evidence.
 STATIC_EVIDENCE: PASS: scoped ESLint0errors/exit0 and whitespace PASS. Hosted exact-head type/build/security/CI still owed; no clean whole-app local typecheck claim.
 RENDERED_EVIDENCE: UNVERIFIED: actual mounted DOM/hook states exercised; fresh native rendering is unavailable after browser input timeouts. No new screenshot PASS is claimed.
 BEHAVIORAL_EVIDENCE: PASS: mounted controls withhold missing timestamp, malformed response and prior facts; a later genuine empty-array read recovers through the existing focus refresh. Native customer behavior remains unverified.
@@ -30,7 +30,7 @@ UNVERIFIED: non-author review, required exact-head CI, merge/deployment and genu
 OWNER_INTENT: Complete original O13 accountable history, original results/receipts and recovery; this repairs its necessary source-truth boundary only.
 MUST_NOT_HAPPEN: Read time masquerading as event time, malformed success masquerading as no work, or stale facts surviving a failed read.
 MUST_PRESERVE: Original native Rail, actor/tenant/request-order guards, attribution, departments, polling/focus refresh, canonical writers, Chat/Live, approval and provider restrictions.
-ACCEPTANCE_CRITERIA: Missing/non-string source time has no manufactured instant; null/object/string payloads produce unavailable, withhold prior facts and recover on a valid subsequent response. Empty array remains a true empty sample.
+ACCEPTANCE_CRITERIA: Missing/non-string source time has no manufactured instant; null/object/string payloads and arrays containing a row without required id/title produce unavailable, withhold prior facts and recover on a valid subsequent response. Empty array remains a true empty sample.
 MOTION_PURPOSE: NONE: no motion source changed.
 PROTECTED_SEAMS: UNCHANGED: native ABI/grants, domain/receipt writers, Spine/Harness/Layer C, Chat/Live, providers, approvals, Knowledge/Memory and billing.
 INTERNAL_BUILD_IDENTITY: b52fba6b0429943c90d4d97ba9b51ce5db2ccf04; identity-role=supporting baseline; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e2-o13-recorded-time-truth.md
@@ -45,4 +45,4 @@ REPAIR original useSoloActivityFeed and its owning tests only. No active competi
 
 Affected catalogue: existing business.operating_snapshot/Executive stays PARTIAL; CAP009–017 readiness unchanged. No new catalogue entry, capability, provider or algorithm activation. A more truthful failed read is not prediction or completed business work. Orchestration remains the same read-only caller-scoped Rail; no action, job, approval, new record or receipt is created.
 
-Functional: controlled repair96PASS. Visual: unchanged source design, native candidate capture UNVERIFIED. Experiential: controlled withholding/recovery verified, customer proof owed. Founder Acceptance: OPEN. Algorithm Support: unchanged. Orchestration Contract: original read only, no dispatch or original-domain mutation.
+Functional: controlled repair99PASS. Visual: unchanged source design, native candidate capture UNVERIFIED. Experiential: controlled withholding/recovery verified, customer proof owed. Founder Acceptance: OPEN. Algorithm Support: unchanged. Orchestration Contract: original read only, no dispatch or original-domain mutation.

@@ -86,7 +86,8 @@ export async function executeKnowledgeTool(input: {caller: KnowledgeRpcPort; exp
           // Keep the sole document AND an advancing cursor instead of dropping it.
           let low=start+1,high=Math.min(content.length,start+Number(args.content_limit??12000)),end=start;
           while(low<=high){const probe=Math.floor((low+high)/2),safe=split(probe)?probe-1:probe;
-            if(safe>start&&JSON.stringify([...documents,{...doc,...range(safe)}]).length<=14500){end=safe;low=probe+1;}else high=probe-1;}
+            if(safe<=start){low=probe+1;continue;}
+            if(JSON.stringify([...documents,{...doc,...range(safe)}]).length<=14500){end=safe;low=probe+1;}else high=probe-1;}
           if(end<=start)return failure('KNOWLEDGE_TEXT_RANGE_INVALID');
           Object.assign(doc,range(end));
         }

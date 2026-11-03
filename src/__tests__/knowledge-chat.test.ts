@@ -54,6 +54,19 @@ describe('original Knowledge source identity and text continuation',()=>{
    expect(await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args})).toMatchObject({success:false,not_applied:true});
   expect(caller.rpc).not.toHaveBeenCalled();
  });
+ it.each([
+  {content:'😀',offset:0,limit:12000,expected:'😀',next:null},
+  {content:'😀B',offset:0,limit:2,expected:'😀',next:2},
+  {content:'A😀',offset:1,limit:2,expected:'😀',next:null},
+ ])('reads a whole two-unit character at the range boundary %j',async({content,offset,limit,expected,next})=>{
+  const caller=port({tenant_id:tenant,documents:[{...row,content}]});
+  const first=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{document_id:id}});
+  const reference=(first.documents as Array<Record<string,unknown>>|undefined)?.[0]?.source_reference as {contentSha256:string}|undefined;
+  const result=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{document_id:id,content_offset:offset,content_limit:limit,
+   ...(offset?{expected_revision:row.revision,expected_content_sha256:reference?.contentSha256}:{}),}});
+  expect(result.success).toBe(true);
+  expect((result.documents as Array<Record<string,unknown>>)[0]).toMatchObject({content:expected,content_utf16_start:offset,next_content_offset:next});
+ });
  it('does not split a surrogate pair or expose content in the ordinary metadata list',async()=>{
   const content='A😀B',caller=port({tenant_id:tenant,documents:[{...row,content}]});
   const first=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{document_id:id,content_limit:2}});

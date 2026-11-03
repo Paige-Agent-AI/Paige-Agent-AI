@@ -139,3 +139,6 @@ both themes and1280px dark: no document horizontal overflow, editable step title
 Escape close and return to original card. Body14px/legacy inputs13px observed.
 This does not prove full-shell, assistive, reduced-motion or customer persistence.
 Private fixture transport refuses backend calls; owning listener is stopped.
+
+
+Nov3 final reader review retained a second concrete defect: binary-search probe at the middle of a leading UTF16 surrogate pair discarded its valid complete endpoint. Three actual controls failed (3FAIL/45PASS), including a final two-unit continuation; repair keeps the upper endpoint searchable while still refusing a limit too small for a whole character. SAME six current suites now129PASS, scoped ESLint0 and actual C0b273PASS. Predecessor126PASS and old4cc hosted CI remain historical; new exact-head review/CI/release are still required. No customer/provider/Task effect.

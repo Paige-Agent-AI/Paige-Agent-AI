@@ -1,0 +1,165 @@
+-- PRIVATE O13 CONTRACT PROPOSAL. NOT a migration, installed API or release.
+-- Original Rail and original owner-only target readers only. No raw detail/payload,
+-- actor/contact identifiers, table grant, writer, approval or execution.
+create function public._solo_rail_activity_evidence(_event uuid,_audience text,_visibility text)
+returns jsonb language plpgsql stable security definer set search_path='' as $evidence$
+declare w public.paige_workspace_events%rowtype; proof jsonb; result jsonb; revision jsonb;
+ answer jsonb; source uuid; revision_number integer;
+begin
+ if _audience not in ('owner','both') or _visibility not in ('owner_internal','client_visible')
+   or _audience is null or _visibility is null then return null; end if;
+ select * into w from public.paige_workspace_events e
+  where e.id=_event and e.tenant_id=public.current_user_tenant_id();
+ if not found then return null; end if;
+ answer:=jsonb_build_object('version',1,'kind','recorded_outcome','rail_receipt_id',w.id,
+   'recorded_outcome',case when w.outcome in ('capability_succeeded','capability_failed','capability_refused',
+    'capability_unreachable','capability_outcome_unknown','capability_completed_unrecorded',
+    'run_completed','run_failed','run_refused','run_awaiting_approval',
+    'plan_drafted','plan_updated','plan_step_completed','plan_blocked','check_completed','check_failed')
+     then w.outcome else 'unclassified' end,
+   'business_result',null,'record_links','[]'::jsonb);
+ -- A succeeded READ is still only a read receipt. No inferred mutation, domain ID,
+ -- current approval state, target actual or causal business improvement.
+ if w.source_kind is distinct from 'capability_run' or w.outcome is distinct from 'capability_succeeded'
+   or w.capability_key is null or w.capability_key not in ('owner_mission_target_save','owner_mission_target_transition') then return answer; end if;
+ begin
+  -- These original domain readers reapply CURRENT owner/actor/tenant authority.
+  if w.actor_id is distinct from auth.uid() then return answer; end if;
+  proof:=public.get_business_mission_target_receipt(w.source_id);
+  result:=proof->'result';
+  if proof->>'request_key' is distinct from w.source_id::text or result->'ok' is distinct from 'true'::jsonb
+    or result->>'receipt_id' is distinct from proof->>'id'
+    or result->>'request_key' is distinct from w.source_id::text
+    or result->>'mission_id' is distinct from proof->>'mission_id'
+    or proof->>'operation' not in ('target_create','target_revise','target_transition')
+    or (w.capability_key='owner_mission_target_transition') is distinct from (proof->>'operation'='target_transition')
+    or jsonb_typeof(result->'revision') is distinct from 'number'
+    or proof->>'created_at' is null or (proof->>'created_at')::timestamptz>w.occurred_at then return answer; end if;
+  source:=(result->>'target_id')::uuid;
+  revision_number:=(result->>'revision')::integer;
+  if source is null or revision_number is null or revision_number<1
+    or proof->>'id' is null or proof->>'mission_id' is null then return answer; end if;
+  revision:=public.get_business_mission_target_revision(source,revision_number);
+  if revision->>'id' is distinct from source::text
+    or revision->>'tenant_id' is distinct from w.tenant_id::text
+    or revision->>'mission_id' is distinct from proof->>'mission_id'
+    or revision->>'revision' is distinct from result->>'revision'
+    or revision->>'state' is distinct from result->>'state'
+    or revision->>'created_by' is distinct from w.actor_id::text
+    or revision->>'state' is null or revision->>'state' not in ('active','paused','retired') then return answer; end if;
+  return answer||jsonb_build_object('kind','verified_original_result',
+   'business_result',jsonb_build_object('kind','target_revision','operation',proof->>'operation',
+     'receipt_id',(proof->>'id')::uuid,'target_id',source,'revision',revision_number,
+     'state',revision->>'state'),
+   'record_links',jsonb_build_array(jsonb_build_object('destination','business_game_plan',
+     'record_id',(proof->>'mission_id')::uuid)));
+ exception when insufficient_privilege or no_data_found or invalid_text_representation
+   or numeric_value_out_of_range or raise_exception then return answer;
+ end;
+end $evidence$;
+revoke all on function public._solo_rail_activity_evidence(uuid,text,text) from public,anon,authenticated,service_role;
+
+CREATE OR REPLACE FUNCTION public._solo_rail_activity_rows(p_limit integer, p_event_id uuid, p_evidence boolean)
+ RETURNS TABLE(id uuid, event_kind text, surface text, actor_type text, actor_agent text, audience text, visibility text, from_department text, to_department text, title text, summary text, occurred_at timestamp with time zone, evidence jsonb)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_uid    uuid := auth.uid();
+  v_tenant uuid;
+  v_owner  boolean;
+  v_limit  integer := least(greatest(coalesce(p_limit, 50), 1), 200);
+begin
+  if v_uid is null then
+    raise exception using errcode = '42501', message = 'RAIL_FORBIDDEN';
+  end if;
+
+  v_owner  := public.is_platform_owner();
+  v_tenant := public.current_user_tenant_id();
+
+  if v_tenant is null then
+    raise exception using errcode = '42501', message = 'RAIL_FORBIDDEN';
+  end if;
+
+  if not v_owner then
+    if not exists (
+      select 1
+        from public.tenant_members m
+       where m.user_id  = v_uid
+         and m.tenant_id = v_tenant
+         and m.status    = 'active'
+         and m.role in ('owner', 'admin')
+    ) then
+      raise exception using errcode = '42501', message = 'RAIL_FORBIDDEN';
+    end if;
+  end if;
+
+  if p_event_id is not null and exists(select 1 from public.paige_client_events c
+    join public.paige_workspace_events w on w.id=c.id and w.tenant_id=c.tenant_id
+    where c.id=p_event_id and c.tenant_id=v_tenant) then
+    raise exception using errcode='22023',message='RAIL_EVENT_AMBIGUOUS';
+  end if;
+  return query
+  select e.id, e.event_kind, e.surface, e.actor_type, e.actor_agent, e.audience, e.visibility,
+         e.from_department, e.to_department, e.title, e.summary, e.occurred_at,
+         case when p_evidence and e.workspace_event then public._solo_rail_activity_evidence(e.id,e.audience,e.visibility) else null::jsonb end
+  from (
+   select c.id, c.event_kind, c.surface, c.actor_type,
+          -- The snapshot, defended a second time. A read-time predicate is still required even
+          -- with a correct writer: paige_subagents.tenant_id is updatable, so a platform default
+          -- that is later assigned to a tenant would retroactively turn legally-written rows into
+          -- foreign ones, and no write-time guard can reach back through history.
+          case when c.actor_agent_slug is null then null
+               when not exists (select 1 from public.paige_subagents s
+                                 where s.slug = c.actor_agent_slug)
+               then c.actor_agent_label
+               when exists (select 1 from public.paige_subagents s
+                             where s.slug = c.actor_agent_slug
+                               and (s.tenant_id is null or s.tenant_id = v_tenant))
+               then c.actor_agent_label
+               else null end as actor_agent,
+          c.audience, c.visibility, c.from_department, c.to_department,
+          c.title, c.summary, c.occurred_at,false as workspace_event
+   from public.paige_client_events c where c.tenant_id = v_tenant
+   union all
+   select w.id, d.value->>'event_kind', d.value->>'surface', d.value->>'actor_type',
+          case when w.actor_agent_slug is null then null
+               when not exists (select 1 from public.paige_subagents s
+                                 where s.slug = w.actor_agent_slug)
+               then w.actor_agent_label
+               when exists (select 1 from public.paige_subagents s
+                             where s.slug = w.actor_agent_slug
+                               and (s.tenant_id is null or s.tenant_id = v_tenant))
+               then w.actor_agent_label
+               else null end,
+          d.value->>'audience', d.value->>'visibility',
+          d.value->>'from_department', d.value->>'to_department',
+          d.value->>'title', d.value->>'summary', w.occurred_at,true
+   from public.paige_workspace_events w
+   cross join lateral (select public._workspace_event_display(w.source_kind, w.outcome, w.capability_key) as value) d
+   where w.tenant_id = v_tenant
+  ) e
+  where p_event_id is null or e.id=p_event_id
+  order by e.occurred_at desc,e.id
+  limit case when p_event_id is null then v_limit else 1 end;
+end
+$function$
+;
+revoke all on function public._solo_rail_activity_rows(integer,uuid,boolean) from public,anon,authenticated,service_role;
+
+-- Same original public list ABI/roles/settings remain; ONE underlying query.
+create or replace function public.get_solo_rail_activity(p_limit integer default 50)
+returns table(id uuid,event_kind text,surface text,actor_type text,actor_agent text,audience text,visibility text,from_department text,to_department text,title text,summary text,occurred_at timestamptz) language plpgsql stable security definer set search_path='public' as $legacy$
+begin return query select q.id,q.event_kind,q.surface,q.actor_type,q.actor_agent,q.audience,q.visibility,q.from_department,q.to_department,q.title,q.summary,q.occurred_at from public._solo_rail_activity_rows(p_limit,null,false) q; end
+$legacy$;
+
+-- SAME canonical function family, explicit exact event (null means current sample).
+-- Proposed same authenticated role, not installed or activation-authorized by this file.
+create function public.get_solo_rail_activity(p_limit integer,p_event_id uuid)
+returns table(id uuid,event_kind text,surface text,actor_type text,actor_agent text,audience text,visibility text,from_department text,to_department text,title text,summary text,occurred_at timestamptz,evidence jsonb) language plpgsql stable security definer set search_path='' as $extended$
+begin return query select q.* from public._solo_rail_activity_rows(p_limit,p_event_id,true) q; end
+$extended$;
+revoke all on function public.get_solo_rail_activity(integer,uuid) from public,anon,service_role;
+grant execute on function public.get_solo_rail_activity(integer,uuid) to authenticated;
+

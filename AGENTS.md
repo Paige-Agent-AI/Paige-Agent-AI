@@ -1,5 +1,9 @@
 # Paige agent delivery rules
 
+## MANDATORY OWNER RULE — NO LOVABLE — November 3, 2026
+
+This binds the Coordinator and every agent. Never introduce, reuse, restore or deploy Lovable-generated or Lovable-dependent code, SDKs, gateways, integrations, scaffolds, icons, assets or branding. When encountered, delete that implementation or asset. If its behavior is required, recreate it as PAIGE-owned code using the original authorized domain writer and native provider, preserving working behavior, data, tenant isolation and permissions. Remove obsolete components outright. Renaming, hiding, wrapping or recoloring Lovable material is not replacement. No Lovable runtime dependency or branding may ship. This rule does not authorize deleting customer data or weakening authentication, and it does not resume paused agents or approve another outcome.
+
 ## MANDATORY OWNER DELIVERY RULE — November 1, 2026
 
 This rule binds the Coordinator and every current and future authorized agent. Pick ONE complete original customer/business outcome and finish it. Do not start or consider another outcome while it is unfinished. REPORT THE COMPLETED OUTCOME, THEN STOP. The owner must explicitly approve the next outcome, one at a time. Preserve the full original assignment as pending scope; it does not authorize starting the next outcome.

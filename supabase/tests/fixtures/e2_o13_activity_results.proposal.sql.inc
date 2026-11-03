@@ -162,4 +162,3 @@ begin return query select q.* from public._solo_rail_activity_rows(p_limit,p_eve
 $extended$;
 revoke all on function public.get_solo_rail_activity(integer,uuid) from public,anon,service_role;
 grant execute on function public.get_solo_rail_activity(integer,uuid) to authenticated;
-

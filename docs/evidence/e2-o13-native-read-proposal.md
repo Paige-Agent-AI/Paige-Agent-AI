@@ -16,9 +16,11 @@ ORIGINAL BEGIN/ROLLBACK only. The two `.sql.inc` files are explicit includes,
 not standalone tests or migration carriers. There is no production/native/Edge
 deployment or provider activation in this change, and no workflow gate is changed.
 
-The proposed implementation fixture is byte-identical to the independently
-reviewed private artifact, SHA256
+The independently reviewed private artifact remains SHA256
 `8fbb17b7e3456c29edbfc0b842ccd8ab8ebc295a9e185c1140fb5d8d259969e3`.
+The test fixture normalizes only its extra trailing blank line, SHA256
+`45fafe4c155688b32abeed9f0f09f4c6ccfcaffc94c473b988f98435600d6012`;
+every statement byte remains identical. The original private proposal is unchanged.
 It is a test-only proposal, not a second production reader. Upon legitimate
 native release, the reviewed implementation belongs to the original reader
 family's canonical migration; this temporary proposal fixture must be reconciled
@@ -43,7 +45,11 @@ no direct reinstatement or relaxation of its original contract is introduced.
 
 ## Evidence status and release boundary
 
-Prepared source only: plan arithmetic35 and proposal hash/whitespace inspected.
+Prepared source only: plan arithmetic35 and proposal hash inspected. Own NON-AUTHOR
+review ofdd297 found no material safety/contract findings and caught the extra
+EOF blank line that the pre-add working-tree whitespace check did not inspect.
+The actual base-to-head failure is retained; trailing whitespace is corrected
+without a guard exception, SQL change or silent replacement of the private artifact.
 Full-schema execution is **UNVERIFIED until the actual hosted owning step runs**.
 The earlier24 rollback observations used reduced-schema owner/display ports;
 they are preserved as that evidence class, not upgraded to full-schema proof.

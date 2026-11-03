@@ -33,7 +33,7 @@ MUST_PRESERVE: Canonical Rail/domain records, original target paused and Play un
 ACCEPTANCE_CRITERIA: After released source readback, expanded receipts and exact reading position survive original Play and Back, with same event/filter/list and visible source focus; denied/foreign reads still withhold results.
 MOTION_PURPOSE: NONE: no animation change.
 PROTECTED_SEAMS: IMPACTED: original display bookmark, fresh authorized event selection, disclosure/scroll/focus restoration. UNCHANGED: domain writers, native functions/grants, Trust, Spine, Harness/Layer C, Chat/Live and provider routing.
-INTERNAL_BUILD_IDENTITY: 4f3daed2f6987546e5cec9004b0187f7c7216791; identity-role=verified production predecessor; deployment=dpl_BnrmFmXJsRh3oNpPz1o8GoRpRKx2; environment=production predecessor; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e2-o13-receipt-disclosure-return.md
+INTERNAL_BUILD_IDENTITY: 066f9cd4a324fb50ebba5f8d71537d32088630c5; identity-role=supporting source preparation; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e2-o13-receipt-disclosure-return.md
 RELEASE_CHANNEL: development: bounded display-only repair prepared for ordinary stable release after exact-head review and CI.
 RELEASE_CLASSIFICATION: internal-only: same-outcome recovery correction, no new capability or activation.
 CUSTOMER_RELEASE_IDENTITY: none: no complete Experience announcement or founder acceptance.

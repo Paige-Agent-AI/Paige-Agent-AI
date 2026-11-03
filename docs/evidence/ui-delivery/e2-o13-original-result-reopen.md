@@ -1,0 +1,63 @@
+# EXP02 O13 — original activity results, receipts and reopening
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: original O13 only; eligible business actor inspects a recorded event, checks its original result/receipts, opens the original Play and returns to the same authorized event.
+PAIGE_UI_DESIGN: PASS: installed project skill and routed modules applied to the existing Executive reading workspace; no replacement design system or navigation owner.
+MATERIAL_FLOW_CHANGE: YES: exact-event reopening beyond the latest sample and original result/receipt inspection with reauthorization on return.
+FLOW_PROTOTYPE: UNVERIFIED: actual mounted flow and source states exercised; supported native browser control currently times out, so rendered prototype/live proof remains owed.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized SOLO Owner/Admin inspects who recorded work and the evidence establishing a saved result; readers must not mistake successful reads or saved targets for business achievement.
+VISUAL_DIRECTION: PASS: preserve existing Executive tokens, fonts, list/detail composition, Radix dialog, responsive scroll owners and original semantic record links. Two compact saved-revision facts and expandable receipts replace an undifferentiated explanation.
+AUTOMATED_EVIDENCE: PASS: 222 tests across nine owning suites passed together, exit0; parser, real mounted hook, original Executive journey, receipt presentation, source adapter and existing neighboring mount behavior. Six discriminating context controls failed against the prior adapter, then passed after integration. Counts overlap earlier runs and are not summed.
+STATIC_EVIDENCE: UNVERIFIED: scoped ESLint0 errors/0 warnings and whitespace passed; full build/type gates still in progress. First local build failed because the prior dependency-cache junction lacks an existing LiveRoom package; no externalization, source stub or product workaround applied.
+RENDERED_EVIDENCE: UNVERIFIED: mounted DOM is controlled evidence, not native rendering. Fresh desktop/narrow/theme captures of this candidate remain owed after page-control timeouts.
+BEHAVIORAL_EVIDENCE: PASS: controlled actual Executive/hook/parser journey reopens exact older event, reloads original URL, navigates to current-account original Play and returns with fresh same-event read, reading position and focus. Refusal or mismatched/missing result withholds facts and never substitutes a recent event.
+AUTHENTICATED_RUNTIME: UNVERIFIED: new native exact-event interface is absent; private written proposal and its new grant await the bounded owner decision. No candidate customer proof, original native receipt match or production activation is claimed.
+KEYBOARD_FOCUS: UNVERIFIED: mounted return/source-link/newer-input controls pass; actual native keyboard, resize/close and screen-reader behavior remain owed. Prior real offscreen-focus failures are retained in the preceding evidence, not overwritten.
+ZOOM_REFLOW: UNVERIFIED: native 200-percent zoom/reflow and changed receipt-content reachability have not been exercised.
+REDUCED_MOTION: UNVERIFIED: no new animation source; actual native reduced-motion timing remains unrun.
+STATE_COVERAGE: PASS: controlled loading, true empty sample, recorded-only, original-result, unavailable/missing/foreign/mismatched/malformed, forbidden, stale response/workspace, retry, exact-URL reload and source-return states.
+TRUTHFUL_STATE_LABELS: PASS: original target revision/state are historical saved work; a recorded operation outcome does not establish current approval, completed business work, goal achievement or improvement. Unknown/legacy receipts stay absent; no accomplished-work aggregate is manufactured.
+SOLO_UI: YES: original Executive shared SOLO product, caller-JWT Rail family, current-account semantic resolver; no account-specific code, flags, fixtures or permission exception.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: fresh native candidate capture unavailable.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: fresh native candidate capture unavailable.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: fresh native candidate capture unavailable.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: fresh native candidate capture unavailable.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: fresh native candidate capture unavailable.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: fresh native candidate capture unavailable.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: fresh native candidate capture unavailable.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: fresh native candidate capture unavailable.
+UNVERIFIED: native interface/grant authorization and release, full-schema/current-authority proof, final non-author review, exact-head hosted CI, deployment/Edge readback, two authorized ordinary customer contexts, actual persisted Chat/reopen and final founder acceptance. O13 remains incomplete.
+OWNER_INTENT: Finish original O13 accountable actor-attributed history with original result/receipt and durable recovery; other original outcomes remain queued.
+MUST_NOT_HAPPEN: Recent-event substitution, stale/foreign facts after refusal, invented receipts or completed-work counts, current approvals inferred from history, new business effects on inspection or a replacement activity/navigation/Chat engine.
+MUST_PRESERVE: Original Rail/domain writers, caller authority, historical first briefing9PASS/0FAIL, current Executive/Chat, unsent composer and source context, existing Trust/approval/Harness/Layer C/Rail boundaries and original record resolver.
+ACCEPTANCE_CRITERIA: A permitted actor reopens the same original event beyond the latest sample, sees native-verified original saved work and separate domain/Rail receipts where supported, follows its current-account canonical record, returns with fresh authority and reading context, and recovers truthfully after missing/refused/unavailable reads. Confirm persisted conversation and reload in both designated ordinary customer contexts before outcome closure.
+MOTION_PURPOSE: NONE: existing dialog/focus behavior retained; no new animated data or decorative motion.
+PROTECTED_SEAMS: IMPACTED: same caller-JWT Rail read/result parsing, original source reread, current actor/workspace guards and existing Executive history bookmark/semantic links. UNCHANGED: business/domain writers, approval/effect authority, privileged grants in this consumer, Chat/Live runtime, model/provider routing, Knowledge/Memory and billing.
+INTERNAL_BUILD_IDENTITY: c66544d5516776d52098c4b13a857bb483144524; identity-role=supporting source baseline; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLIED; evidence=docs/evidence/ui-delivery/e2-o13-original-result-reopen.md
+RELEASE_CHANNEL: development: consumer source only; dependent native read interface is proposed and uninstalled.
+RELEASE_CLASSIFICATION: internal-only: necessary O13 integration; no completed customer release.
+CUSTOMER_RELEASE_IDENTITY: none: full useful result and customer acceptance are not established.
+RELEASE_NOTE_REQUIRED: NO: no customer announcement earned by local source/tests.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: original native result, exact-event and persisted conversation continuity in production. Source preparation does not promote algorithms, nine analytics capabilities or the existing PARTIAL Executive surface.
+RELEASE_RECOVERY: position=do not deploy the consumer before its actual native prerequisite; use a bounded consumer revert/forward fix if later readback fails; reference=docs/delivery/e2-customer-experience-integration-matrix.md
+
+## Flow, routing and ownership
+
+1. Outcome/owner: original O13, EXP02 read-side integration; original Rail, Mission target and other domain writers retain their authority. The existing original receipt/custody request remains unacknowledged; a posted proposal is not a transfer.
+2. Canonical capability: `business.operating_snapshot`, read/read_only, existing `outcomes.owner_activity.v1` adapter. UI continues the original `useSoloActivityFeed`/caller-JWT family. No new Spine registration or provider connection is required or invented.
+3. Shared layers: existing Gateway/Spine admission and Operating Fabric composition for conversation; current Trust and native actor/workspace checks for reads. Harness/Layer C execution is not applicable to an inspection, refresh or record link. No mutation verb, extra approval or durable job is introduced.
+4. Evidence: native exact event plus original owner-only target receipt/immutable revision readers. A parser validates shape/identity only; it does not establish authority or execution. Legacy/unsupported domains retain recorded-only/absent results. Original semantic links reauthorize at the receiving record.
+5. Surface: existing `command-center.executive` row remains PARTIAL with proof owed. Relevant Chat Capabilities status and CAP009–017 stay unchanged; no entry can become Live from this source packet. Actual panel/readiness verification remains required at release.
+6. Continuity: extend the ORIGINAL Executive return bookmark with display metadata only, keyed to current actor/account/address. Original URL holds the event locator; fresh native read precedes result restoration. No storage of business facts, alternative route registry or Chat draft mutation.
+
+Classification: EXTEND original hook/Executive/Operating Fabric adapter; REUSE original semantic resolver and Play route; NEW pure shared validator and controlled owning tests. No second reader, registry, ledger, approval, scheduler or runtime.
+
+## Verification and remaining release order
+
+The nine-suite command is the nine owning files from `useSoloActivityFeed.test.ts` through `business-review-recorded-activity.test.ts`, using the existing Vitest runner with `--maxWorkers=2`. Private local transcript `outputs/e2-o13-integrated-local-tests.log` records222PASS/9files/exit0; scoped lint transcript records0/0. Private fixture data is synthetic and no customer records are changed.
+
+The native proposal is not included here. Its written non-author review and24 reduced-schema rollback observations do not substitute for full-schema/current-authority or customer proof; owner-context/display ports were modeled. New authenticated-signature grant remains held pending the one bounded owner decision. Deploy/re-read the legitimate native prerequisite first, then independently reviewed consumer/web and affected existing Edge functions, then actual customer result/reopen/recovery. No preview-login or screenshot-only release hold is added.
+
+Impeccable: applied existing-world hardening/craft floor, functional information hierarchy, token reuse, wrapping/44px links, complete source/error/retry states, truthful copy and newer-input/focus preservation. Native contrast/geometry/reduced-motion checks are UNVERIFIED, not assumed from tokens. Canonical skill: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md . Final independent finish review is owed on the exact consumer head.
+
+Functional: local consumer/adapter verified; native prerequisite held. Visual: existing world extended, native rendered proof owed. Experiential: controlled original-record return/reload/revocation pass; authenticated continuity owed. Founder Acceptance: OPEN. Algorithm Support: no new scoring/prediction; ALG03/06/11/12 maturity unchanged and ALG13 remains Unverified. No verified supporting algorithm is identified for exact receipt/URL validation; it is deterministic contract enforcement. Orchestration Contract: read-only original capability/source → current authorization → original event/domain receipt → existing semantic record → same-event reauthorization/recovery; no effect, new work record or receipt is created.

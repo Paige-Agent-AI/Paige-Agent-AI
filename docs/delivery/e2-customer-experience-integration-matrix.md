@@ -1,5 +1,50 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## November3 — O13 is the one authorized outcome; original result/reopen integration
+
+The owner authorized the next outcome after the O06 customer-verification report.
+**O13 alone is active; O06_CUSTOMER_VERIFIED_OWNER_ACCEPTANCE_PENDING is the
+preceding reported state.** [O06 original final proof](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3211#issuecomment-6592544760)
+supersedes older pending O06 observations below without rewriting their history.
+All other original outcomes/nine analytics remain queued. Finish O13, report the
+useful completed result, then STOP for the owner's next explicit approval.
+
+Original O13: actor-attributed accountable activity and receipts. The existing
+Rail/domain records remain authoritative. Released #3231 inspection and #3240
+focus repair do not prove original business completion or full recovery; two real
+earlier offscreen-focus FAILs are retained. #3242 mechanical Master closeout is
+actually released as7f5f23f08cea8c2b312568e1151205500eec5af0 with exact review,
+required CI, READY deployment and both official version/bootstrap readbacks.
+That closeout adds no customer capability or recursive log. #3244's absent-time/
+malformed-read correction is a separate same-outcome release in progress.
+
+Current consumer is local, not released: same original Rail family, exact original
+event URL, shared typed evidence validator, original saved-target/domain receipt
+inspection, current-account semantic Play link, existing Executive return bookmark
+and original Operating Fabric/Chat adapter. Integrated222 controls/9 owning suites
+passed together (overlapping earlier counts), scoped lint0/0; these are controlled
+source/DOM cases, not authenticated acceptance. No accomplished-work aggregate,
+current approval, target achievement or causal business improvement is inferred.
+
+The proposed native exact-event signature/new authenticated function grant is
+**UNINSTALLED / OWNER DECISION PENDING**. It preserves the existing list ABI and
+owner-only target receipt/revision readers. Its written non-author review and24
+rollback reduced-schema observations are not full-schema or customer proof.
+Original source/result disposition request928fb46c remains unacknowledged; no
+new domain-writer authority or peer source lease is inferred. Consumer release
+must follow the actual legitimate native prerequisite, current-source review,
+exact-head CI and production readback; no privilege or activation bypass.
+
+Functional: consumer local, native dependency held, full O13 INCOMPLETE.
+Visual: existing Executive world retained; changed native rendered desktop/narrow,
+zoom and reduced-motion proof UNVERIFIED after page-control timeouts.
+Experiential: controlled exact-event/reload/record/Back/refusal recovery passes;
+two ordinary customer contexts and persisted original Chat evidence remain owed.
+Founder Acceptance: OPEN. Algorithm Support and existing PARTIAL Executive/nine
+catalogue readiness unchanged. Orchestration: original read-only Rail/Fabric and
+domain receipt readers; no new writer, approval, job or executor.
+[Bounded consumer evidence](../evidence/ui-delivery/e2-o13-original-result-reopen.md).
+
 ## November1 — O06 saved-source proof released; live acceptance remains open
 
 O06 remains the ONE PRIMARY. The existing native

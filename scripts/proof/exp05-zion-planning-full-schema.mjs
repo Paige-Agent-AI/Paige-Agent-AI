@@ -174,12 +174,61 @@ SELECT ok((SELECT prosrc LIKE '%octet_length(t.read_context::text)>8192%' AND pr
  assert(sql.includes(prior.slice(prior.indexOf('CREATE FUNCTION pg_temp.e5_metadata'),prior.indexOf('SELECT * FROM finish();'))),
   'All original thirteen assertions, setup and inverse checks retained byte-exact');
 }
+if(calendarMode){
+ // Rewind ONLY the latest four Task-reference bodies inside this rollback-only
+ // proof, retain all19 original assertions, then restore/replay the real forward.
+ const task=readFileSync(join(repo,'supabase/migrations/20271130010105_exp05_zion_original_task_references_earlier.sql'),'utf8').replace(/\r\n/g,'\n');
+ const latestTask=unwrap(task);
+ const hunks=[...task.matchAll(/\('([^']+)',(\d+),'([a-f0-9]{32})','([a-f0-9]{32})',\$old\$([\s\S]*?)\$old\$,\$new\$([\s\S]*?)\$new\$\)/g)];
+ assert.equal(hunks.length,8,'Exactly eight guarded original Task-reference hunks');
+ const pins=[...new Map(hunks.map(([,sig,,before,after])=>[sig,`('${sig}','${before}','${after}')`])).values()];
+ assert.equal(pins.length,4,'Exactly four incumbent native functions');
+ const values=hunks.map(([,sig,n,,,old,next])=>`('${sig}',${n},$task_old$${old}$task_old$,$task_new$${next}$task_new$)`);
+ const rewind=`CREATE TEMP TABLE e5_task_entry AS SELECT oid,to_jsonb(p) full_metadata FROM pg_proc p WHERE pronamespace='public'::regnamespace;
+DO $task_inverse$
+DECLARE sig text; before_hash text; after_hash text; p pg_proc; metadata jsonb; replacement text; h record;
+BEGIN
+ FOR sig,before_hash,after_hash IN SELECT * FROM (VALUES ${pins.join(',\n')}) v(sig,before_hash,after_hash) LOOP
+  SELECT * INTO p FROM pg_proc WHERE oid=to_regprocedure(sig);
+  IF md5(p.prosrc) IS DISTINCT FROM after_hash THEN RAISE EXCEPTION 'Task full-schema source is not installed: %',sig; END IF;
+  metadata:=to_jsonb(p)-'prosrc'; replacement:=p.prosrc;
+  FOR h IN SELECT * FROM (VALUES ${values.join(',\n')}) v(name,ordinal,old_text,new_text) WHERE name=sig ORDER BY ordinal DESC LOOP
+   IF (length(replacement)-length(replace(replacement,h.new_text,'')))/length(h.new_text)<>1 THEN RAISE EXCEPTION 'Task inverse hunk drift'; END IF;
+   replacement:=replace(replacement,h.new_text,h.old_text);
+  END LOOP;
+  IF md5(replacement)<>before_hash THEN RAISE EXCEPTION 'Task complete inverse drift'; END IF;
+  EXECUTE replace(pg_get_functiondef(p.oid),p.prosrc,replacement);
+  IF metadata IS DISTINCT FROM (SELECT to_jsonb(q)-'prosrc' FROM pg_proc q WHERE q.oid=p.oid) THEN RAISE EXCEPTION 'Task inverse changed metadata'; END IF;
+ END LOOP;
+END $task_inverse$;
+`;
+ const extra=`${latestTask}
+SELECT ok(NOT EXISTS(SELECT 1 FROM e5_task_entry b FULL JOIN pg_proc p USING(oid)
+ WHERE (b.oid IS NOT NULL OR p.pronamespace='public'::regnamespace) AND b.full_metadata IS DISTINCT FROM to_jsonb(p)),
+ 'Restoring latest Task forward preserves all whole bodies/OIDs/ABI/owner/ACL/config/default');
+${latestTask}
+SELECT ok(NOT EXISTS(SELECT 1 FROM e5_task_entry b FULL JOIN pg_proc p USING(oid)
+ WHERE (b.oid IS NOT NULL OR p.pronamespace='public'::regnamespace) AND b.full_metadata IS DISTINCT FROM to_jsonb(p)),
+ 'Latest Task exact replay preserves the full installed catalog');
+SELECT ok(NOT has_function_privilege('authenticated','public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)','EXECUTE')
+ AND has_function_privilege('service_role','public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)','EXECUTE'),
+ 'Original Task staging remains service-only with no browser grant');
+SELECT ok((SELECT provolatile='s' AND NOT prosrc LIKE '%FOR SHARE%' AND NOT prosrc LIKE '%FOR UPDATE%'
+ FROM pg_proc WHERE oid='public._team_hub_planning_read_annotations(public.team_hub_agent_turns)'::regprocedure),
+ 'Composed Task/Calendar/Planning history stays read-only');
+`;
+ const prior=sql;
+ sql=prior.replace('SELECT plan(19);',()=>`SELECT plan(23);\n${rewind}`).replace('SELECT * FROM finish();',()=>`${extra}SELECT * FROM finish();`);
+ assert(sql.includes(prior.slice(prior.indexOf('CREATE TEMP TABLE e5_calendar_entry'),prior.indexOf('SELECT * FROM finish();'))),
+  'All original nineteen Calendar/Planning assertions and inverses retained byte-exact');
+}
 if(process.argv.includes('--self-test')){
- assert(sql.startsWith(`BEGIN;\nSELECT plan(${calendarMode?19:13});`));assert(sql.endsWith('ROLLBACK;\n'));
+ assert(sql.startsWith(`BEGIN;\nSELECT plan(${calendarMode?23:13});`));assert(sql.endsWith('ROLLBACK;\n'));
  assert.equal((sql.match(/^BEGIN;$/gm)??[]).length,1);assert.equal((sql.match(/^COMMIT;$/gm)??[]).length,0);
  assert.equal(sql.split(body).length,3,'Exact candidate bytes embedded twice without transaction wrappers');
  assert(!/INSERT INTO (public|auth)\./i.test(sql));
- console.log(`PASS: ${calendarMode?'five':'four'} exact carriers verified; latest forward twice inside one rollback-only test;${calendarMode?19:13} assertions; no business fixture/ledger`);
+ console.log(`PASS: ${calendarMode?'six':'four'} exact carriers verified; latest forward twice inside one rollback-only test;${calendarMode?23:13} assertions; no business fixture/ledger`);
 }else{
  const cli=process.env.SUPABASE_BIN??'supabase';
  const state=spawnSync(cli,['status','-o','json'],{cwd:repo,encoding:'utf8',timeout:30000});

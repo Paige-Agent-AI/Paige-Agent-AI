@@ -1,3 +1,7 @@
+## EXP03 November2 — NEXUS email producer source release
+
+Original3224/a4f3f6195 is released: original first unsent Save creates one Messages draft/audit, same actor-operation replay, existing raw-version edit/reopen and original exact approval/send source. Native30010003+30010103/Save13FULL195f827 and original restricted metadata, all8Edge/source certificate1001bindings and both public web origins verified; Master4.0 and originaljourney14.60 retain exact source, review, checks and failures. No new writer/approval/runtime/permission or provider send. E08 retains actual NEXUS privateDM/admission/card/result/return integration. Selected integrated email outcome remains INCOMPLETE until authenticated save/fullreload/reopen, exact recipient/content approval, separately authorized particular send and truthful receipt/no-duplicate recovery. Provider acceptance is not delivery; full EXP03 STILL CODING/owner acceptance separate. No next outcome.
+
 ## EXP03 November1 — saved-email opening release and authenticated continuity
 
 Original [3193/d7596d976](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3193)

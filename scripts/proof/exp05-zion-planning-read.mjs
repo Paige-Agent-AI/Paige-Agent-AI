@@ -11,6 +11,8 @@ const repo=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 assert(['127.0.0.1','localhost'].includes(process.env.PGHOST??'127.0.0.1'),'Disposable local PostgreSQL only');
 const run=join(repo,'work','planning-native-proof',`run-${Date.now()}`);mkdirSync(run,{recursive:true});
 const inputs=new Map();
+const taskLinksMode=!['--red','--search-red','--links-red'].some(flag=>process.argv.includes(flag));
+const calendarMode=process.argv.includes('--calendar')||taskLinksMode;
 function materialize(path){
  path=resolve(path);if(inputs.has(path))return inputs.get(path).copy;
  const source=readFileSync(path,'utf8').replace(/\r\n/g,'\n');
@@ -20,7 +22,7 @@ function materialize(path){
  if(path===join(repo,'supabase/tests/exp08_team_hub_a2b_cards.sql')){
   const anchor="RESET ROLE;\n\\c postgres\nDROP DATABASE exp08_team_hub_a2b_proof;\n\\echo 'PASS: EXP08 Team Hub agents A2b proof complete; disposable database dropped'";
   assert.equal(sql.split(anchor).length,2,'Exactly one final disposable cleanup');
-  sql=sql.replace(anchor,`\\ir '${join(repo,'supabase/tests/exp05_zion_planning_read.sql').replaceAll('\\','/')}'\n${process.argv.includes('--calendar') ? `\\ir '${join(repo,'supabase/tests/exp05_zion_calendar_read.sql').replaceAll('\\','/')}'\n` : ''}\\if :{?exp05_concurrent}\n\\echo 'EXP05 retained original disposable fixture only for concurrent probes'\n\\else\n${anchor}\n\\endif`);
+  sql=sql.replace(anchor,`\\ir '${join(repo,'supabase/tests/exp05_zion_planning_read.sql').replaceAll('\\','/')}'\n${calendarMode ? `\\ir '${join(repo,'supabase/tests/exp05_zion_calendar_read.sql').replaceAll('\\','/')}'\n` : ''}${taskLinksMode ? `\\ir '${join(repo,'supabase/tests/exp05_zion_task_references.sql').replaceAll('\\','/')}'\n` : ''}\\if :{?exp05_concurrent}\n\\echo 'EXP05 retained original disposable fixture only for concurrent probes'\n\\else\n${anchor}\n\\endif`);
  }
  // Incumbent sed commands extract SQL text only. Feed the exact same ranges
  // through SQL literals on Windows; preserve every original drift/mutant probe.
@@ -51,20 +53,32 @@ const result=spawnSync(psql,['-X',...connection,'-d','postgres','-v','ON_ERROR_S
 writeFileSync(join(run,'stdout.txt'),result.stdout??'');writeFileSync(join(run,'stderr.txt'),result.stderr??'');
 const contractLine=(result.stdout??'').split(/\r?\n/).find(line=>line.startsWith('EXP05_NATIVE_CONTRACT:'));
 const contract=contractLine?JSON.parse(contractLine.slice('EXP05_NATIVE_CONTRACT:'.length)):null;
-let proofError=null,races=[],calendarRaces=[],readOnlyHistory=[];
+let proofError=null,races=[],calendarRaces=[],taskRaces=[],readOnlyHistory=[],taskContract=null;
 if(result.status===0){
  try{
   assert(contract?.length===14,'Successful proof includes the actual native source/metadata contract');
+  if(taskLinksMode){
+   const line=(result.stdout??'').split(/\r?\n/).find(l=>l.startsWith('EXP05_TASK_LINK_NATIVE_CONTRACT:'));
+   assert(line,'Task extension exported its actual final native contract');
+   taskContract=JSON.parse(line.slice('EXP05_TASK_LINK_NATIVE_CONTRACT:'.length));
+   assert.equal(taskContract.length,4,'Four original Task-reference bodies and complete metadata');
+  }
   if(concurrent){
    const line=(result.stdout??'').split(/\r?\n/).find(l=>l.startsWith('EXP05_RACE_CONTEXT:'));
    assert(line,'Original fixture exported its synthetic concurrency context');
    const context=JSON.parse(line.slice('EXP05_RACE_CONTEXT:'.length));
    races=await provePlanningConcurrency(psql,[...connection,'-d','exp08_team_hub_a2b_proof'],context);
-   if(process.argv.includes('--calendar')){
+   if(calendarMode){
     const calendarLine=(result.stdout??'').split(/\r?\n/).find(l=>l.startsWith('EXP05_CALENDAR_RACE_CONTEXT:'));
     assert(calendarLine,'Calendar extension exported its original synthetic context');
     calendarRaces=await provePlanningConcurrency(psql,[...connection,'-d','exp08_team_hub_a2b_proof'],
      JSON.parse(calendarLine.slice('EXP05_CALENDAR_RACE_CONTEXT:'.length)),{source:'calendar'});
+   }
+   if(taskLinksMode){
+    const taskLine=(result.stdout??'').split(/\r?\n/).find(l=>l.startsWith('EXP05_TASK_RACE_CONTEXT:'));
+    assert(taskLine,'Original Task extension exported its synthetic concurrency context');
+    taskRaces=await provePlanningConcurrency(psql,[...connection,'-d','exp08_team_hub_a2b_proof'],
+     JSON.parse(taskLine.slice('EXP05_TASK_RACE_CONTEXT:'.length)),{source:'task'});
    }
    // The incumbent final history control ends the seat and canonically deletes
    // its DM/turns. Preserve that destructive negative LAST, after Calendar has
@@ -81,8 +95,9 @@ if(result.status===0){
  }
 }
 if(contract)writeFileSync(join(run,'native-contract.json'),JSON.stringify(contract,null,2)+'\n');
+if(taskContract)writeFileSync(join(run,'task-native-contract.json'),JSON.stringify(taskContract,null,2)+'\n');
 const exit=result.status===0&&!proofError?0:1;
-writeFileSync(join(run,'result.json'),JSON.stringify({exit,error:proofError??result.error?.message??null,races,calendarRaces,readOnlyHistory,
+writeFileSync(join(run,'result.json'),JSON.stringify({exit,error:proofError??result.error?.message??null,races,calendarRaces,taskRaces,readOnlyHistory,
  inputs:[...inputs].map(([path,value])=>({path:relative(repo,path),sha256:value.sha256})),
  proof:'Original E08 reduced-schema disposable fixture plus EXP05 extension; no customer/full-schema/production claim'},null,2));
 console.log((result.stdout??'').split(/\r?\n/).filter(line=>line.startsWith('PASS:')).join('\n'));
@@ -91,4 +106,5 @@ if(proofError)console.error(proofError);
 if(exit===0&&concurrent)console.log('PASS: four actual native source/role publication blocking pairs; same original retry/history; disposable database dropped');
 if(exit===0&&concurrent)console.log(`PASS: ${readOnlyHistory.length} actual read-only original history/Search positive, revocation and recovery controls; no new messages`);
 if(exit===0&&calendarRaces.length)console.log('PASS: four additional actual Calendar source/role publication blocking pairs, same-message retry and history masking');
+if(exit===0&&taskRaces.length)console.log('PASS: four actual Task scope/role publication blocking pairs, same-message retry and history masking');
 console.log(`Evidence: ${run}`);process.exitCode=exit;

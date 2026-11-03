@@ -74,6 +74,7 @@ import { mergeRecordLinks, type ReadRecordLink } from "../paige-turn/record-link
 import { readZionPlans, zionPlanReadTools, type ZionPlanningDeps, type ZionPlanningScope } from "./zion-planning-read.ts";
 import { zionPlanningRecordLinks } from "./zion-planning-source.ts";
 import { readZionCalendar, zionCalendarReadTools, type ZionCalendarDeps, type ZionCalendarScope } from "./zion-calendar-read.ts";
+import { zionTaskRecordLinks } from "./zion-task-record-links.ts";
 import type { ContextIdentity } from "../paige-context/mod.ts";
 import { createWeeklyDraftDeadline } from "../paige-orchestration/weekly-draft-deadline.ts";
 import { createNexusEmailPreparation, nexusEmailPreparationFromAnswer, NEXUS_EMAIL_PREPARATION_PROMPT } from "./nexus-email-prepare.ts";
@@ -1167,6 +1168,17 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
         const result = await runCardRead({ caller, service, tenantId, userId, turnRef: `${turnId}:${hash}`, signal: deps.signal,
           isCurrent: currentCardReadScope }, name, args, call.id);
         if (!await currentCardReadScope()) return endedWithoutPost("no_reply");
+        // Original successful ZION Task references must be admitted natively
+        // before private read results reach the model. No URL or model IDs.
+        if (agent === "zion") {
+          const taskLinks = zionTaskRecordLinks(name, result);
+          if (taskLinks.length) {
+            const staged = await rpcSafe(service, "team_hub_stage_agent_read_context", {
+              p_turn_id: turnId, p_token_hash: hash, p_read_tools: [...cardReadTools], p_record_links: taskLinks,
+            });
+            if (deps.signal?.aborted || staged?.error || object(staged?.data)?.ok !== true) return endedWithoutPost("no_reply");
+          }
+        }
         provenance.note(name, result);
         messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
         continue;

@@ -51,7 +51,12 @@ export function ExecutiveActivity({ feed, timezone }: { feed: SoloActivityFeed; 
     };
     if (visible(trigger.current)) return;
     const target = [...document.querySelectorAll<HTMLButtonElement>("#tenant-paige-workspace header button")].find(visible);
-    if (target) { event.preventDefault(); target.focus({ preventScroll: true }); }
+    if (target) { event.preventDefault(); target.focus({ preventScroll: true }); return; }
+    // A resize can move the invoker outside its EXISTING scroll owner. Radix's
+    // default return prevents scrolling, leaving keyboard focus out of view.
+    event.preventDefault();
+    trigger.current.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
+    trigger.current.focus({ preventScroll: true });
   };
 
   return <section className="exec-recorded" aria-labelledby="exec-recorded-title">

@@ -15,7 +15,7 @@ import path from "node:path";
  * plausible-looking constant and every render assertion below would keep passing on it.
  */
 
-type ReadResult = { data: unknown[] | null; error: { code?: string; message: string } | null };
+type ReadResult = { data: unknown; error: { code?: string; message: string } | null };
 const harness = vi.hoisted(() => ({
   result: null as ReadResult | null,
   /** Per-call answers, in order, for the stale-response case. Consumed before `result`. */
@@ -206,6 +206,28 @@ describe("the activity feed renders what was recorded", () => {
     await render();
     expect(container.querySelector('[data-testid="state"]')?.textContent).toBe("empty");
     expect(container.querySelector('[data-testid="copy"]')?.textContent).toContain("Nothing recorded yet");
+  });
+
+  it.each([null, {}, "not a row list"])("withholds malformed successful responses instead of claiming no activity (%j)", async (data) => {
+    harness.result = { data, error: null };
+    await render();
+    expect(state()).toBe("unavailable");
+    expect(container.textContent).not.toContain("Nothing recorded yet");
+    expect(rowText()).toEqual([]);
+    harness.result = { data: [], error: null };
+    await act(async () => { window.dispatchEvent(new Event("focus")); await Promise.resolve(); });
+    expect(state()).toBe("empty");
+  });
+
+  it("withholds earlier facts when a later response is malformed", async () => {
+    harness.result = { data: [{ id: "test-event", title: "Earlier recorded fact", occurred_at: "2026-09-01T11:59:00Z" }], error: null };
+    await render();
+    expect(state()).toBe("ok");
+    expect(rowText()).toHaveLength(1);
+    harness.result = { data: null, error: null };
+    await act(async () => { window.dispatchEvent(new Event("focus")); await Promise.resolve(); });
+    expect(state()).toBe("unavailable");
+    expect(rowText()).toEqual([]);
   });
 });
 

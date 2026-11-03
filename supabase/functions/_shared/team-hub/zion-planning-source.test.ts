@@ -1,4 +1,8 @@
 import assert from "node:assert/strict";
+// Original Planning-reference suite is explicitly hosted; retain Chat's joined
+// producer/receipt/collector/history regression in that same owning suite.
+import "../planning/read-record-links.test.ts";
+import "../planning/read-record-links.integration.test.ts";
 import { describe, it } from "node:test";
 import { captureZionPlanningSource, zionPlanningRecordLinks } from "./zion-planning-source.ts";
 

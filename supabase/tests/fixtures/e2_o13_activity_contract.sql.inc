@@ -1,6 +1,7 @@
 -- ISOLATED FULL-SCHEMA CI ONLY. Included inside the original attribution test's
 -- BEGIN/ROLLBACK. No migrations, production grants, providers or real accounts.
--- The candidate is byte-identical to the reviewed, still-uninstalled proposal.
+-- Candidate statement bytes match the reviewed, still-uninstalled proposal;
+-- only its extra trailing blank line is normalized in the test include.
 CREATE TEMP TABLE o13_reader_before AS SELECT p.oid, p.proacl, p.proowner,
   p.prosecdef,p.provolatile,p.proconfig,p.prorettype,p.proretset,p.proargtypes,
   p.proallargtypes,p.proargmodes,p.proargnames,

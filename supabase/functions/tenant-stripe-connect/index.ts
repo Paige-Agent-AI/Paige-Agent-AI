@@ -1,4 +1,4 @@
-import {salesStripeSecret} from '../_shared/sales-payments/stripe-configuration.ts';
+import {salesStripeSecret,salesStripeReadbackSecret} from '../_shared/sales-payments/stripe-configuration.ts';
 // One merchant door: scoped reads, shared Trust/Kit approval, canonical Stripe binding and Rail.
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import Stripe from 'https://esm.sh/stripe@17.5.0?target=deno';
@@ -41,13 +41,16 @@ Deno.serve(async req=>{
   const output=()=>merchantStatus(tenantId!,row,true,environment,Date.now());
   if(action==='status'){await scope();return json(200,{...output(),ok:true,outcome:'available'});}
   if(!environment)return json(503,{...output(),ok:false,outcome:'refused',code:'PROVIDER_UNAVAILABLE',state:'unverified',recovery_reason:'PROVIDER_UNAVAILABLE'});
-  if(row?.provider_environment&&row.provider_environment!==environment)return json(409,{...output(),ok:false,outcome:'refused',code:'PROVIDER_ENVIRONMENT_MISMATCH',state:'unverified',recovery_reason:'PROVIDER_ENVIRONMENT_MISMATCH'});
+  if(action!=='refresh_status'&&row?.provider_environment&&row.provider_environment!==environment)return json(409,{...output(),ok:false,outcome:'refused',code:'PROVIDER_ENVIRONMENT_MISMATCH',state:'unverified',recovery_reason:'PROVIDER_ENVIRONMENT_MISMATCH'});
+  const readbackEnvironment=action==='refresh_status'&&(row?.provider_environment==='test'||row?.provider_environment==='live')?row.provider_environment:environment;
+  const providerKey=action==='refresh_status'?salesStripeReadbackSecret(name=>Deno.env.get(name),readbackEnvironment):stripeKey;
+  if(!providerKey)return json(503,{...output(),ok:false,outcome:'refused',code:'PROVIDER_UNAVAILABLE',state:'unverified',recovery_reason:'PROVIDER_UNAVAILABLE'});
   // No automatic provider write retries. Unknown reservations reconcile by GET only.
-  const stripe=new Stripe(stripeKey,{apiVersion:'2024-11-20.acacia',maxNetworkRetries:0,timeout:8000});
+  const stripe=new Stripe(providerKey,{apiVersion:'2024-11-20.acacia',maxNetworkRetries:0,timeout:8000});
   const around=async<T>(at:MerchantStage,fn:()=>Promise<T>)=>{stage=at;await scope();const value=await deadline(fn());await scope();return value;};
   const persist=async(binding:MerchantRow,account:{id:string})=>{
    stage='binding_persist';await scope();
-   const saved=await admin.rpc('persist_sales_merchant_onboarding',{_actor_user_id:actor,_expected_tenant_id:tenantId,_environment:environment,_operation_id:binding.onboarding_id,_claim:binding.onboarding_claim,_expected_version:binding.binding_version,_merchant_id:account.id});
+   const saved=await admin.rpc('persist_sales_merchant_onboarding',{_actor_user_id:actor,_expected_tenant_id:tenantId,_environment:readbackEnvironment,_operation_id:binding.onboarding_id,_claim:binding.onboarding_claim,_expected_version:binding.binding_version,_merchant_id:account.id});
    if(saved.error||!saved.data)throw Error('BINDING_UNRECORDED');return saved.data as MerchantRow;
   };
   let admitted:{capability:MerchantTool;args:Record<string,unknown>}|null=null;
@@ -90,16 +93,16 @@ Deno.serve(async req=>{
   row=await recoverPendingMerchant(action,row,{scope,create:async()=>{throw Error('ONBOARDING_CREATE_NOT_ALLOWED');},list:after=>{stage='account_recovery';return deadline(stripe.accounts.list({limit:100,...(after?{starting_after:after}:{})}));},persist});
   if(!row?.stripe_account_id)return json(200,{...output(),ok:true,outcome:'available'});
   let account:Stripe.Account|null=null;
-  const facts=await around('account_readback',()=>readStripeMerchant({tenant_id:tenantId!,provider:'stripe',merchant_id:row!.stripe_account_id!,environment:(row!.provider_environment??environment) as 'test'|'live',version:row!.binding_version},{environment:environment!,retrieveAccount:async id=>{const found=await stripe.accounts.retrieve(id);if('deleted'in found&&found.deleted)return {id:found.id,deleted:true};account=found as Stripe.Account;return account;}},Date.now));
+  const facts=await around('account_readback',()=>readStripeMerchant({tenant_id:tenantId!,provider:'stripe',merchant_id:row!.stripe_account_id!,environment:(row!.provider_environment??readbackEnvironment) as 'test'|'live',version:row!.binding_version},{environment:readbackEnvironment,retrieveAccount:async id=>{const found=await stripe.accounts.retrieve(id);if('deleted'in found&&found.deleted)return {id:found.id,deleted:true};account=found as Stripe.Account;return account;}},Date.now));
   // Every handoff projects this fresh observation, never a previously cached Ready row.
   // Persist/CAS the exact account/version before the external hosted-link effect.
   const acct=account as Stripe.Account|null;if(!acct)throw Error('PROVIDER_UNAVAILABLE');stage='readback_persist';await scope();
-  const saved=await admin.rpc('record_sales_merchant_onboarding_readback',{_actor_user_id:actor,_expected_tenant_id:tenantId,_merchant_id:facts.merchant_id,_expected_version:row.binding_version,_environment:environment,_charges_enabled:facts.charges_enabled,_payouts_enabled:facts.payouts_enabled,_details_submitted:facts.details_submitted,_payment_permission:facts.payment_permission,_country:acct.country??null,_currency:acct.default_currency??null,_requirements:acct.requirements??null});
+  const saved=await admin.rpc('record_sales_merchant_onboarding_readback',{_actor_user_id:actor,_expected_tenant_id:tenantId,_merchant_id:facts.merchant_id,_expected_version:row.binding_version,_environment:readbackEnvironment,_charges_enabled:facts.charges_enabled,_payouts_enabled:facts.payouts_enabled,_details_submitted:facts.details_submitted,_payment_permission:facts.payment_permission,_country:acct.country??null,_currency:acct.default_currency??null,_requirements:acct.requirements??null});
   if(saved.error||!Number.isSafeInteger(saved.data))throw Error('READBACK_UNRECORDED');
   if(admitted&&saved.data!==facts.binding_version)throw Error('BINDING_CHANGED');
-  row={...row,binding_version:saved.data,provider_environment:environment};
+  row={...row,binding_version:saved.data,provider_environment:readbackEnvironment};
   await scope();const current=await admin.from('tenant_stripe_accounts').select('*').eq('tenant_id',tenantId).single();if(current.error||!current.data)throw Error('STORAGE_UNAVAILABLE');
-  if(current.data.stripe_account_id!==facts.merchant_id||current.data.provider_environment!==environment||current.data.binding_version!==saved.data)throw Error('BINDING_CHANGED');
+  if(current.data.stripe_account_id!==facts.merchant_id||current.data.provider_environment!==readbackEnvironment||current.data.binding_version!==saved.data)throw Error('BINDING_CHANGED');
   row=current.data as MerchantRow;
   if(action==='start_onboarding'||action==='login_link'){
    const link=await around('hosted_link',()=>action==='start_onboarding'?stripe.accountLinks.create({account:row!.stripe_account_id!,refresh_url:targets!.refresh_url,return_url:targets!.return_url,type:'account_onboarding'}):stripe.accounts.createLoginLink(row!.stripe_account_id!));

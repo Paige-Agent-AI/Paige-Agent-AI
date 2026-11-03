@@ -64,6 +64,8 @@ export function useSoloActivityFeed() {
   ], refresh: noop };
 }
 export const elapsedLabel = () => "in the synthetic record";
+// Present the same source-owned department labels in the actual O13 component.
+export { departmentLabel } from "../../../../src/solo/data/useSoloActivityFeed";
 export function useBusinessGamePlanMissions() {
   const state = useHarnessParams().get("state");
   return { status: state === "loading" ? "loading" : state === "member" ? "forbidden" : state === "error" ? "error" : "ready", items: state === "empty" ? [] : [

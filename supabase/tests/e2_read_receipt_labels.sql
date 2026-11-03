@@ -63,7 +63,13 @@ SELECT is(public._workspace_event_display('capability_run','capability_succeeded
 SELECT is(public._workspace_event_display('capability_run','capability_succeeded','read_sales_commercial_package'),
   public._workspace_event_display('capability_run','capability_succeeded','read_sales_commercial_package'),
   'repeated display of the original package receipt is deterministic');
-SELECT ok(pg_get_functiondef('public.get_solo_rail_activity(integer)'::regprocedure) LIKE '%_workspace_event_display(%',
+-- Preserve the original assertion across the exact reviewed O13 row delegate;
+-- arbitrary wrappers or helper bodies do not satisfy this source-chain check.
+SELECT ok(pg_get_functiondef('public.get_solo_rail_activity(integer)'::regprocedure) LIKE '%_workspace_event_display(%'
+  OR ((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.get_solo_rail_activity(integer)'::regprocedure)='4be4093980839256c98ece6ccd915eab'
+    AND EXISTS(SELECT 1 FROM pg_proc WHERE oid=to_regprocedure('public._solo_rail_activity_rows(integer,uuid,boolean)')
+      AND md5(prosrc)='a4200333a5ebfe365a8d84049865ab52'
+      AND pg_get_functiondef(oid) LIKE '%_workspace_event_display(%')),
   'existing scoped Rail reader still uses the shared display chain');
 SELECT is((SELECT count(*) FROM public.paige_workspace_events),(SELECT n FROM e02_read_label_event_count),
   'display, repetition and denied-access checks append no activity receipt');

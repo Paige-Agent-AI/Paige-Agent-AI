@@ -121,6 +121,8 @@ try:
   for _ in range(2):sql(db,file=migration)
   if sql(db,"SELECT proacl::text FROM pg_proc WHERE oid='public.lock_knowledge_extraction_authority(uuid,uuid)'::regprocedure")[0]!=before_lock_acl:raise RuntimeError('Auth lock migration changed privileges')
   if release:
+   run=subprocess.run(base+['-d',db],input="BEGIN;ALTER FUNCTION public.lock_knowledge_extraction_authority(uuid,uuid) IMMUTABLE;"+release.read_text(encoding='utf8')+'COMMIT;',cwd=root,text=True,capture_output=True,encoding='utf8')
+   if run.returncode==0 or 'KNOWLEDGE_SAVE_AUTH_REPAIR_REQUIRED' not in run.stderr:raise RuntimeError('Noncanonical authority helper reopened save permission')
    for fault in [
     'GRANT EXECUTE ON FUNCTION '+save_signature+' TO service_role',
     'ALTER FUNCTION '+save_signature+' SECURITY INVOKER',

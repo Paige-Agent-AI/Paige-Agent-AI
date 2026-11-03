@@ -6,7 +6,11 @@ DECLARE
   current_acl aclitem[];
 BEGIN
   IF (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.lock_knowledge_extraction_authority(uuid,uuid)'::regprocedure)
-       IS DISTINCT FROM '3f61f700706ae3d80dbde0164954e46c' THEN
+       IS DISTINCT FROM '3f61f700706ae3d80dbde0164954e46c'
+    OR NOT (SELECT prosecdef AND provolatile='v' AND proconfig=ARRAY['search_path=""']
+      AND proowner='postgres'::regrole
+      AND proacl='{postgres=X/postgres,service_role=X/postgres}'::aclitem[]
+      FROM pg_proc WHERE oid='public.lock_knowledge_extraction_authority(uuid,uuid)'::regprocedure) THEN
     RAISE EXCEPTION 'KNOWLEDGE_SAVE_AUTH_REPAIR_REQUIRED';
   END IF;
   SELECT proacl INTO current_acl FROM pg_proc WHERE oid=f::oid;

@@ -1,7 +1,7 @@
 // Browser-only explicit handoff of a native private NEXUS preparation. No model
 // tool can enter this route. Uses ORIGINAL email sender read, Save adapter,
 // native operation and audit receipt. Check never retries a domain save.
-import { listCommsEmailSenders, resolveCommsEmailParties, type CommsEmailAdmin } from "../comms-email/readiness.ts";
+import { emailProvidersFor, listCommsEmailSenders, resolveCommsEmailParties, type CommsEmailAdmin } from "../comms-email/readiness.ts";
 import type { CommsEmailChatDependencies } from "../comms-email/chat.ts";
 import { UUID } from "../comms-email/contract.ts";
 import { createNexusEmailDraftSaver, nexusEmailDraftOperationId, type NexusEmailDraftScope, type NexusEmailDraftSelection } from "./nexus-email-draft.ts";
@@ -22,6 +22,10 @@ const object = (v: unknown): Record<string, unknown> | null =>
   v !== null && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;
 const answer = (outcome: NexusEmailDraftAnswer["outcome"]): NexusEmailDraftAnswer =>
   ({ ok: outcome === "saved" || outcome === "available", outcome });
+// Recognize the ORIGINAL email door's provider family for unsent drafts even
+// when sending is not configured. This projection never asserts send readiness
+// or reads a credential; ORIGINAL domain readiness still governs any later send.
+const unsentSenderProviders = emailProvidersFor({ sendgridConfigured: false });
 
 export async function runNexusEmailDraft(deps: NexusEmailDraftHostDeps, raw: unknown): Promise<NexusEmailDraftAnswer> {
   const req = parseNexusEmailDraftRequest(raw);
@@ -60,7 +64,7 @@ export async function runNexusEmailDraft(deps: NexusEmailDraftHostDeps, raw: unk
       // the original domain writer independently repeats its checks at Save.
       try {
         const parties = await resolveCommsEmailParties(service, { tenantId, actorUserId: actor,
-          contactId: req.contactId!, connectorId: req.connectorId! });
+          contactId: req.contactId!, connectorId: req.connectorId! }, unsentSenderProviders);
         if (!live() || parties.kind !== "resolved") return answer("refused");
         const chosen = await read(true);
         if (!chosen || chosen.turnId !== original.turnId || chosen.conversationId !== original.conversationId
@@ -86,7 +90,7 @@ export async function runNexusEmailDraft(deps: NexusEmailDraftHostDeps, raw: unk
     if (req.intent === "inspect") {
       // ORIGINAL actor-filtered mailbox/provider projection; no new connection
       // policy, credential access, provider request or model disclosure.
-      const senders = await listCommsEmailSenders(service, { tenantId, actorUserId: actor });
+      const senders = await listCommsEmailSenders(service, { tenantId, actorUserId: actor }, unsentSenderProviders);
       if (!await current()) return answer("refused");
       return { ok: true, outcome: "available", message_id: req.messageId, senders };
     }

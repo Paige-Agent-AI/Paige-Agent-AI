@@ -134,3 +134,13 @@ test("original permitted sender choices stay out of the model and do not invoke 
   assert.deepEqual(result.senders, [{ connector_id: connector, from_address: "business@tests.invalid" }]);
   assert.equal(writes(h).length, 0);
 });
+
+test("the unsent sender picker includes permitted PAIGE Email and still refuses unsupported or private senders",async()=>{
+  const sender={id:connector,tenant_id:tenant,provider:"sendgrid",active:true,status:"active",mailbox_class:"shared_support",from_address:"business@tests.invalid"};
+  const h=setup({senders:[sender,{...sender,id:source,provider:"unknown",from_address:"unsupported@tests.invalid"},
+    {...sender,id:contact,mailbox_class:"personal",mailbox_owner_user_id:turn,from_address:"private@tests.invalid"}]});
+  const result=await runNexusEmailDraft(h.deps,request("inspect"));
+  assert.equal(result.outcome,"available");
+  assert.deepEqual(result.senders,[{connector_id:connector,from_address:"business@tests.invalid"}]);
+  assert.equal(writes(h).length,0);
+});

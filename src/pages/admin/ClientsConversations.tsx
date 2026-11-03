@@ -909,6 +909,13 @@ export default function ClientsConversations() {
     // Hold a just-composed selection until its thread arrives in dbThreads — don't clobber it
     // to visibleThreads[0] in the gap (compose selection race). Honor it the moment it lands.
     if (followupHoldRef.current && selectedKey) return;
+    // A temporarily withheld ORIGINAL draft still owns its unsaved editor.
+    // Do not select another inbox thread and let its default-channel effect
+    // erase these hidden words. Retry must re-prove the same actor/source;
+    // Close and account retirement keep their existing clearing behavior.
+    const withheld=withheldEmail.current;
+    if(emailLocator.kind==="bound"&&withheld?.key===emailLocatorKey
+      &&withheld.messageId===editingDraftId&&withheld.threadKey===selectedKey)return;
     if (pendingSelectRef.current) {
       if (dbThreads.some((t) => t.thread_key === pendingSelectRef.current)) {
         const key = pendingSelectRef.current;
@@ -919,7 +926,7 @@ export default function ClientsConversations() {
     }
     if (visibleThreads.length === 0) { if (selectedKey !== null) setSelectedKey(null); return; }
     if (!selectedKey || !visibleThreads.some((t) => t.thread_key === selectedKey)) setSelectedKey(visibleThreads[0].thread_key);
-  }, [visibleThreads, selectedKey, dbThreads]);
+  }, [visibleThreads, selectedKey, dbThreads, emailLocator, emailLocatorKey, editingDraftId]);
 
   const selectedThread = useMemo(() => dbThreads.find((t) => t.thread_key === selectedKey) ?? null, [dbThreads, selectedKey]);
   const soloLinks = buildSoloConversationLinks(soloAccountAddress, selectedThread?.contact_id ?? null);

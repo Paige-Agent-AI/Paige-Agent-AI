@@ -1,16 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../_shared/capability-record.ts";
-import { buildSocialProfileKey, SOCIAL_OAUTH_PLATFORMS, uploadPostSocialAdapter } from "../_shared/social-provider/upload-post.ts";
+import { buildSocialProfileKey, SOCIAL_OAUTH_PLATFORMS } from "../_shared/social-provider/upload-post.ts";
 import { governSocialMutation } from "../_shared/social-provider/governance.ts";
 import { SocialProviderError } from "../_shared/social-provider/mod.ts";
 import { zernioSocialAdapter } from "../_shared/social-provider/zernio.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const RETURN_PATH = /^\/solo\/[A-Za-z0-9_-]+\/settings\/integrations\/?$/;
-// The provider Paige runs on is whichever adapter carries a vaulted key. Zernio is the
-// selected provider (owner decision 2026-10-29); the doors stay provider-neutral.
-const adapter = zernioSocialAdapter.isConfigured() ? zernioSocialAdapter : uploadPostSocialAdapter;
+// Zernio is PAIGE's sole Social connection provider (owner decision, locked November 2:
+// retire Upload-Post; NO secret-driven alternate-provider fallback). Unconfigured simply
+// means the honest dormant refusal below — never a silent second provider.
+const adapter = zernioSocialAdapter;
 
 type Json = Record<string, unknown>;
 

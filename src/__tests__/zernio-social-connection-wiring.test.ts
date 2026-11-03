@@ -11,12 +11,14 @@ const shared = read("supabase/functions/_shared/social-provider/mod.ts");
 const uploadPost = read("supabase/functions/_shared/social-provider/upload-post.ts");
 
 describe("Zernio provider wiring", () => {
-  it("selects the configured provider in both Social doors without any second surface", () => {
-    const selection = "zernioSocialAdapter.isConfigured() ? zernioSocialAdapter : uploadPostSocialAdapter";
-    expect(endpoint).toContain(selection);
-    expect(callback).toContain(selection);
+  it("binds Zernio as the SOLE provider in both Social doors — no secret-driven fallback (owner decision, locked November 2)", () => {
+    expect(endpoint).toContain("const adapter = zernioSocialAdapter;");
+    expect(callback).toContain("const adapter = zernioSocialAdapter;");
     expect(endpoint).toContain('from "../_shared/social-provider/zernio.ts"');
     expect(callback).toContain('from "../_shared/social-provider/zernio.ts"');
+    // The retired alternate must not be injected by either door.
+    expect(endpoint).not.toContain("uploadPostSocialAdapter");
+    expect(callback).not.toContain("uploadPostSocialAdapter");
   });
 
   it("keeps the strict redirect-parameter contract for the other provider and verifies Zernio by readback", () => {

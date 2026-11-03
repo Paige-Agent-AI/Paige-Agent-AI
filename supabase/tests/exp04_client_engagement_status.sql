@@ -471,7 +471,14 @@ select pg_temp.check_true(not has_function_privilege('authenticated','public._wo
   'E4-S3: neither display link is callable by anon or authenticated');
 -- The Rail history reader derives the actor through the display (proved on the APPLIED definition, not
 -- migration text, because 20270504000000 rewrote it), so the owner's own Rail reads "Person".
-select pg_temp.check_true(pg_get_functiondef('public.get_solo_rail_activity(integer)'::regprocedure) like '%_workspace_event_display(%',
+-- O13 may factor the SAME original projection into its private row helper. Pin
+-- the reviewed complete wrapper/helper bodies rather than accepting any delegate;
+-- the original real owner/PAIGE Rail probes below still verify actual behavior.
+select pg_temp.check_true(pg_get_functiondef('public.get_solo_rail_activity(integer)'::regprocedure) like '%_workspace_event_display(%'
+  or ((select md5(prosrc) from pg_proc where oid='public.get_solo_rail_activity(integer)'::regprocedure)='4be4093980839256c98ece6ccd915eab'
+    and exists(select 1 from pg_proc where oid=to_regprocedure('public._solo_rail_activity_rows(integer,uuid,boolean)')
+      and md5(prosrc)='a4200333a5ebfe365a8d84049865ab52'
+      and pg_get_functiondef(oid) like '%_workspace_event_display(%')),
   'E4-S3: the applied Rail reader projects through the display');
 create temp table rail_probe as select * from (select null::text actor_type, null::text title) x where false;
 grant insert,select on rail_probe to authenticated;

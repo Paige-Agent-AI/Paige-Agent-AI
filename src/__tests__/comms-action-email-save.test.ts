@@ -26,6 +26,19 @@ function ports(change?:{status?:string;kind?:string;personal?:boolean;current?:b
  return{rpc,reads,d:{admin,caller:admin,storage,stillCurrent:async()=>change?.current!==false}};
 }
 describe("original action's first unsent save",()=>{
+ it("saves a fresh generic email with the same native writer, without inventing an action or source version",async()=>{
+  const p=ports();
+  const result=await saveOriginalEmailDraft({tenantId:tenant,actorUserId:actor,operationId:operation,command:input.command},p.d);
+  expect(result).toMatchObject({ok:true,outcome:"draft_saved",draft_source:{message_id:message,updated_at}});
+  expect(p.rpc).toHaveBeenCalledExactlyOnceWith("save_comms_email_draft",expect.objectContaining({
+   _message_id:null,_expected_updated_at:null,_approval:null,_actor:actor,_tenant:tenant,_save_id:operation}));
+  expect(p.reads.some(r=>r.table==="paige_actions"||r.table==="paige_pending_approvals")).toBe(false);
+ });
+ it("does not turn an unbound approval into a fresh generic save",async()=>{
+  const p=ports();
+  expect(await saveOriginalEmailDraft({tenantId:tenant,actorUserId:actor,operationId:operation,approvalId:approval,command:input.command},p.d)).toMatchObject({ok:false,outcome:"refused"});
+  expect(p.rpc).not.toHaveBeenCalled();
+ });
  it("keeps the approval's raw microsecond version and refuses guessed or widened navigation claims",()=>{
   expect(parseCommsEmailActionDraftSource(input.actionSource)).toEqual(input.actionSource);
   for(const value of [null,{},[],{...input.actionSource,tenant_id:tenant},{...input.actionSource,updated_at:"yesterday"},{message_id:message,updated_at}])expect(()=>parseCommsEmailActionDraftSource(value)).toThrow();

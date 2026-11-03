@@ -265,7 +265,73 @@ $function$;
    // assertions ran. The finally block still disposes its own database.
    process.exitCode=0;
   };
-  if(process.argv.includes('--action-entry'))await proveActionEntry();else{
+  const proveFreshEntry=async()=>{
+   if(process.argv.includes('--fresh-candidate')){
+    const sig='public.save_comms_email_draft(uuid,uuid,uuid,uuid,timestamptz,uuid,uuid,text,text,text,jsonb,timestamptz,uuid)';
+    const metadata=()=>db.run(`SELECT to_jsonb(p)-'prosrc' FROM pg_proc p WHERE oid='${sig}'::regprocedure`);
+    const patch=read('scripts/proof/exp03-fresh-email-save-patch.sql'),oldCatalogue=originalCatalogue(),oldRows=businessState();
+    if(process.argv.includes('--fresh-published')){assert.equal(read('supabase/migrations/20271130010003_exp03_fresh_email_draft_save.sql'),patch,'published fresh-save migration equals the exercised original writer bytes');checks++;}
+    const late="md5(pg_get_functiondef(oid)) ='195f827f04a3cffe6ba18b98b3075225'";
+    assert.equal(patch.split(late).length,2);
+    assert.throws(()=>db.run(patch.replace(late,"md5(pg_get_functiondef(oid)) ='00000000000000000000000000000000'")),/final source drift/);
+    assert.equal(originalCatalogue(),oldCatalogue);assert.equal(businessState(),oldRows);checks++;
+    const before=metadata();db.run(patch);assert.equal(metadata(),before);checks++;
+    assert.equal(db.run(`SELECT md5(pg_get_functiondef('${sig}'::regprocedure))`),'195f827f04a3cffe6ba18b98b3075225');checks++;
+    const catalogue=originalCatalogue();db.run(read('scripts/proof/exp03-fresh-email-save-patch.sql'));assert.equal(originalCatalogue(),catalogue);checks++;
+    const acl=read('supabase/migrations/20271130010103_exp03_saved_email_explicit_acl.sql');
+    const beforeAcl=originalCatalogue(),beforeBusiness=businessState();
+    db.run(acl);assert.equal(originalCatalogue(),beforeAcl,'explicit declaration preserves every function/OID/source/ACL');assert.equal(businessState(),beforeBusiness);checks++;
+    db.run(acl);assert.equal(originalCatalogue(),beforeAcl,'ACL declaration replay is an exact no-op');checks++;
+    assert.throws(()=>db.run(acl.replace('END $after_acl$;',"RAISE EXCEPTION 'forced ACL late rollback';END $after_acl$;")),/forced ACL late rollback/);
+    assert.equal(originalCatalogue(),beforeAcl);assert.equal(businessState(),beforeBusiness);checks++;
+   }
+   const freshId='c0000000-0000-4000-8000-000000000001';
+   const freshSQL=(over={})=>saveSQL(null,{message:null,approval:null,id:freshId,...over});
+   const before=Number(db.run('SELECT count(*) FROM public.messages'));
+   const first=JSON.parse(db.run(freshSQL()).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(first.outcome,'draft_saved');assert(first.message_id);assert.notEqual(first.message_id,draft);checks++;
+   assert.equal(Number(db.run('SELECT count(*) FROM public.messages')),before+1);checks++;
+   assert.equal(db.run(`SELECT status||':'||(action_id IS NULL)::text||':'||(meta?'comms_email_binding')::text FROM public.messages WHERE id='${first.message_id}'`),'draft:true:false');checks++;
+   const replay=JSON.parse(db.run(freshSQL()).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(replay.replayed,true);assert.equal(replay.message_id,first.message_id);assert.equal(replay.receipt_id,first.receipt_id);checks++;
+   assert.equal(db.run(`SELECT count(*) FROM public.paige_audit_log WHERE action='comms.email_draft_saved' AND payload->>'operation_id'='${freshId}'`),'1');checks++;
+   refuse(()=>db.run(freshSQL({text:'Different payload'})),/COMMS_EMAIL_DRAFT_SAVE_REPLAY_MISMATCH/);
+   refuse(()=>db.run(freshSQL({message:first.message_id})),/COMMS_EMAIL_DRAFT_SAVE_INVALID/);
+   refuse(()=>db.run(freshSQL({version})),/COMMS_EMAIL_DRAFT_SAVE_INVALID/);
+   refuse(()=>db.run(freshSQL({tenant:other})),/COMMS_EMAIL_/);
+   const newId='c0000000-0000-4000-8000-000000000002';
+   const denied=(setup,pattern)=>{
+    const rows=businessState();assert.throws(()=>db.run('BEGIN;'+setup+';'+freshSQL({id:newId})+';COMMIT;'),pattern);
+    assert.equal(businessState(),rows,'failed fresh save leaves no draft or receipt');checks++;
+   };
+   denied(`UPDATE public.channel_connectors SET mailbox_class='personal',mailbox_owner_user_id='${otherActor}' WHERE id='${connector}'`,/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/);
+   denied(`UPDATE public.channel_connectors SET active=false WHERE id='${connector}'`,/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/);
+   denied(`DELETE FROM public.clients WHERE id='${contact}'`,/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/);
+   denied(`UPDATE public.tenant_members SET status='suspended' WHERE user_id='${actor}'`,/COMMS_EMAIL_/);
+   denied(`CREATE FUNCTION public.exp03_refuse_fresh_receipt() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'fresh_receipt_failure';END$$;
+    CREATE TRIGGER exp03_refuse_fresh_receipt BEFORE INSERT ON public.paige_audit_log FOR EACH ROW EXECUTE FUNCTION public.exp03_refuse_fresh_receipt()`,/fresh_receipt_failure/);
+   const edit=JSON.parse(db.run(saveSQL(first.updated_at,{message:first.message_id,id:newId,text:'Newer generic draft words.'})).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(edit.message_id,first.message_id);checks++;
+   refuse(()=>db.run(freshSQL()),/COMMS_EMAIL_DRAFT_SOURCE_CHANGED/);
+   assert.equal(db.run(`SELECT body_text FROM public.messages WHERE id='${first.message_id}'`),'Newer generic draft words.');checks++;
+   const racedId='c0000000-0000-4000-8000-000000000003';
+   const blocker=await db.holdArchive(`SELECT pg_advisory_xact_lock(hashtextextended('${racedId}',32847))`,[],{manualRelease:true});
+   const tags=['fresh-save-one','fresh-save-two'];
+   const racers=tags.map(tag=>concurrentSQL(tag,freshSQL({id:racedId})));
+   try{await observeWait(tags);}finally{blocker.release();}
+   await blocker.completed;
+   const answers=await Promise.all(racers.map(r=>r.completed));
+   assert(answers.every(r=>r.code===0),'identical concurrent saves both settle without deadlock');checks++;
+   const results=answers.map(r=>JSON.parse(r.out.split(/\r?\n/).find(x=>x.startsWith('{'))));
+   assert.equal(results[0].message_id,results[1].message_id);assert.equal(results[0].receipt_id,results[1].receipt_id);
+   assert.equal(results.filter(r=>r.replayed===true).length,1);checks++;
+   assert.equal(db.run(`SELECT count(*) FROM public.paige_audit_log WHERE payload->>'operation_id'='${racedId}'`),'1');checks++;
+   const prepared=prepare({source:{message_id:results[0].message_id,updated_at:results[0].updated_at},op:'c0000000-0000-4000-8000-000000000004',command:{...command,subject:'Saved subject',body:'Saved unsent words.'},bodyHtml:'<p>Saved unsent words.</p>'});
+   assert.equal(prepared.message_id,results[0].message_id,'later original approval preparation adopts the SAME generic saved draft');checks++;
+   console.log(JSON.stringify({checks,scope:'original fresh email first save, same Messages and receipt, no provider or authenticated proof'}));
+  };
+  if(process.argv.includes('--fresh-entry')){await proveActionEntry();await proveFreshEntry();}
+  else if(process.argv.includes('--action-entry'))await proveActionEntry();else{
   const saved=JSON.parse(db.run(saveSQL()).split(/\r?\n/).find(x=>x.startsWith('{')));
   assert.equal(saved.outcome,'draft_saved');assert.equal(saved.message_id,draft);checks++;
   assert.equal(db.run(`SELECT status||':'||subject||':'||(meta?'comms_email_binding')::text||':'||(meta->>'keep') FROM public.messages WHERE id='${draft}'`),'draft:Saved subject:false:7');checks++;
@@ -548,6 +614,7 @@ $function$;
    for(const [sig,hash]of currentBodyPins){assert.equal(db.run(`SELECT md5(prosrc) FROM pg_proc WHERE oid=${quote(sig)}::regprocedure`),hash,'exact reviewed native body: '+sig);checks++;}
    if(process.argv.includes('--action-after-whole')){
     await proveActionEntry();
+    if(process.argv.includes('--fresh-after-whole'))await proveFreshEntry();
     // Historical140003 source assertions above remain. Current repository SQL
     // fixtures must now identify the actually installed200003 generation, with
     // exactly one identity rather than an old-or-new source allowance.

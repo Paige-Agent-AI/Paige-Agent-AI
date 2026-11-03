@@ -18,6 +18,37 @@ const preview = { kind: 'email', to_name: 'Dana Reyes', to_address: 'dana@exampl
 const savedSource={message_id:'55555555-5555-4555-8555-555555555555',updated_at:'2026-10-30T16:00:00.123456Z'};
 const sourceContext={...context,userId:'88888888-8888-4888-8888-888888888888',turn:{...turn,thread_id:'99999999-9999-4999-8999-999999999999'},current:()=>true};
 
+it('saves a fresh unsent email through the original door without inventing an existing source or approval',async()=>{
+  const op=await commsEmailOperationId(tenant,sourceContext.userId,{...command,connector_id:null},sourceContext.turn,undefined,undefined,{save_draft:true});
+  const h=harness([],{ok:true,outcome:'draft_saved',operation_id:op,draft_source:savedSource,receipt_id:'77777777-7777-4777-8777-777777777777'});
+  const r=await dispatchCommsEmailChat({...sourceContext,args:{...args,save_draft:true}},h.deps);
+  expect(h.calls).toHaveLength(1);
+  expect(h.calls[0].options.body).toMatchObject({save_draft:true,operation_id:op});
+  expect(h.calls[0].options.body).not.toHaveProperty('draft_source');
+  expect(h.calls[0].options.body).not.toHaveProperty('approval_id');
+  expect(h.calls[0].options.body).not.toHaveProperty('approved_fingerprint');
+  expect(r.content).toMatchObject({success:true,outcome:'draft_saved',draft_source:savedSource,delivery_confirmed:false});
+  expect(r.spent).toBeUndefined();
+});
+
+it('a fresh save requires a stable current actor and turn and cannot borrow an approval',async()=>{
+  for(const ctx of [{...sourceContext,current:undefined},{...sourceContext,current:()=>false},
+    {...sourceContext,userId:'actor'},{...sourceContext,turn:{...turn,thread_id:null}},
+    {...sourceContext,approved:new Set([fingerprint])}]){
+    const h=harness();
+    await dispatchCommsEmailChat({...ctx,args:{...args,save_draft:true}},h.deps);
+    expect(h.calls).toEqual([]);
+  }
+});
+
+it('an explicitly empty file list on a new unsent email is not an invented source',async()=>{
+  const op=await commsEmailOperationId(tenant,sourceContext.userId,{...command,connector_id:null},sourceContext.turn,undefined,undefined,{files:[],save_draft:true});
+  const h=harness([],{ok:true,outcome:'draft_saved',operation_id:op,draft_source:savedSource,receipt_id:'77777777-7777-4777-8777-777777777777'});
+  const r=await dispatchCommsEmailChat({...sourceContext,args:{...args,save_draft:true,attachments:[]}},h.deps);
+  expect(r.content.success).toBe(true);
+  expect(h.calls[0].options.body).toMatchObject({save_draft:true,attachments:[]});
+});
+
 it('the same domain dispatcher forwards an exact saved source and explicit file selection to the original door',async()=>{
   const h=harness();
   const r=await dispatchCommsEmailChat({...sourceContext,args:{...args,draft_source:savedSource,attachments:[]}},h.deps);

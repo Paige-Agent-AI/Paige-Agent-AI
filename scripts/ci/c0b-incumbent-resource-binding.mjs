@@ -1576,7 +1576,10 @@ const ANCESTRY_SOURCES = {
  // uses the original email door; stored pins retain their source/files. Saved-source
  // approvals require UUID actor/thread + sticky current fence (counterexample retained).
  // Only this adapter AST pin changes; Root/checker/other pins and action risk stay intact.
- "supabase/functions/_shared/comms-email/chat.ts": "b32b0597a818c5cb0ca3daea10efc9d8e313c7cc1c352fc282aa22c09e94bb83",
+ // EXP03 fresh unsent Save, reviewed68921bff6: incumbent b32b0597 independently
+ // reproduced from actualmain624530f3b with the original printer. Renew this ONE
+ // reviewed adapter pin; other source pins, all29 dispatches and validators remain exact.
+ "supabase/functions/_shared/comms-email/chat.ts": "54aad6f67e9e1c74dd4e807cde56692697ba436ae312bc32b0392fcdf805f56f",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {
  const findings=[],tools=new Map();

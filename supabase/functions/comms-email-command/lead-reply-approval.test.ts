@@ -195,11 +195,14 @@ test("saving an unsent edit changes only its original draft, without an approval
  const replay=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP,attachments:[],save_draft:true},{body:"An edited unsent reply."});
  assert.equal(replay.body.outcome,"draft_saved",JSON.stringify(replay.body));assert.equal(replay.body.replayed,true);assertNoSend(w);
 });
-test("save cannot be used without an original source or with an approval-redemption fingerprint",async()=>{
- for(const request of [{save_draft:true},{save_draft:true,draft_source:DRAFT_SOURCE,approved_fingerprint:"a".repeat(16)}]){
+test("save refuses a malformed source, borrowed approval or approval-redemption fingerprint",async()=>{
+ for(const request of [{save_draft:true,draft_source:null},{save_draft:true,draft_source:DRAFT_SOURCE,approved_fingerprint:"a".repeat(16)}]){
   const w=withOriginalDraft();const result=await call(w,request);assert.equal(result.status,400);assertNoSend(w);
   assert.ok(!rpcNames(w).includes("save_comms_email_draft"));
  }
+ const w=withOriginalDraft();const result=await call(w,{save_draft:true,approval_id:AP});
+ assert.equal(result.status,422);assert.equal(result.body.code,"COMMS_EMAIL_DRAFT_SOURCE_INVALID");
+ assertNoSend(w);assert.ok(!rpcNames(w).includes("save_comms_email_draft"));
 });
 test("an action-owned saved reply uses its original verified approval and original message",async()=>{
  const w=withOriginalDraft({action_id:ACT});const p=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP});

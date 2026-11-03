@@ -16,6 +16,9 @@ import { resolveCommsEmailParties, commsEmailReadinessOutcome, emailProvidersFor
 import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal } from "../../supabase/functions/comms-email-command/lead-reply-approval";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../../supabase/functions/_shared/comms-email/adapter";
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../../supabase/functions/_shared/comms-provider-boundary";
+import {saveOriginalEmailDraft} from "../../supabase/functions/comms-email-command/save-draft";
+import {parseCommsEmailDraftSource,parseCommsEmailActionDraftSource,commsEmailDraftSourcesEqual} from "../../supabase/functions/_shared/comms-email/draft-source";
+import {readCommsEmailDraftProposal} from "../../supabase/functions/_shared/comms-email/draft-proposal";
 
 const TENANT = "10000000-0000-4000-8000-000000000001";
 const FOREIGN = "10000000-0000-4000-8000-000000000002";
@@ -70,6 +73,7 @@ type Setup = {
   actor?: string; activeTenant?: string | null; readResultFails?: boolean; readResultFailsFor?: string; finalizeFails?: boolean;
   providerExecution?: unknown; providerBoundaryError?: boolean;
   cancelFails?: boolean; messagesFail?: boolean;
+  draftSaveResult?: unknown;
   // The private bucket the composer uploads into: object path -> bytes + stored type. `storageFails`
   // makes every read answer an error.
   objects?: Record<string, { bytes: Uint8Array; type: string }>; storageFails?: boolean; bucketTypes?: readonly string[] | null;
@@ -157,6 +161,7 @@ function setup(options: Setup = {}) {
     from: builder,
     rpc: async (name: string, args: Row) => {
       calls.push({ name, args });
+      if (name === "save_comms_email_draft") return {data:options.draftSaveResult??null,error:null};
       if (name === "comms_provider_execution_allowed") {
         if (options.providerBoundaryError) return { data: null, error: { code: "PGRST000" } };
         const ordinaryScope = args._tenant_id === TENANT && [ACTOR, ACTOR_2].includes(String(args._actor_user_id));
@@ -259,6 +264,7 @@ function setup(options: Setup = {}) {
     createClient: (_url: string, key: string) => key === "SUPABASE_ANON_KEY" ? caller : admin,
     fetch: fetchStub,
     commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
+    saveOriginalEmailDraft,parseCommsEmailDraftSource,parseCommsEmailActionDraftSource,commsEmailDraftSourcesEqual,readCommsEmailDraftProposal,
     confirmFingerprint, decideDeclaredCapability, COMMS_EMAIL_SEND_CAPABILITY,
     COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest,
     parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS,
@@ -289,6 +295,18 @@ const BUCKET_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "ima
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
 
 describe("comms-email-command: authority before anything", () => {
+  it("saves a new generic draft without provider execution, approval proposal or send preparation",async()=>{
+    const draft="60000000-0000-4000-8000-000000000001",receipt="70000000-0000-4000-8000-000000000001";
+    const h=setup({providerExecution:false,draftSaveResult:{ok:true,outcome:"draft_saved",message_id:draft,updated_at:"2026-11-02T20:00:00.123456Z",receipt_id:receipt}});
+    const r=await h.request({save_draft:true,attachments:[]});
+    expect(r).toMatchObject({status:200,body:{ok:true,outcome:"draft_saved",draft_source:{message_id:draft},receipt_id:receipt}});
+    expect(h.named("save_comms_email_draft")).toHaveLength(1);
+    expect(h.named("save_comms_email_draft")[0].args).toMatchObject({_message_id:null,_expected_updated_at:null,_approval:null});
+    expect(h.named("comms_provider_execution_allowed")).toEqual([]);
+    expect(h.named("prepare_comms_email_send")).toEqual([]);
+    expect(h.named("insert:paige_pending_confirmations")).toEqual([]);
+    expect(h.sends).toEqual([]);
+  });
   it("only proposes a personal sender for its granting actor and refuses drift on approval", async () => {
     const sender = { id: SENDER, tenant_id: TENANT, channel_type: "email", provider: "gmail", from_address: "owner@business.test", active: true, status: "active", mailbox_class: "personal", mailbox_owner_user_id: ACTOR };
     const own = setup({ connectors: [sender] });

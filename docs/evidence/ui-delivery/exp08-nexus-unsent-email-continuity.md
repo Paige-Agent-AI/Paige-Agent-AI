@@ -36,7 +36,7 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: browser drive owed.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: browser drive owed.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: browser drive owed.
 
-INTERNAL_BUILD_IDENTITY: source=70152b873b73dcdb2edfa65e1303ead7fca6e969; deployment=none; environment=local; migrations=APPLIED(20271130020008,20271130020009); edge=PROOF_OWED(repaired paige-ai-chat application deployment/source readback not run); evidence=docs/evidence/ui-delivery/exp08-nexus-unsent-email-continuity.md
+INTERNAL_BUILD_IDENTITY: source=70152b873b73dcdb2edfa65e1303ead7fca6e969; deployment=none; environment=local; migrations=APPLIED(20271130020008_exp08_nexus_unsent_email_handoff,20271130020009_exp08_nexus_email_lock_order_forward); edge=PROOF_OWED(repaired paige-ai-chat application deployment/source readback not run); evidence=docs/evidence/ui-delivery/exp08-nexus-unsent-email-continuity.md
 RELEASE_CHANNEL: development: repaired application unmerged; native prerequisite separately installed in production.
 RELEASE_CLASSIFICATION: internal-only: unsent Hub and original Messages integration candidate under technical review, with no customer publication.
 CUSTOMER_RELEASE_IDENTITY: none: not released or owner accepted.

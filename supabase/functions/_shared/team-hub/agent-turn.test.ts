@@ -5,6 +5,8 @@
 // real request the definer or the model seam would receive. All people, channels and text are
 // fictional. EVIDENCE CLASS: automated unit tests of the module; the definers themselves are proved
 // in supabase/tests/exp08_team_hub_agents_a1.sql, and no authenticated drive is claimed here.
+// Keep O01's regression in this original explicitly enumerated hosted suite.
+import "./zion-responsibility-context.test.ts";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";

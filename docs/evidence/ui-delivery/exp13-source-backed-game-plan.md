@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: Original immutable Mission briefs may retain source v
 FLOW_PROTOTYPE: UNVERIFIED: No rendered candidate prototype/browser drive yet. November1 safe-release ordering does not waive functional, privacy, authority, review or CI gates.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An authorized existing SOLO actor reviews a source-backed plan, edits its proposed steps, saves and reopens the same original record.
 VISUAL_DIRECTION: PASS: Extend the existing game-plan world; one original drawer, no menu or competing workspace. Owned text uses14px/body,13px/labels; source text wraps;36px buttons and44px coarse-pointer targets.
-AUTOMATED_EVIDENCE: PASS: Bounded local suites54PASS, actual SQL structural29PASS and all33original native assertions PASS on genuine managed Preview with synthetic rollback fixtures. Required final-head full CI and real two-session race proof remain owed; these are not authenticated customer proof.
+AUTOMATED_EVIDENCE: PASS: Current six bounded source/UI suites123PASS after meaningful failing-first model-contract and Knowledge continuation controls. Original exact4cc hosted full-schema passes original34/new33 and actual two-session owner-revocation race. New-head full CI remains owed; these are not authenticated customer proof.
 STATIC_EVIDENCE: PASS: Scoped ESLint0; whole app type ratchet baseline10/current6/0NEW; app-mode ES2020 module compilerPASS; actual production buildPASS after current-main composition and review repairs. No baseline changed. Full native carrier proof remains owed.
 RENDERED_EVIDENCE: UNVERIFIED: New plan component has not been rendered in a managed Preview or live authenticated account.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Actual saved plan/receipt/reload/reopen and original Task creation are unverified. React ports prove only bounded UI forwarding and response retirement.
@@ -28,7 +28,7 @@ MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: E02 named Mission types/normalization/forward/readback/PlanInMotion window only; original Knowledge validator unchanged. CRM writer/admission, Source trusted-writer adapter, role expansion and new effect authority are not implemented here.
 
 INTERNAL_BUILD_IDENTITY: Development base normally fast-forwarded to current f29dbfeeaa82f861fc785b85b042a999a4e9d0ac with all incoming leaves preserved; candidate identity is its subsequent immutable Git/PR head, not that base; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(production30020013 not installed with managedPreview carrier verified once); edge=PROOF_OWED(business-mission-action dependency bundle source readback); evidence=this record plus original ANT21/ANT147/ANT161.
-RELEASE_CHANNEL: development: unpublished candidate; no cohort activation or production installation.
+RELEASE_CHANNEL: development: original candidate PR3236; no cohort activation or production installation.
 RELEASE_CLASSIFICATION: internal-only: incomplete slice of the SAME joined outcome, not another customer outcome.
 CUSTOMER_RELEASE_IDENTITY: none: whole outcome incomplete and no customer-publication approval.
 RELEASE_NOTE_REQUIRED: no: internal candidate; no customer announcement.
@@ -88,3 +88,46 @@ SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: candidate not rendered.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: candidate not rendered.
 
 No supporting business-planning algorithm maturity is established by these data checks: NO VERIFIED SUPPORTING ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED. Original orchestration/algorithm records remain separate; no maturity is promoted.
+
+## November3 — authorized original model/source connection
+
+The owner directly authorizes the narrow remaining Mission and Task source window,
+with this same lead, independent non-author review, normal release gates and ONE
+whole outcome followed by STOP. Original ANT147/d347 and ANT161/d71 carry the
+before-edit scope. This clears source custody only; no role/provider authority changes.
+
+Current main d5f5190 was normally composed, preserving all incoming Planning,
+Task-reference, activity and commercial work. Preview-applied30020013 remains
+byte-identical. Original4cc engineering checks finished genuinely green, but those
+greens do not belong to this later source head. E08's applied lower20008 plus
+guarded20009 must release/readback first; no include-all/reset/history rewrite.
+
+The original Mission tools now describe the SAME optional closed source/step
+contract. Selected/thread contexts carry only the original caller-native permitted
+draft plus exact immutable brief/hash; unavailable/foreign/malformed data is
+withheld. Above16000 serialized units the draft text is omitted, labeled too large,
+and existing omission/preservation behavior prevents a truncated rewrite. Source
+instructions remain DATA, never fact/Memory/agreement/Task approval.
+
+Actual producer gap: the existing Knowledge model read returned only an initial
+text prefix and no canonical source hash/reference. It now uses the SAME caller
+RPC and original text SHA256 primitive, returning the existing source-reference
+DTO for full canonical text plus bounded UTF16 range/continuation. Later ranges
+require the SAME expected version/hash; changed sources refuse before body return.
+Metadata listing, document pagination, update/delete, native visibility and all
+authority remain original. Surrogate boundaries are retained. Full canonical-text
+reading is distinct from original-file extraction/OCR/index completeness and facts.
+
+Failing-first controls: original Mission31PASS/4FAIL becomes35PASS; original
+Knowledge39PASS/3FAIL becomes42PASS. All six current original suites123PASS.
+The earlier four-path snapshot had own independent non-author source APPROVE,
+58PASS, zero scoped lint, Spine245PASS, production buildPASS and type ratchet
+baseline10/current6/zero new; genuine incumbent273controlsPASS. The expanded
+Knowledge producer requires fresh review/static checks/whole exact-head CI.
+No Task admission, customer action/provider effect or joined readiness is claimed.
+
+Actual development-only original-component rendering earlier exercised390px in
+both themes and1280px dark: no document horizontal overflow, editable step title,
+Escape close and return to original card. Body14px/legacy inputs13px observed.
+This does not prove full-shell, assistive, reduced-motion or customer persistence.
+Private fixture transport refuses backend calls; owning listener is stopped.

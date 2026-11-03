@@ -27,13 +27,13 @@ SOLO_1024X768_PAIGE_OPEN: PASS: e2-o13-local-1024-open.png, inspection and draft
 SOLO_900X1000_PAIGE_CLOSED: PASS: e2-o13-local-900-closed.png, no page/pane horizontal overflow.
 SOLO_900X1000_PAIGE_OPEN: PASS: e2-o13-local-900-open.png, same inspection/source and retained synthetic draft; subsequent repaired overlay return confirmed separately.
 UNVERIFIED: O13 original result/receipt locator and exact retrieval depend on Coordinator contract928fb46c; authenticated role/tenant/result/reload proof, native zoom, reduced-motion preference, non-author review, exact-head CI and release remain unclaimed.
-INTERNAL_BUILD_IDENTITY: UNVERIFIED: source baseline71fdf5f427ca633c3ba7558aa03fbb16fe6d977f fast-forward composed with maina4f3f6195058cb9fcee2a03862f48a8ddbbeb809; all16incoming peer leaves are outside this increment. Exact release identity is not yet earned.
-RELEASE_CHANNEL: development
-RELEASE_CLASSIFICATION: internal-only
-CUSTOMER_RELEASE_IDENTITY: NOT_ASSIGNED
+INTERNAL_BUILD_IDENTITY: 3e3ec7d460006cc744ffed48d0bdfac6799b67eb; identity-role=supporting local source candidate; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e2-o13-activity-history.md
+RELEASE_CHANNEL: development: source candidate only, no production release or authenticated O13 claim.
+RELEASE_CLASSIFICATION: internal-only: original recorded-event inspection increment within the incomplete O13 outcome.
+CUSTOMER_RELEASE_IDENTITY: none: no customer release identity or announcement is earned by this increment.
 RELEASE_NOTE_REQUIRED: NO: implementation increment within original O13, no customer release announcement or readiness promotion.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED
-RELEASE_RECOVERY: No native or provider change. Revert the owning Executive consumer increment to recover its previous four-row preview; original Rail records and domain writers are unchanged.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: original result/receipt linkage, exact-event reopen, hosted checks, release and authenticated O13 useful result are unverified; controlled inspection is not full outcome completion.
+RELEASE_RECOVERY: position=revert the owning Executive consumer increment to its previous four-row preview without changing native or provider state; reference=docs/delivery/e2-customer-experience-integration-matrix.md
 OWNER_INTENT: Finish O13 actor-attributed accountable history, useful original result/receipt inspection and return/recovery. This inspection is an implementation increment within that single outcome, not completion.
 MUST_NOT_HAPPEN: No invented completion, timestamps, actor, status, causal improvement, receipt or domain locator. No treating a Rail UUID as a Task UUID, exposing raw payload, creating another history store or performing an action on inspection.
 MUST_PRESERVE: Original caller-scoped get_solo_rail_activity, existing department writers and semantic navigation, business review/targets/Finance, PAIGE composer/transcript/scroll/Live and all original approvals/activation restrictions.

@@ -479,6 +479,27 @@ const AUTH_CHOICES: ReadonlyArray<{ value: AuthenticationChoice; label: string }
 ];
 
 /**
+ * The ONE translation of a catalogue row's coarse facts into the form's auth vocabulary —
+ * the create door (onPick) and the recognized-row re-key door both call it, so the two can
+ * never drift when the next curated provider is added (review finding: duplicated logic).
+ */
+function catalogueAuthChoice(item: CatItem): AuthenticationChoice | undefined {
+  // The generic entry stays unprefilled by its own documented contract ("nothing
+  // prefilled, since it names no vendor") — its historical auth field is dead data.
+  if (item.manual) return undefined;
+  if (item.pk && item.req?.length) return "headers";
+  if (item.auth === "header") return "headers";
+  return item.auth;
+}
+/** The catalogue row a saved connection is recognized as (by provider key or server host). */
+function catalogueMatchForRow(c: { providerKey: string | null; serverUrlHost: string | null }): CatItem | null {
+  return CATALOGUE.find(p => !p.manual && (
+    (p.pk && providerToken(p.pk) === providerToken(c.providerKey)) ||
+    (addressHost(p.url) !== "" && addressHost(p.url) === addressHost(`https://${c.serverUrlHost ?? ""}`))
+  )) ?? null;
+}
+
+/**
  * The Slack connect preset the FIRST-CLASS Integrations tile opens — the same contract the
  * catalogue drawer's Slack tile routes to (one preset, two doors; §18 one home). Provider
  * facts: Slack's hosted MCP at mcp.slack.com/mcp, Streamable HTTP, NO Dynamic Client
@@ -512,19 +533,25 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   // HighLevel row; a vendor with one proven contract never re-offers the other three modes
   // on either door. A row the catalogue does NOT recognize keeps every mode reachable on
   // re-key: its saved kind is the only proven fact, and a re-key may legitimately change it.
-  const recognizedPreset = !tool ? null : CATALOGUE.find(p => !p.manual && (
-    (p.pk && providerToken(p.pk) === providerToken(tool.providerKey)) ||
-    (addressHost(p.url) !== "" && addressHost(p.url) === addressHost(`https://${tool.serverUrlHost ?? ""}`))
-  ));
+  const recognizedPreset = !tool ? null : catalogueMatchForRow(tool);
   const authContract = !tool
     ? presetAuthContract(preset)
     : recognizedPreset ? presetAuthContract({
         providerKey: recognizedPreset.pk,
-        auth: recognizedPreset.req?.length ? "headers"
-          : recognizedPreset.auth === "header" ? "headers"
-          : recognizedPreset.auth,
+        auth: catalogueAuthChoice(recognizedPreset),
       })
     : null;
+  /**
+   * The row this CREATE will finish instead of duplicating, if any (recomputed per render so
+   * the disclosure below is live). Also carries the provider's required headers when the
+   * held row sits at a curated provider's host — the manual door must enforce the same
+   * contract the catalogue door enforces (review finding: locationId was create-only).
+   */
+  const heldRow = tool ? null
+    : connectionForProvider(gw.tools, { providerKey: preset.providerKey ?? null, url: (url.trim() || preset.url) ?? null });
+  const heldRecognized = heldRow ? catalogueMatchForRow(heldRow) : null;
+  const requiredHeaders = preset.requiredHeaders
+    ?? (recognizedPreset?.req ?? heldRecognized?.req ?? undefined);
   // New connections require an explicit choice, even when opened from a named preset; a
   // locked contract's single mode is that choice, already made by the provider's contract.
   const initialAuth: AuthenticationChoice | null = authContract
@@ -609,9 +636,9 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
       extra[name] = header.value;
     }
     if (headers.length > 16 || new TextEncoder().encode(JSON.stringify(extra)).length > 16384) errors.headers = "Use at most 16 headers and 16 KB of header data.";
-    if (preset.requiredHeaders?.length) {
+    if (requiredHeaders?.length) {
       const have = new Set(Object.keys(extra).map((k) => k.toLowerCase()));
-      const missing = preset.requiredHeaders.filter((h) => !have.has(h.toLowerCase()));
+      const missing = requiredHeaders.filter((h) => !have.has(h.toLowerCase()));
       if (missing.length) errors.headers = `${label || "This provider"} requires the ${missing.join(", ")} header${missing.length > 1 ? "s" : ""} on the connection.`;
     }
     setValidation(errors); setMessage(null);
@@ -633,7 +660,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
       if (!tool) {
         const held = connectionForProvider(gw.tools, { providerKey: preset.providerKey ?? null, url: url.trim() });
         if (held && usable(held)) {
-          setMessage(`This workspace already has a working ${connectionDisplayName(held)} connection for this server. Close this form and open that connection from your list to change it — a second connection to the same server is not added.`);
+          setMessage(`This workspace already has a working ${connectionDisplayName(held)} connection. Close this form and open that connection from your list to change it — a second connection for the same tool is not added.`);
           return;
         }
         finishExisting = held;
@@ -672,7 +699,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   };
 
   return <div ref={formRef}>
-    {tool && !ack && <p className="ig-gw-warn">Replacing configuration clears this tool’s approvals. Enter the full address and every credential/header you want retained, then check it and approve its tools again.</p>}
+    {(tool || (heldRow && !usable(heldRow))) && !ack && <p className="ig-gw-warn">Replacing configuration clears this tool’s approvals. Enter the full address and every credential/header you want retained, then check it and approve its tools again.</p>}
     {message && <p className="ig-error" role="alert">{message}</p>}
     {discarding && <DiscardPrompt label="Discard configuration" onDiscard={onCancel} onKeep={() => setDiscarding(false)} />}
     {ack ? <>
@@ -681,7 +708,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
         <strong>Saved — configuration confirmed.</strong>
         <p>Address on file · kept private. {confirmed.credentialsConfigured ? "Credentials on file · encrypted." : "No credential on file."}</p>
         <p>{confirmed.customHeaderCount ?? 0} additional headers on file. Saving does not check the server or grant tool approval.</p>
-        {finishedExisting && <p>This finished your existing “{connectionDisplayName(finishedExisting)}” connection instead of adding a second one for the same server.</p>}
+        {finishedExisting && <p>This finished your existing “{connectionDisplayName(finishedExisting)}” connection instead of adding a second one for the same tool.{finishedExisting.label && label.trim() && label.trim() !== finishedExisting.label ? " Its existing name was kept." : ""}</p>}
       </> : <p>{busy ? "Confirming saved configuration…" : "The server acknowledged the write; its current configuration still needs confirmation."}</p>}
       </div>
       <div className="ig-actions ig-gw-actions">
@@ -1650,11 +1677,14 @@ function ScopedIntegrationsGatewaySection({
       {gw.tools.map((c) => {
         const noOutboundAddress = c.addressConfigured === false;
         // EXP10 (owner finding 2026-11-04): a row that was saved but never finished is the
-        // common state a non-technical owner sees after a half-done connect. Name the
-        // recovery, not the protocol: "Setup not finished" (the surface's own vocabulary)
-        // instead of the twin riddles "not usable yet · Turned off".
+        // state a non-technical owner sees after a half-done connect — name the recovery in
+        // the surface's own vocabulary. Scoped to GENUINELY unfinished rows (unconfigured,
+        // or disabled before it ever worked): an error, needs-attention or deliberately
+        // turned-off row keeps its true state and tone from statusChip — "setup not
+        // finished" would be a lie about a connection whose setup WAS finished.
+        const neverFinished = c.status === "unconfigured" || (!c.enabled && c.status !== "connected");
         const chip = noOutboundAddress ? { tone: "neutral", label: "View incoming setup" }
-          : !usable(c) ? { tone: "neutral", label: "Setup not finished" }
+          : neverFinished ? { tone: "neutral", label: "Setup not finished" }
           : statusChip(c);
         const title = connectionDisplayName(c);
         return (

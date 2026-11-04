@@ -609,7 +609,19 @@ describe("Truth boundary", () => {
     expect(host.textContent).toContain("Not checked yet");
     expect(host.textContent).not.toMatch(/\bReady\b/);
     expect(host.textContent).not.toMatch(/Checking…/);
+  });
+
+  it("a never-finished row reads 'Setup not finished'; a broken one keeps its true state", async () => {
+    // EXP10 (owner finding 2026-11-04 + review): the owner's half-done rows (saved with no
+    // auth) must name the recovery; but a row whose setup WAS finished and then failed must
+    // never be relabeled "Setup not finished" — that erases the error it is telling him.
+    world({ rows: [
+      row({ connection_id: "conn-dead", label: "Slack", provider_key: "slack", auth_kind: "none", enabled: false, status: "unconfigured", health: "unknown" }),
+      row({ connection_id: "conn-broken", label: "Scheduling tool", status: "error", health: "unknown" }),
+    ] });
+    const { host } = await render();
     expect(host.textContent).toContain("Setup not finished");
+    expect(host.textContent).toContain("Couldn’t reach it");
   });
 
   it("keeps a failed read distinct from an account with no tools", async () => {
@@ -795,6 +807,30 @@ describe("Adding a tool", () => {
     expect(edgeCalls("create")).toHaveLength(0);
     expect(rpc.mock.calls.some(c => c[0] === "set_mcp_connection_endpoint")).toBe(false);
     expect(dialog(host)?.textContent).toMatch(/already has a working Slack connection/i);
+  });
+
+  it("locks the RE-KEY door too: the owner's dead HighLevel row collapses to its one contract", async () => {
+    // Review finding / the owner's literal screenshot: the four-way OAuth/Token/Token+headers/
+    // None wall he met was the re-key form of his unfinished generic-remote GoHighLevel row
+    // (host services.leadconnectorhq.com, auth none). Recognition is by provider key OR
+    // host, so this generic row must lock to "Private Integration Token" exactly like the
+    // catalogue door — and the required locationId header is enforced on this door as well.
+    world({ rows: [row({ connection_id: "conn-ghl", label: "GoHighLevel", provider_key: "generic-remote",
+      auth_kind: "none", enabled: true, status: "pending_verification", health: "unknown",
+      server_url_host: "services.leadconnectorhq.com" })] });
+    const { host } = await render();
+    await openCatalogue(host);
+    await click(tile(host, "HighLevel · LeadConnector")); // held by host → opens the connection, not an add
+    await click(byText(host, "Re-key"));
+    const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
+    expect(authButtons.map(b => b.textContent)).toEqual(["Private Integration Token"]);
+    expect(authButtons[0].getAttribute("aria-pressed")).toBe("true");
+    await type(fieldFor(host, "Full address"), "https://services.leadconnectorhq.com/mcp/");
+    await type(fieldFor(host, "Token"), "pit_loc_abcdefghijklmnopqrstuvwxyz012345");
+    await click(byText(host, "Save configuration"));
+    // locationId is required on THIS door too — the save refuses without it.
+    expect(dialog(host)?.textContent).toMatch(/requires the locationId header/i);
+    expect(rpc.mock.calls.some(c => c[0] === "set_mcp_connection_endpoint")).toBe(false);
   });
 
   it("finds HighLevel under the LeadConnector name the provider's own API uses", async () => {

@@ -21,8 +21,11 @@ async function sha256(value: string): Promise<string> {
 
 function safeBase(): string | null {
   try {
-    const configured = Deno.env.get("PUBLIC_SITE_URL");
-    if (!configured) return null;
+    // Canonical-app-url contract (mcp-oauth-callback, tenant-signup): PUBLIC_SITE_URL is
+    // optional with the platform's canonical origin as the fallback. The hard-required read
+    // was the whole of the 2026-11-04 connect-door outage; the redirect below stays
+    // fixed-origin and the return path stays the server-stored single-use RETURN_PATH.
+    const configured = Deno.env.get("PUBLIC_SITE_URL") ?? "https://paigeagent.ai";
     const url = new URL(configured);
     return url.protocol === "https:" && !url.username && !url.password && !url.search && !url.hash ? url.origin : null;
   } catch {

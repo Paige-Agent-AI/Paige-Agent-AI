@@ -63,11 +63,15 @@ describe("Social authorization callback", () => {
     expect(hook).toContain('params.get("social_result")');
   });
 
-  it("fails closed without an explicitly configured customer return origin", () => {
-    expect(endpoint).toContain('const configured = Deno.env.get("PUBLIC_SITE_URL")');
-    expect(callback).toContain('const configured = Deno.env.get("PUBLIC_SITE_URL")');
-    expect(endpoint).not.toContain('?? "https://paigeagent.ai"');
-    expect(callback).not.toContain('?? "https://paigeagent.ai"');
+  it("returns to the canonical app origin when PUBLIC_SITE_URL is unset, and never to a malformed one", () => {
+    // 2026-11-04 outage root cause: these were the platform's only hard-required PUBLIC_SITE_URL
+    // reads. The env was never provisioned (nothing else requires it), so every Connect click was
+    // refused while the provider key was present. The canonical-app-url fallback matches
+    // mcp-oauth-callback (the same browser-redirect job) — and origin validation is unchanged.
+    expect(endpoint).toContain('const configured = Deno.env.get("PUBLIC_SITE_URL") ?? "https://paigeagent.ai"');
+    expect(callback).toContain('const configured = Deno.env.get("PUBLIC_SITE_URL") ?? "https://paigeagent.ai"');
+    expect(endpoint).toContain('url.protocol !== "https:" || url.username || url.password || url.search || url.hash');
+    expect(callback).toContain('url.protocol === "https:" && !url.username && !url.password && !url.search && !url.hash');
   });
 
   it("does not require a separately managed profile secret when the server already has its service secret", () => {

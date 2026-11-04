@@ -23,8 +23,12 @@ function text(value: unknown, max: number): string | null {
 }
 
 function safePublicBase(): string | null {
-  const configured = Deno.env.get("PUBLIC_SITE_URL");
-  if (!configured) return null;
+  // Canonical-app-url contract (mcp-oauth-callback, tenant-signup, send-transactional-email,
+  // public-booking): PUBLIC_SITE_URL is optional with the platform's canonical origin as the
+  // fallback. This was the platform's only hard-required read — PUBLIC_SITE_URL was never
+  // provisioned because nothing else needs it, which silently closed the whole connect door
+  // (2026-11-04: every click refused 503 while the provider key was present and toast-confirmed).
+  const configured = Deno.env.get("PUBLIC_SITE_URL") ?? "https://paigeagent.ai";
   try {
     const url = new URL(configured);
     if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash) return null;

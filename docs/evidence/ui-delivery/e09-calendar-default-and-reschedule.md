@@ -34,12 +34,12 @@ MUST_PRESERVE: Week and Agenda, original Work responsibility slot, canonical boo
 ACCEPTANCE_CRITERIA: Original customer booking appears to original owner; a permitted move updates that same appointment; both reopen to its accurate state; normal cancellation remains visible. Calendar first opens Month, a selected default reopens correctly, temporary view changes do not overwrite it.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: Customer booking admission and original conditional native update tested; existing provider execution gate retained. Auth/Knowledge/Chat/Live/Work writers and calendar policy configuration are unaffected.
-INTERNAL_BUILD_IDENTITY: development branch fix/e09-session-default-hours-20261104; deployment=not deployed; environment=development; migrations=NOT_APPLICABLE; edge=not deployed; evidence=this record and exact-head PR checks.
+INTERNAL_BUILD_IDENTITY: 913178902537da524bcbc8917020acd20eb38e6d; deployment=local source only; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original deployment workflow and exact source readback); evidence=docs/evidence/ui-delivery/e09-calendar-default-and-reschedule.md and original ANT-163 Calendar checkpoint. This is the exact product implementation; later evidence-only commits do not change it.
 RELEASE_CHANNEL: development: ordinary reviewed prelaunch production release intended; no staged eligibility or activation change.
-RELEASE_CLASSIFICATION: Internal Calendar reliability repair and owner-requested presentation preference.
+RELEASE_CLASSIFICATION: internal-only: Calendar reliability repair and owner-requested presentation preference during prelaunch.
 CUSTOMER_RELEASE_IDENTITY: none: no new public version or announcement requested.
 RELEASE_NOTE_REQUIRED: no: bounded prelaunch repair reported to owner and original coordination records.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source implementation; PROOF OWED deployment and authenticated move/default persistence. No full Experience acceptance claim.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source implementation tested; deployment and authenticated move/default persistence remain PROOF OWED. No full Experience acceptance claim.
 RELEASE_RECOVERY: position=normal forward fix or revert the bounded PR; reference=original ANT-163 selected Calendar outcome and actual production record reconciliation before retry.
 
 ## Bounded flow and original contracts

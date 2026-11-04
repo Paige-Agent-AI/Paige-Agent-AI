@@ -88,7 +88,7 @@ const CATALOGUE: ReadonlyArray<CatItem> = [
   { n: "Instagram · Facebook · LinkedIn · TikTok · YouTube", c: "Social", m: "zapier", g: "◎", d: "No official direct path — post through Buffer, Metricool or Hootsuite.", legacy: "social" },
   { n: "WhatsApp Business", c: "Social", m: "zapier", g: "W", d: "Business Tools MCP announced; not verified yet. Bridge via Zapier." },
   // CRM & Sales
-  { n: "HighLevel · LeadConnector", c: "CRM & Sales", m: "connect", g: "HL", d: "Contacts, conversations (SMS/email), pipelines, calendars, invoices. Connect with a Private Integration token (Settings → Private Integrations) plus your locationId header.", net: "A location token stays inside one sub-account; a company (agency) token can reach every location under the agency. Connect the narrowest token that does the job — Paige reads and acts only inside the location you point her at.", pop: true, r: 1, url: "https://services.leadconnectorhq.com/mcp/", pk: "gohighlevel", req: ["locationId"] },
+  { n: "HighLevel · LeadConnector", c: "CRM & Sales", m: "connect", g: "HL", d: "Contacts, conversations (SMS/email), pipelines, calendars, invoices. Connect with a Private Integration token (Settings → Private Integrations) plus your locationId header.", net: "A location token stays inside one sub-account; a company (agency) token can reach every location under the agency. Connect the narrowest token that does the job — Paige reads and acts only inside the location you point her at.", pop: true, r: 1, url: "https://services.leadconnectorhq.com/mcp/", pk: "gohighlevel", auth: "header", req: ["locationId"] },
   { n: "HubSpot", c: "CRM & Sales", m: "zapier", g: "HS", d: "CRM records, activities, pipelines. No direct path for Paige yet — bridge via Zapier." },
   { n: "Close", c: "CRM & Sales", m: "connect", g: "C", d: "Leads, contacts, opportunities; read and write scopes.", pop: true, r: 13, url: "https://mcp.close.com/mcp" },
   { n: "Attio", c: "CRM & Sales", m: "connect", g: "A", d: "Records, lists, notes, tasks.", url: "https://mcp.attio.com/mcp" },
@@ -505,15 +505,34 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
 }) {
   const [label, setLabel] = useState(tool?.label ?? preset.label ?? "");
   const [url, setUrl] = useState(tool ? "" : preset.url ?? "");
-  // New connections require an explicit choice, even when opened from a named preset.
-  const initialAuth: AuthenticationChoice | null = tool
-    ? tool.authKind === "oauth" ? "oauth" : tool.authKind === "bearer"
-      ? (tool.customHeaderCount ? "headers" : "bearer") : tool.authKind === "header" ? "headers" : "none"
-    : preset.auth ?? null;
-  // Curated presets lock the selector (and their note names the provider's real contract);
-  // editing an EXISTING tool keeps every mode reachable — the row's saved kind is already
-  // proven for it, and a re-key may legitimately change custom headers.
-  const authContract = !tool ? presetAuthContract(preset) : null;
+  // Curated presets lock the selector (and their note names the provider's real contract).
+  // EXP10 (owner finding 2026-11-04): a curated provider's ONE proven mode governs BOTH doors
+  // into its form — the catalogue preset AND the re-key of an existing row the catalogue
+  // recognizes. The four-way auth wall the owner met was the re-key of an unfinished
+  // HighLevel row; a vendor with one proven contract never re-offers the other three modes
+  // on either door. A row the catalogue does NOT recognize keeps every mode reachable on
+  // re-key: its saved kind is the only proven fact, and a re-key may legitimately change it.
+  const recognizedPreset = !tool ? null : CATALOGUE.find(p => !p.manual && (
+    (p.pk && providerToken(p.pk) === providerToken(tool.providerKey)) ||
+    (addressHost(p.url) !== "" && addressHost(p.url) === addressHost(`https://${tool.serverUrlHost ?? ""}`))
+  ));
+  const authContract = !tool
+    ? presetAuthContract(preset)
+    : recognizedPreset ? presetAuthContract({
+        providerKey: recognizedPreset.pk,
+        auth: recognizedPreset.req?.length ? "headers"
+          : recognizedPreset.auth === "header" ? "headers"
+          : recognizedPreset.auth,
+      })
+    : null;
+  // New connections require an explicit choice, even when opened from a named preset; a
+  // locked contract's single mode is that choice, already made by the provider's contract.
+  const initialAuth: AuthenticationChoice | null = authContract
+    ? authContract.choices[0].value
+    : tool
+      ? tool.authKind === "oauth" ? "oauth" : tool.authKind === "bearer"
+        ? (tool.customHeaderCount ? "headers" : "bearer") : tool.authKind === "header" ? "headers" : "none"
+      : preset.auth ?? null;
   const [auth, setAuth] = useState<AuthenticationChoice | null>(initialAuth);
   const [token, setToken] = useState("");
   const [primaryHeader, setPrimaryHeader] = useState(tool?.authKind === "header" ? "" : "Authorization");
@@ -522,6 +541,8 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   const [busy, setBusy] = useState(false);
   const [ack, setAck] = useState<{ id: string; generation: number | null } | null>(null);
   const [confirmed, setConfirmed] = useState<GatewayConnection | null>(null);
+  /** Set when the duplicate-guard finished an unfinished row instead of adding a second one. */
+  const [finishedExisting, setFinishedExisting] = useState<GatewayConnection | null>(null);
   const [validation, setValidation] = useState<Record<string, string>>({});
   const [discarding, setDiscarding] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
@@ -601,8 +622,25 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
       // after durable readback and a separate explicit Authorize click, never because of a brand.
       const kind: GatewayAuthKind = auth === "oauth" || auth === "none" ? "none"
         : auth === "headers" && primaryHeader.trim().toLowerCase() !== "authorization" ? "header" : "bearer";
-      const result = tool
-        ? await gw.rekeyMcp(tool.id, url.trim(), kind, needsToken ? token.trim() : null, kind === "header" ? primaryHeader.trim() : null, extra)
+      /**
+       * EXP10 duplicate-guard (owner finding 2026-11-04): an add flow may never leave a SECOND
+       * connection for a server this workspace already holds. A usable row blocks the create
+       * outright (open that connection to change it); an unfinished one is FINISHED — the save
+       * becomes that row's replacement, so retrying a half-done connect can no longer stack
+       * dead rows (production had one workspace with a never-finished row per attempt).
+       */
+      let finishExisting: GatewayConnection | null = null;
+      if (!tool) {
+        const held = connectionForProvider(gw.tools, { providerKey: preset.providerKey ?? null, url: url.trim() });
+        if (held && usable(held)) {
+          setMessage(`This workspace already has a working ${connectionDisplayName(held)} connection for this server. Close this form and open that connection from your list to change it — a second connection to the same server is not added.`);
+          return;
+        }
+        finishExisting = held;
+      }
+      const target = tool ?? finishExisting;
+      const result = target
+        ? await gw.rekeyMcp(target.id, url.trim(), kind, needsToken ? token.trim() : null, kind === "header" ? primaryHeader.trim() : null, extra)
         : await gw.createMcp({ providerKey: preset.providerKey ?? "generic-remote", label: label.trim(), serverUrl: url.trim(),
           authKind: kind, authToken: needsToken ? token.trim() : null, authHeaderName: kind === "header" ? primaryHeader.trim() : null, customHeaders: extra });
       if (!alive.current) return;
@@ -610,6 +648,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
         setMessage(result.message ?? "The save was not confirmed. Your details remain here; try again.");
         return;
       }
+      if (finishExisting) setFinishedExisting(finishExisting);
       const saved = { id: result.connectionId, generation: result.configGeneration ?? null };
       setAck(saved);
       // Secrets never survive a successful write in local form state, even if readback fails.
@@ -642,6 +681,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
         <strong>Saved — configuration confirmed.</strong>
         <p>Address on file · kept private. {confirmed.credentialsConfigured ? "Credentials on file · encrypted." : "No credential on file."}</p>
         <p>{confirmed.customHeaderCount ?? 0} additional headers on file. Saving does not check the server or grant tool approval.</p>
+        {finishedExisting && <p>This finished your existing “{connectionDisplayName(finishedExisting)}” connection instead of adding a second one for the same server.</p>}
       </> : <p>{busy ? "Confirming saved configuration…" : "The server acknowledged the write; its current configuration still needs confirmation."}</p>}
       </div>
       <div className="ig-actions ig-gw-actions">
@@ -1308,7 +1348,7 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
   // OAuth replacement first saves a credential-free shell, then offers explicit authorization.
 
   return (
-    <GatewayDrawer eyebrow={noOutboundAddress ? "Integrations" : "Connected MCP Gateway"} title={tool.label} dirty={() => incomingDirty.current || (mode === "rekey" && (isRest || configurationDirty))} onClose={onClose}>
+    <GatewayDrawer eyebrow={noOutboundAddress ? "Integrations" : "MCP server connection"} title={tool.label} dirty={() => incomingDirty.current || (mode === "rekey" && (isRest || configurationDirty))} onClose={onClose}>
       {returnedFromSignIn && <p className="ig-gw-info" role="status">Returning from sign-in does not verify this tool. Review its saved status, then check it when you’re ready.</p>}
       <dl className="ig-facts">
         <div><dt>Endpoint</dt><dd>{tool.serverUrlHost ?? "—"}</dd></div>
@@ -1609,7 +1649,13 @@ function ScopedIntegrationsGatewaySection({
       )}
       {gw.tools.map((c) => {
         const noOutboundAddress = c.addressConfigured === false;
-        const chip = noOutboundAddress ? { tone: "neutral", label: "View incoming setup" } : statusChip(c);
+        // EXP10 (owner finding 2026-11-04): a row that was saved but never finished is the
+        // common state a non-technical owner sees after a half-done connect. Name the
+        // recovery, not the protocol: "Setup not finished" (the surface's own vocabulary)
+        // instead of the twin riddles "not usable yet · Turned off".
+        const chip = noOutboundAddress ? { tone: "neutral", label: "View incoming setup" }
+          : !usable(c) ? { tone: "neutral", label: "Setup not finished" }
+          : statusChip(c);
         const title = connectionDisplayName(c);
         return (
           <li key={c.id}>
@@ -1620,7 +1666,6 @@ function ScopedIntegrationsGatewaySection({
               </span>
               <span className="ig-card-title">
                 <strong>{title}</strong>
-                {!noOutboundAddress && !usable(c) && <span className="ig-chip" data-warn>not usable yet</span>}
               </span>
               <span className="ig-card-foot">
                 <span className="ig-card-state" data-tone={chip.tone === "ok" ? "ok" : chip.tone === "bad" ? "bad" : chip.tone === "warn" ? "warn" : "neutral"}>
@@ -1676,7 +1721,7 @@ function ScopedIntegrationsGatewaySection({
 
       {drawer?.kind === "catalogue" && !tenantLoading && (
         <GatewayDrawer
-          eyebrow="Connected MCP Gateway"
+          eyebrow="MCP server connection"
           title="Add a tool"
           onClose={close}
           // Shipped copy, kept verbatim (§58). It used to head the tools section; the section is
@@ -1710,7 +1755,7 @@ function ScopedIntegrationsGatewaySection({
       )}
 
       {drawer?.kind === "add" && !tenantLoading && (
-        <GatewayDrawer eyebrow="Connected MCP Gateway" title={drawer.preset.label ? `Add ${drawer.preset.label}` : "Add a tool"} dirty={addDirty} onClose={close}>
+        <GatewayDrawer eyebrow="MCP server connection" title={drawer.preset.label ? `Add ${drawer.preset.label}` : "Add a tool"} dirty={addDirty} onClose={close}>
           <ConnectionForm key={scopeKey} gw={gw} preset={drawer.preset} onDirtyChange={setAddDirty} onCancel={close}
             onSaved={(tool) => setDrawer({ kind: "detail", tool, scope: scopeKey })} />
         </GatewayDrawer>

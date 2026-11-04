@@ -609,7 +609,7 @@ describe("Truth boundary", () => {
     expect(host.textContent).toContain("Not checked yet");
     expect(host.textContent).not.toMatch(/\bReady\b/);
     expect(host.textContent).not.toMatch(/Checking…/);
-    expect(host.textContent).toContain("not usable yet");
+    expect(host.textContent).toContain("Setup not finished");
   });
 
   it("keeps a failed read distinct from an account with no tools", async () => {
@@ -729,6 +729,72 @@ describe("Adding a tool", () => {
       server_url: "https://mcp.slack.com/mcp",
       auth_kind: "bearer",
     });
+  });
+
+  it("locks HighLevel to its Private Integration Token contract — never a four-way auth wall", async () => {
+    // EXP10 (owner finding 2026-11-04): the owner opened HighLevel and met a developer's
+    // question — OAuth / Token / Token + headers / None — instead of a connect form.
+    // HighLevel's proven contract is ONE mode: the Private Integration Token as the
+    // credential plus the required locationId header. The catalogue row carries auth so
+    // the curated lock engages, exactly as Slack's already did.
+    world({ rows: [] });
+    const { host } = await render();
+    await openCatalogue(host);
+    await click(tile(host, "HighLevel · LeadConnector"));
+    expect((fieldFor(host, "Server URL") as HTMLInputElement).value).toBe("https://services.leadconnectorhq.com/mcp/");
+    const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
+    expect(authButtons.map(b => b.textContent)).toEqual(["Private Integration Token"]);
+    expect(authButtons[0].getAttribute("aria-pressed")).toBe("true");
+    await type(fieldFor(host, "Name"), "Main location");
+    await type(fieldFor(host, "Token"), "pit_loc_abcdefghijklmnopqrstuvwxyz012345");
+    await click(byText(host, "Add header"));
+    await type(fieldFor(host, "Header 1 name"), "locationId");
+    await type(fieldFor(host, "Header 1 value"), "ABcdEf123456");
+    await click(byText(host, "Save configuration"));
+    expect(lastEdgeBody()).toMatchObject({
+      action: "create",
+      facet: "mcp",
+      provider_key: "gohighlevel",
+      label: "Main location",
+      server_url: "https://services.leadconnectorhq.com/mcp/",
+      auth_kind: "bearer",
+    });
+    expect(Object.keys(lastEdgeBody().custom_headers ?? {})).toEqual(["locationId"]);
+  });
+
+  it("finishes an unfinished connection instead of adding a second one for the same server", async () => {
+    // EXP10 duplicate-guard (owner finding 2026-11-04): retrying a half-done connect must
+    // complete THE row, never stack another. Production held exactly this trap — a Slack row
+    // saved with no auth, where every retry read as "it creates an additional connection".
+    world({ rows: [row({ connection_id: "conn-slack", provider_key: "slack", label: "Slack",
+      auth_kind: "none", enabled: false, status: "unconfigured", health: "unknown", server_url_host: "mcp.slack.com" })] });
+    const { host } = await render();
+    await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Operations workspace");
+    await type(fieldFor(host, "Server URL"), "https://mcp.slack.com/mcp");
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "xoxp-slack-user-token-123456");
+    await click(byText(host, "Save configuration"));
+    // No second row: the write is a REPLACEMENT of the unfinished one, and the receipt says so.
+    expect(edgeCalls("create")).toHaveLength(0);
+    const rekey = rpc.mock.calls.find(c => c[0] === "set_mcp_connection_endpoint")?.[1] as Record<string, unknown>;
+    expect(rekey).toMatchObject({ _connection_id: "conn-slack", _server_url: "https://mcp.slack.com/mcp", _auth_kind: "bearer" });
+    expect(dialog(host)?.textContent).toMatch(/instead of adding a second one/i);
+  });
+
+  it("never duplicates a WORKING connection: the save is refused with a plain explanation", async () => {
+    world({ rows: [row({ connection_id: "conn-live", provider_key: "slack", label: "Slack",
+      status: "connected", health: "healthy", server_url_host: "mcp.slack.com" })] });
+    const { host } = await render();
+    await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Second try");
+    await type(fieldFor(host, "Server URL"), "https://mcp.slack.com/mcp");
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "xoxp-slack-user-token-123456");
+    await click(byText(host, "Save configuration"));
+    expect(edgeCalls("create")).toHaveLength(0);
+    expect(rpc.mock.calls.some(c => c[0] === "set_mcp_connection_endpoint")).toBe(false);
+    expect(dialog(host)?.textContent).toMatch(/already has a working Slack connection/i);
   });
 
   it("finds HighLevel under the LeadConnector name the provider's own API uses", async () => {

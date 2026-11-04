@@ -56,19 +56,6 @@
 }
 /* The hairline grid, faded with a mask so it reads as texture near the top and vanishes below. It
    sits behind everything via z-index within the page's own isolated stacking context. */
-.social-page::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    linear-gradient(var(--sd-grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--sd-grid-line) 1px, transparent 1px);
-  background-size: 34px 34px;
-  -webkit-mask: radial-gradient(128% 74% at 50% 0%, #000, transparent 78%);
-  mask: radial-gradient(128% 74% at 50% 0%, #000, transparent 78%);
-}
 .social-page > * { min-width: 0; }
 
 .social-eyebrow {
@@ -300,7 +287,7 @@
 }
 .social-next-glyph {
   display: grid; place-items: center; flex: none;
-  width: 34px; height: 34px; border-radius: 10px;
+  width: 34px; height: 34px; border-radius: var(--r-s);
   background: var(--surface); border: 1px solid var(--gold-line); color: var(--gold);
   box-shadow: var(--sh-1);
 }
@@ -327,7 +314,7 @@
 .social-golive-head { display: flex; align-items: center; gap: 14px; }
 .social-golive-glyph {
   display: grid; place-items: center; flex: none;
-  width: 34px; height: 34px; border-radius: 10px;
+  width: 34px; height: 34px; border-radius: var(--r-s);
   background: var(--surface); border: 1px solid var(--gold-line); color: var(--gold);
   box-shadow: var(--sh-1);
 }
@@ -517,7 +504,7 @@
 .social-channel-id h4 { font-size: 12.5px; }
 .social-channel-id small { display: block; margin-top: 2px; font-size: 10.5px; color: var(--ink-3); overflow-wrap: anywhere; }
 .social-channel-dot {
-  flex: none; width: 22px; height: 22px; border-radius: 7px;
+  flex: none; width: 22px; height: 22px; border-radius: var(--r-s);
   display: grid; place-items: center;
   background: var(--violet-tint); color: var(--violet);
 }
@@ -526,8 +513,8 @@
   background: var(--violet); opacity: .9;
 }
 .social-channel-metric { min-width: 0; }
-.social-channel-metric .social-figure { font-size: 15px; }
-.social-channel-metric small { display: block; margin-top: 2px; max-width: 40ch; font-size: 10px; line-height: 1.4; color: var(--ink-3); }
+.social-channel-metric .social-figure { font-size: 14px; }
+.social-channel-metric small { display: block; margin-top: 2px; max-width: 40ch; font-size: 10.5px; line-height: 1.4; color: var(--ink-3); }
 
 /* ── governance (Trust Compass, reflected) ────────────────────────────────── */
 
@@ -568,7 +555,7 @@
   border: 1px solid var(--line); border-radius: var(--r-l);
   background: var(--sd-panel); box-shadow: var(--sh-2);
 }
-.social-state h2 { font-size: 19px; letter-spacing: -.02em; }
+.social-state h2 { font-size: 18px; letter-spacing: -.02em; }
 .social-state p { max-width: 54ch; font-size: 12.8px; line-height: 1.55; color: var(--ink-2); }
 .social-spinner {
   width: 24px; height: 24px; border: 2px solid var(--line);
@@ -695,4 +682,36 @@
   .social-page { background: Canvas; }
   .social-page::before, .social-orb-halo, .social-orb-ring { display: none; }
   .social-scrim { background: Canvas; }
+}
+
+/* ── connected accounts (EXP07 owner directive 2026-11-04) ──────────────────
+   Live-connected social accounts show up on this tab. The list borrows the
+   Channels anatomy exactly — same two-column grid, same card, same dot — so a
+   connection row reads as a first-class channel state, not a new widget. The
+   state colors follow the readiness line's own convention: connected is the
+   surface's ok ink, attention states the bad ink, everything else ink-3. */
+.social-connections-list {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px; margin: 0; padding: 14px 16px; list-style: none;
+}
+.social-connections-list li {
+  min-width: 0;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 9px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+}
+.social-connection-main { min-width: 0; }
+.social-connection-main h4 { font-size: 12.5px; }
+.social-connection-main small { display: block; margin-top: 2px; font-size: 10.5px; color: var(--ink-3); overflow-wrap: anywhere; }
+.social-connection-main p { margin: 6px 0 0; font-size: 11.6px; line-height: 1.5; color: var(--ink-3); }
+.social-connections-list li[data-state="connected"] .social-connection-main p { color: var(--ok); }
+.social-connections-list li[data-state="needs_reauth"] .social-connection-main p,
+.social-connections-list li[data-state="error"] .social-connection-main p { color: var(--bad); }
+.social-connections-manage { color: var(--violet); text-decoration: none; border-bottom: 1px solid var(--line-soft); }
+.social-connections-manage:hover { border-bottom-color: var(--violet); }
+.social-connections-manage:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; border-bottom-color: transparent; }
+@media (max-width: 900px) {
+  .social-connections-list { grid-template-columns: minmax(0, 1fr); }
 }

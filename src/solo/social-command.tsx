@@ -31,19 +31,22 @@
  * page; until this slice it pointed at a page that could not finish the job.
  */
 import React from "react";
+import { Link } from "react-router-dom";
 import { Ic } from "./_shared";
 import { useSocialCommand } from "./useSocialCommand";
 import { GoLive } from "./go-live";
 import { useSoloPendingActions } from "./data/useSoloPendingActions";
 import { elapsedLabel } from "./data/useSoloActivityFeed";
-// useSoloTrust directly rather than compass.tsx's useTrustDepartments: the compass module pulls the
-// whole Trust Compass surface into the Campaigns bundle for two lane labels, and this is the same
+// useSoloTrust directly rather than compass.tsx's useTrustDepartments: the compass module pulls
+// the whole Trust Compass surface into the Campaigns bundle for two lane labels, and this is the same
 // underlying read either way.
 import { useSoloTrust } from "./data/useSoloTrust";
 import {
+  CONNECTION_COPY,
   SOCIAL_NETWORKS,
   buildBrief,
   buildChannels,
+  buildConnectionsPanel,
   buildKpis,
   buildNextMove,
   buildPipeline,
@@ -495,6 +498,58 @@ function ContentPipelinePanel({ stages }) {
   );
 }
 
+/* ─────────────────────────── connections ─────────────────────────── */
+
+/**
+ * EXP07 owner directive 2026-11-04: "for social they should show up in the Marketing Social
+ * subtab when they are live connected." Connections are MADE in Settings → Integrations and
+ * nowhere else — this panel only SHOWS them here: every connection row the lifecycle still
+ * holds, each with its network, its connected identity's own label, its state in the
+ * lifecycle's own vocabulary, and the one link that manages it. It renders nothing when no
+ * connection exists (the Channels panel already owns the honest empty state), it produces no
+ * figure and no inferred capability — a connection grants consent to read, and every row says
+ * so in CONNECTION_COPY's own words.
+ */
+function ConnectionsPanel({ entries, tenantId }) {
+  if (!entries.length) return null;
+  return (
+    <section className="social-panel social-connections" aria-label="Connected accounts">
+      <PanelHead
+        glyph="pulse"
+        title="Connected accounts"
+        state={entries.some((e) => e.status === "connected") ? "LIVE" : "PARTIAL"}
+        sub="This workspace's live social connections, as the connection readback proves them."
+      />
+      <ul className="social-connections-list">
+        {entries.map((entry) => (
+          <li key={entry.network} data-state={entry.status}>
+            <span className="social-channel-dot" aria-hidden="true" />
+            <div className="social-connection-main">
+              <h4>{entry.networkLabel}</h4>
+              {entry.label ? <small className="mono">{entry.label}</small> : null}
+              <p>
+                {CONNECTION_COPY[entry.status]}
+                {entry.status === "connected" && entry.verifiedAt
+                  ? ` Last verified ${new Date(entry.verifiedAt).toLocaleDateString()}.`
+                  : ""}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="social-panel-foot">
+        {tenantId ? (
+          <Link to={`/solo/${tenantId}/settings/integrations`} className="social-connections-manage">
+            Connect or manage social accounts in Settings → Integrations
+          </Link>
+        ) : (
+          "Connections are made and managed in Settings → Integrations."
+        )}
+      </p>
+    </section>
+  );
+}
+
 /* ─────────────────────────── channels ─────────────────────────── */
 
 function ChannelTelemetryPanel({ channels, onRecord, canManage, notPermitted, handlesUnknown }) {
@@ -691,7 +746,10 @@ export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompa
     const artifacts = campaigns.artifacts ?? [];
     return {
       handles: social.handles,
-      connections: social.connections,
+      // Same coercion idiom as the Boolean(...) fields below: the hook's contract always supplies
+      // connections, and stale harness doubles may not — the boundary is the honest place to hold
+      // the shape, not every double that ages.
+      connections: social.connections ?? [],
       publishedOutputs: artifacts.length,
       approvalGatedForms: artifacts.filter((artifact) => String(artifact.routingState || "").includes("approval-gated")).length,
       formsNeedingRepair: artifacts.filter((artifact) => (artifact.recentDispatches?.failed ?? 0) > 0).length,
@@ -771,7 +829,10 @@ export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompa
   const nextMove = buildNextMove(input);
   const kpis = buildKpis(input);
   const stages = buildPipeline(input);
-  const channels = buildChannels(social.handles, social.connections);
+  const channels = buildChannels(social.handles, social.connections ?? []);
+  // Owner directive 2026-11-04 — live-connected accounts show up on THIS tab, right under the
+  // brief, not only in Settings → Integrations where they are managed.
+  const connectionEntries = buildConnectionsPanel(social.connections ?? []);
 
   return (
     <div className="social-page">
@@ -785,6 +846,8 @@ export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompa
         authorityUnknown={Boolean(social.authorityUnknown)}
         onRetry={social.retry}
       />
+
+      <ConnectionsPanel entries={connectionEntries} tenantId={social.tenantId} />
 
       <NextMove
         move={nextMove}

@@ -93,6 +93,7 @@ export function TenantCanonicalCalendarWorkspace({ tier, openPaige, owner = "dir
       <WeeklyCalendarResponsibility>{weeklySlot => <SoloCalendarWorkspace
         key={`${activeUserId}:${activeTenantId}`}
         activeTenantId={activeTenantId}
+        activeUserId={activeUserId}
         connectionsHref={soloConnections}
         openPaige={openPaige}
         weeklyResponsibility={weeklySlot}

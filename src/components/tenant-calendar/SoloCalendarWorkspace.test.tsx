@@ -120,15 +120,17 @@ function todayAt(hour: number, minutes = 0) {
 let container: HTMLDivElement;
 let root: Root;
 
-function mount() {
+function mount(startOnWeek = true) {
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
   act(() => {
     root.render(
-      <SoloCalendarWorkspace activeTenantId="tenant-1" connectionsHref="/solo/1/integrations" />,
+      <SoloCalendarWorkspace activeTenantId="tenant-1" activeUserId="user-1" connectionsHref="/solo/1/integrations" />,
     );
   });
+  // Incumbent grid tests explicitly exercise Week; the product starts in Month.
+  if (startOnWeek) click(buttonByText(/^Week$/));
 }
 
 const text = () => container.textContent ?? "";
@@ -163,6 +165,7 @@ function setValue(el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 const byId = <T extends Element>(id: string) => document.querySelector<T>(id);
 
 beforeEach(() => {
+  localStorage.clear();
   state.bookings = [];
   state.calendars = [];
   state.phase = "ready";
@@ -190,6 +193,42 @@ afterEach(() => {
 });
 
 describe("Solo Calendar — a truthful surface", () => {
+  it("starts in Month and keeps Week and Agenda available", () => {
+    mount(false);
+    expect(buttonByText(/^Month$/)?.getAttribute("aria-pressed")).toBe("true");
+    click(buttonByText(/^Week$/));
+    expect(buttonByText(/^Week$/)?.getAttribute("aria-pressed")).toBe("true");
+    click(buttonByText(/^Agenda$/));
+    expect(buttonByText(/^Agenda$/)?.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("saves a default through View options and restores it when Calendar reopens", () => {
+    mount(false);
+    click(buttonByText(/View options/i));
+    click(document.querySelector('input[type="radio"][value="week"]'));
+    expect(buttonByText(/^Week$/)?.getAttribute("aria-pressed")).toBe("true");
+    act(() => root.unmount());
+    container.remove();
+    mount(false);
+    expect(buttonByText(/^Week$/)?.getAttribute("aria-pressed")).toBe("true");
+    click(buttonByText(/^Month$/));
+    act(() => root.unmount());
+    container.remove();
+    mount(false);
+    expect(buttonByText(/^Week$/)?.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("reports blocked storage without claiming the default was saved", () => {
+    mount(false);
+    const write = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked"); });
+    try {
+      click(buttonByText(/View options/i));
+      click(document.querySelector('input[type="radio"][value="week"]'));
+      expect(document.querySelector('[role="alert"]')?.textContent).toMatch(/could not save the default/i);
+      expect(document.querySelector<HTMLInputElement>('input[type="radio"][value="month"]')?.checked).toBe(true);
+    } finally { write.mockRestore(); }
+  });
+
   it("renders no duplicate heading: the Clients tab strip already names this view", () => {
     mount();
     // The retired presentation drew an <h1>Calendar</h1> plus an eyebrow and a

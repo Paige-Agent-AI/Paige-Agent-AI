@@ -8,6 +8,23 @@
 
 // day 0=Sun..6=Sat, "HH:MM" wall-clock in the calendar's timezone.
 export interface DayWindow { day: number; start: string; end: string }
+
+// Calendar-level fallback is the original booking engine's weekday 9–5 policy.
+// Host overrides are deliberately NOT parsed here: an explicit empty host
+// schedule means no hours, whereas a missing calendar schedule uses this default.
+const DEFAULT_AVAILABILITY: DayWindow[] = [1, 2, 3, 4, 5].map((day) => ({ day, start: "09:00", end: "17:00" }));
+
+export function parseCalendarAvailability(raw: unknown): DayWindow[] {
+  if (!Array.isArray(raw)) return DEFAULT_AVAILABILITY;
+  const out = raw.filter(
+    (w): w is DayWindow =>
+      w && typeof w === "object" &&
+      typeof (w as DayWindow).day === "number" &&
+      /^\d{2}:\d{2}$/.test((w as DayWindow).start ?? "") &&
+      /^\d{2}:\d{2}$/.test((w as DayWindow).end ?? ""),
+  );
+  return out.length ? out : DEFAULT_AVAILABILITY;
+}
 // Per-date exception to the weekly pattern: block a whole day, or set special hours.
 export interface DateOverride { date: string; blocked: boolean; windows: { start: string; end: string }[] }
 export interface Busy { start: number; end: number } // UTC ms

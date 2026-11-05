@@ -913,6 +913,8 @@ jobs:
         run: deno test --allow-sys --no-lock supabase/functions/_shared/solo-beta-stripe-shapes.test.ts
       - name: SendGrid webhook-admin broker (mocked provider IO)
         run: deno test --allow-sys --no-lock supabase/functions/_shared/comms-email/sendgrid-webhook-admin.test.ts
+      - name: MCP gateway connect-consent auto-approve (real runApprove stack)
+        run: deno test --allow-sys --no-lock supabase/functions/_shared/mcp-gateway/auto-approve.test.ts
       - name: SendGrid provider adapter (mocked fetch; synthetic key values only)
         run: deno test --allow-sys --allow-env --no-lock supabase/functions/_shared/email/sendgrid-provider.test.ts
       - name: Customer email footer names the business, never the platform's COO (E09 CURA)

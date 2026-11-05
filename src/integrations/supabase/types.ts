@@ -21237,7 +21237,33 @@ export type Database = {
           requested_platform: string | null
         }[]
       }
-      social_current_tenant_id: { Args: never; Returns: string }
+
+      social_platform_grant_set: {
+        Args: { p_granted: boolean; p_platform: string; p_tenant: string }
+        Returns: {
+          granted: boolean
+          platform: string
+          tenant_id: string
+        }[]
+      }
+      social_platform_grant_workspaces: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          slug: string
+        }[]
+      }
+      social_platform_grants_list: {
+        Args: never
+        Returns: {
+          granted: boolean
+          granted_at: string
+          platform: string
+          tenant_id: string
+          tenant_name: string
+        }[]
+      }      social_current_tenant_id: { Args: never; Returns: string }
       social_mark_connection_disconnected: {
         Args: {
           _actor_id: string

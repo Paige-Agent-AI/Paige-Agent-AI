@@ -20,7 +20,7 @@ import IntegrationsSurface, { INTEGRATIONS, INT_KINDS, PLATFORM_SHELF, TYPE_TABS
 describe("Integrations — owner-approved type-tab redesign (mockup po-integrations-redesign)", () => {
   it("opens on Social with the live platform channel home and never names the social provider", () => {
     const html = renderToStaticMarkup(<IntegrationsSurface />);
-    for (const t of TYPE_TABS) expect(html, `missing tab: ${t}`).toContain(t);
+    for (const t of TYPE_TABS) expect(html, `missing tab: ${t}`).toContain(t.replace(/&/g, "&amp;"));
     expect(html).toContain("Company channels");
     expect(html).toContain("Which workspaces may use which company channels");
     expect(html).toContain("Channels connected in the platform hub");
@@ -63,7 +63,7 @@ describe("Integrations — owner-approved type-tab redesign (mockup po-integrati
     expect(payments).toContain("Not switched on");
     const web = renderToStaticMarkup(<IntegrationsSurface initialTab="Web & Hosting" />);
     for (const host of ["Vercel", "Cloudflare", "Supabase"]) expect(web, `missing host: ${host}`).toContain(host);
-    expect(web.match(/Live/g) ?? []).toHaveLength(3);
+    expect(web.match(/>Live</g) ?? []).toHaveLength(3);
     const auto = renderToStaticMarkup(<IntegrationsSurface initialTab="Automations" />);
     expect(auto).toContain("HighLevel");
     expect(auto).toContain("Locked · consult CSM");

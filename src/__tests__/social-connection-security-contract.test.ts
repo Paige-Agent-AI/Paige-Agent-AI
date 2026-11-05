@@ -235,8 +235,14 @@ describe("Platform Integrations redesign seam (owner 2026-11-05)", () => {
 
   it("gates every workspace-grant RPC on the platform-owner resolver and fails closed", () => {
     expect(grantsMigration).toContain("SOCIAL_GRANTS_FORBIDDEN");
-    expect(grantsMigration.match(/resolve_platform_operator_workspace\(\)/g) ?? []).toHaveLength(3);
-    expect(grantsMigration).toContain("security definer");
+    for (const fn of ["social_platform_grant_workspaces", "social_platform_grants_list", "social_platform_grant_set"]) {
+      const start = grantsMigration.indexOf(`create or replace function public.${fn}`);
+      const end = grantsMigration.indexOf("create or replace function public.", start + 10);
+      const block = grantsMigration.slice(start, end > start ? end : undefined);
+      expect(block, `${fn} must exist`).toContain("security definer");
+      expect(block, `${fn} must gate on the resolver`).toContain("resolve_platform_operator_workspace()");
+      expect(block, `${fn} must fail closed`).toContain("SOCIAL_GRANTS_FORBIDDEN");
+    }
     expect(grantsMigration).not.toMatch(/revoke all on function/);
   });
 });

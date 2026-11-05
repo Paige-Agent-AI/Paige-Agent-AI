@@ -13,7 +13,7 @@ import { SocialChannelsPanel, SocialGrantsPanel } from "./SocialPlatformPanels";
  * the UI (owner: "they do not get any surface level branding").
  *
  * WHAT PORTS VERBATIM FROM THE v3 PACK (`paige-ia.js` L1464–L1538): `INT_KINDS` and the
- * eight-shelf, forty-two-vendor `INTEGRATIONS` catalogue with each vendor's kind/state/
+ * eight-shelf, forty-three-vendor `INTEGRATIONS` catalogue with each vendor's kind/state/
  * does/note/blocks — the pack's own grounded contract about this repo. The Directory tab
  * keeps the pack's drawn surface whole (State/Consequence bands, kind filters, search,
  * the foot), so the port survives inside the redesign. Two catalogue edits are made under
@@ -271,15 +271,14 @@ export default function IntegrationsSurface({
           </button>
         </div>
 
-        <div role="tablist" aria-label="Integration types" className="mt-3 flex flex-wrap gap-1">
+        <div aria-label="Integration types" className="mt-3 flex flex-wrap gap-1">
           {TYPE_TABS.map((t) => {
             const on = tab === t;
             return (
               <button
                 key={t}
                 type="button"
-                role="tab"
-                aria-selected={on}
+                aria-pressed={on}
                 onClick={() => setTab(t)}
                 className={[
                   "min-h-[32px] flex-none border-0 bg-transparent px-3 pb-2 pt-1.5 text-[length:var(--pg-t-body)]",
@@ -485,7 +484,7 @@ function Tile({ item, onOpen }: { item: Row; onOpen?: (i: Row) => void }) {
     >
       <span className="flex min-w-0 items-center gap-[9px]">
         <span
-          className="relative grid h-7 w-7 flex-none place-items-center overflow-hidden rounded-[var(--pg-r-chip)] text-[length:var(--pg-t-body)] font-medium shadow-[shadow:inset_0_0_0_1px_var(--pg-line)]"
+          className="relative grid h-7 w-7 flex-none place-items-center overflow-hidden rounded-[var(--pg-r-chip)] text-[length:var(--pg-t-body)] font-medium shadow-[inset_0_0_0_1px_var(--pg-line)]"
           style={{
             background: live ? "var(--pg-lift)" : "var(--pg-surface)",
             color: live ? "var(--pg-gold-deep)" : "var(--pg-muted)",

@@ -5,8 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
  * The Social tab's live panels for the Platform Operator (God Level) Integrations surface:
  * what is connected on the resolved workspace (`channels` read on the paige-social door,
  * which applies the platform-owner workspace fallback server-side), a fresh connect that
- * runs the SAME governed social_connection_start approval the Solo drawer uses, and the
- * Workspace grants block — which Solo workspaces may see which company channels.
+ * runs the SAME governed social_connection_start approval the Solo drawer uses (rendered
+ * as a click-through authorization link — the operator console never hard-navigates), and
+ * the Workspace grants block — which Solo workspaces may see which company channels.
  *
  * WHITE-LABEL RULE (owner, 2026-11-05): the social provider behind these connections is
  * never named in the UI. The brand hexes below are the owner-approved brand-tile pass
@@ -40,6 +41,9 @@ const PLATFORMS: ReadonlyArray<{ key: string; label: string; hex: string; mark: 
   { key: "snapchat", label: "Snapchat", hex: "#FFFC00", mark: "S" },
 ];
 
+/** Statuses that still hold the platform's connected authorization; anything else may reconnect. */
+const HEALTHY = new Set(["connected", "authorizing", "needs_reauth"]);
+
 function payloadObject(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
 }
@@ -66,14 +70,8 @@ export function SocialChannelsPanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [authorizationUrl, setAuthorizationUrl] = useState<string | null>(null);
   const [pending, setPending] = useState<{ summary: string; request: Record<string, unknown>; fingerprint: string } | null>(null);
-
-  // The connect door returns here with a social_result param once authorization completes.
-  useEffect(() => {
-    const result = new URLSearchParams(window.location.search).get("social_result");
-    if (result === "verified") setNotice("Social accounts were verified. Choose the account below when you are ready.");
-    else if (result === "error") setNotice("The authorization did not complete. Nothing was connected.");
-  }, []);
 
   const invoke = useCallback(async (request: Record<string, unknown>) => {
     setBusy(true);
@@ -88,6 +86,7 @@ export function SocialChannelsPanel() {
       if (!approval || typeof approval.fingerprint !== "string" || typeof approval.summary !== "string") {
         setError("The approval card was malformed. Nothing was changed."); return null;
       }
+      setAuthorizationUrl(null);
       setPending({ summary: approval.summary, request, fingerprint: approval.fingerprint });
       return payload;
     }
@@ -96,11 +95,15 @@ export function SocialChannelsPanel() {
       return payload;
     }
     if (payload.state === "authorization_required" && typeof payload.authorization_url === "string") {
-      setNotice("Opening secure Social authorization…");
-      window.location.assign(payload.authorization_url);
+      // The operator console never hard-navigates (scopeIsNotNavigation): the door's
+      // authorization link renders for the operator to click; it expires with the attempt.
+      setPending(null);
+      setAuthorizationUrl(payload.authorization_url);
+      setNotice("Approved. Continue below — the authorization link expires with this attempt.");
       return payload;
     }
     setPending(null);
+    setAuthorizationUrl(null);
     setNotice("The Social platform responded.");
     return payload;
   }, []);
@@ -127,7 +130,28 @@ export function SocialChannelsPanel() {
     setRows(parsed);
   }, [invoke]);
 
-  const connected = useMemo(() => new Set(rows?.map((r) => r.platform) ?? []), [rows]);
+  // The connect door returns here with a social_result param once authorization completes.
+  // Read it once and strip it (the Solo hook does the same); a verified return reloads the
+  // real channel state instead of trusting the URL flag alone.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get("social_result");
+    if (!result) return;
+    params.delete("social_result");
+    const query = params.toString();
+    window.history.replaceState(null, "", window.location.pathname + (query ? "?" + query : ""));
+    if (result === "verified") setNotice("Social accounts were verified. The channels below now reflect what authorized.");
+    else if (result === "error") setNotice("The authorization did not complete. Nothing was connected.");
+  }, []);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("social_result") === "verified") void load();
+  }, [load]);
+
+  const connected = useMemo(
+    () => new Set((rows ?? []).filter((r) => HEALTHY.has(r.status)).map((r) => r.platform)),
+    [rows],
+  );
   const available = PLATFORMS.filter((p) => !connected.has(p.key));
 
   const connect = useCallback((platform: string) => {
@@ -173,7 +197,7 @@ export function SocialChannelsPanel() {
               <div key={row.platform} className="flex min-w-0 flex-col bg-[var(--pg-raised)] px-3 py-[11px]">
                 <span className="flex min-w-0 items-center gap-[9px]">
                   {meta ? <BrandTile platform={meta} /> : (
-                    <span aria-hidden="true" className="grid h-[34px] w-[34px] flex-none place-items-center rounded-[9px] bg-[var(--pg-surface)] text-[length:var(--pg-t-body)] font-bold text-[var(--pg-muted)] shadow-[shadow:inset_0_0_0_1px_var(--pg-line)]">
+                    <span aria-hidden="true" className="grid h-[34px] w-[34px] flex-none place-items-center rounded-[9px] bg-[var(--pg-surface)] text-[length:var(--pg-t-body)] font-bold text-[var(--pg-muted)] shadow-[inset_0_0_0_1px_var(--pg-line)]">
                       {label.charAt(0)}
                     </span>
                   )}
@@ -189,7 +213,7 @@ export function SocialChannelsPanel() {
                   <i aria-hidden="true" className="h-1.5 w-1.5 flex-none rotate-45" style={{ background: chip[1] }} />
                   <small className="min-w-0 truncate text-[length:var(--pg-t-label)] text-[var(--pg-muted)]">{chip[0]}</small>
                   <small className="ml-auto flex-none whitespace-nowrap text-[length:var(--pg-t-label)] font-medium text-[var(--pg-faint)]">
-                    {row.accountCount > 0 ? `${row.accountCount} account${row.accountCount === 1 ? "" : "s"}` : ""}
+                    {row.lastVerifiedAt ? `Verified ${row.lastVerifiedAt.slice(0, 10)}` : row.accountCount > 0 ? `${row.accountCount} account${row.accountCount === 1 ? "" : "s"}` : ""}
                   </small>
                 </span>
               </div>
@@ -246,6 +270,21 @@ export function SocialChannelsPanel() {
           </div>
         </div>
       )}
+
+      {authorizationUrl && (
+        <div role="status" className="mt-4 border-t border-[var(--pg-line-soft)] pt-3">
+          <a
+            href={authorizationUrl}
+            rel="noopener noreferrer"
+            className="inline-flex min-h-[32px] flex-none items-center rounded-full bg-[var(--pg-gold-core)] px-4 text-[length:var(--pg-t-body)] font-semibold text-[var(--pg-ink)]"
+          >
+            Continue to secure Social authorization
+          </a>
+          <p className="mt-2 text-[length:var(--pg-t-label)] text-[var(--pg-faint)]">
+            This link opens the provider&rsquo;s own sign-in and expires with this attempt.
+          </p>
+        </div>
+      )}
     </section>
   );
 }
@@ -267,7 +306,10 @@ export function SocialGrantsPanel() {
     ]);
     setBusy(false);
     if (ws.error || gr.error) {
-      setError("Workspace grants are not switched on yet. Nothing can be changed here.");
+      const code = String((gr.error ?? ws.error)?.message ?? "");
+      setError(code.includes("SOCIAL_GRANTS_FORBIDDEN")
+        ? "Workspace grants are not switched on yet. Nothing can be changed here."
+        : "Workspace grants could not be read. Try again.");
       return;
     }
     const wsRows = Array.isArray(ws.data) ? ws.data : [];
@@ -289,7 +331,9 @@ export function SocialGrantsPanel() {
     setChosen((current) => current || parsedWorkspaces[0]?.id || "");
   }, []);
 
-  useEffect(() => { if (workspaces === null && !busy && !error) void load(); });
+  useEffect(() => {
+    if (workspaces === null && !busy && !error) void load();
+  }, [workspaces, busy, error, load]);
 
   const grantedFor = useCallback(
     (tenantId: string, platform: string) => grants.some((g) => g.tenantId === tenantId && g.platform === platform && g.granted),
@@ -319,8 +363,7 @@ export function SocialGrantsPanel() {
     <section aria-labelledby="op-social-grants" className="mb-6 flex-none border border-[var(--pg-line)] bg-[var(--pg-raised)] p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-[length:var(--pg-t-label)] font-semibold uppercase tracking-[0.14em] text-[var(--pg-faint)]">Workspace grants</p>
-          <h2 id="op-social-grants" className="mt-1 text-[length:var(--pg-t-h3)] font-semibold text-[var(--pg-ink)]">
+          <h2 id="op-social-grants" className="text-[length:var(--pg-t-h3)] font-semibold text-[var(--pg-ink)]">
             Which workspaces may use which company channels
           </h2>
           <p className="mt-1 max-w-[68ch] text-[length:var(--pg-t-body)] text-[var(--pg-muted)]">

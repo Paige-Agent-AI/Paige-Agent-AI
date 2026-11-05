@@ -13,9 +13,11 @@ still renders its error state — an unavailable-settings message is truth, not 
 incoming-ONLY surface (no outbound address — where setup IS the surface's purpose) keeps the
 offer unchanged. The owner-named future home of the offer — PAIGE setting up incoming contacts in
 chat once tools are connected — is recorded on ANT-164 as direction, not built here.
-Files: settings-integrations-incoming.tsx (offerSetup prop + hide predicate),
-settings-integrations-gateway.tsx (passes offerSetup = no outbound address), + the incoming test
-suite (two new outbound-drawer tests).
+Files: settings-integrations-incoming.tsx (offerSetup prop + hide predicate; the hide return sits
+AFTER the hook block per the non-author review's P1 — an early return above the hooks froze the
+component and could never un-hide a configured grant), settings-integrations-gateway.tsx (passes
+offerSetup = no outbound address), + the incoming test suite (two new outbound-drawer tests, each
+asserting the initial read FIRED so a hidden mount is alive, not frozen).
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: affected flow — the connection detail drawer's incoming-contacts section on outbound-capable rows (original owner EXP10). Steps for a CONFIGURED grant are unchanged (view → replace/revoke/instructions). The never-configured state's step ("read the pitch → Set up incoming contacts → consent") no longer exists on outbound drawers; the incoming-only surface keeps it byte-identical. Dependencies (gw.readContactSync/setContactSync, tenant context) untouched.
@@ -24,15 +26,15 @@ MATERIAL_FLOW_CHANGE: YES: a section that used to render on every connection dra
 FLOW_PROTOTYPE: UNVERIFIED: no dedicated prototype — no new screen exists; the remaining render is the incumbent structure prior records evidenced — but the change IS material (a section vanishes from a state), so a rendered capture of a never-configured outbound drawer showing no incoming anything (and a configured one keeping manage) is owed and named here.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an owner connecting HighLevel sees the connection truth (status, check, tools) with NO setup homework he never asked for; incoming contacts becomes something PAIGE can be asked to do later, per his words.
 VISUAL_DIRECTION: PASS: incumbent visual language only; removal of a section, no additions.
-AUTOMATED_EVIDENCE: PASS: two new tests drive the outbound drawer through the real gateway section — never-configured renders no incoming section and no setup button; configured keeps Replace/Revoke with no setup button — plus the incumbent incoming-only suite (offer unchanged) stays green in CI; changed-file typecheck clean locally.
+AUTOMATED_EVIDENCE: PASS: two new tests drive the outbound drawer through the real gateway section — never-configured renders no incoming section and no setup button; configured keeps Replace/Revoke with no setup button; BOTH assert the initial get_mcp_contact_sync read fired (a hidden mount stays alive) — plus the incumbent incoming-only suite (offer unchanged); changed-file typecheck clean locally; CI is the executing authority on the PR.
 STATIC_EVIDENCE: PASS: tsc on the changed files reports zero findings.
 RENDERED_EVIDENCE: UNVERIFIED: no local browser render this slice (local vitest/browser environment is the known-broken workstation state); owed and named.
-BEHAVIORAL_EVIDENCE: PASS: both the hidden and retained states are driven through real drawer opens in the automated tests; the failed-read error path is reasoned in the predicate (record null + read finished ⇒ renders) and covered by the incumbent error rendering.
+BEHAVIORAL_EVIDENCE: PASS: both the hidden and retained states are driven through real drawer opens in the automated tests, each proving its initial read resolved; the failed-read error path is covered by the incumbent error-rendering test on the incoming-ONLY surface — on the outbound drawer that state is reached by the same read result handling (record null + read finished ⇒ renders), reasoned here rather than separately automated.
 AUTHENTICATED_RUNTIME: UNVERIFIED: the owed proof is the owner's own GoHighLevel drawer on the deployed surface showing no incoming pitch; named here.
 KEYBOARD_FOCUS: PASS: no focus behavior touched; the hidden state removes controls that were never the drawer's focus owner (the section focus logic applies only when it renders).
 ZOOM_REFLOW: NOT_APPLICABLE: removal only; no layout structure added.
 REDUCED_MOTION: NOT_APPLICABLE: no motion change.
-STATE_COVERAGE: PASS: never-configured (hidden on outbound, offered on incoming-only), configured (manage everywhere), pending first read (hidden on outbound), failed read (error still renders), uncertain generation (recovery UI still renders — the hide predicate yields to it).
+STATE_COVERAGE: PASS: never-configured (hidden on outbound after its read resolves, offered on incoming-only), configured (manage everywhere — automated), pending first read (hidden on outbound while the read is in flight, alive under the hide), failed read (error still renders — reasoned on outbound, automated on incoming-only), uncertain generation (recovery UI always renders — the hide predicate yields to it).
 TRUTHFUL_STATE_LABELS: PASS: the drawer no longer implies setup homework the owner never started; a configured grant's manage affordances and a failed read's error remain truthful.
 SOLO_UI: YES: src/solo/settings-integrations-incoming.tsx + settings-integrations-gateway.tsx are the Solo Integrations surfaces.
 SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: removal-only change inside the incumbent drawer structure; no rendering structure added.
@@ -50,7 +52,7 @@ ACCEPTANCE_CRITERIA: on the deployed surface, the owner opens a connected HighLe
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: NONE_AFFECTED: contact-sync writers, consent flow and the gateway drawer's own machinery untouched; this delta is a render condition and its wiring.
 
-INTERNAL_BUILD_IDENTITY: 045eb09041220a0defc0ae16a15d5e583b75ff81 (exp10-incoming-not-pitched changeset off origin/main 61b0c10e4); deployment=vercel-main-on-merge; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp10-incoming-not-pitched.md
+INTERNAL_BUILD_IDENTITY: 4d61b5cc1135d959a8efb48a90838587ac41c106 (exp10-incoming-not-pitched changeset off origin/main c6805b5dc); deployment=vercel-main-on-merge; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp10-incoming-not-pitched.md
 RELEASE_CHANNEL: preview: unmerged branch; frontend ships with the next Vercel main deploy (Vercel prod deploys currently pending re-auth — #3279 and the connect-consent sentence ride the same unblock)
 RELEASE_CLASSIFICATION: internal-only: authenticated Solo Integrations drawer truth; no customer release identity until the owner's own drawer view exercises it
 CUSTOMER_RELEASE_IDENTITY: none: internal-only

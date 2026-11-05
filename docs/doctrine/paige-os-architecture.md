@@ -1,5 +1,7 @@
 # Paige OS Architecture
 
+> **Current owner North Star (2026-11-05).** This file is a DERIVED architecture reference; root AGENTS.md and CLAUDE.md now carry the single EXP/PO-EXP complete-prelaunch rule. The original **Orchestration Layer** coordinates one PAIGE AI COO, Team Hub, six existing specialist agents, native business records and eligible external tools; **Model Fabric** remains separate AI model routing. EXP10 owns shared connection admission/Vault/revocation, while each consuming EXP and corresponding company PO-EXP owns its business action and real customer/company proof. Third-party examples are ClickFunnels, licensed Zoom webinars/events, WebinarJam/EverWebinar, existing Zapier/n8n/Make, and customer-owned API/MCP apps. Zernio remains the selected social aggregator only. These are candidate/partial integrations, never implied available or authorized external effects. All approved EXP00–19 and PO-EXP01–30 customer/company outcomes must be accepted before public commercial launch. Development skills: **Flow by Flow, then Impeccable for UI/UX**; other routed procedures are subordinate. Historical architecture and dated findings below are not current delivery assignments. No agent activation, selected-outcome override or direct provider action is authorized by this documentation.
+
 > **Status and authority.** This document is a derived architecture reference. The
 > directives in `CLAUDE.md` remain canonical. If this synthesis and `CLAUDE.md`
 > differ, `CLAUDE.md` governs. The linked organization and growth-map documents

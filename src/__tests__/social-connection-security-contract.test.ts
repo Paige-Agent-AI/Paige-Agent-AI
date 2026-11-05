@@ -8,6 +8,8 @@ const endpoint = read("supabase/functions/paige-social/index.ts");
 const callback = read("supabase/functions/paige-social-callback/index.ts");
 const migration = read("supabase/migrations/20270127000000_social_connection_lifecycle.sql")
   + read("supabase/migrations/20270130000000_social_connection_platform_scope.sql");
+const platformMigration = read("supabase/migrations/20271131000001_social_platform_connections.sql");
+const adapter = read("supabase/functions/_shared/social-provider/zernio.ts");
 const hook = read("src/solo/data/useSocialConnections.ts");
 const drawer = read("src/solo/settings-integrations-social.tsx");
 const catalogue = read("src/solo/settings-integrations.tsx");
@@ -107,6 +109,46 @@ describe("Social authorization callback", () => {
   it("cannot apply callback readback after disconnect wins the connection lock", () => {
     expect(migration).toMatch(/where c\.tenant_id=_tenant_id and c\.id=_connection_id\s+and c\.status='authorizing'\s+and a\.id=_attempt_id/);
     expect(migration).toContain("state in ('created','redirected','processing')");
+  });
+
+  it("governs hub adoption and writes only provider-readback-verified channels as platform-provided", () => {
+    expect(endpoint).toContain('"social_connection_adopt"');
+    expect(endpoint).toContain('"Bring the platform hub\'s existing Social channels into this workspace as platform-provided connections. Nothing is published."');
+    const governAt = endpoint.indexOf('"social_connection_adopt"');
+    const rpcAt = endpoint.indexOf('admin.rpc("social_adopt_platform_channels"');
+    expect(governAt).toBeGreaterThan(-1);
+    expect(rpcAt).toBeGreaterThan(governAt);
+    expect(endpoint).toContain('SOCIAL_ADOPT_NOTHING_VERIFIED');
+    expect(platformMigration).toContain("SOCIAL_ADOPT_APPROVAL_INVALID");
+    expect(platformMigration).toContain("p.tool_name='social_connection_adopt'");
+    expect(platformMigration).toContain("provided_by_platform boolean not null default false");
+    expect(platformMigration).toContain("'hub:' || _tenant_id::text || ':' || _hub_profile_id || ':' || k");
+  });
+
+  it("lists hub profiles admin-only and never offers tenant-owned provider profiles for adoption", () => {
+    expect(endpoint).toContain('"hub_profiles"');
+    expect(endpoint).toContain("SOCIAL_HUB_FORBIDDEN");
+    // the adapter's hub helpers exclude profiles whose externalId is a tenant ps_ key
+    expect(adapter).toContain("PROFILE_KEY_PATTERN.test(externalId)");
+    expect(adapter).toContain("export async function listZernioHubProfiles");
+    expect(adapter).toContain("export async function readZernioHubProfile");
+    expect(adapter).toContain("HUB_PROFILE_ID_PATTERN");
+  });
+
+  it("disconnecting a platform-provided connection never revokes the shared hub provider profile", () => {
+    expect(endpoint).toContain(".select(\"id,status,provider_key,provider_profile_key,provided_by_platform\")");
+    const providedBranch = endpoint.indexOf("const isPlatformProvided");
+    const providerDelete = endpoint.indexOf("adapter.deleteProfile");
+    expect(providedBranch).toBeGreaterThan(-1);
+    expect(providerDelete).toBeGreaterThan(providedBranch);
+    expect(endpoint.indexOf("_disconnected_at", providedBranch)).toBeGreaterThan(providedBranch);
+  });
+
+  it("keeps per-workspace platform-channel grants service-role-only and empty by default", () => {
+    expect(platformMigration).toContain("create table if not exists public.paige_social_platform_grants");
+    expect(platformMigration).toContain("force row level security");
+    expect(platformMigration).toMatch(/revoke all on public\.paige_social_platform_grants\s+from public, anon, authenticated/);
+    expect(platformMigration).not.toMatch(/insert into public\.paige_social_platform_grants/);
   });
 
   it("recreates a provider profile only when reconnect readback proves it is missing", () => {

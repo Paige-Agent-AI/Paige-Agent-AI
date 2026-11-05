@@ -3,7 +3,7 @@ import { corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../_shared/capability-record.ts";
 import { buildSocialProfileKey, SOCIAL_OAUTH_PLATFORMS, SocialProviderError } from "../_shared/social-provider/mod.ts";
 import { governSocialMutation } from "../_shared/social-provider/governance.ts";
-import { zernioSocialAdapter } from "../_shared/social-provider/zernio.ts";
+import { zernioSocialAdapter, listZernioHubProfiles, readZernioHubProfile } from "../_shared/social-provider/zernio.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const RETURN_PATH = /^\/solo\/[A-Za-z0-9_-]+\/settings\/integrations\/?$/;
@@ -105,6 +105,7 @@ Deno.serve(async (req: Request) => {
     const capability = text(body.capability, 80);
     if (!fingerprint || !/^[0-9a-f]{16}$/.test(fingerprint) || ![
       "social_connection_start", "social_connection_disconnect", "social_account_select",
+      "social_connection_adopt",
     ].includes(capability ?? "")) {
       return jsonResponse({ ok: false, code: "SOCIAL_DECLINE_INVALID" }, 400);
     }
@@ -121,7 +122,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const govern = async (
-    capability: "social_connection_start" | "social_connection_disconnect" | "social_account_select",
+    capability: "social_connection_start" | "social_connection_disconnect" | "social_account_select" | "social_connection_adopt",
     args: Json,
     summary: string,
     availability: "needs_approval" | "needs_setup" | "unavailable" = "needs_approval",
@@ -287,6 +288,88 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  if (action === "hub_profiles") {
+    if (!isAdmin) return jsonResponse({ ok: false, code: "SOCIAL_HUB_FORBIDDEN" }, 403);
+    if (!adapter.isConfigured()) {
+      return jsonResponse({ ok: false, code: "capability_unavailable", message: "Social connection setup is not configured for this environment." }, 503);
+    }
+    // Read-only listing of the platform hub's non-tenant profiles for the adoption
+    // surface. Mutations stay governed; this read reveals only channels the provider
+    // readback already proves, mapped onto the customer catalogue vocabulary.
+    const hubs = await listZernioHubProfiles();
+    return jsonResponse({
+      ok: true,
+      hubs: hubs.map((hub) => ({
+        profileId: hub.profileId,
+        name: hub.name,
+        channels: hub.accounts.map((account) => ({
+          platform: account.platform,
+          handle: account.handle,
+          displayName: account.displayName,
+          status: account.status,
+          adoptable: (SOCIAL_OAUTH_PLATFORMS as readonly string[]).includes(account.platform),
+        })),
+      })),
+    });
+  }
+
+  if (action === "adopt") {
+    const profileId = text(body.profileId, 64);
+    const requestedPlatforms = Array.isArray(body.platforms)
+      ? [...new Set(body.platforms.filter((p): p is string => typeof p === "string" && SOCIAL_OAUTH_PLATFORMS.includes(p as typeof SOCIAL_OAUTH_PLATFORMS[number])))].slice(0, 10)
+      : [];
+    if (!profileId || !requestedPlatforms.length) {
+      return jsonResponse({ ok: false, code: "SOCIAL_REQUEST_INVALID" }, 400);
+    }
+    const configured = adapter.isConfigured();
+    const args: Json = { profileId, platforms: requestedPlatforms };
+    const result = await govern(
+      "social_connection_adopt",
+      args,
+      "Bring the platform hub's existing Social channels into this workspace as platform-provided connections. Nothing is published.",
+      configured ? "needs_approval" : "unavailable",
+    );
+    const early = governedResponse(result);
+    if (early || result.kind !== "execute") return early!;
+
+    const approvedProfileId = text(result.args.profileId, 64);
+    const approvedPlatforms = Array.isArray(result.args.platforms)
+      ? result.args.platforms.filter((p): p is string => typeof p === "string" && SOCIAL_OAUTH_PLATFORMS.includes(p as typeof SOCIAL_OAUTH_PLATFORMS[number]))
+      : [];
+    if (!approvedProfileId || !approvedPlatforms.length) {
+      return jsonResponse({ ok: false, code: "SOCIAL_APPROVAL_INVALID" }, 409);
+    }
+    // Provider readback is the only truth: a platform is adopted only when the hub
+    // readback actually holds a connected account for it.
+    const hub = await readZernioHubProfile(approvedProfileId);
+    const verified = hub.accounts.filter((account) => approvedPlatforms.includes(account.platform));
+    const skipped = approvedPlatforms.filter((p) => !verified.some((account) => account.platform === p));
+    if (!verified.length) return jsonResponse({ ok: false, code: "SOCIAL_ADOPT_NOTHING_VERIFIED", skipped }, 409);
+    const accountsJson = verified.map((account) => ({
+      platform: account.platform,
+      providerAccountId: account.providerAccountId,
+      handle: account.handle,
+      displayName: account.displayName,
+      avatarUrl: account.avatarUrl,
+      status: account.status,
+      capabilities: account.capabilities,
+    }));
+    const written = await admin.rpc("social_adopt_platform_channels", {
+      _tenant_id: tenantId, _actor_id: user.id, _confirmation_id: result.confirmationId,
+      _hub_profile_id: approvedProfileId, _accounts: accountsJson,
+    });
+    if (written.error || !object(written.data)) return jsonResponse({ ok: false, code: "SOCIAL_ADOPT_FAILED" }, 500);
+    const railRecorded = await record("social_connection_adopt", result.confirmationId, "capability_succeeded", {
+      hub_profile_id: approvedProfileId,
+      platforms: verified.map((account) => account.platform),
+      skipped,
+      budget: "no_paid_action",
+    });
+    return jsonResponse({
+      ok: true, state: "adopted", ...(written.data as Json), skipped, receipt_recorded: railRecorded,
+    });
+  }
+
   if (action === "select") {
     const connectionId = text(body.connection_id, 36);
     const accountId = text(body.account_id, 36);
@@ -319,7 +402,7 @@ Deno.serve(async (req: Request) => {
   if (action === "disconnect") {
     const connectionId = text(body.connection_id, 36);
     if (!connectionId || !UUID.test(connectionId)) return jsonResponse({ ok: false, code: "SOCIAL_REQUEST_INVALID" }, 400);
-    const existing = await admin.from("paige_social_connections").select("id,status,provider_key,provider_profile_key")
+    const existing = await admin.from("paige_social_connections").select("id,status,provider_key,provider_profile_key,provided_by_platform")
       .eq("tenant_id", tenantId).eq("id", connectionId).maybeSingle();
     const connection = object(existing.data);
     const available = !existing.error && connection && connection.provider_key === adapter.key && connection.status !== "disconnected";
@@ -333,6 +416,20 @@ Deno.serve(async (req: Request) => {
     if (early || result.kind !== "execute") return early!;
     if (!connection || typeof connection.provider_profile_key !== "string") {
       return jsonResponse({ ok: false, code: "SOCIAL_CONNECTION_NOT_FOUND" }, 404);
+    }
+    // A platform-provided connection shares the operator's hub profile: disconnecting
+    // removes this workspace's rows only — never the provider profile other workspaces use.
+    const isPlatformProvided = connection.provided_by_platform === true;
+    if (isPlatformProvided) {
+      const written0 = await admin.rpc("social_mark_connection_disconnected", {
+        _tenant_id: tenantId, _connection_id: connectionId, _actor_id: user.id,
+        _confirmation_id: result.confirmationId, _disconnected_at: new Date().toISOString(),
+      });
+      if (written0.error || !object(written0.data)) return jsonResponse({ ok: false, code: "SOCIAL_DISCONNECT_RECONCILIATION_REQUIRED" }, 500);
+      const rail0 = await record("social_connection_disconnect", result.confirmationId, "capability_succeeded", {
+        connection_id: connectionId, state: "disconnected", provided_by_platform: true, budget: "no_paid_action",
+      });
+      return jsonResponse({ ok: true, state: "disconnected", receipt_recorded: rail0 });
     }
     try {
       await adapter.deleteProfile({ providerProfileKey: connection.provider_profile_key });

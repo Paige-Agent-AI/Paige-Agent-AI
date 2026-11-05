@@ -220,6 +220,59 @@ function firstOf(payload: unknown, field: string): unknown {
   return undefined;
 }
 
+/** Operator-hub helpers — the ONLY code that may address a Zernio profile by the
+ *  provider's own id. Tenant-facing adapter methods keep addressing profiles by the
+ *  opaque ps_<hmac> key exclusively; PROFILE_KEY_PATTERN stays strict for tenants, and
+ *  profiles whose externalId IS a tenant key are never offered for adoption. */
+export type ZernioHubProfile = {
+  profileId: string;
+  name: string | null;
+  accounts: SocialProviderAccount[];
+};
+
+const HUB_PROFILE_ID_PATTERN = /^[A-Za-z0-9_-]{6,64}$/;
+
+function hubProfileRow(row: Record<string, unknown>): string | null {
+  const id = text(row._id ?? row.id, 200);
+  const externalId = text(row.externalId, 200);
+  // Tenant-owned profiles (externalId is a ps_ key) are excluded from hub surfaces.
+  if (!id || (externalId && PROFILE_KEY_PATTERN.test(externalId))) return null;
+  return id;
+}
+
+/** Lists the workspace's non-tenant Zernio profiles with their connected accounts. */
+export async function listZernioHubProfiles(): Promise<ZernioHubProfile[]> {
+  const rows = listOf(await request("/profiles?limit=100"));
+  const hubs: ZernioHubProfile[] = [];
+  for (const row of rows) {
+    const id = hubProfileRow(row);
+    if (!id) continue;
+    hubs.push({
+      profileId: id,
+      name: text(row.name, 160),
+      accounts: normalizeZernioAccounts(await request("/accounts?profileId=" + encodeURIComponent(id) + "&limit=100")),
+    });
+  }
+  return hubs;
+}
+
+/** Reads one hub profile by the provider's own id — adoption's readback truth. */
+export async function readZernioHubProfile(profileId: string): Promise<ZernioHubProfile> {
+  if (!HUB_PROFILE_ID_PATTERN.test(profileId)) {
+    throw new SocialProviderError("invalid_hub_profile", 400, "The hub profile identifier is invalid.");
+  }
+  const rows = listOf(await request("/profiles?limit=100"));
+  const match = rows.find((row) => hubProfileRow(row) === profileId);
+  if (!match) {
+    throw new SocialProviderError("provider_profile_not_found", 404, "The Social provider profile was not found.");
+  }
+  return {
+    profileId,
+    name: text(match.name, 160),
+    accounts: normalizeZernioAccounts(await request("/accounts?profileId=" + encodeURIComponent(profileId) + "&limit=100")),
+  };
+}
+
 export const zernioSocialAdapter: SocialProviderAdapter = {
   key: "zernio",
   isConfigured: () => Boolean(envKey("ZERNIO_API_KEY")),

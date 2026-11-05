@@ -41,13 +41,14 @@ SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: same.
 SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: same.
 SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: same.
 SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: same.
+UNVERIFIED: rendered capture and the owner's authenticated page drive are owed and named above (his dead HighLevel row reading "Setup not finished" on card, tile and drawer); the three-surface agreement itself is automated-test-covered.
 
 MUST_PRESERVE: statusChip's own vocabulary and tones for genuinely-finished rows ("Ready", "Needs attention", "Couldn't reach it", "Turned off" for a real disable) are byte-identical; the wall's "View incoming setup" case keeps precedence; every other surface behavior unchanged.
 ACCEPTANCE_CRITERIA: the owner's dead HighLevel row reads "Setup not finished" on its wall card, its catalogue tile and its drawer header — and nothing on the Integrations page says "Turned off" about a setup that never finished.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: NONE_AFFECTED: gateway writers, server guards, catalogue routing and forms are untouched; this delta is chip routing and copy only.
 
-INTERNAL_BUILD_IDENTITY: ad9be0a44 (exp10-tile-chip-truth changeset off origin/main b19e5d00e); deployment=vercel-preview-per-push; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp10-tile-chip-truth.md
+INTERNAL_BUILD_IDENTITY: ad9be0a4477861f874e882dec79c264e18c7c5dc (exp10-tile-chip-truth changeset off origin/main b19e5d00e); deployment=vercel-preview-per-push; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp10-tile-chip-truth.md
 RELEASE_CHANNEL: preview: unmerged branch; Vercel preview deploys per push only
 RELEASE_CLASSIFICATION: internal-only: status-label honesty on the authenticated Solo Integrations surface; no customer release identity until the owner's own page drive exercises it
 CUSTOMER_RELEASE_IDENTITY: none: internal-only

@@ -138,7 +138,9 @@ describe("Social authorization callback", () => {
   it("disconnecting a platform-provided connection never revokes the shared hub provider profile", () => {
     expect(endpoint).toContain(".select(\"id,status,provider_key,provider_profile_key,provided_by_platform\")");
     const providedBranch = endpoint.indexOf("const isPlatformProvided");
-    const providerDelete = endpoint.indexOf("adapter.deleteProfile");
+    // search from the guard forward: an unrelated deleteProfile exists earlier in the
+    // connect-error path, and the contract is that the DISCONNECT delete comes after the guard
+    const providerDelete = endpoint.indexOf("adapter.deleteProfile", providedBranch);
     expect(providedBranch).toBeGreaterThan(-1);
     expect(providerDelete).toBeGreaterThan(providedBranch);
     expect(endpoint.indexOf("_disconnected_at", providedBranch)).toBeGreaterThan(providedBranch);

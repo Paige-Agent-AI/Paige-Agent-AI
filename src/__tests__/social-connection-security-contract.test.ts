@@ -12,7 +12,6 @@ const platformMigration = read("supabase/migrations/20271131000001_social_platfo
 const adapter = read("supabase/functions/_shared/social-provider/zernio.ts");
 const hook = read("src/solo/data/useSocialConnections.ts");
 const drawer = read("src/solo/settings-integrations-social.tsx");
-const hook = read("src/solo/data/useSocialConnections.ts");
 const catalogue = read("src/solo/settings-integrations.tsx");
 
 describe("Social connection authority and tenant isolation", () => {

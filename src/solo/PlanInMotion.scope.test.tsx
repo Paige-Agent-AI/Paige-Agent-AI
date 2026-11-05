@@ -2,9 +2,13 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PlanInMotion } from "./PlanInMotion";
+import {MemoryRouter,Routes,Route} from "react-router-dom";
 
-const h = vi.hoisted(() => ({ actor: "test-owner", tenant: "test-tenant-a", ready: true, detail: vi.fn(), mutate: vi.fn(), source: vi.fn() }));
+const h = vi.hoisted(() => ({ actor: "test-owner", tenant: "test-tenant-a", ready: true, detail: vi.fn(), mutate: vi.fn(), source: vi.fn(), inspectTask: vi.fn(), submitTask: vi.fn(), listTasks: vi.fn(), people: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({supabase: {rpc: vi.fn()}}));
+vi.mock('./operations/useOperationsPeople',()=>({useOperationsPeople:()=>{h.people();return {members:[{user_id:h.actor,full_name:'Current owner',email:'owner@tests.invalid',status:'active'}],loading:false,error:null,refresh:vi.fn(),partial:false};}}));
+vi.mock('./mission-task-command',async()=>({...await vi.importActual('./mission-task-command'),inspectMissionTaskEffect:h.inspectTask,submitMissionTaskOperation:h.submitTask,listMissionTaskEffects:h.listTasks}));
+
 vi.mock('../../supabase/functions/_shared/knowledge-source-evidence', () => ({readKnowledgeSourceEvidence: h.source}));
 vi.mock("@/hooks/useTenantContext", () => ({ useOptionalTenantContext: () => ({ activeUserId: h.actor, activeTenantId: h.tenant, accountContextStatus: h.ready ? "ready" : "resolving", loading: !h.ready }) }));
 vi.mock("./MissionTargetsPanel", () => ({ MissionTargetsPanel: () => <div>Existing target reader</div> }));
@@ -15,7 +19,7 @@ let host: HTMLDivElement, root: Root;
 const render = async (workspace = h.tenant) => { await act(async () => { root.render(<PlanInMotion workspaceId={workspace} />); }); };
 const open = async () => { await act(async () => host.querySelector<HTMLButtonElement>(".pim-card")!.click()); };
 const detail = (title: string) => ({ mission: { id: "play", title, state: "active", revision: 1 }, brief: { desired_outcome: "Private owner direction", constraints: [], assumptions: [], missing_information: [] } });
-beforeEach(() => { h.actor = "test-owner"; h.tenant = "test-tenant-a"; h.ready = true; h.detail.mockReset(); h.mutate.mockReset(); h.source.mockReset(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
+beforeEach(() => { h.actor = "test-owner"; h.tenant = "test-tenant-a"; h.ready = true; h.detail.mockReset(); h.mutate.mockReset(); h.source.mockReset(); h.inspectTask.mockReset(); h.submitTask.mockReset(); h.listTasks.mockReset(); h.people.mockClear(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 it("retires a private drawer immediately on workspace/actor or unresolved-account change", async () => {
   h.detail.mockResolvedValue(detail("Private Play A")); await render(); await open();
@@ -158,4 +162,112 @@ it('explicitly removes withheld document steps without exposing their former sou
   await act(async()=>button('Save revision').click());
   expect(h.mutate.mock.calls[0][1]).toHaveProperty('document_work_intent',null);
   expect(h.source).not.toHaveBeenCalled();
+});
+
+it('reviews a saved source step and creates only through the original Task door after exact approval',async()=>{
+ h.tenant='11111111-1111-4111-8111-111111111111';h.actor='55555555-5555-4555-8555-555555555555';
+ const record=documentPlan();record.mission.id='66666666-6666-4666-8666-666666666666';h.detail.mockResolvedValue(record);
+ h.inspectTask.mockResolvedValue({kind:'not_created'});
+ await render();await open();expect(button('Review task')).toBeDefined();
+ await act(async()=>button('Review task').click());
+ expect(h.inspectTask).toHaveBeenCalledOnce();expect(h.submitTask).not.toHaveBeenCalled();
+ expect(host.textContent).toContain('Assigned to: Current owner (you)');expect(host.textContent).toContain('The task will have no due date.');
+ h.submitTask.mockResolvedValueOnce({kind:'approval',fingerprint:'exact-native-fingerprint',summary:'Create this reviewed task.'});
+ await act(async()=>button('Create task').click());
+ const op=h.submitTask.mock.calls[0][0];expect(op.command.patch).toMatchObject({title:'Hold kickoff',assignee_user_id:h.actor,due_date:null,
+  metadata:{mission_source_v1:{missionId:record.mission.id,missionRevision:4,briefVersion:3,stepId:record.brief.document_work_intent.steps[0].id}}});
+ expect(button('Approve task')).toBeDefined();
+ h.submitTask.mockResolvedValueOnce({kind:'acknowledged'});h.inspectTask.mockResolvedValueOnce({kind:'available',task:{id:'77777777-7777-4777-8777-777777777777',title:'Hold kickoff',status:'pending'},origin:{missionRevision:4,briefVersion:3,intentSha256:'a'.repeat(64)},receipt:{correlation_id:'88888888-8888-4888-8888-888888888888'}});
+ await act(async()=>button('Approve task').click());
+ expect(h.submitTask).toHaveBeenLastCalledWith(op,'exact-native-fingerprint');expect(h.inspectTask).toHaveBeenCalledTimes(2);
+ expect(host.textContent).toContain('Saved task');expect(host.textContent).toContain('Original receipt: 88888888');expect(h.mutate).not.toHaveBeenCalled();
+});
+
+function taskPlan(){
+ h.tenant='11111111-1111-4111-8111-111111111111';h.actor='55555555-5555-4555-8555-555555555555';
+ const record=documentPlan();record.mission.id='66666666-6666-4666-8666-666666666666';h.detail.mockResolvedValue(record);return record;
+}
+it('inspects a lost Task response without replay and masks a late A-B-A result',async()=>{
+ taskPlan();h.inspectTask.mockResolvedValueOnce({kind:'not_created'});h.submitTask.mockResolvedValue({kind:'uncertain',message:'Original effect is unknown.'});
+ await render();await open();await act(async()=>button('Review task').click());await act(async()=>button('Create task').click());
+ expect(host.textContent).toContain('Original effect is unknown.');expect(h.submitTask).toHaveBeenCalledOnce();
+ let late!:(result:unknown)=>void;h.inspectTask.mockImplementationOnce(()=>new Promise(done=>{late=done;}));
+ await act(async()=>button('Check original task').click());expect(h.submitTask).toHaveBeenCalledOnce();
+ const original=h.tenant;h.tenant='44444444-4444-4444-8444-444444444444';await render();h.tenant=original;await render();await open();
+ await act(async()=>late({kind:'available',task:{id:'77777777-7777-4777-8777-777777777777',title:'Late private Task',status:'pending'},origin:{missionRevision:4,briefVersion:3,intentSha256:'a'.repeat(64)},receipt:{correlation_id:'88888888-8888-4888-8888-888888888888'}}));
+ expect(host.textContent).not.toContain('Late private Task');expect(h.submitTask).toHaveBeenCalledOnce();
+});
+it('reopens the original Task through the canonical route and preserves older creating provenance',async()=>{
+ const record=taskPlan();h.inspectTask.mockResolvedValue({kind:'available',task:{id:'77777777-7777-4777-8777-777777777777',title:'Original saved Task',status:'in_progress'},origin:{missionRevision:2,briefVersion:1,intentSha256:'b'.repeat(64)},receipt:{correlation_id:'88888888-8888-4888-8888-888888888888'}});
+ await act(async()=>root.render(<MemoryRouter initialEntries={['/solo/9000001/command-center']}><Routes><Route path="/solo/:account/*" element={<PlanInMotion workspaceId={h.tenant}/>}/></Routes></MemoryRouter>));
+ await open();await act(async()=>button('Review task').click());
+ expect(host.textContent).toContain('Original saved Task');expect(host.textContent).toContain('earlier approved plan version');
+ expect(host.querySelector<HTMLAnchorElement>('a[href*="77777777"]')?.getAttribute('href')).toContain('/solo/9000001/');
+ expect(host.querySelector<HTMLAnchorElement>('a[href*="77777777"]')?.textContent).toBe('Open task');
+ expect(h.submitTask).not.toHaveBeenCalled();expect(h.detail).toHaveBeenCalled();expect(record.mission.revision).toBe(4);
+});
+it('does not create from an unsaved editor, an inactive plan or a deleted historical effect',async()=>{
+ const record=taskPlan();h.inspectTask.mockResolvedValueOnce({kind:'historical_unavailable'});
+ await render();await open();await act(async()=>button('Review task').click());
+ expect(host.textContent).toContain('Another task will not be created');expect(button('Create task')).toBeUndefined();
+ await act(async()=>button('Close task review').click());await act(async()=>button('Revise').click());
+ expect(button('Review task')).toBeUndefined();expect(h.submitTask).not.toHaveBeenCalled();
+ await act(async()=>host.querySelector<HTMLButtonElement>('button[aria-label="Close"]')!.click());
+ h.detail.mockResolvedValue({...record,mission:{...record.mission,state:'paused'}});await open();h.inspectTask.mockResolvedValue({kind:'not_created'});
+ await act(async()=>button('Review task').click());expect(button('Create task').disabled).toBe(true);expect(h.submitTask).not.toHaveBeenCalled();
+});
+
+it('recovers original Task links after source redaction on a cold plan reopen without exposing source or requesting creation',async()=>{
+ const record=taskPlan();h.detail.mockResolvedValue({...record,brief:{...record.brief,document_work_intent:null,document_work_intent_status:'source_changed'}});
+ h.listTasks.mockResolvedValue({kind:'page',records:[{stepId:'33333333-3333-4333-8333-333333333333',inspection:{kind:'available',task:{id:'77777777-7777-4777-8777-777777777777',title:'Permitted original Task',status:'pending'},origin:{missionRevision:4,briefVersion:3,intentSha256:'a'.repeat(64)},receipt:{correlation_id:'88888888-8888-4888-8888-888888888888'}}}],nextOffset:null});
+ await act(async()=>root.render(<MemoryRouter initialEntries={['/solo/9000001/command-center']}><Routes><Route path="/solo/:account/*" element={<PlanInMotion workspaceId={h.tenant}/>}/></Routes></MemoryRouter>));await open();
+ expect(button('Find saved tasks')).toBeDefined();await act(async()=>button('Find saved tasks').click());
+ expect(h.listTasks).toHaveBeenCalledExactlyOnceWith(h.actor,h.tenant,record.mission.id,0);
+ expect(host.textContent).toContain('Permitted original Task');expect(host.querySelector('a[href*="77777777"]')).not.toBeNull();
+ expect(host.textContent).not.toContain('PRIVATE_QUOTATION');expect(host.textContent).not.toContain('Synthetic engagement');expect(h.submitTask).not.toHaveBeenCalled();expect(h.inspectTask).not.toHaveBeenCalled();
+});
+
+it('clears saved Task rows on revoked recovery and discards late recovery across workspace A-B-A',async()=>{
+ const record=taskPlan();h.detail.mockResolvedValue({...record,brief:{...record.brief,document_work_intent:null,document_work_intent_status:'source_unavailable'}});
+ const row={stepId:'33333333-3333-4333-8333-333333333333',inspection:{kind:'available',task:{id:'77777777-7777-4777-8777-777777777777',title:'Recovered private work',status:'pending'},origin:{missionRevision:4,briefVersion:3,intentSha256:'a'.repeat(64)},receipt:{correlation_id:'88888888-8888-4888-8888-888888888888'}}};
+ h.listTasks.mockResolvedValueOnce({kind:'page',records:[row],nextOffset:20});await render();await open();await act(async()=>button('Find saved tasks').click());
+ expect(host.textContent).toContain('Recovered private work');h.listTasks.mockResolvedValueOnce({kind:'unavailable',message:'Current access was revoked'});await act(async()=>button('Load more saved tasks').click());
+ expect(h.listTasks).toHaveBeenLastCalledWith(h.actor,h.tenant,record.mission.id,20);expect(host.textContent).not.toContain('Recovered private work');expect(host.textContent).toContain('Current access was revoked');
+ let late!:(value:unknown)=>void;h.listTasks.mockImplementationOnce(()=>new Promise(done=>{late=done;}));await act(async()=>button('Find saved tasks').click());
+ const original=h.tenant;h.tenant='44444444-4444-4444-8444-444444444444';await render();h.tenant=original;await render();await open();
+ await act(async()=>late({kind:'page',records:[row],nextOffset:null}));expect(host.textContent).not.toContain('Recovered private work');expect(h.submitTask).not.toHaveBeenCalled();
+});
+
+it('keeps keyboard focus in the inline Task review and returns it to the step',async()=>{
+ taskPlan();h.inspectTask.mockResolvedValue({kind:'not_created'});await render();await open();await act(async()=>button('Review task').click());
+ const group=host.querySelector('[aria-label^="Task for "]');expect(group).not.toBeNull();expect(document.activeElement).toBe(group);
+ await act(async()=>button('Close task review').click());expect(document.activeElement).toBe(button('Review task'));
+});
+
+it('finds historical Tasks for removed stable steps while a newer valid plan intent remains',async()=>{
+ const record=taskPlan();h.listTasks.mockResolvedValue({kind:'page',records:[{stepId:'99999999-9999-4999-8999-999999999999',inspection:{kind:'available',task:{id:'77777777-7777-4777-8777-777777777777',title:'Earlier approved work',status:'in_progress'},origin:{missionRevision:2,briefVersion:1,intentSha256:'b'.repeat(64)},receipt:{correlation_id:'88888888-8888-4888-8888-888888888888'}}}],nextOffset:null});
+ await act(async()=>root.render(<MemoryRouter initialEntries={['/solo/9000001/command-center']}><Routes><Route path="/solo/:account/*" element={<PlanInMotion workspaceId={h.tenant}/>}/></Routes></MemoryRouter>));await open();
+ expect(record.brief.document_work_intent).not.toBeNull();expect(button('Find saved tasks')).toBeDefined();await act(async()=>button('Find saved tasks').click());
+ expect(host.textContent).toContain('Earlier approved work');expect(host.querySelector('a[href*="77777777"]')).not.toBeNull();expect(button('Review task')).toBeDefined();expect(h.submitTask).not.toHaveBeenCalled();
+});
+
+
+it('keeps a source-free original plan independent of Team and Task reads',async()=>{
+ const record=documentPlan();h.detail.mockResolvedValue({...record,brief:{...record.brief,version:1,document_work_intent:null,document_work_intent_status:'none'}});
+ await render();await open();expect(host.textContent).toContain('Engagement plan');
+ expect(h.people).not.toHaveBeenCalled();expect(h.listTasks).not.toHaveBeenCalled();expect(h.inspectTask).not.toHaveBeenCalled();expect(h.submitTask).not.toHaveBeenCalled();
+ expect(button('Find saved tasks')).toBeUndefined();
+});
+it('discovers original task history without a Team dependency when sources are withheld or removed',async()=>{
+ const record=documentPlan();h.listTasks.mockResolvedValue({kind:'page',records:[],nextOffset:null});
+ for(const status of ['source_changed','source_unavailable','none']){
+  h.detail.mockResolvedValue({...record,brief:{...record.brief,document_work_intent:null,document_work_intent_status:status}});
+  await render();await open();expect(h.people).not.toHaveBeenCalled();expect(button('Find saved tasks')).toBeDefined();
+  await act(async()=>button('Find saved tasks').click());expect(host.textContent).toContain('No task results are recorded for this plan.');
+  await act(async()=>host.querySelector<HTMLButtonElement>('button[aria-label="Close"]')!.click());
+ }
+ expect(h.listTasks).toHaveBeenCalledTimes(3);expect(h.submitTask).not.toHaveBeenCalled();
+});
+it('still obtains the original current Team roster for source-backed task review',async()=>{
+ taskPlan();await render();await open();expect(h.people).toHaveBeenCalled();expect(h.submitTask).not.toHaveBeenCalled();
 });

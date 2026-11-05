@@ -1,4 +1,4 @@
-import {useId, useLayoutEffect, useRef, useState} from 'react';
+import {useId, useLayoutEffect, useRef, useState,type ReactNode} from 'react';
 import {useParams} from 'react-router-dom';
 import {supabase} from '@/integrations/supabase/client';
 import {useOptionalTenantContext} from '@/hooks/useTenantContext';
@@ -13,12 +13,13 @@ type Props = {
   status?: 'none' | 'available' | 'source_changed' | 'source_unavailable';
   onChange?: (value: DocumentWorkIntent | null) => void;
   disabled?: boolean;
+  renderTask?: (step:DocumentWorkStep)=>ReactNode;
 };
 type Quotation = {phase: 'loading' | 'available' | 'unavailable'; text?: string[]};
 const caller = supabase as unknown as ExtractionRpc;
 
 /** Edits the original immutable brief's draft data; creates no work or approval. */
-export function MissionDocumentSteps({tenantId, value, status, onChange, disabled}: Props) {
+export function MissionDocumentSteps({tenantId, value, status, onChange, disabled, renderTask}: Props) {
   const {account} = useParams<{account: string}>();
   const identity = useOptionalTenantContext();
   const id = useId();
@@ -123,6 +124,7 @@ export function MissionDocumentSteps({tenantId, value, status, onChange, disable
           <p className="text-sm">Responsible: {step.responsible.kind === 'specialist' ? `${step.responsible.alias} (proposed handoff)` : step.responsible.kind === 'person' ? step.responsible.userId === identity?.activeUserId ? 'Me' : 'Proposed person' : 'Not assigned'}</p>
           <p className="text-sm break-words">Sources: {step.sourceIds.map(sourceId => value.sources.find(source => source.reference.documentId === sourceId)?.title).filter(Boolean).join(', ') || 'No source cited'}</p>
           {step.dependencies.length > 0 && <p className="text-sm break-words">Depends on: {step.dependencies.map(dependency => value.steps.find(other => other.id === dependency)?.title).filter(Boolean).join(', ')}</p>}
+          {renderTask?.(step)}
         </div>}
       </li>)}
     </ol>

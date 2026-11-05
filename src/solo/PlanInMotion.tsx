@@ -8,6 +8,7 @@ import { useBusinessGamePlanMissions, type StrategicPlay } from "./data/useBusin
 import { MissionTargetsPanel } from "./MissionTargetsPanel";
 import { useOptionalTenantContext } from "@/hooks/useTenantContext";
 import { MissionDocumentSteps } from './MissionDocumentSteps';
+import {MissionDocumentTasks} from './MissionDocumentTasks';
 import { normalizeDocumentWorkIntent } from '../../supabase/functions/_shared/business-mission-document-intent';
 
 type Props = { workspaceId?: string | null; openPaige?: () => void; onNotice?: (message: string) => void;
@@ -402,7 +403,9 @@ function PlayDetail({ workspaceId, detail, pending, setPending, reason, setReaso
     <div className="pim-detail-stage">{proposed && detail.mission.request_source === "paige_chat" ? "Awaiting owner approval" : state === "stopped" ? "Archived" : state === "completed" ? "Complete" : state[0].toUpperCase() + state.slice(1)} - revision {detail.mission.revision}</div>
     <MissionTargetsPanel workspaceId={workspaceId} mission={detail.mission} />
     <Fact label="Desired outcome" value={detail.brief.desired_outcome} /><Fact label="Horizon" value={detail.brief.deadline_on || "Open horizon"} /><Fact label="Starting point" value={detail.brief.baseline} /><Fact label="Approach" value={detail.brief.strategy} /><Fact label="Success criteria" value={detail.brief.success_definition} /><Fact label="Next meaningful step" value={detail.mission.next_action || "Not set"} /><Fact label="Next owner" value="Owner" />
-    <MissionDocumentSteps tenantId={workspaceId} value={detail.brief.document_work_intent} status={detail.brief.document_work_intent_status} disabled={busy}/>
+    <MissionDocumentTasks tenantId={workspaceId} detail={detail} disabled={busy}>{renderTask=>
+      <MissionDocumentSteps tenantId={workspaceId} value={detail.brief.document_work_intent} status={detail.brief.document_work_intent_status} disabled={busy} renderTask={renderTask}/>
+    }</MissionDocumentTasks>
     {state === "blocked" && detail.mission.state_reason && <div className="pim-blocker"><AlertTriangle />{detail.mission.state_reason}</div>}
     {(state === "completed" || state === "stopped") && detail.mission.outcome_summary && <Fact label="Recorded outcome" value={detail.mission.outcome_summary} />}
     <div className="ov-note"><Info /><span>Source: canonical Business Game Plan record, revision {detail.mission.revision}. Mind and durable Memory are unavailable for this play.</span></div>

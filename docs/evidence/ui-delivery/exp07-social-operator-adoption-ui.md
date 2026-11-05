@@ -19,7 +19,7 @@ STATE_COVERAGE: PASS: Hub read failure (role=alert + retry via Check again), emp
 TRUTHFUL_STATE_LABELS: PASS: Only provider-readback-verified channels are offered; non-adoptable hub channels are never shown as available; adopted rows carry the platform-connection label in the drawer.
 SOLO_UI: YES: Settings -> Integrations inside the Solo shell gains the admin-only SocialHubPanel (hub channel listing + one-approval adoption with inline Approve/Decline) and the Social drawer's platform-connection labels.
 UNVERIFIED: Production deploy of the frontend (Vercel on merge), the owner's first governed adoption, and a rendered screenshot pass remain open; nothing here is inferred as done.
-INTERNAL_BUILD_IDENTITY: __CODE_SHA__; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record plus ANT-162 records 564343f2 and 64e46939
+INTERNAL_BUILD_IDENTITY: 388132b295112fb9eb57b1cb1898d9520e725c54; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record plus ANT-162 records 564343f2 and 64e46939
 RELEASE_CHANNEL: development: Owner-green-lit final slice of the evening ("let's make this live"); exact-head checks and authorized release remain required.
 RELEASE_CLASSIFICATION: PATCH: New governed surface on the existing Social seam; additive only, no removals.
 CUSTOMER_RELEASE_IDENTITY: none: Operator-facing capability; the customer-visible experience follows the owner's walkthrough.

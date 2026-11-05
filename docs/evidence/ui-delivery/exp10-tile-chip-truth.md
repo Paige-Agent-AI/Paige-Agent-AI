@@ -37,6 +37,10 @@ SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: no rendering structure changes; the 
 SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: same.
 SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: same.
 SOLO_1366X768_PAIGE_OPEN: NOT_APPLICABLE: same.
+SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: same.
+SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: same.
+SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: same.
+SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: same.
 
 MUST_PRESERVE: statusChip's own vocabulary and tones for genuinely-finished rows ("Ready", "Needs attention", "Couldn't reach it", "Turned off" for a real disable) are byte-identical; the wall's "View incoming setup" case keeps precedence; every other surface behavior unchanged.
 ACCEPTANCE_CRITERIA: the owner's dead HighLevel row reads "Setup not finished" on its wall card, its catalogue tile and its drawer header — and nothing on the Integrations page says "Turned off" about a setup that never finished.

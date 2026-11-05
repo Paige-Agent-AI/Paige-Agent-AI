@@ -26,8 +26,12 @@
 //
 // HONEST DEGRADE (§13). A tool whose approval fails (transient RPC error, pin raced by a re-key)
 // is reported in `failed` and left unapproved — the connection's health result is NOT degraded by
-// it, the next check retries, and the chat names unapproved tools to the operator exactly as it
-// already does. Failures never abort the loop: one bad tool cannot block consent for the rest.
+// it and the next check retries. Failures never abort the loop: one bad tool cannot block consent
+// for the rest. ONE class can never converge by retry: a tool whose NAME cannot be safely
+// recorded (outside the writer's tool-name contract — the hostile-injection class) is refused
+// deterministically every check and surfaces only as the permanent failed count; the chat's tool
+// summary drops such names, so it can never name them either (§13 keeps the raw name unpersisted
+// here too).
 
 import { runApprove, type ApproveDeps } from "./approve.ts";
 
@@ -58,7 +62,7 @@ export function selectConnectConsentTools(
 }
 
 /**
- * Approve every effect-gated discovered tool for one connection, as the connecting operator.
+ * Approve every discovered tool for one connection, as the connecting operator.
  * Idempotent: re-running against already-approved tools refreshes them through the writer (and
  * converges legacy windowed approvals to permanent connect-consent). Never throws through — a
  * per-tool failure is collected, not raised, so verify's own result stands.

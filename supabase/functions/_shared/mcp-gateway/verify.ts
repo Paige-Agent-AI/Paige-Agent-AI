@@ -279,8 +279,9 @@ export async function runVerify(deps: VerifyDeps, input: VerifyInput): Promise<V
   // approval through the same per-tool authority path the drawer's Approve button used. Reached
   // ONLY after the probe write applied — a failed intake or a re-key race returned above, so
   // consent never attaches to a catalog this verify did not just persist. Per-tool failures are
-  // reported in the body, never fatal: the connection stands, the chat names what is still
-  // unapproved, and the next check retries (idempotent refresh).
+  // reported in the body, never fatal: the connection stands, transient failures retry on the
+  // next check, and the one permanent class (an unrecordable tool NAME) surfaces only as the
+  // failed count — see auto-approve.ts's honest-degrade note.
   let consent: AutoApproveOutcome | null = null;
   if (intake.ok) {
     consent = await (deps.autoApprove ?? autoApproveDiscoveredTools)(

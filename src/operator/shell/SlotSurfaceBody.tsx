@@ -263,7 +263,7 @@ export default function SlotSurfaceBody({ slot, view }: { slot: OperatorSlot; vi
           />
         )}
         {bespoke === "IntegrationsSurface" && (
-          <IntegrationsSurface onOpen={() => summonNotWired("The vendor panel")()} />
+          <IntegrationsSurface />
         )}
       </Suspense>
     );

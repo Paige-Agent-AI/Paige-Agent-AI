@@ -328,6 +328,9 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({
       ok: true,
       channels: conns.map((row) => ({
+        // id rides along so the operator's card drawer can target THIS connection
+        // for a governed disconnect; it is the row key, never a credential.
+        id: row.id,
         platform: row.requested_platform,
         label: row.label,
         status: row.status,

@@ -11,7 +11,7 @@ const migration = read("supabase/migrations/20270127000000_social_connection_lif
 const platformMigration = read("supabase/migrations/20271131000001_social_platform_connections.sql");
 const adapter = read("supabase/functions/_shared/social-provider/zernio.ts");
 const integrationsSurface = read("src/operator/surfaces/IntegrationsSurface.tsx");
-const operatorHubSurface = read("src/operator/surfaces/SocialHubSurface.tsx");
+const operatorSocialDoor = read("src/operator/surfaces/OperatorSocialDoor.tsx");
 const hook = read("src/solo/data/useSocialConnections.ts");
 const drawer = read("src/solo/settings-integrations-social.tsx");
 const catalogue = read("src/solo/settings-integrations.tsx");
@@ -173,13 +173,28 @@ describe("Social authorization callback", () => {
     expect(endpoint).not.toMatch(/body??.(tenant|workspace)/);
   });
 
-  it("mounts the Social hub adoption surface on the Platform console Integrations grid", () => {
-    expect(integrationsSurface).toContain('import SocialHubSurface from "./SocialHubSurface"');
-    expect(integrationsSurface).toContain("<SocialHubSurface />");
-    expect(operatorHubSurface).toContain("Confirm this Social change · Approve once");
-    expect(operatorHubSurface).toContain('action: "hub_profiles"');
-    expect(operatorHubSurface).toContain('action: "adopt"');
-    expect(operatorHubSurface).toContain("approval_fingerprint");
+  it("mounts the governed Social door on the Solo-shell Integrations surface — and no grant apparatus anywhere", () => {
+    // Owner ruling 2026-11-05: the Operator Integrations page IS the Solo shell page
+    // (same markup, same stylesheet); the Social cards open ONE drawer whose every
+    // act runs through the governed approval. The retired hub card's capability —
+    // adopting a channel the platform already holds — lives on inside that drawer.
+    expect(integrationsSurface).toContain('from "./OperatorSocialDoor"');
+    expect(integrationsSurface).toContain("<OperatorSocialDrawer");
+    expect(integrationsSurface).toContain("same fixed options");
+    expect(operatorSocialDoor).toContain('action: "channels"');
+    expect(operatorSocialDoor).toContain('action: "hub_profiles"');
+    expect(operatorSocialDoor).toContain('action: "adopt"');
+    expect(operatorSocialDoor).toContain('action: "start"');
+    expect(operatorSocialDoor).toContain('action: "disconnect"');
+    expect(operatorSocialDoor).toContain("approval_fingerprint");
+    expect(operatorSocialDoor).toContain("Approve once");
+    // "There should be no reason that I need to approve any of the Solo account":
+    // per-workspace social grants are gone from the UI, and nothing may reintroduce
+    // them on an operator surface.
+    for (const source of [integrationsSurface, operatorSocialDoor]) {
+      expect(source).not.toMatch(/social_platform_grant/);
+      expect(source).not.toContain("Which workspaces may use which company channels");
+    }
   });
 
   it("keeps per-workspace platform-channel grants service-role-only and empty by default", () => {

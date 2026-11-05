@@ -2,81 +2,89 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import ComposeOutbound, { CHANNELS } from "./ComposeOutbound";
-import IntegrationsSurface, { INTEGRATIONS, INT_KINDS, PLATFORM_SHELF, TYPE_TABS } from "./IntegrationsSurface";
+import IntegrationsSurface from "./IntegrationsSurface";
+import { SOCIAL_PLATFORMS } from "../../solo/social-platform-catalog";
 
 /**
  * The failure these assertions exist to stop is the one this console has already shipped twice:
  * a surface that typechecks, lints, resolves a route and renders NOTHING a human can read.
  * Counting exports proves the module is addressed; only rendered CONTENT proves the port.
  *
- * The Integrations surface was redesigned under the owner's explicit 2026-11-05 approval
- * (mockup po-integrations-redesign.html — "Yes this is perfect"): type sub-tabs with Social
- * first, honest state chips (Live / Needs attention / Not switched on / Locked · consult CSM),
- * the platform's own hosting shelf, and the WHITE-LABEL rule — the social provider behind the
- * platform's channels is never named in the UI. The pack's drawn Directory surface (bands,
- * kinds, search, foot) ports whole inside the Directory tab, so its copy stays asserted here.
+ * The Integrations surface is the SOLO SHELL page carrying the platform's own connections
+ * (owner ruling 2026-11-05, mockup po-integrations-solo-shell.html: "make the Platform
+ * Operator account Integrations look just like the Solo Shell account"): the Solo page's
+ * count chips, section headings with their one-line descriptions, and brand-tile cards —
+ * the SAME fixed options every Solo account sees. The per-workspace grants matrix is
+ * deleted, not hidden ("There should be no reason that I need to approve any of the Solo
+ * account"), and the social provider behind the platform's channels is never named.
+ *
+ * renderToStaticMarkup runs no effects, so the Social door is still reading on first
+ * paint: cards assert nothing ("Checking connection…") — which is itself the doctrine
+ * under test.
  */
 
-describe("Integrations — owner-approved type-tab redesign (mockup po-integrations-redesign)", () => {
-  it("opens on Social with the live platform channel home and never names the social provider", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface />);
-    for (const t of TYPE_TABS) expect(html, `missing tab: ${t}`).toContain(t.replace(/&/g, "&amp;"));
-    expect(html).toContain("Company channels");
-    expect(html).toContain("Which workspaces may use which company channels");
-    expect(html).toContain("Channels connected in the platform hub");
-    expect(html).toContain("a connection grants reach, never authority");
-    // WHITE-LABEL (owner 2026-11-05): the provider behind the channels gets no surface branding.
-    expect(html).not.toMatch(/zernio/i);
+describe("Integrations — the Solo Shell layout carrying the platform's own connections", () => {
+  const html = renderToStaticMarkup(<IntegrationsSurface />);
+
+  it("opens as the Solo page: one Integrations tab, count chips that agree with the wall below", () => {
+    expect(html).toContain("Integrations");
+    // The chip ladder and its counts are computed from the same tiles the wall renders.
+    for (const [label, count] of [
+      ["All", "22"], ["Automation", "2"], ["Team chat", "2"], ["Social", "11"],
+      ["Finance", "4"], ["Documents", "1"], ["Client data", "1"], ["Developer", "1"],
+    ] as const) {
+      expect(html, `missing chip: ${label}`).toContain(`>${label}<em>${count}</em>`);
+    }
   });
 
-  it("carries every catalogue vendor into the Directory with the pack's drawn surface whole", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface initialTab="Directory" />);
-    const every = [...INTEGRATIONS, PLATFORM_SHELF];
-    const total = every.reduce((n, sh) => n + sh.items.length, 0);
-    expect(html).toContain(`Search ${total} integrations`);
-    for (const sh of every) {
-      expect(html, `missing shelf: ${sh.cat}`).toContain(sh.cat);
-      for (const it of sh.items) {
-        // `renderToStaticMarkup` escapes `&`, so compare against the escaped form.
-        expect(html, `missing vendor: ${it.name}`).toContain(it.name.replace(/&/g, "&amp;"));
-      }
+  it("carries the same fixed options every Solo account sees, in the Solo group vocabulary", () => {
+    for (const platform of SOCIAL_PLATFORMS) {
+      expect(html, `missing social card: ${platform.name}`).toContain(platform.name);
     }
-    for (const s of [
-      "State",
-      "Consequence",
-      "Implemented adapters",
-      "Catalogue readiness; access unverified",
-      "Blocking",
-      "A built surface is dark",
-      "Nice to have",
-      "Blocks nothing we built",
+    for (const row of [
+      "n8n", "Zapier", "Slack", "Microsoft Teams", "Stripe Connect", "PayPal",
+      "QuickBooks", "Plaid", "DocuSign", "Apollo", "Webhooks &amp; direct API",
     ]) {
-      expect(html, `missing band copy: ${s}`).toContain(s);
+      expect(html, `missing provider card: ${row}`).toContain(row);
     }
-    for (const k of Object.keys(INT_KINDS)) expect(html, `missing kind: ${k}`).toContain(k);
-    expect(html).toContain("Blocking is the one that ranks the list");
+    for (const blurb of [
+      "Run workflows and reach other apps.",
+      "Workplace chat and channels.",
+      "Post, schedule and read.",
+      "Invoices, payments and books.",
+      "Send, sign and track.",
+      "Find and enrich contacts.",
+      "Wire it up yourself.",
+    ]) {
+      expect(html, `missing group blurb: ${blurb}`).toContain(blurb);
+    }
   });
 
-  it("renders the typed tabs with honest state chips and the platform's own hosting shelf", () => {
-    const payments = renderToStaticMarkup(<IntegrationsSurface initialTab="Payments" />);
-    expect(payments).toContain("Stripe");
-    expect(payments).toContain("Not switched on");
-    const web = renderToStaticMarkup(<IntegrationsSurface initialTab="Web & Hosting" />);
-    for (const host of ["Vercel", "Cloudflare", "Supabase"]) expect(web, `missing host: ${host}`).toContain(host);
-    expect(web.match(/>Live</g) ?? []).toHaveLength(3);
-    const auto = renderToStaticMarkup(<IntegrationsSurface initialTab="Automations" />);
-    expect(auto).toContain("HighLevel");
-    expect(auto).toContain("Locked · consult CSM");
+  it("states the platform-only truth on the Social section and honest states on every card", () => {
+    expect(html).toContain("These connections belong to the platform itself.");
+    expect(html).toContain("every account in Paige gets the same fixed options");
+    // First paint: the door is still reading, so cards assert nothing…
+    expect((html.match(/Checking connection…/g) ?? []).length).toBe(10);
+    // …except the one platform whose OAuth is provider-side unavailable, pinned by the catalogue.
+    expect(html).toContain("OAuth unavailable");
+    // No platform-level seam exists behind the non-social providers yet — said plainly.
+    expect((html.match(/>Not available</g) ?? []).length).toBe(11);
   });
 
-  it("keeps the live-read override and says what is there when a typed tab matches nothing", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface initialTab="Directory" connectionStates={{ Stripe: "live" }} />);
-    // Stripe is `planned` in the catalogue and carries a `blocks` line; a live read retires it.
-    expect(html).not.toContain("Dark without it: tenant subscription billing");
-    expect(html).toContain("1 reported connected");
-    expect(html).toContain("catalogue-only implemented");
-    const empty = renderToStaticMarkup(<IntegrationsSurface shelves={[]} initialTab="Payments" />);
-    expect(empty).toContain("Nothing sits under Payments yet.");
+  it("has no approvals apparatus and no retired chrome anywhere on the page", () => {
+    expect(html).not.toContain("Which workspaces may use which company channels");
+    expect(html).not.toContain("Grant");
+    expect(html).not.toContain("Revoke");
+    expect(html).not.toContain("Company channels");
+    expect(html).not.toContain("Load channels");
+    expect(html).not.toContain("Load workspaces");
+    expect(html).not.toContain("Social hub");
+    expect(html).not.toContain("Browse directory");
+    // The six typed tabs of the superseded redesign are gone with it.
+    expect(html).not.toContain("Email &amp; Messaging");
+    expect(html).not.toContain("Web &amp; Hosting");
+    // WHITE-LABEL (owner, 2026-11-05): the provider behind the channels gets no surface branding.
+    expect(html).not.toMatch(/zernio/i);
   });
 });
 

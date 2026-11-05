@@ -47,10 +47,11 @@ export function IncomingContacts({ gw, connectionId, connectionEnabled, uncertai
   // Owner direction 2026-11-05: an outbound-capable connection drawer never pitches incoming
   // setup. Hidden while the first read is pending and after a never-configured result, so nothing
   // about incoming appears until a configured grant exists to manage. A FAILED read (message set,
-  // no record) still renders — an unavailable-settings error is truth, not a pitch.
+  // no record) still renders — an unavailable-settings error is truth, not a pitch. The guard
+  // returns BELOW the hook block: an early return above it would freeze the component (the
+  // initial-read effect would never register, so a configured grant could never un-hide itself).
   const pitchHidden = !offerSetup && mode === "view" && !unresolved &&
     (record !== null ? record.configuredEnabled === false : reading);
-  if (pitchHidden) return null;
   useLayoutEffect(() => {
     // Saving/recovery replaces controls. Keep a removed control's focus in this dialog before
     // another key can reach the shell; never steal focus from another surviving control.
@@ -83,6 +84,10 @@ export function IncomingContacts({ gw, connectionId, connectionEnabled, uncertai
     return () => { current = false; };
   // The initial read belongs to this mount; later uncertainty is reconciled only by an explicit read.
   }, [connectionId]);
+
+  // Hidden AFTER every hook (see the pitchHidden note above): a hidden mount stays mounted —
+  // its initial read still fires, so a configured grant flips pitchHidden off and renders Manage.
+  if (pitchHidden) return null;
 
   const changeMode = (next: typeof mode) => {
     setCredential(""); setConsent(false); onDirtyChange(false); setMessage(null); setSaved(null); setMode(next);

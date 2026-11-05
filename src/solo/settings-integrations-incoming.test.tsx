@@ -318,6 +318,10 @@ describe("owner direction 2026-11-05: an outbound connection drawer never pitche
     await mount(); await openGhl();
     expect(host.querySelector('[role="dialog"]')!.textContent).not.toContain("Incoming contacts");
     expect(button("Set up incoming contacts")).toBeUndefined();
+    // Hidden must mean hidden-but-alive, never frozen: the initial read still fired, so a
+    // configured grant on a later mount can un-hide this section (regression guard for the
+    // early-return-above-the-hooks bug the non-author review caught).
+    expect(h.rpc.mock.calls.some(c => c[0] === "get_mcp_contact_sync")).toBe(true);
   });
 
   it("a CONFIGURED incoming grant keeps its manage affordances on the outbound drawer", async () => {
@@ -329,5 +333,8 @@ describe("owner direction 2026-11-05: an outbound connection drawer never pitche
     expect(button("Replace sync credential")).toBeTruthy();
     expect(button("Revoke incoming access")).toBeTruthy();
     expect(button("Set up incoming contacts")).toBeUndefined();
+    // The section is visible BECAUSE the initial read resolved configured — prove the read ran
+    // rather than a default-visible render.
+    expect(h.rpc.mock.calls.some(c => c[0] === "get_mcp_contact_sync")).toBe(true);
   });
 });

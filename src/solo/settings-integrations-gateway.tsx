@@ -486,6 +486,17 @@ export function presetAuthContract(preset: AddPreset): { choices: ReadonlyArray<
   return null;
 }
 type AuthenticationChoice = "oauth" | "bearer" | "headers" | "none";
+/** Credential words for curated providers — the owner's 2026-11-05 direction: the form asks
+ * for what the PROVIDER issues, in the provider's own vocabulary ("Location ID", "Private
+ * Integration Token"), never for a "header name" or an "Authorization" the tenant has no way
+ * to know. Keyed by provider token; header words by lowercased header name. The generic door
+ * never reads these — a manual server keeps its full expert form. */
+const CURATED_TOKEN_WORDS: Record<string, { label: string; note: string }> = {
+  gohighlevel: { label: "Private Integration Token", note: "Starts with pit- — create one in your HighLevel account under Settings → Private Integrations, then paste it here." },
+};
+const CURATED_HEADER_WORDS: Record<string, Record<string, { label: string; note: string }>> = {
+  gohighlevel: { locationid: { label: "Location ID", note: "From your HighLevel sub-account: Settings → Business Info → Location ID. Paige sends this with every request so she works inside the right location." } },
+};
 const AUTH_CHOICES: ReadonlyArray<{ value: AuthenticationChoice; label: string }> = [
   { value: "oauth", label: "OAuth" },
   { value: "bearer", label: "Token" },
@@ -540,7 +551,18 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   onSaved: (connection: GatewayConnection) => void;
 }) {
   const [label, setLabel] = useState(tool?.label ?? preset.label ?? "");
-  const [url, setUrl] = useState(tool ? "" : preset.url ?? "");
+  /** The catalogue row a re-key of this row is recognized as — computed before the form's
+   * state so the curated endpoint can seed the address state (see contractUrl). */
+  const recognizedPreset = !tool ? null : catalogueMatchForRow(tool);
+  /**
+   * The endpoint a CURATED contract binds this form to: the preset's own address on the
+   * create door; the catalogue's canonical address on a recognized row's re-key (which also
+   * silently repairs a row saved against a wrong host). Owner direction 2026-11-05: this
+   * address is the same for every customer, so the form never asks for it — it is carried,
+   * not entered. Null on the generic door and on rows the catalogue does not recognize.
+   */
+  const contractUrl = !tool ? (preset.providerKey && preset.url ? preset.url : null) : recognizedPreset?.url ?? null;
+  const [url, setUrl] = useState(tool ? contractUrl ?? "" : preset.url ?? "");
   // Curated presets lock the selector (and their note names the provider's real contract).
   // EXP10 (owner finding 2026-11-04): a curated provider's ONE proven mode governs BOTH doors
   // into its form — the catalogue preset AND the re-key of an existing row the catalogue
@@ -548,7 +570,6 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   // HighLevel row; a vendor with one proven contract never re-offers the other three modes
   // on either door. A row the catalogue does NOT recognize keeps every mode reachable on
   // re-key: its saved kind is the only proven fact, and a re-key may legitimately change it.
-  const recognizedPreset = !tool ? null : catalogueMatchForRow(tool);
   const authContract = !tool
     ? presetAuthContract(preset)
     : recognizedPreset ? presetAuthContract({
@@ -556,6 +577,16 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
         auth: catalogueAuthChoice(recognizedPreset),
       })
     : null;
+  /**
+   * A CURATED form: the provider's one proven contract governs everything the user sees —
+   * the mode is locked, the address is carried invisibly, and the credential fields wear the
+   * provider's own words (owner direction 2026-11-05: "no need for us to ask anyone" for an
+   * address that never varies, and never a "Credential Header (Authorization)" question when
+   * what the provider actually issues is a Location ID). The generic door and unrecognized
+   * rows keep the full manual form — the address is genuinely theirs to supply there.
+   */
+  const curated = !!authContract && !!contractUrl;
+  const curatedKey = (!tool ? preset.providerKey : recognizedPreset?.pk) ?? null;
   /**
    * The row this CREATE will finish instead of duplicating, if any (recomputed per render so
    * the disclosure below is live). Also carries the provider's required headers when the
@@ -579,6 +610,9 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   const [token, setToken] = useState("");
   const [primaryHeader, setPrimaryHeader] = useState(tool?.authKind === "header" ? "" : "Authorization");
   const [headers, setHeaders] = useState<Array<{ name: string; value: string }>>([]);
+  /** Curated required-header VALUES keyed by header name — the user types a value (a Location
+   * ID); the NAME comes from the provider's contract, never from the keyboard. */
+  const [requiredValues, setRequiredValues] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [ack, setAck] = useState<{ id: string; generation: number | null } | null>(null);
@@ -599,7 +633,8 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   const pending = useRef(false);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const dirty = !ack && (Boolean(token) || headers.length > 0 || auth !== initialAuth
-    || url !== (tool ? "" : preset.url ?? "") || label !== (tool?.label ?? preset.label ?? ""));
+    || Object.values(requiredValues).some(v => v.trim() !== "")
+    || url !== (tool ? contractUrl ?? "" : preset.url ?? "") || label !== (tool?.label ?? preset.label ?? ""));
   useEffect(() => { onDirtyChange(dirty); }, [dirty, onDirtyChange]);
   const choose = (choice: AuthenticationChoice) => {
     if (choice === auth) return;
@@ -607,6 +642,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
     setToken("");
     setPrimaryHeader("Authorization");
     setHeaders([]);
+    setRequiredValues({});
     setValidation({});
     setMessage(null);
   };
@@ -639,19 +675,35 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
     if (needsToken && credentialTooShort("bearer", token)) errors.token = `Enter the full token (at least ${MCP_CREDENTIAL_MIN_LENGTH} characters).`;
     if (needsToken && !token.trim()) errors.token = "Enter the token.";
     const namePattern = /^[!#$%&'*+.^_`|~0-9a-z-]+$/i;
-    if (auth === "headers" && (!primaryHeader.trim() || !namePattern.test(primaryHeader.trim()))) errors.primaryHeader = "Enter a valid credential header name.";
+    if (auth === "headers" && !curated && (!primaryHeader.trim() || !namePattern.test(primaryHeader.trim()))) errors.primaryHeader = "Enter a valid credential header name.";
     const extra: Record<string, string> = Object.create(null);
-    const seen = new Set([primaryHeader.trim().toLowerCase()]);
-    for (const header of headers) {
-      const name = header.name.trim();
-      if (!namePattern.test(name) || seen.has(name.toLowerCase()) || !header.value || /[^\x20-\x7e]/.test(header.value)) {
-        errors.headers = "Give each additional header a unique name and a non-empty, single-line value.";
+    // A curated form's headers are the provider's CONTRACT (name fixed, user supplies the
+    // value); a manual form's headers are the user's own name+value pairs. Value trimming on
+    // the curated path is an owner-observed failure mode: a pasted Location ID with a stray
+    // trailing space silently failed the connect (2026-11-05).
+    if (curated && requiredHeaders?.length) {
+      for (const h of requiredHeaders) {
+        const value = (requiredValues[h] ?? "").trim();
+        if (!value) {
+          errors.requiredHeaders = `Enter the ${CURATED_HEADER_WORDS[curatedKey ?? ""]?.[h.toLowerCase()]?.label ?? h}.`;
+        } else {
+          extra[h] = value;
+        }
       }
-      seen.add(name.toLowerCase());
-      extra[name] = header.value;
     }
-    if (headers.length > 16 || new TextEncoder().encode(JSON.stringify(extra)).length > 16384) errors.headers = "Use at most 16 headers and 16 KB of header data.";
-    if (requiredHeaders?.length) {
+    if (!curated) {
+      const seen = new Set([primaryHeader.trim().toLowerCase()]);
+      for (const header of headers) {
+        const name = header.name.trim();
+        if (!namePattern.test(name) || seen.has(name.toLowerCase()) || !header.value || /[^\x20-\x7e]/.test(header.value)) {
+          errors.headers = "Give each additional header a unique name and a non-empty, single-line value.";
+        }
+        seen.add(name.toLowerCase());
+        extra[name] = header.value;
+      }
+      if (headers.length > 16 || new TextEncoder().encode(JSON.stringify(extra)).length > 16384) errors.headers = "Use at most 16 headers and 16 KB of header data.";
+    }
+    if (requiredHeaders?.length && !curated) {
       const have = new Set(Object.keys(extra).map((k) => k.toLowerCase()));
       const missing = requiredHeaders.filter((h) => !have.has(h.toLowerCase()));
       if (missing.length) errors.headers = `${label || "This provider"} requires the ${missing.join(", ")} header${missing.length > 1 ? "s" : ""} on the connection.`;
@@ -662,8 +714,11 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
     try {
       // OAuth starts from the existing credential-free canonical shell. Discovery runs only
       // after durable readback and a separate explicit Authorize click, never because of a brand.
+      // A curated token rides the standard Authorization credential (fixed, never asked);
+      // only a MANUAL form may name a different credential header.
+      const effectivePrimaryHeader = curated ? "Authorization" : primaryHeader;
       const kind: GatewayAuthKind = auth === "oauth" || auth === "none" ? "none"
-        : auth === "headers" && primaryHeader.trim().toLowerCase() !== "authorization" ? "header" : "bearer";
+        : auth === "headers" && effectivePrimaryHeader.trim().toLowerCase() !== "authorization" ? "header" : "bearer";
       /**
        * EXP10 duplicate-guard (owner finding 2026-11-04): an add flow may never leave a SECOND
        * connection for a server this workspace already holds. A usable row blocks the create
@@ -682,9 +737,9 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
       }
       const target = tool ?? finishExisting;
       const result = target
-        ? await gw.rekeyMcp(target.id, url.trim(), kind, needsToken ? token.trim() : null, kind === "header" ? primaryHeader.trim() : null, extra)
+        ? await gw.rekeyMcp(target.id, url.trim(), kind, needsToken ? token.trim() : null, kind === "header" ? effectivePrimaryHeader : null, extra)
         : await gw.createMcp({ providerKey: preset.providerKey ?? "generic-remote", label: label.trim(), serverUrl: url.trim(),
-          authKind: kind, authToken: needsToken ? token.trim() : null, authHeaderName: kind === "header" ? primaryHeader.trim() : null, customHeaders: extra });
+          authKind: kind, authToken: needsToken ? token.trim() : null, authHeaderName: kind === "header" ? effectivePrimaryHeader : null, customHeaders: extra });
       if (!alive.current) return;
       if (!result.ok || !result.connectionId) {
         setMessage(result.message ?? "The save was not confirmed. Your details remain here; try again.");
@@ -694,7 +749,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
       const saved = { id: result.connectionId, generation: result.configGeneration ?? null };
       setAck(saved);
       // Secrets never survive a successful write in local form state, even if readback fails.
-      setToken(""); setHeaders([]); setUrl("");
+      setToken(""); setHeaders([]); setRequiredValues({}); setUrl("");
       onDirtyChange(false);
       await confirm(saved);
     } finally { pending.current = false; if (alive.current) setBusy(false); }
@@ -714,7 +769,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   };
 
   return <div ref={formRef}>
-    {(tool || (heldRow && !usable(heldRow))) && !ack && <p className="ig-gw-warn">Replacing configuration clears this tool’s approvals. Enter the full address and every credential/header you want retained, then check it and approve its tools again.</p>}
+    {(tool || (heldRow && !usable(heldRow))) && !ack && <p className="ig-gw-warn">Replacing configuration clears this tool’s approvals. {curated ? "Enter the credentials" : "Enter the full address and every credential/header"} you want retained, then check it and approve its tools again.</p>}
     {message && <p className="ig-error" role="alert">{message}</p>}
     {discarding && <DiscardPrompt label="Discard configuration" onDiscard={onCancel} onKeep={() => setDiscarding(false)} />}
     {ack ? <>
@@ -735,8 +790,14 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
     </> : <>
       <fieldset disabled={busy || gw.saving || !gw.canWrite} className="ig-gw-config-fields">
         {!tool && <label className="ig-field"><span id="ig-config-name-label">Name</span><input autoComplete="off" value={label} onChange={e => setLabel(e.target.value)} aria-labelledby="ig-config-name-label" aria-invalid={!!validation.label} aria-describedby={validation.label ? "ig-config-name-error" : undefined} />{validation.label && <small id="ig-config-name-error" className="ig-gw-err">{validation.label}</small>}</label>}
-        <label className="ig-field"><span id="ig-config-address-label">{tool ? "Full address" : "Server URL"}</span><input type="url" spellCheck={false} autoComplete="off" value={url} placeholder="https://tools.example.com/mcp" onChange={e => setUrl(e.target.value)} aria-labelledby="ig-config-address-label" aria-invalid={!!validation.url} aria-describedby="ig-config-address-note" />
-          <small id="ig-config-address-note">{validation.url ?? (tool ? "The saved address is kept private. Enter the full address from your provider, including its path." : "Enter the complete public HTTPS address, including its path. Its contents stay private after saving.")}</small></label>
+        {curated ? (
+          // Owner direction 2026-11-05: this address is identical for every customer, so the
+          // form states it and moves on — it never asks for what it already knows.
+          <p className="ig-note" id="ig-config-address-note">Paige already knows this provider’s address ({addressHost(contractUrl)}). There is nothing to enter for it — you only supply the credentials below.</p>
+        ) : (
+          <label className="ig-field"><span id="ig-config-address-label">{tool ? "Full address" : "Server URL"}</span><input type="url" spellCheck={false} autoComplete="off" value={url} placeholder="https://tools.example.com/mcp" onChange={e => setUrl(e.target.value)} aria-labelledby="ig-config-address-label" aria-invalid={!!validation.url} aria-describedby="ig-config-address-note" />
+            <small id="ig-config-address-note">{validation.url ?? (tool ? "The saved address is kept private. Enter the full address from your provider, including its path." : "Enter the complete public HTTPS address, including its path. Its contents stay private after saving.")}</small></label>
+        )}
         <div className="ig-gw-seg ig-gw-seg-auth" role="group" aria-label="Authentication">
           {(authContract?.choices ?? AUTH_CHOICES).map(choice => <button type="button" key={choice.value} aria-invalid={!!validation.auth} aria-pressed={auth === choice.value} className={auth === choice.value ? "on" : ""} onClick={() => choose(choice.value)}>{choice.label}</button>)}
         </div>
@@ -744,10 +805,20 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
         {validation.auth && <p className="ig-gw-err" role="alert">{validation.auth}</p>}
         {auth === "oauth" && <p className="ig-note">Save first, then choose Authorize with server. You’ll leave this page only after that choice. Server support determines whether authorization is available.</p>}
         {(auth === "bearer" || auth === "headers") && <>
-          {auth === "headers" && <label className="ig-field"><span id="ig-config-header-label">Credential header</span><input autoComplete="off" value={primaryHeader} onChange={e => setPrimaryHeader(e.target.value)} aria-labelledby="ig-config-header-label" aria-describedby="ig-config-header-note" aria-invalid={!!validation.primaryHeader} /><small id="ig-config-header-note">{validation.primaryHeader ?? "Authorization sends a Bearer token. Use another header name only when your server requires it."}</small></label>}
-          <label className="ig-field"><span id="ig-config-token-label">Token</span><input type="password" autoComplete="new-password" value={token} onChange={e => setToken(e.target.value)} aria-labelledby="ig-config-token-label" aria-invalid={!!validation.token} aria-describedby="ig-config-token-note" /><small id="ig-config-token-note">{validation.token ?? "Stored encrypted and never shown back. Enter the token only, without a Bearer prefix."}</small></label>
+          {auth === "headers" && !curated && <label className="ig-field"><span id="ig-config-header-label">Credential header</span><input autoComplete="off" value={primaryHeader} onChange={e => setPrimaryHeader(e.target.value)} aria-labelledby="ig-config-header-label" aria-describedby="ig-config-header-note" aria-invalid={!!validation.primaryHeader} /><small id="ig-config-header-note">{validation.primaryHeader ?? "Authorization sends a Bearer token. Use another header name only when your server requires it."}</small></label>}
+          {/* Curated required headers wear the provider's own words: the user types a VALUE
+              (a Location ID); the header NAME is the provider's contract, never a question. */}
+          {curated && (requiredHeaders ?? []).map((h) => {
+            const words = CURATED_HEADER_WORDS[curatedKey ?? ""]?.[h.toLowerCase()];
+            return <label className="ig-field" key={h}>
+              <span id={`ig-req-${h.toLowerCase()}-label`}>{words?.label ?? h}</span>
+              <input type="password" autoComplete="new-password" spellCheck={false} value={requiredValues[h] ?? ""} onChange={e => setRequiredValues(v => ({ ...v, [h]: e.target.value }))} aria-labelledby={`ig-req-${h.toLowerCase()}-label`} aria-invalid={!!validation.requiredHeaders} aria-describedby={`ig-req-${h.toLowerCase()}-note`} />
+              <small id={`ig-req-${h.toLowerCase()}-note`}>{validation.requiredHeaders ?? words?.note ?? `The ${h} this provider requires on the connection.`}</small>
+            </label>;
+          })}
+          <label className="ig-field"><span id="ig-config-token-label">{curated ? CURATED_TOKEN_WORDS[curatedKey ?? ""]?.label ?? "Token" : "Token"}</span><input type="password" autoComplete="new-password" value={token} onChange={e => setToken(e.target.value)} aria-labelledby="ig-config-token-label" aria-invalid={!!validation.token} aria-describedby="ig-config-token-note" /><small id="ig-config-token-note">{validation.token ?? (curated ? CURATED_TOKEN_WORDS[curatedKey ?? ""]?.note ?? "Stored encrypted and never shown back. Enter the token only, without a Bearer prefix." : "Stored encrypted and never shown back. Enter the token only, without a Bearer prefix.")}</small></label>
         </>}
-        {auth === "headers" && <>
+        {auth === "headers" && !curated && <>
           <p className="ig-note">Additional headers are encrypted too. Replacement removes previously saved headers not entered here.</p>
           {headers.map((header, index) => <div className="ig-gw-header-row" key={index}>
             <label className="ig-field"><span>Header {index + 1} name</span><input autoComplete="off" aria-invalid={!!validation.headers} value={header.name} onChange={e => setHeaders(items => items.map((item, at) => at === index ? { ...item, name: e.target.value } : item))} /></label>

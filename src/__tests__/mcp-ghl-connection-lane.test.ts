@@ -118,8 +118,9 @@ describe("the catalogue names GHL's real MCP endpoint", () => {
     expect(catalogue).toContain('url: "https://services.leadconnectorhq.com/mcp/"');
     expect(catalogue).toContain("Private Integration token (Settings → Private Integrations) plus your locationId header");
     expect(catalogue).not.toContain("/mcp/anthropic/v2");
-    // The tile's create routes to the canonical gohighlevel descriptor — NOT generic-remote.
-    expect(catalogue).toContain('pk: "gohighlevel", req: ["locationId"]');
+    // The tile's create routes to the canonical gohighlevel descriptor — NOT generic-remote —
+    // and (PR #3272) the row locks the drawer to the header-token contract HighLevel accepts.
+    expect(catalogue).toContain('pk: "gohighlevel", auth: "header", req: ["locationId"]');
   });
 
   it("the drawer carries the provider identity into the create (the identity fix)", () => {
@@ -132,12 +133,18 @@ describe("the catalogue names GHL's real MCP endpoint", () => {
   });
 
   it("the drawer enforces the preset's required headers before save", () => {
-    expect(catalogue).toContain("const missing = preset.requiredHeaders.filter((h) => !have.has(h.toLowerCase()));");
+    // PR #3272: the check runs on the DERIVED requiredHeaders, so a recognized curated row
+    // (create door) AND a dead row being finished (re-key door) both enforce locationId —
+    // the requirement is the provider's contract, not just the preset's field.
+    expect(catalogue).toContain("const requiredHeaders = preset.requiredHeaders");
+    expect(catalogue).toContain("?? (recognizedPreset?.req ?? heldRecognized?.req ?? undefined);");
+    expect(catalogue).toContain("const missing = requiredHeaders.filter((h) => !have.has(h.toLowerCase()));");
     expect(catalogue).toContain("requires the ${missing.join(\", \")}");
     // A preset with required headers preselects the Token + headers mode (renewed pin: the
     // EXP10 auth-forwarding kept the req-derived headers branch first — the generic entry
-    // stays unprefilled by its own contract, and a curated row's proven mode flows through).
-    expect(catalogue).toContain('item.pk && item.req?.length ? "headers"');
+    // stays unprefilled by its own contract, and a curated row's proven mode flows through;
+    // PR #3272 moved the translation into one helper both doors share).
+    expect(catalogue).toContain('if (item.pk && item.req?.length) return "headers";');
     expect(catalogue).toContain("item.manual ? undefined");
     expect(catalogue).toContain(": preset.auth ?? null;");
   });

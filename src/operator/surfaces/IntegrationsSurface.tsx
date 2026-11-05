@@ -484,7 +484,7 @@ function Tile({ item, onOpen }: { item: Row; onOpen?: (i: Row) => void }) {
     >
       <span className="flex min-w-0 items-center gap-[9px]">
         <span
-          className="relative grid h-7 w-7 flex-none place-items-center overflow-hidden rounded-[var(--pg-r-chip)] text-[length:var(--pg-t-body)] font-medium shadow-[inset_0_0_0_1px_var(--pg-line)]"
+          className="relative grid h-7 w-7 flex-none place-items-center overflow-hidden rounded-[var(--pg-r-chip)] text-[length:var(--pg-t-body)] font-medium shadow-[shadow:inset_0_0_0_1px_var(--pg-line)]"
           style={{
             background: live ? "var(--pg-lift)" : "var(--pg-surface)",
             color: live ? "var(--pg-gold-deep)" : "var(--pg-muted)",

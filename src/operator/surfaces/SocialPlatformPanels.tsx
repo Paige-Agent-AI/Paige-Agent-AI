@@ -197,7 +197,7 @@ export function SocialChannelsPanel() {
               <div key={row.platform} className="flex min-w-0 flex-col bg-[var(--pg-raised)] px-3 py-[11px]">
                 <span className="flex min-w-0 items-center gap-[9px]">
                   {meta ? <BrandTile platform={meta} /> : (
-                    <span aria-hidden="true" className="grid h-[34px] w-[34px] flex-none place-items-center rounded-[9px] bg-[var(--pg-surface)] text-[length:var(--pg-t-body)] font-bold text-[var(--pg-muted)] shadow-[inset_0_0_0_1px_var(--pg-line)]">
+                    <span aria-hidden="true" className="grid h-[34px] w-[34px] flex-none place-items-center rounded-[9px] bg-[var(--pg-surface)] text-[length:var(--pg-t-body)] font-bold text-[var(--pg-muted)] shadow-[shadow:inset_0_0_0_1px_var(--pg-line)]">
                       {label.charAt(0)}
                     </span>
                   )}

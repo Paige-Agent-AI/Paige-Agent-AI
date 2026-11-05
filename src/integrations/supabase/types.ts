@@ -21263,7 +21263,8 @@ export type Database = {
           tenant_id: string
           tenant_name: string
         }[]
-      }      social_current_tenant_id: { Args: never; Returns: string }
+      }
+      social_current_tenant_id: { Args: never; Returns: string }
       social_mark_connection_disconnected: {
         Args: {
           _actor_id: string

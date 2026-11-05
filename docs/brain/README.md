@@ -5870,3 +5870,17 @@ Initial contract/Edge failures and scratch-cleanup warning remain historical evi
 Normal reviewed recovery passed source/configuration, not business execution.
 Held3177 UI, Chat binding, selected facts/separate Memory, saved Mission and actual
 Work/CRM receipt/reopen/full lifecycle remain unfinished; full EXP13+BULK is not ready.
+
+
+### Original Knowledge intake source release — November 1
+
+- Original policy3207/c556 normally merged d910a421dfcb07e5aff7d1b5e39648cf1c61f9eb; required exact checks/review and BOTH live public build readbacks verified.
+- The obsolete active prototype/browser premerge-proof requirement is literally deleted; real engineering/security/authority/native-order checks remain.
+- Original UI3177/29cb normally merged a6fa6b90eed92c9bd97f247f6423586eb8796c8e; all18 own files and19,567 incoming outside leaves conserved.
+- ONE Knowledge entry/three tabs now mount the original native single/BULK PDF/DOCX/text review and original secure URL consumer.
+- Actual READYdpl_4JP/exacta6fa and BOTH official fulla6fa-mvybtkxq/observed bootstrap200/equal hash verified21:16UTC. SQL/Edge delta N/A.
+- 35 Knowledge suites733 source checks are not authenticated business proof; diagnostic parity is8-to-8 inherited/new0, not global strict clearance.
+- Live save/index/reopen/PAIGE-use evidence belongs to original ANT21/12fea7ea and its append-only checkpoints; no outcome or owner acceptance is inferred here.
+- Current owner instruction: finish ONE direct-Knowledge-Bucket customer outcome, report, then STOP; next outcome needs owner approval.
+- Full original EXP13/aliases/research/lifecycle/artifacts remain pending; Chat binding/facts/Memory/saved Game Plan/actual Work are separate outcomes.
+- See [owning UI evidence](../evidence/ui-delivery/exp13-knowledge-bulk-review.md) and Master4.0 actual3177/3207 rows; no duplicate ledger or recursive closeout row.

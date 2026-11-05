@@ -29,7 +29,7 @@
 -- existing future-dated sequence (20271132...) because deploy-migrations refuses any
 -- file versioned below production's newest recorded migration.
 --
--- CONTINUITY: the 20 interval-scheduled jobs miss at most one tick each between this
+-- CONTINUITY: the 16 interval-scheduled jobs miss at most one tick each between this
 -- migration landing and the runbook enable (same supervised window) — durable queues
 -- hold the work. FIXED-TIME jobs (systems-check-scheduled 09:00, paige-evaluator-daily
 -- 05:30, paige-heartbeat-daily 13:00, paige-model-watch-daily 03:17, n8n-keepalive

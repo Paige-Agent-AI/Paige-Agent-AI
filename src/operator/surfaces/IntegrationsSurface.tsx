@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import SocialHubSurface from "./SocialHubSurface";
 
 /**
  * Settings → Integrations — the connection grid.
@@ -243,6 +244,7 @@ export default function IntegrationsSurface({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+      <SocialHubSurface />
       {/* ── controls · pack L1578–L1620 ─────────────────────────────────── */}
       <div className="flex-none border-b border-[var(--pg-line)] pb-3.5">
         {!connectionStates && <p role="status" className="mb-4 max-w-[72ch] text-[length:var(--pg-t-body)] text-[var(--pg-muted)]">PARTIAL · Adapter catalogue. Verified account connections and current provider health are not loaded. Catalogue readiness may need revalidation.</p>}

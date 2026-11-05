@@ -80,8 +80,19 @@ Deno.serve(async (req: Request) => {
     caller.rpc("current_user_tenant_id"),
     caller.rpc("is_current_user_tenant_admin"),
   ]);
-  const tenantId = typeof tenantResult.data === "string" ? tenantResult.data : null;
-  if (tenantResult.error || !tenantId) return jsonResponse({ ok: false, code: "SOCIAL_TENANT_UNRESOLVED" }, 403);
+  const sessionTenantId = typeof tenantResult.data === "string" ? tenantResult.data : null;
+  // Platform Operator (God Level) fallback: when the caller holds no active workspace, the
+  // ONE designated workspace is resolved server-side via the platform-owner-only resolver —
+  // never from the request (§9/§10). Zero rows for anyone else: fail closed.
+  let tenantId = sessionTenantId;
+  let actingAsPlatformWorkspace = false;
+  if (!tenantId) {
+    const resolved = await caller.rpc("resolve_platform_operator_workspace");
+    const row = object(Array.isArray(resolved.data) ? resolved.data[0] : resolved.data);
+    const resolvedId = row && typeof row.id === "string" ? row.id : null;
+    if (resolvedId) { tenantId = resolvedId; actingAsPlatformWorkspace = true; }
+  }
+  if (!tenantId) return jsonResponse({ ok: false, code: "SOCIAL_TENANT_UNRESOLVED" }, 403);
 
   let body: Json;
   try {
@@ -97,7 +108,9 @@ Deno.serve(async (req: Request) => {
   const approvedFingerprint = body.approval_fingerprint === undefined
     ? undefined
     : text(body.approval_fingerprint, 16);
-  const isAdmin = adminResult.error ? false : adminResult.data === true;
+  // The platform owner acting on the designated workspace holds workspace authority by
+  // construction (the resolver grants nothing less) — that authority is the access gate here.
+  const isAdmin = actingAsPlatformWorkspace || (adminResult.error ? false : adminResult.data === true);
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
   if (action === "decline") {

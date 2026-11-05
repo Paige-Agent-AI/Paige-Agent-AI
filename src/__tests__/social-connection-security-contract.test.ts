@@ -10,6 +10,8 @@ const migration = read("supabase/migrations/20270127000000_social_connection_lif
   + read("supabase/migrations/20270130000000_social_connection_platform_scope.sql");
 const platformMigration = read("supabase/migrations/20271131000001_social_platform_connections.sql");
 const adapter = read("supabase/functions/_shared/social-provider/zernio.ts");
+const integrationsSurface = read("src/operator/surfaces/IntegrationsSurface.tsx");
+const operatorHubSurface = read("src/operator/surfaces/SocialHubSurface.tsx");
 const hook = read("src/solo/data/useSocialConnections.ts");
 const drawer = read("src/solo/settings-integrations-social.tsx");
 const catalogue = read("src/solo/settings-integrations.tsx");
@@ -159,6 +161,25 @@ describe("Social authorization callback", () => {
 
   it("platform-provided identities are labeled in the drawer", () => {
     expect(drawer).toContain("{platform.name} identity{connection.providedByPlatform ? \" · platform connection\" : \"\"}");
+  });
+
+  it("resolves the designated platform workspace for the Platform Operator and nowhere else", () => {
+    // The God Level account holds no active workspace in the console: the door falls back to
+    // the platform-owner-only resolver, server-side, fail-closed. Authority comes from that
+    // resolution alone — never from the request body.
+    expect(endpoint).toContain('caller.rpc("resolve_platform_operator_workspace")');
+    expect(endpoint).toContain("actingAsPlatformWorkspace");
+    expect(endpoint).toContain("const isAdmin = actingAsPlatformWorkspace ||");
+    expect(endpoint).not.toMatch(/body??.(tenant|workspace)/);
+  });
+
+  it("mounts the Social hub adoption surface on the Platform console Integrations grid", () => {
+    expect(integrationsSurface).toContain('import SocialHubSurface from "./SocialHubSurface"');
+    expect(integrationsSurface).toContain("<SocialHubSurface />");
+    expect(operatorHubSurface).toContain("Confirm this Social change · Approve once");
+    expect(operatorHubSurface).toContain('action: "hub_profiles"');
+    expect(operatorHubSurface).toContain('action: "adopt"');
+    expect(operatorHubSurface).toContain("approval_fingerprint");
   });
 
   it("keeps per-workspace platform-channel grants service-role-only and empty by default", () => {

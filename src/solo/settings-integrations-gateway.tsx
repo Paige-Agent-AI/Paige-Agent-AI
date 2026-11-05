@@ -181,7 +181,7 @@ const MODE_LABEL: Record<CatMode, string> = {
 /* ── Status → owner-facing chip ───────────────────────────────────────────────
    Ported honesty: a new or re-keyed tool is "Checking" until the verify step promotes it; it is
    never shown as ready before then. Tone words match the incumbent surface's data-* tones. */
-type ChipTone = "ok" | "warn" | "bad" | "pending" | "off";
+type ChipTone = "ok" | "warn" | "bad" | "pending" | "off" | "neutral";
 function statusChip(c: GatewayConnection): { label: string; tone: ChipTone } {
   if (!c.enabled) return { label: "Turned off", tone: "off" };
   if (c.status === "error") return { label: "Couldn’t reach it", tone: "bad" };
@@ -190,6 +190,21 @@ function statusChip(c: GatewayConnection): { label: string; tone: ChipTone } {
   if (c.status === "connected" && c.health === "healthy") return { label: "Ready", tone: "ok" };
   if (c.status === "connected") return { label: "Not checked yet", tone: "pending" };
   return { label: "Not set up", tone: "off" };
+}
+/** True when a row never reached a working state (unconfigured, or disabled before it ever
+ *  connected). Such a row reads "Setup not finished" — nobody turned anything off. KNOWN
+ *  BOUNDARY (writer contract 20270331000000): this surface's own "Turn it off" erases status
+ *  to unconfigured, so a NATIVE deliberate disable is byte-identical to a never-finished row
+ *  and reads the same here; the drawer body still names the turn-off plainly for every
+ *  disabled row. A row whose status survived a disable (legacy backfill) keeps "Turned off".
+ *  An error, needs-attention or connected row keeps its true state from statusChip.
+ *  Every surface showing a HELD row (wall card, catalogue tile, drawer header) goes through
+ *  heldStatusChip, so all three say the same thing about the same row. */
+function neverFinishedRow(c: GatewayConnection): boolean {
+  return c.status === "unconfigured" || (!c.enabled && c.status !== "connected");
+}
+function heldStatusChip(c: GatewayConnection): { label: string; tone: ChipTone } {
+  return neverFinishedRow(c) ? { label: "Setup not finished", tone: "neutral" } : statusChip(c);
 }
 /** The honest WHY under the chip, in this surface's own voice. Keyed ONLY on the closed
  * refusal vocabulary (the same codes describeMcpError words for chat) plus the one derived
@@ -827,12 +842,12 @@ function Catalogue({
     // person already looks in for it — and reports its real state there instead of appearing twice:
     // once as something to add, once as the thing they already added.
     const have = held(p);
-    const chip = have ? statusChip(have) : null;
+    const chip = have ? heldStatusChip(have) : null;
     return (
       <li key={p.n}>
         <button type="button" className="ig-gw-tile" data-mode={p.m} data-held={have ? "" : undefined}
           onClick={() => route(p)}
-          aria-label={have ? `${p.n} — connected, ${chip!.label.toLowerCase()}. Open it.` : `${p.n} — ${MODE_LABEL[p.m]}`}>
+          aria-label={have ? `${p.n} — already added, ${chip!.label.toLowerCase()}. Open it.` : `${p.n} — ${MODE_LABEL[p.m]}`}>
           <span className="ig-gw-tile-top"><span className="ig-gw-tile-mark" aria-hidden>{p.g}</span><span className="ig-gw-tile-name">{p.n}</span></span>
           <span className="ig-gw-tile-desc">{p.d}</span>
           {p.net && <span className="ig-gw-tile-net">{p.net}</span>}
@@ -1335,7 +1350,9 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
    *  so without this the drawer would announce "found 12 actions" directly above a list
    *  still showing what it read before the check ran. */
   const [catalogueRead, setCatalogueRead] = useState(0);
-  const chip = statusChip(tool);
+  // The same held-row truth as the wall and the catalogue tile (owner finding 2026-11-05:
+  // this header said "Turned off" about a setup that never finished).
+  const chip = heldStatusChip(tool);
   const isRest = tool.authKind === "api_key";
   const isOAuth = tool.authKind === "oauth";
   const noOutboundAddress = tool.addressConfigured === false;
@@ -1409,9 +1426,12 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
           )}
           {signInMessage && <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>{signInMessage}</span></div>}
 
-          {/* Replacement is the recovery for a disabled canonical connection. */}
+          {/* Replacement is the recovery for a disabled canonical connection; a row that
+              never finished names that recovery instead (its chip already says so). */}
           {!tool.enabled && (
-            <div className="ig-gw-info" role="status"><span>This tool is turned off. Re-key it to switch it back on.</span></div>
+            <div className="ig-gw-info" role="status"><span>{neverFinishedRow(tool)
+              ? "This setup never finished. Re-key it to add what is missing."
+              : "This tool is turned off. Re-key it to switch it back on."}</span></div>
           )}
 
           {!noOutboundAddress && tool.status === "pending_verification" && (
@@ -1677,15 +1697,10 @@ function ScopedIntegrationsGatewaySection({
       {gw.tools.map((c) => {
         const noOutboundAddress = c.addressConfigured === false;
         // EXP10 (owner finding 2026-11-04): a row that was saved but never finished is the
-        // state a non-technical owner sees after a half-done connect — name the recovery in
-        // the surface's own vocabulary. Scoped to GENUINELY unfinished rows (unconfigured,
-        // or disabled before it ever worked): an error, needs-attention or deliberately
-        // turned-off row keeps its true state and tone from statusChip — "setup not
-        // finished" would be a lie about a connection whose setup WAS finished.
-        const neverFinished = c.status === "unconfigured" || (!c.enabled && c.status !== "connected");
-        const chip = noOutboundAddress ? { tone: "neutral", label: "View incoming setup" }
-          : neverFinished ? { tone: "neutral", label: "Setup not finished" }
-          : statusChip(c);
+        // state a non-technical owner sees after a half-done connect — name the recovery
+        // (heldStatusChip, shared with the catalogue tile and drawer header).
+        const chip = noOutboundAddress ? { tone: "neutral" as ChipTone, label: "View incoming setup" }
+          : heldStatusChip(c);
         const title = connectionDisplayName(c);
         return (
           <li key={c.id}>

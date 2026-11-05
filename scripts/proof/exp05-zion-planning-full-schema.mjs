@@ -8,6 +8,8 @@ import { dirname,join,resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 const repo=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
+const weeklyAtomic=readFileSync(join(repo,'supabase/migrations/20271130050009_exp05_reviewed_weekly_plan_atomic.sql'),'utf8').replace(/\r\n/g,'\n');
+const weeklyComponent=(start,end)=>weeklyAtomic.slice(weeklyAtomic.indexOf(start)+start.length,weeklyAtomic.indexOf(end));
 const candidate=readFileSync(join(repo,'scripts/proof/exp05-zion-planning-read-candidate.sql'),'utf8').replace(/\r\n/g,'\n');
 const carrier=readFileSync(join(repo,'supabase/migrations/20271127000005_exp05_zion_planning_source_binding.sql'),'utf8').replace(/\r\n/g,'\n');
 const history=readFileSync(join(repo,'scripts/proof/exp05-zion-planning-history-readonly.sql'),'utf8').replace(/\r\n/g,'\n');
@@ -223,12 +225,68 @@ SELECT ok((SELECT provolatile='s' AND NOT prosrc LIKE '%FOR SHARE%' AND NOT pros
  assert(sql.includes(prior.slice(prior.indexOf('CREATE TEMP TABLE e5_calendar_entry'),prior.indexOf('SELECT * FROM finish();'))),
   'All original nineteen Calendar/Planning assertions and inverses retained byte-exact');
 }
+if(calendarMode){
+ // Rewind ONLY O02's six Plan-reference hunks inside the existing rollback.
+ // All 23 prior Task/Calendar/Planning assertions still run against their exact base.
+ const weekly=weeklyComponent('-- BEGIN ORIGINAL PLAN REFERENCES\n','-- END ORIGINAL PLAN REFERENCES');
+ const weeklyBody=weekly.replace(/^begin;\n/m,'').replace(/\ncommit;\s*$/,'\n');
+ const pairs=[...weekly.matchAll(/definition:=replace\(definition,\$old(\d+)\$([\s\S]*?)\$old\1\$,\$new\1\$([\s\S]*?)\$new\1\$\);/g)];
+ assert.equal(pairs.length,6,'Exactly six closed Plan-reference hunks');
+ const values=pairs.map(([,n,old,next])=>`(${n},$week_old$${old}$week_old$,$week_new$${next}$week_new$)`).join(',\n');
+ const rewind=`CREATE TEMP TABLE e5_weekly_entry AS SELECT oid,to_jsonb(p) full_metadata FROM pg_proc p WHERE pronamespace='public'::regnamespace;
+DO $week_inverse$ DECLARE p pg_proc; replacement text; h record;
+BEGIN
+ SELECT * INTO p FROM pg_proc WHERE oid='public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)'::regprocedure;
+ replacement:=p.prosrc;
+ FOR h IN SELECT * FROM (VALUES ${values}) v(ordinal,old_text,new_text) ORDER BY ordinal DESC LOOP
+  IF (length(replacement)-length(replace(replacement,h.new_text,'')))/length(h.new_text)<>1 THEN RAISE EXCEPTION 'Weekly Plan inverse drift'; END IF;
+  replacement:=replace(replacement,h.new_text,h.old_text);
+ END LOOP;
+ IF md5(replace(replacement,E'\\r\\n',E'\\n'))<>'437b5c12b5261b73a38e6a34104c5387' THEN RAISE EXCEPTION 'Weekly Plan complete inverse drift'; END IF;
+ EXECUTE replace(pg_get_functiondef(p.oid),p.prosrc,replacement);
+END $week_inverse$;`;
+ const extra=`${weeklyBody}
+SELECT ok(NOT EXISTS(SELECT 1 FROM e5_weekly_entry b FULL JOIN pg_proc p USING(oid)
+ WHERE (b.oid IS NOT NULL OR p.pronamespace='public'::regnamespace) AND b.full_metadata IS DISTINCT FROM to_jsonb(p)),
+ 'O02 exact full installed source/metadata restored; no outside function changed');
+SELECT ok(has_function_privilege('authenticated','public.save_weekly_plan_review_scoped(uuid,uuid,uuid,jsonb)','EXECUTE')
+ AND has_function_privilege('authenticated','public.get_weekly_plan_review_result_scoped(uuid,uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.save_weekly_plan_review_scoped(uuid,uuid,uuid,jsonb)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.save_weekly_plan_review_scoped(uuid,uuid,uuid,jsonb)','EXECUTE')
+ AND NOT has_function_privilege('authenticated','private.planning_weekly_review_scope(uuid,uuid)','EXECUTE'),
+ 'O02 explicit human/native save and recovery remain scoped, private helper sealed');
+`;
+ sql=sql.replace('SELECT plan(23);',()=>`SELECT plan(25);\n${rewind}`).replace('SELECT * FROM finish();',()=>`${extra}SELECT * FROM finish();`);
+}
+if(calendarMode){
+ const nav=weeklyComponent('-- BEGIN BOUNDED PLAN NAVIGATION\n','-- END BOUNDED PLAN NAVIGATION');
+ const navBody=nav.replace(/^begin;\n/m,'').replace(/\ncommit;\s*$/,'\n');
+ const old=nav.split('$old$')[1],next=nav.split('$new$')[1];assert(old&&next,'Whole navigation inverse present');
+ const rewind=`CREATE TEMP TABLE e5_navigation_entry AS SELECT oid,to_jsonb(p) full_metadata FROM pg_proc p WHERE pronamespace='public'::regnamespace;
+DO $navigation_inverse$ DECLARE p pg_proc; replacement text;
+BEGIN
+ SELECT * INTO p FROM pg_proc WHERE oid='public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)'::regprocedure;
+ IF (length(p.prosrc)-length(replace(p.prosrc,$nav_new$${next}$nav_new$,'')))/length($nav_new$${next}$nav_new$)<>1 THEN RAISE EXCEPTION 'Navigation inverse drift'; END IF;
+ replacement:=replace(p.prosrc,$nav_new$${next}$nav_new$,$nav_old$${old}$nav_old$);
+ IF md5(replace(replacement,E'\\r\\n',E'\\n'))<>'0f5f3585656d4a24eb9c930b0267aa6b' THEN RAISE EXCEPTION 'Navigation whole inverse drift'; END IF;
+ EXECUTE replace(pg_get_functiondef(p.oid),p.prosrc,replacement);
+END $navigation_inverse$;`;
+ const restore=`${navBody}
+SELECT ok(NOT EXISTS(SELECT 1 FROM e5_navigation_entry b FULL JOIN pg_proc p USING(oid)
+ WHERE (b.oid IS NOT NULL OR p.pronamespace='public'::regnamespace) AND b.full_metadata IS DISTINCT FROM to_jsonb(p)),
+ 'O02 populated-navigation forward restores every original full source/metadata exactly');
+SELECT ok(NOT has_function_privilege('authenticated','public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)','EXECUTE')
+ AND has_function_privilege('service_role','public.team_hub_stage_agent_read_context(uuid,text,jsonb,jsonb)','EXECUTE'),
+ 'O02 populated reference selection does not create browser staging authority');
+`;
+ sql=sql.replace('SELECT plan(25);',()=>`SELECT plan(27);\n${rewind}`).replace('SELECT * FROM finish();',()=>`${restore}SELECT * FROM finish();`);
+}
 if(process.argv.includes('--self-test')){
- assert(sql.startsWith(`BEGIN;\nSELECT plan(${calendarMode?23:13});`));assert(sql.endsWith('ROLLBACK;\n'));
+ assert(sql.startsWith(`BEGIN;\nSELECT plan(${calendarMode?27:13});`));assert(sql.endsWith('ROLLBACK;\n'));
  assert.equal((sql.match(/^BEGIN;$/gm)??[]).length,1);assert.equal((sql.match(/^COMMIT;$/gm)??[]).length,0);
  assert.equal(sql.split(body).length,3,'Exact candidate bytes embedded twice without transaction wrappers');
  assert(!/INSERT INTO (public|auth)\./i.test(sql));
- console.log(`PASS: ${calendarMode?'six':'four'} exact carriers verified; latest forward twice inside one rollback-only test;${calendarMode?23:13} assertions; no business fixture/ledger`);
+ console.log(`PASS: original carrier conservation plus O02 forwards; one rollback-only test;${calendarMode?27:13} assertions; no business fixture/ledger`);
 }else{
  const cli=process.env.SUPABASE_BIN??'supabase';
  const state=spawnSync(cli,['status','-o','json'],{cwd:repo,encoding:'utf8',timeout:30000});

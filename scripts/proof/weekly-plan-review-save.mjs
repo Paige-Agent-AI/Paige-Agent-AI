@@ -1,0 +1,137 @@
+// Additive REAL native save/recovery proof in the incumbent Planning fixture.
+// Its auth/membership/realtime ports are explicit doubles, never production proof.
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {randomUUID} from 'node:crypto';
+export async function proveWeeklyPlanReviewSave({db,read,definition,actor,admin,tenant,foreign,setActor}) {
+ const literal=v=>`'${String(v).replaceAll("'","''")}'`;
+ const scalar=async sql=>(await db.query(`SELECT ${sql} AS value`)).rows[0].value;
+ let checks=0;
+ const check=(v,label)=>{assert(v,label);checks++;};
+ const refuses=async(sql,code,label)=>{let error;try{await scalar(sql);}catch(e){error=e;}assert.equal(error?.code,code,label);checks++;};
+ await db.exec('RESET ROLE');
+ await db.exec(`CREATE FUNCTION public.is_platform_owner(uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$ SELECT public.has_any_role($1,ARRAY['platform_admin']) $$;`);
+ await db.exec(`CREATE SCHEMA IF NOT EXISTS private;
+ ALTER TABLE public.tenants ADD COLUMN status text NOT NULL DEFAULT 'active';
+ CREATE TABLE public.paige_chat_threads(id uuid PRIMARY KEY,tenant_id uuid,caller_user_id uuid,is_archived boolean DEFAULT false);
+ CREATE TABLE public.tasks(id uuid PRIMARY KEY,tenant_id uuid,user_id uuid,title text,status text,due_date timestamptz,updated_at timestamptz,created_at timestamptz);
+ CREATE TABLE public.tenant_business_time_zones(tenant_id uuid PRIMARY KEY,time_zone text,set_at timestamptz DEFAULT now());
+ CREATE FUNCTION public._sales_invoice_actor(uuid,uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN
+  IF auth.uid() IS DISTINCT FROM $1 OR public.current_user_tenant_id() IS DISTINCT FROM $2 OR NOT public.is_tenant_admin($2) THEN RAISE EXCEPTION 'fixture actor refused' USING ERRCODE='42501'; END IF;
+ END $$;`);
+ await db.exec(definition(read('20271031005000_exp04_s3_display_reads_write_no_receipt.sql'),'read_business_time_zone'));
+ const envelope=read('20270417000000_paige_durable_work_envelope.sql');
+ const tableAt=envelope.indexOf('create table public.paige_durable_work (');
+ await db.exec(envelope.slice(tableAt,envelope.indexOf('\n);',tableAt)+3));
+ await db.exec('ALTER TABLE public.paige_durable_work ENABLE ROW LEVEL SECURITY; ALTER TABLE public.paige_durable_work FORCE ROW LEVEL SECURITY; ALTER TABLE public.paige_durable_work ADD COLUMN request_payload jsonb;');
+ for(const name of ['_paige_durable_work_protect_identity','create_paige_durable_work','transition_paige_durable_work']) await db.exec(definition(envelope,name));
+ const seed=read('20260907000000_skills_s2_cat10_operations_process.sql');
+ const copy=seed.match(/weekly_priorities_plan\$s\$,\s*\$s\$Weekly Priorities Plan\$s\$,\s*\$s\$([\s\S]*?)\$s\$/)?.[1];assert(copy,'Original catalogue copy');
+ await db.exec(`CREATE TABLE public.paige_skills(id uuid,slug text,name text,description text,category text,scoping text,created_by text,risk_level text,status text,metadata jsonb);
+ INSERT INTO public.paige_skills VALUES('${randomUUID()}','weekly_priorities_plan','Weekly Priorities Plan',${literal(copy)},'operations_process','platform','system','draft','active','{}');`);
+ await db.exec('CREATE TRIGGER trg_paige_durable_work_identity BEFORE UPDATE ON public.paige_durable_work FOR EACH ROW EXECUTE FUNCTION public._paige_durable_work_protect_identity();');
+ const atomic=readFileSync(new URL('../../supabase/migrations/20271130050009_exp05_reviewed_weekly_plan_atomic.sql',import.meta.url),'utf8');
+ // Exact producer component; the SAME installer's navigation component runs in
+ // the incumbent Team Hub native proof. Required full-schema CI runs both together.
+ const marker=atomic.indexOf('-- BEGIN ORIGINAL PLAN REFERENCES');assert(marker>0,'Atomic installer component boundary');
+ const migration=atomic.slice(0,marker)+'commit;\n';
+ const signature='public.plan_create_scoped(uuid,uuid,text,text,date,date,text,uuid,text)';
+ const metadata=async()=>(await db.query(`SELECT (to_jsonb(p)-'prosrc'-'proargdefaults')||jsonb_build_object('proargdefaults',pg_get_expr(proargdefaults,0)) AS value FROM pg_proc p WHERE oid='${signature}'::regprocedure`)).rows[0].value;
+ const prior=await metadata();await db.exec(migration);assert.deepEqual(await metadata(),prior,'native receipt forward retains original ABI/OID/owner/ACL/config');checks++;
+ await db.exec(read('20271130050010_exp05_weekly_plan_catalogue_identity.sql'));
+ check(await scalar(`(SELECT metadata#>>'{catalogue_coverage,state}'='limited' AND description LIKE '%does not execute work%' AND risk_level='draft' FROM public.paige_skills)`),'same canonical catalogue states Limited/manual only; original risk and activation unchanged');
+ const task=randomUUID(),request=randomUUID();
+ await db.exec(`INSERT INTO public.tenant_business_time_zones(tenant_id,time_zone) VALUES('${tenant}','America/New_York');
+ INSERT INTO public.tasks VALUES('${task}','${tenant}','${admin}','Original permitted test work','pending','2026-11-04T15:00:00Z','2026-11-03T12:00:00Z','2026-11-03T12:00:00Z');`);
+ const key=`crm:${task}`;
+ const review={v:1,starts_on:'2026-11-02',zone:'America/New_York',goal:'Finish confirmed client readiness',sources:[{key,updated_at:'2026-11-03T12:00:00Z',minutes:60,dependencies:[]}],capacity_minutes:{[admin]:120},included:[key]};
+ const save=(r=review,id=request,a=admin,t=tenant)=>`public.save_weekly_plan_review_scoped('${a}','${t}','${id}',${literal(JSON.stringify(r))}::jsonb)`;
+ const recover=(id=request,a=admin,t=tenant)=>`public.get_weekly_plan_review_result_scoped('${a}','${t}','${id}')`;
+ await setActor(admin);await db.exec('SET ROLE authenticated');
+ const plans=await scalar('(SELECT count(*) FROM public.plans)');
+ const result=await scalar(save());
+ check(result.status==='succeeded'&&result.plan_id&&result.receipt_run_id,'one native save returns original Plan and Rail identity');
+ const again=await scalar(save()),reopened=await scalar(recover());
+ check(result.plan_id===again.plan_id&&result.receipt_run_id===again.receipt_run_id&&reopened.plan_id===result.plan_id,'retry and read-only reload reconcile the same original result');
+ check(await scalar('(SELECT count(*) FROM public.plans)')===Number(plans)+1,'same attempt creates exactly one Plan');
+ const row=await scalar(`(SELECT to_jsonb(p) FROM public.plans p WHERE id='${result.plan_id}')`);
+ check(row.horizon==='week'&&row.scope==='individual'&&row.owner_user_id===admin&&row.metadata.weekly_plan_review_v1.reserves_time===false,'original native container retains actual scope and explicit no-reservation boundary');
+ check(!JSON.stringify(row).includes('Original permitted test work')&&row.metadata.weekly_plan_review_v1.review.goal===review.goal&&reopened.current_work[0].title==='Original permitted test work','saved review retains only references/owner inputs; current authorized work is resolved on reopen');
+ check(reopened.confirmed_goal===review.goal&&reopened.starts_on===review.starts_on&&reopened.confirmed_capacity_minutes[admin]===120&&reopened.current_work[0].original_minutes===60&&reopened.current_work[0].original_owner_id===admin&&reopened.current_work[0].original_dependencies.length===0,'reload preserves the original accepted goal, effort, owner and net capacity');
+ await refuses(save({...review,goal:'A different command'}),'22023','same request cannot become another plan');
+ const fresh=()=>randomUUID();
+ await refuses(save({...review,sources:[{...review.sources[0],updated_at:'2026-11-03T11:00:00Z'}]},fresh()),'40001','stale original work refuses before creating a Plan');
+ await refuses(save({...review,zone:'UTC'},fresh()),'40001','changed business zone refuses');
+ await refuses(save({...review,capacity_minutes:{[admin]:30}},fresh()),'22023','insufficient actual entered capacity refuses');
+ await refuses(save({...review,sources:[{...review.sources[0],minutes:null}]},fresh()),'22023','unknown effort cannot be accepted as feasible work');
+ await refuses(save({...review,sources:[{...review.sources[0],dependencies:[key]}]},fresh()),'22023','cyclic dependency cannot be saved as feasible');
+ await refuses(save({...review,sources:[{...review.sources[0],key:`crm:${randomUUID()}`}],included:[]},fresh()),'22023','empty accepted proposal is refused');
+ await refuses(save(review,fresh(),admin,foreign),'42501','foreign tenant cannot be used');
+ await setActor(actor);await refuses(recover(),'42501','member cannot read another actor save result');
+ await refuses(save(review,fresh(),actor),'42501','ordinary member cannot use owner/admin weekly review');
+ await setActor(admin);
+ const absent=await scalar(recover(fresh()));check(absent.status==='not_found','unknown request is read-only absence, never another creation');
+ await db.exec('RESET ROLE');
+ const originalReceipt=await scalar(`(SELECT count(*) FROM public.paige_workspace_events WHERE source_id='${result.receipt_run_id}' AND detail->>'record_id'='${result.plan_id}')`);
+ check(Number(originalReceipt)===1,'original Plan commit has exactly one correlated domain Rail');
+ await db.exec(`UPDATE public.tasks SET title='Current authorized changed work',updated_at='2026-11-03T13:00:00Z' WHERE id='${task}'`);
+ await setActor(admin);await db.exec('SET ROLE authenticated');
+ const changed=await scalar(recover());
+ check(changed.plan_id===result.plan_id&&changed.current_work[0].title==='Current authorized changed work'&&changed.current_work[0].changed_since_review===true,'reopen resolves CURRENT original work without rewriting the accepted Plan');
+ await db.exec(`RESET ROLE; UPDATE public.tasks SET tenant_id='${foreign}' WHERE id='${task}'`);
+ await setActor(admin);await db.exec('SET ROLE authenticated');
+ const removed=await scalar(recover());
+ check(removed.plan_id===result.plan_id&&removed.current_work[0].state==='unavailable'&&Object.keys(removed.current_work[0]).length===2&&!JSON.stringify(removed).includes('Current authorized changed work'),'foreign/deleted source cannot leak retained Task facts through a saved Plan');
+ await db.exec(`RESET ROLE; UPDATE public.tasks SET tenant_id='${tenant}',title='Original permitted test work',updated_at='2026-11-03T12:00:00Z' WHERE id='${task}'; UPDATE public.tenant_members SET role='member',is_owner=false WHERE tenant_id='${tenant}' AND user_id='${admin}'`);
+ await setActor(admin);await db.exec('SET ROLE authenticated');
+ await refuses(recover(),'42501','demoted original actor cannot recover workspace-wide Task facts');
+ await db.exec(`RESET ROLE; UPDATE public.tenant_members SET role='admin',is_owner=true WHERE tenant_id='${tenant}' AND user_id='${admin}'`);
+ const privatePlan=randomUUID(),privateItem=randomUUID();
+ await db.exec(`DELETE FROM public.user_roles WHERE user_id='${admin}' AND role='admin';
+ INSERT INTO public.plans(id,tenant_id,created_by,owner_user_id,title,scope,horizon,starts_on,ends_on,status) VALUES('${privatePlan}','${tenant}','${actor}','${actor}','Other actor private Plan','individual','week','2026-11-02','2026-11-08','active');
+ INSERT INTO public.plan_items(id,tenant_id,plan_id,item_type,created_by,assigned_to_user_id,title,status,updated_at)
+ VALUES('${privateItem}','${tenant}','${privatePlan}','task','${actor}','${actor}','Private original Planning work','open','2026-11-03T12:00:00Z');`);
+ const planningKey=`planning:${privateItem}`,planningReview={...review,capacity_minutes:{[actor]:120,[admin]:120},sources:[{key:planningKey,updated_at:'2026-11-03T12:00:00Z',minutes:30,dependencies:[]}],included:[planningKey]};
+ await setActor(admin);await db.exec('SET ROLE authenticated');
+ await refuses(save(planningReview,fresh()),'40001','tenant administrator cannot submit an inaccessible same-tenant Planning item');
+ await db.exec(`RESET ROLE; UPDATE public.plan_items SET created_by='${admin}',assigned_to_user_id='${admin}' WHERE id='${privateItem}'`);
+ planningReview.sources[0].updated_at=await scalar(`(SELECT updated_at FROM public.plan_items WHERE id='${privateItem}')`);
+ await setActor(admin);await db.exec('SET ROLE authenticated');
+ await refuses(save(planningReview,fresh()),'40001','item assignment does not bypass original private parent-Plan visibility');
+ await db.exec(`RESET ROLE; UPDATE public.plans SET created_by='${admin}',owner_user_id='${admin}' WHERE id='${privatePlan}'`);
+ await setActor(admin);await db.exec('SET ROLE authenticated');
+ const planningRequest=fresh(),planningResult=await scalar(save(planningReview,planningRequest));
+ check(planningResult.current_work[0].title==='Private original Planning work','original owner and permitted parent can save/reopen the same Planning work');
+ await db.exec(`RESET ROLE; UPDATE public.plan_items SET created_by='${actor}',assigned_to_user_id='${actor}' WHERE id='${privateItem}'`);
+ await setActor(admin);await db.exec('SET ROLE authenticated');
+ check((await scalar(recover(planningRequest))).current_work[0].state==='unavailable','lost original item visibility withholds facts from an existing saved Plan');
+ await db.exec(`RESET ROLE; UPDATE public.plan_items SET created_by='${admin}',assigned_to_user_id='${admin}' WHERE id='${privateItem}'; UPDATE public.plans SET created_by='${actor}',owner_user_id='${actor}' WHERE id='${privatePlan}'`);
+ await setActor(admin);await db.exec('SET ROLE authenticated');
+ check((await scalar(recover(planningRequest))).current_work[0].state==='unavailable','lost private parent visibility withholds current work without recreating the saved Plan');
+ await db.exec(`RESET ROLE; INSERT INTO public.user_roles VALUES('${admin}','admin')`);
+ await db.exec('RESET ROLE');
+ check(await scalar(`has_function_privilege('authenticated','public.save_weekly_plan_review_scoped(uuid,uuid,uuid,jsonb)','EXECUTE') AND NOT has_function_privilege('anon','public.save_weekly_plan_review_scoped(uuid,uuid,uuid,jsonb)','EXECUTE') AND NOT has_function_privilege('service_role','public.save_weekly_plan_review_scoped(uuid,uuid,uuid,jsonb)','EXECUTE')`),'only ordinary authenticated role can enter the explicitly guarded save API');
+ check(await scalar(`NOT has_function_privilege('authenticated','private.planning_weekly_review_scope(uuid,uuid)','EXECUTE')`),'private scope helper has no browser grant');
+ const count=async table=>Number(await scalar(`(SELECT count(*) FROM public.${table})`));
+ const before={plans:await count('plans'),work:await count('paige_durable_work'),events:await count('paige_workspace_events')};
+ await db.exec(`CREATE FUNCTION public.weekly_fixture_receipt_refusal() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'receipt refusal fixture'; END $$;
+ CREATE TRIGGER weekly_fixture_receipt_refusal BEFORE INSERT ON public.paige_workspace_events FOR EACH ROW EXECUTE FUNCTION public.weekly_fixture_receipt_refusal();`);
+ await setActor(admin);await db.exec('SET ROLE authenticated');
+ await refuses(save(review,fresh()),'P0001','a failed original Rail rolls back the whole Plan save');
+ await db.exec('RESET ROLE');
+ check(await count('plans')===before.plans&&await count('paige_durable_work')===before.work&&await count('paige_workspace_events')===before.events,'receipt failure leaves no Plan, Work claim or false completion');
+ await db.exec('DROP TRIGGER weekly_fixture_receipt_refusal ON public.paige_workspace_events');
+ await setActor(admin);await db.exec('SET ROLE authenticated');
+ const raceRequest=fresh(),held=await db.holdArchive(`SELECT ${save(review,raceRequest)}`,[],{manualRelease:true});
+ try {
+  let wait;try{await db.exec(`SET lock_timeout='50ms'; SELECT ${save(review,raceRequest)}`);}catch(e){wait=e;}
+  check(wait?.code==='55P03','a second original save actually waits on the same native publication lock');
+  let revoke;try{await db.exec(`RESET ROLE;SET lock_timeout='50ms';UPDATE public.tenant_members SET status='inactive' WHERE tenant_id='${tenant}' AND user_id='${admin}'`);}catch(e){revoke=e;}
+  check(revoke?.code==='55P03','authority revocation cannot cross the locked native save boundary');
+ } finally {held.release();await held.completed;}
+ const raceResult=await scalar(recover(raceRequest));
+ check(raceResult.status==='succeeded'&&raceResult.plan_id!==result.plan_id,'the one concurrent native winner has one recoverable original result');
+ await db.exec('RESET ROLE');
+ check(await count('plans')===before.plans+1&&await count('paige_durable_work')===before.work+1&&await count('paige_workspace_events')===before.events+1,'concurrent attempt commits exactly one Plan, Work identity and original domain Rail');
+ console.log(`PASS ${checks} O02 original native Plan/save-once/reload/receipt/negative controls; fixture authority ports remain bounded evidence`);
+}

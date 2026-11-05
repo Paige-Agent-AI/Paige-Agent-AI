@@ -1423,7 +1423,11 @@ const SOURCES = {
  // Restoring main8e97's route helper reproduces old636e digest, all120 sources
  // and all29 dispatches. Renew this reviewed helper only; extractor, metadata,
  // dispatch scalars and other119 accepted dependency pins remain unchanged.
- "supabase/functions/_shared/canonical-app-url.ts": "a3d293063f09179639eb4e04867ac1b6b2815424a46b5b8dc8387e7d40c53d1a",
+ // O02 original Plan/review navigation. Both predecessor AST pins independently
+ // reproduced from maind05; only these TWO dependencies change. Registry,
+ // whole Root/all29 dispatches, extractor/validators and other pins stay exact.
+ // Required exact-head NON-AUTHOR review and CI remain binding, no activation.
+ "supabase/functions/_shared/canonical-app-url.ts": "b24445a840dc2b62bdb5e1f7907caaa5e5f1a66beec54757507c4cb40e77ae34",
   "supabase/functions/_shared/gmail.ts": "78f697e312d18eb9d73ff2a3802142003a843b109f5e2a956182befb5d6160ff",
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",
@@ -1573,7 +1577,7 @@ const ANCESTRY_SOURCES = {
  // stay exact. Restoring main8e97's helper reproduces old8465 digest, all120 source
  // pins and all29 dispatches. Renew this inspected helper only; no extractor,
  // metadata, dispatch scalar or other dependency changes. Hostile controls retained.
- "supabase/functions/_shared/paige-turn/record-links.ts": "070fcf83ef4aae32af76d63bf873854999677316df78ccedea8bb48391e23cff",
+ "supabase/functions/_shared/paige-turn/record-links.ts": "f9eb0bd7050072a0b2c893dcff5a330e5317f0021da16513b3e8d6a52dbfbab2",
  // Original extraction input/acknowledgment validation remains authoritative.
  // EXP13 October31: exact0b5a helper independently reviewed before this renewal.
  // Original-main458e reproduced; only this source input changed across131

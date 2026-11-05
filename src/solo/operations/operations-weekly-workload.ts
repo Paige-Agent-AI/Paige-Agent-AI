@@ -1,5 +1,6 @@
 import type { operationsWeek } from "./operations-week";
 import { localDateInZone } from "../../../supabase/functions/_shared/paige-context/snapshot";
+import { capacityMinutesFromHours } from "../../../supabase/functions/_shared/planning/weekly-plan-review";
 
 export type ReadyWorkWeek = Extract<ReturnType<typeof operationsWeek>, { kind: "ready" }>;
 
@@ -7,9 +8,7 @@ export type ReadyWorkWeek = Extract<ReturnType<typeof operationsWeek>, { kind: "
 export function weeklyWorkload(week: ReadyWorkWeek, ownerId: string, hours: string,
   estimates: Readonly<Record<string, string>> = {}) {
   const enteredHours = hours.trim();
-  const hoursValue = /^\d{1,3}(?:\.\d{1,2})?$/.test(enteredHours) ? Number(enteredHours) : NaN;
-  const capacityMinutes = Number.isFinite(hoursValue) && hoursValue >= 0 && hoursValue <= 168 && Number.isInteger(hoursValue * 4)
-    ? hoursValue * 60 : null;
+  const capacityMinutes = capacityMinutesFromHours(enteredHours);
   const rows = week.days.flatMap(day => day.deadlines)
     .filter(work => Boolean(ownerId) && work.assigned_to_user_id === ownerId)
     .map(work => {

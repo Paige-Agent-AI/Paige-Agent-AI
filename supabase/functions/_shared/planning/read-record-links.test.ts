@@ -8,23 +8,24 @@ const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")
 const item = (n: number, plan: string | null = null) => ({ id: id(n), tenant_id: tenant, plan_id: plan,
   title: "Private source text must never enter a reference", status: "open" });
 const link = (n: number) => ({ destination: "operations_work", record_id: id(n), record_kind: "planning_item" });
+const reviewLink = { destination: "operations_weekly_plan", record_id: null };
 
 describe("original caller-scoped Planning read navigation", () => {
-  it("projects original nested and loose items, never a plan container, text or URL", () => {
+  it("projects original items and a distinctly typed Plan container, never text or a URL", () => {
     const result = { plans: [{ id: id(9), tenant_id: tenant, items: [item(1, id(9))] }], loose_items: [item(2)] };
-    assert.deepEqual(planningReadRecordLinks(tenant, result), [link(1), link(2)]);
+    assert.deepEqual(planningReadRecordLinks(tenant, result), [link(1), link(2), { destination: "operations_work", record_id: id(9), record_kind: "planning_plan" }, reviewLink]);
   });
   it("withholds foreign tenants and mismatched parent identities", () => {
     const result = { plans: [{ id: id(9), tenant_id: tenant,
       items: [item(1, id(8)), { ...item(2, id(9)), tenant_id: foreign }] },
       { id: id(8), tenant_id: foreign, items: [item(3, id(8))] }],
       loose_items: [{ ...item(4), tenant_id: foreign }, item(5, id(9)), item(6)] };
-    assert.deepEqual(planningReadRecordLinks(tenant, result), [link(6)]);
+    assert.deepEqual(planningReadRecordLinks(tenant, result), [link(6), reviewLink]);
   });
   it("accepts only original UUIDs, deduplicates and preserves the existing six-link cap", () => {
     const result = { plans: [], loose_items: [item(1), item(1), { ...item(2), id: "https://example.invalid/" },
       ...Array.from({ length: 8 }, (_, n) => item(n + 2))] };
-    assert.deepEqual(planningReadRecordLinks(tenant, result), [1, 2, 3, 4, 5, 6].map(link));
+    assert.deepEqual(planningReadRecordLinks(tenant, result), [reviewLink, ...[1, 2, 3, 4, 5].map(link)]);
   });
   for (const result of [null, [], { success: false, plans: [], loose_items: [item(1)] },
     { plans: null, loose_items: [item(1)] }, { plans: [], loose_items: null }]) {
@@ -43,14 +44,14 @@ describe("original Planning read receipt before model disclosure", () => {
     const raw = { plans: [], loose_items: [item(1)] }; let calls = 0;
     const result = await finishPlanningChatRead({ tenantId: tenant, runId, isCurrent: async () => true, recordRead: async () => { calls++; return true; } }, raw);
     assert.equal(calls, 1); assert.equal(result.model.status, "available");
-    assert.deepEqual(result.model.loose_items, raw.loose_items); assert.deepEqual(result.links, [link(1)]);
+    assert.deepEqual(result.model.loose_items, raw.loose_items); assert.deepEqual(result.links, [link(1), reviewLink]);
     const receipt = result.model.read_receipt as { run_id: string; recorded: boolean; kind: string; observed_at: string };
     assert.equal(receipt.run_id, runId); assert.equal(receipt.recorded, true); assert.equal(receipt.kind, "read_only");
     assert.ok(Number.isFinite(Date.parse(receipt.observed_at)));
   });
   it("distinguishes an authoritative empty read from an unavailable lookup", async () => {
     const result = await finishPlanningChatRead({ tenantId: tenant, runId, isCurrent: async () => true, recordRead: async () => true }, { plans: [], loose_items: [] });
-    assert.equal(result.model.status, "available"); assert.deepEqual(result.links, []);
+    assert.equal(result.model.status, "available"); assert.deepEqual(result.links, [reviewLink]);
     assert.deepEqual(result.model.plans, []); assert.deepEqual(result.model.loose_items, []);
   });
   for (const failure of [false, "unknown"] as const) it(`withholds facts and references on ${failure} receipt`, async () => {

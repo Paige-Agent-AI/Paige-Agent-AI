@@ -216,3 +216,33 @@ describe("customer-facing identity truth", () => {
     expect(migration).not.toMatch(/\n\s+account_id text;/);
   });
 });
+
+describe("Platform Integrations redesign seam (owner 2026-11-05)", () => {
+  const grantsMigration = read("supabase/migrations/20271131000002_social_platform_grant_ops.sql");
+
+  it("serves the console's channel list through the same admin-gated door, read-only", () => {
+    expect(endpoint.indexOf('action === "channels"')).toBeGreaterThan(endpoint.indexOf("const isAdmin ="));
+    expect(endpoint.indexOf('action === "channels"')).toBeLessThan(endpoint.indexOf('action === "hub_profiles"'));
+    const channelsBlock = endpoint.slice(endpoint.indexOf('action === "channels"'), endpoint.indexOf('action === "hub_profiles"'));
+    expect(channelsBlock).toContain("SOCIAL_CHANNELS_FORBIDDEN");
+    // Read-only: the channels action never touches a governed mutation.
+    expect(channelsBlock).not.toContain("govern(");
+  });
+
+  it("lets a fresh connect start from the Platform console return path as well as a Solo one", () => {
+    expect(endpoint).toContain("RETURN_PATH = /^\\/(solo\\/[A-Za-z0-9_-]+|operator)\\/settings\\/integrations\\/?$/");
+  });
+
+  it("gates every workspace-grant RPC on the platform-owner resolver and fails closed", () => {
+    expect(grantsMigration).toContain("SOCIAL_GRANTS_FORBIDDEN");
+    for (const fn of ["social_platform_grant_workspaces", "social_platform_grants_list", "social_platform_grant_set"]) {
+      const start = grantsMigration.indexOf(`create or replace function public.${fn}`);
+      const end = grantsMigration.indexOf("create or replace function public.", start + 10);
+      const block = grantsMigration.slice(start, end > start ? end : undefined);
+      expect(block, `${fn} must exist`).toContain("security definer");
+      expect(block, `${fn} must gate on the resolver`).toContain("resolve_platform_operator_workspace()");
+      expect(block, `${fn} must fail closed`).toContain("SOCIAL_GRANTS_FORBIDDEN");
+    }
+    expect(grantsMigration).not.toMatch(/revoke all on function/);
+  });
+});

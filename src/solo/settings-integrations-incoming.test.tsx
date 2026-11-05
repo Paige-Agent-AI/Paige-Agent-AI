@@ -1,6 +1,6 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IntegrationsGatewaySection } from "./settings-integrations-gateway";
 import { useMcpGateway } from "./data/useMcpGateway";
 
@@ -302,4 +302,32 @@ it("protects a new source name against Escape before passive effects", async () 
   });
   expect(host.querySelector('[role="dialog"]')).not.toBeNull();
   expect(host.textContent).toContain("Discard these unsaved details?");
+});
+
+
+describe("owner direction 2026-11-05: an outbound connection drawer never pitches incoming setup", () => {
+  const outboundRow = { ...connection, connection_id: "connection-ghl", provider_key: "gohighlevel",
+    label: "GoHighLevel", address_configured: true, credentials_configured: true, configured: true,
+    auth_kind: "bearer", status: "connected", health: "healthy" };
+  const openGhl = async () => {
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-gateway-tool="connection-ghl"]')!.click());
+  };
+
+  it("a never-configured incoming grant renders NOTHING on the outbound drawer", async () => {
+    rows = [outboundRow]; saved = sync({ connection_id: "connection-ghl" });
+    await mount(); await openGhl();
+    expect(host.querySelector('[role="dialog"]')!.textContent).not.toContain("Incoming contacts");
+    expect(button("Set up incoming contacts")).toBeUndefined();
+  });
+
+  it("a CONFIGURED incoming grant keeps its manage affordances on the outbound drawer", async () => {
+    rows = [outboundRow];
+    saved = sync({ connection_id: "connection-ghl", enabled: true, configured_enabled: true, credential_configured: true, generation: 3, granted_at: "2026-11-01T12:00:00Z" });
+    await mount(); await openGhl();
+    const dialog = host.querySelector('[role="dialog"]')!;
+    expect(dialog.textContent).toContain("Incoming contacts");
+    expect(button("Replace sync credential")).toBeTruthy();
+    expect(button("Revoke incoming access")).toBeTruthy();
+    expect(button("Set up incoming contacts")).toBeUndefined();
+  });
 });

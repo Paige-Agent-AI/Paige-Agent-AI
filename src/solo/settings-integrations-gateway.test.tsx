@@ -624,6 +624,35 @@ describe("Truth boundary", () => {
     expect(host.textContent).toContain("Couldn’t reach it");
   });
 
+  it("the catalogue tile and the drawer header say what the wall says — never 'Turned off' for a setup that never finished", async () => {
+    // Owner finding 2026-11-05: the HighLevel tile wore "Turned off" about his half-done
+    // September row while the wall card said "Setup not finished" — three surfaces showing
+    // one row must agree, and none of them may claim somebody turned something off when
+    // nobody did. A genuinely broken row keeps its error everywhere.
+    world({ rows: [
+      row({ connection_id: "conn-ghl", label: "GoHighLevel", provider_key: "gohighlevel", server_url_host: "services.leadconnectorhq.com", auth_kind: "none", enabled: false, status: "unconfigured", health: "unknown" }),
+      row({ connection_id: "conn-broken", label: "Scheduling tool", status: "error", health: "unknown" }),
+    ] });
+    const { host } = await render();
+    expect(host.textContent).not.toContain("Turned off");
+    // The detail drawer header agrees with the wall.
+    await click(host.querySelector('[data-gateway-tool="conn-ghl"]'));
+    expect(dialog(host)?.textContent).toContain("Setup not finished");
+    expect(dialog(host)?.textContent).not.toContain("Turned off");
+    await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
+    // The held catalogue tile agrees too, and its screen-reader label no longer claims the
+    // tool is connected.
+    await openCatalogue(host);
+    const ghlTile = tile(host, "HighLevel · LeadConnector");
+    expect(ghlTile?.textContent).toContain("Setup not finished");
+    expect(ghlTile?.getAttribute("aria-label")).toMatch(/already added, setup not finished/i);
+    // An errored row keeps its error in the drawer header — never softened, never "Turned off".
+    await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
+    await click(host.querySelector('[data-gateway-tool="conn-broken"]'));
+    expect(dialog(host)?.textContent).toContain("Couldn’t reach it");
+    expect(dialog(host)?.textContent).not.toContain("Turned off");
+  });
+
   it("keeps a failed read distinct from an account with no tools", async () => {
     rpc.mockImplementation((name: string) =>
       builder({ data: null, error: name === "get_mcp_connections_v2" ? { message: "read failed" } : null }));

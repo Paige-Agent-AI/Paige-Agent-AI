@@ -18,6 +18,14 @@ REDUCED_MOTION: NOT_APPLICABLE: No motion added in this slice.
 STATE_COVERAGE: PASS: Hub read failure (role=alert + retry via Check again), empty readback ("No adoptable hub channels"), busy gating on every action, approval card with Approve/Decline, and the post-adopt notice are all rendered states pinned or present.
 TRUTHFUL_STATE_LABELS: PASS: Only provider-readback-verified channels are offered; non-adoptable hub channels are never shown as available; adopted rows carry the platform-connection label in the drawer.
 SOLO_UI: YES: Settings -> Integrations inside the Solo shell gains the admin-only SocialHubPanel (hub channel listing + one-approval adoption with inline Approve/Decline) and the Social drawer's platform-connection labels.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: frame owed with the authenticated drive (see RENDERED_EVIDENCE).
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: frame owed with the authenticated drive.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: frame owed with the authenticated drive (see RENDERED_EVIDENCE).
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: frame owed with the authenticated drive.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: frame owed with the authenticated drive (see RENDERED_EVIDENCE).
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: frame owed with the authenticated drive.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: frame owed with the authenticated drive (see RENDERED_EVIDENCE).
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: frame owed with the authenticated drive.
 UNVERIFIED: Production deploy of the frontend (Vercel on merge), the owner's first governed adoption, and a rendered screenshot pass remain open; nothing here is inferred as done.
 INTERNAL_BUILD_IDENTITY: 388132b295112fb9eb57b1cb1898d9520e725c54; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record plus ANT-162 records 564343f2 and 64e46939
 RELEASE_CHANNEL: development: Owner-green-lit final slice of the evening ("let's make this live"); exact-head checks and authorized release remain required.

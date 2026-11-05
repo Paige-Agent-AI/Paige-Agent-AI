@@ -107,8 +107,10 @@ export default function IntegrationsSurface() {
 
   return (
     <div className="ss-integrations flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
-      <div className="ss-subtabs" role="tablist" aria-label="Integrations sections">
-        <span className="ss-subtab" aria-selected="true">Integrations</span>
+      {/* The Solo page's tab row, carried as shape: this console has one leaf, so
+          the single tab is a place marker (aria-current), never a false control. */}
+      <div className="ss-subtabs">
+        <span className="ss-subtab" aria-current="page">Integrations</span>
       </div>
 
       <div className="ig-bar" role="group" aria-label="Filter integrations">

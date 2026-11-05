@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { IntegrationLogo } from "../../solo/integration-logos";
@@ -17,11 +17,15 @@ import type { SocialPlatformDefinition } from "../../solo/social-platform-catalo
  * hub read degrades to "unknown" when the capability is not configured; the cards
  * never guess.
  *
- * Every mutation — connect, adopt, disconnect — travels the same governed wrapper:
- * an approval card first, the provider's authorization link second (rendered as a
- * click-through ANCHOR — the operator console never hard-navigates), nothing changed
- * on decline. The `social_result` return is read once, stripped, and a verified
- * return reloads the real state rather than trusting the URL flag.
+ * Every mutation — connect, reconnect, adopt, disconnect — travels the same
+ * governed wrapper: an approval card first, the provider's authorization link
+ * second (rendered as a click-through ANCHOR — the operator console never
+ * hard-navigates), nothing changed on decline, and the decline itself is sent to
+ * the door so the pending confirmation is consumed and recorded. A completed
+ * adopt or disconnect reloads the real channel state immediately — the cards never
+ * keep a state the server has already left. The `social_result` return is read
+ * once and stripped; the door's mount-time channel read carries the post-return
+ * state (the provider round trip is a full page navigation).
  *
  * WHITE-LABEL RULE (owner, 2026-11-05): the social provider behind the platform's
  * channels is never named in the UI.
@@ -32,7 +36,6 @@ export type OperatorChannelRow = {
   id: string;
   platform: string;
   label: string | null;
-  handle: string | null;
   status: string;
   providedByPlatform: boolean;
   accountCount: number;
@@ -45,15 +48,30 @@ type HubChannel = { profileId: string; platform: string; handle: string | null; 
 /** Statuses that still hold a working authorization; anything else may reconnect. */
 const HEALTHY = new Set(["connected", "authorizing", "needs_reauth"]);
 
+/** The decline action consumes a pending confirmation by its capability name. */
+const CAPABILITY_OF_ACTION: Record<string, string> = {
+  start: "social_connection_start",
+  adopt: "social_connection_adopt",
+  disconnect: "social_connection_disconnect",
+};
+
 function payloadObject(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
 }
 
 /** The words a card foot and a drawer fact row use for a channel's state. */
 function channelWords(row: OperatorChannelRow): { account: string; tone: "ok" | "warn" } {
-  if (row.status === "connected") return { account: row.handle ? `Connected · ${row.handle}` : "Connected", tone: "ok" };
+  if (row.status === "connected") return { account: row.label ? `Connected · ${row.label}` : "Connected", tone: "ok" };
   if (row.status === "authorizing") return { account: "Finishing setup", tone: "warn" };
   return { account: "Needs attention", tone: "warn" };
+}
+
+/** What a completed act says — and the one thing every completed act does: reload. */
+function completionNotice(state: unknown): string | null {
+  if (state === "adopted") return "Platform channel brought in. The cards now reflect it.";
+  if (state === "disconnected") return "Channel disconnected. The cards now reflect it.";
+  if (state === "declined") return "Canceled. No Social change was made.";
+  return null;
 }
 
 export function useOperatorSocialDoor() {
@@ -66,9 +84,11 @@ export function useOperatorSocialDoor() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [authorizationUrl, setAuthorizationUrl] = useState<string | null>(null);
-  const [pending, setPending] = useState<{ summary: string; request: Record<string, unknown>; fingerprint: string } | null>(null);
+  const [pending, setPending] = useState<{ summary: string; request: Record<string, unknown>; fingerprint: string; capability: string } | null>(null);
   const mounted = useRef(false);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+
+  const loadRef = useRef<(() => Promise<void>) | null>(null);
 
   /** One governed invoke for EVERY mutation: approval card → (for connects) the
    *  provider's authorization link as a click-through anchor. Reads pass through. */
@@ -85,8 +105,9 @@ export function useOperatorSocialDoor() {
       if (!approval || typeof approval.fingerprint !== "string" || typeof approval.summary !== "string") {
         setError("The approval card was malformed. Nothing was changed."); return null;
       }
+      const capability = CAPABILITY_OF_ACTION[String(request.action)] ?? "";
       setAuthorizationUrl(null);
-      setPending({ summary: approval.summary, request, fingerprint: approval.fingerprint });
+      setPending({ summary: approval.summary, request, fingerprint: approval.fingerprint, capability });
       return payload;
     }
     if (payload.ok !== true) {
@@ -101,6 +122,11 @@ export function useOperatorSocialDoor() {
     }
     setPending(null);
     setAuthorizationUrl(null);
+    // A completed adopt or disconnect changes what the cards must say; reload the
+    // real state now rather than leaving the wall one act behind.
+    const done = completionNotice(payload.state);
+    if (done) setNotice(done);
+    if (payload.state === "adopted" || payload.state === "disconnected") void loadRef.current?.();
     return payload;
   }, []);
 
@@ -116,7 +142,7 @@ export function useOperatorSocialDoor() {
     const channelsPayload = payloadObject(channelsResult.data);
     if (!channelsPayload || channelsPayload.ok !== true || !Array.isArray(channelsPayload.channels)) {
       setChannels(null);
-      setError("Company channels could not be read. Try again.");
+      setError("The platform's channels could not be read. Try again.");
       return;
     }
     const parsed: OperatorChannelRow[] = channelsPayload.channels.flatMap((raw) => {
@@ -126,7 +152,6 @@ export function useOperatorSocialDoor() {
         id: row.id,
         platform: row.platform,
         label: typeof row.label === "string" ? row.label : null,
-        handle: typeof row.handle === "string" ? row.handle : null,
         status: typeof row.status === "string" ? row.status : "",
         providedByPlatform: row.providedByPlatform === true,
         accountCount: typeof row.accountCount === "number" ? row.accountCount : 0,
@@ -159,11 +184,13 @@ export function useOperatorSocialDoor() {
       setHub(null);
     }
   }, []);
+  loadRef.current = load;
 
   useEffect(() => { void load(); }, [load]);
 
   // The door returns here with a social_result param once the provider round trip
-  // completes. Read it once, strip it, and reload the real state on a verified return.
+  // completes. Read it once and strip it; the mount-time load above is what carries
+  // the post-return state, because the round trip is a full page navigation.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const result = params.get("social_result");
@@ -171,16 +198,16 @@ export function useOperatorSocialDoor() {
     params.delete("social_result");
     const query = params.toString();
     window.history.replaceState(null, "", window.location.pathname + (query ? "?" + query : ""));
-    if (result === "verified") setNotice("Social accounts were verified. The cards below now reflect what authorized.");
+    if (result === "verified") setNotice("Social accounts were verified. The cards now reflect what authorized.");
     else if (result === "error") setNotice("The authorization did not complete. Nothing was connected.");
   }, []);
 
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("social_result") === "verified") void load();
-  }, [load]);
-
   const connect = useCallback((platform: string) => {
     void invoke({ action: "start", platform, return_path: window.location.pathname });
+  }, [invoke]);
+
+  const reconnect = useCallback((platform: string, connectionId: string) => {
+    void invoke({ action: "start", platform, connection_id: connectionId, return_path: window.location.pathname });
   }, [invoke]);
 
   /** Bring ONE platform's already-held hub channel into the workspace — the governed
@@ -194,6 +221,21 @@ export function useOperatorSocialDoor() {
   const disconnect = useCallback((connectionId: string) => {
     void invoke({ action: "disconnect", connection_id: connectionId });
   }, [invoke]);
+
+  /** Decline THROUGH the door, so the pending confirmation is consumed and recorded
+   *  rather than silently abandoned client-side. */
+  const decline = useCallback((fingerprint: string, capability: string) => {
+    void invoke({ action: "decline", approval_fingerprint: fingerprint, capability });
+  }, [invoke]);
+
+  /** Transient door state (an approval card, an authorization link, a notice)
+   *  belongs to the drawer that produced it; closing the drawer clears it so one
+   *  platform's authorization link can never surface inside another's drawer. */
+  const clearTransient = useCallback(() => {
+    setPending(null);
+    setAuthorizationUrl(null);
+    setNotice(null);
+  }, []);
 
   const channelFor = useCallback(
     (platform: string) => (channels ?? []).find((row) => row.platform === platform && HEALTHY.has(row.status)) ?? null,
@@ -215,8 +257,9 @@ export function useOperatorSocialDoor() {
   );
 
   return {
-    loading: channels === null && busy, channels, hub, busy, error, notice, authorizationUrl, pending,
-    setNotice, setPending, load, invoke, connect, adopt, disconnect, channelFor, cardState, hubHoldFor,
+    channels, hub, busy, error, notice, authorizationUrl, pending,
+    setNotice, load, invoke, connect, reconnect, adopt, disconnect, decline, clearTransient,
+    channelFor, cardState, hubHoldFor,
   };
 }
 
@@ -227,12 +270,14 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 /** The one drawer every Social card opens: the platform's own channel for that
- *  platform — its proven state, and every act (connect, adopt, disconnect) behind
- *  the governed approval. Chrome mirrors the surface family's drawers: focus lands
- *  on close, Tab stays inside, Escape closes, focus returns to the opener card. */
+ *  platform — its proven state, and every act (connect, reconnect, adopt,
+ *  disconnect) behind the governed approval. Chrome mirrors the surface family's
+ *  drawers: focus lands on close, Tab stays inside, Escape closes, focus returns
+ *  to the opener card, and closing clears the door's transient state. */
 export function OperatorSocialDrawer({ platform, door, onClose }: { platform: SocialPlatformDefinition; door: OperatorSocialDoor; onClose: () => void }) {
   const panel = useRef<HTMLElement>(null);
   const close = useRef<HTMLButtonElement>(null);
+  const handleClose = useCallback(() => { door.clearTransient(); onClose(); }, [door, onClose]);
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     close.current?.focus();
@@ -240,7 +285,7 @@ export function OperatorSocialDrawer({ platform, door, onClose }: { platform: So
   }, []);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { event.preventDefault(); onClose(); return; }
+      if (event.key === "Escape") { event.preventDefault(); handleClose(); return; }
       if (event.key !== "Tab") return;
       const root = panel.current;
       if (!root) return;
@@ -253,7 +298,7 @@ export function OperatorSocialDrawer({ platform, door, onClose }: { platform: So
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [handleClose]);
 
   const row = door.channelFor(platform.key);
   const held = door.hubHoldFor(platform.key);
@@ -261,7 +306,7 @@ export function OperatorSocialDrawer({ platform, door, onClose }: { platform: So
   const facts = row
     ? <dl className="ig-facts">
         <Fact label="Channel" value={channelWords(row).account} />
-        <Fact label="Account" value={row.handle ?? row.label ?? "Provider-verified account"} />
+        <Fact label="Account" value={row.label ?? "Provider-verified account"} />
         <Fact label="Held by" value={row.providedByPlatform ? "The platform (adopted)" : "Connected by you"} />
         <Fact label="Accounts on this connection" value={String(row.accountCount)} />
         {row.lastVerifiedAt && <Fact label="Verified" value={row.lastVerifiedAt.slice(0, 10)} />}
@@ -272,7 +317,7 @@ export function OperatorSocialDrawer({ platform, door, onClose }: { platform: So
       </dl>;
 
   return (
-    <div className="ig-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className="ig-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) handleClose(); }}>
       <aside className="ig-panel" ref={panel} role="dialog" aria-modal="true" aria-labelledby="op-social-drawer-title">
         <header>
           <IntegrationLogo id={platform.key} fallback={platform.mark} />
@@ -280,13 +325,13 @@ export function OperatorSocialDrawer({ platform, door, onClose }: { platform: So
             <h2 id="op-social-drawer-title">{platform.name}</h2>
             <span>Platform channel</span>
           </div>
-          <button ref={close} className="ig-close" type="button" aria-label={`Close ${platform.name}`} onClick={onClose}><X aria-hidden size={16} /></button>
+          <button ref={close} className="ig-close" type="button" aria-label={`Close ${platform.name}`} onClick={handleClose}><X aria-hidden size={16} /></button>
         </header>
         <div className="ig-panel-body">
           {door.error && <p className="ig-error" role="alert">{door.error}</p>}
           {door.notice && <p className="ig-note" role="status">{door.notice}</p>}
           {facts}
-          <p className="ig-lede">{platform.connectionNote}</p>
+          {canOAuth && <p className="ig-lede">{platform.connectionNote}</p>}
 
           {door.pending && (
             <div className="ig-caps" role="status">
@@ -298,7 +343,7 @@ export function OperatorSocialDrawer({ platform, door, onClose }: { platform: So
                   Approve once
                 </button>
                 <button type="button" className="ig-btn" disabled={door.busy}
-                  onClick={() => { door.setPending(null); door.setNotice("Canceled. No Social change was made."); }}>
+                  onClick={() => door.decline(door.pending!.fingerprint, door.pending!.capability)}>
                   Decline
                 </button>
               </div>
@@ -321,6 +366,11 @@ export function OperatorSocialDrawer({ platform, door, onClose }: { platform: So
             {!row && canOAuth && (
               <button type="button" className="ig-btn" data-primary disabled={door.busy} onClick={() => door.connect(platform.key)}>
                 Connect {platform.name}
+              </button>
+            )}
+            {row && row.status !== "connected" && (
+              <button type="button" className="ig-btn" data-primary disabled={door.busy} onClick={() => door.reconnect(platform.key, row.id)}>
+                Reconnect {platform.name}
               </button>
             )}
             {!row && held && (

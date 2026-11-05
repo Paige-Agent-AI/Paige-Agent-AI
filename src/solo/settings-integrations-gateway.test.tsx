@@ -861,8 +861,7 @@ describe("Adding a tool", () => {
     expect(dialog(host)?.textContent).toMatch(/already has a working Slack connection/i);
   });
 
-  it("locks the RE-KEY door too: the owner's dead HighLevel row collapses to its one contract", async () => {
-    // Review finding / the owner's literal screenshot: the four-way OAuth/Token/Token+headers/
+  it("locks the RE-KEY door too: the owner's dead HighLevel row collapses to its one contract", async () => {    // Review finding / the owner's literal screenshot: the four-way OAuth/Token/Token+headers/
     // None wall he met was the re-key form of his unfinished generic-remote GoHighLevel row
     // (host services.leadconnectorhq.com, auth none). Recognition is by provider key OR
     // host, so this generic row must lock to "Private Integration Token" exactly like the
@@ -892,6 +891,26 @@ describe("Adding a tool", () => {
     const rekey = rpc.mock.calls.find(c => c[0] === "set_mcp_connection_endpoint")?.[1] as Record<string, unknown>;
     expect(rekey).toMatchObject({ _connection_id: "conn-ghl", _server_url: "https://services.leadconnectorhq.com/mcp/", _auth_kind: "bearer" });
     expect(rekey?._custom_headers).toEqual({ locationId: "ABcdEf123456" });
+  });
+
+  it("a row the catalogue knows ONLY by host keeps the manual re-key: blank address, every mode", async () => {
+    // Review P2 (2026-11-05): recognition reaches ~50 host-matched catalogue rows (Notion,
+    // Stripe, …) but only a LOCKED contract may carry its endpoint. A non-curated recognized
+    // row's re-key must still ask for the full address (blank, never prefilled — a prefill
+    // would silently rewrite a tenant's saved endpoint) and keep all four modes.
+    world({ rows: [row({ connection_id: "conn-notion", label: "Notion", provider_key: "generic-remote",
+      auth_kind: "none", enabled: true, status: "pending_verification", health: "unknown",
+      server_url_host: "mcp.notion.com" })] });
+    const { host } = await render();
+    const card = host.querySelector(`[data-gateway-tool="conn-notion"]`);
+    await click(card ?? undefined);
+    await click(byText(host, "Re-key"));
+    const address = fieldFor(host, "Full address") as HTMLInputElement | null;
+    expect(address).toBeTruthy();
+    expect(address?.value).toBe("");
+    const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
+    expect(authButtons.length).toBe(4);
+    expect(dialog(host)?.textContent).not.toMatch(/Paige already knows this provider’s address/i);
   });
 
   it("finds HighLevel under the LeadConnector name the provider's own API uses", async () => {

@@ -554,14 +554,21 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   /** The catalogue row a re-key of this row is recognized as — computed before the form's
    * state so the curated endpoint can seed the address state (see contractUrl). */
   const recognizedPreset = !tool ? null : catalogueMatchForRow(tool);
+  /** The LOCKED contract a recognized row carries. Null for rows the catalogue knows only by
+   * host (Notion, Stripe, …) — their re-key keeps the full manual form, address and all;
+   * only a curated provider's row may carry its endpoint (review P2, 2026-11-05: seeding a
+   * host-recognized non-curated row would silently rewrite its saved endpoint). */
+  const recognizedContract = !recognizedPreset ? null
+    : presetAuthContract({ providerKey: recognizedPreset.pk, auth: catalogueAuthChoice(recognizedPreset) });
   /**
    * The endpoint a CURATED contract binds this form to: the preset's own address on the
    * create door; the catalogue's canonical address on a recognized row's re-key (which also
    * silently repairs a row saved against a wrong host). Owner direction 2026-11-05: this
    * address is the same for every customer, so the form never asks for it — it is carried,
-   * not entered. Null on the generic door and on rows the catalogue does not recognize.
+   * not entered. Null on the generic door and on rows the catalogue does not recognize —
+   * and on rows it recognizes without a locked contract (their address stays theirs to give).
    */
-  const contractUrl = !tool ? (preset.providerKey && preset.url ? preset.url : null) : recognizedPreset?.url ?? null;
+  const contractUrl = !tool ? (preset.providerKey && preset.url ? preset.url : null) : recognizedContract ? recognizedPreset?.url ?? null : null;
   const [url, setUrl] = useState(tool ? contractUrl ?? "" : preset.url ?? "");
   // Curated presets lock the selector (and their note names the provider's real contract).
   // EXP10 (owner finding 2026-11-04): a curated provider's ONE proven mode governs BOTH doors
@@ -572,11 +579,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   // re-key: its saved kind is the only proven fact, and a re-key may legitimately change it.
   const authContract = !tool
     ? presetAuthContract(preset)
-    : recognizedPreset ? presetAuthContract({
-        providerKey: recognizedPreset.pk,
-        auth: catalogueAuthChoice(recognizedPreset),
-      })
-    : null;
+    : recognizedContract;
   /**
    * A CURATED form: the provider's one proven contract governs everything the user sees —
    * the mode is locked, the address is carried invisibly, and the credential fields wear the

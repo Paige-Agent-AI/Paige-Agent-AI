@@ -2,6 +2,7 @@
 // Auth claims and Storage metadata are explicit ports; no uploaded bytes/API/provider effects.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {verifyHubFileBeginCurrentness} from './exp08-team-hub-file-begin-currentness.mjs';
 
 export async function verifyHubFileCurrentness({sql,connection,ids,prepare,post,file,original,ready,blocked,parsed}){
  const controls=[];
@@ -119,7 +120,7 @@ export async function verifyHubFileCurrentness({sql,connection,ids,prepare,post,
    }
   }
   assert.equal(controls.length,15);
-  return controls;
+  return [...controls,...await verifyHubFileBeginCurrentness({sql,connection,ids,prepare,file,original,ready,blocked,parsed})];
  }finally{
   sql(roleDefinition);
   assert.equal(sql("SELECT to_jsonb(p)::text FROM pg_proc p WHERE oid='auth.role()'::regprocedure"),roleMetadata,'Restore every original Auth role-port field');

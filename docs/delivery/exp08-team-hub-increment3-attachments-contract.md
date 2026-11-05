@@ -2,6 +2,19 @@
 
 Status: building.
 
+**November 3, 2026 selected continuation — IN PROGRESS.** Original row10 file
+sharing is the ONE owner-authorized outcome: permitted attachment → original
+message → full reload/manual reopen → download SAME bytes. Current repairs fence
+late download completion after departure/unmount and re-resolve original native
+upload admission after uploader waits. The original permission/Storage/validation,
+idempotency, lifecycle and unscanned-file contract below is unchanged. Forward
+carrier20018 and its original disposable controls are engineering work, not a
+released or authenticated result yet; see the dated section in
+[original evidence](../evidence/ui-delivery/exp08-team-hub-increment3.md).
+Existing MMA live continuation waits for the same signed-in Owner session to
+return. Prior unsent-email completion and blocked teammate-details remain separate;
+full18+6/five journeys STILL CODING. Finish/report this outcome, then STOP.
+
 Owner decisions are recorded 2026-10-24 in the decision log, under "EXP08 Team Hub increment 3". This increment:
 
 - reuses the private `comms-attachments` bucket under a Team Hub path;

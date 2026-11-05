@@ -772,7 +772,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   };
 
   return <div ref={formRef}>
-    {(tool || (heldRow && !usable(heldRow))) && !ack && <p className="ig-gw-warn">Replacing configuration clears this tool’s approvals. {curated ? "Enter the credentials" : "Enter the full address and every credential/header"} you want retained, then check it and approve its tools again.</p>}
+    {(tool || (heldRow && !usable(heldRow))) && !ack && <p className="ig-gw-warn">Replacing configuration clears this tool’s approvals. {curated ? "Enter the credentials" : "Enter the full address and every credential/header"} you want retained, then check it — checking approves its tools again for you.</p>}
     {message && <p className="ig-error" role="alert">{message}</p>}
     {discarding && <DiscardPrompt label="Discard configuration" onDiscard={onCancel} onKeep={() => setDiscarding(false)} />}
     {ack ? <>
@@ -1509,7 +1509,7 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
           )}
 
           {!noOutboundAddress && tool.status === "pending_verification" && (
-            <div className="ig-gw-info" role="status"><span>This tool hasn’t been checked yet. Paige can’t use it until she has reached it and you’ve approved what it may do.</span></div>
+            <div className="ig-gw-info" role="status"><span>This tool hasn’t been checked yet. Check it once — reaching it also approves its tools for you.</span></div>
           )}
           {!noOutboundAddress && tool.status === "error" && (
             <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>Couldn’t reach it. Fix the address or re-key, then check it again.</span></div>

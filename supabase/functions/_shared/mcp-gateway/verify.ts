@@ -272,14 +272,15 @@ export async function runVerify(deps: VerifyDeps, input: VerifyInput): Promise<V
     return { httpStatus: 409, body: { ok: false, status: "pending_verification", tool_count: 0, error_code: "config_changed_during_verify" } };
   }
 
-  // CONNECT-CONSENT (owner decision 2026-11-05, ANT-164 3c731bae): "all the tools approved once
-  // the connection is made." A healthy catalog just persisted IS the operator's consent moment —
-  // this check runs as the connecting admin (every gate above re-proved that), so each effect-gated
-  // discovered tool receives a durable permanent approval through the same per-tool authority path
-  // the drawer's Approve button used. Reached ONLY after the probe write applied — a failed intake
-  // or a re-key race returned above, so consent never attaches to a catalog this verify did not
-  // just persist. Per-tool failures are reported in the body, never fatal: the connection stands,
-  // the chat names what is still unapproved, and the next check retries (idempotent refresh).
+  // CONNECT-CONSENT (owner decision 2026-11-05, ANT-164 3c731bae; amended same day "EVERYTHING
+  // SHOULD BE APPROVED"): "all the tools approved once the connection is made." A healthy catalog
+  // just persisted IS the operator's consent moment — this check runs as the connecting admin
+  // (every gate above re-proved that), so EVERY discovered tool receives a durable permanent
+  // approval through the same per-tool authority path the drawer's Approve button used. Reached
+  // ONLY after the probe write applied — a failed intake or a re-key race returned above, so
+  // consent never attaches to a catalog this verify did not just persist. Per-tool failures are
+  // reported in the body, never fatal: the connection stands, the chat names what is still
+  // unapproved, and the next check retries (idempotent refresh).
   let consent: AutoApproveOutcome | null = null;
   if (intake.ok) {
     consent = await (deps.autoApprove ?? autoApproveDiscoveredTools)(

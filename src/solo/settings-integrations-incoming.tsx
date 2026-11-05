@@ -11,11 +11,19 @@ type IncomingProps = {
   onUncertain: (id: string, generation: number | null) => void;
   onDirtyChange: (dirty: boolean) => void;
   onEditingChange: (editing: boolean) => void;
+  /**
+   * Owner direction 2026-11-05: a connection drawer must not PITCH an incoming-contacts setup —
+   * "that should not be on this card but rather just an option I can have PAIGE do if the tools
+   * are already connected." On outbound-capable drawers the section renders only when incoming is
+   * ALREADY configured (manage/replace/revoke stays); a never-configured incoming grant offers
+   * nothing. The incoming-only surface (no outbound address — setup IS its purpose) keeps the offer.
+   */
+  offerSetup?: boolean;
 };
 
 /** The existing drawer's incoming grant, not a provider probe or a second connection authority. */
 export function IncomingContacts({ gw, connectionId, connectionEnabled, uncertainGeneration,
-  onUncertain, onDirtyChange, onEditingChange }: IncomingProps) {
+  onUncertain, onDirtyChange, onEditingChange, offerSetup = true }: IncomingProps) {
   const { activeTenant } = useTenantContext();
   const business = activeTenant?.name ?? "this business";
   const [record, setRecord] = useState<ContactSyncRecord | null>(null);
@@ -36,6 +44,14 @@ export function IncomingContacts({ gw, connectionId, connectionEnabled, uncertai
   const initialUncertainty = useRef(uncertainGeneration !== null);
   readRef.current = gw.readContactSync;
   const unresolved = uncertainGeneration !== null && (!record || record.generation <= uncertainGeneration);
+  // Owner direction 2026-11-05: an outbound-capable connection drawer never pitches incoming
+  // setup. Hidden while the first read is pending and after a never-configured result, so nothing
+  // about incoming appears until a configured grant exists to manage. A FAILED read (message set,
+  // no record) still renders — an unavailable-settings error is truth, not a pitch. The guard
+  // returns BELOW the hook block: an early return above it would freeze the component (the
+  // initial-read effect would never register, so a configured grant could never un-hide itself).
+  const pitchHidden = !offerSetup && mode === "view" && !unresolved &&
+    (record !== null ? record.configuredEnabled === false : reading);
   useLayoutEffect(() => {
     // Saving/recovery replaces controls. Keep a removed control's focus in this dialog before
     // another key can reach the shell; never steal focus from another surviving control.
@@ -68,6 +84,10 @@ export function IncomingContacts({ gw, connectionId, connectionEnabled, uncertai
     return () => { current = false; };
   // The initial read belongs to this mount; later uncertainty is reconciled only by an explicit read.
   }, [connectionId]);
+
+  // Hidden AFTER every hook (see the pitchHidden note above): a hidden mount stays mounted —
+  // its initial read still fires, so a configured grant flips pitchHidden off and renders Manage.
+  if (pitchHidden) return null;
 
   const changeMode = (next: typeof mode) => {
     setCredential(""); setConsent(false); onDirtyChange(false); setMessage(null); setSaved(null); setMode(next);

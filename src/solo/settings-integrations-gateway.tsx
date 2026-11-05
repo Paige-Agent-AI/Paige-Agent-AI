@@ -1489,7 +1489,8 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
         <>
           <IncomingContacts gw={gw} connectionId={tool.id} connectionEnabled={tool.enabled}
             uncertainGeneration={uncertainGeneration} onUncertain={onUncertain}
-            onDirtyChange={setIncomingDirty} onEditingChange={setIncomingEditing} />
+            onDirtyChange={setIncomingDirty} onEditingChange={setIncomingEditing}
+            offerSetup={noOutboundAddress} />
           {!incomingEditing && <>
           {/* The probe's own verdict, when one has been run in this drawer. It leads, because it is
               the newest thing the person knows and the reason they pressed the button. */}

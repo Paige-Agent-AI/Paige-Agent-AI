@@ -11,7 +11,7 @@ AUTOMATED_EVIDENCE: PASS: Extended social-connection-security-contract.test.ts p
 STATIC_EVIDENCE: PASS: Source-contract tests read the deployed door, adapter, and migration as text; typecheck and lint run in the verify job.
 RENDERED_EVIDENCE: NOT_APPLICABLE: No UI file changes in this slice.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: First governed adoption (operator click through the UI slice, or a direct governed adopt call) is the live proof; expected a paige_social_connections row with provided_by_platform=true and verified accounts.
-AUTHENTICATED_RUNTIME: UNVERIFIED: Runtime proof owed post-deploy: migration applied via deploy-migrations, functions redeployed, then the operator's first adoption.
+AUTHENTICATED_RUNTIME: UNVERIFIED: No adoption has run against production yet — the operator's first governed adoption after deploy-migrations and the door redeploy is the runtime confirmation, visible as a provided_by_platform=true connection row plus edge-log receipts.
 KEYBOARD_FOCUS: NOT_APPLICABLE: No controls changed in this slice.
 ZOOM_REFLOW: NOT_APPLICABLE: No layout changed.
 REDUCED_MOTION: NOT_APPLICABLE: No motion changed.
@@ -25,4 +25,4 @@ RELEASE_CLASSIFICATION: PATCH: New governed capability on the existing Social se
 CUSTOMER_RELEASE_IDENTITY: none: Internal capability slice; the customer-visible experience lands with the UI slice and owner acceptance.
 RELEASE_NOTE_REQUIRED: no: Not yet advertised; the Operator experience notice follows the UI slice.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: Source, tests, and migration are written and CI-verified; production migration application, redeploy, and first adoption are not yet proven and are not inferred.
-RELEASE_RECOVERY: position=revert the migration file and door changes (additive column and grants table stay inert if left applied — no writer exists without the door actions; a single revert restores prior behavior with no data change required); reference=this record and the revert commit
+RELEASE_RECOVERY: position=revert the migration file and door changes (additive column and grants table stay inert if left applied since no writer exists without the door actions — a single revert restores prior behavior with no data change required); reference=this record and the revert commit

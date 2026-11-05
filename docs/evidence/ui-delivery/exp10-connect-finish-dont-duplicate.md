@@ -57,19 +57,3 @@ CUSTOMER_RELEASE_IDENTITY: none: internal-only
 RELEASE_NOTE_REQUIRED: NO: internal-only until the owner's HighLevel/Slack connect
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: ships on merge; the owner's first completed HighLevel connect (and the dead rows either finishing or being removed by him) is the owed live proof
 RELEASE_RECOVERY: position=revert-restores-four-mode-rekey-and-unchecked-creates; reference=this record plus the revert commit
-
-## Follow-up (2026-11-05): the tile and the drawer header carry the same truth as the wall
-
-Owner finding 2026-11-05 8:11am EST: the HighLevel catalogue tile still read "Turned off"
-about the half-done September row (and the detail drawer header did too) while the wall card
-read "Setup not finished" — the 2026-11-04 fix wired only the wall site, leaving statusChip
-raw at the tile and drawer-header call sites, where "!enabled" answers first. Follow-up delta
-(same two files as this record): one shared heldStatusChip/neverFinishedRow pair now feeds
-ALL three held-row surfaces (wall card, catalogue tile, drawer header), ChipTone gains the
-"neutral" value the wall chip already emitted, and the held tile's screen-reader label says
-"already added" instead of claiming "connected". New regression test drives all three
-surfaces for the never-finished row and keeps the errored row's "Couldn't reach it" in the
-drawer header. tsc clean on the changed files; same MUST_PRESERVE and ACCEPTANCE_CRITERIA;
-RELEASE_TRUTH_BOUNDARY unchanged (owner's connect drive still the owed live proof).
-
-FOLLOWUP_INTERNAL_BUILD_IDENTITY: exp10-tile-chip-truth changeset off origin/main b19e5d00e; same file pair; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE

@@ -1394,11 +1394,14 @@ describe("A turned-off tool offers only the recovery it actually has", () => {
 
   it("names Re-key for a turned-off tool that genuinely has it", async () => {
     // A successful re-key restores enabled=true, so for a re-keyable row this really is the path.
+    // This row carries the writer's disable shape (unconfigured + off), so its body names the
+    // never-finished recovery; the true "switch it back on" copy is pinned by the legacy
+    // turn-off test (a row whose status survived the disable).
     world({ rows: [row({ enabled: false, status: "unconfigured", auth_kind: "bearer" })] });
     const { host } = await render();
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
     expect(byText(host, "Re-key")).toBeTruthy();
-    expect(dialog(host)?.textContent).toMatch(/Re-key it to switch it back on/i);
+    expect(dialog(host)?.textContent).toMatch(/Re-key it to add what is missing/i);
   });
 });
 

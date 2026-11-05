@@ -150,8 +150,8 @@ begin
     from base pc
     cross join lateral pg_catalog.aclexplode(coalesce(pc.relacl,
                          pg_catalog.acldefault('r', pc.relowner))) acl
-    join pg_catalog.pg_roles gr on gr.oid = acl.grantee
-    where gr.rolname in ('anon','authenticated','public')
+    left join pg_catalog.pg_roles gr on gr.oid = acl.grantee
+    where coalesce(gr.rolname, 'public') in ('anon','authenticated','public')
       and acl.privilege_type in ('INSERT','UPDATE','DELETE')
   )
   select

@@ -26,7 +26,7 @@ export const run: CheckRunner = async (ctx, _row) => {
     const noPolCount = Number(audit.tables_rls_no_policy_count ?? 0);
     // ANT-165: block on effective exposure, not policy-count alone. Older audit versions
     // (pre-blocking_exposure_count) fall back to the strict count verdict — never weaker.
-    const blockingCount = audit.blocking_exposure_count === undefined
+    const blockingCount = audit.blocking_exposure_count == null
       ? noRlsCount + noPolCount
       : Number(audit.blocking_exposure_count);
     const pass = blockingCount === 0;

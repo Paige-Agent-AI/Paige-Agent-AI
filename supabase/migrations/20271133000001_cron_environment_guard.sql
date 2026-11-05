@@ -1,34 +1,46 @@
--- ANT-165 — cron environment guard (preview-to-production leakage correction).
+-- ANT-165 — cron environment guard (preview-to-production scheduled-execution leakage).
 --
 -- CONTEXT (2026-11-05 incident): migration files call cron.schedule() with commands
 -- embedding the literal production URL. Preview branches are created by replaying the
 -- whole migration history (with_data=false), so every branch re-creates every job and
 -- fires it at PRODUCTION: measured ~199,000 unauthorized 401s/day across 23 active
--- previews vs ~11,000 legitimate 200s/day, ~350ms edge time per rejected call.
--- Older migrations also embed a dead legacy project ref (bfmyebsjyuoecmjskqhs) in 8
--- further jobs that production has long since removed manually — branches resurrect
--- them. Database-level settings DO reach branches (prod's app.settings.jwt_exp is
--- present on live branches), so "setting presence" can never be the gate.
+-- previews vs ~11,000 legitimate 200s/day, ~350ms edge time per rejected call. Older
+-- migrations also embed a dead legacy project ref (bfmyebsjyuoecmjskqhs) in 8 further
+-- jobs production removed manually — branches resurrect them.
 --
--- CONTRACT (default-off): this migration rewrites the 21 production-URL http jobs to
--- guarded commands and leaves them ACTIVE=FALSE everywhere, and unschedules the dead
--- legacy jobs. Production is re-enabled exactly once by a runbook-only operation
--- (below) that sets app.settings.project_ref and flips the allowlisted jobs on —
--- never by a migration, so no branch can inherit authorization to invoke production.
--- Fail-safe: missing/absent configuration leaves every job inactive.
+-- SCOPE HONESTLY STATED: this migration secures the STEADY STATE of newly created
+-- branches (after their replay completes; minutes-long provisioning windows still
+-- expose raw jobs) and reconciles the legacy-job drift. It cannot rewrite applied
+-- history, and ALREADY-PROVISIONED preview branches do not receive forward migrations
+-- — those are remediated per-branch (owner-approved rollout), not by this file.
 --
--- IDENTITY: idempotent end-to-end (create-if-not-exists, or-replace, dedup'd backup
--- capture, reschedule-by-name, unschedule-if-present loops). db push applies files
--- statement-by-statement (no file transaction), which this file tolerates by design.
+-- CONTRACT (default-off): rewrite the 21 production-URL http jobs to guarded commands
+-- and leave them ACTIVE=FALSE everywhere; unschedule dead legacy jobs. Production is
+-- re-enabled exactly once by a runbook-only operation (below) that sets
+-- app.settings.project_ref and flips the allowlisted jobs on — never by a migration,
+-- so no branch can inherit authorization to invoke production (verified: database-
+-- level settings DO reach branches — prod's app.settings.jwt_exp is present on live
+-- branches — so "setting presence" alone could never be the gate; the gate is the
+-- combination of default-off jobs + ops-only enable).
 --
--- CONTINUITY: all 21 jobs are tick-driven workers over durable queues. Between this
--- migration landing and the runbook enable, a one-minute job misses at most one tick
--- — work waits one interval; nothing is lost. The 7 local-SQL jobs (growth sweeper,
--- operator-mrr, meter-llm, resend-receipt, native-event sweeper, orchestration
--- reconciler, agreements expiry) are untouched: they address only their own
--- database's data in every environment.
+-- IDENTITY: idempotent end-to-end (create-if-not-exists, or-replace, capture-once
+-- backup, reschedule-by-name, unschedule-if-present loops); db push applies files
+-- statement-by-statement, tolerated by design. Filenames continue the chain's
+-- existing future-dated sequence (20271132...) because deploy-migrations refuses any
+-- file versioned below production's newest recorded migration.
+--
+-- CONTINUITY: the 20 interval-scheduled jobs miss at most one tick each between this
+-- migration landing and the runbook enable (same supervised window) — durable queues
+-- hold the work. FIXED-TIME jobs (systems-check-scheduled 09:00, paige-evaluator-daily
+-- 05:30, paige-heartbeat-daily 13:00, paige-model-watch-daily 03:17, n8n-keepalive
+-- every 6h) lose a whole cycle if the enable lands after their fire time — schedule
+-- the window accordingly. The 7 local-SQL jobs (growth sweeper, operator-mrr,
+-- meter-llm, resend-receipt, native-event sweeper, orchestration reconciler,
+-- agreements expiry) are untouched: they address only their own database's data.
 
--- 0) Capture current state BEFORE any change (restoration path, §C.1).
+-- 0) Capture current state BEFORE any change. First capture per jobid is authoritative
+--    so the restoration path always restores the ORIGINAL pre-migration definitions,
+--    never a later remediated state.
 
 create table if not exists public.cron_job_backup (
   captured_at timestamptz not null default now(),
@@ -46,12 +58,7 @@ insert into public.cron_job_backup (jobid, jobname, schedule, command, database,
 select j.jobid, j.jobname, j.schedule, j.command, j.database, j.username, j.active
 from cron.job j
 where not exists (
-  select 1 from public.cron_job_backup b
-  where b.jobid = j.jobid
-    and b.command = j.command
-    and b.schedule = j.schedule
-    and b.active = j.active
-    and b.captured_at > now() - interval '1 day'
+  select 1 from public.cron_job_backup b where b.jobid = j.jobid
 );
 
 -- 1) Helpers.
@@ -74,7 +81,7 @@ stable
 as $fn$
   select format($cmd$
     select case
-      when current_setting('app.settings.project_ref', true) is null
+      when nullif(btrim(current_setting('app.settings.project_ref', true)), '') is null
         then 'cron skipped: environment not provisioned'
       else (select net.http_post(
              url     := public.cron_edge_url(%1$L),
@@ -120,8 +127,22 @@ on conflict (jobname) do update
   set function = excluded.function,
       schedule = excluded.schedule;
 
+-- Both tables and the helpers are operator/DBA-only: RLS on (forced, the repo
+-- convention) and no anon/authenticated/public access of any kind — without this,
+-- the rollback path and the enable allowlist would be anon-writable AND the new
+-- operator_rls_coverage_audit would correctly fail on these very tables.
+alter table public.cron_job_backup enable row level security;
+alter table public.cron_job_backup force row level security;
+revoke all on public.cron_job_backup from public, anon, authenticated;
+
+alter table public.cron_production_allowlist enable row level security;
+alter table public.cron_production_allowlist force row level security;
+revoke all on public.cron_production_allowlist from public, anon, authenticated;
+
+
 -- 2) Reschedule allowlisted jobs to guarded commands and deactivate them.
---    cron.schedule() replaces by jobname (idempotent); alter_job is state-setting.
+--    cron.schedule() replaces by jobname (keeping the existing jobid); alter_job
+--    takes the bigint job id.
 
 do $blk$
 declare
@@ -133,7 +154,6 @@ begin
     join cron.job c on c.jobname = a.jobname
   loop
     perform cron.schedule(j.jobname, j.schedule, public.cron_guarded_edge_command(j.function));
-    -- cron.schedule keeps the existing jobid for a known jobname; alter_job wants the id.
     perform cron.alter_job(j.jobid, active := false);
   end loop;
 end
@@ -176,7 +196,9 @@ as $fn$
   order by a.jobname
 $fn$;
 
--- Restores every captured job verbatim (original command AND active flag).
+-- Restores the FIRST captured (pre-migration) state of every job verbatim — original
+-- command AND active flag. Capture-once semantics keep this authoritative even if the
+-- migration body is later re-run.
 create or replace function public.cron_restore_backup(p_as_of timestamptz default now())
 returns integer
 language plpgsql
@@ -189,7 +211,7 @@ begin
     select distinct on (jobid) jobid, jobname, schedule, command, active
     from public.cron_job_backup
     where captured_at <= p_as_of
-    order by jobid, captured_at desc
+    order by jobid, captured_at asc
   loop
     perform cron.schedule(v_job.jobname, v_job.schedule, v_job.command);
     perform cron.alter_job(
@@ -202,15 +224,25 @@ begin
 end
 $fn$;
 
+-- Functions are operator/DBA-only too (see step 1 note); placed here because
+-- cron_restore_backup/cron_verify_enabled are defined above.
+
+revoke all on function public.cron_restore_backup(timestamptz) from public, anon, authenticated;
+revoke all on function public.cron_verify_enabled() from public, anon, authenticated;
+revoke all on function public.cron_edge_url(text) from public, anon, authenticated;
+revoke all on function public.cron_guarded_edge_command(text) from public, anon, authenticated;
+
 -- RUNBOOK — PRODUCTION ENABLE (never commit this as a migration; branches must never
--- receive it). One supervised window, in order:
+-- receive it). One supervised window timed BEFORE the day's fixed-time jobs fire, in order:
 --   0. Confirm this migration applied:  select * from public.cron_verify_enabled();
 --      (expect 21 rows, active=false — intentional pause)
 --   1. begin;
 --        alter database postgres set app.settings.project_ref = 'xygzykjyynhzqytbqnzu';
---        select cron.alter_job(a.jobname, active := true)
+--        select cron.alter_job(c.jobid, active := true)
 --          from public.cron_production_allowlist a join cron.job c on c.jobname = a.jobname;
---      commit;   -- failure aborts whole transaction: jobs stay off (fail-closed)
---   2. Verify: select * from public.cron_verify_enabled();  (21x active=true)
---   3. Within 70s observe one 200 per one-minute job (user_agent pg_net/0.19.5).
+--      commit;   -- any failure aborts the whole transaction: jobs stay off (fail-closed)
+--   2. Verify: select * from public.cron_verify_enabled();  (21 rows active=true)
+--   3. Within 70s observe one 200 per one-minute job (user_agent pg_net/0.19.5) in logs.
 --   Rollback at any point: select public.cron_restore_backup();
+--   NOTE: re-running this migration body on production after the enable re-deactivates
+--   the 21 jobs (default-off by design); re-run the runbook to re-enable.

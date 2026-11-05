@@ -166,11 +166,14 @@ export function useOperatorSocialDoor() {
       const rows: HubChannel[] = hubPayload.hubs.flatMap((rawHub) => {
         const profile = payloadObject(rawHub);
         if (!profile || typeof profile.profileId !== "string" || !Array.isArray(profile.channels)) return [];
+        // Narrowed here, named once: element-access narrowing does not cross the
+        // closure below, and the row's profileId must arrive as string, not unknown.
+        const profileId: string = profile.profileId;
         return profile.channels.flatMap((rawChannel) => {
           const channel = payloadObject(rawChannel);
           return channel && typeof channel.platform === "string"
             ? [{
-              profileId: profile.profileId,
+              profileId,
               platform: channel.platform,
               handle: typeof channel.handle === "string" ? channel.handle : null,
               status: typeof channel.status === "string" ? channel.status : "",

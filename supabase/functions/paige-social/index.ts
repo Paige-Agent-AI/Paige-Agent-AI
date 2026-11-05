@@ -6,7 +6,7 @@ import { governSocialMutation } from "../_shared/social-provider/governance.ts";
 import { zernioSocialAdapter, listZernioHubProfiles, readZernioHubProfile } from "../_shared/social-provider/zernio.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const RETURN_PATH = /^\/solo\/[A-Za-z0-9_-]+\/settings\/integrations\/?$/;
+const RETURN_PATH = /^\/(solo\/[A-Za-z0-9_-]+|operator)\/settings\/integrations\/?$/;
 // Zernio is the SOLE social provider (owner directive ANT-164 3f511055, Nov 2 2026 — Zernio sole
 // aggregator, Upload-Post retired). No vaulted ZERNIO_API_KEY means the honest
 // SOCIAL_PROVIDER_UNAVAILABLE refusal below, never a second provider.
@@ -299,6 +299,43 @@ Deno.serve(async (req: Request) => {
       const status = safeCode === "provider_profile_limit" ? 409 : safeCode === "provider_rate_limited" ? 429 : 502;
       return jsonResponse({ ok: false, code: safeCode }, status);
     }
+  }
+
+  if (action === "channels") {
+    if (!isAdmin) return jsonResponse({ ok: false, code: "SOCIAL_CHANNELS_FORBIDDEN" }, 403);
+    // Read-only listing of the resolved workspace's own Social connections — the same
+    // authority hub_profiles uses. Reads mirror provider-proven facts only; mutations stay
+    // governed, and nothing here publishes or exposes credentials.
+    const [connRead, accRead] = await Promise.all([
+      admin.from("paige_social_connections")
+        .select("id,requested_platform,label,status,last_verified_at,provided_by_platform")
+        .eq("tenant_id", tenantId)
+        .order("requested_platform", { ascending: true }),
+      admin.from("paige_social_accounts")
+        .select("connection_id")
+        .eq("tenant_id", tenantId),
+    ]);
+    if (connRead.error || accRead.error) {
+      return jsonResponse({ ok: false, code: "SOCIAL_CHANNELS_READ_FAILED" }, 502);
+    }
+    const conns = Array.isArray(connRead.data) ? connRead.data : [];
+    const accs = Array.isArray(accRead.data) ? accRead.data : [];
+    const counts = new Map<string, number>();
+    for (const acc of accs) {
+      const key = typeof acc?.connection_id === "string" ? acc.connection_id : "";
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return jsonResponse({
+      ok: true,
+      channels: conns.map((row) => ({
+        platform: row.requested_platform,
+        label: row.label,
+        status: row.status,
+        providedByPlatform: row.provided_by_platform === true,
+        lastVerifiedAt: row.last_verified_at,
+        accountCount: counts.get(row.id) ?? 0,
+      })),
+    });
   }
 
   if (action === "hub_profiles") {

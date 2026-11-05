@@ -216,3 +216,27 @@ describe("customer-facing identity truth", () => {
     expect(migration).not.toMatch(/\n\s+account_id text;/);
   });
 });
+
+describe("Platform Integrations redesign seam (owner 2026-11-05)", () => {
+  const grantsMigration = read("supabase/migrations/20271131000002_social_platform_grant_ops.sql");
+
+  it("serves the console's channel list through the same admin-gated door, read-only", () => {
+    expect(endpoint.indexOf('action === "channels"')).toBeGreaterThan(endpoint.indexOf("const isAdmin ="));
+    expect(endpoint.indexOf('action === "channels"')).toBeLessThan(endpoint.indexOf('action === "hub_profiles"'));
+    const channelsBlock = endpoint.slice(endpoint.indexOf('action === "channels"'), endpoint.indexOf('action === "hub_profiles"'));
+    expect(channelsBlock).toContain("SOCIAL_CHANNELS_FORBIDDEN");
+    // Read-only: the channels action never touches a governed mutation.
+    expect(channelsBlock).not.toContain("govern(");
+  });
+
+  it("lets a fresh connect start from the Platform console return path as well as a Solo one", () => {
+    expect(endpoint).toContain("RETURN_PATH = /^\\/(solo\\/[A-Za-z0-9_-]+|operator)\\/settings\\/integrations\\/?$/");
+  });
+
+  it("gates every workspace-grant RPC on the platform-owner resolver and fails closed", () => {
+    expect(grantsMigration).toContain("SOCIAL_GRANTS_FORBIDDEN");
+    expect(grantsMigration.match(/resolve_platform_operator_workspace\(\)/g) ?? []).toHaveLength(3);
+    expect(grantsMigration).toContain("security definer");
+    expect(grantsMigration).not.toMatch(/revoke all on function/);
+  });
+});

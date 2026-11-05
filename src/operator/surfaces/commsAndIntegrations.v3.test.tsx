@@ -2,30 +2,50 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import ComposeOutbound, { CHANNELS } from "./ComposeOutbound";
-import IntegrationsSurface, { INTEGRATIONS, INT_KINDS } from "./IntegrationsSurface";
+import IntegrationsSurface, { INTEGRATIONS, INT_KINDS, PLATFORM_SHELF, TYPE_TABS } from "./IntegrationsSurface";
 
 /**
  * The failure these assertions exist to stop is the one this console has already shipped twice:
  * a surface that typechecks, lints, resolves a route and renders NOTHING a human can read.
  * Counting exports proves the module is addressed; only rendered CONTENT proves the port.
  *
- * Every string asserted below is verbatim pack copy with its line cited in the component, and
- * no assertion is on a figure that was typed — the counts are derived from the catalogue, so a
- * catalogue edit moves them rather than making this file lie.
+ * The Integrations surface was redesigned under the owner's explicit 2026-11-05 approval
+ * (mockup po-integrations-redesign.html — "Yes this is perfect"): type sub-tabs with Social
+ * first, honest state chips (Live / Needs attention / Not switched on / Locked · consult CSM),
+ * the platform's own hosting shelf, and the WHITE-LABEL rule — the social provider behind the
+ * platform's channels is never named in the UI. The pack's drawn Directory surface (bands,
+ * kinds, search, foot) ports whole inside the Directory tab, so its copy stays asserted here.
  */
 
-describe("Integrations grid — pack L1577–L1659 / L7928–L8082", () => {
-  it("draws both filter bands with the pack's labels and notes", () => {
+describe("Integrations — owner-approved type-tab redesign (mockup po-integrations-redesign)", () => {
+  it("opens on Social with the live platform channel home and never names the social provider", () => {
     const html = renderToStaticMarkup(<IntegrationsSurface />);
+    for (const t of TYPE_TABS) expect(html, `missing tab: ${t}`).toContain(t);
+    expect(html).toContain("Company channels");
+    expect(html).toContain("Which workspaces may use which company channels");
+    expect(html).toContain("Channels connected in the platform hub");
+    expect(html).toContain("a connection grants reach, never authority");
+    // WHITE-LABEL (owner 2026-11-05): the provider behind the channels gets no surface branding.
+    expect(html).not.toMatch(/zernio/i);
+  });
+
+  it("carries every catalogue vendor into the Directory with the pack's drawn surface whole", () => {
+    const html = renderToStaticMarkup(<IntegrationsSurface initialTab="Directory" />);
+    const every = [...INTEGRATIONS, PLATFORM_SHELF];
+    const total = every.reduce((n, sh) => n + sh.items.length, 0);
+    expect(html).toContain(`Search ${total} integrations`);
+    for (const sh of every) {
+      expect(html, `missing shelf: ${sh.cat}`).toContain(sh.cat);
+      for (const it of sh.items) {
+        // `renderToStaticMarkup` escapes `&`, so compare against the escaped form.
+        expect(html, `missing vendor: ${it.name}`).toContain(it.name.replace(/&/g, "&amp;"));
+      }
+    }
     for (const s of [
       "State",
       "Consequence",
       "Implemented adapters",
       "Catalogue readiness; access unverified",
-      "Half-wired",
-      "Waiting on credentials",
-      "Not built",
-      "Nothing behind it",
       "Blocking",
       "A built surface is dark",
       "Nice to have",
@@ -33,50 +53,30 @@ describe("Integrations grid — pack L1577–L1659 / L7928–L8082", () => {
     ]) {
       expect(html, `missing band copy: ${s}`).toContain(s);
     }
-  });
-
-  it("draws the search field, all six connection kinds and every shelf chip", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface />);
-    expect(html).toContain("Search 42 integrations");
     for (const k of Object.keys(INT_KINDS)) expect(html, `missing kind: ${k}`).toContain(k);
-    expect(html).toContain(">All<");
-    for (const sh of INTEGRATIONS) expect(html, `missing shelf: ${sh.cat}`).toContain(sh.cat);
-  });
-
-  it("renders every vendor tile, its action verb and the foot", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface />);
-    for (const sh of INTEGRATIONS) {
-      for (const it of sh.items) {
-        // `renderToStaticMarkup` escapes `&`, so compare against the escaped form.
-        expect(html, `missing vendor: ${it.name}`).toContain(it.name.replace(/&/g, "&amp;"));
-      }
-    }
-    for (const verb of ["Configure", "Finish", "Connect"]) expect(html).toContain(verb);
     expect(html).toContain("Blocking is the one that ranks the list");
   });
 
-  it("composes the result line from the catalogue rather than typing it", () => {
-    const total = INTEGRATIONS.reduce((n, sh) => n + sh.items.length, 0);
-    const live = INTEGRATIONS.reduce((n, sh) => n + sh.items.filter((i) => i.state === "live").length, 0);
-    const html = renderToStaticMarkup(<IntegrationsSurface />);
-    expect(html).toContain(`${total} of ${total} shown · ${live} adapters described as implemented`);
-    expect(html).toContain("Verified account connections and current provider health are not loaded");
-    expect(html).not.toContain("A seam exists and runs today");
-    expect(html).not.toContain("Connected means");
+  it("renders the typed tabs with honest state chips and the platform's own hosting shelf", () => {
+    const payments = renderToStaticMarkup(<IntegrationsSurface initialTab="Payments" />);
+    expect(payments).toContain("Stripe");
+    expect(payments).toContain("Not switched on");
+    const web = renderToStaticMarkup(<IntegrationsSurface initialTab="Web & Hosting" />);
+    for (const host of ["Vercel", "Cloudflare", "Supabase"]) expect(web, `missing host: ${host}`).toContain(host);
+    expect(web.match(/Live/g) ?? []).toHaveLength(3);
+    const auto = renderToStaticMarkup(<IntegrationsSurface initialTab="Automations" />);
+    expect(auto).toContain("HighLevel");
+    expect(auto).toContain("Locked · consult CSM");
   });
 
-  it("lets a live read override the catalogue's authored state (slice I drop-in)", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface connectionStates={{ Stripe: "live" }} />);
+  it("keeps the live-read override and says what is there when a typed tab matches nothing", () => {
+    const html = renderToStaticMarkup(<IntegrationsSurface initialTab="Directory" connectionStates={{ Stripe: "live" }} />);
     // Stripe is `planned` in the catalogue and carries a `blocks` line; a live read retires it.
     expect(html).not.toContain("Dark without it: tenant subscription billing");
     expect(html).toContain("1 reported connected");
     expect(html).toContain("catalogue-only implemented");
-    expect(html).toContain("Catalogue readiness; account access and health unverified");
-  });
-
-  it("says what is there rather than blanking when a shelf matches nothing", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface shelves={[]} />);
-    expect(html).toContain("Nothing matches. 0 integrations exist across 0 shelves.");
+    const empty = renderToStaticMarkup(<IntegrationsSurface shelves={[]} initialTab="Payments" />);
+    expect(empty).toContain("Nothing sits under Payments yet.");
   });
 });
 

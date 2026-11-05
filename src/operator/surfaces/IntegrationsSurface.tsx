@@ -1,45 +1,35 @@
 import { useMemo, useState } from "react";
 import SocialHubSurface from "./SocialHubSurface";
+import { SocialChannelsPanel, SocialGrantsPanel } from "./SocialPlatformPanels";
 
 /**
- * Settings → Integrations — the connection grid.
+ * Settings → Integrations — the connection home, organized by integration type.
  *
- * PORTED FROM the v3 pack, not from memory and not from the superseded `super-admin-shell/`:
- *   markup   `PAIGE Super Admin Shell v3.dc.html` L1577–L1659  (the `showInts` block)
- *   geometry `PAIGE Super Admin Shell v3.dc.html` L7928–L8082  (`intVals(on)`)
- *   contract `paige-ia.js` L1464–L1471 (`P.INT_KINDS`) and L1473–L1538 (`P.INTEGRATIONS`)
+ * REDESIGN AUTHORITY: owner-approved 2026-11-05 (mockup `po-integrations-redesign.html`,
+ * "Yes this is perfect"). The owner's explicit instruction names the change the pack lock
+ * requires: Integrations is navigated by TYPE sub-tabs (Social · Email & Messaging ·
+ * Automations · Payments · Web & Hosting · Directory), Social first, and the social
+ * provider behind the platform's channels is WHITE-LABELED — its name never appears in
+ * the UI (owner: "they do not get any surface level branding").
  *
- * `PORT-SPEC-palette-and-six-surfaces.md` lists an "Integrations grid" as its §7 but the
- * document body ends after §5 (1392 lines), so §7 was never written. The pack itself draws
- * the surface in full, so this is a port, never a blocker (PACK-FIRST).
+ * WHAT PORTS VERBATIM FROM THE v3 PACK (`paige-ia.js` L1464–L1538): `INT_KINDS` and the
+ * eight-shelf, forty-two-vendor `INTEGRATIONS` catalogue with each vendor's kind/state/
+ * does/note/blocks — the pack's own grounded contract about this repo. The Directory tab
+ * keeps the pack's drawn surface whole (State/Consequence bands, kind filters, search,
+ * the foot), so the port survives inside the redesign. Two catalogue edits are made under
+ * the owner's approval, not silently: the email adapter row reads SendGrid (the platform's
+ * live mail adapter; the pack's Resend row predates the platform-wide unwind), and the
+ * automation shelf gains HighLevel carrying `locked` (guided setup required, never one
+ * click away). `PLATFORM_SHELF` (Web and hosting) is new surface truth the pack never
+ * drew: the vendors the platform itself runs on.
  *
- * WHAT IS STRUCTURE HERE, AND WHY THE CATALOGUE COMES OVER. `P.INTEGRATIONS` is not a fixture
- * set: it carries no invented figure, no tenant name, no timestamp and no sample prose. It is
- * the pack's own grounded contract about this repo — the pack states the rule above it
- * ("live = a seam exists in supabase/functions today; stub = the adapter is written and
- * waiting on credentials; planned = nothing built"), and `corrections-2026-08-23.md` §4 shows
- * CC correcting an entry in it (Stripe's note) rather than treating it as disposable. So the
- * eight shelves, the forty-two named vendors, their kind, what each does, the note and the
- * `blocks` line all port verbatim, exactly as `P.SUMMONS`'s row `name`/`status` pairs do.
- *
- * `connectionStates` is the drop-in for backend slice I (`usePlatformConfig`): a live read of
- * what is actually connected overrides the catalogue's authored state per vendor. Nothing here
- * writes that hook — it is another agent's file — and the surface renders correctly without it.
- *
- * ELEVATION — RULING F (Claude Design, 2026-08-23): elevation is distance from `--pg-env`, and
- * `--pg-surface`/`--pg-workspace` both sit ABOVE canvas in dark and BELOW it in light, so a
- * plate painted on either RECEDES in light. Applied per element:
- *   vendor tile        RISES   → `--pg-raised` (pack L8050 paints `--pg-workspace`, which inverts)
- *   tile monogram well RECEDES → `--pg-surface` (pack L8044, kept: inside a raised parent it is
- *                                darker in BOTH themes, so the role does not invert)
- *   search field       RECEDES → `--pg-surface` (pack L8071 paints `--pg-canvas`, which is darker
- *                                than the workspace ground in dark and LIGHTER in light)
- *   shelf gutter       neither → `--pg-line-soft`, a line token, ported verbatim
- *
- * TWO RAW HEXES ARE PORTED VERBATIM. `KIND_TONE` (pack L7986–L7988) is four `--pg-*` tokens plus
- * `MCP:'#2F6B8F'` and `CalDAV:'#3F7F5C'`. No token carries either value, so substituting one
- * would be inventing a design decision rather than porting it. Both are decorative marks (a 6px
- * diamond and a 2px rail), never text. Reported rather than silently resolved (§13/§00).
+ * The Social tab is LIVE, not catalogue: channels come from the paige-social door's
+ * read-only `channels` action on the resolved workspace (platform-owner fallback v202),
+ * fresh connects run the same governed `social_connection_start` approval the Solo
+ * drawer uses, adoption keeps the governed `social_connection_adopt` block
+ * (SocialHubSurface), and Workspace grants manage `paige_social_platform_grants` through
+ * the God-Level RPCs. Honest states only: Live / Needs attention / Not switched on /
+ * Locked — never a number the platform cannot prove.
  */
 
 export type IntegrationKind = "OAuth" | "Key" | "Webhook" | "MCP" | "SMTP" | "CalDAV";
@@ -52,6 +42,8 @@ export type IntegrationItem = {
   readonly does: string;
   readonly note: string;
   readonly blocks?: string;
+  /** Guided setup required before this vendor can be switched on (never one click away). */
+  readonly locked?: boolean;
 };
 export type IntegrationShelf = { readonly cat: string; readonly items: readonly IntegrationItem[] };
 
@@ -65,10 +57,10 @@ export const INT_KINDS: Readonly<Record<IntegrationKind, { note: string; glyph: 
   CalDAV: { note: "A calendar URL and an app password", glyph: "M2.6 4h10.8v9.4H2.6z M2.6 6.8h10.8 M5.6 4V2.4 M10.4 4V2.4" },
 };
 
-/** `paige-ia.js` L1473–L1538 — verbatim, eight shelves, forty-two vendors. */
+/** `paige-ia.js` L1473–L1538 — verbatim except the two owner-approved edits named in the file head. */
 export const INTEGRATIONS: readonly IntegrationShelf[] = [
   { cat: "Email and messaging", items: [
-    { name: "Resend", kind: "Key", state: "live", does: "Transactional and campaign email", note: "The platform email adapter" },
+    { name: "SendGrid", kind: "Key", state: "live", does: "Transactional and campaign email", note: "The platform email adapter" },
     { name: "Gmail", kind: "OAuth", state: "live", does: "Send and read from a real mailbox", note: "Its own seam, not a second email adapter" },
     { name: "Twilio SMS", kind: "Key", state: "live", does: "Outbound and inbound text", note: "API-key trio · A2P messaging service" },
     { name: "Twilio Voice", kind: "Key", state: "stub", does: "Place and receive calls", note: "Webhook still on the Twilio demo URL", blocks: "The call surface in Conversations" },
@@ -101,6 +93,7 @@ export const INTEGRATIONS: readonly IntegrationShelf[] = [
     { name: "PAIGE MCP server", kind: "MCP", state: "live", does: "Exposes her tools to a client", note: "Operator tools are god-locked" },
     { name: "Claude Desktop", kind: "MCP", state: "planned", does: "Drive the platform from Claude", note: "" },
     { name: "Custom MCP server", kind: "MCP", state: "planned", does: "Bring a tool server of your own", note: "" },
+    { name: "HighLevel", kind: "OAuth", state: "planned", does: "CRM and funnel automation", note: "Guided setup with the platform team", locked: true },
   ]},
   { cat: "Money", items: [
     { name: "Stripe", kind: "Key", state: "planned", does: "Subscriptions and invoices", note: "Operator metrics read (L1) and marketplace paid installs charge. Subscription billing is the part that is not wired.", blocks: "Tenant subscription billing" },
@@ -127,17 +120,38 @@ export const INTEGRATIONS: readonly IntegrationShelf[] = [
   ]},
 ];
 
+/** New surface truth the pack never drew: what the platform itself runs on. */
+export const PLATFORM_SHELF: IntegrationShelf = { cat: "Web and hosting", items: [
+  { name: "Vercel", kind: "Key", state: "live", does: "Application hosting and deploys", note: "The console runs here" },
+  { name: "Cloudflare", kind: "Key", state: "live", does: "Growth hosting and tenant domains", note: "" },
+  { name: "Supabase", kind: "Key", state: "live", does: "Database, auth and edge functions", note: "The platform spine" },
+]};
+
+/** The six owner-approved type tabs, in order. Social is the home tab. */
+export const TYPE_TABS = ["Social", "Email & Messaging", "Automations", "Payments", "Web & Hosting", "Directory"] as const;
+export type IntegrationType = (typeof TYPE_TABS)[number];
+
+/** Which catalogue shelves each typed tab carries. Directory carries them all. */
+const TAB_SHELVES: Readonly<Record<Exclude<IntegrationType, "Social" | "Directory">, readonly string[]>> = {
+  "Email & Messaging": ["Email and messaging", "Calendar and scheduling"],
+  "Automations": ["Automation and tools"],
+  "Payments": ["Money"],
+  "Web & Hosting": ["Web and hosting"],
+};
+
 /** Pack L7936–L7946 — `[label, tone, note]` per state, plus the two derived consequence axes. */
 const ST = {
-  live: ["Implemented adapter", "var(--pg-positive)", "Catalogue readiness; account access and health unverified"],
-  stub: ["Half-wired", "var(--pg-warning)", "The adapter is written and waiting on credentials"],
-  planned: ["Not built", "var(--pg-faint)", "Nothing exists yet"],
+  live: ["Live", "var(--pg-positive)", "Catalogue readiness; account access and health unverified"],
+  stub: ["Needs attention", "var(--pg-warning)", "The adapter is written and waiting on credentials"],
+  planned: ["Not switched on", "var(--pg-faint)", "Nothing exists yet"],
   blocking: ["Blocking", "var(--pg-negative)", "A built surface is dark without this"],
   nice: ["Nice to have", "var(--pg-faint)", "Blocks nothing we have built"],
 } as const;
 type Axis = keyof typeof ST;
 
-/** Pack L7986–L7988 — verbatim. MCP and CalDAV carry raw hexes in the pack; see the file head. */
+const LOCKED_CHIP = ["Locked · consult CSM", "var(--pg-gold-deep)", "Guided setup required before switching on"] as const;
+
+/** Pack L7986–L7988 — verbatim. MCP and CalDAV carry raw hexes in the pack; see the pack port. */
 const KIND_TONE: Readonly<Record<IntegrationKind, string>> = {
   OAuth: "var(--pg-gold)",
   Key: "var(--pg-gold-deep)",
@@ -172,28 +186,31 @@ export type IntegrationsSurfaceProps = {
   readonly connectionStates?: Readonly<Record<string, IntegrationState>>;
   /** Pack L8055 — a tile opens the `integration` summon. The shell owns that; this reports it. */
   readonly onOpen?: (item: Row) => void;
+  /** Which type tab opens first. The owner's design opens Social; tests open others. */
+  readonly initialTab?: IntegrationType;
 };
 
 export default function IntegrationsSurface({
   shelves = INTEGRATIONS,
   connectionStates,
   onOpen,
+  initialTab = "Social",
 }: IntegrationsSurfaceProps) {
-  const [cat, setCat] = useState<string>("All");
+  const [tab, setTab] = useState<IntegrationType>(initialTab);
   const [stateFilter, setStateFilter] = useState<Axis | null>(null);
   const [kindFilter, setKindFilter] = useState<IntegrationKind | null>(null);
   const [q, setQ] = useState("");
 
-  /** Pack L7932 — one flat list, each row carrying its shelf. */
+  /** Every shelf the surface knows: the pack's eight plus the platform's own. */
+  const every = useMemo(() => [...shelves, PLATFORM_SHELF], [shelves]);
   const all: readonly Row[] = useMemo(
     () =>
-      shelves.flatMap((sh) =>
+      every.flatMap((sh) =>
         sh.items.map((i) => ({ ...i, cat: sh.cat, state: connectionStates?.[i.name] ?? i.state, reported: connectionStates?.[i.name] !== undefined })),
       ),
-    [shelves, connectionStates],
+    [every, connectionStates],
   );
 
-  /** Pack L7989–L7996 — the two axes, and the search across name/does/kind/cat/blocks. */
   const query = q.trim().toLowerCase();
   const matchState = (i: Row) =>
     !stateFilter ||
@@ -211,7 +228,6 @@ export default function IntegrationsSurface({
   const n = (k: IntegrationState) => all.filter((i) => i.state === k).length;
   const blocking = all.filter((i) => i.blocks && i.state !== "live").length;
 
-  /** Pack L7970–L7981 — State row, then Consequence row. Values derived, never typed. */
   const stats: ReadonlyArray<[Axis, string, string, string]> = [
     ["live", String(n("live")), connectionStates ? "Ready / implemented adapters" : "Implemented adapters", connectionStates ? "Mixed source readiness; not an account count" : "Catalogue readiness; access unverified"],
     ["stub", String(n("stub")), "Half-wired", "Waiting on credentials"],
@@ -225,120 +241,176 @@ export default function IntegrationsSurface({
   const shown = all.filter(matches).length;
   const liveShown = all.filter((i) => matches(i) && i.state === "live").length;
   const reportedLiveShown = all.filter((i) => matches(i) && i.state === "live" && i.reported).length;
-  /** Pack L8072–L8080 — composed, so the sentence moves with the list (corrections §6, rule 3). */
   const intResult = !shown
-    ? `Nothing matches. ${all.length} integrations exist across ${shelves.length} shelves.`
+    ? `Nothing matches. ${all.length} integrations exist across ${every.length} shelves.`
     : `${shown} of ${all.length} shown · ${connectionStates ? `${reportedLiveShown} reported connected · ${liveShown - reportedLiveShown} catalogue-only implemented` : `${liveShown} adapters described as implemented`}` +
       (kindFilter ? ` · ${kindFilter} only` : "") +
       (stateFilter ? ` · ${FILTER_WORD[stateFilter]} only` : "");
 
-  const visible = shelves
-    .filter((sh) => cat === "All" || cat === sh.cat)
-    .map((sh) => ({
-      cat: sh.cat,
-      total: sh.items.length,
-      live: sh.items.filter((i) => (connectionStates?.[i.name] ?? i.state) === "live").length,
-      items: all.filter((i) => i.cat === sh.cat && matches(i)),
-    }))
-    .filter((sh) => sh.items.length);
+  const typedRows = (t: Exclude<IntegrationType, "Social" | "Directory">): readonly Row[] =>
+    all.filter((i) => TAB_SHELVES[t].includes(i.cat));
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
-      <SocialHubSurface />
-      {/* ── controls · pack L1578–L1620 ─────────────────────────────────── */}
+      {/* ── head + type tabs · owner-approved mockup po-integrations-redesign ── */}
       <div className="flex-none border-b border-[var(--pg-line)] pb-3.5">
-        {!connectionStates && <p role="status" className="mb-4 max-w-[72ch] text-[length:var(--pg-t-body)] text-[var(--pg-muted)]">PARTIAL · Adapter catalogue. Verified account connections and current provider health are not loaded. Catalogue readiness may need revalidation.</p>}
-        <AxisRow label="State" rows={stats} active={stateFilter} onPick={setStateFilter} />
-        <div className="mt-[11px]">
-          <AxisRow label="Consequence" rows={conseq} active={stateFilter} onPick={setStateFilter} />
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0">
+            <p className="text-[length:var(--pg-t-label)] font-semibold uppercase tracking-[0.14em] text-[var(--pg-faint)]">Settings · Integrations</p>
+            <h1 className="mt-1 text-[length:var(--pg-t-h3)] font-semibold text-[var(--pg-ink)]">Integrations</h1>
+            <p className="mt-1 max-w-[74ch] text-[length:var(--pg-t-body)] text-[var(--pg-muted)]">
+              Everything the platform connects, organized by what it does for the business. Credentials live in the Vault; a connection grants reach, never authority.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTab("Directory")}
+            className="min-h-[30px] flex-none rounded-full border border-[var(--pg-gold)] bg-[var(--pg-lift)] px-3.5 text-[length:var(--pg-t-body)] font-semibold text-[var(--pg-ink)]"
+          >
+            Browse directory
+          </button>
         </div>
 
-        <div className="mt-[13px] flex flex-wrap items-center gap-x-3.5 gap-y-2">
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search 42 integrations"
-            aria-label="Search 42 integrations"
-            className="min-h-[30px] min-w-0 flex-[1_1_180px] rounded-full border border-[var(--pg-line)] bg-[var(--pg-surface)] px-[11px] text-[length:var(--pg-t-body)] text-[var(--pg-ink)] outline-none placeholder:text-[var(--pg-faint)] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--pg-gold-core)]"
-          />
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-[5px]">
-            {(Object.keys(INT_KINDS) as IntegrationKind[]).map((k) => {
-              const on = kindFilter === k;
+        <div role="tablist" aria-label="Integration types" className="mt-3 flex flex-wrap gap-1">
+          {TYPE_TABS.map((t) => {
+            const on = tab === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                onClick={() => setTab(t)}
+                className={[
+                  "min-h-[32px] flex-none border-0 bg-transparent px-3 pb-2 pt-1.5 text-[length:var(--pg-t-body)]",
+                  on
+                    ? "border-b-2 border-[var(--pg-gold-core)] font-semibold text-[var(--pg-ink)]"
+                    : "border-b-2 border-transparent font-normal text-[var(--pg-muted)] hover:text-[var(--pg-ink)]",
+                ].join(" ")}
+              >
+                {t}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Social · the live platform channel home ─────────────────────────── */}
+      {tab === "Social" && (
+        <div className="min-h-0 flex-1 pt-1">
+          <SocialChannelsPanel />
+          <SocialHubSurface />
+          <SocialGrantsPanel />
+        </div>
+      )}
+
+      {/* ── typed tabs · curated shelves with honest chips ──────────────────── */}
+      {tab !== "Social" && tab !== "Directory" && (
+        <div className="min-h-0 flex-1 pt-1">
+          {(() => {
+            const t = tab as Exclude<IntegrationType, "Social" | "Directory">;
+            const rows = typedRows(t);
+            const cats = [...new Set(rows.map((r) => r.cat))];
+            if (!rows.length) {
               return (
-                <button
-                  key={k}
-                  type="button"
-                  title={INT_KINDS[k].note}
-                  onClick={() => setKindFilter(on ? null : k)}
-                  style={{ boxShadow: on ? `inset 0 -1px 0 ${KIND_TONE[k]}` : "none" }}
-                  className={[
-                    "inline-flex min-h-[24px] flex-none items-center gap-[5px] whitespace-nowrap border-0 bg-transparent px-0.5 text-[length:var(--pg-t-label)]",
-                    on ? "font-semibold text-[var(--pg-ink)]" : "font-normal text-[var(--pg-muted)]",
-                  ].join(" ")}
-                >
-                  <i
-                    aria-hidden="true"
-                    className="h-1.5 w-1.5 flex-none rotate-45"
-                    style={{ background: KIND_TONE[k] }}
-                  />
-                  {k}
-                  <small className="font-mono text-[length:var(--pg-t-label)] text-[var(--pg-faint)]">
-                    {String(all.filter((i) => i.kind === k).length)}
+                <p className="pt-4 text-[length:var(--pg-t-body)] text-[var(--pg-muted)]">
+                  {`Nothing sits under ${t} yet. The Directory lists everything available.`}
+                </p>
+              );
+            }
+            return cats.map((cat) => (
+              <div key={cat} className="pb-[5px] pt-[15px]">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <b className="text-[length:var(--pg-t-body)] font-medium">{cat}</b>
+                  <small className="min-w-0 text-[length:var(--pg-t-label)] text-[var(--pg-faint)]">
+                    {`${rows.filter((r) => r.cat === cat && r.state === "live").length} of ${rows.filter((r) => r.cat === cat).length} live`}
                   </small>
-                </button>
-              );
-            })}
-          </div>
+                </div>
+                <div className="mt-[11px] grid gap-px bg-[var(--pg-line-soft)] [grid-template-columns:repeat(auto-fill,minmax(min(100%,192px),1fr))]">
+                  {rows.filter((r) => r.cat === cat).map((it) => (
+                    <Tile key={it.name} item={it} onOpen={onOpen} />
+                  ))}
+                </div>
+              </div>
+            ));
+          })()}
         </div>
+      )}
 
-        <div className="mt-[11px] flex flex-wrap gap-[5px]">
-          {[{ label: "All", n: all.length }, ...shelves.map((sh) => ({ label: sh.cat, n: sh.items.length }))].map(
-            (c) => {
-              const on = cat === c.label;
-              return (
-                <button
-                  key={c.label}
-                  type="button"
-                  onClick={() => setCat(c.label)}
-                  className={[
-                    "inline-flex min-h-[27px] flex-none items-center gap-[5px] whitespace-nowrap rounded-full px-[11px] text-[length:var(--pg-t-label)]",
-                    on
-                      ? "border border-[var(--pg-gold)] bg-[var(--pg-lift)] font-semibold text-[var(--pg-ink)]"
-                      : "border border-[var(--pg-line)] bg-transparent font-normal text-[var(--pg-muted)]",
-                  ].join(" ")}
-                >
-                  {c.label}
-                  <small className="font-mono text-[length:var(--pg-t-label)] text-[var(--pg-faint)]">{String(c.n)}</small>
-                </button>
-              );
-            },
-          )}
-        </div>
-
-        <p className="mt-[11px] text-[length:var(--pg-t-body)] font-normal text-[var(--pg-muted)]">{intResult}</p>
-      </div>
-
-      {/* ── the shelves · pack L1622–L1657 ──────────────────────────────── */}
-      <div className="min-h-0 flex-1 pt-1">
-        {visible.map((sh) => (
-          <div key={sh.cat} className="pb-[5px] pt-[15px]">
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <b className="text-[length:var(--pg-t-body)] font-medium">{sh.cat}</b>
-              <small className="min-w-0 text-[length:var(--pg-t-label)] text-[var(--pg-faint)]">
-                {`${sh.items.length} of ${sh.total} shown · ${sh.live} marked ready / implemented`}
-              </small>
+      {/* ── Directory · the pack's drawn surface, whole ─────────────────────── */}
+      {tab === "Directory" && (
+        <div className="min-h-0 flex-1 pt-1">
+          <div className="pt-[15px]">
+            {!connectionStates && <p role="status" className="mb-4 max-w-[72ch] text-[length:var(--pg-t-body)] text-[var(--pg-muted)]">PARTIAL · Adapter catalogue. Verified account connections and current provider health are not loaded. Catalogue readiness may need revalidation.</p>}
+            <AxisRow label="State" rows={stats} active={stateFilter} onPick={setStateFilter} />
+            <div className="mt-[11px]">
+              <AxisRow label="Consequence" rows={conseq} active={stateFilter} onPick={setStateFilter} />
             </div>
-            <div className="mt-[11px] grid gap-px bg-[var(--pg-line-soft)] [grid-template-columns:repeat(auto-fill,minmax(min(100%,192px),1fr))]">
-              {sh.items.map((it) => (
-                <Tile key={it.name} item={it} onOpen={onOpen} />
+
+            <div className="mt-[13px] flex flex-wrap items-center gap-x-3.5 gap-y-2">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={`Search ${all.length} integrations`}
+                aria-label={`Search ${all.length} integrations`}
+                className="min-h-[30px] min-w-0 flex-[1_1_180px] rounded-full border border-[var(--pg-line)] bg-[var(--pg-surface)] px-[11px] text-[length:var(--pg-t-body)] text-[var(--pg-ink)] outline-none placeholder:text-[var(--pg-faint)] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--pg-gold-core)]"
+              />
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-[5px]">
+                {(Object.keys(INT_KINDS) as IntegrationKind[]).map((k) => {
+                  const on = kindFilter === k;
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      title={INT_KINDS[k].note}
+                      onClick={() => setKindFilter(on ? null : k)}
+                      style={{ boxShadow: on ? `inset 0 -1px 0 ${KIND_TONE[k]}` : "none" }}
+                      className={[
+                        "inline-flex min-h-[24px] flex-none items-center gap-[5px] whitespace-nowrap border-0 bg-transparent px-0.5 text-[length:var(--pg-t-label)]",
+                        on ? "font-semibold text-[var(--pg-ink)]" : "font-normal text-[var(--pg-muted)]",
+                      ].join(" ")}
+                    >
+                      <i aria-hidden="true" className="h-1.5 w-1.5 flex-none rotate-45" style={{ background: KIND_TONE[k] }} />
+                      {k}
+                      <small className="font-mono text-[length:var(--pg-t-label)] text-[var(--pg-faint)]">
+                        {String(all.filter((i) => i.kind === k).length)}
+                      </small>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <p className="mt-[11px] text-[length:var(--pg-t-body)] font-normal text-[var(--pg-muted)]">{intResult}</p>
+
+            {every
+              .map((sh) => ({
+                cat: sh.cat,
+                total: sh.items.length,
+                items: all.filter((i) => i.cat === sh.cat && matches(i)),
+              }))
+              .filter((sh) => sh.items.length)
+              .map((sh) => (
+                <div key={sh.cat} className="pb-[5px] pt-[15px]">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <b className="text-[length:var(--pg-t-body)] font-medium">{sh.cat}</b>
+                    <small className="min-w-0 text-[length:var(--pg-t-label)] text-[var(--pg-faint)]">
+                      {`${sh.items.length} of ${sh.total} shown`}
+                    </small>
+                  </div>
+                  <div className="mt-[11px] grid gap-px bg-[var(--pg-line-soft)] [grid-template-columns:repeat(auto-fill,minmax(min(100%,192px),1fr))]">
+                    {sh.items.map((it) => (
+                      <Tile key={it.name} item={it} onOpen={onOpen} />
+                    ))}
+                  </div>
+                </div>
               ))}
-            </div>
+            <p className="mt-4 max-w-[66ch] border-t border-[var(--pg-line-soft)] pt-[13px] text-[length:var(--pg-t-label)] leading-[1.55] text-[var(--pg-faint)]">
+              {INT_FOOT}
+            </p>
           </div>
-        ))}
-        <p className="mt-4 max-w-[66ch] border-t border-[var(--pg-line-soft)] pt-[13px] text-[length:var(--pg-t-label)] leading-[1.55] text-[var(--pg-faint)]">
-          {INT_FOOT}
-        </p>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -395,13 +467,15 @@ function AxisRow({
   );
 }
 
-/** Pack L1628–L1652 + L8034–L8056. */
+/** Pack L1628–L1652 + L8034–L8056, with the owner-approved honest-state chips. */
 function Tile({ item, onOpen }: { item: Row; onOpen?: (i: Row) => void }) {
-  const st = item.reported && item.state === "live"
-    ? ["Reported connected", "var(--pg-positive)", "Supplied connection state; provider health unverified"] as const
-    : ST[item.state];
-  const live = item.state === "live";
-  const planned = item.state === "planned";
+  const st = item.locked
+    ? LOCKED_CHIP
+    : item.reported && item.state === "live"
+      ? (["Reported connected", "var(--pg-positive)", "Supplied connection state; provider health unverified"] as const)
+      : ST[item.state];
+  const live = item.state === "live" && !item.locked;
+  const planned = item.state === "planned" || item.locked;
   const hasBlock = !!item.blocks && !live;
   return (
     <button
@@ -439,12 +513,12 @@ function Tile({ item, onOpen }: { item: Row; onOpen?: (i: Row) => void }) {
         <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3 w-3 flex-none text-[var(--pg-faint)]">
           <path d={INT_KINDS[item.kind].glyph} fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <small className="min-w-0 truncate text-[length:var(--pg-t-label)] text-[var(--pg-muted)]">{item.kind}</small>
+        <small className="min-w-0 truncate text-[length:var(--pg-t-label)] text-[var(--pg-muted)]">{st[0]}</small>
         <small
           className="ml-auto flex-none whitespace-nowrap text-[length:var(--pg-t-label)] font-medium"
           style={{ color: live ? "var(--pg-gold-deep)" : "var(--pg-faint)" }}
         >
-          {live ? "Configure" : item.state === "stub" ? "Finish" : "Connect"}
+          {live ? "Configure" : item.locked ? "Details" : item.state === "stub" ? "Finish" : "Connect"}
         </small>
       </span>
       {hasBlock && (

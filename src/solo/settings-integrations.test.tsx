@@ -1188,9 +1188,11 @@ describe("Team chat — Slack first-class, Teams honest", () => {
       server_url_host: "mcp.slack.com" }] });
     const { host } = await render();
     await openCard(host, "slack");
-    // The form's edit shape: the address field becomes "Full address" (re-key), and the
-    // Name field is absent — this is the EXISTING connection, not a fresh add.
-    expect(fieldFor(host, "Full address")).toBeTruthy();
+    // The form's edit shape for a CURATED provider (owner direction 2026-11-05): no address
+    // field at all — the endpoint is carried, not entered — and the Name field is absent;
+    // this is the EXISTING connection, not a fresh add.
+    expect(fieldFor(host, "Full address")).toBeFalsy();
+    expect(host.querySelector('[role="dialog"]')?.textContent).toMatch(/Paige already knows this provider’s address \(mcp\.slack\.com\)/i);
     expect(fieldFor(host, "Name")).toBeFalsy();
     const create = invoke.mock.calls.find(([name, options]) => name === "mcp-gateway" && options.body.action === "create");
     expect(create).toBeUndefined();
@@ -1202,7 +1204,9 @@ describe("Team chat — Slack first-class, Teams honest", () => {
     await openCard(host, "slack");
     const dialog = host.querySelector('[role="dialog"]');
     expect(dialog?.textContent).toContain("Slack");
-    expect((fieldFor(host, "Server URL") as HTMLInputElement)?.value).toBe("https://mcp.slack.com/mcp");
+    // Curated (2026-11-05): the address is stated, never asked — the create still carries it.
+    expect(fieldFor(host, "Server URL")).toBeFalsy();
+    expect(dialog?.textContent).toMatch(/Paige already knows this provider’s address \(mcp\.slack\.com\)/i);
     await type(fieldFor(host, "Name"), "Operations workspace");
     await type(fieldFor(host, "Token"), "xoxp-slack-user-token-123456");
     await click(byText(host, "Save configuration"));

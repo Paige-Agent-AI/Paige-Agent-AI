@@ -148,6 +148,27 @@ describe("the catalogue names GHL's real MCP endpoint", () => {
     expect(catalogue).toContain("item.manual ? undefined");
     expect(catalogue).toContain(": preset.auth ?? null;");
   });
+
+  it("a curated form never asks for the address or a header NAME (owner direction 2026-11-05)", () => {
+    // "If services.leadconnectorhq.com/mcp/ is the same for everyone there is no need for us
+    // to ask anyone to add it" and "why would it say Credential Header (Authorization) if
+    // what we need is locationId?" — the form states the endpoint it already knows, asks for
+    // the token and the Location ID in GHL's own words, and the header NAME comes from the
+    // provider's contract, never from the keyboard.
+    expect(catalogue).toContain("const curated = !!authContract && !!contractUrl;");
+    expect(catalogue).toContain("Paige already knows this provider’s address");
+    expect(catalogue).toContain("CURATED_HEADER_WORDS");
+    expect(catalogue).toContain('label: "Location ID"');
+    expect(catalogue).toContain('label: "Private Integration Token"');
+    expect(catalogue).toContain("Starts with pit-");
+    // The value is trimmed on save — an owner-observed failure mode: a pasted Location ID
+    // with a trailing space silently failed the live connect (2026-11-05).
+    expect(catalogue).toContain("const value = (requiredValues[h] ?? \"\").trim();");
+    // The generic "Any MCP server" door keeps the FULL manual form (its own address field,
+    // its own header names) — curation never leaks into the neutral door.
+    expect(catalogue).toContain('n: "Any MCP server"');
+    expect(catalogue).toContain('{tool ? "Full address" : "Server URL"}');
+  });
 });
 
 describe("the lane LANDED (GHL-1, 2026-10-03) — declared from the real catalogue, not before it", () => {

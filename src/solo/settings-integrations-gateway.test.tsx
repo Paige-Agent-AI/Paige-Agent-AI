@@ -769,7 +769,11 @@ describe("Adding a tool", () => {
     const { host } = await render();
     await openCatalogue(host);
     await click(tile(host, "Slack"));
-    expect((fieldFor(host, "Server URL") as HTMLInputElement).value).toBe("https://mcp.slack.com/mcp");
+    // Owner direction 2026-11-05: a curated provider's address is the same for every
+    // customer, so the form never asks for it — it states the endpoint it already knows and
+    // carries it on save (the payload below still receives mcp.slack.com).
+    expect(fieldFor(host, "Server URL")).toBeFalsy();
+    expect(dialog(host)?.textContent).toMatch(/Paige already knows this provider’s address \(mcp\.slack\.com\)/i);
     // Curated: one button, the provider's own words — never a generic OAuth/None wall
     // (Slack does not support dynamic registration; sign-in style OAuth is not offered).
     const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
@@ -798,15 +802,16 @@ describe("Adding a tool", () => {
     const { host } = await render();
     await openCatalogue(host);
     await click(tile(host, "HighLevel · LeadConnector"));
-    expect((fieldFor(host, "Server URL") as HTMLInputElement).value).toBe("https://services.leadconnectorhq.com/mcp/");
+    // 2026-11-05: the address is never asked for (identical for every customer — carried,
+    // stated, not entered), and the credential fields wear GHL's own words.
+    expect(fieldFor(host, "Server URL")).toBeFalsy();
+    expect(dialog(host)?.textContent).toMatch(/Paige already knows this provider’s address \(services\.leadconnectorhq\.com\)/i);
     const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
     expect(authButtons.map(b => b.textContent)).toEqual(["Private Integration Token"]);
     expect(authButtons[0].getAttribute("aria-pressed")).toBe("true");
     await type(fieldFor(host, "Name"), "Main location");
-    await type(fieldFor(host, "Token"), "pit_loc_abcdefghijklmnopqrstuvwxyz012345");
-    await click(byText(host, "Add header"));
-    await type(fieldFor(host, "Header 1 name"), "locationId");
-    await type(fieldFor(host, "Header 1 value"), "ABcdEf123456");
+    await type(fieldFor(host, "Private Integration Token"), "pit_loc_abcdefghijklmnopqrstuvwxyz012345");
+    await type(fieldFor(host, "Location ID"), " ABcdEf123456 ");
     await click(byText(host, "Save configuration"));
     expect(lastEdgeBody()).toMatchObject({
       action: "create",
@@ -816,7 +821,9 @@ describe("Adding a tool", () => {
       server_url: "https://services.leadconnectorhq.com/mcp/",
       auth_kind: "bearer",
     });
-    expect(Object.keys(lastEdgeBody().custom_headers ?? {})).toEqual(["locationId"]);
+    // The Location ID arrives as the locationId header — name from the contract, value
+    // trimmed (an owner-observed failure mode: a trailing space silently killed the connect).
+    expect(lastEdgeBody().custom_headers).toEqual({ locationId: "ABcdEf123456" });
   });
 
   it("finishes an unfinished connection instead of adding a second one for the same server", async () => {
@@ -854,8 +861,7 @@ describe("Adding a tool", () => {
     expect(dialog(host)?.textContent).toMatch(/already has a working Slack connection/i);
   });
 
-  it("locks the RE-KEY door too: the owner's dead HighLevel row collapses to its one contract", async () => {
-    // Review finding / the owner's literal screenshot: the four-way OAuth/Token/Token+headers/
+  it("locks the RE-KEY door too: the owner's dead HighLevel row collapses to its one contract", async () => {    // Review finding / the owner's literal screenshot: the four-way OAuth/Token/Token+headers/
     // None wall he met was the re-key form of his unfinished generic-remote GoHighLevel row
     // (host services.leadconnectorhq.com, auth none). Recognition is by provider key OR
     // host, so this generic row must lock to "Private Integration Token" exactly like the
@@ -870,12 +876,41 @@ describe("Adding a tool", () => {
     const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
     expect(authButtons.map(b => b.textContent)).toEqual(["Private Integration Token"]);
     expect(authButtons[0].getAttribute("aria-pressed")).toBe("true");
-    await type(fieldFor(host, "Full address"), "https://services.leadconnectorhq.com/mcp/");
-    await type(fieldFor(host, "Token"), "pit_loc_abcdefghijklmnopqrstuvwxyz012345");
+    // The re-key door asks ONLY for what the owner supplies: no address field (the catalogue's
+    // canonical endpoint is carried — and silently repairs this row's host), no header-name
+    // machinery — just the token and the Location ID in GHL's own words.
+    expect(fieldFor(host, "Full address")).toBeFalsy();
+    expect(dialog(host)?.textContent).toMatch(/Paige already knows this provider’s address \(services\.leadconnectorhq\.com\)/i);
+    await type(fieldFor(host, "Private Integration Token"), "pit_loc_abcdefghijklmnopqrstuvwxyz012345");
     await click(byText(host, "Save configuration"));
-    // locationId is required on THIS door too — the save refuses without it.
-    expect(dialog(host)?.textContent).toMatch(/requires the locationId header/i);
-    expect(rpc.mock.calls.some(c => c[0] === "set_mcp_connection_endpoint")).toBe(false);
+    // The Location ID is required on THIS door too — the save refuses in plain words.
+    expect(dialog(host)?.textContent).toMatch(/Enter the Location ID\./i);
+    await type(fieldFor(host, "Location ID"), "ABcdEf123456");
+    invoke.mockResolvedValueOnce({ data: { connection_id: "conn-ghl", config_generation: 2 }, error: null });
+    await click(byText(host, "Save configuration"));
+    const rekey = rpc.mock.calls.find(c => c[0] === "set_mcp_connection_endpoint")?.[1] as Record<string, unknown>;
+    expect(rekey).toMatchObject({ _connection_id: "conn-ghl", _server_url: "https://services.leadconnectorhq.com/mcp/", _auth_kind: "bearer" });
+    expect(rekey?._custom_headers).toEqual({ locationId: "ABcdEf123456" });
+  });
+
+  it("a row the catalogue knows ONLY by host keeps the manual re-key: blank address, every mode", async () => {
+    // Review P2 (2026-11-05): recognition reaches ~50 host-matched catalogue rows (Notion,
+    // Stripe, …) but only a LOCKED contract may carry its endpoint. A non-curated recognized
+    // row's re-key must still ask for the full address (blank, never prefilled — a prefill
+    // would silently rewrite a tenant's saved endpoint) and keep all four modes.
+    world({ rows: [row({ connection_id: "conn-notion", label: "Notion", provider_key: "generic-remote",
+      auth_kind: "none", enabled: true, status: "pending_verification", health: "unknown",
+      server_url_host: "mcp.notion.com" })] });
+    const { host } = await render();
+    const card = host.querySelector(`[data-gateway-tool="conn-notion"]`);
+    await click(card ?? undefined);
+    await click(byText(host, "Re-key"));
+    const address = fieldFor(host, "Full address") as HTMLInputElement | null;
+    expect(address).toBeTruthy();
+    expect(address?.value).toBe("");
+    const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
+    expect(authButtons.length).toBe(4);
+    expect(dialog(host)?.textContent).not.toMatch(/Paige already knows this provider’s address/i);
   });
 
   it("finds HighLevel under the LeadConnector name the provider's own API uses", async () => {
@@ -979,14 +1014,16 @@ describe("Adding a tool", () => {
     expect(authButtons.map(b => b.textContent)).toEqual(["Private Integration Token"]);
     expect(dialog(host)?.textContent).not.toContain("Token + headers");
     expect(dialog(host)?.textContent).toMatch(/Private Integration token/i);
-    // Saving without the locationId header is refused in the product's own words.
-    await type(fieldFor(host, "Token"), "pit-token-value-0123456789");
+    // 2026-11-05: the address is carried (never asked) and the credentials wear GHL's words.
+    expect(fieldFor(host, "Server URL")).toBeFalsy();
+    expect(dialog(host)?.textContent).toMatch(/Starts with pit-/i);
+    // Saving without the Location ID is refused in the provider's own words.
+    await type(fieldFor(host, "Private Integration Token"), "pit-token-value-0123456789");
     await click(byText(host, "Save configuration"));
-    expect(dialog(host)?.textContent).toMatch(/requires the locationId header/i);
-    // With the header present, the create carries the provider identity and the header.
-    await click(byText(host, "Add header"));
-    await type(fieldFor(host, "Header 1 name"), "locationId");
-    await type(fieldFor(host, "Header 1 value"), "loc-123");
+    expect(dialog(host)?.textContent).toMatch(/Enter the Location ID\./i);
+    // With it present, the create carries the provider identity, the carried address, and
+    // the header — name from the contract, value from the owner.
+    await type(fieldFor(host, "Location ID"), "loc-123");
     invoke.mockResolvedValueOnce({ data: { connection_id: "conn-ghl", config_generation: 1 }, error: null });
     await click(byText(host, "Save configuration"));
     const call = edgeCalls("create")[0];

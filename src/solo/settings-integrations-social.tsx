@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Check, ExternalLink, Link2Off, Plus, RefreshCw, ShieldCheck, X } from "lucide-react";
 import type { useSocialConnections } from "./data/useSocialConnections";
@@ -120,7 +120,7 @@ export function SocialDrawer({ social, platform, onClose }: { social: SocialStat
             {activeConnections.map((connection) => {
               const linked = social.accounts.filter((account) => account.connectionId === connection.id && account.platform === platform.key && !["disconnected", "revoked"].includes(account.status));
               return <section className="social-ig-connection" key={connection.id} aria-labelledby={`social-connection-${connection.id}`}>
-                <div className="social-ig-connection-head"><div><span className="social-ig-kicker">{platform.name} identity</span><h3 id={`social-connection-${connection.id}`}>{connection.label ?? (linked[0]?.displayName || linked[0]?.handle || `${platform.name} account`)}</h3></div>
+                <div className="social-ig-connection-head"><div><span className="social-ig-kicker">{platform.name} identity{connection.providedByPlatform ? " · platform connection" : ""}</span><h3 id={`social-connection-${connection.id}`}>{connection.label ?? (linked[0]?.displayName || linked[0]?.handle || `${platform.name} account`)}</h3></div>
                   <span className="ig-card-state" data-tone={connection.status === "connected" ? "ok" : connection.status === "needs_reauth" || connection.status === "error" ? "warn" : "neutral"}><i aria-hidden />{connection.status === "connected" ? "Verified" : connection.status === "needs_reauth" ? "Reconnect needed" : connection.status === "error" ? "Needs attention" : "Setup not finished"}</span></div>
                 <dl className="ig-facts"><div><dt>Last verified</dt><dd>{checkedAt(connection.lastVerifiedAt)}</dd></div><div><dt>Accounts found</dt><dd>{linked.length}</dd></div></dl>
 
@@ -156,4 +156,86 @@ export function SocialDrawer({ social, platform, onClose }: { social: SocialStat
       <footer><span>No password, token, provider profile key, or raw provider payload is shown here.</span></footer>
     </aside>
   </div>;
+}
+
+
+type HubChannel = {
+  platform: string;
+  handle: string | null;
+  displayName: string | null;
+  status: string;
+  adoptable: boolean;
+};
+type HubProfile = { profileId: string; name: string | null; channels: HubChannel[] };
+
+/**
+ * The operator-side adoption surface: lists channels the platform hub's provider readback
+ * already proves, and adopts the chosen ones through ONE governed social_connection_adopt
+ * approval. Nothing here publishes; the approval card below is the same governed flow as
+ * every other Social mutation.
+ */
+export function SocialHubPanel({ social }: { social: SocialState }) {
+  const [hubs, setHubs] = useState<HubProfile[] | null>(null);
+  const [chosen, setChosen] = useState<Record<string, boolean>>({});
+  const [hubError, setHubError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setHubError(null);
+    const payload = await social.hubProfiles();
+    setLoading(false);
+    const rows = payload && Array.isArray((payload as { hubs?: unknown }).hubs)
+      ? (payload as { hubs: unknown[] }).hubs : null;
+    if (!rows) { setHubError("Platform hub channels could not be read. Try again."); return; }
+    const parsed: HubProfile[] = rows.flatMap((raw) => {
+      const row = raw && typeof raw === "object" ? raw as Record<string, unknown> : null;
+      if (!row || typeof row.profileId !== "string") return [];
+      const channels = Array.isArray(row.channels) ? row.channels.flatMap((entry) => {
+        const channel = entry && typeof entry === "object" ? entry as Record<string, unknown> : null;
+        if (!channel || typeof channel.platform !== "string") return [];
+        return [{
+          platform: channel.platform,
+          handle: typeof channel.handle === "string" ? channel.handle : null,
+          displayName: typeof channel.displayName === "string" ? channel.displayName : null,
+          status: typeof channel.status === "string" ? channel.status : "",
+          adoptable: channel.adoptable === true,
+        }];
+      }) : [];
+      return [{ profileId: row.profileId, name: typeof row.name === "string" ? row.name : null, channels }];
+    });
+    setHubs(parsed);
+    setChosen({});
+  }, [social]);
+
+  const adoptable = hubs?.flatMap((hub) => hub.channels.filter((channel) => channel.adoptable)
+    .map((channel) => ({ profileId: hub.profileId, ...channel }))) ?? [];
+  const selected = adoptable.filter((channel) => chosen[channel.profileId + ":" + channel.platform]);
+  const key = (profileId: string, platform: string) => profileId + ":" + platform;
+
+  return <section className="social-ig-connections" aria-labelledby="social-hub-title">
+    <div className="social-ig-connection-head">
+      <div><span className="social-ig-kicker">Platform hub</span><h3 id="social-hub-title">Channels already connected in the PAIGE hub</h3></div>
+      {social.canManage && <button type="button" className="ig-btn" disabled={social.busy || loading} onClick={() => void load()}>
+        {hubs ? "Check again" : "Find hub channels"}
+      </button>}
+    </div>
+    <p className="ig-note">Bring the platform's already-connected channels into this workspace with one approval. Each becomes its own labeled platform connection. Nothing is published.</p>
+    {hubError && <div className="ig-state" role="alert"><span>{hubError}</span></div>}
+    {social.error && <div className="ig-state" role="alert"><span>{social.error}</span></div>}
+    {social.notice && <p className="social-ig-notice" role="status"><Check aria-hidden size={14} />{social.notice}</p>}
+    {hubs && !adoptable.length && !hubError && <p className="ig-note">No adoptable hub channels were found in the provider readback.</p>}
+    {adoptable.map((channel) => <label key={key(channel.profileId, channel.platform)} className="social-ig-account" data-selected={chosen[key(channel.profileId, channel.platform)] || undefined} style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }}>
+      <input type="checkbox" checked={Boolean(chosen[key(channel.profileId, channel.platform)])} onChange={(event) => setChosen((current) => ({ ...current, [key(channel.profileId, channel.platform)]: event.target.checked }))} />
+      <span className="social-ig-account-main"><div><strong>{platformName(channel.platform)}</strong><span>{channel.handle ? channel.handle : "Provider-verified account"}</span></div></span>
+    </label>)}
+    {!!selected.length && social.canManage && <button type="button" className="ig-btn" data-primary disabled={social.busy} onClick={() => void social.adopt(selected[0].profileId, selected.map((channel) => channel.platform))}>
+      Confirm this Social change · Approve once
+    </button>}
+    {social.pending && social.pending.capability === "social_connection_adopt" && <div className="ig-state" role="status">
+      <span>{social.pending.summary}</span>
+      <button type="button" className="ig-btn" data-primary disabled={social.busy} onClick={() => void social.approve()}>Approve once</button>
+      <button type="button" className="ig-btn" disabled={social.busy} onClick={() => void social.decline()}>Decline</button>
+    </div>}
+  </section>;
 }

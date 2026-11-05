@@ -246,3 +246,19 @@ describe("Platform Integrations redesign seam (owner 2026-11-05)", () => {
     expect(grantsMigration).not.toMatch(/revoke all on function/);
   });
 });
+
+describe("platform operator workspace resolver (incident fix 2026-11-05)", () => {
+  const resolverMigration = read("supabase/migrations/20271132000001_resolve_platform_operator_workspace.sql");
+
+  it("ships the resolver its grant RPCs call — reference-without-create can never land again", () => {
+    // 20271131000002 shipped RPC bodies calling resolve_platform_operator_workspace()
+    // without ever creating it; Supabase applies migrations with plpgsql body
+    // checking off, so the gap only surfaced at first CALL in the owner's browser.
+    expect(resolverMigration).toMatch(/create or replace function public\.resolve_platform_operator_workspace\(\)/);
+    expect(resolverMigration).toContain("security definer");
+    expect(resolverMigration).toContain("is_super_admin()");
+    expect(resolverMigration).toContain("platform_operator_tenant_id");
+    expect(resolverMigration).toMatch(/revoke execute on function public\.resolve_platform_operator_workspace\(\) from public, anon/);
+    expect(resolverMigration).toContain("set search_path to ''");
+  });
+});

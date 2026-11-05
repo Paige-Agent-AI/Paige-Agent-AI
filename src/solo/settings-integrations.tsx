@@ -5,7 +5,7 @@ import { SoloAutomationsView } from "./settings-automations";
 import { IntegrationsGatewaySection, connectionForProvider, ConnectionForm, SLACK_MCP_PRESET, type GatewayLegacyTarget } from "./settings-integrations-gateway";
 import { useMcpGateway } from "./data/useMcpGateway";
 import { IntegrationLogo } from "./integration-logos";
-import { SocialDrawer } from "./settings-integrations-social";
+import { SocialDrawer, SocialHubPanel } from "./settings-integrations-social";
 import { socialCardState } from "./settings-integrations-social-state";
 import { SOCIAL_PLATFORMS, type SocialPlatformDefinition } from "./social-platform-catalog";
 import { useSocialConnections } from "./data/useSocialConnections";
@@ -1114,6 +1114,7 @@ export function SoloIntegrationsView() {
       : open.row.id === "stripe"
       ? <StripeMerchantDrawer key={`${scopeKey}:stripe`} merchant={stripe} onClose={() => setOpen(null)} />
       : <ProviderPanel initialMcp={open.initialMcp} m={oauth} a={api} key={`${scopeKey}:${open.row.id}`} row={open.row} onClose={() => setOpen(null)} onChanged={status.retry} />)}
+    {!tenantLoading && social.canManage && <SocialHubPanel social={social} key={`${scopeKey}:social-hub`} />}
     {socialOpen && !tenantLoading && socialOpen.scope === scopeKey && <SocialDrawer social={social} platform={socialOpen.platform} key={`${scopeKey}:social:${socialOpen.platform.key}`} onClose={() => setSocialOpen(null)} />}
   </div>;
 }

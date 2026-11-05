@@ -146,6 +146,21 @@ describe("Social authorization callback", () => {
     expect(endpoint.indexOf("_disconnected_at", providedBranch)).toBeGreaterThan(providedBranch);
   });
 
+  it("adoption is reachable from the Integrations surface and every adoption carries the governed approval", () => {
+    expect(hook).toContain('action: "hub_profiles"');
+    expect(hook).toContain('action: "adopt"');
+    expect(hook).toContain('"social_connection_adopt"');
+    expect(hook).toContain("providedByPlatform: row.provided_by_platform === true");
+    expect(drawer).toContain("Confirm this Social change · Approve once");
+    expect(drawer).toContain('capability === "social_connection_adopt"');
+    expect(drawer).toContain("social.approve()");
+    expect(catalogue).toContain("SocialHubPanel");
+  });
+
+  it("platform-provided identities are labeled in the drawer", () => {
+    expect(drawer).toContain("{platform.name} identity{connection.providedByPlatform ? \" · platform connection\" : \"\"}");
+  });
+
   it("keeps per-workspace platform-channel grants service-role-only and empty by default", () => {
     expect(platformMigration).toContain("create table if not exists public.paige_social_platform_grants");
     expect(platformMigration).toContain("force row level security");

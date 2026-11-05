@@ -630,15 +630,16 @@ describe("Truth boundary", () => {
     // one row must agree, and none of them may claim somebody turned something off when
     // nobody did. A genuinely broken row keeps its error everywhere.
     world({ rows: [
-      row({ connection_id: "conn-ghl", label: "GoHighLevel", provider_key: "gohighlevel", server_url_host: "services.leadconnectorhq.com", auth_kind: "none", enabled: false, status: "unconfigured", health: "unknown" }),
+      row({ connection_id: "conn-ghl", label: "GoHighLevel", provider_key: "gohighlevel", server_url_host: "services.leadconnectorhq.com", auth_kind: "none", enabled: false, status: "unconfigured", health: "unknown", last_checked_at: null }),
       row({ connection_id: "conn-broken", label: "Scheduling tool", status: "error", health: "unknown" }),
     ] });
     const { host } = await render();
-    expect(host.textContent).not.toContain("Turned off");
-    // The detail drawer header agrees with the wall.
+    expect(host.textContent).not.toMatch(/turned off/i);
+    // The detail drawer agrees with the wall — chip AND body line.
     await click(host.querySelector('[data-gateway-tool="conn-ghl"]'));
     expect(dialog(host)?.textContent).toContain("Setup not finished");
-    expect(dialog(host)?.textContent).not.toContain("Turned off");
+    expect(dialog(host)?.textContent).not.toMatch(/turned off/i);
+    expect(dialog(host)?.textContent).toMatch(/this setup never finished/i);
     await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
     // The held catalogue tile agrees too, and its screen-reader label no longer claims the
     // tool is connected.
@@ -646,11 +647,26 @@ describe("Truth boundary", () => {
     const ghlTile = tile(host, "HighLevel · LeadConnector");
     expect(ghlTile?.textContent).toContain("Setup not finished");
     expect(ghlTile?.getAttribute("aria-label")).toMatch(/already added, setup not finished/i);
-    // An errored row keeps its error in the drawer header — never softened, never "Turned off".
+    // An errored row's tile keeps its error — never softened, never "Turned off".
     await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
     await click(host.querySelector('[data-gateway-tool="conn-broken"]'));
     expect(dialog(host)?.textContent).toContain("Couldn’t reach it");
-    expect(dialog(host)?.textContent).not.toContain("Turned off");
+    expect(dialog(host)?.textContent).not.toMatch(/turned off/i);
+  });
+
+  it("a deliberate turn-off keeps 'Turned off' when the row's state survived it (legacy shape)", async () => {
+    // The writer contract zeroes status on a native disable, so those rows are
+    // indistinguishable from never-finished ones and read "Setup not finished" (documented
+    // boundary on neverFinishedRow). Rows whose status SURVIVED a disable — the registry
+    // backfill preserved them verbatim — must keep the truthful "Turned off" everywhere.
+    world({ rows: [
+      row({ connection_id: "conn-off", label: "Zapier", provider_key: "zapier", server_url_host: "mcp.zapier.com", auth_kind: "oauth", enabled: false, status: "connected", health: "healthy" }),
+    ] });
+    const { host } = await render();
+    expect(host.textContent).toContain("Turned off");
+    await click(host.querySelector('[data-gateway-tool="conn-off"]'));
+    expect(dialog(host)?.textContent).toContain("Turned off");
+    expect(dialog(host)?.textContent).toMatch(/this tool is turned off/i);
   });
 
   it("keeps a failed read distinct from an account with no tools", async () => {
@@ -1795,7 +1811,7 @@ describe("a tool the tenant already has is one tile, not two", () => {
     expect(tile!.querySelector(".ig-gw-badge")).toBeNull();
     expect(tile!.getAttribute("data-held")).toBe("");
     // And it says so to a screen reader, rather than leaving the label claiming an add flow.
-    expect(tile!.getAttribute("aria-label")).toContain("connected");
+    expect(tile!.getAttribute("aria-label")).toContain("already added");
   });
 
   it("opens the connection it represents rather than the add form", async () => {

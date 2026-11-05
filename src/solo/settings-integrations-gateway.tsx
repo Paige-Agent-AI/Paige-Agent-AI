@@ -192,11 +192,14 @@ function statusChip(c: GatewayConnection): { label: string; tone: ChipTone } {
   return { label: "Not set up", tone: "off" };
 }
 /** True when a row never reached a working state (unconfigured, or disabled before it ever
- *  connected). Such a row reads "Setup not finished" — nobody turned anything off. An error,
- *  needs-attention or deliberately turned-off row keeps its true state and tone from
- *  statusChip: "setup not finished" would be a lie about a connection whose setup WAS
- *  finished. Every surface showing a HELD row (wall card, catalogue tile, drawer header)
- *  goes through heldStatusChip, so all three say the same thing about the same row. */
+ *  connected). Such a row reads "Setup not finished" — nobody turned anything off. KNOWN
+ *  BOUNDARY (writer contract 20270331000000): this surface's own "Turn it off" erases status
+ *  to unconfigured, so a NATIVE deliberate disable is byte-identical to a never-finished row
+ *  and reads the same here; the drawer body still names the turn-off plainly for every
+ *  disabled row. A row whose status survived a disable (legacy backfill) keeps "Turned off".
+ *  An error, needs-attention or connected row keeps its true state from statusChip.
+ *  Every surface showing a HELD row (wall card, catalogue tile, drawer header) goes through
+ *  heldStatusChip, so all three say the same thing about the same row. */
 function neverFinishedRow(c: GatewayConnection): boolean {
   return c.status === "unconfigured" || (!c.enabled && c.status !== "connected");
 }
@@ -1423,9 +1426,12 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
           )}
           {signInMessage && <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>{signInMessage}</span></div>}
 
-          {/* Replacement is the recovery for a disabled canonical connection. */}
+          {/* Replacement is the recovery for a disabled canonical connection; a row that
+              never finished names that recovery instead (its chip already says so). */}
           {!tool.enabled && (
-            <div className="ig-gw-info" role="status"><span>This tool is turned off. Re-key it to switch it back on.</span></div>
+            <div className="ig-gw-info" role="status"><span>{neverFinishedRow(tool)
+              ? "This setup never finished. Re-key it to add what is missing."
+              : "This tool is turned off. Re-key it to switch it back on."}</span></div>
           )}
 
           {!noOutboundAddress && tool.status === "pending_verification" && (

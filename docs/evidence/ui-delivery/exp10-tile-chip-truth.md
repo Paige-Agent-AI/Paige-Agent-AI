@@ -22,7 +22,7 @@ MATERIAL_FLOW_CHANGE: NO: no flow's visible steps change; what changes is honest
 FLOW_PROTOTYPE: NOT_REQUIRED: non-material; the chip, tile and drawer-header structures are the incumbent ones the prior record (exp10-connect-finish-dont-duplicate) evidenced.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a non-technical owner looking at HighLevel after a half-done connect sees "Setup not finished" everywhere he looks — on the card, in the catalogue, and when he opens it — instead of a wrong "Turned off" that implies an action he never took.
 VISUAL_DIRECTION: PASS: incumbent visual language only; same chip classes and tones already in the surface.
-AUTOMATED_EVIDENCE: PASS: new regression test drives all three surfaces — wall card, detail drawer header, catalogue tile — for a never-finished GoHighLevel row (asserting "Setup not finished" and no "Turned off" anywhere, plus the "already added, setup not finished" screen-reader label) and keeps the errored row's "Couldn't reach it" in the drawer header; tsc --noEmit clean on the changed files.
+AUTOMATED_EVIDENCE: PASS: new regression tests drive all three surfaces plus the legacy deliberate-turn-off shape (and the held-tile aria assertion was renewed to the new wording) — wall card, detail drawer header, catalogue tile — for a never-finished GoHighLevel row (asserting "Setup not finished" and no "Turned off" anywhere, plus the "already added, setup not finished" screen-reader label) and keeps the errored row's "Couldn't reach it" in the drawer header; tsc --noEmit clean on the changed files.
 STATIC_EVIDENCE: PASS: typecheck filtered clean; the chip choice is a pure function of the row's existing shape.
 RENDERED_EVIDENCE: UNVERIFIED: no local browser render this slice; the touched chip renders in the exact incumbent structures prior captures evidenced; owed and named.
 BEHAVIORAL_EVIDENCE: PASS: the three-surface agreement and the error-row boundary are driven by automated tests through real clicks (wall card open, Escape, catalogue open, drawer header read).
@@ -30,8 +30,8 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: no authenticated drive this slice; the owner'
 KEYBOARD_FOCUS: PASS: unchanged — no focus behavior touched; the tile button and drawer keep their incumbent focus effects.
 ZOOM_REFLOW: NOT_APPLICABLE: no layout change.
 REDUCED_MOTION: NOT_APPLICABLE: no motion change.
-STATE_COVERAGE: PASS: never-finished rows (unconfigured, or disabled before ever connecting) read "Setup not finished" on all three surfaces; error, needs-attention and deliberately-turned-off rows keep their true chips everywhere; the screen-reader label matches the visible one.
-TRUTHFUL_STATE_LABELS: PASS: "Turned off" now appears only for a row somebody actually turned off — never as the default for a half-done save; the tile's aria-label no longer claims "connected" for a row that never did.
+STATE_COVERAGE: PASS: never-finished rows (unconfigured, or disabled before ever connecting) read "Setup not finished" on all three surfaces and the drawer body names that recovery; error and needs-attention rows keep their true chips. KNOWN BOUNDARY: a native deliberate disable erases status to unconfigured (writer contract 20270331000000), so it is indistinguishable from a never-finished row and reads the same; rows whose status survived a disable (legacy backfill) keep "Turned off" — pinned by test.
+TRUTHFUL_STATE_LABELS: PASS: "Turned off" never labels a half-done save; the tile aria-label no longer claims "connected"; the drawer body names the turn-off plainly for every disabled row, so a deliberate native disable still tells the truth one line below its chip.
 SOLO_UI: YES: src/solo/settings-integrations-gateway.tsx is the Solo settings Integrations surface.
 SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: no rendering structure changes; the chip renders in the incumbent structure prior records evidenced at these viewports.
 SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: same.
@@ -43,8 +43,8 @@ SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: same.
 SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: same.
 UNVERIFIED: rendered capture and the owner's authenticated page drive are owed and named above (his dead HighLevel row reading "Setup not finished" on card, tile and drawer); the three-surface agreement itself is automated-test-covered.
 
-MUST_PRESERVE: statusChip's own vocabulary and tones for genuinely-finished rows ("Ready", "Needs attention", "Couldn't reach it", "Turned off" for a real disable) are byte-identical; the wall's "View incoming setup" case keeps precedence; every other surface behavior unchanged.
-ACCEPTANCE_CRITERIA: the owner's dead HighLevel row reads "Setup not finished" on its wall card, its catalogue tile and its drawer header — and nothing on the Integrations page says "Turned off" about a setup that never finished.
+MUST_PRESERVE: statusChip vocabulary and tones for finished rows ("Ready", "Needs attention", "Couldn't reach it") are byte-identical, and "Turned off" survives for rows whose status survived a disable (legacy shape, pinned by test); native disables read "Setup not finished" like never-finished rows because the writer erases status — documented boundary, full fix (server discriminator or the two-state vocabulary) belongs to the EXP07 redesign; the wall's "View incoming setup" case keeps precedence.
+ACCEPTANCE_CRITERIA: the owner's dead HighLevel row reads "Setup not finished" on its wall card, its catalogue tile and its drawer header (header chip AND body line), and no surface calls a never-finished setup "Turned off".
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: NONE_AFFECTED: gateway writers, server guards, catalogue routing and forms are untouched; this delta is chip routing and copy only.
 

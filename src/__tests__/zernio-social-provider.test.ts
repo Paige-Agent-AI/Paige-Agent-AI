@@ -96,6 +96,16 @@ describe("Zernio connect URL", () => {
     expect(calls[1].url).toContain("/v1/connect/google-business?");
   });
 
+  it("connects X under the provider's own slug (twitter) — the live 2026-11-06 failure", async () => {
+    stubEnv({ ZERNIO_API_KEY: "zk_test" });
+    const calls = serve([
+      { body: [{ id: "zp_3", externalId: KEY }] },
+      { body: { authUrl: "https://zernio.com/go" } },
+    ]);
+    await zernioSocialAdapter.createConnectUrl({ providerProfileKey: KEY, redirectUrl: "https://paige.example/cb", platform: "x" });
+    expect(calls[1].url).toContain("/v1/connect/twitter?");
+  });
+
   it("refuses an authorization URL that is not https or not on a consent host", async () => {
     stubEnv({ ZERNIO_API_KEY: "zk_test" });
     serve([

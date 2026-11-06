@@ -1231,3 +1231,29 @@ describe("Team chat — Slack first-class, Teams honest", () => {
     expect(create).toBeUndefined();
   });
 });
+
+
+describe("EXP07 slice 1 — the provider's connection apps on the Solo page (owner 2026-11-06)", () => {
+  it("renders Google, Discord and Telegram beside the social cards, in the shared groups", async () => {
+    world();
+    const { host } = await render();
+    for (const key of ["google", "discord", "telegram"]) {
+      const card = host.querySelector(`.ig-card[data-provider="app-${key}"]`);
+      expect(card, `missing connection app card: ${key}`).toBeTruthy();
+    }
+    expect(host.textContent).toContain("Reach people where they are.");
+    expect(host.textContent).toContain("Send mail and book time.");
+  });
+
+  it("opens the governed Social drawer for a connection app with its own kind label", async () => {
+    world();
+    const { host, root } = await render();
+    const googleCard = host.querySelector<HTMLButtonElement>('.ig-card[data-provider="app-google"]');
+    expect(googleCard).toBeTruthy();
+    await act(async () => { googleCard!.click(); await Promise.resolve(); });
+    const drawer = host.querySelector('[role="dialog"]');
+    expect(drawer?.textContent).toContain("Google");
+    expect(drawer?.textContent).toContain("Gmail, Calendar and more");
+    await act(async () => root.unmount());
+  });
+});

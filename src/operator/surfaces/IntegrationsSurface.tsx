@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { TriangleAlert, X } from "lucide-react";
 import { IntegrationLogo } from "../../solo/integration-logos";
-import { SOCIAL_PLATFORMS, type SocialPlatformDefinition } from "../../solo/social-platform-catalog";
-import { DrawerPlatform, OperatorSocialDrawer, useOperatorSocialDoor } from "./OperatorSocialDoor";
+import { SOCIAL_CONNECTION_APPS, SOCIAL_PLATFORMS, connectionAppAsPlatform, type SocialConnectionApp, type SocialPlatformDefinition } from "../../solo/social-platform-catalog";
+import { OperatorSocialDrawer, useOperatorSocialDoor } from "./OperatorSocialDoor";
 import "../../solo/settings-integrations.css";
 
 /**
@@ -85,40 +85,10 @@ const GROUPS: ReadonlyArray<{ id: GroupId; label: string; accent: string; blurb:
   { id: "developer", label: "Developer", accent: "var(--pg-muted)", blurb: "Wire it up yourself." },
 ];
 
-/**
- * The provider's connection apps beyond Social (owner ruling 2026-11-05: "Gmail,
- * Calendar… even Discord and Telegram"), connected through the SAME governed door as
- * the Social cards — one approval, provider-side sign-in, readback-verified truth.
- * Operator-scoped on purpose: the Solo catalogue gains these in its own step, per the
- * owner's sequence. Slugs and flows are docs-verified: google = one OAuth covering
- * areas (email/calendar to start), discord = OAuth bot install, telegram = access code.
- */
-type OperatorConnectionApp = {
-  key: string;
-  name: string;
-  kind: string;
-  group: GroupId;
-  logoId: string | null;
-  brandHex: string;
-  mark: string;
-  note: string;
-};
-const CONNECTION_APPS: ReadonlyArray<OperatorConnectionApp> = [
-  { key: "google", name: "Google", kind: "Gmail, Calendar and more", group: "email-calendar",
-    logoId: "google", brandHex: "#4285F4", mark: "G",
-    note: "One Google sign-in covers Gmail and Google Calendar. The remaining Google areas — Drive files and Contacts — arrive in a later update." },
-  { key: "discord", name: "Discord", kind: "Community chat", group: "collaboration",
-    logoId: null, brandHex: "#5865F2", mark: "D",
-    note: "The provider's bot joins your server through Discord's own consent — no app of ours to create. Server and channel selection happen at Discord." },
-  { key: "telegram", name: "Telegram", kind: "Channel messaging", group: "messaging",
-    logoId: null, brandHex: "#26A5E4", mark: "T",
-    note: "Telegram connects with an access code, not a sign-in redirect: add the provider's bot as an administrator of your channel, then send it the code the link shows you. The card updates once the connection verifies." },
-];
-
-/** Connection apps reuse the Social drawer's machinery; this shim gives the drawer the
- *  platform shape it reads (oauthAvailable: every one of these opens a link). */
-const appAsPlatform = (app: OperatorConnectionApp): DrawerPlatform =>
-  ({ key: app.key, name: app.name, mark: app.mark, oauthAvailable: true, connectionNote: app.note });
+/** The provider's connection apps beyond Social — ONE shared catalogue definition
+ *  (src/solo/social-platform-catalog.ts) serves this page and every Solo page, so the
+ *  surfaces cannot drift (owner 2026-11-06: same fixed options for every account). */
+type OperatorConnectionApp = SocialConnectionApp;
 
 type Category = "all" | GroupId;
 
@@ -134,7 +104,7 @@ export default function IntegrationsSurface() {
   const groups = GROUPS.map((group) => ({
     ...group,
     social: group.id === "social" ? SOCIAL_PLATFORMS : [],
-    apps: CONNECTION_APPS.filter((app) => app.group === group.id),
+    apps: SOCIAL_CONNECTION_APPS.filter((app) => app.group === group.id),
     providers: PROVIDERS.filter((row) => row.group === group.id),
   }));
   const countOf = (id: GroupId) => {
@@ -238,7 +208,7 @@ export default function IntegrationsSurface() {
           ))}
 
       {socialOpen && <OperatorSocialDrawer key={`social-${socialOpen.key}`} platform={socialOpen} door={door} onClose={() => setSocialOpen(null)} />}
-      {appOpen && <OperatorSocialDrawer key={`app-${appOpen.key}`} platform={appAsPlatform(appOpen)} door={door} kindLabel={appOpen.kind} onClose={() => setAppOpen(null)} />}
+      {appOpen && <OperatorSocialDrawer key={`app-${appOpen.key}`} platform={connectionAppAsPlatform(appOpen)} door={door} kindLabel={appOpen.kind} onClose={() => setAppOpen(null)} />}
       {providerOpen && <ProviderNoteDrawer row={providerOpen} onClose={() => setProviderOpen(null)} />}
     </div>
   );

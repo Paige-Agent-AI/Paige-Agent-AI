@@ -3,10 +3,12 @@
 -- Independent-review P3 (2026-11-05): a provision row like ('project_ref','')
 -- or ('project_ref','   ') would pass 20271133000003's `is null` test, mint the
 -- URL "https://.supabase.co/...", and turn every tick into a doomed call. Two
--- layers now treat blank exactly like missing:
+-- layers now treat blank (including tabs/newlines/CRs — the classic paste
+-- artifact, which space-only btrim misses) exactly like missing:
 --   * a CHECK on the table (rejects the bad write at insert/update time), and
---   * nullif(btrim(value),'') in the guard (fails closed even if a blank row
---     somehow exists — e.g. a migration written before this one replays).
+--   * nullif(btrim(value, E' \t\n\r'),'') in the guard (fails closed even if
+--     a blank row somehow exists — e.g. a migration written before this one
+--     replays).
 -- Production's live row is non-blank, so this applies as a no-op besides the
 -- tightened functions; legitimate provisioning is unchanged.
 
@@ -15,7 +17,7 @@ alter table public.cron_environment
 
 alter table public.cron_environment
   add constraint cron_environment_value_nonblank
-  check (value = btrim(value) and value <> '');
+  check (value = btrim(value, E' \t\n\r') and value <> '');
 
 create or replace function public.cron_edge_url(p_function text)
 returns text
@@ -25,8 +27,8 @@ security definer
 set search_path = 'public'
 as $fn$
   select 'https://' || (
-           select btrim(value) from public.cron_environment
-           where name = 'project_ref' and nullif(btrim(value), '') is not null
+           select btrim(value, E' \t\n\r') from public.cron_environment
+           where name = 'project_ref' and nullif(btrim(value, E' \t\n\r'), '') is not null
          )
          || '.supabase.co/functions/v1/' || p_function
 $fn$;
@@ -38,7 +40,7 @@ stable
 as $fn$
   select format($cmd$
     select case
-      when nullif(btrim((select value from public.cron_environment where name = 'project_ref')), '') is null
+      when nullif(btrim((select value from public.cron_environment where name = 'project_ref'), E' \t\n\r'), '') is null
         then 'cron skipped: environment not provisioned'
       else (select net.http_post(
              url     := public.cron_edge_url(%1$L),

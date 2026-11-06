@@ -42,7 +42,11 @@ corrections.
   — **not** `alter database … set app.settings.project_ref`: that was the original
   design, but it requires database ownership the operator role lacks, and the
   `cron_environment` table (`20271133000003`, blank-values hardened in `20271133000004`)
-  is what production actually runs. The 7
+  is what production actually runs. Note the intentional materialized-text split:
+  production's `cron.job.command` rows embed the 000003-text guard, fresh branches'
+  embed the 000001 GUC-text guard (000003/000004 replace functions without
+  rescheduling), and both fail closed — the else-branch resolves `cron_edge_url` at
+  tick time, so every environment benefits from later hardening. The 7
   local-SQL jobs are untouched. `cron_job_backup` + `cron_restore_backup()` is the
   tested verbatim rollback. **Do not "fix" a preview by re-enabling its jobs; do not
   delete the backup/allowlist tables; do not add cron.schedule migrations with
@@ -79,14 +83,14 @@ corrections.
   truncation once "proved" a function didn't exist when it did.
 7. **Deployments duplicated by `vercel redeploy`** are visible as `source:"redeploy"`
   in the Vercel API — check `source` before assuming double Git triggers.
-8. **An inline `ignoreCommand` string in vercel.json breaks PRODUCTION builds.**
-  Vercel's main-branch runner evaluates the inline command through JSON-shell escaping
-  that the heavy quoting in our script did not survive; the failure exits >1, which
-  Vercel reports as build **ERROR** — while preview builds fail open, so the bug is
-  invisible until main. Three inline attempts errored (`2dbd9040` production,
-  `62a1948`/`dbfcdbd` previews) before the fix: keep the logic in
-  `scripts/vercel-ignore.sh` and reference it by path (`"ignoreCommand": "bash
-  scripts/vercel-ignore.sh"`). Verified green on main at `d81b65f`.
+8. **An inline `ignoreCommand` string in vercel.json breaks builds.**
+  Vercel's runner evaluates the inline command through JSON-shell escaping that the
+  heavy quoting in our script did not survive; the failure exits >1, which Vercel
+  reports as build **ERROR**. Three inline attempts errored — one production build
+  (`2dbd9040`) and two preview builds (`62a1948`/`dbfcdbd`) — before the fix: keep
+  the logic in `scripts/vercel-ignore.sh` and reference it by path
+  (`"ignoreCommand": "bash scripts/vercel-ignore.sh"`). Verified green on main at
+  `d81b65f`.
 
 ## Workload facts (for future CPU attribution)
 

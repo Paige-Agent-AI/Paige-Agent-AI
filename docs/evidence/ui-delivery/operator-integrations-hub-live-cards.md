@@ -1,0 +1,28 @@
+# UI delivery evidence: operator-integrations-hub-live-cards
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: Owner 2026-11-06: "My connections are not live on the Platform Operator Integrations… I want to start reconnecting all of my live connections for PAIGE on her Platform Level Account." Diagnosis first (production DB, operator workspace): two fresh Facebook connects had failed at the provider's profile-creation step (failure_code provider_request_failed, zero attempt rows — the provider refused the SETUP, distinct from any consent decline), and the workspace holds no adopted rows, so every card read Setup required while the provider hub provably holds the platform's channels. The fix serves both truths: a channel the platform hub already holds now renders at CARD level as "Held by the platform · <handle>" (provider-proven, actionable), with the governed bring-in — which creates NO new provider profile — one click away in its drawer; adoption widens to the full connection set (google/discord/telegram hub channels adoptable, edge body and approved filters on SOCIAL_CONNECTION_PLATFORMS); and a provider-refused setup now states what happened and names the recovery (retry, or bring in a held channel) instead of a generic refusal. After a bring-in completes, the door's step-2 reload shows the card as Connected like any other.
+PAIGE_UI_DESIGN: PASS: The same card language, tones and drawer chrome the owner accepted; the held-channel state uses the existing warn tone dot and the surface's own vocabulary; no new colour, no new component.
+MATERIAL_FLOW_CHANGE: YES: The Platform Operator's real connection estate becomes visible and actionable at card level, and hub-held Google/Discord/Telegram channels become adoptable — the reconnect-everything flow the owner asked for.
+FLOW_PROTOTYPE: UNVERIFIED: No prototype; this extends the owner-accepted live page in its own language.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: The Platform Operator reconnects his live connections for PAIGE on the platform account; primary action = open a held channel's card and bring it in through one governed approval.
+VISUAL_DIRECTION: PASS: Existing Solo stylesheet and tokens exclusively; text-only state additions on the established card foot.
+AUTOMATED_EVIDENCE: PASS: Security contract extended — pins the held-channel card state, the provider-refusal copy, the adoptable superset flag, and the adopt filters on SOCIAL_CONNECTION_PLATFORMS; v3 static suite unchanged by construction (hub reads are runtime; first paint still asserts nothing); independent NON-AUTHOR review pass run before push.
+STATIC_EVIDENCE: PASS: Typecheck and lint run in the verify job on the exact head; source-contract tests read the door and the endpoint as text.
+RENDERED_EVIDENCE: UNVERIFIED: The owner's walkthrough on the live page with his held channels is the rendered check, owed per the Nov-1 unrun-proof rule.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: One governed bring-in of a held channel from the operator card is the behavioral check owed — the owner's click; the adopt path exercised live for social channels during the hub lane, widened here by source contract only.
+AUTHENTICATED_RUNTIME: UNVERIFIED: No authenticated operator pass has run on this increment yet.
+KEYBOARD_FOCUS: PASS: No new controls; the same cards and drawer with their focus chrome.
+ZOOM_REFLOW: NOT_APPLICABLE: Text-only additions to the existing reflowing grid.
+REDUCED_MOTION: NOT_APPLICABLE: No motion added.
+STATE_COVERAGE: PASS: Held-at-provider (with and without a handle), needs-attention on the two refused Facebook rows with the drawer's reconnect, provider-refused setup copy naming the recovery, unread Checking, and post-adopt Connected — rendered or pinned.
+TRUTHFUL_STATE_LABELS: PASS: A held channel is never labelled Connected until the governed bring-in lands and readback proves it; the provider's refusal is named as its own failure, not a consent decline.
+SOLO_UI: NO: Operator surface and the shared door's adoption gate only; no src/solo file is edited.
+UNVERIFIED: Production deploy (Vercel frontend plus paige-social redeploy), the owner's walkthrough with his held channels, and one governed bring-in remain open; none are inferred as done.
+INTERNAL_BUILD_IDENTITY: 2b672585520c309fadc05ea5a89bfa811983a67e; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; this change ships no migration; the adopt RPC is platform-agnostic by design and the gate lives in the door; edge=PROOF_OWED(paige-social redeploy owed: adoptable superset + adopt filters); evidence=this record plus record operator-integrations-connection-apps
+RELEASE_CHANNEL: development: Owner-requested live-connections increment on the Integrations page; exact-head checks and authorized deploy remain required.
+RELEASE_CLASSIFICATION: PATCH: Card-state truth for held channels, adoption set widened at the door's gate, honest provider-refusal copy; additive only.
+CUSTOMER_RELEASE_IDENTITY: none: Platform-console capability; customer visibility follows the owner's walkthrough.
+RELEASE_NOTE_REQUIRED: no: Not advertised until the owner accepts the walkthrough.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: Source, tests, and CI complete on this head — production deploy, the edge redeploy, and the owner's live walkthrough have not run and are not inferred.
+RELEASE_RECOVERY: position=revert this commit to restore social-only adoption and the two-state card foot; reference=this record and the revert commit

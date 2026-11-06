@@ -65,3 +65,5 @@ alter table public.paige_social_connections
 --    migration revoked all and granted no one, so even unblocked CHECKs would die
 --    one step later with permission denied. Same grant its sibling writers carry.
 grant execute on function public.social_adopt_platform_channels(uuid, uuid, uuid, text, jsonb, timestamptz) to service_role;
+
+commit;

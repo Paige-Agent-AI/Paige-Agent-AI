@@ -373,7 +373,7 @@ Deno.serve(async (req: Request) => {
           handle: account.handle,
           displayName: account.displayName,
           status: account.status,
-          adoptable: (SOCIAL_OAUTH_PLATFORMS as readonly string[]).includes(account.platform),
+          adoptable: (SOCIAL_CONNECTION_PLATFORMS as readonly string[]).includes(account.platform),
         })),
       })),
     });
@@ -382,7 +382,7 @@ Deno.serve(async (req: Request) => {
   if (action === "adopt") {
     const profileId = text(body.profileId, 64);
     const requestedPlatforms = Array.isArray(body.platforms)
-      ? [...new Set(body.platforms.filter((p): p is string => typeof p === "string" && SOCIAL_OAUTH_PLATFORMS.includes(p as typeof SOCIAL_OAUTH_PLATFORMS[number])))].slice(0, 10)
+      ? [...new Set(body.platforms.filter((p): p is string => typeof p === "string" && SOCIAL_CONNECTION_PLATFORMS.includes(p as typeof SOCIAL_CONNECTION_PLATFORMS[number])))].slice(0, 10)
       : [];
     if (!profileId || !requestedPlatforms.length) {
       return jsonResponse({ ok: false, code: "SOCIAL_REQUEST_INVALID" }, 400);
@@ -400,7 +400,7 @@ Deno.serve(async (req: Request) => {
 
     const approvedProfileId = text(result.args.profileId, 64);
     const approvedPlatforms = Array.isArray(result.args.platforms)
-      ? result.args.platforms.filter((p): p is string => typeof p === "string" && SOCIAL_OAUTH_PLATFORMS.includes(p as typeof SOCIAL_OAUTH_PLATFORMS[number]))
+      ? result.args.platforms.filter((p): p is string => typeof p === "string" && SOCIAL_CONNECTION_PLATFORMS.includes(p as typeof SOCIAL_CONNECTION_PLATFORMS[number]))
       : [];
     if (!approvedProfileId || !approvedPlatforms.length) {
       return jsonResponse({ ok: false, code: "SOCIAL_APPROVAL_INVALID" }, 409);

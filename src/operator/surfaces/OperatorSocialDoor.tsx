@@ -110,7 +110,12 @@ export function useOperatorSocialDoor() {
       return payload;
     }
     if (payload.ok !== true) {
-      setError("The request was refused. Nothing was changed.");
+      // The provider refused the SETUP request itself (not a consent decline) — the
+      // honest recovery names both paths: retry, or bring in a channel the platform
+      // already holds, which needs no new provider profile at all.
+      setError(payload.code === "SOCIAL_PROVIDER_UNAVAILABLE"
+        ? "The connection provider refused the setup request. Nothing was changed — try again, or bring in a channel the platform already holds."
+        : "The request was refused. Nothing was changed.");
       return payload;
     }
     if (payload.state === "authorization_required" && typeof payload.authorization_url === "string") {
@@ -244,14 +249,21 @@ export function useOperatorSocialDoor() {
     [channels],
   );
 
-  /** The honest foot a Social card renders: unread states assert nothing. */
+  /** The honest foot a Social card renders: unread states assert nothing. A channel
+   *  the platform hub already holds is REAL (provider-proven) but not yet usable by
+   *  PAIGE — the card says exactly that, with the one-click bring-in in its drawer. */
   const cardState = useCallback((platform: string): { account: string; tone: "ok" | "warn" | "neutral" } => {
     if (channels === null) return busy ? { account: "Checking connection…", tone: "neutral" } : { account: "Status unavailable", tone: "neutral" };
     const row = (channels ?? []).find((candidate) => candidate.platform === platform);
-    if (!row) return { account: "Setup required", tone: "neutral" };
+    if (!row) {
+      const held = hub?.find((channel) => channel.platform === platform && channel.adoptable);
+      return held
+        ? { account: held.handle ? `Held by the platform · ${held.handle}` : "Held by the platform · bring it in", tone: "warn" }
+        : { account: "Setup required", tone: "neutral" };
+    }
     if (!HEALTHY.has(row.status)) return { account: "Needs attention", tone: "warn" };
     return channelWords(row);
-  }, [busy, channels]);
+  }, [busy, channels, hub]);
 
   const hubHoldFor = useCallback(
     (platform: string) => hub?.find((channel) => channel.platform === platform && channel.adoptable) ?? null,

@@ -213,6 +213,17 @@ describe("Social authorization callback", () => {
     expect(callback).toContain("|operator)");
   });
 
+  it("shows the platform's held channels at card level and adopts them across the full connection set (owner 2026-11-06)", () => {
+    // "My connections are not live on the Platform Operator Integrations": channels the
+    // provider hub already holds are provider-proven truth — the card states them and
+    // the drawer's governed bring-in adopts them, now for every connection platform.
+    expect(operatorSocialDoor).toContain("Held by the platform");
+    expect(operatorSocialDoor).toContain("bring it in");
+    expect(operatorSocialDoor).toContain("SOCIAL_PROVIDER_UNAVAILABLE");
+    expect(endpoint).toContain("adoptable: (SOCIAL_CONNECTION_PLATFORMS as readonly string[]).includes(account.platform)");
+    expect(endpoint).toContain("&& SOCIAL_CONNECTION_PLATFORMS.includes(p as typeof SOCIAL_CONNECTION_PLATFORMS[number])");
+  });
+
   it("keeps per-workspace platform-channel grants service-role-only and empty by default", () => {
     expect(platformMigration).toContain("create table if not exists public.paige_social_platform_grants");
     expect(platformMigration).toContain("force row level security");

@@ -132,5 +132,13 @@ provider returned — no "check before asking again."
 
 ## INTERNAL_BUILD_IDENTITY
 
-Head of this changeset: `exp10-run-outcome-confirmation` off `origin/main` @ `1290a94602503646254b3edae9f085e0f847d6a6`
-(exp10-consent-all-tools merge). Exact SHA recorded at PR merge.
+**LANDED 2026-11-06 03:09Z**: PR #3292 squash-merged (branch head `bdba3542c66f7fcc097b3c6f676bebf5f0d180d8`,
+all 11 checks green) -> **main `e299ed5f488aa744f12fdc55065215b0f4f43d59`** -> deploy-edge-functions run
+42154597958 SUCCESS: secrets applied, `deployed mcp-gateway` + `deployed paige-ai-chat`, readback both
+PASS (source/configuration matched) at 03:09:15Z.
+
+CI round note: the first verify run failed on two PIN renewals owed by this change, both renewed -
+(1) the C0B incumbent spine contract (all 29 dispatch fingerprints shift through the shared
+describeConfirm helper + the ghl branch's dominating-chain position; renewed with the module's own
+inspector + a documented review note; spine self-test PASS, main lint PASS 245 capability, ancestry
+32/32) and (2) mcp-ghl-chat-slice.test.ts's confirm-card copy pin (the read-vs-write reword).

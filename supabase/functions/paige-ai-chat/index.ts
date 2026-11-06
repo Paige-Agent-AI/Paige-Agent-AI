@@ -152,6 +152,7 @@ import { buildApprovalOutcome, classifySpentApproval, classifyUnspentApproval, d
 import { resolveSourceThreadLink } from "../_shared/source-thread-link.ts";
 import { buildCreditProposal, buildCreditSyncPayload } from "../_shared/credit-extraction-payload.ts";
 import { projectOutcomeForModel } from "../_shared/mcp-outcome.ts";
+import { projectRunOutcomeForModel, projectRunRefusalForModel } from "../_shared/mcp-gateway/run-projection.ts";
 import { embeddingsCompat, voyageEmbedOne, VOYAGE_MODEL } from "../_shared/voyage.ts";
 import { applyContactSearchFilter, CONTACT_NAME_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
 import { resolveClientRef } from "../_shared/client-ref.ts";
@@ -10538,7 +10539,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         case "zapier_run_action":
           return `Run the Zapier action "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} — this runs it live in the connected app.`;
         case "ghl_run_action":
-          return `Run the GoHighLevel tool "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} — this touches the live CRM (a write changes real records; a send messages a real person).`;
+          return `Run the GoHighLevel tool "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} in the live CRM — a read looks up real records and changes nothing; a write changes real records or messages a real person.`;
         case "forge_subagent":
           return `${a?.runtime === "hard" ? "Propose a new (code-backed) specialist" : "Spin up a new specialist"} — "${a?.name || a?.slug || "agent"}" (${a?.domain || "general"}): ${String(a?.description || "").slice(0, 80)}.${a?.runtime === "hard" ? " Goes to an admin for sign-off." : " Joins the team right away."}`;
         case "save_to_knowledge_base":
@@ -17462,11 +17463,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // tool lacks its durable approval), not_found, bad_tool_name — and each
                 // must reach the model verbatim, never the generic transport sentence.
                 const ghlRunBody = await readInvokeBody(ghlErr, ghlData);
-                if (ghlErr) {
-                  result = { success: false, ...ghlRunBody, error: String(ghlRunBody.error ?? "gateway_refused") };
-                } else {
-                  result = ghlRunBody;
-                }
+                // PROJECT, never forward raw. The closed body alone ({outcome, code, run_id,
+                // recorded}) has no `success` field, no data, and no glossary — on 2026-11-06 a
+                // SUCCEEDED lookup (Rail: capability_succeeded) was narrated to the owner as
+                // "couldn't confirm whether it went through" because the model had nothing it
+                // could read as evidence or as meaning. The projection adds the chat's own
+                // `success` convention, the bounded `data` the gateway now returns for clean
+                // results, and an own-words note per outcome (2026-11-06 owner incident).
+                result = ghlErr
+                  ? projectRunRefusalForModel(ghlRunBody)
+                  : projectRunOutcomeForModel(ghlRunBody);
               }
             }
 

@@ -19,7 +19,7 @@ STATE_COVERAGE: PASS: Held-at-provider (with and without a handle), needs-attent
 TRUTHFUL_STATE_LABELS: PASS: A held channel is never labelled Connected until the governed bring-in lands and readback proves it; the provider's refusal is named as its own failure, not a consent decline.
 SOLO_UI: NO: Operator surface and the shared door's adoption gate only; no src/solo file is edited.
 UNVERIFIED: Production deploy (Vercel frontend plus paige-social redeploy), the owner's walkthrough with his held channels, and one governed bring-in remain open; none are inferred as done.
-INTERNAL_BUILD_IDENTITY: 2b672585520c309fadc05ea5a89bfa811983a67e; deployment=UNVERIFIED; environment=development; migrations=APPLIED(20271133000005_hub_live_connection_shapes.sql) apply owed via the deploy pipeline; edge=PROOF_OWED(paige-social redeploy owed: adoptable superset + adopt filters); evidence=this record plus record operator-integrations-connection-apps
+INTERNAL_BUILD_IDENTITY: 2b672585520c309fadc05ea5a89bfa811983a67e; deployment=UNVERIFIED; environment=development; migrations=APPLIED(20271133000005_hub_live_connection_shapes); the deploy pipeline applies it after merge; edge=PROOF_OWED(paige-social redeploy owed: adoptable superset + adopt filters); evidence=this record plus record operator-integrations-connection-apps
 RELEASE_CHANNEL: development: Owner-requested live-connections increment on the Integrations page; exact-head checks and authorized deploy remain required.
 RELEASE_CLASSIFICATION: PATCH: Card-state truth for held channels, adoption set widened at the door's gate, honest provider-refusal copy; additive only.
 CUSTOMER_RELEASE_IDENTITY: none: Platform-console capability; customer visibility follows the owner's walkthrough.

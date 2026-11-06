@@ -60,3 +60,36 @@ CUSTOMER_RELEASE_IDENTITY: none: internal-only
 RELEASE_NOTE_REQUIRED: NO: internal-only
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: ships on merge + edge deploy; the owner's one Check on the deployed gateway showing every gated tool approved (drawer + ghl_list_actions in chat) is the owed live proof
 RELEASE_RECOVERY: position=revert-restores-manual-per-tool-approval-ceremony; reference=this record plus the revert commit (existing approvals already written by consent remain valid rows — reverting stops future auto-consent, it does not revoke what a connection already consented to; re-key remains the owner's bulk revocation)
+
+────────────────────────────────────────────────────────────────────────
+AMENDMENT 2026-11-05 (owner, same day, verbatim): "EVERYTHING SHOULD BE
+APPROVED. TOP BEING SO CONSERVATIVE LOL."
+────────────────────────────────────────────────────────────────────────
+Recorded at the non-author reviewer's direction (the fields above describe
+the FIRST cut and are superseded where they conflict):
+
+- SELECTION (supersedes the AUTOMATED_EVIDENCE/STATE_COVERAGE read clauses
+  above): connect-consent now consents to EVERY discovered tool — declared
+  reads included — so the approval ledger the chat counts matches the
+  owner's all-of-them grant. The old suite's "declared read never
+  consented / a read-only catalog writes nothing" assertions are INVERTED
+  and now pin the amendment (selection includes contacts.search; the
+  read-only-catalog test expects 2 writes; the smoke's TOOLS fixture
+  asserts 5-of-5 approved with reads included, list_records consented).
+- EXECUTION UNCHANGED: the effect policy still governs dispatch (a declared
+  read never consults the consent verifier; a provider re-classifying a
+  consented read later fails closed on pin mismatch).
+- HONEST RESIDUAL: a tool whose name cannot be safely recorded (the smoke's
+  hostile injection name) is refused by the writer's tool-name contract and
+  lands in auto_approve_failed on every check — reported as a count, never
+  fatal, never named (§13: it is literally an injection string), and it can
+  never converge by retry. Same class: names of 65–200 chars are cataloged
+  (probe truncates at 200) but permanently unconsentable (approvals cap at
+  64). A unit test pins the refusal code bad_tool_name.
+- LIVE STATE: the owner's GHL connection carries all 36 approval rows
+  (written through this same writer 23:31Z); PAIGE's chat reported
+  "14 of 36" at 23:23Z before the owner's amendment, 36/36 after.
+- MUST_PRESERVE supersession: "declared reads remain approval-free" at
+  EXECUTION stays true; at the LEDGER, reads now carry consent rows.
+- AMENDED BUILD: exp10-consent-all-tools (2c49206bf + review fixes), off
+  origin/main 521cbf34c; edge redeploys on merge via deploy-edge-functions.

@@ -1,13 +1,16 @@
 // Connected MCP Gateway — CONNECT-CONSENT AUTO-APPROVE (owner decision 2026-11-05, ANT-164
-// comment 3c731bae: "all the tools approved once the connection is made inside of Integrations").
+// comment 3c731bae: "all the tools approved once the connection is made inside of Integrations";
+// amended same day, verbatim: "EVERYTHING SHOULD BE APPROVED. TOP BEING SO CONSERVATIVE LOL").
 //
 // THE MODEL THIS IMPLEMENTS. A connection IS the operator's consent to the tools it offers: when a
-// verify persists a healthy catalog, every effect-gated tool the check discovered is approved
-// through the SAME runApprove path the per-tool drawer button used — permanent (no expiry), any
-// call shape — so consent rides the human connect/check action itself instead of a per-tool
-// ceremony. ACTION-level consent is unchanged and stays in chat (the approval card before a
-// consequential run); this only removes the TOOL-level gate. Genuinely-declared reads stay
-// approval-free exactly as before (effect-policy: a declared read runs without approval).
+// verify persists a healthy catalog, EVERY discovered tool is approved through the SAME runApprove
+// path the per-tool drawer button used — permanent (no expiry), any call shape — so consent rides
+// the human connect/check action itself instead of a per-tool ceremony. The first cut consented
+// only effect-gated tools (reads "run free anyway"); the amendment includes declared reads too, so
+// the approval LEDGER matches what the owner believes he granted ("all of them") instead of
+// contradicting the chat's approved-count with a 22-row gap of technically-unnecessary rows.
+// ACTION-level consent is unchanged and stays in chat (the approval card before a consequential
+// run); this only removes the TOOL-level gate.
 //
 // WHY PERMANENT. The drawer's approval-lifetime choices are all windowed (APPROVAL_LIFETIME_CHOICES,
 // settings-integrations-gateway.tsx) — a manual approval always carried an end date. Connect-consent
@@ -19,15 +22,18 @@
 // tenant read, workspace-race guard, admin gate, v2 ownership, live-pin resolution, endpoint-hash
 // binding, and the writer's own in-body FOR UPDATE guard (§59). A bulk writer would have to
 // re-implement part of that; composing the existing one keeps ONE home for approval authority.
-// Cost is a few RPC round-trips per gated tool at connect/check time — not a hot path.
+// Cost is a few RPC round-trips per tool at connect/check time — not a hot path.
 //
 // HONEST DEGRADE (§13). A tool whose approval fails (transient RPC error, pin raced by a re-key)
 // is reported in `failed` and left unapproved — the connection's health result is NOT degraded by
-// it, the next check retries, and the chat names unapproved tools to the operator exactly as it
-// already does. Failures never abort the loop: one bad tool cannot block consent for the rest.
+// it and the next check retries. Failures never abort the loop: one bad tool cannot block consent
+// for the rest. ONE class can never converge by retry: a tool whose NAME cannot be safely
+// recorded (outside the writer's tool-name contract — the hostile-injection class) is refused
+// deterministically every check and surfaces only as the permanent failed count; the chat's tool
+// summary drops such names, so it can never name them either (§13 keeps the raw name unpersisted
+// here too).
 
 import { runApprove, type ApproveDeps } from "./approve.ts";
-import { resolveEffectApproval } from "./effect-policy.ts";
 
 /** One discovered tool, reduced to the two fields the consent decision needs. */
 export type DiscoveredTool = {
@@ -43,18 +49,20 @@ export type AutoApproveOutcome = {
 };
 
 /**
- * Select the tools a connect/check must consent to: exactly those the SERVER-AUTHORITATIVE effect
- * policy gates (mutation-verb name floor, provider-declared mutating effect, or undeclared effects
- * failing closed). A declared read never appears here — it runs without approval by design.
+ * Select the tools a connect/check must consent to: EVERY tool the check discovered. The
+ * effect-gated ones (mutation-verb name floor, provider-declared mutating effect, undeclared
+ * effects failing closed) needed approval to run at all; declared reads ran free — but the owner's
+ * amendment includes them so the ledger says "all of them" and a later effect re-classification of
+ * a read tool finds consent already recorded rather than a surprise gate.
  */
 export function selectConnectConsentTools(
   tools: readonly DiscoveredTool[],
 ): DiscoveredTool[] {
-  return tools.filter((t) => resolveEffectApproval(t.name, t.effects).requiresApproval);
+  return [...tools];
 }
 
 /**
- * Approve every effect-gated discovered tool for one connection, as the connecting operator.
+ * Approve every discovered tool for one connection, as the connecting operator.
  * Idempotent: re-running against already-approved tools refreshes them through the writer (and
  * converges legacy windowed approvals to permanent connect-consent). Never throws through — a
  * per-tool failure is collected, not raised, so verify's own result stands.

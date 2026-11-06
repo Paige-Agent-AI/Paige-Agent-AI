@@ -1110,15 +1110,18 @@ console.log("\n— slice ①: verify (runVerify) —");
   const bodyJson = JSON.stringify(okRes.body);
   check("verify response leaks NO secret / server url / provider prose", !bodyJson.includes("secret-token") && !bodyJson.includes("public.example") && !bodyJson.includes("RAW PROVIDER PROSE"), bodyJson);
 
-  // Connect-consent (owner decision 2026-11-05): the healthy persisted catalog IS the operator's
-  // consent moment — every EFFECT-GATED tool of the 6 (send_message + mystery_action [undeclared]
-  // + delete_records [name floor] + submit_form [declared create]; list_records and the sanitized
-  // hostile name are declared reads) receives a durable PERMANENT tool-level approval through the
-  // real runApprove stack. The two declared reads get nothing.
-  check("connect-consent approves every effect-gated tool (4 of 6)", okRes.body.auto_approved === 4 && okRes.body.auto_approve_failed === 0, JSON.stringify({ approved: okRes.body.auto_approved, failed: okRes.body.auto_approve_failed }));
-  check("...through the durable writer, exactly once per gated tool", consentWrites.length === 4, JSON.stringify(consentWrites.map((w) => w._tool_name)));
+  // Connect-consent (owner decision 2026-11-05, amended same day: "EVERYTHING SHOULD BE
+  // APPROVED"): the healthy persisted catalog IS the operator's consent moment — EVERY tool the
+  // intake kept (the effect-gated send_message + mystery_action [undeclared] + delete_records
+  // [name floor] + submit_form [declared create], AND the declared read list_records) receives a
+  // durable PERMANENT tool-level approval through the real runApprove stack, so the ledger
+  // matches the owner's all-of-them grant. The one refusal is the hostile injection NAME — the
+  // writer's tool-name contract refuses it and it lands in the reported failures (honest degrade:
+  // never fatal, never a silent approval of an unrecordable name).
+  check("connect-consent approves EVERY clean discovered tool (5 of 5)", okRes.body.auto_approved === 5 && okRes.body.auto_approve_failed === 1, JSON.stringify({ approved: okRes.body.auto_approved, failed: okRes.body.auto_approve_failed }));
+  check("...through the durable writer, exactly once per tool", consentWrites.length === 5, JSON.stringify(consentWrites.map((w) => w._tool_name)));
   check("...each PERMANENT (no expiry) and tool-level (no args-shape binding)", consentWrites.every((w) => w._expires_at === null && w._args_shape_hash === null), JSON.stringify(consentWrites.map((w) => [w._tool_name, w._expires_at, w._args_shape_hash])));
-  check("...and no declared read was consented", !consentWrites.some((w) => w._tool_name === "list_records"), JSON.stringify(consentWrites.map((w) => w._tool_name)));
+  check("...declared reads included (the amendment)", consentWrites.some((w) => w._tool_name === "list_records"), JSON.stringify(consentWrites.map((w) => w._tool_name)));
 
   // INT-152 — a probe that no-ops because the connection was RE-KEYED mid-verify (config_generation moved)
   // returns {applied:false}; verify must report the race honestly (409 config_changed_during_verify), NOT a

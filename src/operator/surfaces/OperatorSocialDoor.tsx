@@ -249,26 +249,29 @@ export function useOperatorSocialDoor() {
     [channels],
   );
 
+  const hubHoldFor = useCallback(
+    (platform: string) => hub?.find((channel) => channel.platform === platform && channel.adoptable) ?? null,
+    [hub],
+  );
+
   /** The honest foot a Social card renders: unread states assert nothing. A channel
    *  the platform hub already holds is REAL (provider-proven) but not yet usable by
    *  PAIGE — the card says exactly that, with the one-click bring-in in its drawer. */
   const cardState = useCallback((platform: string): { account: string; tone: "ok" | "warn" | "neutral" } => {
     if (channels === null) return busy ? { account: "Checking connection…", tone: "neutral" } : { account: "Status unavailable", tone: "neutral" };
-    const row = (channels ?? []).find((candidate) => candidate.platform === platform);
+    // A healthy row wins; only when none exists does an older errored row of the same
+    // platform surface as Needs attention — it can never shadow a fresh adoption.
+    const row = (channels ?? []).find((candidate) => candidate.platform === platform && HEALTHY.has(candidate.status))
+      ?? (channels ?? []).find((candidate) => candidate.platform === platform);
     if (!row) {
-      const held = hub?.find((channel) => channel.platform === platform && channel.adoptable);
+      const held = hubHoldFor(platform);
       return held
         ? { account: held.handle ? `Held by the platform · ${held.handle}` : "Held by the platform · bring it in", tone: "warn" }
         : { account: "Setup required", tone: "neutral" };
     }
     if (!HEALTHY.has(row.status)) return { account: "Needs attention", tone: "warn" };
     return channelWords(row);
-  }, [busy, channels, hub]);
-
-  const hubHoldFor = useCallback(
-    (platform: string) => hub?.find((channel) => channel.platform === platform && channel.adoptable) ?? null,
-    [hub],
-  );
+  }, [busy, channels, hubHoldFor]);
 
   return {
     channels, hub, busy, error, notice, authorizationUrl, pending,

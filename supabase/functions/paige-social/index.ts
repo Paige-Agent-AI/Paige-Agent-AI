@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../_shared/capability-record.ts";
-import { buildSocialProfileKey, GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SOCIAL_OAUTH_PLATFORMS, SocialProviderError } from "../_shared/social-provider/mod.ts";
+import { buildSocialProfileKey, GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SocialProviderError } from "../_shared/social-provider/mod.ts";
 import { governSocialMutation } from "../_shared/social-provider/governance.ts";
 import { zernioSocialAdapter, listZernioHubProfiles, readZernioHubProfile } from "../_shared/social-provider/zernio.ts";
 

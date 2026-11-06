@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { TriangleAlert, X } from "lucide-react";
 import { IntegrationLogo } from "../../solo/integration-logos";
 import { SOCIAL_PLATFORMS, type SocialPlatformDefinition } from "../../solo/social-platform-catalog";
-import { OperatorSocialDrawer, useOperatorSocialDoor } from "./OperatorSocialDoor";
+import { DrawerPlatform, OperatorSocialDrawer, useOperatorSocialDoor } from "./OperatorSocialDoor";
 import "../../solo/settings-integrations.css";
 
 /**
@@ -106,7 +106,7 @@ type OperatorConnectionApp = {
 const CONNECTION_APPS: ReadonlyArray<OperatorConnectionApp> = [
   { key: "google", name: "Google", kind: "Gmail, Calendar and more", group: "email-calendar",
     logoId: "google", brandHex: "#4285F4", mark: "G",
-    note: "One Google sign-in covers Gmail and Google Calendar to start. Reconnecting the same account can widen it to Drive files and Contacts later." },
+    note: "One Google sign-in covers Gmail and Google Calendar. The remaining Google areas — Drive files and Contacts — arrive in a later update." },
   { key: "discord", name: "Discord", kind: "Community chat", group: "collaboration",
     logoId: null, brandHex: "#5865F2", mark: "D",
     note: "The provider's bot joins your server through Discord's own consent — no app of ours to create. Server and channel selection happen at Discord." },
@@ -117,7 +117,7 @@ const CONNECTION_APPS: ReadonlyArray<OperatorConnectionApp> = [
 
 /** Connection apps reuse the Social drawer's machinery; this shim gives the drawer the
  *  platform shape it reads (oauthAvailable: every one of these opens a link). */
-const appAsPlatform = (app: OperatorConnectionApp): SocialPlatformDefinition =>
+const appAsPlatform = (app: OperatorConnectionApp): DrawerPlatform =>
   ({ key: app.key, name: app.name, mark: app.mark, oauthAvailable: true, connectionNote: app.note });
 
 type Category = "all" | GroupId;
@@ -213,7 +213,7 @@ export default function IntegrationsSurface() {
                       <button type="button" className="ig-card" data-provider={app.key} onClick={() => setAppOpen(app)} aria-haspopup="dialog">
                         {app.logoId
                           ? <IntegrationLogo id={app.logoId} fallback={app.mark} />
-                          : <span className="ig-logo" aria-hidden style={{ ["--ig-brand" as string]: app.brandHex }}>{app.mark}</span>}
+                          : <span className="ig-logo" data-letter="" aria-hidden style={{ ["--ig-brand" as string]: app.brandHex }}>{app.mark}</span>}
                         <span className="ig-card-title"><strong>{app.name}</strong></span>
                         <span className="ig-card-foot">
                           <span className="ig-card-state" data-tone={state.tone}><i aria-hidden />{state.account}</span>

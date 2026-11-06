@@ -13,6 +13,8 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 // Vercel Speed Insights — Core Web Vitals from real visitors. This is a Vite +
 // React SPA, so we use the framework-agnostic /react entry (NOT /next).
 import { SpeedInsights } from "@vercel/speed-insights/react";
+// Vercel Web Analytics — Collect and analyze visitor traffic data.
+import { Analytics } from "@vercel/analytics/react";
 import { MetaPixel } from "./components/seo/MetaPixel";
 import { TenantProvider } from "./hooks/useTenantContext";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
@@ -226,6 +228,7 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
           <AppInner />
           {!isFormOnBusinessSite() && <MetaPixel />}
           <SpeedInsights />
+          <Analytics />
           <ClientOnlyRouteGuard />
           <Routes>
             {/* Live homepage — the new gold+indigo Paige design */}

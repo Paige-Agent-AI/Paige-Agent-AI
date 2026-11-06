@@ -45,9 +45,12 @@ export function validateToolResult(raw: unknown): ToolResultCheck {
   return { recognized: true, isError };
 }
 
-/** The bound on {@link projectToolResultData}. Generous enough to carry a useful page of records;
- * small enough that no provider can flood a model's context through a successful tool result. */
-const RESULT_DATA_CAP = 4_000;
+/** The bound on {@link projectToolResultData}. Reads are side-effect-free, so the reason to bound
+ * this channel is prompt-injection surface and model-context budget, not effect safety — and the
+ * first live exercise (2026-11-06, "list 5 contacts") showed 4 000 chars is too small to carry a
+ * real page: the excerpt cut off mid-third-contact and the model could honestly report only two.
+ * 12 000 (~3k tokens) carries a useful page of CRM records while staying a hard, explicit bound. */
+const RESULT_DATA_CAP = 12_000;
 
 /**
  * Reduce a VALIDATED clean tool result to a bounded, control-stripped string the caller's model can

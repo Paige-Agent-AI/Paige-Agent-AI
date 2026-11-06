@@ -62,10 +62,17 @@ Deno.test("unknown extra fields from the body never reach the model", () => {
 });
 
 Deno.test("forwarded data is re-capped at the adapter's own bound", () => {
-  const big = "y".repeat(10_000);
+  const big = "y".repeat(50_000);
   const out = projectRunOutcomeForModel({ outcome: "read_observed", data: big });
-  assertEquals(String(out.data).length, 3_000 + "\n[truncated]".length);
+  assertEquals(String(out.data).length, 8_000 + "\n[truncated]".length);
   assertEquals(String(out.data).endsWith("\n[truncated]"), true);
+});
+
+Deno.test("the read note teaches the truncation discipline (never present a partial list as complete)", () => {
+  const out = projectRunOutcomeForModel({ outcome: "read_observed", data: "x" });
+  const note = String(out.note);
+  assertEquals(note.includes("[truncated]"), true);
+  assertEquals(note.includes("narrow the query"), true);
 });
 
 Deno.test("a refusal body with only an error string projects as a plain failure with the glossary note", () => {

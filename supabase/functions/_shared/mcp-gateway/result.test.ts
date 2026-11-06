@@ -73,10 +73,10 @@ Deno.test("projectToolResultData normalizes CRLF and bare CR to newline instead 
 });
 
 Deno.test("projectToolResultData caps the projection with an explicit truncation marker", () => {
-  const big = "x".repeat(10_000);
+  const big = "x".repeat(50_000);
   const out = projectToolResultData({ content: [{ type: "text", text: big }] });
   assertEquals(typeof out, "string");
-  assertEquals(out!.length, 4_000 + "\n[truncated]".length);
+  assertEquals(out!.length, 12_000 + "\n[truncated]".length);
   assertEquals(out!.endsWith("\n[truncated]"), true);
 });
 

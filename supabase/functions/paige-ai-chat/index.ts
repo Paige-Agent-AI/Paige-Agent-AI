@@ -17439,7 +17439,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     approved: tools.filter((t) => t?.approved === true).map((t) => String(t?.name ?? "")).filter(Boolean),
                     // NAME the waiting tools so the operator can act — never a bare count.
                     unapproved: tools.filter((t) => t?.approved !== true).map((t) => String(t?.name ?? "")).filter(Boolean),
-                    note: "The approved tools are ready to run via ghl_run_action. The unapproved names are waiting on the operator's per-tool approval (Settings → Integrations) — name them to the operator so they can choose which to grant.",
+                    note: "The approved tools are ready to run via ghl_run_action. The unapproved names are waiting on the operator's per-tool approval (Settings → Integrations) — name them to the operator so they can choose which to grant. IMPORTANT: this connection is healthy and its approved actions are NEVER 'unavailable' — if ghl_run_action is not among your current round's tools, do not tell the person the action or runner is unavailable; ask them to send the request again (that re-routes the turn with the runner available), or ask the question you need answered.",
                   };
                 }
               } else {

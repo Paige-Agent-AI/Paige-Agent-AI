@@ -152,7 +152,7 @@ import { buildApprovalOutcome, classifySpentApproval, classifyUnspentApproval, d
 import { resolveSourceThreadLink } from "../_shared/source-thread-link.ts";
 import { buildCreditProposal, buildCreditSyncPayload } from "../_shared/credit-extraction-payload.ts";
 import { projectOutcomeForModel } from "../_shared/mcp-outcome.ts";
-import { projectRunOutcomeForModel, projectRunRefusalForModel } from "../_shared/mcp-gateway/run-projection.ts";
+import { projectGatewayRunForModel } from "../_shared/mcp-gateway/run-projection.ts";
 import { embeddingsCompat, voyageEmbedOne, VOYAGE_MODEL } from "../_shared/voyage.ts";
 import { applyContactSearchFilter, CONTACT_NAME_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
 import { resolveClientRef } from "../_shared/client-ref.ts";
@@ -17463,16 +17463,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // tool lacks its durable approval), not_found, bad_tool_name — and each
                 // must reach the model verbatim, never the generic transport sentence.
                 const ghlRunBody = await readInvokeBody(ghlErr, ghlData);
-                // PROJECT, never forward raw. The closed body alone ({outcome, code, run_id,
-                // recorded}) has no `success` field, no data, and no glossary — on 2026-11-06 a
-                // SUCCEEDED lookup (Rail: capability_succeeded) was narrated to the owner as
-                // "couldn't confirm whether it went through" because the model had nothing it
-                // could read as evidence or as meaning. The projection adds the chat's own
-                // `success` convention, the bounded `data` the gateway now returns for clean
-                // results, and an own-words note per outcome (2026-11-06 owner incident).
-                result = ghlErr
-                  ? projectRunRefusalForModel(ghlRunBody)
-                  : projectRunOutcomeForModel(ghlRunBody);
+                // PROJECT, never forward raw — and route by the BODY, not the HTTP status
+                // (non-author review P1, 2026-11-06). The closed body alone ({outcome,
+                // code, run_id, recorded}) has no `success` field, no data, and no
+                // glossary: on 2026-11-06 a SUCCEEDED lookup (Rail: capability_succeeded)
+                // was narrated to the owner as "couldn't confirm whether it went through."
+                // The router picks the glossary the body earns — a 502 carrying
+                // {outcome:"tool_error"} gets the tool_error note, a pre-runner {error:…}
+                // gets the nothing-ran note, and a gateway that never answered gets the
+                // may-have-landed posture (NEVER "it didn't run", which invites the
+                // duplicating retry).
+                result = projectGatewayRunForModel(ghlRunBody);
               }
             }
 

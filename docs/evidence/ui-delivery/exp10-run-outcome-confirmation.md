@@ -62,16 +62,27 @@ data the tool existed to fetch.
 ### Layer 2 — the chat translates the vocabulary (the Zapier lane's `projectOutcomeForModel` discipline)
 
 - New `_shared/mcp-gateway/run-projection.ts`: `projectRunOutcomeForModel` /
-  `projectRunRefusalForModel` — allowlist-only fields, `success` boolean, the bounded `data`
-  re-capped at 3 000, and an own-words `note` per outcome, e.g.:
+  `projectRunRefusalForModel` / `projectRunTransportFailureForModel` behind ONE router
+  (`projectGatewayRunForModel`) the chat calls for every gateway answer, whatever the HTTP status
+  did. The rule (non-author review P1): **the glossary matches the BODY, not the status** — a 502
+  carrying `{outcome:"tool_error"}` gets the tool_error note; a pre-runner `{error:…}` body gets
+  the nothing-ran note (true for exactly those); a body the gateway never wrote (transport
+  failure, platform 5xx, dead fetch) gets the `outcome_unknown` POSTURE — may-or-may-not-have-
+  landed, do-not-re-run — never "it didn't run", which invites the duplicating retry this
+  vocabulary exists to make impossible. Allowlist-only fields, `success` boolean, the bounded
+  `data` re-capped at 3 000, and an own-words `note` per outcome, e.g.:
   - `read_observed`: "The tool ran successfully and returned data… The read is confirmed; do not
     re-run it to 'make sure'."
   - `outcome_unknown`: "…may or may not have landed. Do NOT run this tool again… tell the operator
     to check the connected app first so it does not happen twice."
-- `paige-ai-chat` `ghl_run_action` now routes both the success and refusal bodies through the
-  projection instead of forwarding raw.
+- `paige-ai-chat` `ghl_run_action` routes both the success and refusal bodies through the router
+  instead of forwarding raw.
 - The approval-card copy no longer describes every GHL call as a write ("a read looks up real
   records and changes nothing; a write changes real records or messages a real person").
+- Sanitizer hardening (non-author review P2): the strip class covers the invisible-steering
+  families the first C0-only regex missed — bidi overrides (U+202E and friends), zero-width and
+  format characters, BOM, the C1 block, Unicode line/paragraph separators — and CRLF/bare CR are
+  normalized to newline rather than surviving as controls.
 
 ## SECURITY POSTURE (unchanged in kind, re-bounded in degree)
 
@@ -82,17 +93,25 @@ Secrets remain inside the loader; unvalidated payloads never echo; refusals stay
 
 ## AUTOMATED_EVIDENCE
 
-- `supabase/functions/_shared/mcp-gateway/result.test.ts` (NEW, 9 tests): input gate (isError /
+- `supabase/functions/_shared/mcp-gateway/result.test.ts` (NEW, 12 tests): input gate (isError /
   malformed isError / unrecognized → null), content rules (text + structuredContent, non-text and
-  non-string text ignored), bounds (control-strip, cap + `[truncated]`, empty → null).
-- `supabase/functions/_shared/mcp-gateway/run-projection.test.ts` (NEW, 9 tests): success mapping
+  non-string text ignored), bounds (control/bidi/zero-width/C1 strip with CRLF normalization, cap +
+  `[truncated]`, empty → null).
+- `supabase/functions/_shared/mcp-gateway/run-projection.test.ts` (NEW, 16 tests): success mapping
   per outcome, the no-duplicate-retry instruction on `outcome_unknown`, allowlist (unknown fields
-  never cross), the adapter's own re-cap, refusal glossary.
+  never cross), the adapter's own re-cap, refusal glossary, the body-not-status ROUTER (502
+  tool_error body, pre-runner error body, empty/null transport body, outcome_unknown over any
+  status), and the spread-order override guard.
 - `scripts/mcp-gateway-smoke.mjs`: +4 assertions (400 total, all green) — runner-level and
   runExecute-level reads carry `data === "ok"` from the fake provider; an executed mutation carries
   its clean confirmation; `outcome_unknown` carries `data === null`.
-- `deno test supabase/functions/_shared/mcp-gateway/` → 24 passed (18 new + 6 consent tests).
+- `deno test supabase/functions/_shared/mcp-gateway/` → 32 passed, 0 failed.
 - `deno check` gateway tree clean.
+- NON-AUTHOR REVIEW (mandatory round, 2026-11-06): initial verdict FAIL on one P1 (refusal
+  glossary attached to non-refusal/transport failures — fixed: the router above) and one P2
+  (incomplete invisible-character strip — fixed: widened class + normalization); P3s fixed
+  (spread order, doc claim). Reviewer independently reproduced 24-test/400-smoke green and
+  verified secrets have no path into `data` and `outcome_unknown` never echoes.
 
 ## STATE_COVERAGE
 

@@ -7,7 +7,12 @@
 // carry the bounded `data`, unknown fields never cross, and `outcome_unknown` carries the exact
 // no-duplicate-retry instruction the incident showed the model needs.
 import { assertEquals } from "jsr:@std/assert@1";
-import { projectRunOutcomeForModel, projectRunRefusalForModel } from "./run-projection.ts";
+import {
+  projectGatewayRunForModel,
+  projectRunOutcomeForModel,
+  projectRunRefusalForModel,
+  projectRunTransportFailureForModel,
+} from "./run-projection.ts";
 
 Deno.test("a read_observed body projects as success with its data and a do-not-rerun note", () => {
   const out = projectRunOutcomeForModel({
@@ -74,4 +79,47 @@ Deno.test("a refusal body carrying the closed vocabulary keeps its code as the e
   const out = projectRunRefusalForModel({ outcome: "refused", code: "approval_required", run_id: "r-6" });
   assertEquals(out.error, "approval_required");
   assertEquals(out.outcome, "refused");
+});
+
+// ── The router (non-author review P1, 2026-11-06): the glossary must match the BODY, not the
+// HTTP status. A 502 carrying {outcome:"tool_error"} must get the tool_error note; a body the
+// gateway never wrote must get the may-have-landed posture — NEVER "it didn't run".
+
+Deno.test("router: a tool_error body (arrives over 502) gets the tool_error glossary, not the nothing-ran one", () => {
+  const out = projectGatewayRunForModel({ outcome: "tool_error", code: "provider_reported_error", run_id: "r-7" });
+  assertEquals(out.success, false);
+  assertEquals(out.code, "provider_reported_error");
+  assertEquals(String(out.note).includes("reported a failure"), true);
+  assertEquals(String(out.note).includes("nothing touched the connected app"), false);
+});
+
+Deno.test("router: an outcome_unknown body over ANY status keeps the no-duplicate-retry instruction", () => {
+  const out = projectGatewayRunForModel({ outcome: "outcome_unknown", code: null, run_id: "r-8" });
+  assertEquals(String(out.note).includes("Do NOT run this tool again"), true);
+});
+
+Deno.test("router: a pre-runner {error:…} body gets the nothing-ran note (true for exactly these)", () => {
+  const out = projectGatewayRunForModel({ error: "execute_not_enabled" });
+  assertEquals(out.success, false);
+  assertEquals(out.error, "execute_not_enabled");
+  assertEquals(String(out.note).includes("refused BEFORE anything ran"), true);
+});
+
+Deno.test("router: a body with neither outcome nor error is a TRANSPORT failure and gets the may-have-landed posture", () => {
+  const out = projectGatewayRunForModel({});
+  assertEquals(out.success, false);
+  assertEquals(out.error, "gateway_no_answer");
+  assertEquals(String(out.note).includes("may or may not have landed"), true);
+  assertEquals(String(out.note).includes("nothing touched the connected app"), false);
+});
+
+Deno.test("router: a null body (fetch died before any answer) is the same transport posture", () => {
+  const out = projectGatewayRunForModel(null);
+  assertEquals(out.error, "gateway_no_answer");
+  assertEquals(projectRunTransportFailureForModel().error, "gateway_no_answer");
+});
+
+Deno.test("refusal projection: a body-carried success field can never override success:false (review P3)", () => {
+  const out = projectRunRefusalForModel({ error: "bad_tool_name", success: true });
+  assertEquals(out.success, false);
 });

@@ -65,15 +65,46 @@ export function projectRunOutcomeForModel(raw: unknown): Record<string, unknown>
   };
 }
 
-/** The same glossary for an HTTP-level refusal body (`{error: "..."}`), so a refused execute reads
- * as a plain failure the model can act on instead of an opaque transport sentence. */
+/** The same glossary for an HTTP-level refusal body (`{error: "..."}`) — the gateway's PRE-RUNNER
+ * refusals (bad_connection_id, bad_tool_name, execute_not_enabled, no_tenant, tenant_mismatch),
+ * every one of which genuinely refused BEFORE anything ran, so the "nothing touched the connected
+ * app" sentence is true for exactly these and only these. */
 export function projectRunRefusalForModel(raw: unknown): Record<string, unknown> {
   const b = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
-  const error = typeof b.error === "string" ? b.error : (typeof b.code === "string" ? b.code : "gateway_refused");
+  const error = typeof b.error === "string" && b.error ? b.error
+    : (typeof b.code === "string" ? b.code : "gateway_refused");
+  // `success:false` AFTER the spread so no body field can ever override it (non-author review P3).
+  return { ...b, success: false, error, note: RUN_OUTCOME_NOTES.refused };
+}
+
+/**
+ * The gateway-silent case: no closed body arrived at all (transport failure, platform 5xx with a
+ * non-JSON body, the chat's own fetch dying). This is the one case where the chat CANNOT know what
+ * happened — including whether a dispatched mutation landed — so it gets the `outcome_unknown`
+ * POSTURE on purpose: never "it didn't run" (that false assurance invites the duplicating retry
+ * the gateway's vocabulary exists to make impossible), always "may or may not have landed; check
+ * the connected app before running it again." (Non-author review P1, 2026-11-06.)
+ */
+export function projectRunTransportFailureForModel(): Record<string, unknown> {
   return {
     success: false,
-    ...b,
-    error,
-    note: RUN_OUTCOME_NOTES.refused,
+    error: "gateway_no_answer",
+    note: RUN_OUTCOME_NOTES.outcome_unknown,
   };
+}
+
+/**
+ * THE ONE ROUTER the chat should call for a gateway execute answer, whatever the HTTP status did.
+ * The rule the non-author review forced (2026-11-06): the GLOSSARY MUST MATCH THE BODY, NOT THE
+ * STATUS. `tool_error` and `provider_unavailable` arrive over 502 WITH their closed body — those
+ * bodies carry the correct per-outcome note in this file's map and must be routed by their
+ * `outcome`, never flattened into "refused before anything ran." Status only picks the LAST
+ * resort: a body the gateway never wrote (no `outcome`, no `error`) is a transport failure and
+ * gets the may-have-landed posture above.
+ */
+export function projectGatewayRunForModel(raw: unknown): Record<string, unknown> {
+  const b = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  if (typeof b.outcome === "string" && b.outcome) return projectRunOutcomeForModel(b);
+  if (typeof b.error === "string" && b.error) return projectRunRefusalForModel(b);
+  return projectRunTransportFailureForModel();
 }

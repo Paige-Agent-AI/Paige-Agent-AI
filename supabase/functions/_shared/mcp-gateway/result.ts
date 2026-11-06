@@ -64,9 +64,12 @@ const RESULT_DATA_CAP = 4_000;
  *   * WHAT CROSSES — text blocks' `text` fields (string-valued only) and, when present,
  *     `structuredContent` serialized as JSON. Non-text blocks (images, resources) contribute
  *     nothing — their payloads are not text and never cross.
- *   * HOW IT IS BOUNDED — control characters other than newline/tab are stripped (an untrusted
- *     provider cannot smuggle invisible steering into the string), the whole projection is capped
- *     at {@link RESULT_DATA_CAP} characters with an explicit truncation marker, and an empty
+ *   * HOW IT IS BOUNDED — the text is normalized (`\r\n`/`\r` → `\n`) and then stripped of every
+ *     invisible-steering class: C0 controls except newline/tab, DEL, the C1 block (incl. NEL),
+ *     zero-width and format characters (ZWSP, ZWJ/ZWNJ, bidi overrides like U+202E, LRM/RLM
+ *     marks, word-joiner U+2060), BOM, and the Unicode line/paragraph separators that can read
+ *     as breaks the provider never earned. The whole projection is capped at
+ *     {@link RESULT_DATA_CAP} characters with an explicit truncation marker, and an empty
  *     projection returns `null` (never an empty string that could read as "provider said nothing").
  *
  * The output is still provider-written content — a prompt-injection surface. It is DATA to be
@@ -88,9 +91,13 @@ export function projectToolResultData(raw: unknown): string | null {
   }
   const joined = parts
     .join("\n")
-    // Strip control characters except \n and \t — the projection must never carry invisible
-    // control bytes from an untrusted provider into a model transcript.
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    // Normalize line endings first, so a CRLF provider reads the same as an LF one and `\r`
+    // never survives as a bare control character.
+    .replace(/\r\n?/g, "\n")
+    // Invisible-steering strip (see the doc comment): C0 except \n\t, DEL, the C1 block,
+    // zero-width/format/bidi characters, BOM, and Unicode line/paragraph separators. What a
+    // provider renders or hides with must not cross into a model transcript.
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u0080-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\u061C\u2028\u2029\uFEFF]/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
   if (!joined) return null;

@@ -277,7 +277,7 @@ function Fact({ label, value }: { label: string; value: string }) {
  *  disconnect) behind the governed approval. Chrome mirrors the surface family's
  *  drawers: focus lands on close, Tab stays inside, Escape closes, focus returns
  *  to the opener card, and closing clears the door's transient state. */
-export function OperatorSocialDrawer({ platform, door, onClose }: { platform: SocialPlatformDefinition; door: OperatorSocialDoor; onClose: () => void }) {
+export function OperatorSocialDrawer({ platform, door, onClose, kindLabel = "Platform channel" }: { platform: SocialPlatformDefinition; door: OperatorSocialDoor; onClose: () => void; kindLabel?: string }) {
   const panel = useRef<HTMLElement>(null);
   const close = useRef<HTMLButtonElement>(null);
   const handleClose = useCallback(() => { door.clearTransient(); onClose(); }, [door, onClose]);
@@ -326,7 +326,7 @@ export function OperatorSocialDrawer({ platform, door, onClose }: { platform: So
           <IntegrationLogo id={platform.key} fallback={platform.mark} />
           <div>
             <h2 id="op-social-drawer-title">{platform.name}</h2>
-            <span>Platform channel</span>
+            <span>{kindLabel}</span>
           </div>
           <button ref={close} className="ig-close" type="button" aria-label={`Close ${platform.name}`} onClick={handleClose}><X aria-hidden size={16} /></button>
         </header>

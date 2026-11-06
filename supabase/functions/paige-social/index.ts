@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../_shared/capability-record.ts";
-import { buildSocialProfileKey, SOCIAL_OAUTH_PLATFORMS, SocialProviderError } from "../_shared/social-provider/mod.ts";
+import { buildSocialProfileKey, GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SOCIAL_OAUTH_PLATFORMS, SocialProviderError } from "../_shared/social-provider/mod.ts";
 import { governSocialMutation } from "../_shared/social-provider/governance.ts";
 import { zernioSocialAdapter, listZernioHubProfiles, readZernioHubProfile } from "../_shared/social-provider/zernio.ts";
 
@@ -182,12 +182,22 @@ Deno.serve(async (req: Request) => {
     const label = text(body.label, 120);
     const reconnectId = text(body.connection_id, 36);
     const platform = text(body.platform, 32);
+    // Google is the one platform whose connect areas ride along (the provider requires
+    // them; every other platform ignores or rejects a scopes parameter). Areas are
+    // validated against the provider's closed set and default to Gmail-and-Calendar.
+    const googleAreas = (raw: unknown): string[] => Array.isArray(raw)
+      ? [...new Set(raw.filter((area): area is typeof GOOGLE_CONNECT_AREAS[number] =>
+          typeof area === "string" && (GOOGLE_CONNECT_AREAS as readonly string[]).includes(area)))].slice(0, 4)
+      : [];
+    const requestedAreas = platform === "google" ? googleAreas(body.scopes) : [];
+    const scopes = platform === "google" && requestedAreas.length ? requestedAreas
+      : platform === "google" ? ["email", "calendar"] : undefined;
     if (!returnPath || !RETURN_PATH.test(returnPath) || (reconnectId && !UUID.test(reconnectId))
-        || !platform || !SOCIAL_OAUTH_PLATFORMS.includes(platform as typeof SOCIAL_OAUTH_PLATFORMS[number])) {
+        || !platform || !SOCIAL_CONNECTION_PLATFORMS.includes(platform as typeof SOCIAL_CONNECTION_PLATFORMS[number])) {
       return jsonResponse({ ok: false, code: "SOCIAL_REQUEST_INVALID" }, 400);
     }
     const configured = adapter.isConfigured() && Boolean(safePublicBase());
-    const args: Json = { return_path: returnPath, platform, label, ...(reconnectId ? { connection_id: reconnectId } : {}) };
+    const args: Json = { return_path: returnPath, platform, label, ...(reconnectId ? { connection_id: reconnectId } : {}), ...(scopes ? { scopes } : {}) };
     const result = await govern(
       "social_connection_start",
       args,
@@ -204,8 +214,11 @@ Deno.serve(async (req: Request) => {
     const approvedLabel = text(approved.label, 120);
     const approvedReconnectId = text(approved.connection_id, 36);
     const approvedPlatform = text(approved.platform, 32);
+    const approvedScopes = approvedPlatform === "google" ? googleAreas(approved.scopes) : [];
+    const approvedAreas = approvedPlatform === "google" && approvedScopes.length ? approvedScopes
+      : approvedPlatform === "google" ? ["email", "calendar"] : undefined;
     if (!approvedReturnPath || !RETURN_PATH.test(approvedReturnPath) || (approvedReconnectId && !UUID.test(approvedReconnectId))
-        || !approvedPlatform || !SOCIAL_OAUTH_PLATFORMS.includes(approvedPlatform as typeof SOCIAL_OAUTH_PLATFORMS[number])) {
+        || !approvedPlatform || !SOCIAL_CONNECTION_PLATFORMS.includes(approvedPlatform as typeof SOCIAL_CONNECTION_PLATFORMS[number])) {
       return jsonResponse({ ok: false, code: "SOCIAL_APPROVAL_INVALID" }, 409);
     }
 
@@ -258,11 +271,11 @@ Deno.serve(async (req: Request) => {
       if (attempt.error) throw new Error("attempt_write_failed");
       let authorization: Awaited<ReturnType<typeof adapter.createConnectUrl>>;
       try {
-        authorization = await adapter.createConnectUrl({ providerProfileKey, redirectUrl: callback.href, platform: approvedPlatform });
+        authorization = await adapter.createConnectUrl({ providerProfileKey, redirectUrl: callback.href, platform: approvedPlatform, ...(approvedAreas ? { scopes: approvedAreas } : {}) });
       } catch (error) {
         if (!(approvedReconnectId && error instanceof SocialProviderError && error.code === "provider_profile_not_found")) throw error;
         createdProfile = (await adapter.createProfile({ providerProfileKey })).created;
-        authorization = await adapter.createConnectUrl({ providerProfileKey, redirectUrl: callback.href, platform: approvedPlatform });
+        authorization = await adapter.createConnectUrl({ providerProfileKey, redirectUrl: callback.href, platform: approvedPlatform, ...(approvedAreas ? { scopes: approvedAreas } : {}) });
       }
       const update = await admin.from("paige_social_connections").update({
         authorization_expires_at: authorization.expiresAt,

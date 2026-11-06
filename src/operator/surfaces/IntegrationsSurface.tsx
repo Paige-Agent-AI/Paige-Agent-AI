@@ -72,10 +72,12 @@ const PROVIDERS: ReadonlyArray<ProviderRow> = [
 
 /** The group ladder — the Solo page's own seven groups, labels, accents and
  *  one-line descriptions carried verbatim, so the two pages are one vocabulary. */
-type GroupId = "automation" | "collaboration" | "social" | "financial" | "documents" | "client-data" | "developer";
+type GroupId = "automation" | "collaboration" | "messaging" | "email-calendar" | "social" | "financial" | "documents" | "client-data" | "developer";
 const GROUPS: ReadonlyArray<{ id: GroupId; label: string; accent: string; blurb: string }> = [
   { id: "automation", label: "Automation", accent: "var(--k-automation)", blurb: "Run workflows and reach other apps." },
   { id: "collaboration", label: "Team chat", accent: "var(--k-integration)", blurb: "Workplace chat and channels." },
+  { id: "messaging", label: "Messaging", accent: "var(--k-template)", blurb: "Reach people where they are." },
+  { id: "email-calendar", label: "Email & Calendar", accent: "var(--k-integration)", blurb: "Send mail and book time." },
   { id: "social", label: "Social", accent: "var(--k-template)", blurb: "Post, schedule and read." },
   { id: "financial", label: "Finance", accent: "var(--k-integration)", blurb: "Invoices, payments and books." },
   { id: "documents", label: "Documents", accent: "var(--k-agent)", blurb: "Send, sign and track." },
@@ -83,12 +85,48 @@ const GROUPS: ReadonlyArray<{ id: GroupId; label: string; accent: string; blurb:
   { id: "developer", label: "Developer", accent: "var(--pg-muted)", blurb: "Wire it up yourself." },
 ];
 
+/**
+ * The provider's connection apps beyond Social (owner ruling 2026-11-05: "Gmail,
+ * Calendar… even Discord and Telegram"), connected through the SAME governed door as
+ * the Social cards — one approval, provider-side sign-in, readback-verified truth.
+ * Operator-scoped on purpose: the Solo catalogue gains these in its own step, per the
+ * owner's sequence. Slugs and flows are docs-verified: google = one OAuth covering
+ * areas (email/calendar to start), discord = OAuth bot install, telegram = access code.
+ */
+type OperatorConnectionApp = {
+  key: string;
+  name: string;
+  kind: string;
+  group: GroupId;
+  logoId: string | null;
+  brandHex: string;
+  mark: string;
+  note: string;
+};
+const CONNECTION_APPS: ReadonlyArray<OperatorConnectionApp> = [
+  { key: "google", name: "Google", kind: "Gmail, Calendar and more", group: "email-calendar",
+    logoId: "google", brandHex: "#4285F4", mark: "G",
+    note: "One Google sign-in covers Gmail and Google Calendar to start. Reconnecting the same account can widen it to Drive files and Contacts later." },
+  { key: "discord", name: "Discord", kind: "Community chat", group: "collaboration",
+    logoId: null, brandHex: "#5865F2", mark: "D",
+    note: "The provider's bot joins your server through Discord's own consent — no app of ours to create. Server and channel selection happen at Discord." },
+  { key: "telegram", name: "Telegram", kind: "Channel messaging", group: "messaging",
+    logoId: null, brandHex: "#26A5E4", mark: "T",
+    note: "Telegram connects with an access code, not a sign-in redirect: add the provider's bot as an administrator of your channel, then send it the code the link shows you. The card updates once the connection verifies." },
+];
+
+/** Connection apps reuse the Social drawer's machinery; this shim gives the drawer the
+ *  platform shape it reads (oauthAvailable: every one of these opens a link). */
+const appAsPlatform = (app: OperatorConnectionApp): SocialPlatformDefinition =>
+  ({ key: app.key, name: app.name, mark: app.mark, oauthAvailable: true, connectionNote: app.note });
+
 type Category = "all" | GroupId;
 
 export default function IntegrationsSurface() {
   const door = useOperatorSocialDoor();
   const [category, setCategory] = useState<Category>("all");
   const [socialOpen, setSocialOpen] = useState<SocialPlatformDefinition | null>(null);
+  const [appOpen, setAppOpen] = useState<OperatorConnectionApp | null>(null);
   const [providerOpen, setProviderOpen] = useState<ProviderRow | null>(null);
 
   /** One flat ladder of everything this page can show — the same fixed options every
@@ -96,13 +134,14 @@ export default function IntegrationsSurface() {
   const groups = GROUPS.map((group) => ({
     ...group,
     social: group.id === "social" ? SOCIAL_PLATFORMS : [],
+    apps: CONNECTION_APPS.filter((app) => app.group === group.id),
     providers: PROVIDERS.filter((row) => row.group === group.id),
   }));
   const countOf = (id: GroupId) => {
     const group = groups.find((candidate) => candidate.id === id)!;
-    return group.social.length + group.providers.length;
+    return group.social.length + group.apps.length + group.providers.length;
   };
-  const total = groups.reduce((sum, group) => sum + group.social.length + group.providers.length, 0);
+  const total = groups.reduce((sum, group) => sum + group.social.length + group.apps.length + group.providers.length, 0);
   const shown = (id: GroupId) => category === "all" || category === id;
 
   return (
@@ -167,6 +206,22 @@ export default function IntegrationsSurface() {
                     </li>
                   );
                 })}
+                {group.apps.map((app) => {
+                  const state = door.cardState(app.key);
+                  return (
+                    <li key={`app-${app.key}`}>
+                      <button type="button" className="ig-card" data-provider={app.key} onClick={() => setAppOpen(app)} aria-haspopup="dialog">
+                        {app.logoId
+                          ? <IntegrationLogo id={app.logoId} fallback={app.mark} />
+                          : <span className="ig-logo" aria-hidden style={{ ["--ig-brand" as string]: app.brandHex }}>{app.mark}</span>}
+                        <span className="ig-card-title"><strong>{app.name}</strong></span>
+                        <span className="ig-card-foot">
+                          <span className="ig-card-state" data-tone={state.tone}><i aria-hidden />{state.account}</span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
                 {group.providers.map((row) => (
                   <li key={row.id}>
                     <button type="button" className="ig-card" data-provider={row.id} onClick={() => setProviderOpen(row)} aria-haspopup="dialog">
@@ -183,6 +238,7 @@ export default function IntegrationsSurface() {
           ))}
 
       {socialOpen && <OperatorSocialDrawer key={`social-${socialOpen.key}`} platform={socialOpen} door={door} onClose={() => setSocialOpen(null)} />}
+      {appOpen && <OperatorSocialDrawer key={`app-${appOpen.key}`} platform={appAsPlatform(appOpen)} door={door} kindLabel={appOpen.kind} onClose={() => setAppOpen(null)} />}
       {providerOpen && <ProviderNoteDrawer row={providerOpen} onClose={() => setProviderOpen(null)} />}
     </div>
   );

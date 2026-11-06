@@ -12,6 +12,7 @@ const platformMigration = read("supabase/migrations/20271131000001_social_platfo
 const adapter = read("supabase/functions/_shared/social-provider/zernio.ts");
 const integrationsSurface = read("src/operator/surfaces/IntegrationsSurface.tsx");
 const operatorSocialDoor = read("src/operator/surfaces/OperatorSocialDoor.tsx");
+const providerSeam = read("supabase/functions/_shared/social-provider/mod.ts");
 const hook = read("src/solo/data/useSocialConnections.ts");
 const drawer = read("src/solo/settings-integrations-social.tsx");
 const catalogue = read("src/solo/settings-integrations.tsx");
@@ -195,6 +196,21 @@ describe("Social authorization callback", () => {
       expect(source).not.toMatch(/social_platform_grant/);
       expect(source).not.toContain("Which workspaces may use which company channels");
     }
+  });
+
+  it("widens CONNECTING to the provider's apps while publishing stays social-only (owner 2026-11-05)", () => {
+    expect(providerSeam).toContain("export const SOCIAL_CONNECTION_PLATFORMS");
+    for (const app of ['"google"', '"discord"', '"telegram"']) expect(providerSeam).toContain(app);
+    expect(providerSeam).toContain("export const GOOGLE_CONNECT_AREAS");
+    expect(endpoint).toContain("SOCIAL_CONNECTION_PLATFORMS.includes");
+    // Google requires its areas; the door defaults the operator's start to Gmail-and-Calendar.
+    expect(endpoint).toContain('["email", "calendar"]');
+    // The posting arm must NOT widen with the connection set.
+    expect(adapter).toContain("function postPlatform");
+    expect(adapter).toContain('"unsupported_post_platform"');
+    // The callback accepts the SAME return destinations as the door — the Solo-only check
+    // silently killed every Operator connect at the return step (fixed with this change).
+    expect(callback).toContain("|operator)");
   });
 
   it("keeps per-workspace platform-channel grants service-role-only and empty by default", () => {

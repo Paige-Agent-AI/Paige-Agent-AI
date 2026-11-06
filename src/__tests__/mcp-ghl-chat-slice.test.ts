@@ -117,6 +117,15 @@ describe("the chat manifest and dispatch carry the governed lane", () => {
     expect(chat).toContain("NAME the waiting tools so the operator can act");
   });
 
+  it("the catalogue note forbids the 'runner not available' confession (2026-11-06 live incident)", () => {
+    // On read-routed turns the mutating-classified ghl_run_action is withheld from the round and
+    // only ghl_list_actions is offered; the model twice told the owner the action "isn't available
+    // in this chat" when a re-send would have re-routed with the runner. The lister's note — the
+    // one tool that IS offered at that moment — must teach the honest move instead.
+    expect(chat).toContain("are NEVER 'unavailable'");
+    expect(chat).toContain("do not tell the person the action or runner is unavailable");
+  });
+
   it("the confirm card names the live-CRM consequence — and states read vs write honestly", () => {
     expect(chat).toContain('case "ghl_run_action":');
     // Renewed 2026-11-06 (PR #3292): the card used to call EVERY ghl call a write

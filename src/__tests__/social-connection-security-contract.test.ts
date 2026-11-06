@@ -251,7 +251,9 @@ describe("customer-facing identity truth", () => {
     expect(drawer).toContain("Select this account");
     expect(endpoint).toContain('.eq("tenant_id", tenantId).eq("connection_id", connectionId).eq("id", accountId)');
     expect(drawer).toContain("connection.requestedPlatform === platform.key");
-    expect(endpoint).toContain("SOCIAL_OAUTH_PLATFORMS.includes");
+    // The OAuth list now lives at the publishing boundary (adapter postPlatform);
+    // the endpoint gates everything on the connection superset.
+    expect(adapter).toContain("SOCIAL_OAUTH_PLATFORMS.includes");
     expect(callback).toContain("returnedPlatform !== claim.requested_platform");
     expect(migration).toContain("not selected or status='connected'");
     expect(migration).toContain("provider_account_id text;");

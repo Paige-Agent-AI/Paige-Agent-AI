@@ -45,7 +45,7 @@ describe("Zernio provider wiring", () => {
     expect(shared).toContain("export async function buildSocialProfileKey");
     expect(shared).toContain("export function normalizeSocialProfile");
     expect(adapter).toContain('from "./mod.ts"');
-    expect(endpoint).toContain('buildSocialProfileKey, GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SOCIAL_OAUTH_PLATFORMS, SocialProviderError } from "../_shared/social-provider/mod.ts"');
+    expect(endpoint).toContain('buildSocialProfileKey, GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SocialProviderError } from "../_shared/social-provider/mod.ts"');
   });
 
   it("carries the provider credential only in the Authorization header and never in a URL", () => {

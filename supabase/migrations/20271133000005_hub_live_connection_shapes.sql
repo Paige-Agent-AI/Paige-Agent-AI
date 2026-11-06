@@ -60,3 +60,8 @@ alter table public.paige_social_connections
     provider_profile_key ~ '^ps_[0-9a-f]{40}$'
     or provider_profile_key ~ '^hub:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[A-Za-z0-9_-]{6,64}:[a-z][a-z0-9_]{0,31}$'
   );
+
+-- 4. The adopt RPC's only caller is the door's service-role client; the creating
+--    migration revoked all and granted no one, so even unblocked CHECKs would die
+--    one step later with permission denied. Same grant its sibling writers carry.
+grant execute on function public.social_adopt_platform_channels(uuid, uuid, uuid, text, jsonb, timestamptz) to service_role;

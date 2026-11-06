@@ -89,9 +89,20 @@ export type RunnerResult = {
   runId: string;
   /** Refusal/why code — closed vocabulary, never provider prose. */
   code: string | null;
+  /** A bounded, sanitized projection of the provider's tool result — NON-NULL only for a VALIDATED
+   *  clean success (`read_observed`/`executed`), because only a recognized non-error result is safe
+   * to echo. Without it a successful read is unconfirmable by the caller's model: the closed
+   * vocabulary says "read_observed" but shows nothing that was read, so the model honestly reports
+   * it could not confirm the lookup (the 2026-11-06 owner incident). The projection is produced at
+   * the provider boundary by {@link projectToolResultData} (control-stripped, length-capped); it is
+   * still PROVIDER-WRITTEN CONTENT downstream — a prompt-injection surface to be labeled as data,
+   * never executed as instructions. `null` for every other outcome (refused/errored/unknown —
+   * nothing validated exists to share, and `outcome_unknown` in particular must never echo an
+   * unvalidated payload that could dress an uncertain landing as a confirmed one). */
+  data: string | null;
   /** Whether the receipt for this run persisted on the canonical Rail. `null` when the caller wired
-   *  no receipt writer (or one that reports nothing) — the runner then makes no filing claim. A
-   *  wired writer that reports `{ filed: false, reason: "record_failed" }` means the action's
-   *  outcome is truthful but its Rail row is owed, not recorded. */
+   * no receipt writer (or one that reports nothing) — the runner then makes no filing claim. A
+   * wired writer that reports `{ filed: false, reason: "record_failed" }` means the action's
+   * outcome is truthful but its Rail row is owed, not recorded. */
   receipt: ReceiptFiling | null;
 };

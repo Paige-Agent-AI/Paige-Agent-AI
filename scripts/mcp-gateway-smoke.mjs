@@ -264,6 +264,11 @@ const verifyCallsBeforeRead = verifyCalls.length;
 const readRun = await runOn("https://public.example/mcp-run", { toolName: "list_records", args: { q: "x" }, mode: "execute" });
 check("a read tool executes without approval → read_observed", readRun.outcome === "read_observed");
 check("a read tool never even consults the consent verifier", verifyCalls.length === verifyCallsBeforeRead);
+// The 2026-11-06 owner incident: a successful read that carries NO data is unconfirmable by the
+// caller's model (PAIGE narrated a SUCCEEDED lookup as "couldn't confirm whether it went through").
+// The runner now attaches the bounded projection of the validated clean result — the fake server's
+// tools/call default answers text "ok", so that is exactly what must cross.
+check("a successful read CARRIES the bounded data projection (the unconfirmable-read fix)", readRun.data === "ok", JSON.stringify(readRun.data));
 
 // mutation WITHOUT a durable approval → refused: approval_required (NOT unavailable)
 const noApp = await runOn("https://public.example/mcp-run", { toolName: "send_message", args: {}, mode: "execute" });
@@ -1804,6 +1809,7 @@ console.log("\n— slice ③: execute (runExecute) —");
   // A read tool in execute mode dispatches → read_observed → 200.
   const readRun = await executeMod.runExecute({ userClient: makeExecuteUser(), admin: makeExecuteAdmin() }, inExec({ toolName: "list_records", args: { q: "x" } }));
   check("execute a read tool → 200 read_observed", readRun.httpStatus === 200 && readRun.body.outcome === "read_observed", JSON.stringify(readRun.body));
+  check("...and the HTTP body carries the bounded data projection (unconfirmable-read fix)", readRun.body.data === "ok", JSON.stringify(readRun.body.data));
 
   // A mutation without a durable approval → refused approval_required → 403.
   const noApp = await executeMod.runExecute({ userClient: makeExecuteUser(), admin: makeExecuteAdmin() }, inExec({ toolName: "send_message", args: { to: "a" } }));
@@ -1814,11 +1820,13 @@ console.log("\n— slice ③: execute (runExecute) —");
   const okExec = await executeMod.runExecute({ userClient: makeExecuteUser(), admin: makeExecuteAdmin({ approval: { authorized: true, reason: "authorized" } }) }, inExec({ toolName: "send_message", args: { to: "a" } }));
   check("execute a mutation with durable approval → 200 executed", okExec.httpStatus === 200 && okExec.body.outcome === "executed", JSON.stringify(okExec.body));
   check("...and the canonical Rail receipt persisted (recorded:true)", okExec.body.recorded === true && recordCalls.length === 1, JSON.stringify({ recorded: okExec.body.recorded, calls: recordCalls.length }));
+  check("...and the executed body carries the provider's clean confirmation data", okExec.body.data === "ok", JSON.stringify(okExec.body.data));
 
   // A mutation that dispatches then reports isError → outcome_unknown → 200 (NEVER a 5xx that invites a
   // duplicating retry). The body.outcome is the authoritative "check before running again" signal.
   const unknownExec = await executeMod.runExecute({ userClient: makeExecuteUser(), admin: makeExecuteAdmin({ secret: secretFor(XEURL), approval: { authorized: true, reason: "authorized" } }) }, inExec({ toolName: "send_message", args: { to: "a" } }));
   check("execute a mutation that dispatched then errored → 200 outcome_unknown (never a retry-inviting 5xx)", unknownExec.httpStatus === 200 && unknownExec.body.outcome === "outcome_unknown", JSON.stringify(unknownExec.body));
+  check("...and an unvalidated payload is NEVER echoed (outcome_unknown carries no data)", unknownExec.body.data === null, JSON.stringify(unknownExec.body.data));
 
   // A READ that dispatches then reports isError → tool_error → 502 (no side effect to be unknown about).
   const readErr = await executeMod.runExecute({ userClient: makeExecuteUser(), admin: makeExecuteAdmin({ secret: secretFor(XEURL) }) }, inExec({ toolName: "list_records" }));

@@ -42,7 +42,7 @@
 import { withApprovedCapabilitySession } from "../mcp-client.ts";
 import type { ReceiptFiling, RunnerOutcome, RunnerResult } from "./types.ts";
 import { resolveEffectApproval } from "./effect-policy.ts";
-import { validateToolResult } from "./result.ts";
+import { projectToolResultData, validateToolResult } from "./result.ts";
 import { argsShapeHash, type ApprovalVerifier } from "./consent.ts";
 import type { ConnectionLoader } from "./connection.ts";
 import { type CallerAuthority, resolveRestrictedUse } from "./authority.ts";
@@ -148,12 +148,20 @@ export async function runConnectionCapability(
   // to the `record_capability_run` contract, out of INT-082's scope. The security property (no system
   // use of an owner_only connection WITHOUT an explicit reason) holds regardless of persistence.
   let authorityDetail: Record<string, unknown> = {};
-  const emit = async (outcome: RunnerOutcome, code: string | null): Promise<RunnerResult> => {
+  const emit = async (
+    outcome: RunnerOutcome,
+    code: string | null,
+    // The bounded data projection, carried ONLY for a validated clean success (see types.ts
+    // `RunnerResult.data`). Every other path passes null — an unvalidated payload is never echoed.
+    data: string | null = null,
+  ): Promise<RunnerResult> => {
     // The receipt is best-effort for the OUTCOME (a landed effect is never downgraded to a failure
     // because its Rail row did not persist — §13/§32) but TRUTHFUL for the RECORD: whatever the
     // writer reports about whether the row persisted is carried through, so a completed-but-
     // unrecorded run is never dressed as fully recorded (Codex R3). No writer, or one that returns
     // nothing → no filing claim (`null`); a writer that throws is itself a filing failure.
+    // The DATA projection is deliberately NOT in the receipt detail — receipts are the owner's
+    // audit trail of outcomes, not a provider-content store.
     let receipt: ReceiptFiling | null = null;
     try {
       const filing = await deps.recordReceipt?.({
@@ -165,7 +173,7 @@ export async function runConnectionCapability(
       });
       if (filing) receipt = filing;
     } catch { receipt = { filed: false, reason: "record_threw" }; }
-    return { outcome, runId, code, receipt };
+    return { outcome, runId, code, data, receipt };
   };
 
   // SINGLE SOURCE (MCP PR-1): resolve the ONE canonical connection row server-side by `connectionId`
@@ -261,7 +269,14 @@ export async function runConnectionCapability(
         // (4) The provider RAN it. A clean, recognized result with no error is the ONLY success.
         const validated = validateToolResult(result);
         if (validated.recognized && !validated.isError) {
-          return await emit(decision.requiresApproval ? "executed" : "read_observed", null);
+          // Carry WHAT the tool returned (bounded, sanitized at this provider boundary) so the
+          // caller's model can actually confirm a read/execute — the closed vocabulary alone
+          // left a successful lookup unconfirmable (2026-11-06 owner incident).
+          return await emit(
+            decision.requiresApproval ? "executed" : "read_observed",
+            null,
+            projectToolResultData(result),
+          );
         }
         // Not a clean success. A CONSEQUENTIAL (approval-gated) call has already DISPATCHED, so its
         // effect may have landed fully or partially — a provider error / malformed / unaccepted

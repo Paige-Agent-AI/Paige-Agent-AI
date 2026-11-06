@@ -230,6 +230,9 @@ describe("Social authorization callback", () => {
     // own page and post examples use twitter. google_business already had its alias.
     expect(adapter).toContain('x: "twitter"');
     expect(adapter).toContain('google_business: "google-business"');
+    // And the SQL shapes accept the single-letter key end to end (migration 20271133000006).
+    const singleLetterShapes = read("supabase/migrations/20271133000006_single_letter_platform_shapes.sql");
+    expect((singleLetterShapes.match(/\{0,31\}/g) ?? []).length).toBeGreaterThanOrEqual(3);
     expect((adapter.match(/PROVIDER_PATH\[requested\] \?\? requested/g) ?? []).length).toBeGreaterThanOrEqual(2);
   });
 

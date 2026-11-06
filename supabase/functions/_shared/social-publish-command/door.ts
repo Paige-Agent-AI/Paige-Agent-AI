@@ -57,7 +57,12 @@ const HEADERS = {
 };
 const respond = (status: number, body: Record<string, unknown>) => new Response(JSON.stringify(body), { status, headers: HEADERS });
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const PLATFORMS = new Set(["tiktok", "instagram", "facebook", "linkedin", "youtube", "x", "threads", "pinterest", "google_business", "snapchat"]);
+// The publishable channels — sourced from the seam's POST set (social networks plus
+// the provider's documented messaging targets; google connects but never receives posts).
+const PLATFORMS = new Set<string>([
+  "tiktok", "instagram", "facebook", "linkedin", "youtube", "x", "threads",
+  "pinterest", "google_business", "snapchat", "discord", "telegram",
+]);
 const CAPABILITY = "social.post_publish";
 const NOTHING_CHANGED = "Nothing was published.";
 

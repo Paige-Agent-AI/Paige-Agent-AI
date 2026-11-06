@@ -13,6 +13,7 @@ const adapter = read("supabase/functions/_shared/social-provider/zernio.ts");
 const integrationsSurface = read("src/operator/surfaces/IntegrationsSurface.tsx");
 const operatorSocialDoor = read("src/operator/surfaces/OperatorSocialDoor.tsx");
 const providerSeam = read("supabase/functions/_shared/social-provider/mod.ts");
+const publishDoor = read("supabase/functions/_shared/social-publish-command/door.ts");
 const hook = read("src/solo/data/useSocialConnections.ts");
 const drawer = read("src/solo/settings-integrations-social.tsx");
 const catalogue = read("src/solo/settings-integrations.tsx");
@@ -234,6 +235,15 @@ describe("Social authorization callback", () => {
     const singleLetterShapes = read("supabase/migrations/20271133000006_single_letter_platform_shapes.sql");
     expect((singleLetterShapes.match(/\{0,31\}/g) ?? []).length).toBeGreaterThanOrEqual(3);
     expect((adapter.match(/PROVIDER_PATH\[requested\] \?\? requested/g) ?? []).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("publishes to the messaging channels the platform actually connects (owner 2026-11-06)", () => {
+    expect(providerSeam).toContain("export const SOCIAL_POST_PLATFORMS");
+    expect(providerSeam).toContain('"discord", "telegram"');
+    expect(adapter).toContain("SOCIAL_POST_PLATFORMS.includes");
+    // The publish door's own gate carries the same two, and google never receives posts.
+    expect(publishDoor).toContain('"snapchat", "discord", "telegram"');
+    expect(publishDoor).not.toMatch(/PLATFORMS[^;]*"google"/);
   });
 
   it("keeps per-workspace platform-channel grants service-role-only and empty by default", () => {

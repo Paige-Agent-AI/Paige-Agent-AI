@@ -20,6 +20,17 @@ export const SOCIAL_CONNECTION_PLATFORMS = [
   ...SOCIAL_OAUTH_PLATFORMS,
   "google", "discord", "telegram",
 ] as const;
+
+/**
+ * The platforms a piece may be PUBLISHED to — the social set plus the provider's
+ * documented messaging post targets (owner 2026-11-06: the Discord and Telegram
+ * channels the platform and Solo accounts connect become usable for content).
+ * Google is deliberately absent: Gmail/Calendar are connections, not post targets.
+ */
+export const SOCIAL_POST_PLATFORMS = [
+  ...SOCIAL_OAUTH_PLATFORMS,
+  "discord", "telegram",
+] as const;
 export type SocialConnectionPlatform = (typeof SOCIAL_CONNECTION_PLATFORMS)[number];
 
 /** The areas a Google connect may request — the provider's own closed set

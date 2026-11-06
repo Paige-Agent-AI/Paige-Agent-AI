@@ -22,7 +22,7 @@
 import { envKey } from "../env-key.ts";
 import { NeedsConfigError } from "../provider-types.ts";
 import { safeFetch } from "../ssrfGuard.ts";
-import { GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SOCIAL_OAUTH_PLATFORMS } from "./mod.ts";
+import { GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SOCIAL_OAUTH_PLATFORMS, SOCIAL_POST_PLATFORMS } from "./mod.ts";
 import {
   SocialProviderError,
   type SocialProviderAccount,
@@ -93,13 +93,14 @@ function connectPlatform(value: string): typeof SOCIAL_CONNECTION_PLATFORMS[numb
   return value as typeof SOCIAL_CONNECTION_PLATFORMS[number];
 }
 
-/** Publishing stays on the OAuth list: a connectable app is not automatically a
- *  publish target, and the posting arm must not widen with the connection set. */
-function postPlatform(value: string): typeof SOCIAL_OAUTH_PLATFORMS[number] {
-  if (!SOCIAL_OAUTH_PLATFORMS.includes(value as typeof SOCIAL_OAUTH_PLATFORMS[number])) {
+/** Publishing rides the POST set: the social networks plus the provider's
+ *  documented messaging targets (discord, telegram). A connectable app is still not
+ *  automatically a publish target — google connects but does not receive posts. */
+function postPlatform(value: string): typeof SOCIAL_POST_PLATFORMS[number] {
+  if (!SOCIAL_POST_PLATFORMS.includes(value as typeof SOCIAL_POST_PLATFORMS[number])) {
     throw new SocialProviderError("unsupported_post_platform", 400, "This platform cannot be published to yet.");
   }
-  return value as typeof SOCIAL_OAUTH_PLATFORMS[number];
+  return value as typeof SOCIAL_POST_PLATFORMS[number];
 }
 
 const hostnameMatches = (hostname: string, expected: string) =>

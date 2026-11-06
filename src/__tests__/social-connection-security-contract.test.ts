@@ -224,6 +224,15 @@ describe("Social authorization callback", () => {
     expect(endpoint).toContain("&& SOCIAL_CONNECTION_PLATFORMS.includes(p as typeof SOCIAL_CONNECTION_PLATFORMS[number])");
   });
 
+  it("addresses the provider by ITS slugs, not ours (X connects and posts as twitter)", () => {
+    // Diagnosed live 2026-11-06: every X connect on both workspaces failed with
+    // provider_request_failed because the door called /connect/x while the provider's
+    // own page and post examples use twitter. google_business already had its alias.
+    expect(adapter).toContain('x: "twitter"');
+    expect(adapter).toContain('google_business: "google-business"');
+    expect((adapter.match(/PROVIDER_PATH\[requested\] \?\? requested/g) ?? []).length).toBeGreaterThanOrEqual(2);
+  });
+
   it("keeps per-workspace platform-channel grants service-role-only and empty by default", () => {
     expect(platformMigration).toContain("create table if not exists public.paige_social_platform_grants");
     expect(platformMigration).toContain("force row level security");

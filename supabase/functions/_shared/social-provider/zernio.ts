@@ -49,6 +49,15 @@ const AUTHORIZATION_HOSTS: Readonly<Record<string, readonly string[]>> = {
   telegram: ["telegram.org", "t.me", "zernio.com"],
 };
 
+/** Paige's catalogue key -> the path/slug Zernio's API addresses that platform by.
+ *  The docs' own pages name the endpoints: /connect/twitter (not x) and
+ *  /connect/google-business (not google_business). Inbound account names fold back
+ *  the other way through PLATFORM_ALIASES below. */
+const PROVIDER_PATH: Readonly<Record<string, string>> = {
+  google_business: "google-business",
+  x: "twitter",
+};
+
 /** The platform names Zernio reports on accounts, folded into Paige's catalogue keys. */
 const PLATFORM_ALIASES: Readonly<Record<string, string>> = {
   twitter: "x", x_twitter: "x", googlebusiness: "google_business",
@@ -327,7 +336,7 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
       areaQuery = `&scopes=${encodeURIComponent(areas.join(","))}`;
     }
     const profileId = await resolveProfileId(providerProfileKey);
-    const providerPath = requested === "google_business" ? "google-business" : requested;
+    const providerPath = PROVIDER_PATH[requested] ?? requested;
     const payload = await request(
       `/connect/${encodeURIComponent(providerPath)}?profileId=${encodeURIComponent(profileId)}&redirect_url=${encodeURIComponent(callback.href)}${areaQuery}`,
     );
@@ -377,7 +386,7 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
     }
     const content = typeof input.text === "string" && input.text.trim() ? input.text.trim().slice(0, 6000) : "";
     const profileId = await resolveProfileId(input.providerProfileKey);
-    const providerPath = requested === "google_business" ? "google-business" : requested;
+    const providerPath = PROVIDER_PATH[requested] ?? requested;
     try {
       const payload = await request("/posts", {
         method: "POST",

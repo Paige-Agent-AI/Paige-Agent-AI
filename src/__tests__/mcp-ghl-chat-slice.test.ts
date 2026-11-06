@@ -117,9 +117,12 @@ describe("the chat manifest and dispatch carry the governed lane", () => {
     expect(chat).toContain("NAME the waiting tools so the operator can act");
   });
 
-  it("the confirm card names the live-CRM consequence", () => {
+  it("the confirm card names the live-CRM consequence — and states read vs write honestly", () => {
     expect(chat).toContain('case "ghl_run_action":');
-    expect(chat).toContain("this touches the live CRM");
+    // Renewed 2026-11-06 (PR #3292): the card used to call EVERY ghl call a write
+    // ("this touches the live CRM"); it now says what the tool actually does — a read looks
+    // up real records and changes nothing; a write changes them or messages a real person.
+    expect(chat).toContain("in the live CRM — a read looks up real records and changes nothing; a write changes real records or messages a real person.");
   });
 });
 

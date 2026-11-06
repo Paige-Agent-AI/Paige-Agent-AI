@@ -7,7 +7,7 @@ import { useMcpGateway } from "./data/useMcpGateway";
 import { IntegrationLogo } from "./integration-logos";
 import { SocialDrawer, SocialHubPanel } from "./settings-integrations-social";
 import { socialCardState } from "./settings-integrations-social-state";
-import { SOCIAL_CONNECTION_APPS, SOCIAL_PLATFORMS, connectionAppAsPlatform, type SocialConnectionApp, type SocialDrawerPlatform } from "./social-platform-catalog";
+import { SOCIAL_CONNECTION_APPS, SOCIAL_PLATFORMS, connectionAppAsPlatform, type SocialConnectionApp, type SocialDrawerPlatform, type SocialPlatformDefinition } from "./social-platform-catalog";
 import { useSocialConnections } from "./data/useSocialConnections";
 import { useN8nConnection, readN8nReadiness, type N8nConnection } from "./data/useN8nConnection";
 import { useN8nOAuth, n8nMcpStateWords, type N8nReadiness } from "./data/useN8nOAuth";
@@ -89,7 +89,7 @@ function sanitizeMcpByProvider(value: unknown): Partial<Record<"n8n" | "zapier",
 }
 
 type ProviderIdentity = "n8n" | "zapier" | "mcp" | "slack" | "microsoft-teams" | "quickbooks" | "stripe" | "paypal" | "docusign" | "apollo" | "plaid" | "api";
-type CatalogueCategory = "all" | "social" | "marketing" | "automation" | "collaboration" | "financial" | "documents" | "client-data" | "developer";
+type CatalogueCategory = "all" | "social" | "marketing" | "automation" | "collaboration" | "messaging" | "email-calendar" | "financial" | "documents" | "client-data" | "developer";
 
 
 function statusPresentation(value: SafeConnectionStatus | null) {

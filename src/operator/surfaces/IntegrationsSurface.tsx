@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { TriangleAlert, X } from "lucide-react";
 import { IntegrationLogo } from "../../solo/integration-logos";
 import { SOCIAL_CONNECTION_APPS, SOCIAL_PLATFORMS, connectionAppAsPlatform, type SocialConnectionApp, type SocialPlatformDefinition } from "../../solo/social-platform-catalog";
-import { DrawerPlatform, OperatorSocialDrawer, useOperatorSocialDoor } from "./OperatorSocialDoor";
+import { OperatorSocialDrawer, useOperatorSocialDoor } from "./OperatorSocialDoor";
 import "../../solo/settings-integrations.css";
 
 /**

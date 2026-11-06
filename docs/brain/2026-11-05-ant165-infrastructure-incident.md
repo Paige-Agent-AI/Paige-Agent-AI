@@ -1,9 +1,13 @@
 # ANT-165 Infrastructure Incident — Engineering Second Brain Record
 
 **Incident:** ANT-165 / INT-364 (Evidence Register → Intake & Gaps → Row 365)
-**Date:** 2026-11-05 · **Resolution PR:** #3283 (branch `bug/ant-165-cron-systemscheck-buildgate`)
-**Status at write time:** merged path in progress; this note records durable engineering
-knowledge so no future agent repeats the incident's mistakes or reverts its corrections.
+**Date:** 2026-11-05 · **Resolution PRs:** #3283 (cron guard + Systems Check truth) and
+#3287 (ignoreCommand script, `cron_environment` provisioning, this record) + blank-value
+hardening follow-up (`20271133000004`)
+**Status:** closed in production — cron cutover verified (21/21 guarded, ticks green);
+Vercel production build green on the #3287 merge (`d81b65f`). This note records durable
+engineering knowledge so no future agent repeats the incident's mistakes or reverts its
+corrections.
 
 ## What happened (measured)
 
@@ -31,7 +35,18 @@ knowledge so no future agent repeats the incident's mistakes or reverts its corr
 - **Cron default-off contract** (`20271133000001_cron_environment_guard.sql`): all 21
   production-URL http jobs carry guarded commands and are `active=false` everywhere;
   `public.cron_production_allowlist` is the only enable path; production enable is a
-  runbook-only step setting `app.settings.project_ref` (never a migration). The 7
+  runbook-only step (never a migration) that inserts the provision row into
+  `public.cron_environment` and flips allowlisted jobs on:
+  `insert into public.cron_environment (name,value) values ('project_ref','<ref>') on conflict (name) do update set value=excluded.value;`
+  then `select cron.alter_job(c.jobid, active := true) from public.cron_production_allowlist a join cron.job c on c.jobname=a.jobname;`
+  — **not** `alter database … set app.settings.project_ref`: that was the original
+  design, but it requires database ownership the operator role lacks, and the
+  `cron_environment` table (`20271133000003`, blank-values hardened in `20271133000004`)
+  is what production actually runs. Note the intentional materialized-text split:
+  production's `cron.job.command` rows embed the 000003-text guard, fresh branches'
+  embed the 000001 GUC-text guard (000003/000004 replace functions without
+  rescheduling), and both fail closed — the else-branch resolves `cron_edge_url` at
+  tick time, so every environment benefits from later hardening. The 7
   local-SQL jobs are untouched. `cron_job_backup` + `cron_restore_backup()` is the
   tested verbatim rollback. **Do not "fix" a preview by re-enabling its jobs; do not
   delete the backup/allowlist tables; do not add cron.schedule migrations with
@@ -68,6 +83,14 @@ knowledge so no future agent repeats the incident's mistakes or reverts its corr
   truncation once "proved" a function didn't exist when it did.
 7. **Deployments duplicated by `vercel redeploy`** are visible as `source:"redeploy"`
   in the Vercel API — check `source` before assuming double Git triggers.
+8. **An inline `ignoreCommand` string in vercel.json breaks builds.**
+  Vercel's runner evaluates the inline command through JSON-shell escaping that the
+  heavy quoting in our script did not survive; the failure exits >1, which Vercel
+  reports as build **ERROR**. Three inline attempts errored — one production build
+  (`2dbd9040`) and two preview builds (`62a1948`/`dbfcdbd`) — before the fix: keep
+  the logic in `scripts/vercel-ignore.sh` and reference it by path
+  (`"ignoreCommand": "bash scripts/vercel-ignore.sh"`). Verified green on main at
+  `d81b65f`.
 
 ## Workload facts (for future CPU attribution)
 

@@ -70,5 +70,7 @@ the runner/action is unavailable; she asks to re-send or asks her question.
 
 ## INTERNAL_BUILD_IDENTITY
 
-Branch `exp10-read-payload-breadth` off main `cbe102c5d` (#3292 landed identity). Final SHA recorded
-at PR merge.
+**LANDED 2026-11-06 04:49Z**: PR #3294 squash-merged (head `9de68b2168c064c5e39f4a72a15c257346491dda`,
+11/11 checks green) -> **main `21aa150710c63a37bbf77aa6b5ce151f72ba9415`** -> deploy-edge-functions
+run 42164650634 SUCCESS: secrets applied, `deployed mcp-gateway` + `deployed paige-ai-chat`, readback
+both PASS (source/configuration matched) at 04:49:59Z.

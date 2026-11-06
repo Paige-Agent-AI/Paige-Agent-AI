@@ -9,6 +9,23 @@ export const SOCIAL_OAUTH_PLATFORMS = [
   "pinterest", "google_business", "snapchat",
 ] as const;
 
+/**
+ * The platforms a workspace may CONNECT through the Social door — the OAuth list
+ * plus the connection apps the provider exposes behind the same profile flow
+ * (owner ruling 2026-11-05: the Platform Operator connects Gmail/Calendar,
+ * Discord and Telegram here; docs-verified slugs and readback values).
+ * Publishing stays on the OAuth list above; connecting is this superset.
+ */
+export const SOCIAL_CONNECTION_PLATFORMS = [
+  ...SOCIAL_OAUTH_PLATFORMS,
+  "google", "discord", "telegram",
+] as const;
+export type SocialConnectionPlatform = (typeof SOCIAL_CONNECTION_PLATFORMS)[number];
+
+/** The areas a Google connect may request — the provider's own closed set
+ *  (docs: scopes REQUIRED for google, subset of email/calendar/files/contacts). */
+export const GOOGLE_CONNECT_AREAS = ["email", "calendar", "files", "contacts"] as const;
+
 export interface SocialProviderAccount {
   platform: string;
   providerAccountId: string;
@@ -51,6 +68,8 @@ export interface SocialProviderAdapter {
     providerProfileKey: string;
     redirectUrl: string;
     platform: string;
+    /** Google requires its connect areas; other platforms ignore this (some reject scopes). */
+    scopes?: readonly string[];
   }): Promise<{ url: string; expiresAt: string }>;
   readProfile(input: { providerProfileKey: string }): Promise<SocialProviderProfile>;
   deleteProfile(input: { providerProfileKey: string }): Promise<void>;

@@ -5,7 +5,11 @@ import { zernioSocialAdapter } from "../_shared/social-provider/zernio.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TOKEN = /^[0-9a-f]{64}$/;
-const RETURN_PATH = /^\/solo\/[A-Za-z0-9_-]+\/settings\/integrations\/?$/;
+// The same destinations the door itself accepts (paige-social's widened regex): a
+// Solo workspace's Integrations page or the Platform Operator's. The callback is the
+// verifier of the round trip the door started, so the two sets must agree — a Solo-only
+// check here silently killed every Operator connect at the return step.
+const RETURN_PATH = /^\/(solo\/[A-Za-z0-9_-]+|operator)\/settings\/integrations\/?$/;
 // Same sole-provider rule as paige-social (ANT-164 3f511055: Zernio sole aggregator, Upload-Post
 // retired). Unconfigured Zernio fails closed through the honest unavailable path, never a fallback.
 const adapter = zernioSocialAdapter;

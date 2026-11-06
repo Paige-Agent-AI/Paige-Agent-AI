@@ -22,7 +22,7 @@
 import { envKey } from "../env-key.ts";
 import { NeedsConfigError } from "../provider-types.ts";
 import { safeFetch } from "../ssrfGuard.ts";
-import { SOCIAL_OAUTH_PLATFORMS } from "./mod.ts";
+import { GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SOCIAL_OAUTH_PLATFORMS } from "./mod.ts";
 import {
   SocialProviderError,
   type SocialProviderAccount,
@@ -41,6 +41,12 @@ const AUTHORIZATION_HOSTS: Readonly<Record<string, readonly string[]>> = {
   x: ["x.com", "twitter.com"], threads: ["threads.net", "facebook.com"],
   pinterest: ["pinterest.com"], google_business: ["google.com"],
   snapchat: ["snapchat.com"], internal_bounce: ["zernio.com"],
+  // Connection apps (owner 2026-11-05): Google's consent lives on Google, Discord's on
+  // Discord; Telegram has no OAuth redirect at all — its flow may hand back a Telegram
+  // deep link or bounce through the provider, so both are accepted launch targets.
+  google: ["google.com", "accounts.google.com"],
+  discord: ["discord.com"],
+  telegram: ["telegram.org", "t.me", "zernio.com"],
 };
 
 /** The platform names Zernio reports on accounts, folded into Paige's catalogue keys. */
@@ -71,9 +77,18 @@ function assertProfileKey(value: string): void {
   }
 }
 
-function connectPlatform(value: string): typeof SOCIAL_OAUTH_PLATFORMS[number] {
-  if (!SOCIAL_OAUTH_PLATFORMS.includes(value as typeof SOCIAL_OAUTH_PLATFORMS[number])) {
+function connectPlatform(value: string): typeof SOCIAL_CONNECTION_PLATFORMS[number] {
+  if (!SOCIAL_CONNECTION_PLATFORMS.includes(value as typeof SOCIAL_CONNECTION_PLATFORMS[number])) {
     throw new SocialProviderError("unsupported_oauth_platform", 400, "This Social OAuth platform is unavailable.");
+  }
+  return value as typeof SOCIAL_CONNECTION_PLATFORMS[number];
+}
+
+/** Publishing stays on the OAuth list: a connectable app is not automatically a
+ *  publish target, and the posting arm must not widen with the connection set. */
+function postPlatform(value: string): typeof SOCIAL_OAUTH_PLATFORMS[number] {
+  if (!SOCIAL_OAUTH_PLATFORMS.includes(value as typeof SOCIAL_OAUTH_PLATFORMS[number])) {
+    throw new SocialProviderError("unsupported_post_platform", 400, "This platform cannot be published to yet.");
   }
   return value as typeof SOCIAL_OAUTH_PLATFORMS[number];
 }
@@ -291,17 +306,30 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
       throw error;
     }
   },
-  async createConnectUrl({ providerProfileKey, redirectUrl, platform }) {
+  async createConnectUrl({ providerProfileKey, redirectUrl, platform, scopes }) {
     assertProfileKey(providerProfileKey);
     const requested = connectPlatform(platform);
     const callback = new URL(redirectUrl);
     if (callback.protocol !== "https:" || callback.username || callback.password) {
       throw new SocialProviderError("invalid_redirect_url", 400, "The Social return destination must be a secure URL.");
     }
+    // Google REQUIRES its areas on connect (the provider 400s without them); the other
+    // platforms either ignore or actively reject a scopes parameter, so it goes only to
+    // Google. Absent areas default to the owner's Gmail-and-Calendar starting set.
+    let areaQuery = "";
+    if (requested === "google") {
+      const areas = (scopes === undefined || scopes.length === 0 ? ["email", "calendar"] : scopes)
+        .filter((area): area is typeof GOOGLE_CONNECT_AREAS[number] =>
+          (GOOGLE_CONNECT_AREAS as readonly string[]).includes(area));
+      if (!areas.length) {
+        throw new SocialProviderError("invalid_connect_areas", 400, "The Google connection needs at least one area.");
+      }
+      areaQuery = `&scopes=${encodeURIComponent(areas.join(","))}`;
+    }
     const profileId = await resolveProfileId(providerProfileKey);
     const providerPath = requested === "google_business" ? "google-business" : requested;
     const payload = await request(
-      `/connect/${encodeURIComponent(providerPath)}?profileId=${encodeURIComponent(profileId)}&redirect_url=${encodeURIComponent(callback.href)}`,
+      `/connect/${encodeURIComponent(providerPath)}?profileId=${encodeURIComponent(profileId)}&redirect_url=${encodeURIComponent(callback.href)}${areaQuery}`,
     );
     const url = authorizationUrl(firstOf(payload, "authUrl") ?? firstOf(payload, "url"), requested);
     return { url, expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString() };
@@ -339,7 +367,7 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
   },
   async createPost(input) {
     assertProfileKey(input.providerProfileKey);
-    const requested = connectPlatform(input.platform);
+    const requested = postPlatform(input.platform);
     // The publication row's UUID is the Idempotency-Key: one approved publication = one
     // provider post, and a retry of the same publication can never create a second. Zernio
     // matches on the key ALONE (not the body), so the key must never be reused for

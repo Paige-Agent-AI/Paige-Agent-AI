@@ -30,7 +30,8 @@ describe("Integrations — the Solo Shell layout carrying the platform's own con
     expect(html).toContain("Integrations");
     // The chip ladder and its counts are computed from the same tiles the wall renders.
     for (const [label, count] of [
-      ["All", "22"], ["Automation", "2"], ["Team chat", "2"], ["Social", "11"],
+      ["All", "25"], ["Automation", "2"], ["Team chat", "3"], ["Messaging", "1"],
+      ["Email &amp; Calendar", "1"], ["Social", "11"],
       ["Finance", "4"], ["Documents", "1"], ["Client data", "1"], ["Developer", "1"],
     ] as const) {
       expect(html, `missing chip: ${label}`).toContain(`>${label}<em>${count}</em>`);
@@ -41,6 +42,12 @@ describe("Integrations — the Solo Shell layout carrying the platform's own con
     for (const platform of SOCIAL_PLATFORMS) {
       expect(html, `missing social card: ${platform.name}`).toContain(platform.name);
     }
+    // The provider's connection apps ride the same governed door as the Social cards.
+    for (const app of ["Google", "Discord", "Telegram"]) {
+      expect(html, `missing connection app: ${app}`).toContain(app);
+    }
+    expect(html).toContain("Reach people where they are.");
+    expect(html).toContain("Send mail and book time.");
     for (const row of [
       "n8n", "Zapier", "Slack", "Microsoft Teams", "Stripe Connect", "PayPal",
       "QuickBooks", "Plaid", "DocuSign", "Apollo", "Webhooks &amp; direct API",
@@ -64,7 +71,8 @@ describe("Integrations — the Solo Shell layout carrying the platform's own con
     expect(html).toContain("These connections belong to the platform itself.");
     expect(html).toContain("every account in Paige gets the same fixed options");
     // First paint: the door is still reading, so cards assert nothing…
-    expect((html.match(/Checking connection…/g) ?? []).length).toBe(10);
+    // 10 social OAuth platforms + the 3 connection apps, all still reading on first paint.
+    expect((html.match(/Checking connection…/g) ?? []).length).toBe(13);
     // …except the one platform whose OAuth is provider-side unavailable, pinned by the catalogue.
     expect(html).toContain("OAuth unavailable");
     // No platform-level seam exists behind the non-social providers yet — said plainly.

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { IntegrationLogo } from "../../solo/integration-logos";
-import type { SocialPlatformDefinition } from "../../solo/social-platform-catalog";
 
 /**
  * The Platform Operator's Social door — the machinery behind the Social cards on
@@ -277,7 +276,12 @@ function Fact({ label, value }: { label: string; value: string }) {
  *  disconnect) behind the governed approval. Chrome mirrors the surface family's
  *  drawers: focus lands on close, Tab stays inside, Escape closes, focus returns
  *  to the opener card, and closing clears the door's transient state. */
-export function OperatorSocialDrawer({ platform, door, onClose }: { platform: SocialPlatformDefinition; door: OperatorSocialDoor; onClose: () => void }) {
+/** Structural: the drawer reads shape, not catalogue membership — the social
+ *  catalogue's definitions (narrower literal key) widen into this safely, and the
+ *  provider's connection apps fit without claiming to be social catalogue entries. */
+export type DrawerPlatform = { key: string; name: string; mark: string; oauthAvailable: boolean; connectionNote: string };
+
+export function OperatorSocialDrawer({ platform, door, onClose, kindLabel = "Platform channel" }: { platform: DrawerPlatform; door: OperatorSocialDoor; onClose: () => void; kindLabel?: string }) {
   const panel = useRef<HTMLElement>(null);
   const close = useRef<HTMLButtonElement>(null);
   const handleClose = useCallback(() => { door.clearTransient(); onClose(); }, [door, onClose]);
@@ -326,7 +330,7 @@ export function OperatorSocialDrawer({ platform, door, onClose }: { platform: So
           <IntegrationLogo id={platform.key} fallback={platform.mark} />
           <div>
             <h2 id="op-social-drawer-title">{platform.name}</h2>
-            <span>Platform channel</span>
+            <span>{kindLabel}</span>
           </div>
           <button ref={close} className="ig-close" type="button" aria-label={`Close ${platform.name}`} onClick={handleClose}><X aria-hidden size={16} /></button>
         </header>

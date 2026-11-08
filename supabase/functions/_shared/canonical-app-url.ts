@@ -49,6 +49,7 @@ export type CanonicalDestination =
   | "sales_invoices"
   | "sales_collections"
   | "operations_work"
+  | "operations_weekly_plan"
   | "team_hub"
   | "business_time_zone";
 
@@ -103,6 +104,7 @@ const ROUTES: Record<MountedTier, Partial<Record<CanonicalDestination, string>>>
     sales_invoices: "/solo/{account}/sales/payments?view=invoices",
     sales_collections: "/solo/{account}/sales/payments?view=collections",
     operations_work: "/solo/{account}/operations/work",
+    operations_weekly_plan: "/solo/{account}/operations/overview?weeklyPlan=review",
     team_hub: "/solo/{account}/team-hub",
     business_time_zone: "/solo/{account}/settings/setup/business-profile#business-time-zone",
   },
@@ -194,13 +196,17 @@ export function withQuery(path: string, key: string, value: string): string {
 }
 
 export function resolveCanonicalRecordLink(
-  input: CanonicalAppRouteInput & { recordId?: string | null; recordKind?: "planning_item" },
+  input: CanonicalAppRouteInput & { recordId?: string | null; recordKind?: "planning_item" | "planning_plan" },
 ): CanonicalRecordLink | null {
   // A Planning UUID must never be reinterpreted as an identically named CRM task.
-  if (input.recordKind !== undefined && (input.recordKind !== "planning_item" || input.destination !== "operations_work")) return null;
+  if (input.recordKind !== undefined && (!["planning_item", "planning_plan"].includes(input.recordKind) || input.destination !== "operations_work")) return null;
   const path = resolveCanonicalAppPath(input);
   if (!path) return null;
   const tier = mountedTier(input.tier);
+  if (input.recordKind === "planning_plan") {
+    if (tier !== "solo" || !RECORD_UUID.test(input.recordId ?? "")) return null;
+    return { path: withQuery(path.replace(/\/operations\/work$/, "/operations/projects"), "planningPlan", input.recordId!), status: "exact" };
+  }
   const focus = input.recordKind === "planning_item" ? "planningItem" : tier ? RECORD_FOCUS[tier][input.destination] : undefined;
   const id = typeof input.recordId === "string" ? input.recordId.trim() : "";
   if (focus && RECORD_UUID.test(id)) return { path: withQuery(path, focus, id), status: "exact" };

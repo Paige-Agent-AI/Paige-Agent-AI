@@ -69,7 +69,6 @@ export async function voyageEmbedOne(text: string, opts: VoyageOpts = {}): Promi
 // embeddings response shape ({data:[{index,embedding}]}) via Voyage, so existing
 // call sites migrate by swapping the fetch target only:
 //   fetch("https://api.openai.com/v1/embeddings", init)  ->  embeddingsCompat("voyage", init)
-//   fetch("https://ai.gateway.lovable.dev/v1/embeddings", init) -> embeddingsCompat("voyage", init)
 // (input_type is left unset for now — symmetric embeddings work; query/document
 //  tuning is a future optimization.)
 export async function embeddingsCompat(

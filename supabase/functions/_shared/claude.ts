@@ -1,6 +1,6 @@
 // _shared/claude.ts
 // Anthropic-only AI client for Paige edge functions.
-// Replaces the Lovable AI gateway (OpenAI-compatible proxy over Gemini/OpenAI).
+// PAIGE-owned direct Anthropic transport with compatibility response shapes.
 //
 // Two tiers (aliases → auto-upgrade on future model versions):
 //   REASONING      — chat, doc drafting, game plans, deep skills
@@ -159,7 +159,7 @@ export interface ClaudeMessage {
 // back an assistant turn carrying `tool_calls` followed by `tool` results, and
 // Anthropic needs (a) the assistant `tool_use` blocks so each `tool_result` has
 // a matching id, and (b) consecutive tool_results merged onto ONE user turn
-// (Anthropic requires alternating roles). Missing (a) was the Lovable→Anthropic
+// (Anthropic requires alternating roles). Missing (a) caused the historical transport
 // regression that broke every tool-using turn ("couldn't finish that").
 // ---------------------------------------------------------------------------
 interface OaiMessage { role: string; content: unknown; tool_calls?: any[]; tool_call_id?: string }
@@ -386,7 +386,7 @@ export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
 // ---------------------------------------------------------------------------
 // OpenAI-/gateway-compatible shim.
 // Lets existing call sites migrate with a near-mechanical edit:
-//   fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {..body:{model,messages,tools,response_format}})
+//   chatCompletionCompat({model,messages,tools,response_format})
 //     -> chatCompletionCompat({model,messages,tools,response_format})
 // Returns an OpenAI-shaped response so downstream `choices[0].message.content`
 // / `tool_calls` parsing keeps working.
@@ -552,7 +552,7 @@ export async function chatCompletionCompat(body: OpenAIStyleBody, tierOverride?:
 // Drop-in replacement for `fetch(gatewayUrl, init)` on NON-streaming chat calls.
 // Returns a Response-like object so existing `.ok` / `.status` / `await x.json()`
 // handling keeps working unchanged — the only migration edit at a call site is
-// swapping `fetch("https://ai.gateway.lovable.dev/v1/chat/completions", init)`
+// replacing an obsolete gateway fetch
 // for `gatewayCompat("anthropic", init)`. (Streaming call sites are handled
 // separately; do NOT use this for stream:true requests.)
 // Translate an OpenAI-/gateway-style body into an Anthropic Messages request object.

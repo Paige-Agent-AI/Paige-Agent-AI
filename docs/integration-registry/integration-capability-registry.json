@@ -2043,9 +2043,9 @@
     },
     {
       "id": "upload_post_social",
-      "name": "Upload-Post (internal Social adapter)",
+      "name": "Upload-Post (RETIRED — the former Social connection provider)",
       "taxonomy": "marketing_ads_social_presence_analytics",
-      "business_reason": "Provider-neutral, tenant-owned Social account authorization and provider readback behind Paige's customer-facing Social integration.",
+      "business_reason": "RETIRED 2026-11-03 (owner directive ANT-164 3f511055, Nov 2 2026: Zernio sole social aggregator; Upload-Post ACTIVE integration retirement authorized) + the Nov 3 owner green light, executed in the retirement PR. Formerly: provider-neutral, tenant-owned Social account authorization and provider readback behind Paige's Social connection doors. Retirement was safe on the completed inventory's readback: ALL social tables were EMPTY (zero connections, profiles, posts, or pending/UNKNOWN operations — ANT-164 9e59820a), so no tenant data was migrated, relinked, or lost. The adapter file, the secret-driven fallback in both connection doors, and the publisher's injection are removed from source; the provider-neutral seam (mod.ts) and doors now bind Zernio alone.",
       "paige_use_cases": [
         "create one opaque provider profile per tenant-owned Social identity",
         "open exact-platform OAuth consent",
@@ -2058,18 +2058,17 @@
         "Platform-native OAuth scopes shown to and consented by the account owner; the internal adapter handles the exchange and custody, while Paige does not infer or silently grant a platform scope."
       ],
       "safe_readable_context": "Tenant-scoped connection health, stable provider account identifier, platform, display label, handle, avatar URL, per-account optional capability list, and last verification time. Provider profile keys, callback nonces, API credentials, and raw payloads are service-only.",
-      "allowed_writes_external_effects": "Create/reconnect/delete an opaque provider profile and open secure account authorization after one exact owner/admin confirmation. Publishing, scheduling, analytics pulls, comments, replies, DMs, ads, and paid actions remain UNAVAILABLE.",
+      "allowed_writes_external_effects": "None — RETIRED (2026-11-03, ANT-164 3f511055 + Nov 3 green light). The adapter, its secret-driven fallback in both connection doors, and the publisher's injection are removed from source; no path reaches Upload-Post. Historically: create/reconnect/delete an opaque provider profile and open secure account authorization after one owner/admin confirmation; publishing never existed.",
       "authority_lane": [
-        "read",
-        "confirm"
+        "prohibited"
       ],
       "m1_dependency": "No money movement in the connection slice. Provider subscription cost is a platform operating expense. Any future paid Social action requires the canonical real-money control before exposure.",
       "canonical_provider_receipt": "Exact provider profile readback matched to the stored opaque profile key; tenant account state is applied atomically before the connection receipt/Rail outcome is recorded.",
       "rail_mind_memory": "Rail: connection start/readback/account selection/disconnect outcomes through record_capability_run. Mind and long-term Memory: no private provider payload, token, or audience data.",
-      "status": "PROOF_OWED",
+      "status": "UNAVAILABLE",
       "owner": "Growth/Social workstream",
-      "dependency": "Platform-scope migration and functions must deploy, then an owner must complete platform-native OAuth on an authorized account. Current OAuth catalogue: Instagram, Facebook Pages, X, TikTok, YouTube, LinkedIn, Threads, Pinterest, Google Business Profile, and Snapchat basic profile; Reddit OAuth is provider-unavailable. LIVE requires authenticated tenant-isolation, readback, repeated-platform identities, account switching, reconnect, disconnect, failure, receipt, and UI evidence.",
-      "next_slice": "Deploy the connection candidate, present one secure authorization URL, and complete controlled owner consent plus tenant-scoped account discovery/readback. Do not publish.",
+      "dependency": "Retired — no dependency. Historical note: the two vault rows UPLOAD_POST_API_KEY and optional UPLOAD_POST_API_BASE_URL became obsolete at the retirement merge; their removal from the vault and the owner's Upload-Post subscription/billing check are owner actions (directive 3f511055; current legacy plan/invoice UNVERIFIED).",
+      "next_slice": "None — retired. The sole-provider path forward lives on the zernio row: first real connect, EXP07's publishing arm, and the first governed post with live receipt/readback/reopen.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -2104,26 +2103,12 @@
         "next_owner": "Growth/Social workstream",
         "next_slice": "Authenticated owner connection and disconnect proof after deployment; public posting remains a separate approval boundary."
       },
-      "code_anchors": [
-        {
-          "path": "supabase/functions/_shared/social-provider/upload-post.ts",
-          "role": "provider_adapter",
-          "note": "the Upload-Post provider adapter (api.upload-post.com/api/uploadposts) behind Paige's provider-neutral Social connection seam; reachable (imported by paige-social + paige-social-callback), fail-closed on a missing key."
-        },
-        {
-          "path": "supabase/functions/paige-social-callback/index.ts",
-          "role": "callback_readback",
-          "note": "Upload-Post hosted-OAuth connection callback: completes owner consent and reads back the tenant-scoped account profile via uploadPostSocialAdapter. PROOF_OWED — authenticated end-to-end runtime proof not yet attached."
-        }
-      ],
+      "code_anchors": [],
       "sources": [
-        "supabase/functions/_shared/social-provider/upload-post.ts",
-        "supabase/functions/paige-social/index.ts",
-        "supabase/functions/paige-social-callback/index.ts",
-        "supabase/migrations/20270127000000_social_connection_lifecycle.sql",
-        "supabase/migrations/20270130000000_social_connection_platform_scope.sql",
-        "https://docs.upload-post.com/api/connect-api/",
-        "https://docs.upload-post.com/api/user-profiles/"
+        "ANT-164 comment 3f511055 (owner directive: Zernio sole social aggregator; Upload-Post retirement authorized)",
+        "ANT-164 comments 736a2db2 + 9e59820a (the completed read-only inventory: all eight social tables empty; the retirement plan)",
+        "ANT-164 comment cb06a691 (the Nov 3 owner green-light work record for the retirement's execution)",
+        "supabase/migrations/20270127000000_social_connection_lifecycle.sql (immutable history — the pipe the adapter served)"
       ]
     },
     {

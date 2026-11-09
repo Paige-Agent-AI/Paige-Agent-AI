@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Deploy a Supabase edge function via the Management API (Lovable-free, CLI-free).
+# Deploy a Supabase edge function directly via the Management API.
 #
 # Why this exists: the Supabase CLI's HTTP client bypasses this environment's
-# egress proxy (TransportError), and Lovable was removed from the deploy path.
+# egress proxy (TransportError).
 # curl honors the proxy and reads files straight from disk (exact bytes), so this
 # is the reliable way to ship an edge function — including large multi-file ones.
 #

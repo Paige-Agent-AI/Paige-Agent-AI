@@ -1,5 +1,5 @@
 // Public signup wizard completion endpoint.
-// Auth-gated by JWT (the user just signed up via Lovable Cloud auth on the client).
+// Auth-gated by the user's existing Supabase JWT.
 // Creates a `clients` row mirror, classifies routing, and fires sales_dept.handle_new_lead via mma-os-bridge.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://esm.sh/zod@3.23.8";

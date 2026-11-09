@@ -12,6 +12,7 @@
  */
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -49,13 +50,17 @@ function renderAt(campaigns: Record<string, unknown> = CAMPAIGNS) {
   root = createRoot(host);
   act(() => {
     root!.render(
-      <SocialCommand
-        campaigns={campaigns}
-        onOpenStudio={harness.nav.studio}
-        onAskPaige={harness.nav.paige}
-        onOpenCompass={harness.nav.compass}
-        onOpenPipeline={harness.nav.pipeline}
-      />,
+      // MemoryRouter: the connections panel routes its manage link with react-router's Link,
+      // which cannot render outside a router. Every other case renders the same tree it did.
+      <MemoryRouter>
+        <SocialCommand
+          campaigns={campaigns}
+          onOpenStudio={harness.nav.studio}
+          onAskPaige={harness.nav.paige}
+          onOpenCompass={harness.nav.compass}
+          onOpenPipeline={harness.nav.pipeline}
+        />
+      </MemoryRouter>,
     );
   });
 }
@@ -79,6 +84,9 @@ beforeEach(() => {
     tenantId: "tenant-1",
     phase: "ready",
     handles: [],
+    // The hook's own contract: connections is always an array (every phase supplies it), so the
+    // harness default supplies it too rather than letting a phase fall through as undefined.
+    connections: [],
     canManage: true,
     recordChangedAt: null,
     notPermitted: false,
@@ -225,8 +233,8 @@ describe("record dismissal lifetime", () => {
   };
   const unmount = () => { act(() => root!.unmount()); root = null; };
   const redraw = () => act(() => root!.render(
-    <SocialCommand campaigns={CAMPAIGNS} onOpenStudio={harness.nav.studio}
-      onAskPaige={harness.nav.paige} onOpenCompass={harness.nav.compass} onOpenPipeline={harness.nav.pipeline} />,
+    <MemoryRouter><SocialCommand campaigns={CAMPAIGNS} onOpenStudio={harness.nav.studio}
+      onAskPaige={harness.nav.paige} onOpenCompass={harness.nav.compass} onOpenPipeline={harness.nav.pipeline} /></MemoryRouter>,
   ));
   const holdSave = () => {
     let complete!: (result: Record<string, unknown>) => void;
@@ -795,5 +803,58 @@ describe("shell contract", () => {
   it("keeps the Vibe Studio launcher the replaced panel offered", () => {
     renderAt();
     expect(host.querySelector("[data-solo-vibe-studio-launcher]")).toBeTruthy();
+  });
+});
+
+
+describe("live-connected accounts show up on this tab (owner directive 2026-11-04)", () => {
+  const connected = {
+    network: "facebook", status: "connected", label: "Acme Media Page",
+    verifiedAt: "2026-11-04T10:00:00.000Z", profiles: 2,
+  };
+
+  it("shows the connected account, its label, its consent boundary, and the one manage link", () => {
+    harness.social = { ...harness.social, connections: [connected] };
+    renderAt();
+    const panel = host.querySelector(".social-connections");
+    expect(panel).toBeTruthy();
+    expect(panel!.textContent).toContain("Facebook");
+    expect(panel!.textContent).toContain("Acme Media Page");
+    expect(panel!.textContent).toContain("consent to read the account, not to publish");
+    expect(panel!.textContent).toContain("Last verified");
+    const manage = panel!.querySelector<HTMLAnchorElement>("a.social-connections-manage");
+    expect(manage).toBeTruthy();
+    expect(manage!.getAttribute("href")).toContain("/solo/tenant-1/settings/integrations");
+  });
+
+  it("renders no connections panel when nothing is connected — the Channels panel owns that state", () => {
+    // One handle on record so the brief takes the has-parts branch where the standing absence
+    // sentence lives; the panel-absence assertion is the point either way.
+    harness.social = { ...harness.social, handles: [{ network: "x", label: "X", handle: "@acme" }] };
+    renderAt();
+    expect(host.querySelector(".social-connections")).toBeNull();
+    expect(host.textContent).toContain("No account is connected for publishing");
+  });
+
+  it("the brief names the connection instead of asserting publishing absence", () => {
+    harness.social = { ...harness.social, connections: [connected] };
+    renderAt();
+    expect(host.textContent).toContain("One account is connected");
+    expect(host.textContent).toContain("Manage connections in Settings → Integrations");
+    expect(host.textContent).not.toContain("No account is connected for publishing");
+  });
+
+  it("a needs_reauth connection shows with its own honest state, never as connected", () => {
+    harness.social = {
+      ...harness.social,
+      connections: [{ network: "instagram", status: "needs_reauth", label: null, verifiedAt: null, profiles: 1 }],
+    };
+    renderAt();
+    const panel = host.querySelector(".social-connections");
+    expect(panel).toBeTruthy();
+    expect(panel!.querySelector("li[data-state='needs_reauth']")).toBeTruthy();
+    expect(panel!.textContent).toContain("sign in again");
+    expect(panel!.textContent).not.toContain("Last verified");
+    expect(panel!.textContent).not.toContain("One account is connected");
   });
 });

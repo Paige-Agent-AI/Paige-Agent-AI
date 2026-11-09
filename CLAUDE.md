@@ -1,5 +1,9 @@
 # Paige Agent AI — Working Doctrine
 
+## MANDATORY OWNER RULE — NO LOVABLE — November 3, 2026
+
+This binds the Coordinator and every agent. Never introduce, reuse, restore or deploy Lovable-generated or Lovable-dependent code, SDKs, gateways, integrations, scaffolds, icons, assets or branding. When encountered, delete that implementation or asset. If its behavior is required, recreate it as PAIGE-owned code using the original authorized domain writer and native provider, preserving working behavior, data, tenant isolation and permissions. Remove obsolete components outright. Renaming, hiding, wrapping or recoloring Lovable material is not replacement. No Lovable runtime dependency or branding may ship. This rule does not authorize deleting customer data or weakening authentication, and it does not resume paused agents or approve another outcome.
+
 ## MANDATORY OWNER DELIVERY RULE — November 1, 2026
 
 This rule binds the Coordinator and every current and future authorized agent. Pick ONE complete original customer/business outcome and finish it. Do not start or consider another outcome while it is unfinished. REPORT THE COMPLETED OUTCOME, THEN STOP. The owner must explicitly approve the next outcome, one at a time. Preserve the full original assignment as pending scope; it does not authorize starting the next outcome.
@@ -700,7 +704,7 @@ confusing people with all these multiple tabs. Nobody does that."*
 ## 22. The Vibe Studio is benchmarked against best-in-class — motion, 3D, and craft are the mandatory bar.
 
 **Directive (owner: Antonio, 2026-07-17).** The Vibe Studio is developed against the best AI-builder
-studios in the world — **Lovable and Emergent** — and the broader best-in-class motion/3D web (Bolt · v0 ·
+studios in the world and the broader best-in-class motion/3D web (Bolt · v0 ·
 Framer · the Awwwards/Codrops/Three.js lineage), studied 2026-07-17 (synthesis parked at
 `scratchpad/studio-motion-3d-plan.md`). **That study is now the STANDING BAR:** every Studio surface is
 built to it, and the verifier + compliance officer (§5/§11) judge every Studio ship **against this
@@ -712,7 +716,7 @@ not design"*: **depth, motion, and craft are the bar; a palette flip never is.**
   never a flat fill. Our chrome is layered indigo/violet elevation tokens with hairline borders. **Flat =
   fail; "made it dark" ≠ designed.**
 - **One accent, spent on the act.** Best-in-class reserves exactly one color for the CTA/interactive moment
-  (Lovable's blue). Ours is **gold — ONLY on the primary act**; everything else neutral/indigo (§11).
+  Ours is **gold — ONLY on the primary act**; everything else neutral/indigo (§11).
 - **Type carries the hierarchy — weight + size + tight NEGATIVE tracking on display sizes** (the "expensive"
   tell). A real scale (display → title → body → caption; `tabular-nums` for metrics). Weak/default type = fail.
 - **Real thumbnails, real hover, refined borders.** Project cards render **REAL scaled artifact previews**
@@ -747,8 +751,7 @@ not design"*: **depth, motion, and craft are the bar; a palette flip never is.**
 studios are auth-gated, so their loading/handoff moments were reconstructed from reviews/walkthroughs, not
 seen first-hand; the heavy-shader hero/cutscene is imported from the directly-inspectable Awwwards/Codrops
 lineage, **not proven** to be a competitor's own studio behavior; borrowed tokens are extractor-approximate.
-Build these as **our** interpretation of a well-attested pattern — never tell anyone "Lovable does exactly X"
-as fact.
+Build these as **our own** implementation of a well-attested pattern; never copy a competitor's code or assets or present unverified competitor behavior as fact.
 
 **The test, every time:** *"Does this Studio surface clear the best-in-class bar — layered depth, real type,
 real thumbnails, alive motion where it earns its pixels — or is it a flat palette flip?"* If the latter, it

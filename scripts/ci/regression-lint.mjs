@@ -35,6 +35,7 @@ import { execSync } from "node:child_process";
 const BASE_REF = process.env.BASE_REF || "origin/main";
 const HEAD_REF = process.env.HEAD_REF || "HEAD";
 const ALLOW = /ci-allow-regression/;
+const FORBIDDEN_VENDOR_RUNTIME = /@lovable\.dev\/|\blovable-tagger\b|https?:\/\/[^\s"')]*lovable\.(?:dev|app)\b|\bLOVABLE_(?:API_KEY|SEND_URL)\b|\bsendLovableEmail\b/i;
 
 // §3 banned marketing phrases (case-insensitive) + operator jargon that must not ship.
 const PHRASE_PATTERNS = [
@@ -49,8 +50,9 @@ const isShipped = (f) =>
   /^src\/.*\.(ts|tsx|js|jsx|css|html)$/.test(f) ||
   f === "index.html" ||
   /^public\//.test(f) ||
-  /^supabase\/functions\/.*\.ts$/.test(f);
+  /^supabase\/functions\/.*\.(?:ts|tsx|js|jsx|mjs)$/.test(f);
 const isMigration = (f) => /^supabase\/migrations\/.*\.sql$/.test(f);
+const isRuntimeConfig = (f) => /^(?:package(?:-lock)?\.json|vite\.config\.ts|auth\.html)$/.test(f) || /^supabase\/functions\/.*\/(?:deno\.jsonc?|deno\.lock)$/.test(f);
 
 function resolveBase() {
   try {
@@ -84,6 +86,9 @@ for (const line of diff.split("\n")) {
   }
   if (line.startsWith("+") && !line.startsWith("+++")) {
     const content = line.slice(1);
+    if (file && (isShipped(file) || isRuntimeConfig(file)) && FORBIDDEN_VENDOR_RUNTIME.test(content)) {
+      problems.push(`${file}:${lineNo}  Owner no-Lovable rule: remove the vendor dependency and recreate required behavior in PAIGE-owned code`);
+    }
     if (file && !ALLOW.test(content)) {
       if (isShipped(file)) {
         for (const { re, label } of PHRASE_PATTERNS) {

@@ -570,8 +570,8 @@ All colors MUST be HSL.
                                               edges now read as real indigo seams on the light canvas,
                                               §27 definition, still an indigo hairline, never gray */
 
-    /* Drafting WELL — the recessed surface the rendered page floats on (the Lovable/v0 preview
-       pane, not a wireframe grid). Light values: a soft indigo-tinted step below the canvas so
+    /* Drafting WELL — the recessed surface the rendered page floats on.
+       Light values: a soft indigo-tinted step below the canvas so
        the page card lifts and casts. `well-glow` is the top-light that gives the recess its
        lit lip. */
     --studio-well:      236 24% 91%;      /* recessed BELOW the canvas so the rendered page lifts */
@@ -863,7 +863,7 @@ All colors MUST be HSL.
   }
 
   /* Studio drafting surface — the Vibe Studio canvas WELL. A recessed, photographic pane the
-     rendered page floats on (the Lovable/v0 preview surface), NOT a wireframe. The old version
+     rendered page floats on, NOT a wireframe. The old version
      stacked a 22px dot-grid on top — the literal "sketch / graph-paper" look the owner called
      out — which is gone. Now two soft radial washes over a solid well color: (1) a top-down
      glow lip (`--studio-well-glow`) so the recess reads LIT from above, and (2) a bottom
@@ -876,8 +876,8 @@ All colors MUST be HSL.
     background-color: hsl(var(--studio-well));
     background-image:
       radial-gradient(120% 80% at 50% 0%, hsl(var(--studio-well-glow) / 0.55), transparent 60%),
-      /* soft violet/blue ambient bloom behind the artifact — the Lovable preview-pane "glowing
-         stage" feel. Static background-image, so it's motion-safe by construction. */
+      /* Soft violet/blue ambient bloom behind the artifact.
+         Static background-image, so it's motion-safe by construction. */
       radial-gradient(70% 55% at 50% 40%, hsl(var(--studio-nebula-indigo) / 0.10), transparent 72%),
       radial-gradient(100% 100% at 50% 120%, hsl(var(--studio-ink) / 0.5), transparent 55%);
   }

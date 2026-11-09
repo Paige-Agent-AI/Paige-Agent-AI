@@ -8,9 +8,10 @@
 // verification and one receipt. The handler is _shared/growth-hosting-command/door.ts; this file
 // only wires the two Supabase clients, the export builder and the provider configuration.
 //
-// DORMANT BY DESIGN: with GROWTH_HOSTING_CF_ACCOUNT_ID / GROWTH_HOSTING_CF_API_TOKEN unset (the
-// current, owner-held state) every path answers HOSTING_NOT_ENABLED — no token exists to create,
-// nothing provisions, and no approval is minted. verify_jwt is the default (true).
+// DORMANT BY DESIGN: with GROWTH_HOSTING_CF_API_TOKEN unset (the current, owner-held state —
+// the account ID may come from the platform's existing CLOUDFLARE_ACCOUNT_ID) every path answers
+// HOSTING_NOT_ENABLED — no token exists to create, nothing provisions, and no approval is minted.
+// verify_jwt is the default (true).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
 import { GROWTH_HOSTING_KIT_BY_ACTION } from "../_shared/paige-spine/domains/growth_hosting.ts";
@@ -22,10 +23,14 @@ import { buildHostingExport } from "../_shared/growth-hosting/export.ts";
 const decide: HostingDoorDeps["decide"] = (key, input) =>
   decideDeclaredCapability(GROWTH_HOSTING_KIT_BY_ACTION[key as keyof typeof GROWTH_HOSTING_KIT_BY_ACTION], input);
 
-// The platform's provider configuration — BOTH values or the honest dormant refusal. No default,
-// no fallback, no silent enable.
+// The platform's provider configuration — the account ID is the PAIGE Cloudflare account: a
+// dedicated GROWTH_HOSTING_CF_ACCOUNT_ID overrides, otherwise the platform's existing
+// CLOUDFLARE_ACCOUNT_ID edge secret (already vaulted for the account's other services) covers it.
+// The TOKEN has no fallback by design: GROWTH_HOSTING_CF_API_TOKEN is the dedicated, minimum-scope
+// credential the owner vaults for this service alone (decision doc). Still both-or-null — no
+// token, no silent enable: the honest dormant refusal stands.
 const providerConfig = (() => {
-  const accountId = Deno.env.get("GROWTH_HOSTING_CF_ACCOUNT_ID");
+  const accountId = Deno.env.get("GROWTH_HOSTING_CF_ACCOUNT_ID") ?? Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
   const apiToken = Deno.env.get("GROWTH_HOSTING_CF_API_TOKEN");
   return accountId && apiToken ? { accountId, apiToken } : null;
 })();

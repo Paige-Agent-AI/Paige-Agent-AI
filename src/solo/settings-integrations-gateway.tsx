@@ -88,7 +88,7 @@ const CATALOGUE: ReadonlyArray<CatItem> = [
   { n: "Instagram · Facebook · LinkedIn · TikTok · YouTube", c: "Social", m: "zapier", g: "◎", d: "No official direct path — post through Buffer, Metricool or Hootsuite.", legacy: "social" },
   { n: "WhatsApp Business", c: "Social", m: "zapier", g: "W", d: "Business Tools MCP announced; not verified yet. Bridge via Zapier." },
   // CRM & Sales
-  { n: "HighLevel · LeadConnector", c: "CRM & Sales", m: "connect", g: "HL", d: "Contacts, conversations (SMS/email), pipelines, calendars, invoices. Connect with a Private Integration token (Settings → Private Integrations) plus your locationId header.", net: "A location token stays inside one sub-account; a company (agency) token can reach every location under the agency. Connect the narrowest token that does the job — Paige reads and acts only inside the location you point her at.", pop: true, r: 1, url: "https://services.leadconnectorhq.com/mcp/", pk: "gohighlevel", req: ["locationId"] },
+  { n: "HighLevel · LeadConnector", c: "CRM & Sales", m: "connect", g: "HL", d: "Contacts, conversations (SMS/email), pipelines, calendars, invoices. Connect with a Private Integration token (Settings → Private Integrations) plus your locationId header.", net: "A location token stays inside one sub-account; a company (agency) token can reach every location under the agency. Connect the narrowest token that does the job — Paige reads and acts only inside the location you point her at.", pop: true, r: 1, url: "https://services.leadconnectorhq.com/mcp/", pk: "gohighlevel", auth: "header", req: ["locationId"] },
   { n: "HubSpot", c: "CRM & Sales", m: "zapier", g: "HS", d: "CRM records, activities, pipelines. No direct path for Paige yet — bridge via Zapier." },
   { n: "Close", c: "CRM & Sales", m: "connect", g: "C", d: "Leads, contacts, opportunities; read and write scopes.", pop: true, r: 13, url: "https://mcp.close.com/mcp" },
   { n: "Attio", c: "CRM & Sales", m: "connect", g: "A", d: "Records, lists, notes, tasks.", url: "https://mcp.attio.com/mcp" },
@@ -181,7 +181,7 @@ const MODE_LABEL: Record<CatMode, string> = {
 /* ── Status → owner-facing chip ───────────────────────────────────────────────
    Ported honesty: a new or re-keyed tool is "Checking" until the verify step promotes it; it is
    never shown as ready before then. Tone words match the incumbent surface's data-* tones. */
-type ChipTone = "ok" | "warn" | "bad" | "pending" | "off";
+type ChipTone = "ok" | "warn" | "bad" | "pending" | "off" | "neutral";
 function statusChip(c: GatewayConnection): { label: string; tone: ChipTone } {
   if (!c.enabled) return { label: "Turned off", tone: "off" };
   if (c.status === "error") return { label: "Couldn’t reach it", tone: "bad" };
@@ -190,6 +190,21 @@ function statusChip(c: GatewayConnection): { label: string; tone: ChipTone } {
   if (c.status === "connected" && c.health === "healthy") return { label: "Ready", tone: "ok" };
   if (c.status === "connected") return { label: "Not checked yet", tone: "pending" };
   return { label: "Not set up", tone: "off" };
+}
+/** True when a row never reached a working state (unconfigured, or disabled before it ever
+ *  connected). Such a row reads "Setup not finished" — nobody turned anything off. KNOWN
+ *  BOUNDARY (writer contract 20270331000000): this surface's own "Turn it off" erases status
+ *  to unconfigured, so a NATIVE deliberate disable is byte-identical to a never-finished row
+ *  and reads the same here; the drawer body still names the turn-off plainly for every
+ *  disabled row. A row whose status survived a disable (legacy backfill) keeps "Turned off".
+ *  An error, needs-attention or connected row keeps its true state from statusChip.
+ *  Every surface showing a HELD row (wall card, catalogue tile, drawer header) goes through
+ *  heldStatusChip, so all three say the same thing about the same row. */
+function neverFinishedRow(c: GatewayConnection): boolean {
+  return c.status === "unconfigured" || (!c.enabled && c.status !== "connected");
+}
+function heldStatusChip(c: GatewayConnection): { label: string; tone: ChipTone } {
+  return neverFinishedRow(c) ? { label: "Setup not finished", tone: "neutral" } : statusChip(c);
 }
 /** The honest WHY under the chip, in this surface's own voice. Keyed ONLY on the closed
  * refusal vocabulary (the same codes describeMcpError words for chat) plus the one derived
@@ -471,12 +486,44 @@ export function presetAuthContract(preset: AddPreset): { choices: ReadonlyArray<
   return null;
 }
 type AuthenticationChoice = "oauth" | "bearer" | "headers" | "none";
+/** Credential words for curated providers — the owner's 2026-11-05 direction: the form asks
+ * for what the PROVIDER issues, in the provider's own vocabulary ("Location ID", "Private
+ * Integration Token"), never for a "header name" or an "Authorization" the tenant has no way
+ * to know. Keyed by provider token; header words by lowercased header name. The generic door
+ * never reads these — a manual server keeps its full expert form. */
+const CURATED_TOKEN_WORDS: Record<string, { label: string; note: string }> = {
+  gohighlevel: { label: "Private Integration Token", note: "Starts with pit- — create one in your HighLevel account under Settings → Private Integrations, then paste it here." },
+};
+const CURATED_HEADER_WORDS: Record<string, Record<string, { label: string; note: string }>> = {
+  gohighlevel: { locationid: { label: "Location ID", note: "From your HighLevel sub-account: Settings → Business Info → Location ID. Paige sends this with every request so she works inside the right location." } },
+};
 const AUTH_CHOICES: ReadonlyArray<{ value: AuthenticationChoice; label: string }> = [
   { value: "oauth", label: "OAuth" },
   { value: "bearer", label: "Token" },
   { value: "headers", label: "Token + headers" },
   { value: "none", label: "None" },
 ];
+
+/**
+ * The ONE translation of a catalogue row's coarse facts into the form's auth vocabulary —
+ * the create door (onPick) and the recognized-row re-key door both call it, so the two can
+ * never drift when the next curated provider is added (review finding: duplicated logic).
+ */
+function catalogueAuthChoice(item: CatItem): AuthenticationChoice | undefined {
+  // The generic entry stays unprefilled by its own documented contract ("nothing
+  // prefilled, since it names no vendor") — its historical auth field is dead data.
+  if (item.manual) return undefined;
+  if (item.pk && item.req?.length) return "headers";
+  if (item.auth === "header") return "headers";
+  return item.auth;
+}
+/** The catalogue row a saved connection is recognized as (by provider key or server host). */
+function catalogueMatchForRow(c: { providerKey: string | null; serverUrlHost: string | null }): CatItem | null {
+  return CATALOGUE.find(p => !p.manual && (
+    (p.pk && providerToken(p.pk) === providerToken(c.providerKey)) ||
+    (addressHost(p.url) !== "" && addressHost(p.url) === addressHost(`https://${c.serverUrlHost ?? ""}`))
+  )) ?? null;
+}
 
 /**
  * The Slack connect preset the FIRST-CLASS Integrations tile opens — the same contract the
@@ -504,24 +551,77 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   onSaved: (connection: GatewayConnection) => void;
 }) {
   const [label, setLabel] = useState(tool?.label ?? preset.label ?? "");
-  const [url, setUrl] = useState(tool ? "" : preset.url ?? "");
-  // New connections require an explicit choice, even when opened from a named preset.
-  const initialAuth: AuthenticationChoice | null = tool
-    ? tool.authKind === "oauth" ? "oauth" : tool.authKind === "bearer"
-      ? (tool.customHeaderCount ? "headers" : "bearer") : tool.authKind === "header" ? "headers" : "none"
-    : preset.auth ?? null;
-  // Curated presets lock the selector (and their note names the provider's real contract);
-  // editing an EXISTING tool keeps every mode reachable — the row's saved kind is already
-  // proven for it, and a re-key may legitimately change custom headers.
-  const authContract = !tool ? presetAuthContract(preset) : null;
+  /** The catalogue row a re-key of this row is recognized as — computed before the form's
+   * state so the curated endpoint can seed the address state (see contractUrl). */
+  const recognizedPreset = !tool ? null : catalogueMatchForRow(tool);
+  /** The LOCKED contract a recognized row carries. Null for rows the catalogue knows only by
+   * host (Notion, Stripe, …) — their re-key keeps the full manual form, address and all;
+   * only a curated provider's row may carry its endpoint (review P2, 2026-11-05: seeding a
+   * host-recognized non-curated row would silently rewrite its saved endpoint). */
+  const recognizedContract = !recognizedPreset ? null
+    : presetAuthContract({ providerKey: recognizedPreset.pk, auth: catalogueAuthChoice(recognizedPreset) });
+  /**
+   * The endpoint a CURATED contract binds this form to: the preset's own address on the
+   * create door; the catalogue's canonical address on a recognized row's re-key (which also
+   * silently repairs a row saved against a wrong host). Owner direction 2026-11-05: this
+   * address is the same for every customer, so the form never asks for it — it is carried,
+   * not entered. Null on the generic door and on rows the catalogue does not recognize —
+   * and on rows it recognizes without a locked contract (their address stays theirs to give).
+   */
+  const contractUrl = !tool ? (preset.providerKey && preset.url ? preset.url : null) : recognizedContract ? recognizedPreset?.url ?? null : null;
+  const [url, setUrl] = useState(tool ? contractUrl ?? "" : preset.url ?? "");
+  // Curated presets lock the selector (and their note names the provider's real contract).
+  // EXP10 (owner finding 2026-11-04): a curated provider's ONE proven mode governs BOTH doors
+  // into its form — the catalogue preset AND the re-key of an existing row the catalogue
+  // recognizes. The four-way auth wall the owner met was the re-key of an unfinished
+  // HighLevel row; a vendor with one proven contract never re-offers the other three modes
+  // on either door. A row the catalogue does NOT recognize keeps every mode reachable on
+  // re-key: its saved kind is the only proven fact, and a re-key may legitimately change it.
+  const authContract = !tool
+    ? presetAuthContract(preset)
+    : recognizedContract;
+  /**
+   * A CURATED form: the provider's one proven contract governs everything the user sees —
+   * the mode is locked, the address is carried invisibly, and the credential fields wear the
+   * provider's own words (owner direction 2026-11-05: "no need for us to ask anyone" for an
+   * address that never varies, and never a "Credential Header (Authorization)" question when
+   * what the provider actually issues is a Location ID). The generic door and unrecognized
+   * rows keep the full manual form — the address is genuinely theirs to supply there.
+   */
+  const curated = !!authContract && !!contractUrl;
+  const curatedKey = (!tool ? preset.providerKey : recognizedPreset?.pk) ?? null;
+  /**
+   * The row this CREATE will finish instead of duplicating, if any (recomputed per render so
+   * the disclosure below is live). Also carries the provider's required headers when the
+   * held row sits at a curated provider's host — the manual door must enforce the same
+   * contract the catalogue door enforces (review finding: locationId was create-only).
+   */
+  const heldRow = tool ? null
+    : connectionForProvider(gw.tools, { providerKey: preset.providerKey ?? null, url: (url.trim() || preset.url) ?? null });
+  const heldRecognized = heldRow ? catalogueMatchForRow(heldRow) : null;
+  const requiredHeaders = preset.requiredHeaders
+    ?? (recognizedPreset?.req ?? heldRecognized?.req ?? undefined);
+  // New connections require an explicit choice, even when opened from a named preset; a
+  // locked contract's single mode is that choice, already made by the provider's contract.
+  const initialAuth: AuthenticationChoice | null = authContract
+    ? authContract.choices[0].value
+    : tool
+      ? tool.authKind === "oauth" ? "oauth" : tool.authKind === "bearer"
+        ? (tool.customHeaderCount ? "headers" : "bearer") : tool.authKind === "header" ? "headers" : "none"
+      : preset.auth ?? null;
   const [auth, setAuth] = useState<AuthenticationChoice | null>(initialAuth);
   const [token, setToken] = useState("");
   const [primaryHeader, setPrimaryHeader] = useState(tool?.authKind === "header" ? "" : "Authorization");
   const [headers, setHeaders] = useState<Array<{ name: string; value: string }>>([]);
+  /** Curated required-header VALUES keyed by header name — the user types a value (a Location
+   * ID); the NAME comes from the provider's contract, never from the keyboard. */
+  const [requiredValues, setRequiredValues] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [ack, setAck] = useState<{ id: string; generation: number | null } | null>(null);
   const [confirmed, setConfirmed] = useState<GatewayConnection | null>(null);
+  /** Set when the duplicate-guard finished an unfinished row instead of adding a second one. */
+  const [finishedExisting, setFinishedExisting] = useState<GatewayConnection | null>(null);
   const [validation, setValidation] = useState<Record<string, string>>({});
   const [discarding, setDiscarding] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
@@ -536,7 +636,8 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   const pending = useRef(false);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const dirty = !ack && (Boolean(token) || headers.length > 0 || auth !== initialAuth
-    || url !== (tool ? "" : preset.url ?? "") || label !== (tool?.label ?? preset.label ?? ""));
+    || Object.values(requiredValues).some(v => v.trim() !== "")
+    || url !== (tool ? contractUrl ?? "" : preset.url ?? "") || label !== (tool?.label ?? preset.label ?? ""));
   useEffect(() => { onDirtyChange(dirty); }, [dirty, onDirtyChange]);
   const choose = (choice: AuthenticationChoice) => {
     if (choice === auth) return;
@@ -544,6 +645,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
     setToken("");
     setPrimaryHeader("Authorization");
     setHeaders([]);
+    setRequiredValues({});
     setValidation({});
     setMessage(null);
   };
@@ -576,21 +678,37 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
     if (needsToken && credentialTooShort("bearer", token)) errors.token = `Enter the full token (at least ${MCP_CREDENTIAL_MIN_LENGTH} characters).`;
     if (needsToken && !token.trim()) errors.token = "Enter the token.";
     const namePattern = /^[!#$%&'*+.^_`|~0-9a-z-]+$/i;
-    if (auth === "headers" && (!primaryHeader.trim() || !namePattern.test(primaryHeader.trim()))) errors.primaryHeader = "Enter a valid credential header name.";
+    if (auth === "headers" && !curated && (!primaryHeader.trim() || !namePattern.test(primaryHeader.trim()))) errors.primaryHeader = "Enter a valid credential header name.";
     const extra: Record<string, string> = Object.create(null);
-    const seen = new Set([primaryHeader.trim().toLowerCase()]);
-    for (const header of headers) {
-      const name = header.name.trim();
-      if (!namePattern.test(name) || seen.has(name.toLowerCase()) || !header.value || /[^\x20-\x7e]/.test(header.value)) {
-        errors.headers = "Give each additional header a unique name and a non-empty, single-line value.";
+    // A curated form's headers are the provider's CONTRACT (name fixed, user supplies the
+    // value); a manual form's headers are the user's own name+value pairs. Value trimming on
+    // the curated path is an owner-observed failure mode: a pasted Location ID with a stray
+    // trailing space silently failed the connect (2026-11-05).
+    if (curated && requiredHeaders?.length) {
+      for (const h of requiredHeaders) {
+        const value = (requiredValues[h] ?? "").trim();
+        if (!value) {
+          errors.requiredHeaders = `Enter the ${CURATED_HEADER_WORDS[curatedKey ?? ""]?.[h.toLowerCase()]?.label ?? h}.`;
+        } else {
+          extra[h] = value;
+        }
       }
-      seen.add(name.toLowerCase());
-      extra[name] = header.value;
     }
-    if (headers.length > 16 || new TextEncoder().encode(JSON.stringify(extra)).length > 16384) errors.headers = "Use at most 16 headers and 16 KB of header data.";
-    if (preset.requiredHeaders?.length) {
+    if (!curated) {
+      const seen = new Set([primaryHeader.trim().toLowerCase()]);
+      for (const header of headers) {
+        const name = header.name.trim();
+        if (!namePattern.test(name) || seen.has(name.toLowerCase()) || !header.value || /[^\x20-\x7e]/.test(header.value)) {
+          errors.headers = "Give each additional header a unique name and a non-empty, single-line value.";
+        }
+        seen.add(name.toLowerCase());
+        extra[name] = header.value;
+      }
+      if (headers.length > 16 || new TextEncoder().encode(JSON.stringify(extra)).length > 16384) errors.headers = "Use at most 16 headers and 16 KB of header data.";
+    }
+    if (requiredHeaders?.length && !curated) {
       const have = new Set(Object.keys(extra).map((k) => k.toLowerCase()));
-      const missing = preset.requiredHeaders.filter((h) => !have.has(h.toLowerCase()));
+      const missing = requiredHeaders.filter((h) => !have.has(h.toLowerCase()));
       if (missing.length) errors.headers = `${label || "This provider"} requires the ${missing.join(", ")} header${missing.length > 1 ? "s" : ""} on the connection.`;
     }
     setValidation(errors); setMessage(null);
@@ -599,21 +717,42 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
     try {
       // OAuth starts from the existing credential-free canonical shell. Discovery runs only
       // after durable readback and a separate explicit Authorize click, never because of a brand.
+      // A curated token rides the standard Authorization credential (fixed, never asked);
+      // only a MANUAL form may name a different credential header.
+      const effectivePrimaryHeader = curated ? "Authorization" : primaryHeader;
       const kind: GatewayAuthKind = auth === "oauth" || auth === "none" ? "none"
-        : auth === "headers" && primaryHeader.trim().toLowerCase() !== "authorization" ? "header" : "bearer";
-      const result = tool
-        ? await gw.rekeyMcp(tool.id, url.trim(), kind, needsToken ? token.trim() : null, kind === "header" ? primaryHeader.trim() : null, extra)
+        : auth === "headers" && effectivePrimaryHeader.trim().toLowerCase() !== "authorization" ? "header" : "bearer";
+      /**
+       * EXP10 duplicate-guard (owner finding 2026-11-04): an add flow may never leave a SECOND
+       * connection for a server this workspace already holds. A usable row blocks the create
+       * outright (open that connection to change it); an unfinished one is FINISHED — the save
+       * becomes that row's replacement, so retrying a half-done connect can no longer stack
+       * dead rows (production had one workspace with a never-finished row per attempt).
+       */
+      let finishExisting: GatewayConnection | null = null;
+      if (!tool) {
+        const held = connectionForProvider(gw.tools, { providerKey: preset.providerKey ?? null, url: url.trim() });
+        if (held && usable(held)) {
+          setMessage(`This workspace already has a working ${connectionDisplayName(held)} connection. Close this form and open that connection from your list to change it — a second connection for the same tool is not added.`);
+          return;
+        }
+        finishExisting = held;
+      }
+      const target = tool ?? finishExisting;
+      const result = target
+        ? await gw.rekeyMcp(target.id, url.trim(), kind, needsToken ? token.trim() : null, kind === "header" ? effectivePrimaryHeader : null, extra)
         : await gw.createMcp({ providerKey: preset.providerKey ?? "generic-remote", label: label.trim(), serverUrl: url.trim(),
-          authKind: kind, authToken: needsToken ? token.trim() : null, authHeaderName: kind === "header" ? primaryHeader.trim() : null, customHeaders: extra });
+          authKind: kind, authToken: needsToken ? token.trim() : null, authHeaderName: kind === "header" ? effectivePrimaryHeader : null, customHeaders: extra });
       if (!alive.current) return;
       if (!result.ok || !result.connectionId) {
         setMessage(result.message ?? "The save was not confirmed. Your details remain here; try again.");
         return;
       }
+      if (finishExisting) setFinishedExisting(finishExisting);
       const saved = { id: result.connectionId, generation: result.configGeneration ?? null };
       setAck(saved);
       // Secrets never survive a successful write in local form state, even if readback fails.
-      setToken(""); setHeaders([]); setUrl("");
+      setToken(""); setHeaders([]); setRequiredValues({}); setUrl("");
       onDirtyChange(false);
       await confirm(saved);
     } finally { pending.current = false; if (alive.current) setBusy(false); }
@@ -633,7 +772,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
   };
 
   return <div ref={formRef}>
-    {tool && !ack && <p className="ig-gw-warn">Replacing configuration clears this tool’s approvals. Enter the full address and every credential/header you want retained, then check it and approve its tools again.</p>}
+    {(tool || (heldRow && !usable(heldRow))) && !ack && <p className="ig-gw-warn">Replacing configuration clears this tool’s approvals. {curated ? "Enter the credentials" : "Enter the full address and every credential/header"} you want retained, then check it — checking approves its tools again for you.</p>}
     {message && <p className="ig-error" role="alert">{message}</p>}
     {discarding && <DiscardPrompt label="Discard configuration" onDiscard={onCancel} onKeep={() => setDiscarding(false)} />}
     {ack ? <>
@@ -642,6 +781,7 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
         <strong>Saved — configuration confirmed.</strong>
         <p>Address on file · kept private. {confirmed.credentialsConfigured ? "Credentials on file · encrypted." : "No credential on file."}</p>
         <p>{confirmed.customHeaderCount ?? 0} additional headers on file. Saving does not check the server or grant tool approval.</p>
+        {finishedExisting && <p>This finished your existing “{connectionDisplayName(finishedExisting)}” connection instead of adding a second one for the same tool.{finishedExisting.label && label.trim() && label.trim() !== finishedExisting.label ? " Its existing name was kept." : ""}</p>}
       </> : <p>{busy ? "Confirming saved configuration…" : "The server acknowledged the write; its current configuration still needs confirmation."}</p>}
       </div>
       <div className="ig-actions ig-gw-actions">
@@ -653,8 +793,14 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
     </> : <>
       <fieldset disabled={busy || gw.saving || !gw.canWrite} className="ig-gw-config-fields">
         {!tool && <label className="ig-field"><span id="ig-config-name-label">Name</span><input autoComplete="off" value={label} onChange={e => setLabel(e.target.value)} aria-labelledby="ig-config-name-label" aria-invalid={!!validation.label} aria-describedby={validation.label ? "ig-config-name-error" : undefined} />{validation.label && <small id="ig-config-name-error" className="ig-gw-err">{validation.label}</small>}</label>}
-        <label className="ig-field"><span id="ig-config-address-label">{tool ? "Full address" : "Server URL"}</span><input type="url" spellCheck={false} autoComplete="off" value={url} placeholder="https://tools.example.com/mcp" onChange={e => setUrl(e.target.value)} aria-labelledby="ig-config-address-label" aria-invalid={!!validation.url} aria-describedby="ig-config-address-note" />
-          <small id="ig-config-address-note">{validation.url ?? (tool ? "The saved address is kept private. Enter the full address from your provider, including its path." : "Enter the complete public HTTPS address, including its path. Its contents stay private after saving.")}</small></label>
+        {curated ? (
+          // Owner direction 2026-11-05: this address is identical for every customer, so the
+          // form states it and moves on — it never asks for what it already knows.
+          <p className="ig-note" id="ig-config-address-note">Paige already knows this provider’s address ({addressHost(contractUrl)}). There is nothing to enter for it — you only supply the credentials below.</p>
+        ) : (
+          <label className="ig-field"><span id="ig-config-address-label">{tool ? "Full address" : "Server URL"}</span><input type="url" spellCheck={false} autoComplete="off" value={url} placeholder="https://tools.example.com/mcp" onChange={e => setUrl(e.target.value)} aria-labelledby="ig-config-address-label" aria-invalid={!!validation.url} aria-describedby="ig-config-address-note" />
+            <small id="ig-config-address-note">{validation.url ?? (tool ? "The saved address is kept private. Enter the full address from your provider, including its path." : "Enter the complete public HTTPS address, including its path. Its contents stay private after saving.")}</small></label>
+        )}
         <div className="ig-gw-seg ig-gw-seg-auth" role="group" aria-label="Authentication">
           {(authContract?.choices ?? AUTH_CHOICES).map(choice => <button type="button" key={choice.value} aria-invalid={!!validation.auth} aria-pressed={auth === choice.value} className={auth === choice.value ? "on" : ""} onClick={() => choose(choice.value)}>{choice.label}</button>)}
         </div>
@@ -662,10 +808,20 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
         {validation.auth && <p className="ig-gw-err" role="alert">{validation.auth}</p>}
         {auth === "oauth" && <p className="ig-note">Save first, then choose Authorize with server. You’ll leave this page only after that choice. Server support determines whether authorization is available.</p>}
         {(auth === "bearer" || auth === "headers") && <>
-          {auth === "headers" && <label className="ig-field"><span id="ig-config-header-label">Credential header</span><input autoComplete="off" value={primaryHeader} onChange={e => setPrimaryHeader(e.target.value)} aria-labelledby="ig-config-header-label" aria-describedby="ig-config-header-note" aria-invalid={!!validation.primaryHeader} /><small id="ig-config-header-note">{validation.primaryHeader ?? "Authorization sends a Bearer token. Use another header name only when your server requires it."}</small></label>}
-          <label className="ig-field"><span id="ig-config-token-label">Token</span><input type="password" autoComplete="new-password" value={token} onChange={e => setToken(e.target.value)} aria-labelledby="ig-config-token-label" aria-invalid={!!validation.token} aria-describedby="ig-config-token-note" /><small id="ig-config-token-note">{validation.token ?? "Stored encrypted and never shown back. Enter the token only, without a Bearer prefix."}</small></label>
+          {auth === "headers" && !curated && <label className="ig-field"><span id="ig-config-header-label">Credential header</span><input autoComplete="off" value={primaryHeader} onChange={e => setPrimaryHeader(e.target.value)} aria-labelledby="ig-config-header-label" aria-describedby="ig-config-header-note" aria-invalid={!!validation.primaryHeader} /><small id="ig-config-header-note">{validation.primaryHeader ?? "Authorization sends a Bearer token. Use another header name only when your server requires it."}</small></label>}
+          {/* Curated required headers wear the provider's own words: the user types a VALUE
+              (a Location ID); the header NAME is the provider's contract, never a question. */}
+          {curated && (requiredHeaders ?? []).map((h) => {
+            const words = CURATED_HEADER_WORDS[curatedKey ?? ""]?.[h.toLowerCase()];
+            return <label className="ig-field" key={h}>
+              <span id={`ig-req-${h.toLowerCase()}-label`}>{words?.label ?? h}</span>
+              <input type="password" autoComplete="new-password" spellCheck={false} value={requiredValues[h] ?? ""} onChange={e => setRequiredValues(v => ({ ...v, [h]: e.target.value }))} aria-labelledby={`ig-req-${h.toLowerCase()}-label`} aria-invalid={!!validation.requiredHeaders} aria-describedby={`ig-req-${h.toLowerCase()}-note`} />
+              <small id={`ig-req-${h.toLowerCase()}-note`}>{validation.requiredHeaders ?? words?.note ?? `The ${h} this provider requires on the connection.`}</small>
+            </label>;
+          })}
+          <label className="ig-field"><span id="ig-config-token-label">{curated ? CURATED_TOKEN_WORDS[curatedKey ?? ""]?.label ?? "Token" : "Token"}</span><input type="password" autoComplete="new-password" value={token} onChange={e => setToken(e.target.value)} aria-labelledby="ig-config-token-label" aria-invalid={!!validation.token} aria-describedby="ig-config-token-note" /><small id="ig-config-token-note">{validation.token ?? (curated ? CURATED_TOKEN_WORDS[curatedKey ?? ""]?.note ?? "Stored encrypted and never shown back. Enter the token only, without a Bearer prefix." : "Stored encrypted and never shown back. Enter the token only, without a Bearer prefix.")}</small></label>
         </>}
-        {auth === "headers" && <>
+        {auth === "headers" && !curated && <>
           <p className="ig-note">Additional headers are encrypted too. Replacement removes previously saved headers not entered here.</p>
           {headers.map((header, index) => <div className="ig-gw-header-row" key={index}>
             <label className="ig-field"><span>Header {index + 1} name</span><input autoComplete="off" aria-invalid={!!validation.headers} value={header.name} onChange={e => setHeaders(items => items.map((item, at) => at === index ? { ...item, name: e.target.value } : item))} /></label>
@@ -760,12 +916,12 @@ function Catalogue({
     // person already looks in for it — and reports its real state there instead of appearing twice:
     // once as something to add, once as the thing they already added.
     const have = held(p);
-    const chip = have ? statusChip(have) : null;
+    const chip = have ? heldStatusChip(have) : null;
     return (
       <li key={p.n}>
         <button type="button" className="ig-gw-tile" data-mode={p.m} data-held={have ? "" : undefined}
           onClick={() => route(p)}
-          aria-label={have ? `${p.n} — connected, ${chip!.label.toLowerCase()}. Open it.` : `${p.n} — ${MODE_LABEL[p.m]}`}>
+          aria-label={have ? `${p.n} — already added, ${chip!.label.toLowerCase()}. Open it.` : `${p.n} — ${MODE_LABEL[p.m]}`}>
           <span className="ig-gw-tile-top"><span className="ig-gw-tile-mark" aria-hidden>{p.g}</span><span className="ig-gw-tile-name">{p.n}</span></span>
           <span className="ig-gw-tile-desc">{p.d}</span>
           {p.net && <span className="ig-gw-tile-net">{p.net}</span>}
@@ -1268,7 +1424,9 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
    *  so without this the drawer would announce "found 12 actions" directly above a list
    *  still showing what it read before the check ran. */
   const [catalogueRead, setCatalogueRead] = useState(0);
-  const chip = statusChip(tool);
+  // The same held-row truth as the wall and the catalogue tile (owner finding 2026-11-05:
+  // this header said "Turned off" about a setup that never finished).
+  const chip = heldStatusChip(tool);
   const isRest = tool.authKind === "api_key";
   const isOAuth = tool.authKind === "oauth";
   const noOutboundAddress = tool.addressConfigured === false;
@@ -1308,7 +1466,7 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
   // OAuth replacement first saves a credential-free shell, then offers explicit authorization.
 
   return (
-    <GatewayDrawer eyebrow={noOutboundAddress ? "Integrations" : "Connected MCP Gateway"} title={tool.label} dirty={() => incomingDirty.current || (mode === "rekey" && (isRest || configurationDirty))} onClose={onClose}>
+    <GatewayDrawer eyebrow={noOutboundAddress ? "Integrations" : "MCP server connection"} title={tool.label} dirty={() => incomingDirty.current || (mode === "rekey" && (isRest || configurationDirty))} onClose={onClose}>
       {returnedFromSignIn && <p className="ig-gw-info" role="status">Returning from sign-in does not verify this tool. Review its saved status, then check it when you’re ready.</p>}
       <dl className="ig-facts">
         <div><dt>Endpoint</dt><dd>{tool.serverUrlHost ?? "—"}</dd></div>
@@ -1331,7 +1489,8 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
         <>
           <IncomingContacts gw={gw} connectionId={tool.id} connectionEnabled={tool.enabled}
             uncertainGeneration={uncertainGeneration} onUncertain={onUncertain}
-            onDirtyChange={setIncomingDirty} onEditingChange={setIncomingEditing} />
+            onDirtyChange={setIncomingDirty} onEditingChange={setIncomingEditing}
+            offerSetup={noOutboundAddress} />
           {!incomingEditing && <>
           {/* The probe's own verdict, when one has been run in this drawer. It leads, because it is
               the newest thing the person knows and the reason they pressed the button. */}
@@ -1342,13 +1501,16 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
           )}
           {signInMessage && <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>{signInMessage}</span></div>}
 
-          {/* Replacement is the recovery for a disabled canonical connection. */}
+          {/* Replacement is the recovery for a disabled canonical connection; a row that
+              never finished names that recovery instead (its chip already says so). */}
           {!tool.enabled && (
-            <div className="ig-gw-info" role="status"><span>This tool is turned off. Re-key it to switch it back on.</span></div>
+            <div className="ig-gw-info" role="status"><span>{neverFinishedRow(tool)
+              ? "This setup never finished. Re-key it to add what is missing."
+              : "This tool is turned off. Re-key it to switch it back on."}</span></div>
           )}
 
           {!noOutboundAddress && tool.status === "pending_verification" && (
-            <div className="ig-gw-info" role="status"><span>This tool hasn’t been checked yet. Paige can’t use it until she has reached it and you’ve approved what it may do.</span></div>
+            <div className="ig-gw-info" role="status"><span>This tool hasn’t been checked yet. Check it once — reaching it also approves its tools for you.</span></div>
           )}
           {!noOutboundAddress && tool.status === "error" && (
             <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>Couldn’t reach it. Fix the address or re-key, then check it again.</span></div>
@@ -1609,7 +1771,11 @@ function ScopedIntegrationsGatewaySection({
       )}
       {gw.tools.map((c) => {
         const noOutboundAddress = c.addressConfigured === false;
-        const chip = noOutboundAddress ? { tone: "neutral", label: "View incoming setup" } : statusChip(c);
+        // EXP10 (owner finding 2026-11-04): a row that was saved but never finished is the
+        // state a non-technical owner sees after a half-done connect — name the recovery
+        // (heldStatusChip, shared with the catalogue tile and drawer header).
+        const chip = noOutboundAddress ? { tone: "neutral" as ChipTone, label: "View incoming setup" }
+          : heldStatusChip(c);
         const title = connectionDisplayName(c);
         return (
           <li key={c.id}>
@@ -1620,7 +1786,6 @@ function ScopedIntegrationsGatewaySection({
               </span>
               <span className="ig-card-title">
                 <strong>{title}</strong>
-                {!noOutboundAddress && !usable(c) && <span className="ig-chip" data-warn>not usable yet</span>}
               </span>
               <span className="ig-card-foot">
                 <span className="ig-card-state" data-tone={chip.tone === "ok" ? "ok" : chip.tone === "bad" ? "bad" : chip.tone === "warn" ? "warn" : "neutral"}>
@@ -1676,7 +1841,7 @@ function ScopedIntegrationsGatewaySection({
 
       {drawer?.kind === "catalogue" && !tenantLoading && (
         <GatewayDrawer
-          eyebrow="Connected MCP Gateway"
+          eyebrow="MCP server connection"
           title="Add a tool"
           onClose={close}
           // Shipped copy, kept verbatim (§58). It used to head the tools section; the section is
@@ -1710,7 +1875,7 @@ function ScopedIntegrationsGatewaySection({
       )}
 
       {drawer?.kind === "add" && !tenantLoading && (
-        <GatewayDrawer eyebrow="Connected MCP Gateway" title={drawer.preset.label ? `Add ${drawer.preset.label}` : "Add a tool"} dirty={addDirty} onClose={close}>
+        <GatewayDrawer eyebrow="MCP server connection" title={drawer.preset.label ? `Add ${drawer.preset.label}` : "Add a tool"} dirty={addDirty} onClose={close}>
           <ConnectionForm key={scopeKey} gw={gw} preset={drawer.preset} onDirtyChange={setAddDirty} onCancel={close}
             onSaved={(tool) => setDrawer({ kind: "detail", tool, scope: scopeKey })} />
         </GatewayDrawer>

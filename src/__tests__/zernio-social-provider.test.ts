@@ -16,11 +16,13 @@ afterEach(() => vi.unstubAllGlobals());
 
 /** Serves the given Responses in order and records every request URL + method. */
 function serve(bodies: Array<{ status?: number; body?: unknown }>) {
-  const calls: Array<{ url: string; method: string; body: string | null }> = [];
+  const calls: Array<{ url: string; method: string; body: string | null; headers: Record<string, string> }> = [];
   let cursor = 0;
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = input instanceof Request ? input : new Request(String(input), init);
-    calls.push({ url: request.url, method: request.method, body: init?.body ? String(init.body) : null });
+    const headers: Record<string, string> = {};
+    new Headers((input instanceof Request ? request.headers : init?.headers) ?? undefined).forEach((value, key) => { headers[key] = value; });
+    calls.push({ url: request.url, method: request.method, body: init?.body ? String(init.body) : null, headers });
     const next = bodies[Math.min(cursor, bodies.length - 1)];
     cursor += 1;
     return new Response(next.body === undefined ? "{}" : JSON.stringify(next.body), {
@@ -92,6 +94,16 @@ describe("Zernio connect URL", () => {
     ]);
     await zernioSocialAdapter.createConnectUrl({ providerProfileKey: KEY, redirectUrl: "https://paige.example/cb", platform: "google_business" });
     expect(calls[1].url).toContain("/v1/connect/google-business?");
+  });
+
+  it("connects X under the provider's own slug (twitter) — the live 2026-11-06 failure", async () => {
+    stubEnv({ ZERNIO_API_KEY: "zk_test" });
+    const calls = serve([
+      { body: [{ id: "zp_3", externalId: KEY }] },
+      { body: { authUrl: "https://zernio.com/go" } },
+    ]);
+    await zernioSocialAdapter.createConnectUrl({ providerProfileKey: KEY, redirectUrl: "https://paige.example/cb", platform: "x" });
+    expect(calls[1].url).toContain("/v1/connect/twitter?");
   });
 
   it("refuses an authorization URL that is not https or not on a consent host", async () => {
@@ -191,13 +203,84 @@ describe("Zernio disconnect", () => {
   });
 });
 
-describe("Zernio publishing arm", () => {
-  it("does not exist yet and always refuses", async () => {
+describe("Zernio publishing arm (owner-approved November 3)", () => {
+  const PUB = "1a2b3c4d-0000-4000-8000-00000000f001";
+  it("posts now with the publication UUID as the Idempotency-Key and the resolved profile", async () => {
+    stubEnv({ ZERNIO_API_KEY: "zk_test" });
+    const calls = serve([
+      { body: [{ _id: "zp_9", externalId: KEY }] },
+      { status: 207, body: { post: { id: "zp_post_1", status: "published" }, platformResults: [
+        { platform: "google-business", status: "published", platformPostId: "gp_1", platformPostUrl: "https://plus.google.com/x" },
+      ] } },
+    ]);
+    const outcome = await zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "google_business", text: "Hello world", externalId: PUB });
+    expect(outcome).toEqual({ kind: "published", results: [expect.objectContaining({ platform: "google_business", success: true, postId: "gp_1", postUrl: "https://plus.google.com/x" })] });
+    expect(calls[1].url).toContain("/v1/posts");
+    expect(calls[1].method).toBe("POST");
+    expect(calls[1].body).toContain('"publishNow":true');
+    expect(calls[1].body).toContain('"profileId":"zp_9"');
+    expect(calls[1].body).toContain('"platforms":["google-business"]');
+    expect(calls[1].headers["idempotency-key"]).toBe(PUB);
+  });
+
+  it("maps per-platform failures honestly inside a published outcome", async () => {
+    stubEnv({ ZERNIO_API_KEY: "zk_test" });
+    serve([
+      { body: [{ _id: "zp_9", externalId: KEY }] },
+      { status: 207, body: { post: { id: "zp_post_2", status: "partial" }, platformResults: [
+        { platform: "x", status: "failed", error: "rate limited by platform" },
+      ] } },
+    ]);
+    const outcome = await zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "x", text: "Hi", externalId: PUB });
+    expect(outcome).toEqual({ kind: "published", results: [expect.objectContaining({ platform: "x", success: false, error: "rate limited by platform", postUrl: null })] });
+  });
+
+  it("reports an accepted-but-unproven post as processing with the provider's own post id", async () => {
+    stubEnv({ ZERNIO_API_KEY: "zk_test" });
+    serve([
+      { body: [{ _id: "zp_9", externalId: KEY }] },
+      { status: 201, body: { message: "created", post: { id: "zp_post_3", status: "publishing" } } },
+    ]);
+    await expect(zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "instagram", text: "Hi", externalId: PUB }))
+      .resolves.toEqual({ kind: "processing", requestId: "zp_post_3" });
+  });
+
+  it("refuses to guess when the answer proves nothing", async () => {
+    stubEnv({ ZERNIO_API_KEY: "zk_test" });
+    serve([
+      { body: [{ _id: "zp_9", externalId: KEY }] },
+      { status: 201, body: { message: "created", post: { id: "zp_post_4" } } },
+    ]);
+    await expect(zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "x", text: "Hi", externalId: PUB }))
+      .resolves.toEqual({ kind: "unknown", requestId: "zp_post_4", reason: "provider_answered_without_results" });
+  });
+
+  it("treats a 409 as an uncertain outcome for reconciliation, never a clean failure", async () => {
+    stubEnv({ ZERNIO_API_KEY: "zk_test" });
+    serve([
+      { body: [{ _id: "zp_9", externalId: KEY }] },
+      { status: 409, body: { code: "idempotency_conflict" } },
+    ]);
+    await expect(zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "x", text: "Hi", externalId: PUB }))
+      .resolves.toEqual({ kind: "unknown", requestId: null, reason: "provider_idempotency_or_dedup_conflict" });
+  });
+
+  it("still throws the door's refusal families for provider authorization problems", async () => {
+    stubEnv({ ZERNIO_API_KEY: "zk_test" });
+    serve([
+      { body: [{ _id: "zp_9", externalId: KEY }] },
+      { status: 403, body: { code: "ACCOUNT_DISCONNECTED" } },
+    ]);
+    await expect(zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "x", text: "Hi", externalId: PUB }))
+      .rejects.toMatchObject({ code: "provider_authorization_rejected" });
+  });
+
+  it("refuses a non-UUID publication id before any transport (idempotency key integrity)", async () => {
     stubEnv({ ZERNIO_API_KEY: "zk_test" });
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
-    await expect(zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "x", text: "hello", externalId: "pub_1" }))
-      .rejects.toMatchObject({ code: "provider_publishing_unavailable" });
+    await expect(zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "x", text: "Hi", externalId: "not-a-uuid" }))
+      .rejects.toMatchObject({ code: "invalid_publication_id" });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

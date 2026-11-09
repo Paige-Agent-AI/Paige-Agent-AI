@@ -152,6 +152,7 @@ import { buildApprovalOutcome, classifySpentApproval, classifyUnspentApproval, d
 import { resolveSourceThreadLink } from "../_shared/source-thread-link.ts";
 import { buildCreditProposal, buildCreditSyncPayload } from "../_shared/credit-extraction-payload.ts";
 import { projectOutcomeForModel } from "../_shared/mcp-outcome.ts";
+import { projectGatewayRunForModel } from "../_shared/mcp-gateway/run-projection.ts";
 import { embeddingsCompat, voyageEmbedOne, VOYAGE_MODEL } from "../_shared/voyage.ts";
 import { applyContactSearchFilter, CONTACT_NAME_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
 import { resolveClientRef } from "../_shared/client-ref.ts";
@@ -10538,7 +10539,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         case "zapier_run_action":
           return `Run the Zapier action "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} — this runs it live in the connected app.`;
         case "ghl_run_action":
-          return `Run the GoHighLevel tool "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} — this touches the live CRM (a write changes real records; a send messages a real person).`;
+          return `Run the GoHighLevel tool "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} in the live CRM — a read looks up real records and changes nothing; a write changes real records or messages a real person.`;
         case "forge_subagent":
           return `${a?.runtime === "hard" ? "Propose a new (code-backed) specialist" : "Spin up a new specialist"} — "${a?.name || a?.slug || "agent"}" (${a?.domain || "general"}): ${String(a?.description || "").slice(0, 80)}.${a?.runtime === "hard" ? " Goes to an admin for sign-off." : " Joins the team right away."}`;
         case "save_to_knowledge_base":
@@ -17438,7 +17439,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     approved: tools.filter((t) => t?.approved === true).map((t) => String(t?.name ?? "")).filter(Boolean),
                     // NAME the waiting tools so the operator can act — never a bare count.
                     unapproved: tools.filter((t) => t?.approved !== true).map((t) => String(t?.name ?? "")).filter(Boolean),
-                    note: "The approved tools are ready to run via ghl_run_action. The unapproved names are waiting on the operator's per-tool approval (Settings → Integrations) — name them to the operator so they can choose which to grant.",
+                    note: "The approved tools are ready to run via ghl_run_action. The unapproved names are waiting on the operator's per-tool approval (Settings → Integrations) — name them to the operator so they can choose which to grant. IMPORTANT: this connection is healthy and its approved actions are NEVER 'unavailable' — if ghl_run_action is not among your current round's tools, do not tell the person the action or runner is unavailable; ask them to send the request again (that re-routes the turn with the runner available), or ask the question you need answered.",
                   };
                 }
               } else {
@@ -17462,11 +17463,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // tool lacks its durable approval), not_found, bad_tool_name — and each
                 // must reach the model verbatim, never the generic transport sentence.
                 const ghlRunBody = await readInvokeBody(ghlErr, ghlData);
-                if (ghlErr) {
-                  result = { success: false, ...ghlRunBody, error: String(ghlRunBody.error ?? "gateway_refused") };
-                } else {
-                  result = ghlRunBody;
-                }
+                // PROJECT, never forward raw — and route by the BODY, not the HTTP status
+                // (non-author review P1, 2026-11-06). The closed body alone ({outcome,
+                // code, run_id, recorded}) has no `success` field, no data, and no
+                // glossary: on 2026-11-06 a SUCCEEDED lookup (Rail: capability_succeeded)
+                // was narrated to the owner as "couldn't confirm whether it went through."
+                // The router picks the glossary the body earns — a 502 carrying
+                // {outcome:"tool_error"} gets the tool_error note, a pre-runner {error:…}
+                // gets the nothing-ran note, and a gateway that never answered gets the
+                // may-have-landed posture (NEVER "it didn't run", which invites the
+                // duplicating retry).
+                result = projectGatewayRunForModel(ghlRunBody);
               }
             }
 
@@ -19547,7 +19554,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         propose_business_brief_update: "tenants",
         // 2026-09-12 repair — the evaluation loop + social publish, newly classified (action-risk.ts).
         // `improvement_propose` INSERTs and `improvement_decide` UPDATEs the proposals row, so both
-        // name that table; `social_post` reaches an external social platform via Upload-Post with no
+        // name that table; `social_post` reaches an external social platform via the sole provider
+        // (Zernio) with no
         // durable local record, so it names the provider the way `zapier_run_action` does.
         improvement_propose: "paige_improvement_proposals",
         improvement_decide: "paige_improvement_proposals",

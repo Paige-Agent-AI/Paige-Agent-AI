@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "bash scripts/vercel-ignore.sh",
   "installCommand": "bun install",
   "rewrites": [
     { "source": "/privacy", "destination": "/privacy.html" },

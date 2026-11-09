@@ -26,6 +26,7 @@ const dialogText = () => document.querySelector('[role="dialog"]')?.textContent 
 const chooseDetails = async () => { await click("Book a time"); await click(/^Client check-in/); await click(/Nov 9/); };
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 beforeEach(() => {
+  vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-11-08T12:00:00Z"));
   vi.clearAllMocks(); localStorage.clear(); onSaved = vi.fn<() => void>();
   f.calendars.mockResolvedValue({ calendars: [calendar], next: null });
   f.availability.mockResolvedValue({ slots, timezone: "UTC", durationMin: 30, horizonDays: 60, services: [], questions: [], locations: ["phone"] });

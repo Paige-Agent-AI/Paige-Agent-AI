@@ -219,8 +219,6 @@ project_id = "xygzykjyynhzqytbqnzu"
     verify_jwt = true
   [functions.admin-delete-user]
     verify_jwt = true
-  [functions.auth-email-hook]
-    verify_jwt = false
   [functions.backfill-memory-embeddings]
     verify_jwt = true
   [functions.create-trial-checkout]
@@ -230,8 +228,6 @@ project_id = "xygzykjyynhzqytbqnzu"
   [functions.enroll-user-in-course]
     verify_jwt = true
   [functions.fetch-url-content]
-    verify_jwt = false
-  [functions.handle-email-suppression]
     verify_jwt = false
   # Resend calls this with a Svix signature and no bearer token, so JWT verification MUST be off —
   # the signature is the authentication. The function refuses every request when its secret is
@@ -281,10 +277,6 @@ project_id = "xygzykjyynhzqytbqnzu"
     verify_jwt = false
   [functions.quickbooks-webhook]
     verify_jwt = false
-  [functions.preview-transactional-email]
-    verify_jwt = false
-  [functions.process-email-queue]
-    verify_jwt = true
   [functions.request-data-deletion]
     verify_jwt = true
   [functions.schedule-automated-tasks]

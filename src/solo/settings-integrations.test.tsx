@@ -1188,9 +1188,11 @@ describe("Team chat — Slack first-class, Teams honest", () => {
       server_url_host: "mcp.slack.com" }] });
     const { host } = await render();
     await openCard(host, "slack");
-    // The form's edit shape: the address field becomes "Full address" (re-key), and the
-    // Name field is absent — this is the EXISTING connection, not a fresh add.
-    expect(fieldFor(host, "Full address")).toBeTruthy();
+    // The form's edit shape for a CURATED provider (owner direction 2026-11-05): no address
+    // field at all — the endpoint is carried, not entered — and the Name field is absent;
+    // this is the EXISTING connection, not a fresh add.
+    expect(fieldFor(host, "Full address")).toBeFalsy();
+    expect(host.querySelector('[role="dialog"]')?.textContent).toMatch(/Paige already knows this provider’s address \(mcp\.slack\.com\)/i);
     expect(fieldFor(host, "Name")).toBeFalsy();
     const create = invoke.mock.calls.find(([name, options]) => name === "mcp-gateway" && options.body.action === "create");
     expect(create).toBeUndefined();
@@ -1202,7 +1204,9 @@ describe("Team chat — Slack first-class, Teams honest", () => {
     await openCard(host, "slack");
     const dialog = host.querySelector('[role="dialog"]');
     expect(dialog?.textContent).toContain("Slack");
-    expect((fieldFor(host, "Server URL") as HTMLInputElement)?.value).toBe("https://mcp.slack.com/mcp");
+    // Curated (2026-11-05): the address is stated, never asked — the create still carries it.
+    expect(fieldFor(host, "Server URL")).toBeFalsy();
+    expect(dialog?.textContent).toMatch(/Paige already knows this provider’s address \(mcp\.slack\.com\)/i);
     await type(fieldFor(host, "Name"), "Operations workspace");
     await type(fieldFor(host, "Token"), "xoxp-slack-user-token-123456");
     await click(byText(host, "Save configuration"));
@@ -1225,5 +1229,31 @@ describe("Team chat — Slack first-class, Teams honest", () => {
     // No gateway create ever fires for Teams — there is no native path to create.
     const create = invoke.mock.calls.find(([name, options]) => name === "mcp-gateway" && options.body.action === "create");
     expect(create).toBeUndefined();
+  });
+});
+
+
+describe("EXP07 slice 1 — the provider's connection apps on the Solo page (owner 2026-11-06)", () => {
+  it("renders Google, Discord and Telegram beside the social cards, in the shared groups", async () => {
+    world();
+    const { host } = await render();
+    for (const key of ["google", "discord", "telegram"]) {
+      const card = host.querySelector(`.ig-card[data-provider="app-${key}"]`);
+      expect(card, `missing connection app card: ${key}`).toBeTruthy();
+    }
+    expect(host.textContent).toContain("Reach people where they are.");
+    expect(host.textContent).toContain("Send mail and book time.");
+  });
+
+  it("opens the governed Social drawer for a connection app with its own kind label", async () => {
+    world();
+    const { host, root } = await render();
+    const googleCard = host.querySelector<HTMLButtonElement>('.ig-card[data-provider="app-google"]');
+    expect(googleCard).toBeTruthy();
+    await act(async () => { googleCard!.click(); await Promise.resolve(); });
+    const drawer = host.querySelector('[role="dialog"]');
+    expect(drawer?.textContent).toContain("Google");
+    expect(drawer?.textContent).toContain("Gmail, Calendar and more");
+    await act(async () => root.unmount());
   });
 });

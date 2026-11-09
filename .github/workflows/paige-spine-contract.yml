@@ -78,6 +78,7 @@ on:
       - "scripts/proof/contact-methods-add-race.mjs"
       - "scripts/proof/chat-answer-claim-race.mjs"
       - "scripts/proof/layer-c-native-vertical.mjs"
+      - "scripts/proof/exp01-chat-knowledge-postgres.py"
       - "scripts/proof/operator-postgres-fixture.mjs"
       - "scripts/proof/operations-review-discovery-concurrency.mjs"
       - "supabase/functions/paige-native-event-dispatch/**"
@@ -209,7 +210,7 @@ permissions:
 jobs:
   contract:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -921,6 +922,17 @@ jobs:
         run: |
           npm ci
           node scripts/proof/exp01-reviewed-setup-full-schema.mjs
+        if: ${{ !cancelled() }}
+      - name: Knowledge saves preserve native Auth update progress
+        run: |
+          python3 scripts/proof/exp01-chat-knowledge-postgres.py \
+            --psql "$(command -v psql)" --port 54322 \
+            --expected-data-directory "$(psql -X -h 127.0.0.1 -p 54322 -U postgres -d postgres -Atc 'SHOW data_directory')" \
+            --auth-lock-migration supabase/migrations/20271130020015_knowledge_auth_lock_fairness.sql \
+            --containment-release-migration supabase/migrations/20271130020017_knowledge_save_release_contract.sql \
+            --auth-order-migration supabase/migrations/20271130020019_knowledge_auth_lock_order.sql
+        env:
+          PGPASSWORD: postgres
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/secure_browser_control_plane_security.sql
       # PC-1 — concurrent budget enforcement: 12 racing service-role callers against a day

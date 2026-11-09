@@ -1,14 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { recordCapabilityRun, stableRunId } from "../_shared/capability-record.ts";
-import { uploadPostSocialAdapter } from "../_shared/social-provider/upload-post.ts";
 import { SocialProviderError } from "../_shared/social-provider/mod.ts";
 import { zernioSocialAdapter } from "../_shared/social-provider/zernio.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TOKEN = /^[0-9a-f]{64}$/;
-const RETURN_PATH = /^\/solo\/[A-Za-z0-9_-]+\/settings\/integrations\/?$/;
-// Same provider selection as paige-social: whichever adapter carries a vaulted key.
-const adapter = zernioSocialAdapter.isConfigured() ? zernioSocialAdapter : uploadPostSocialAdapter;
+// The same destinations the door itself accepts (paige-social's widened regex): a
+// Solo workspace's Integrations page or the Platform Operator's. The callback is the
+// verifier of the round trip the door started, so the two sets must agree — a Solo-only
+// check here silently killed every Operator connect at the return step.
+const RETURN_PATH = /^\/(solo\/[A-Za-z0-9_-]+|operator)\/settings\/integrations\/?$/;
+// Same sole-provider rule as paige-social (ANT-164 3f511055: Zernio sole aggregator, Upload-Post
+// retired). Unconfigured Zernio fails closed through the honest unavailable path, never a fallback.
+const adapter = zernioSocialAdapter;
 
 function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -21,8 +25,11 @@ async function sha256(value: string): Promise<string> {
 
 function safeBase(): string | null {
   try {
-    const configured = Deno.env.get("PUBLIC_SITE_URL");
-    if (!configured) return null;
+    // Canonical-app-url contract (mcp-oauth-callback, tenant-signup): PUBLIC_SITE_URL is
+    // optional with the platform's canonical origin as the fallback. The hard-required read
+    // was the whole of the 2026-11-04 connect-door outage; the redirect below stays
+    // fixed-origin and the return path stays the server-stored single-use RETURN_PATH.
+    const configured = Deno.env.get("PUBLIC_SITE_URL") ?? "https://paigeagent.ai";
     const url = new URL(configured);
     return url.protocol === "https:" && !url.username && !url.password && !url.search && !url.hash ? url.origin : null;
   } catch {

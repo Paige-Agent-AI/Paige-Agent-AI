@@ -14,6 +14,7 @@ export type SocialConnection = {
   disconnectedAt: string | null;
   failureCode: string | null;
   accountCount: number;
+  providedByPlatform: boolean;
 };
 
 export type SocialAccount = {
@@ -30,7 +31,7 @@ export type SocialAccount = {
 };
 
 type PendingAction = {
-  capability: "social_connection_start" | "social_connection_disconnect" | "social_account_select";
+  capability: "social_connection_start" | "social_connection_disconnect" | "social_account_select" | "social_connection_adopt";
   fingerprint: string;
   summary: string;
   expiresAt: string | null;
@@ -74,6 +75,7 @@ function connections(value: unknown): SocialConnection[] {
       disconnectedAt: date(row.disconnected_at),
       failureCode: typeof row.failure_code === "string" ? row.failure_code : null,
       accountCount: typeof row.account_count === "number" ? row.account_count : Number(row.account_count) || 0,
+      providedByPlatform: row.provided_by_platform === true,
     }];
   });
 }
@@ -197,6 +199,7 @@ export function useSocialConnections() {
       const fingerprint = approval.fingerprint;
       const summary = approval.summary;
       const capability = request.action === "start" ? "social_connection_start"
+        : request.action === "adopt" ? "social_connection_adopt"
         : request.action === "disconnect" ? "social_connection_disconnect" : "social_account_select";
       setState((current) => ({ ...current, busy: false, pending: {
         capability,
@@ -219,6 +222,7 @@ export function useSocialConnections() {
     setState((current) => ({
       ...current, busy: false, pending: null,
       notice: payload.state === "verified" ? "Social accounts were verified. Choose the account Paige should use."
+        : payload.state === "adopted" ? "Platform channels were adopted into this workspace. Nothing was published."
         : payload.state === "selected" ? "Social account selected. No content was published."
           : payload.state === "disconnected" ? "Social access was disconnected and future actions are blocked."
             : "Social was updated.",
@@ -265,6 +269,11 @@ export function useSocialConnections() {
     invoke({ action: "select", connection_id: connectionId, account_id: accountId }), [invoke]);
   const disconnect = useCallback((connectionId: string) =>
     invoke({ action: "disconnect", connection_id: connectionId }), [invoke]);
+  // Operator hub surface: reads adoptable channels, and adopts under one governed approval.
+  // The approval card is issued by invoke() like every other Social mutation.
+  const hubProfiles = useCallback(() => invoke({ action: "hub_profiles" }), [invoke]);
+  const adopt = useCallback((profileId: string, platforms: string[]) =>
+    invoke({ action: "adopt", profileId, platforms }), [invoke]);
   const approve = useCallback(() => state.pending
     ? invoke({ ...state.pending.request, approval_fingerprint: state.pending.fingerprint })
     : Promise.resolve(null), [invoke, state.pending]);
@@ -288,6 +297,8 @@ export function useSocialConnections() {
     start,
     select,
     disconnect,
+    hubProfiles,
+    adopt,
     approve,
     decline,
   };

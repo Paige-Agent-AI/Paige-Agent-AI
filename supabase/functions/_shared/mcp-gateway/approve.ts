@@ -75,6 +75,25 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const TOOL_NAME_RE = /^[A-Za-z0-9_.:-]{1,64}$/;
 const HEX64_RE = /^[0-9a-f]{64}$/;
 
+/** The one-home builder for the live-verified tool pin reader (§18). The pin lives in
+ *  `mcp_connection_tools` (service-role read only) — both the wrapper's approve branch and its
+ *  verify branch (connect-consent, owner decision 2026-11-05) build this from the service-role
+ *  client, so runApprove and the connect-consent pass resolve pins through the identical path.
+ *  Typed against the minimal `from` seam the real SupabaseClient satisfies under `deno check`. */
+// deno-lint-ignore no-explicit-any
+export function makeReadToolPin(admin: { from: (table: string) => any }): ApproveDeps["readToolPin"] {
+  return async (connectionId: string, toolName: string): Promise<string | null> => {
+    const { data, error } = await admin
+      .from("mcp_connection_tools")
+      .select("pin")
+      .eq("connection_id", connectionId)
+      .eq("tool_name", toolName)
+      .maybeSingle();
+    if (error || !data) return null;
+    return typeof (data as { pin?: unknown }).pin === "string" ? (data as { pin: string }).pin : null;
+  };
+}
+
 function nonEmptyString(v: unknown): string | null {
   return typeof v === "string" && v.length > 0 ? v : null;
 }

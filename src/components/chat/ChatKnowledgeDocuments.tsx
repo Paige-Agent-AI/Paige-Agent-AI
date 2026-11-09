@@ -162,9 +162,10 @@ export function ChatKnowledgeDocuments(props: Props) {
       || source.documentId!==value.documentId || value.tenantId!==props.tenantId) return;
     const owner=beginBusy();setSavedPublication(value);setSavedLinkState('unknown');
     try {
+      // Initial publication annotation has its own revision0, separate from intake revision1.
       await prepareChatKnowledgeLink(port,{...scope(captured),isCurrent:()=>current(captured)&&(!context||context.isCurrent())},{
         publicationWorkId:value.workId,documentId:value.documentId,documentRevision:value.revision,
-        extractionIntentId:source.extractionIntentId,sourceSha256:source.sourceSha256,turnId:source.turnId,expectedLinkRevision:1,
+        extractionIntentId:source.extractionIntentId,sourceSha256:source.sourceSha256,turnId:source.turnId,expectedLinkRevision:0,
       }).save();
       if (current(captured)) { setNotice('The original saved text is linked to this chat.'); setSavedPublication(null);setSavedLinkState('ready'); void load(); }
     } catch { if (current(captured)) setNotice('The text remains in Knowledge. Its chat link is unconfirmed; reload the document list before repeating any link action.'); }

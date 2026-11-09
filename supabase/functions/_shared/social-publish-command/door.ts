@@ -12,7 +12,7 @@
 //   confirm): a server-issued proposal in paige_pending_confirmations with the exact preview, and
 //   on the second call a single-use claim bound to this user, workspace, act and args → authority +
 //   connection RECHECKED after the claim → the provider execution runs ONCE through the claimed
-//   args (upload-post adapter's createPost — synchronous text post, external_id = the publication
+//   args (the configured provider adapter's createPost — synchronous text post, external_id = the publication
 //   row) → the truthful receipt: the provider's own post id/url read back into
 //   content_publications (published | partial | failed | outcome_unknown), the capability receipt
 //   recorded, and the response states exactly what happened — an outcome_unknown answer says the

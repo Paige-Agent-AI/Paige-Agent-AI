@@ -15,7 +15,7 @@ export async function verifyHubFileBeginCurrentness({sql,connection,ids,prepare,
  const definition=sql(`SELECT pg_get_functiondef('${signature}'::regprocedure)`);
  const metadata=()=>sql(`SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='${signature}'::regprocedure`);
  const beforeMetadata=metadata();
- const patch=readFileSync(new URL('../../supabase/migrations/20271130020018_exp08_file_admission_currentness.sql',import.meta.url),'utf8').replace(/\r\n/g,'\n');
+ const patch=readFileSync(new URL('../../supabase/migrations/20271133000018_exp08_file_admission_currentness_forward.sql',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  const request='e8000000-0000-4000-8000-000000080899';
  for(const candidate of [false,true]) {
   if(candidate) { sql(patch); sql(patch); assert.equal(metadata(),beforeMetadata,'Actual forward apply/replay conserves OID and ALL non-source catalogue fields'); }
@@ -29,6 +29,13 @@ export async function verifyHubFileBeginCurrentness({sql,connection,ids,prepare,
     await ready(holder);
     caller=connection(`BEGIN; SET application_name='exp08_hub_door_second'; SET statement_timeout='20s'; SELECT set_config('request.jwt.claim.sub','${ids.actor}',true); SET LOCAL ROLE authenticated; SELECT public.team_hub_begin_file('${ids.tenant}','${channel}','proof.txt','text/plain',1,'${request}'); COMMIT;`);
     assert(await blocked(caller,holder),'The original uploader advisory wait must actually occur');
+    const checksAuthWhileWaiting=candidate&&change==='workspace'&&commit;
+    if(checksAuthWhileWaiting) {
+     // A queued uploader must leave the actor Auth row available to native sign-in.
+     assert.match(sql(`BEGIN; SET LOCAL lock_timeout='1s'; WITH updated AS (
+       UPDATE auth.users SET banned_until=banned_until WHERE id='${ids.actor}' RETURNING id
+     ) SELECT 'auth_rows_updated='||count(*) FROM updated; ROLLBACK;`),/^auth_rows_updated=1\r?$/m);
+    }
     const withdrawal=change==='workspace'?`UPDATE public.profiles SET active_tenant_id='${ids.other}' WHERE user_id='${ids.actor}'`:change==='suspension'?`UPDATE public.tenant_members SET status='suspended' WHERE tenant_id='${ids.tenant}' AND user_id='${ids.actor}'`:`DELETE FROM public.team_hub_channel_members WHERE channel_id='${channel}' AND user_id='${ids.actor}'`;
     sql(`BEGIN; ${withdrawal}; ${commit?'COMMIT':'ROLLBACK'};`);
     holder.p.stdin.end('COMMIT;\n\\q\n');
@@ -44,7 +51,7 @@ export async function verifyHubFileBeginCurrentness({sql,connection,ids,prepare,
      if(change==='suspension')assert.equal(sql(`SELECT set_config('request.jwt.claim.sub','${ids.actor}',false); SELECT public.current_user_tenant_id();`).split('\n').at(-1),ids.other);
      assert.equal(response.code,change==='private membership'?'not_found':'scope_changed');
     }
-    controls.push({change,candidate,committed:commit,actualAdvisoryWait:true,pendingRows:allowed?1:0});
+    controls.push({change,candidate,committed:commit,actualAdvisoryWait:true,authRowUpdateWhileQueued:checksAuthWhileWaiting,pendingRows:allowed?1:0});
    } finally {
     if(holder.p.exitCode===null&&!holder.p.stdin.writableEnded)holder.p.stdin.end('ROLLBACK;\n\\q\n');
     await Promise.allSettled([holder.done,...(caller?[caller.done]:[])]);

@@ -6,6 +6,29 @@ a replacement matrix or result ledger. The original
 and [historical proof packet](exp08-team-hub-increment3.md) remain authoritative.
 Owner authorized ONE original row10 outcome, then report and STOP.
 
+## November 9 release continuation
+
+The owner released the same row 10 outcome first, followed by the separate
+EXP08 Conversational Loop consumer. This pull request remains scoped to files.
+Current main `271106c3718c390ad4d8223746d479c5ce08e941` includes the original
+sign-in repair, vendor retirement and Preview infrastructure corrections.
+
+The original #3258 revision `794ff6f4` finished all 13 checks successfully.
+Its migration `20271130020018` remains recorded in its original managed
+Preview. Production advanced to `20271133000010` with the guarded writer and
+admission helper bodies unchanged. The successor manifest carries only
+`20271133000018_exp08_file_admission_currentness_forward.sql`, with SQL
+byte-identical to the original and the earlier Preview and branch preserved.
+EXP05's published `20271133000011` is a lower, separate carrier. Recheck
+production and published order before merging.
+
+The original 125-case mounted Team Hub suite passed on the composed source.
+The file admission fixture now checks that a queued uploader leaves its
+actor's Auth row available for an update before the advisory lock is released.
+This exercises PostgreSQL lock order in the disposable fixture. Production
+sign-in continuity and the authenticated file round trip still require live
+verification.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original attachment contract sections1–8; owner/sole-successor selected-outcome ACK and finite source window in original ANT147 thread1d02cdb0, receiving0682a9f6/source92d83507. Reuse original permitted-file → original message → full reload/reopen → same-byte download.
 PAIGE_UI_DESIGN: PASS: existing project UI skill/modules and Impeccable harden/craft-floor applied to the incumbent approved Team Hub. Targeted detector exits0; no layout, identity, copy, color or icon redesign. Context was run once for the existing surface, not recreated.

@@ -14,7 +14,7 @@ const row = (patch: Record<string, unknown> = {}) => ({
 });
 function caller(rowValue: unknown = row(), opts: { driftActor?: boolean } = {}) {
   const getUser = vi.fn(async () => ({ data: { user: { id: id(5) } }, error: null }));
-  const rpc = vi.fn(async () => ({ data: rowValue, error: null }));
+  const rpc = vi.fn(async (_name: string, _args?: Record<string, unknown>) => ({ data: rowValue, error: null }));
   const c = {
     auth: { getUser },
     rpc,

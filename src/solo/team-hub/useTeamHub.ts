@@ -783,7 +783,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     if (!alive.current || navigationEpoch.current !== epoch + 1) return unavailable;
     return result;
   }, [call, settle, openConversation, loadThread]);
-  const cancelReferenceNavigation = useCallback(() => { navigationEpoch.current += 1; }, []);
+  const cancelPendingNavigation = useCallback(() => { navigationEpoch.current += 1; }, []);
 
   // ── Attachments (increment 3) ──
   const removedChips = useRef(new Set<string>());
@@ -1633,7 +1633,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     setStreamVisible,
     openThread,
     openMessageReference,
-    cancelReferenceNavigation,
+    cancelPendingNavigation,
     loadEarlierReplies,
     closeThread,
     send,

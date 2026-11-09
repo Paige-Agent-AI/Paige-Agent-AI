@@ -711,7 +711,7 @@ function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings
     window.requestAnimationFrame(() => (target?.isConnected ? target : composerRef.current)?.focus());
   }, [hub]);
 
-  const { openMessageReference, cancelReferenceNavigation } = hub;
+  const { openMessageReference, cancelPendingNavigation } = hub;
   useEffect(() => {
     const key = `${referenceKey}:${referenceSearch}`;
     const generation = ++referenceGeneration.current;
@@ -740,10 +740,10 @@ function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings
       threadReturn.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       setReferenceFocus({ rootId: result.value.rootId, messageId: result.value.messageId });
     });
-    return () => { retired = true; referenceGeneration.current += 1; cancelReferenceNavigation(); };
+    return () => { retired = true; referenceGeneration.current += 1; cancelPendingNavigation(); };
     // Layout and already-visible conversation state do not restart an accepted URL intent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [referenceSearch, referenceKey, referenceBlocked, openMessageReference, cancelReferenceNavigation, prepareThreadDraft, announce]);
+  }, [referenceSearch, referenceKey, referenceBlocked, openMessageReference, cancelPendingNavigation, prepareThreadDraft, announce]);
   useEffect(() => {
     if (!referenceFocus) return;
     const thread = hub.thread;
@@ -1009,7 +1009,13 @@ function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings
       {firstUse && !hub.activeId
         ? (oneColumn ? null : firstUseState("conv"))
         : <Conversation hub={hub} people={people} meId={meId} active={active} agent={agentProps}
-          onBack={() => { setMobileView("list"); window.requestAnimationFrame(() => document.getElementById(`th-conv-${hub.activeId}`)?.focus()); }}
+          onBack={() => {
+            // The narrow list hides the conversation without unmounting its file rows.
+            referenceGeneration.current += 1;
+            cancelPendingNavigation();
+            setMobileView("list");
+            window.requestAnimationFrame(() => document.getElementById(`th-conv-${hub.activeId}`)?.focus());
+          }}
           onOpenThread={openThread} announce={announce} pending={pendingTop} onRetry={retry}
           onMembershipDone={(left) => { if (left) window.requestAnimationFrame(() => searchRef.current?.focus()); else focusComposer(); }}
           onDiscard={(item) => { hub.discard(item.localId); announce("Removed from this screen"); focusComposer(); }}

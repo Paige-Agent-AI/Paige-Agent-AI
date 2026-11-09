@@ -2105,6 +2105,32 @@ describe("attachments: files on messages (increment 3, mocked RPC)", () => {
     expect(assign).not.toHaveBeenCalled();
   });
 
+  it("retires a pending download when Back hides the conversation on a phone", async () => {
+    hubWidth(390);
+    db.messages["c-general"] = [msg({ files: [posted()] })];
+    gates.sign = deferred();
+    const assign = vi.spyOn(teamHubNavigation, "assign").mockImplementation(() => undefined);
+    const { host } = await mount();
+    const open = () => host.querySelector<HTMLButtonElement>("#th-conv-c-general")!.click();
+    await act(async () => open());
+    await flush();
+    await act(async () => button(host, "Download Brief.pdf")!.click());
+    expect(signs).toHaveLength(1);
+    await act(async () => button(host, "Back to conversations")!.click());
+    expect(host.querySelector(".th-grid")!.getAttribute("data-view")).toBe("list");
+    await act(async () => gates.sign!.resolve());
+    await flush();
+    expect(assign).not.toHaveBeenCalled();
+    expect(liveRegion(host).textContent).not.toContain("Couldn't get the file");
+    gates.sign = undefined;
+    await act(async () => open());
+    await flush();
+    await act(async () => button(host, "Download Brief.pdf")!.click());
+    await flush();
+    expect(signs).toHaveLength(2);
+    expect(assign).toHaveBeenCalledTimes(1);
+  });
+
   it("mints a fresh 60-second attachment URL on every Download click, then goes to it", async () => {
     db.messages["c-general"] = [msg({ files: [posted()] })];
     const assign = vi.spyOn(teamHubNavigation, "assign").mockImplementation(() => undefined);

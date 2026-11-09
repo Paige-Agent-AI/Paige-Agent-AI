@@ -22,12 +22,18 @@ byte-identical to the original and the earlier Preview and branch preserved.
 EXP05's published `20271133000011` is a lower, separate carrier. Recheck
 production and published order before merging.
 
-The original 125-case mounted Team Hub suite passed on the composed source.
-The file admission fixture now checks that a queued uploader leaves its
-actor's Auth row available for an update before the advisory lock is released.
-This exercises PostgreSQL lock order in the disposable fixture. Production
-sign-in continuity and the authenticated file round trip still require live
-verification.
+The owning mounted suite passed its original 125 cases on the composed
+source. Exact-source review then found that Back on a phone hides the
+conversation without unmounting its file rows. The new deferred-signing
+control reproduced a late download on the unchanged candidate. Back now
+retires the pending navigation, and the control verifies that a fresh download
+still works after reopening the conversation.
+
+The disposable PostgreSQL suite passed all 41 file controls. Its original
+workspace-withdrawal case also updates the actor's Auth row while the upload
+waits on the advisory lock. This demonstrates lock ordering in the fixture.
+Production sign-in continuity and the authenticated file round trip still
+require live verification.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original attachment contract sections1–8; owner/sole-successor selected-outcome ACK and finite source window in original ANT147 thread1d02cdb0, receiving0682a9f6/source92d83507. Reuse original permitted-file → original message → full reload/reopen → same-byte download.

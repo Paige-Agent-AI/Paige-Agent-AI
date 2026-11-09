@@ -1,8 +1,9 @@
 // Presentation references from the ORIGINAL successful caller-JWT plan_list.
 // No query, authority, source text, model content or execution receipt is added.
 // Opening the existing Work inspector reauthorizes the original item normally.
-import { readRecordLinks, type ReadRecordLink } from "../paige-turn/record-links.ts";
+import { boundedPlanningNavigation, type ReadRecordLink } from "../paige-turn/record-links.ts";
 import { createWeeklyDraftDeadline } from "../paige-orchestration/weekly-draft-deadline.ts";
+import { planningModelPlans, WEEKLY_PLAN_REVIEW_NOTE } from "./weekly-plan-read-projection.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const object = (v: unknown): Record<string, unknown> | null =>
@@ -26,7 +27,14 @@ export function planningReadRecordLinks(tenantId: string, result: unknown): Read
     for (const item of plan.items) add(item, id);
   }
   for (const item of data.loose_items) add(item, null);
-  return readRecordLinks(links);
+  for (const raw of data.plans) {
+    const plan = object(raw), id = uuid(plan?.id);
+    if (plan && id && uuid(plan.tenant_id) === tenant && Array.isArray(plan.items) && plan.items.every(rawItem => {
+      const item = object(rawItem); return !!item && !!uuid(item.id) && uuid(item.tenant_id) === tenant && uuid(item.plan_id) === id;
+    })) links.push({ destination: "operations_work", record_id: id, record_kind: "planning_plan" });
+  }
+  links.push({ destination: "operations_weekly_plan", record_id: null });
+  return boundedPlanningNavigation(links);
 }
 
 /** Finish the existing RPC read, never query or authorize it. The existing
@@ -67,7 +75,7 @@ export async function finishPlanningChatRead(context: {
     if (recorded === true && await within(context.isCurrent) !== true) return unavailable("The current workspace changed or could not be verified. Read Planning again in the intended workspace; nothing was changed.");
   } catch { recorded = false; /* unknown/expired receipt or scope: withhold facts */ }
   if (recorded !== true) return unavailable("The Planning lookup returned, but its read receipt could not be confirmed. Try the read again later; nothing was changed.");
-  return { model: { status: "available", success: true, plans: data.plans, loose_items: data.loose_items,
+  return { model: { status: "available", success: true, plans: planningModelPlans(data.plans), loose_items: data.loose_items, note: WEEKLY_PLAN_REVIEW_NOTE,
     read_receipt: { run_id: context.runId, recorded: true, observed_at: observedAt, kind: "read_only" } },
     links: planningReadRecordLinks(tenant, data) };
 }

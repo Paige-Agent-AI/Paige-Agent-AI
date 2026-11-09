@@ -150,9 +150,19 @@ jobs:
           EXP08_DISPOSABLE: '1'
           PGHOST: 127.0.0.1
           PGPORT: '5432'
+          PROOF_POSTGRES_SERVICE: ${{ job.services.postgres.id }}
         run: |
+          # The host pg_dump can emit settings the pinned PostgreSQL 16 server
+          # cannot restore. Dump with the client from that same service image.
+          test -n "$PROOF_POSTGRES_SERVICE"
+          dump_client="$RUNNER_TEMP/exp08-proof-pg-dump"
+          cat > "$dump_client" <<'EOF'
+          #!/usr/bin/env bash
+          exec docker exec "$PROOF_POSTGRES_SERVICE" pg_dump "$@"
+          EOF
+          chmod +x "$dump_client"
           node scripts/proof/exp08-owner-recovery-carrier.mjs --check
-          node scripts/proof/exp08-owner-recovery-writers.mjs
+          OPERATOR_PROOF_PG_DUMP="$dump_client" node scripts/proof/exp08-owner-recovery-writers.mjs
       - name: EXP08 Team Hub agents A1a, accepted-turn record, single-use agent posts, one-reply rule, per-seat cap, agent DM isolation, roster correction and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_agents_a1.sql
       - name: EXP08 Team Hub agents A1b, member-safe turn-state read, staged Bring in suggestions, same-token acceptance retry and mutants in a disposable database

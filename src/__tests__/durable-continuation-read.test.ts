@@ -129,3 +129,44 @@ describe('durable continuation eligibility adapter', () => {
     expect(await readDurableContinuation(ref, caller(bad), budgetDb(50, 1))).toBeNull();
   });
 });
+
+describe('reconnecting to the original document completion', () => {
+  const completion = { resultRef: id(7), receiptRef: id(8) };
+  const completed = row({ terminalOutcome: { verified_readback: true, content_id: id(7) }, completion });
+  const reconnect = (responses: unknown[] = [completed, completed]) => {
+    const c = caller();
+    let index = 0;
+    c.rpc.mockImplementation(async (name) => ({
+      data: name === 'current_user_tenant_id' ? id(4) : responses[index++],
+      error: null,
+    }));
+    return c;
+  };
+
+  it('returns the original result and receipt on repeated reads using only observation RPCs', async () => {
+    const c = reconnect([completed, completed, completed, completed]);
+    const first = await readDurableContinuation(ref, c, null);
+    expect(first).toMatchObject({ workId: ref.workId, completion });
+    expect(await readDurableContinuation(ref, c, null)).toEqual(first);
+    expect(c.rpc.mock.calls.map(([name]) => name)).toEqual([
+      'read_paige_durable_continuation', 'current_user_tenant_id', 'read_paige_durable_continuation',
+      'read_paige_durable_continuation', 'current_user_tenant_id', 'read_paige_durable_continuation',
+    ]);
+  });
+
+  it.each([
+    null,
+    { ...completed, completion: { ...completion, receiptRef: id(9) } },
+    { ...completed, tenantId: id(9) },
+  ])('withholds the pair when the authoritative re-read changes', async (changed) => {
+    expect(await readDurableContinuation(ref, reconnect([completed, changed]), null)).toBeNull();
+  });
+
+  it.each([
+    { ...completed, completion: { ...completion, resultRef: id(9) } },
+    { ...completed, status: 'outcome_unknown' },
+    { ...completed, workKind: 'research' },
+  ])('refuses an inconsistent completion tuple', async (changed) => {
+    expect(await readDurableContinuation(ref, reconnect([changed, changed]), null)).toBeNull();
+  });
+});

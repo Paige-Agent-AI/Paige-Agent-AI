@@ -97,6 +97,11 @@ insert into paige_workspace_events values (
  '00000000-0000-4000-8000-000000000005:1',
  '{"work_id":"00000000-0000-4000-8000-000000000005","content_id":"00000000-0000-4000-8000-000000000007","document_revision":1,"verified_readback":true}');
 set local role authenticated;
+select pg_temp.check_cont('historical receipt without original body proof is not paired', not (pg_temp.cont() ? 'completion'));
+reset role;
+update paige_workspace_events set detail=detail || jsonb_build_object('document_sha256',
+ (select encode(sha256(convert_to(body,'UTF8')),'hex') from marketing_content));
+set local role authenticated;
 select pg_temp.check_cont('same job result and receipt survive repeated reconnect',
  pg_temp.cont()->>'workId'='00000000-0000-4000-8000-000000000005'
  and pg_temp.cont()->'completion'='{"resultRef":"00000000-0000-4000-8000-000000000007","receiptRef":"00000000-0000-4000-8000-000000000014"}'
@@ -106,6 +111,11 @@ select pg_temp.check_cont('reconnect creates no work attempt, artifact, turn or 
  (select attempt_count=1 from paige_durable_work where id='00000000-0000-4000-8000-000000000005')
  and (select count(*)=1 from marketing_content) and (select count(*)=1 from paige_chat_turns where work_id is not null)
  and (select count(*)=1 from paige_workspace_events));
+update marketing_content set body='{"docType":"guide","title":"Guide","blocks":[{"text":"Edited body, same revision"}]}';
+set local role authenticated;
+select pg_temp.check_cont('an edit that preserves the revision cannot borrow the original receipt', not (pg_temp.cont() ? 'completion'));
+reset role;
+update marketing_content set body='{"docType":"guide","title":"Guide","blocks":[{"text":"Content"}]}';
 update paige_workspace_events set job_attempt_id='00000000-0000-4000-8000-000000000005:2';
 set local role authenticated;
 select pg_temp.check_cont('receipt from another attempt is unavailable', not (pg_temp.cont() ? 'completion'));

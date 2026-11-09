@@ -15,7 +15,7 @@ const taskLinksMode=!['--red','--search-red','--links-red'].some(flag=>process.a
 const calendarMode=process.argv.includes('--calendar')||taskLinksMode;
 const weeklyPlanLinksMode=process.argv.includes('--weekly-plan-links');
 if(weeklyPlanLinksMode){
- const atomic=readFileSync(join(repo,'supabase/migrations/20271133000007_exp05_reviewed_weekly_plan_atomic.sql'),'utf8');
+ const atomic=readFileSync(join(repo,'supabase/migrations/20271133000009_exp05_reviewed_weekly_plan_atomic.sql'),'utf8');
  const component=(start,end)=>atomic.slice(atomic.indexOf(start)+start.length,atomic.indexOf(end));
  assert.equal(readFileSync(join(repo,'scripts/proof/exp05-weekly-plan-navigation.sql'),'utf8'),
   '-- EXACT navigation component of the ONE atomic O02 installer; checked by the owning wrapper.\nbegin;\n'

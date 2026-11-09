@@ -8,7 +8,7 @@ import { dirname,join,resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 const repo=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
-const weeklyAtomic=readFileSync(join(repo,'supabase/migrations/20271133000007_exp05_reviewed_weekly_plan_atomic.sql'),'utf8').replace(/\r\n/g,'\n');
+const weeklyAtomic=readFileSync(join(repo,'supabase/migrations/20271133000009_exp05_reviewed_weekly_plan_atomic.sql'),'utf8').replace(/\r\n/g,'\n');
 const weeklyComponent=(start,end)=>weeklyAtomic.slice(weeklyAtomic.indexOf(start)+start.length,weeklyAtomic.indexOf(end));
 const candidate=readFileSync(join(repo,'scripts/proof/exp05-zion-planning-read-candidate.sql'),'utf8').replace(/\r\n/g,'\n');
 const carrier=readFileSync(join(repo,'supabase/migrations/20271127000005_exp05_zion_planning_source_binding.sql'),'utf8').replace(/\r\n/g,'\n');

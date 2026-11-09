@@ -28,7 +28,9 @@ returns void language plpgsql security definer set search_path='' as $$
 begin
  if auth.uid() is null or auth.uid() is distinct from p_actor or p_tenant is null then
   raise exception 'WEEKLY_PLAN_SCOPE_CHANGED' using errcode='42501'; end if;
- perform 1 from auth.users where id=p_actor for share;
+ -- Match native Auth-first serialization so concurrent reviews cannot form
+ -- a shared-lock cohort ahead of an already waiting sign-in update.
+ perform 1 from auth.users where id=p_actor for no key update;
  if not found then raise exception 'WEEKLY_PLAN_SCOPE_CHANGED' using errcode='42501'; end if;
  perform 1 from public.profiles where user_id=p_actor and active_tenant_id=p_tenant for update;
  if not found or public.current_user_tenant_id() is distinct from p_tenant then

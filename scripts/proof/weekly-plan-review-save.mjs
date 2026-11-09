@@ -30,7 +30,7 @@ export async function proveWeeklyPlanReviewSave({db,read,definition,actor,admin,
  await db.exec(`CREATE TABLE public.paige_skills(id uuid,slug text,name text,description text,category text,scoping text,created_by text,risk_level text,status text,metadata jsonb);
  INSERT INTO public.paige_skills VALUES('${randomUUID()}','weekly_priorities_plan','Weekly Priorities Plan',${literal(copy)},'operations_process','platform','system','draft','active','{}');`);
  await db.exec('CREATE TRIGGER trg_paige_durable_work_identity BEFORE UPDATE ON public.paige_durable_work FOR EACH ROW EXECUTE FUNCTION public._paige_durable_work_protect_identity();');
- const atomic=readFileSync(new URL('../../supabase/migrations/20271133000007_exp05_reviewed_weekly_plan_atomic.sql',import.meta.url),'utf8');
+ const atomic=readFileSync(new URL('../../supabase/migrations/20271133000009_exp05_reviewed_weekly_plan_atomic.sql',import.meta.url),'utf8');
  // Exact producer component; the SAME installer's navigation component runs in
  // the incumbent Team Hub native proof. Required full-schema CI runs both together.
  const marker=atomic.indexOf('-- BEGIN ORIGINAL PLAN REFERENCES');assert(marker>0,'Atomic installer component boundary');
@@ -38,7 +38,7 @@ export async function proveWeeklyPlanReviewSave({db,read,definition,actor,admin,
  const signature='public.plan_create_scoped(uuid,uuid,text,text,date,date,text,uuid,text)';
  const metadata=async()=>(await db.query(`SELECT (to_jsonb(p)-'prosrc'-'proargdefaults')||jsonb_build_object('proargdefaults',pg_get_expr(proargdefaults,0)) AS value FROM pg_proc p WHERE oid='${signature}'::regprocedure`)).rows[0].value;
  const prior=await metadata();await db.exec(migration);assert.deepEqual(await metadata(),prior,'native receipt forward retains original ABI/OID/owner/ACL/config');checks++;
- await db.exec(read('20271133000008_exp05_weekly_plan_catalogue_identity.sql'));
+ await db.exec(read('20271133000010_exp05_weekly_plan_catalogue_identity.sql'));
  check(await scalar(`(SELECT metadata#>>'{catalogue_coverage,state}'='limited' AND description LIKE '%does not execute work%' AND risk_level='draft' FROM public.paige_skills)`),'same canonical catalogue states Limited/manual only; original risk and activation unchanged');
  const task=randomUUID(),request=randomUUID();
  await db.exec(`INSERT INTO public.tenant_business_time_zones(tenant_id,time_zone) VALUES('${tenant}','America/New_York');
@@ -126,6 +126,9 @@ export async function proveWeeklyPlanReviewSave({db,read,definition,actor,admin,
  try {
   let wait;try{await db.exec(`SET lock_timeout='50ms'; SELECT ${save(review,raceRequest)}`);}catch(e){wait=e;}
   check(wait?.code==='55P03','a second original save actually waits on the same native publication lock');
+  await db.exec('RESET ROLE');
+  await refuses(`(SELECT id FROM auth.users WHERE id='${admin}' FOR SHARE NOWAIT)`,'55P03',
+   'an in-flight weekly save excludes a competing shared Auth lock cohort');
   let revoke;try{await db.exec(`RESET ROLE;SET lock_timeout='50ms';UPDATE public.tenant_members SET status='inactive' WHERE tenant_id='${tenant}' AND user_id='${admin}'`);}catch(e){revoke=e;}
   check(revoke?.code==='55P03','authority revocation cannot cross the locked native save boundary');
  } finally {held.release();await held.completed;}

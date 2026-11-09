@@ -16,6 +16,12 @@ const source = () => ({ plans: [{ id: PLAN, tenant_id: TENANT, updated_at: VERSI
     description: "Never copy this into the attestation" }] }], loose_items: [] });
 
 describe("ZION's closed original Planning source binding", () => {
+  it("reserves original review and saved-Plan navigation within SIX on a populated source", () => {
+    const raw=source();raw.plans[0].items=Array.from({length:6},(_,n)=>({...raw.plans[0].items[0],id:`33333333-3333-4333-8333-${String(n+1).padStart(12,"0")}`}));
+    const bound=captureZionPlanningSource(scope,{},raw)!;assert.ok(bound);
+    const links=zionPlanningRecordLinks(bound);assert.equal(links.length,6);
+    assert.ok(links.some(r=>r.record_kind==="planning_plan"&&r.record_id===PLAN));assert.ok(links.some(r=>r.destination==="operations_weekly_plan"));
+  });
   it("preserves exact source versions and original query without copying private source text or authority", () => {
     const raw = source();
     const result = captureZionPlanningSource(scope, { horizon: "week", limit: 200, status: "cancelled" }, raw)!;
@@ -29,7 +35,8 @@ describe("ZION's closed original Planning source binding", () => {
     scope.storedTools.push("unrelated");
     assert.equal(result.source.plans[0].updated_at, VERSION);
     assert.deepEqual(result.roster_tools, ["crm_list_tasks", "plan_list"]);
-    assert.deepEqual(zionPlanningRecordLinks(result), [{ destination: "operations_work", record_id: ITEM, record_kind: "planning_item" }]);
+    assert.deepEqual(zionPlanningRecordLinks(result), [{ destination: "operations_work", record_id: ITEM, record_kind: "planning_item" },
+      { destination: "operations_work", record_id: PLAN, record_kind: "planning_plan" }, { destination: "operations_weekly_plan", record_id: null }]);
     scope.storedTools.pop();
   });
 

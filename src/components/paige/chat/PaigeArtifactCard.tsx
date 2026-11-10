@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { loadDocument } from "@/components/admin/studio/studio";
+import { usePaigeDocumentWindow } from "./paigeDocumentWindowContext";
 import { DocumentPreview } from "@/components/admin/studio/DocumentPreview";
 import { STUDIO_DOC_TYPE_LABEL, type StudioDocument } from "@/components/admin/studio/studio-types";
 
@@ -122,6 +123,7 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
   const { resolvedTheme } = useTheme();
   const reduce = useReducedMotion();
   const isDoc = artifact.artifactType === "document";
+  const openDocument = usePaigeDocumentWindow();
   const imageUrl = artifact.artifactType === "image" ? artifact.url : undefined;
 
   const [open, setOpen] = useState(false);
@@ -132,6 +134,10 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
   const retryRequested = useRef(false);
   const [readAttempt, setReadAttempt] = useState(0);
   const openPreview = (event: MouseEvent<HTMLButtonElement>) => {
+    if (isDoc && openDocument) {
+      openDocument({ id: artifact.id, title: artifact.title, tenantId }, event.currentTarget);
+      return;
+    }
     opener.current = { element: event.currentTarget, identity };
     setOpen(true);
   };
@@ -224,6 +230,7 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
 
   return (
     <motion.div
+      data-paige-artifact-card
       className={cn(
         "w-full max-w-[24rem] overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md motion-reduce:transition-none",
         className,
@@ -234,7 +241,7 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
       <div className="flex gap-3 p-3">
         {/* Keep the real inert preview beside the native Open target: a paged
             preview contains its own controls and must not nest inside a button. */}
-        <div className="relative h-24 w-20 shrink-0">
+        <div className="relative h-24 w-20 shrink-0" data-paige-document-thumbnail={isDoc || undefined}>
           <div className="absolute inset-0 overflow-hidden rounded-lg border border-border bg-muted/30">{thumb}</div>
           <button
             type="button"

@@ -36,10 +36,10 @@ WHERE oid IN (
   'public.content_publication_record(uuid,uuid,text,text,text,text,text,jsonb)'::regprocedure
 );
 
-\ir ../migrations/20271133000019_exp07_account_scoped_publication.sql
-\ir ../migrations/20271133000019_exp07_account_scoped_publication.sql
-\ir ../migrations/20271133000020_exp07_publication_receipt_privacy.sql
-\ir ../migrations/20271133000020_exp07_publication_receipt_privacy.sql
+\ir ../migrations/20271133000021_exp07_account_scoped_publication.sql
+\ir ../migrations/20271133000021_exp07_account_scoped_publication.sql
+\ir ../migrations/20271133000022_exp07_publication_receipt_privacy.sql
+\ir ../migrations/20271133000022_exp07_publication_receipt_privacy.sql
 
 DO $$
 BEGIN

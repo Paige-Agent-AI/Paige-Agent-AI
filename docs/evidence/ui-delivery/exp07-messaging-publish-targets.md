@@ -27,7 +27,7 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Fresh rendered geometry owed.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Fresh rendered geometry owed.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Fresh rendered geometry owed.
 UNVERIFIED: Required hosted checks, production migration and Edge/web readback, one approved live post and link, same-receipt reopening, and founder acceptance are separate gates.
-INTERNAL_BUILD_IDENTITY: 8639559bb912c4a2ddd524495ff082bb74061f03; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271133000019 and 20271133000020); edge=PROOF_OWED(social-publish-command and affected shared-adapter consumers); evidence=supabase/tests/exp07_account_scoped_publication.sql and src/__tests__/zernio-social-provider.test.ts
+INTERNAL_BUILD_IDENTITY: 16ccd265d5f9d3513aef229a936fba397b8d13e5; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271133000021 and 20271133000022); edge=PROOF_OWED(social-publish-command and affected shared-adapter consumers); evidence=supabase/tests/exp07_account_scoped_publication.sql and src/__tests__/zernio-social-provider.test.ts
 RELEASE_CHANNEL: development: Candidate source and isolated verification only.
 RELEASE_CLASSIFICATION: PATCH: Repair the existing publish flow, including the owner-approved Discord and Telegram targets.
 CUSTOMER_RELEASE_IDENTITY: none: Internal candidate.

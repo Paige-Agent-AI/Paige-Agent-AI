@@ -89,6 +89,23 @@ describe("saved document window", () => {
     expect(host.textContent).toContain(saved.data.body);
   });
 
+  it("restores the opener before the next frame and reopens on the first activation", async () => {
+    const frame = vi.spyOn(window, "requestAnimationFrame").mockImplementation(() => 1);
+    try {
+      await render();
+      await click("Open");
+      await click("Expand");
+      const original = button("Open");
+      await click("Back to chat");
+      expect(document.activeElement).toBe(original);
+      await click("Open");
+      expect(fake.read).toHaveBeenCalledTimes(2);
+      expect(host.textContent).toContain("Saved version 1");
+    } finally {
+      frame.mockRestore();
+    }
+  });
+
   it("keeps Chat operable without a viewport API and opens with the full-page fallback", async () => {
     vi.stubGlobal("matchMedia", undefined);
     await render();

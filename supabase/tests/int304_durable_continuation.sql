@@ -78,3 +78,63 @@ select pg_temp.check_cont('research work reads its frozen question',
  and (pg_temp.research_cont()->'approvalPending')='false');
 -- The document work on the same thread is unaffected by the research effect beside it.
 select pg_temp.check_cont('document work unaffected beside the research effect',pg_temp.cont() is not null);
+
+-- Reconnect reads the original document, completion turn and Rail receipt from one snapshot.
+reset role;
+update paige_durable_work set status='succeeded', attempt_count=1, error_code=null, settled_at=now(),
+ terminal_outcome='{"verified_readback":true,"content_id":"00000000-0000-4000-8000-000000000007","document_revision":1,"completion_turn_id":"00000000-0000-4000-8000-000000000011"}'
+where id='00000000-0000-4000-8000-000000000005';
+insert into marketing_content values ('00000000-0000-4000-8000-000000000007','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000005','document',1,'Guide','{"docType":"guide","title":"Guide","blocks":[{"text":"Content"}]}');
+insert into paige_chat_turns (id,work_id,thread_id,role,bundle_ref)
+values ('00000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000005','00000000-0000-4000-8000-000000000003','assistant','{"paige_artifact":[{"id":"00000000-0000-4000-8000-000000000007","tenant_id":"00000000-0000-4000-8000-000000000002","artifactType":"document"}]}');
+select set_config('request.jwt.claim.role','authenticated',true);
+set local role authenticated;
+select pg_temp.check_cont('artifact alone never supplies a receipt', not (pg_temp.cont() ? 'completion'));
+reset role;
+insert into paige_workspace_events values (
+ '00000000-0000-4000-8000-000000000014','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001',
+ 'capability_run','00000000-0000-4000-8000-000000000005',0,'document_generate','capability_succeeded',
+ '00000000-0000-4000-8000-000000000005:1',
+ '{"work_id":"00000000-0000-4000-8000-000000000005","content_id":"00000000-0000-4000-8000-000000000007","document_revision":1,"verified_readback":true}');
+set local role authenticated;
+select pg_temp.check_cont('historical receipt without original body proof is not paired', not (pg_temp.cont() ? 'completion'));
+reset role;
+update paige_workspace_events set detail=detail || jsonb_build_object('document_sha256',
+ (select encode(sha256(convert_to(body,'UTF8')),'hex') from marketing_content));
+set local role authenticated;
+select pg_temp.check_cont('same job result and receipt survive repeated reconnect',
+ pg_temp.cont()->>'workId'='00000000-0000-4000-8000-000000000005'
+ and pg_temp.cont()->'completion'='{"resultRef":"00000000-0000-4000-8000-000000000007","receiptRef":"00000000-0000-4000-8000-000000000014"}'
+ and pg_temp.cont()=pg_temp.cont());
+reset role;
+select pg_temp.check_cont('reconnect creates no work attempt, artifact, turn or receipt',
+ (select attempt_count=1 from paige_durable_work where id='00000000-0000-4000-8000-000000000005')
+ and (select count(*)=1 from marketing_content) and (select count(*)=1 from paige_chat_turns where work_id is not null)
+ and (select count(*)=1 from paige_workspace_events));
+update marketing_content set body='{"docType":"guide","title":"Guide","blocks":[{"text":"Edited body, same revision"}]}';
+set local role authenticated;
+select pg_temp.check_cont('an edit that preserves the revision cannot borrow the original receipt', not (pg_temp.cont() ? 'completion'));
+reset role;
+update marketing_content set body='{"docType":"guide","title":"Guide","blocks":[{"text":"Content"}]}';
+update paige_workspace_events set job_attempt_id='00000000-0000-4000-8000-000000000005:2';
+set local role authenticated;
+select pg_temp.check_cont('receipt from another attempt is unavailable', not (pg_temp.cont() ? 'completion'));
+reset role;
+update paige_workspace_events set job_attempt_id='00000000-0000-4000-8000-000000000005:1',actor_id=gen_random_uuid();
+set local role authenticated;
+select pg_temp.check_cont('receipt from another actor is unavailable', not (pg_temp.cont() ? 'completion'));
+reset role;
+update paige_workspace_events set actor_id='00000000-0000-4000-8000-000000000001', detail=jsonb_set(detail,'{document_revision}','2');
+set local role authenticated;
+select pg_temp.check_cont('receipt from another result revision is unavailable', not (pg_temp.cont() ? 'completion'));
+reset role;
+update paige_workspace_events set detail=jsonb_set(detail,'{document_revision}','1');
+update marketing_content set document_revision=2;
+set local role authenticated;
+select pg_temp.check_cont('receipt alone never supplies a changed result', not (pg_temp.cont() ? 'completion'));
+reset role;
+update marketing_content set document_revision=1;
+update paige_durable_work set status='outcome_unknown', terminal_outcome=null, settled_at=null where id='00000000-0000-4000-8000-000000000005';
+set local role authenticated;
+select pg_temp.check_cont('unknown outcome never supplies a completion pair', not (pg_temp.cont() ? 'completion'));
+reset role;

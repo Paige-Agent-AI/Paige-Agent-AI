@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: The preview now binds the actual account and channel 
 FLOW_PROTOTYPE: UNVERIFIED: No separate interactive prototype was run. The original picker, preview and receipts are reused and can be driven after release.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An authorized SOLO owner or workspace admin reviews a saved piece and exact destination, then approves one immediate post.
 VISUAL_DIRECTION: PASS: Reuse the existing publish drawer, Solo tokens and native button styles. Longer channel names wrap inside the current panel.
-AUTOMATED_EVIDENCE: PASS: Focused Vitest suites cover exact request and response shapes, changed versions and accounts, foreign or revoked destinations, approval replay, and reconciliation of the same attempt. The isolated PostgreSQL fixture replays the forward migration and verifies both messaging networks, authority, grants, and the receipt's forward-only states.
+AUTOMATED_EVIDENCE: PASS: Focused Vitest suites cover the documented account and Discord settings reads, request and response shapes, changed versions and accounts, foreign or revoked destinations, mutable provider defaults, approval replay, and reconciliation of the same attempt. Isolated PostgreSQL replays both forward migrations and verifies messaging networks, authority, grants, receipt privacy and duplicate prevention.
 STATIC_EVIDENCE: PASS: Deno check of the social-publish-command entry point and git diff --check completed on the implementation source.
 RENDERED_EVIDENCE: UNVERIFIED: No fresh browser render of the changed publish panel was completed on this build.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Provider fixtures and SQL establish the bounded source behavior. An ordinary account's real approved send and reload remain owed.
@@ -27,7 +27,7 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Fresh rendered geometry owed.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Fresh rendered geometry owed.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Fresh rendered geometry owed.
 UNVERIFIED: Required hosted checks, production migration and Edge/web readback, one approved live post and link, same-receipt reopening, and founder acceptance are separate gates.
-INTERNAL_BUILD_IDENTITY: 04c5837eb2fca3d0bdacf1139423dc8d364b434d; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271133000019_exp07_account_scoped_publication); edge=PROOF_OWED(social-publish-command and affected shared-adapter consumers); evidence=supabase/tests/exp07_account_scoped_publication.sql and src/__tests__/zernio-social-provider.test.ts
+INTERNAL_BUILD_IDENTITY: 8639559bb912c4a2ddd524495ff082bb74061f03; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271133000019 and 20271133000020); edge=PROOF_OWED(social-publish-command and affected shared-adapter consumers); evidence=supabase/tests/exp07_account_scoped_publication.sql and src/__tests__/zernio-social-provider.test.ts
 RELEASE_CHANNEL: development: Candidate source and isolated verification only.
 RELEASE_CLASSIFICATION: PATCH: Repair the existing publish flow, including the owner-approved Discord and Telegram targets.
 CUSTOMER_RELEASE_IDENTITY: none: Internal candidate.

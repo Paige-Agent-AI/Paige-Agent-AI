@@ -783,7 +783,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     if (!alive.current || navigationEpoch.current !== epoch + 1) return unavailable;
     return result;
   }, [call, settle, openConversation, loadThread]);
-  const cancelReferenceNavigation = useCallback(() => { navigationEpoch.current += 1; }, []);
+  const cancelPendingNavigation = useCallback(() => { navigationEpoch.current += 1; }, []);
 
   // ── Attachments (increment 3) ──
   const removedChips = useRef(new Set<string>());
@@ -931,16 +931,23 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
    * A fresh 60-second signed URL for one Team Hub file of this workspace, minted on every call and
    * never cached. With `download`, it is served as an attachment under the file's own name.
    */
-  const fileUrl = useCallback(async (path: string, download?: string): Promise<string | null> => {
+  const fileUrl = useCallback(async (path: string, download?: string): Promise<string | null | undefined> => {
+    const epoch = navigationEpoch.current, channelId = live.current.activeId;
+    const actorId = live.current.overview?.me.user_id;
+    const current = () => alive.current && navigationEpoch.current === epoch && live.current.activeId === channelId
+      && live.current.overview?.me.user_id === actorId && live.current.status === "ready";
+    // undefined retires a departed request silently; null is a current request's mint failure.
+    if (!current()) return undefined;
     if (!path.startsWith(`${tenantId.toLowerCase()}/team-hub/`)) return null;
     try {
       const bucket = supabase.storage.from(TEAM_HUB_FILE_BUCKET);
       const { data, error } = download
         ? await bucket.createSignedUrl(path, SIGNED_URL_SECONDS, { download })
         : await bucket.createSignedUrl(path, SIGNED_URL_SECONDS);
+      if (!current()) return undefined;
       return !error && data && typeof data.signedUrl === "string" && data.signedUrl ? data.signedUrl : null;
     } catch {
-      return null;
+      return current() ? null : undefined;
     }
   }, [tenantId]);
 
@@ -1626,7 +1633,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     setStreamVisible,
     openThread,
     openMessageReference,
-    cancelReferenceNavigation,
+    cancelPendingNavigation,
     loadEarlierReplies,
     closeThread,
     send,

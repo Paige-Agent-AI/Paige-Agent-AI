@@ -711,7 +711,7 @@ function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings
     window.requestAnimationFrame(() => (target?.isConnected ? target : composerRef.current)?.focus());
   }, [hub]);
 
-  const { openMessageReference, cancelReferenceNavigation } = hub;
+  const { openMessageReference, cancelPendingNavigation } = hub;
   useEffect(() => {
     const key = `${referenceKey}:${referenceSearch}`;
     const generation = ++referenceGeneration.current;
@@ -740,10 +740,10 @@ function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings
       threadReturn.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       setReferenceFocus({ rootId: result.value.rootId, messageId: result.value.messageId });
     });
-    return () => { retired = true; referenceGeneration.current += 1; cancelReferenceNavigation(); };
+    return () => { retired = true; referenceGeneration.current += 1; cancelPendingNavigation(); };
     // Layout and already-visible conversation state do not restart an accepted URL intent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [referenceSearch, referenceKey, referenceBlocked, openMessageReference, cancelReferenceNavigation, prepareThreadDraft, announce]);
+  }, [referenceSearch, referenceKey, referenceBlocked, openMessageReference, cancelPendingNavigation, prepareThreadDraft, announce]);
   useEffect(() => {
     if (!referenceFocus) return;
     const thread = hub.thread;
@@ -1009,7 +1009,13 @@ function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings
       {firstUse && !hub.activeId
         ? (oneColumn ? null : firstUseState("conv"))
         : <Conversation hub={hub} people={people} meId={meId} active={active} agent={agentProps}
-          onBack={() => { setMobileView("list"); window.requestAnimationFrame(() => document.getElementById(`th-conv-${hub.activeId}`)?.focus()); }}
+          onBack={() => {
+            // The narrow list hides the conversation without unmounting its file rows.
+            referenceGeneration.current += 1;
+            cancelPendingNavigation();
+            setMobileView("list");
+            window.requestAnimationFrame(() => document.getElementById(`th-conv-${hub.activeId}`)?.focus());
+          }}
           onOpenThread={openThread} announce={announce} pending={pendingTop} onRetry={retry}
           onMembershipDone={(left) => { if (left) window.requestAnimationFrame(() => searchRef.current?.focus()); else focusComposer(); }}
           onDiscard={(item) => { hub.discard(item.localId); announce("Removed from this screen"); focusComposer(); }}
@@ -2373,7 +2379,7 @@ function WorkPanel({ hub, people, conversations, headingRef, onClose, onJump }: 
 const FILE_DISCLOSURE_ID = "th-file-disclosure";
 
 /** How file rows mint their URLs and speak, without threading both through every message row. */
-const FileAccess = createContext<{ sign: (path: string, download?: string) => Promise<string | null>; announce: (text: string) => void }>({
+const FileAccess = createContext<{ sign: (path: string, download?: string) => Promise<string | null | undefined>; announce: (text: string) => void }>({
   sign: async () => null, announce: () => undefined,
 });
 
@@ -2481,15 +2487,20 @@ function MessageFiles({ files }: { files: TeamHubFile[] }) {
  */
 function FileRow({ file }: { file: TeamHubFile }) {
   const access = useContext(FileAccess);
+  const lifetime = useRef(0);
+  useLayoutEffect(() => { lifetime.current += 1; return () => { lifetime.current += 1; }; }, [file.path]);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const errorId = `th-file-error-${file.id}`;
   const download = async () => {
     if (busy) return;
+    const generation = lifetime.current;
     setBusy(true);
     setFailed(false);
     const url = await access.sign(file.path, file.name);
+    if (lifetime.current !== generation) return;
     setBusy(false);
+    if (url === undefined) return;
     if (!url) { setFailed(true); access.announce(TEAM_HUB_DOWNLOAD_FAILED); return; }
     teamHubNavigation.assign(url);
   };
@@ -2520,7 +2531,7 @@ function FileThumb({ file }: { file: TeamHubFile }) {
   const current = useRef({ path: file.path, reminted: false });
   const mint = useCallback((path: string) => {
     void sign(path).then((next) => {
-      if (current.current.path !== path) return;
+      if (current.current.path !== path || next === undefined) return;
       if (next) setUrl(next); else setBroken(true);
     });
   }, [sign]);

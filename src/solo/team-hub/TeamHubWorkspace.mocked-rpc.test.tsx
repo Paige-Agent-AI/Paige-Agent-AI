@@ -1677,7 +1677,7 @@ describe("increment 2 review findings (mocked RPC)", () => {
 type FileRow = { id: string; client_request_id: string; channel_id: string; name: string; mime: string; size: number; path: string; state: string };
 let files: Record<string, FileRow>;
 type Deferred = { resolve: () => void; promise: Promise<void> };
-let gates: { upload?: Deferred; finish?: Deferred };
+let gates: { upload?: Deferred; finish?: Deferred; sign?: Deferred };
 let finishAnswer: (id: string) => unknown;
 let signAnswer: (path: string) => { data: { signedUrl: string } | null; error: unknown };
 let uploads: Array<{ path: string; contentType?: string; upsert?: boolean }>;
@@ -1738,6 +1738,7 @@ beforeEach(() => {
     },
     async createSignedUrl(path: string, seconds: number, options?: unknown) {
       signs.push({ bucket, path, seconds, options });
+      if (gates.sign) await gates.sign.promise;
       return signAnswer(path);
     },
   }));
@@ -2067,6 +2068,68 @@ describe("attachments: the composer (increment 3, mocked RPC)", () => {
 
 describe("attachments: files on messages (increment 3, mocked RPC)", () => {
   const posted = (over: Record<string, unknown> = {}) => ({ id: "f-9", name: "Brief.pdf", mime: "application/pdf", size: 4096, path: `${TENANT}/team-hub/f-9`, ...over });
+
+  it("ignores a delayed download after leaving and reopening its conversation", async () => {
+    db.conversations = [channel(), channel({ id: "c-design", name: "design" })];
+    db.messages["c-general"] = [msg({ files: [posted()] })];
+    gates.sign = deferred();
+    const assign = vi.spyOn(teamHubNavigation, "assign").mockImplementation(() => undefined);
+    const { host } = await mount();
+    await act(async () => button(host, "Download Brief.pdf")!.click());
+    expect(signs).toHaveLength(1);
+    await act(async () => host.querySelector<HTMLButtonElement>("#th-conv-c-design")!.click());
+    await flush();
+    await act(async () => host.querySelector<HTMLButtonElement>("#th-conv-c-general")!.click());
+    await flush();
+    await act(async () => gates.sign!.resolve());
+    await flush();
+    expect(assign).not.toHaveBeenCalled();
+    expect(liveRegion(host).textContent).not.toContain("Couldn't get the file");
+    expect(button(host, "Download Brief.pdf")).toBeDefined();
+    gates.sign = undefined;
+    await act(async () => button(host, "Download Brief.pdf")!.click());
+    await flush();
+    expect(assign).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not navigate when a signed download resolves after the workspace unmounts", async () => {
+    db.messages["c-general"] = [msg({ files: [posted()] })];
+    gates.sign = deferred();
+    const assign = vi.spyOn(teamHubNavigation, "assign").mockImplementation(() => undefined);
+    const { host, root } = await mount();
+    await act(async () => button(host, "Download Brief.pdf")!.click());
+    mounted.splice(mounted.indexOf(root), 1);
+    await act(async () => root.unmount());
+    await act(async () => gates.sign!.resolve());
+    await flush();
+    expect(assign).not.toHaveBeenCalled();
+  });
+
+  it("retires a pending download when Back hides the conversation on a phone", async () => {
+    hubWidth(390);
+    db.messages["c-general"] = [msg({ files: [posted()] })];
+    gates.sign = deferred();
+    const assign = vi.spyOn(teamHubNavigation, "assign").mockImplementation(() => undefined);
+    const { host } = await mount();
+    const open = () => host.querySelector<HTMLButtonElement>("#th-conv-c-general")!.click();
+    await act(async () => open());
+    await flush();
+    await act(async () => button(host, "Download Brief.pdf")!.click());
+    expect(signs).toHaveLength(1);
+    await act(async () => button(host, "Back to conversations")!.click());
+    expect(host.querySelector(".th-grid")!.getAttribute("data-view")).toBe("list");
+    await act(async () => gates.sign!.resolve());
+    await flush();
+    expect(assign).not.toHaveBeenCalled();
+    expect(liveRegion(host).textContent).not.toContain("Couldn't get the file");
+    gates.sign = undefined;
+    await act(async () => open());
+    await flush();
+    await act(async () => button(host, "Download Brief.pdf")!.click());
+    await flush();
+    expect(signs).toHaveLength(2);
+    expect(assign).toHaveBeenCalledTimes(1);
+  });
 
   it("mints a fresh 60-second attachment URL on every Download click, then goes to it", async () => {
     db.messages["c-general"] = [msg({ files: [posted()] })];

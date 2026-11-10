@@ -60,7 +60,9 @@
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
-  animation: none;
+  /* Keep the shell entrance animation attached so closing cannot restart it. */
+  transform: none !important;
+  opacity: 1 !important;
 }
 
 /* Keep covered workspace controls out of both the tab order and hit testing. */

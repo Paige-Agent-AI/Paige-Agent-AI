@@ -63,6 +63,13 @@
   animation: none;
 }
 
+/* Keep covered workspace controls out of both the tab order and hit testing. */
+[data-tenant-shell]:has(.tcs-paige:not([hidden]) .spw-chat-panel:not([hidden]) [data-paige-document-mode])
+  > :is(.tcs-skip, .tcs-nav, .tcs-canvas, .tcs-paige-backdrop) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 [data-paige-document-mode="beside"] [data-solo-thread-rail] {
   display: none;
 }

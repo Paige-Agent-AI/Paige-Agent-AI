@@ -230,14 +230,15 @@ describe('durable Research pre-publication recovery', () => {
     const result = { ...checkpoint, persistence_verified: true, receipt_recorded: true,
       receipt_id: '00000000-0000-4000-8000-000000000007', receipt_outcome: 'capability_succeeded' };
     const resumeRpc = vi.fn(async (args: Row): Promise<Reply> => ({
-      data: args._phase === 'begin' ? { state: 'ready' } : { state: 'complete', result },
+      data: args._phase === 'resume' ? { state: 'ready' } : { state: 'complete', result },
       error: null,
     }));
     const replacement = fixture({ workRpc: resumeRpc });
-    const resumed = await replacement.run({ durable_work: binding }, true);
+    const resumed = await replacement.run({ question: undefined, durable_work: { ...binding, resume_only: true } }, true);
     expect(resumed.response.status).toBe(200);
     expect(resumed.body).toEqual(result);
-    expect(resumeRpc.mock.calls.map(([args]) => args._phase)).toEqual(['begin', 'publish']);
+    expect(resumeRpc.mock.calls.map(([args]) => args._phase)).toEqual(['resume', 'publish']);
+    expect(resumeRpc.mock.calls.every(([args]) => args._request_payload === null)).toBe(true);
     expect(replacement.strategy).not.toHaveBeenCalled();
     expect(replacement.provider).not.toHaveBeenCalled();
     expect(replacement.model).not.toHaveBeenCalled();
@@ -269,6 +270,15 @@ describe('durable Research pre-publication recovery', () => {
     expect(result.response.status).toBe(422);
     expect(result.body.not_applied).toBe(true);
     expect(workRpc).not.toHaveBeenCalled();
+    expect(test.provider).not.toHaveBeenCalled();
+  });
+
+  it('a resume-only request cannot cross the provider boundary even on an invalid execute response', async () => {
+    const workRpc = vi.fn(async (): Promise<Reply> => ({ data: { state: 'execute', version: 3 }, error: null }));
+    const test = fixture({ workRpc });
+    expect((await test.run({ durable_work: { ...binding, resume_only: true } }, true)).response.status).toBe(409);
+    expect(workRpc).toHaveBeenCalledWith(expect.objectContaining({ _phase: 'resume' }));
+    expect(test.strategy).not.toHaveBeenCalled();
     expect(test.provider).not.toHaveBeenCalled();
   });
 });

@@ -55,6 +55,8 @@ select pg_temp.refuses_c4e('prepared Work without current admission cannot dispa
 reset role;
 select pg_temp.admit_c4e(:'thread',:'intent');
 set role service_role;
+select pg_temp.check_c4e('resume-only cannot start a prepared attempt', public.advance_paige_research_work(
+  :'original',:'tenant',:'actor',:'thread',:'intent',null,'resume')->>'state'='blocked');
 select public.advance_paige_research_work(:'original',:'tenant',:'actor',:'thread',:'intent',:'payload','begin') as opened \gset
 select pg_temp.check_c4e('claims one original attempt', :'opened'::jsonb->>'state'='execute');
 select pg_temp.check_c4e('duplicate delivery cannot execute', public.advance_paige_research_work(
@@ -87,7 +89,7 @@ reset role;
 select pg_temp.admit_c4e(:'thread',:'intent');
 set role service_role;
 select pg_temp.check_c4e('replacement gets ready, never execute', public.advance_paige_research_work(
-  :'original',:'tenant',:'actor',:'thread',:'intent',:'payload','begin')->>'state'='ready');
+  :'original',:'tenant',:'actor',:'thread',:'intent',null,'resume')->>'state'='ready');
 begin;
 select public.record_capability_run(:'tenant',:'actor','deep_research','capability_succeeded',:'original',
   _job_attempt_id=>'unrelated-attempt',_detail=>'{}'::jsonb);
@@ -95,7 +97,7 @@ select pg_temp.refuses_c4e('an existing receipt cannot be adopted as this attemp
   format('select public.advance_paige_research_work(%L,%L,%L,%L,%L,%L,%L)',
     :'original',:'tenant',:'actor',:'thread',:'intent',:'payload','publish'),'55000');
 rollback;
-select public.advance_paige_research_work(:'original',:'tenant',:'actor',:'thread',:'intent',:'payload','publish') as recovered \gset
+select public.advance_paige_research_work(:'original',:'tenant',:'actor',:'thread',:'intent',null,'publish') as recovered \gset
 select pg_temp.check_c4e('same report, citations and receipt', :'recovered'::jsonb->>'state'='complete'
   and :'recovered'::jsonb#>>'{result,run_id}'=:'original'
   and :'recovered'::jsonb#>'{result,findings,0,citations}'='[1]'::jsonb

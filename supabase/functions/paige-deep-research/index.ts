@@ -116,7 +116,7 @@ interface DeepResearchRequest {
   strict?: boolean;
   caller?: string;   // opaque provenance tag (e.g. "chat" | "manual" | an opted-in caller)
   /** Service-only link to the original prepared Chat Work. */
-  durable_work?: { work_id: string; thread_id: string; intent_id: string };
+  durable_work?: { work_id: string; thread_id: string; intent_id: string; resume_only?: boolean };
   // A7 — caller-supplied flavor facets. An opt-in vertical surface may inject its
   // OWN extra search-facet templates (with `{name}`/`{site}` placeholders) that are
   // appended after the universal facets in dossier mode. The engine holds ZERO
@@ -2039,7 +2039,8 @@ serve(async (req) => {
   }
 
   const question = typeof body.question === "string" ? body.question.trim() : "";
-  if (!question || question.length < 3) return json({ error: "question is required (min 3 chars)" }, 400);
+  const resumeOnly = body.durable_work?.resume_only === true;
+  if (!resumeOnly && question.length < 3) return json({ error: "question is required (min 3 chars)" }, 400);
   if (!body.user_id || typeof body.user_id !== "string") return json({ error: "user_id is required" }, 400);
 
   const domainHint = typeof body.domain === "string" ? body.domain : "general";
@@ -2139,6 +2140,7 @@ serve(async (req) => {
 
   const work = body.durable_work;
   if (work !== undefined && (!delegated || !work || !persist || body.client_user_id != null ||
+    (work.resume_only !== undefined && typeof work.resume_only !== "boolean") ||
     (body.caller ?? "chat") !== "chat" || ![work.work_id, work.thread_id, work.intent_id]
       .every(id => typeof id === "string" && UUID_RE.test(id)))) {
     return json({ error: "Original Research work could not be verified.", not_applied: true }, 403);
@@ -2148,7 +2150,7 @@ serve(async (req) => {
   if (work && (body.max_sources !== undefined || body.allowed_domains !== undefined)) {
     return json({ error: "Checkpointed Research does not support these source filters.", not_applied: true }, 422);
   }
-  const requestPayload = {
+  const requestPayload = resumeOnly ? null : {
     version: 1,
     question: body.question,
     domain: body.domain,
@@ -2158,7 +2160,7 @@ serve(async (req) => {
     strict: body.strict,
     flavor_facets: body.flavor_facets,
   };
-  const advanceWork = async (phase: "begin" | "checkpoint" | "publish", version?: number,
+  const advanceWork = async (phase: "begin" | "resume" | "checkpoint" | "publish", version?: number,
     checkpoint?: { report: DeepResearchResult; dossier: unknown }) => {
     await assertResearchScope();
     const { data, error } = await scopeAdmin.rpc("advance_paige_research_work", {
@@ -2185,11 +2187,11 @@ serve(async (req) => {
   if (work) {
     runId = work.work_id;
     try {
-      const begin = await advanceWork("begin");
+      const begin = await advanceWork(resumeOnly ? "resume" : "begin");
       if (begin.state === "ready") return json(await publishCheckpoint());
       if (begin.state === "complete" && begin.result?.run_id === runId && begin.result.receipt_id) return json(begin.result);
       if (begin.state === "in_progress") return json({ run_id: runId, research_state: "in_progress" }, 202);
-      if (begin.state !== "execute" || !Number.isSafeInteger(begin.version)) return workUnconfirmed();
+      if (resumeOnly || begin.state !== "execute" || !Number.isSafeInteger(begin.version)) return workUnconfirmed();
       workVersion = begin.version;
     } catch {
       return workUnconfirmed();

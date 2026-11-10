@@ -46,10 +46,12 @@ begin
   if not found or w.work_kind<>'research' or w.capability_key<>'deep_research'
     or w.tenant_id is distinct from _tenant_id or w.initiating_user_id is distinct from _actor_id
     or w.thread_id is distinct from _thread_id or w.intent_id is distinct from _intent_id
-    or w.request_payload is null or w.request_payload is distinct from _request_payload then
+    or w.request_payload is null
+    or (_request_payload is null and _phase is distinct from 'resume' and _phase is distinct from 'publish')
+    or (_request_payload is not null and w.request_payload is distinct from _request_payload) then
     raise exception 'RESEARCH_WORK_UNAVAILABLE' using errcode='42501';
   end if;
-  if _phase is null or _phase not in ('begin','checkpoint','publish') then
+  if _phase is null or _phase not in ('begin','resume','checkpoint','publish') then
     raise exception 'RESEARCH_WORK_PHASE_INVALID' using errcode='22023';
   end if;
   if w.status in ('blocked','claimed') and thread.interactive_latest_intent is distinct from w.intent_id then
@@ -57,8 +59,8 @@ begin
   end if;
   attempt_ref := w.id::text||':'||w.attempt_count::text;
 
-  if _phase='begin' then
-    if w.status='blocked' and w.blocked_reason='research_execution_not_enabled'
+  if _phase in ('begin','resume') then
+    if _phase='begin' and w.status='blocked' and w.blocked_reason='research_execution_not_enabled'
       and w.dispatch_started_attempt=0 and w.research_checkpoint is null then
       -- An older prepared row is not authority to start billable work. Require
       -- the live, original bound Chat executor for this first dispatch only.

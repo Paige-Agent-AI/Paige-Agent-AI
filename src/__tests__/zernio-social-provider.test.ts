@@ -261,6 +261,7 @@ describe("Zernio account-scoped publication", () => {
     expect(calls[0].headers["idempotency-key"]).toBe(target.externalId);
     expect(JSON.parse(calls[0].body!)).toEqual({
       content: target.text, publishNow: true, metadata: { paigePublicationId: target.externalId },
+      tags: [`paige-publication-${target.externalId}`],
       platforms: [{ platform: "discord", accountId: target.providerAccountId, platformSpecificData: { channelId } }],
     });
     expect(result).toMatchObject({
@@ -280,6 +281,13 @@ describe("Zernio account-scoped publication", () => {
         { platform: "telegram", accountId: target.providerAccountId, platformSpecificData: { parseMode: "HTML" } },
       ],
     });
+  });
+
+  it("keeps internal publication tags out of YouTube's published keyword field", async () => {
+    const calls = serve([{ status: 400, body: { code: "video_required" } }]);
+    await expect(zernioSocialAdapter.createPost({ ...target, platform: "youtube", channelId: null }))
+      .rejects.toMatchObject({ status: 400 });
+    expect(JSON.parse(calls[0].body!)).not.toHaveProperty("tags");
   });
 
   it.each(["facebook", "linkedin", "google_business", "pinterest"])(
@@ -327,6 +335,7 @@ describe("Zernio account-scoped publication", () => {
     const list = new URL(calls[1].url);
     expect(list.searchParams.get("profileId")).toBe(profileId);
     expect(list.searchParams.get("accountId")).toBe(target.providerAccountId);
+    expect(list.searchParams.get("tags")).toBe(`paige-publication-${target.externalId}`);
     expect(new URL(calls[2].url).searchParams.get("cursor")).toBe("next-page");
     expect(calls[3].url).toMatch(new RegExp(`/posts/${providerPostId}$`));
     expect(calls.every((call) => call.method === "GET")).toBe(true);

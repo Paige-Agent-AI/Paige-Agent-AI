@@ -325,7 +325,7 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
         <ul>{reads.receipts.map((receipt) => <li key={receipt.id}>
           <span>{receipt.destination ?? receipt.platform ?? "Channel"}</span>
           <em className={receipt.status === "published" ? "mct-pubdoor-ok" : receipt.status === "outcome_unknown" || receipt.status === "publishing" || receipt.status === "approved" || receipt.status === "registered" ? "mct-pubdoor-warn" : ""}>
-            {receipt.status === "outcome_unknown" && receipt.providerProcessing ? "Channel is still processing" : PUBLICATION_STATUS_WORDS[receipt.status] ?? receipt.status}
+            {receipt.status === "outcome_unknown" && receipt.providerProcessing ? "Last reported as processing" : PUBLICATION_STATUS_WORDS[receipt.status] ?? receipt.status}
           </em>
           {receipt.url && <a href={receipt.url} target="_blank" rel="noreferrer">see the post</a>}
           {canCheckAttempt(receipt.status) &&

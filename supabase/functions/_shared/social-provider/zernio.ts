@@ -242,6 +242,11 @@ export function normalizeZernioAccounts(payload: unknown): SocialProviderAccount
 const POST_REJECTED_BEFORE_DISPATCH = new Set([400, 401, 402, 403, 404, 405, 413, 415, 429]);
 const PUBLICATION_METADATA_KEY = "paigePublicationId";
 
+function publicationTag(input: SocialPostInput): string | null {
+  // Zernio forwards tags as YouTube keywords. Keep internal correlation out of those.
+  return input.platform === "youtube" ? null : `paige-publication-${input.externalId}`;
+}
+
 /** Parse only evidence for the single approved target. Zernio's inline examples
  * sometimes omit accountId. A GET readback must explicitly name that account. */
 function postOutcome(
@@ -489,6 +494,7 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
       : input.text;
     const platformSpecificData = requested === "discord" ? { channelId: input.channelId }
       : requested === "telegram" ? { parseMode: "HTML" } : undefined;
+    const tag = publicationTag(input);
     try {
       const payload = await request("/posts", {
         method: "POST",
@@ -498,6 +504,7 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
           platforms: [{ platform: PROVIDER_PATH[requested] ?? requested, accountId: input.providerAccountId, platformSpecificData }],
           publishNow: true,
           metadata: { [PUBLICATION_METADATA_KEY]: input.externalId },
+          ...(tag ? { tags: [tag] } : {}),
         }),
       });
       return postOutcome(payload, input);
@@ -515,6 +522,8 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
       const query = new URLSearchParams({
         profileId, accountId: input.providerAccountId, limit: "25", fields: "metadata",
       });
+      const tag = publicationTag(input);
+      if (tag) query.set("tags", tag);
       for (let page = 0; page < 3; page += 1) {
         const listed = await request(`/posts?${query}`);
         const candidates = listOf(listed).filter((post) =>

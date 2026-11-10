@@ -12,5 +12,10 @@ export interface DocumentWindowTarget {
   tenantId: string;
 }
 
-export const DocumentWindowContext = createContext<((target: DocumentWindowTarget, opener: HTMLButtonElement) => void) | null>(null);
+export interface DocumentWindowController {
+  ready: boolean;
+  open(target: DocumentWindowTarget, opener: HTMLButtonElement): void;
+}
+
+export const DocumentWindowContext = createContext<DocumentWindowController | null>(null);
 export const usePaigeDocumentWindow = () => useContext(DocumentWindowContext);

@@ -119,10 +119,18 @@ export async function readDurableContinuation(
     });
     if (r.completion === undefined) return projection;
     const completion = r.completion;
+    const document = r.workKind === 'document_authoring' && r.capabilityKey === 'document_generate';
+    const research = r.workKind === 'research' && r.capabilityKey === 'deep_research';
+    const resultField = document ? 'content_id' : 'run_id';
     if (!projection.eligibleForContext || projection.state !== 'succeeded'
-      || r.workKind !== 'document_authoring' || r.capabilityKey !== 'document_generate'
+      || (!document && !research)
       || !object(completion) || !UUID(completion.resultRef) || !UUID(completion.receiptRef)
-      || !object(r.terminalOutcome) || r.terminalOutcome.content_id !== completion.resultRef) return null;
+      || !object(r.terminalOutcome) || r.terminalOutcome[resultField] !== completion.resultRef) return null;
+    if (research && (r.workIntentId !== pin.intentId || completion.resultRef !== pin.workId
+      || r.terminalOutcome.receipt_id !== completion.receiptRef
+      || r.terminalOutcome.receipt_outcome !== 'capability_succeeded'
+      || typeof r.terminalOutcome.report_sha256 !== 'string'
+      || !/^[a-f0-9]{64}$/.test(r.terminalOutcome.report_sha256))) return null;
 
     const tenant = await caller.rpc('current_user_tenant_id');
     if (tenant.error || tenant.data !== r.tenantId) return null;
@@ -132,9 +140,18 @@ export async function readDurableContinuation(
     const fields = ['actorId', 'tenantId', 'workId', 'threadId', 'intentId', 'workIntentId',
       'scopeEpoch', 'capabilityKey', 'workKind', 'canonicalObjective', 'status', 'settledAt', 'approvalPending'];
     if (fields.some((key) => current[key] !== r[key]) || !object(current.terminalOutcome)
-      || current.terminalOutcome.verified_readback !== true || current.terminalOutcome.content_id !== completion.resultRef
+      || current.terminalOutcome.verified_readback !== true || current.terminalOutcome[resultField] !== completion.resultRef
       || !object(current.completion) || current.completion.resultRef !== completion.resultRef
       || current.completion.receiptRef !== completion.receiptRef) return null;
+    if (research) {
+      if (current.terminalOutcome.receipt_id !== completion.receiptRef
+        || current.terminalOutcome.receipt_outcome !== 'capability_succeeded'
+        || current.terminalOutcome.report_sha256 !== r.terminalOutcome.report_sha256) return null;
+      const [identity, workspace] = await Promise.all([
+        caller.auth.getUser(), caller.rpc('current_user_tenant_id'),
+      ]);
+      if (identity.error || identity.data.user?.id !== r.actorId || workspace.error || workspace.data !== r.tenantId) return null;
+    }
     return { ...projection, completion: { resultRef: completion.resultRef, receiptRef: completion.receiptRef } };
   } catch {
     return null;

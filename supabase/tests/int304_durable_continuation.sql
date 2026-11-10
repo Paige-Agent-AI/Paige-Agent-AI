@@ -138,3 +138,120 @@ update paige_durable_work set status='outcome_unknown', terminal_outcome=null, s
 set local role authenticated;
 select pg_temp.check_cont('unknown outcome never supplies a completion pair', not (pg_temp.cont() ? 'completion'));
 reset role;
+
+-- C4e: a completed, cited partial report keeps its original native receipt.
+insert into profiles values ('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002');
+insert into paige_durable_work(id,tenant_id,initiating_user_id,intent_id,thread_id,capability_key,work_kind,
+ authority_context,scope_epoch,idempotency_key,request_payload,status,attempt_count,settled_at,terminal_outcome)
+values ('00000000-0000-4000-8000-000000000016','00000000-0000-4000-8000-000000000002',
+ '00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000004',
+ '00000000-0000-4000-8000-000000000003','deep_research','research','{}','epoch','research-original-read',
+ '{"question":"Recover this cited fixture"}','succeeded',1,now(),'{"verified_readback":true}');
+update paige_chat_turns set bundle_ref=jsonb_set(bundle_ref,'{interactive,effects}',
+ (bundle_ref->'interactive'->'effects')||'[{"tool":"deep_research","outcome":"durable_accepted","work_id":"00000000-0000-4000-8000-000000000016"}]'::jsonb)
+where interactive_intent_id='00000000-0000-4000-8000-000000000004';
+insert into research_runs(id,work_id,tenant_id,user_id,question,domain,caller,findings,coverage,stop_reason,configured)
+values ('00000000-0000-4000-8000-000000000016','00000000-0000-4000-8000-000000000016',
+ '00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001',
+ 'Recover this cited fixture','general','chat','[{"text":"A cited fixture.","citations":[1]}]',
+ '{"configured":true,"stop_reason":"max_hops"}','max_hops',true);
+insert into research_sources(run_id,tenant_id,user_id,source_index,url,title,snippet,reliability_score,tier,reliability,fetched_at,excluded)
+values ('00000000-0000-4000-8000-000000000016','00000000-0000-4000-8000-000000000002',
+ '00000000-0000-4000-8000-000000000001',1,'https://research-fixture.example/evidence','Fixture',
+ 'Canonical original source.',0.900,'primary','high','2026-11-10T00:00:00Z',false);
+insert into paige_workspace_events values ('00000000-0000-4000-8000-000000000017',
+ '00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001',
+ 'capability_run','00000000-0000-4000-8000-000000000016',0,'deep_research','capability_succeeded',
+ '00000000-0000-4000-8000-000000000016:1',
+ '{"operation":"deep_research","report_saved":true,"findings_count":1,"sources_count":1,"stop_reason":"max_hops","configured":true}');
+-- Seed the original committed digest through the ACTUAL service-only readback.
+set local TimeZone='UTC';
+select set_config('request.jwt.claim.role','service_role',true);
+update paige_durable_work set terminal_outcome=jsonb_build_object('verified_readback',true,
+ 'run_id',id,'receipt_id','00000000-0000-4000-8000-000000000017','receipt_outcome','capability_succeeded',
+ 'report_sha256',encode(sha256(convert_to(public.research_readback_persisted_run(id,tenant_id,initiating_user_id)::text,'UTF8')),'hex'))
+where id='00000000-0000-4000-8000-000000000016';
+create function pg_temp.research_original_cont()returns jsonb language sql as $$select public.read_paige_durable_continuation(
+ '00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000004','00000000-0000-4000-8000-000000000016')$$;
+set local TimeZone='America/New_York';
+select set_config('request.jwt.claim.role','authenticated',true);
+set local role authenticated;
+select pg_temp.check_cont('Research partial report returns the original run and receipt',
+ pg_temp.research_original_cont()->'completion'='{"resultRef":"00000000-0000-4000-8000-000000000016","receiptRef":"00000000-0000-4000-8000-000000000017"}');
+select pg_temp.check_cont('Research reconnect repeatedly returns the same pair',
+ pg_temp.research_original_cont()=pg_temp.research_original_cont());
+set local TimeZone='Asia/Tokyo';
+select pg_temp.check_cont('Research original digest is independent of caller timezone',pg_temp.research_original_cont()?'completion');
+reset role;
+select pg_temp.check_cont('Research reads make no new run source receipt or attempt',
+ (select count(*)=1 from research_runs) and (select count(*)=1 from research_sources)
+ and (select count(*)=2 from paige_workspace_events)
+ and (select attempt_count=1 from paige_durable_work where id='00000000-0000-4000-8000-000000000016'));
+select pg_temp.check_cont('Research read grants stay unchanged',
+ has_function_privilege('authenticated','public.read_paige_durable_continuation(uuid,uuid,uuid)','execute')
+ and not has_function_privilege('anon','public.read_paige_durable_continuation(uuid,uuid,uuid)','execute')
+ and not has_function_privilege('service_role','public.read_paige_durable_continuation(uuid,uuid,uuid)','execute')
+ and not has_function_privilege('authenticated','public.research_readback_persisted_run(uuid,uuid,uuid)','execute'));
+select pg_temp.check_cont('Research reader pins the writer timezone without changing authority',
+ exists(select 1 from pg_proc where oid='public.read_paige_durable_continuation(uuid,uuid,uuid)'::regprocedure
+  and proconfig=array['search_path=""','TimeZone=UTC'] and provolatile='s' and prosecdef));
+update tenant_members set role='member';set local role authenticated;
+select pg_temp.check_cont('Research revoked owner seat refuses',pg_temp.research_original_cont() is null);
+reset role;update tenant_members set role='owner';
+select set_config('test.tenant','00000000-0000-4000-8000-000000000009',true);set local role authenticated;
+select pg_temp.check_cont('Research wrong tenant refuses',pg_temp.research_original_cont() is null);
+reset role;select set_config('test.tenant','00000000-0000-4000-8000-000000000002',true);
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000009',true);set local role authenticated;
+select pg_temp.check_cont('Research wrong actor refuses',pg_temp.research_original_cont() is null);
+reset role;select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
+update research_runs set work_id=null;set local role authenticated;
+select pg_temp.check_cont('Research legacy run cannot borrow a Work receipt',not(pg_temp.research_original_cont()?'completion'));
+reset role;update research_runs set work_id=id;
+insert into paige_workspace_events select '00000000-0000-4000-8000-000000000018'::uuid,tenant_id,actor_id,
+ source_kind,source_id,source_revision,capability_key,'capability_failed',job_attempt_id,detail
+ from paige_workspace_events where source_id='00000000-0000-4000-8000-000000000016';set local role authenticated;
+select pg_temp.check_cont('Research conflicting receipt makes completion unavailable',not(pg_temp.research_original_cont()?'completion'));
+reset role;delete from paige_workspace_events where id='00000000-0000-4000-8000-000000000018';
+
+update research_runs set findings='[{"text":"Changed with the same citation count.","citations":[1]}]';
+set local role authenticated;
+select pg_temp.check_cont('Research text tampering cannot borrow the receipt',not(pg_temp.research_original_cont()?'completion'));
+reset role;update research_runs set findings='[{"text":"A cited fixture.","citations":[1]}]';
+update research_sources set snippet='Changed source text';set local role authenticated;
+select pg_temp.check_cont('Research source tampering cannot borrow the receipt',not(pg_temp.research_original_cont()?'completion'));
+reset role;update research_sources set snippet='Canonical original source.';
+update research_runs set coverage=jsonb_set(coverage,'{stop_reason}','"answered"');set local role authenticated;
+select pg_temp.check_cont('Research coverage drift cannot become answered evidence',not(pg_temp.research_original_cont()?'completion'));
+reset role;update research_runs set coverage=jsonb_set(coverage,'{stop_reason}','"max_hops"');
+update paige_workspace_events set job_attempt_id='00000000-0000-4000-8000-000000000016:2'
+ where source_id='00000000-0000-4000-8000-000000000016';set local role authenticated;
+select pg_temp.check_cont('Research receipt from another attempt refuses',not(pg_temp.research_original_cont()?'completion'));
+reset role;update paige_workspace_events set job_attempt_id='00000000-0000-4000-8000-000000000016:1',actor_id=gen_random_uuid()
+ where source_id='00000000-0000-4000-8000-000000000016';set local role authenticated;
+select pg_temp.check_cont('Research receipt from another actor refuses',not(pg_temp.research_original_cont()?'completion'));
+reset role;update paige_workspace_events set actor_id='00000000-0000-4000-8000-000000000001',detail=jsonb_set(detail,'{report_saved}','false')
+ where source_id='00000000-0000-4000-8000-000000000016';set local role authenticated;
+select pg_temp.check_cont('Research unconfirmed receipt refuses',not(pg_temp.research_original_cont()?'completion'));
+reset role;update paige_workspace_events set detail=jsonb_set(detail,'{report_saved}','true')
+ where source_id='00000000-0000-4000-8000-000000000016';
+update auth.users set banned_until=now()+interval '1 day';set local role authenticated;
+select pg_temp.check_cont('Research current Auth ban refuses',pg_temp.research_original_cont() is null);
+reset role;update auth.users set banned_until=null;
+update profiles set active_tenant_id=gen_random_uuid();set local role authenticated;
+select pg_temp.check_cont('Research current profile workspace drift refuses',pg_temp.research_original_cont() is null);
+reset role;update profiles set active_tenant_id='00000000-0000-4000-8000-000000000002';
+insert into research_sources(run_id,tenant_id,user_id,source_index,url,excluded)
+ values('00000000-0000-4000-8000-000000000016',gen_random_uuid(),gen_random_uuid(),2,'https://foreign-fixture.example',false);
+set local role authenticated;
+select pg_temp.check_cont('Research foreign source is never silently excluded from proof',not(pg_temp.research_original_cont()?'completion'));
+reset role;delete from research_sources where source_index=2;
+select set_config('test.research_terminal',terminal_outcome::text,true) from paige_durable_work
+ where id='00000000-0000-4000-8000-000000000016';
+update paige_durable_work set status='outcome_unknown',terminal_outcome=null,settled_at=null
+ where id='00000000-0000-4000-8000-000000000016';set local role authenticated;
+select pg_temp.check_cont('Research uncertain state cannot return a completion pair',not(pg_temp.research_original_cont()?'completion'));
+reset role;update paige_durable_work set status='succeeded',settled_at=now(),
+ terminal_outcome=current_setting('test.research_terminal')::jsonb where id='00000000-0000-4000-8000-000000000016';
+set local role authenticated;
+select pg_temp.check_cont('Research original pair remains available after negative controls',pg_temp.research_original_cont()?'completion');
+reset role;

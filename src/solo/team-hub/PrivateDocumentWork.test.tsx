@@ -1,6 +1,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { OriginalDocumentWork } from "@/components/chat/OriginalDocumentWork";
 import {
   clearPrivateDocumentWork,
   keepPrivateDocumentWork,
@@ -74,13 +75,21 @@ async function check() {
 describe("Team Hub private document reopen", () => {
   it("keeps only the explicit locator and restores the same result and receipt after a remount", async () => {
     const source = { ...reference, transcript: "private context", ...completion };
-    expect(keepPrivateDocumentWork(actorId, tenantId, source)).toBe(true);
+    await act(async () => root.render(
+      <OriginalDocumentWork reference={source} actorId={actorId} tenantId={tenantId} current={() => true} artifacts={[]} />,
+    ));
+    expect(button("Keep in Team Hub")).toBeUndefined();
+    await check();
+    expect(privateDocumentWorkSnapshot(actorId, tenantId)).toBeNull();
+    await act(async () => button("Keep in Team Hub")!.click());
+    expect(host.textContent).toContain("In Team Hub, open Saved PAIGE work.");
     expect(privateDocumentWorkSnapshot(actorId, tenantId)).toBe(JSON.stringify(reference));
+    expect(invoke).toHaveBeenCalledTimes(1);
 
     for (let visit = 0; visit < 2; visit++) {
       await open();
       expect(host.textContent).not.toContain(completion.receiptRef);
-      expect(invoke).toHaveBeenCalledTimes(visit);
+      expect(invoke).toHaveBeenCalledTimes(visit + 1);
       await check();
       expect(invoke).toHaveBeenLastCalledWith("paige-ai-chat", expect.objectContaining({
         headers: { [CHAT_CONTROL_HEADER]: "status", Authorization: "Bearer caller-token" },
@@ -92,9 +101,22 @@ describe("Team Hub private document reopen", () => {
       }));
       expect(host.textContent).toContain(completion.receiptRef);
       expect(host.querySelector("[data-document]")?.getAttribute("data-document")).toBe(completion.resultRef);
+      expect(button("Keep in Team Hub")).toBeUndefined();
       await act(async () => root.render(null));
     }
-    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(invoke).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not save a verified Chat reference once its original scope has retired", async () => {
+    let current = true;
+    await act(async () => root.render(
+      <OriginalDocumentWork reference={reference} actorId={actorId} tenantId={tenantId} current={() => current} artifacts={[]} />,
+    ));
+    await check();
+    current = false;
+    await act(async () => button("Keep in Team Hub")!.click());
+    expect(privateDocumentWorkSnapshot(actorId, tenantId)).toBeNull();
+    expect(invoke).toHaveBeenCalledTimes(1);
   });
 
   it("keeps a different actor and workspace from seeing or checking the saved reference", async () => {

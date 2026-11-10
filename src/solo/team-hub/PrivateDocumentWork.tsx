@@ -40,6 +40,7 @@ export function PrivateDocumentWork({ actorId, tenantId }: { actorId: string; te
           <>
             <OriginalDocumentWork
               key={snapshot}
+              surface="team-hub"
               reference={reference}
               actorId={actorId}
               tenantId={tenantId}

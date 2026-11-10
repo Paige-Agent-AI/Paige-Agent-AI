@@ -150,7 +150,7 @@ export function PaigeDocumentWindowHost({ scope, children }: { scope: DocumentWi
     setSelection(value => value ? { ...value, expanded } : value);
   }
 
-  return <DocumentWindowContext.Provider value={scope ? open : null}>
+  return <DocumentWindowContext.Provider value={{ ready: !!scope, open }}>
     <div ref={host} className="paige-document-host" data-paige-document-mode={mode ?? undefined}
       onKeyDown={event => { if (current && event.key === "Escape" && !event.defaultPrevented) { event.preventDefault(); close(); } }}>
       <div className="paige-document-chat" hidden={mode === "full"}>{children}</div>

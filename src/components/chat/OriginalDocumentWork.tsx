@@ -84,11 +84,16 @@ export function OriginalDocumentWork({ reference, actorId, tenantId, current, ar
       {result && result !== "checking" && (result.state === "verified" ? (
         <div className="mt-2 space-y-2">
           <p role="status" className="break-words text-sm font-medium">
-            {existing ? `Verified document: ${existing.title}` : "Original document verified"}
+            Completion receipt verified at this check.
           </p>
           <p className="break-all text-xs text-muted-foreground">Original receipt {result.receiptRef}</p>
-          {!existing && <PaigeArtifactCard tenantId={tenantId}
-            artifact={{ id: result.resultRef, artifactType: "document", title: "Original document" }} />}
+          <p className="text-xs text-muted-foreground">
+            The document card shows the current draft, which may have changed since completion.
+          </p>
+          {!existing && <div aria-label="Current document">
+            <PaigeArtifactCard tenantId={tenantId}
+              artifact={{ id: result.resultRef, artifactType: "document", title: "Current document" }} />
+          </div>}
         </div>
       ) : <p role="status" className="mt-2 text-sm text-muted-foreground">{labels[result.state]}</p>)}
     </section>

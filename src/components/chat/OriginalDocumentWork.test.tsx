@@ -1,12 +1,13 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { PaigeArtifact } from "@/components/paige/chat/PaigeArtifactCard";
 import { OriginalDocumentWork } from "./OriginalDocumentWork";
 
 const { getSession, invoke } = vi.hoisted(() => ({ getSession: vi.fn(), invoke: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession }, functions: { invoke } } }));
 vi.mock("@/components/paige/chat/PaigeArtifactCard", () => ({
-  PaigeArtifactCard: ({ artifact }: { artifact: { id: string } }) => <span>{artifact.id}</span>,
+  PaigeArtifactCard: ({ artifact }: { artifact: { id: string; title: string } }) => <span>{artifact.title} {artifact.id}</span>,
 }));
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -36,9 +37,9 @@ describe("original document status control", () => {
     host.remove();
   });
 
-  async function open(key: string) {
+  async function open(key: string, artifacts: PaigeArtifact[] = []) {
     await act(async () => root.render(<OriginalDocumentWork key={key} reference={reference}
-      actorId={id(6)} tenantId={id(7)} current={() => active} artifacts={[]} />));
+      actorId={id(6)} tenantId={id(7)} current={() => active} artifacts={artifacts} />));
   }
 
   it("recovers the same result and receipt through one read per explicit check after reopening", async () => {
@@ -63,6 +64,22 @@ describe("original document status control", () => {
     expect(invoke).toHaveBeenCalledTimes(2);
     expect(host.textContent).toContain(completion.receiptRef);
     expect(host.textContent).toContain(completion.resultRef);
+  });
+
+  it("keeps completion verification separate from the mutable document card", async () => {
+    invoke.mockResolvedValue(response);
+    await open("fallback");
+    await act(async () => host.querySelector("button")!.click());
+    expect(host.querySelector('[role="status"]')?.textContent).toBe("Completion receipt verified at this check.");
+    expect(host.textContent).toContain("Current document");
+    expect(host.textContent).toContain(completion.resultRef);
+
+    await open("existing", [{ id: completion.resultRef, artifactType: "document", title: "Edited draft" }]);
+    await act(async () => host.querySelector("button")!.click());
+    expect(host.querySelector('[role="status"]')?.textContent).toBe("Completion receipt verified at this check.");
+    expect(host.textContent).toContain("The document card shows the current draft");
+    expect(host.textContent).toContain(completion.receiptRef);
+    expect(host.textContent).not.toContain("Verified document: Edited draft");
   });
 
   it("aborts and withholds the old result when the conversation is replaced during the read", async () => {

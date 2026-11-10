@@ -348,9 +348,12 @@ describe("Zernio account-scoped publication", () => {
     { ...published, metadata: { paigePublicationId: "other-attempt" } },
     { ...published, platforms: [{ ...published.platforms[0], accountId: "other-account" }] },
     { ...published, platforms: [{ ...published.platforms[0], platformPostUrl: url.replace(channelId, "2222222222222222222") }] },
+    { ...published, platforms: [{ ...published.platforms[0], platformPostUrl: null }] },
   ])("never claims a receipt from another attempt, account or Discord channel", async (post) => {
     serve([{ body: { post } }]);
-    await expect(zernioSocialAdapter.readPost(target, providerPostId)).resolves.not.toMatchObject({ kind: "published" });
+    await expect(zernioSocialAdapter.readPost(target, providerPostId)).resolves.toMatchObject({
+      kind: "unknown", requestId: providerPostId,
+    });
   });
 
   it("refuses non-UUID publication IDs and unsupported platforms before transport", async () => {

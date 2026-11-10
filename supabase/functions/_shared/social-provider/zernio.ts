@@ -275,7 +275,11 @@ function postOutcome(
       platform: target.platform, success: false, postId: requestId, postUrl: null, error: "provider_rejected",
     }] };
   }
-  return { kind: "processing", requestId };
+  if (post?.status === "publishing" && typeof row?.status === "string"
+      && ["pending", "processing", "uploading"].includes(row.status)) {
+    return { kind: "processing", requestId };
+  }
+  return { kind: "unknown", requestId, reason: "provider_receipt_unverified" };
 }
 
 function authorizationUrl(raw: unknown, platform: string): string {

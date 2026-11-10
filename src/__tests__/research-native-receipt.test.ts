@@ -47,6 +47,7 @@ type Options = {
   searchHits?: Array<{url:string;title:string;description:string}>;
   searchBatches?: Array<Array<{url:string;title:string;description:string}>>;
   fabricEnabled?: boolean;
+  workRpc?: (args: Row) => Promise<Reply>;
 };
 
 function fixture(options: Options = {}) {
@@ -148,7 +149,9 @@ function fixture(options: Options = {}) {
     return { data: { ...saved, sources }, error: null };
   });
   const admin = { from: query, rpc: (name: string, args: Row) => name === 'research_assert_current_scope' ? scopeRpc(args)
-    : name === 'research_readback_persisted_run' ? readbackRpc(args) : adminRpc(name, args), auth: { admin: { getUserById: identityRead } } };
+    : name === 'research_readback_persisted_run' ? readbackRpc(args)
+    : name === 'advance_paige_research_work' && options.workRpc ? options.workRpc(args)
+    : adminRpc(name, args), auth: { admin: { getUserById: identityRead } } };
   const caller = { from: query, auth: { getUser: identityRead }, rpc: async (name: string, args: Row) => name === 'research_assert_current_scope' ? scopeRpc(args) : ({ data: name === 'current_user_tenant_id' ? active : options.member !== false, error: null }) };
   let searchNumber=0;
   const provider = vi.fn(async (url: string, _init?: {body:string}) => {
@@ -200,6 +203,65 @@ function fixture(options: Options = {}) {
     identityRead, scopeRpc, readbackRpc, maxParallel: () => maxParallel,
     setActive: (value: string) => { active = value; }, waitForScope: (wait: Promise<void>) => { scopeWait = wait; } };
 }
+
+describe('durable Research pre-publication recovery', () => {
+  const binding = { work_id: runId, thread_id: '00000000-0000-4000-8000-000000000005',
+    intent_id: '00000000-0000-4000-8000-000000000006' };
+
+  it('reopens the exact checkpoint with a fresh handler and no repeated provider calls', async () => {
+    const abort = new AbortController();
+    let checkpoint: Row | undefined;
+    const firstRpc = vi.fn(async (args: Row): Promise<Reply> => {
+      if (args._phase === 'begin') return { data: { state: 'execute', version: 3 }, error: null };
+      expect(args).toMatchObject({ _phase: 'checkpoint', _work_id: runId, _version: 3,
+        _thread_id: binding.thread_id, _intent_id: binding.intent_id, _actor_id: actor, _tenant_id: tenant });
+      checkpoint = structuredClone((args._checkpoint as { report: Row }).report);
+      abort.abort();
+      return { data: { state: 'ready' }, error: null };
+    });
+    const original = fixture({ cited: true, workRpc: firstRpc });
+    expect((await original.run({ durable_work: binding }, true, abort.signal)).response.status).toBe(409);
+    expect(firstRpc.mock.calls.map(([args]) => args._phase)).toEqual(['begin', 'checkpoint']);
+    expect(original.rows.research_runs).toHaveLength(0);
+    expect(original.receipts.size).toBe(0);
+    expect(original.model).toHaveBeenCalled();
+    expect(checkpoint).toMatchObject({ run_id: runId, findings: [expect.objectContaining({ citations: [1] })] });
+
+    const result = { ...checkpoint, persistence_verified: true, receipt_recorded: true,
+      receipt_id: '00000000-0000-4000-8000-000000000007', receipt_outcome: 'capability_succeeded' };
+    const resumeRpc = vi.fn(async (args: Row): Promise<Reply> => ({
+      data: args._phase === 'begin' ? { state: 'ready' } : { state: 'complete', result },
+      error: null,
+    }));
+    const replacement = fixture({ workRpc: resumeRpc });
+    const resumed = await replacement.run({ durable_work: binding }, true);
+    expect(resumed.response.status).toBe(200);
+    expect(resumed.body).toEqual(result);
+    expect(resumeRpc.mock.calls.map(([args]) => args._phase)).toEqual(['begin', 'publish']);
+    expect(replacement.strategy).not.toHaveBeenCalled();
+    expect(replacement.provider).not.toHaveBeenCalled();
+    expect(replacement.model).not.toHaveBeenCalled();
+  });
+
+  it.each(['in_progress', 'outcome_unknown'])('does not redispatch when the original Work is %s', async state => {
+    const workRpc = vi.fn(async (): Promise<Reply> => ({ data: { state }, error: null }));
+    const test = fixture({ workRpc });
+    const result = await test.run({ durable_work: binding }, true);
+    expect(result.response.status).toBe(state === 'in_progress' ? 202 : 409);
+    expect(workRpc).toHaveBeenCalledTimes(1);
+    expect(test.strategy).not.toHaveBeenCalled();
+    expect(test.provider).not.toHaveBeenCalled();
+    expect(test.model).not.toHaveBeenCalled();
+  });
+
+  it('refuses a customer-supplied Work ID before calling the checkpoint door', async () => {
+    const workRpc = vi.fn();
+    const test = fixture({ workRpc });
+    expect((await test.run({ durable_work: binding })).response.status).toBe(403);
+    expect(workRpc).not.toHaveBeenCalled();
+    expect(test.provider).not.toHaveBeenCalled();
+  });
+});
 
 describe('native Research creates original-identity attempt scopes', () => {
   it('request JSON cannot enable Research Fabric; every native context still receives a fresh callback and signal', async () => {

@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded November 10, 2026 UTC — EXP08 Team Hub attachment access and download continuity.**
+
+| Increment | Exact reviewed source and production release | Proof boundary and original outcome |
+| --- | --- | --- |
+| [#3302](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3302) | Independent non-author review approved `2d0724c2969b57cdda5dc6788bbfacfab0be1e22` and the prospective merge tree `3e2dee0e1fa6eaadb273f25d347fd2342d6d7333`. All 13 required checks, genuine managed Preview and both web statuses passed. Normal merge `257f76b05359ee4a3a7a08049336b8f5e114f087` matches that tree. [Native deploy](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/42743125608) succeeded. Production recorded `20271133000018` once and the original file RPC retains OID `310795`, expected body `937b18e71e7e3e04d22c4650c56ad7e2` and its restricted grants. Vercel `dpl_5hZykP1orsKFrunVL53Kb1fkMjRk` READY. All three official origins served `257f76b05359ee4a3a7a08049336b8f5e114f087-mwa2odvf` and the verified Team Hub chunk. Original Edge file validator v42 remained active with JWT required and all three served files matched the release. | The existing file admission writer rechecks authority after waiting. Departed download requests retire silently, including Back on a phone, and a new request can download after reopening. Review, 141 composed UI tests, 41 isolated native file controls and production source readback support this release. Authenticated upload, post, reload and byte-identical retrieval were pending at cutover. The original MMA Owner result belongs to [the Coordinator record](https://linear.app/paigeagentai/issue/ANT-147#comment-4f0e164f-6e78-4e91-9f1f-78cff72b3cc6). Internal prelaunch patch. Owner acceptance and full EXP08 readiness remain separate. |
+
 **Recorded November 10, 2026 UTC — EXP01 original PAIGE Chat document continuation.**
 
 | Increment | Exact reviewed source and production release | Proof boundary and original outcome |

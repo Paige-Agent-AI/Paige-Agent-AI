@@ -114,7 +114,8 @@ describe("growth-publish-command — the proposal", () => {
     const [row] = w.tables.paige_pending_confirmations;
     expect(row).toMatchObject({ user_id: USER, tenant_id: MINE, tool_name: "growth_page_publish", thread_id: null, scoped_client_id: null, consumed_at: null, fingerprint: r.body.fingerprint });
     expect(row.server_issued_at).toBeTruthy();
-    expect(row.args).toMatchObject({ action: "publish", kind: "page", id: PAGE, expected_tenant_id: MINE });
+    expect(row.args).toMatchObject({ action: "publish", kind: "page", id: PAGE, expected_tenant_id: MINE,
+      approval_subject: `publish:page:${PAGE}`, reviewed_page_revision: "a".repeat(64), reviewed_page_path: "/p/acme/spring-offer" });
     expect(r.body.fingerprint).toBe(await confirmFingerprint("growth_page_publish", row.args as Record<string, unknown>));
     expect(w.executorCalls()).toHaveLength(0);
     expect(w.seen.receipts).toHaveLength(0);

@@ -89,6 +89,15 @@ describe("saved document window", () => {
     expect(host.textContent).toContain(saved.data.body);
   });
 
+  it("keeps Chat operable without a viewport API and opens with the full-page fallback", async () => {
+    vi.stubGlobal("matchMedia", undefined);
+    await render();
+    expect(button("Open")).toBeDefined();
+    await click("Open");
+    expect(button("Back to chat")).toBeDefined();
+    expect(host.textContent).toContain(saved.data.body);
+  });
+
   it("opens full page on a narrow screen and checks access again on reopen", async () => {
     wide = false;
     await render();

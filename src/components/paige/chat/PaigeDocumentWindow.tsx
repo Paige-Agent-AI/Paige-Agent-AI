@@ -62,12 +62,12 @@ export function PaigeDocumentWindowHost({ scope, children }: { scope: DocumentWi
   const mode = current ? current.expanded || !wide ? "full" : "beside" : null;
 
   useLayoutEffect(() => {
-    const media = host.current?.ownerDocument.defaultView?.matchMedia("(min-width: 1024px)");
+    const media = host.current?.ownerDocument.defaultView?.matchMedia?.("(min-width: 1024px)");
     if (!media) return;
     const update = () => setWide(media.matches);
     update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
+    media.addEventListener?.("change", update);
+    return () => media.removeEventListener?.("change", update);
   }, []);
 
   useLayoutEffect(() => {
@@ -89,7 +89,7 @@ export function PaigeDocumentWindowHost({ scope, children }: { scope: DocumentWi
     sourceRect.current = null;
     const element = pane.current;
     const win = element?.ownerDocument.defaultView;
-    if (!from?.width || !element?.animate || !win || win.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!from?.width || !element?.animate || !win || win.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
     const to = element.getBoundingClientRect();
     if (!to.width || !to.height) return;
     const page = element.ownerDocument.createElement("span");
@@ -141,7 +141,7 @@ export function PaigeDocumentWindowHost({ scope, children }: { scope: DocumentWi
     const button = opener.current;
     const key = currentScope.current?.key;
     opener.current = null;
-    button?.ownerDocument.defaultView?.requestAnimationFrame(() => {
+    button?.ownerDocument.defaultView?.requestAnimationFrame?.(() => {
       if (button.isConnected && currentScope.current?.key === key) button.focus({ preventScroll: true });
     });
   }

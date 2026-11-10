@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PaigeArtifactCard, type PaigeArtifact } from "@/components/paige/chat/PaigeArtifactCard";
 import { supabase } from "@/integrations/supabase/client";
+import { keepPrivateDocumentWork } from "@/lib/privateDocumentWorkHandoff";
 import { CHAT_CONTROL_HEADER, chatControlRetryDelay } from "../../../supabase/functions/_shared/paige-turn/control-transport";
 import { readOriginalDocumentWork, type DocumentWorkRead, type OriginalDocumentReference } from "./documentWorkRecovery";
 
@@ -14,14 +15,16 @@ const labels = {
   unknown: "The original document and receipt could not be verified. Check the original status again.",
 };
 
-export function OriginalDocumentWork({ reference, actorId, tenantId, current, artifacts }: {
+export function OriginalDocumentWork({ reference, actorId, tenantId, current, artifacts, surface = "chat" }: {
   reference: OriginalDocumentReference;
   actorId: string;
   tenantId: string;
   current(): boolean;
   artifacts: readonly PaigeArtifact[];
+  surface?: "chat" | "team-hub";
 }) {
   const [result, setResult] = useState<DocumentWorkRead | "checking">();
+  const [handoffSaved, setHandoffSaved] = useState<boolean>();
   const inFlight = useRef<AbortController | null>(null);
   const retryAt = useRef(0);
   useLayoutEffect(() => () => {
@@ -31,6 +34,7 @@ export function OriginalDocumentWork({ reference, actorId, tenantId, current, ar
 
   async function check() {
     if (!current() || inFlight.current) return;
+    setHandoffSaved(undefined);
     if (Date.now() < retryAt.current) {
       setResult({ state: "unknown" });
       return;
@@ -94,6 +98,19 @@ export function OriginalDocumentWork({ reference, actorId, tenantId, current, ar
             <PaigeArtifactCard tenantId={tenantId}
               artifact={{ id: result.resultRef, artifactType: "document", title: "Current document" }} />
           </div>}
+          {surface === "chat" && <>
+            <Button type="button" variant="outline" size="sm" className="min-h-11 max-w-full whitespace-normal text-left"
+              onClick={() => {
+                if (current()) setHandoffSaved(keepPrivateDocumentWork(actorId, tenantId, reference));
+              }}>
+              Keep in Team Hub
+            </Button>
+            {handoffSaved !== undefined && <p role="status" className="text-xs text-muted-foreground">
+              {handoffSaved
+                ? "Saved in this tab. In Team Hub, open Saved PAIGE work."
+                : "This tab could not save the reference. Try again."}
+            </p>}
+          </>}
         </div>
       ) : <p role="status" className="mt-2 text-sm text-muted-foreground">{labels[result.state]}</p>)}
     </section>

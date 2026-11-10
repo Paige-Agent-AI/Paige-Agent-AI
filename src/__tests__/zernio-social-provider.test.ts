@@ -214,8 +214,9 @@ describe("Zernio account-scoped publication", () => {
   };
   const account = {
     _id: target.providerAccountId, profileId, isActive: true, platform: "discord",
-    channelId, displayName: "Test Guild · #announcements",
+    displayName: "Test Guild · #announcements",
   };
+  const discordSettings = { account: { _id: account._id, platform: "discord", channelId, displayName: account.displayName } };
   const profile = { body: { profiles: [{ _id: profileId, externalId: KEY }] } };
   const published = {
     _id: providerPostId, status: "published", metadata: { paigePublicationId: target.externalId },
@@ -228,20 +229,29 @@ describe("Zernio account-scoped publication", () => {
   beforeEach(() => stubEnv({ ZERNIO_API_KEY: "zk_test" }));
 
   it("matches the exact active Discord account and channel in the tenant profile", async () => {
-    const calls = serve([profile, { body: { accounts: [{ ...account, _id: "different-account" }, account] } }]);
+    const calls = serve([profile, { body: { accounts: [{ ...account, _id: "different-account" }, account] } }, { body: discordSettings }]);
     await expect(zernioSocialAdapter.readPostDestination(target)).resolves.toEqual({
       channelId, label: account.displayName,
     });
     expect(calls[1].url).toContain(`/accounts?profileId=${profileId}`);
+    expect(calls[2].url).toContain(`/accounts/${account._id}/discord-settings`);
   });
 
   it.each([
-    { profileId: "foreign-profile" }, { isActive: false }, { channelId: undefined },
-  ])("refuses a wrong-profile, revoked, or unidentified channel account (%j)", async (overrides) => {
+    { profileId: "foreign-profile" }, { profileId: undefined }, { isActive: false }, { isActive: undefined }, { enabled: false },
+  ])("refuses an unverified or disabled account before reading Discord settings (%j)", async (overrides) => {
     const calls = serve([profile, { body: { accounts: [{ ...account, ...overrides }] } }]);
     await expect(zernioSocialAdapter.readPostDestination(target)).rejects.toMatchObject({ status: 409 });
     expect(calls.every((call) => call.method === "GET")).toBe(true);
+    expect(calls).toHaveLength(2);
   });
+
+  it.each([{ _id: "another-account" }, { platform: "telegram" }, { channelId: undefined }])(
+    "refuses settings that fail to confirm the exact Discord account and channel (%j)", async (overrides) => {
+      serve([profile, { body: { accounts: [account] } }, { body: { account: { ...discordSettings.account, ...overrides } } }]);
+      await expect(zernioSocialAdapter.readPostDestination(target)).rejects.toMatchObject({ code: "destination_unverified" });
+    },
+  );
 
   it("posts one account/channel object and reads the native post ID and link from post.platforms", async () => {
     const calls = serve([{ status: 201, body: { post: published } }]);
@@ -272,14 +282,16 @@ describe("Zernio account-scoped publication", () => {
     });
   });
 
-  it("uses the documented Google Business posting slug", async () => {
-    const calls = serve([{ status: 201, body: { post: { _id: providerPostId, status: "published", platforms: [
-      { platform: "googlebusiness", status: "published", platformPostUrl: "https://business.google.com/posts/fixture" },
-    ] } } }]);
-    await expect(zernioSocialAdapter.createPost({ ...target, platform: "google_business", channelId: null }))
-      .resolves.toMatchObject({ kind: "published", results: [{ platform: "google_business", success: true }] });
-    expect(JSON.parse(calls[0].body!).platforms).toEqual([{ platform: "googlebusiness", accountId: target.providerAccountId }]);
-  });
+  it.each(["facebook", "linkedin", "google_business", "pinterest"])(
+    "refuses to post to an unpinned provider default on %s", async (platform) => {
+      const fetchSpy = vi.fn();
+      vi.stubGlobal("fetch", fetchSpy);
+      const input = { ...target, platform, channelId: null };
+      await expect(zernioSocialAdapter.readPostDestination(input)).rejects.toMatchObject({ code: "destination_selection_unavailable" });
+      await expect(zernioSocialAdapter.createPost(input)).rejects.toMatchObject({ code: "destination_selection_unavailable" });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    },
+  );
 
   it("keeps processing, per-target failure, malformed response and transport failure separate", async () => {
     serve([
@@ -306,15 +318,30 @@ describe("Zernio account-scoped publication", () => {
 
   it("reconciles a lost response by tenant profile, account and exact publication metadata with GET only", async () => {
     const calls = serve([
-      profile, { body: { posts: [{ _id: "unrelated", metadata: {} }, { _id: providerPostId, metadata: published.metadata }] } },
+      profile,
+      { body: { posts: [{ _id: "unrelated", metadata: {} }], pagination: { nextCursor: "next-page" } } },
+      { body: { posts: [{ _id: providerPostId, metadata: published.metadata }] } },
       { body: { post: published } },
     ]);
     await expect(zernioSocialAdapter.readPost(target, null)).resolves.toMatchObject({ kind: "published", requestId: providerPostId });
     const list = new URL(calls[1].url);
     expect(list.searchParams.get("profileId")).toBe(profileId);
     expect(list.searchParams.get("accountId")).toBe(target.providerAccountId);
-    expect(calls[2].url).toMatch(new RegExp(`/posts/${providerPostId}$`));
+    expect(new URL(calls[2].url).searchParams.get("cursor")).toBe("next-page");
+    expect(calls[3].url).toMatch(new RegExp(`/posts/${providerPostId}$`));
     expect(calls.every((call) => call.method === "GET")).toBe(true);
+  });
+
+  it("distinguishes a documented duplicate-content rejection from an idempotency conflict", async () => {
+    const details = { accountId: target.providerAccountId, platform: target.platform, existingPostId: providerPostId };
+    serve([
+      { status: 409, body: { details } },
+      { status: 409, body: { details, code: "idempotency_conflict" } },
+      { status: 409, body: { details: { ...details, accountId: "unrelated-account" } } },
+    ]);
+    await expect(zernioSocialAdapter.createPost(target)).rejects.toMatchObject({ status: 409, code: "provider_duplicate_content" });
+    await expect(zernioSocialAdapter.createPost(target)).resolves.toMatchObject({ kind: "unknown" });
+    await expect(zernioSocialAdapter.createPost(target)).resolves.toMatchObject({ kind: "unknown" });
   });
 
   it.each([

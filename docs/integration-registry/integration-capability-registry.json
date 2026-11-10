@@ -3429,7 +3429,7 @@
         "Per-account platform-native consent shown by the real platform's own consent screen (the adapter's per-platform authorization-host allowlist is enforced); no scope is inferred, pre-granted, or silently widened"
       ],
       "safe_readable_context": "Connection health, stable provider account identifier, platform (Zernio's reported names folded to PAIGE's catalogue keys via the adapter's documented aliases), handle, display name, avatar URL, per-account capability list, and last verification time. The API key, profile HMAC keys, callback nonces, and raw payloads are service-only.",
-      "allowed_writes_external_effects": "Open account authorization after one owner/admin confirmation, verify by readback, and revoke the connected account on disconnect. For SOLO content, social.post_publish requires its own exact saved revision, caption and tenant-owned destination approval. The publish door sends one immediate text post. Scheduling, analytics, inbound social automation and paid actions have separate scope and proof.",
+      "allowed_writes_external_effects": "Open account authorization after one owner/admin confirmation, verify by readback, and revoke the connected account on disconnect. For SOLO content, social.post_publish requires exact saved revision, caption and tenant-owned destination approval. The publish door sends one immediate text post to a proven target. Facebook, LinkedIn, Google Business Profile and Pinterest need exact Page, organization, location or board binding before a publish can proceed. Scheduling, analytics, inbound social automation and paid actions have separate scope and proof.",
       "authority_lane": [
         "read",
         "confirm"

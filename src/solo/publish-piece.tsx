@@ -44,7 +44,15 @@ export type PublicationReceipt = {
   status: string;
   url: string | null;
   createdAt: string;
+  providerProcessing: boolean;
 };
+
+const canCheckAttempt = (status: string) => ["approved", "publishing", "outcome_unknown"].includes(status);
+
+export function prioritizePublicationReceipts(receipts: PublicationReceipt[]): PublicationReceipt[] {
+  const unresolved = receipts.filter((receipt) => canCheckAttempt(receipt.status));
+  return [...unresolved, ...receipts.filter((receipt) => !canCheckAttempt(receipt.status)).slice(0, Math.max(0, 5 - unresolved.length))];
+}
 
 /** The one sentence per receipt status — the door's own vocabulary, spelled for a person. */
 export const PUBLICATION_STATUS_WORDS: Record<string, string> = {
@@ -145,6 +153,7 @@ export function doorFace(data: Record<string, unknown> | null, errorBody: Record
   if (["NO_CONNECTION", "NEEDS_REAUTH", "DESTINATION_AMBIGUOUS", "DESTINATION_UNVERIFIED"].includes(code)) return { face: "channel_blocked", sentence };
   if (code === "PUBLISHING_NOT_CONFIGURED") return { face: "not_configured", sentence };
   if (code === "RETRY_PENDING_RECONCILIATION") return { face: "retry_blocked", sentence };
+  if (code === "DESTINATION_SELECTION_UNAVAILABLE") return { face: "refused", sentence };
   if (code === "NOT_AUTHENTICATED") return { face: "signed_out", sentence };
   if (code.startsWith("CALLER_") || code === "CONTENT_NOT_FOUND") return { face: "not_permitted", sentence };
   return { face: "unreachable", sentence };
@@ -188,7 +197,7 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
       networks: classifyPublishNetworks(SOCIAL_NETWORKS, connections),
       networksPhase: presence.error ? "error" : "ready",
       receiptsError: Boolean(receipts.error),
-      receipts: receiptRows.slice(0, 5).map((row) => ({
+      receipts: prioritizePublicationReceipts(receiptRows.map((row) => ({
         id: typeof row.id === "string" ? row.id : "",
         platform: typeof row.platform === "string" ? row.platform : null,
         destination: typeof (row.request_args as Record<string, unknown> | null)?.channel_label === "string"
@@ -196,7 +205,8 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
         status: typeof row.status === "string" ? row.status : "",
         url: typeof row.provider_post_url === "string" && row.provider_post_url ? row.provider_post_url : null,
         createdAt: typeof row.created_at === "string" ? row.created_at : "",
-      })).filter((row) => row.id),
+        providerProcessing: row.error_code === "provider_processing",
+      })).filter((row) => row.id)),
     });
   }, [tenantId, piece.id]);
 
@@ -315,10 +325,10 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
         <ul>{reads.receipts.map((receipt) => <li key={receipt.id}>
           <span>{receipt.destination ?? receipt.platform ?? "Channel"}</span>
           <em className={receipt.status === "published" ? "mct-pubdoor-ok" : receipt.status === "outcome_unknown" || receipt.status === "publishing" || receipt.status === "approved" || receipt.status === "registered" ? "mct-pubdoor-warn" : ""}>
-            {PUBLICATION_STATUS_WORDS[receipt.status] ?? receipt.status}
+            {receipt.status === "outcome_unknown" && receipt.providerProcessing ? "Channel is still processing" : PUBLICATION_STATUS_WORDS[receipt.status] ?? receipt.status}
           </em>
           {receipt.url && <a href={receipt.url} target="_blank" rel="noreferrer">see the post</a>}
-          {["approved", "publishing", "outcome_unknown"].includes(receipt.status) &&
+          {canCheckAttempt(receipt.status) &&
             <button type="button" className="mov-lnk" disabled={busy} onClick={() => void reconcile(receipt.id)}>Check this attempt</button>}
         </li>)}</ul>
       </div>}

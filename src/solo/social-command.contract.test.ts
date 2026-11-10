@@ -198,9 +198,13 @@ describe("handle shape — the surface and Systems Check must agree on the count
   it("keeps the client allow-list identical to the server's, in both directions", () => {
     // A network the form offers and the function refuses is a save that fails after the person
     // typed it; one the function accepts and the form omits is a record nobody can edit here.
-    const declared = /_allowed constant text\[\] := ARRAY\[([^\]]+)\]/.exec(migration)?.[1] ?? "";
-    const server = [...declared.matchAll(/'([a-z]+)'/g)].map((m) => m[1]).sort();
-    expect(server).toEqual(SOCIAL_NETWORKS.map((n) => n.key).sort());
+    const current = read("supabase/migrations/20271133000019_exp07_account_scoped_publication.sql");
+    const client = SOCIAL_NETWORKS.map((n) => n.key).sort();
+    for (const array of ["_allowed", "v_networks"]) {
+      const declared = current.split(`${array} constant text[] := ARRAY[`)[1]?.split("]")[0] ?? "";
+      const server = [...declared.matchAll(/'([a-z]+)'/g)].map((m) => m[1]).sort();
+      expect(server).toEqual(client);
+    }
   });
 });
 

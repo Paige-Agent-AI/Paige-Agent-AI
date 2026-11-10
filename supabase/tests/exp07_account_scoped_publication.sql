@@ -17,6 +17,10 @@ CREATE TABLE public.marketing_content (
   id uuid PRIMARY KEY,
   tenant_id uuid NOT NULL REFERENCES public.tenants(id)
 );
+CREATE FUNCTION public.is_tenant_member(target uuid) RETURNS boolean LANGUAGE sql STABLE AS
+$$ SELECT EXISTS (SELECT 1 FROM public.tenant_members m WHERE m.tenant_id = target AND m.user_id = auth.uid() AND m.status = 'active') $$;
+CREATE FUNCTION public.agency_can_manage_child(target uuid) RETURNS boolean LANGUAGE sql STABLE AS
+$$ SELECT public.agency_can_manage_child(target, auth.uid()) $$;
 \ir ../migrations/20271113870000_content_publications.sql
 
 -- Match the deployed handles ACL before comparing all four routines.
@@ -27,12 +31,15 @@ FROM pg_proc
 WHERE oid IN (
   'public.record_social_handles(uuid,jsonb)'::regprocedure,
   'public.get_social_presence_evidence(uuid)'::regprocedure,
+  'public.content_publication_list(uuid,uuid)'::regprocedure,
   'public.content_publication_bind(uuid,uuid,uuid,text,uuid,uuid,jsonb)'::regprocedure,
   'public.content_publication_record(uuid,uuid,text,text,text,text,text,jsonb)'::regprocedure
 );
 
 \ir ../migrations/20271133000019_exp07_account_scoped_publication.sql
 \ir ../migrations/20271133000019_exp07_account_scoped_publication.sql
+\ir ../migrations/20271133000020_exp07_publication_receipt_privacy.sql
+\ir ../migrations/20271133000020_exp07_publication_receipt_privacy.sql
 
 DO $$
 BEGIN
@@ -62,7 +69,7 @@ DECLARE
   tenant_id constant uuid := '00000000-0000-4000-8000-00000000d0a1';
   piece_id constant uuid := '00000000-0000-4000-8000-00000000f001';
   approval_id constant uuid := '00000000-0000-4000-8000-00000000f002';
-  args constant jsonb := '{"content_revision":"v1","account_id":"acct-1","channel_id":"channel-1","caption":"Example"}';
+  args constant jsonb := '{"content_revision":"v1","account_id":"acct-1","channel_id":"channel-1","channel_label":"Private fixture channel","caption":"Example"}';
   attempt public.content_publications;
   telegram public.content_publications;
 BEGIN
@@ -127,5 +134,24 @@ BEGIN
   EXCEPTION WHEN check_violation THEN NULL;
   END;
   RAISE NOTICE 'EXP07 account-scoped publication and native presence checks passed';
+END
+$$;
+
+DO $$
+DECLARE
+  own_receipt text;
+  member_receipt text;
+BEGIN
+  own_receipt := pg_temp.run('00000000-0000-4000-8000-00000000e001', 'authenticated', 'authenticated',
+    $q$SELECT to_jsonb(r) FROM public.content_publication_list('00000000-0000-4000-8000-00000000f001') r WHERE platform = 'discord'$q$);
+  member_receipt := pg_temp.run('00000000-0000-4000-8000-00000000e002', 'authenticated', 'authenticated',
+    $q$SELECT to_jsonb(r) FROM public.content_publication_list('00000000-0000-4000-8000-00000000f001') r WHERE platform = 'discord'$q$);
+  IF own_receipt NOT LIKE 'ok:%Private fixture channel%' OR own_receipt NOT LIKE '%https://discord.com/channels/1/2/3%'
+    THEN RAISE EXCEPTION 'The authorized owner could not reopen the exact destination receipt'; END IF;
+  IF member_receipt NOT LIKE 'ok:%"status": "published"%' OR member_receipt LIKE '%Private fixture channel%'
+    OR member_receipt LIKE '%channel-1%' OR member_receipt LIKE '%acct-1%' OR member_receipt LIKE '%discord.com%'
+    OR member_receipt LIKE '%native-1%' OR member_receipt LIKE '%post-1%'
+    THEN RAISE EXCEPTION 'The ordinary member receipt lost its outcome or exposed the exact destination'; END IF;
+  RAISE NOTICE 'EXP07 receipt owner and tenant-member projection checks passed';
 END
 $$;

@@ -101,9 +101,10 @@ describe("social publish door — proposal, owner approval, provider execution, 
       platform: "instagram", providerAccountId: "zernio-account-1", text: "Spring workshop reminder", externalId: PUBLICATION,
     });
     // The capability receipt was recorded with the succeeded outcome and the URL.
-    const receipt = w.seen.receipts.find((x) => x.capabilityKey === "social.post_publish");
+    const receipt = w.seen.receipts.find((x) => x.capabilityKey === "social_post_publish");
     expect(receipt?.outcome).toBe("capability_succeeded");
-    expect(receipt?.detail).toMatchObject({ url: "https://instagram.com/p/abc123" });
+    expect(receipt?.detail).toMatchObject({ publication_id: PUBLICATION });
+    expect(receipt?.detail).not.toHaveProperty("url");
   });
 
   it("a replayed fingerprint is refused — the claim was consumed, so a duplicate publish is impossible", async () => {
@@ -159,7 +160,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
     expect(r.status).toBe(502);
     expect(r.body.state).toBe("failed");
     expect(r.body.code).toBe("provider_rejected");
-    const receipt = w.seen.receipts.find((x) => x.capabilityKey === "social.post_publish");
+    const receipt = w.seen.receipts.find((x) => x.capabilityKey === "social_post_publish");
     expect(receipt?.outcome).toBe("capability_failed");
   });
 
@@ -179,7 +180,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
     expect(r.body).toMatchObject({ ok: false, state: "outcome_unknown", publication_id: PUBLICATION });
     expect(r.body.error).toContain("still processing");
     expect(w.tables.content_publications[0].provider_request_id).toBe("req_789");
-    const receipt = w.seen.receipts.find((x) => x.capabilityKey === "social.post_publish");
+    const receipt = w.seen.receipts.find((x) => x.capabilityKey === "social_post_publish");
     expect(receipt?.outcome).toBe("capability_outcome_unknown");
   });
 
@@ -188,7 +189,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
     const first = await w.call(publishBody());
     const r = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
     expect(r.body.state).toBe("outcome_unknown");
-    expect(w.seen.receipts.find((x) => x.capabilityKey === "social.post_publish")?.outcome).toBe("capability_outcome_unknown");
+    expect(w.seen.receipts.find((x) => x.capabilityKey === "social_post_publish")?.outcome).toBe("capability_outcome_unknown");
   });
 
   it("the connection recheck after the claim: a revoked connection publishes nothing", async () => {
@@ -199,7 +200,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
     expect(r.body.code).toBe("CONNECTION_REVOKED");
     expect(r.body.error).toContain("Nothing was published");
     expect(w.seen.createPost).toHaveLength(0); // the provider was never called
-    expect(w.seen.receipts.find((x) => x.capabilityKey === "social.post_publish")?.outcome).toBe("capability_refused");
+    expect(w.seen.receipts.find((x) => x.capabilityKey === "social_post_publish")?.outcome).toBe("capability_refused");
   });
 
   it("a plain member (not owner/admin) is refused — no publish happens", async () => {

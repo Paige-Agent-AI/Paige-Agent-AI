@@ -94,15 +94,29 @@ function connectPlatform(value: string): typeof SOCIAL_CONNECTION_PLATFORMS[numb
 /** Publishing rides the POST set: the social networks plus the provider's
  *  documented messaging targets (discord, telegram). A connectable app is still not
  *  automatically a publish target — google connects but does not receive posts. */
+const PLATFORMS_WITH_MUTABLE_DESTINATIONS = new Set(["facebook", "linkedin", "google_business", "pinterest"]);
+
 function postPlatform(value: string): typeof SOCIAL_POST_PLATFORMS[number] {
   if (!SOCIAL_POST_PLATFORMS.includes(value as typeof SOCIAL_POST_PLATFORMS[number])) {
     throw new SocialProviderError("unsupported_post_platform", 400, "This platform cannot be published to yet.");
+  }
+  if (PLATFORMS_WITH_MUTABLE_DESTINATIONS.has(value)) {
+    throw new SocialProviderError("destination_selection_unavailable", 409, "This network needs a specific Page, organization, location or board before publishing.");
   }
   return value as typeof SOCIAL_POST_PLATFORMS[number];
 }
 
 const hostnameMatches = (hostname: string, expected: string) =>
   hostname === expected || hostname.endsWith(`.${expected}`);
+
+function isDuplicatePost(payload: Record<string, unknown>, requestBody: unknown): boolean {
+  const details = asRecord(payload.details) ?? payload;
+  const requested = asRecord(requestBody);
+  const target = Array.isArray(requested?.platforms) ? asRecord(requested.platforms[0]) : null;
+  return typeof details.existingPostId === "string" && /^[a-f0-9]{24}$/i.test(details.existingPostId)
+    && typeof target?.accountId === "string" && details.accountId === target.accountId
+    && normalizePlatform(details.platform) === normalizePlatform(target.platform);
+}
 
 async function request(path: string, init: RequestInit = {}): Promise<unknown> {
   const response = await safeFetch(`${apiBase()}${path}`, {
@@ -115,12 +129,17 @@ async function request(path: string, init: RequestInit = {}): Promise<unknown> {
   }, { timeoutMs: 15_000, maxBytes: 262_144 });
   if (response.status < 200 || response.status >= 300) {
     let providerCode = "";
+    let duplicatePost = false;
     try {
       const body = response.body ? JSON.parse(response.body) as Record<string, unknown> : {};
       const raw = body.error_code ?? body.code;
       providerCode = typeof raw === "string" ? raw.toUpperCase() : "";
+      duplicatePost = response.status === 409 && path === "/posts" && init.method === "POST"
+        && providerCode !== "IDEMPOTENCY_CONFLICT" && typeof init.body === "string"
+        && isDuplicatePost(body, JSON.parse(init.body));
     } catch { providerCode = ""; }
-    const code = providerCode === "PROFILE_LIMIT_REACHED" || providerCode === "PROFILE_BLOCKED"
+    const code = duplicatePost ? "provider_duplicate_content"
+      : providerCode === "PROFILE_LIMIT_REACHED" || providerCode === "PROFILE_BLOCKED"
       ? "provider_profile_limit"
       : response.status === 401 || response.status === 403
       ? "provider_authorization_rejected"
@@ -246,7 +265,7 @@ function postOutcome(
   const url = safeHttpsUrl(row?.platformPostUrl);
   const discordChannelMatches = target.platform !== "discord"
     || (url && new URL(url).hostname === "discord.com" && new URL(url).pathname.split("/")[3] === target.channelId);
-  if (row?.status === "published" && url && discordChannelMatches) {
+  if (post?.status === "published" && row?.status === "published" && url && discordChannelMatches) {
     return { kind: "published", requestId, results: [{
       platform: target.platform, success: true, postId: text(row.platformPostId, 200) ?? requestId, postUrl: url, error: null,
     }] };
@@ -424,19 +443,27 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
       text(account._id ?? account.accountId ?? account.id, 200) === input.providerAccountId
       && normalizePlatform(account.platform) === requested);
     const returnedProfile = text(asRecord(row?.profileId)?._id ?? row?.profileId, 200);
-    if (!row || (returnedProfile && returnedProfile !== profileId)
+    if (!row || returnedProfile !== profileId || row.isActive !== true || row.enabled === false
         || normalizeZernioAccounts([row])[0]?.status !== "connected") {
       throw new SocialProviderError("destination_unavailable", 409, "The approved account is no longer connected.");
     }
-    const channelId = requested === "discord"
-      ? text(row.channelId ?? asRecord(row.metadata)?.channelId, 32)
-      : null;
-    if (requested === "discord" && (!channelId || !/^\d{16,22}$/.test(channelId))) {
-      throw new SocialProviderError("destination_unverified", 409, "The Discord channel could not be verified.");
+    let details = row;
+    let channelId: string | null = null;
+    if (requested === "discord") {
+      // The generic account list proves membership in the profile. Discord's
+      // dedicated settings read supplies the channel that the POST must pin.
+      const settings = asRecord(await request(`/accounts/${encodeURIComponent(input.providerAccountId)}/discord-settings`));
+      const discord = asRecord(settings?.account);
+      channelId = text(discord?.channelId, 32);
+      if (!discord || discord._id !== input.providerAccountId || discord.platform !== "discord"
+          || !channelId || !/^\d{16,22}$/.test(channelId)) {
+        throw new SocialProviderError("destination_unverified", 409, "The Discord channel could not be verified.");
+      }
+      details = discord;
     }
-    const name = text(row.displayName ?? row.name, 160);
-    const handle = text(row.username ?? row.handle, 100);
-    const channelName = text(row.channelName ?? asRecord(row.metadata)?.channelName, 100);
+    const name = text(details.displayName ?? details.name, 160);
+    const handle = text(details.username ?? details.handle, 100);
+    const channelName = text(details.channelName, 100);
     const identity = [...new Set([name, channelName, handle].filter(Boolean))].join(" · ");
     if (!identity) {
       throw new SocialProviderError("destination_unverified", 409, "The destination name could not be verified.");
@@ -458,21 +485,21 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
       : input.text;
     const platformSpecificData = requested === "discord" ? { channelId: input.channelId }
       : requested === "telegram" ? { parseMode: "HTML" } : undefined;
-    const providerPlatform = requested === "google_business" ? "googlebusiness" : PROVIDER_PATH[requested] ?? requested;
     try {
       const payload = await request("/posts", {
         method: "POST",
         headers: { "Idempotency-Key": input.externalId },
         body: JSON.stringify({
           content,
-          platforms: [{ platform: providerPlatform, accountId: input.providerAccountId, platformSpecificData }],
+          platforms: [{ platform: PROVIDER_PATH[requested] ?? requested, accountId: input.providerAccountId, platformSpecificData }],
           publishNow: true,
           metadata: { [PUBLICATION_METADATA_KEY]: input.externalId },
         }),
       });
       return postOutcome(payload, input);
     } catch (error) {
-      if (error instanceof SocialProviderError && POST_REJECTED_BEFORE_DISPATCH.has(error.status)) throw error;
+      if (error instanceof SocialProviderError
+          && (POST_REJECTED_BEFORE_DISPATCH.has(error.status) || error.code === "provider_duplicate_content")) throw error;
       // Conflicts, 5xx, malformed responses and transport errors may follow a real dispatch.
       return { kind: "unknown", requestId: null, reason: "provider_dispatch_unconfirmed" };
     }
@@ -484,9 +511,18 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
       const query = new URLSearchParams({
         profileId, accountId: input.providerAccountId, limit: "25", fields: "metadata",
       });
-      const candidates = listOf(await request(`/posts?${query}`)).filter((post) =>
-        asRecord(post.metadata)?.[PUBLICATION_METADATA_KEY] === input.externalId);
-      id = candidates.length === 1 ? text(candidates[0]._id, 128) : null;
+      for (let page = 0; page < 3; page += 1) {
+        const listed = await request(`/posts?${query}`);
+        const candidates = listOf(listed).filter((post) =>
+          asRecord(post.metadata)?.[PUBLICATION_METADATA_KEY] === input.externalId);
+        if (candidates.length) {
+          id = candidates.length === 1 ? text(candidates[0]._id, 128) : null;
+          break;
+        }
+        const cursor = text(asRecord(asRecord(listed)?.pagination)?.nextCursor, 2048);
+        if (!cursor || cursor === query.get("cursor")) break;
+        query.set("cursor", cursor);
+      }
     }
     if (!id) return { kind: "unknown", requestId: null, reason: "provider_attempt_not_found" };
     return postOutcome(await request(`/posts/${encodeURIComponent(id)}`), input, id);

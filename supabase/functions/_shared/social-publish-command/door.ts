@@ -35,6 +35,7 @@ const respond = (status: number, body: Record<string, unknown>) => new Response(
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PLATFORMS = new Set<string>(SOCIAL_POST_PLATFORMS);
 const CAPABILITY = "social.post_publish";
+const RAIL_CAPABILITY = "social_post_publish";
 const NOTHING_CHANGED = "Nothing was published.";
 const UNCONFIRMED = "The post may have gone out. Check the original attempt before trying again.";
 
@@ -139,7 +140,7 @@ export async function handleSocialPublishCommand(req: Request, deps: SocialPubli
   const piece = object(pieceRead.data);
   if (pieceRead.error || !piece || typeof piece.updated_at !== "string" || piece.status === "archived") return respond(404, { ok: false, code: "CONTENT_NOT_FOUND", error: "That piece is not in this workspace." });
   if (body.expected_content_revision != null && body.expected_content_revision !== piece.updated_at) {
-    return respond(409, { ok: false, state: "refused", code: "CONTENT_REVISION_CHANGED", error: "This piece changed. Reopen it to review the latest saved version." });
+    return respond(409, { ok: false, state: "refused", code: "CONTENT_REVISION_CHANGED", error: "This piece changed. Reload Content to review the latest saved version." });
   }
   const pieceTitle = typeof piece.title === "string" && piece.title.trim() ? piece.title.trim().slice(0, 120) : "Untitled piece";
   const text = caption ?? pieceTitle;
@@ -169,7 +170,10 @@ export async function handleSocialPublishCommand(req: Request, deps: SocialPubli
   let destination;
   try {
     destination = await deps.adapter.readPostDestination(account);
-  } catch {
+  } catch (error) {
+    if (error instanceof SocialProviderError && error.code === "destination_selection_unavailable") {
+      return respond(409, { ok: false, code: "DESTINATION_SELECTION_UNAVAILABLE", error: error.message });
+    }
     return respond(409, { ok: false, code: "DESTINATION_UNVERIFIED", error: "The connected destination could not be verified. Nothing was published." });
   }
   const requestArgs = {
@@ -279,7 +283,7 @@ async function finish(deps: SocialPublishDeps, attempt: Attempt, outcome: Social
   }
   if (!reconciled || !pending) {
     await record(deps.admin, tenantId, actorId, confirmationId, pending ? "outcome_unknown" : status === "failed" ? "failed" : "succeeded",
-      { platform, code, publication_id: publicationId, post_id: result?.postId ?? null, url: result?.postUrl ?? null, reconciled });
+      { platform, code, publication_id: publicationId, reconciled });
   }
   if (pending) {
     return respond(200, {
@@ -288,7 +292,10 @@ async function finish(deps: SocialPublishDeps, attempt: Attempt, outcome: Social
     });
   }
   if (status === "failed") {
-    return respond(502, { ok: false, state: "failed", code, publication_id: publicationId, error: "The channel refused the post. Nothing was published." });
+    const error = code === "provider_duplicate_content"
+      ? "This account already has the same post or is processing it. Check the channel before trying again."
+      : "The channel refused the post. Nothing was published.";
+    return respond(code === "provider_duplicate_content" ? 409 : 502, { ok: false, state: "failed", code, publication_id: publicationId, error });
   }
   return respond(200, { ok: true, state: "published", platform, post_url: result?.postUrl, post_id: result?.postId, publication_id: publicationId });
 }
@@ -364,7 +371,7 @@ const RECEIPT_OUTCOME: Record<string, CapabilityOutcome> = {
 async function record(admin: Client, tenantId: string, actorId: string, confirmationId: string, outcome: keyof typeof RECEIPT_OUTCOME, detail: Record<string, unknown>) {
   try {
     await recordCapabilityRun(admin, {
-      tenantId, actorId, capabilityKey: CAPABILITY,
+      tenantId, actorId, capabilityKey: RAIL_CAPABILITY,
       outcome: RECEIPT_OUTCOME[outcome], runId: await stableRunId(["social", CAPABILITY, tenantId, confirmationId]),
       detail,
     });

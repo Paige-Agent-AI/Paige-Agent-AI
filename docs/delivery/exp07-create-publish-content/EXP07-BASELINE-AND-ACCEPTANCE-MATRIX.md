@@ -91,6 +91,16 @@ Debt classes: **VERIFY** (prove existing), **INTEGRATE** (wire existing pieces),
 
 ## 5. WEB-01..14 applicability + algorithm register
 
+### November 10, 2026 — selected SOLO create-and-publish, rows 9–11 and 16
+
+The owner confirmed Social, Gmail, Google Docs and Google Calendar connected in the existing Academy SOLO workspace after [connection parity #3296](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3296#issuecomment-6691410604). This records connection evidence for that workspace. This slice uses Social only.
+
+Source candidate uses the existing NEXUS Content path, the saved piece's revision, the exact caption and the selected connected tenant account. Discord pins the channel from the account's dedicated settings read. The original `social.post_publish` confirmation binds those values. The original publication writer stores one attempt, and that attempt's UUID is the provider idempotency key and correlation value. Known provider results keep the native link for authorized receipt readers. Processing and ambiguous responses use the same receipt and a read-only Zernio lookup, with a new dispatch refused while the attempt remains unresolved.
+
+Publishing on Facebook, LinkedIn, Google Business Profile and Pinterest requires a separately verified Page, organization, location or board binding. This candidate refuses those mutable defaults at dispatch admission. Their connection evidence remains separate.
+
+ALG-01 wiring is exercised in the original door and receipt writer. The positive fixture correlates the original account and provider result. Changed-version, wrong-workspace, revoked account, no-link and lost-response cases refuse or remain unknown. Real provider execution, reopening the same authenticated receipt, wider eligible-cohort checks and owner acceptance remain **UNVERIFIED**. This candidate does not close any of the original outcomes or pending additions.
+
 - **WEB01–14:** accepted as applicable controls for EXP07 wherever a creative artifact reaches a public destination. EXP06 owns website delivery; EXP07 consumes approved destinations and returns artifact/version identity. WEB controls that concern hosting/DNS/TLS are consumed from EXP06's surface, not duplicated.
 - **SAAS-01–24:** applied-with-proof rule; no availability promotion from staffing/source/CI alone.
 - **Algorithm support (actual maturity, per canonical register):**

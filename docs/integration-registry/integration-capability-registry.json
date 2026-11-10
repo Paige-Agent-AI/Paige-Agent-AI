@@ -3415,32 +3415,32 @@
     },
     {
       "id": "zernio",
-      "name": "Zernio (the configured Social connection provider)",
+      "name": "Zernio (Social connections and governed publishing)",
       "taxonomy": "marketing_ads_social_presence_analytics",
       "business_reason": "Owner selected Zernio and vaulted ZERNIO_API_KEY (2026-10-29); EXP07 PR #3070 (merged a405a3a11, deployed with the workflow's own readback 2026-10-29) configured it behind the existing dormant Social connection pipe — the concrete provider the Social cards' Connect flow now reaches. Before this the whole connection pipe (cards, approvals, verification, receipts) shipped with NO provider configured behind it, dormant by design.",
       "paige_use_cases": [
         "per-platform, multi-account social connections through the REAL platform's own consent screen (Zernio hosts the selection screens before it; per-platform authorization hosts allowlisted by the adapter)",
         "verify a connected account by provider readback (GET /accounts — Zernio's documented completion signal, not redirect parameters)",
         "per-account disconnect with provider-side revocation (their documented revocation unit: tokens revoked, metering stops)",
-        "(future, its own governed slice) publishing — the adapter's createPost always refuses today"
+        "Publish one approved caption to one exact tenant-owned social account and channel, then reopen or reconcile that publication through its existing receipt"
       ],
       "connection_prerequisite": "Owner-vaulted platform secret ZERNIO_API_KEY (Edge Secrets; the adapter reads it through the canonical env-key path) plus the pipe's existing PUBLIC_SITE_URL. The key authenticates PAIGE as a platform client only; tenant identity stays the opaque ps_<hmac> provider profile key minted by the social doors — Zernio never learns a Paige tenant or customer id.",
       "required_scopes": [
         "Per-account platform-native consent shown by the real platform's own consent screen (the adapter's per-platform authorization-host allowlist is enforced); no scope is inferred, pre-granted, or silently widened"
       ],
       "safe_readable_context": "Connection health, stable provider account identifier, platform (Zernio's reported names folded to PAIGE's catalogue keys via the adapter's documented aliases), handle, display name, avatar URL, per-account capability list, and last verification time. The API key, profile HMAC keys, callback nonces, and raw payloads are service-only.",
-      "allowed_writes_external_effects": "Open the account-authorization redirect (Zernio selection screens or the platform's consent screen) after one owner/admin confirmation; verify by readback; per-account provider-side revocation on disconnect. Publishing, scheduling, analytics pulls, comments, replies, DMs, ads, and paid actions DO NOT exist here — the adapter's createPost always refuses, and each arm ships as its own future governed slice. No spend.",
+      "allowed_writes_external_effects": "Open account authorization after one owner/admin confirmation, verify by readback, and revoke the connected account on disconnect. For SOLO content, social.post_publish requires exact saved revision, caption and tenant-owned destination approval. The publish door sends one immediate text post to a proven target. Facebook, LinkedIn, Google Business Profile and Pinterest need exact Page, organization, location or board binding before a publish can proceed. Scheduling, analytics, inbound social automation and paid actions have separate scope and proof.",
       "authority_lane": [
         "read",
         "confirm"
       ],
       "m1_dependency": "No money movement in the connection slice; the provider subscription is a platform operating expense. Any future paid social action requires the canonical real-money control before exposure.",
-      "canonical_provider_receipt": "The requested platform's account present in the profile readback (GET /accounts) — Zernio's documented completion signal — with connection state applied by the existing social doors before their connection receipt/Rail outcome. Future publishing receipts belong to the publishing slice, not this row.",
+      "canonical_provider_receipt": "Account connection uses profile-scoped GET /accounts. Publishing uses the exact target's Zernio post result and link in the existing content_publications row. An incomplete or lost response uses read-only provider lookup on the same publication, account and metadata correlation before a retry can be considered.",
       "rail_mind_memory": "Rail: the existing social-connection receipt path (record_capability_run through the doors). Mind and long-term Memory: no private provider payload, token, or audience data.",
       "status": "PROOF_OWED",
       "owner": "EXP07 (Social experience); EXP10 (registry entry — connection substrate)",
-      "dependency": "The first REAL connect in production (Settings → Integrations → a platform → Connect) is the live probe and the credential check on the vaulted key: 200-path proves the key carries authority; 401/403 surfaces exact regeneration guidance; it lands the first verified account on a card. LIVE requires that authenticated end-to-end proof. Durable follow-up only if the redirect race ever shows: Zernio's account.connected webhook (a later slice).",
-      "next_slice": "EXP07 queue: broadcast slice → guest admission + scheduled calls → Team Hub chat-tool seam → the Zernio publishing arm (its own governed slice; createPost refuses until then).",
+      "dependency": "The owner confirmed Social connected in the existing Academy SOLO workspace after #3296. One authorized live post, its provider link and reopening the saved piece and receipt remain PROOF OWED.",
+      "next_slice": "Complete the selected SOLO create-and-publish proof through the existing content and publication door. Other original EXP07 outcomes require their separate approval and evidence.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",

@@ -86,6 +86,11 @@ export const SOCIAL_NETWORKS = [
   { key: "youtube", label: "YouTube", hint: "@yourbusiness" },
   { key: "tiktok", label: "TikTok", hint: "@yourbusiness" },
   { key: "x", label: "X", hint: "@yourbusiness" },
+  // The provider's messaging post targets (owner 2026-11-06: connected Discord and
+  // Telegram channels become publishable). Readiness still comes from the presence
+  // read alone — an unconnected channel says "Not connected", never "probably fine".
+  { key: "discord", label: "Discord", hint: "your server" },
+  { key: "telegram", label: "Telegram", hint: "t.me/yourchannel" },
 ] as const;
 
 export type SocialNetworkKey = (typeof SOCIAL_NETWORKS)[number]["key"];

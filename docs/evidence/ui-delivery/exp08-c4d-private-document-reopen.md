@@ -50,7 +50,7 @@ ACCEPTANCE_CRITERIA: explicit keep from a verified original Chat job, same origi
 MOTION_PURPOSE: NONE: no motion added.
 PROTECTED_SEAMS: current Solo actor and tenant, private storage lifetime and original authorization transport, result and receipt pairing, original artifact read. No database, Work writer, execution, approval, account or provider source change.
 
-INTERNAL_BUILD_IDENTITY: source=c4d-private-document-reopen-candidate; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp08-c4d-private-document-reopen.md
+INTERNAL_BUILD_IDENTITY: source=f5207970bf3b9ff8423d5f8d21d341be28fb7440; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp08-c4d-private-document-reopen.md
 RELEASE_CHANNEL: development: candidate under test.
 RELEASE_CLASSIFICATION: internal-only: prelaunch bounded consumer outcome.
 CUSTOMER_RELEASE_IDENTITY: none: candidate pending exact reviewed release.

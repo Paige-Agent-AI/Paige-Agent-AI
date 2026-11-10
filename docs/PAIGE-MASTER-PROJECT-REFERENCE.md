@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded November 10, 2026 UTC — EXP05 C4d durable Document recovery backend.**
+
+| Increment | Exact reviewed source and production release | Proof boundary and original outcome |
+| --- | --- | --- |
+| [#3300](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3300) | Independently reviewed `be9f1db38ab957e49a280b16232296af69aeacdd` with [non-author receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3300#issuecomment-6754537218). All 13 required checks and both web previews passed. The fresh managed Preview installed the reviewed migration after the approved in-place reset failed with PostgreSQL `53200`. Normal merge `b4653b12e55074c3ad397418e9dd21ea3502b7dd` has the exact reviewed tree. [Native release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/42736663103) and [Edge release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/42736663139) succeeded and both live tags point to the merge. Production migration `20271133000011` matches both reviewed SQL blocks. The service-only writer and authenticated reader match Preview body MD5 `4b3b68a9a1cb28cbfc76165821bced53` and `f97d7636da19292b737ea38767f8ff44` respectively. PAIGE Chat v644 is active with JWT verification. Edge readback artifact 13727751110 and the public PAIGE build `b4653b12e55074c3ad397418e9dd21ea3502b7dd-mwa0oq1l` match the release. | The original completion transaction binds its Rail receipt to the saved document bytes. Recovery verifies the same job, attempt, result and receipt through the original authorized read. The isolated proof counted one attempt across repeated reads and refused a same-revision edit. Historical receipts without a digest cannot prove an exact completion pair. The EXP01 and EXP08 consumers and the live two-surface reconnect check remain pending in [ANT-6](https://linear.app/paigeagentai/issue/ANT-6#comment-e1340368-ad90-49c9-974b-e51d9bd97ae8). Backend release only. |
+
 **Recorded November 9, 2026 UTC — EXP05 O02 reviewed weekly plan and original receipt release identity.**
 
 | Increment | Exact reviewed source and production release | Proof boundary and original outcome |

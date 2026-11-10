@@ -11,11 +11,16 @@ alter table public.paige_chat_threads add column interactive_latest_intent uuid;
 create table public.paige_chat_turns(id uuid default gen_random_uuid(),work_id uuid,thread_id uuid,role text,interactive_intent_id uuid,interactive_actor_id uuid,interactive_tenant_id uuid,interactive_terminal_state text,bundle_ref jsonb);
 ${read('supabase/migrations/20270417000000_paige_durable_work_envelope.sql')}
 alter table public.paige_durable_work add column request_payload jsonb;
+create table public.marketing_content(id uuid, tenant_id uuid, work_id uuid, kind text, document_revision int, title text, body text);
+create table public.paige_workspace_events(id uuid, tenant_id uuid, actor_id uuid, source_kind text, source_id uuid, source_revision bigint,
+ capability_key text, outcome text, job_attempt_id text, detail jsonb);
 ${readMigration('_int304_durable_continuation_read.sql').replace(/^begin;\r?$/mg,'').replace(/^commit;\r?$/mg,'')}
+${read('supabase/migrations/20270601000014_int304_durable_observation.sql')}
+${readMigration('_exp05_c4d_original_completion.sql').split('end $document_receipt$;')[1].replace(/^commit;\r?$/mg,'')}
 ${read('supabase/tests/int304_durable_continuation.sql')}
 rollback;`;
 const result=spawnSync(process.env.PSQL_BIN??'psql',['-X','-v','ON_ERROR_STOP=1',url],{input:sql,encoding:'utf8',timeout:45000,windowsHide:true});if(result.status!==0){console.error(result.stderr);process.exit(1)}
 const proofs=(result.stdout+'\n'+result.stderr).split('\n').filter(l=>l.includes('CONTINUATION_PROOF'));
-if(proofs.length<22)throw Error(`expected at least 22 CONTINUATION_PROOF lines, saw ${proofs.length}`);
+if(proofs.length<33)throw Error(`expected at least 33 CONTINUATION_PROOF lines, saw ${proofs.length}`);
 console.log(proofs.join('\n'));
 console.log('PASS durable continuation read: exact validated fields with canonical objective, permission/tenant/actor/intent/archival gates, approval-pending only from a real expired approval, blank objective refused, ambiguous lineage refused, capability class closed, service/anon refused');

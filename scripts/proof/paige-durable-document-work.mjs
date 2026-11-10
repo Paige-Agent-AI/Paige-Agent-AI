@@ -25,6 +25,9 @@ const metricActor = readFileSync(join(root, "supabase/migrations/20271113360002_
 const reportAuthority = readFileSync(join(root, "supabase/migrations/20271113440002_exp02_native_report_authority.sql"), "utf8");
 const reportPrivacy = readFileSync(join(root, "supabase/migrations/20271113430002_exp02_metric_report_artifact_scope.sql"), "utf8");
 const reportArtifact = readFileSync(join(root, "supabase/migrations/20271113450002_exp02_native_report_artifact.sql"), "utf8");
+const c4dCompletion = readFileSync(join(root, "supabase/migrations/20271133000011_exp05_c4d_original_completion.sql"), "utf8");
+const continuationReader = c4dCompletion.indexOf("do $migration$");
+assert.ok(continuationReader > 0, "C4d receipt writer proof requires the actual guarded migration section");
 const reportCaptureMigration = readFileSync(join(root, "supabase/migrations/20271113330002_exp02_document_metric_capture.sql"), "utf8");
 const reportAdmission = readFileSync(join(root, "supabase/migrations/20271113520002_exp02_report_capture_admission.sql"), "utf8");
 const reportSourceRequests = readFileSync(join(root, "supabase/migrations/20271113840002_exp02_report_source_requests.sql"), "utf8");
@@ -206,6 +209,9 @@ try {
     CREATE POLICY native_fixture_legacy_read ON public.marketing_content FOR SELECT TO authenticated USING(true);`);
   await psql(reportArtifact);
   await psql(reportArtifact); // complete producer exact replay, no public admission
+  // This fixture owns the actual document writer. The separate continuation
+  // fixture exercises the reader section against the original observer.
+  await psql(c4dCompletion.slice(0, continuationReader) + "\ncommit;");
   assert.equal((await psql(nativeMetadata)).stdout, originalMetadata);
 
   const userId = randomUUID();
@@ -318,6 +324,9 @@ try {
     where w.id='${workId}';
   `);
   assert.equal(persisted.stdout, `succeeded|true|draft|1|${workId}|1|1`, persisted.stdout);
+  assert.equal((await psql(`SELECT r.detail->>'document_sha256'=encode(sha256(convert_to(m.body,'UTF8')),'hex')
+    FROM public.proof_capability_runs r JOIN public.marketing_content m ON m.work_id=r.run_id
+    WHERE r.run_id='${workId}' AND r.outcome='capability_succeeded';`)).stdout, 't');
 
   const revisionIntent = randomUUID();
   const revisionBrief = JSON.stringify({
@@ -485,6 +494,8 @@ try {
   assert.doesNotMatch(JSON.stringify(actualReport),/aneb_v1_|isolated-private-canary|account_epoch/);
   assert.equal(actualReport.status,'succeeded'); assert.equal(actualReport.turns,1); assert.equal(actualReport.receipts,1);
   assert.equal(actualReport.purpose,'metric_business_review');
+  assert.equal((await psql(`SELECT NOT (detail ? 'document_sha256') FROM public.proof_capability_runs
+    WHERE run_id='${report.id}' AND outcome='capability_succeeded';`)).stdout, 't');
   assert.equal((await psql(finishReport(report))).stdout,`${report.id}|succeeded`);
   const rewrite = await psql(`UPDATE public.marketing_content SET body='Changed captured facts' WHERE id='${report.id}';`,true);
   assert.match(rewrite.stderr,/BUSINESS_REVIEW_ARTIFACT_IMMUTABLE/);

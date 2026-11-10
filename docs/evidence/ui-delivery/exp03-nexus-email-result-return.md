@@ -25,7 +25,7 @@ MUST_PRESERVE: original Save13/prepare/claim/finalize/provider/approval/receipt/
 ACCEPTANCE_CRITERIA: same original email reopens after full reload with truthful original result and Return to NEXUS, no editor/send offered for that result; stale/revoked/foreign reads withhold; authenticated exact authorized send once/receipt/recovery still required.
 MOTION_PURPOSE: NONE: no motion changed.
 PROTECTED_SEAMS: AFFECTED original message readback/privacy, result/receipt presentation, mailbox/actor/tenant/epoch retirement, original draft-to-result navigation and accessibility. NOT_AFFECTED auth/account choice, signup/entitlement/billing/provisioning, approval/standing authority, Spine execution, native writers, durable jobs/scheduler/retry dispatch, Chat transcript/Live, Vault/credentials, provider execution, Memory. Existing responsive shell/scroll owner preserved; geometry proof owed.
-INTERNAL_BUILD_IDENTITY: source=f12b44707; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=original source/controller tests and this record
+INTERNAL_BUILD_IDENTITY: source=f12b44707d5a8801c5518c8f0d149880fd7e2f88; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=original source/controller tests and this record
 RELEASE_CHANNEL: development: same-outcome repair awaiting exact source review/checks and ordinary release.
 RELEASE_CLASSIFICATION: patch: repair original saved-email return after original send transition; no new capability or provider.
 CUSTOMER_RELEASE_IDENTITY: none: internal selected-outcome repair, no version or announcement.
@@ -50,3 +50,5 @@ No native/Edge/Hub/card-act/registry/provider/auth/permission/connection changes
 Pre-publication collision refresh: all63 current open PR manifests inspected; zero overlap with the four owned original Messages source/test paths. E08 protected card-context repair remains in its original files. Historical old nativezoom harness and untracked assets remain preserved outside this patch.
 
 Record validator initially refused missing exact source SHA, ambiguous automated-state prose and an unsupported unverified keyboard explanation. Corrected only this record to exact functionalf12b44707 and substantive evidence boundaries; validator/guard untouched. Plain compiler6 existing diagnostics is not a zero-error compiler claim. Owner authorized one verification email to the specified existing recipient inside the designated MMA workspace using the proposed neutral subject/body; exact permitted sender still requires live inspection. Customer address/session details stay out of public source.
+
+The unchanged validator also refused the abbreviated source identity; renewed the full40-character functional Git identity, with no source/test/guard change.

@@ -16,10 +16,38 @@ function ports(){return{current:()=>true,identity:vi.fn(async()=>true),readConte
   readRow:vi.fn(async()=>({data:row()})),readHub:vi.fn(async()=>({data:hubResult()}))};}
 
 describe("original saved email navigation",()=>{
+  it("reopens the SAME provider-accepted original message after Save became a send, without an editable source",async()=>{
+    const m={...row(),status:"sent",provider_message_id:"provider-result",comms_email_operation:operation,comms_email_state:"provider_accepted"};
+    const n={...native(),status:"sent",saved_email_draft:null,body_text:m.body_text,body_truncated:false};
+    const p=ports();p.readRow.mockResolvedValue({data:m});p.readContent.mockResolvedValue({data:n} as never);
+    expect(await readLocatedSavedEmail(locator,tenant,actor,p)).toEqual(m);
+    expect(p.readHub).toHaveBeenCalledWith(hub);expect(p.readContent).toHaveBeenCalledTimes(2);
+  });
+
   it("preserves the current complete original body and raw microsecond source after a later Messages edit",async()=>{
     const p=ports();expect(await readLocatedSavedEmail(locator,tenant,actor,p)).toEqual(row());
     expect(p.readContent).toHaveBeenCalledTimes(2);expect(p.identity).toHaveBeenCalledTimes(2);
     expect(p.readRow).toHaveBeenCalledWith(message);expect(p.readHub).toHaveBeenCalledWith(hub);
+  });
+  it("reopens uncertain, failed and scheduled ORIGINAL effects as read-only results, never an editable source",async()=>{
+    for(const state of ["prepared","dispatching","unknown","failed","refused","blocked"]){
+      const m={...row(),comms_email_operation:operation,comms_email_state:state};
+      const n={...native(),saved_email_draft:null,body_text:m.body_text,body_truncated:false};
+      const p=ports();p.readRow.mockResolvedValue({data:m});p.readContent.mockResolvedValue({data:n} as never);
+      expect(await readLocatedSavedEmail(locator,tenant,actor,p)).toEqual(m);
+      expect(savedEmailRow(n,m,locator,tenant)).toBeNull();
+    }
+  });
+  it("never turns an unbound, malformed, foreign or mismatched result envelope into a readable source",async()=>{
+    const m={...row(),status:"sent",comms_email_operation:operation,comms_email_state:"provider_accepted"};
+    const n={...native(),status:"sent",saved_email_draft:null,body_text:m.body_text,body_truncated:false};
+    for(const change of [{tenant_id:actor},{id:hub},{contact_id:hub},{connector_id:null},{comms_email_operation:null},
+      {comms_email_operation:"not-an-operation"},{comms_email_state:"invented"},{subject:"Other subject"},{body_text:"Other words"},{status:"draft"}]){
+      const p=ports();p.readRow.mockResolvedValue({data:{...m,...change}} as never);p.readContent.mockResolvedValue({data:n} as never);
+      expect(await readLocatedSavedEmail(locator,tenant,actor,p)).toBeNull();
+    }
+    const p=ports();p.readRow.mockResolvedValue({data:m});p.readContent.mockResolvedValueOnce({data:n} as never).mockResolvedValueOnce({data:{ok:false}} as never);
+    expect(await readLocatedSavedEmail(locator,tenant,actor,p)).toBeNull();
   });
   it("a plain original Messages locator needs mailbox permission without inventing a Hub receipt",async()=>{
     const p=ports();expect(await readLocatedSavedEmail({...locator,hubMessageId:null},tenant,actor,p)).toEqual(row());

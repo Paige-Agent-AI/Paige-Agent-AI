@@ -98,7 +98,7 @@ import {
 } from "./conversations/solo/soloConversationModel";
 import { missingPortalAccessColumns, withoutPortalAccessColumns } from "@/lib/client-portal-access";
 import { parseSavedEmailLocator } from "@/solo/team-hub/team-hub-email-links";
-import { readLocatedSavedEmail } from "./conversations/savedEmailLocator";
+import { readLocatedSavedEmail, originalEmailResultLabel } from "./conversations/savedEmailLocator";
 import { routeLinkTarget } from "@/lib/links/workspaceLinks";
 
 // ── Connector (channel_connectors row — kept local, not in shared) ─────────────────
@@ -561,10 +561,11 @@ export default function ClientsConversations() {
   const locatedEmailRows=useRef<{key:string;message:MessageRow;thread:DbThread;revalidate:()=>Promise<MessageRow|null>;checking:()=>boolean;retire:()=>void}|null>(null);
   const withheldEmail=useRef<{key:string;messageId:string;threadKey:string|null}|null>(null);
   const locatedEditingId=useRef(editingDraftId);locatedEditingId.current=editingDraftId;
-  const [emailLocation,setEmailLocation]=useState<{key:string;state:"loading"|"loaded"|"opened"|"unavailable";message?:MessageRow}>({key:"",state:"loading"});
+  const [emailLocation,setEmailLocation]=useState<{key:string;state:"loading"|"loaded"|"opened"|"result"|"unavailable";message?:MessageRow}>({key:"",state:"loading"});
   const [emailLocationRetry,setEmailLocationRetry]=useState(0);
   const emailLocatorConflict=emailLocator.kind!=="none" && (emailLocator.kind!=="bound" || emailLocation.key!==emailLocatorKey
-    || emailLocation.state!=="opened" || editingDraftId!==emailLocator.messageId || selectedKey!==emailLocation.message?.thread_key);
+    || (emailLocation.state!=="opened"&&emailLocation.state!=="result") || (emailLocation.state==="opened"&&editingDraftId!==emailLocator.messageId) || selectedKey!==emailLocation.message?.thread_key);
+  const emailResultReadOnly=emailLocator.kind==="bound"&&emailLocation.key===emailLocatorKey&&emailLocation.state==="result"&&!emailLocatorConflict;
   useEffect(() => {
     const v = searchParams.get("filter");
     if (v && (INBOX_VIEWS as string[]).includes(v) && (v !== "attention" || isSolo)) setView(v as InboxView);
@@ -1433,7 +1434,14 @@ export default function ClientsConversations() {
     // One in-flight ORIGINAL read shared by the existing message/thread refresh;
     // settled results are never cached as current permission.
     let checking:Promise<MessageRow|null>|null=null;
-    const revalidate=()=>checking??(checking=readOriginal().finally(()=>{checking=null;}));
+    const revalidate=()=>checking??(checking=readOriginal().then(message=>{
+      const pin=locatedEmailRows.current;
+      if(current()&&message&&pin?.key===key&&!isApprovableDraft(message)
+        &&JSON.stringify(message)!==JSON.stringify(pin.message)){
+        pin.message=message;setEmailLocation({key,state:"loaded",message});
+      }
+      return message;
+    }).finally(()=>{checking=null;}));
     setEmailLocation({key,state:"loading"});
     void(async()=>{
       const message=await revalidate();
@@ -1458,11 +1466,16 @@ export default function ClientsConversations() {
     if(emailLocation.key!==emailLocatorKey||emailLocation.state!=="loaded"||!emailLocation.message
       ||selected?.key!==emailLocation.message.thread_key)return;
     const key=emailLocatorKey;
+    if(!isApprovableDraft(emailLocation.message)){
+      if(locatedEditingId.current===emailLocation.message.id)resetComposer();
+      setEmailLocation(value=>value.key===key?{...value,state:"result"}:value);
+      return;
+    }
     void openLocatedEmail.current(emailLocation.message).then(opened=>{
       if(emailLocatorCurrent.current===key)setEmailLocation(value=>value.key===key?{...value,state:opened?"opened":"unavailable"}:value);
     });
-  },[emailLocation,emailLocatorKey,selected?.key]);
-  const emailHubReturn=emailLocator.kind==="bound"&&emailLocator.hubMessageId&&emailLocation.key===emailLocatorKey&&emailLocation.state==="opened"
+  },[emailLocation,emailLocatorKey,selected?.key,resetComposer]);
+  const emailHubReturn=emailLocator.kind==="bound"&&emailLocator.hubMessageId&&emailLocation.key===emailLocatorKey&&(emailLocation.state==="opened"||emailLocation.state==="result")
     ?routeLinkTarget({destination:"team_hub",record_id:emailLocator.hubMessageId},"solo",soloAccountAddress):null;
   useEffect(() => {
     if (!reviewDraftRequest) return;
@@ -1948,7 +1961,7 @@ export default function ClientsConversations() {
   // Why PAIGE won't send on the chosen channel, from the row's reason (20271120120003), or null.
   // The admin inbox shows the contact card with its DND tab (where a hold on the contact is lifted); Solo does not.
   const composeHeldNote = composeSuppressionNotice(suppressions, composeChannel, { canLiftHere: !isSolo });
-  const composerModel: ConversationsComposerModel | null = selected ? {
+  const composerModel: ConversationsComposerModel | null = selected && !emailResultReadOnly ? {
     capabilities: {
       ...capabilities,
       // The portal reply posts immediately and carries text only — no schedule/undo, no files.
@@ -2315,7 +2328,7 @@ export default function ClientsConversations() {
             {followupLocatorConflict&&leadReplyApprovalId&&selected.contactId?<p role="status" className="text-sm text-muted-foreground">The original reply is still open. <button type="button" className="underline" onClick={()=>restoreFollowupOrigin(selected.contactId!,leadReplyApprovalId)}>Return to original reply</button></p>
               :followupLocator.kind==="invalid"?<p role="alert" className="text-sm text-destructive">The selected reply link is invalid. No replacement was selected.</p>:null}
             {openingSavedDraft?<p role="status" className="text-sm text-muted-foreground">Opening saved reply…</p>:null}
-            {activeTenantId&&selected.contactId&&followupLocator.kind!=="invalid"?<LeadReplyDrafts
+            {activeTenantId&&selected.contactId&&!emailResultReadOnly&&followupLocator.kind!=="invalid"?<LeadReplyDrafts
               key={`${activeUserId}:${activeTenantId}:${selected.contactId}`}
               actorId={activeUserId} tenantId={activeTenantId} contactId={selected.contactId}
               approvalId={followupLocator.kind==="bound"?followupLocator.approvalId:undefined}
@@ -2353,7 +2366,7 @@ export default function ClientsConversations() {
               (the only other earned gold is the draft card's "Approve & send", kept tenant-side
               above). No sendable channel → the connect CTA replaces the composer entirely. */}
           <div className="mt-auto">
-            {noChannel ? (
+            {noChannel && !emailResultReadOnly ? (
               <div className="border-t border-border/60 bg-muted/30 px-3 py-2">
                 <div className="flex flex-col gap-3 rounded-lg border border-border bg-card px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                   <p className="flex items-start gap-2 text-xs text-muted-foreground">
@@ -2411,7 +2424,7 @@ export default function ClientsConversations() {
         <span>{emailLocator.kind==="invalid"?"This saved email link is invalid. No replacement was opened."
           :emailLocation.key!==emailLocatorKey||emailLocation.state==="loading"||emailLocation.state==="loaded"?"Opening the original saved email…"
             :emailLocation.state==="unavailable"||emailLocatorConflict?"The selected draft could not be opened here. Check your workspace, mailbox access and any reply already open."
-              :"Editing the original saved email. Nothing has been sent."}</span>
+              :emailLocation.state==="result"&&emailLocation.message?`Original email · ${originalEmailResultLabel(emailLocation.message)}`:"Editing the original saved email. Nothing has been sent."}</span>
         {emailLocator.kind==="bound"&&(emailLocation.state==="unavailable"||emailLocation.state==="opened"&&emailLocatorConflict)?<Button variant="outline" size="sm" onClick={()=>setEmailLocationRetry(n=>n+1)}>Retry original draft</Button>:null}
         {emailHubReturn?<Link className="underline underline-offset-2 focus-visible:ring-2 focus-visible:ring-ring" to={emailHubReturn.to}>Return to NEXUS</Link>:null}
         <Button variant="ghost" size="sm" onClick={()=>{if(emailLocator.kind==="bound"&&locatedEditingId.current===emailLocator.messageId

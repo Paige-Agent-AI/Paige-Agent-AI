@@ -1,6 +1,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PaigeDocumentWindowHost } from "./PaigeDocumentWindow";
 import { DocumentWindowContext } from "./paigeDocumentWindowContext";
 import { PaigeArtifactCard } from './PaigeArtifactCard';
 const state = vi.hoisted(() => ({ load: vi.fn(), scope: 'initial', rendered: [] as Array<{ scope: string; title: string }> }));
@@ -18,6 +19,20 @@ const paint = async (tenantId = 'test-workspace-one', selected = artifact) => { 
 const originalOpen = () => Array.from(host.querySelectorAll('button')).find(button => button.textContent?.trim() === 'Open')!;
 const click = async (button: HTMLElement) => { await act(async () => { button.click(); await new Promise(resolve => setTimeout(resolve, 0)); }); };
 describe('original artifact review context and return', () => {
+  it('preserves the original preview for non-SOLO and platform mounts', async () => {
+    state.load.mockResolvedValue(doc);
+    await act(async () => root.render(
+      <PaigeDocumentWindowHost enabled={false} scope={null}>
+        <PaigeArtifactCard artifact={artifact} tenantId="test-workspace-one" />
+      </PaigeDocumentWindowHost>,
+    ));
+    const open = originalOpen();
+    expect(open.disabled).toBe(false);
+    await click(open);
+    expect(document.querySelector('[role="dialog"]')).toBeTruthy();
+    expect(host.textContent).not.toContain("Opening chat");
+  });
+
   it('waits for the selected conversation and routes its first enabled Open to the shared viewer', async () => {
     state.load.mockResolvedValue(doc);
     const open = vi.fn();

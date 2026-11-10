@@ -46,7 +46,7 @@ async function readSavedDocument(scope: DocumentWindowScope, id: string, signal:
   return { document, revision: data.document_revision, fingerprint };
 }
 
-export function PaigeDocumentWindowHost({ scope, children }: { scope: DocumentWindowScope | null; children: ReactNode }) {
+export function PaigeDocumentWindowHost({ scope, children, enabled = true }: { scope: DocumentWindowScope | null; children: ReactNode; enabled?: boolean }) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [wide, setWide] = useState(false);
   const host = useRef<HTMLDivElement>(null);
@@ -150,7 +150,7 @@ export function PaigeDocumentWindowHost({ scope, children }: { scope: DocumentWi
     setSelection(value => value ? { ...value, expanded } : value);
   }
 
-  return <DocumentWindowContext.Provider value={{ ready: !!scope, open }}>
+  return <DocumentWindowContext.Provider value={enabled ? { ready: !!scope, open } : null}>
     <div ref={host} className="paige-document-host" data-paige-document-mode={mode ?? undefined}
       onKeyDown={event => { if (current && event.key === "Escape" && !event.defaultPrevented) { event.preventDefault(); close(); } }}>
       <div className="paige-document-chat" hidden={mode === "full"}>{children}</div>

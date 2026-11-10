@@ -73,6 +73,7 @@ import {
 import { agentTurnKey, attachmentScope, teamHubNavigation, useTeamHub, type AgentTurn, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub, type TurnStateRead } from "./useTeamHub";
 import { useNexusEmailDrafts, type NexusEmailDraftView } from "./useNexusEmailDrafts";
 import { TeamHubEmailDraft } from "./TeamHubEmailDraft";
+import { PrivateDocumentWork } from "./PrivateDocumentWork";
 import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, dmRequestPrefill, endsWithRedirect, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
 import { AgentDmEmpty, AgentDmNote, AgentFailRow, AgentGlyph, AgentPlate, AgentProfilePanel, AgentTag, AgentTyping, BringInRow, PrivateNote, PrivateOthersNote } from "./TeamHubAgents";
 import { TeamHubApprovalCard, type TeamHubApprovalAct } from "./TeamHubApproval";
@@ -128,13 +129,13 @@ function HubEntry({ onOpenTeamSettings, openPaige, onApprovalAct, referenceSearc
     </CenterState></div>;
   }
   // Remount per actor and workspace: a switch clears every conversation, draft and pending send.
-  return <ScopedTeamHub key={`${activeUserId}:${tenantId}`} tenantId={tenantId} onTenantRefresh={refresh}
+  return <ScopedTeamHub key={`${activeUserId}:${tenantId}`} actorId={activeUserId} tenantId={tenantId} onTenantRefresh={refresh}
     onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct}
     referenceSearch={referenceSearch} referenceKey={referenceKey} />;
 }
 
-function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
-  tenantId: string; onTenantRefresh?: () => unknown; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
+function ScopedTeamHub({ actorId, tenantId, onTenantRefresh, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
+  actorId: string; tenantId: string; onTenantRefresh?: () => unknown; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
   referenceSearch: string; referenceKey: string;
 }) {
   const [announcement, setAnnouncement] = useState("");
@@ -196,6 +197,7 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
     return <HubSkeleton />;
   }
   return <ReadyHub hub={hub} nexusEmails={nexusEmails} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct}
+    privateWorkScope={hub.overview.me.user_id === actorId && hub.overview.tenant_id === tenantId ? { actorId, tenantId } : null}
     referenceSearch={referenceSearch} referenceKey={referenceKey} />;
 }
 
@@ -275,10 +277,11 @@ const localDay = (instant: string | null) => {
   return Number.isNaN(date.getTime()) ? "" : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
-function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
+function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey, privateWorkScope }: {
   hub: TeamHub; announce: (text: string) => void; announcement: string; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
   referenceSearch: string; referenceKey: string;
   nexusEmails: NexusEmailDraftView;
+  privateWorkScope: { actorId: string; tenantId: string } | null;
 }) {
   const overview = hub.overview!;
   const people = overview.people;
@@ -997,6 +1000,8 @@ function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings
           })}
           {!agentRows.length && <p className="th-note">No agents match.</p>}
         </div>}
+        {!query && privateWorkScope && (me?.permission === "owner" || me?.permission === "admin") &&
+          <PrivateDocumentWork {...privateWorkScope} />}
         {query && <p className="th-note">Search covers the conversations you can see.</p>}
       </div>
     </section>

@@ -356,6 +356,24 @@ describe("Team Hub workspace (mocked RPC)", () => {
     expect(host.textContent).not.toMatch(/private|member of/i);
   });
 
+  it.each([
+    { permission: "owner", user: ME, showsWork: true },
+    { permission: "admin", user: ME, showsWork: true },
+    { permission: "member", user: ME, showsWork: false },
+    { permission: "owner", user: "different-actor", showsWork: false },
+  ])("admits saved PAIGE work only for the current owner or admin (%j)", async ({ permission, user, showsWork }) => {
+    db.override.team_hub_list_conversations = () => ({
+      ok: true,
+      tenant_id: TENANT,
+      me: { user_id: user },
+      people: [person(user, "Morgan", null, permission), ...db.people.filter(p => p.user_id !== user)],
+      conversations: db.conversations,
+    });
+    const { host } = await mount();
+    expect(host.textContent?.includes("Saved PAIGE work")).toBe(showsWork);
+    expect(mocks.invoke).not.toHaveBeenCalled();
+  });
+
   it("shows one honest whole-hub state, with no controls, when the server says unavailable (A1) twice", async () => {
     db.override.team_hub_list_conversations = () => ({ ok: false, code: "unavailable" });
     const { host } = await mount({ onOpenTeamSettings: vi.fn() });

@@ -37,7 +37,10 @@ declare
     where s.run_id=r.id and s.tenant_id=tenant and s.user_id=actor),'[]'::jsonb)
   ) into research_report from public.research_runs r
    where r.id=w.id and r.work_id=w.id and r.tenant_id=tenant and r.user_id=actor
-    and r.question=objective and r.configured and r.coverage->'configured'='true'::jsonb
+    -- Work retains the raw input; the original Research report uses JS.trim.
+    and r.question=btrim(objective,
+     U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')
+    and r.configured and r.coverage->'configured'='true'::jsonb
     and r.stop_reason in ('answered','max_hops','budget','wall_clock','no_results')
     and r.coverage->>'stop_reason'=r.stop_reason;
   if research_report is not null

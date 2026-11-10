@@ -146,7 +146,10 @@ insert into paige_durable_work(id,tenant_id,initiating_user_id,intent_id,thread_
 values ('00000000-0000-4000-8000-000000000016','00000000-0000-4000-8000-000000000002',
  '00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000004',
  '00000000-0000-4000-8000-000000000003','deep_research','research','{}','epoch','research-original-read',
- '{"question":"Recover this cited fixture"}','succeeded',1,now(),'{"verified_readback":true}');
+ jsonb_build_object('question',
+  U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF'
+  ||'Recover this cited fixture'||E'\n\t'),
+ 'succeeded',1,now(),'{"verified_readback":true}');
 update paige_chat_turns set bundle_ref=jsonb_set(bundle_ref,'{interactive,effects}',
  (bundle_ref->'interactive'->'effects')||'[{"tool":"deep_research","outcome":"durable_accepted","work_id":"00000000-0000-4000-8000-000000000016"}]'::jsonb)
 where interactive_intent_id='00000000-0000-4000-8000-000000000004';
@@ -176,7 +179,7 @@ create function pg_temp.research_original_cont()returns jsonb language sql as $$
 set local TimeZone='America/New_York';
 select set_config('request.jwt.claim.role','authenticated',true);
 set local role authenticated;
-select pg_temp.check_cont('Research partial report returns the original run and receipt',
+select pg_temp.check_cont('Research padded original input recovers its partial report and receipt',
  pg_temp.research_original_cont()->'completion'='{"resultRef":"00000000-0000-4000-8000-000000000016","receiptRef":"00000000-0000-4000-8000-000000000017"}');
 select pg_temp.check_cont('Research reconnect repeatedly returns the same pair',
  pg_temp.research_original_cont()=pg_temp.research_original_cont());

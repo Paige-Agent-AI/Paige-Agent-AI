@@ -261,6 +261,16 @@ describe('durable Research pre-publication recovery', () => {
     expect(workRpc).not.toHaveBeenCalled();
     expect(test.provider).not.toHaveBeenCalled();
   });
+
+  it('refuses source filters that cannot be pinned by the existing preparation RPC', async () => {
+    const workRpc = vi.fn();
+    const test = fixture({ workRpc });
+    const result = await test.run({ durable_work: binding, allowed_domains: ['example.gov'] }, true);
+    expect(result.response.status).toBe(422);
+    expect(result.body.not_applied).toBe(true);
+    expect(workRpc).not.toHaveBeenCalled();
+    expect(test.provider).not.toHaveBeenCalled();
+  });
 });
 
 describe('native Research creates original-identity attempt scopes', () => {

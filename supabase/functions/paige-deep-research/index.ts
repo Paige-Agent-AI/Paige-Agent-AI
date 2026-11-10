@@ -2143,14 +2143,17 @@ serve(async (req) => {
       .every(id => typeof id === "string" && UUID_RE.test(id)))) {
     return json({ error: "Original Research work could not be verified.", not_applied: true }, 403);
   }
+  // The incumbent v1 preparation contract cannot pin these optional filters.
+  // Refuse before dispatch rather than silently widening the user's sources.
+  if (work && (body.max_sources !== undefined || body.allowed_domains !== undefined)) {
+    return json({ error: "Checkpointed Research does not support these source filters.", not_applied: true }, 422);
+  }
   const requestPayload = {
     version: 1,
     question: body.question,
     domain: body.domain,
     caller: body.caller,
     max_hops: body.max_hops,
-    max_sources: body.max_sources,
-    allowed_domains: body.allowed_domains,
     freshness_days: body.freshness_days,
     strict: body.strict,
     flavor_facets: body.flavor_facets,

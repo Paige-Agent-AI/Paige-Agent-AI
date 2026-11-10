@@ -208,24 +208,27 @@ describe('durable Research pre-publication recovery', () => {
   const binding = { work_id: runId, thread_id: '00000000-0000-4000-8000-000000000005',
     intent_id: '00000000-0000-4000-8000-000000000006' };
 
-  it('reopens the exact checkpoint with a fresh handler and no repeated provider calls', async () => {
+  it.each([question, `\t\n\u00a0\u2028\ufeff${question}\ufeff\u2029\n\t`])(
+    'reopens the exact checkpoint with a fresh handler and no repeated provider calls: %j', async requestedQuestion => {
     const abort = new AbortController();
     let checkpoint: Row | undefined;
     const firstRpc = vi.fn(async (args: Row): Promise<Reply> => {
       if (args._phase === 'begin') return { data: { state: 'execute', version: 3 }, error: null };
       expect(args).toMatchObject({ _phase: 'checkpoint', _work_id: runId, _version: 3,
         _thread_id: binding.thread_id, _intent_id: binding.intent_id, _actor_id: actor, _tenant_id: tenant });
+      expect((args._request_payload as Row).question).toBe(requestedQuestion);
       checkpoint = structuredClone((args._checkpoint as { report: Row }).report);
       abort.abort();
       return { data: { state: 'ready' }, error: null };
     });
     const original = fixture({ cited: true, workRpc: firstRpc });
-    expect((await original.run({ durable_work: binding }, true, abort.signal)).response.status).toBe(409);
+    expect((await original.run({ question: requestedQuestion, durable_work: binding }, true, abort.signal)).response.status).toBe(409);
     expect(firstRpc.mock.calls.map(([args]) => args._phase)).toEqual(['begin', 'checkpoint']);
     expect(original.rows.research_runs).toHaveLength(0);
     expect(original.receipts.size).toBe(0);
     expect(original.model).toHaveBeenCalled();
-    expect(checkpoint).toMatchObject({ run_id: runId, findings: [expect.objectContaining({ citations: [1] })] });
+    expect(checkpoint).toMatchObject({ run_id: runId, question: requestedQuestion.trim(),
+      findings: [expect.objectContaining({ citations: [1] })] });
 
     const result = { ...checkpoint, persistence_verified: true, receipt_recorded: true,
       receipt_id: '00000000-0000-4000-8000-000000000007', receipt_outcome: 'capability_succeeded' };

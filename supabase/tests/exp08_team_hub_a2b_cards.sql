@@ -1660,6 +1660,7 @@ SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=16 AND NOT EXISTS(SEL
 
 \ir fixtures/exp08-a2b-card-read-revalidation.sql
 \ir fixtures/exp08-uncapped-consumption.sql
+\ir fixtures/exp08-card-approval-context.sql
 
 RESET ROLE;
 \c postgres

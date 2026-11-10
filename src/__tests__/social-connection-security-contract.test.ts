@@ -242,7 +242,7 @@ describe("Social authorization callback", () => {
     expect(providerSeam).toContain('"discord", "telegram"');
     expect(adapter).toContain("SOCIAL_POST_PLATFORMS.includes");
     // The publish door's own gate carries the same two, and google never receives posts.
-    expect(publishDoor).toContain('"snapchat", "discord", "telegram"');
+    expect(publishDoor).toContain("new Set<string>(SOCIAL_POST_PLATFORMS)");
     expect(publishDoor).not.toMatch(/PLATFORMS[^;]*"google"/);
   });
 
@@ -275,7 +275,7 @@ describe("customer-facing identity truth", () => {
     expect(drawer).toContain("connection.requestedPlatform === platform.key");
     // The OAuth list now lives at the publishing boundary (adapter postPlatform);
     // the endpoint gates everything on the connection superset.
-    expect(adapter).toContain("SOCIAL_OAUTH_PLATFORMS.includes");
+    expect(adapter).toContain("SOCIAL_POST_PLATFORMS.includes");
     expect(callback).toContain("returnedPlatform !== claim.requested_platform");
     expect(migration).toContain("not selected or status='connected'");
     expect(migration).toContain("provider_account_id text;");

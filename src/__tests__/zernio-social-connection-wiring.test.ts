@@ -59,7 +59,7 @@ describe("Zernio provider wiring", () => {
     expect(adapter).toContain('request("/posts"');
     expect(adapter).toContain('"Idempotency-Key": input.externalId');
     expect(adapter).toContain("publishNow: true");
-    expect(adapter).toContain('"provider_idempotency_or_dedup_conflict"');
+    expect(adapter).toContain('"provider_dispatch_unconfirmed"');
     expect(adapter).not.toContain("provider_publishing_unavailable");
     // The publish door injects Zernio alone — no retired-provider fallback anywhere.
     const publishDoor = read("supabase/functions/social-publish-command/index.ts");

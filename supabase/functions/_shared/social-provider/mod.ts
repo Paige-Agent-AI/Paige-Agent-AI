@@ -14,7 +14,7 @@ export const SOCIAL_OAUTH_PLATFORMS = [
  * plus the connection apps the provider exposes behind the same profile flow
  * (owner ruling 2026-11-05: the Platform Operator connects Gmail/Calendar,
  * Discord and Telegram here; docs-verified slugs and readback values).
- * Publishing stays on the OAuth list above; connecting is this superset.
+ * Connection and publishing have separate allowlists.
  */
 export const SOCIAL_CONNECTION_PLATFORMS = [
   ...SOCIAL_OAUTH_PLATFORMS,
@@ -63,13 +63,30 @@ export interface SocialProviderPostResult {
 
 /** The provider's answer to one createPost call. */
 export type SocialProviderPostOutcome =
-  | { kind: "published"; results: SocialProviderPostResult[] }
+  | { kind: "published"; results: SocialProviderPostResult[]; requestId?: string }
   /** The provider accepted the post for background processing and named it — the outcome is
    *  UNKNOWN until its status is reconciled; the requestId is the reconciliation handle. */
   | { kind: "processing"; requestId: string }
   /** The transport itself was uncertain (network failure after send, or an unusable answer).
    *  The post MAY exist; nothing here may be reported as either success or failure. */
   | { kind: "unknown"; requestId: string | null; reason: string };
+
+export interface SocialPostAccount {
+  providerProfileKey: string;
+  platform: string;
+  providerAccountId: string;
+}
+
+export interface SocialPostDestination {
+  channelId: string | null;
+  label: string;
+}
+
+export interface SocialPostInput extends SocialPostAccount {
+  channelId: string | null;
+  text: string;
+  externalId: string;
+}
 
 export interface SocialProviderAdapter {
   readonly key: string;
@@ -84,14 +101,11 @@ export interface SocialProviderAdapter {
   }): Promise<{ url: string; expiresAt: string }>;
   readProfile(input: { providerProfileKey: string }): Promise<SocialProviderProfile>;
   deleteProfile(input: { providerProfileKey: string }): Promise<void>;
-  /** Publish one text post to one platform under one provider profile. Never schedules, queues,
-   *  or fans out — the door publishes exactly what one approval claimed, now. */
-  createPost(input: {
-    providerProfileKey: string;
-    platform: string;
-    text: string;
-    externalId: string;
-  }): Promise<SocialProviderPostOutcome>;
+  readPostDestination(input: SocialPostAccount): Promise<SocialPostDestination>;
+  /** One immediate text post to the approved account and channel. */
+  createPost(input: SocialPostInput): Promise<SocialProviderPostOutcome>;
+  /** Read the original provider attempt without dispatching another post. */
+  readPost(input: SocialPostInput, providerPostId: string | null): Promise<SocialProviderPostOutcome>;
 }
 
 export class SocialProviderError extends Error {

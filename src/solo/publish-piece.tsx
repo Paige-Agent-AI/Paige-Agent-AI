@@ -40,6 +40,7 @@ export type PublishNetwork = {
 export type PublicationReceipt = {
   id: string;
   platform: string | null;
+  destination: string | null;
   status: string;
   url: string | null;
   createdAt: string;
@@ -53,7 +54,7 @@ export const PUBLICATION_STATUS_WORDS: Record<string, string> = {
   outcome_unknown: "Outcome being checked — it may have posted",
   refused: "Refused — nothing was posted",
   publishing: "Posting…",
-  approved: "Approved — posting",
+  approved: "Approved — waiting to post",
   registered: "Started",
 };
 
@@ -93,7 +94,7 @@ export type PublishFace =
   | { face: "not_permitted"; sentence: string }
   | { face: "unreachable"; sentence: string };
 
-const SENTENCE_FALLBACK = "Publishing couldn't be confirmed. Nothing was posted — reload the page and check the channel before trying again.";
+const SENTENCE_FALLBACK = "Publishing couldn't be confirmed. Check recent attempts before trying again.";
 
 /**
  * Map ONE door call's outcome to the panel's face. PURE, exported, tested directly.
@@ -141,7 +142,7 @@ export function doorFace(data: Record<string, unknown> | null, errorBody: Record
   // Refusal codes the door sends BEFORE any approval: the channel's own state, the account's
   // setup, the retry gate, and the caller's own authority. Each gets its own face so the panel
   // can offer the right next step (Settings, sign-in, or nothing but the truth).
-  if (code === "NO_CONNECTION" || code === "NEEDS_REAUTH") return { face: "channel_blocked", sentence };
+  if (["NO_CONNECTION", "NEEDS_REAUTH", "DESTINATION_AMBIGUOUS", "DESTINATION_UNVERIFIED"].includes(code)) return { face: "channel_blocked", sentence };
   if (code === "PUBLISHING_NOT_CONFIGURED") return { face: "not_configured", sentence };
   if (code === "RETRY_PENDING_RECONCILIATION") return { face: "retry_blocked", sentence };
   if (code === "NOT_AUTHENTICATED") return { face: "signed_out", sentence };
@@ -153,6 +154,7 @@ type Reads = {
   networks: PublishNetwork[];
   networksPhase: "loading" | "ready" | "error";
   receipts: PublicationReceipt[];
+  receiptsError: boolean;
 };
 
 /** The words that will post, prefilled from the piece itself: its copy if it has words, else its title. */
@@ -162,7 +164,7 @@ export function defaultCaption(piece: Pick<ContentPiece, "body" | "title">): str
 }
 
 export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantId: string | null }) {
-  const [reads, setReads] = React.useState<Reads>({ networks: [], networksPhase: "loading", receipts: [] });
+  const [reads, setReads] = React.useState<Reads>({ networks: [], networksPhase: "loading", receipts: [], receiptsError: false });
   const [face, setFace] = React.useState<PublishFace>({ face: "idle" });
   const [platform, setPlatform] = React.useState<string>("");
   const [caption, setCaption] = React.useState<string>(() => defaultCaption(piece));
@@ -173,17 +175,24 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
 
   const readAll = React.useCallback(async () => {
     if (!tenantId) return;
-    const presence = await supabase.rpc("get_social_presence_evidence" as never, {} as never);
-    const receipts = await supabase.rpc("content_publication_list" as never, { p_content_id: piece.id } as never);
-    const presenceRows = Array.isArray(presence.data) ? (presence.data as unknown as SocialPresenceRow[]) : [];
+    const [presence, receipts] = await Promise.all([
+      supabase.rpc("get_social_presence_evidence" as never, {} as never),
+      supabase.rpc("content_publication_list" as never, { p_content_id: piece.id, p_tenant_id: tenantId } as never),
+    ]);
+    const presenceRows = Array.isArray(presence.data)
+      ? (presence.data as unknown as SocialPresenceRow[]).filter((row) => row.tenant_id === tenantId)
+      : [];
     const connections = presence.error || !presenceRows.length ? [] : classifyPresence(presenceRows).connections;
     const receiptRows = Array.isArray(receipts.data) ? (receipts.data as unknown as Array<Record<string, unknown>>) : [];
     setReads({
       networks: classifyPublishNetworks(SOCIAL_NETWORKS, connections),
       networksPhase: presence.error ? "error" : "ready",
+      receiptsError: Boolean(receipts.error),
       receipts: receiptRows.slice(0, 5).map((row) => ({
         id: typeof row.id === "string" ? row.id : "",
         platform: typeof row.platform === "string" ? row.platform : null,
+        destination: typeof (row.request_args as Record<string, unknown> | null)?.channel_label === "string"
+          ? (row.request_args as { channel_label: string }).channel_label : null,
         status: typeof row.status === "string" ? row.status : "",
         url: typeof row.provider_post_url === "string" && row.provider_post_url ? row.provider_post_url : null,
         createdAt: typeof row.created_at === "string" ? row.created_at : "",
@@ -206,7 +215,8 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
     if (!platform || busy) return;
     setBusy(true);
     setFace({ face: "calling", sentence: "Asking for the exact post to approve…" });
-    const next = await callDoor({ action: "publish", expected_tenant_id: tenantId, content_id: piece.id, platform, caption: caption.trim() || null });
+    const next = await callDoor({ action: "publish", expected_tenant_id: tenantId, content_id: piece.id,
+      expected_content_revision: piece.updated_at, platform, caption: caption.trim() || null });
     setFace(next); setBusy(false); void readAll();
   };
   const approve = async () => {
@@ -215,7 +225,8 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
     setFace({ face: "calling", sentence: "Publishing the approved post…" });
     // The door requires the piece and channel on EVERY publish action (it re-validates them
     // against the claimed args before executing) — an approve body naming nothing is refused 400.
-    const next = await callDoor({ action: "publish", expected_tenant_id: tenantId, content_id: piece.id, platform: face.platform, caption: face.caption, approved_fingerprint: face.fingerprint });
+    const next = await callDoor({ action: "publish", expected_tenant_id: tenantId, content_id: piece.id,
+      expected_content_revision: piece.updated_at, platform: face.platform, caption: face.caption, approved_fingerprint: face.fingerprint });
     setFace(next); setBusy(false); void readAll();
   };
   const decline = async () => {
@@ -225,6 +236,13 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
     const next = await callDoor({ action: "decline", expected_tenant_id: tenantId, fingerprint: face.fingerprint });
     // The door answers decline with { ok: true, state: "declined" }; a refusal to record the
     // decline is the door's own failure sentence, never a silent success.
+    setFace(next); setBusy(false); void readAll();
+  };
+  const reconcile = async (publicationId: string) => {
+    if (busy) return;
+    setBusy(true);
+    setFace({ face: "calling", sentence: "Checking the original publication attempt…" });
+    const next = await callDoor({ action: "reconcile", expected_tenant_id: tenantId, content_id: piece.id, publication_id: publicationId });
     setFace(next); setBusy(false); void readAll();
   };
   const reset = () => { setFace({ face: "idle" }); };
@@ -246,14 +264,15 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
     </> : face.face === "calling" ? <p className="mct-pubdoor-state" role="status">{face.sentence}</p>
     : face.face === "published" ? <div className="mct-pubdoor-result mct-pubdoor-ok">
         <p>Published{face.url ? <> — <a href={face.url} target="_blank" rel="noreferrer">see the post</a></> : "."}</p>
-        <button type="button" className="mov-lnk" onClick={reset}>Publish somewhere else</button>
+        <button type="button" className="mov-lnk" onClick={reset}>Back to channels</button>
       </div>
     : face.face === "partial" ? <div className="mct-pubdoor-result">
         <p>Partially published{face.url ? <> — <a href={face.url} target="_blank" rel="noreferrer">see what posted</a></> : "."} Check the channel to see what went out.</p>
         <button type="button" className="mov-lnk" onClick={reset}>Back</button>
       </div>
     : face.face === "outcome_unknown" ? <div className="mct-pubdoor-result mct-pubdoor-warn">
-        <p>{face.sentence}</p>
+        <p role="status">{face.sentence}</p>
+        {face.publicationId && <button type="button" className="btn btn-s" disabled={busy} onClick={() => void reconcile(face.publicationId)}>Check this attempt</button>}
         <button type="button" className="mov-lnk" onClick={reset}>Back</button>
       </div>
     : face.face === "declined" ? <div className="mct-pubdoor-result">
@@ -290,14 +309,17 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
         </>}
         <p className="mct-pubdoor-note">Nothing posts until you approve the exact post. Nothing is scheduled.</p>
       </>}
+      {reads.receiptsError && <p className="mct-pubdoor-state" role="status">Recent attempts could not be loaded. Reload this piece to check their results.</p>}
       {reads.receipts.length > 0 && <div className="mct-pubdoor-history">
         <h4>Recent attempts for this piece</h4>
         <ul>{reads.receipts.map((receipt) => <li key={receipt.id}>
-          <span>{receipt.platform ?? "channel"}</span>
+          <span>{receipt.destination ?? receipt.platform ?? "Channel"}</span>
           <em className={receipt.status === "published" ? "mct-pubdoor-ok" : receipt.status === "outcome_unknown" || receipt.status === "publishing" || receipt.status === "approved" || receipt.status === "registered" ? "mct-pubdoor-warn" : ""}>
             {PUBLICATION_STATUS_WORDS[receipt.status] ?? receipt.status}
           </em>
           {receipt.url && <a href={receipt.url} target="_blank" rel="noreferrer">see the post</a>}
+          {["approved", "publishing", "outcome_unknown"].includes(receipt.status) &&
+            <button type="button" className="mov-lnk" disabled={busy} onClick={() => void reconcile(receipt.id)}>Check this attempt</button>}
         </li>)}</ul>
       </div>}
     </>}

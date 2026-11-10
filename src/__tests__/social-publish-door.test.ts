@@ -72,7 +72,7 @@ vi.mock("../../supabase/functions/_shared/studio-caller.ts", () => ({
 }));
 
 import {
-  world, publishBody, connectedRow, pieceRow, MINE, THEIRS, USER, PIECE, FOREIGN_PIECE, CONNECTION,
+  world, publishBody, connectedRow, accountRow, pieceRow, MINE, THEIRS, USER, PIECE, FOREIGN_PIECE, CONNECTION, PUBLICATION,
 } from "./social-publish-door.world.ts";
 
 describe("social publish door — proposal, owner approval, provider execution, receipt (EXP07 row 10)", () => {
@@ -97,7 +97,9 @@ describe("social publish door — proposal, owner approval, provider execution, 
     expect(r.body).toMatchObject({ ok: true, state: "published", platform: "instagram", post_url: "https://instagram.com/p/abc123", post_id: "up_123" });
     // The provider was called EXACTLY once, under the claimed args.
     expect(w.seen.createPost).toHaveLength(1);
-    expect(w.seen.createPost[0]).toMatchObject({ platform: "instagram", text: "Spring workshop reminder" });
+    expect(w.seen.createPost[0]).toMatchObject({
+      platform: "instagram", providerAccountId: "zernio-account-1", text: "Spring workshop reminder", externalId: PUBLICATION,
+    });
     // The capability receipt was recorded with the succeeded outcome and the URL.
     const receipt = w.seen.receipts.find((x) => x.capabilityKey === "social.post_publish");
     expect(receipt?.outcome).toBe("capability_succeeded");
@@ -150,13 +152,13 @@ describe("social publish door — proposal, owner approval, provider execution, 
 
   it("provider refusal (2xx with per-platform error) → failed, nothing claimed as published", async () => {
     const w = world({
-      createPost: () => ({ kind: "published" as const, results: [{ platform: "instagram", success: false, postId: null, postUrl: null, error: "rate limited by platform" }] }),
+      createPost: () => ({ kind: "published" as const, results: [{ platform: "instagram", success: false, postId: null, postUrl: null, error: "provider_rejected" }] }),
     });
     const first = await w.call(publishBody());
     const r = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
     expect(r.status).toBe(502);
     expect(r.body.state).toBe("failed");
-    expect(r.body.code).toBe("PROVIDER_REJECTED");
+    expect(r.body.code).toBe("provider_rejected");
     const receipt = w.seen.receipts.find((x) => x.capabilityKey === "social.post_publish");
     expect(receipt?.outcome).toBe("capability_failed");
   });
@@ -174,8 +176,9 @@ describe("social publish door — proposal, owner approval, provider execution, 
     const first = await w.call(publishBody());
     const r = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
     expect(r.status).toBe(200);
-    expect(r.body).toMatchObject({ ok: false, state: "outcome_unknown", request_id: "req_789" });
-    expect(r.body.error).toContain("may have posted");
+    expect(r.body).toMatchObject({ ok: false, state: "outcome_unknown", publication_id: PUBLICATION });
+    expect(r.body.error).toContain("still processing");
+    expect(w.tables.content_publications[0].provider_request_id).toBe("req_789");
     const receipt = w.seen.receipts.find((x) => x.capabilityKey === "social.post_publish");
     expect(receipt?.outcome).toBe("capability_outcome_unknown");
   });
@@ -194,7 +197,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
     const r = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
     expect(r.status).toBe(409);
     expect(r.body.code).toBe("CONNECTION_REVOKED");
-    expect(r.body.error).toContain("Reconnect it");
+    expect(r.body.error).toContain("Nothing was published");
     expect(w.seen.createPost).toHaveLength(0); // the provider was never called
     expect(w.seen.receipts.find((x) => x.capabilityKey === "social.post_publish")?.outcome).toBe("capability_refused");
   });
@@ -234,6 +237,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
     // Both channels are connected so the pre-claim readiness check passes on the WRONG channel —
     // only the claim binding check can catch it.
     w.tables.paige_social_connections.push(connectedRow({ id: "55555555-5555-4555-8555-555555555556", requested_platform: "facebook", provider_profile_key: "ps_bbbb000000000000000000000000000000000000" }) as never);
+    w.tables.paige_social_accounts.push(accountRow({ connection_id: "55555555-5555-4555-8555-555555555556", platform: "facebook" }));
     const r = await w.call(publishBody({ approved_fingerprint: fp, platform: "facebook" }));
     expect(r.status).toBe(409);
     expect(r.body.code).toBe("CLAIM_MISMATCH");
@@ -242,13 +246,61 @@ describe("social publish door — proposal, owner approval, provider execution, 
 
   it("independent review #2 — an in-flight or crashed attempt (approved/publishing) blocks a second approval entirely", async () => {
     const w = world({ tables: { content_publications: [{ id: "pub-stuck", tenant_id: MINE, content_id: PIECE, platform: "instagram", status: "publishing", created_at: new Date().toISOString() }] as never } });
-    const first = await w.call(publishBody()); // a NEW proposal is still allowed…
-    expect(first.status).toBe(202);
-    const fp = (first.body.approval as Record<string, string>).fingerprint;
-    const r = await w.call(publishBody({ approved_fingerprint: fp })); // …but the approve is refused
+    const r = await w.call(publishBody());
     expect(r.status).toBe(409);
     expect(r.body.code).toBe("RETRY_PENDING_RECONCILIATION");
     expect(w.seen.createPost).toHaveLength(0);
+  });
+
+  it("refuses a previously approved post after the saved revision or selected account changes", async () => {
+    const draft = world();
+    const first = await draft.call(publishBody());
+    const fingerprint = (first.body.approval as Record<string, string>).fingerprint;
+    draft.tables.marketing_content[0].updated_at = "2026-10-21T10:00:00Z";
+    expect((await draft.call(publishBody({ approved_fingerprint: fingerprint }))).body.code).toBe("CLAIM_MISMATCH");
+    expect(draft.seen.createPost).toHaveLength(0);
+
+    const destination = world();
+    const second = await destination.call(publishBody());
+    destination.tables.paige_social_accounts[0].account_id = "another-account";
+    expect((await destination.call(publishBody({
+      approved_fingerprint: (second.body.approval as Record<string, string>).fingerprint,
+    }))).body.code).toBe("CLAIM_MISMATCH");
+    expect(destination.seen.createPost).toHaveLength(0);
+  });
+
+  it("refuses ambiguous, revoked and platform-provided identities without guessing an account", async () => {
+    for (const w of [
+      world({ tables: { paige_social_accounts: [accountRow({ selected: false }), accountRow({ selected: false, id: "other" })] } }),
+      world({ tables: { paige_social_accounts: [accountRow({ status: "disconnected" })] } }),
+      world({ tables: { paige_social_connections: [connectedRow({ provided_by_platform: true })] } }),
+    ]) {
+      expect((await w.call(publishBody())).status).toBe(409);
+      expect(w.seen.createPost).toHaveLength(0);
+    }
+  });
+
+  it("recovers a lost acknowledgment using the original scoped attempt without another send", async () => {
+    const w = world({
+      createPost: () => ({ kind: "unknown", requestId: null, reason: "timeout" }),
+      readPost: () => ({
+        kind: "published", requestId: "zernio-post",
+        results: [{ platform: "instagram", success: true, postId: "native-post", postUrl: "https://instagram.com/p/example", error: null }],
+      }),
+    });
+    const first = await w.call(publishBody());
+    const approved = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
+    expect(approved.body).toMatchObject({ state: "outcome_unknown", publication_id: PUBLICATION });
+    expect((await w.call(publishBody())).body.code).toBe("RETRY_PENDING_RECONCILIATION");
+    const lookup = { action: "reconcile", content_id: PIECE, publication_id: PUBLICATION };
+    expect((await w.call({ ...lookup, content_id: FOREIGN_PIECE })).status).toBe(404);
+    const recovered = await w.call(lookup);
+    expect(recovered.body).toMatchObject({ state: "published", publication_id: PUBLICATION, post_id: "native-post" });
+    expect(w.seen.readPost).toEqual([expect.objectContaining({
+      providerId: null, input: expect.objectContaining({ externalId: PUBLICATION, providerAccountId: "zernio-account-1" }),
+    })]);
+    expect(w.tables.content_publications[0]).toMatchObject({ id: PUBLICATION, status: "published" });
+    expect(w.seen.createPost).toHaveLength(1);
   });
 
   it("surface-agnostic (Team Hub reachability pin): a request naming a different surface changes NOTHING about the door's authority path", async () => {

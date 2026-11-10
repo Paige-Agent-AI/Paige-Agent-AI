@@ -1,28 +1,14 @@
-// THE SOCIAL PUBLISH DOOR — the one governed way a saved piece ships to a connected channel.
-//
-// EXP07 row 10. Every publish of marketing content to a social channel goes through THIS handler:
-// the Studio's saved pieces (and later PAIGE's chat) reach it and nothing else. It composes only
-// existing canonical machinery — no new approval channel, scheduler or registry:
-//
-//   authenticated user → server-derived workspace (resolveStudioCaller: owner, admin or managing
-//   agency) → the piece must be THIS workspace's (cross-account refused) → the channel's connection
-//   must be `connected` in EXP10's lifecycle (needs_reauth/disconnected say so; none says connect) →
-//   reconcile-before-retry (an outcome_unknown attempt for the same piece+platform blocks a new one)
-//   → governSocialMutation on the REGISTERED Spine action social.post_publish (external_effect,
-//   confirm): a server-issued proposal in paige_pending_confirmations with the exact preview, and
-//   on the second call a single-use claim bound to this user, workspace, act and args → authority +
-//   connection RECHECKED after the claim → the provider execution runs ONCE through the claimed
-//   args (the configured provider adapter's createPost — synchronous text post, external_id = the publication
-//   row) → the truthful receipt: the provider's own post id/url read back into
-//   content_publications (published | partial | failed | outcome_unknown), the capability receipt
-//   recorded, and the response states exactly what happened — an outcome_unknown answer says the
-//   post MAY exist and names the reconciliation handle, never "failed".
-//
-// Retry safety is structural: the claim is single-use (CAS on consumed_at), so replaying a
-// fingerprint refuses; a retry is a NEW proposal and a NEW publication row; and while an
-// outcome_unknown row stands for the same piece+platform the door refuses a new attempt entirely.
-// A duplicate publish from this door is impossible, not merely discouraged.
+// EXP07: the existing governed door for one saved piece, one approved social destination
+// and one durable publication receipt. Reconciliation reads Zernio without sending again.
 
+import {
+  SOCIAL_POST_PLATFORMS,
+  SocialProviderError,
+  type SocialPostAccount,
+  type SocialPostInput,
+  type SocialProviderAdapter,
+  type SocialProviderPostOutcome,
+} from "../social-provider/mod.ts";
 import { governSocialMutation } from "../social-provider/governance.ts";
 import { resolveStudioCaller } from "../studio-caller.ts";
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../capability-record.ts";
@@ -36,18 +22,8 @@ export interface SocialPublishDeps {
   /** Service-role client: the piece read, the connection read, the approval store, the
    *  publication record, and the capability receipt. */
   admin: Client;
-  /** The provider adapter's publish arm, injected so tests drive the REAL door with a double. */
-  adapter: {
-    isConfigured(): boolean;
-    createPost(input: { providerProfileKey: string; platform: string; text: string; externalId: string }): Promise<
-      | { kind: "published"; results: Array<{ platform: string; success: boolean; postId: string | null; postUrl: string | null; error: string | null }> }
-      | { kind: "processing"; requestId: string }
-      | { kind: "unknown"; requestId: string | null; reason: string }
-    >;
-  };
+  adapter: Pick<SocialProviderAdapter, "key" | "isConfigured" | "readPostDestination" | "createPost" | "readPost">;
 }
-
-export interface SocialPublishProviderError extends Error { code: string; }
 
 const HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -57,25 +33,70 @@ const HEADERS = {
 };
 const respond = (status: number, body: Record<string, unknown>) => new Response(JSON.stringify(body), { status, headers: HEADERS });
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-// The publishable channels — sourced from the seam's POST set (social networks plus
-// the provider's documented messaging targets; google connects but never receives posts).
-const PLATFORMS = new Set<string>([
-  "tiktok", "instagram", "facebook", "linkedin", "youtube", "x", "threads",
-  "pinterest", "google_business", "snapchat", "discord", "telegram",
-]);
+const PLATFORMS = new Set<string>(SOCIAL_POST_PLATFORMS);
 const CAPABILITY = "social.post_publish";
 const NOTHING_CHANGED = "Nothing was published.";
+const UNCONFIRMED = "The post may have gone out. Check the original attempt before trying again.";
+
+function object(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+function rows(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value) ? value.map(object).filter((row) => row !== null) : [];
+}
+
+async function publishAccount(deps: SocialPublishDeps, tenantId: string, platform: string): Promise<
+  (SocialPostAccount & { connectionId: string; accountId: string }) | { code: keyof typeof DESTINATION_ERROR }
+> {
+  const connections = await deps.admin.from("paige_social_connections")
+    .select("id,provider_profile_key,status")
+    .eq("tenant_id", tenantId).eq("requested_platform", platform)
+    .eq("provider_key", deps.adapter.key).eq("provided_by_platform", false);
+  if (connections.error) return { code: "DESTINATION_READ_FAILED" } as const;
+  const connected = rows(connections.data).filter((row) => row.status === "connected");
+  if (!connected.length) {
+    return { code: rows(connections.data).some((row) => row.status === "needs_reauth") ? "NEEDS_REAUTH" : "NO_CONNECTION" } as const;
+  }
+  const accounts = await deps.admin.from("paige_social_accounts")
+    .select("id,connection_id,account_id,selected")
+    .eq("tenant_id", tenantId).eq("platform", platform)
+    .eq("provider_key", deps.adapter.key).eq("status", "connected")
+    .in("connection_id", connected.map((row) => row.id));
+  if (accounts.error) return { code: "DESTINATION_READ_FAILED" } as const;
+  const candidates = rows(accounts.data);
+  const selected = candidates.filter((row) => row.selected === true);
+  const account = selected.length === 1 ? selected[0] : candidates.length === 1 ? candidates[0] : null;
+  const connection = connected.find((row) => row.id === account?.connection_id);
+  if (!account || !connection || typeof connection.id !== "string"
+      || typeof connection.provider_profile_key !== "string" || typeof account.account_id !== "string"
+      || typeof account.id !== "string") {
+    return { code: candidates.length > 1 ? "DESTINATION_AMBIGUOUS" : "NO_CONNECTION" } as const;
+  }
+  return {
+    connectionId: connection.id,
+    accountId: account.id,
+    providerProfileKey: connection.provider_profile_key,
+    providerAccountId: account.account_id,
+    platform,
+  } as const;
+}
+
+const DESTINATION_ERROR = {
+  NO_CONNECTION: "Connect this channel in Settings → Integrations before posting.",
+  NEEDS_REAUTH: "Sign in to this channel again in Settings → Integrations before posting.",
+  DESTINATION_AMBIGUOUS: "Choose the account for this channel in Settings → Integrations before posting.",
+  DESTINATION_READ_FAILED: "The connected accounts could not be read. Nothing was published.",
+};
 
 export async function handleSocialPublishCommand(req: Request, deps: SocialPublishDeps): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: HEADERS });
   if (req.method !== "POST") return respond(405, { ok: false, code: "METHOD_NOT_ALLOWED", error: NOTHING_CHANGED });
 
   let body: Record<string, unknown> = {};
-  try { body = await req.json() as Record<string, unknown>; } catch { return respond(400, { ok: false, code: "REQUEST_INVALID", error: NOTHING_CHANGED }); }
+  try { body = object(await req.json()) ?? {}; } catch { return respond(400, { ok: false, code: "REQUEST_INVALID", error: NOTHING_CHANGED }); }
   const action = typeof body.action === "string" ? body.action : "";
   const approvedFingerprint = typeof body.approved_fingerprint === "string" ? body.approved_fingerprint : null;
-
-  const object = (v: unknown): Record<string, unknown> | null => v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;
 
   // Who is calling — the door never trusts a named tenant or user.
   const { data: userData, error: userErr } = await deps.caller.auth.getUser();
@@ -103,6 +124,7 @@ export async function handleSocialPublishCommand(req: Request, deps: SocialPubli
     if (declined.error || !object(declined.data)) return respond(409, { ok: false, code: "DECLINE_NOT_RECORDED", error: NOTHING_CHANGED });
     return respond(200, { ok: true, state: "declined" });
   }
+  if (action === "reconcile") return await reconcile(deps, tenantId, body);
   if (action !== "publish") return respond(400, { ok: false, code: "ACTION_INVALID", error: NOTHING_CHANGED });
 
   // The request names a saved piece and a platform; the caption defaults to the piece's title.
@@ -113,59 +135,63 @@ export async function handleSocialPublishCommand(req: Request, deps: SocialPubli
 
   // The piece must be THIS workspace's own — a foreign piece is not found, never adopted.
   const pieceRead = await deps.admin.from("marketing_content")
-    .select("id,title,kind,tenant_id").eq("id", contentId).eq("tenant_id", tenantId).maybeSingle();
+    .select("id,title,updated_at,status").eq("id", contentId).eq("tenant_id", tenantId).maybeSingle();
   const piece = object(pieceRead.data);
-  if (pieceRead.error || !piece) return respond(404, { ok: false, code: "CONTENT_NOT_FOUND", error: "That piece is not in this workspace." });
+  if (pieceRead.error || !piece || typeof piece.updated_at !== "string" || piece.status === "archived") return respond(404, { ok: false, code: "CONTENT_NOT_FOUND", error: "That piece is not in this workspace." });
+  if (body.expected_content_revision != null && body.expected_content_revision !== piece.updated_at) {
+    return respond(409, { ok: false, state: "refused", code: "CONTENT_REVISION_CHANGED", error: "This piece changed. Reopen it to review the latest saved version." });
+  }
   const pieceTitle = typeof piece.title === "string" && piece.title.trim() ? piece.title.trim().slice(0, 120) : "Untitled piece";
   const text = caption ?? pieceTitle;
 
-  // The channel's connection, from EXP10's lifecycle — the truthful readiness states.
-  const connectionRead = await deps.admin.from("paige_social_connections")
-    .select("id,provider_profile_key,status,label,requested_platform,updated_at")
-    .eq("tenant_id", tenantId).eq("requested_platform", platform)
-    .order("updated_at", { ascending: false });
-  const connections = Array.isArray(connectionRead.data) ? connectionRead.data.map(object).filter(Boolean) as Array<Record<string, unknown>> : [];
-  const connected = connections.find((c) => c.status === "connected");
-  if (!connected) {
-    if (connections.some((c) => c.status === "needs_reauth")) {
-      return respond(409, { ok: false, code: "NEEDS_REAUTH", error: "That channel's connection needs you to sign in again before anything can post. Reconnect it in Settings → Integrations." });
-    }
-    return respond(409, { ok: false, code: "NO_CONNECTION", error: "That channel isn't connected yet. Connect it in Settings → Integrations first." });
-  }
-  const profileKey = connected.provider_profile_key;
-  const channelLabel = typeof connected.label === "string" && connected.label.trim() ? connected.label.trim().slice(0, 120) : platform;
-  const connectionId = typeof connected.id === "string" ? connected.id : null;
-  if (typeof profileKey !== "string" || !profileKey) return respond(500, { ok: false, code: "CONNECTION_RECORD_INVALID", error: NOTHING_CHANGED });
-
-  // Provider configured? needs_setup is the truthful state until the credential exists.
-  if (!deps.adapter.isConfigured()) {
-    return respond(503, { ok: false, code: "PUBLISHING_NOT_CONFIGURED", error: "Publishing isn't configured on this account yet. Nothing was published." });
-  }
-
-  // Reconcile-before-retry: an unresolved attempt for the same piece+channel blocks a new one.
-  const pending = await deps.admin.rpc("content_publication_pending_reconcile", { p_content_id: contentId, p_platform: platform, p_tenant_id: tenantId });
-  if (pending.error) return respond(500, { ok: false, code: "RECONCILE_CHECK_FAILED", error: NOTHING_CHANGED });
-  if (pending.data === true) {
-    return respond(409, {
-      ok: false, code: "RETRY_PENDING_RECONCILIATION",
-      error: "A previous attempt to publish this piece to that channel never reported an outcome. Check the channel before publishing again — a duplicate post is worse than a delay.",
+  const account = await publishAccount(deps, tenantId, platform);
+  if ("code" in account) {
+    return respond(account.code === "DESTINATION_READ_FAILED" ? 503 : 409, {
+      ok: false, code: account.code, error: DESTINATION_ERROR[account.code],
     });
   }
+  if (!deps.adapter.isConfigured()) {
+    return respond(503, { ok: false, code: "PUBLISHING_NOT_CONFIGURED", error: "Publishing is unavailable right now. Nothing was published." });
+  }
+
+  // This gate is advisory for the preview. The native bind serializes attempts.
+  const pending = await deps.admin.rpc("content_publication_pending_reconcile", {
+    p_content_id: contentId, p_platform: platform, p_tenant_id: tenantId,
+  });
+  if (pending.error) return respond(500, { ok: false, code: "RECONCILE_CHECK_FAILED", error: NOTHING_CHANGED });
+  if (pending.data === true) return retryBlocked();
+  const inFlight = await deps.admin.from("content_publications").select("id")
+    .eq("tenant_id", tenantId).eq("content_id", contentId).eq("platform", platform)
+    .in("status", ["approved", "publishing"]).limit(1);
+  if (inFlight.error) return respond(500, { ok: false, code: "RECONCILE_CHECK_FAILED", error: NOTHING_CHANGED });
+  if (rows(inFlight.data).length) return retryBlocked();
+
+  let destination;
+  try {
+    destination = await deps.adapter.readPostDestination(account);
+  } catch {
+    return respond(409, { ok: false, code: "DESTINATION_UNVERIFIED", error: "The connected destination could not be verified. Nothing was published." });
+  }
+  const requestArgs = {
+    content_id: contentId, content_revision: piece.updated_at, platform, caption: text,
+    connection_id: account.connectionId, account_id: account.accountId,
+    channel_id: destination.channelId, channel_label: destination.label,
+  };
 
   // The governed decision: proposal on first call, single-use claim on the second.
   const governed = await governSocialMutation({
     callerDb: deps.caller, adminDb: deps.admin,
     userId: user.id, tenantId, accessAllowed: true,
     capability: CAPABILITY, availability: "needs_approval",
-    requestArgs: { content_id: contentId, platform, caption: text, profile_key: profileKey },
-    summary: `Publish “${pieceTitle}” to ${platform}${channelLabel !== platform ? ` (${channelLabel})` : ""}. Nothing else is included, and nothing is scheduled.`,
+    requestArgs: { ...requestArgs, provider_account_id: account.providerAccountId, profile_key: account.providerProfileKey },
+    summary: `Publish “${pieceTitle}” to ${destination.label} (${platform}) now.`,
     approvedFingerprint,
   });
   if (governed.kind === "approval_required") {
     return respond(202, {
       ok: false, state: "approval_required",
       approval: { fingerprint: governed.fingerprint, summary: governed.summary, expires_at: governed.expiresAt },
-      preview: { piece_id: contentId, piece_title: pieceTitle, platform, channel_label: channelLabel, caption: text },
+      preview: { piece_id: contentId, piece_title: pieceTitle, platform, channel_label: destination.label, caption: text },
     });
   }
   if (governed.kind === "refuse") {
@@ -173,106 +199,158 @@ export async function handleSocialPublishCommand(req: Request, deps: SocialPubli
     return respond(status, { ok: false, state: "refused", code: governed.code, message: governed.message });
   }
 
-  // EXECUTE — under the claimed args, once. The publication row is the receipt.
   const confirmationId = governed.confirmationId;
-  const claimArgs = object(governed.args) ?? {};
-
-  // The claim is the authority, so the request that presents it must name the SAME piece and
-  // channel the proposal was issued for. Without this, an approve call carrying a proposal's
-  // fingerprint but a DIFFERENT platform/piece would sail through the readiness and reconcile
-  // checks on the wrong target, then execute the claimed args against a connection that was
-  // never rechecked (independent review finding #1).
-  if (claimArgs.content_id !== contentId || claimArgs.platform !== platform) {
-    return respond(409, { ok: false, state: "refused", code: "CLAIM_MISMATCH", error: "That approval belongs to a different piece or channel. Start again from the piece you want to publish. Nothing was published." });
+  if (Object.entries(requestArgs).some(([key, value]) => governed.args[key] !== value)
+      || governed.args.provider_account_id !== account.providerAccountId
+      || governed.args.profile_key !== account.providerProfileKey) {
+    return respond(409, { ok: false, state: "refused", code: "CLAIM_MISMATCH", error: "The saved piece or destination changed. Review the current post and approve again. Nothing was published." });
   }
-
-  // No second attempt while one is in flight. The reconcile gate covers outcome_unknown; this
-  // covers the OTHER duplicate window — two live approvals with different fingerprints (owner +
-  // a second admin, two tabs) racing the provider call, and a crashed attempt left at
-  // 'approved'/'publishing' that never reached a receipt (independent review finding #2).
-  const inFlight = await deps.admin.from("content_publications")
-    .select("id,status").eq("tenant_id", tenantId).eq("content_id", contentId).eq("platform", platform)
-    .in("status", ["approved", "publishing"]).limit(1);
-  if (!inFlight.error && Array.isArray(inFlight.data) && inFlight.data.length > 0) {
-    return respond(409, {
-      ok: false, code: "RETRY_PENDING_RECONCILIATION",
-      error: "An attempt to publish this piece to that channel is already under way or never finished reporting. Check the channel before publishing again — a duplicate post is worse than a delay.",
-    });
-  }
-
-  const runCaption = typeof claimArgs.caption === "string" ? claimArgs.caption : text;
-  const runPlatform = typeof claimArgs.platform === "string" && PLATFORMS.has(claimArgs.platform) ? claimArgs.platform : platform;
-  const runProfile = typeof claimArgs.profile_key === "string" ? claimArgs.profile_key : profileKey;
-
-  const inserted = await deps.admin.rpc("content_publication_record", { p_id: null, p_tenant_id: tenantId, p_status: "registered" });
-  const publication = object(inserted.data);
-  if (inserted.error || !publication?.id) return respond(500, { ok: false, code: "RECORD_FAILED", error: NOTHING_CHANGED });
-  const publicationId = String(publication.id);
 
   const bound = await deps.admin.rpc("content_publication_bind", {
-    p_id: publicationId, p_tenant_id: tenantId, p_content_id: contentId, p_platform: runPlatform,
-    p_connection_id: connectionId, p_confirmation_id: confirmationId,
-    p_request_args: { content_id: contentId, platform: runPlatform, caption: runCaption, profile_key: runProfile, approved_by: user.id },
+    p_id: null, p_tenant_id: tenantId, p_content_id: contentId, p_platform: platform,
+    p_connection_id: account.connectionId, p_confirmation_id: confirmationId,
+    p_request_args: { ...requestArgs, approved_by: user.id },
   });
-  if (bound.error || !object(bound.data)?.id) return respond(500, { ok: false, code: "RECORD_FAILED", error: NOTHING_CHANGED });
+  if (bound.error?.code === "PT409") return retryBlocked();
+  const publicationId = object(bound.data)?.id;
+  if (bound.error || typeof publicationId !== "string") return respond(500, { ok: false, code: "RECORD_FAILED", error: NOTHING_CHANGED });
 
-  // Authority + connection RECHECK after the claim: a revoked connection publishes nothing.
-  const recheck = await deps.admin.from("paige_social_connections")
-    .select("status").eq("id", connectionId ?? "").eq("tenant_id", tenantId).maybeSingle();
-  const recheckRow = object(recheck.data);
-  if (recheck.error || recheckRow?.status !== "connected") {
-    await deps.admin.rpc("content_publication_record", { p_id: publicationId, p_tenant_id: tenantId, p_status: "refused", p_error_code: "connection_no_longer_connected", p_provider_response: { recheck: recheckRow ?? null } });
-    await record(deps.admin, tenantId, user.id, confirmationId, "refused", { platform: runPlatform, code: "connection_no_longer_connected", publication_id: publicationId });
-    return respond(409, { ok: false, state: "refused", code: "CONNECTION_REVOKED", error: "That channel's connection changed before the post could go out. Reconnect it, then approve again. Nothing was published.", publication_id: publicationId });
-  }
-
-  await deps.admin.rpc("content_publication_record", { p_id: publicationId, p_tenant_id: tenantId, p_status: "publishing" });
-
-  // The provider execution — the one external effect, under exactly the claimed args.
-  let outcome;
-  try {
-    outcome = await deps.adapter.createPost({ providerProfileKey: runProfile, platform: runPlatform, text: runCaption, externalId: publicationId });
-  } catch (error) {
-    const code = (error as SocialPublishProviderError)?.code ?? "provider_request_failed";
-    await deps.admin.rpc("content_publication_record", { p_id: publicationId, p_tenant_id: tenantId, p_status: "failed", p_error_code: code, p_provider_response: {} });
-    await record(deps.admin, tenantId, user.id, confirmationId, "failed", { platform: runPlatform, code, publication_id: publicationId });
-    return respond(502, { ok: false, state: "failed", code, error: "The channel refused the post. Nothing was published — you can approve it again after changing the piece.", publication_id: publicationId });
-  }
-
-  if (outcome.kind === "published") {
-    const first = outcome.results.find((r) => r.platform === runPlatform) ?? outcome.results[0];
-    const allOk = outcome.results.length > 0 && outcome.results.every((r) => r.success);
-    const someOk = outcome.results.some((r) => r.success);
-    const status = allOk ? "published" : someOk ? "partial" : "failed";
+  const [currentCaller, currentAccount, currentPiece] = await Promise.all([
+    resolveStudioCaller(deps.caller, tenantId),
+    publishAccount(deps, tenantId, platform),
+    deps.admin.from("marketing_content").select("id,updated_at,status").eq("tenant_id", tenantId).eq("id", contentId).maybeSingle(),
+  ]);
+  if (!currentCaller.ok || "code" in currentAccount || currentAccount.connectionId !== account.connectionId
+      || currentAccount.accountId !== account.accountId || currentAccount.providerAccountId !== account.providerAccountId
+      || currentAccount.providerProfileKey !== account.providerProfileKey
+      || currentPiece.error || object(currentPiece.data)?.updated_at !== piece.updated_at
+      || object(currentPiece.data)?.status === "archived") {
     await deps.admin.rpc("content_publication_record", {
-      p_id: publicationId, p_tenant_id: tenantId, p_status: status,
-      p_provider_post_id: first?.postId ?? null, p_provider_post_url: first?.postUrl ?? null,
-      p_error_code: allOk || someOk ? null : (first?.error ?? "provider_rejected").slice(0, 120),
-      p_provider_response: { results: outcome.results },
+      p_id: publicationId, p_tenant_id: tenantId, p_status: "refused", p_error_code: "approval_context_changed",
     });
-    if (status === "failed") {
-      await record(deps.admin, tenantId, user.id, confirmationId, "failed", { platform: runPlatform, code: "provider_rejected", publication_id: publicationId });
-      return respond(502, { ok: false, state: "failed", code: "PROVIDER_REJECTED", error: "The channel refused the post. Nothing was published.", publication_id: publicationId });
-    }
-    await record(deps.admin, tenantId, user.id, confirmationId, "succeeded", { platform: runPlatform, url: first?.postUrl ?? null, post_id: first?.postId ?? null, publication_id: publicationId });
-    return respond(200, {
-      ok: true, state: status, platform: runPlatform,
-      post_url: first?.postUrl ?? null, post_id: first?.postId ?? null, publication_id: publicationId,
-    });
+    await record(deps.admin, tenantId, user.id, confirmationId, "refused", { platform, code: "approval_context_changed", publication_id: publicationId });
+    return respond(409, { ok: false, state: "refused", code: "CONNECTION_REVOKED", error: "Access, the saved piece or the connected destination changed. Nothing was published.", publication_id: publicationId });
   }
 
-  // processing | unknown — the post MAY exist. Truthful outcome_unknown, never "failed".
-  const requestId = outcome.kind === "processing" ? outcome.requestId : outcome.requestId;
-  await deps.admin.rpc("content_publication_record", {
-    p_id: publicationId, p_tenant_id: tenantId, p_status: "outcome_unknown",
-    p_provider_request_id: requestId, p_error_code: outcome.kind === "processing" ? "provider_processing" : outcome.reason.slice(0, 120),
-    p_provider_response: outcome.kind === "processing" ? { request_id: requestId } : { reason: outcome.reason },
+  const publishing = await deps.admin.rpc("content_publication_record", { p_id: publicationId, p_tenant_id: tenantId, p_status: "publishing" });
+  if (publishing.error || !object(publishing.data)?.id) {
+    return respond(500, { ok: false, code: "RECORD_FAILED", error: NOTHING_CHANGED, publication_id: publicationId });
+  }
+
+  let outcome: SocialProviderPostOutcome;
+  try {
+    outcome = await deps.adapter.createPost({ ...account, channelId: destination.channelId, text, externalId: publicationId });
+  } catch (error) {
+    if (!(error instanceof SocialProviderError)) {
+      outcome = { kind: "unknown", requestId: null, reason: "provider_dispatch_unconfirmed" };
+    } else {
+      outcome = { kind: "published", results: [{ platform, success: false, postId: null, postUrl: null, error: error.code }] };
+    }
+  }
+  return await finish(deps, { tenantId, platform, publicationId, confirmationId, actorId: user.id }, outcome);
+}
+
+function retryBlocked() {
+  return respond(409, { ok: false, code: "RETRY_PENDING_RECONCILIATION", error: "An attempt already exists for this post. Check the original receipt before trying again." });
+}
+
+type Attempt = { tenantId: string; platform: string; publicationId: string; confirmationId: string; actorId: string };
+
+async function finish(deps: SocialPublishDeps, attempt: Attempt, outcome: SocialProviderPostOutcome, reconciled = false) {
+  const { tenantId, platform, publicationId, confirmationId, actorId } = attempt;
+  const result = outcome.kind === "published" && outcome.results.length === 1
+    && outcome.results[0].platform === platform ? outcome.results[0] : null;
+  const status = result && !result.success ? "failed"
+    : result?.postUrl && result.postId ? "published" : "outcome_unknown";
+  const requestId = outcome.kind === "published" ? outcome.requestId ?? null : outcome.requestId;
+  const pending = status === "outcome_unknown";
+  const code = pending ? outcome.kind === "processing" ? "provider_processing" : "provider_dispatch_unconfirmed"
+    : status === "failed" ? result?.error ?? "provider_rejected" : null;
+  const saved = reconciled && pending ? null : await deps.admin.rpc("content_publication_record", {
+    p_id: publicationId, p_tenant_id: tenantId, p_status: status,
+    p_provider_post_id: result?.postId ?? null, p_provider_post_url: result?.postUrl ?? null,
+    p_provider_request_id: requestId, p_error_code: code,
+    p_provider_response: { ...(result ? { results: [result] } : {}), ...(reconciled ? { reconciled: true } : {}) },
   });
-  await record(deps.admin, tenantId, user.id, confirmationId, "outcome_unknown", { platform: runPlatform, request_id: requestId, publication_id: publicationId });
-  return respond(200, {
-    ok: false, state: "outcome_unknown", publication_id: publicationId, request_id: requestId,
-    error: "The channel accepted the post but hasn't confirmed it. It may have posted — check the channel before trying again; this door will refuse a retry until it's reconciled.",
-  });
+
+  // A confirmed result is shown only once the original durable receipt records it.
+  if (saved && (saved.error || !object(saved.data)?.id)) {
+    return respond(200, { ok: false, state: "outcome_unknown", publication_id: publicationId, error: UNCONFIRMED });
+  }
+  if (!reconciled || !pending) {
+    await record(deps.admin, tenantId, actorId, confirmationId, pending ? "outcome_unknown" : status === "failed" ? "failed" : "succeeded",
+      { platform, code, publication_id: publicationId, post_id: result?.postId ?? null, url: result?.postUrl ?? null, reconciled });
+  }
+  if (pending) {
+    return respond(200, {
+      ok: false, state: "outcome_unknown", publication_id: publicationId,
+      error: outcome.kind === "processing" ? "The channel is still processing this post. Check the original attempt again for its result." : UNCONFIRMED,
+    });
+  }
+  if (status === "failed") {
+    return respond(502, { ok: false, state: "failed", code, publication_id: publicationId, error: "The channel refused the post. Nothing was published." });
+  }
+  return respond(200, { ok: true, state: "published", platform, post_url: result?.postUrl, post_id: result?.postId, publication_id: publicationId });
+}
+
+async function reconcile(deps: SocialPublishDeps, tenantId: string, body: Record<string, unknown>): Promise<Response> {
+  const publicationId = typeof body.publication_id === "string" && UUID.test(body.publication_id) ? body.publication_id : "";
+  const contentId = typeof body.content_id === "string" && UUID.test(body.content_id) ? body.content_id : "";
+  if (!publicationId || !contentId) return respond(400, { ok: false, code: "REQUEST_INVALID", error: "Choose the original publication attempt." });
+  const read = await deps.admin.from("content_publications")
+    .select("id,platform,status,connection_id,confirmation_id,provider_request_id,provider_post_id,provider_post_url,request_args")
+    .eq("tenant_id", tenantId).eq("content_id", contentId).eq("id", publicationId).maybeSingle();
+  const row = object(read.data);
+  if (read.error || !row) return respond(404, { ok: false, code: "PUBLICATION_NOT_FOUND", error: "That attempt could not be found in this workspace." });
+  if (row.status === "published") {
+    return respond(200, { ok: true, state: "published", publication_id: publicationId, post_url: row.provider_post_url, post_id: row.provider_post_id });
+  }
+  if (row.status === "failed" || row.status === "refused") {
+    return respond(200, { ok: false, state: row.status, publication_id: publicationId, error: NOTHING_CHANGED });
+  }
+  if (row.status === "approved") {
+    // Only an expired pre-dispatch approval can close here. The native CAS excludes publishing.
+    const expired = await deps.admin.rpc("content_publication_record", {
+      p_id: publicationId, p_tenant_id: tenantId, p_status: "refused", p_error_code: "approval_abandoned",
+    });
+    return object(expired.data)?.id && !expired.error
+      ? respond(200, { ok: false, state: "refused", publication_id: publicationId, error: "This attempt expired before dispatch. Nothing was published." })
+      : respond(200, { ok: false, state: "outcome_unknown", publication_id: publicationId, error: "This attempt is still being prepared. Check it again before trying another." });
+  }
+
+  const args = object(row.request_args);
+  if (!args || (row.status !== "outcome_unknown" && row.status !== "publishing")
+      || typeof row.platform !== "string" || !PLATFORMS.has(row.platform)
+      || args.content_id !== contentId || args.platform !== row.platform || typeof args.account_id !== "string"
+      || typeof row.connection_id !== "string" || typeof args.caption !== "string"
+      || typeof row.confirmation_id !== "string" || typeof args.approved_by !== "string"
+      || !deps.adapter.isConfigured()) {
+    return respond(200, { ok: false, state: "outcome_unknown", publication_id: publicationId, error: UNCONFIRMED });
+  }
+  const [connectionRead, accountRead] = await Promise.all([
+    deps.admin.from("paige_social_connections").select("provider_profile_key")
+      .eq("tenant_id", tenantId).eq("id", row.connection_id).eq("requested_platform", row.platform)
+      .eq("provider_key", deps.adapter.key).eq("provided_by_platform", false).maybeSingle(),
+    deps.admin.from("paige_social_accounts").select("account_id")
+      .eq("tenant_id", tenantId).eq("id", args.account_id).eq("connection_id", row.connection_id)
+      .eq("platform", row.platform).eq("provider_key", deps.adapter.key).maybeSingle(),
+  ]);
+  const providerProfileKey = object(connectionRead.data)?.provider_profile_key;
+  const providerAccountId = object(accountRead.data)?.account_id;
+  if (connectionRead.error || accountRead.error || typeof providerProfileKey !== "string" || typeof providerAccountId !== "string") {
+    return respond(200, { ok: false, state: "outcome_unknown", publication_id: publicationId, error: UNCONFIRMED });
+  }
+  const input: SocialPostInput = {
+    providerProfileKey, platform: row.platform, providerAccountId,
+    channelId: typeof args.channel_id === "string" ? args.channel_id : null, text: args.caption, externalId: publicationId,
+  };
+  let outcome: SocialProviderPostOutcome;
+  try {
+    outcome = await deps.adapter.readPost(input, typeof row.provider_request_id === "string" ? row.provider_request_id : null);
+  } catch {
+    return respond(200, { ok: false, state: "outcome_unknown", publication_id: publicationId, error: UNCONFIRMED });
+  }
+  return await finish(deps, { tenantId, platform: row.platform, publicationId, confirmationId: row.confirmation_id, actorId: args.approved_by }, outcome, true);
 }
 
 /** The receipt's own vocabulary: the door's states map 1:1 onto the capability outcomes. */

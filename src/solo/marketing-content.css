@@ -122,7 +122,7 @@
 .mct-pubdoor-preview{display:grid;gap:6px;padding:12px 14px;border-radius:var(--r-s);background:var(--surface);border:1px solid var(--line)}
 .mct-pubdoor-preview p{margin:0;font-size:13px;line-height:1.5;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
 .mct-pubdoor-preview small{font-size:11px;color:var(--ink-2)}
-.mct-pubdoor-chip{justify-self:start;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px;font-weight:600;color:var(--ink-2)}
+.mct-pubdoor-chip{justify-self:start;min-width:0;max-width:100%;overflow-wrap:anywhere;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px;font-weight:600;color:var(--ink-2)}
 .mct-pubdoor-result{display:grid;gap:6px;justify-items:start}
 .mct-pubdoor-result p{margin:0;font-size:13px;line-height:1.5;color:var(--ink)}
 .mct-pubdoor-ok{color:var(--ok)}
@@ -130,7 +130,7 @@
 .mct-pubdoor-history{display:grid;gap:6px;margin-top:4px;border-top:1px solid var(--line-soft);padding-top:10px}
 .mct-pubdoor-history ul{margin:0;padding:0;list-style:none;display:grid;gap:4px}
 .mct-pubdoor-history li{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;font-size:12px;color:var(--ink-2)}
-.mct-pubdoor-history li span{font-weight:600;color:var(--ink)}
+.mct-pubdoor-history li span{min-width:0;overflow-wrap:anywhere;font-weight:600;color:var(--ink)}
 .mct-pubdoor-history li em{font-style:normal}
 
 /* ── Videos (the tenant media library surface) ─────────────────────────────────────────────── */

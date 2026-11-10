@@ -47,6 +47,8 @@ import type { QuickChip } from "@/components/paige/commandCenterTypes";
 import { usePaigeThreads, type PaigeThread } from "@/hooks/usePaigeThreads";
 import { readOriginalReminderHistory, type OriginalReminderHistory } from "@/components/chat/reminderHistory";
 import { originalSpecialistOrigin, readOriginalSpecialistHistory, type OriginalSpecialistHistory } from "@/components/chat/specialistHistory";
+import { OriginalDocumentWork } from "@/components/chat/OriginalDocumentWork";
+import { originalDocumentReference, type OriginalDocumentReference } from "@/components/chat/documentWorkRecovery";
 import { OriginalSpecialistResult } from "@/components/chat/OriginalSpecialistResult";
 import { readOriginalCuraPreparationHistory, preparationWorkLabel, type OriginalCuraPreparationHistory, type OriginalPreparationScope } from "@/components/chat/curaPreparationHistory";
 import { useScopedUserId } from "@/hooks/useScopedUserId";
@@ -164,6 +166,7 @@ type Message = {
   originalCuraPreparationHistory?: OriginalCuraPreparationHistory;
   originalCuraPreparationHistoryStatus?: "checking" | "unverified";
   originalSpecialistOrigin?: OriginalPreparationScope;
+  originalDocumentWork?: OriginalDocumentReference;
   originalSpecialistHistory?: OriginalSpecialistHistory;
   originalSpecialistHistoryStatus?: "checking" | "unverified";
   recoveredApprovalExpiresAt?: string;
@@ -1254,6 +1257,7 @@ const PaigeAIChatInner = ({
           queued: queued?.length ? queued : undefined,
           confirm: confirm?.length ? confirm : undefined,
           confirmResolved: true,
+          ...(originThreadId ? { originalDocumentWork: originalDocumentReference(t, originThreadId) ?? undefined } : {}),
           ...(activeTenantId && originThreadId ? { originalSpecialistOrigin:
             originalSpecialistOrigin(t, { threadId: originThreadId, tenantId: activeTenantId }) ?? undefined } : {}),
           // This only offers an inert read. Native status re-proves the actual
@@ -3737,6 +3741,19 @@ const PaigeAIChatInner = ({
                               if (origin.threadId !== activeThreadId) return;
                               void restoreOriginalReminderHistory(origin.threadId, [], () => composerScopeRef.current.writable, origin, "specialist");
                             }} />
+                        )}
+                        {soloTenantSafety && !platform && scopedUserId && activeTenantId &&
+                          composerScope.writable && !isLoading && message.originalDocumentWork &&
+                          message.originalDocumentWork.threadId === activeThreadId && (
+                            <OriginalDocumentWork
+                              key={`${scopedUserId}:${activeTenantId}:${requestScopeEpoch}:${message.originalDocumentWork.workId}`}
+                              reference={message.originalDocumentWork}
+                              actorId={scopedUserId}
+                              tenantId={activeTenantId}
+                              current={() => requestScopeRef.current.epoch === requestScopeEpoch &&
+                                composerScopeRef.current.writable && !submissionPreflightRef.current}
+                              artifacts={messages.flatMap(turn => turn.artifacts ?? [])}
+                            />
                         )}
                         {/* #29 — inline handoff cards for the deliverables Paige produced this turn. Open
                             renders the real artifact; Send prefills the composer so Paige drives the send

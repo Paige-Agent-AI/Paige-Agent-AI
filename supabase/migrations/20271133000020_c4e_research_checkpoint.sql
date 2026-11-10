@@ -112,7 +112,9 @@ begin
     if jsonb_typeof(report) is distinct from 'object'
       or octet_length(_checkpoint::text)>2097152
       or report->>'run_id' is distinct from w.id::text
-      or report->>'question' is distinct from btrim(w.request_payload->>'question')
+      -- Match the worker's ECMAScript String.trim without rewriting its frozen input.
+      or report->>'question' is distinct from btrim(w.request_payload->>'question',
+        U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')
       or jsonb_typeof(report->'findings') is distinct from 'array'
       or jsonb_typeof(report->'sources') is distinct from 'array'
       or jsonb_typeof(report->'coverage'->'configured') is distinct from 'boolean'

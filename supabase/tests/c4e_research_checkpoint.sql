@@ -7,7 +7,10 @@
 \set intent '00000000-0000-4000-8000-00000000c4e4'
 \set unknown_intent '00000000-0000-4000-8000-00000000c4e5'
 \set invalid_intent '00000000-0000-4000-8000-00000000c4e6'
-\set payload '{"version":1,"question":"Research a public fixture","max_hops":1}'
+-- Match every ECMAScript String.trim edge character used by the real worker.
+select U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF' as edge_whitespace \gset
+select jsonb_build_object('version',1,'question',
+  :'edge_whitespace'||'Research a public fixture'||:'edge_whitespace','max_hops',1) as payload \gset
 
 create function pg_temp.check_c4e(label text, condition boolean) returns void language plpgsql as $$
 begin
@@ -79,6 +82,9 @@ reset role;
 select pg_temp.check_c4e('report and receipt absent at interruption', not exists(
   select 1 from public.research_runs where id=:'original') and not exists(
   select 1 from public.paige_workspace_events where source_id=:'original'));
+select pg_temp.check_c4e('checkpoint trims edges without changing frozen input',
+  (select request_payload=:'payload'::jsonb and research_checkpoint->'report'->>'question'='Research a public fixture'
+   from public.paige_durable_work where id=:'original'));
 
 select pg_temp.admit_c4e(:'thread',:'unknown_intent');
 set role service_role;

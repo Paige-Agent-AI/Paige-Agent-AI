@@ -8,14 +8,14 @@ FLOW_PROTOTYPE: UNVERIFIED: Production recovery and rendered flow remain to be d
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: The authorized owner or admin checks a document job they already started in the current conversation.
 VISUAL_DIRECTION: PASS: The existing Chat transcript and document card define the layout. No new panel or motion.
 AUTOMATED_EVIDENCE: PASS: 43 focused Vitest checks across original effect selection, status transport, verified completion and retired in-flight response.
-STATIC_EVIDENCE: UNVERIFIED: Final hosted verification is pending.
+STATIC_EVIDENCE: PASS: Scoped ESLint and Git whitespace checks passed on the consumer files.
 RENDERED_EVIDENCE: UNVERIFIED: Mounted tests use a controlled DOM and the producer dependency is pending.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Actual original document job reconnect is pending.
 AUTHENTICATED_RUNTIME: UNVERIFIED: Original EXP05 producer PR 3300 must be released and read back before the paired result can be verified.
 KEYBOARD_FOCUS: UNVERIFIED: The native button remains focusable during the read. Live keyboard drive remains pending.
 ZOOM_REFLOW: UNVERIFIED: Live geometry remains pending.
 REDUCED_MOTION: UNVERIFIED: This increment adds no animation. Live preference drive remains pending.
-STATE_COVERAGE: PASS: Controlled status tests cover pending, approval, cancellation, unknown, verified pair, duplicate clicks, reopen and route retirement.
+STATE_COVERAGE: PASS: Controlled status tests cover in-progress work, approval, cancellation, indeterminate state, verified pairs, duplicate clicks, reopen and route retirement.
 TRUTHFUL_STATE_LABELS: PASS: The receipt describes verification at the status check. The document card shows the current editable draft and is identified separately.
 SOLO_UI: YES: Existing SOLO PAIGE Chat conversation transcript.
 UNVERIFIED: Final hosted checks, producer release, mounted production result, reconnect and unchanged execution counts.

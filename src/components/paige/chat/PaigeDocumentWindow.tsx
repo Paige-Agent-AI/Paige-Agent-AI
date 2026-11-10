@@ -83,7 +83,12 @@ export function PaigeDocumentWindowHost({ scope, children }: { scope: DocumentWi
   }, [scope?.key]);
 
   useLayoutEffect(() => {
-    if (!mode) return;
+    if (!mode) {
+      const button = opener.current;
+      opener.current = null;
+      if (button?.isConnected) button.focus({ preventScroll: true });
+      return;
+    }
     title.current?.focus({ preventScroll: true });
     const from = sourceRect.current;
     sourceRect.current = null;
@@ -138,12 +143,6 @@ export function PaigeDocumentWindowHost({ scope, children }: { scope: DocumentWi
   function close() {
     pending.current?.abort();
     setSelection(null);
-    const button = opener.current;
-    const key = currentScope.current?.key;
-    opener.current = null;
-    button?.ownerDocument.defaultView?.requestAnimationFrame?.(() => {
-      if (button.isConnected && currentScope.current?.key === key) button.focus({ preventScroll: true });
-    });
   }
 
   function changeLayout(expanded: boolean) {

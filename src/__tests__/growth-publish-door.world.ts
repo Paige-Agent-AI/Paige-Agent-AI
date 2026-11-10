@@ -35,6 +35,7 @@ export interface WorldOptions {
   tables?: Partial<Record<string, Row[]>>;
   /** Make the active workspace change after N current_user_tenant_id reads. */
   switchAfter?: number;
+  onTenantRead?: (count: number) => void | Promise<void>;
   recordFails?: boolean;
   auditFails?: boolean;
   /** Wrap the real Kit gate, to observe it or make it refuse. */
@@ -43,7 +44,8 @@ export interface WorldOptions {
 
 export const livePage = (over: Row = {}): Row => ({
   id: PAGE, tenant_id: MINE, title: "Spring offer", slug: "spring-offer", status: "draft",
-  blocks_json: null, draft_blocks_json: [{ type: "hero", title: "Get the weekends back" }], draft_seo_json: null, ...over,
+  blocks_json: null, draft_blocks_json: [{ type: "hero", title: "Get the weekends back" }], draft_seo_json: null,
+  publish_revision: "a".repeat(64), ...over,
 });
 
 export function world(o: WorldOptions = {}) {
@@ -128,6 +130,7 @@ export function world(o: WorldOptions = {}) {
       seen.rpc.push({ fn, args, client: "caller" });
       if (fn === "current_user_tenant_id") {
         tenantReads += 1;
+        if (o.onTenantRead) await o.onTenantRead(tenantReads);
         if (o.switchAfter !== undefined && tenantReads > o.switchAfter) return { data: THEIRS, error: null };
         return { data: o.active === undefined ? MINE : o.active, error: null };
       }
@@ -148,6 +151,11 @@ export function world(o: WorldOptions = {}) {
         if (o.recordFails) return { data: null, error: { message: "permission denied" } };
         seen.receipts.push(args ?? {});
         return { data: true, error: null };
+      }
+      if (fn === "growth_page_publish_review") {
+        const page = tables.growth_pages.find((row) => row.id === args?.p_id && row.tenant_id === args?.p_tenant_id);
+        const tenant = tables.tenants.find((row) => row.id === args?.p_tenant_id);
+        return { data: page && tenant ? { page, tenant_slug: tenant.slug } : null, error: null };
       }
       if (PUBLISH_RPC.test(fn)) {
         if (o.rpc) return await o.rpc(fn, args ?? {});
@@ -171,9 +179,11 @@ export function world(o: WorldOptions = {}) {
 /** The eight publish/unpublish RPCs (Migration G: service_role-only). */
 export const PUBLISH_RPC = /^(growth_(page|form|funnel)|studio_image)_(un)?publish$/;
 
-/** The exact executor call Migration G requires: service role, the verified workspace and person. */
+/** The exact executor call: service role, the verified workspace/person, and reviewed page if applicable. */
 export const serverCall = (fn: string, id: string, tenant = MINE, actor = USER) =>
-  ({ fn, args: { p_tenant_id: tenant, p_id: id, p_actor_id: actor }, client: "admin" as const });
+  ({ fn, args: { p_tenant_id: tenant, p_id: id, p_actor_id: actor,
+    ...(fn === "growth_page_publish" ? { p_reviewed_revision: "a".repeat(64), p_reviewed_path: "/p/acme/spring-offer" } : {}),
+  }, client: "admin" as const });
 
 /** A publish RPC that answers like the real one for a page. */
 export const pagePublished = (_fn: string, args: Row) => ({

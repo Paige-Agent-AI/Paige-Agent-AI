@@ -1201,7 +1201,7 @@ const SOURCES = {
   "supabase/functions/_shared/untrusted-fence.ts": "fc0ed34f9c564e4669b187a106756e860383ede74ae2bbb60f4b0a3944c7bf12",
   // C4e #3309: independently reviewed worker at 3e6d420bc. The original
   // main pin and all 29 Chat dispatch bindings reproduced before renewal.
-  "supabase/functions/paige-deep-research/index.ts": "e8b8dc24544058a0b0377d0e1a4c27583ddd56877cb71d4a2ec389f65696b1da",
+  "supabase/functions/paige-deep-research/index.ts": "9478aee713cb60ca0a13b204a7cc1d13e4fc221fc68ca81855cd46e979efd910",
   "supabase/functions/paige-web-search/index.ts": "2606664401bb71708fe798afab7f1166648083131d1ccfa06f9123d1629b0dd2",
   "supabase/functions/_shared/research-source-policy.ts": "df0ca1d9f4ee256051ff51927500b25b5fd071a057a6d868c6448f6f852e144b",
   "supabase/functions/fetch-url-content/index.ts": "4e10fe5cd2e189ced5c0cf929586626297b7c9653b34f8a109eede4b88d2926b",

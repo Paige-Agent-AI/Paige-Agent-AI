@@ -60,6 +60,7 @@ import { DocumentAttachmentChip } from "@/components/chat/DocumentAttachmentChip
 import { ChatKnowledgeDocuments } from "@/components/chat/ChatKnowledgeDocuments";
 import { DocumentMessageBubble } from "@/components/chat/DocumentMessageBubble";
 import { MessageAudioButton } from "@/components/chat/MessageAudioButton";
+import { PaigeDocumentWindowHost } from "@/components/paige/chat/PaigeDocumentWindow";
 import { PaigeArtifactCard, type PaigeArtifact } from "@/components/paige/chat/PaigeArtifactCard";
 import { ExtractionProposalCard, type ExtractionProposal } from "@/components/chat/ExtractionProposalCard";
 import { PaigeCompactingCard, type CompactingSignal } from "@/components/paige/chat/PaigeCompactingCard";
@@ -3370,6 +3371,10 @@ const PaigeAIChatInner = ({
   };
 
   return (
+    <PaigeDocumentWindowHost scope={soloTenantSafety && !platform && scopedUserId && activeTenantId &&
+      activeThreadId && composerScope.writable ? {
+        key: JSON.stringify([requestScopeEpoch, activeThreadId]), actorId: scopedUserId, tenantId: activeTenantId,
+      } : null}>
     <div data-solo-chat-engine={soloTenantSafety ? "true" : undefined} className={fill ? "w-full h-full" : `max-w-4xl mx-auto w-full ${hideHeader ? "h-full" : "h-[calc(100vh-4rem)]"}`}
       onDragOver={preventFileNavigation} onDrop={preventFileNavigation}>
       <div className={enableHistory ? (cd ? "flex h-full min-h-0 gap-3.5" : "flex h-full min-h-0 gap-4 px-3 pt-3 md:px-4") : "flex flex-col h-full"}>
@@ -4215,6 +4220,7 @@ const PaigeAIChatInner = ({
         </div>
       </div>
     </div>
+    </PaigeDocumentWindowHost>
   );
 };
 

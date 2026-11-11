@@ -197,3 +197,92 @@ server stopped/viewport reset, no alternate-browser or security bypass. No live
 Research run/provider effect has started. Original Google workbook is view-only
 in both identified sessions; owner explicitly authorized original Linear/repository
 closeout for now. No permission change or substitute record was made.
+
+## Post-release original Chat corrections — November 11, 2026
+
+Original #3330 review threads4534281185 (P1) and4534281195 (P2), received through
+ANT6/160e1a63, identify genuine gaps in released #3324/e235. That release's source
+and CI evidence remain historical facts, not completion of this customer outcome.
+The single paid Research run and scoped fault have not been started.
+
+Causal before-change tests reproduce BOTH gaps: 2 FAIL /68 PASS. A live successful
+Research stream did not read its canonical accepted turn, so the original status
+control appeared only after history reload. A lost worker response skipped the
+native accepted-turn read; the existing accepted-pause control could not stop
+another model round. No protected tests were modified to excuse either failure.
+
+The existing WAIT_WORK/INTERRUPTED terminal schedules a caller-governed read;
+it supplies no locator or authority. The existing ticket/thread/scope/lifetime is
+checked around the await. Only the current intent's protected original Research
+assistant replaces its own live slot. History, unsent next text, a newer send,
+other conversations, Document, Live and all approvals retain their existing paths.
+The Root Research catch reconciles the SAME original native WAIT_WORK after a
+lost worker response, under the existing fresh actor/workspace read. Confirmed
+acceptance ends through the existing canonical pause/terminal; it does not call
+another model, tool, provider, writer or approval. Missing/denied stays UNKNOWN.
+
+Owning81 tests PASS, including actor/workspace/conversation/unmount/newer-send,
+wrong-intent and denied read negatives. Actual dispatch plus actual accepted-pause
+statements causally reproduce the old extra model round when the reconciliation
+is removed; corrected control stops at one model round/one worker invocation.
+This source-level causal harness is not a full hosted invocation or customer proof.
+All564 selected original Chat/customer/Live/Research tests across27 suites PASS;
+scoped ESLint and whitespace PASS. Pinned Impeccable4.1.0 reports0 anti-patterns;
+6 existing font-size advisories remain outside these interaction-only changes.
+No visual redesign, new runtime/store, Auth/login/permission change or Lovable code.
+
+Independent pre-renewal inspection, exact fingerprint renewal if required, final
+head CI/review, normal corrective release/source readback and the actual one-run
+recovery proof remain required. Current-source live UI, report/citation/receipt
+reload/reopen and no-additional-attributable-execution/meter proof are UNVERIFIED.
+ALG-12 bounded failure/recovery evaluation is extended by these causal and changed-
+context negatives; this does not promote algorithm maturity or full EXP01/Live/
+owner acceptance. Original records and all prior failed/unverified evidence remain.
+
+Pre-renewal candidate8f466ce6 was correctly HELD after the author identified one
+more actual-path coupling: unknown effect takes precedence over durable acceptance,
+so a committed native WAIT_WORK can emit an INTERRUPTED Research wire terminal.
+The WAIT_WORK-only read hint causally failed that case (1 FAIL/1 PASS/40 skipped).
+The intermediate cbe hint used Research mode to inspect the caller's canonical row,
+including INTERRUPTED; uncertainty and all effect classification remain intact.
+Owning82 tests now PASS, with both wire states and the same protected native row.
+The earlier564-suite result belongs to the initial hint; final broader regression,
+canonical type ratchet and final source review are running, not inferred PASS.
+React guidance applied: cheap current-ticket checks before IO, one event-scoped
+canonical read without render/effect polling, functional current-state replacement,
+no new dependency/bundle or storage, and preserved existing accessible controls.
+
+Independent pre-renewal review correctly HELD cbe444d0: original native26 preserves
+build/multi_agent mode precedence, so mode-only gating misses valid Research.
+Those four cases causally FAIL while two ordinary Research-mode cases PASS (40
+other cases skipped in that focused run). The final read hint uses WAIT_WORK or
+INTERRUPTED regardless of mode. The stored protected row and current request
+intent still decide the Research locator; no state/mode confers authority.
+
+A parallel565-case rerun reported120 FAIL/445 PASS, including5s timeouts and unit
+transport-isolation refusals while local free disk was about70MB. That FAIL is
+retained; it is not replaced by the earlier564 PASS. A full same-coverage serial
+rerun is in progress with assertions, timeout and transport guard unchanged.
+The canonical type ratchet completed normally: baseline10/current6/no new errors;
+it is not described as a clean zero-error compile. No process was terminated or
+unrelated cache/data deleted. No additional paid run, browser bypass or effect.
+
+Final same-coverage serial regression on the mode-independent runtime:569 PASS
+across27 suites. Assertions,5s timeouts and the unit network guard are unchanged;
+all protected files remain byte-identical. The prior parallel120 failures and
+all earlier causal failures are preserved, not relabeled PASS. No process or
+unrelated data/cache was removed. Source2026896b/treeebcffdaa is independently
+NON-AUTHOR CLEAR before renewal; prior Root8f decomposition carries unchanged.
+Only29 reviewed fingerprint scalars and nine factual history lines are renewed;
+the complete inverse restores the prior verifier exactly, including every source
+pin/metadata/inspector/validator/hostile control. Final renewed review is pending.
+
+Original ANT6/e2c60517 offers one composed release in existing #3330. E1 retains
+this correction branch/source authorship and will return an immutable six-file
+commit plus review; E5 may compose it without editing the protected host/index,
+then complete ONE fresh final-head review/CI/normal release/readback. Preserve
+E7 #3331's distinct frozen Social source pin and native27; no SQL allocation or
+checker change is transferred. No separate corrective implementation/PR or paid
+run is started. Original Master #3332 normally merged daaab07f/tree76b7fca0 after
+all exact-head gates; its six-line historical #3324 row is not clearance of the
+new findings. Actual composed useful-result proof and owner acceptance stay open.

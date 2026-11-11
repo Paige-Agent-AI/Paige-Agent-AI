@@ -73,6 +73,12 @@ describe('CRM Chat requires an explicit native execution acknowledgement', () =>
     expect(out).toMatchObject({ success: false, outcome_unknown: true });
     expect(out.not_applied).not.toBe(true);
   });
+  it('returns the original Opportunity receipt and saved version after a lost-ack replay', async () => {
+    const native = { ok: true, action: 'deal.update', outcome: 'succeeded', replayed: true,
+      correlation_id: 'e4000000-0000-4000-8000-0000000c0003', receipt_recorded: true,
+      readback: { id: 'e4000000-0000-4000-8000-0000000c0004', version: 3 } };
+    expect(await map(native, null, 'deal.update')).toEqual({ success: true, ...native });
+  });
   it('keeps the one native proposal and exact stored-command fields', async () => {
     const out = await map({ ok: false, outcome: 'approval_required', fingerprint: 'fixture-fingerprint', summary: 'Review the fixture.' });
     expect(out).toMatchObject({ success: false, needs_confirm: true, confirm_fingerprint: 'fixture-fingerprint', confirm_command: command, confirm_idempotency_key: 'fixture-original-operation' });

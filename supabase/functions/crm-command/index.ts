@@ -19,6 +19,7 @@ import { databaseAnswered } from "../_shared/approval-outcome.ts";
 import { canonicalAppUrl, PAIGE_APP_ORIGIN, resolveCanonicalRecordLink, type CanonicalTier } from "../_shared/canonical-app-url.ts";
 import { dealCreateRelationshipIssue, UNLINKED_DEAL_REASONS } from "../_shared/crm-command/deal-relationship-integrity.ts";
 import { resolveCommandContactRefs } from "../_shared/crm-command/contact-refs.ts";
+import { inspectOpportunityResult } from "../_shared/crm-command/opportunity-result-read.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -313,6 +314,16 @@ serve(async (req) => {
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: { user }, error: authError } = await caller.auth.getUser();
   if (authError || !user) return response(401, { ok: false, code: "CRM_AUTH_INVALID" });
+
+  // Read only the original committed result; never fall through to execution.
+  // Clone preserves the ordinary parser and peer-owned inspection branches.
+  let inspection: unknown;
+  try { inspection = await req.clone().json(); } catch { /* Original parser reports malformed JSON. */ }
+  if (inspection && typeof inspection === "object" && !Array.isArray(inspection)
+    && Object.prototype.hasOwnProperty.call(inspection, "inspect_opportunity_result")) {
+    const answer = await inspectOpportunityResult({ raw: inspection, actorId: user.id, caller, admin });
+    return response(answer.status, answer.body);
+  }
 
   type ParsedBody = z.infer<typeof bodySchema>;
   type CanonicalBody = Omit<ParsedBody, "command" | "legacy_command" | "legacy_idempotency_key" | "legacy_supplied_idempotency_key"> & {

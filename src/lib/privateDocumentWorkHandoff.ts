@@ -20,12 +20,18 @@ export function privateDocumentWorkSnapshot(actorId: string, tenantId: string): 
   }
 }
 
-export type PrivateOriginalWorkReference = OriginalDocumentReference & { kind?: "research" };
+export type PrivateOpportunityReference = { kind: "opportunity"; dealId: string; correlationId: string };
+export type PrivateOriginalWorkReference = (OriginalDocumentReference & { kind?: "research" }) | PrivateOpportunityReference;
 
 export function parsePrivateDocumentWork(raw: string | null): PrivateOriginalWorkReference | null {
   if (!raw || raw.length > 184) return null;
   try {
     const saved = JSON.parse(raw);
+    if (saved?.kind === "opportunity") {
+      return Object.keys(saved).length === 3 && uuid(saved.dealId) && uuid(saved.correlationId)
+        && saved.dealId.length === 36 && saved.correlationId.length === 36
+        ? { kind: "opportunity", dealId: saved.dealId, correlationId: saved.correlationId } : null;
+    }
     if (!saved || typeof saved !== "object" || Array.isArray(saved) ||
       (saved.kind !== undefined && saved.kind !== "research")) return null;
     if (saved.kind !== "research" && raw.length > 160) return null;
@@ -45,6 +51,16 @@ export function keepPrivateDocumentWork(actorId: string, tenantId: string, refer
 
 export function keepPrivateResearchWork(actorId: string, tenantId: string, reference: OriginalDocumentReference) {
   return keepPrivateWork(actorId, tenantId, reference, "research");
+}
+
+export function keepPrivateOpportunity(actorId: string, tenantId: string, dealId: string, correlationId: string) {
+  const key = storageKey(actorId, tenantId);
+  const value = { kind: "opportunity" as const, dealId, correlationId };
+  if (!key || actorId.length !== 36 || tenantId.length !== 36
+    || !parsePrivateDocumentWork(JSON.stringify(value))) return false;
+  try { window.sessionStorage.setItem(key, JSON.stringify(value)); } catch { return false; }
+  window.dispatchEvent(new Event(PRIVATE_DOCUMENT_WORK_CHANGED));
+  return true;
 }
 
 function keepPrivateWork(actorId: string, tenantId: string, reference: OriginalDocumentReference, kind?: "research") {

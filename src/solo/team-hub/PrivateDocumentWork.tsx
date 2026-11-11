@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ChevronDown, Lock } from "lucide-react";
 import { OriginalDocumentWork } from "@/components/chat/OriginalDocumentWork";
 import { OriginalResearchWork } from "@/components/chat/OriginalResearchWork";
+import { SavedOpportunityResult } from "@/components/chat/OpportunityResultReceipt";
 import {
   clearPrivateDocumentWork,
   parsePrivateDocumentWork,
@@ -40,7 +41,9 @@ export function PrivateDocumentWork({ actorId, tenantId }: { actorId: string; te
         </p>
         {open && (snapshot && reference ? (
           <>
-            {reference.kind === "research" ? <OriginalResearchWork
+            {reference.kind === "opportunity" ? <SavedOpportunityResult
+              key={controlKey} reference={reference} actorId={actorId} tenantId={tenantId}
+            /> : reference.kind === "research" ? <OriginalResearchWork
               key={controlKey}
               surface="team-hub"
               reference={reference}
@@ -69,7 +72,7 @@ export function PrivateDocumentWork({ actorId, tenantId }: { actorId: string; te
             </button>
             {removeFailed && <p className="th-note" role="status">The saved reference could not be removed. Try again.</p>}
           </>
-        ) : <p className="th-note">In PAIGE Chat, check an original document or research job and choose Keep in Team Hub.</p>)}
+        ) : <p className="th-note">In PAIGE Chat, check original work or an Opportunity receipt and choose Keep in Team Hub.</p>)}
       </div>
     </details>
   );

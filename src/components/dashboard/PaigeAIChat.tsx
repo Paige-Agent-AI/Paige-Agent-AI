@@ -3371,7 +3371,7 @@ const PaigeAIChatInner = ({
   };
 
   return (
-    <PaigeDocumentWindowHost scope={soloTenantSafety && !platform && scopedUserId && activeTenantId &&
+    <PaigeDocumentWindowHost enabled={soloTenantSafety && !platform} scope={soloTenantSafety && !platform && scopedUserId && activeTenantId &&
       activeThreadId && composerScope.writable ? {
         key: JSON.stringify([requestScopeEpoch, activeThreadId]), actorId: scopedUserId, tenantId: activeTenantId,
       } : null}>

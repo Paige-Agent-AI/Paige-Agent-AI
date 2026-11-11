@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded November 10, 2026 UTC — EXP06 original page publisher binds the reviewed draft and destination.**
+
+| Increment | Exact reviewed source and production release | Proof boundary and original outcome |
+| --- | --- | --- |
+| [#3310](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3310) | Final head `457d9e5a6814476b4a279d3f883c229a88192828` and composed tree passed independent NON-AUTHOR review and all 15 hosted checks, including managed Preview. Normal merge `49a0fb73c8744662a82aec2def5b76f35e327529` matches reviewed tree `7a686b322c8368798952b3ab814aa767dbdb0b04`. [Native release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/42889966268) and [Edge release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/42889966088) succeeded. Production recorded immutable `20271133000019` once; reviewed function bodies and restricted grants matched. Active `growth-publish-command` v78 requires JWT; its served door matched the merged bytes. Both web statuses passed. | The existing publisher refuses changed drafts or public paths, preserving separate fresh approvals and original actor, claim and receipt authority. Focused publish/Chat checks, 54 Team Hub adapter checks and the full 72-assertion native Studio lifecycle passed. The authorized signed-in Team Hub attempt failed before decision or publish because its separate adapter could not read protected provenance. No public test result or receipt/reopen is claimed. [Original outcome and EXP08 dependency](https://linear.app/paigeagentai/issue/ANT-162#comment-d2f738f9-9e8e-4778-ab5f-d7fa4a56ae2b). Internal production patch; full EXP06 and owner acceptance remain pending, with no customer announcement. |
+
 **Recorded November 10, 2026 UTC — EXP08 Team Hub attachment access and download continuity.**
 
 | Increment | Exact reviewed source and production release | Proof boundary and original outcome |

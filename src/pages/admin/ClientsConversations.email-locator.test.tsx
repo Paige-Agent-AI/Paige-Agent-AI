@@ -6,7 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import ClientsConversations from "./ClientsConversations";
-const db=vi.hoisted(()=>({from:vi.fn(),rpc:vi.fn(),invoke:vi.fn(),getUser:vi.fn(),allowed:true,listIncludesRaw:false,otherInboxThread:false,contentWait:null as Promise<unknown>|null,refresh:[] as (()=>void)[]}));
+const db=vi.hoisted(()=>({from:vi.fn(),rpc:vi.fn(),invoke:vi.fn(),getUser:vi.fn(),allowed:true,resultState:null as string|null,listIncludesRaw:false,otherInboxThread:false,contentWait:null as Promise<unknown>|null,refresh:[] as (()=>void)[]}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{from:db.from,rpc:db.rpc,functions:{invoke:db.invoke},auth:{getUser:db.getUser,onAuthStateChange:()=>({data:{subscription:{unsubscribe:vi.fn()}}})},
   channel:()=>{const c={on:(_kind:unknown,_options:unknown,cb:()=>void)=>{db.refresh.push(cb);return c;},subscribe:()=>c};return c;},removeChannel:vi.fn()}}));
 vi.mock("@/hooks/useTenantContext",()=>({useTenantContext:()=>({activeTenantId:"11111111-1111-4111-8111-111111111111",activeUserId:"22222222-1111-4111-8111-111111111111",loading:false,accountContextLoading:false,accountContextStatus:"ready"})}));
@@ -27,18 +27,19 @@ const client={id:contact,first_name:"Existing",last_name:"Contact",entity_name:n
 const row={id:message,tenant_id:tenantId,thread_key:threadKey,contact_id:contact,connector_id:connector,channel_type:"email",direction:"outbound",status:"draft",subject:"Saved original",body_text:"PRIVATE ORIGINAL SAVED EMAIL",body_html:null,updated_at:version,attachments:[],action_id:null,provider_message_id:null,scheduled_for:null,created_at:version,sender:{address:"sender@tests.invalid"},recipients:[{address:"recipient@tests.invalid"}],clients:client};
 const thread={id:turn,tenant_id:tenantId,thread_key:threadKey,contact_id:contact,snoozed_until:null,archived_at:null,labels:[],unread_count:0,last_message_at:version,last_direction:"outbound",clients:client};
 const otherThread={...thread,id:operation,thread_key:`contact:${tenantId}:${receipt}`,contact_id:receipt,clients:{...client,id:receipt,first_name:"Other"}};
-const native=()=>db.allowed?{ok:true,id:message,contact_id:contact,thread_key:threadKey,channel:"email",direction:"outbound",status:"draft",subject:row.subject,saved_email_draft:{source:{message_id:message,updated_at:version},body_text:row.body_text,body_html:null}}:{ok:false,code:"MAILBOX_INACTIVE"};
+const currentRow=()=>db.resultState?{...row,status:db.resultState==="provider_accepted"?"sent":"draft",provider_message_id:db.resultState==="provider_accepted"?"provider-result":null,comms_email_operation:operation,comms_email_state:db.resultState}:row;
+const native=()=>db.allowed&&db.resultState?{ok:true,id:message,contact_id:contact,thread_key:threadKey,channel:"email",direction:"outbound",status:currentRow().status,subject:row.subject,body_text:row.body_text,body_truncated:false,saved_email_draft:null}:db.allowed?{ok:true,id:message,contact_id:contact,thread_key:threadKey,channel:"email",direction:"outbound",status:"draft",subject:row.subject,saved_email_draft:{source:{message_id:message,updated_at:version},body_text:row.body_text,body_html:null}}:{ok:false,code:"MAILBOX_INACTIVE"};
 const prepared=()=>({ok:true,tenant_id:tenantId,actor_id:actorId,turn_id:turn,conversation_id:conversation,source_message_id:source,message_id:hub,draft:{subject:row.subject,body:row.body_text,contact_id:contact,connector_id:connector,result:{message_id:message,updated_at:version,receipt_id:receipt,operation_id:operation}}});
 let host:HTMLDivElement,root:Root;
 async function flush(){for(let i=0;i<12;i++)await act(async()=>{await new Promise(resolve=>setTimeout(resolve,0));});}
 beforeEach(()=>{
-  db.allowed=true;db.listIncludesRaw=false;db.otherInboxThread=false;db.contentWait=null;db.refresh=[];db.from.mockReset();db.rpc.mockReset();db.invoke.mockReset();db.getUser.mockResolvedValue({data:{user:{id:actorId}},error:null});
+  db.allowed=true;db.resultState=null;db.listIncludesRaw=false;db.otherInboxThread=false;db.contentWait=null;db.refresh=[];db.from.mockReset();db.rpc.mockReset();db.invoke.mockReset();db.getUser.mockResolvedValue({data:{user:{id:actorId}},error:null});
   Element.prototype.scrollIntoView=vi.fn();
   db.rpc.mockImplementation(async(name)=>({data:name==="current_user_tenant_id"?tenantId:name==="team_hub_email_draft"?prepared():name==="read_message_content"?db.contentWait?await db.contentWait:native():null,error:null}));
   db.from.mockImplementation(table=>{const filters:unknown[][]=[];const q:Record<string,unknown>={};
-    const result=()=>({data:db.listIncludesRaw&&table==="messages"?[row]:table==="threads"?[...(db.listIncludesRaw?[thread]:[]),...(db.otherInboxThread?[otherThread]:[])]:table==="channel_connectors"?[{id:connector,channel_type:"email",provider:"gmail",display_name:"Original mailbox",from_address:"sender@tests.invalid",status:"active",active:true}]:[],error:null,count:table==="threads"?1:0});
+    const result=()=>({data:db.listIncludesRaw&&table==="messages"?[currentRow()]:table==="threads"?[...(db.listIncludesRaw?[thread]:[]),...(db.otherInboxThread?[otherThread]:[])]:table==="channel_connectors"?[{id:connector,channel_type:"email",provider:"gmail",display_name:"Original mailbox",from_address:"sender@tests.invalid",status:"active",active:true}]:[],error:null,count:table==="threads"?1:0});
     for(const method of ["select","eq","order","limit","not","is","or","gt","in","gte"])q[method]=(...args:unknown[])=>{filters.push([method,...args]);return q;};
-    q.maybeSingle=async()=>({data:table==="messages"?row:table==="threads"?thread:null,error:null});
+    q.maybeSingle=async()=>({data:table==="messages"?currentRow():table==="threads"?thread:null,error:null});
     q.then=(done:(v:unknown)=>unknown)=>Promise.resolve(result()).then(done);return q;
   });
   host=document.createElement("div");document.body.append(host);root=createRoot(host);
@@ -96,4 +97,30 @@ it("closing a delayed Retry cannot reveal the original editor before a later nat
   expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Original message editor"]')?.value??"").not.toContain("LOCAL USER EDIT");
   await act(async()=>release({ok:false,code:"MAILBOX_INACTIVE"}));await flush();
   expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Original message editor"]')?.value??"").not.toContain("LOCAL USER EDIT");expect(db.invoke).not.toHaveBeenCalled();
+});
+
+it("reopens the original accepted result after a full remount without an editor, new proposal or provider call",async()=>{
+  db.resultState="provider_accepted";await mount();
+  expect(host.textContent).toContain("Original email · Accepted");
+  expect(host.textContent).toContain(row.body_text);
+  expect(Array.from(host.querySelectorAll("a")).find(a=>a.textContent==="Return to NEXUS")).toBeTruthy();
+  expect(host.querySelector('textarea[aria-label="Original message editor"]')).toBeNull();
+  expect(db.invoke).not.toHaveBeenCalled();
+});
+
+it("a saved draft becoming uncertain during original refresh retires editing and keeps its original return without a resend",async()=>{
+  await mount();expect(host.querySelector('textarea[aria-label="Original message editor"]')).not.toBeNull();
+  db.resultState="unknown";await act(async()=>{for(const refresh of db.refresh)refresh();});await flush();
+  expect(host.textContent).toContain("Couldn't confirm this went out — don't resend.");
+  expect(host.textContent).not.toContain("Nothing has been sent");
+  expect(host.querySelector('textarea[aria-label="Original message editor"]')).toBeNull();
+  expect(Array.from(host.querySelectorAll("a")).find(a=>a.textContent==="Return to NEXUS")).toBeTruthy();
+  expect(db.invoke).not.toHaveBeenCalled();
+});
+it("revoking mailbox access withholds a reopened result and its original return without creating another send",async()=>{
+  db.resultState="provider_accepted";await mount();db.allowed=false;
+  await act(async()=>{for(const refresh of db.refresh)refresh();});await flush();
+  expect(host.textContent).not.toContain(row.body_text);expect(host.textContent).not.toContain("Original email · Accepted");
+  expect(Array.from(host.querySelectorAll("a")).find(a=>a.textContent==="Return to NEXUS")).toBeFalsy();
+  expect(db.invoke).not.toHaveBeenCalled();
 });

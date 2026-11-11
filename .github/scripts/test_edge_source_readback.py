@@ -74,6 +74,22 @@ class WorkflowContract(unittest.TestCase):
         for path in ['.github/scripts/edge-source-emit.ts', '.github/scripts/edge-source-emit.lock']:
             self.assertIn('"' + path + '"', workflow.split('workflow_dispatch:', 1)[0])
 
+    def test_native_checkpoint_refresh_requires_a_valid_selected_upload(self):
+        name = 'Refresh Social native publication checkpoint'
+        upload = {'steps.upload.outputs.required': 'true'}
+        self.assertTrue(self.workflow_condition(name, **upload))
+        for changes in [
+                {'steps.affected.outcome': 'failure'},
+                {'steps.affected.outputs.count': '0'},
+                {'steps.upload.outputs.required': 'false'}]:
+            self.assertFalse(self.workflow_condition(name, **{**upload, **changes}))
+        workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
+        refresh = workflow.split('- name: ' + name, 1)[1].split('\n      - name:', 1)[0]
+        self.assertIn("grep -Fxq 'social-publish-command' affected.txt", refresh)
+        self.assertIn("git fetch -q --force origin 'refs/tags/db-live:refs/tags/db-live'", refresh)
+        self.assertLess(workflow.index('- name: Delete retired functions'), workflow.index('- name: ' + name))
+        self.assertLess(workflow.index('- name: ' + name), workflow.index('- name: Deploy affected functions'))
+
     def test_no_false_live_tag_after_an_unverified_upload(self):
         workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
         marker = '- name: Verify deployed source'
@@ -1797,6 +1813,85 @@ class PreselectedDeployFixtures(unittest.TestCase):
                           side_effect=edge_deploy.readback.ReadbackError('withdrawn')):
             self.assertEqual(self.run_deploy()['reason'], 'source_validation_refused')
         self.assertEqual(self.calls, [])
+
+
+class SocialPublicationDeployFixtures(unittest.TestCase):
+    """The actual uploader cannot outrun native private-receipt protection."""
+
+    def setUp(self):
+        self.fixture = ReleaseFixtures('test_frontend_runtime_import_is_rejected_before_provider_io')
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+        self.before_binding = self.fixture.commit
+        binding = 'supabase/migrations/20271133000021_exp07_account_scoped_publication.sql'
+        self.privacy = 'supabase/migrations/20271133000022_exp07_publication_receipt_privacy.sql'
+        self.fixture.files[binding] = (ROOT / binding).read_text(encoding='utf-8')
+        self.fixture.recommit()
+        self.binding_only = self.fixture.commit
+        self.fixture.files[self.privacy] = (ROOT / self.privacy).read_text(encoding='utf-8')
+        self.fixture.files['supabase/functions/social-publish-command/index.ts'] = (
+            'export const publication = "protected fixture";\n')
+        self.fixture.recommit()
+        self.target = self.fixture.commit
+        self.calls = []
+        self.withdraw_after_api = False
+
+    def runner(self, args, directory, timeout):
+        self.assertEqual(directory, self.fixture.repo)
+        self.assertGreater(timeout, 0)
+        self.calls.append(args)
+        if args[0] == 'docker':
+            self.assertEqual(args, ['docker', 'info', '--format', '{{.ServerVersion}}'])
+            return subprocess.CompletedProcess(args, 0, 'fixture-version', '')
+        self.assertEqual(args[:-1], [
+            'supabase', 'functions', 'deploy', 'social-publish-command',
+            '--project-ref', 'test-project', '--workdir', str(self.fixture.repo)])
+        if self.withdraw_after_api and args[-1] == '--use-api':
+            self.fixture.git('tag', '-f', 'db-live', self.binding_only)
+            return subprocess.CompletedProcess(args, 1, '', 'unexpected deploy status 413: ' +
+                                               json.dumps({'message': edge_deploy.SIZE_MESSAGE}))
+        return subprocess.CompletedProcess(args, 0, '', '')
+
+    def deploy(self):
+        return edge_deploy.deploy(self.fixture.repo, self.target,
+                                  'social-publish-command', runner=self.runner)
+
+    def test_only_persisted_private_receipt_migration_admits_upload(self):
+        for stage, commit, admitted in [
+                ('before binding', self.before_binding, False),
+                ('binding without privacy', self.binding_only, False),
+                ('privacy persisted', self.target, True)]:
+            with self.subTest(stage=stage):
+                self.fixture.git('tag', '-f', 'db-live', commit)
+                self.calls.clear()
+                result = self.deploy()
+                self.assertEqual(result['ok'], admitted)
+                self.assertFalse(result['source_verified'])
+                if admitted:
+                    self.assertEqual(len(self.calls), 1)
+                    self.assertEqual(self.calls[0][-1], '--use-api')
+                else:
+                    self.assertEqual(result['reason'], 'source_validation_refused')
+                    self.assertEqual(self.calls, [])
+
+    def test_missing_native_checkpoint_refuses_before_upload(self):
+        self.assertEqual(self.deploy()['reason'], 'source_validation_refused')
+        self.assertEqual(self.calls, [])
+
+    def test_different_native_privacy_bytes_refuse_before_upload(self):
+        self.fixture.files[self.privacy] += '\n-- different native contract\n'
+        self.fixture.recommit()
+        self.fixture.git('tag', '-f', 'db-live', self.fixture.commit)
+        self.fixture.git('checkout', '-q', self.target)
+        self.assertEqual(self.deploy()['reason'], 'source_validation_refused')
+        self.assertEqual(self.calls, [])
+
+    def test_native_prerequisite_is_rechecked_before_local_recovery(self):
+        self.fixture.git('tag', '-f', 'db-live', self.target)
+        self.withdraw_after_api = True
+        self.assertEqual(self.deploy()['reason'], 'source_changed_no_retry')
+        self.assertEqual(len(self.calls), 1)
+        self.assertEqual(self.calls[0][-1], '--use-api')
 
 
 if __name__ == '__main__':

@@ -1,8 +1,53 @@
 import { confirmFingerprint } from "../confirm-fingerprint.ts";
+import { defineCapability, objectInputSchema, ownerGrantablePermission } from "../capability-kit/mod.ts";
+import { SOCIAL_POST_PLATFORMS } from "./mod.ts";
 import {
   decideGovernedExecution,
   type GovernedDecision,
 } from "../paige-spine/governedExecution.ts";
+
+// Declares the existing first-party publishing door, not a new Chat tool or
+// executor. The constructor checks the canonical risk before this adapter loads.
+// The door retains its original role/connection checks and stored-approval CAS.
+export const SOCIAL_PUBLICATION_CAPABILITY = defineCapability({
+  identity: {
+    id: "social.post_publish", version: 1, domain: "social", owner: "solo-campaigns",
+    humanSurface: "/solo/:account/growth/content",
+    description: "Publish one approved caption from a saved content piece to one freshly verified Social destination.",
+  },
+  input: objectInputSchema({
+    description: "The original publishing door's saved piece, channel and caption; authority is resolved by the server.",
+    properties: {
+      content_id: { type: "string", format: "uuid" },
+      platform: { type: "string", enum: [...SOCIAL_POST_PLATFORMS] },
+      caption: { type: "string", maxLength: 2200 },
+    },
+    required: ["content_id", "platform"],
+  }),
+  effect: "external_effect",
+  governance: {
+    actionRiskKey: "social_post_publish", risk: "high", approval: "confirm",
+    requiredPermission: ownerGrantablePermission("social.post_publish.execute"),
+  },
+  tenantScope: {
+    source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user",
+    revalidateAt: ["before_availability", "before_execution", "before_receipt"],
+  },
+  availability: { resolver: "paige-capability-status", states: ["live", "needs_approval", "needs_setup", "unavailable"] },
+  // This names the PAIGE-owned command. Its existing adapter owns Zernio access;
+  // it does not claim an MCP connection or introduce another provider resolver.
+  providerBinding: { kind: "internal", operation: "edge.social-publish-command/publish", connectionResolver: null },
+  idempotency: {
+    mode: "required",
+    key: "The original tenant-scoped approval CAS and content_publication_bind attempt; one approved saved call, consumed once.",
+    readback: "Original content_publications receipt and provider post readback; an uncertain attempt is reconciled without another send.",
+    replay: "reconcile_then_return",
+  },
+  receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});
+// Non-read declarations are constructor-checked to carry a non-null policy key.
+const SOCIAL_PUBLICATION_ACTION_RISK_KEY = SOCIAL_PUBLICATION_CAPABILITY.governance.actionRiskKey as string;
 
 type Query = {
   select(...args: unknown[]): Query;
@@ -49,14 +94,24 @@ export async function governSocialMutation(input: {
   summary: string;
   approvedFingerprint?: string | null;
 }): Promise<SocialGovernanceResult> {
+  // The proposal identity stays namespaced. The shared decision API requires the
+  // canonical action-risk key, as Capability Kit does. This server-owned mapping
+  // grants no claim: the original stored-identity CAS below must still succeed.
+  const actionRiskKey = input.capability === "social.post_publish"
+    ? SOCIAL_PUBLICATION_ACTION_RISK_KEY : input.capability;
   const requestNonce = crypto.randomUUID();
   let lane = "unresolved";
   try {
-    const { data, error } = await input.callerDb.rpc("resolve_tool_autonomy", {
-      _tenant_id: input.tenantId,
-      _tool_key: input.capability,
-    });
-    if (!error && typeof data === "string" && ["auto", "confirm", "off"].includes(data)) lane = data;
+    // The visible canonical control and any existing proposal-identity control
+    // are both brakes. A rename must never bypass an operator's stored off mode.
+    const keys = actionRiskKey === input.capability ? [input.capability] : [input.capability, actionRiskKey];
+    const resolved = await Promise.all(keys.map(_tool_key => input.callerDb.rpc("resolve_tool_autonomy", {
+      _tenant_id: input.tenantId, _tool_key,
+    })));
+    if (resolved.every(({ data, error }) => !error && typeof data === "string" && ["auto", "confirm", "off"].includes(data))) {
+      lane = resolved.some(({ data }) => data === "off") ? "off"
+        : resolved.some(({ data }) => data === "confirm") ? "confirm" : "auto";
+    }
   } catch {
     // The shared seam refuses an unrecognized lane. Never guess a permissive one.
   }
@@ -105,14 +160,14 @@ export async function governSocialMutation(input: {
       access: { allowed: input.accessAllowed, reason: "A workspace owner or admin is required." },
     },
     capability: {
-      id: input.capability,
+      id: actionRiskKey,
       effect: "mutate",
       outcomeChannel: "record_capability_run",
       availability: input.availability,
     },
     approval: {
       autonomyLane: lane,
-      ...(claimedArgs !== undefined ? { claimedArgs, claimedFor: input.capability } : {}),
+      ...(claimedArgs !== undefined ? { claimedArgs, claimedFor: actionRiskKey } : {}),
     },
     requestArgs: input.requestArgs,
   });

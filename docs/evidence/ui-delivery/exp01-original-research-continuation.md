@@ -81,3 +81,50 @@ Proof status: existing Document/Research history baseline 44 tests PASS. New sou
 tests, independent review, exact-head CI, release and authenticated interruption /
 same-job recovery / no-second-provider-or-charge proof are PENDING. Browser and
 prototype proof are UNVERIFIED. No live Research request has been made.
+
+## Same-outcome start / explicit checkpoint recovery increment
+
+Original producer receiving ACK ANT-6/50e83568 and exact metadata ABI caf02f09
+are incorporated, with actual E1 sequence ACK a6444bf0 and causal snapshot detail
+69dda972. Native26 remains EXP05-owned and unreleased: original begin must
+persist/read back the original accepted WAIT_WORK and claim the same Work attempt
+in one transaction before any provider call. E1 never pre-settles or overwrites
+that accepted terminal. Applied20 and published23–25 are unchanged by this consumer.
+
+The original dispatch now prepares the frozen v1 payload using current
+server-resolved actor/workspace and the canonical pre-acceptance tracker snapshot.
+Research is selected alone in its batch so prior batch effects are already observed;
+native26 projects the newly accepted tool onto those actual counts. Unsupported
+filtered legacy requests retain their constraints and make no durable Work claim.
+
+The existing Chat endpoint accepts an explicit, closed Research recovery body:
+original threadId/requestIntentId, one fixed user control message, interactive.kind
+message and researchResume.workId. It cannot mix a question, attachments, approval,
+customer audience or status transport. The original issued accepted turn is read
+under current caller permissions before invoking the existing worker with ONLY
+the same original IDs and resume_only:true. Its native resume cannot start an
+unstarted job or call a provider. UNKNOWN returns to original status inspection.
+
+Status stays read-only. After observing a pending job, the user can explicitly
+choose Recover original research. It inspects again before the mutation, performs
+at most one recovery request, then inspects the same original report/receipt.
+Scope retirement, changed actor/workspace and original Retry-After fences apply.
+No provider result body is used as the authoritative receipt.
+
+Engineering evidence at preparation: 18 isolated Deno contract tests PASS; 103
+focused UI/reducer/actual-dispatch tests PASS. Broader affected Research/Document
+run: 668 PASS, one actual persistence-predicate assertion FAIL after its production
+guard gained Research-pause protection. Updated that assertion to exercise BOTH
+approval and Research duplicate-persist exclusions; the targeted 48 tests PASS.
+Scoped frontend lint and whitespace PASS. Exact successor review/hosted CI,
+actual native26/Edge release/readback and authenticated pre-publication interruption
+and no-second-run-or-charge proof remain PENDING. No live Research run has started.
+
+Independent NON-AUTHOR review of d217b953 found a real MAJOR preparation fault:
+the original create_paige_durable_work predicate requires tenant_id and actor_user_id
+inside authority_context too. No live invocation was attempted. The corrected
+consumer supplies both from its already server-resolved scope. Its actual-dispatch
+test now enforces the original SQL identity predicate; removing those fields from
+the actual dispatch causally reproduces refusal with zero worker calls, while the
+corrected dispatch accepts the same Work. Owning dispatch32 tests PASS. The initial
+review HOLD remains history; successor source review and exact-head checks are owed.

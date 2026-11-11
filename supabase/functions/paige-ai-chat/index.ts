@@ -144,6 +144,8 @@ import { readPipelineMetadataOutcome } from "../_shared/pipeline-metadata-readba
 import { readPipelineNonApplicationOutcome } from "../_shared/pipeline-metadata-observation.ts";
 import { readDurableObservation } from "../_shared/durable-job/observation.ts";
 import { readDurableContinuation } from "../_shared/durable-job/continuation-read.ts";
+import { originalResearchPayload, originalResearchResumeRequest, readAcceptedResearchTurn, researchCallerCurrent, resumeOriginalResearch,
+  type AcceptedResearchTurn, type ResearchCaller, type ResearchWorkBinding } from "../_shared/paige-turn/research-work.ts";
 import type { BudgetDb } from "../_shared/router-budget/mod.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
 import { classifyAction, clampLaneByRisk, mutatingTools, riskReason, unclassifiedWriteReason } from "../_shared/action-risk.ts";
@@ -979,6 +981,8 @@ const messageSchema = z.object({
   // submission uses this as its cross-request identity; a server-generated per-request UUID would
   // recreate INT-180 by dispatching the same document again after a lost response.
   requestIntentId: z.string().uuid().optional(),
+  // Explicit same-job publication recovery. It is never a status hint or a new prompt.
+  researchResume: z.object({ workId: z.string().uuid() }).strict().optional(),
   interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional(), approvalTurnId: z.string().uuid().optional(),
     includeCuraPreparationHistory: z.literal(true).optional(),
     includeSpecialistHistory: z.literal(true).optional(),
@@ -1278,6 +1282,8 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     let interactiveReceiptScope: { thread: string; tenant: string | null; intent: string } | null = null;
+    let originalResearchBinding: ResearchWorkBinding | null = null;
+    let originalResearchAccepted: AcceptedResearchTurn | null = null;
     let customerSourceSnapshot: CustomerSourceSnapshot | null = null;
     let customerProgressSnapshot: CustomerProgressSnapshot | null = null;
     let customerProgressContext: CustomerProgressContext | null = null;
@@ -1295,6 +1301,14 @@ serve(async (req) => {
       if (!interactiveReceiptScope) return await supabaseClient.rpc("paige_chat_turn_append", args);
       const scope = interactiveReceiptScope;
       if (args.p_thread_id !== scope.thread || args.p_role !== "assistant") throw new Error("INTERACTIVE_RECEIPT_SCOPE_MISMATCH");
+      if (originalResearchBinding) {
+        const accepted = await readAcceptedResearchTurn(originalResearchBinding,
+          supabaseClient as unknown as ResearchCaller, () => !req.signal.aborted);
+        if (!accepted) throw new Error("RESEARCH_ACCEPTANCE_UNCONFIRMED");
+        // Native begin already issued this immutable WAIT_WORK. A later FINAL
+        // must not overwrite it or be misrepresented as a second saved turn.
+        return { data: accepted.id, error: null };
+      }
       const customerTerminal = customerTerminalSource(customerSourceSnapshot, args.p_content, args.p_bundle_ref ?? {});
       const progressTerminal = customerProgressTerminalSource(customerProgressSnapshot, customerTerminal.content, args.p_bundle_ref ?? {});
       const sessionsTerminal = customerSessionsTerminalSource(customerSessionsSnapshot, progressTerminal.content, args.p_bundle_ref ?? {});
@@ -1488,6 +1502,10 @@ serve(async (req) => {
       return new Response(JSON.stringify({ code: 'CHAT_CONTROL_HINT_MISMATCH', message_accepted: false }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    if (validatedData.researchResume && (controlHint !== null || !originalResearchResumeRequest(rawData))) {
+      return new Response(JSON.stringify({ code: "RESEARCH_RESUME_NOT_ADMITTED", message_accepted: false }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // The surface narrows the audience; only the native customer frame proves it.
     // It cannot supply a tenant/client identity or inherit a global owner role.
@@ -1641,6 +1659,33 @@ serve(async (req) => {
       if ((thread.audience === "customer_private") !== customerPortal)
         return new Response(JSON.stringify({code:"CHAT_AUDIENCE_MISMATCH",message_accepted:false}),
           {status:403,headers:{...corsHeaders,"Content-Type":"application/json"}});
+      if (validatedData.researchResume) {
+        const raw = rawData as Record<string, unknown>;
+        const allowed = ["threadId", "requestIntentId", "messages", "interactive", "researchResume"];
+        const control = raw.interactive as Record<string, unknown> | undefined;
+        if (!protocolActive || degraded || interactiveRecoveryReadOnly || customerPortal || !thread.tenant_id ||
+          controlHint !== null || Object.keys(raw).some(key => !allowed.includes(key)) ||
+          !control || Object.keys(control).some(key => key !== "kind") || control.kind !== "message" ||
+          validatedData.messages.length !== 1 || validatedData.messages[0].role !== "user" ||
+          validatedData.messages[0].content !== "Resume original research") {
+          return new Response(JSON.stringify({ code: "RESEARCH_RESUME_NOT_ADMITTED", message_accepted: false }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } });
+        }
+        const disposition = await resumeOriginalResearch({ actorId: user.id, tenantId: thread.tenant_id,
+          threadId: validatedData.threadId, intentId: validatedData.requestIntentId,
+          workId: validatedData.researchResume.workId }, {
+          caller: supabaseClient as unknown as ResearchCaller, current: () => !req.signal.aborted,
+          invoke: body => fetch(`${supabaseUrl}/functions/v1/paige-deep-research`, {
+            method: "POST", signal: req.signal,
+            headers: { Authorization: `Bearer ${supabaseServiceKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          }),
+        });
+        return new Response(JSON.stringify({ research_recovery: disposition }), {
+          status: disposition === "inspect_original" ? 200 : 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
+        });
+      }
       // E09 K2 (§9/§67): protocol and audience are already valid. Observed replay/supersedes
       // evidence never incurs a query embedding; native begin remains the sole admission authority.
       // Only an authorized customer of this thread pays for an embedding, and only when
@@ -11791,7 +11836,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // tools (TEAM_HUB_EGRESS_WITHHELD_TOOLS) before dispatch, so text read from Team Hub cannot carry a
       // teammate's private words out of Paige or into the workspace's Knowledge.
       let teamHubContentCarried = false;
-      const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>, stepHooks?: ToolStepHooks) => {
+      const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>, stepHooks?: ToolStepHooks, getTurnRecord?: () => unknown) => {
         // Provider-authored tool names cannot cross the customer audience boundary.
         // Future customer actions must be explicitly admitted by their native domain contract.
         if (customerPortal && !customerPublicLinkCall) return {
@@ -11908,6 +11953,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
       };
       for (const [toolIndex, tc] of toolCalls.entries()) {
+        if (originalResearchAccepted) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
+            refused_before_run: true, not_applied: true, error: "ORIGINAL_RESEARCH_ALREADY_ACCEPTED" }) });
+          continue;
+        }
         try { await interactive?.check(); }
         catch (error) { return { toolResults, executed, scopeInvalidated: false, interactiveError: error }; }
         if (!tc || !tc.function?.name) continue;
@@ -13865,6 +13915,35 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (typeof args.question !== "string" || args.question.trim().length < 3 || !await researchScopeHolds()) {
               throw new Error("RESEARCH_REQUEST_NOT_ADMITTED");
             }
+            const durableResearch = interactiveReceiptScope && interactiveReceiptScope.tenant === tenantId &&
+              !customerPortal && !studioSessionId && sourcePolicy.max_sources === undefined && sourcePolicy.allowed_domains === undefined;
+            if (durableResearch) {
+              const payload = originalResearchPayload(args);
+              const turnRecord = getTurnRecord?.();
+              const identity = { actorId: user.id, tenantId: tenantId! };
+              if (!payload || !turnRecord || toolCalls.length !== 1 ||
+                !await researchCallerCurrent(identity, supabaseClient as unknown as ResearchCaller, () => !req.signal.aborted)) {
+                throw new Error("RESEARCH_REQUEST_NOT_ADMITTED");
+              }
+              const prepared = await supabase.rpc("prepare_paige_research_work", {
+                _tenant_id: tenantId, _initiating_user_id: user.id,
+                _intent_id: interactiveReceiptScope!.intent, _thread_id: interactiveReceiptScope!.thread,
+                _request_payload: payload,
+                _authority_context: { authority_source: "server_resolved", approval_reusable: false,
+                  tenant_id: tenantId, actor_user_id: user.id,
+                  chat_turn_record: turnRecord,
+                  budget_context: { source: "existing_chat_admission", reservation: false } },
+                _scope_epoch: `${interactiveReceiptScope!.thread}:${interactiveReceiptScope!.intent}`,
+              });
+              const accepted = Array.isArray(prepared.data) && prepared.data.length === 1 ? prepared.data[0] : null;
+              if (prepared.error || !accepted || !researchUuid(accepted.work_id) || accepted.work_status !== "blocked" ||
+                accepted.blocked_reason !== "research_execution_not_enabled" ||
+                !await researchCallerCurrent(identity, supabaseClient as unknown as ResearchCaller, () => !req.signal.aborted)) {
+                throw new Error("RESEARCH_PREPARATION_UNCONFIRMED");
+              }
+              originalResearchBinding = { ...identity, threadId: interactiveReceiptScope!.thread,
+                intentId: interactiveReceiptScope!.intent, workId: accepted.work_id };
+            }
             void logAnalyticsEvent(supabase, user.id, "deep_research_triggered", "paige", {
               question: typeof args.question === "string" ? args.question.slice(0, 200) : null,
               domain: typeof args.domain === "string" ? args.domain.slice(0, 40) : null,
@@ -13872,6 +13951,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             researchStarted = true;
             const drResp = await fetch(`${supabaseUrl}/functions/v1/paige-deep-research`, {
               method: "POST",
+              ...(originalResearchBinding ? { signal: req.signal } : {}),
               headers: { Authorization: `Bearer ${supabaseServiceKey}`, "Content-Type": "application/json" },
               body: JSON.stringify({
                 question: args.question,
@@ -13882,8 +13962,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 expected_tenant_id: tenantId,
                 caller: "chat",
                 persist: true,
+                ...(originalResearchBinding ? { durable_work: { work_id: originalResearchBinding.workId,
+                  thread_id: originalResearchBinding.threadId, intent_id: originalResearchBinding.intentId } } : {}),
               }),
             });
+            if (originalResearchBinding) {
+              originalResearchAccepted = await readAcceptedResearchTurn(originalResearchBinding,
+                supabaseClient as unknown as ResearchCaller, () => !req.signal.aborted);
+              if (!originalResearchAccepted) throw new Error("RESEARCH_ACCEPTANCE_UNCONFIRMED");
+              if (drResp.status === 202) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: true,
+                  accepted: true, work_id: originalResearchBinding.workId, note: originalResearchAccepted.content }) });
+                continue;
+              }
+            }
             if (!drResp.ok) throw new Error("RESEARCH_RESPONSE_UNCONFIRMED");
             const dr = await drResp.json();
             if (!dr || typeof dr !== "object" || Array.isArray(dr) || !researchUuid(dr.run_id) ||
@@ -13913,7 +14005,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   typeof a === "string" && typeof b === "string" && Number.isFinite(Date.parse(a)) && Date.parse(a) === Date.parse(b);
                 const sourceFields = ["index", "url", "title", "snippet", "reliability_score", "tier", "reliability", "excluded"];
                 drSaved = !drReadError && !!drReadback && typeof drReadback === "object" && !Array.isArray(drReadback) &&
-                  drReadback.id === drRunId && drReadback.question === args.question &&
+                  drReadback.id === drRunId && drReadback.question === (originalResearchBinding ? args.question.trim() : args.question) &&
                   drReadback.domain === (args.domain ?? "general") && drReadback.caller === "chat" &&
                   drReadback.configured === coverage.configured && drReadback.stop_reason === coverage.stop_reason &&
                   canonicalResearchJson(drReadback.coverage) === canonicalResearchJson(coverage) &&
@@ -13978,6 +14070,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               role: "tool",
               content: JSON.stringify({
                 success: coverage.configured === true && coverage.stop_reason !== "error",
+                ...(originalResearchAccepted && originalResearchBinding
+                  ? { accepted: true, work_id: originalResearchBinding.workId } : {}),
                 configured: coverage.configured !== false,
                 run_id: dr?.run_id ?? null,
                 ...(drSaved ? { research_run_id: drRunId } : {}),
@@ -14012,6 +14106,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               tool_call_id: tc.id,
               role: "tool",
               content: JSON.stringify({ success: false, saved: false,
+                ...(originalResearchAccepted && originalResearchBinding && !researchScopeInvalidated
+                  ? { accepted: true, work_id: originalResearchBinding.workId } : {}),
                 ...(researchStarted ? { outcome_unknown: true } : { not_applied: true }),
               ...(!researchScopeInvalidated && pendingResearchRunId ? { run_id: pendingResearchRunId } : {}),
                 error: researchStarted ? "Research could not be confirmed. Inspect the workspace research library before repeating this request."
@@ -19869,6 +19965,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // A native proposal already supplies the exact approval. Do not spend another
       // model round before recording that pause, or publish a card before its receipt.
       let durableApprovalPause = false;
+      let durableResearchPause = false;
       let approvalPauseRecorded = false;
       const crmResultTrace: Array<Record<string, unknown>> = [];
       // E4-S3 — the records this turn's available reads drew on, as REFERENCES (destination, a client's
@@ -20169,7 +20266,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // most likely to take.
       const heldContent: Uint8Array[] = [];
       const emitContent = (controller: ReadableStreamDefaultController, chunk: Uint8Array) => {
-        if (turnCarriesProtectedContent() || durableApprovalPause) heldContent.push(chunk);
+        if (turnCarriesProtectedContent() || durableApprovalPause || durableResearchPause) heldContent.push(chunk);
         else controller.enqueue(chunk);
       };
       const releaseContent = (controller: ReadableStreamDefaultController) => {
@@ -20206,7 +20303,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         try { controller.enqueue(enc.encode(turnFrameLine(turnTracker.terminalFrame()))); } catch { /* client hung up */ }
       };
       const emitTurnTerminalBeforeAnswer = (controller: ReadableStreamDefaultController) => {
-        if (!turnCarriesProtectedContent() && !durableApprovalPause) emitTurnTerminal(controller);
+        if (!turnCarriesProtectedContent() && !durableApprovalPause && !durableResearchPause) emitTurnTerminal(controller);
       };
       // The turn record rides bundle_ref at each persist call site, never inside
       // `assistantTurnMetadata` (its output is pinned by n5; #1701 extended it). The persist gate is
@@ -20512,7 +20609,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // tools never reach dispatch; each gets its one plain refusal instead (contract section 5).
             const roundCalls = askAlongside ? toolCalls.filter((tc: any) => tc !== chooseTc) : toolCalls;
             const teamHubWithheld = teamHubContentCarried ? roundCalls.filter((tc: any) => TEAM_HUB_EGRESS_WITHHELD_TOOLS.has(String(tc?.function?.name ?? ""))) : [];
-            const { toolResults, executed, scopeInvalidated, interactiveError } = await executeToolCalls(roundCalls.filter((tc: any) => !teamHubWithheld.includes(tc)), queuedApprovals, toolStepHooks);
+            const { toolResults, executed, scopeInvalidated, interactiveError } = await executeToolCalls(roundCalls.filter((tc: any) => !teamHubWithheld.includes(tc)), queuedApprovals, toolStepHooks, () => turnTracker.record());
             for (const tc of teamHubWithheld) {
               executed.push(tc);
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(TEAM_HUB_EGRESS_REFUSAL) });
@@ -20653,6 +20750,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             convo.push(...toolResults);
             // Observe/audit/persist prior tool truth before terminating a partial batch.
             if (interactiveError) throw interactiveError;
+            if (interactive && originalResearchAccepted) {
+              // Native begin already saved this exact accepted terminal. End this
+              // objective here, without another model/tool round or another receipt.
+              durableResearchPause = true;
+              forcedTermination = true;
+              finalAssistantText = originalResearchAccepted.content;
+              finalChunks = [enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
+                enc.encode("data: [DONE]\n\n")];
+              break;
+            }
             if (interactive && confirmTrace.length > 0 && turnTracker.state === "WAIT_APPROVAL"
                 && !requestExecutionState.needsReview && !interactiveEffects.some((effect) => effect.outcome === "outcome_unknown")) {
               // The whole dispatched batch has finished and its effects are accounted
@@ -21150,7 +21257,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the first delta.content, so this is a lightweight explicit confirmation, not a dependency.
           // A native pause has a fixed notice, not another model writing phase.
           // Avoid a closed reader aborting its still-needed canonical settlement.
-          if (!durableApprovalPause) controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_phase: "writing" })}\n\n`));
+          if (!durableApprovalPause && !durableResearchPause) controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_phase: "writing" })}\n\n`));
           if (finalChunks) {
             await interactive?.check();
             for (const c of finalChunks) emitContent(controller, c);
@@ -21374,7 +21481,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
             return;
           }
-          if (durableApprovalPause) {
+          if (durableApprovalPause || durableResearchPause) {
             // Reuse the server-issued settlement and its closed effect/card metadata.
             // Receipt failure leaves authority held and no actionable card on the wire.
             // Release follows that receipt before publishing, so a disconnected reader
@@ -21409,7 +21516,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the asymmetry that used to justify persisting an already-streamed reply on a lapsed
           // scope: the transcript and the wire now always agree, because neither happens unless
           // the check holds.
-          if (!durableApprovalPause && payloadThreadId && finalAssistantText.trim()) {
+          if (!durableApprovalPause && !durableResearchPause && payloadThreadId && finalAssistantText.trim()) {
             try {
               const p = persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()));
               // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime

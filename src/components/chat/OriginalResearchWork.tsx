@@ -16,7 +16,7 @@ const labels = {
 type Result = Exclude<ResearchWorkRead, { state: "verified" }>
   | { state: "verified"; receiptRef: string; report: PaigeResearchResult };
 
-/** Read-only recovery. Mounting or checking never dispatches or publishes Research. */
+/** Status remains read-only. Publication recovery requires a separate explicit action. */
 export function OriginalResearchWork({ reference, actorId, tenantId, current }: {
   reference: OriginalResearchReference;
   actorId: string;
@@ -28,7 +28,7 @@ export function OriginalResearchWork({ reference, actorId, tenantId, current }: 
   const retryAt = useRef(0);
   useLayoutEffect(() => () => { inFlight.current?.abort(); inFlight.current = null; }, []);
 
-  async function check() {
+  async function check(resume = false) {
     if (!current() || inFlight.current) return;
     if (Date.now() < retryAt.current) { setResult({ state: "unknown" }); return; }
     const controller = new AbortController();
@@ -58,10 +58,35 @@ export function OriginalResearchWork({ reference, actorId, tenantId, current }: 
         if (context?.status === 429) retryAt.current = Date.now() + chatControlRetryDelay(context.headers.get("Retry-After"));
         return response.error ? unknown : readOriginalResearchWork(response.data, reference);
       };
-      const first = await status();
+      let first = await status();
       if (!stillCurrent()) return;
       if (!await authority()) { if (stillCurrent()) setResult(unknown); return; }
       if (!stillCurrent()) return;
+      if (resume && first.state === "pending") {
+        // Fresh same-job inspection precedes the explicit mutation. This body
+        // cannot carry a replacement question, approval or fresh request intent.
+        try {
+          const response = await supabase.functions.invoke("paige-ai-chat", {
+            signal: controller.signal,
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            body: { threadId: reference.threadId, requestIntentId: reference.intentId,
+              messages: [{ role: "user", content: "Resume original research" }],
+              interactive: { kind: "message" }, researchResume: { workId: reference.workId } },
+          });
+          if (!stillCurrent()) return;
+          const context = (response.error as { context?: Response } | null)?.context;
+          if (context?.status === 429) {
+            retryAt.current = Date.now() + chatControlRetryDelay(context.headers.get("Retry-After"));
+            setResult(unknown); return;
+          }
+        } catch { /* UNKNOWN: inspect the same job once below, never repeat this mutation. */ }
+        if (!await authority()) { if (stillCurrent()) setResult(unknown); return; }
+        if (!stillCurrent()) return;
+        first = await status();
+        if (!stillCurrent()) return;
+        if (!await authority()) { if (stillCurrent()) setResult(unknown); return; }
+        if (!stillCurrent()) return;
+      }
       if (first.state !== "verified") { setResult(first); return; }
       const read = await supabase.rpc("get_workspace_research_run", { _run_id: first.resultRef })
         .abortSignal(controller.signal);
@@ -87,6 +112,12 @@ export function OriginalResearchWork({ reference, actorId, tenantId, current }: 
       onClick={() => void check()}>
       {result === "checking" ? "Checking research status…" : "Check original research status"}
     </Button>
+    {result && result !== "checking" && result.state === "pending" &&
+      <div className="mt-2 space-y-2">
+        <p className="text-xs text-muted-foreground">If research was interrupted, recover this job from its saved checkpoint. This does not start new research.</p>
+        <Button type="button" variant="outline" size="sm" className="min-h-11 max-w-full whitespace-normal text-left"
+          onClick={() => void check(true)}>Recover original research</Button>
+      </div>}
     {result && result !== "checking" && (result.state === "verified" ? <div className="mt-2 space-y-2">
       <p role="status" className="break-words text-sm font-medium">Saved report and completion receipt verified at this check.</p>
       <p className="break-all text-xs text-muted-foreground">Original receipt {result.receiptRef}</p>

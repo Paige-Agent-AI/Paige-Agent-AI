@@ -132,4 +132,22 @@ describe("original Research status control", () => {
     expect(host.textContent).not.toContain("Report ");
     expect(invoke).toHaveBeenCalledTimes(1);
   });
+
+  it("recovers the original pending job explicitly, then inspects the same report and receipt without a question", async () => {
+    const pending = { error: null, data: { durable_work: { ...response.data.durable_work,
+      state: "claimed", recoveryState: "observed", continuation: null } } };
+    invoke.mockResolvedValueOnce(pending).mockResolvedValueOnce(pending)
+      .mockResolvedValueOnce({ data: null, error: new Error("resume response lost") }).mockResolvedValue(response);
+    await open(); await click();
+    const recover = Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Recover original research")!;
+    await act(async () => { recover.click(); recover.click(); });
+    const resumes = invoke.mock.calls.filter(([, args]) => args.body.researchResume);
+    expect(resumes).toHaveLength(1);
+    expect(resumes[0][1].body).toEqual({ threadId: reference.threadId, requestIntentId: reference.intentId,
+      messages: [{ role: "user", content: "Resume original research" }], interactive: { kind: "message" },
+      researchResume: { workId: reference.workId } });
+    expect(host.textContent).toContain(receiptRef);
+    expect(host.textContent).toContain(reference.workId);
+    expect(invoke.mock.calls.filter(([, args]) => args.body.interactive.kind === "status")).toHaveLength(4);
+  });
 });

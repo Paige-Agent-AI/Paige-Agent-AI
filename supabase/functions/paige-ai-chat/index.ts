@@ -1281,8 +1281,7 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    let interactiveReceiptScope: { thread: string; tenant: string | null; intent: string } | null = null;
-    let originalResearchBinding: ResearchWorkBinding | null = null;
+    let interactiveReceiptScope: { thread: string; tenant: string | null; intent: string; researchWork?: ResearchWorkBinding } | null = null;
     let originalResearchAccepted: AcceptedResearchTurn | null = null;
     let readOriginalResearchTurnRecord: (() => unknown) | null = null;
     let customerSourceSnapshot: CustomerSourceSnapshot | null = null;
@@ -1302,8 +1301,8 @@ serve(async (req) => {
       if (!interactiveReceiptScope) return await supabaseClient.rpc("paige_chat_turn_append", args);
       const scope = interactiveReceiptScope;
       if (args.p_thread_id !== scope.thread || args.p_role !== "assistant") throw new Error("INTERACTIVE_RECEIPT_SCOPE_MISMATCH");
-      if (originalResearchBinding) {
-        const accepted = await readAcceptedResearchTurn(originalResearchBinding,
+      if (scope.researchWork) {
+        const accepted = await readAcceptedResearchTurn(scope.researchWork,
           supabaseClient as unknown as ResearchCaller, () => !req.signal.aborted);
         if (!accepted) throw new Error("RESEARCH_ACCEPTANCE_UNCONFIRMED");
         // Native begin already issued this immutable WAIT_WORK. A later FINAL
@@ -13899,6 +13898,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           let researchStarted = false;
           let pendingResearchRunId: string | null = null;
           let researchScopeInvalidated = false;
+          let originalResearchBinding: ResearchWorkBinding | null = null;
           try {
             const args = JSON.parse(tc.function.arguments || "{}");
             const sourcePolicy = parseResearchSourcePolicy(args);
@@ -13944,6 +13944,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
               originalResearchBinding = { ...identity, threadId: interactiveReceiptScope!.thread,
                 intentId: interactiveReceiptScope!.intent, workId: accepted.work_id };
+              interactiveReceiptScope!.researchWork = originalResearchBinding;
             }
             void logAnalyticsEvent(supabase, user.id, "deep_research_triggered", "paige", {
               question: typeof args.question === "string" ? args.question.slice(0, 200) : null,
@@ -20267,7 +20268,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // most likely to take.
       const heldContent: Uint8Array[] = [];
       const emitContent = (controller: ReadableStreamDefaultController, chunk: Uint8Array) => {
-        if (turnCarriesProtectedContent() || durableApprovalPause || durableResearchPause) heldContent.push(chunk);
+        if (turnCarriesProtectedContent() || durableApprovalPause || (interactive && durableResearchPause)) heldContent.push(chunk);
         else controller.enqueue(chunk);
       };
       const releaseContent = (controller: ReadableStreamDefaultController) => {
@@ -20304,7 +20305,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         try { controller.enqueue(enc.encode(turnFrameLine(turnTracker.terminalFrame()))); } catch { /* client hung up */ }
       };
       const emitTurnTerminalBeforeAnswer = (controller: ReadableStreamDefaultController) => {
-        if (!turnCarriesProtectedContent() && !durableApprovalPause && !durableResearchPause) emitTurnTerminal(controller);
+        if (!turnCarriesProtectedContent() && !durableApprovalPause && !(interactive && durableResearchPause)) emitTurnTerminal(controller);
       };
       // The turn record rides bundle_ref at each persist call site, never inside
       // `assistantTurnMetadata` (its output is pinned by n5; #1701 extended it). The persist gate is
@@ -21259,7 +21260,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the first delta.content, so this is a lightweight explicit confirmation, not a dependency.
           // A native pause has a fixed notice, not another model writing phase.
           // Avoid a closed reader aborting its still-needed canonical settlement.
-          if (!durableApprovalPause && !durableResearchPause) controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_phase: "writing" })}\n\n`));
+          if (!durableApprovalPause && !(interactive && durableResearchPause)) controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_phase: "writing" })}\n\n`));
           if (finalChunks) {
             await interactive?.check();
             for (const c of finalChunks) emitContent(controller, c);
@@ -21483,7 +21484,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
             return;
           }
-          if (durableApprovalPause || durableResearchPause) {
+          if (durableApprovalPause || (interactive && durableResearchPause)) {
             // Reuse the server-issued settlement and its closed effect/card metadata.
             // Receipt failure leaves authority held and no actionable card on the wire.
             // Release follows that receipt before publishing, so a disconnected reader
@@ -21518,7 +21519,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the asymmetry that used to justify persisting an already-streamed reply on a lapsed
           // scope: the transcript and the wire now always agree, because neither happens unless
           // the check holds.
-          if (!durableApprovalPause && !durableResearchPause && payloadThreadId && finalAssistantText.trim()) {
+          if (!durableApprovalPause && !(interactive && durableResearchPause) && payloadThreadId && finalAssistantText.trim()) {
             try {
               const p = persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()));
               // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime

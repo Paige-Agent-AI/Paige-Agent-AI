@@ -23,9 +23,9 @@ const code = ts.transpileModule(`async function dispatch(tc, supabaseClient, per
   originalResearchPayload, readAcceptedResearchTurn, researchCallerCurrent, scope = null, turnRecord = null, mixedBatch = false) {
     const interactiveReceiptScope = scope, customerPortal = false, studioSessionId = null;
     const req = { signal: new AbortController().signal }, toolCalls = [tc, ...(mixedBatch ? [{id:'other-call',function:{name:'plan_create'}}] : [])], readOriginalResearchTurnRecord = () => turnRecord;
-    let originalResearchBinding = null, originalResearchAccepted = null;
+    let originalResearchAccepted = null;
     for (const selected of [tc]) ${branch.getText(ast)}
-    return { originalResearchBinding, originalResearchAccepted };
+    return { originalResearchBinding: interactiveReceiptScope?.researchWork ?? null, originalResearchAccepted };
   }`,
 { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const dispatch = new Function(`${code}; return dispatch;`)();
@@ -110,8 +110,8 @@ describe('Research Chat native invocation and durable library proof',()=>{
     const caller = { auth:{getUser:async()=>({data:{user:{id:actor}},error:null})},
       rpc:async()=>({data:tenant,error:null}),from:()=>({select:()=>query}) };
     const js = ts.transpileModule(`function make(readAcceptedResearchTurn,supabaseClient,supabase,user,req) {
-      const interactiveReceiptScope={thread:'${id(5)}',tenant:'${tenant}',intent:'${id(4)}'};
-      const originalResearchBinding={actorId:'${actor}',tenantId:'${tenant}',threadId:'${id(5)}',intentId:'${id(4)}',workId:'${run}'};
+      const interactiveReceiptScope={thread:'${id(5)}',tenant:'${tenant}',intent:'${id(4)}',
+        researchWork:{actorId:'${actor}',tenantId:'${tenant}',threadId:'${id(5)}',intentId:'${id(4)}',workId:'${run}'}};
       return ${append!.getText(ast)};
     }`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;
     const make = new Function(`${js};return make;`)();

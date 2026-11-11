@@ -40,6 +40,8 @@ WHERE oid IN (
 \ir ../migrations/20271133000021_exp07_account_scoped_publication.sql
 \ir ../migrations/20271133000022_exp07_publication_receipt_privacy.sql
 \ir ../migrations/20271133000022_exp07_publication_receipt_privacy.sql
+\ir ../migrations/20271133000025_exp07_threads_presence.sql
+\ir ../migrations/20271133000025_exp07_threads_presence.sql
 
 DO $$
 BEGIN
@@ -58,6 +60,7 @@ INSERT INTO public.paige_social_connections
 VALUES
   ('00000000-0000-4000-8000-00000000d0a1', 'zernio', 'ps_' || repeat('e', 40), 'discord', 'Alpha Discord', 'connected', now()),
   ('00000000-0000-4000-8000-00000000d0a1', 'zernio', 'ps_' || repeat('d', 40), 'telegram', 'Alpha Telegram', 'disconnected', NULL),
+  ('00000000-0000-4000-8000-00000000d0a1', 'zernio', 'ps_' || repeat('b', 40), 'threads', 'Alpha Threads', 'connected', now()),
   ('00000000-0000-4000-8000-00000000d0b1', 'zernio', 'ps_' || repeat('c', 40), 'telegram', 'Foreign Telegram', 'connected', now());
 
 INSERT INTO public.marketing_content VALUES
@@ -74,6 +77,18 @@ DECLARE
   telegram public.content_publications;
 BEGIN
   IF pg_temp.run(owner_id, 'authenticated', 'authenticated',
+    $q$SELECT to_jsonb(connection_status) FROM public.get_social_presence_evidence(NULL) WHERE network = 'threads'$q$)
+    IS DISTINCT FROM 'ok:"connected"' THEN RAISE EXCEPTION 'Connected Threads is missing from the native picker projection'; END IF;
+  IF pg_temp.run(owner_id, 'authenticated', 'authenticated',
+    $q$SELECT to_jsonb(connection_label) FROM public.get_social_presence_evidence('00000000-0000-4000-8000-00000000d0b1') WHERE network = 'threads'$q$)
+    IS DISTINCT FROM 'ok:"Alpha Threads"' THEN RAISE EXCEPTION 'The Threads projection trusted a foreign tenant argument'; END IF;
+  IF pg_temp.run('00000000-0000-4000-8000-00000000e002', 'authenticated', 'authenticated',
+    $q$SELECT to_jsonb(status) FROM public.get_social_presence_evidence(NULL) WHERE network = 'threads'$q$)
+    IS DISTINCT FROM 'ok:"unavailable"' THEN RAISE EXCEPTION 'The client-role member learned Threads readiness'; END IF;
+  IF pg_temp.run(owner_id, 'authenticated', 'authenticated',
+    $q$SELECT public.record_social_handles('00000000-0000-4000-8000-00000000d0b1','{"threads":"@foreign"}')$q$)
+    NOT LIKE 'err:42501:%' THEN RAISE EXCEPTION 'Cross-workspace Threads handles write was admitted'; END IF;
+  IF pg_temp.run(owner_id, 'authenticated', 'authenticated',
     $q$SELECT to_jsonb(connection_status) FROM public.get_social_presence_evidence(NULL) WHERE network = 'discord'$q$)
     <> 'ok:"connected"' THEN RAISE EXCEPTION 'Discord did not survive the native read'; END IF;
   IF pg_temp.run(owner_id, 'authenticated', 'authenticated',
@@ -85,7 +100,13 @@ BEGIN
     NOT LIKE 'err:42501:%' THEN RAISE EXCEPTION 'Cross-workspace handles write was admitted'; END IF;
 
   PERFORM set_config('test.uid', owner_id, true);
-  PERFORM public.record_social_handles(tenant_id, '{"discord":"Alpha","telegram":"t.me/alpha"}');
+  PERFORM public.record_social_handles(tenant_id, '{"discord":"Alpha","telegram":"t.me/alpha","threads":"@alpha_threads"}');
+  IF (SELECT handle FROM public.get_social_presence_evidence(NULL) WHERE network = 'threads') IS DISTINCT FROM '@alpha_threads'
+    THEN RAISE EXCEPTION 'The owner could not reopen the original Threads handle'; END IF;
+  UPDATE public.paige_social_connections AS pc SET status = 'needs_reauth'
+    WHERE pc.tenant_id = '00000000-0000-4000-8000-00000000d0a1' AND pc.requested_platform = 'threads';
+  IF (SELECT connection_status FROM public.get_social_presence_evidence(NULL) WHERE network = 'threads') IS DISTINCT FROM 'needs_reauth'
+    THEN RAISE EXCEPTION 'The saved Threads handle overrode revoked readiness'; END IF;
   IF (SELECT count(*) FROM public.get_social_presence_evidence(NULL) WHERE network IN ('discord','telegram') AND handle IS NOT NULL) <> 2
     THEN RAISE EXCEPTION 'Discord and Telegram handles did not reopen'; END IF;
   BEGIN

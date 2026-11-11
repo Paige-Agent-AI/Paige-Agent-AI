@@ -150,9 +150,9 @@ export const FAILED_REASON = Object.freeze({
 // ---------------------------------------------------------------- dependencies
 
 export interface CardActDeps {
-  /** The asker's own session (their JWT): decide, settle, post, read back and the card read. */
+  /** The asker's own session (their JWT): context read, decide, post and read back. */
   caller: TeamHubCaller;
-  /** The service role: the proposal and link reads, accept/end, the receipt. */
+  /** The service role: original proposal/scope reads, settlement, accept/end and receipt. */
   service: AgentTurnService;
   /** The verified asker (auth.getUser on the JWT), never from the body. */
   userId: string;
@@ -211,36 +211,34 @@ export async function runTeamHubCardAct(deps: CardActDeps, raw: unknown): Promis
   if (!tenantId) return result("could_not_start");
   if (req.act === "approve" && typeof deps.invokeAs !== "function") return result("could_not_start");
 
-  const cardState = async (): Promise<Record<string, unknown> | null> => {
+  const readCards = async (): Promise<Record<string, unknown> | null> => {
     const r = await rpcSafe(caller, "team_hub_card_states", { p_expected_tenant: tenantId, p_channel_id: req.conversationId, p_message_ids: [req.messageId] });
-    const env = r && !r.error ? object(r.data) : null;
-    if (env?.ok !== true || !Array.isArray(env.cards)) return null;
-    return env.cards.map(object).find((c) => c && uuid(c.message_id) === req.messageId) ?? null;
+    return r && !r.error ? object(r.data) : null;
   };
+  const selectedCard = (env: Record<string, unknown> | null): Record<string, unknown> | null => {
+    if (env?.ok !== true || !Array.isArray(env.cards)) return null;
+    const matches = env.cards.map(object).filter((c) => c && uuid(c.message_id) === req.messageId);
+    return matches.length === 1 ? matches[0] : null;
+  };
+  const cardState = async () => selectedCard(await readCards());
 
-  // The card's message and the turn that posted it (service role, keyed on this person and workspace), read
-  // and checked against the request BEFORE anything is decided (verifier fix 4): a card that is not this
-  // conversation's, or not this person's agent turn, is never decided, and a read that does not answer
-  // decides nothing either. Deciding first would let a mismatch settle an approved card as failed and
-  // consume a proposal the person had just approved.
-  let meta: { agent: TeamHubAgentKey; source: string; root: string } | null = null;
-  let metaUnread = false;
-  try {
-    const [m, t] = await Promise.all([
-      service.from("team_hub_messages").select("id,channel_id,parent_message_id,agent_key,author_kind").eq("id", req.messageId).eq("tenant_id", tenantId).maybeSingle(),
-      service.from("team_hub_agent_turns").select("source_message_id,agent_key,channel_id").eq("posted_message_id", req.messageId)
-        .eq("asker_user_id", userId).eq("tenant_id", tenantId).maybeSingle(),
-    ]);
-    if (m?.error || t?.error) metaUnread = true;
-    const msg = m?.error ? null : object(m?.data), turnRow = t?.error ? null : object(t?.data);
-    const agentKey = typeof msg?.agent_key === "string" ? msg.agent_key : null;
-    if (msg && turnRow && uuid(msg.channel_id) === req.conversationId && uuid(turnRow.channel_id) === req.conversationId
-      && msg.author_kind === "agent" && agentKey === turnRow.agent_key && (TEAM_HUB_AGENT_KEYS as readonly string[]).includes(agentKey ?? "")
-      && uuid(turnRow.source_message_id)) {
-      meta = { agent: agentKey as TeamHubAgentKey, source: uuid(turnRow.source_message_id)!, root: uuid(msg.parent_message_id) ?? req.messageId };
-    }
-  } catch { metaUnread = true; meta = null; }
-  if (!meta) return result(metaUnread ? "could_not_start" : "not_visible", { card: await cardState() });
+  // The existing caller reader proves the exact card/message/accepted-turn relationship before
+  // Decide. Its approver-only projection supplies locators, not permission to execute.
+  const before = await readCards();
+  if (!before) return result("could_not_start");
+  if (before.ok !== true) return result(decideRefusal(before.code));
+  if (!Array.isArray(before.cards)) return result("could_not_start");
+  const card = selectedCard(before);
+  const context = object(card?.approval_context);
+  const agentKey = context?.agent_key;
+  const source = uuid(context?.source_message_id), root = uuid(context?.root_message_id);
+  if (!card || !context || uuid(object(card.card)?.asker_user_id) !== userId
+    || uuid(context.tenant_id) !== tenantId || uuid(context.channel_id) !== req.conversationId
+    || uuid(context.approver_user_id) !== userId || typeof agentKey !== "string"
+    || !(TEAM_HUB_AGENT_KEYS as readonly string[]).includes(agentKey) || !source || !root) {
+    return result("not_visible", { card });
+  }
+  const meta = { agent: agentKey as TeamHubAgentKey, source, root };
 
   // 1. Decide. Asked once: a retry after a lost answer could read the first attempt's own decision as
   // "already decided" by someone else. A lost answer is reported as such, and the card read says the rest.

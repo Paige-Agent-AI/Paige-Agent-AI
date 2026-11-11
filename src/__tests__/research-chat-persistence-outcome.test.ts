@@ -22,7 +22,7 @@ const code = ts.transpileModule(`async function dispatch(tc, supabaseClient, per
   supabase, logAnalyticsEvent, fetch, supabaseUrl, supabaseServiceKey, formatDossier, parseResearchSourcePolicy, researchResultHonorsSourcePolicy,
   originalResearchPayload, readAcceptedResearchTurn, researchCallerCurrent, scope = null, turnRecord = null) {
     const interactiveReceiptScope = scope, customerPortal = false, studioSessionId = null;
-    const req = { signal: new AbortController().signal }, toolCalls = [tc], getTurnRecord = () => turnRecord;
+    const req = { signal: new AbortController().signal }, toolCalls = [tc], readOriginalResearchTurnRecord = () => turnRecord;
     let originalResearchBinding = null, originalResearchAccepted = null;
     for (const selected of [tc]) ${branch.getText(ast)}
     return { originalResearchBinding, originalResearchAccepted };

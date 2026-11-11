@@ -1284,6 +1284,7 @@ serve(async (req) => {
     let interactiveReceiptScope: { thread: string; tenant: string | null; intent: string } | null = null;
     let originalResearchBinding: ResearchWorkBinding | null = null;
     let originalResearchAccepted: AcceptedResearchTurn | null = null;
+    let readOriginalResearchTurnRecord: (() => unknown) | null = null;
     let customerSourceSnapshot: CustomerSourceSnapshot | null = null;
     let customerProgressSnapshot: CustomerProgressSnapshot | null = null;
     let customerProgressContext: CustomerProgressContext | null = null;
@@ -11836,7 +11837,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // tools (TEAM_HUB_EGRESS_WITHHELD_TOOLS) before dispatch, so text read from Team Hub cannot carry a
       // teammate's private words out of Paige or into the workspace's Knowledge.
       let teamHubContentCarried = false;
-      const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>, stepHooks?: ToolStepHooks, getTurnRecord?: () => unknown) => {
+      const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>, stepHooks?: ToolStepHooks) => {
         // Provider-authored tool names cannot cross the customer audience boundary.
         // Future customer actions must be explicitly admitted by their native domain contract.
         if (customerPortal && !customerPublicLinkCall) return {
@@ -13919,7 +13920,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               !customerPortal && !studioSessionId && sourcePolicy.max_sources === undefined && sourcePolicy.allowed_domains === undefined;
             if (durableResearch) {
               const payload = originalResearchPayload(args);
-              const turnRecord = getTurnRecord?.();
+              const turnRecord = readOriginalResearchTurnRecord?.();
               const identity = { actorId: user.id, tenantId: tenantId! };
               if (!payload || !turnRecord || toolCalls.length !== 1 ||
                 !await researchCallerCurrent(identity, supabaseClient as unknown as ResearchCaller, () => !req.signal.aborted)) {
@@ -20609,7 +20610,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // tools never reach dispatch; each gets its one plain refusal instead (contract section 5).
             const roundCalls = askAlongside ? toolCalls.filter((tc: any) => tc !== chooseTc) : toolCalls;
             const teamHubWithheld = teamHubContentCarried ? roundCalls.filter((tc: any) => TEAM_HUB_EGRESS_WITHHELD_TOOLS.has(String(tc?.function?.name ?? ""))) : [];
-            const { toolResults, executed, scopeInvalidated, interactiveError } = await executeToolCalls(roundCalls.filter((tc: any) => !teamHubWithheld.includes(tc)), queuedApprovals, toolStepHooks, () => turnTracker.record());
+            readOriginalResearchTurnRecord = () => turnTracker.record();
+            const { toolResults, executed, scopeInvalidated, interactiveError } = await executeToolCalls(roundCalls.filter((tc: any) => !teamHubWithheld.includes(tc)), queuedApprovals, toolStepHooks);
             for (const tc of teamHubWithheld) {
               executed.push(tc);
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(TEAM_HUB_EGRESS_REFUSAL) });

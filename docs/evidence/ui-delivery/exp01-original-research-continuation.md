@@ -128,3 +128,12 @@ test now enforces the original SQL identity predicate; removing those fields fro
 the actual dispatch causally reproduces refusal with zero worker calls, while the
 corrected dispatch accepts the same Work. Owning dispatch32 tests PASS. The initial
 review HOLD remains history; successor source review and exact-head checks are owed.
+
+Published6541 CI caught the shared Team Hub call-shape guard: adding a fourth
+tracker callback argument changed its protected single dispatch call. The privacy
+test is unchanged. The corrected consumer supplies that same canonical callback
+through request-local state and preserves the original three-argument dispatch
+and filter verbatim. All17 original Team Hub wiring tests and32 actual Research
+dispatch tests PASS after correction. The failed required job130295203440 is
+retained; its skipped native steps are not called PASS. Fresh successor review and
+hosted exact-head gates remain required.

@@ -14104,6 +14104,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }),
             });
           } catch (_err) {
+            // Native begin may have committed WAIT_WORK before the worker's
+            // response was lost. Inspect that same protected receipt before
+            // deciding whether this objective can continue; never dispatch again.
+            if (!originalResearchAccepted && researchStarted && originalResearchBinding && !researchScopeInvalidated) {
+              originalResearchAccepted = await readAcceptedResearchTurn(originalResearchBinding,
+                supabaseClient as unknown as ResearchCaller, () => !req.signal.aborted);
+            }
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",

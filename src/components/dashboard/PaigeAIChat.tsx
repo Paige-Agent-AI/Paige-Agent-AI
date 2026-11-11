@@ -2109,6 +2109,7 @@ const PaigeAIChatInner = ({
       let proposalThisTurn: ExtractionProposal | null = null;
       // C4c — the question this answer ended on, if PAIGE paused to ask (`paige_choices`).
       let askThisTurn: Message["ask"] | undefined;
+      let nativeWorkMayExist = false;
       let streamDone = false;
 
       setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: "", approvalOutcome: outcomeThisTurn }]);
@@ -2139,6 +2140,10 @@ const PaigeAIChatInner = ({
         if (frame.type === "malformed") { halted = true; continue; }
         if (frame.type === "turn") {
           const turnFrame = frame.turn;
+          // A read hint only. Research can retain an earlier build/multi-agent
+          // mode, and unknown effects stay INTERRUPTED. The protected stored
+          // turn alone decides whether this intent has a Research locator.
+          if (turnFrame.state === "WAIT_WORK" || turnFrame.state === "INTERRUPTED") nativeWorkMayExist = true;
           // C4a — `resumed` sticks for the rest of the read: later frames (the terminal) replace the
           // frame, never the fact that this answer carries an approval forward.
           updateLiveTurn(assistantId, (t) => ({ ...t, frame: turnFrame, resumed: t.resumed || (turnFrame.event === "resumed" && !t.answering) }));
@@ -2374,6 +2379,25 @@ const PaigeAIChatInner = ({
         // turn + title write run in the edge fn's waitUntil after the stream
         // closes, so refresh once now and again shortly to catch that commit.
         threadsApi.onTurnPersisted();
+        if (typedInteractive && nativeWorkMayExist && threadId) {
+          const originalThreadId = threadId;
+          void (async () => {
+            try {
+              if (!ticketAccepted(requestTicket) || hydratedFromRef.current !== originalThreadId) return;
+              const turns = await threadsApi.loadTurns(originalThreadId);
+              if (!ticketAccepted(requestTicket) || hydratedFromRef.current !== originalThreadId) return;
+              const canonical = turnsToMessages(turns, originalThreadId).messages.find(message =>
+                message.originalResearchWork?.threadId === originalThreadId &&
+                message.originalResearchWork.intentId === requestIntentId);
+              if (!canonical) return;
+              // Replace only this live answer. Never reset history, unsent
+              // composer text, a newer send or a newly selected conversation.
+              setMessages(current => ticketAccepted(requestTicket) && hydratedFromRef.current === originalThreadId
+                ? preserveSettledResearchHistory(current.map(message => message.id === assistantId ? canonical : message), current)
+                : current);
+            } catch { /* Inspection failed: retain the original transcript, never replay. */ }
+          })();
+        }
         window.setTimeout(() => {
           if (ticketAccepted(requestTicket)) threadsApi.onTurnPersisted();
         }, 1800);

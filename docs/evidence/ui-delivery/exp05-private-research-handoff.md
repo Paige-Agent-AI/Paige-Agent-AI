@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: The existing private handoff can reopen original Rese
 FLOW_PROTOTYPE: UNVERIFIED: Flow Prototype consulted; no throwaway prototype or live browser drive. Existing approved control is reused and unrun proof remains open.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: The authorized SOLO customer keeps an original job, changes surface, checks its current result and recovers it without another run.
 VISUAL_DIRECTION: PASS: Existing Mineral/Obsidian Operate surfaces, compact typography, native details/summary and original report/card tokens; no new tab, banner, modal or visual system.
-AUTOMATED_EVIDENCE: PASS: All48 cases across five original Document/Research/Hub/locator suites pass on actual core9a2 plus the original EXP01 Keep contribution123930bd. The composed Hub test first failed because Keep repeated inside Hub; the owned receiver now passes the original team-hub surface contract. Earlier locator, routing and copied-scope failures remain recorded below.
+AUTOMATED_EVIDENCE: PASS: All134 cases across seven original Document/Research/Hub/locator/live-Chat/native-dispatch suites pass serially on composed529ff7d2, including exact E1 correctionc386b7ab and unchanged Keep/helper. Earlier causal locator/routing/scope/recursive-Keep failures and the newly reproduced live-turn/lost-response failures remain recorded below and in the owning EXP01 evidence. These are controlled checks, not customer proof.
 STATIC_EVIDENCE: PASS: Six composed TypeScript paths pass scoped ESLint; both final UI paths pass the pinned Impeccable detector. Contribution control/test and frozen helper blobs match their original authors. Canonical TypeScript ratchet previously passed baseline10/current6 with no new errors; raw full-app TypeScript retained six baseline diagnostics. Pre-Keep corrected-core build passed6433 modules in3m34s. Final composed types and hosted CI remain required; no checker/baseline changed.
 RENDERED_EVIDENCE: UNVERIFIED: No new desktop/narrow render is claimed.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Original pending job, explicit recovery, report, receipt and remount checks remain to be driven.
@@ -33,7 +33,7 @@ MUST_PRESERVE: Existing Document serialization and original control, actor/tenan
 ACCEPTANCE_CRITERIA: A confirmed original Research locator survives same-tab reload; each surface revalidates private authority and returns the same job/report/citations/receipt. Refused/stale/foreign/unsupported locators disclose nothing and never dispatch a new job; existing Document recovery remains intact.
 MOTION_PURPOSE: NONE: Preserve the existing disclosure feedback; no new motion.
 PROTECTED_SEAMS: Affected private tenant/actor scope, source authority, message/job/result/Rail identity, same-tab recovery and accessible disclosure/removal are tested through original controls. No Auth/account-choice, enrollment/billing/provisioning, global approval/Spine writer, Live, Vault/Browser, provider registration/activation, Memory, scheduler or shared shell change.
-INTERNAL_BUILD_IDENTITY: 9a2f6ad77a02c5079d2246d3c3e3aa353edb9a28; deployment=local-candidate; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=ANT-147/7ced3068 and ANT-6/b8346004 original receiving contribution
+INTERNAL_BUILD_IDENTITY: 529ff7d2d4938ae36343d3bbbf5b793c7e2608f6; deployment=local-candidate; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(ANT-6/787f66e5 original corrective Chat contribution); evidence=ANT-147/7ced3068 and ANT-6/787f66e5 source-frozen composition
 RELEASE_CHANNEL: development: Bounded receiving source under implementation; no production customer claim.
 RELEASE_CLASSIFICATION: internal-only: Same selected Loop integration, not a new customer release.
 CUSTOMER_RELEASE_IDENTITY: none: Full authenticated result remains unverified.
@@ -48,8 +48,11 @@ privateDocumentWorkHandoff and their tests. Original EXP08 remains stopped and
 retains broader Team Hub ownership. EXP01 retains the original Research control
 and contributes its own Keep action; no unilateral edit to that source by EXP05.
 Native26 is independently reviewed/released at341e; original20/23/24/25/26 are
-immutable. Core EXP01 receiving source must be normally released before this
-dependent integration merges. No new store, writer, dispatcher or provider.
+immutable. Original core3324 was normally released/read back at e235 before this
+candidate. EXP01 then supplied its own six-path corrective contributionc386b7ab
+for the SAME3330 with explicit receiving ACK930f63c8; protected source authorship
+and current authority remain with EXP01. One reviewed composed release now carries
+that correction and this receiver. No new store, writer, dispatcher or provider.
 
 The locator remains private and tab-local, not cross-device durable state.
 Research adds an explicit closed kind to the existing three-ID locator. Legacy
@@ -86,3 +89,41 @@ offered Keep inside Hub. Passing its original surface="team-hub" removes that
 recursive handoff without changing the original control. All48 cases in the same
 five suites now pass. Original Document behavior, privacy and no-replay negatives
 remain covered. No real Research job, provider charge or customer result is claimed.
+
+## Final original Chat correction composition
+
+Final review on old published9899 identified two genuine inherited gaps: the live
+Research response lacked its status/Keep locator until manual reload, and a lost
+worker response could miss already-committed native acceptance. The old head's
+all11 green checks and own-source review remain historical; neither waived those
+release holds. EXP01 independently confirmed both and retained its protected
+host/index/test windows. No paid run was spent while those findings were open.
+
+EXP01 returned immutablec386b7ab38988fde20b306188cd2b8b0271691c2, parent actual
+maindaaab07f85ec0a7f4d5e2184d3ef89e7b7eccb9c, with six exact owning paths and
+distinct renewed NON-AUTHOR source review (ANT-6/787f66e5). Its causal retained-mode,
+wire-state, changed-context and lost-response evidence remains in the original
+EXP01 record, including earlier failed runs and the serial569/27-suite PASS.
+The protected current-intent native row alone supplies the live locator; a wire
+state is only a read hint. Lost-response reconciliation reuses that same accepted
+terminal and grants no retry/provider/model/receipt authority.
+
+Normal local merge529ff7d2/tree13e3c641 conserves those exact six blobs, our prior
+eight paths, frozen helperfc123 and Keep968bf09f/6cba58bf. Main's six historical
+3332 Master lines and earlier E06 lines are preserved. E7's open3331 Social pin
+and native27 remain its distinct source; no allocation or checker edit by EXP05.
+All134 cases in seven affected suites pass serially. Source identity above refers
+to that actual tested composition before this evidence-only update; final public
+head/tree and fresh review/CI/release readback are attached to the same PR.
+
+Local disk reached zero free bytes during verification. Only the task's newly
+generated build output work/c4e-handoff-build-20261111-ccc29 was removed after
+absolute-path/link checks, reclaiming80,637,735 bytes. Source, canonical records,
+historical receipts, installed caches and unrelated data were preserved. This is
+environment housekeeping, not a product failure or a relaxed test/check.
+
+Fresh composed types/lint/guard checks, final non-author full-union review and
+exact-head hosted CI remain required. Both original review findings remain open
+until the corrected source is verified; no live recovery/charge or owner-accepted
+outcome is inferred. The ONE shared approved run/fault stays unused until the
+corrected Chat and Hub receiving source are actually deployed/read back.

@@ -41,6 +41,9 @@ export interface WorldOptions {
   revokeAfterClaim?: boolean;
   /** Pending-reconcile answer. */
   pendingReconcile?: boolean;
+  /** The original caller loses SELECT/RLS visibility before prepare or after native binding. */
+  callerContentReadDenied?: boolean;
+  revokeContentAfterClaim?: boolean;
 }
 
 export const connectedRow = (over: Row = {}): Row => ({
@@ -75,11 +78,13 @@ export function world(o: WorldOptions = {}) {
   const seen = {
     rpc: [] as Array<{ fn: string; args?: Row; client: "caller" | "admin" }>,
     receipts: [] as Row[],
-    reads: [] as Array<{ table: string; filters: Filter[] }>,
+    reads: [] as Array<{ table: string; filters: Filter[]; client: "caller" | "admin" }>,
+    destinationReads: [] as unknown[],
     createPost: [] as SocialPostInput[],
     readPost: [] as Array<{ input: SocialPostInput; providerId: string | null }>,
   };
   let connectionReads = 0;
+  let contentClaimed = false;
 
   const matches = (row: Row, filters: Filter[]) => filters.every(([op, col, value]) => {
     const v = row[col];
@@ -94,13 +99,19 @@ export function world(o: WorldOptions = {}) {
     }
   });
 
-  const from = (table: string) => {
+  const from = (table: string, client: "caller" | "admin") => {
     const filters: Filter[] = [];
     let update: Row | null = null;
     let single = false;
     const run = () => {
       const rows = tables[table] ?? (tables[table] = []);
-      seen.reads.push({ table, filters: [...filters] });
+      seen.reads.push({ table, filters: [...filters], client });
+      // Production grants authenticated SELECT, but service_role has no table SELECT.
+      // BYPASSRLS does not supply a missing grant. Keep the clients distinct in this world.
+      if (table === "marketing_content" && (client === "admin" || o.callerContentReadDenied
+          || (o.revokeContentAfterClaim && contentClaimed))) {
+        return { data: null, error: { code: "42501", message: "permission denied for table marketing_content" } };
+      }
       const hit = rows.filter((r) => matches(r, filters));
       if (update) for (const r of hit) Object.assign(r, update);
       return { data: single ? hit[0] ?? null : hit, error: null };
@@ -122,6 +133,7 @@ export function world(o: WorldOptions = {}) {
   };
 
   const caller = {
+    from: (table: string) => from(table, "caller"),
     auth: { getUser: async () => (o.user === null ? { data: { user: null }, error: { message: "bad jwt" } } : { data: { user: { id: o.user ?? USER } }, error: null }) },
     rpc: async (fn: string, args?: Row) => {
       seen.rpc.push({ fn, args, client: "caller" });
@@ -133,7 +145,7 @@ export function world(o: WorldOptions = {}) {
     },
   };
   const admin = {
-    from,
+    from: (table: string) => from(table, "admin"),
     rpc: async (fn: string, args?: Row) => {
       seen.rpc.push({ fn, args, client: "admin" });
       if (fn === "record_capability_run") {
@@ -158,6 +170,7 @@ export function world(o: WorldOptions = {}) {
         return { data: row, error: null };
       }
       if (fn === "content_publication_bind") {
+        contentClaimed = true;
         let row = tables.content_publications.find((candidate) => candidate.id === args?.p_id);
         if (!args?.p_id) {
           row = { id: PUBLICATION, tenant_id: args?.p_tenant_id };
@@ -177,7 +190,10 @@ export function world(o: WorldOptions = {}) {
   const adapter = {
     key: "zernio",
     isConfigured: () => o.adapterConfigured !== false,
-    readPostDestination: async () => ({ channelId: null, label: "Northfield Coaching (main)" }),
+    readPostDestination: async (input: unknown) => {
+      seen.destinationReads.push(input);
+      return { channelId: null, label: "Northfield Coaching (main)" };
+    },
     readPost: async (input: SocialPostInput, providerId: string | null): Promise<SocialProviderPostOutcome> => {
       seen.readPost.push({ input, providerId });
       return o.readPost?.(input, providerId) ?? { kind: "unknown", requestId: providerId, reason: "not_found" };
@@ -203,7 +219,7 @@ export function world(o: WorldOptions = {}) {
 
   // On the connection recheck (the second read of paige_social_connections with eq id), optionally
   // flip the status to simulate a post-claim revocation.
-  const origFrom = from;
+  const origFrom = admin.from;
   const fromWrapped = (table: string) => {
     if (table === "paige_social_connections") {
       connectionReads += 1;
@@ -214,7 +230,7 @@ export function world(o: WorldOptions = {}) {
     }
     return origFrom(table);
   };
-  admin.from = fromWrapped as typeof from;
+  admin.from = fromWrapped as typeof origFrom;
 
   return { tables, seen, call, caller, adapter };
 }

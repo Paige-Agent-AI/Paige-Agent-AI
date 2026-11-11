@@ -76,6 +76,38 @@ import {
 } from "./social-publish-door.world.ts";
 
 describe("social publish door — proposal, owner approval, provider execution, receipt (EXP07 row 10)", () => {
+  it("reads protected content with the signed-in caller before preview and execution despite denied service SELECT", async () => {
+    const w = world();
+    const preview = await w.call(publishBody());
+    expect(preview.status).toBe(202);
+    const result = await w.call(publishBody({ approved_fingerprint: (preview.body.approval as Record<string, string>).fingerprint }));
+    expect(result.body.state).toBe("published");
+    expect(w.seen.createPost).toHaveLength(1);
+    expect(w.tables.content_publications).toHaveLength(1);
+    expect(w.seen.reads.filter(read => read.table === "marketing_content").every(read => read.client === "caller")).toBe(true);
+  });
+
+  it("refuses protected content the caller cannot read before any destination lookup or publication binding", async () => {
+    const w = world({ callerContentReadDenied: true });
+    const result = await w.call(publishBody());
+    expect(result.body.code).toBe("CONTENT_NOT_FOUND");
+    expect(w.seen.destinationReads).toHaveLength(0);
+    expect(w.seen.createPost).toHaveLength(0);
+    expect(w.tables.content_publications).toHaveLength(0);
+    expect(w.seen.rpc.some(call => call.fn === "content_publication_bind")).toBe(false);
+  });
+
+  it("rechecks protected content with current caller access after binding and refuses a revoked read without posting", async () => {
+    const w = world({ revokeContentAfterClaim: true });
+    const preview = await w.call(publishBody());
+    expect(preview.status).toBe(202);
+    const result = await w.call(publishBody({ approved_fingerprint: (preview.body.approval as Record<string, string>).fingerprint }));
+    expect(result.body).toMatchObject({ state: "refused", code: "CONNECTION_REVOKED" });
+    expect(w.tables.content_publications).toHaveLength(1);
+    expect(w.tables.content_publications[0].status).toBe("refused");
+    expect(w.seen.createPost).toHaveLength(0);
+  });
+
   it("first call: proposes with the exact preview and asks for approval — nothing is executed", async () => {
     const w = world();
     const r = await w.call(publishBody());

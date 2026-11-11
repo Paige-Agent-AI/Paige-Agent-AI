@@ -116,4 +116,3 @@ states and preservation of existing controls; no visual redesign was performed.
 Its existing design-sidecar staleness is outside this bounded repair, not repaired
 as a side effect. Rendered/behavioral checks and non-author final review are
 separate from the native engineering proof above.
-

@@ -152,8 +152,16 @@ hostile controls remain exact. Local original registry self-test PASS. Current
 maina841's eight incoming paths are conserved unchanged. Final successor review,
 hosted CI/native26 release and actual live proof remain mandatory. All86 original
 incumbent authority/hostile controls PASS after this exact scalar renewal. The
-separate b42 INT336 workflow step also reported FAIL; every constituent command
-has now passed locally (including29 isolated Deno tests and22 subsequent actual
-handler/control commands), but the running hosted job has not yet made its log
-available. Its actual failure is not waived or relabeled PASS; inspect the log
-and pass the fresh successor exact-head gate before release.
+separate b42 INT336 workflow step also reported FAIL. The local sweep covered
+direct commands (including29 Deno tests and22 later handler/control commands),
+not the workflow's environment-prefixed variants; the earlier broad wording is
+corrected. Actual hosted log identifies RESEARCH_READBACK_TEST=success at original
+two-tool check line310: the fixture expected legacy dispatch while presenting a
+mixed Research/Plan batch and unsupported model identity to v1. The product
+correctly refused before preparation/provider; no native guard is weakened.
+Those three incumbent legacy readback cases now explicitly request max_sources3
+and matching source_policy, assert exact constraint forwarding and no durable_work.
+All three actual-handler variants PASS. Two added actual-dispatch negatives retain
+the v1 unsupported-input/mixed-batch refusal;34 owning dispatch cases PASS. The
+hosted failure/interrupted later steps remain history; fresh exact-head gates
+must pass before release. No additional runtime source changed for this repair.

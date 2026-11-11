@@ -20,9 +20,9 @@ findAppend(ast);
 if (!append) throw new Error('Original assistant settlement missing');
 const code = ts.transpileModule(`async function dispatch(tc, supabaseClient, personaCtx, user, toolResults,
   supabase, logAnalyticsEvent, fetch, supabaseUrl, supabaseServiceKey, formatDossier, parseResearchSourcePolicy, researchResultHonorsSourcePolicy,
-  originalResearchPayload, readAcceptedResearchTurn, researchCallerCurrent, scope = null, turnRecord = null) {
+  originalResearchPayload, readAcceptedResearchTurn, researchCallerCurrent, scope = null, turnRecord = null, mixedBatch = false) {
     const interactiveReceiptScope = scope, customerPortal = false, studioSessionId = null;
-    const req = { signal: new AbortController().signal }, toolCalls = [tc], readOriginalResearchTurnRecord = () => turnRecord;
+    const req = { signal: new AbortController().signal }, toolCalls = [tc, ...(mixedBatch ? [{id:'other-call',function:{name:'plan_create'}}] : [])], readOriginalResearchTurnRecord = () => turnRecord;
     let originalResearchBinding = null, originalResearchAccepted = null;
     for (const selected of [tc]) ${branch.getText(ast)}
     return { originalResearchBinding, originalResearchAccepted };
@@ -39,7 +39,7 @@ const sources=[{ index:1,url:'https://example.com/source',title:'Fixture source'
 const findings=[{text:'Fixture cited finding',citations:[1],confidence:'high'}];
 const native={run_id:run,question,findings,sources,coverage:{configured:true,stop_reason:'answered',hops_used:1,searches:1,reads:1,note:''}};
 const saved={id:run,question,domain:'general',caller:'chat',configured:true,stop_reason:'answered',findings,sources,coverage:native.coverage};
-async function drive(options: { readback?:unknown; readError?:unknown; native?:unknown; status?:number; tenant?:string|null; scopes?:string[]; transportLost?:boolean; scopeErrorAt?:number; args?:Record<string,unknown>; durable?:boolean; accepted?:boolean; omitAuthorityIdentity?:boolean }={}) {
+async function drive(options: { readback?:unknown; readError?:unknown; native?:unknown; status?:number; tenant?:string|null; scopes?:string[]; transportLost?:boolean; scopeErrorAt?:number; args?:Record<string,unknown>; durable?:boolean; accepted?:boolean; omitAuthorityIdentity?:boolean; mixedBatch?:boolean }={}) {
   const calls:Array<{body:Record<string,unknown>;headers:Record<string,string>}>=[];
   const outputs:Array<{content:string}>=[];
   const rpcs:Array<{name:string;args:unknown}>=[];
@@ -81,11 +81,16 @@ async function drive(options: { readback?:unknown; readError?:unknown; native?:u
       return Response.json('native' in options?options.native:native,{status:options.status??200});
     },'https://fixture.invalid','fixture-service-key',()=>null,parseResearchSourcePolicy,researchResultHonorsSourcePolicy,
     originalResearchPayload,readAcceptedResearchTurn,researchCallerCurrent,
-    options.durable?{thread:id(5),intent:id(4),tenant}:null,record);
+    options.durable?{thread:id(5),intent:id(4),tenant}:null,record,options.mixedBatch);
   expect(outputs).toHaveLength(1);
   return {calls,rpcs,analytics,preparations,outcome,result:JSON.parse(outputs[0].content)};
 }
 describe('Research Chat native invocation and durable library proof',()=>{
+  it.each([{mixedBatch:true},{args:{expected_tenant_id:id(99)}}])('refuses unsupported v1/mixed-batch preparation before any worker call: %j',async options=>{
+    const {calls,preparations,result}=await drive({durable:true,...options});
+    expect(calls).toHaveLength(0);expect(preparations).toHaveLength(0);
+    expect(result).toMatchObject({success:false,not_applied:true});
+  });
   it('reproduces the reviewed missing-native-identity fault causally before any worker/provider invocation',async()=>{
     const broken = await drive({durable:true,omitAuthorityIdentity:true});
     expect(broken.preparations).toHaveLength(1);

@@ -1,5 +1,7 @@
 -- EXP08: original card approval context through the existing caller reader.
--- Guard the observed production reader. No table or function grants change.
+-- Guard the observed production reader. No permissions are broadened.
+-- Fresh Supabase branches can retain service-role administrative defaults;
+-- narrow only that known non-DML remainder to the actual production ACL.
 BEGIN;
 SET LOCAL lock_timeout='2s';
 DO $guard$
@@ -21,8 +23,18 @@ BEGIN
    ('public.team_hub_messages'::regclass,'public.team_hub_agent_turns'::regclass,'public.team_hub_message_cards'::regclass)
    AND (NOT c.relrowsecurity OR c.relowner<>'postgres'::regrole OR EXISTS(
     SELECT 1 FROM aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) a
-    WHERE a.grantee<>'postgres'::regrole OR a.grantor<>'postgres'::regrole))) THEN
+    WHERE a.grantor<>'postgres'::regrole OR (a.grantee<>'postgres'::regrole AND
+     (a.grantee<>'service_role'::regrole OR a.is_grantable
+      OR a.privilege_type NOT IN ('TRUNCATE','REFERENCES','TRIGGER','MAINTAIN')))))) THEN
   RAISE EXCEPTION 'EXP08 protected card table grants drift';
+ END IF;
+ -- Production already has no service table privileges: this is a no-op there.
+ -- Refuse any DML/reader or unrelated-role drift above before narrowing defaults.
+ REVOKE ALL ON TABLE public.team_hub_messages,public.team_hub_agent_turns,public.team_hub_message_cards FROM service_role;
+ IF EXISTS(SELECT 1 FROM pg_class c CROSS JOIN LATERAL aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) a
+  WHERE c.oid IN ('public.team_hub_messages'::regclass,'public.team_hub_agent_turns'::regclass,'public.team_hub_message_cards'::regclass)
+   AND (a.grantee<>'postgres'::regrole OR a.grantor<>'postgres'::regrole)) THEN
+  RAISE EXCEPTION 'EXP08 protected card table grants postcondition';
  END IF;
 END $guard$;
 

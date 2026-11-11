@@ -143,10 +143,46 @@ SELECT pg_temp.check((:'context_settle')::jsonb->>'ok'='true'
 ROLLBACK;
 \set context_guard_sql `sed -n '/^DO \$guard\$/,/^END \$guard\$;/p' supabase/migrations/20271133000024_exp08_card_approval_context.sql`
 BEGIN;
-GRANT SELECT ON public.team_hub_messages TO service_role;
-SELECT pg_temp.check(pg_temp.try(:'context_guard_sql')='EXP08 protected card table grants drift',
+-- Supabase fresh-branch defaults can retain these non-DML rights after old
+-- migrations revoke the four DML privileges. Actual production has none.
+GRANT TRUNCATE,REFERENCES,TRIGGER ON public.team_hub_messages,public.team_hub_agent_turns,public.team_hub_message_cards TO service_role;
+SELECT pg_temp.try(:'context_guard_sql') AS context_default_normalize \gset
+SELECT pg_temp.check(:'context_default_normalize'='ran'
+ AND NOT EXISTS(SELECT 1 FROM pg_class c CROSS JOIN LATERAL aclexplode(c.relacl) a
+  WHERE c.oid IN ('public.team_hub_messages'::regclass,'public.team_hub_agent_turns'::regclass,'public.team_hub_message_cards'::regclass)
+   AND a.grantee<>'postgres'::regrole),
+ 'context: fresh-branch residual service administration rights narrow to exact production ACLs');
+ROLLBACK;
+BEGIN;
+GRANT SELECT,TRUNCATE ON public.team_hub_messages TO service_role;
+SELECT pg_temp.try(:'context_guard_sql') AS context_forbidden_read \gset
+SELECT pg_temp.check(:'context_forbidden_read'='EXP08 protected card table grants drift'
+ AND has_table_privilege('service_role','public.team_hub_messages','SELECT')
+ AND has_table_privilege('service_role','public.team_hub_messages','TRUNCATE'),
  'context: forward installer refuses broadened protected-table grants');
 ROLLBACK;
+CREATE FUNCTION pg_temp.context_guard_refusal(ddl text,guard_sql text) RETURNS text LANGUAGE plpgsql AS $$
+DECLARE answer text;
+BEGIN
+ BEGIN
+  EXECUTE ddl;
+  answer:=pg_temp.try(guard_sql);
+  RAISE EXCEPTION USING ERRCODE='ZX008',MESSAGE='rollback isolated privilege probe';
+ EXCEPTION WHEN SQLSTATE 'ZX008' THEN NULL;
+ END;
+ RETURN answer;
+END $$;
+SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM (VALUES
+ ('GRANT INSERT ON public.team_hub_messages TO service_role'),
+ ('GRANT UPDATE ON public.team_hub_agent_turns TO service_role'),
+ ('GRANT DELETE ON public.team_hub_message_cards TO service_role'),
+ ('GRANT TRIGGER ON public.team_hub_messages TO service_role WITH GRANT OPTION'),
+ ('GRANT TRIGGER ON public.team_hub_messages TO authenticated'),
+ ('GRANT TRIGGER ON public.team_hub_messages TO anon'),
+ ('GRANT TRIGGER ON public.team_hub_messages TO PUBLIC'),
+ ('ALTER TABLE public.team_hub_messages DISABLE ROW LEVEL SECURITY')
+ ) probes(ddl) WHERE pg_temp.context_guard_refusal(ddl,:'context_guard_sql') IS DISTINCT FROM 'EXP08 protected card table grants drift'),
+ 'context: DML, grant options, caller/public grants and disabled RLS all refuse instead of normalizing');
 BEGIN;
 SELECT pg_temp.mutate('public.team_hub_card_states(uuid,uuid,uuid[])'::regprocedure,
  's.approver_user_id=actor AND s.approval_context IS NOT NULL','true AND s.approval_context IS NOT NULL');

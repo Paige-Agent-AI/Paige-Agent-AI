@@ -143,8 +143,28 @@ describe("R3 dossier wiring — bounded shape + canonical persistence", () => {
     expect(core).toContain("caps_applied.candidates_truncated = true");
   });
 
-  it("the dossier persists on the canonical record — all three persistRun sites carry it", () => {
-    expect(core.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope\)/g)?.length).toBe(4); // All four canonical dossier persistence paths retain the current actor/tenant checkpoint.
+  it("every save retains the dossier through the canonical write or durable checkpoint", () => {
+    const source = ts.createSourceFile("research.ts", core, ts.ScriptTarget.Latest, true);
+    const saves: ts.CallExpression[] = [];
+    const checkpoints: ts.CallExpression[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+        if (["persistRun", "saveResult"].includes(node.expression.text)) saves.push(node);
+        if (node.expression.text === "advanceWork" && ts.isStringLiteral(node.arguments[0]) &&
+          node.arguments[0].text === "checkpoint") checkpoints.push(node);
+      }
+      node.forEachChild(visit);
+    };
+    visit(source);
+    expect(new Set(saves.map(call => call.expression.getText(source)))).toEqual(new Set(["persistRun", "saveResult"]));
+    for (const call of saves) {
+      const dossierIndex = call.expression.getText(source) === "persistRun" ? 6 : 1;
+      expect(call.arguments[dossierIndex]?.getText(source)).toBe("dossier");
+    }
+    expect(checkpoints).toHaveLength(1);
+    const payload = checkpoints[0].arguments[2];
+    expect(ts.isObjectLiteralExpression(payload) && payload.properties.some(property =>
+      ts.isShorthandPropertyAssignment(property) && property.name.text === "dossier")).toBe(true);
     expect(core).toContain("dossier: (dossier ?? null) as never,");
   });
 

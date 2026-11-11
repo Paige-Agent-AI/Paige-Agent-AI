@@ -24,7 +24,8 @@ const bookingArgs={title:'Fixture appointment',start_at:'2026-11-10T15:00:00Z',e
 const researchRequests=[];
 const researchFixture=()=>({run_id:id(11),question:'Fixture public question',findings:[{text:'Fixture cited finding',citations:[1],confidence:'high'}],
  sources:[{index:1,url:'https://example.com/source',title:'Fixture source',snippet:'Source text',reliability_score:.9,tier:'T1',reliability:'high',excluded:false,published_at:null,fetched_at:'2026-10-15T16:00:00Z'}],
- coverage:{configured:true,stop_reason:'answered',hops_used:1,searches:1,reads:1,note:''}});
+ coverage:{configured:true,stop_reason:'answered',hops_used:1,searches:1,reads:1,note:'',
+   source_policy:{max_sources:3,admitted_sources:1,limit_reached:false}}});
 const draftArgs={name:'Fixture process',trigger_key:'contact.created',steps:[{action_kind:'crm.advance_journey_stage',config:{stage:'review'}}]};
 const ingestRequests=[];
 let modelCalls=0;
@@ -57,7 +58,7 @@ globalThis.fetch=async(url,opts)=>{
  for(let i=0;i<(crmPauseMode?(['prior-success','following-unknown'].includes(crmPauseMode)?2:1):crmScopeMode||bookingMode&&bookingMode!=='no-approval'?1:2);i++){
   const name=crmPauseMode?(crmPauseMode==='prior-success'&&i===0||crmPauseMode==='following-unknown'&&i===1?'plan_create':'crm_create_task'):i===0&&bookingMode==='no-approval'?'calendar_book_meeting':i===0&&(crmMode||crmScopeMode)?'crm_create_task':i===0&&researchMode?'deep_research':i===0&&automationMode?'automation_draft':i===0&&knowledgeMode?'save_to_knowledge_base':'plan_create';
   const args=name==='calendar_book_meeting'?bookingArgs
-   :name==='crm_create_task'?(crmScopeMode||crmPauseMode?{patch:{title:'Protected CRM fixture'}}:{title:'Protected CRM fixture'}):name==='deep_research'?{question:'Fixture public question',expected_tenant_id:'ignored-model-scope'}
+   :name==='crm_create_task'?(crmScopeMode||crmPauseMode?{patch:{title:'Protected CRM fixture'}}:{title:'Protected CRM fixture'}):name==='deep_research'?{question:'Fixture public question',expected_tenant_id:'ignored-model-scope',max_sources:3}
    :name==='automation_draft'?{...draftArgs,...(automationMode==='refused'?{steps:Array.from({length:21},()=>draftArgs.steps[0])}:{})}
    :name==='save_to_knowledge_base'?{title:'Fixture reference',content:'Private fixture content'}
    :{title:`Plan ${knowledgeMode||automationMode||researchMode||crmMode||bookingMode?0:i}`,horizon:'week',starts_on:'2026-10-06',ends_on:'2026-10-12'};
@@ -309,6 +310,10 @@ if(crmMode){
 if(researchMode){
  assert.equal(researchRequests.length,1,'one incumbent invocation; no blind research retry');
  assert.equal(researchRequests[0].user_id,actor);assert.equal(researchRequests[0].expected_tenant_id,tenant);assert.equal(researchRequests[0].persist,true);
+ // These are the incumbent FILTERED compatibility cases. The v1 durable
+ // contract cannot drop a source policy or accept a mixed Research/Plan batch.
+ assert.equal(researchRequests[0].max_sources,3,'original source bound reaches the incumbent engine');
+ assert.equal(researchRequests[0].durable_work,undefined,'filtered legacy request is not silently widened to v1');
  assert.equal(receipts.length,1,'one canonical terminal receipt');
  const bundle=receipts[0].bundle_ref,effect=bundle.interactive.effects.find(e=>e.tool==='deep_research');
  assert.equal(effect.outcome,researchMode==='unconfirmed'?'outcome_unknown':'reported_success');

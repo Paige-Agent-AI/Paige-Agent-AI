@@ -20,22 +20,41 @@ export function privateDocumentWorkSnapshot(actorId: string, tenantId: string): 
   }
 }
 
-export function parsePrivateDocumentWork(raw: string | null): OriginalDocumentReference | null {
-  if (!raw || raw.length > 160) return null;
+export type PrivateOriginalWorkReference = OriginalDocumentReference & { kind?: "research" };
+
+export function parsePrivateDocumentWork(raw: string | null): PrivateOriginalWorkReference | null {
+  if (!raw || raw.length > 184) return null;
   try {
-    const { threadId, intentId, workId } = JSON.parse(raw) ?? {};
-    return uuid(threadId) && uuid(intentId) && uuid(workId) ? { threadId, intentId, workId } : null;
+    const saved = JSON.parse(raw);
+    if (!saved || typeof saved !== "object" || Array.isArray(saved) ||
+      (saved.kind !== undefined && saved.kind !== "research")) return null;
+    if (saved.kind !== "research" && raw.length > 160) return null;
+    const { threadId, intentId, workId } = saved;
+    if (!uuid(threadId) || !uuid(intentId) || !uuid(workId)) return null;
+    return saved.kind === "research"
+      ? { kind: "research", threadId, intentId, workId }
+      : { threadId, intentId, workId };
   } catch {
     return null;
   }
 }
 
 export function keepPrivateDocumentWork(actorId: string, tenantId: string, reference: OriginalDocumentReference) {
+  return keepPrivateWork(actorId, tenantId, reference);
+}
+
+export function keepPrivateResearchWork(actorId: string, tenantId: string, reference: OriginalDocumentReference) {
+  return keepPrivateWork(actorId, tenantId, reference, "research");
+}
+
+function keepPrivateWork(actorId: string, tenantId: string, reference: OriginalDocumentReference, kind?: "research") {
   const key = storageKey(actorId, tenantId);
   const { threadId, intentId, workId } = reference;
   if (!key || !uuid(threadId) || !uuid(intentId) || !uuid(workId)) return false;
   try {
-    window.sessionStorage.setItem(key, JSON.stringify({ threadId, intentId, workId }));
+    window.sessionStorage.setItem(key, JSON.stringify(kind === "research"
+      ? { kind, threadId, intentId, workId }
+      : { threadId, intentId, workId }));
   } catch {
     return false;
   }

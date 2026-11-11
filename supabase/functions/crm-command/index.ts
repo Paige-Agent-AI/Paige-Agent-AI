@@ -14,6 +14,7 @@ import {
   type CanonicalCrmCommand,
   type CrmAction,
 } from "../_shared/crm-command/catalog.ts";
+import {inspectMissionTask} from '../_shared/crm-command/mission-task-inspection.ts';
 import { parseExecutorError, executorFailureSpeech } from "../_shared/crm-command/executor-error.ts";
 import { databaseAnswered } from "../_shared/approval-outcome.ts";
 import { canonicalAppUrl, PAIGE_APP_ORIGIN, resolveCanonicalRecordLink, type CanonicalTier } from "../_shared/canonical-app-url.ts";
@@ -313,6 +314,15 @@ serve(async (req) => {
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: { user }, error: authError } = await caller.auth.getUser();
   if (authError || !user) return response(401, { ok: false, code: "CRM_AUTH_INVALID" });
+
+  // Inspect an existing Mission step effect through the SAME native result reader.
+  // Clone keeps ordinary command parsing/canonicalization and every old path intact.
+  let inspectionBody: unknown;
+  try { inspectionBody = await req.clone().json(); } catch { /* Original parser owns malformed JSON. */ }
+  if (object(inspectionBody) && Object.prototype.hasOwnProperty.call(inspectionBody, "inspect_mission_task")) {
+    const inspected = await inspectMissionTask({raw: inspectionBody, actorId: user.id, caller, admin});
+    return response(inspected.status, inspected.body);
+  }
 
   type ParsedBody = z.infer<typeof bodySchema>;
   type CanonicalBody = Omit<ParsedBody, "command" | "legacy_command" | "legacy_idempotency_key" | "legacy_supplied_idempotency_key"> & {

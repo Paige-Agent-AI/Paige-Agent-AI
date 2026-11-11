@@ -5,13 +5,22 @@
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: vi.fn(), functions: { invoke: vi.fn() } } }));
 
 import { describe, expect, it, vi } from "vitest";
-import { classifyPublishNetworks, doorFace, defaultCaption, PUBLICATION_STATUS_WORDS } from '@/solo/publish-piece';
+import { classifyPublishNetworks, doorFace, defaultCaption, prioritizePublicationReceipts, PUBLICATION_STATUS_WORDS } from '@/solo/publish-piece';
 
 const NETWORKS = [
   { key: 'instagram', label: 'Instagram' },
   { key: 'facebook', label: 'Facebook' },
   { key: 'x', label: 'X' },
 ];
+
+it('keeps old unresolved attempts actionable beyond five newer terminal receipts', () => {
+  const recent = Array.from({ length: 7 }, (_, i) => ({
+    id: String(i), platform: 'instagram', destination: null, status: 'published', url: null,
+    createdAt: '2026-10-20', providerProcessing: false,
+  }));
+  const original = { ...recent[0], id: 'original', status: 'outcome_unknown' };
+  expect(prioritizePublicationReceipts([...recent, original]).map(({ id }) => id)).toEqual(['original', '0', '1', '2', '3']);
+});
 
 describe('EXP07 · publish affordance · network readiness', () => {
   it('renders each network from the presence read alone — never a guess from a handle', () => {

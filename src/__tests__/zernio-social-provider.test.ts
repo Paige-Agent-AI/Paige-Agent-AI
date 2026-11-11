@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { zernioSocialAdapter } from "../../supabase/functions/_shared/social-provider/zernio.ts";
 import { NeedsConfigError } from "../../supabase/functions/_shared/provider-types.ts";
 
@@ -203,84 +203,175 @@ describe("Zernio disconnect", () => {
   });
 });
 
-describe("Zernio publishing arm (owner-approved November 3)", () => {
-  const PUB = "1a2b3c4d-0000-4000-8000-00000000f001";
-  it("posts now with the publication UUID as the Idempotency-Key and the resolved profile", async () => {
-    stubEnv({ ZERNIO_API_KEY: "zk_test" });
-    const calls = serve([
-      { body: [{ _id: "zp_9", externalId: KEY }] },
-      { status: 207, body: { post: { id: "zp_post_1", status: "published" }, platformResults: [
-        { platform: "google-business", status: "published", platformPostId: "gp_1", platformPostUrl: "https://plus.google.com/x" },
-      ] } },
-    ]);
-    const outcome = await zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "google_business", text: "Hello world", externalId: PUB });
-    expect(outcome).toEqual({ kind: "published", results: [expect.objectContaining({ platform: "google_business", success: true, postId: "gp_1", postUrl: "https://plus.google.com/x" })] });
-    expect(calls[1].url).toContain("/v1/posts");
-    expect(calls[1].method).toBe("POST");
-    expect(calls[1].body).toContain('"publishNow":true');
-    expect(calls[1].body).toContain('"profileId":"zp_9"');
-    expect(calls[1].body).toContain('"platforms":["google-business"]');
-    expect(calls[1].headers["idempotency-key"]).toBe(PUB);
+describe("Zernio account-scoped publication", () => {
+  const profileId = "66a1f0c2a4b9d3e8f1a2b3c4";
+  const providerPostId = "65f1c0a9e2b5af0012ab34cd";
+  const channelId = "1234567890123456789";
+  const url = `https://discord.com/channels/1098765432109876543/${channelId}/4455667788990011223`;
+  const target = {
+    providerProfileKey: KEY, providerAccountId: "66b2e19d8c3f5a7e9d0b1c2d",
+    platform: "discord", channelId, text: "Release 2.3 is live.", externalId: "77777777-7777-4777-8777-777777777777",
+  };
+  const account = {
+    _id: target.providerAccountId, profileId, isActive: true, platform: "discord",
+    displayName: "Test Guild · #announcements",
+  };
+  const discordSettings = { account: { _id: account._id, platform: "discord", channelId, displayName: account.displayName } };
+  const profile = { body: { profiles: [{ _id: profileId, externalId: KEY }] } };
+  const published = {
+    _id: providerPostId, status: "published", metadata: { paigePublicationId: target.externalId },
+    platforms: [{
+      platform: "discord", accountId: { _id: target.providerAccountId }, status: "published",
+      platformPostId: "4455667788990011223", platformPostUrl: url,
+    }],
+  };
+
+  beforeEach(() => stubEnv({ ZERNIO_API_KEY: "zk_test" }));
+
+  it("matches the exact active Discord account and channel in the tenant profile", async () => {
+    const calls = serve([profile, { body: { accounts: [{ ...account, _id: "different-account" }, account] } }, { body: discordSettings }]);
+    await expect(zernioSocialAdapter.readPostDestination(target)).resolves.toEqual({
+      channelId, label: account.displayName,
+    });
+    expect(calls[1].url).toContain(`/accounts?profileId=${profileId}`);
+    expect(calls[2].url).toContain(`/accounts/${account._id}/discord-settings`);
   });
 
-  it("maps per-platform failures honestly inside a published outcome", async () => {
-    stubEnv({ ZERNIO_API_KEY: "zk_test" });
-    serve([
-      { body: [{ _id: "zp_9", externalId: KEY }] },
-      { status: 207, body: { post: { id: "zp_post_2", status: "partial" }, platformResults: [
-        { platform: "x", status: "failed", error: "rate limited by platform" },
-      ] } },
-    ]);
-    const outcome = await zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "x", text: "Hi", externalId: PUB });
-    expect(outcome).toEqual({ kind: "published", results: [expect.objectContaining({ platform: "x", success: false, error: "rate limited by platform", postUrl: null })] });
+  it.each([
+    { profileId: "foreign-profile" }, { profileId: undefined }, { isActive: false }, { isActive: undefined }, { enabled: false },
+  ])("refuses an unverified or disabled account before reading Discord settings (%j)", async (overrides) => {
+    const calls = serve([profile, { body: { accounts: [{ ...account, ...overrides }] } }]);
+    await expect(zernioSocialAdapter.readPostDestination(target)).rejects.toMatchObject({ status: 409 });
+    expect(calls.every((call) => call.method === "GET")).toBe(true);
+    expect(calls).toHaveLength(2);
   });
 
-  it("reports an accepted-but-unproven post as processing with the provider's own post id", async () => {
-    stubEnv({ ZERNIO_API_KEY: "zk_test" });
-    serve([
-      { body: [{ _id: "zp_9", externalId: KEY }] },
-      { status: 201, body: { message: "created", post: { id: "zp_post_3", status: "publishing" } } },
-    ]);
-    await expect(zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "instagram", text: "Hi", externalId: PUB }))
-      .resolves.toEqual({ kind: "processing", requestId: "zp_post_3" });
+  it.each([{ _id: "another-account" }, { platform: "telegram" }, { channelId: undefined }])(
+    "refuses settings that fail to confirm the exact Discord account and channel (%j)", async (overrides) => {
+      serve([profile, { body: { accounts: [account] } }, { body: { account: { ...discordSettings.account, ...overrides } } }]);
+      await expect(zernioSocialAdapter.readPostDestination(target)).rejects.toMatchObject({ code: "destination_unverified" });
+    },
+  );
+
+  it("posts one account/channel object and reads the native post ID and link from post.platforms", async () => {
+    const calls = serve([{ status: 201, body: { post: published } }]);
+    const result = await zernioSocialAdapter.createPost(target);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toMatch(/\/posts$/);
+    expect(calls[0].headers["idempotency-key"]).toBe(target.externalId);
+    expect(JSON.parse(calls[0].body!)).toEqual({
+      content: target.text, publishNow: true, metadata: { paigePublicationId: target.externalId },
+      tags: [`paige-publication-${target.externalId}`],
+      platforms: [{ platform: "discord", accountId: target.providerAccountId, platformSpecificData: { channelId } }],
+    });
+    expect(result).toMatchObject({
+      kind: "published", requestId: providerPostId,
+      results: [{ success: true, postId: "4455667788990011223", postUrl: url }],
+    });
   });
 
-  it("refuses to guess when the answer proves nothing", async () => {
-    stubEnv({ ZERNIO_API_KEY: "zk_test" });
-    serve([
-      { body: [{ _id: "zp_9", externalId: KEY }] },
-      { status: 201, body: { message: "created", post: { id: "zp_post_4" } } },
-    ]);
-    await expect(zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "x", text: "Hi", externalId: PUB }))
-      .resolves.toEqual({ kind: "unknown", requestId: "zp_post_4", reason: "provider_answered_without_results" });
+  it("uses the Telegram account and posts literal approved text through its HTML parser", async () => {
+    const calls = serve([{ status: 201, body: { post: { _id: providerPostId, status: "published", platforms: [
+      { platform: "telegram", status: "published", platformPostUrl: "https://t.me/fixture/42" },
+    ] } } }]);
+    await expect(zernioSocialAdapter.createPost({ ...target, platform: "telegram", channelId: null, text: "A & <B>" }))
+      .resolves.toMatchObject({ kind: "published", results: [{ success: true }] });
+    expect(JSON.parse(calls[0].body!)).toMatchObject({
+      content: "A &amp; &lt;B&gt;", platforms: [
+        { platform: "telegram", accountId: target.providerAccountId, platformSpecificData: { parseMode: "HTML" } },
+      ],
+    });
   });
 
-  it("treats a 409 as an uncertain outcome for reconciliation, never a clean failure", async () => {
-    stubEnv({ ZERNIO_API_KEY: "zk_test" });
+  it("keeps internal publication tags out of YouTube's published keyword field", async () => {
+    const calls = serve([{ status: 400, body: { code: "video_required" } }]);
+    await expect(zernioSocialAdapter.createPost({ ...target, platform: "youtube", channelId: null }))
+      .rejects.toMatchObject({ status: 400 });
+    expect(JSON.parse(calls[0].body!)).not.toHaveProperty("tags");
+  });
+
+  it.each(["facebook", "linkedin", "google_business", "pinterest"])(
+    "refuses to post to an unpinned provider default on %s", async (platform) => {
+      const fetchSpy = vi.fn();
+      vi.stubGlobal("fetch", fetchSpy);
+      const input = { ...target, platform, channelId: null };
+      await expect(zernioSocialAdapter.readPostDestination(input)).rejects.toMatchObject({ code: "destination_selection_unavailable" });
+      await expect(zernioSocialAdapter.createPost(input)).rejects.toMatchObject({ code: "destination_selection_unavailable" });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    },
+  );
+
+  it("keeps processing, per-target failure, malformed response and transport failure separate", async () => {
     serve([
-      { body: [{ _id: "zp_9", externalId: KEY }] },
+      { status: 202, body: { post: { ...published, status: "publishing", platforms: [
+        { ...published.platforms[0], status: "processing", platformPostUrl: null },
+      ] } } },
+      { status: 207, body: { post: { ...published, status: "failed", platforms: [
+        { ...published.platforms[0], status: "failed", errorMessage: "Bot cannot post to this channel." },
+      ] } } },
+      { status: 403, body: { error: "account disconnected" } },
       { status: 409, body: { code: "idempotency_conflict" } },
+      { status: 500 }, { status: 503 },
+      { status: 200, body: { post: { id: providerPostId }, platformResults: published.platforms } },
     ]);
-    await expect(zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "x", text: "Hi", externalId: PUB }))
-      .resolves.toEqual({ kind: "unknown", requestId: null, reason: "provider_idempotency_or_dedup_conflict" });
+    await expect(zernioSocialAdapter.createPost(target)).resolves.toEqual({ kind: "processing", requestId: providerPostId });
+    await expect(zernioSocialAdapter.createPost(target)).resolves.toMatchObject({ kind: "published", results: [{ success: false, error: "provider_rejected" }] });
+    await expect(zernioSocialAdapter.createPost(target)).rejects.toMatchObject({ status: 403, code: "provider_authorization_rejected" });
+    for (let i = 0; i < 4; i += 1) {
+      await expect(zernioSocialAdapter.createPost(target)).resolves.toMatchObject({ kind: "unknown" });
+    }
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValueOnce(new Error("Timed out")));
+    await expect(zernioSocialAdapter.createPost(target)).resolves.toMatchObject({ kind: "unknown" });
   });
 
-  it("still throws the door's refusal families for provider authorization problems", async () => {
-    stubEnv({ ZERNIO_API_KEY: "zk_test" });
+  it("reconciles a lost response by tenant profile, account and exact publication metadata with GET only", async () => {
+    const calls = serve([
+      profile,
+      { body: { posts: [{ _id: "unrelated", metadata: {} }], pagination: { nextCursor: "next-page" } } },
+      { body: { posts: [{ _id: providerPostId, metadata: published.metadata }] } },
+      { body: { post: published } },
+    ]);
+    await expect(zernioSocialAdapter.readPost(target, null)).resolves.toMatchObject({ kind: "published", requestId: providerPostId });
+    const list = new URL(calls[1].url);
+    expect(list.searchParams.get("profileId")).toBe(profileId);
+    expect(list.searchParams.get("accountId")).toBe(target.providerAccountId);
+    expect(list.searchParams.get("tags")).toBe(`paige-publication-${target.externalId}`);
+    expect(new URL(calls[2].url).searchParams.get("cursor")).toBe("next-page");
+    expect(calls[3].url).toMatch(new RegExp(`/posts/${providerPostId}$`));
+    expect(calls.every((call) => call.method === "GET")).toBe(true);
+  });
+
+  it("distinguishes a documented duplicate-content rejection from an idempotency conflict", async () => {
+    const details = { accountId: target.providerAccountId, platform: target.platform, existingPostId: providerPostId };
     serve([
-      { body: [{ _id: "zp_9", externalId: KEY }] },
-      { status: 403, body: { code: "ACCOUNT_DISCONNECTED" } },
+      { status: 409, body: { details } },
+      { status: 409, body: { details, code: "idempotency_conflict" } },
+      { status: 409, body: { details: { ...details, accountId: "unrelated-account" } } },
     ]);
-    await expect(zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "x", text: "Hi", externalId: PUB }))
-      .rejects.toMatchObject({ code: "provider_authorization_rejected" });
+    await expect(zernioSocialAdapter.createPost(target)).rejects.toMatchObject({ status: 409, code: "provider_duplicate_content" });
+    await expect(zernioSocialAdapter.createPost(target)).resolves.toMatchObject({ kind: "unknown" });
+    await expect(zernioSocialAdapter.createPost(target)).resolves.toMatchObject({ kind: "unknown" });
   });
 
-  it("refuses a non-UUID publication id before any transport (idempotency key integrity)", async () => {
-    stubEnv({ ZERNIO_API_KEY: "zk_test" });
+  it.each([
+    { ...published, metadata: { paigePublicationId: "other-attempt" } },
+    { ...published, platforms: [{ ...published.platforms[0], accountId: "other-account" }] },
+    { ...published, platforms: [{ ...published.platforms[0], platformPostUrl: url.replace(channelId, "2222222222222222222") }] },
+    { ...published, platforms: [{ ...published.platforms[0], platformPostUrl: null }] },
+  ])("never claims a receipt from another attempt, account or Discord channel", async (post) => {
+    serve([{ body: { post } }]);
+    await expect(zernioSocialAdapter.readPost(target, providerPostId)).resolves.toMatchObject({
+      kind: "unknown", requestId: providerPostId,
+    });
+  });
+
+  it("refuses non-UUID publication IDs and unsupported platforms before transport", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
-    await expect(zernioSocialAdapter.createPost({ providerProfileKey: KEY, platform: "x", text: "Hi", externalId: "not-a-uuid" }))
+    await expect(zernioSocialAdapter.createPost({ ...target, externalId: "not-a-uuid" }))
       .rejects.toMatchObject({ code: "invalid_publication_id" });
+    await expect(zernioSocialAdapter.createPost({ ...target, platform: "google" }))
+      .rejects.toMatchObject({ code: "unsupported_post_platform" });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

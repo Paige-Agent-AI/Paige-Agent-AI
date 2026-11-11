@@ -14,12 +14,13 @@ import { resolveStudioCaller } from "../studio-caller.ts";
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../capability-record.ts";
 
 // deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- The existing Edge wrapper injects the two Supabase clients.
 type Client = any;
 
 export interface SocialPublishDeps {
   /** The caller's own client (anon key + their JWT). Never runs a write — writes are service-role. */
   caller: Client;
-  /** Service-role client: the piece read, the connection read, the approval store, the
+  /** Service-role client: the connection read, the approval store, the
    *  publication record, and the capability receipt. */
   admin: Client;
   adapter: Pick<SocialProviderAdapter, "key" | "isConfigured" | "readPostDestination" | "createPost" | "readPost">;
@@ -135,7 +136,9 @@ export async function handleSocialPublishCommand(req: Request, deps: SocialPubli
   const caption = typeof body.caption === "string" && body.caption.trim() ? body.caption.trim().slice(0, 2200) : null;
 
   // The piece must be THIS workspace's own — a foreign piece is not found, never adopted.
-  const pieceRead = await deps.admin.from("marketing_content")
+  // The protected library grants SELECT to the signed-in caller, not service_role.
+  // Keep the verified active workspace and explicit row predicates on this read.
+  const pieceRead = await deps.caller.from("marketing_content")
     .select("id,title,updated_at,status").eq("id", contentId).eq("tenant_id", tenantId).maybeSingle();
   const piece = object(pieceRead.data);
   if (pieceRead.error || !piece || typeof piece.updated_at !== "string" || piece.status === "archived") return respond(404, { ok: false, code: "CONTENT_NOT_FOUND", error: "That piece is not in this workspace." });
@@ -222,7 +225,7 @@ export async function handleSocialPublishCommand(req: Request, deps: SocialPubli
   const [currentCaller, currentAccount, currentPiece] = await Promise.all([
     resolveStudioCaller(deps.caller, tenantId),
     publishAccount(deps, tenantId, platform),
-    deps.admin.from("marketing_content").select("id,updated_at,status").eq("tenant_id", tenantId).eq("id", contentId).maybeSingle(),
+    deps.caller.from("marketing_content").select("id,updated_at,status").eq("tenant_id", tenantId).eq("id", contentId).maybeSingle(),
   ]);
   if (!currentCaller.ok || "code" in currentAccount || currentAccount.connectionId !== account.connectionId
       || currentAccount.accountId !== account.accountId || currentAccount.providerAccountId !== account.providerAccountId

@@ -17,6 +17,9 @@ CREATE TABLE public.marketing_content (
   id uuid PRIMARY KEY,
   tenant_id uuid NOT NULL REFERENCES public.tenants(id)
 );
+-- Match the production table privilege boundary for the door's two clients.
+-- This minimal fixture proves SELECT grants, not the complete library RLS policy set.
+GRANT SELECT ON public.marketing_content TO authenticated;
 CREATE FUNCTION public.is_tenant_member(target uuid) RETURNS boolean LANGUAGE sql STABLE AS
 $$ SELECT EXISTS (SELECT 1 FROM public.tenant_members m WHERE m.tenant_id = target AND m.user_id = auth.uid() AND m.status = 'active') $$;
 CREATE FUNCTION public.agency_can_manage_child(target uuid) RETURNS boolean LANGUAGE sql STABLE AS
@@ -76,6 +79,16 @@ DECLARE
   attempt public.content_publications;
   telegram public.content_publications;
 BEGIN
+  IF has_table_privilege('service_role', 'public.marketing_content', 'SELECT')
+    OR NOT has_table_privilege('authenticated', 'public.marketing_content', 'SELECT') THEN
+    RAISE EXCEPTION 'Protected content SELECT grants differ from the production boundary';
+  END IF;
+  IF pg_temp.run(owner_id, 'authenticated', 'authenticated',
+    $q$SELECT to_jsonb(count(*)) FROM public.marketing_content WHERE id = '00000000-0000-4000-8000-00000000f001'$q$)
+    IS DISTINCT FROM 'ok:1' THEN RAISE EXCEPTION 'The authenticated content reader lacks SELECT'; END IF;
+  IF pg_temp.run('', 'service_role', 'service_role',
+    $q$SELECT to_jsonb(count(*)) FROM public.marketing_content WHERE id = '00000000-0000-4000-8000-00000000f001'$q$)
+    NOT LIKE 'err:42501:%' THEN RAISE EXCEPTION 'Service role read the protected content table'; END IF;
   IF pg_temp.run(owner_id, 'authenticated', 'authenticated',
     $q$SELECT to_jsonb(connection_status) FROM public.get_social_presence_evidence(NULL) WHERE network = 'threads'$q$)
     IS DISTINCT FROM 'ok:"connected"' THEN RAISE EXCEPTION 'Connected Threads is missing from the native picker projection'; END IF;

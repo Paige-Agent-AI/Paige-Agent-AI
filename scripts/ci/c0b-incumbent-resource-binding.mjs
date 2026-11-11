@@ -1199,7 +1199,9 @@ const SOURCES = {
   "supabase/functions/_shared/paige-capability-status/render.ts": "63a15351e4f7af98544082c421c35af5d9eba2002d54150b2756b255bd131c58",
   "supabase/functions/_shared/checked-write.ts": "455d00e06fc6e84479ff8d0d5782288d21e4570d63d8e2e0acf770a5a8d5e95c",
   "supabase/functions/_shared/untrusted-fence.ts": "fc0ed34f9c564e4669b187a106756e860383ede74ae2bbb60f4b0a3944c7bf12",
-  "supabase/functions/paige-deep-research/index.ts": "a96323d61924dba10329189fd98c56d2638c0fdc79e9a83a28ad352b0043bbd6",
+  // C4e #3309: independently reviewed worker at 3e6d420bc. The original
+  // main pin and all 29 Chat dispatch bindings reproduced before renewal.
+  "supabase/functions/paige-deep-research/index.ts": "9478aee713cb60ca0a13b204a7cc1d13e4fc221fc68ca81855cd46e979efd910",
   "supabase/functions/paige-web-search/index.ts": "2606664401bb71708fe798afab7f1166648083131d1ccfa06f9123d1629b0dd2",
   "supabase/functions/_shared/research-source-policy.ts": "df0ca1d9f4ee256051ff51927500b25b5fd071a057a6d868c6448f6f852e144b",
   "supabase/functions/fetch-url-content/index.ts": "4e10fe5cd2e189ced5c0cf929586626297b7c9653b34f8a109eede4b88d2926b",

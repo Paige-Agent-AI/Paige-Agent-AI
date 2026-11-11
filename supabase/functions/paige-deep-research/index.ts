@@ -115,6 +115,8 @@ interface DeepResearchRequest {
   expected_tenant_id?: string;
   strict?: boolean;
   caller?: string;   // opaque provenance tag (e.g. "chat" | "manual" | an opted-in caller)
+  /** Service-only link to the original prepared Chat Work. */
+  durable_work?: { work_id: string; thread_id: string; intent_id: string; resume_only?: boolean };
   // A7 — caller-supplied flavor facets. An opt-in vertical surface may inject its
   // OWN extra search-facet templates (with `{name}`/`{site}` placeholders) that are
   // appended after the universal facets in dossier mode. The engine holds ZERO
@@ -211,6 +213,7 @@ interface DeepResearchResult {
   persistence_verified?: boolean;
   receipt_recorded?: boolean;
   receipt_outcome?: CapabilityOutcome;
+  receipt_id?: string;
   // Present ONLY in dossier mode (entity target detected) AND only when ≥1 typed
   // item survived the profile gate. Absent on the general path → back-compat.
   entity_profile?: EntityProfile;
@@ -1987,7 +1990,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   let t0 = Date.now();
-  const runId = crypto.randomUUID();
+  let runId: string = crypto.randomUUID();
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -2036,7 +2039,8 @@ serve(async (req) => {
   }
 
   const question = typeof body.question === "string" ? body.question.trim() : "";
-  if (!question || question.length < 3) return json({ error: "question is required (min 3 chars)" }, 400);
+  const resumeOnly = body.durable_work?.resume_only === true;
+  if (!resumeOnly && question.length < 3) return json({ error: "question is required (min 3 chars)" }, 400);
   if (!body.user_id || typeof body.user_id !== "string") return json({ error: "user_id is required" }, 400);
 
   const domainHint = typeof body.domain === "string" ? body.domain : "general";
@@ -2133,6 +2137,75 @@ serve(async (req) => {
   catch (error) { return json({ error: "Research identity or current workspace could not be verified.", not_applied: true },
     error instanceof ResearchScopeError ? error.status : 403); }
   const refuseChangedScope = () => json({ error: "Research workspace changed or access could not be verified. Earlier authorized work may have run; inspect the original workspace before repeating it.", outcome_unknown: true }, 409);
+
+  const work = body.durable_work;
+  if (work !== undefined && (!delegated || !work || !persist || body.client_user_id != null ||
+    (work.resume_only !== undefined && typeof work.resume_only !== "boolean") ||
+    (body.caller ?? "chat") !== "chat" || ![work.work_id, work.thread_id, work.intent_id]
+      .every(id => typeof id === "string" && UUID_RE.test(id)))) {
+    return json({ error: "Original Research work could not be verified.", not_applied: true }, 403);
+  }
+  // The incumbent v1 preparation contract cannot pin these optional filters.
+  // Refuse before dispatch rather than silently widening the user's sources.
+  if (work && (body.max_sources !== undefined || body.allowed_domains !== undefined)) {
+    return json({ error: "Checkpointed Research does not support these source filters.", not_applied: true }, 422);
+  }
+  const requestPayload = resumeOnly ? null : {
+    version: 1,
+    question: body.question,
+    domain: body.domain,
+    caller: body.caller,
+    max_hops: body.max_hops,
+    freshness_days: body.freshness_days,
+    strict: body.strict,
+    flavor_facets: body.flavor_facets,
+  };
+  const advanceWork = async (phase: "begin" | "resume" | "checkpoint" | "publish", version?: number,
+    checkpoint?: { report: DeepResearchResult; dossier: unknown }) => {
+    await assertResearchScope();
+    const { data, error } = await scopeAdmin.rpc("advance_paige_research_work", {
+      _work_id: work!.work_id, _tenant_id: lineageTenantId, _actor_id: body.user_id,
+      _thread_id: work!.thread_id, _intent_id: work!.intent_id, _request_payload: requestPayload,
+      _phase: phase, _version: version ?? null, _checkpoint: checkpoint ?? null,
+    });
+    if (error || !data) throw new Error("RESEARCH_WORK_UNCONFIRMED");
+    await assertResearchScope();
+    return data as { state: string; version?: number; result?: DeepResearchResult };
+  };
+  const workUnconfirmed = () => json({
+    run_id: runId, outcome_unknown: true,
+    error: "The original Research work could not be confirmed. Check its status before starting new research.",
+  }, 409);
+  const publishCheckpoint = async (): Promise<DeepResearchResult> => {
+    const publication = await advanceWork("publish");
+    if (publication.state !== "complete" || publication.result?.run_id !== runId ||
+      !publication.result.persistence_verified || !publication.result.receipt_recorded ||
+      !publication.result.receipt_id) throw new Error("RESEARCH_PUBLICATION_UNCONFIRMED");
+    return publication.result;
+  };
+  let workVersion: number | undefined;
+  if (work) {
+    runId = work.work_id;
+    try {
+      const begin = await advanceWork(resumeOnly ? "resume" : "begin");
+      if (begin.state === "ready") return json(await publishCheckpoint());
+      if (begin.state === "complete" && begin.result?.run_id === runId && begin.result.receipt_id) return json(begin.result);
+      if (begin.state === "in_progress") return json({ run_id: runId, research_state: "in_progress" }, 202);
+      if (resumeOnly || begin.state !== "execute" || !Number.isSafeInteger(begin.version)) return workUnconfirmed();
+      workVersion = begin.version;
+    } catch {
+      return workUnconfirmed();
+    }
+  }
+  const saveResult = async (result: DeepResearchResult, dossier: unknown): Promise<DeepResearchResult> => {
+    if (work) {
+      const checkpoint = await advanceWork("checkpoint", workVersion, { report: result, dossier });
+      if (checkpoint.state !== "ready") throw new Error("RESEARCH_CHECKPOINT_UNCONFIRMED");
+      return await publishCheckpoint();
+    }
+    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+    return result;
+  };
 
   // Immutable native context per phase. Match the existing provider's 120s maximum,
   // narrowed by the incumbent gathering/synthesis deadline; never renew an expired
@@ -2325,11 +2398,13 @@ serve(async (req) => {
 
   // Unconfigured → no synthesis, findings [], persist NOTHING (test iii).
   if (!configured) {
-    await assertResearchScope();
-    return json(buildResult(
+    const result = buildResult(
       [], "unconfigured",
       "Live web search is not connected, so no sources could be gathered. No facts were produced — nothing was invented.",
-    ));
+    );
+    const saved = work ? await saveResult(result, dossier) : result;
+    await assertResearchScope();
+    return json(saved);
   }
 
   // No citable sources at all → honest-empty. Persist an audit run (attempt happened).
@@ -2340,9 +2415,9 @@ serve(async (req) => {
         ? "Search ran but returned no results. No verifiable sources, so no findings — nothing was fabricated."
         : "Sources were found but none met the reliability bar. No findings produced rather than surface unverifiable claims.",
     );
-    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+    const saved = await saveResult(result, dossier);
     await assertResearchScope();
-    return json(result);
+    return json(saved);
   }
 
   // ── SYNTHESIZE — exactly ONE Claude reasoning call (A9) ───────────────────
@@ -2357,9 +2432,9 @@ serve(async (req) => {
     const mono = await synthesize(question, domainHint, citable, entityTarget, { ...fabricCtx, ...modelContext(t0 + BND.WALL_CLOCK_MS + 110_000) });
     if (!mono) {
       const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
-      if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+      const saved = await saveResult(result, dossier);
       await assertResearchScope();
-      return json(result);
+      return json(saved);
     }
     // R6-B: the fabric's closed served-route projection on the dossier record (absent on
     // the dormant flag-off path).
@@ -2400,9 +2475,9 @@ serve(async (req) => {
     // all units failed at the transport level = the monolithic failure class (honest error)
     if (perUnit.length > 0 && perUnit.every((pu) => pu.out === null)) {
       const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
-      if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+      const saved = await saveResult(result, dossier);
       await assertResearchScope();
-      return json(result);
+      return json(saved);
     }
   }
   dossier.synthesis.returned = true;
@@ -2443,11 +2518,12 @@ serve(async (req) => {
     result.coverage.unverified_notes = entityProfile.unverified_notes;
   }
   await assertResearchScope();
-  if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+  const saved = await saveResult(result, dossier);
   await assertResearchScope();
-  return json(result);
+  return json(saved);
   } catch (e) {
     if (e instanceof ResearchScopeError) return refuseChangedScope();
+    if (work) return workUnconfirmed();
     // Error responses also carry identity/evidence. Persistence is optional,
     // while authorization immediately before returning any result is not.
     try { await assertResearchScope(); }

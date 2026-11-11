@@ -5,11 +5,10 @@ import { isSoloStandalone } from "../solo-classification.ts";
 // approval or receipt store. actorId must come from that door's getUser().
 type QueryResult = { data: unknown; error: unknown };
 interface ReadQuery {
-  select(columns: string): ReadQuery;
   eq(field: string, value: unknown): ReadQuery;
   maybeSingle(): PromiseLike<QueryResult>;
 }
-type Client = { from(table: string): ReadQuery; rpc(name: string): PromiseLike<QueryResult> };
+export type OpportunityReadClient = { from(table: string): { select(columns: string): ReadQuery }; rpc(name: string, args?: Record<string, unknown>): PromiseLike<QueryResult> };
 type Answer = { status: number; body: Record<string, unknown> };
 const object = (v: unknown): Record<string, unknown> | null =>
   v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;
@@ -22,7 +21,7 @@ const refused = (): Answer => ({ status: 403, body: { ok: false, outcome: "refus
 const notFound = (): Answer => ({ status: 404, body: { ok: false, outcome: "not_found", code: "CRM_RESULT_NOT_FOUND" } });
 
 export async function inspectOpportunityResult(input: {
-  raw: unknown; actorId: string; caller: Client; admin: Client;
+  raw: unknown; actorId: string; caller: OpportunityReadClient; admin: OpportunityReadClient;
 }): Promise<Answer> {
   const raw = object(input.raw), requested = object(raw?.inspect_opportunity_result);
   const tenantId = uuid(raw?.expected_tenant_id), actorId = uuid(input.actorId);

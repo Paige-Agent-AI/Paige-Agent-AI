@@ -431,7 +431,12 @@ jobs:
 
       - name: Install Chromium for the Secure Browser hostile-page proof
         if: ${{ !cancelled() }}
-        run: npx playwright install --with-deps chromium
+        run: |
+          npx playwright install chromium
+          if ! node --input-type=module -e 'import { chromium } from "playwright"; const browser = await chromium.launch({ headless: true }); await browser.close();'; then
+            npx playwright install --with-deps chromium
+            node --input-type=module -e 'import { chromium } from "playwright"; const browser = await chromium.launch({ headless: true }); await browser.close();'
+          fi
 
       - name: Secure Browser hostile-page egress proof (reads pass; writes, beacon, WebSockets, service workers stop)
         if: ${{ !cancelled() }}

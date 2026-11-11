@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { PaigeResearchCard, type PaigeResearchResult } from "@/components/paige/chat/PaigeResearchCard";
 import { supabase } from "@/integrations/supabase/client";
 import { readResearchHistoryRun } from "@/lib/paigeResearchReadback";
+import { keepPrivateResearchWork } from "@/lib/privateDocumentWorkHandoff";
 import { CHAT_CONTROL_HEADER, chatControlRetryDelay } from "../../../supabase/functions/_shared/paige-turn/control-transport";
 import { readOriginalResearchWork, type OriginalResearchReference, type ResearchWorkRead } from "./researchWorkRecovery";
 
@@ -17,18 +18,21 @@ type Result = Exclude<ResearchWorkRead, { state: "verified" }>
   | { state: "verified"; receiptRef: string; report: PaigeResearchResult };
 
 /** Status remains read-only. Publication recovery requires a separate explicit action. */
-export function OriginalResearchWork({ reference, actorId, tenantId, current }: {
+export function OriginalResearchWork({ reference, actorId, tenantId, current, surface = "chat" }: {
   reference: OriginalResearchReference;
   actorId: string;
   tenantId: string;
   current(): boolean;
+  surface?: "chat" | "team-hub";
 }) {
   const [result, setResult] = useState<Result | "checking">();
+  const [handoffSaved, setHandoffSaved] = useState<boolean>();
+  const [keeping, setKeeping] = useState(false);
   const inFlight = useRef<AbortController | null>(null);
   const retryAt = useRef(0);
   useLayoutEffect(() => () => { inFlight.current?.abort(); inFlight.current = null; }, []);
 
-  async function check(resume = false) {
+  async function check(resume = false, keep = false) {
     if (!current() || inFlight.current) return;
     if (Date.now() < retryAt.current) { setResult({ state: "unknown" }); return; }
     const controller = new AbortController();
@@ -36,6 +40,12 @@ export function OriginalResearchWork({ reference, actorId, tenantId, current }: 
     const stillCurrent = () => current() && !controller.signal.aborted && inFlight.current === controller;
     const unknown = { state: "unknown" } as const;
     setResult("checking");
+    setHandoffSaved(undefined);
+    setKeeping(keep);
+    const keepCurrentReference = () => {
+      if (keep && surface === "chat" && stillCurrent())
+        setHandoffSaved(keepPrivateResearchWork(actorId, tenantId, reference));
+    };
     try {
       const authority = async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -87,7 +97,10 @@ export function OriginalResearchWork({ reference, actorId, tenantId, current }: 
         if (!await authority()) { if (stillCurrent()) setResult(unknown); return; }
         if (!stillCurrent()) return;
       }
-      if (first.state !== "verified") { setResult(first); return; }
+      if (first.state !== "verified") {
+        if (first.state === "pending") keepCurrentReference();
+        setResult(first); return;
+      }
       const read = await supabase.rpc("get_workspace_research_run", { _run_id: first.resultRef })
         .abortSignal(controller.signal);
       if (!stillCurrent()) return;
@@ -99,11 +112,16 @@ export function OriginalResearchWork({ reference, actorId, tenantId, current }: 
       if (!stillCurrent()) return;
       const authorized = await authority();
       if (!stillCurrent()) return;
-      setResult(authorized && last.state === "verified" && last.resultRef === first.resultRef &&
-        last.receiptRef === first.receiptRef
+      const verified = authorized && last.state === "verified" && last.resultRef === first.resultRef &&
+        last.receiptRef === first.receiptRef;
+      if (verified) keepCurrentReference();
+      setResult(verified
         ? { state: "verified", receiptRef: first.receiptRef, report: { ...report, saved: true } } : unknown);
     } catch { if (stillCurrent()) setResult(unknown); }
-    finally { if (inFlight.current === controller) inFlight.current = null; }
+    finally {
+      if (stillCurrent()) setKeeping(false);
+      if (inFlight.current === controller) inFlight.current = null;
+    }
   }
 
   return <section aria-label="Original research job" className="mt-3 border-t border-border pt-3">
@@ -123,5 +141,15 @@ export function OriginalResearchWork({ reference, actorId, tenantId, current }: 
       <p className="break-all text-xs text-muted-foreground">Original receipt {result.receiptRef}</p>
       <PaigeResearchCard result={result.report} />
     </div> : <p role="status" className="mt-2 text-sm text-muted-foreground">{labels[result.state]}</p>)}
+    {surface === "chat" && (keeping || (result && result !== "checking" &&
+      (result.state === "pending" || result.state === "verified"))) && <div className="mt-2 space-y-2">
+        <Button type="button" variant="outline" size="sm" className="min-h-11 max-w-full whitespace-normal text-left"
+          aria-disabled={keeping || undefined} aria-busy={keeping || undefined}
+          onClick={() => void check(false, true)}>{keeping ? "Checking original research…" : "Keep in Team Hub"}</Button>
+        {handoffSaved !== undefined && <p role="status" className="text-xs text-muted-foreground">
+          {handoffSaved ? "Saved in this tab. In Team Hub, open Saved PAIGE work."
+            : "This tab could not save the reference. Try again."}
+        </p>}
+      </div>}
   </section>;
 }

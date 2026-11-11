@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ChevronDown, Lock } from "lucide-react";
 import { OriginalDocumentWork } from "@/components/chat/OriginalDocumentWork";
+import { OriginalResearchWork } from "@/components/chat/OriginalResearchWork";
 import {
   clearPrivateDocumentWork,
   parsePrivateDocumentWork,
@@ -20,6 +21,7 @@ export function PrivateDocumentWork({ actorId, tenantId }: { actorId: string; te
   const [removeFailed, setRemoveFailed] = useState(false);
   const summary = useRef<HTMLElement>(null);
   const mounted = useRef(false);
+  const controlKey = `${actorId}:${tenantId}:${snapshot}`;
   useLayoutEffect(() => {
     mounted.current = true;
     return () => { mounted.current = false; };
@@ -34,19 +36,26 @@ export function PrivateDocumentWork({ actorId, tenantId }: { actorId: string; te
       </summary>
       <div className="min-w-0 px-2 py-2">
         <p className="th-note">
-          Saved references stay in this tab. Access is checked when you reopen them.
+          Your last kept reference stays in this tab. Access is checked when reopened.
         </p>
         {open && (snapshot && reference ? (
           <>
-            <OriginalDocumentWork
-              key={snapshot}
+            {reference.kind === "research" ? <OriginalResearchWork
+              key={controlKey}
+              surface="team-hub"
+              reference={reference}
+              actorId={actorId}
+              tenantId={tenantId}
+              current={() => mounted.current && privateDocumentWorkSnapshot(actorId, tenantId) === snapshot}
+            /> : <OriginalDocumentWork
+              key={controlKey}
               surface="team-hub"
               reference={reference}
               actorId={actorId}
               tenantId={tenantId}
               current={() => mounted.current && privateDocumentWorkSnapshot(actorId, tenantId) === snapshot}
               artifacts={[]}
-            />
+            />}
             <button
               type="button"
               className="th-btn mt-2"
@@ -60,7 +69,7 @@ export function PrivateDocumentWork({ actorId, tenantId }: { actorId: string; te
             </button>
             {removeFailed && <p className="th-note" role="status">The saved reference could not be removed. Try again.</p>}
           </>
-        ) : <p className="th-note">In PAIGE Chat, check an original document job and choose Keep in Team Hub.</p>)}
+        ) : <p className="th-note">In PAIGE Chat, check an original document or research job and choose Keep in Team Hub.</p>)}
       </div>
     </details>
   );

@@ -128,6 +128,27 @@ describe("ordinary Chat history restores existing Research through its governed 
     });
   };
   const cards = () => Array.from(host.querySelectorAll<HTMLElement>("[data-research-card]"));
+
+  it("mounts an inert original Research status control from the protected accepted message after reopening", async () => {
+    const thread = "00000000-0000-4000-8000-000000000001";
+    const intent = "00000000-0000-4000-8000-000000000002";
+    const work = "00000000-0000-4000-8000-000000000003";
+    port.turns = [{ id: "accepted-research", role: "assistant", content: "Research accepted.",
+      interactive_intent_id: intent, interactive_terminal_state: "WAIT_WORK",
+      bundle_ref: { turn_state: { v: 1, state: "WAIT_WORK" }, interactive: { request_intent_id: intent,
+        effects: [{ tool: "deep_research", outcome: "durable_accepted", work_id: work }] } } }];
+    await render(thread);
+    expect(host.querySelector('[aria-label="Original research job"]')?.textContent).toContain("Check original research status");
+    expect(host.querySelector('[aria-label="Original document job"]')).toBeNull();
+    expect(port.read).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+    root = createRoot(host);
+    await render(thread);
+    expect(host.querySelector('[aria-label="Original research job"]')).not.toBeNull();
+    expect(port.read).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
   const unavailable = () => {
     expect(host.textContent).toContain("Unavailable");
     expect(host.textContent).not.toContain("Reloading");

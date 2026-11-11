@@ -133,9 +133,10 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
   const review = useRef<HTMLDivElement>(null), retryButton = useRef<HTMLButtonElement>(null);
   const retryRequested = useRef(false);
   const [readAttempt, setReadAttempt] = useState(0);
+  const documentOpeningBlocked = isDoc && openDocument !== null && !openDocument.ready;
   const openPreview = (event: MouseEvent<HTMLButtonElement>) => {
     if (isDoc && openDocument) {
-      openDocument({ id: artifact.id, title: artifact.title, tenantId }, event.currentTarget);
+      if (openDocument.ready) openDocument.open({ id: artifact.id, title: artifact.title, tenantId }, event.currentTarget);
       return;
     }
     opener.current = { element: event.currentTarget, identity };
@@ -246,6 +247,7 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
           <button
             type="button"
             onClick={openPreview}
+            disabled={documentOpeningBlocked}
             aria-label={`Open ${artifact.title}`}
             className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
           />
@@ -261,9 +263,9 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
           </p>
 
           <div className="mt-auto flex items-center gap-2 pt-2.5">
-            <Button variant="outline" size="sm" className="h-11 gap-1.5 px-3" onClick={openPreview}>
+            <Button variant="outline" size="sm" className="h-11 gap-1.5 px-3" disabled={documentOpeningBlocked} onClick={openPreview}>
               <Eye className="h-3.5 w-3.5" aria-hidden />
-              Open
+              {documentOpeningBlocked ? "Opening chat…" : "Open"}
             </Button>
             {/* GOLD — the single act. Rendered only when the host wired sending (never a dead button). */}
             {onSend && (

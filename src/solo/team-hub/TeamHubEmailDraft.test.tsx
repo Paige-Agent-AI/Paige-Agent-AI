@@ -34,8 +34,8 @@ it("one explicit Save hands off only selected original IDs; truthful receipt lin
     .mockResolvedValueOnce({ok:true,outcome:"saved",message_id:message,result});
   await render();await click("Choose recipient and email account");await click("Choose existing contact");await click("Save unsent email");
   expect(invoke.mock.calls[1][0]).toEqual({messageId:message,intent:"save",contactId:contact,connectorId:connector});
-  expect(host.textContent).toContain("Saved unsent in Messages");
-  const link=host.querySelector<HTMLAnchorElement>("a");expect(link?.textContent).toContain("Open draft");
+  expect(host.textContent).toContain("Saved in Messages");
+  const link=host.querySelector<HTMLAnchorElement>("a");expect(link?.textContent).toContain("Open email");
   expect(link?.getAttribute("href")).toContain(`email_draft=${source}`);expect(link?.getAttribute("href")).toContain(`hub_message=${message}`);
   expect(host.textContent).not.toContain("Delivered");
 });
@@ -44,7 +44,7 @@ it("a reconstructed bound request first checks; unknown never claims success and
   await render({...base,contactId:contact,connectorId:connector});
   expect(invoke).not.toHaveBeenCalled();await click("Check saved status");
   expect(invoke.mock.calls[0][0]).toEqual({messageId:message,intent:"check"});
-  expect(host.textContent).toContain("The save isn’t confirmed.");expect(host.textContent).not.toContain("Saved unsent in Messages");
+  expect(host.textContent).toContain("The save isn’t confirmed.");expect(host.textContent).not.toContain("Saved in Messages");
   await click("Retry same save");expect(invoke.mock.calls[1][0]).toEqual({messageId:message,intent:"save",contactId:contact,connectorId:connector});
 });
 it("no permitted mailbox and an unavailable read remain distinct and invoke no Save",async()=>{

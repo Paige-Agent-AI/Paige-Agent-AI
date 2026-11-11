@@ -33,7 +33,7 @@ const saved = { error: null, data: { id: "document", title: "Office Plant Checkl
 
 function Card({ document = target }: { document?: typeof target }) {
   const open = usePaigeDocumentWindow();
-  return <button onClick={event => open?.(document, event.currentTarget)}>Open</button>;
+  return <button onClick={event => open?.ready && open.open(document, event.currentTarget)}>Open</button>;
 }
 
 describe("saved document window", () => {

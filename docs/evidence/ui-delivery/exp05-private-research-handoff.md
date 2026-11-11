@@ -127,3 +127,32 @@ exact-head hosted CI remain required. Both original review findings remain open
 until the corrected source is verified; no live recovery/charge or owner-accepted
 outcome is inferred. The ONE shared approved run/fault stays unused until the
 corrected Chat and Hub receiving source are actually deployed/read back.
+
+## Incoming main dd9 composition
+
+During final old282d CI, original EXP07 release3331 reached main asdd9d8014.
+Old282d ultimately passed all11 checks and both web statuses; those remain
+historical, not verification of the new union. Actual main was fetched and all
+16 incoming paths preserved. The index merged to25c08332: relative to E1's
+reviewed3484 source, only the exact two-line Social attribution was added;
+relative to main71392a74, only E1's unchanged seven-line lost-response catch.
+The original host, Keep/helper, current-authority and private Document contracts
+remain unchanged. E1 explicitly acknowledged this composition in ANT-6/c1ee4d7f.
+
+ONLY29 verifier literal conflicts existed. Immutable pre-renewal sourcecee7a57b
+retained actual main's reviewed scalar baseline and all131 dependency pins.
+The real original86-case suite then correctly refused the stale positive binding
+(1 FAIL/85 PASS); every original negative still passed. The same existing distinct
+NON-AUTHOR reviewer independently cleared the exact runtime/inverse and all29
+explicit main-to-union pairs BEFORE renewal, receiptf5e36cf5929ae32ee68a0e4cee56a41626f4d6b0fd991b2ee49bb12c9c68c874.
+Only those29 scalars and seven factual history lines were applied; their full
+inverse restorescee7 byte-exact. No inspector, metadata, validator, hostile test
+or current-main dependency pin was edited by EXP05.
+
+Source42dcc016/treea97ff902 then passed all86 original restrictive controls.
+Normal metadata-only merge47bab302 preserved published282d ancestry with the
+SAME tree; actual focused154 tests across eight original/private/Social suites
+passed serially. These are source/controlled proofs, not a paid run or live
+result. Final current-head non-author review, fresh required CI and normal
+Chat/web deployment/readback remain owed. The one original approved run/fault
+stays unused until the corrected source is actually live.

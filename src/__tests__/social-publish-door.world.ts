@@ -31,6 +31,8 @@ export interface WorldOptions {
   manages?: boolean;
   lane?: string;
   laneError?: boolean;
+  canonicalLane?: string;
+  canonicalLaneError?: boolean;
   adapterConfigured?: boolean;
   /** The adapter's createPost answer, or a function of its input. */
   createPost?: (input: SocialPostInput) => SocialProviderPostOutcome;
@@ -102,9 +104,15 @@ export function world(o: WorldOptions = {}) {
   const from = (table: string, client: "caller" | "admin") => {
     const filters: Filter[] = [];
     let update: Row | null = null;
+    let inserted: Row | null = null;
     let single = false;
     const run = () => {
       const rows = tables[table] ?? (tables[table] = []);
+      if (inserted) {
+        rows.push({ id: crypto.randomUUID(), consumed_at: null,
+          expires_at: new Date(Date.now() + 600000).toISOString(), ...inserted });
+        inserted = null;
+      }
       seen.reads.push({ table, filters: [...filters], client });
       // Production grants authenticated SELECT, but service_role has no table SELECT.
       // BYPASSRLS does not supply a missing grant. Keep the clients distinct in this world.
@@ -126,6 +134,7 @@ export function world(o: WorldOptions = {}) {
       not: (c: string, op: string, v: unknown) => { filters.push(["not", c, op, v]); return q; },
       gt: (c: string, v: unknown) => { filters.push(["gt", c, v]); return q; },
       update: (patch: Row) => { update = patch; return q; },
+      insert: (row: Row) => { inserted = row; return q; },
       maybeSingle: () => { single = true; return q; },
       then: (ok: (v: unknown) => unknown, bad: (e: unknown) => unknown) => Promise.resolve(run()).then(ok, bad),
     };
@@ -140,7 +149,12 @@ export function world(o: WorldOptions = {}) {
       if (fn === "current_user_tenant_id") return { data: o.active === undefined ? MINE : o.active, error: null };
       if (fn === "is_tenant_admin") return { data: o.admin !== false, error: null };
       if (fn === "agency_can_manage_child") return { data: o.manages === true, error: null };
-      if (fn === "resolve_tool_autonomy") return o.laneError ? { data: null, error: { message: "down" } } : { data: o.lane ?? "confirm", error: null };
+      if (fn === "resolve_tool_autonomy") {
+        const canonical = args?._tool_key === "social_post_publish";
+        return o.laneError || (canonical && o.canonicalLaneError)
+          ? { data: null, error: { message: "down" } }
+          : { data: canonical ? o.canonicalLane ?? o.lane ?? "confirm" : o.lane ?? "confirm", error: null };
+      }
       return { data: null, error: { code: "PGRST202", message: `no rpc ${fn}` } };
     },
   };

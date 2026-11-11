@@ -16,10 +16,10 @@ KEYBOARD_FOCUS: UNVERIFIED: Native buttons, links, disclosure semantics and visi
 ZOOM_REFLOW: UNVERIFIED: Inline wrapping uses original container; actual native zoom and original-shell viewport geometry are not yet measured.
 REDUCED_MOTION: PASS: This change adds no animation; original disclosure and scroll owner remain unchanged.
 STATE_COVERAGE: PASS: Closed/loading/verified/refused/not-found/unavailable/timeout/read retry/collapse/unmount/user-workspace retirement/storage refusal/late result and clock response covered with original consumers.
-TRUTHFUL_STATE_LABELS: PASS: Original receipt is shown only after current authorized inspection; unknown never offers an update or approval retry. Kept locator is explicitly private and tab-local, replacing the last reference.
+TRUTHFUL_STATE_LABELS: UNVERIFIED: Actual released current-permission receipt labels need genuine customer verification; fixture refusals never offer a mutation and kept references are explicitly private and tab-local.
 SOLO_UI: YES: Existing PAIGE CRM result card and Team Hub Saved PAIGE work disclosure, available through standard current workspace context rather than named-account branches.
 UNVERIFIED: Production release, exact-head final review/CI, native and Edge source readback, real customer update/interruption/reload/reopen, actual shell keyboard/zoom and role/cohort acceptance remain owed.
-INTERNAL_BUILD_IDENTITY: d3fce2b9ae56b0304bf0a7074e148e3a951f049f; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=UNVERIFIED; evidence=original journey14.62 and owning source tests.
+INTERNAL_BUILD_IDENTITY: d3fce2b9ae56b0304bf0a7074e148e3a951f049f; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original CRM command and Chat functions require normal production release and source readback); evidence=original journey14.62 and owning source tests.
 RELEASE_CHANNEL: development: original CRM/Chat/private Hub integration not yet released.
 RELEASE_CLASSIFICATION: patch: preserve original native update receipt identity and add guarded original receipt reopening; no new mutation or provider capability.
 CUSTOMER_RELEASE_IDENTITY: none: internal selected-outcome repair, no announcement or version assigned.

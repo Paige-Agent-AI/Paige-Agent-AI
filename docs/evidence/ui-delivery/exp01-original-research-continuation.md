@@ -137,3 +137,23 @@ and filter verbatim. All17 original Team Hub wiring tests and32 actual Research
 dispatch tests PASS after correction. The failed required job130295203440 is
 retained; its skipped native steps are not called PASS. Fresh successor review and
 hosted exact-head gates remain required.
+
+Published b42's required Spine self-test/C0b proof also genuinely failed because
+the frozen incumbent fingerprints preceded this reviewed Research integration.
+NON-AUTHOR pre-renewal inspection reproduced all29 original scalars on155a and
+currentmaina841. All prior dominating controls remain exact/ordered; one accepted
+Research refusal is additive. Only enclosing identity[15] changes among identity
+components;28 dispatch/helper/import sets are exact. The Research branch has the
+already-reviewed original preparation/binding/readback and research-work import;
+the original traversal also captures the unchanged aborted helper. Renewal is
+therefore NOT labeled identity-only. Only29 exact CONTRACTS fingerprint scalars
+and a factual receipt change; metadata, source pins, inspector, validator and
+hostile controls remain exact. Local original registry self-test PASS. Current
+maina841's eight incoming paths are conserved unchanged. Final successor review,
+hosted CI/native26 release and actual live proof remain mandatory. All86 original
+incumbent authority/hostile controls PASS after this exact scalar renewal. The
+separate b42 INT336 workflow step also reported FAIL; every constituent command
+has now passed locally (including29 isolated Deno tests and22 subsequent actual
+handler/control commands), but the running hosted job has not yet made its log
+available. Its actual failure is not waived or relabeled PASS; inspect the log
+and pass the fresh successor exact-head gate before release.

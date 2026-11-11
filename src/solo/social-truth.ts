@@ -86,6 +86,7 @@ export const SOCIAL_NETWORKS = [
   { key: "youtube", label: "YouTube", hint: "@yourbusiness" },
   { key: "tiktok", label: "TikTok", hint: "@yourbusiness" },
   { key: "x", label: "X", hint: "@yourbusiness" },
+  { key: "threads", label: "Threads", hint: "@yourbusiness" },
   // The provider's messaging post targets (owner 2026-11-06: connected Discord and
   // Telegram channels become publishable). Readiness still comes from the presence
   // read alone — an unconnected channel says "Not connected", never "probably fine".

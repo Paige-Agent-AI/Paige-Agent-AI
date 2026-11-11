@@ -136,6 +136,7 @@ export const TOOL_MAP: Readonly<Record<string, { capability: CapabilityKey; risk
   growth_funnel_unpublish: { capability: "content", risk: "high" },
   studio_image_publish: { capability: "content", risk: "high" },
   studio_image_unpublish: { capability: "content", risk: "high" },
+  social_post_publish: { capability: "content", risk: "high" },
 
   // ── Automations & connected apps ──────────────────────────────────────────────────────────
   n8n_run_workflow: { capability: "autos", risk: "high" },

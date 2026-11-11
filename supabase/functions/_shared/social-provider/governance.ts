@@ -4,6 +4,8 @@ import {
   type GovernedDecision,
 } from "../paige-spine/governedExecution.ts";
 
+const SOCIAL_PUBLICATION_ACTION_RISK_KEY = "social_post_publish";
+
 type Query = {
   select(...args: unknown[]): Query;
   insert(...args: unknown[]): Query;
@@ -49,14 +51,24 @@ export async function governSocialMutation(input: {
   summary: string;
   approvedFingerprint?: string | null;
 }): Promise<SocialGovernanceResult> {
+  // The proposal identity stays namespaced. The shared decision API requires the
+  // canonical action-risk key, as Capability Kit does. This server-owned mapping
+  // grants no claim: the original stored-identity CAS below must still succeed.
+  const actionRiskKey = input.capability === "social.post_publish"
+    ? SOCIAL_PUBLICATION_ACTION_RISK_KEY : input.capability;
   const requestNonce = crypto.randomUUID();
   let lane = "unresolved";
   try {
-    const { data, error } = await input.callerDb.rpc("resolve_tool_autonomy", {
-      _tenant_id: input.tenantId,
-      _tool_key: input.capability,
-    });
-    if (!error && typeof data === "string" && ["auto", "confirm", "off"].includes(data)) lane = data;
+    // The visible canonical control and any existing proposal-identity control
+    // are both brakes. A rename must never bypass an operator's stored off mode.
+    const keys = actionRiskKey === input.capability ? [input.capability] : [input.capability, actionRiskKey];
+    const resolved = await Promise.all(keys.map(_tool_key => input.callerDb.rpc("resolve_tool_autonomy", {
+      _tenant_id: input.tenantId, _tool_key,
+    })));
+    if (resolved.every(({ data, error }) => !error && typeof data === "string" && ["auto", "confirm", "off"].includes(data))) {
+      lane = resolved.some(({ data }) => data === "off") ? "off"
+        : resolved.some(({ data }) => data === "confirm") ? "confirm" : "auto";
+    }
   } catch {
     // The shared seam refuses an unrecognized lane. Never guess a permissive one.
   }
@@ -105,14 +117,14 @@ export async function governSocialMutation(input: {
       access: { allowed: input.accessAllowed, reason: "A workspace owner or admin is required." },
     },
     capability: {
-      id: input.capability,
+      id: actionRiskKey,
       effect: "mutate",
       outcomeChannel: "record_capability_run",
       availability: input.availability,
     },
     approval: {
       autonomyLane: lane,
-      ...(claimedArgs !== undefined ? { claimedArgs, claimedFor: input.capability } : {}),
+      ...(claimedArgs !== undefined ? { claimedArgs, claimedFor: actionRiskKey } : {}),
     },
     requestArgs: input.requestArgs,
   });

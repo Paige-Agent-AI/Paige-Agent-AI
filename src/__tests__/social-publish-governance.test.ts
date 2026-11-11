@@ -27,9 +27,12 @@ describe("Social publication through the real governance path", () => {
     expect(w.seen.createPost).toHaveLength(1);
     expect(approval.consumed_at).toEqual(expect.any(String));
     expect(w.tables.content_publications[0].confirmation_id).toBe(approval.id);
+    expect(w.seen.receipts).toHaveLength(1);
+    expect(w.seen.receipts[0]).toMatchObject({ _capability_key: "social_post_publish", _outcome: "capability_succeeded" });
     const replay = await w.call(publishBody({ approved_fingerprint: fingerprint }));
     expect(replay.body.state).toBe("approval_required");
     expect(w.seen.createPost).toHaveLength(1);
+    expect(w.seen.receipts).toHaveLength(1);
   });
 
   it.each(["off", "unrecognized"])("refuses the %s lane without minting an approval or posting", async lane => {

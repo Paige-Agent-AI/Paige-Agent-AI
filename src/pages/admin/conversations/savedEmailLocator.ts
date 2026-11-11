@@ -4,6 +4,8 @@ import { parseCommsEmailDraftSource } from "../../../../supabase/functions/_shar
 import { parseNexusEmailDraft } from "../../../../supabase/functions/_shared/team-hub/nexus-email-contract";
 import type { SavedEmailLocator } from "@/solo/team-hub/team-hub-email-links";
 import type { MessageRow } from "./inbox-shared";
+import { UUID } from "../../../../supabase/functions/_shared/comms-email/contract";
+import { governedSendView, governedEmailReceiptLabel, GOVERNED_SEND_COPY, type GovernedSendFields } from "./governedSend";
 
 type Bound = Extract<SavedEmailLocator, { kind: "bound" }>;
 type Result = { data: unknown; error?: unknown };
@@ -22,6 +24,30 @@ export function savedEmailRow(native: unknown, row: unknown, locator: Bound, ten
     if (source.message_id !== m.id || source.updated_at !== m.updated_at) return null;
   } catch { return null; }
   return m as unknown as MessageRow;
+}
+
+/** A saved original can become the SAME governed send. This is a read-only
+ * result, never an editable source or authority for another dispatch. Both the
+ * original mailbox reader and the caller-RLS envelope must agree. */
+export function originalEmailResultRow(native: unknown, row: unknown, locator: Bound, tenantId: string): MessageRow | null {
+  const n=record(native),m=record(row);
+  if(!n||n.ok!==true||n.saved_email_draft!==null||!m||m.tenant_id!==tenantId||n.id!==locator.messageId||m.id!==locator.messageId
+    ||n.contact_id!==locator.contactId||m.contact_id!==locator.contactId||n.thread_key!==m.thread_key
+    ||typeof m.thread_key!=="string"||!m.thread_key||n.channel!=="email"||m.channel_type!=="email"
+    ||n.direction!=="outbound"||m.direction!=="outbound"||n.status!==m.status||n.subject!==m.subject
+    ||typeof m.connector_id!=="string"||!UUID.test(m.connector_id)
+    ||typeof m.comms_email_operation!=="string"||!UUID.test(m.comms_email_operation)
+    ||!['prepared','dispatching','provider_accepted','failed','refused','blocked','unknown'].includes(String(m.comms_email_state))
+    ||!['draft','queued','sent','delivered','failed','read'].includes(String(m.status))
+    ||typeof m.body_text!=="string"||n.body_text!==Array.from(m.body_text).slice(0,8000).join("")
+    ||n.body_truncated!==(Array.from(m.body_text).length>8000))return null;
+  return m as unknown as MessageRow;
+}
+
+export function originalEmailResultLabel(message: MessageRow & GovernedSendFields): string {
+  const view=governedSendView(message);
+  if(view&&view!=="settled")return view==="unconfirmed"?GOVERNED_SEND_COPY.unconfirmed.line:GOVERNED_SEND_COPY[view].pill;
+  return governedEmailReceiptLabel(message)??(message.status==="failed"?"Failed":"Sending result recorded");
 }
 
 /** Every awaited read is fenced, including A→B→A and actor changes. A failed
@@ -49,6 +75,7 @@ export async function readLocatedSavedEmail(locator: Bound, tenantId: string, ac
     // envelope read, so revocation or edits during navigation cannot be hidden.
     const fresh = await deps.readContent(locator.messageId);
     if (!deps.current() || fresh.error || !await deps.identity() || !deps.current()) return null;
-    return savedEmailRow(fresh.data, row.data, locator, tenantId);
+    return savedEmailRow(fresh.data, row.data, locator, tenantId)
+      ?? originalEmailResultRow(fresh.data, row.data, locator, tenantId);
   } catch { return null; }
 }

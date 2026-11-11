@@ -39,7 +39,9 @@ export function useZapierApi(){
  },[activeTenantId,scope,tenantLoading]);
  useEffect(()=>{const activeGate=gate.current;mounted.current=true;if(!tenantLoading)void load();return()=>{mounted.current=false;activeGate.clear();};},[load,tenantLoading]);
  const invoke=useCallback(async(action:"oauth_begin"|"test"|"disconnect"|"cancel",profile:ZapierPermissionProfile="read_only")=>{if(!activeTenantId||loaded!==scope||!state.canManage||state.busy||(action==="oauth_begin"&&profile==="workflow_management"&&!state.canAuthorizeWorkflowManagement))return action==="oauth_begin"?null:false;
-  const token=gate.current.begin();setState(p=>({...p,busy:true,message:null}));const{data,error}=await supabase.functions.invoke("tenant-zapier-api-connect",{body:{action,expected_tenant_id:activeTenantId,...(action==="oauth_begin"?{permission_profile:profile}:{})}});
+  // Preserve the original read-only request. Only explicit management consent
+  // adds a profile; old clients and old servers retain the same default contract.
+  const token=gate.current.begin();setState(p=>({...p,busy:true,message:null}));const{data,error}=await supabase.functions.invoke("tenant-zapier-api-connect",{body:{action,expected_tenant_id:activeTenantId,...(action==="oauth_begin"&&profile==="workflow_management"?{permission_profile:profile}:{})}});
   if(!mounted.current||scopeRef.current!==scope||!gate.current.isCurrent(token))return action==="oauth_begin"?null:false;const failure=await readFunctionErrorBody(error,data);
   if(!mounted.current||scopeRef.current!==scope||!gate.current.isCurrent(token))return action==="oauth_begin"?null:false;
   if(error||failure?.error){setState(p=>({...p,busy:false,message:failure?.error==="capability_unavailable"?"Zapier API authorization is unavailable until Paige has provider-issued OAuth credentials for a published Zapier integration.":"The provider did not complete that request. Refresh the status and try again."}));return action==="oauth_begin"?null:false;}

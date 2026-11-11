@@ -5,8 +5,9 @@ import { OriginalResearchWork } from "./OriginalResearchWork";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
-const { getSession, invoke, rpc } = vi.hoisted(() => ({ getSession: vi.fn(), invoke: vi.fn(), rpc: vi.fn() }));
+const { getSession, invoke, rpc, keepReference } = vi.hoisted(() => ({ getSession: vi.fn(), invoke: vi.fn(), rpc: vi.fn(), keepReference: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession }, functions: { invoke }, rpc } }));
+vi.mock("@/lib/privateDocumentWorkHandoff", () => ({ keepPrivateResearchWork: keepReference }));
 vi.mock("@/components/paige/chat/PaigeResearchCard", () => ({
   PaigeResearchCard: ({ result }: { result: { run_id: string; stop_reason: string; sources: { index: number; url: string }[] } }) =>
     <div>Report {result.run_id} {result.stop_reason} {result.sources.map(s => `[${s.index}] ${s.url}`).join(" ")}</div>,
@@ -30,14 +31,16 @@ describe("original Research status control", () => {
     host = document.createElement("div"); document.body.append(host); root = createRoot(host); active = true;
     getSession.mockReset().mockResolvedValue({ data: { session: { user: { id: actorId }, access_token: "fixture" } } });
     invoke.mockReset().mockResolvedValue(response);
+    keepReference.mockReset().mockReturnValue(true);
     rpc.mockReset().mockImplementation(name => read({ error: null, data: name === "current_user_tenant_id" ? tenantId : report }));
   });
   afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
-  async function open(key = "first") {
+  async function open(key = "first", surface?: "chat" | "team-hub") {
     await act(async () => root.render(<OriginalResearchWork key={key} reference={reference}
-      actorId={actorId} tenantId={tenantId} current={() => active} />));
+      actorId={actorId} tenantId={tenantId} current={() => active} surface={surface} />));
   }
   async function click() { await act(async () => host.querySelector("button")!.click()); }
+  const keepButton = () => Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Keep in Team Hub");
 
   it("reopens the exact saved partial report, original citation numbering and receipt using reads only", async () => {
     await open();
@@ -149,5 +152,100 @@ describe("original Research status control", () => {
     expect(host.textContent).toContain(receiptRef);
     expect(host.textContent).toContain(reference.workId);
     expect(invoke.mock.calls.filter(([, args]) => args.body.interactive.kind === "status")).toHaveLength(4);
+  });
+
+  it("does not offer or store an uninspected original locator", async () => {
+    await open(); expect(keepButton()).toBeUndefined(); expect(keepReference).not.toHaveBeenCalled();
+  });
+
+  it.each(["pending", "verified"])("explicitly keeps only the freshly authorized %s original locator, without a second execution", async state => {
+    if (state === "pending") invoke.mockResolvedValue({ error: null, data: { durable_work: {
+      ...response.data.durable_work, state: "claimed", recoveryState: "observed", continuation: null } } });
+    await open(); await click();
+    expect(keepReference).not.toHaveBeenCalled();
+    const inspections = invoke.mock.calls.length;
+    const keep = keepButton()!;
+    await act(async () => { keep.click(); keep.click(); });
+    expect(invoke.mock.calls.length).toBeGreaterThan(inspections);
+    expect(keepReference).toHaveBeenCalledExactlyOnceWith(actorId, tenantId, reference);
+    expect(host.textContent).toContain("Saved in this tab");
+    expect(invoke.mock.calls.every(([, args]) => args.body.interactive.kind === "status" &&
+      args.body.requestIntentId === reference.intentId && args.body.researchResume === undefined)).toBe(true);
+  });
+
+  it.each(["actor", "workspace", "lifetime"])("does not keep when %s changes during the fresh inspection", async changed => {
+    await open(); await click();
+    invoke.mockImplementation(async () => {
+      if (changed === "actor") getSession.mockResolvedValue({ data: { session: { user: { id: id(9) } } } });
+      else if (changed === "workspace") rpc.mockImplementation(() => read({ error: null, data: id(9) }));
+      else active = false;
+      return response;
+    });
+    await act(async () => keepButton()!.click());
+    expect(keepReference).not.toHaveBeenCalled();
+    expect(host.textContent).not.toContain("Saved in this tab");
+  });
+
+  it("inspects UNKNOWN without writing or repeating the handoff", async () => {
+    await open(); await click();
+    invoke.mockResolvedValue({ data: null, error: new Error("status response lost") });
+    await act(async () => keepButton()!.click());
+    expect(keepReference).not.toHaveBeenCalled();
+    expect(keepButton()).toBeUndefined();
+    expect(host.textContent).toContain("could not be verified");
+  });
+
+  it("does not keep a verified report whose receipt changes during fresh readback", async () => {
+    await open(); await click();
+    invoke.mockResolvedValueOnce(response).mockResolvedValueOnce({ ...response, data: { durable_work: {
+      ...response.data.durable_work, continuation: { ...response.data.durable_work.continuation,
+        completion: { resultRef: reference.workId, receiptRef: id(9) } } } } });
+    await act(async () => keepButton()!.click());
+    expect(keepReference).not.toHaveBeenCalled();
+    expect(host.textContent).toContain("could not be verified");
+  });
+
+  it("discards a late Keep response after leaving the original conversation", async () => {
+    await open(); await click();
+    let settle!: (value: typeof response) => void;
+    invoke.mockImplementation(() => new Promise(resolve => { settle = resolve; }));
+    await act(async () => keepButton()!.click());
+    const signal = invoke.mock.calls.at(-1)![1].signal as AbortSignal;
+    await open("other"); expect(signal.aborted).toBe(true);
+    await act(async () => settle(response));
+    expect(keepReference).not.toHaveBeenCalled();
+  });
+
+  it("retains keyboard focus on Keep during its fresh inspection and after readback", async () => {
+    await open(); await click();
+    let settle!: (value: typeof response) => void;
+    invoke.mockImplementationOnce(() => new Promise(resolve => { settle = resolve; }));
+    const keep = keepButton()!; keep.focus();
+    await act(async () => keep.click());
+    expect(document.activeElement).toBe(keep); expect(keep.getAttribute("aria-busy")).toBe("true");
+    await act(async () => settle(response));
+    expect(document.activeElement).toBe(keep); expect(keep.getAttribute("aria-busy")).toBeNull();
+    expect(keepReference).toHaveBeenCalledExactlyOnceWith(actorId, tenantId, reference);
+  });
+
+  it.each(["failed", "blocked", "cancelled", "unknown"])("never offers Keep for a %s original state", async state => {
+    invoke.mockResolvedValue({ error: null, data: { durable_work: {
+      ...response.data.durable_work, state, recoveryState: "observed", continuation: null } } });
+    await open(); await click(); expect(keepButton()).toBeUndefined();
+    expect(keepReference).not.toHaveBeenCalled();
+  });
+
+  it("uses the same Research control in Team Hub without offering another handoff", async () => {
+    await open("hub", "team-hub"); await click();
+    expect(host.textContent).toContain(receiptRef); expect(keepButton()).toBeUndefined();
+    expect(keepReference).not.toHaveBeenCalled();
+  });
+
+  it("reports a tab-storage refusal without claiming the original Research failed", async () => {
+    keepReference.mockReturnValue(false);
+    await open(); await click(); await act(async () => keepButton()!.click());
+    expect(host.textContent).toContain("This tab could not save the reference");
+    expect(host.textContent).toContain(receiptRef);
+    expect(keepReference).toHaveBeenCalledExactlyOnceWith(actorId, tenantId, reference);
   });
 });

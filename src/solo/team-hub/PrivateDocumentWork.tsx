@@ -42,6 +42,7 @@ export function PrivateDocumentWork({ actorId, tenantId }: { actorId: string; te
           <>
             {reference.kind === "research" ? <OriginalResearchWork
               key={controlKey}
+              surface="team-hub"
               reference={reference}
               actorId={actorId}
               tenantId={tenantId}

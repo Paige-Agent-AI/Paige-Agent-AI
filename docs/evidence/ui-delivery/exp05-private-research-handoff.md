@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: YES: The existing private handoff can reopen original Rese
 FLOW_PROTOTYPE: UNVERIFIED: Flow Prototype consulted; no throwaway prototype or live browser drive. Existing approved control is reused and unrun proof remains open.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: The authorized SOLO customer keeps an original job, changes surface, checks its current result and recovers it without another run.
 VISUAL_DIRECTION: PASS: Existing Mineral/Obsidian Operate surfaces, compact typography, native details/summary and original report/card tokens; no new tab, banner, modal or visual system.
-AUTOMATED_EVIDENCE: PASS: All32 cases across five original Document/Research/Hub/locator suites pass on the local core82b composition. Causal pre-repair locator result was five failures and one legacy pass; receiving and copied-scope failures are detailed below. Final Keep contribution checks remain owed.
-STATIC_EVIDENCE: PASS: Scoped ESLint, pinned Impeccable detector, evidence grammar and diff checks passed. The existing canonical TypeScript ratchet passes with baseline10/current6 and no new errors; raw full-app TypeScript still reports those six baseline diagnostics. No checker/baseline was changed; final composed build/hosted CI remain required.
+AUTOMATED_EVIDENCE: PASS: All48 cases across five original Document/Research/Hub/locator suites pass on actual core9a2 plus the original EXP01 Keep contribution123930bd. The composed Hub test first failed because Keep repeated inside Hub; the owned receiver now passes the original team-hub surface contract. Earlier locator, routing and copied-scope failures remain recorded below.
+STATIC_EVIDENCE: PASS: Six composed TypeScript paths pass scoped ESLint; both final UI paths pass the pinned Impeccable detector. Contribution control/test and frozen helper blobs match their original authors. Canonical TypeScript ratchet previously passed baseline10/current6 with no new errors; raw full-app TypeScript retained six baseline diagnostics. Pre-Keep corrected-core build passed6433 modules in3m34s. Final composed types and hosted CI remain required; no checker/baseline changed.
 RENDERED_EVIDENCE: UNVERIFIED: No new desktop/narrow render is claimed.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Original pending job, explicit recovery, report, receipt and remount checks remain to be driven.
 AUTHENTICATED_RUNTIME: UNVERIFIED: One approved pre-save interruption and original recovery through both released chats remain owed.
@@ -33,7 +33,7 @@ MUST_PRESERVE: Existing Document serialization and original control, actor/tenan
 ACCEPTANCE_CRITERIA: A confirmed original Research locator survives same-tab reload; each surface revalidates private authority and returns the same job/report/citations/receipt. Refused/stale/foreign/unsupported locators disclose nothing and never dispatch a new job; existing Document recovery remains intact.
 MOTION_PURPOSE: NONE: Preserve the existing disclosure feedback; no new motion.
 PROTECTED_SEAMS: Affected private tenant/actor scope, source authority, message/job/result/Rail identity, same-tab recovery and accessible disclosure/removal are tested through original controls. No Auth/account-choice, enrollment/billing/provisioning, global approval/Spine writer, Live, Vault/Browser, provider registration/activation, Memory, scheduler or shared shell change.
-INTERNAL_BUILD_IDENTITY: 341e66ad5a75e0d8a923c2965485bfff38ec9958; deployment=local-candidate; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=ANT-147/7ced3068 owner-approved finite receiving source handoff
+INTERNAL_BUILD_IDENTITY: 9a2f6ad77a02c5079d2246d3c3e3aa353edb9a28; deployment=local-candidate; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=ANT-147/7ced3068 and ANT-6/b8346004 original receiving contribution
 RELEASE_CHANNEL: development: Bounded receiving source under implementation; no production customer claim.
 RELEASE_CLASSIFICATION: internal-only: Same selected Loop integration, not a new customer release.
 CUSTOMER_RELEASE_IDENTITY: none: Full authenticated result remains unverified.
@@ -77,3 +77,12 @@ original control. All32 cases across five original/new suites pass on the local
 composition with unchanged EXP01 core82b source. These are controlled fixtures,
 not browser or authenticated customer evidence. Original source authorship,
 final Keep contribution and genuine release gates remain distinct.
+
+The final receiving composition preserves current main525eb74d, corrected core9a2
+and original EXP01-authored contribution123930bd (only its two control/test paths;
+blobs968bf09f/6cba58bf), while the frozen locator helper remainsfc123e57.
+The existing Hub fixture then causally failed1/8 because the default Chat control
+offered Keep inside Hub. Passing its original surface="team-hub" removes that
+recursive handoff without changing the original control. All48 cases in the same
+five suites now pass. Original Document behavior, privacy and no-replay negatives
+remain covered. No real Research job, provider charge or customer result is claimed.

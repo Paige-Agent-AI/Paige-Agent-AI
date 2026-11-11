@@ -1192,7 +1192,11 @@ const SOURCES = {
   // 2026-10-28 EXP06 hosting door: canonical delta is TWO added `high` rows
   // (growth_hosting_deploy/growth_hosting_recover) after the studio_image keys — no existing
   // row touched. Renewed with the proof's own printer (removeComments).
-  "supabase/functions/_shared/action-risk.ts": "4c5c2a8a959024508454156c2c5cb19937e8a0ba477d0e543ec7d058979a230a",
+  // EXP07, November11: immutable25fb59df reviewed NON-AUTHOR before renewal
+  // (/root/exp07_release_review; PR3331/6787776746). Exact one-high-row inverse
+  // reproduces baseline5d0f8fb3:131 dependency pins/29 dispatches, zero findings.
+  // Renew ONLY this digest; other130 pins, all29 dispatches and validators exact.
+  "supabase/functions/_shared/action-risk.ts": "fd46eaed024b7259951811fbe8390e8f9a0d4881f3c6bb7fd0f642bff1a76ff1",
   "supabase/functions/_shared/finance-gate.ts": "dfa7fbec065d346ca72199313294a4418aa8be66f3dbb68cfe991a93aef0cf40",
   "supabase/functions/_shared/paige-capability-status/projection.ts": "280c36a53ed5d553f6e6467f7177d049a2c612078cdb8d8139878cec3463922f",
   "supabase/functions/_shared/paige-capability-status/readiness.ts": "56b0a8da8b1a76414a147d15bffb9b589b9bcf9e130c797290b846759e1da65e",

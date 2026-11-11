@@ -170,3 +170,67 @@ describe('reconnecting to the original document completion', () => {
     expect(await readDurableContinuation(ref, reconnect([changed, changed]), null)).toBeNull();
   });
 });
+
+describe('reconnecting to the original Research completion', () => {
+  const completion = { resultRef: ref.workId, receiptRef: id(8) };
+  const completed = row({ capabilityKey: 'deep_research', workKind: 'research',
+    workIntentId: ref.intentId, canonicalObjective: 'Read the original cited report', completion,
+    terminalOutcome: { verified_readback: true, run_id: ref.workId, receipt_id: id(8),
+      receipt_outcome: 'capability_succeeded', report_sha256: 'a'.repeat(64) } });
+  const reconnect = (responses: unknown[] = [completed, completed]) => {
+    const c = caller();
+    let index = 0;
+    c.rpc.mockImplementation(async (name) => ({
+      data: name === 'current_user_tenant_id' ? id(4) : responses[index++], error: null,
+    }));
+    return c;
+  };
+
+  it('reopens the same Research report and receipt without a provider or mutation RPC', async () => {
+    const c = reconnect([completed, completed, completed, completed]);
+    const first = await readDurableContinuation(ref, c, null);
+    expect(first).toEqual({ eligibleForContext: true, state: 'succeeded', reason: 'canonical_terminal',
+      workId: ref.workId, completion });
+    expect(await readDurableContinuation(ref, c, null)).toEqual(first);
+    expect(c.rpc.mock.calls.every(([name]) => ['read_paige_durable_continuation', 'current_user_tenant_id'].includes(name))).toBe(true);
+  });
+
+  it.each([
+    { workIntentId: id(9) },
+    { terminalOutcome: { ...completed.terminalOutcome, run_id: id(9) } },
+    { terminalOutcome: { ...completed.terminalOutcome, receipt_id: id(9) } },
+    { terminalOutcome: { ...completed.terminalOutcome, receipt_outcome: 'capability_failed' } },
+    { terminalOutcome: { ...completed.terminalOutcome, report_sha256: null } },
+    { completion: { ...completion, resultRef: id(9) } },
+  ])('withholds inconsistent original Research evidence (%j)', async patch => {
+    const changed = { ...completed, ...patch };
+    expect(await readDurableContinuation(ref, reconnect([changed, changed]), null)).toBeNull();
+  });
+
+  it('withholds a changed report digest on the authoritative re-read', async () => {
+    const changed = { ...completed, terminalOutcome: { ...completed.terminalOutcome, report_sha256: 'b'.repeat(64) } };
+    expect(await readDurableContinuation(ref, reconnect([completed, changed]), null)).toBeNull();
+  });
+
+  it('withholds a changed native receipt even when the completion locator is unchanged', async () => {
+    const changed = { ...completed, terminalOutcome: { ...completed.terminalOutcome, receipt_id: id(9) } };
+    expect(await readDurableContinuation(ref, reconnect([completed, changed]), null)).toBeNull();
+  });
+
+  it('withholds a changed identity after the final record read', async () => {
+    const c = reconnect();
+    c.auth.getUser.mockResolvedValueOnce({ data: { user: { id: id(5) } }, error: null })
+      .mockResolvedValueOnce({ data: { user: { id: id(5) } }, error: null })
+      .mockResolvedValueOnce({ data: { user: { id: id(9) } }, error: null });
+    expect(await readDurableContinuation(ref, c, null)).toBeNull();
+  });
+
+  it('withholds a workspace change after the final record read', async () => {
+    const c = reconnect();
+    let tenants = 0;
+    c.rpc.mockImplementation(async name => ({
+      data: name === 'current_user_tenant_id' ? ++tenants === 1 ? id(4) : id(9) : completed, error: null,
+    }));
+    expect(await readDurableContinuation(ref, c, null)).toBeNull();
+  });
+});

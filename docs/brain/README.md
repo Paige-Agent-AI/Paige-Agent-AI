@@ -1,3 +1,11 @@
+## EXP03 November11 — original email result return and real receipt
+
+Original3315/c62ac214b is released on both current customer domains, exact source and production identity in Master4.0/originaljourney14.61. Same original Messages email passes actual authorized prepare/save/fullreload/reopen/exact approval/ONE send, correlated provider delivery receipt and read-only result reload/return to NEXUS. Source tests231/required checks/non-author review pass; no native/Edge/auth/permission/new writer. The original Hub source card's static Saved unsent/Open draft wording remains a routed E08 presentation defect after delivery, so selected outcome completion is withheld. All original matrices/all50/ALG maturity/full EXP03 remain STILL CODING and owner acceptance separate. Historical producer release record below is conserved from unmerged3230 without stale peer-document overwrite or a recursive shipped row.
+
+## EXP03 November2 — NEXUS email producer source release
+
+Original3224/a4f3f6195 is released: original first unsent Save creates one Messages draft/audit, same actor-operation replay, existing raw-version edit/reopen and original exact approval/send source. Native30010003+30010103/Save13FULL195f827 and original restricted metadata, all8Edge/source certificate1001bindings and both public web origins verified; Master4.0 and originaljourney14.60 retain exact source, review, checks and failures. No new writer/approval/runtime/permission or provider send. E08 retains actual NEXUS privateDM/admission/card/result/return integration. Selected integrated email outcome remains INCOMPLETE until authenticated save/fullreload/reopen, exact recipient/content approval, separately authorized particular send and truthful receipt/no-duplicate recovery. Provider acceptance is not delivery; full EXP03 STILL CODING/owner acceptance separate. No next outcome.
+
 ## EXP08 November3 — original file sharing, one outcome in progress
 
 Original row10 reuses the existing private Storage/file/message pipeline. Current

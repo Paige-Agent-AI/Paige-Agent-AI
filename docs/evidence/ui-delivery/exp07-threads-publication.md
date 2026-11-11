@@ -22,7 +22,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: Original owner approval is recorded in the wo
 KEYBOARD_FOCUS: UNVERIFIED: Existing semantic channel buttons are reused; post-repair keyboard drive remains owed.
 ZOOM_REFLOW: UNVERIFIED: Existing wrapping picker is retained; post-repair zoom/reflow remains owed.
 REDUCED_MOTION: NOT_APPLICABLE: No motion change.
-STATE_COVERAGE: PASS: Automated connected, needs-reauth and disconnected Threads projections, native role/tenant/refusal/reopen and unchanged approval/unknown/receipt controls passed. The real post and authenticated receipt reopen remain owed.
+STATE_COVERAGE: UNVERIFIED: The repaired picker and real Threads post/receipt recovery require production forward 25. Automated readiness, role, tenant, revoke and original approval/recovery cases passed.
 TRUTHFUL_STATE_LABELS: PASS: Stored connection, fresh provider preflight, approved preview, dispatch and original durable result remain separate.
 SOLO_UI: YES: Existing Marketing Content publication drawer and original Social presence/handle catalogue.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: Post-repair rendered geometry owed.
@@ -34,7 +34,7 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Post-repair rendered geometry owed.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Post-repair rendered geometry owed.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Post-repair rendered geometry owed.
 UNVERIFIED: Exact final review/CI, forward migration release, rendered geometry, real provider post, original receipt reopen and founder acceptance remain open. Full Experience scope is not complete.
-INTERNAL_BUILD_IDENTITY: abb3a111845bf55a3b87ecc4c4795ebcb3925d34; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271133000025_exp07_threads_presence); edge=NOT_APPLICABLE(existing reviewed publisher); evidence=src/__tests__/publish-piece.test.ts and supabase/tests/exp07_account_scoped_publication.sql
+INTERNAL_BUILD_IDENTITY: abb3a111845bf55a3b87ecc4c4795ebcb3925d34; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271133000025_exp07_threads_presence); edge=NOT_APPLICABLE; evidence=src/__tests__/publish-piece.test.ts and supabase/tests/exp07_account_scoped_publication.sql
 RELEASE_CHANNEL: development: Same-outcome missing-choice repair, not released.
 RELEASE_CLASSIFICATION: PATCH: Restore the connected Threads choice through the original native and UI catalogue.
 CUSTOMER_RELEASE_IDENTITY: none: No customer announcement.

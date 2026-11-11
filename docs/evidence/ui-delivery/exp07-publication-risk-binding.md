@@ -33,7 +33,14 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Broader geometry not newly certified.
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Broader geometry not newly certified.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Broader geometry not newly certified.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Broader geometry not newly certified.
-RELEASE_GOVERNANCE: internal_build=commit containing this record; channel=development until ordinary release; customer_release_identity=none; release_note_required=no; authenticated_scope=existing saved-content publication; blocker=RUNTIME_DEFECT until repaired live proof; excluded_claim=completed post and durable reopen; recovery=reviewed source revert retaining original approvals, applied SQL and receipts; reference=original EXP07 matrix.
+UNVERIFIED: Final independent review/CI, forward27 release/native inherited-row readback, affected Edge source/configuration, actual publication/control visibility, original receipt reload/reopen, broader geometry/cohorts and founder acceptance remain owed because the candidate has not been released. Full18 and pending scope remain open.
+INTERNAL_BUILD_IDENTITY: d78063259cd05f5c6c2cdeda8cd07319638ae193; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271133000027_exp07_publication_autonomy_catalogue); edge=PROOF_OWED(social-publish-command and paige-social); evidence=scripts/proof/exp07-publication-autonomy.mjs and src/__tests__/social-publish-governance.test.ts
+RELEASE_CHANNEL: development: Same-outcome publication governance correction, not released.
+RELEASE_CLASSIFICATION: PATCH: Restore the original high-risk publication path and its visible autonomy brake.
+CUSTOMER_RELEASE_IDENTITY: none: No customer announcement.
+RELEASE_NOTE_REQUIRED: no: Internal prelaunch repair.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: Engineering proof does not establish an executed post, visible production control or durable receipt recovery.
+RELEASE_RECOVERY: position=reviewed forward fix or source revert preserving original approvals, applied carriers and receipts; reference=original EXP07 matrix and this record.
 
 ## Universal SOLO and custody boundary
 

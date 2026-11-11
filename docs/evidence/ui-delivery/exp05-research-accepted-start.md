@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: UNVERIFIED: Existing controls unchanged; final two-chat keyboard
 ZOOM_REFLOW: UNVERIFIED: Existing shell unchanged; no new viewport or zoom proof claimed.
 REDUCED_MOTION: UNVERIFIED: No motion change; the existing receiver's final rendered behavior is not newly verified here.
 STATE_COVERAGE: UNVERIFIED: Native guards and atomic failures are tested; actual accepted, interrupted, refused, recovered and reloaded customer states remain owed.
-TRUTHFUL_STATE_LABELS: PASS: Acceptance records WAIT_WORK, not completed Research. Global terminal and Stop evidence remain unchanged. Unknown work is never replayed as a new start.
+TRUTHFUL_STATE_LABELS: PASS: Acceptance records WAIT_WORK, not completed Research. Global terminal and Stop evidence remain unchanged. Unconfirmed work is never replayed as a new start.
 SOLO_UI: YES: Existing PAIGE Chat original Research work control and privately authorized Team Hub consumer; this change adds no visual control.
 UNVERIFIED: Both-chat authenticated recovery, complete report/citation/Rail identity, attributable provider/meter comparison and founder acceptance remain open.
 
@@ -36,7 +36,7 @@ ACCEPTANCE_CRITERIA: Original accepted Work is saved before execute; real pre-pu
 MOTION_PURPOSE: NONE: No new or changed motion.
 PROTECTED_SEAMS: Affected tenant/workspace isolation, authority, canonical writes/readback, Rail evidence, message identity, durable recovery and privacy are covered by actual native guards/rollback/race controls. Authentication/account choice, entitlement/signup/billing/provisioning, global Spine execution, Live, Secure Browser/Vault, provider registration/activation, Memory storage, shell geometry and accessibility markup are unchanged. No new grant, provider effect or customer approval is introduced by this patch.
 
-INTERNAL_BUILD_IDENTITY: d5d7c923a6577a17ea0f85c8d1e6b73cbfbabd95; deployment=UNVERIFIED; environment=development; migrations=UNVERIFIED(20271133000026); edge=NOT_APPLICABLE; evidence=original native fixture and race proof described below
+INTERNAL_BUILD_IDENTITY: d5d7c923a6577a17ea0f85c8d1e6b73cbfbabd95; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271133000026-not-applied); edge=NOT_APPLICABLE; evidence=original native fixture and race proof described below
 RELEASE_CHANNEL: development: Native successor only; production deployment and caller activation are not inferred from source or tests.
 RELEASE_CLASSIFICATION: internal-only: Bounded repair in the existing approved Loop, not a complete customer release.
 CUSTOMER_RELEASE_IDENTITY: none: Full authenticated two-chat outcome remains unverified.

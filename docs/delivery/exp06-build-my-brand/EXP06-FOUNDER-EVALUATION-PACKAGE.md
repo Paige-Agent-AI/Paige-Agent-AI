@@ -1,5 +1,17 @@
 # EXP06 — Build My Brand & Online Presence: the ONE integrated founder evaluation package
 
+> **November 10, 2026 ET — bounded native PAGE proof PASS.** One owner-approved,
+> text-only saved Version 1 was published once from the original NEXUS Team Hub
+> card. Its exact public content, same receipt/outcome after a full Hub reload,
+> approved same-page takedown and same private Version 1 after Studio reload were
+> verified. The test URL is now offline; one save, one publish and one unpublish
+> receipt remain. [Original proof and release identities](https://linear.app/paigeagentai/issue/ANT-162#comment-d2f738f9-9e8e-4778-ab5f-d7fa4a56ae2b).
+> This closes row 19's native PAGE subcase (a), with the scope limits in the
+> [original matrix](EXP06-BASELINE-AND-ACCEPTANCE-MATRIX.md#november-10-2026-et--row-19-authenticated-native-page-subcase-pass).
+> The other both-chat families and full integrated founder acceptance remain open.
+> The November 3 walkthrough below is retained as a staged reference; this record
+> requests no repeated test or additional founder QA. Full EXP06 remains STILL CODING.
+
 > **STATUS: READY TO WALK (2026-11-03, owner-approved).** Everything the 2026-10-28
 > correction demanded is now built and shipped: the hosting engine (executor, REAL HTTPS
 > verification, usage meter — merged #3032, deployed, read back; dormant-fail-closed
@@ -8,7 +20,8 @@
 > copy (#3054), one shared export builder for download+deployment (#3056), and the
 > customer-facing Check-hosting step (#3073, live in production). **The single
 > integrated evaluation is invited: the ~30-minute script is §2a below; the
-> authenticated Team Hub publish click rides step 7 and closes row 19's last half.**
+> authenticated native PAGE click is step 7's bounded subcase; broader row 19
+> acceptance remains separate.**
 > Rows 11/19 carry only what a live owner session or the owner's activation decision can
 > close — exactly what this walkthrough is. Pre-flight 2026-11-03: 264/265 wall green on
 > main `14cc74471`; production serves the Check-hosting button (`vibe-Dh8srJqZ.js`).
@@ -72,11 +85,11 @@ business's brand, so everything you see is real.
    Today it answers: *"Hosting isn't switched on yet. Nothing was changed."*
    ✎ *Is that the right thing to say? (Turning it on is your call, later, whenever.)*
 
-7. **Publish from the TEAM HUB (5 min) — the step that closes the both-chats proof.**
+7. **Publish from the TEAM HUB (5 min) — the native PAGE subcase.**
    Open your Team Hub. In a channel or your DM with PAIGE/NEXUS, ask to publish the
    page (or use the card). The SAME approval card appears — approve it there.
-   ✎ *Same experience both places? This click is the authenticated Team Hub proof the
-   records still owe.*
+   ✎ *Same experience both places? The November 10 checkpoint above records the
+   completed native PAGE case; wider both-chat coverage remains proof owed.*
 
 8. **Take it down, put it back (3 min).** Unpublish from either place; watch the honest
    states (what stays live, what doesn't). Republish if you like. ✎ *Anything scary?*
@@ -112,10 +125,11 @@ what this walk actually proves.
 
 ## 3. What remains PROOF OWED (named, never hidden)
 
-- **Authenticated in-Studio proof.** Every UI proof above is at unit/jsdom + real-browser
-  harness level. A real signed-in owner clicking through their own workspace is queued
-  through the existing QA coordination (no new test account). The owner's own walkthrough
-  (this evaluation) is itself the strongest form of this proof.
+- **Authenticated breadth beyond the dated native PAGE case.** Preserve the owner's
+  earlier native Studio publish/unpublish evidence and the November 10 Team Hub
+  publish/receipt/reload/takedown proof above. Other artifact families, eligibility,
+  role/channel/recovery and full integrated evaluation retain their named proof debt.
+  No additional test account or new per-PR founder gate is introduced.
 - **Real unfurler/crawler.** The SPA applies meta after load; crawlers that execute JS see
   it. Server-rendered meta is a platform decision, not claimed.
 - **Real-device AT testing.** The a11y contract pins source truth; screen-reader/physical

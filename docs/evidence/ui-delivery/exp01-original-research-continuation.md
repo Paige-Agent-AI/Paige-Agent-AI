@@ -165,3 +165,35 @@ All three actual-handler variants PASS. Two added actual-dispatch negatives reta
 the v1 unsupported-input/mixed-batch refusal;34 owning dispatch cases PASS. The
 hosted failure/interrupted later steps remain history; fresh exact-head gates
 must pass before release. No additional runtime source changed for this repair.
+
+Exact82b full unit suite then reported26717PASS/25FAIL/7pending (original
+attribution13828687346, run42955216181/job130308684732). Original customer/Live
+settlement closures reproduced two new Research-only ambient dependencies:
+originalResearchBinding and durableResearchPause. No protected customer, Live or
+financial test was changed. The corrected Research binding lives on the SAME
+existing server-owned request ReceiptScope; the execution alias is local to the
+Research branch. Ordinary native settlement needs no Research ambient variable.
+Research pause checks short-circuit on the existing typed interactive context,
+so noninteractive Live retains its original terminal/content path and no second
+Research receipt is saved. Original approval semantics and personal consent are
+unchanged; genuine Live activation remains separate. Original tests, pre-renewal
+review, exact fingerprint renewal and fresh complete hosted checks remain gates.
+After both ambient dependencies were contained, all204 affected original
+customer/Live/Research checks across9 files PASS; no protected test was edited.
+
+Native26 is now normally released by EXP05 at341e66ad, workflow42958021651SUCCESS.
+Production19–26 are each once; original advanceOID313658/owner/definer/volatile/
+emptysearchpath+UTC/service-onlyACL retained. Independent exact frozen transform
+of the saved actual predecessor reproduces SHA256332499a8069c3b701484a2b7b1a284a24e9a3b1aa1c2b6de89d9fcb37b4bfb10.
+This clears producer source readiness, not the pending consumer/live outcome.
+Final82b hosted Deno artifact13827210995 ZIP digest0b6ad417567f7cf0f4ff00b326d195de165504b7e29e342787585e78f3b5ccba
+confirms real base/head each9 diagnostics, no new/increased diagnostic and PASS.
+The local failed raw/temporary-copy attempts remain ungraded history.
+
+Current-source local browser proof remains UNVERIFIED: the cached earlier fixture
+was visible, but required reload timed out and viewport requests did not change
+actual1536x735 size. Captures are INVALID for current-source/responsive proof;
+server stopped/viewport reset, no alternate-browser or security bypass. No live
+Research run/provider effect has started. Original Google workbook is view-only
+in both identified sessions; owner explicitly authorized original Linear/repository
+closeout for now. No permission change or substitute record was made.

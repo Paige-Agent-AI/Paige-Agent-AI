@@ -100,6 +100,50 @@ with exact source/release identity + relevant legitimate runtime evidence;
 | 20 | AGENTIC BEHAVIOR (owner mandate b261cc11, 2026-10-27): PAIGE/NEXUS carries an authorized customer goal to a useful verified outcome, subcases A–H, tested beyond happy path | Per-subcase below; evidence = PR1–8 source/release records | ASSESS (statuses recorded; authenticated proof owed) | EXP08 (goal-directed Team Hub wiring, A2/A1c); EXP05 (Work/Harness runtime states) | **A** understand/clarify only missing material facts: BUILT at source (brief intake asks name/audience/outcome only; chat brief-flow SSE steps show what's asked) — authenticated proof PROOF OWED. **B** scoped plan/choose original tools: BUILT at flow level (brief→draft→approve chain; native Studio capabilities, no second runtime) — PROOF OWED authenticated. **C** execute via original doors, single writers: BUILT (ONE publish door UI+Chat; cross-domain via leases/handoffs only). **D** inspect actual result/receipt, not dispatch: BUILT (verified public HTTPS readback before any "live" claim; Rail receipts). **E** durable work save/reopen/resume: BUILT (studio_sessions/artifact_versions; brand floor survives reload — tested). **F** failure/refusal/stale/revoked/unknown recovery, no duplicate effects: BUILT at door level (single-redeem fingerprint, nothing-ran codes, role-change-mid-approval test PR8). **G** independent follow-through without routine prompting: PARTIAL — inside an active Studio session the chat drives brief→draft→approval→verified-live multi-step without owner prompts, but no standing-goal/background autonomy exists (correctly none; that wiring is EXP08 amendment §4/EXP05 runtime — named dependency, not this lane's to build). **H** concrete reviewable question only beyond authority: BUILT (Needs-your-OK card names the exact pending decision; blocker copy names the next permitted step). Team-Hub goal-directed NEXUS: MISSING (EXP08 A2). Algorithm grounding: §4 stands — NO VERIFIED SUPPORTING ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED. |
 | 21 | SANDBOX APPLICABILITY (owner mandate ae670ada, 2026-10-27): choose native capability vs isolated execution; untrusted-input boundaries; no unintended real effects | PR8 security negatives + retained denial wall | ASSESS (NOT APPLICABLE WITH REASON for isolated execution; boundaries verified) | — (future code-execution shapes: EXP19/ZION-under-PAIGE, held) | EXP06 surfaces execute NO untrusted code/files: page blocks render data-driven through React (no eval), forms are governed inputs (origin/bot-trap/rate gating retained), the export emits generated static bytes (negative tests: no private data, no secrets, no unsafe execution), guidance is read-only copy. Isolated execution: **NOT APPLICABLE WITH REASON** — no untrusted code/file/data execution exists in EXP06 outcomes today. Untrusted-content boundary (visitor input, hostile SEO fields): treated as inert data — PROVEN at source (hostile-SEO inert test; injection surfaces inert) — authenticated re-run PROOF OWED. A future custom-code/script block in pages would be **HELD** pending the isolated-execution owner (EXP19 general runner — UNVERIFIED/held per owner ae670ada); not buildable from this lane. Cross-tenant/task denial: retained RLS/scope negatives re-run green each PR. |
 
+### November 10, 2026 ET — row 19 authenticated native PAGE subcase PASS
+
+This dated checkpoint supersedes only the older row 19 `STILL OWED (a)` for native
+PAGE publishing. The whole row and the full EXP06 assignment remain open.
+
+- The existing ordinary Owner prepared one fresh NEXUS approval card for the same
+  saved, text-only Version 1 test page and approved it once. The original publisher
+  returned Done. The exact native public URL rendered the two approved lines and
+  copyright, with no form or private content.
+- A full Team Hub reload, reselection of the same NEXUS DM and reopening of the
+  original thread recovered the same Done card, outcome message and publish Rail
+  receipt. Native before/after readback retained one publish receipt; reopening did
+  not dispatch another publication.
+- The separately approved takedown used the same original Studio project's
+  Live · Manage → Unpublish → Take it offline controls once. Full Studio reload and
+  reopening retained Saved · draft, the same Version 1 and the same text. The public
+  URL then showed Page not found. Native readback retained exactly one save, one
+  publish and one unpublish receipt, with the original publish/outcome identities
+  unchanged. `published_at` retains the historical publication time; current draft
+  status and the public takedown were verified.
+- The original publisher repair [#3310](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3310)
+  released at `49a0fb73c8744662a82aec2def5b76f35e327529`; the original protected
+  Team Hub repair [#3316](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3316)
+  released at `155a9cebe7eccddd5af1cbeb772b833607230c46`. Independent review,
+  required exact-head checks, managed native proof and production readbacks passed.
+  Reader and protected-table permissions were preserved. Chat source assurance
+  matched its active JWT-required bundle to the successful served-source certificate
+  and all 344 certificate source hashes to the reviewed commit; direct MCP Chat
+  bundle retrieval was unavailable. All 25 actual publisher files matched that
+  commit directly. No separate direct Chat-body download proof is claimed.
+
+The [original authenticated proof record](https://linear.app/paigeagentai/issue/ANT-162#comment-d2f738f9-9e8e-4778-ab5f-d7fa4a56ae2b)
+retains exact card/artifact/receipt identities, timestamps, the earlier safe failure,
+release certificates and screenshots. No old card was replayed and no other page,
+external host, provider, account or permission was changed for this test.
+
+**Remaining scope:** all eight high-risk and three ordinary both-chat capability
+families are not accepted as a group. Broader role/channel/revoke/UNKNOWN recovery,
+rendered viewport coverage, hosting admission/activation and the joined business
+journey retain their existing proof debt. Earlier owner-observed native Studio
+publish/unpublish evidence is preserved. ALG classifications and all other original
+IDs/denominators remain unchanged. Full EXP06 is STILL CODING and founder acceptance
+remains pending. The approved next NEXUS outcome has not started.
+
 ## 3. WEB controls applicability (WEB-01..14 all applicable or justified N/A)
 
 | Control | State at baseline | EXP06 obligation |

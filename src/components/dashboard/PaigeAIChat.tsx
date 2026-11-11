@@ -49,6 +49,8 @@ import { readOriginalReminderHistory, type OriginalReminderHistory } from "@/com
 import { originalSpecialistOrigin, readOriginalSpecialistHistory, type OriginalSpecialistHistory } from "@/components/chat/specialistHistory";
 import { OriginalDocumentWork } from "@/components/chat/OriginalDocumentWork";
 import { originalDocumentReference, type OriginalDocumentReference } from "@/components/chat/documentWorkRecovery";
+import { OriginalResearchWork } from "@/components/chat/OriginalResearchWork";
+import { originalResearchReference, type OriginalResearchReference } from "@/components/chat/researchWorkRecovery";
 import { OriginalSpecialistResult } from "@/components/chat/OriginalSpecialistResult";
 import { readOriginalCuraPreparationHistory, preparationWorkLabel, type OriginalCuraPreparationHistory, type OriginalPreparationScope } from "@/components/chat/curaPreparationHistory";
 import { useScopedUserId } from "@/hooks/useScopedUserId";
@@ -168,6 +170,7 @@ type Message = {
   originalCuraPreparationHistoryStatus?: "checking" | "unverified";
   originalSpecialistOrigin?: OriginalPreparationScope;
   originalDocumentWork?: OriginalDocumentReference;
+  originalResearchWork?: OriginalResearchReference;
   originalSpecialistHistory?: OriginalSpecialistHistory;
   originalSpecialistHistoryStatus?: "checking" | "unverified";
   recoveredApprovalExpiresAt?: string;
@@ -1259,6 +1262,7 @@ const PaigeAIChatInner = ({
           confirm: confirm?.length ? confirm : undefined,
           confirmResolved: true,
           ...(originThreadId ? { originalDocumentWork: originalDocumentReference(t, originThreadId) ?? undefined } : {}),
+          ...(originThreadId ? { originalResearchWork: originalResearchReference(t, originThreadId) ?? undefined } : {}),
           ...(activeTenantId && originThreadId ? { originalSpecialistOrigin:
             originalSpecialistOrigin(t, { threadId: originThreadId, tenantId: activeTenantId }) ?? undefined } : {}),
           // This only offers an inert read. Native status re-proves the actual
@@ -3758,6 +3762,18 @@ const PaigeAIChatInner = ({
                               current={() => requestScopeRef.current.epoch === requestScopeEpoch &&
                                 composerScopeRef.current.writable && !submissionPreflightRef.current}
                               artifacts={messages.flatMap(turn => turn.artifacts ?? [])}
+                            />
+                        )}
+                        {soloTenantSafety && !platform && scopedUserId && activeTenantId &&
+                          composerScope.writable && !isLoading && message.originalResearchWork &&
+                          message.originalResearchWork.threadId === activeThreadId && (
+                            <OriginalResearchWork
+                              key={`${scopedUserId}:${activeTenantId}:${requestScopeEpoch}:${message.originalResearchWork.workId}`}
+                              reference={message.originalResearchWork}
+                              actorId={scopedUserId}
+                              tenantId={activeTenantId}
+                              current={() => requestScopeRef.current.epoch === requestScopeEpoch &&
+                                composerScopeRef.current.writable && !submissionPreflightRef.current}
                             />
                         )}
                         {/* #29 — inline handoff cards for the deliverables Paige produced this turn. Open

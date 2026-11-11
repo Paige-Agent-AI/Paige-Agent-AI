@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { classifyAction } from "../../supabase/functions/_shared/action-risk.ts";
+import { isDefinedCapability } from "../../supabase/functions/_shared/capability-kit/mod.ts";
+import { SOCIAL_PUBLICATION_CAPABILITY } from "../../supabase/functions/_shared/social-provider/governance.ts";
 import { world, publishBody, USER, THEIRS } from "./social-publish-door.world.ts";
 
 // No module doubles: the original door, Social governance, fingerprint, risk map,
@@ -8,6 +10,14 @@ import { world, publishBody, USER, THEIRS } from "./social-publish-door.world.ts
 describe("Social publication through the real governance path", () => {
   it("classifies the existing approval identity as high risk", () => {
     expect(classifyAction("social_post_publish")).toBe("high");
+    expect(isDefinedCapability(SOCIAL_PUBLICATION_CAPABILITY)).toBe(true);
+    expect(SOCIAL_PUBLICATION_CAPABILITY).toMatchObject({
+      identity: { id: "social.post_publish" },
+      effect: "external_effect",
+      governance: { actionRiskKey: "social_post_publish", risk: "high", approval: "confirm" },
+      providerBinding: { operation: "edge.social-publish-command/publish" },
+      idempotency: { replay: "reconcile_then_return" },
+    });
   });
 
   it.each(["confirm", "auto"])("requires a stored preview in the %s lane, then consumes it once", async lane => {

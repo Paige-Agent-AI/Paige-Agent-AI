@@ -229,11 +229,22 @@ export function socialPublishDoorBound(entryText, doorText, governanceText) {
     return found.length === 1 ? found[0].initializer : null;
   };
   const equals = (node, text) => !!node && compactNode(node) === text;
+  const declaration = value(governance, "SOCIAL_PUBLICATION_CAPABILITY");
+  const field = (node, name) => node && ts.isObjectLiteralExpression(node)
+    ? node.properties.find(n => ts.isPropertyAssignment(n) && n.name.text === name)?.initializer : null;
+  const definition = declaration && ts.isCallExpression(declaration) && equals(declaration.expression, "defineCapability")
+    && declaration.arguments.length === 1 ? declaration.arguments[0] : null;
   if (!imports(entry, "../_shared/social-publish-command/door.ts", "handleSocialPublishCommand")
     || !imports(door, "../social-provider/governance.ts", "governSocialMutation")
     || !imports(governance, "../paige-spine/governedExecution.ts", "decideGovernedExecution")
     || !equals(value(door, "CAPABILITY"), '"social.post_publish"')
-    || !equals(value(governance, "SOCIAL_PUBLICATION_ACTION_RISK_KEY"), '"social_post_publish"')
+    || !imports(governance, "../capability-kit/mod.ts", "defineCapability")
+    || !equals(field(field(definition, "identity"), "id"), '"social.post_publish"')
+    || !equals(field(field(definition, "governance"), "actionRiskKey"), '"social_post_publish"')
+    || !equals(field(field(definition, "governance"), "risk"), '"high"')
+    || !equals(field(field(definition, "governance"), "approval"), '"confirm"')
+    || !equals(field(definition, "effect"), '"external_effect"')
+    || !equals(value(governance, "SOCIAL_PUBLICATION_ACTION_RISK_KEY"), 'SOCIAL_PUBLICATION_CAPABILITY.governance.actionRiskKeyasstring')
     || !equals(value(governance, "actionRiskKey"), 'input.capability==="social.post_publish"?SOCIAL_PUBLICATION_ACTION_RISK_KEY:input.capability')) return false;
   const serve = astNodes(entry, n => ts.isCallExpression(n) && compactNode(n.expression) === "Deno.serve");
   if (serve.length !== 1 || serve[0].arguments.length !== 1
@@ -653,7 +664,12 @@ function selfTest() {
       [1, 'proposal identity', 'const CAPABILITY = "social.post_publish"', 'const CAPABILITY = "another_publish"'],
       [1, 'governed action', 'capability: CAPABILITY', 'capability: "another_publish"'],
       [2, 'decision import', '../paige-spine/governedExecution.ts', '../fake.ts'],
-      [2, 'risk key', 'const SOCIAL_PUBLICATION_ACTION_RISK_KEY = "social_post_publish"', 'const SOCIAL_PUBLICATION_ACTION_RISK_KEY = "another_publish"'],
+      [2, 'risk key', 'actionRiskKey: "social_post_publish"', 'actionRiskKey: "another_publish"'],
+      [2, 'Kit constructor', 'defineCapability({', 'anotherConstructor({'],
+      [2, 'Kit import', '../capability-kit/mod.ts', '../fake-kit.ts'],
+      [2, 'Kit risk', 'risk: "high"', 'risk: "ordinary"'],
+      [2, 'Kit approval', 'approval: "confirm"', 'approval: "none"'],
+      [2, 'Kit binding', 'SOCIAL_PUBLICATION_CAPABILITY.governance.actionRiskKey as string', '"social_post_publish"'],
       [2, 'mapping identity', 'input.capability === "social.post_publish"', 'input.capability === "another_publish"'],
       [2, 'decision identity', 'id: actionRiskKey', 'id: input.capability'],
       [2, 'claim identity', 'claimedFor: actionRiskKey', 'claimedFor: input.capability'],

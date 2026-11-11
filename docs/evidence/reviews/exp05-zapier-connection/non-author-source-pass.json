@@ -1,0 +1,218 @@
+{
+  "reviewedAt": "2026-11-11T15:48:20.145Z",
+  "reviewer": "/root/approval_release_boundary",
+  "relationship": "NON-AUTHOR: did not implement, coauthor or edit product/native/UI/test source. Authored private independent probes and this receipt only.",
+  "verdict": "PASS_BOUNDED_CONNECTION_READINESS_SOURCE",
+  "stage": "UNCOMMITTED_CANDIDATE; NOT_DEPLOYED; COMPLETE_ONBOARDING_NOT_PROVEN",
+  "base": "e64ac2da01861722e5e3ebf6602fba5f3402f6d3",
+  "branch": "feat/exp05-universal-skool-onboarding",
+  "files": [
+    {
+      "path": "supabase/functions/_shared/zapier-workflow-contract.ts",
+      "sha256": "26c2a654af1193d6dfc813be58b7147e92e225789e9ac53e6739b96bc247da9b",
+      "bytes": 13070
+    },
+    {
+      "path": "supabase/functions/_shared/zapier-workflow-transport.ts",
+      "sha256": "96639407ff88950406f68cecb41e64997df6237dc81e9da8f9f29e46cd0b5f41",
+      "bytes": 7172
+    },
+    {
+      "path": "supabase/functions/tenant-zapier-api-connect/index.ts",
+      "sha256": "59f25a1d0180b1c322cbc1317f3e96ed145dea89806b3db8ebea96b396275a2f",
+      "bytes": 19998
+    },
+    {
+      "path": "supabase/migrations/20271133000028_exp05_zapier_workflow_scopes.sql",
+      "sha256": "0c12e984f5a5f7518bfb67e7d4b09e70794f4bf5db5483848649a047ee09ff04",
+      "bytes": 14064
+    },
+    {
+      "path": "supabase/tests/zapier_workflow_scopes.sql",
+      "sha256": "8cd43ab92ee261af8906126b9a64eb152b476b7a9026371d80e8ba746b65bafd",
+      "bytes": 9763
+    },
+    {
+      "path": "src/integrations/auth/zapierWorkflowContract.test.ts",
+      "sha256": "05fe409d993f77bb594720992d619d4652c02bd0c4e26e9af098d5ce44329267",
+      "bytes": 11572
+    },
+    {
+      "path": "src/integrations/auth/zapierWorkflowTransport.test.ts",
+      "sha256": "fc285bfe90c3509d1130e632c1e9c01fe48ec6caad4928d827eb7c93e53d1155",
+      "bytes": 8380
+    },
+    {
+      "path": "src/solo/data/useZapierApi.ts",
+      "sha256": "8e09170bef3623cac3131b6ec57abe17930ab7962b16866df5501cf304332e37",
+      "bytes": 7361
+    },
+    {
+      "path": "src/solo/settings-integrations.tsx",
+      "sha256": "a21da74fac2a93605884e996ac6e2ec3a9e51afcfb1e35c50ab6f11a7c0b1310",
+      "bytes": 92718
+    },
+    {
+      "path": "src/solo/settings-integrations.css",
+      "sha256": "930f3bc4879172188c902fc4dd4f2ad73801356d92dce6168247a55676b717c2",
+      "bytes": 64571
+    },
+    {
+      "path": "src/solo/zapier-workflow-permissions.test.tsx",
+      "sha256": "08bbe83fc1dc52e0e520b50cd8318490dead50059b5d935a642dadd5487978f0",
+      "bytes": 5471
+    },
+    {
+      "path": "docs/evidence/ui-delivery/exp05-universal-skool-onboarding.md",
+      "sha256": "5aee130168161645ce485a8b1483aaf3a58fb86c2a07171c7c8a506d411aedea",
+      "bytes": 10833
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/exp05-zapier-workflow-permissions/desktop-1366-light.png",
+      "sha256": "6f4e94fdcc8b2011cfb0ee4f83f4bb242ee34ccb9494e655e23611b767967734",
+      "bytes": 50834
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/exp05-zapier-workflow-permissions/narrow-320-dark.png",
+      "sha256": "6be54783e2b9f0f20d0680f8ceb34f7c8415e5c9ec1d64ed1268448d83e6a9fa",
+      "bytes": 34451
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "work/onboarding/non-author-review/native-after-race-proof.json",
+      "sha256": "d6b0c8e352f6b04c5810742c1e291a396b0c819b067c995bd764e189877eeebe"
+    },
+    {
+      "path": "work/onboarding/non-author-review/native-after-32-independent.log",
+      "sha256": "4f73f7a5fefdfe65da5bacd8e24762cd10fcd3a320ad1509d31ec39473b32b6f"
+    },
+    {
+      "path": "work/onboarding/non-author-review/transport-reader-abort-corrected.json",
+      "sha256": "4954c415b90a901c6f185d2318007c221cc901368b25ac35dcfeb04d9c6aa97a"
+    },
+    {
+      "path": "work/onboarding/non-author-review/non-author-transport-native-before-revise.json",
+      "sha256": "3ba8d463aec162422c2dacdcada16257b5dbd678abefee8a606a66d2a88131ed"
+    },
+    {
+      "path": "work/onboarding/non-author-review/transport-cancel-deadline-probe.json",
+      "sha256": "1aac8590a30e3a1a8c2755358cc650c03b5bc6e7c21168a745d56a3aee0ca214"
+    },
+    {
+      "path": "work/onboarding/non-author-review/discovery-enum-probe.json",
+      "sha256": "ab0ca38e4c2a8176960db9b877834c4a6a7bedeeb55e1b354d881f0c3479257f"
+    }
+  ],
+  "coverage": [
+    "Pure provider schema/request/projection/scopes; original-id and history redaction; may-enable create/step PATCH; malformed enum refusal.",
+    "Server original JWT/actor/active-tenant owner door, exact stored attempt/refresh scope set, legacy read-only branch and bounded request/response input.",
+    "Read-only workflow_read composition uses the original user client and single native current actor/tenant/eligible-role/grant-generation snapshot. Writes are refused by the mounted door.",
+    "Native original tenant OAuth advisory mutex precedes domain row locks; tenant/member SHARE prevents revocation across blocking grant upsert. Original disconnect cancellation/order preserved.",
+    "One transport deadline, immutable captured request, fixed origin/no redirect, no retry, unknown writes and post-read authority withholding, nonblocking cancellation.",
+    "Hook actor/tenant/loading/lifetime request gate, original URL validation, stale await suppression; permission review/decline/focus; old absent flags stay false.",
+    "Incumbent drawer and narrow CSS only; no Chat/Hub/registry/executor/Trust/Work/receipt admission or source-pin modification in this increment."
+  ],
+  "independentVerification": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/integrations/auth/zapierWorkflowContract.test.ts src/integrations/auth/zapierWorkflowTransport.test.ts src/solo/zapier-workflow-permissions.test.tsx --maxWorkers=1",
+      "exitCode": 0,
+      "files": 3,
+      "passed": 55,
+      "failed": 0,
+      "contract": 33,
+      "transport": 14,
+      "mountedComponent": 8,
+      "toolChunk": "79e9dd",
+      "durationSeconds": 6.63,
+      "boundary": "Real local modules/mounted component; synthetic grant/fetch ports, no provider or production calls."
+    },
+    {
+      "command": "Actual corrected native migration/source guard and provided rollback fixture on original empty owned local DB",
+      "passed": 32,
+      "failed": 0,
+      "boundary": "Independently executed earlier this review; migration SHA0c12 unchanged. Auth/crypto/Rail fixture ports synthetic, not full deployed schema proof."
+    },
+    {
+      "command": "Genuine two-session BEFORE/AFTER revocation and disconnect controls",
+      "result": "PASS_AFTER_CORRECTION",
+      "boundary": "Dedicated synthetic DB only; retained, cluster stopped, original rollback DB empty. Exact corrected bodies/ACLs installed without pretending layered full-carrier guard passed."
+    },
+    {
+      "command": "Actual bounded JSON reader with pending stream read and never-completing underlying cancel",
+      "result": "response_aborted",
+      "cancelCalls": 1,
+      "elapsedMs": 48.4642,
+      "providerCalls": 0
+    },
+    {
+      "command": "validateEvidenceText(text,{required:true,solo:true})",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "findingDispositions": [
+    {
+      "ids": [
+        "ZWT1",
+        "ZWT2"
+      ],
+      "status": "CLOSED_IN_REVIEWED_SOURCE",
+      "reason": "Split awaited authority/generation ports replaced by one real native snapshot at pre-dispatch and disclosure, composed from original caller JWT."
+    },
+    {
+      "ids": [
+        "ZWG1",
+        "ZWG2"
+      ],
+      "status": "CLOSED_IN_REVIEWED_SOURCE",
+      "reason": "Original advisory mutex plus protected tenant/member locks; actual causal revocation and disconnect races pass after correction."
+    },
+    {
+      "id": "PROVIDER_CANCEL_DEADLINE",
+      "status": "CLOSED_IN_REVIEWED_SOURCE",
+      "reason": "Never await unresponsive body cancellation; actual reader abort and both corrected transport probes pass."
+    },
+    {
+      "id": "DISCOVERY_ENUM_COERCION",
+      "status": "CLOSED_IN_REVIEWED_SOURCE",
+      "reason": "Exact string guard precedes closed action_type enum; malformed array negative retained."
+    },
+    {
+      "id": "PERMISSION_DECLINE_FOCUS",
+      "status": "CLOSED_IN_REVIEWED_SOURCE",
+      "reason": "Focused decline returns to original disclosure trigger; actual mounted assertion passes."
+    },
+    {
+      "id": "EVIDENCE_GRAMMAR",
+      "status": "CLOSED_IN_REVIEWED_METADATA",
+      "reason": "Six original required-validator errors retained as historical failure; corrected final record independently validates."
+    }
+  ],
+  "finishReview": {
+    "inspectedImages": [
+      "ui-desktop-1366-light.png",
+      "ui-narrow-320-dark-canonical.png"
+    ],
+    "result": "Bounded isolated component copy, wrapping layout, scope consequence and mounted decline-focus are satisfactory.",
+    "invalidPredecessors": "Earlier private dark-final/review-end captures omit canonical SOLO theme attribute; not evidence of product contrast or used as PASS.",
+    "limits": "Static isolated fixture; not full shell/PAIGE panel, 200 percent zoom, reduced motion, authenticated provider consent or complete responsive matrix proof."
+  },
+  "retainedFailures": [
+    "Original pure-contract three causal failures; predecessor split authority/generation races; original native revocation and deadlock; cancellation hang; malformed action enum; focus loss.",
+    "Private local process-pipe/newline setup errors are infrastructure/INVALID, not product failures; source guards remained strict.",
+    "Initial Vite/full-project typecheck and native screenshot timeout remain UNVERIFIED/failed infrastructure; no global full-project type/build claim.",
+    "Required evidence validator initially failed six fields; final PASS does not relabel that failure."
+  ],
+  "remainingLimits": [
+    "This verdict binds the listed working-file hashes, not a future committed head. Exact commit/current-main composition and hosted required checks remain separate.",
+    "Native28 unused production carrier; current production API authorization unavailable. No credentials, OAuth, refresh, workflow enable/run or customer record operation performed by reviewer.",
+    "No mounted write transport or individual exact Work/Trust workflow approval/execution/recovery path certified; Chat/private Hub binding, live Skool paid-member to original GHL result/receipt/dedup and owner acceptance remain owed.",
+    "Provider workflow ID to numeric run-history ID association must use original provider-validated evidence; not inferred from this projection.",
+    "One selected onboarding outcome only; no completion, Live or customer readiness claim."
+  ]
+}

@@ -9,48 +9,44 @@ SET LOCAL lock_timeout='5s';
 SET LOCAL statement_timeout='45s';
 
 DO $baseline$
-DECLARE signature text; expected text; expected_acl text;
+DECLARE signature text; expected text; expected_replay text; expected_acl text;
  actual_md5 text; actual_source_md5 text; actual_owner text; actual_acl text; prerequisite_detail text;
 BEGIN
- -- This writer has two reviewed, token/literal-identical source preimages:
- -- live compact6f0a... and original repository replayf42d... from
- -- 20260716222837_studio_rpc_owner_gate_unify.sql (blob84e6893c6b84289d06e541c085d970a25edf6dd7).
- -- Preserve both original consumers until a reviewed forward change makes the
- -- live catalog and original full replay converge. Never normalize other bodies.
- FOR signature,expected IN SELECT * FROM (VALUES
-  ('public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)','6f0a0cef4d411b4ef75a00a5bb5bec42'),
-  ('public.studio_role_ok(uuid)','1cf44d6637a20846c7e52fc35ec7b6d3'),
-  ('public.paige_studio_thread_ensure(uuid)','3535edb88dd02ceec2ec4087bf4371ad'),
-  ('public._team_hub_visible(uuid,uuid,uuid)','944ae4d661b7ea427717b35b6fc86c4d'),
-  ('public._team_hub_is_active(uuid,uuid)','8a17dba7a1a8fd50bcc5c7457e6caa05'),
-  ('public._team_hub_participates(uuid,uuid)','c204534d91951e1a6841003f1b9976a7'),
-  ('public.save_artifact_version(uuid,text,uuid,uuid)','414256973e5858b5ace8f3d38e57d725'),
-  ('public.create_session_artifact(uuid,text,jsonb,uuid)','ee7d9b1a6201f210e88f08c9b1e4dd87'),
-  ('public.link_session_artifact(uuid,text,uuid,uuid)','151a9d791c8c7de43e44a78f4834d5f9'),
-  ('public.growth_page_upsert(uuid,text,text,jsonb,jsonb,jsonb,uuid,jsonb)','b58fbbc9b18a40de26fc85e5937d2298'),
-  ('public._growth_form_go_live(uuid,uuid)','4183c4f3fc90f0ed58d751482f896620'),
-  ('public.growth_validate_blocks(jsonb)','264e09051c47a6282950b94c4ddb968c'),
-  ('public._growth_page_go_live(uuid,uuid)','d83ae6e305890c40ee72a6910dac2cea')
- ) AS p(signature,expected) LOOP
+ -- Four finite source pairs preserve the live compact catalog and original
+ -- repository replay without rewriting either original function. Differences
+ -- are comments/whitespace only; quoted tokens and all ABI/security metadata match.
+ -- Provenance: create/link20260716222837, artifact20260716224310,
+ -- thread20260718052352. Retain until a reviewed forward change converges both
+ -- original consumers. Never normalize a third source or admit the weaker Hub
+ -- CREATEs before original20271126150008 identity currentness.
+ FOR signature,expected,expected_replay IN SELECT * FROM (VALUES
+  ('public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)','6f0a0cef4d411b4ef75a00a5bb5bec42','f42d5a5d6d47fc4e7bd57e37cb909e85'),
+  ('public.studio_role_ok(uuid)','1cf44d6637a20846c7e52fc35ec7b6d3',NULL::text),
+  ('public.paige_studio_thread_ensure(uuid)','3535edb88dd02ceec2ec4087bf4371ad','c513ca9d8306637b33a29ce6ea16f221'),
+  ('public._team_hub_visible(uuid,uuid,uuid)','944ae4d661b7ea427717b35b6fc86c4d',NULL::text),
+  ('public._team_hub_is_active(uuid,uuid)','8a17dba7a1a8fd50bcc5c7457e6caa05',NULL::text),
+  ('public._team_hub_participates(uuid,uuid)','c204534d91951e1a6841003f1b9976a7',NULL::text),
+  ('public.save_artifact_version(uuid,text,uuid,uuid)','414256973e5858b5ace8f3d38e57d725',NULL::text),
+  ('public.create_session_artifact(uuid,text,jsonb,uuid)','ee7d9b1a6201f210e88f08c9b1e4dd87','d05e6d4eb947aa6d2c9c2f0947bca02a'),
+  ('public.link_session_artifact(uuid,text,uuid,uuid)','151a9d791c8c7de43e44a78f4834d5f9','83f6ab4e9b8088e101a58462e46d25a8'),
+  ('public.growth_page_upsert(uuid,text,text,jsonb,jsonb,jsonb,uuid,jsonb)','b58fbbc9b18a40de26fc85e5937d2298',NULL::text),
+  ('public._growth_form_go_live(uuid,uuid)','4183c4f3fc90f0ed58d751482f896620',NULL::text),
+  ('public.growth_validate_blocks(jsonb)','264e09051c47a6282950b94c4ddb968c',NULL::text),
+  ('public._growth_page_go_live(uuid,uuid)','d83ae6e305890c40ee72a6910dac2cea',NULL::text)
+ ) AS p(signature,expected,expected_replay) LOOP
   expected_acl:=CASE WHEN signature LIKE 'public._team_hub_%' OR signature IN ('public._growth_form_go_live(uuid,uuid)','public._growth_page_go_live(uuid,uuid)')
    THEN '{postgres=X/postgres}' ELSE '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}' END;
-  IF signature='public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)' THEN
-   SELECT md5(pg_get_functiondef(p.oid)),md5(p.prosrc),pg_get_userbyid(p.proowner),p.proacl::text
-    INTO actual_md5,actual_source_md5,actual_owner,actual_acl FROM pg_proc p WHERE p.oid=to_regprocedure(signature);
-   prerequisite_detail:=format('definition_md5=%s; prosrc_md5=%s; search_path=%s; owner=%s; acl=%s',
-    coalesce(actual_md5,'<missing>'),coalesce(actual_source_md5,'<missing>'),
-    left(current_setting('search_path'),256),coalesce(actual_owner,'<missing>'),left(coalesce(actual_acl,'<missing>'),512));
+  SELECT md5(pg_get_functiondef(p.oid)),md5(p.prosrc),pg_get_userbyid(p.proowner),p.proacl::text
+   INTO actual_md5,actual_source_md5,actual_owner,actual_acl FROM pg_proc p WHERE p.oid=to_regprocedure(signature);
+  prerequisite_detail:=format('definition_md5=%s; prosrc_md5=%s; search_path=%s; owner=%s; acl=%s',
+   coalesce(actual_md5,'<missing>'),coalesce(actual_source_md5,'<missing>'),
+   left(current_setting('search_path'),256),coalesce(actual_owner,'<missing>'),left(coalesce(actual_acl,'<missing>'),512));
+  IF to_regprocedure(signature) IS NULL OR (actual_md5 IS DISTINCT FROM expected
+   AND (expected_replay IS NULL OR actual_md5 IS DISTINCT FROM expected_replay))
+   OR actual_owner IS DISTINCT FROM 'postgres' OR actual_acl IS DISTINCT FROM expected_acl THEN
+   RAISE EXCEPTION 'EXP06 original prerequisite changed: %',signature USING ERRCODE='55000',DETAIL=prerequisite_detail;
   END IF;
-  IF to_regprocedure(signature) IS NULL OR (md5(pg_get_functiondef(to_regprocedure(signature))) IS DISTINCT FROM expected
-   AND NOT (signature='public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)'
-    AND md5(pg_get_functiondef(to_regprocedure(signature))) IS NOT DISTINCT FROM 'f42d5a5d6d47fc4e7bd57e37cb909e85'))
-   OR (SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM 'postgres'
-   OR (SELECT proacl::text FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM expected_acl THEN
-   IF signature='public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)' THEN
-    RAISE EXCEPTION 'EXP06 original prerequisite changed: %',signature USING ERRCODE='55000',DETAIL=prerequisite_detail;
-   END IF;
-   RAISE EXCEPTION 'EXP06 original prerequisite changed: %',signature USING ERRCODE='55000'; END IF;
-  IF signature='public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)' THEN
+  IF expected_replay IS NOT NULL THEN
    RAISE NOTICE 'EXP06 original prerequisite accepted: %',signature USING DETAIL=prerequisite_detail;
   END IF;
  END LOOP;

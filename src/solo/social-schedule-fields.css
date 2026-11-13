@@ -1,0 +1,8 @@
+.mct-pubdoor-timing { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+.mct-schedule-fields { display:grid; gap:6px; margin:12px 0; padding:12px; border:1px solid var(--pg-line-soft); border-radius:var(--pg-r-chip); min-width:0; }
+.mct-schedule-fields legend { padding:0 4px; font-size:var(--pg-t-body); }
+.mct-schedule-fields input { min-height:44px; max-width:100%; min-width:0; color:var(--pg-ink); background:var(--pg-canvas); border:1px solid var(--pg-line-soft); border-radius:var(--pg-r-chip); padding:8px; }
+.mct-schedule-fields label { font-size:var(--pg-t-label); }
+.mct-schedule-fields p { font-size:var(--pg-t-body); overflow-wrap:anywhere; }
+.mct-schedule-fields input[type="radio"] { min-height:auto; margin-right:8px; }
+.mct-schedule-fields input:focus-visible { outline:2px solid var(--pg-violet); outline-offset:2px; }

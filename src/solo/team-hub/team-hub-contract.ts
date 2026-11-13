@@ -11,6 +11,7 @@
  */
 
 import { readRecordLinks, type ReadRecordLink } from "../../../supabase/functions/_shared/paige-turn/record-links";
+import type {SocialPublicationReference} from "../social-publication-reference";
 
 export const TEAM_HUB_REFUSALS = [
   "not_member",
@@ -115,6 +116,8 @@ export interface TeamHubOverview {
 }
 
 export interface TeamHubMessage {
+  /** Derived only from the current native private Social card reader. Never raw message JSON. */
+  social_publication_reference?:SocialPublicationReference;
   /** Derived only from the separate current native card read; raw message fields cannot supply it. */
   approval_result_reference?: ReadRecordLink;
   /** Original source references, attached only to a native verified private agent reply. */

@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
+import {SocialApprovalReview,SocialPublicationCard} from "@/components/chat/SocialPublicationCard";
+import {readSocialPublicationReferences,socialConfirmReference,type SocialPublicationReference} from "@/solo/social-publication-reference";
 import { RECOVERY_READ_ONLY_REFUSAL } from "../../../supabase/functions/_shared/paige-turn/interactive-refusal";
 import { mergeIntoDraft, subscribePaigePromptHandoff } from "@/lib/paigePromptHandoff";
 import { StepTimeline, upsertStep, type PaigeStep, type PaigeStepFrame } from "@/components/dashboard/PaigeStepTrace";
@@ -157,7 +159,8 @@ type Message = {
    *  them back so the gate runs that call and not whatever the model re-emits — see the gate's own
    *  note. Optional: a rehydrated turn has summaries but no live fingerprints, which is correct,
    *  because a past decision must never be re-fired (§15). */
-  confirm?: Array<{ tool: string; summary: string; fingerprint?: string; expires_at?: string | null; command?: Record<string, unknown>; idempotency_key?: string; preview?: ConfirmEmailPreview }>;
+  confirm?: Array<{ tool: string; summary: string; fingerprint?: string; expires_at?: string | null; command?: Record<string, unknown>; idempotency_key?: string; preview?: ConfirmEmailPreview; social_reference?:SocialPublicationReference }>;
+  socialPublications?:SocialPublicationReference[];
   /** True on turns rehydrated from history: their confirm cards render settled,
    *  not as a live Approve button (§15 — never re-fire a past action). */
   confirmResolved?: boolean;
@@ -1198,7 +1201,8 @@ const PaigeAIChatInner = ({
         // fingerprint, and `confirmResolved` below renders it settled, so there is nothing here that
         // could re-fire a decision already taken (§15). INT-328 — stored items pass the same preview
         // gate as the live frame.
-        const confirm = rehydrateConfirmItems(b.paige_confirm);
+        const confirm = rehydrateConfirmItems(b.paige_confirm)?.map(c=>({...c,...(socialConfirmReference(c)?{social_reference:socialConfirmReference(c)!}:{})}));
+        const socialPublications=readSocialPublicationReferences(b.paige_social_publications);
         const crmResults = readCrmResultMetadata(b.paige_crm_result);
         // E4-S3 — the read references this answer persisted (the same reader the live frame uses).
         const recordLinks = readRecordLinks(b.paige_record_links);
@@ -1274,6 +1278,7 @@ const PaigeAIChatInner = ({
             ? { originalPreparationOrigin: { threadId: originThreadId, turnId: tid!,
                 intentId: t.interactive_intent_id!, tenantId: activeTenantId! } } : {}),
           crmResults: crmResults?.length ? crmResults : undefined,
+          socialPublications:socialPublications.length?socialPublications:undefined,
           recordLinks: recordLinks.length ? recordLinks : undefined,
           research: turnResearchRefs?.length
             ? turnResearchRefs.map((ref) => ({
@@ -2095,6 +2100,7 @@ const PaigeAIChatInner = ({
       let assistantMessage = "";
       let queuedThisTurn: QueuedApproval[] = [];
       const crmResultsThisTurn: PaigeCrmResult[] = [];
+      let socialPublicationsThisTurn:SocialPublicationReference[]=[];
       let recordLinksThisTurn: ReadRecordLink[] = [];
       // R2b — inline research results streamed this turn (paige_research frames).
       const researchThisTurn: PaigeResearchResult[] = [];
@@ -2214,7 +2220,7 @@ const PaigeAIChatInner = ({
             // — a proposal parked in a local and never committed would simply never appear, and
             // the person would be left with a document Paige said she read and nothing to do
             // about it. Same shape as the approval and confirm frames above, for the same reason.
-            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, socialPublications: socialPublicationsThisTurn.length ? [...socialPublicationsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn }]);
             continue;
           }
           if (parsed.client_scope?.status === "refused") {
@@ -2261,7 +2267,7 @@ const PaigeAIChatInner = ({
               : [];
             askThisTurn = { askId: c.ask_id, options: options.length >= 2 ? options : [], multi: c.multi === true, ...(typeof c.prompt === "string" && c.prompt ? { question: c.prompt } : {}) };
             if (!assistantMessage && typeof c.prompt === "string") assistantMessage = c.prompt;
-            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, ask: askThisTurn }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, socialPublications: socialPublicationsThisTurn.length ? [...socialPublicationsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, ask: askThisTurn }]);
             continue;
           }
           // #12 — conversation-compacting lifecycle (approaching/start/progress/done/skipped).
@@ -2272,7 +2278,7 @@ const PaigeAIChatInner = ({
             // #29 §39 — carry artifacts here too so the invariant "the card survives every rebuild"
             // never depends on the backend's frame ORDER (today approval_queued precedes paige_artifact,
             // but a reorder or a second approval_queued after an artifact must not wipe the card).
-            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn, confirm: confirmThisTurn.length ? confirmThisTurn : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn, confirm: confirmThisTurn.length ? confirmThisTurn : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, socialPublications: socialPublicationsThisTurn.length ? [...socialPublicationsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             continue;
           }
           // What became of each approval this turn carried. Only the card that asked reads it;
@@ -2280,14 +2286,14 @@ const PaigeAIChatInner = ({
           if (parsed.paige_approval_outcome) {
             if (outcomeThisTurn) {
               outcomeThisTurn = applyServerOutcome(outcomeThisTurn, parsed.paige_approval_outcome);
-              setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+              setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, socialPublications: socialPublicationsThisTurn.length ? [...socialPublicationsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             }
             continue;
           }
           // Structured event: Paige is asking to confirm a mutating action → render an approve/deny card.
           if (parsed.paige_confirm?.summary) {
-            confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(Object.prototype.hasOwnProperty.call(parsed.paige_confirm, "expires_at") ? { expires_at: typeof parsed.paige_confirm.expires_at === "string" ? parsed.paige_confirm.expires_at : null } : {}), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}), ...previewOf(parsed.paige_confirm) });
-            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: [...confirmThisTurn], crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(Object.prototype.hasOwnProperty.call(parsed.paige_confirm, "expires_at") ? { expires_at: typeof parsed.paige_confirm.expires_at === "string" ? parsed.paige_confirm.expires_at : null } : {}), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}), ...previewOf(parsed.paige_confirm), ...(socialConfirmReference(parsed.paige_confirm) ? {social_reference:socialConfirmReference(parsed.paige_confirm)!} : {}) });
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: [...confirmThisTurn], crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, socialPublications: socialPublicationsThisTurn.length ? [...socialPublicationsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             continue;
           }
           if (parsed.paige_crm_result?.action && parsed.paige_crm_result?.receipt_recorded === true) {
@@ -2295,11 +2301,18 @@ const PaigeAIChatInner = ({
             // R2b review P2: card survival must not depend on frame order — this rebuild
             // carries the research cards too (researchTrace flushes after crmResultTrace
             // today, but the invariant is the crm pattern's, not the ordering's).
-            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: [...crmResultsThisTurn], recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: [...crmResultsThisTurn], socialPublications: socialPublicationsThisTurn.length ? [...socialPublicationsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             continue;
           }
           // E4-S3 — the records the answer's reads drew on: references only, through the same reader the
           // reload uses (an unknown destination or a malformed entry is dropped, never rendered).
+          if (Array.isArray(parsed.paige_social_publications)) {
+            socialPublicationsThisTurn=readSocialPublicationReferences(parsed.paige_social_publications);
+            setStreamMessages([...newMessages,{id:assistantId,ts:assistantTs,role:"assistant",content:assistantMessage,approvalOutcome:outcomeThisTurn,
+              queued:queuedThisTurn,confirm:confirmThisTurn,socialPublications:socialPublicationsThisTurn,crmResults:crmResultsThisTurn,recordLinks:recordLinksThisTurn,
+              research:researchThisTurn,artifacts:artifactsThisTurn}]);
+            continue;
+          }
           if (Array.isArray(parsed.paige_record_links)) {
             recordLinksThisTurn = mergeRecordLinks(recordLinksThisTurn, parsed.paige_record_links);
             if (recordLinksThisTurn.length) {
@@ -2311,7 +2324,7 @@ const PaigeAIChatInner = ({
           // (one Paige turn, ruling §7) and renders immediately, like the crm cards.
           if (Array.isArray(parsed.paige_research?.findings)) {
             researchThisTurn.push(parsed.paige_research as PaigeResearchResult);
-            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: [...researchThisTurn], artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, socialPublications: socialPublicationsThisTurn.length ? [...socialPublicationsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: [...researchThisTurn], artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             continue;
           }
           // #29 — Paige handed the user a deliverable (document/image) → attach an inline handoff card.
@@ -2323,7 +2336,7 @@ const PaigeAIChatInner = ({
             // RLS-safe hydrate scopes to it, not the viewer's activeTenantId (they diverge when an
             // operator manages another tenant → wrong-tenant query → 0 rows → "Preview unavailable").
             artifactsThisTurn.push({ id: String(a.id), title: String(a.title ?? ""), url: a.url ?? undefined, artifactType: a.artifactType, tenantId: (parsed.paige_artifact.tenant_id as string | undefined) ?? undefined });
-            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: [...artifactsThisTurn] }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, socialPublications: socialPublicationsThisTurn.length ? [...socialPublicationsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: [...artifactsThisTurn] }]);
             continue;
           }
           // Only a string is an answer's words (the shared decoder's rule): a non-string `content`
@@ -2332,7 +2345,7 @@ const PaigeAIChatInner = ({
           if (typeof content === "string" && content) {
             if (!assistantMessage) setWritingPhase(true); // #11 — first token → "Writing…"
             assistantMessage += content;
-            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined, ...(askThisTurn ? { ask: askThisTurn } : {}) }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, socialPublications: socialPublicationsThisTurn.length ? [...socialPublicationsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined, ...(askThisTurn ? { ask: askThisTurn } : {}) }]);
           }
         } catch {
           halted = true;
@@ -2344,7 +2357,7 @@ const PaigeAIChatInner = ({
         // The approval reached Paige, so it may have run. Keep everything that arrived — never roll
         // the turn back and never say the message wasn't sent — and let the card say so.
         if (!outcomeThisTurn.reported) outcomeThisTurn = { ...outcomeThisTurn, dropped: true };
-        setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+        setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, socialPublications: socialPublicationsThisTurn.length ? [...socialPublicationsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
         retryTurnRef.current = null;
         releaseRequestBusy(requestTicket);
         setStreamingThreadId(null);
@@ -3619,6 +3632,8 @@ const PaigeAIChatInner = ({
                             </div>
                           </div>
                         ))}
+                        {!!message.socialPublications?.length && message.socialPublications.map((reference)=><SocialPublicationCard
+                          key={`${reference.content_id}:${reference.publication_id??reference.content_revision}`} reference={reference} tenantId={activeTenantId} account={activeTenant}/>)}
                         {!!message.crmResults?.length && (
                           <div className="flex flex-col gap-2">
                             {message.crmResults.map((result, resultIndex) => (
@@ -3644,13 +3659,20 @@ const PaigeAIChatInner = ({
                             approval click aborts the current stream and dispatches directly). */}
                         {confirmCardLive(message, index) && (
                           <div ref={observeLiveApproval} data-paige-live-decide>
-                          <PaigeConfirmCard
+                          {message.confirm.filter(c=>c.tool==="social_post_publish").map((c,i)=>c.social_reference?<SocialApprovalReview
+                            key={c.fingerprint??`social-${i}`} reference={c.social_reference} fingerprint={c.fingerprint} summary={c.summary}
+                            tenantId={activeTenantId} account={activeTenant} disabled={composerSendBlocked}
+                            focusOnMount={soloTenantSafety&&!message.recoveredApprovalExpiresAt}
+                            onApprove={fps=>{if(!refuseExpiredDecision(message))void handleSend(DECISION_REPLY.approved,fps);}}
+                            onDeny={fps=>{if(!refuseExpiredDecision(message))void handleSend(DECISION_REPLY.declined,undefined,fps);}}/>
+                            :<p key={`social-${i}`} role="status" className="text-sm text-muted-foreground">The original Social proposal could not be verified for approval.</p>)}
+                          {message.confirm.some(c=>c.tool!=="social_post_publish")&&<PaigeConfirmCard
                             // Summary and fingerprint stay PAIRED. The previous version built two
                             // parallel arrays and `.filter()`ed the fingerprints, so one action
                             // missing a fingerprint shifted every later summary onto the wrong
                             // call — an approval spendable on a neighbouring action. Pairing them
                             // in one object makes that misalignment unrepresentable.
-                            actions={message.confirm.map((c) => ({
+                            actions={message.confirm.filter(c=>c.tool!=="social_post_publish").map((c) => ({
                               summary: c.summary,
                               fingerprint: c.fingerprint,
                               // INT-328 — the email itself, when the call sends one.
@@ -3666,7 +3688,7 @@ const PaigeAIChatInner = ({
                             // full window, and a later turn could still act on something the
                             // person had already said no to.
                             onDeny={(fps) => { if (!refuseExpiredDecision(message)) void handleSend(DECISION_REPLY.declined, undefined, fps); }}
-                          />
+                          />}
                           </div>
                         )}
                         {/* Solo: decided in this session. The card is now a record of the answer. */}

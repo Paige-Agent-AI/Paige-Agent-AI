@@ -44,7 +44,6 @@ describe("Solo Campaigns approved contract", () => {
       ["campaigns", "Campaigns"],
       ["audience", "Audience"],
       ["content", "Content"],
-      ["calendar", "Calendar"],
       ["social", "Social"],
       ["email", "Email"],
       ["analytics", "Analytics"],

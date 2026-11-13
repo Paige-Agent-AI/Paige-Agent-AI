@@ -90,10 +90,11 @@ def checked_source(repo, commit, name):
     readback.changed_function_configuration(repo, baseline, commit)
     project, expected = readback.expected_release(repo, commit, [name])
     if name == 'social-publish-command':
-        # Its new account-bound receipts need the native private projection first.
+        # Media snapshots and original schedule CAS require the final native
+        # projection/writer first. Text-only native22 cannot protect this source.
         database_commit = readback.git(repo, 'rev-parse', '--verify',
                                        'refs/tags/db-live^{commit}').decode().strip()
-        privacy = 'supabase/migrations/20271133000022_exp07_publication_receipt_privacy.sql'
+        privacy = 'supabase/migrations/20271133000034_exp07_media_snapshot_receipt_compatibility.sql'
         persisted_privacy = readback.git(repo, 'cat-file', 'blob', f'{database_commit}:{privacy}')
         expected_privacy = readback.git(repo, 'cat-file', 'blob', f'{commit}:{privacy}')
         if persisted_privacy != expected_privacy:

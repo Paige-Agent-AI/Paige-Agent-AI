@@ -18,7 +18,8 @@
 import { envKey } from "../env-key.ts";
 import { NeedsConfigError } from "../provider-types.ts";
 import { safeFetch } from "../ssrfGuard.ts";
-import { GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SOCIAL_OAUTH_PLATFORMS, SOCIAL_POST_PLATFORMS } from "./mod.ts";
+import { readSocialSchedule } from "../social-publish-command/schedule.ts";
+import { GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SOCIAL_OAUTH_PLATFORMS, SOCIAL_POST_PLATFORMS, socialPostMediaIssue } from "./mod.ts";
 import {
   SocialProviderError,
   type SocialProviderAccount,
@@ -26,6 +27,7 @@ import {
   type SocialProviderProfile,
   type SocialPostInput,
   type SocialProviderPostOutcome,
+  type SocialPostPerformance,
 } from "./mod.ts";
 
 const DEFAULT_API_BASE = "https://zernio.com/api/v1";
@@ -241,10 +243,41 @@ export function normalizeZernioAccounts(payload: unknown): SocialProviderAccount
 
 const POST_REJECTED_BEFORE_DISPATCH = new Set([400, 401, 402, 403, 404, 405, 413, 415, 429]);
 const PUBLICATION_METADATA_KEY = "paigePublicationId";
+const SCHEDULE_VERSION_KEY = "paigeScheduleVersion";
 
 function publicationTag(input: SocialPostInput): string | null {
   // Zernio forwards tags as YouTube keywords. Keep internal correlation out of those.
   return input.platform === "youtube" ? null : `paige-publication-${input.externalId}`;
+}
+function scheduleMediaMatches(post:Record<string,unknown>,input:SocialPostInput):boolean {
+  if(!Array.isArray(input.scheduledMedia)||input.scheduledMedia.length>20)return false;
+  const actual=post.mediaItems==null?[]:post.mediaItems;
+  if(!Array.isArray(actual)||actual.length!==input.scheduledMedia.length)return false;
+  return actual.every((value,index)=>{const item=asRecord(value),expected=input.scheduledMedia![index];
+    return item?.url===expected.url&&item.type===expected.type&&(text(item.altText,500)??null)===(expected.altText??null);});
+}
+/** Only the original adapter's one approved effective instruction. Per-platform
+ * overrides can replace root content/media/time; never repair them implicitly. */
+function scheduledInstructionMatches(post:Record<string,unknown>,row:Record<string,unknown>,input:SocialPostInput,changing=false):boolean {
+  // Recycling creates additional future copies. This capability approves ONE
+  // instruction and never silently removes or adopts recurrence configured elsewhere.
+  if(post.recycling!=null)return false;
+  const caption=input.platform==="telegram"?input.text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"):input.text;
+  if(post.content!==caption||!scheduleMediaMatches(post,input))return false;
+  if(row.customContent!=null&&row.customContent!==caption)return false;
+  if(row.customMedia!=null&&!scheduleMediaMatches({mediaItems:row.customMedia},input))return false;
+  if(row.scheduledFor!=null){
+    // The original PUT changes root time only. Keeping even an equal OLD override
+    // could silently defeat a new time; hold that externally changed job instead.
+    if(changing||typeof row.scheduledFor!=="string"||!/(?:Z|[+-]\d{2}:\d{2})$/.test(row.scheduledFor)
+      ||!input.schedule||Date.parse(row.scheduledFor)!==Date.parse(input.schedule.scheduled_for))return false;
+  }
+  const data=asRecord(row.platformSpecificData);
+  if(row.platformSpecificData!=null&&!data)return false;
+  if(input.platform==="discord")return !!data&&typeof input.channelId==="string"&&/^\d{16,22}$/.test(input.channelId)
+    &&data.channelId===input.channelId&&Object.keys(data).every(key=>key==="channelId");
+  if(input.platform==="telegram")return !data||Object.keys(data).every(key=>key==="parseMode"&&data[key]==="HTML");
+  return !data||Object.keys(data).length===0;
 }
 
 /** Parse only evidence for the single approved target. Zernio's inline examples
@@ -266,6 +299,19 @@ function postOutcome(
     && (accountId === target.providerAccountId || (!lookupId && row?.accountId == null));
   if (!matches) {
     return { kind: "unknown", requestId: lookupId ?? null, reason: "provider_target_unverified" };
+  }
+  if(target.scheduleVersion&&lookupId&&!scheduledInstructionMatches(post!,row!,target)) {
+    return {kind:"unknown",requestId,reason:"provider_scheduled_instruction_changed"};
+  }
+  // A scheduled acceptance requires exact-ID GET evidence. A POST acknowledgement
+  // or another date/zone/version cannot be displayed as the approved future job.
+  if (lookupId && target.scheduleVersion && asRecord(post?.metadata)?.[SCHEDULE_VERSION_KEY] === target.scheduleVersion) {
+    if (target.cancelSchedule && post?.status === "draft" && row && ["pending", "cancelled"].includes(String(row.status))
+        && !row.platformPostId && !row.platformPostUrl) return { kind: "cancelled", requestId, version: target.scheduleVersion };
+    if (target.schedule && !target.cancelSchedule && post?.status === "scheduled" && row?.status === "pending"
+        && typeof post.scheduledFor === "string" && Date.parse(post.scheduledFor) === Date.parse(target.schedule.scheduled_for)
+        && post.timezone === target.schedule.timezone) return { kind: "scheduled", requestId,
+      scheduledFor: target.schedule.scheduled_for, timezone: target.schedule.timezone, version: target.scheduleVersion };
   }
   const url = safeHttpsUrl(row?.platformPostUrl);
   const discordChannelMatches = target.platform !== "discord"
@@ -365,6 +411,51 @@ export async function readZernioHubProfile(profileId: string): Promise<ZernioHub
     name: text(match.name, 160),
     accounts: normalizeZernioAccounts(await request("/accounts?profileId=" + encodeURIComponent(profileId) + "&limit=100")),
   };
+}
+
+/** Approved bytes enter the SAME provider client; PAIGE library URLs never leave it. */
+async function uploadPostMedia(input: SocialPostInput): Promise<Array<{ url: string; type: "image" | "video"; altText?: string }>> {
+  if (input.media === undefined) return [];
+  if (!Array.isArray(input.media)) throw new SocialProviderError("media_invalid", 400, "Choose saved media before publishing.");
+  if (!input.media.length) return [];
+  const formatIssue = socialPostMediaIssue(input.platform, input.text, input.media);
+  if (formatIssue) throw new SocialProviderError(formatIssue.code, 409, formatIssue.message);
+  if (typeof input.beforePublish !== "function") throw new SocialProviderError("approval_context_changed", 409, "The publication context could not be verified.");
+  const items: Array<{ url: string; type: "image" | "video"; altText?: string }> = [];
+  for (const [index, media] of input.media.entries()) {
+    const extension = ({ "image/png": "png", "image/jpeg": "jpg", "video/mp4": "mp4" } as Record<string, string>)[media.contentType];
+    try {
+      const bytes = await media.readBytes();
+      if (!(bytes instanceof Uint8Array) || bytes.byteLength !== media.size) throw new Error("media_identity_changed");
+      // The provider filename contains only the original publication UUID and its media order.
+      const response = asRecord(await request("/media/presign", { method: "POST", body: JSON.stringify({
+        filename: `post_${input.externalId}_${index}.${extension}`, contentType: media.contentType, size: media.size,
+      }) }));
+      const upload = new URL(String(response?.uploadUrl ?? ""));
+      const publicUrl = new URL(String(response?.publicUrl ?? ""));
+      const key = response?.key;
+      const validKey = typeof key === "string" && /^temp\/[A-Za-z0-9][A-Za-z0-9._/-]{0,299}$/.test(key)
+        && key.split("/").every(segment => segment !== "." && segment !== ".." && segment.length > 0);
+      const uploadPrefix = validKey && upload.pathname.endsWith(`/${key}`) ? upload.pathname.slice(0, -key.length - 1) : null;
+      if (!validKey || upload.protocol !== "https:" || upload.username || upload.password || upload.hash || upload.port
+        || !upload.hostname.endsWith(".r2.cloudflarestorage.com") || !upload.searchParams.get("X-Amz-Signature")
+        || uploadPrefix === null || (uploadPrefix !== "" && !/^\/[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/.test(uploadPrefix))
+        || publicUrl.origin !== "https://media.zernio.com" || publicUrl.username || publicUrl.password
+        || publicUrl.search || publicUrl.hash || publicUrl.pathname !== `/${key}`
+        || typeof response?.expiresIn !== "number" || response.expiresIn <= 0 || response.expiresIn > 3600) {
+        throw new Error("media_upload_reference_unverified");
+      }
+      // A signed storage PUT deliberately receives no Zernio or PAIGE Authorization header.
+      const uploaded = await safeFetch(upload.href, { method: "PUT", headers: { "Content-Type": media.contentType },
+        body: bytes as unknown as BodyInit }, { timeoutMs: 30_000, maxBytes: 4096 });
+      if (uploaded.status < 200 || uploaded.status >= 300 || uploaded.truncated) throw new Error("media_upload_unconfirmed");
+      items.push({ url: publicUrl.href, type: media.type, ...(media.altText ? { altText: media.altText } : {}) });
+    } catch {
+      // This stage cannot have created a social post. The original POST is below, once only.
+      throw new SocialProviderError("provider_media_unavailable", 409, "The media could not be prepared. No post was published.");
+    }
+  }
+  return items;
 }
 
 export const zernioSocialAdapter: SocialProviderAdapter = {
@@ -481,6 +572,7 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
   },
   async createPost(input) {
     assertProfileKey(input.providerProfileKey);
+    if (input.schedule && !readSocialSchedule(input.schedule, Date.now())) throw new SocialProviderError("schedule_time_expired", 409, "Choose a future time and review the schedule again.");
     const requested = postPlatform(input.platform);
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.externalId)) {
       throw new SocialProviderError("invalid_publication_id", 400, "The publication identifier is invalid.");
@@ -495,25 +587,99 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
     const platformSpecificData = requested === "discord" ? { channelId: input.channelId }
       : requested === "telegram" ? { parseMode: "HTML" } : undefined;
     const tag = publicationTag(input);
+    const mediaItems = await uploadPostMedia(input);
+    if (input.beforePublish) {
+      try { await input.beforePublish!(); }
+      catch { throw new SocialProviderError("approval_context_changed", 409, "Access, the saved post, media or destination changed before publishing."); }
+    }
+    if (input.schedule && !readSocialSchedule(input.schedule, Date.now())) throw new SocialProviderError("schedule_time_expired", 409, "Choose a future time and review the schedule again.");
     try {
       const payload = await request("/posts", {
         method: "POST",
         headers: { "Idempotency-Key": input.externalId },
         body: JSON.stringify({
           content,
+          ...(mediaItems.length ? { mediaItems } : {}),
           platforms: [{ platform: PROVIDER_PATH[requested] ?? requested, accountId: input.providerAccountId, platformSpecificData }],
-          publishNow: true,
-          metadata: { [PUBLICATION_METADATA_KEY]: input.externalId },
+          ...(input.schedule ? { scheduledFor: input.schedule.scheduled_for, timezone: input.schedule.timezone, isDraft: false } : { publishNow: true }),
+          metadata: { [PUBLICATION_METADATA_KEY]: input.externalId, ...(input.schedule ? { [SCHEDULE_VERSION_KEY]: 1 } : {}) },
           ...(tag ? { tags: [tag] } : {}),
         }),
       });
-      return postOutcome(payload, input);
+      const initial = postOutcome(payload, input);
+      if (input.schedule) {
+        const id = text(asRecord(asRecord(payload)?.post)?._id, 128);
+        if (!id) return { kind: "unknown", requestId: null, reason: "provider_schedule_unconfirmed",scheduledMedia:mediaItems };
+        try { return {...postOutcome(await request(`/posts/${encodeURIComponent(id)}`), { ...input, scheduleVersion: 1,scheduledMedia:mediaItems }, id),scheduledMedia:mediaItems}; }
+        catch { return { kind: "unknown", requestId: id, reason: "provider_schedule_unconfirmed",scheduledMedia:mediaItems }; }
+      }
+      return initial;
     } catch (error) {
       if (error instanceof SocialProviderError
           && (POST_REJECTED_BEFORE_DISPATCH.has(error.status) || error.code === "provider_duplicate_content")) throw error;
       // Conflicts, 5xx, malformed responses and transport errors may follow a real dispatch.
-      return { kind: "unknown", requestId: null, reason: "provider_dispatch_unconfirmed" };
+      return { kind: "unknown", requestId: null, reason: "provider_dispatch_unconfirmed",...(input.schedule?{scheduledMedia:mediaItems}:{}) };
     }
+  },
+  async updateSchedule(input, providerPostId, expectedVersion, mutationId, previousSchedule) {
+    assertProfileKey(input.providerProfileKey);
+    if (!providerPostId || !Number.isSafeInteger(expectedVersion) || expectedVersion < 1 || input.scheduleVersion !== expectedVersion + 1
+        || !/^[0-9a-f-]{36}$/i.test(mutationId) || (!input.cancelSchedule && !readSocialSchedule(input.schedule, Date.now()))) {
+      throw new SocialProviderError("schedule_invalid", 409, "The exact schedule change must be reviewed again.");
+    }
+    // Re-read the SAME provider object. A late/publishing/changed job is reconciled,
+    // never replaced with POST /posts and never described as cancelled.
+    const payload = asRecord(await request(`/posts/${encodeURIComponent(providerPostId)}`)), post = asRecord(payload?.post);
+    const platforms = Array.isArray(post?.platforms) ? post.platforms.map(asRecord) : [], entry = platforms.length === 1 ? platforms[0] : null;
+    const metadata = asRecord(post?.metadata);
+    if (post?._id !== providerPostId || post.status !== "scheduled" || metadata?.[PUBLICATION_METADATA_KEY] !== input.externalId
+        || metadata?.[SCHEDULE_VERSION_KEY] !== expectedVersion || entry?.status !== "pending"
+        || !previousSchedule || Date.parse(String(post.scheduledFor)) !== Date.parse(previousSchedule.scheduled_for) || post.timezone !== previousSchedule.timezone
+        || !scheduledInstructionMatches(post,entry!,{...input,schedule:previousSchedule},true)
+        || normalizePlatform(entry?.platform) !== input.platform || text(asRecord(entry?.accountId)?._id ?? entry?.accountId, 200) !== input.providerAccountId) {
+      return { kind: "unknown", requestId: providerPostId, reason: "provider_schedule_changed" };
+    }
+    await input.beforePublish?.();
+    if (!readSocialSchedule(previousSchedule, Date.now())) return { kind: "unknown", requestId: providerPostId, reason: "provider_schedule_due_or_started" };
+    if (!input.cancelSchedule && !readSocialSchedule(input.schedule, Date.now())) throw new SocialProviderError("schedule_time_expired", 409, "Choose a future time and review the schedule again.");
+    try {
+      await request(`/posts/${encodeURIComponent(providerPostId)}`, { method: "PUT", body: JSON.stringify({
+        ...(input.cancelSchedule ? { isDraft: true } : { isDraft: false, scheduledFor: input.schedule!.scheduled_for, timezone: input.schedule!.timezone }),
+        metadata: { ...metadata, [SCHEDULE_VERSION_KEY]: input.scheduleVersion, paigeScheduleMutationId: mutationId },
+      }) });
+    } catch { return { kind: "unknown", requestId: providerPostId, reason: "provider_schedule_change_unconfirmed" }; }
+    try { return postOutcome(await request(`/posts/${encodeURIComponent(providerPostId)}`), input, providerPostId); }
+    catch { return { kind: "unknown", requestId: providerPostId, reason: "provider_schedule_change_unconfirmed" }; }
+  },
+  async readPerformance(input): Promise<SocialPostPerformance> {
+    const empty = (state: SocialPostPerformance["state"]): SocialPostPerformance => ({ state, metrics: {}, measured_at: null });
+    if (input.platform !== "threads") return empty("unsupported");
+    assertProfileKey(input.providerProfileKey);
+    if (!input.requestId || !input.postId || !input.providerAccountId) return empty("error");
+    let payload: Record<string, unknown> | null;
+    try {
+      const profileId = await resolveProfileId(input.providerProfileKey);
+      const query = new URLSearchParams({ postId: input.requestId, accountId: input.providerAccountId, profileId, platform: "threads" });
+      payload = asRecord(await request(`/analytics?${query}`));
+    } catch (error) {
+      return empty(error instanceof SocialProviderError && error.status === 402 ? "unsupported"
+        : error instanceof SocialProviderError && error.status === 404 ? "pending" : "error");
+    }
+    if (!payload || (payload.postId !== input.requestId && payload.latePostId !== input.requestId)) return empty("error");
+    const exact = Array.isArray(payload.platformAnalytics) ? payload.platformAnalytics.map(asRecord).filter(row => row
+      && row.platform === "threads" && row.accountId === input.providerAccountId && row.platformPostId === input.postId) : [];
+    if (exact.length !== 1) return empty(payload.syncStatus === "pending" && exact.length === 0 ? "pending" : "error");
+    const row = exact[0]!;
+    if (row.syncStatus !== "synced") return empty(row.errorMessage ? "error" : "pending");
+    const metrics: Record<string, number> = {}, analytics = asRecord(row.analytics);
+    // Threads exposes these counters. Missing values and other platform defaults are not zeros.
+    for (const key of ["views", "likes", "comments", "shares"]) {
+      const value = analytics?.[key];
+      if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) metrics[key] = value;
+    }
+    const measured = text(analytics?.lastUpdated, 80);
+    return { state: Object.keys(metrics).length ? "available" : "pending", metrics,
+      measured_at: measured && Number.isFinite(Date.parse(measured)) ? measured : null };
   },
   async readPost(input, providerPostId) {
     let id = providerPostId;

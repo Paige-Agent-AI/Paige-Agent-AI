@@ -323,9 +323,11 @@ function withCards(messages: TeamHubMessage[], cards: Record<string, CardRead> |
     const card = message.author_kind === "agent" ? cards[message.id] : undefined;
     if (!card) return message;
     const reference = resultReadReady ? cardResultReference(card) : undefined;
-    if (message.approval === card.approval && message.approval_result_reference?.record_id === reference?.record_id) return message;
+    const socialReference=resultReadReady?card.socialReference:undefined;
+    if (message.approval === card.approval && message.approval_result_reference?.record_id === reference?.record_id
+      &&message.social_publication_reference===socialReference) return message;
     changed = true;
-    return { ...message, approval: card.approval, approval_result_reference: reference };
+    return { ...message, approval: card.approval, approval_result_reference: reference,social_publication_reference:socialReference };
   });
   return changed ? out : messages;
 }

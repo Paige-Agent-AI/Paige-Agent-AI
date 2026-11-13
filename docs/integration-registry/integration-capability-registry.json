@@ -3435,7 +3435,7 @@
         "Per-account platform-native consent shown by the real platform's own consent screen (the adapter's per-platform authorization-host allowlist is enforced); no scope is inferred, pre-granted, or silently widened"
       ],
       "safe_readable_context": "Connection health, stable provider account identifier, platform (Zernio's reported names folded to PAIGE's catalogue keys via the adapter's documented aliases), handle, display name, avatar URL, per-account capability list, and last verification time. The API key, profile HMAC keys, callback nonces, and raw payloads are service-only.",
-      "allowed_writes_external_effects": "Open account authorization after one owner/admin confirmation, verify by readback, and revoke the connected account on disconnect. For SOLO content, social.post_publish requires exact saved revision, caption and tenant-owned destination approval. The publish door sends one immediate text post to a proven target. Facebook, LinkedIn, Google Business Profile and Pinterest need exact Page, organization, location or board binding before a publish can proceed. Scheduling, analytics, inbound social automation and paid actions have separate scope and proof.",
+      "allowed_writes_external_effects": "Open account authorization after one owner/admin confirmation, verify by readback, and revoke on disconnect. The released SOLO social.post_publish door requires exact saved revision, caption and tenant-owned destination approval for one immediate text post. Facebook, LinkedIn, Google Business Profile and Pinterest require exact Page, organization, location or board binding. Unreleased EXP07 carrier34/source candidate adds approved saved-media upload, receipt-bound manual Threads performance and the owner-approved exact provider-native future instruction through the SAME gate/receipt. Current authority, connection generation, caption/media/destination and UTC/civil/IANA/DST choice are bound; each same-job time change/cancel requires a new exact approval and native version claim. Scheduled acceptance is not publication; ambiguous results reconcile without replay. Unexpected effective platform overrides or recycling are refused, never adopted or silently edited. Candidate media supports Threads PNG/JPEG images and one MP4 video, saved order and 25 MiB source limits. Combined review/release/current-account/provider proof and fresh exact effect consent remain owed. Inbound replies/automation and paid actions retain their original separate scope/proof.",
       "authority_lane": [
         "read",
         "confirm"
@@ -3445,8 +3445,8 @@
       "rail_mind_memory": "Rail: the existing social-connection receipt path (record_capability_run through the doors). Mind and long-term Memory: no private provider payload, token, or audience data.",
       "status": "PROOF_OWED",
       "owner": "EXP07 (Social experience); EXP10 (registry entry — connection substrate)",
-      "dependency": "The owner confirmed Social connected in the existing Academy SOLO workspace after #3296. One authorized live post, its provider link and reopening the saved piece and receipt remain PROOF OWED.",
-      "next_slice": "Complete the selected SOLO create-and-publish proof through the existing content and publication door. Other original EXP07 outcomes require their separate approval and evidence.",
+      "dependency": "One earlier authorized text-only post, provider result/link and original receipt reopen completed through PR3331/native27; its approval is consumed and must never be replayed. The SAME Visual Desk A media outcome remains OPEN: unused local31 was moved to Coordinator-reserved34 before publication/application. Backend/native12-source review is CLEAR at its immutable November13 packet; UI/final composition/literals/CI/release/readback and fresh approved media/result/performance/reopen proof remain owed. Shared upstream declined-action/error-path P1 release is HELD with its original EXP08 owner; old hosted greens do not clear it. No feature PR, managed Preview, deployment or new provider effect is claimed. Connection reports are account-specific; personal SOLO authorization-start defects remain with original EXP10. Empty connection states do not prove failed attempts.",
+      "next_slice": "Finish the SAME universal eligible-SOLO Visual Desk A saved-media publishing and original receipt/performance/reopen outcome through existing Content/Social/Chat/private-NEXUS writers. Other outcomes retain separate approval and evidence.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -3476,20 +3476,25 @@
         },
         "receipt_reconciliation": "The requested platform's account present in the GET /accounts readback, matched to the opaque ps_<hmac> profile key; connection state applied by the doors before the receipt/Rail outcome.",
         "rail_outcome": "Governed social-connection outcome on Rail (the doors' existing path)",
-        "pause_revoke_path": "Stop connects (immediate; no scheduled or automated connects exist); disconnect revokes per-account at the provider (their documented unit); platform key rotation is owner-held (ZERNIO_API_KEY).",
+        "pause_revoke_path": "Stop new connects; disconnect revokes per-account at the provider (their documented unit); platform key rotation is owner-held (ZERNIO_API_KEY). Local disconnect/revocation/deletion must never imply that a previously committed provider future job was cancelled. The original same-ID job requires verified provider cancellation/readback; an ambiguous or late change remains unresolved or the original post may already be live. This is a documented lifecycle boundary, not a claim that the unreleased schedule feature executed.",
         "next_owner": "EXP07",
-        "next_slice": "First real connect in production (the live probe and credential check), then EXP07's broadcast / guest admission / Team Hub seam / publishing queue."
+        "next_slice": "Finish the SAME approved universal SOLO Visual Desk A media publishing/original receipt/reopen outcome with its scheduling amendment. Other broadcast/guest/automation outcomes remain pending their original approval and proof."
       },
       "code_anchors": [
         {
           "path": "supabase/functions/_shared/social-provider/zernio.ts",
           "role": "provider_adapter",
-          "note": "the Zernio adapter — satisfies the same SocialProviderAdapter contract the doors were built against; DEFAULT_API_BASE zernio.com/api/v1; verification by GET /accounts readback; createPost always refuses (publishing is a future governed slice)"
+          "note": "Original Zernio adapter: profile-scoped verification, exact approved text-post creation and same-attempt readback. Unreleased carrier34 adds approved-byte presign/credentialless upload, manual Threads analytics and exact future-instruction/same-job PUT+GET controls. Original provider-owned media proof stays private in the same receipt. Candidate source/native review is not release/provider proof."
         },
         {
           "path": "supabase/functions/paige-social-callback/index.ts",
           "role": "callback_readback",
           "note": "the callback leg — verifies Zernio rows by reading the profile back and requiring the requested platform's account (readback, not redirect parameters)"
+        },
+        {
+          "path": "supabase/functions/_shared/social-publish-command/door.ts",
+          "role": "governed_publish_door",
+          "note": "Original caller-JWT workspace/role checks, stored approval/claim and native publication receipt. Candidate media/source/performance/schedule extensions retain this writer; exact future time and each change bind the same approval/version. Native34 precedes media Edge deployment. Combined release and fresh exact media/caption/destination/time consent remain owed."
         }
       ],
       "sources": [
@@ -3497,7 +3502,13 @@
         "supabase/functions/_shared/social-provider/mod.ts",
         "supabase/functions/paige-social/index.ts",
         "supabase/functions/paige-social-callback/index.ts",
-        "ANT-162 comments e1ec0288 + d3e5ad85 (EXP07 records: owner choice, key vaulting, #3070 merged a405a3a11 + deploy readback, honest probe boundary)"
+        "ANT-162 comments e1ec0288 + d3e5ad85 (EXP07 records: owner choice, key vaulting, #3070 merged a405a3a11 + deploy readback, honest probe boundary)",
+        "https://docs.zernio.com/posts/create-post",
+        "https://docs.zernio.com/posts/update-post",
+        "https://docs.zernio.com/guides/timezones",
+        "https://docs.zernio.com/guides/platform-settings",
+        "https://docs.zernio.com/platforms/discord",
+        "https://docs.zernio.com/changelog (March6 recycling: source documentation, not runtime/account permission)"
       ]
     },
     {

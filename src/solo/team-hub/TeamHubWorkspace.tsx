@@ -3,6 +3,7 @@ import { Link, useInRouterContext, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Radio, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
+import {SocialApprovalReview,SocialPublicationCard} from "@/components/chat/SocialPublicationCard";
 import { workspaceLinkTarget } from "@/lib/links/workspaceLinks";
 import { createComposerScopeIdentity } from "@/lib/paigeComposerScopeState";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
@@ -1760,7 +1761,7 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
   message: TeamHubMessage; agentKey: TeamHubAgentKey; people: TeamHubPerson[]; meId: string;
   onOpenThread?: (rootId: string, trigger: HTMLElement) => void; agent?: AgentView; place?: RowPlace;
 }) {
-  const { activeTenant } = useTenantContext();
+  const { activeTenant,activeTenantId } = useTenantContext();
   const name = agentName(agentKey);
   const profile = TEAM_HUB_AGENT_PROFILES[agentKey];
   const asker = people.find((person) => person.user_id === message.author_user_id) ?? null;
@@ -1826,10 +1827,23 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
           <AgentPlate agent={agentKey} size="sm" />Open DM with {name}</button>
       </div>}
       {message.files.length > 0 && <MessageFiles files={message.files} />}
-      {message.approval && <TeamHubApprovalCard approval={message.approval} agent={agentKey} meId={meId}
+      {message.approval && (message.approval.kind==="Social publish"&&(message.approval.state==="waiting"||message.approval.can_resume)
+        ?agentKey==="nexus"&&place?.agentDm==="nexus"&&isAsker&&message.social_publication_reference
+          ?<SocialApprovalReview reference={message.social_publication_reference} tenantId={activeTenantId} account={activeTenant}
+            fingerprint={message.approval.actions[0]?.fingerprint} summary={message.approval.actions[0]?.summary??"Original Social proposal"}
+            disabled={!agent?.online} onApprove={fingerprints=>agent?.onApprovalAct?.(message,{kind:"approve",fingerprints})}
+            onDeny={fingerprints=>agent?.onApprovalAct?.(message,{kind:"decline",fingerprints})}>
+            <TeamHubApprovalCard approval={message.approval} agent={agentKey} meId={meId}
+              askerName={approvalAsker(message.approval.asker_user_id,people,askerShort)} decidedLabel={null} online={agent?.online??true}
+              onAct={agent?.onApprovalAct?act=>agent.onApprovalAct?.(message,act):undefined}/>
+           </SocialApprovalReview>
+          :<p role="status" className="th-fail">This original Social proposal could not be verified for approval here.</p>
+        :<TeamHubApprovalCard approval={message.approval} agent={agentKey} meId={meId}
         askerName={approvalAsker(message.approval.asker_user_id, people, askerShort)}
         decidedLabel={message.approval.decided_at ? timeLabel(message.approval.decided_at) : null} online={agent?.online ?? true}
-        onAct={agent?.onApprovalAct ? (act) => agent.onApprovalAct?.(message, act) : undefined} />}
+        onAct={agent?.onApprovalAct ? (act) => agent.onApprovalAct?.(message, act) : undefined} />)}
+      {agentKey==="nexus"&&place?.agentDm==="nexus"&&isAsker&&message.social_publication_reference
+        &&message.approval?.state!=="waiting"&&<SocialPublicationCard reference={message.social_publication_reference} tenantId={activeTenantId} account={activeTenant} returnMessageId={message.id}/>}
       {message.approval && agent?.cardNotices?.[message.id] && <div className="th-fail">{agent.cardNotices[message.id]}</div>}
       {message.approval?.state === "done" && message.approval_result_reference
         && <PaigeRecordLinks links={[message.approval_result_reference]} account={activeTenant} />}

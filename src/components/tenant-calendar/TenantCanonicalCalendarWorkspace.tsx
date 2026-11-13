@@ -7,6 +7,7 @@ import { subtabByKey, subtabBySlug, type RouteTierKey } from "@/lib/routing/tier
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { SoloCalendarWorkspace } from "./SoloCalendarWorkspace";
 import { WeeklyCalendarResponsibility } from "@/solo/weekly/WeeklyCalendarResponsibility";
+import { SocialCalendarProjection } from "@/solo/social-calendar-projection";
 
 export interface TenantCanonicalCalendarWorkspaceProps {
   tier: Extract<RouteTierKey, "solo" | "agency">;
@@ -44,7 +45,7 @@ function CalendarBoundary({ kind }: { kind: "loading" | "permission" }) {
  * navigating. Every read/write receives the server-resolved activeTenantId.
  */
 export function TenantCanonicalCalendarWorkspace({ tier, openPaige, owner = "direct" }: TenantCanonicalCalendarWorkspaceProps) {
-  const { activeTenantId, activeUserId, loading, accountContextLoading } = useTenantContext();
+  const { activeTenantId, activeUserId, activeTenant, loading, accountContextLoading } = useTenantContext();
   const location = useLocation();
   const navigate = useNavigate();
   const routeRoot = tenantRoutePrefixForPath(location.pathname);
@@ -96,6 +97,7 @@ export function TenantCanonicalCalendarWorkspace({ tier, openPaige, owner = "dir
         connectionsHref={soloConnections}
         openPaige={openPaige}
         weeklyResponsibility={weeklySlot}
+        marketingSchedules={({ from, until }) => <SocialCalendarProjection key={`${activeUserId}:${activeTenantId}`} tenantId={activeTenantId} actorId={activeUserId} account={activeTenant} from={from} until={until} />}
       />
       }</WeeklyCalendarResponsibility>
     );

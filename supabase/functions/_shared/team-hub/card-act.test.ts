@@ -29,10 +29,12 @@ const TOKEN = "07".repeat(32);
 
 const CRM_ARGS = { command: { action: "task.cancel", task_id: TASK, expected_updated_at: "2026-10-28T09:00:00.000000+00:00" }, idempotency_key: "k".repeat(16), approval_subject: `task:${TASK}` };
 const PUBLISH_ARGS = { action: "publish", kind: "page", id: PAGE, expected_tenant_id: TENANT, approval_subject: `publish:page:${PAGE}`, approval_cycle_nonce: "16161616-1616-4161-8161-161616161616" };
+const SOCIAL_ARGS={content_id:PAGE,content_revision:"2026-11-13T12:00:00Z",platform:"threads",caption:"Exact original caption",account_id:TASK,connection_id:CONF,
+ provider_account_id:"fixture-account",profile_key:"fixture-profile",channel_id:null,channel_label:"Original destination"};
 
 type Call = { who: "caller" | "service" | "door"; name: string; args: Record<string, unknown> };
 type Opts = {
-  tool?: "crm_cancel_task" | "crm_assign_task" | "growth_page_publish"; decide?: (a: Record<string, unknown>) => unknown; settle?: (a: Record<string, unknown>) => unknown;
+  tool?: "crm_cancel_task" | "crm_assign_task" | "growth_page_publish"|"social.post_publish"; decide?: (a: Record<string, unknown>) => unknown; settle?: (a: Record<string, unknown>) => unknown;
   door?: (name: string, body: Record<string, unknown>) => unknown; rowAfter?: () => Record<string, unknown> | null; row?: (fp: string) => Record<string, unknown> | null;
   accept?: () => unknown; post?: () => unknown;
   /** The proposal read does not answer (a database error). */
@@ -49,8 +51,8 @@ type Opts = {
 
 async function world(opts: Opts = {}) {
   const tool = opts.tool ?? "crm_cancel_task";
-  const agent = tool === "growth_page_publish" ? "nexus" : "zion";
-  const args = opts.args ?? (tool === "growth_page_publish" ? PUBLISH_ARGS : CRM_ARGS);
+  const agent = tool === "growth_page_publish"||tool==="social.post_publish" ? "nexus" : "zion";
+  const args = opts.args ?? (tool === "growth_page_publish" ? PUBLISH_ARGS : tool==="social.post_publish"?SOCIAL_ARGS:CRM_ARGS);
   const fp = await confirmFingerprint(tool, args);
   const calls: Call[] = [];
   const queries: Query[] = [];
@@ -74,7 +76,7 @@ async function world(opts: Opts = {}) {
             const msg = opts.msg === undefined ? { id: CARD, channel_id: ZION_DM, parent_message_id: null, agent_key: agent, author_kind: "agent" } : opts.msg;
             const valid = msg?.id === CARD && msg.channel_id === ZION_DM && msg.author_kind === "agent" && msg.agent_key === agent;
             return { ok: true, cards: [{ message_id: CARD,
-              card: { state: "done", kind: "task_cancel", asker_user_id: SAM, actions: [{ summary: "Cancel" }] },
+              card: { state: "done", kind: tool==="social.post_publish"?"social_publish":"task_cancel", asker_user_id: SAM, actions: [{ summary: "Cancel" }] },
               ...(valid ? { approval_context: opts.context === undefined ? {
                 tenant_id: TENANT, channel_id: ZION_DM, approver_user_id: SAM,
                 agent_key: agent, source_message_id: ASK, root_message_id: msg.parent_message_id ?? CARD,
@@ -97,7 +99,7 @@ async function world(opts: Opts = {}) {
     if (q.table === "team_hub_messages" || q.table === "team_hub_agent_turns" || q.table === "team_hub_message_cards")
       return { data: null, error: { message: "permission denied for protected Team Hub table" } };
     if (q.table === "paige_subagents") return { data: { slug: agent, config: { capability_scope: opts.currentScope ?? {
-      mode: "allowlist", access: "card", tools: ["crm_cancel_task", "crm_assign_task", "growth_page_publish"],
+      mode: "allowlist", access: "card", tools: ["crm_cancel_task", "crm_assign_task", "growth_page_publish",...(agent==="nexus"?["social_post_publish","read_social_publication"]:[])],
     } } }, error: opts.scopeError ? { message: "unavailable" } : null };
     if (q.table === "tasks") return { data: opts.title ? { title: opts.title } : null, error: null };
     if (q.table === "profiles") return { data: opts.fullName ? { full_name: opts.fullName } : null, error: null };
@@ -127,6 +129,28 @@ async function world(opts: Opts = {}) {
 const act = (fp: string, extra: Record<string, unknown> = {}) => ({ teamHubCardAct: { conversationId: ZION_DM, messageId: CARD, act: "approve", fingerprint: fp, ...extra } });
 const named = (w: Awaited<ReturnType<typeof world>>, name: string) => w.calls.filter((c) => c.name === name);
 const order = (w: Awaited<ReturnType<typeof world>>, ...names: string[]) => names.map((n) => w.calls.findIndex((c) => c.name === n));
+
+describe("original Social proposal redemption in NEXUS private cards",()=>{
+ const publication="33333333-3333-4333-8333-333333333333";
+ const reference={schema:1,tenant_id:TENANT,content_id:PAGE,content_revision:SOCIAL_ARGS.content_revision,publication_id:publication};
+ it("uses the stored caption/revision and original caller door, then requires the same native receipt before Done",async()=>{
+  const w=await world({tool:"social.post_publish",door:(name,body)=>({data:body.action==="inspect"?{ok:true,state:"available",status:"published",reference}:{ok:true,state:"published",publication_id:publication},error:null})});
+  const r=await runTeamHubCardAct(w.deps,act(w.fp));assert.equal(r.body.outcome,"done");
+  const calls=named(w,"social-publish-command");assert.equal(calls.length,2);assert.deepEqual(calls[0].args,{action:"publish",expected_tenant_id:TENANT,content_id:PAGE,
+    expected_content_revision:SOCIAL_ARGS.content_revision,platform:"threads",caption:SOCIAL_ARGS.caption,approved_fingerprint:w.fp});
+  assert.equal(calls[1].args.action,"inspect");assert.equal(named(w,"crm-command").length,0);assert.equal(named(w,"growth-publish-command").length,0);assert.equal(w.modelCalls(),0);
+  assert.equal((named(w,"team_hub_settle_card")[0].args.p_outcome as Record<string,unknown>).state,"done");
+ });
+ it("an uncertain original attempt remains unconfirmed, with one send and no model/retry",async()=>{
+  const w=await world({tool:"social.post_publish",door:(_name,body)=>({data:body.action==="inspect"?{ok:true,state:"available",status:"outcome_unknown",reference}:{ok:false,state:"outcome_unknown",publication_id:publication},error:null})});
+  const r=await runTeamHubCardAct(w.deps,act(w.fp));assert.equal(r.body.outcome,"unconfirmed");assert.equal(named(w,"social-publish-command").filter(c=>c.args.action==="publish").length,1);
+  assert.equal((named(w,"team_hub_settle_card")[0].args.p_outcome as Record<string,unknown>).state,"unconfirmed");assert.equal(w.modelCalls(),0);
+ });
+ it("revocation of either stored Social grant withholds the original writer",async()=>{
+  for(const tools of [["social_post_publish"],["read_social_publication"],[]]){const w=await world({tool:"social.post_publish",currentScope:{mode:"allowlist",access:"card",tools}});
+   const r=await runTeamHubCardAct(w.deps,act(w.fp));assert.equal(named(w,"social-publish-command").length,0);assert.equal(r.body.outcome,"failed");}
+ });
+});
 
 describe("the request is closed and strict", () => {
   it("routes on its own key only, and refuses anything beyond the four fields", async () => {

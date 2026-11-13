@@ -30,21 +30,27 @@ import { readOperationsTask, type OperationsTaskReadCaller } from "../operations
 import { resolveWorkspaceAuthority, NO_WORKSPACE_AUTHORITY, type WorkspaceAuthority } from "../workspace-authority.ts";
 import { classifyAction, mutatingTools } from "../action-risk.ts";
 import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
+import {dispatchSocialChat,socialChatToolDefs,SOCIAL_PUBLISH_TOOL,SOCIAL_READ_TOOL,SOCIAL_PROPOSAL_KEY,type SocialApprovalQuery} from "../social-publish-command/chat.ts";
+import {readSocialSource,type SocialSourceReadCaller} from "../social-publish-command/read.ts";
+import {readSocialPublicationReference} from "../social-publish-command/reference.ts";
+import {resolveStudioCaller} from "../studio-caller.ts";
 
 // ---------------------------------------------------------------- the A2b sets (D2), hand-listed
 
 /** The acts a Team Hub card may carry in A2b. Each is `high`; nothing else is ever carded here. */
-export const A2B_CARD_TOOLS: ReadonlySet<string> = new Set(["crm_assign_task", "crm_cancel_task", "growth_page_publish"]);
+export const A2B_CARD_TOOLS: ReadonlySet<string> = new Set(["crm_assign_task", "crm_cancel_task", "growth_page_publish",SOCIAL_PUBLISH_TOOL]);
 /** The reads that resolve a card's ids, each already in the agent's stored DM scope (20271117010108). */
-export const A2B_READ_TOOLS: ReadonlySet<string> = new Set(["crm_list_tasks", "crm_get_task", "crm_list_team", "growth_list"]);
+export const A2B_READ_TOOLS: ReadonlySet<string> = new Set(["crm_list_tasks", "crm_get_task", "crm_list_team", "growth_list",SOCIAL_READ_TOOL]);
 
 /** The card kind each tool is stored under (team_hub_message_cards_kind_chk). */
-export const CARD_KIND: Readonly<Record<string, "task_handover" | "task_cancel" | "page_publish">> = Object.freeze({
+export const CARD_KIND: Readonly<Record<string, "task_handover" | "task_cancel" | "page_publish" | "social_publish">> = Object.freeze({
   crm_assign_task: "task_handover", crm_cancel_task: "task_cancel", growth_page_publish: "page_publish",
+  [SOCIAL_PUBLISH_TOOL]:"social_publish",[SOCIAL_PROPOSAL_KEY]:"social_publish",
 });
 /** The label each kind shows on its card (owner frames, plan section 9). */
 export const KIND_LABEL: Readonly<Record<string, string>> = Object.freeze({
   task_handover: "Task hand-over", task_cancel: "Task cancel", page_publish: "Page publish",
+  social_publish:"Social publish",
 });
 
 /** The fixed line the server appends when a shared conversation asks for an act (flow 6). Never the model's. */
@@ -71,10 +77,12 @@ type Authority = Pick<WorkspaceAuthority, "seat" | "workspaceAdmin">;
  * Never in a shared conversation, never without an authority answer, and never any other write: an
  * ordinary write (crm_update_task, plan_*) stays withheld until A2c.
  */
-export function offeredA2bTools(stored: readonly string[] | null, where: "shared" | "agent_dm", authority: Authority | null): string[] {
+export function offeredA2bTools(stored: readonly string[] | null, where: "shared" | "agent_dm", authority: Authority | null, agent?:string): string[] {
   if (!stored || where !== "agent_dm" || !authority) return [];
   const writes = mutatingTools();
   return [...new Set(stored)].filter((t) => {
+    if(t===SOCIAL_PROPOSAL_KEY)return false;
+    if((t===SOCIAL_PUBLISH_TOOL||t===SOCIAL_READ_TOOL)&&agent!=="nexus")return false;
     if (A2B_READ_TOOLS.has(t)) return authority.workspaceAdmin === true && !writes.has(t);
     if (A2B_CARD_TOOLS.has(t)) return authority.seat === true && writes.has(t) && classifyAction(t) === "high";
     return false;
@@ -105,6 +113,7 @@ export const CHAT_READ_TOOL_NAMES: ReadonlySet<string> = new Set(["growth_list",
 /** Each A2b tool's definition, a fresh copy per call (the caller may decorate what it is handed). */
 export function a2bToolDef(name: string, chatReadDefs?: Readonly<Record<string, unknown>>): { type: "function"; function: { name: string; description: string; parameters: unknown } } | null {
   const pick = (): unknown => {
+    if(name===SOCIAL_PUBLISH_TOOL||name===SOCIAL_READ_TOOL)return socialChatToolDefs().find(t=>t.function.name===name)??null;
     if (name === "growth_page_publish") return growthPagePublishToolDef();
     if (name === "crm_get_task") return CRM_TASK_READ_TOOLS.find((t) => t.function.name === name) ?? null;
     if (name === "crm_assign_task" || name === "crm_cancel_task") return CRM_COMMAND_TOOLS.find((t) => t.function.name === name) ?? null;
@@ -140,11 +149,16 @@ export class CardProvenance {
   /** Each person a read returned, by user id, with the name that read gave them (never an email). */
   readonly people = new Map<string, string | null>();
   readonly pages = new Set<string>();
+  readonly socialSources=new Map<string,string>();
 
   /** Record what one A2b read returned (its result exactly as the model receives it). */
   note(tool: string, result: unknown): void {
     const r = object(result);
     if (!r) return;
+    if(tool===SOCIAL_READ_TOOL&&r.state==="available"){
+      const ref=readSocialPublicationReference(r.reference);
+      if(ref&&ref.publication_id===null)this.socialSources.set(ref.content_id,ref.content_revision);
+    }
     const addTask = (t: unknown) => {
       const o = object(t);
       const id = str(o?.id);
@@ -164,6 +178,13 @@ export class CardProvenance {
   check(tool: string, args: Record<string, unknown>): ProvenanceVerdict {
     // `confirm` and `idempotency_key` are never identity: the door, not the model, settles both.
     const keys = Object.keys(args).filter((k) => k !== "confirm" && k !== "idempotency_key");
+    if(tool===SOCIAL_PUBLISH_TOOL){
+      if(keys.some(k=>!["content_id","expected_content_revision","platform","caption"].includes(k)))return NEEDS_INPUT("Only the original saved piece, revision, platform and exact caption can go on this card.");
+      const id=str(args.content_id);
+      if(!id||this.socialSources.get(id)!==args.expected_content_revision)return NEEDS_LOOKUP("the saved Social piece again (read_social_publication)");
+      if(typeof args.caption!=="string"||!args.caption.trim()||args.caption.length>2200||typeof args.platform!=="string")return NEEDS_INPUT("Name the channel and exact caption to review.");
+      return {ok:true,callArgs:{content_id:id,expected_content_revision:args.expected_content_revision,platform:args.platform,caption:args.caption}};
+    }
     if (tool === "growth_page_publish") {
       if (keys.some((k) => k !== "page_id")) return NEEDS_INPUT("Only the page can go on this card. Nothing was prepared.");
       const page = str(args.page_id);
@@ -254,6 +275,15 @@ export async function runCardRead(ctx: CardReadContext, tool: string, args: Reco
 
 async function readCardData(ctx: CardReadContext, tool: string, args: Record<string, unknown>, callId: string): Promise<Record<string, unknown>> {
   try {
+    if(tool===SOCIAL_READ_TOOL){
+      const initial=await resolveStudioCaller(ctx.caller,ctx.tenantId);if(!initial.ok)return READ_UNAVAILABLE;
+      const read=await readSocialSource(ctx.caller as unknown as SocialSourceReadCaller,ctx.tenantId,args);
+      if(ctx.signal?.aborted||!await ctx.isCurrent()||!(await resolveStudioCaller(ctx.caller,ctx.tenantId)).ok)return READ_UNAVAILABLE;
+      if(read.state==="available")await recordCapabilityRun(ctx.service,{tenantId:ctx.tenantId,actorId:ctx.userId,capabilityKey:"social.publication_read",outcome:"capability_succeeded",
+        runId:await stableRunId(["social.publication_read",ctx.tenantId,`team_hub_agent:${ctx.turnRef}:${callId}`]),
+        detail:{channel:"team_hub_agent",content_id:read.reference.content_id,publication_id:read.reference.publication_id}});
+      return read;
+    }
     if (tool === "crm_list_tasks") {
       // D15: the person filter needs an auth-user lookup by email, which Team Hub never makes.
       if (args.assignee_email !== undefined) return { status: "needs_input", message: "Filter by person isn't available here. List the tasks without it." };
@@ -318,12 +348,14 @@ async function answerOf(reply: { data: unknown; error: unknown } | null): Promis
 const NOT_PREPARED = "Nothing was prepared and nothing was changed.";
 /** D11: the copy for a proposal another surface already left waiting. */
 export const ALREADY_WAITING: Readonly<Record<string, string>> = Object.freeze({
+  social_publish:"That post is already waiting for approval elsewhere in Paige. Nothing new was prepared.",
   page_publish: "That page is already waiting for an Approve somewhere else in Paige. Nothing new was prepared.",
   task_handover: "That task change is already waiting for an Approve somewhere else in Paige. Nothing new was prepared.",
   task_cancel: "That task change is already waiting for an Approve somewhere else in Paige. Nothing new was prepared.",
 });
 /** D11, when the proposal already waiting is a Team Hub card's (an earlier DM turn's, in this DM or another). */
 export const ALREADY_ON_A_CARD: Readonly<Record<string, string>> = Object.freeze({
+  social_publish:"That post already has a card waiting for approval in Team Hub. Nothing new was prepared; point to that card.",
   page_publish: "That page already has a card waiting for an Approve in Team Hub. Nothing new was prepared; point to that card.",
   task_handover: "That task change already has a card waiting for an Approve in Team Hub. Nothing new was prepared; point to that card.",
   task_cancel: "That task change already has a card waiting for an Approve in Team Hub. Nothing new was prepared; point to that card.",
@@ -350,7 +382,13 @@ export async function prepareCard(ctx: PrepareContext, tool: string, callArgs: C
   const kind = CARD_KIND[tool];
   if (!kind) return { result: { status: "unavailable", message: `That can't go on a card here. ${NOT_PREPARED}` } };
   let fingerprint: string | null = null;
-  if (tool === "growth_page_publish") {
+  if(tool===SOCIAL_PUBLISH_TOOL){
+    const dispatched=await dispatchSocialChat({tenantId:ctx.tenantId,userId:ctx.userId,toolName:tool,args:callArgs,approved:new Set(),sameToolCalls:1},{
+      admin:{from:name=>({select:columns=>ctx.service.from(name).select(columns) as SocialApprovalQuery})},invoke:body=>ctx.invokeAs("social-publish-command",body)});
+    const c=dispatched.content;
+    if(c.needs_confirm===true&&typeof c.confirm_fingerprint==="string"&&/^[0-9a-f]{16}$/.test(c.confirm_fingerprint))fingerprint=c.confirm_fingerprint;
+    else return {result:{status:"not_prepared",message:"The original Social door could not prepare this post. Nothing was approved or published."}};
+  }else if (tool === "growth_page_publish") {
     const dispatched = await dispatchGrowthPublishChat({ tenantId: ctx.tenantId, userId: ctx.userId, toolName: tool, args: callArgs,
       approved: new Set<string>(), sameToolCalls: 1 }, {
       admin: { from: (name: string) => ({ select: (columns: string) => ctx.service.from(name).select(columns) as GrowthPublishApprovalQuery }) },
@@ -386,7 +424,7 @@ export async function prepareCard(ctx: PrepareContext, tool: string, callArgs: C
   let row: Record<string, unknown> | null = null;
   try {
     const read = await ctx.service.from("paige_pending_confirmations").select("id,fingerprint,tool_name,summary,expires_at,server_issued_at")
-      .eq("user_id", ctx.userId).eq("tenant_id", ctx.tenantId).eq("tool_name", tool).eq("fingerprint", fingerprint)
+      .eq("user_id", ctx.userId).eq("tenant_id", ctx.tenantId).eq("tool_name", tool===SOCIAL_PUBLISH_TOOL?SOCIAL_PROPOSAL_KEY:tool).eq("fingerprint", fingerprint)
       .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
       .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
       .gt("expires_at", new Date().toISOString()).maybeSingle();
@@ -403,8 +441,13 @@ export async function prepareCard(ctx: PrepareContext, tool: string, callArgs: C
     return { result: { status: "already_waiting", message: (await linkedToCard(ctx.service, id) ? ALREADY_ON_A_CARD : ALREADY_WAITING)[kind] } };
   }
   const summary = cardSummary ?? (typeof row.summary === "string" ? row.summary : null);
+  // The proposal store may later retire its consumed row. Keep the original
+  // server-authored Social sentence on the existing card so its receipt remains
+  // parsable after that cleanup. Exact caption/media are still protected reads.
+  const socialSummary=tool===SOCIAL_PUBLISH_TOOL&&typeof row.summary==="string"&&row.summary.trim()?oneLine(row.summary,280):null;
+  if(tool===SOCIAL_PUBLISH_TOOL&&!socialSummary)return {result:{status:"unavailable",message:"The original Social proposal could not be verified. Nothing was published."}};
   return {
-    card: { confirmationId: id.toLowerCase(), kind, tool, expiresAt: str(row.expires_at), summary: cardSummary },
+    card: { confirmationId: id.toLowerCase(), kind, tool, expiresAt: str(row.expires_at), summary: socialSummary??cardSummary },
     result: { status: "prepared", card: KIND_LABEL[kind], summary,
       expires_at: str(row.expires_at),
       note: "A card with Approve and Not now will show under your reply in this DM. Nothing has changed yet, and nothing will until the person presses Approve. Say in one short line what the card will do; never say it is done." },

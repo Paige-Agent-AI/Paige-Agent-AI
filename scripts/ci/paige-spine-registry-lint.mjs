@@ -4,6 +4,7 @@ import { validateCrmReadBindings, validatePipelinePreparationSql } from "./c0b-c
 import { validateInvitationBindings, validateInvitationAuthoritySql } from "./c0b-invitation-binding.mjs";
 import { validateIncumbentResourceBindings, incumbentSourcePaths, matchesIncumbentDeclaration, validateIncumbentDeclarations } from "./c0b-incumbent-resource-binding.mjs";
 import { validateFundingStudioBindings, validateFundingStudioDeclarations } from "./c0b-funding-studio-binding.mjs";
+import {socialPublicationSourcePaths,validateSocialPublicationBindings,validateSocialPublicationDeclarations,matchesSocialPublicationDeclaration,SOCIAL_PUBLICATION_REVIEWED_BINDINGS} from "./c0b-social-publication-binding.mjs";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join, resolve } from "node:path";
@@ -263,6 +264,7 @@ const crmReadProof = validateCrmReadBindings(readFileSync(chatSourcePath, "utf8"
 crmReadProof.findings.push(...validatePipelinePreparationSql(migrations));
 const invitationProof = validateInvitationBindings(readFileSync(chatSourcePath, "utf8"), readFileSync(join(root, "supabase/functions/solo-team-invitations/index.ts"), "utf8"));
 const incumbentProof = validateIncumbentResourceBindings(readFileSync(chatSourcePath,"utf8"),new Map(incumbentSourcePaths.map(path=>[path,readFileSync(join(root,path),"utf8")])));
+const socialPublicationProof=validateSocialPublicationBindings(readFileSync(chatSourcePath,"utf8"),new Map(socialPublicationSourcePaths.map(path=>[path,readFileSync(join(root,path),"utf8")])),SOCIAL_PUBLICATION_REVIEWED_BINDINGS);
 // PC-1 — the browser.browse_public_url READ declaration is proven against the REAL skill-runner
 // dispatch: the named edge executor is the function that injects the interpreter's public-browse
 // seam, and that seam targets the Fly host's /browse-public-url endpoint. Source contracts, not
@@ -298,6 +300,11 @@ function provenIncumbentSymbol(capability,role,symbol){
  const spec=incumbentProof.tools.get(capability.action?.chatTool);
  return !incumbentProof.findings.length&&!!spec&&role==="executor"&&symbol.startsWith("edge.")&&symbol===spec.executor&&matchesIncumbentDeclaration(capability,spec);
 }
+function provenSocialPublicationSymbol(capability,role,symbol){
+ const spec=socialPublicationProof.tools.get(capability.action?.chatTool);
+ return !socialPublicationProof.findings.length&&!!spec&&spec.key===capability.key
+  &&role==="executor"&&symbol==="edge.paige-ai-chat"&&matchesSocialPublicationDeclaration(capability);
+}
 function provenFundingStudioSymbol(capability,role,symbol){
  const spec=fundingStudioProof.tools.get(capability.action?.chatTool);
  return !fundingStudioProof.findings.length&&!!spec&&role==="executor"&&symbol===spec.executor&&capability.key===spec.key
@@ -330,7 +337,7 @@ function lint(capabilities, sql, chatGuard, classifyAction, proof = null) {
     const symbols = [["adapter",capability.evidence?.adapter], ["executor",capability.action?.executor], ["projector",capability.outcome?.projector]].filter(([,symbol])=>!!symbol);
     for (const [role,symbol] of symbols) {
       // Never bypass a public SQL symbol, even on a verified TS capability.
-      if (!symbol.startsWith("public.") && (provenTypeScriptSymbol(capability,role,symbol)||provenMerchantSymbol(capability,role,symbol)||provenStoredReadSymbol(capability,role,symbol)||provenInvitationSymbol(capability,role,symbol)||provenIncumbentSymbol(capability,role,symbol)||provenFundingStudioSymbol(capability,role,symbol)||provenBrowserSymbol(capability,role,symbol))) continue;
+      if (!symbol.startsWith("public.") && (provenTypeScriptSymbol(capability,role,symbol)||provenMerchantSymbol(capability,role,symbol)||provenStoredReadSymbol(capability,role,symbol)||provenInvitationSymbol(capability,role,symbol)||provenIncumbentSymbol(capability,role,symbol)||provenFundingStudioSymbol(capability,role,symbol)||provenBrowserSymbol(capability,role,symbol)||provenSocialPublicationSymbol(capability,role,symbol))) continue;
       const bare = symbol.replace(/^public\./, "");
       if (!new RegExp(`create\\s+(?:or\\s+replace\\s+)?function\\s+public\\.${bare}\\s*\\(`, "i").test(sql)) findings.push(`${capability.key}: registered server symbol is absent from migration history: ${symbol}`);
     }
@@ -448,6 +455,13 @@ if (process.argv.includes("--self-test")) {
     }
     if (prover(cap, "projector", symbol) || prover(cap, "executor", "public.fake")) { console.error(`${key}: symbol mutation bypassed proof`); process.exit(1); }
   }
+  for(const capability of PAIGE_SPINE_CAPABILITIES.filter(c=>c.domain==="social"&&c.key!=="social.presence")){
+    if(!provenSocialPublicationSymbol(capability,"executor","edge.paige-ai-chat"))throw Error("Social exact original binding is unavailable");
+    for(const changed of [{...capability,key:"social.unregistered"},{...capability,maturity:"LIVE"},{...capability,action:{...capability.action,seatAuthority:"member"}},{...capability,action:{...capability.action,approvalAuthority:"unknown"}}]){
+      if(provenSocialPublicationSymbol(changed,"executor","edge.paige-ai-chat"))throw Error("Social metadata mutation borrowed original binding proof");
+    }
+    if(provenSocialPublicationSymbol(capability,"projector","edge.paige-ai-chat")||provenSocialPublicationSymbol(capability,"executor","edge.other"))throw Error("Social executor proof escaped its exact slot");
+  }
   console.log("PAIGE Spine registry lint self-test: PASS (SQL + exact TS AST bindings)"); process.exit(0);
 }
 
@@ -457,6 +471,6 @@ if (existsSync(actionRiskPath)) {
   const policy = await import(pathToFileURL(actionRiskPath).href);
   classifyAction = typeof policy.classifyAction === "function" ? policy.classifyAction : null;
 }
-const findings = [...incumbentProof.findings,...fundingStudioProof.findings,...invitationProof.findings,...crmReadProof.findings,...storedReadProof.findings,...tsProof.findings,...zapierProof.findings,...merchantProof.findings,...lint(PAIGE_SPINE_CAPABILITIES, migrations, chatGuard, classifyAction)];
+const findings = [...incumbentProof.findings,...socialPublicationProof.findings,...validateSocialPublicationDeclarations(PAIGE_SPINE_CAPABILITIES,socialPublicationProof),...fundingStudioProof.findings,...invitationProof.findings,...crmReadProof.findings,...storedReadProof.findings,...tsProof.findings,...zapierProof.findings,...merchantProof.findings,...lint(PAIGE_SPINE_CAPABILITIES, migrations, chatGuard, classifyAction)];
 if (findings.length) { console.error("PAIGE Spine registry lint: FAIL"); for (const finding of findings) console.error(`- ${finding}`); process.exit(1); }
 console.log(`PAIGE Spine registry lint: PASS (${PAIGE_SPINE_CAPABILITIES.length} capability)`);

@@ -1460,7 +1460,13 @@ const SOURCES = {
   // redirect refusal and size caps byte-identical; pinned by the new 8-test suite). Old pin
   // ab192431c1d51594a551184bc0e029a2a47a96a408f9f5935e0e13c8bbfe4db8 reproduced from main with
   // printer {removeComments:true}+sha256 before renewing. Renew this digest only.
-  "supabase/functions/_shared/ssrfGuard.ts": "656797b1b724d61b766a88787a803286bf56637050d8d8e715b3310628d51490",
+  // EXP07 November13 finite binary-return window, Coordinator937b794c. Immutable NON-AUTHOR
+  // source review: guard blob f0dde0a26f13045469816006c8cfb88f1ad20e81, original text API,
+  // URL/IP/redirect/deadline/cap/cleanup and EXP10 DNS/429 conserved. Both public views use
+  // the SAME guarded core/reader. Unchanged actual extractor independently reproduced old
+  // 656797b1… and this digest; baseline131/29 zero findings, candidate ONLY this source changed.
+  // Renew ONLY this scalar; all other source pins, bindings, metadata and validators conserved.
+  "supabase/functions/_shared/ssrfGuard.ts": "6cf5da0b8b9808bfe5fec48e04424af7f07692cf4d43c562ccfbb39692b6e243",
   "supabase/functions/_shared/kb-ingest-core.ts": "7001d69379463479e816922b58e911effa3ce0bf0d6f4377ce5b71b21aad070a",
   "supabase/functions/_shared/knowledge-ingest-scope.ts": "d7d21c4f3f76bdab286c3ef89132584358d3b5f5d05c087d0c27c1117c75904c",
   "supabase/functions/_shared/twilio-webhook-auth.ts": "70015f70ca2250b4a991d7c15d54f27bc7fb17d937c386d48621af749f48bf05",

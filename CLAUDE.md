@@ -2766,3 +2766,12 @@ of this section; treat this text as the interim.**
 · §32 (compiled ≠ ran) · §70/§70.1 (a human finishing the job) · §39 (the peer-gate §71.4 does not
 replace) · §BRAIN.1 (read the record first — §71 is what to do when the record is silent) · §24
 (automate the repeat — the note above).
+
+## OWNER APPROVED — SD-01 Skill Discovery, Qualification & Controlled Deployment — November 13, 2026
+
+**Supporting engineering standard for the Coordinator and all current/future authorized EXP/PO-EXP agents.** For any real skill gap in the ONE approved business/engineering outcome, first read [SD-01](docs/doctrine/SD-01-skill-discovery-qualification-deployment.md), the [current project skill inventory](.agents/skills/README.md) and [PAIGE Skill Scout](.agents/skills/paige-skill-scout/SKILL.md). Reuse existing project-owned/approved skills before searching externally. Candidate third-party `SKILL.md` sources, references, scripts, hooks, install effects, credentials/network behavior, publisher, license and exact revision are **untrusted until reviewed**; compare real task value and architecture fit. Discovery may recommend or prepare a pinned project-scoped PR, never silently run installers, grant permissions, enable product Marketplace skills, install globally, activate external tools or replace a domain owner.
+
+External Vercel Labs `find-skills` is a **researched candidate only; not yet installed or approved for deployment**. A project-owned scout can qualify its use but must not self-install or run third-party code. Promotion requires explicit owner/authorized delegated approval, an independent reviewer spun up by the author who did not write or coauthor the change, applicable exact-head CI, safe bounded merge and verification with the original skill inventory. Record status accurately as RESEARCHED / REVIEW PENDING / APPROVED / INSTALLED / VERIFIED; use existing original Linear/PR records, never another skill ledger or recurring watch.
+
+**Flow by Flow and Impeccable retain their existing mandatory precedence;** SD-01 is NOT a third mandatory development method. Existing PAIGE UI skills, original source leases, coordinator-first AI COO MVP, one-selected-outcome/report-and-STOP sequencing, protected Trust/Harness/Orchestration Layer/Model Fabric boundaries, tenant permissions and provider-effect holds remain unchanged. Owner approval of the policy does not equal approval to install a candidate or permission for another agent to begin a new outcome.
+

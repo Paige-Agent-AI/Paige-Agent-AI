@@ -886,5 +886,148 @@ SELECT pg_temp.studio_refuses(format('select public.chat_studio_start(%L,%L,%L)'
 SELECT pg_temp.studio_refuses(format('select public.chat_studio_sources(%L,%L,ARRAY[%L::uuid])','f0060000-0000-4000-8000-000000000010',(SELECT value->>'thread' FROM chat_studio_cases WHERE label='service-role'),(SELECT value->>'source' FROM chat_studio_cases WHERE label='service-role')),'42501','actual service role cannot invoke owner loaded-history projection');
 SELECT pg_temp.studio_refuses('select public.studio_page_save_source(gen_random_uuid(),gen_random_uuid(),NULL)','42501','actual service role cannot request server-bound Studio generation source');
 RESET ROLE;
+
+-- Private expected-state metadata belongs to the SAME original confirmation.
+CREATE TEMP TABLE studio_confirmation_cases(label text PRIMARY KEY,id uuid,thread_id uuid,args jsonb,source jsonb);
+GRANT SELECT ON studio_confirmation_cases TO authenticated,service_role;
+GRANT INSERT ON studio_confirmation_cases TO service_role;
+DO $confirmation_source_fixture$
+DECLARE started jsonb; source jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub','f0060000-0000-4000-8000-000000000001',true);
+ started:=public.studio_start_project('f0060000-0000-4000-8000-000000000010',gen_random_uuid(),'Private approval source',
+  '{"target":{"kind":"workspace"},"values":{"offers":"Actual local project source"}}');
+ source:=public.studio_page_save_source('f0060000-0000-4000-8000-000000000010',(started->>'session_id')::uuid,NULL);
+ INSERT INTO studio_confirmation_cases VALUES('expected',(started->>'session_id')::uuid,(started->>'thread_id')::uuid,
+  '{"slug":"local-confirmed-page","title":"Local confirmed page","blocks":[{"type":"hero","title":"Prepared"}]}',source);
+END $confirmation_source_fixture$;
+SET LOCAL request.jwt.claim.sub='';
+SET LOCAL request.jwt.claim.role='service_role';
+SET LOCAL ROLE service_role;
+WITH inserted AS (
+ INSERT INTO public.paige_pending_confirmations(user_id,tenant_id,thread_id,scoped_client_id,tool_name,fingerprint,args,summary,issued_in_request,server_issued_at,studio_page_save_source)
+ SELECT 'f0060000-0000-4000-8000-000000000001','f0060000-0000-4000-8000-000000000010',thread_id,NULL,
+  'growth_page_save','0350000000000001',args,'Local approval','f0350000-0000-4000-8000-000000000101',clock_timestamp(),source
+ FROM studio_confirmation_cases WHERE label='expected'
+ RETURNING id,thread_id,args,studio_page_save_source
+) INSERT INTO studio_confirmation_cases SELECT 'prepared',id,thread_id,args,studio_page_save_source FROM inserted;
+SELECT pg_temp.studio_assert(
+ (SELECT p.args=e.args AND p.source=e.source AND NOT(p.args ? 'studio_page_save_source')
+  FROM studio_confirmation_cases p CROSS JOIN studio_confirmation_cases e WHERE p.label='prepared' AND e.label='expected'),
+ 'actual service original INSERT atomically retains separate native expected source without changing args');
+DO $confirmation_source_guard$
+DECLARE selected uuid; assignment text; captured_source jsonb; legacy uuid; response jsonb;
+BEGIN
+ SELECT id INTO selected FROM studio_confirmation_cases WHERE label='prepared';
+ SELECT source INTO captured_source FROM studio_confirmation_cases WHERE label='expected';
+ PERFORM pg_temp.studio_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=NULL where id=%L',selected),
+  '40001','private source cannot be cleared after original insertion');
+ PERFORM pg_temp.studio_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=%L where id=%L','{"changed":true}',selected),
+  '40001','private source cannot be rebound to a newer project read');
+ FOREACH assignment IN ARRAY ARRAY[
+  'id=gen_random_uuid()','user_id=''f0060000-0000-4000-8000-000000000002''::uuid',
+  'tenant_id=''f0060000-0000-4000-8000-000000000020''::uuid','thread_id=gen_random_uuid()',
+  'scoped_client_id=gen_random_uuid()','tool_name=''other_tool''','fingerprint=''0350000000000009''',
+  'args=''{"title":"Changed model args"}''::jsonb','issued_in_request=gen_random_uuid()',
+  'server_issued_at=server_issued_at+interval ''1 second'''
+ ] LOOP
+  PERFORM pg_temp.studio_refuses(format('update public.paige_pending_confirmations set %s where id=%L',assignment,selected),'40001',
+   'private source keeps original approval binding: '||split_part(assignment,'=',1));
+ END LOOP;
+ INSERT INTO public.paige_pending_confirmations(user_id,tenant_id,tool_name,fingerprint,args,summary)
+  VALUES('f0060000-0000-4000-8000-000000000001','f0060000-0000-4000-8000-000000000010','growth_page_save','0350000000000002','{}','Legacy NULL source') RETURNING id INTO legacy;
+ INSERT INTO studio_confirmation_cases VALUES('legacy',legacy,NULL,'{}',NULL);
+ PERFORM pg_temp.studio_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=%L where id=%L',captured_source,legacy),
+  '40001','legacy NULL source cannot be blessed by a later update');
+ PERFORM pg_temp.studio_refuses($q$insert into public.paige_pending_confirmations(user_id,tool_name,fingerprint,args,summary,studio_page_save_source)
+  values('f0060000-0000-4000-8000-000000000001','other_tool','0350000000000010','{}','Wrong tool','{}')$q$,'23514','private Studio source cannot be attached to a different tool');
+ PERFORM pg_temp.studio_refuses($q$insert into public.paige_pending_confirmations(user_id,tool_name,fingerprint,args,summary,studio_page_save_source)
+  values('f0060000-0000-4000-8000-000000000001','growth_page_save','0350000000000011','{}','Wrong shape','[]')$q$,'23514','private source requires a JSON object');
+ UPDATE public.paige_pending_confirmations SET expires_at=expires_at+interval '1 minute',claimed_in_request='f0350000-0000-4000-8000-000000000102'
+  WHERE id=selected;
+ PERFORM pg_temp.studio_assert((SELECT captured_source=p.studio_page_save_source AND p.expires_at>p.created_at AND p.claimed_in_request IS NOT NULL
+  FROM public.paige_pending_confirmations p WHERE p.id=selected),'unchanged source permits incumbent expiry and claim marker updates');
+END $confirmation_source_guard$;
+-- SAME original generic CAS; private source is a separate returned column.
+WITH claimed AS (
+ UPDATE public.paige_pending_confirmations SET consumed_at=clock_timestamp()
+ WHERE user_id='f0060000-0000-4000-8000-000000000001' AND tenant_id='f0060000-0000-4000-8000-000000000010'
+  AND thread_id=(SELECT thread_id FROM studio_confirmation_cases WHERE label='prepared') AND scoped_client_id IS NULL
+  AND tool_name='growth_page_save' AND fingerprint='0350000000000001'
+  AND issued_in_request='f0350000-0000-4000-8000-000000000101' AND issued_in_request<>'f0350000-0000-4000-8000-000000000103'
+  AND issued_in_request IS NOT NULL AND server_issued_at IS NOT NULL AND consumed_at IS NULL AND expires_at>clock_timestamp()
+ RETURNING id,thread_id,args,studio_page_save_source
+) INSERT INTO studio_confirmation_cases SELECT 'claimed',id,thread_id,args,studio_page_save_source FROM claimed;
+SELECT pg_temp.studio_assert((SELECT p.id=c.id AND p.args=c.args AND p.source=c.source
+ FROM studio_confirmation_cases p CROSS JOIN studio_confirmation_cases c WHERE p.label='prepared' AND c.label='claimed'),
+ 'single actual service claim CAS returns stored args and exact private source separately');
+WITH repeated AS (
+ UPDATE public.paige_pending_confirmations SET consumed_at=clock_timestamp()
+ WHERE fingerprint='0350000000000001' AND user_id='f0060000-0000-4000-8000-000000000001'
+  AND issued_in_request='f0350000-0000-4000-8000-000000000101' AND consumed_at IS NULL RETURNING id
+) SELECT pg_temp.studio_assert((SELECT count(*)=0 FROM repeated),'unknown original claim cannot be spent a second time');
+SELECT pg_temp.studio_assert((SELECT p.consumed_at IS NOT NULL AND p.studio_page_save_source=c.source AND p.args=c.args
+ FROM public.paige_pending_confirmations p JOIN studio_confirmation_cases c ON c.id=p.id WHERE c.label='claimed'),
+ 'read-only original identity lookup reconciles consumed claim without a second writer');
+INSERT INTO public.paige_pending_confirmations(user_id,tenant_id,tool_name,fingerprint,args,summary)
+ VALUES('f0060000-0000-4000-8000-000000000002','f0060000-0000-4000-8000-000000000020','other_tool','0350000000000003','{}','Foreign actor row');
+UPDATE public.paige_pending_confirmations SET args='{"ordinary":"updated"}',consumed_at=clock_timestamp(),claimed_in_request=gen_random_uuid(),expires_at=clock_timestamp()
+ WHERE fingerprint='0350000000000003';
+SELECT pg_temp.studio_assert((SELECT args='{"ordinary":"updated"}'::jsonb AND studio_page_save_source IS NULL AND consumed_at IS NOT NULL
+ FROM public.paige_pending_confirmations WHERE fingerprint='0350000000000003'),'non-Studio NULL-source args, consume, claim and expiry behavior remains original');
+RESET ROLE;
+SET LOCAL request.jwt.claim.sub='f0060000-0000-4000-8000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.studio_assert((SELECT count(*)=2 FROM (
+ SELECT id,user_id,tenant_id,thread_id,scoped_client_id,tool_name,fingerprint,args,summary,created_at,expires_at,consumed_at,
+  issued_in_request,server_issued_at,claimed_in_request FROM public.paige_pending_confirmations
+ WHERE fingerprint IN ('0350000000000001','0350000000000002','0350000000000003')) original_columns),
+ 'actual authenticated SELECT retains all fifteen incumbent columns and own-row RLS');
+SELECT pg_temp.studio_assert(NOT EXISTS(SELECT 1 FROM public.paige_pending_confirmations WHERE fingerprint='0350000000000003'),
+ 'current caller cannot read foreign actor original confirmation rows');
+SELECT pg_temp.studio_refuses('select studio_page_save_source from public.paige_pending_confirmations','42501','authenticated explicit private column read is denied');
+SELECT pg_temp.studio_refuses('select * from public.paige_pending_confirmations','42501','authenticated SQL star cannot expose private column');
+SELECT pg_temp.studio_refuses('select to_jsonb(p) from public.paige_pending_confirmations p','42501','authenticated whole-row serialization cannot expose private column');
+SELECT pg_temp.studio_refuses($q$insert into public.paige_pending_confirmations(user_id,tool_name,fingerprint,args,summary) values(auth.uid(),'growth_page_save','0350000000000012','{}','Forged')$q$,
+ '42501','authenticated caller cannot insert arbitrary original args or server metadata');
+SELECT pg_temp.studio_refuses($q$update public.paige_pending_confirmations set args='{"forged":true}' where fingerprint='0350000000000001'$q$,
+ '42501','authenticated caller cannot rewrite original stored args');
+SELECT pg_temp.studio_refuses($q$delete from public.paige_pending_confirmations where fingerprint='0350000000000001'$q$,
+ '42501','authenticated caller cannot delete original confirmation history');
+SELECT pg_temp.studio_refuses($q$update public.paige_pending_confirmations set studio_page_save_source='{}' where fingerprint='0350000000000001'$q$,
+ '42501','authenticated caller cannot write private expected metadata');
+RESET ROLE;
+SET LOCAL request.jwt.claim.sub='f0060000-0000-4000-8000-000000000002';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.studio_assert((SELECT count(*)=1 FROM public.paige_pending_confirmations WHERE fingerprint IN
+ ('0350000000000001','0350000000000002','0350000000000003')),'second actual caller sees only its own incumbent fields');
+RESET ROLE;
+SET LOCAL request.jwt.claim.sub='';
+GRANT INSERT,SELECT ON studio_binding_assertions TO anon;
+SET LOCAL ROLE anon;
+SELECT pg_temp.studio_refuses('select studio_page_save_source from public.paige_pending_confirmations','42501','anon explicit private field read denied');
+SELECT pg_temp.studio_refuses('select * from public.paige_pending_confirmations','42501','anon original table star read denied');
+SELECT pg_temp.studio_refuses('select args from public.paige_pending_confirmations','42501','anon incumbent column read denied');
+RESET ROLE;
+-- Actual captured specialized wrapper + original whole-row helper closure.
+INSERT INTO public.paige_pending_confirmations(user_id,tenant_id,tool_name,fingerprint,args,summary,issued_in_request,server_issued_at)
+ VALUES('f0060000-0000-4000-8000-000000000001','f0060000-0000-4000-8000-000000000010','weekly_commitment_draft','0350000000000004',
+  '{"_request_id":"f0350000-0000-4000-8000-000000000104","_name":"Original weekly draft","_weekday":1,"_local_time":"09:00","_timezone":"America/New_York"}',
+  'Original specialized proposal','f0350000-0000-4000-8000-000000000105',clock_timestamp());
+SET LOCAL request.jwt.claim.sub='f0060000-0000-4000-8000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.studio_assert((SELECT public.read_weekly_commitment_draft(id)->>'phase'='awaiting_approval'
+ AND NOT(public.read_weekly_commitment_draft(id) ? 'studio_page_save_source')
+ FROM public.paige_pending_confirmations WHERE fingerprint='0350000000000004'),
+ 'captured original authenticated specialized wrapper reads original projection without private source exposure');
+SELECT pg_temp.studio_refuses($q$select public._weekly_draft_proposal((select id from public.paige_pending_confirmations where fingerprint='0350000000000004'))$q$,
+ '42501','incumbent whole-row native helper remains postgres-only');
+RESET ROLE;
+UPDATE public.paige_pending_confirmations SET consumed_at=clock_timestamp() WHERE fingerprint='0350000000000004';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.studio_assert((SELECT public.claim_weekly_commitment_draft(id,'0350000000000004:f0350000-0000-4000-8000-000000000105',gen_random_uuid())->'claimed'='false'
+ FROM public.paige_pending_confirmations WHERE fingerprint='0350000000000004'),
+ 'captured original specialized consumed-claim readback remains compatible with added nullable column');
+RESET ROLE;
 SELECT count(*) AS passed_native_studio_assertions FROM studio_binding_assertions;
 ROLLBACK;

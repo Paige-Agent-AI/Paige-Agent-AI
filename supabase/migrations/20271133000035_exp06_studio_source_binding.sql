@@ -1,6 +1,6 @@
 -- CLI-created 20261113165306; NEVER published/applied candidate forward-renumbered
--- to reserved32 under Coordinator45cfb235: EXP08 published30, EXP07 local31,
--- withdrawn unpublished29 has no filler. Re-ground applied frontier before release.
+-- from NEVER-published32/body094cc227 to reserved35 under Coordinator950a23fa.
+-- Re-ground actual earlier30/33/34 frontier before release; no filler/history edit.
 -- ONE original Studio project/request and private accepted-turn reference.
 -- Explicit authoring reuses original writers. No automatic domain execution or
 -- publication, new result store, provider, or direct table grant is introduced.
@@ -1161,4 +1161,93 @@ END $$;
 REVOKE ALL ON FUNCTION public.studio_save_page(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb) FROM PUBLIC,anon,service_role;
 GRANT EXECUTE ON FUNCTION public.studio_save_page(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb) TO authenticated;
 
+-- E01 source ACK9f5c7689 permits this original-row field, not schema/release
+-- clearance. Original service INSERT and claim CAS stay canonical. PG17's exact
+-- ACL includes built-in MAINTAIN; the isolated PG16 port has the same grants
+-- without that version-specific privilege. No legacy rows are rewritten.
+DO $source_preflight$
+DECLARE columns_now text[];
+BEGIN
+ SELECT array_agg(attname::text ORDER BY attnum) INTO columns_now
+ FROM pg_attribute WHERE attrelid='public.paige_pending_confirmations'::regclass
+  AND attnum>0 AND NOT attisdropped;
+ IF columns_now IS DISTINCT FROM ARRAY['id','user_id','tenant_id','thread_id','scoped_client_id','tool_name','fingerprint','args','summary','created_at','expires_at','consumed_at','issued_in_request','server_issued_at','claimed_in_request']
+  OR (SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid='public.paige_pending_confirmations'::regclass) IS DISTINCT FROM 'postgres'
+  OR (SELECT relacl::text FROM pg_class WHERE oid='public.paige_pending_confirmations'::regclass)
+   IS DISTINCT FROM (CASE WHEN current_setting('server_version_num')::integer>=170000
+    THEN '{postgres=arwdDxtm/postgres,authenticated=r/postgres,service_role=arwdDxtm/postgres}'
+    ELSE '{postgres=arwdDxt/postgres,authenticated=r/postgres,service_role=arwdDxt/postgres}' END)
+  OR NOT (SELECT relrowsecurity AND NOT relforcerowsecurity FROM pg_class WHERE oid='public.paige_pending_confirmations'::regclass)
+  OR EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='public.paige_pending_confirmations'::regclass AND attnum>0 AND NOT attisdropped AND attacl IS NOT NULL)
+  OR (SELECT count(*) FROM pg_policy WHERE polrelid='public.paige_pending_confirmations'::regclass)<>2
+  OR NOT EXISTS(SELECT 1 FROM pg_policy WHERE polrelid='public.paige_pending_confirmations'::regclass
+   AND polname='paige_pending_confirmations_own' AND polcmd='*' AND NOT polpermissive
+   AND polroles=ARRAY['authenticated'::regrole]::oid[]
+   AND pg_get_expr(polqual,polrelid)='(user_id = auth.uid())' AND pg_get_expr(polwithcheck,polrelid)='(user_id = auth.uid())')
+  OR NOT EXISTS(SELECT 1 FROM pg_policy WHERE polrelid='public.paige_pending_confirmations'::regclass
+   AND polname='paige_pending_confirmations_read' AND polcmd='r' AND polpermissive
+   AND polroles=ARRAY['authenticated'::regrole]::oid[] AND polwithcheck IS NULL
+   AND pg_get_expr(polqual,polrelid)='(user_id = auth.uid())')
+  OR EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='public.paige_pending_confirmations'::regclass AND NOT tgisinternal) THEN
+  RAISE EXCEPTION 'Original confirmation source protection changed; re-ground before applying' USING ERRCODE='55000';
+ END IF;
+END $source_preflight$;
+
+-- No DEFAULT, backfill, row rewrite, new queue, receipt or authority.
+ALTER TABLE public.paige_pending_confirmations ADD COLUMN studio_page_save_source jsonb;
+ALTER TABLE public.paige_pending_confirmations ADD CONSTRAINT paige_confirmation_studio_source_kind
+ CHECK(studio_page_save_source IS NULL OR
+  (tool_name='growth_page_save' AND jsonb_typeof(studio_page_save_source)='object'));
+
+-- A table-wide SELECT would expose the new column despite column revokes.
+-- Preserve access to EXACTLY all fifteen incumbent columns, under unchanged RLS.
+REVOKE SELECT ON TABLE public.paige_pending_confirmations FROM authenticated;
+GRANT SELECT (
+ id,user_id,tenant_id,thread_id,scoped_client_id,tool_name,fingerprint,args,
+ summary,created_at,expires_at,consumed_at,issued_in_request,server_issued_at,claimed_in_request
+) ON TABLE public.paige_pending_confirmations TO authenticated;
+
+-- New invoker guard: there is no incumbent confirmation table trigger to extend.
+-- INSERT is already service/postgres-only. Source must be present atomically in
+-- the original INSERT; NULL->source via UPDATE is refused too.
+CREATE FUNCTION public._paige_confirmation_studio_source_immutable()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+BEGIN
+ IF NEW.studio_page_save_source IS DISTINCT FROM OLD.studio_page_save_source THEN
+  RAISE EXCEPTION 'STUDIO_CONFIRMATION_SOURCE_CHANGED: original proposal source is immutable' USING ERRCODE='40001';
+ END IF;
+ IF OLD.studio_page_save_source IS NOT NULL AND (
+  NEW.id IS DISTINCT FROM OLD.id OR NEW.user_id IS DISTINCT FROM OLD.user_id
+  OR NEW.tenant_id IS DISTINCT FROM OLD.tenant_id OR NEW.thread_id IS DISTINCT FROM OLD.thread_id
+  OR NEW.scoped_client_id IS DISTINCT FROM OLD.scoped_client_id OR NEW.tool_name IS DISTINCT FROM OLD.tool_name
+  OR NEW.fingerprint IS DISTINCT FROM OLD.fingerprint OR NEW.args IS DISTINCT FROM OLD.args
+  OR NEW.issued_in_request IS DISTINCT FROM OLD.issued_in_request OR NEW.server_issued_at IS DISTINCT FROM OLD.server_issued_at
+ ) THEN
+  RAISE EXCEPTION 'STUDIO_CONFIRMATION_BINDING_CHANGED: original proposal binding is immutable' USING ERRCODE='40001';
+ END IF;
+ -- consumed_at, claimed_in_request, expires_at and unrelated legacy-row updates
+ -- retain their original behavior. This guard neither claims nor authorizes.
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._paige_confirmation_studio_source_immutable() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER paige_confirmation_studio_source_immutable BEFORE UPDATE
+ ON public.paige_pending_confirmations FOR EACH ROW
+ EXECUTE FUNCTION public._paige_confirmation_studio_source_immutable();
+
+DO $source_postflight$
+DECLARE column_name text;
+BEGIN
+ FOREACH column_name IN ARRAY ARRAY['id','user_id','tenant_id','thread_id','scoped_client_id','tool_name','fingerprint','args','summary','created_at','expires_at','consumed_at','issued_in_request','server_issued_at','claimed_in_request'] LOOP
+  IF NOT has_column_privilege('authenticated','public.paige_pending_confirmations',column_name,'SELECT') THEN
+   RAISE EXCEPTION 'Original confirmation column read compatibility changed' USING ERRCODE='55000'; END IF;
+ END LOOP;
+ IF has_column_privilege('authenticated','public.paige_pending_confirmations','studio_page_save_source','SELECT')
+  OR has_column_privilege('anon','public.paige_pending_confirmations','studio_page_save_source','SELECT')
+  OR has_table_privilege('authenticated','public.paige_pending_confirmations','INSERT')
+  OR has_table_privilege('authenticated','public.paige_pending_confirmations','UPDATE')
+  OR has_table_privilege('authenticated','public.paige_pending_confirmations','DELETE')
+  OR NOT has_table_privilege('service_role','public.paige_pending_confirmations','SELECT')
+  OR NOT (SELECT relrowsecurity AND NOT relforcerowsecurity FROM pg_class WHERE oid='public.paige_pending_confirmations'::regclass) THEN
+  RAISE EXCEPTION 'Private Studio confirmation source boundary unavailable' USING ERRCODE='55000'; END IF;
+END $source_postflight$;
 COMMIT;

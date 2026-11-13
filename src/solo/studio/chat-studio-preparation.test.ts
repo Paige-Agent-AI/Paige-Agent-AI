@@ -129,14 +129,14 @@ describe("Studio terminal control — actual buffered SSE", () => {
     expect(CHAT_STUDIO_PREPARATION_PROMPT).toContain("have NOT created");
     expect(CHAT_STUDIO_PREPARATION_PROMPT).toContain("explicit");
   });
-  it("requests a truthful target question without assuming a confirmed handoff control", () => {
+  it("requests truthful input review without assuming a confirmed handoff control", () => {
     expect(CHAT_STUDIO_PREPARATION_PROMPT).toContain("ordinary visible reply");
-    expect(CHAT_STUDIO_PREPARATION_PROMPT).toContain("Which business or project should NEXUS build this for?");
+    expect(CHAT_STUDIO_PREPARATION_PROMPT).toContain("Anything to adjust in the business and project details before starting Studio?");
     expect(CHAT_STUDIO_PREPARATION_PROMPT).toContain('Do not say "Choose below"');
     expect(CHAT_STUDIO_PREPARATION_PROMPT).toContain("no native save or stage has been confirmed");
-    expect(CHAT_STUDIO_TARGET_QUESTION).toBe("Which business or project should NEXUS build this for?");
+    expect(CHAT_STUDIO_TARGET_QUESTION).toBe("Anything to adjust in the business and project details before starting Studio?");
     expect(CHAT_STUDIO_PREPARATION_PROMPT).toContain("entire ordinary visible reply");
-    expect(CHAT_STUDIO_PREPARATION_PROMPT).toContain("exactly this question");
+    expect(CHAT_STUDIO_PREPARATION_PROMPT).toContain("exactly this review question");
   });
 });
 

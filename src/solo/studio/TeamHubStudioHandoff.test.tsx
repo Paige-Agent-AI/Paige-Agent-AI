@@ -2,6 +2,7 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TeamHubStudioHandoff } from "./TeamHubStudioHandoff";
+import { ChatStudioHandoff } from "./ChatStudioHandoff";
 import { parseTeamHubStudioReference, readTeamHubStudioReference, startTeamHubStudio, ProjectStartUnknown } from "./studio-data";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -17,8 +18,8 @@ let cleanups: (() => void)[];
 const ready = () => ({ ok: true, state: "ready", session_id: SESSION, thread_id: THREAD, created: true });
 const prepared = () => ({ ok: true, state: "prepared", brief: BRIEF });
 function answer(data: unknown, error: unknown = null) { return { data, error }; }
-async function render(agentKey: "nexus" | "paige" = "nexus", expectedTenant = TENANT) {
-  await act(async () => root.render(<TeamHubStudioHandoff messageId={MESSAGE} expectedTenant={expectedTenant} actorId={ACTOR} agentKey={agentKey} />));
+async function render(agentKey: "nexus" | "paige" = "nexus", expectedTenant = TENANT, originalRequestText?: string) {
+  await act(async () => root.render(<TeamHubStudioHandoff messageId={MESSAGE} expectedTenant={expectedTenant} actorId={ACTOR} agentKey={agentKey} originalRequestText={originalRequestText} />));
 }
 async function click(text: string) {
   const button = Array.from(host.querySelectorAll("button")).find(node => node.textContent === text);
@@ -63,6 +64,75 @@ describe("original Team Hub Studio adapter", () => {
   });
 });
 describe("private same-source Studio handoff", () => {
+  it("prefills explicit my-business data only after native preparation, and never starts automatically", async () => {
+    let finish!: (value: unknown) => void;
+    api.rpc.mockImplementation((name: string) => name === "team_hub_studio_reference" ? new Promise(resolve => { finish = resolve; }) : Promise.resolve(answer(null)));
+    await render("nexus", TENANT, "Build a landing page for my business.");
+    expect(host.querySelector('select[aria-label="Project target"]')).toBeNull();
+    expect(calls("get_solo_business_context")).toHaveLength(0);
+    await act(async () => finish(answer(prepared())));
+    expect((host.querySelector('select[aria-label="Project target"]') as HTMLSelectElement).value).toBe("workspace");
+    expect(calls("get_solo_business_context")).toHaveLength(1);
+    expect(calls("team_hub_start_studio")).toHaveLength(0);
+  });
+  it.each(["client", "prospect", "custom"] as const)("prefills explicit %s input with a local reference and no workspace/CRM inheritance", async kind => {
+    const phrase = kind === "custom" ? "a different brand" : `my ${kind}`;
+    const request = `Build a page for ${phrase}.\nBusiness name: Northwind`;
+    await render("nexus", TENANT, request);
+    const reference = (host.querySelector('select[aria-label="Project target"]') as HTMLSelectElement).value;
+    expect(reference).toBe(kind);
+    await render("nexus", TENANT, request + "\nOffer: Editorial services");
+    await click("Start Studio project");
+    const context = calls("team_hub_start_studio")[0][1].p_project_context;
+    expect(context.target).toMatchObject({ kind, reference: expect.stringMatching(/^[0-9a-f-]{36}$/i) });
+    expect(context.target.reference).not.toBe(MESSAGE);
+    // A later prop must not replace the first reviewed proposal.
+    expect(context.values).toEqual({ publicName: "Northwind" });
+    expect(calls("get_solo_business_context")).toHaveLength(0);
+    expect(api.rpc.mock.calls.some(call => /crm|contact|client_list/.test(call[0]))).toBe(false);
+  });
+  it("does not infer a target from the model-prepared brief or override a manual choice with late props", async () => {
+    api.rpc.mockImplementation(async name => answer(name === "team_hub_studio_reference" ? { ...prepared(), brief: "Build for my business." } : name === "team_hub_start_studio" ? ready() : null));
+    await render();
+    expect((host.querySelector('select[aria-label="Project target"]') as HTMLSelectElement).value).toBe("");
+    await selectTarget("custom");
+    await render("nexus", TENANT, "Build for my business.");
+    expect((host.querySelector('select[aria-label="Project target"]') as HTMLSelectElement).value).toBe("custom");
+    await click("Start Studio project");
+    expect(calls("team_hub_start_studio")[0][1].p_project_context.target.kind).toBe("custom");
+  });
+  it("keeps a manual field edit when later original-request props change", async () => {
+    await render("nexus", TENANT, "Build for my client.\nBusiness name: Northwind");
+    const label = Array.from(host.querySelectorAll("label")).find(node => node.textContent === "Business name")!;
+    const input = document.getElementById(label.htmlFor) as HTMLInputElement;
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "Owner correction"); input.dispatchEvent(new Event("input", { bubbles: true })); });
+    await render("nexus", TENANT, "Build for my business.\nBusiness name: Another name");
+    await click("Start Studio project");
+    expect(calls("team_hub_start_studio")[0][1].p_project_context).toMatchObject({ target: { kind: "client" }, values: { publicName: "Owner correction" } });
+  });
+  it("forwards optional original human input through the own Chat adapter only after its native read", async () => {
+    api.rpc.mockImplementation(async name => answer(name === "chat_studio_reference" ? prepared() : name === "chat_studio_start" ? ready() : null));
+    await act(async () => root.render(<ChatStudioHandoff reference={{ tenantId: TENANT, sourceTurnId: MESSAGE }} originalRequestText="Build for my prospect." />));
+    expect((host.querySelector('select[aria-label="Project target"]') as HTMLSelectElement).value).toBe("prospect");
+    expect(calls("chat_studio_start")).toHaveLength(0);
+    await click("Start Studio project");
+    expect(calls("chat_studio_start")[0][1]).toMatchObject({ p_expected_tenant: TENANT, p_source_turn_id: MESSAGE, p_project_context: { target: { kind: "prospect" }, values: {} } });
+  });
+  it("keeps ambiguous original input unselected and never guesses from assistant-prepared text", async () => {
+    await render("nexus", TENANT, "Build for my business or for my client.");
+    expect((host.querySelector('select[aria-label="Project target"]') as HTMLSelectElement).value).toBe("");
+    expect(calls("get_solo_business_context")).toHaveLength(0);
+  });
+  it("retains the same authored context across an unknown start and later changed source props", async () => {
+    let starts = 0;
+    api.rpc.mockImplementation(async name => name === "team_hub_start_studio" ? ++starts === 1 ? answer(null, { message: "lost" }) : answer(ready()) : answer(name === "team_hub_studio_reference" ? prepared() : null));
+    await render("nexus", TENANT, "Build for my client.\nBusiness name: Northwind");
+    await click("Start Studio project");
+    const original = calls("team_hub_start_studio")[0][1];
+    await render("nexus", TENANT, "Build for my business.");
+    await click("Retry same start");
+    expect(calls("team_hub_start_studio")[1][1]).toEqual(original);
+  });
   it.each(["nexus", "paige"] as const)("%s mount reads only and requires an explicit target before start", async (agent) => {
     await render(agent);
     expect(calls("team_hub_studio_reference")).toHaveLength(1);
@@ -113,7 +183,7 @@ describe("private same-source Studio handoff", () => {
     api.rpc.mockResolvedValue(answer({ ok: true, state: "ready", session_id: SESSION }));
     const events: CustomEvent[] = []; const listener = (event: Event) => events.push(event as CustomEvent);
     window.addEventListener("paige-studio", listener); cleanups.push(() => window.removeEventListener("paige-studio", listener));
-    await render(); expect(events).toHaveLength(0); await click("Open Studio");
+    await render("nexus", TENANT, "Build for my client.\nBusiness name: Northwind"); expect(events).toHaveLength(0); await click("Open Studio");
     expect(events).toHaveLength(1); expect(events[0].detail.sessionId).toBe(SESSION);
     expect(Object.keys(events[0].detail).sort()).toEqual(["returnFocus", "sessionId"]);
     expect(calls("team_hub_start_studio")).toHaveLength(0);

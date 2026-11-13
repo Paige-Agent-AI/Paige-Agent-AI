@@ -5,6 +5,7 @@ import React from "react";
 import { ArrowUp, FileText, Filter, Image as ImageIcon, LayoutTemplate, Sparkles, Images, Minimize2 } from "lucide-react";
 import { Ic } from "../_shared";
 import { NexusIdentity } from "./NexusIdentity";
+import { projectStudioRequestIntent } from "./studio-request-intent";
 import { VsStars } from "./VsStars";
 import { listTemplates, loadBrand, plainError, sessionName, startStudioProject, lookupStudioProjectStart, ProjectStartUnknown, type StudioSession, type StudioProjectContext } from "./studio-data";
 import { BRIEF_FIELDS, EMPTY_BRIEF_DETAILS, composeBrief, hasBriefDetails, type BriefDetails } from "./brief-fields";
@@ -146,6 +147,9 @@ export function StudioHome({ sessions, sessionsError, tenantId, tenantSlug, onNe
   const [error, setError] = React.useState<string | null>(null);
   const [target, setTarget] = React.useState<StudioContextTarget>({ kind: "workspace" });
   const [projectValues, setProjectValues] = React.useState<StudioBusinessContext["projectValues"]>({});
+  const manuallyEditedContext = React.useRef(false);
+  const originalRequestProposal = projectStudioRequestIntent(brief);
+  const contextConflict = manuallyEditedContext.current && originalRequestProposal && originalRequestProposal.kind !== target.kind;
   const projection = useStudioBusinessContext(tenantId, tenantSlug, target, projectValues);
   const [editorialTemplate, setEditorialTemplate] = React.useState(false);
   const [unknownStart, setUnknownStart] = React.useState(!!recoverStartId);
@@ -154,6 +158,16 @@ export function StudioHome({ sessions, sessionsError, tenantId, tenantSlug, onNe
   React.useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const ref = React.useRef<HTMLTextAreaElement | null>(null);
   React.useEffect(() => { ref.current?.focus(); }, []);
+  const updateBrief = (text: string) => {
+    setBrief(text);
+    if (manuallyEditedContext.current || creating || unknownStart) return;
+    const proposal = projectStudioRequestIntent(text);
+    if (!proposal) return;
+    try {
+      setTarget(target.kind === proposal.kind ? target : proposal.kind === "workspace" ? { kind: "workspace" } : { kind: proposal.kind, reference: crypto.randomUUID() });
+      setProjectValues(proposal.values);
+    } catch { setError("A project reference could not be created in this browser. Choose the target before starting."); }
+  };
 
   const start = async (text: string) => {
     // The owner's own words are the brief; details only add to them (the Build button gates the same way).
@@ -209,8 +223,9 @@ export function StudioHome({ sessions, sessionsError, tenantId, tenantSlug, onNe
         <VsStars n={160} />
         <div className="vs-hero-inner">
           <h1>What should NEXUS build?</h1>
-          <StudioBusinessContextPanel projection={projection} projectValues={projectValues} onChange={setProjectValues} disabled={creating || unknownStart}
-            onTargetChange={kind => { setProjectValues({}); setTarget(kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }); }} />
+          <StudioBusinessContextPanel projection={projection} projectValues={projectValues} onChange={values => { manuallyEditedContext.current = true; setProjectValues(values); }} disabled={creating || unknownStart}
+            onTargetChange={kind => { manuallyEditedContext.current = true; if (kind !== target.kind) { setProjectValues({}); setTarget(kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }); } }} />
+          {contextConflict && <p className="vs-brief-note" role="status">Review the selected brand: your brief names a different project target. Your choices are unchanged.</p>}
           <div className="vs-composer">
             <label className="vs-sr" htmlFor="vs-brief">Describe what you want NEXUS to build</label>
             <textarea
@@ -218,7 +233,7 @@ export function StudioHome({ sessions, sessionsError, tenantId, tenantSlug, onNe
               ref={ref}
               value={brief}
               placeholder="A page, a form, a funnel, or images. Say who it's for and what should happen next."
-              onChange={(e) => setBrief(e.target.value)}
+              onChange={(e) => updateBrief(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void start(brief); } }}
             />
             {detailsOpen && (

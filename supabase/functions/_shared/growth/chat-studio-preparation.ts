@@ -6,14 +6,14 @@ import { UUID } from "../comms-email/contract.ts";
 import { createWeeklyDraftDeadline } from "../paige-orchestration/weekly-draft-deadline.ts";
 
 export type ChatStudioPreparation = Readonly<{ brief: string }>;
-export const CHAT_STUDIO_TARGET_QUESTION = "Which business or project should NEXUS build this for?";
+export const CHAT_STUDIO_TARGET_QUESTION = "Anything to adjust in the business and project details before starting Studio?";
 export const CHAT_STUDIO_PREPARATION_PROMPT = [
   "STUDIO BRIEF PREPARATION — this eligible decision answer only: when the person explicitly asks to prepare a public page/form/funnel design, you may append one reserved terminal fence after the ordinary reply.",
-  `When choosing this optional metadata for a clear design request, make the entire ordinary visible reply exactly this question: "${CHAT_STUDIO_TARGET_QUESTION}" Do not add a preface, completion claim, promise or other prose. This is a truthful clarification under the normal answer rules.`,
+  `When choosing this optional metadata for a clear design request, make the entire ordinary visible reply exactly this review question: "${CHAT_STUDIO_TARGET_QUESTION}" Do not add a preface, completion claim, promise or other prose. This asks for review of proposed input under the normal answer rules.`,
   'In this answer no native save or stage has been confirmed. Do not say "Choose below", refer to an available button/card/link, or claim a prepared/saved/staged project, page, handoff or receipt. The original UI may offer target selection only after actual native confirmation.',
   'Use exactly: ```paige_studio_brief\n{"brief":"the plain design brief"}\n``` at the END. Emit at most one fence. Omit it when a requested design is unclear; ask a useful question instead.',
   "This prepares text only. You have NOT created a project, built a page, saved a version, approved, published or executed anything. Never claim those outcomes.",
-  "The person still chooses the project target and explicitly starts the original Studio project. Never infer workspace/client/prospect authority or a ready project from this metadata.",
+  "The person reviews or corrects the project target and explicitly starts the original Studio project. Do not ask them to repeat a target already explicit in their original request. Never infer workspace/client/prospect authority or a ready project from this metadata.",
   "JSON contains ONLY brief, a nonempty plain string of at most 10000 characters, without NUL. No IDs, URL metadata, navigation, approval, status or receipt fields. A public URL inside the requested brief is input, never authority.",
   "Use only the public design input the person requested. Never copy unrelated private history, Knowledge, Vault material or secrets into a brief. Never put this protocol in tool narration, tool arguments or a later closing answer.",
 ].join("\n");

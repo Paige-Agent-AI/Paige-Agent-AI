@@ -6,9 +6,14 @@ import { StudioBusinessContextPanel } from "./StudioBusinessContextPanel";
 import { useStudioBusinessContext } from "./useStudioBusinessContext";
 import { projectStudioBusinessContext, type StudioBusinessContext, type StudioContextTarget } from "./business-context";
 import { ProjectStartUnknown, readTeamHubStudioReference, startTeamHubStudio, type StudioProjectContext, type TeamHubStudioReference } from "./studio-data";
+import { projectStudioRequestIntent } from "./studio-request-intent";
 import "./TeamHubStudioHandoff.css";
 
-export interface TeamHubStudioHandoffProps { messageId: string; expectedTenant: string; actorId: string; agentKey: "nexus" | "paige" }
+export interface TeamHubStudioHandoffProps {
+  messageId: string; expectedTenant: string; actorId: string; agentKey: "nexus" | "paige";
+  /** Optional ORIGINAL human request text, not an assistant/model brief. Proposal data only. */
+  originalRequestText?: string;
+}
 type Values = StudioBusinessContext["projectValues"];
 type ContextProps = { tenantId: string; tenantSlug: string; target: StudioContextTarget; values: Values; disabled: boolean; onChange: (values: Values) => void; onTargetChange: (kind: StudioContextTarget["kind"]) => void };
 function WorkspaceContext({ tenantId, tenantSlug, target, values, ...props }: ContextProps) {
@@ -35,7 +40,7 @@ type SourceReaders = {
   readReference?: typeof readTeamHubStudioReference;
   startReference?: typeof startTeamHubStudio;
 };
-export function BoundStudioSourceHandoff({ messageId, expectedTenant, tenantSlug, readReference = readTeamHubStudioReference, startReference = startTeamHubStudio }: TeamHubStudioHandoffProps & { tenantSlug: string } & SourceReaders) {
+export function BoundStudioSourceHandoff({ messageId, expectedTenant, tenantSlug, originalRequestText, readReference = readTeamHubStudioReference, startReference = startTeamHubStudio }: TeamHubStudioHandoffProps & { tenantSlug: string } & SourceReaders) {
   const [reference, setReference] = useState<TeamHubStudioReference | null>(null);
   const [phase, setPhase] = useState<"idle" | "starting" | "checking" | "unknown" | "retry" | "refused">("idle");
   const [target, setTarget] = useState<StudioContextTarget | null>(null);
@@ -43,6 +48,7 @@ export function BoundStudioSourceHandoff({ messageId, expectedTenant, tenantSlug
   const [message, setMessage] = useState<string | null>(null);
   const alive = useRef(false), pending = useRef(false), sequence = useRef(0);
   const originalContext = useRef<StudioProjectContext | null>(null);
+  const proposalSettled = useRef(false);
   const labelId = useId();
   const readSame = useCallback(async (recovery: boolean) => {
     const request = ++sequence.current;
@@ -60,8 +66,21 @@ export function BoundStudioSourceHandoff({ messageId, expectedTenant, tenantSlug
   }, [readSame]);
   const busy = phase === "starting" || phase === "checking";
   const locked = busy || phase === "unknown" || phase === "retry";
+  useEffect(() => {
+    if (proposalSettled.current || originalContext.current || target || phase !== "idle"
+      || reference?.ok !== true || reference.state !== "prepared" || !originalRequestText) return;
+    proposalSettled.current = true;
+    const proposal = projectStudioRequestIntent(originalRequestText);
+    if (!proposal) return;
+    try {
+      setTarget(proposal.kind === "workspace" ? { kind: "workspace" } : { kind: proposal.kind, reference: crypto.randomUUID() });
+      setValues(proposal.values);
+    } catch { setMessage("A project reference could not be created in this browser. Choose the target again."); }
+  }, [originalRequestText, phase, reference, target]);
   function chooseTarget(kind: StudioContextTarget["kind"]) {
-    if (locked || target?.kind === kind) return;
+    if (locked) return;
+    proposalSettled.current = true;
+    if (target?.kind === kind) return;
     try { setTarget(kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }); setValues({}); setMessage(null); }
     catch { setMessage("A project reference could not be created in this browser. Try again."); }
   }
@@ -93,7 +112,7 @@ export function BoundStudioSourceHandoff({ messageId, expectedTenant, tenantSlug
   if (reference?.ok !== true) return null;
   if (reference.state === "ready") return <div className="th-studio-handoff th-studio-ready"><span>Studio project</span><StudioLaunchButton sessionId={reference.sessionId} className="th-btn" /></div>;
   const contextProps: ContextProps | null = target ? { tenantId: expectedTenant, tenantSlug, target, values, disabled: locked,
-    onChange: next => { if (!locked) setValues(next); }, onTargetChange: chooseTarget } : null;
+    onChange: next => { if (!locked) { proposalSettled.current = true; setValues(next); } }, onTargetChange: chooseTarget } : null;
   return <div className="th-studio-handoff" role="group" aria-labelledby={labelId}>
     <details>
       <summary className="th-studio-summary"><FileText aria-hidden="true" /><span id={labelId}>Review Studio brief</span></summary>

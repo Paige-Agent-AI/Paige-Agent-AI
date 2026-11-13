@@ -336,7 +336,7 @@ import { loadResearchHistoryContext, renderResearchHistoryContext } from "../_sh
 // generative-UI choice-card rule), externalized so it lives in one editable home (§9/§12/§18).
 import { STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
 import { buildStudioNexusPersona } from "../_shared/growth/studio-nexus-persona.ts";
-import { parseStudioPageSaveSource, type StudioPageSaveSource } from "../_shared/growth/studio-page-source.ts";
+import { parseStudioPageSaveSource, sameStudioPageSaveSource, type StudioPageSaveSource } from "../_shared/growth/studio-page-source.ts";
 import { createStudioPageSave } from "../_shared/growth/studio-page-save.ts";
 import { CHAT_STUDIO_PREPARATION_PROMPT, CHAT_STUDIO_TARGET_QUESTION, createChatStudioPreparation, extractChatStudioPreparation, stripChatStudioControl } from "../_shared/growth/chat-studio-preparation.ts";
 // Tier Rail Spine (Phase D): the SAME declared-rail tier resolver + client-seat
@@ -6733,6 +6733,10 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // durable store. The native original writer compares this whole source
     // under lock before any page/form/manifest/version change.
     const studioPageSaves = new Map<string, { source: StudioPageSaveSource; save: ReturnType<typeof createStudioPageSave>["save"] }>();
+    const studioPageClaims = new Map<string, { state: "attempted" | "claimed" | "unknown"; proposalId?: string; source?: StudioPageSaveSource; owner?: object; reconciliation?: "live" | "expired" | "used" | "unknown" }>();
+    // Null is deliberate: a claimed legacy/malformed proposal may never fall
+    // back to this invocation's newer generation and bless its older payload.
+    const studioPageApprovedSaves = new WeakMap<object, { source: StudioPageSaveSource; save: ReturnType<typeof createStudioPageSave>["save"] } | null>();
     const studioPageSavedCalls = new Set<object>();
     let studioPageSaveWithdrawn = false;
     const studioPageSaveCurrent = (): boolean => {
@@ -6740,6 +6744,19 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         || interactive?.superseded || interactiveRecoveryReadOnly || interactiveConversational
         || !studioSessionId || personaCtx?.tenant_id !== turnScopeTenantId) studioPageSaveWithdrawn = true;
       return !studioPageSaveWithdrawn;
+    };
+    const restoreStudioPageApproval = (tc: object, fingerprint: string): void => {
+      // This only restores private expected-state metadata from the original
+      // claim. It neither claims again nor dispatches the native page writer.
+      studioPageApprovedSaves.set(tc, null);
+      const claimed = studioPageClaims.get(fingerprint);
+      if (claimed?.state !== "claimed" || !claimed.proposalId || claimed.owner !== undefined) return;
+      claimed.owner = tc;
+      if (!claimed.source || !studioPageSaveCurrent()) return;
+      const writer = createStudioPageSave(claimed.source, {
+        caller: supabaseClient, current: studioPageSaveCurrent, signal: req.signal,
+      });
+      studioPageApprovedSaves.set(tc, { source: claimed.source, save: writer.save });
     };
     // A page designed in a Studio project but not saved this turn (the save waited on approval, or
     // the model stopped short). The stage shows it, marked as not saved, instead of staying empty:
@@ -9480,9 +9497,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       try {
         if (!(await revalidateProposalScope())) return { state: "failed" };
         const storedArgs = confirmationArgs(args);
+        const studioPageProposal = tool === "growth_page_save" && !!studioSessionId;
+        const generatedSource = studioPageProposal ? studioPageSaves.get(canvasArtifact?.kind === "page" ? canvasArtifact.id : "new")?.source : null;
+        const studioProposalSource = generatedSource
+          ? parseStudioPageSaveSource(personaCtx?.tenant_id, studioSessionId, generatedSource.page_id, generatedSource) : null;
+        if (studioPageProposal && (!studioProposalSource || !studioPageSaveCurrent())) return { state: "failed" };
         const findReusable = async (): Promise<Array<{ fingerprint: string; summary: string; expires_at: string | null }>> => {
           let existing = supabase.from("paige_pending_confirmations")
-            .select("fingerprint,args,issued_in_request,summary,expires_at").eq("user_id", user.id).eq("tool_name", tool)
+            .select(studioPageProposal ? "fingerprint,args,issued_in_request,summary,expires_at,studio_page_save_source" : "fingerprint,args,issued_in_request,summary,expires_at").eq("user_id", user.id).eq("tool_name", tool)
             .is("consumed_at", null)
             .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
             .gt("expires_at", new Date().toISOString());
@@ -9490,6 +9512,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           existing = payloadThreadId ? existing.eq("thread_id", payloadThreadId) : existing.is("thread_id", null);
           existing = scopedClientId ? existing.eq("scoped_client_id", scopedClientId) : existing.is("scoped_client_id", null);
           const { data: pending, error: pendingError } = await existing.limit(65);
+          if (studioPageProposal && !studioPageSaveCurrent()) throw new Error("studio_source_unavailable");
           if (pendingError || (pending?.length ?? 0) > 64) {
             throw new Error("confirmation preparation unavailable");
           }
@@ -9497,13 +9520,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           for (const row of pending ?? []) {
             if (!row?.args || typeof row.args !== "object" || Array.isArray(row.args)
               || await confirmFingerprint(tool, row.args) !== fp) continue;
+            if (studioProposalSource) {
+              const savedSource = parseStudioPageSaveSource(personaCtx?.tenant_id, studioSessionId, studioProposalSource.page_id, row.studio_page_save_source);
+              if (!savedSource || !sameStudioPageSaveSource(studioProposalSource, savedSource)) throw new Error("studio_source_changed");
+            }
             const token = await confirmationToken(row, tool);
+            if (studioPageProposal && !studioPageSaveCurrent()) throw new Error("studio_source_unavailable");
             if (token) reusable.push({ fingerprint: token, summary: typeof row.summary === "string" ? row.summary : summary,
               expires_at: typeof row.expires_at === "string" ? row.expires_at : null });
           }
           return reusable;
         };
         const reusable = await findReusable();
+        if (studioPageProposal && (!studioPageSaveCurrent() || !(await revalidateProposalScope()) || !studioPageSaveCurrent())) return { state: "failed" };
         if (reusable.length > 1) return { state: "failed" };
         if (reusable.length === 1) return { state: "exists", ...reusable[0] };
         if (!(await revalidateProposalScope())) return { state: "failed" };
@@ -9519,6 +9548,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         const { error: expiryError } = await expired;
         if (expiryError) return { state: "failed" };
         await requireRecoveryPermission(true);
+        if (studioPageProposal && !studioPageSaveCurrent()) return { state: "failed" };
         const { data: recorded, error } = await supabase.from("paige_pending_confirmations").insert({
           user_id: user.id,
           tenant_id: personaCtx?.tenant_id ?? null,
@@ -9530,7 +9560,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           server_issued_at: new Date().toISOString(),
           args: storedArgs,
           summary,
+          ...(studioProposalSource ? { studio_page_save_source: studioProposalSource } : {}),
         }).select("expires_at").single();
+        if (studioPageProposal && !studioPageSaveCurrent()) return { state: "failed" };
         if (error) {
           if (error.code === "23505") {
             const winner = await findReusable();
@@ -9674,6 +9706,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     ): Promise<Record<string, unknown> | null> => {
       try {
         if (!cancellationsRecorded || !approvedConfirmations.has(fp) || !(await revalidateProposalScope())) return null;
+        const studioPageClaim = tool === "growth_page_save" && !!studioSessionId;
+        if (studioPageClaim) {
+          if (studioPageClaims.has(fp)) return null;
+          studioPageClaims.set(fp, { state: "attempted" });
+        }
         const portalRequest = tool===PORTAL_REQUEST_SHARE_TOOL;
         if (portalRequest) {
           // Once an original claim is attempted, uncertainty never falls through
@@ -9760,13 +9797,27 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         q = payloadThreadId ? q.eq("thread_id", payloadThreadId) : q.is("thread_id", null);
         q = scopedClientId ? q.eq("scoped_client_id", scopedClientId) : q.is("scoped_client_id", null);
         if (reminderCompatibilityProposalId) q = q.eq("id", reminderCompatibilityProposalId);
-        const { data, error } = await q.select(portalRequest?"args,id,fingerprint,thread_id,scoped_client_id":"args").maybeSingle();
+        const { data, error } = await q.select(studioPageClaim ? "args,id,fingerprint,issued_in_request,studio_page_save_source" : portalRequest?"args,id,fingerprint,thread_id,scoped_client_id":"args").maybeSingle();
         if (error) {
+          if (studioPageClaim) studioPageClaims.set(fp, { state: "unknown" });
           if (portalRequest) portalRequestClaims.set(fp,{state:'unknown'});
           console.error("[paige] confirm claim failed", JSON.stringify({ tool, code: error.code ?? null, message: error.message ?? null }));
           return null;
         }
         const args = (data as { args?: unknown } | null)?.args;
+        if (studioPageClaim) {
+          const selected = data as { id?: unknown; fingerprint?: unknown; issued_in_request?: unknown; studio_page_save_source?: unknown } | null;
+          if (selected && typeof selected.id === "string" && UUID_INPUT_SHAPE.test(selected.id)
+              && selected.fingerprint === fp.split(":")[0] && selected.issued_in_request === nonce
+              && args && typeof args === "object" && !Array.isArray(args)) {
+            const rawSource = selected.studio_page_save_source;
+            const pageId = rawSource && typeof rawSource === "object" && !Array.isArray(rawSource)
+              ? Object.getOwnPropertyDescriptor(rawSource, "page_id")?.value : undefined;
+            const source = studioPageSaveCurrent() && await revalidateProposalScope() && studioPageSaveCurrent()
+              ? parseStudioPageSaveSource(personaCtx?.tenant_id, studioSessionId, pageId, rawSource) : null;
+            studioPageClaims.set(fp, { state: "claimed", proposalId: selected.id, ...(source ? { source } : {}) });
+          } else studioPageClaims.set(fp, { state: "unknown" });
+        }
         if (portalRequest) {
           const scope=portalRequestScope();
           const selected=data as {id?:unknown;fingerprint?:unknown;thread_id?:unknown;scoped_client_id?:unknown}|null;
@@ -9785,6 +9836,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           ? args as Record<string, unknown>
           : null;
       } catch (e) {
+        if (tool === "growth_page_save" && studioPageClaims.has(fp)) studioPageClaims.set(fp, { state: "unknown" });
         if (tool===PORTAL_REQUEST_SHARE_TOOL && portalRequestClaims.has(fp)) portalRequestClaims.set(fp,{state:'unknown'});
         console.error("[paige] confirm claim threw", String(e));
         return null;
@@ -13421,6 +13473,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const approvedArgs = approvedFingerprint !== undefined
               ? await claimConfirmation(approvedFingerprint, tc.function.name)
               : null;
+            const studioPageClaimStop = tc.function.name === "growth_page_save" && studioSessionId && approvedFingerprint
+              ? studioPageClaims.get(approvedFingerprint) : null;
+            if (!approvedArgs && studioPageClaimStop) {
+              const handled = studioPageClaimStop.state === "claimed" && studioPageClaimStop.owner !== undefined;
+              if (!handled) {
+                requestExecutionState.needsReview = true;
+                if (!studioPageClaimStop.reconciliation) studioPageClaimStop.reconciliation =
+                  await resumedRowStateNow(approvedFingerprint!, tc.function.name);
+              }
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
+                ...(handled ? { not_applied: true, already_handled: true } : { outcome_unknown: true }),
+                code: handled ? "STUDIO_APPROVAL_ALREADY_HANDLED" : "STUDIO_APPROVAL_UNVERIFIED",
+                error: handled
+                  ? "This original approval was already handled in this answer. Check its recorded result; no second page save was dispatched."
+                  : "The original approval could not be verified. Check this same saved request and page before another write. Nothing has been retried." }) });
+              continue;
+            }
             const portalRequestClaimStop=tc.function.name===PORTAL_REQUEST_SHARE_TOOL&&approvedFingerprint
               ? portalRequestClaims.get(approvedFingerprint):null;
             if (!approvedArgs && portalRequestClaimStop) {
@@ -13540,6 +13609,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // THE APPROVED CALL, NOT THE RE-EMITTED ONE. Every execution branch below re-parses
             // `tc.function.arguments`, so overwriting it here routes all fifty-one gated tools
             // through one seam rather than fifty-one per-tool edits.
+            if (tc.function.name === "growth_page_save" && studioSessionId && approvedFingerprint) {
+              // Metadata comes only from the SAME original claim's private
+              // projection. A model id, flag, fresh read or cloned call cannot
+              // supply it, and the original stored arguments stay untouched.
+              restoreStudioPageApproval(tc, approvedFingerprint);
+            }
             tc.function.arguments = JSON.stringify(approvedArgs);
             approvalChannel.set(tc.id, "operator_card");
             approvalSpend.set(approvedFingerprint as string, tc.id);
@@ -16778,7 +16853,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             } else if (tc.function.name === "growth_page_save") {
               if (studioSessionId) {
-                const studioSave = studioPageSaves.get(canvasArtifact?.kind === "page" ? canvasArtifact.id : "new");
+                const studioSave = studioPageApprovedSaves.has(tc) ? studioPageApprovedSaves.get(tc)
+                  : studioPageSaves.get(canvasArtifact?.kind === "page" ? canvasArtifact.id : "new");
                 if (!studioSave || !studioPageSaveCurrent()) {
                   result = { success: false, code: "STUDIO_PAGE_SOURCE_REQUIRED", not_applied: true,
                     error: "Generate this page from the current saved project context before saving. No page was changed by this call." };

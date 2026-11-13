@@ -1,3 +1,7 @@
+// EXP01 scoped cache diagnosis, November13. NON-AUTHOR /root/setup_contract_review
+// CLEAR on 5ce9c2ae6dd88638980b81966beb330ba5b2ee7e/tree7ae47d44.
+// Original canonical extractor reproduced the two old/new adapter and trace pins.
+// Renew ONLY those2 dependencies; other129 pins/29 Root dispatches/controls exact.
 // EXP01 stable-prefix boundary, November13. NON-AUTHOR /root/setup_contract_review
 // CLEAR on 69e370451db1a2c2227e9c6c3a5fcacbc8c0a82e/treedd2ed8f0.
 // Same canonical extractor reproduced oldbf4aa3f5 and reviewed new42f0271b.
@@ -1524,7 +1528,7 @@ const SOURCES = {
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",
   "supabase/functions/_shared/agreements/token.ts": "793e1c0a521fc0ea3b39e5761f87cdad7fee67a73b2110ac1f2963992b20eeea",
   "supabase/functions/_shared/model-fabric.ts": "63929332c5c47f841fc8fdb543b28247996efec3374557535c66d0c939113841",
-  "supabase/functions/_shared/llm-trace.ts": "33667b9afdd45c197235452838fe9553f8dd766e0c99c0ab2a403166bbd66056",
+  "supabase/functions/_shared/llm-trace.ts": "588857f4c1c2026b08a0f1ae4b8e69a49e941dbf8e21c940d7afba6c40727ea3",
   "supabase/functions/_shared/prompt-forge.ts": "0abdeb7a887ac7b566dd8f21c11140122985d2acf0b5b6020596974ffd3e11ee",
   "supabase/functions/_shared/voyage.ts": "4eb1a516b2ce4679e83bfa62bb908a4b2e3be4d48dcdc89df75bb160bd6569b2",
   "supabase/functions/_shared/claude.ts": "cfbb18ce156d2259bf1904d6f6eaed8262e007c70929958c7261f185e20747ff",
@@ -1560,7 +1564,7 @@ const SOURCES = {
   // unchanged. Old e2790d93… reproduced from main 5a4bfb1f0 first.
   "supabase/functions/_shared/comms-email/readiness.ts": "8bfab4b5fe9453736b8f68b82d76434cc9884e9ea39583d7d32e97454affba5f",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
-  "supabase/functions/_shared/openai-responses.ts": "42f0271bc4cc1852349f23f1a34ca61832d2241ded68db364eaee0abf17410be",
+  "supabase/functions/_shared/openai-responses.ts": "3293523c9621ae12deb1380e5e9d84de03fe64e15788dfff1c8c93637d622d46",
   "supabase/functions/_shared/provider-failure.ts": "eef5a70437a8952dde4fbb46a29e9696d1b9f31c48e2a76a0c9ae60c99e7c35b",
   "supabase/functions/_shared/paige-turn/route.ts": "657f0c9ee1d3724a5eca72f661718d560e090cd7ee36707cadbbf94f1f463d6e",
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",

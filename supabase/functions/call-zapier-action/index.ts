@@ -11,7 +11,7 @@
 //   The `action` field is ADDITIVE (§37): existing {tool_name} callers are unaffected.
 //
 // Security (§9 tenant isolation):
-//  • The caller's JWT authenticates them; admin-gated (has_role admin).
+//  • The caller's JWT authenticates them; gated by their current workspace admin role.
 //  • The tenant is derived SERVER-SIDE from the JWT (current_user_tenant_id, run in
 //    the caller's JWT context) — a client-supplied tenant_id is NEVER trusted for the
 //    secret read. Mirrors the proven paige-n8n pattern.
@@ -39,9 +39,9 @@
 // decision, and it is empty until somebody makes it.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
-import { mcpListTools, authFromSecret } from "../_shared/mcp-client.ts";
+import { mcpListTools } from "../_shared/mcp-client.ts";
 import { callApprovedCapability, fileGovernedOutcome, projectDiscovery } from "../_shared/mcp-outcome.ts";
-import { discoverAuthorizationServer, discoverProtectedResource, isExpired, refreshTokens } from "../_shared/mcp-oauth.ts";
+import { resolveZapierMcpConnection, zapierMcpReadAuthorized } from "../_shared/zapier-mcp-auth.ts";
 
 // The SSRF validator that used to live inline here is now `_shared/ssrfGuard.ts`, reached
 // through `_shared/mcp-client.ts`. It is the same numeric guard, plus the three things
@@ -62,8 +62,8 @@ Deno.serve(async (req) => {
   if (!user) return jsonResponse({ error: "unauthorized" }, 401);
 
   const admin = createClient(supabaseUrl, serviceKey);
-  const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-  if (!isAdmin) return jsonResponse({ error: "forbidden" }, 403);
+  const { data: isAdmin } = await userClient.rpc("is_current_user_tenant_admin");
+  if (isAdmin !== true) return jsonResponse({ error: "forbidden" }, 403);
 
   const body = await req.json().catch(() => ({}));
   // Two request shapes (§37 — additive, existing `{tool_name, arguments}` callers unchanged):
@@ -76,6 +76,9 @@ Deno.serve(async (req) => {
   // NEVER trust a client-supplied tenant_id for the secret read (§9).
   const { data: tenantId, error: tErr } = await userClient.rpc("current_user_tenant_id");
   if (tErr || !tenantId) return jsonResponse({ error: "no_tenant" }, 400);
+  if (typeof body.expected_tenant_id === "string" && body.expected_tenant_id !== tenantId) {
+    return jsonResponse({ error: "tenant_changed" }, 409);
+  }
   const fileConnectionTest = async (succeeded: boolean) => {
     if (!isList) return true;
     const { error } = await admin.rpc("record_zapier_mcp_connection_test", {
@@ -90,99 +93,16 @@ Deno.serve(async (req) => {
     return true;
   };
 
-  // 2. Pull the tenant's decrypted MCP creds (service-role-only RPC), scoped to the
-  //    caller's OWN resolved tenant. Honest degrade if not configured/enabled (§13) —
-  //    never a fallback to the shared ZAPIER_MCP_TOKEN env.
-  // The registry is provider-scoped: one tenant may hold an n8n MCP connection AND a
-  // Zapier one, so the provider must be named. This function is the Zapier caller.
-  const { data: secret, error: sErr } = await admin.rpc("get_tenant_mcp_secret", {
-    _tenant_id: tenantId,
-    _provider: "zapier",
-  });
-  if (sErr) { await fileConnectionTest(false); return jsonResponse({ error: "secret_lookup_failed" }, 500); }
-  if (!secret?.configured) {
+  // One resolver renews the original grant for discovery, checks and actions.
+  const resolved = await resolveZapierMcpConnection(admin, tenantId, user.id);
+  if ("error" in resolved) {
     await fileConnectionTest(false);
-    return jsonResponse({ ok: false, error: "not_connected", detail: "This workspace hasn't connected a Zapier/MCP account yet. Connect one in Settings → Integrations → Zapier." });
+    return jsonResponse({ ok: false, error: resolved.error }, resolved.status);
   }
-  if (secret.enabled === false) {
-    await fileConnectionTest(false);
-    return jsonResponse({ ok: false, error: "connection_disabled", detail: "This workspace's Zapier/MCP connection is turned off. Re-enable it in Settings → Integrations → Zapier." });
-  }
-  const serverUrl: string = secret.server_url;
-
-  // An access token that has lapsed is refreshed here rather than surfacing as a failed
-  // action. Rotation is stored immediately: a server that issues a new refresh token has
-  // killed the old one, so keeping the old one would work now and break at the next
-  // refresh with nothing to point at.
-  if (secret.auth_kind === "oauth" && isExpired(secret.expires_at) && secret.refresh_token && secret.oauth_issuer) {
-    try {
-      const server = await discoverAuthorizationServer(String(secret.oauth_issuer));
-      // RFC 8707: the resource indicator has to be the one the SERVER advertises, and the
-      // grant was obtained with that value. Substituting the endpoint URL happens to be
-      // the same string for Zapier today and is not the same thing — an authorization
-      // server that advertises a different resource identifier would refuse the refresh,
-      // and the connection would look like it had expired rather than like it had been
-      // asked the wrong question. Re-read rather than stored so it cannot go stale, and
-      // the endpoint is the fallback because that is what the grant used before this.
-      let resource = serverUrl;
-      try { resource = (await discoverProtectedResource(serverUrl)).resource; } catch { /* keep the endpoint */ }
-      const rotated = await refreshTokens({
-        server,
-        clientId: String(secret.oauth_client_id ?? ""),
-        clientSecret: secret.oauth_client_secret ? String(secret.oauth_client_secret) : null,
-        refreshToken: String(secret.refresh_token),
-        resource,
-      });
-      const { error: rErr } = await admin.rpc("rotate_tenant_mcp_tokens", {
-        _tenant_id: tenantId,
-        _provider: "zapier",
-        _access_token: rotated.accessToken,
-        _refresh_token: rotated.refreshToken,
-        _expires_at: rotated.expiresAt,
-      });
-      // FAIL CLOSED when the rotation cannot be stored. The provider has already
-      // invalidated the old refresh token by issuing this one, so a database that still
-      // holds the old one can never refresh again: this single request would succeed and
-      // the connection would be permanently unable to renew, discovered days later as an
-      // expiry nobody can explain. Logging and carrying on trades one visible failure now
-      // for an invisible, unrecoverable one later.
-      //
-      // Nothing has been spent at this point — the capability has not run — so refusing
-      // costs one action and keeps the connection repairable by reconnecting.
-      if (rErr) {
-        console.error("[call-zapier-action] token rotation not stored:", rErr.message);
-        return jsonResponse({
-          ok: false,
-          error: "reauthorization_required",
-          detail: "This workspace's Zapier authorization could not be renewed. Reconnect it in Settings → Integrations → Zapier.",
-        });
-      }
-      // Written back onto `secret`, which is the ONE thing the auth is derived from.
-      // A local copy alongside it is what broke this: the rotation updated the copy and
-      // `authFromSecret(secret)` kept reading the expired field, so the first call after
-      // every expiry went out with the dead token and failed even though the refresh and
-      // the database write had both succeeded. Two representations of one fact is the same
-      // defect as the guard-and-mapping split this function was just consolidated to
-      // remove; the fix is the same one -- keep a single representation.
-      secret.auth_token = rotated.accessToken;
-      secret.expires_at = rotated.expiresAt;
-    } catch {
-      // A grant that can no longer be refreshed has been withdrawn or has expired. Saying
-      // so is the honest answer; retrying with the dead token would fail less clearly.
-      return jsonResponse({ ok: false, error: "reauthorization_required", detail: "This workspace's Zapier authorization has expired. Reconnect it in Settings → Integrations → Zapier." });
-    }
-  }
-  // A 'url' connection has no separate token by design -- Zapier's per-user MCP server
-  // carries its secret in the address. Requiring a token here would report a correctly
-  // saved connection as missing one, which is the failure that looks exactly like "not
-  // connected" and sends the operator to re-enter something that was never absent.
-  // One call for both the verdict and the auth shape, shared with the connect function so
-  // the two cannot drift apart again.
-  const auth = authFromSecret(secret);
-  if (!auth) {
-    return jsonResponse({ ok: false, error: "not_connected", detail: "The Zapier connection is missing its server URL. Reconnect it in Settings → Integrations → Zapier." });
-  }
-
+  const { secret, auth } = resolved;
+  const serverUrl = secret.server_url;
+  const stillAuthorized = () => zapierMcpReadAuthorized(userClient, tenantId, user.id, secret.generation);
+  if (!await stillAuthorized()) return jsonResponse({ error: "connection_changed" }, 409);
   // 3. Discovery, reduced to the workspace's OWN approved names. The provider's
   //    catalogue and its descriptions are provider-written text and do not cross.
 
@@ -207,9 +127,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: false, error: "discovery_unavailable", actions: [], approved_count: 0 });
     }
     const projected = projectDiscovery(discovered, approved);
+    if (!await stillAuthorized()) return jsonResponse({ error: "connection_changed" }, 409);
     if (!await fileConnectionTest(true)) {
       return jsonResponse({ ok: false, error: "rail_unavailable", actions: [], approved_count: 0 }, 500);
     }
+    if (!await stillAuthorized()) return jsonResponse({ error: "connection_changed" }, 409);
     return jsonResponse({
       ok: true,
       // `actions` is kept as the key so the existing consumer keeps working, but it now
@@ -237,6 +159,13 @@ Deno.serve(async (req) => {
     capabilityPins: pins,
     tenantId,
     args: (body.arguments ?? {}) as Record<string, unknown>,
+    authorize: async () => {
+      const { data, error } = await userClient.rpc("zapier_mcp_action_authorized", {
+        _tenant: tenantId, _actor: user.id, _generation: secret.generation,
+        _capability: String(body.tool_name), _pin: pins[String(body.tool_name)] ?? "",
+      });
+      return !error && data === true;
+    },
   });
 
   // The detail is written where a model cannot read it. A failure to store evidence must
@@ -260,5 +189,8 @@ Deno.serve(async (req) => {
   const contactId = typeof body.contact_id === "string" && body.contact_id ? body.contact_id : null;
   await fileGovernedOutcome(admin, { tenantId, outcome, contactId, actorId: user.id });
 
+  // A completed effect stays recorded under its original workspace even when the
+  // caller switches away. Do not disclose that workspace's result in the new one.
+  if (!await stillAuthorized()) return jsonResponse({ error: "connection_changed" }, 409);
   return jsonResponse({ ok: outcome.status === "ok", ...outcome });
 });

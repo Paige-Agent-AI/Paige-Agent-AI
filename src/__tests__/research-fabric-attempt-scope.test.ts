@@ -44,7 +44,9 @@ function fixture(options: { primaryStatus?: number; budget?: () => Promise<numbe
   const budget = { traceAdmin: () => ({}), resolveCeiling: async () => 10, accruedSpendToday: options.budget ?? (async () => 0), BudgetExceeded, enforceBudget };
   const ports = { ...constants, ...failures, ...types, ...budget, Deno: { env: { get: (key: string) => key.endsWith('API_KEY') ? 'controlled-not-a-secret' : undefined } }, fetch: fetchPort, traceLLMCall };
   const claude = moduleAt('_shared/claude.ts', ports);
-  const openai = moduleAt('_shared/openai-responses.ts', { ...ports, envKey: () => 'controlled-not-a-secret', assertModelAllowed: () => {} });
+  // moduleAt strips imports: supply the REAL new canonical pricing dependency,
+  // preserving actual provider translation rather than stubbing its arithmetic.
+  const openai = moduleAt('_shared/openai-responses.ts', { ...ports, ...moduleAt('_shared/token-pricing.ts'), envKey: () => 'controlled-not-a-secret', assertModelAllowed: () => {} });
   const policy = moduleAt('_shared/paige-turn/route.ts', constants);
   const fabric = moduleAt('_shared/model-fabric.ts', { ...ports, ...claude, ...openai, ...policy });
   const legacy = vi.fn(async (_job?: unknown, _body?: unknown, _trace?: unknown) => ({ model: 'controlled-legacy', choices: [{ message: { content: strategyText } }] }));

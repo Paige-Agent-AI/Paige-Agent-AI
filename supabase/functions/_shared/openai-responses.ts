@@ -27,6 +27,7 @@ import { classifyProviderFailure, type ProviderFailureClass } from "./provider-f
 import { envKey } from "./env-key.ts";
 import { traceLLMCall, type TraceCtx } from "./llm-trace.ts";
 import { assertModelAllowed } from "./model-allowlist.ts";
+import { estimateOpenAIProviderUsageCost } from "./token-pricing.ts";
 import {
   OPENAI_EFFORT_BY_CLASS,
   OPENAI_MODEL_BY_CLASS,
@@ -79,6 +80,10 @@ export interface ChatShapeBody {
 
 export interface ResponsesCallOpts {
   model: string;
+  /** Internal provider option, derived only from trusted TraceCtx by the call seam. */
+  promptCacheKey?: string;
+  /** A present but invalid/unavailable trusted partition must never join a global cache. */
+  disablePromptCache?: boolean;
   effort?: "none" | "low" | "medium" | "high" | "xhigh";
   /** Injectable transport for tests; production uses global fetch. */
   fetchImpl?: typeof fetch;
@@ -199,7 +204,22 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
     include: ["reasoning.encrypted_content"],
     max_output_tokens: body.max_tokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
   };
-  if (instructions.length) req.instructions = instructions.join("\n\n");
+  if (!opts.disablePromptCache && opts.promptCacheKey && /^paige-chat-v1:[a-f0-9]{64}$/.test(opts.promptCacheKey)) {
+    // Keep the exact instruction order/priority, but expose an early stable boundary
+    // (tools + first persona block) before changing context. Implicit trailing
+    // breakpoints still preserve the existing tool-loop/history reuse.
+    req.prompt_cache_key = opts.promptCacheKey;
+    req.prompt_cache_options = { mode: "implicit", ttl: "30m" };
+    if (instructions.length) input.unshift({
+      role: "developer",
+      content: instructions.map((text, i) => ({
+        type: "input_text", text: i === 0 ? text : `\n\n${text}`,
+        ...(i === 0 ? { prompt_cache_breakpoint: { mode: "explicit" } } : {}),
+      })),
+    });
+  } else if (instructions.length) req.instructions = instructions.join("\n\n");
+  // Explicit-only with no breakpoints performs neither cache reads nor writes.
+  if (opts.disablePromptCache) req.prompt_cache_options = { mode: "explicit" };
   if (opts.effort) req.reasoning = { effort: opts.effort === "none" && SOL_ASTRA_NO_NONE(opts.model) ? "low" : opts.effort };
   if (body.tools?.length) {
     req.tools = body.tools.map(toolDef);
@@ -215,16 +235,47 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
   return req;
 }
 
+/** A partition is not authority: existing caller checks still guard every attempt.
+ * No raw identities, prompt text, timestamps or per-turn IDs enter the provider key.
+ * Missing/malformed scope keeps non-Chat callers on their existing adapter contract. */
+export async function chatPromptCacheKey(scope: TraceCtx["prompt_cache_scope"]): Promise<string | undefined> {
+  if (!scope) return undefined;
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuid.test(scope.actor_id) || [scope.tenant_id, scope.working_context_tenant_id]
+    .some((id) => id !== null && (typeof id !== "string" || !uuid.test(id)))) return undefined;
+  let digest: ArrayBuffer;
+  try {
+    digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify([
+      "paige-chat-v1", scope.actor_id.toLowerCase(), scope.tenant_id?.toLowerCase() ?? null,
+      scope.working_context_tenant_id?.toLowerCase() ?? null,
+    ])));
+  } catch { return undefined; } // original Fabric disables caching, never broadens the partition
+  return "paige-chat-v1:" + Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
+}
+
 // ── Responses result → chat shape ──────────────────────────────────────────────────────────────
 
-interface Usage { tokens_in: number | null; tokens_out: number | null; cached: number | null }
+interface Usage {
+  tokens_in: number | null; tokens_out: number | null; cached: number | null;
+  total_input: number | null; write: number | null; write30m: number | null; write12h: number | null;
+}
 function readUsage(u: any): Usage {
   const input = typeof u?.input_tokens === "number" ? u.input_tokens : null;
   const cached = typeof u?.input_tokens_details?.cached_tokens === "number" ? u.input_tokens_details.cached_tokens : null;
   const out = typeof u?.output_tokens === "number" ? u.output_tokens : null;
   // tokens_in is the UNCACHED remainder, matching the Anthropic seam's meter semantics; cached tokens
   // are reported separately so a cached prefix is never billed as fresh input.
-  return { tokens_in: input == null ? null : Math.max(0, input - (cached ?? 0)), tokens_out: out, cached };
+  const count = (n: unknown): number | null => typeof n === "number" && Number.isSafeInteger(n) && n >= 0 ? n : null;
+  const write = count(u?.input_tokens_details?.cache_write_tokens);
+  const detail = u?.input_tokens_details?.cache_write_tokens_details;
+  let write30m = count(detail?.ttl_30m_tokens), write12h = count(detail?.ttl_12h_tokens);
+  if (write === null || write30m === null || write12h === null || write30m + write12h !== write) {
+    write30m = null; write12h = null;
+  }
+  // Existing metered tokens_in remains input minus reads (including writes).
+  // Provider-only estimate uses the disjoint categories, never silently reprices bills.
+  return { tokens_in: input == null ? null : Math.max(0, input - (cached ?? 0)), tokens_out: out, cached,
+    total_input: count(input), write, write30m, write12h };
 }
 
 /** Map a Responses status to PAIGE's provider-neutral stop vocabulary. */
@@ -298,12 +349,23 @@ function emitTrace(trace: TraceCtx | undefined, row: {
     tokens_in: row.usage?.tokens_in ?? null,
     tokens_out: row.usage?.tokens_out ?? null,
     cache_read_input_tokens: row.usage?.cached ?? null,
+    cache_creation_input_tokens: row.usage?.write ?? null,
     latency_ms: Date.now() - row.started,
     input: row.input,
     output: row.output,
     error_class: row.error_class ?? null,
     error_message: row.error_message ?? null,
-    metadata: { caller_function: trace.agent_id, ...(row.stop_reason ? { stop_reason: row.stop_reason } : {}) },
+    metadata: {
+      caller_function: trace.agent_id, ...(row.stop_reason ? { stop_reason: row.stop_reason } : {}),
+      ...(row.usage ? {
+        provider_total_input_tokens: row.usage.total_input,
+        provider_cache_write_30m_tokens: row.usage.write30m,
+        provider_cache_write_12h_tokens: row.usage.write12h,
+        provider_cost_estimate_usd: estimateOpenAIProviderUsageCost(row.model, row.usage.total_input,
+          row.usage.tokens_out, row.usage.cached, row.usage.write30m, row.usage.write12h),
+        provider_cost_basis: "OpenAI STANDARD short-context <=272K list USD; cache-inclusive; 2026-11-13; not invoice/customer meter",
+      } : {}),
+    },
   });
 }
 

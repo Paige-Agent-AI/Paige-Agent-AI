@@ -4925,12 +4925,42 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
 // canonical `resolve_tool_autonomy_detail.ceiling_allows_auto`. D2: the funnel tools fell through to
 // "Unknown tool"; they are reachable, and a build that fails after an earlier write is PARTIAL.
 // Each check names the mutation it kills.
+// Studio-only boundary inputs shared with 39.20. Identity and capability scope
+// remain independent platform reads; these records do not emulate native writes.
+const studioNexusRow = { slug: "nexus", tenant_id: null, name: "NEXUS", enabled: true, config: { personality: {
+  intro: "I build creative assets for this project.", role_line: "Creative builder", warmth: 4, length: 3, formality: 1, energy: 5,
+  never_does: ["Invent proof or bypass the existing approval."], sounds_like: ["Clear, practical project guidance."],
+} } };
+const studioPlatformRows = (scopeRow) => (filters) => {
+  if (!filters.some((f) => f[0] === "is" && f[1] === "tenant_id" && f[2] === null)) return [];
+  if (filters.some((f) => f[0] === "eq" && f[1] === "slug" && f[2] === "nexus")) return [studioNexusRow];
+  return filters.some((f) => f[0] === "eq" && f[1] === "slug" && f[2] === "design-studio") ? [scopeRow] : [];
+};
+const studioNativeInputs = (sessionId) => {
+  const context = { target: { kind: "workspace" }, values: {} };
+  const source = { ok: true, tenant_id: CALLER_TENANT, session_id: sessionId, artifact_refs: [], project_context: context,
+    page_id: null, updated_at: null, conversion: null };
+  const blocks = [{ type: "hero", title: "Spring offer" }];
+  return { context, source, blocks,
+    generate: { name: "growth_page_generate", args: { brief: "A page for the spring offer" } },
+    save: { name: "growth_page_save", args: { title: "Spring offer", blocks } },
+    rpcs: {
+      studio_project_context: (args) => args?.p_expected_tenant === CALLER_TENANT && args?.p_session_id === sessionId
+        ? { data: { ok: true, context }, error: null } : { data: null, error: { message: "Studio fixture scope mismatch" } },
+      // Setup facts are not needed by these governance checks; missing stays missing.
+      get_solo_business_context: { data: null, error: null },
+      studio_save_page: { data: { ok: true, page: { id: "5e550000-0000-4000-8000-000000000090", tenant_id: CALLER_TENANT,
+        slug: "spring-offer", title: "Spring offer", status: "draft" }, version_id: "5e550000-0000-4000-8000-000000000091",
+        forms: [], changed: true, reconciled: false }, error: null },
+    },
+    functions: { "growth-page-draft": { data: { blocks, theme_json: null, seo_json: null, studio_source: source }, error: null } },
+  };
+};
 {
   const THREAD = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
   const SESSION = "5e550000-0000-4000-8000-000000000001";
   const studioTables = (extra = {}) => ({
     paige_chat_threads: () => [{ studio_session_id: SESSION, summary: null, last_image_content_id: null, last_image_anchor_at: null }],
-    paige_subagents: () => [{ name: "Design Studio", system_prompt: "You design pages for this business." }],
     studio_sessions: () => [{ id: SESSION, artifact_refs: [], title: "Spring launch" }],
     ...extra,
   });
@@ -4940,24 +4970,22 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   // V1: the build tools ask the workspace-scoped authority, and a Studio turn reads its role scope
   // from the platform design-studio row (server client). Both answered as production would.
   const WS = { studio_role_ok: { data: true, error: null } };
+  const nativeStudio = studioNativeInputs(SESSION);
   const STUDIO_TOOLS = ["ask_choices", "capability_status", "generate_image", "draft_marketing_content", "content_save", "growth_list",
     "growth_page_generate", "growth_page_save", "growth_page_publish", "growth_funnel_generate", "growth_funnel_build", "growth_funnel_publish",
     "growth_form_save", "growth_form_publish", "web_search", "web_fetch"];
-  // Answers only the PLATFORM row read (slug design-studio, tenant_id IS NULL) — so dropping either
-  // filter from the scope read fails the Studio checks instead of passing on a fixture that ignores them.
-  const platformRowOnly = (row) => (filters) => (
-    filters.some((f) => f[0] === "eq" && f[1] === "slug" && f[2] === "design-studio")
-    && filters.some((f) => f[0] === "is" && f[1] === "tenant_id" && f[2] === null)
-  ) ? [row] : [];
+  // Independent PLATFORM scope and NEXUS identity reads both require exact slug/null-tenant filters.
+  const platformRowOnly = studioPlatformRows;
   const SCOPE_ROW = { paige_subagents: platformRowOnly({ config: { capability_scope: { version: 1, mode: "allowlist", tools: STUDIO_TOOLS } } }) };
   const PAGE_ROW = { growth_page_upsert: { data: { id: "page-1", slug: "spring-offer", status: "draft", tenant_id: null }, error: null } };
-  const studioSave = async (ceilingAllowsAuto, { detailError = null } = {}) => {
+  const studioSave = async (ceilingAllowsAuto, { detailError = null, generate = true } = {}) => {
     const st = makeConfirmStore();
     return drive({
       stream: true, extraBody: { threadId: THREAD },
-      toolCall: { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } },
+      toolCall: generate ? [nativeStudio.generate, nativeStudio.save] : nativeStudio.save,
+      functionsExtra: nativeStudio.functions,
       rpcOverrides: {
-        ...AS_TENANT, ...WS, ...PAGE_ROW,
+        ...AS_TENANT, ...WS, ...PAGE_ROW, ...nativeStudio.rpcs,
         resolve_tool_autonomy: { data: "confirm", error: null },
         resolve_tool_autonomy_detail: detailError
           ? { data: null, error: detailError }
@@ -4973,7 +5001,7 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   // Kills: deleting `&& (await ceilingAllowsAuto(...))` from the Studio lift.
   const held = await studioSave(false);
   assert("32.1 rung 1: a Studio page save does not write — the ceiling's confirm stands",
-    called(held, "growth_page_upsert") === 0, JSON.stringify(held.rec.rpc.map((c) => c.name)));
+    called(held, "growth_page_upsert") === 0 && called(held, "studio_save_page") === 0, JSON.stringify(held.rec.rpc.map((c) => c.name)));
   assert("32.1b …it is offered for approval instead (a held proposal, not a silent drop)",
     /"needs_confirm":true/.test(wire(held)), wire(held).slice(0, 400));
   assert("32.1c …and the lift asked the ceiling fact, not only the mode",
@@ -4983,13 +5011,17 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   // Kills: removing the lift altogether (the #292 stall returns).
   const lifted = await studioSave(true);
   assert("32.2 rung 2+: a Studio page save runs without a card",
-    called(lifted, "growth_page_upsert") === 1 && !/"needs_confirm":true/.test(wire(lifted)),
-    JSON.stringify({ upserts: called(lifted, "growth_page_upsert") }));
+    called(lifted, "studio_save_page") === 1 && called(lifted, "growth_page_upsert") === 0 && !/"needs_confirm":true/.test(wire(lifted)),
+    JSON.stringify({ studioSaves: called(lifted, "studio_save_page"), rawUpserts: called(lifted, "growth_page_upsert") }));
 
   // ── 32.3 An unclear ceiling answer lifts nothing. Kills: treating an errored detail read as allow.
   const unclear = await studioSave(true, { detailError: { message: "function does not exist" } });
   assert("32.3 an errored ceiling read fails closed: no write",
-    called(unclear, "growth_page_upsert") === 0, JSON.stringify(unclear.rec.rpc.map((c) => c.name)));
+    called(unclear, "growth_page_upsert") === 0 && called(unclear, "studio_save_page") === 0, JSON.stringify(unclear.rec.rpc.map((c) => c.name)));
+  const ungenerated = await studioSave(true, { generate: false });
+  assert("32.3b a direct Studio save without original generation source refuses before either writer",
+    called(ungenerated, "studio_save_page") === 0 && called(ungenerated, "growth_page_upsert") === 0
+      && wire(ungenerated).includes("STUDIO_PAGE_SOURCE_REQUIRED"), wire(ungenerated).slice(0, 600));
 
   // ── 32.4 Main PAIGE is untouched: outside a Studio thread the same save at `confirm` is held, and
   // the ceiling fact is never consulted. Kills: making the lift (or the detail read) global.
@@ -5058,7 +5090,7 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     stream: true, extraBody: { threadId: THREAD },
     toolCall: { name: "growth_funnel_build", args: funnelArgs },
     rpcOverrides: {
-      ...AS_TENANT, ...WS, ...PAGE_ROW,
+      ...AS_TENANT, ...WS, ...PAGE_ROW, ...nativeStudio.rpcs,
       resolve_tool_autonomy: { data: "auto", error: null },
       growth_form_upsert: { data: null, error: null },
     },
@@ -5095,7 +5127,7 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   const AUTO_LANE = { resolve_tool_autonomy: { data: "auto", error: null } };
   const studioTurn = (toolCall, scope = SCOPE_ROW, extraRpc = {}, functionsExtra = {}) => drive({
     stream: true, extraBody: { threadId: THREAD }, toolCall, functionsExtra,
-    rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE, ...extraRpc },
+    rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE, ...nativeStudio.rpcs, ...extraRpc },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...scope },
     tablesExtra: studioTables(),
   });
@@ -6046,37 +6078,55 @@ console.log("\nC4a — an approval resumes the same objective on the server");
   // proposal. (b) If the Studio scope stops offering the tool before the approval arrives, it is not run
   // and the approval is left unspent — the capability fingerprint, not just the dispatch scope guard.
   const SESSION20 = "5e550000-0000-4000-8000-000000000020";
-  const STUDIO_TOOLS20 = ["ask_choices", "capability_status", "growth_page_save", "growth_list", "web_search"];
-  const studioScope = (tools) => ({ paige_subagents: (filters) => (
-    filters.some((f) => f[0] === "eq" && f[1] === "slug" && f[2] === "design-studio") && filters.some((f) => f[0] === "is" && f[1] === "tenant_id" && f[2] === null)
-  ) ? [{ config: { capability_scope: { version: 1, mode: "allowlist", tools } } }] : [] });
+  const native20 = studioNativeInputs(SESSION20);
+  const STUDIO_TOOLS20 = ["ask_choices", "capability_status", "growth_page_generate", "growth_page_save", "growth_list", "web_search"];
+  const studioScope = (tools) => ({ paige_subagents: studioPlatformRows({ config: { capability_scope: { version: 1, mode: "allowlist", tools } } }) });
   const studioThread = { paige_chat_threads: () => [{ studio_session_id: SESSION20, summary: null, last_image_content_id: null, last_image_anchor_at: null }],
     studio_sessions: () => [{ id: SESSION20, artifact_refs: [], title: "Spring launch" }] };
   const studioDrive = (st, tools, body, toolCall) => drive({
-    stream: true, extraBody: { threadId: THREAD, ...body }, toolCall,
-    rpcOverrides: { get_actor_access: { data: { tier: "tenant" }, error: null }, studio_role_ok: { data: true, error: null }, ...PAGE,
+    stream: true, extraBody: { threadId: THREAD, ...body }, toolCall, functionsExtra: native20.functions,
+    rpcOverrides: { get_actor_access: { data: { tier: "tenant" }, error: null }, studio_role_ok: { data: true, error: null }, ...PAGE, ...native20.rpcs,
       resolve_tool_autonomy: { data: "confirm", error: null }, resolve_tool_autonomy_detail: { data: { mode: "confirm", ceiling_allows_auto: false }, error: null } },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...studioScope(tools) },
     tablesExtra: { ...studioThread, paige_pending_confirmations: st.table },
-    onInsert: mirrorConfirms(st),
+    // Real confirmation INSERTs receive a database UUID. Keep every original
+    // argument/fingerprint/nonce/source field and the original store semantics.
+    onInsert: (table, row) => mirrorConfirms(st)(table, table === "paige_pending_confirmations" ? { id: crypto.randomUUID(), ...row } : row),
   });
   const st20 = makeConfirmStore();
-  const held20 = await studioDrive(st20, STUDIO_TOOLS20, {}, { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } });
+  const held20 = await studioDrive(st20, STUDIO_TOOLS20, {}, [native20.generate, native20.save]);
   const token20 = framesOf(held20.bodyText).find((f) => f.paige_confirm)?.paige_confirm?.fingerprint ?? null;
   const studioRan = await studioDrive(st20, STUDIO_TOOLS20, { approvedConfirmations: [token20] });
   assert("39.20 Studio: an approved held save is carried forward once from its stored proposal",
-    !!token20 && studioRan.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 1 && st20.rows[0].consumed === true
+    !!token20 && studioRan.rec.rpc.filter((c) => c.name === "studio_save_page").length === 1
+      && studioRan.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 0 && st20.rows[0].consumed === true
       && resumedFrames(studioRan.bodyText).length === 1,
-    JSON.stringify({ token20, upserts: studioRan.rec.rpc.filter((c) => c.name === "growth_page_upsert").length }));
+    JSON.stringify({ token20, studioSaves: studioRan.rec.rpc.filter((c) => c.name === "studio_save_page").length }));
+  const studioAgain = await studioDrive(st20, STUDIO_TOOLS20, { approvedConfirmations: [token20] });
+  assert("39.20a the same Studio approval cannot dispatch another native or raw page save",
+    studioAgain.rec.rpc.filter((c) => ["studio_save_page", "growth_page_upsert"].includes(c.name)).length === 0
+      && resumedFrames(studioAgain.bodyText).length === 0 && outcomeOf(studioAgain.bodyText)?.actions?.[0]?.outcome === "unconfirmed",
+    JSON.stringify(outcomeOf(studioAgain.bodyText)));
   const st20b = makeConfirmStore();
-  const held20b = await studioDrive(st20b, STUDIO_TOOLS20, {}, { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } });
+  const held20b = await studioDrive(st20b, STUDIO_TOOLS20, {}, [native20.generate, native20.save]);
   const token20b = framesOf(held20b.bodyText).find((f) => f.paige_confirm)?.paige_confirm?.fingerprint ?? null;
   const narrowed = await studioDrive(st20b, STUDIO_TOOLS20.filter((t) => t !== "growth_page_save"), { approvedConfirmations: [token20b] });
   const outcome20b = outcomeOf(narrowed.bodyText);
   assert("39.20b Studio scope narrowed after the card: not run, approval unspent, the card says it no longer matches",
-    !!token20b && narrowed.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 0 && !st20b.rows[0].consumed
+    !!token20b && narrowed.rec.rpc.filter((c) => ["studio_save_page", "growth_page_upsert"].includes(c.name)).length === 0 && !st20b.rows[0].consumed
       && resumedFrames(narrowed.bodyText).length === 0 && /no longer matches anything Paige can run/.test(outcome20b?.note ?? ""),
-    JSON.stringify({ outcome20b, consumed: st20b.rows[0].consumed }));
+    JSON.stringify({ outcome20b, consumed: st20b.rows[0]?.consumed }));
+  const legacy20 = makeConfirmStore();
+  const legacyHeld20 = await studioDrive(legacy20, STUDIO_TOOLS20, {}, [native20.generate, native20.save]);
+  const legacyToken20 = framesOf(legacyHeld20.bodyText).find((f) => f.paige_confirm)?.paige_confirm?.fingerprint ?? null;
+  // A pre-source proposal has the same original args/token, but NULL private
+  // metadata. It must never inherit a different generation's expected state.
+  if (legacy20.rows[0]) legacy20.rows[0].studio_page_save_source = null;
+  const legacyRefused20 = await studioDrive(legacy20, STUDIO_TOOLS20, { approvedConfirmations: [legacyToken20] });
+  assert("39.20c a NULL legacy Studio source refuses before either writer instead of blessing the stored args",
+    !!legacyToken20 && legacyRefused20.rec.rpc.filter((c) => ["studio_save_page", "growth_page_upsert"].includes(c.name)).length === 0
+      && toldModel(legacyRefused20).includes("STUDIO_PAGE_SOURCE_REQUIRED"),
+    JSON.stringify({ token: legacyToken20, nativeSaves: legacyRefused20.rec.rpc.filter((c) => c.name === "studio_save_page").length }));
 
   // ── 39.21 A DOOR TOOL'S ROW is never carried forward here, even one that (unlike real door rows)
   // carries a thread. Kills: letting door tools through `isResumableTool` (MV15) — on real rows the

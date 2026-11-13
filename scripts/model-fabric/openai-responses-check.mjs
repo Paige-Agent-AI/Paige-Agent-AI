@@ -716,6 +716,51 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
     ok(next.input[0].content[3].text.includes('revision B') && !next.input[0].content[3].prompt_cache_breakpoint,
       'KP3 current source is still delivered after stable boundary, never frozen or promoted to authority');
   }
+  const signatureDrive = async (extra = {}) => {
+    const from = traceCount();
+    const tx = transport(() => json({model:models.OPENAI_OPERATIONAL,status:'completed',
+      output:[{type:'message',role:'assistant',content:[{type:'output_text',text:'Read only.'}]}],
+      usage:{input_tokens:2000,output_tokens:3,input_tokens_details:{cached_tokens:0}}}));
+    const messages = [extra.persona??'Synthetic private persona.',PAIGE_VOICE_BLOCK,PAIGE_PERSONA_CORE,extra.current??'Current source A.']
+      .map(content=>({role:'system',content}));
+    await ad.responsesCompletion({messages:[...messages,{role:'user',content:extra.ask??'Read only.'}],tools:extra.tools??[TOOL]},
+      {model:extra.model??models.OPENAI_OPERATIONAL,effort:extra.effort??'medium',promptCacheKey:extra.key??key,fetchImpl:tx},
+      {...TRACE,content_policy:'metadata_only',prompt_cache_scope:scope});
+    const [row] = await tracesSince(from);
+    return {signature:row.metadata?.provider_cache_signature,row,wire:tx.calls[0].body,calls:tx.calls.length};
+  };
+  const diagnostic = await signatureDrive(), laterHistory = await signatureDrive({ask:'Different later user question.'});
+  const signatureShape = /^v1(?:\|[a-f0-9]{8}(?:-[a-f0-9]{8}){7}){4}$/;
+  ok(signatureShape.test(diagnostic.signature??''), 'KD1 actual original trace carries only fixed-format opaque cache comparison components');
+  ok(!!diagnostic.signature && diagnostic.signature===laterHistory.signature,
+    'KD2 later user history changes neither actual early prefix nor diagnostic signature');
+  ok(!JSON.stringify(diagnostic.row).includes('Synthetic private persona.') && !JSON.stringify(diagnostic.row).includes(key)
+    && diagnostic.row.input_excerpt==null && diagnostic.row.output_excerpt==null,
+    'KD3 metadata-only trace never gains prompt text, raw partition or output');
+  const changedModel = await signatureDrive({model:models.OPENAI_CHEAP});
+  const changedTool = await signatureDrive({tools:[{...TOOL,function:{...TOOL.function,name:'other_lookup'}}]});
+  const changedScope = await signatureDrive({key:await ad.chatPromptCacheKey({...scope,actor_id:'00000000-0000-4000-8000-000000000012'})});
+  const parts = value => (value??'').split('|');
+  ok(!!diagnostic.signature && parts(changedModel.signature)[2]!==parts(diagnostic.signature)[2]
+    && parts(changedTool.signature)[3]!==parts(diagnostic.signature)[3],
+    'KD4 actual model/settings and tool changes identify their own cache-sensitive component');
+  ok(!!diagnostic.signature && parts(changedScope.signature).slice(1).every((p,i)=>p!==parts(diagnostic.signature)[i+1]),
+    'KD5 every diagnostic component is partitioned by the server actor/workspace key');
+  const disabledSignature = await signatureDrive({key:'invalid'});
+  ok(disabledSignature.signature===undefined, 'KD6 invalid partition emits no diagnostic and retains cache-off transport');
+  const changedEarly = await signatureDrive({persona:'Changed permitted private persona.'});
+  const changedLate = await signatureDrive({current:'Current source B.'});
+  ok(!!diagnostic.signature && parts(changedEarly.signature)[4]!==parts(diagnostic.signature)[4]
+    && changedLate.signature===diagnostic.signature,
+    'KD7 real early instruction mutation identifies prefix mismatch while later current source stays fresh');
+  const oldDigest = crypto.subtle.digest;
+  let hashFailure;
+  try {
+    crypto.subtle.digest = async () => {throw new Error('Synthetic diagnostic hash unavailable');};
+    hashFailure = await signatureDrive();
+  } finally {crypto.subtle.digest = oldDigest;}
+  ok(hashFailure?.signature===undefined && hashFailure?.row.status==='success' && hashFailure?.calls===1,
+    'KD8 diagnostic failure never blocks, retries or changes original successful request');
   const usage = { input_tokens: 12000, output_tokens: 500, input_tokens_details: { cached_tokens: 4000,
     cache_write_tokens: 7000, cache_write_tokens_details: { ttl_30m_tokens: 3000, ttl_12h_tokens: 4000 } } };
   const tx = transport(() => json({ status: 'completed', model: models.OPENAI_OPERATIONAL, usage, output: [] }));
@@ -748,6 +793,8 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
   ok(streamRow.status === 'success' && streamRow.cache_creation_input_tokens === 7000
     && streamRow.metadata.provider_cost_estimate_usd === 0.0349 && traceCount() === streamFrom + 1,
     'K15 streamed final authoritative usage carries same cache/cost observations exactly once');
+  ok(signatureShape.test(streamRow.metadata?.provider_cache_signature??''),
+    'KD9 real streaming finalizer writes one fixed-format diagnostic through the same original trace');
 }
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

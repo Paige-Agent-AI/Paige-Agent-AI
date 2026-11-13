@@ -6261,7 +6261,7 @@ try {
   // discarded the reply, so a consumed proposal with a misleading answer escaped its assertions.
   const DECLINE_INTENT = "93939393-9393-4393-8393-939393939393";
   const DECLINE_REPLY = "Understood — you've chosen Not now for that proposal.";
-  const declineVia = (store, db, card, { token = card.fingerprint, tableErrors = {}, streamScript = null, autonomy = "confirm", bodyExtra = {}, unresolved = [] } = {}) => {
+  const declineVia = (store, db, card, { token = card.fingerprint, tableErrors = {}, streamScript = null, autonomy = "confirm", bodyExtra = {}, unresolved = [], bindingReply } = {}) => {
     let executor = null; let terminal = false;
     const history = [
       { id: SUSPENDED, role: "assistant", content: "I can create this contact once you approve.", seq: 2,
@@ -6277,6 +6277,7 @@ try {
         paige_chat_turns: (filters) => filters.some(([op]) => op === "contains") ? structuredClone(unresolved) : structuredClone(history),
       },
       extraRpc: {
+        ...(bindingReply === undefined ? {} : { team_hub_card_binding: bindingReply }),
         resolve_tool_autonomy: { data: autonomy, error: null },
         paige_chat_interactive_protocol: { data: { version: 2, active: true }, error: null },
         paige_chat_interactive_begin_v2: { data: { status: "accepted", turn_id: "96969696-9696-4696-8696-969696969696" }, error: null },
@@ -6760,6 +6761,86 @@ try {
           && toldModel(failed).includes("confirmation_context_unavailable"),
         JSON.stringify({ status: failed.status, consumed: failedStore.rows[0].consumed, executions: failedDb.executions.length,
           committed: failedDb.committed.size, doorCalls: doorCalls(failed).length, cards: cardsOf(failed.bodyText), note: failedNote }));
+    }
+  }
+  {
+    // A withheld decline is still a human refusal, never an empty successful cancellation pass.
+    // Fault only this turn's native binding reply; keep the actual Root, CRM door and original
+    // healthy transport/defaults. A bound Hub token must never reach Chat's cancellation writer.
+    const bindingFaults = [
+      ["rpc error", () => ({ data: null, error: { code: "42501", message: "fixture projection unavailable" } })],
+      ["malformed reply", () => ({ data: { ok: true, bound: null }, error: null })],
+      ["scope refused", () => ({ data: { ok: false, reason: "scope_changed" }, error: null })],
+      ["private Hub binding", (args) => ({ data: { ok: true, bound: args.p_fingerprints }, error: null })],
+      ["rpc throw", () => { throw new Error("fixture projection transport failed"); }],
+    ];
+    for (const autonomy of ["confirm", "auto"]) {
+      for (const [fault, bindingReply] of bindingFaults) {
+        const st = makeConfirmStore(); const db = crmDb();
+        const card = await proposeVia(st, db, CONTACT);
+        const r = await declineVia(st, db, card, { autonomy, bindingReply,
+          streamScript: [CONTACT, CONTACT, DECLINE_REPLY] });
+        const terminal = r.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+        const bindingCall = r.rec.rpc.find((c) => c.name === "team_hub_card_binding");
+        const notes = replyRequests(r).map(declineNote);
+        assert(`40.4b18 ${autonomy} ${fault}: withheld Not now blocks every model round without claiming cancellation or touching its proposal`,
+          r.status === 200 && bindingCall?.client === "jwt" && bindingCall.args.p_expected_user_id === USER
+            && bindingCall.args.p_fingerprints.join() === card.fingerprint
+            && doorCalls(r).length === 0 && db.executions.length === 0 && db.committed.size === 0
+            && st.rows.length === 1 && !st.rows[0].consumed
+            && !r.rec.from.some((q) => q.table === "paige_pending_confirmations" && q.op !== "select")
+            && cardsOf(r.bodyText).length === 0 && resumedFrames(r.bodyText).length === 0
+            && !terminal?.paige_resume && !terminal?.turn_state?.resumed && (terminal?.paige_crm_result ?? []).length === 0
+            && notes.length >= 3 && notes.every((note) => /already chose Not now/.test(note)
+              && /could not be verified/i.test(note) && /do not claim cancellation completed/i.test(note))
+            && toldModel(r).includes("confirmation_context_unavailable"),
+          JSON.stringify({ status: r.status, consumed: st.rows[0]?.consumed, calls: doorCalls(r).length,
+            executions: db.executions.length, committed: db.committed.size, notes }));
+      }
+      for (const [fault, bindingReply] of bindingFaults.filter(([name]) => ["rpc error", "private Hub binding"].includes(name))) {
+        const partialStore = makeConfirmStore(); const partialDb = crmDb();
+        const withheld = await proposeVia(partialStore, partialDb, CONTACT);
+        const surviving = await proposeVia(partialStore, partialDb, { name: "plan_set_reminder",
+          args: { title: "A reminder declined in the same turn", remind_at: "2099-01-01T12:00:00Z", channel: "in_app" } });
+        const partial = await declineVia(partialStore, partialDb, withheld, { autonomy, bindingReply,
+          bodyExtra: { declinedConfirmations: [withheld.fingerprint, surviving.fingerprint] },
+          streamScript: [CONTACT, DECLINE_REPLY] });
+        const cancellations = partial.rec.from.filter((q) => q.table === "paige_pending_confirmations" && q.op === "update");
+        const partialNote = declineNote(replyRequests(partial)[0]);
+        assert(`40.4b21 ${autonomy} ${fault}: surviving valid decline is cancelled exactly once even though the other decline was withheld`,
+          surviving.fingerprint.includes(":") && partial.status === 200 && partialStore.rows.length === 2
+            && !partialStore.rows[0].consumed && partialStore.rows[1].consumed
+            && cancellations.length === 1 && cancellations[0].client === "service"
+            && cancellations[0].filters.some(([op, col, value]) => op === "eq" && col === "fingerprint" && value === partialStore.rows[1].fingerprint)
+            && cancellations[0].filters.some(([op, col, value]) => op === "eq" && col === "issued_in_request" && value === partialStore.rows[1].issued_in_request)
+            && cancellations[0].filters.some(([op, col, value]) => op === "is" && col === "consumed_at" && value === null)
+            && doorCalls(partial).length === 0 && partialDb.executions.length === 0 && partialDb.committed.size === 0
+            && cardsOf(partial.bodyText).length === 0 && resumedFrames(partial.bodyText).length === 0
+            && /already chose Not now/.test(partialNote) && /could not be verified/i.test(partialNote)
+            && toldModel(partial).includes("confirmation_context_unavailable"),
+          JSON.stringify({ status: partial.status, tokens: [withheld.fingerprint, surviving.fingerprint],
+            consumed: partialStore.rows.map((row) => row.consumed), cancellations, note: partialNote }));
+        const st = makeConfirmStore(); const db = crmDb();
+        const card = await proposeVia(st, db, CONTACT);
+        const approved = await proposeVia(st, db, { ...CONTACT, args: { patch: { first_name: "Another", last_name: "Person" } } });
+        const scopedApproval = `${approved.fingerprint}:${st.rows[1].issued_in_request}`;
+        const mixed = await declineVia(st, db, card, { autonomy, bindingReply,
+          bodyExtra: { approvedConfirmations: [scopedApproval] }, streamScript: [CONTACT, DECLINE_REPLY] });
+        assert(`40.4b19 ${autonomy} ${fault}: a retained scoped approval cannot resume or claim while the submitted decline was withheld`,
+          mixed.status === 200 && st.rows.length === 2 && st.rows.every((row) => !row.consumed)
+            && doorCalls(mixed).length === 0 && db.executions.length === 0 && db.committed.size === 0
+            && resumedFrames(mixed.bodyText).length === 0 && cardsOf(mixed.bodyText).length === 0
+            && toldModel(mixed).includes("confirmation_context_unavailable"),
+          JSON.stringify({ status: mixed.status, consumed: st.rows.map((row) => row.consumed), calls: doorCalls(mixed).length }));
+        const read = await declineVia(st, db, card, { autonomy, bindingReply,
+          streamScript: [{ name: "crm_list_tasks", args: {} }, DECLINE_REPLY] });
+        const note = declineNote(replyRequests(read)[0]);
+        assert(`40.4b20 ${autonomy} ${fault}: the same uncertain decline still permits an authorized read without fabricating a cancellation`,
+          read.status === 200 && read.rec.from.some((q) => q.table === "tasks" && q.op === "select")
+            && doorCalls(read).length === 0 && db.executions.length === 0 && db.committed.size === 0
+            && st.rows.every((row) => !row.consumed) && /already chose Not now/.test(note) && /could not be verified/i.test(note),
+          JSON.stringify({ status: read.status, read: read.rec.from.filter((q) => q.table === "tasks"), note }));
+      }
     }
   }
   {

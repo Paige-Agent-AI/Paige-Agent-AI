@@ -152,7 +152,7 @@ export function toExcerpt(value: unknown): { text: string | null; truncated: boo
 // `max_tokens` cut-off — which otherwise read exactly like a normal answer. Provider-enum strings only.
 const METADATA_ALLOWLIST = ["caller_function", "actor_role", "retry_of", "attempt", "capped", "low_confidence", "stop_reason", "stop_category",
   "provider_total_input_tokens", "provider_cache_write_30m_tokens", "provider_cache_write_12h_tokens",
-  "provider_cost_estimate_usd", "provider_cost_basis"] as const;
+  "provider_cost_estimate_usd", "provider_cost_basis", "provider_cache_signature"] as const;
 /** #1856 — flatten the fabric's route telemetry into metadata SCALARS. The allowlist's rule is
  *  "scalars only, never an object" (an object could smuggle a secret); every value here is a closed
  *  enum, a validated job identity, or a provider/model id — scrubbed and capped like the rest. */
@@ -175,6 +175,8 @@ function safeMetadata(meta: Record<string, unknown> | undefined): Record<string,
   for (const k of METADATA_ALLOWLIST) {
     const v = meta[k];
     if (v === undefined || v === null) continue;
+    if (k === "provider_cache_signature" && (typeof v !== "string"
+      || !/^v1(?:\|[a-f0-9]{8}(?:-[a-f0-9]{8}){7}){4}$/.test(v))) continue;
     // scalars only — an object/array could smuggle a secret past the allowlist
     if (typeof v === "string") out[k] = scrubSecrets(v).slice(0, 512);
     else if (typeof v === "number" || typeof v === "boolean") out[k] = v;

@@ -133,11 +133,21 @@ describe("the one choke point for Team Hub card tokens (plan D10)", () => {
   });
   it("sits before every consumer of the two sets (the resume, the doors, the generic gate, the outcome report)", () => {
     const approved = at("    const approvedConfirmations = new Set<string>(requestApproved);\n");
-    for (const consumer of ["const cancellationsRecorded = await cancelConfirmations(declinedConfirmations);",
+    for (const consumer of ["const cancellationPassRecorded = await cancelConfirmations(declinedConfirmations);",
+      "const cancellationsRecorded = cancellationPassRecorded && declinedConfirmations.length === submittedDeclineCount;",
       "let doorTokens = [...approvedConfirmations].map(parseDoorToken)",
       "if (approvalOutcomeSent || (approvedConfirmations.size === 0 && teamHubWithheldApprovals.size === 0)) return;"]) {
       assert.ok(approved < at(consumer), consumer);
     }
+  });
+  it("retains submitted refusal before filtering and verifies every decline after the real cancellation pass", () => {
+    assert.ok(at("    const submittedDeclineCount = requestDeclined.length;\n") < at(CHOKE));
+    const pass = at("    const cancellationPassRecorded = await cancelConfirmations(declinedConfirmations);\n");
+    const verified = at("    const cancellationsRecorded = cancellationPassRecorded && declinedConfirmations.length === submittedDeclineCount;\n");
+    assert.ok(pass < verified && verified < at("    const claimConfirmation = async ("));
+    assert.ok(verified < at("        if (!cancellationsRecorded || !approvedConfirmations.has(fp) || !(await revalidateProposalScope())) return null;\n"));
+    assert.ok(verified < at("    if (submittedDeclineCount > 0) {\n"));
+    assert.ok(verified < at("        if (submittedDeclineCount > 0 && (MUTATING_TOOLS.has(tc.function.name)\n"));
   });
 });
 

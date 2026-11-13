@@ -42,13 +42,13 @@ import { corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
 import { mcpListToolFingerprints, mcpProbe, type McpAuth, authFromSecret } from "../_shared/mcp-client.ts";
 import {
   buildAuthorizationUrl, createPkce, createState, discoverAuthorizationServer,
-  discoverProtectedResource, exchangeCode, OAuthError, registerClient, revokeToken,
+  discoverProtectedResource, exchangeCode, OAuthError, registerClient,
   statesMatch, type AuthorizationServer,
 } from "../_shared/mcp-oauth.ts";
 import { verifyApprovalPins } from "../_shared/mcp-outcome.ts";
 import { isZapierMcpAddress, ZAPIER_MCP_URL } from "../_shared/zapier-mcp-address.ts";
 import {
-  resolveZapierMcpConnection, revokeZapierMcpSecret, zapierMcpReadAuthorized,
+  resolveZapierMcpConnection, revokeZapierMcpSecret, savedZapierMcpGrantMatches, zapierMcpReadAuthorized,
   type McpRpcClient,
 } from "../_shared/zapier-mcp-auth.ts";
 
@@ -407,7 +407,7 @@ Deno.serve(async (req) => {
         requestedScopes: Array.isArray(pending.requested_scopes) ? pending.requested_scopes : undefined,
       });
 
-      const { error } = await admin.rpc("complete_tenant_zapier_mcp_oauth", {
+      const { data: completed, error } = await admin.rpc("complete_tenant_zapier_mcp_oauth", {
         _tenant: flowTenant,
         _state: returnedState,
         _access_token: tokens.accessToken,
@@ -416,16 +416,20 @@ Deno.serve(async (req) => {
         _scopes: tokens.scopes,
         _actor: user.id,
       });
+      let completedGeneration = typeof completed?.generation === "string" ? completed.generation : null;
       if (error) {
-        await revokeToken({ server, clientId: String(pending.client_id),
-          clientSecret: pending.client_secret ? String(pending.client_secret) : null,
-          token: tokens.refreshToken || tokens.accessToken,
-          tokenTypeHint: tokens.refreshToken ? "refresh_token" : "access_token" });
-        return jsonResponse({ error: "oauth_store_failed" }, 500);
+        // A lost response can follow a committed grant. Reconcile once, without
+        // exchanging the code again or revoking a possibly healthy saved connection.
+        const readback = await admin.rpc("get_tenant_mcp_secret", { _tenant_id: flowTenant, _provider: provider });
+        if (readback.error || !savedZapierMcpGrantMatches(readback.data, tokens, {
+          clientId: String(pending.client_id), issuer: server.issuer, resource: String(pending.resource),
+        })) return jsonResponse({ error: "oauth_store_unconfirmed" }, 409);
+        completedGeneration = readback.data.generation;
       }
+      if (!completedGeneration) return jsonResponse({ error: "oauth_store_unconfirmed" }, 409);
 
       // A granted token is still not a working connection until the probe says so.
-      return jsonResponse({ ok: true, ...(await probeAndRecord(admin, userClient, flowTenant, provider, user.id)) });
+      return jsonResponse({ ok: true, ...(await probeAndRecord(admin, userClient, flowTenant, provider, user.id, completedGeneration)) });
     } catch (e) {
       return jsonResponse({ error: "oauth_exchange_failed", code: e instanceof OAuthError ? e.code : "token_exchange_failed" }, 502);
     }
@@ -521,10 +525,12 @@ async function probeAndRecord(
   tenantId: string,
   provider: string,
   actorId: string,
+  expectedGeneration?: string,
 ): Promise<ProbeOutcome> {
   if (provider === "zapier") {
     const resolved = await resolveConnection(admin, userClient, tenantId, provider, actorId);
     if ("error" in resolved) return { status: "error", code: String(resolved.error.error ?? "connection_changed") };
+    if (expectedGeneration && resolved.generation !== expectedGeneration) return { status: "error", code: "connection_changed" };
     const result = await mcpProbe({ serverUrl: resolved.serverUrl, auth: resolved.auth });
     const { data, error } = await admin.rpc("record_tenant_zapier_mcp_probe", {
       _tenant: tenantId, _actor: actorId, _generation: resolved.generation,

@@ -37,6 +37,8 @@ function describeProviderRefusal(error: string): string {
 
 function describeFailure(code: string | undefined): string {
   switch (code) {
+    case "oauth_store_unconfirmed":
+      return "The connection’s final status could not be confirmed. Review the existing connection in Integrations before reconnecting.";
     case "oauth_state_invalid":
       return "That link has already been used or has expired. Start the connection again from Integrations.";
     case "oauth_bad_callback":

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { resolveZapierMcpConnection, zapierMcpReadAuthorized } from "../../supabase/functions/_shared/zapier-mcp-auth";
+import { resolveZapierMcpConnection, savedZapierMcpGrantMatches, zapierMcpReadAuthorized } from "../../supabase/functions/_shared/zapier-mcp-auth";
 
 const oauth = vi.hoisted(() => ({ discoverAuthorizationServer: vi.fn(), discoverProtectedResource: vi.fn(),
   refreshTokens: vi.fn(), revokeToken: vi.fn(), isExpired: vi.fn() }));
@@ -31,6 +31,17 @@ beforeEach(() => {
 });
 
 describe("original Zapier MCP resolver shared by checks and actions", () => {
+  it("confirms callback readback only for the exact persisted grant and provider client",()=>{
+    const saved={...old(),auth_token:"fresh-access",refresh_token:"fresh-refresh"};
+    const expected={clientId:"test-client",issuer:"https://issuer.example",resource:old().server_url};
+    expect(savedZapierMcpGrantMatches(saved,tokenSet(),expected)).toBe(true);
+    expect(savedZapierMcpGrantMatches({...saved,refresh_token:null},{...tokenSet(),refreshToken:null},expected)).toBe(true);
+    expect(savedZapierMcpGrantMatches(saved,{...tokenSet(),refreshToken:null},expected)).toBe(false);
+    for(const mismatch of [{auth_token:"other-access"},{refresh_token:"other-refresh"},{oauth_client_id:"other-client"},
+      {oauth_issuer:"https://other.example"},{server_url:"https://other.example/mcp"},{oauth_scopes:[]},{enabled:false},{generation:null}]){
+      expect(savedZapierMcpGrantMatches({...saved,...mismatch},tokenSet(),expected)).toBe(false);
+    }
+  });
   it("stores rotation before using the saved credential, with actor, generation, claim and scopes", async () => {
     const db = database();
     const result = await resolveZapierMcpConnection(db, "workspace-a", "actor-a");
@@ -77,11 +88,12 @@ describe("original Zapier MCP resolver shared by checks and actions", () => {
       .toEqual({ error: "reauthorization_required", status: 200 });
     expect(oauth.revokeToken).toHaveBeenCalledWith(expect.objectContaining({ token: "fresh-refresh" }));
   });
-  it("recovers a committed renewal after a lost save response using one native readback and no provider replay", async () => {
+  it.each([null,"fresh-refresh"])("recovers a committed renewal with refresh token %s after a lost save response without provider replay", async (refreshToken) => {
     const db = database({ finish_tenant_zapier_mcp_refresh: new Error("response lost after commit") });
+    oauth.refreshTokens.mockResolvedValue({...tokenSet(),refreshToken});
     const original = db.rpc.getMockImplementation()!;let reads = 0;
     db.rpc.mockImplementation(async (name, args) => name === "get_tenant_mcp_secret" && ++reads === 2
-      ? { data: { ...renewed(), auth_token: "fresh-access", refresh_token: "fresh-refresh",
+      ? { data: { ...renewed(), auth_token: "fresh-access", refresh_token: refreshToken??"old-refresh",
         refresh_claim:"claim-a",refresh_completed_at:"2026-11-13T00:00:00Z" }, error: null }
       : original(name, args));
     expect(await resolveZapierMcpConnection(db,"workspace-a","actor-a")).toMatchObject({auth:{token:"fresh-access"}});

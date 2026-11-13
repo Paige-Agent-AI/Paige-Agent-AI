@@ -21,6 +21,16 @@ function usable(value: unknown): ZapierMcpSecret | null {
     && typeof s.generation === "string" && !!s.generation ? s as ZapierMcpSecret : null;
 }
 
+/** Authoritative readback of exactly the returned grant, never a different connection. */
+export function savedZapierMcpGrantMatches(value: unknown, tokens: TokenSet,
+  expected: { clientId: string; issuer: string; resource: string; retainedRefresh?: string | null }): value is ZapierMcpSecret {
+  const saved = usable(value);
+  return !!saved && saved.auth_kind === "oauth" && saved.auth_token === tokens.accessToken
+    && (saved.refresh_token ?? null) === (tokens.refreshToken ?? expected.retainedRefresh ?? null)
+    && saved.oauth_client_id === expected.clientId && saved.oauth_issuer === expected.issuer
+    && saved.server_url === expected.resource && JSON.stringify(saved.oauth_scopes) === JSON.stringify(tokens.scopes);
+}
+
 export async function revokeZapierMcpSecret(secret: Record<string, unknown>): Promise<boolean> {
   try {
     if (typeof secret.oauth_issuer !== "string") return false;
@@ -95,12 +105,10 @@ export async function resolveZapierMcpConnection(
           // once through the original reader; never repeat the provider refresh.
           const readback = await admin.rpc("get_tenant_mcp_secret", { _tenant_id: tenantId, _provider: "zapier" });
           const candidate = readback.error ? null : usable(readback.data);
-          if (candidate && candidate.auth_kind === "oauth" && candidate.refresh_claim === claim.claim && candidate.refresh_completed_at
-            && candidate.auth_token === tokens.accessToken
-            && (!tokens.refreshToken || candidate.refresh_token === tokens.refreshToken)
-            && candidate.oauth_client_id === current.oauth_client_id
-            && candidate.oauth_issuer === current.oauth_issuer && candidate.server_url === current.server_url
-            && JSON.stringify(candidate.oauth_scopes) === JSON.stringify(tokens.scopes)) saved = candidate;
+          if (candidate && candidate.refresh_claim === claim.claim && candidate.refresh_completed_at
+            && savedZapierMcpGrantMatches(candidate, tokens, { clientId: String(current.oauth_client_id),
+              issuer: String(current.oauth_issuer), resource: current.server_url,
+              retainedRefresh: typeof current.refresh_token === "string" ? current.refresh_token : null })) saved = candidate;
         }
         if (!saved) throw new Error("renewal_not_stored");
         secret = saved;

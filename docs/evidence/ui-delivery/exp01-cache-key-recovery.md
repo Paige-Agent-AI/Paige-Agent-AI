@@ -1,5 +1,15 @@
 # UI delivery evidence: original Chat provider-request recovery
 
+**November13 additive boundary checkpoint:** PR3342 is released at6f688766 with
+independent review/all11 checks/source4PASS. Four real corrected answers are FINAL,
+zero tools/Work, but all4 cache reads are0. Earlier HTTP400 and one later classifier
+network failure remain history. Current69e37045 boundary refinement is candidate
+only: same original UI and exact instruction text/order; one explicit cache boundary
+moves after first3 available stable instruction blocks. Tests136PASS2FAIL before,
+138PASS after with real canonical neutral persona/voice/core and optional address.
+Character size is not token/hit proof. Corrected live cache benefit and reload remain
+UNVERIFIED; preceding failure/recovery evidence below remains dated evidence.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: Same read-only question through original Chat admission, Model Fabric, provider response, durable turn and reload; original ANT-50/188b9b2e retains actual failure.
 PAIGE_UI_DESIGN: PASS: Existing project skill and canonical standard consulted; transport-only correction preserves original controls, states, tokens and geometry.

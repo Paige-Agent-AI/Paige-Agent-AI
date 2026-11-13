@@ -128,6 +128,16 @@ async function driveWeekly(options={}) {
     paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},
     check_rate_limit:{data:true,error:null},
     current_user_tenant_id:()=>({data:state.tenant,error:null}),
+    // This fixture's legacy bare token names its original THREADED weekly
+    // proposal, never a Hub card. The real authenticated binding projection
+    // returns an empty bound subset; keep downstream legacy refusal intact.
+    team_hub_card_binding:a=>{
+      assert.equal(options.legacyToken,true,'Only this explicit legacy-token case uses the projection');
+      assert.equal(a.p_expected_user_id,actor);
+      assert.deepEqual(a.p_fingerprints,[fingerprint]);
+      assert.equal(state.proposals[0].thread_id,thread);
+      return{data:{ok:true,bound:[]},error:null};
+    },
     is_platform_owner:{data:false,error:null},get_actor_access:{data:{tier:'tenant'},error:null},
     get_team_authority_readiness:{data:[{fact_key:'viewer_permission',value:options.member?'member':'owner',status:'available',tenant_id:tenant}],error:null},
     weekly_commitment_owner:()=>({data:!options.member&&state.tenant===tenant,error:null}),
@@ -325,6 +335,12 @@ await check('Foreign native result cannot be represented as a verified saved dra
 });
 for(const mode of ['off','foreignProposal','member','legacyToken','expired'])await check('Original '+mode+' refusal never saves, substitutes or reproposes',async()=>{
   const r=await driveWeekly({[mode]:true,modelTools:[{name:'weekly_commitment_draft',args:intentArgs}]});
+  if(mode==='legacyToken'){
+    const binding=r.calls('team_hub_card_binding');
+    assert.equal(binding.length,1,'Exercise the original binding projection, not a missing RPC');
+    assert.equal(binding[0].client,'jwt','The service role must not supply this private fact');
+    assert.deepEqual(binding[0].args,{p_expected_user_id:actor,p_fingerprints:[r.token.split(':')[0]]});
+  }
   if(mode==='member')assert.ok(!r.offered.some(t=>t.name==='weekly_commitment_draft'));
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
   noFallback(r);

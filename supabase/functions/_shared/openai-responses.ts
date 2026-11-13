@@ -259,6 +259,30 @@ export async function chatPromptCacheKey(scope: TraceCtx["prompt_cache_scope"]):
 
 // ── Responses result → chat shape ──────────────────────────────────────────────────────────────
 
+/** Diagnose the actual wire prefix without retaining content, identities or the cache key.
+ * Components are partition, settings, tools, explicit prefix. Every digest is scoped to
+ * the original server partition; no cross-account content correlation or new store. */
+async function cacheRequestSignature(req: Record<string, unknown>): Promise<string | undefined> {
+  const partition = req.prompt_cache_key;
+  if (typeof partition !== "string" || !/^[a-f0-9]{64}$/.test(partition)) return undefined;
+  const first = (req.input as any[] | undefined)?.[0];
+  if (first?.role !== "developer" || !Array.isArray(first.content)) return undefined;
+  const end = first.content.findIndex((part: any) => part?.prompt_cache_breakpoint?.mode === "explicit");
+  if (end < 0) return undefined;
+  try {
+    const values = [null, { model: req.model, reasoning: req.reasoning, text: req.text,
+      tool_choice: req.tool_choice, parallel_tool_calls: req.parallel_tool_calls,
+      service_tier: req.service_tier, store: req.store }, req.tools ?? [], first.content.slice(0, end + 1)];
+    const digests = await Promise.all(values.map(async (value, index) => {
+      const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(
+        JSON.stringify(["paige-cache-diagnostic-v1", partition, index, value])));
+      // Delimited fixed-width digest, not a raw key or a scrubber exception.
+      return Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, "0")).join("").match(/.{8}/g)!.join("-");
+    }));
+    return ["v1", ...digests].join("|");
+  } catch { return undefined; } // observability failure never blocks or repeats a request
+}
+
 interface Usage {
   tokens_in: number | null; tokens_out: number | null; cached: number | null;
   total_input: number | null; write: number | null; write30m: number | null; write12h: number | null;
@@ -339,7 +363,7 @@ export function toChatCompletion(resp: any, requestedModel: string): Record<stri
 
 function emitTrace(trace: TraceCtx | undefined, row: {
   model: string; status: "success" | "error"; started: number; usage?: Usage; input?: unknown; output?: string;
-  error_class?: string | null; error_message?: string | null; stop_reason?: string;
+  error_class?: string | null; error_message?: string | null; stop_reason?: string; cache_signature?: string;
 }) {
   if (!trace) return;
   // Cost is priced once, in traceLLMCall (token-pricing.ts), so this path cannot drift from the meter.
@@ -361,6 +385,7 @@ function emitTrace(trace: TraceCtx | undefined, row: {
     error_message: row.error_message ?? null,
     metadata: {
       caller_function: trace.agent_id, ...(row.stop_reason ? { stop_reason: row.stop_reason } : {}),
+      ...(row.cache_signature ? { provider_cache_signature: row.cache_signature } : {}),
       ...(row.usage ? {
         provider_total_input_tokens: row.usage.total_input,
         provider_cache_write_30m_tokens: row.usage.write30m,
@@ -432,6 +457,7 @@ export async function responsesCompletion(body: ChatShapeBody, opts: ResponsesCa
   emitTrace(trace, {
     model: chat.model as string, status: "success", started, usage: readUsage(data?.usage), input: body.messages,
     output: msg.content, stop_reason: (chat.paige_stop as { stop_reason: string }).stop_reason,
+    cache_signature: trace ? await cacheRequestSignature(req) : undefined,
   });
   return chat;
 }
@@ -686,6 +712,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesStream
           status: errored || cancelled ? "error" : "success",
           started,
           usage: readUsage(finalResponse?.usage),
+          cache_signature: trace ? await cacheRequestSignature(req) : undefined,
           input: body.messages,
           output: outText,
           error_class: acquisitionFailed && failure ? "response_failed" : streamErrored || cancelled ? "stream_interrupted" : failure ? "response_failed" : truncated ? "stream_truncated" : null,

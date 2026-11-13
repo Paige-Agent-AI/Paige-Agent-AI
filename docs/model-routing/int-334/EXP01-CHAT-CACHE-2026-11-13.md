@@ -177,3 +177,31 @@ order, current context, key scope, implicit30m and authority. No Root assembly c
 Real canonical-prefix tests fail136PASS/2FAIL before this correction and138PASS after.
 Own NON-AUTHOR69e37045 independently138PASS and verifies source/digest before renewal.
 Fresh exact-head CI/release/readback and actual cache-read evidence remain owed.
+
+## Stable-prefix release observed; diagnose actual wire mismatch
+
+PR3345 normally merged4141b273/tree687fb866 after exact ddb5f334 checks and distinct
+NON-AUTHOR6862531892/6863064133. Database first35min timeout retained; same-head
+failed-job-only retry passed. WebREADY/both origins4141-mwfetx2e and original
+Edge43498773404 certificate14072847773 independently opened:4/4PASS, Chat673/JWTtrue.
+Three correct read-only answers routed Sol/Luna/Sol; all exposed the same one
+presentation tool. Both Sol traces have the same current tenant/workingcontext.
+Cache reads remained0, writes18382/18505/18801; provider STANDARD list estimates
+USD0.046581/0.00233943/0.0476285 and latency2144/1446/1842ms are observations,
+not savings or a matched speed comparison. No more uncontrolled model probes.
+Full reload/leave/history reopen preserved exact18turns and7trace IDs, zero Work.
+
+The [current primary guide](https://developers.openai.com/api/docs/guides/prompt-caching)
+places tools before developer instructions in the rendered prefix. Model, tools,
+settings and exact content must match; source/character-size inspection alone
+does not establish actual matching or physical availability. The precise remaining
+cause is UNKNOWN. Add one closed opaque scalar to the ORIGINAL trace: four
+SHA256 fingerprints for partition/settings/tools/explicit prefix, each scoped by
+the original server actor/workspace partition. No raw prompt/identity/key/response
+ID, new store, runtime read, timer, model/cache behavior or customer-meter change.
+Hash only after the provider response; failure omits diagnostics without retry.
+Real missing diagnostic tests140PASS4FAIL; candidate147adapter/24trace/212Fabric/
+30roundPASS. NON-AUTHOR source5ce9c2ae independently147+24PASS/CLEAR. Only two
+necessary original dependency pins are renewed after that immutable review.
+Exact final review/CI/release/readback and useful cache evidence remain owed;
+signature equality is a comparison, NOT a cache hit or full-prompt equality.

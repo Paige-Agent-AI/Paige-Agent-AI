@@ -35,7 +35,30 @@
   overflow: hidden;
 }
 .vs-studio *:focus-visible { outline: 2px solid #9C86FF; outline-offset: 2px; }
+.vs-studio[hidden] { display: none; }
+.vs-restore { position: fixed; right: 24px; bottom: 24px; z-index: 79; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 10px 16px; border: 1px solid var(--pg-agent-nexus-fill, #c46dbd); border-radius: 12px; background: #110E24; color: #EDEAF7; box-shadow: 0 8px 28px #0005; font: 600 13px/1.3 var(--font); cursor: pointer; }
+.vs-restore:focus-visible { outline: 2px solid #c46dbd; outline-offset: 3px; }
+@media (max-width: 600px) { .vs-restore { right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); } }
 .vs-studio button { font: inherit; color: inherit; }
+.vs-studio .vs-nexus-identity { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; }
+.vs-studio .vs-nexus-glyph { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 24px; height: 24px; color: var(--pg-agent-nexus-fill, #c46dbd); }
+.vs-studio .vs-nexus-glyph svg { width: 21px; height: 21px; stroke-width: 1.8; }
+.vs-studio .vs-nexus-title { display: grid; gap: 2px; font-size: 15px; font-weight: 650; line-height: 1.2; letter-spacing: -.02em; }
+.vs-studio .vs-nexus-name { font-size: 11px; font-weight: 600; letter-spacing: .09em; color: var(--pg-agent-nexus-fill, #c46dbd); }
+.vs-studio .vs-nexus-identity[data-compact] .vs-nexus-title { font-size: 12.5px; }
+.vs-studio .vs-msg-paige > .vs-nexus-glyph { width: 18px; height: 22px; }
+.vs-studio .vs-msg-paige > .vs-nexus-glyph svg { width: 17px; height: 17px; }
+.vs-studio .vs-project-context-editor { padding: 0 16px 12px; display: grid; gap: 8px; }
+.vs-studio .vs-publication-receipts { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--vs-line); padding: 12px 16px; font-size: 12px; color: var(--vs-dim); max-height: 180px; overflow: auto; }
+.vs-studio .vs-publication-receipts summary { cursor: pointer; min-height: 24px; color: var(--vs-text); }
+.vs-studio .vs-publication-receipts ol { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 12px; }
+.vs-studio .vs-publication-receipts li { display: grid; gap: 4px; }
+.vs-studio .vs-publication-receipts code { overflow-wrap: anywhere; font-size: 12px; }
+.vs-studio .vs-nexus-arrival { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 0; }
+.vs-studio .vs-nexus-arrival[data-arrival="new"] { animation: vs-nexus-arrive 240ms ease-out both; }
+.vs-studio .vs-nexus-arrival p { margin: 0; color: var(--vs-text); font-size: 13px; }
+@keyframes vs-nexus-arrive { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .vs-studio .vs-nexus-arrival { animation: none; } }
 /* The Solo shell resets headings to its own ink (.paige-solo h1–h4); inside the Studio they take the
    surface they sit on. The form sheet sets its own dark ink below. */
 .vs-studio.vs-studio :is(h1, h2, h3, h4) { color: inherit; }
@@ -86,6 +109,12 @@
 .vs-studio .vs-hero { position: relative; display: grid; place-items: center; padding: clamp(40px, 9vh, 96px) 28px 40px; overflow: hidden;
   background: radial-gradient(110% 80% at 50% 0%, #1B1740 0%, #0E0B23 50%, var(--vs-ink) 100%); }
 .vs-studio .vs-hero-inner { position: relative; width: min(760px, 100%); display: grid; gap: 18px; justify-items: center; }
+.vs-studio .vs-template-choice { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px; text-align: left; border: 1px solid var(--vs-line); border-radius: 12px; background: var(--vs-panel); cursor: pointer; }
+.vs-studio .vs-template-choice[aria-pressed="true"] { border-color: var(--pg-agent-nexus-fill, #c46dbd); }
+.vs-studio .vs-template-choice > span:first-of-type { display: grid; gap: 5px; flex: 1; min-width: 0; }
+.vs-studio .vs-template-choice b { font-size: 14px; font-weight: 600; }
+.vs-studio .vs-template-choice small { color: var(--vs-dim); font-size: 12px; line-height: 1.5; }
+.vs-studio .vs-template-choice > span:last-child { color: var(--vs-dim); font-size: 12px; }
 .vs-studio .vs-hero h1 { margin: 0; font-size: clamp(26px, 3.2vw, 38px); letter-spacing: -.04em; color: #fff; text-align: center; }
 .vs-studio .vs-composer { width: 100%; border: 1px solid var(--vs-line); border-radius: 18px; background: rgba(255, 255, 255, .06); padding: 16px 16px 12px; }
 .vs-studio .vs-composer textarea { width: 100%; min-height: 84px; resize: none; border: 0; outline: none; background: transparent; color: var(--vs-text); font: 15px/1.55 var(--font); }
@@ -316,7 +345,7 @@
 }
 
 /* ── Right-hand panel (form settings now; the question inspector joins it next) ── */
-.vs-studio .vs-stage-wrap { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; min-height: 0; min-width: 0; }
+.vs-studio .vs-stage-wrap { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; min-width: 0; }
 .vs-studio .vs-inspector { width: 320px; margin: 14px 14px 14px 0; align-self: start; max-height: calc(100% - 28px); overflow: auto; border: 1px solid var(--vs-line); border-radius: 14px; background: var(--vs-inspector); display: grid; }
 .vs-studio .vs-inspector header { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 10px 16px; border-bottom: 1px solid var(--vs-line-soft); font-size: 13.4px; }
 .vs-studio .vs-inspector-body { padding: 14px 16px 16px; display: grid; gap: 14px; }

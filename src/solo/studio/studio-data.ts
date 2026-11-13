@@ -6,6 +6,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
+import { STUDIO_SESSION_ID } from "./studio-reference";
+import type { StudioBusinessContext, StudioContextTarget } from "./business-context";
 
 // Untyped rpc: several of these functions post-date the generated types.
 type Rpc = (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string; code?: string } | null }>;
@@ -45,6 +47,84 @@ export class Said extends Error {}
  *  address, or no readable reply). The server may already have changed the piece's state, so the
  *  caller re-reads it. */
 export class PublishUnverified extends Said {}
+export class ProjectStartUnknown extends Said {}
+
+/** Authored input on the original project, never a source/authority assertion. */
+export type StudioProjectContext = { target: StudioContextTarget; values: StudioBusinessContext["projectValues"]; template_id?: "nexus-editorial-landing-v1" };
+export type StudioStartedProject = { sessionId: string; threadId: string; created: boolean };
+const objectOf = (v: unknown): Record<string, unknown> | null => v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;
+function startedProject(value: unknown, lookup = false): StudioStartedProject | null {
+  const row = objectOf(value);
+  if (!row || row.ok !== true || row.state !== "ready" || typeof row.session_id !== "string" || !STUDIO_SESSION_ID.test(row.session_id)
+    || typeof row.thread_id !== "string" || !STUDIO_SESSION_ID.test(row.thread_id) || (!lookup && typeof row.created !== "boolean")) return null;
+  return { sessionId: row.session_id, threadId: row.thread_id, created: !lookup && row.created === true };
+}
+
+/** Exactly one explicit request. The caller retains its key when the answer is
+ * unknown and uses the read-only lookup; this function never retries a write. */
+export async function startStudioProject(input: { tenantId: string; requestId: string; brief: string; context: StudioProjectContext }): Promise<StudioStartedProject> {
+  let response: Awaited<ReturnType<Rpc>>;
+  try { response = await rpc("studio_start_project", { p_expected_tenant: input.tenantId, p_request_id: input.requestId, p_brief: input.brief, p_project_context: input.context }); }
+  catch { throw new ProjectStartUnknown("The earlier start could not be verified. Check that same start before trying again."); }
+  const { data, error } = response;
+  if (error) throw new ProjectStartUnknown("The earlier start could not be verified. Check that same start before trying again.");
+  const result = startedProject(data);
+  if (result) return result;
+  if (objectOf(data)?.ok === false && objectOf(data)?.code !== "unknown") throw new Said("This project could not be started in the current workspace. Your brief is still here.");
+  throw new ProjectStartUnknown("The earlier start could not be verified. Check that same start before trying again.");
+}
+
+export async function lookupStudioProjectStart(tenantId: string, requestId: string): Promise<StudioStartedProject | null> {
+  const { data, error } = await rpc("studio_lookup_project_start", { p_expected_tenant: tenantId, p_request_id: requestId });
+  if (error) throw new ProjectStartUnknown("The earlier start is still unverified. No new project was started.");
+  const result = startedProject(data, true);
+  if (result) return result;
+  if (objectOf(data)?.code === "unknown") return null;
+  throw new Said("That earlier start is unavailable in the current workspace.");
+}
+
+/** Reads original current Setup and public-brand sources. Only the shared
+ * allowlist projector may forward facts to the UI/model; never pass these rows. */
+export async function readStudioBusinessSources(tenantId: string, tenantSlug: string): Promise<{ readStatus: "available" | "unavailable"; context: unknown; publicBrand: unknown }> {
+  const [setup, brand] = await Promise.allSettled([
+    rpc("get_solo_business_context"),
+    tenantSlug ? rpc("peek_tenant_portal_brand", { _slug: tenantSlug }) : Promise.resolve({ data: null, error: null }),
+  ]);
+  const setupRow = setup.status === "fulfilled" && !setup.value.error ? objectOf(Array.isArray(setup.value.data) ? setup.value.data[0] : setup.value.data) : null;
+  const brandRow = brand.status === "fulfilled" && !brand.value.error ? objectOf(Array.isArray(brand.value.data) ? brand.value.data[0] : brand.value.data) : null;
+  return { readStatus: setupRow?.tenantId === tenantId ? "available" : "unavailable", context: setupRow,
+    publicBrand: brandRow ? { tenantId, target: { kind: "workspace" }, readStatus: "available", values: brandRow, observedAt: new Date().toISOString() } : undefined };
+}
+
+export async function loadStudioProjectContext(tenantId: string, sessionId: string): Promise<unknown> {
+  const { data, error } = await rpc("studio_project_context", { p_expected_tenant: tenantId, p_session_id: sessionId });
+  if (error || objectOf(data)?.ok !== true) throw new Said("This project's saved context is unavailable.");
+  return objectOf(data)?.context;
+}
+
+export async function saveStudioProjectContext(tenantId: string, sessionId: string, context: StudioProjectContext, expectedContext: StudioProjectContext): Promise<unknown> {
+  const { data, error } = await rpc("studio_set_project_context", { p_expected_tenant: tenantId, p_session_id: sessionId, p_project_context: context, p_expected_context: expectedContext });
+  if (error || objectOf(data)?.ok !== true) throw new Said("The context change could not be verified. Check the saved project before retrying.");
+  return objectOf(data)?.context;
+}
+
+export async function readChatStudioReference(expectedTenant: string, sourceTurnId: string): Promise<TeamHubStudioReference> {
+  try {
+    const { data, error } = await rpc("chat_studio_reference", { p_expected_tenant: expectedTenant, p_source_turn_id: sourceTurnId });
+    return error ? { ok: false, code: "unavailable" } : parseTeamHubStudioReference(data);
+  } catch { return { ok: false, code: "unavailable" }; }
+}
+
+export async function startChatStudio(expectedTenant: string, sourceTurnId: string, context: StudioProjectContext): Promise<StudioStartedProject> {
+  let response: Awaited<ReturnType<Rpc>>;
+  try { response = await rpc("chat_studio_start", { p_expected_tenant: expectedTenant, p_source_turn_id: sourceTurnId, p_project_context: context }); }
+  catch { throw new ProjectStartUnknown("The original project start could not be verified. Check this same handoff."); }
+  if (response.error) throw new ProjectStartUnknown("The original project start could not be verified. Check this same handoff.");
+  const result = startedProject(response.data);
+  if (result) return result;
+  if (objectOf(response.data)?.ok === false && objectOf(response.data)?.code !== "unknown") throw new Said("This Studio handoff is unavailable in the current workspace.");
+  throw new ProjectStartUnknown("The original project start could not be verified. Check this same handoff.");
+}
 
 /** A refusal the owner can read: our own sentence, or the server's without its machine code.
  *  Anything else (a dropped connection, a raw database message) becomes the fallback. */
@@ -283,6 +363,7 @@ export function formFromRow(r: Record<string, unknown>): StudioForm {
 }
 
 export interface StudioPage {
+  updatedAt?: string;
   id: string;
   title: string;
   slug: string;
@@ -302,12 +383,71 @@ export interface StudioPage {
 export async function loadPage(id: string): Promise<StudioPage> {
   const { data, error } = await supabase
     .from("growth_pages")
-    .select("id, title, slug, status, blocks_json, draft_blocks_json, theme_json, draft_theme_json, seo_json, draft_seo_json, published_at")
+    .select("id, title, slug, status, blocks_json, draft_blocks_json, theme_json, draft_theme_json, seo_json, draft_seo_json, published_at, updated_at")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
   if (!data) throw new Said("That page isn't in this workspace.");
   return pageFromRow(data as Record<string, unknown>);
+}
+
+export type StudioConversionResources = {
+  forms: Array<{ id: string; title: string }>;
+  bookingLinks: Array<{ slug: string; title: string }>;
+  formsStatus: "ready" | "unavailable";
+  bookingLinksStatus: "ready" | "unavailable";
+};
+
+export type { StudioPublicationReceipt } from "./publication-receipts";
+import { parseStudioPublicationReceipts, type StudioPublicationReceipt } from "./publication-receipts";
+/** A small projection of the ORIGINAL Rail receipts. This neither executes nor
+ * records an act, and never reads raw receipt detail or another domain's data. */
+export async function loadStudioPublicationReceipts(tenantId: string, sessionId: string, pageId: string): Promise<StudioPublicationReceipt[]> {
+  let response: Awaited<ReturnType<Rpc>> | null;
+  try { response = await rpc("studio_publication_receipts", { p_expected_tenant: tenantId, p_session_id: sessionId, p_page_id: pageId }); }
+  catch { response = null; }
+  const receipts = parseStudioPublicationReceipts(response?.data);
+  if (!response || response.error || !receipts) throw new Said("Publication receipts are unavailable right now.");
+  return receipts;
+}
+
+/** Minimal original resource projections. Legacy calendar rows contain private
+ * provider fields; never broaden either select to '*'. Native save revalidates
+ * the actual public resolver winner and tenant ownership. */
+export async function loadStudioConversionResources(tenantId: string): Promise<StudioConversionResources> {
+  const [formsRead, calendarsRead, legacyRead] = await Promise.allSettled([
+    supabase.from("growth_forms").select("id,name").eq("tenant_id", tenantId).neq("status", "archived").order("name"),
+    supabase.from("calendars").select("id,slug,title").eq("tenant_id", tenantId).eq("enabled", true).order("title"),
+    supabase.from("staff_calendar_settings").select("booking_page_slug,booking_page_title").eq("tenant_id", tenantId).eq("booking_page_enabled", true),
+  ]);
+  const forms = formsRead.status === "fulfilled" && !formsRead.value.error ? formsRead.value.data ?? [] : null;
+  const calendars = calendarsRead.status === "fulfilled" && !calendarsRead.value.error ? calendarsRead.value.data ?? [] : null;
+  const legacy = legacyRead.status === "fulfilled" && !legacyRead.value.error ? legacyRead.value.data ?? [] : null;
+  let hosted = new Set<string>();
+  let hostReadFailed = false;
+  if (calendars?.length) {
+    try {
+      const r = await supabase.from("calendar_hosts").select("calendar_id").in("calendar_id", calendars.map(c => c.id));
+      if (r.error) hostReadFailed = true;
+      else hosted = new Set((r.data ?? []).map(h => h.calendar_id));
+    } catch { hostReadFailed = true; }
+  }
+  const bookingLinks = new Map<string, { slug: string; title: string }>();
+  for (const row of legacy ?? []) if (typeof row.booking_page_slug === "string" && row.booking_page_slug) bookingLinks.set(row.booking_page_slug, { slug: row.booking_page_slug, title: row.booking_page_title || row.booking_page_slug });
+  for (const row of calendars ?? []) if (hosted.has(row.id) && row.slug) bookingLinks.set(row.slug, { slug: row.slug, title: row.title || row.slug });
+  return { forms: (forms ?? []).map(row => ({ id: row.id, title: row.name })), bookingLinks: [...bookingLinks.values()],
+    formsStatus: forms === null ? "unavailable" : "ready", bookingLinksStatus: calendars === null || legacy === null || hostReadFailed ? "unavailable" : "ready" };
+}
+
+export async function saveStudioPageConversion(input: { tenantId: string; sessionId: string; pageId: string; expectedUpdatedAt: string; conversion: Extract<GrowthBlock, { type: "conversion" }> }): Promise<{ page: StudioPage; versionId: string; changed: boolean }> {
+  const { data, error } = await rpc("studio_set_page_conversion", { p_expected_tenant: input.tenantId, p_session_id: input.sessionId,
+    p_page_id: input.pageId, p_expected_updated_at: input.expectedUpdatedAt, p_conversion: input.conversion });
+  if (error) throw error;
+  const result = objectOf(data), row = objectOf(result?.page);
+  if (result?.ok !== true || row?.id !== input.pageId || typeof result.version_id !== "string" || !STUDIO_SESSION_ID.test(result.version_id)) {
+    throw new Said("The conversion save could not be verified. Check the saved page before retrying.");
+  }
+  return { page: pageFromRow(row), versionId: result.version_id, changed: result.changed === true };
 }
 
 /** A growth_pages row (live, or a version's snapshot) as the Studio shows it. */
@@ -317,6 +457,7 @@ export function pageFromRow(r: Record<string, unknown>): StudioPage {
   const pubBlocks = Array.isArray(r.blocks_json) ? (r.blocks_json as GrowthBlock[]) : null;
   return {
     id: String(r.id), title: String(r.title ?? "Page"), slug: String(r.slug ?? ""), live,
+    updatedAt: typeof r.updated_at === "string" ? r.updated_at : undefined,
     // Publishing a page puts its draft sections, theme and SEO live, so any of them differing is a change.
     changesPending: live && (["blocks", "theme", "seo"] as const).some((k) =>
       r[`draft_${k}_json`] != null && JSON.stringify(r[`draft_${k}_json`]) !== JSON.stringify(r[`${k}_json`])),
@@ -644,4 +785,53 @@ export async function confirmHostingDeployment(pageId: string, fingerprint: stri
     throw new PublishRefused(serverSentence(data.error, "Something changed since this opened. Review it again."));
   }
   throw new PublishUnverified(serverSentence(data.error, "The answer never came back, so this panel can't confirm what happened."));
+}
+
+/** Supplemental projection from the ORIGINAL private Hub accepted-turn binding.
+ * A session UUID is navigation only; the original Studio reader still gates it. */
+export type TeamHubStudioReference =
+  | { ok: true; state: "prepared"; brief: string }
+  | { ok: true; state: "ready"; sessionId: string }
+  | { ok: false; code: "not_allowed" | "scope_changed" | "unavailable" | "unknown" };
+
+export function parseTeamHubStudioReference(value: unknown): TeamHubStudioReference {
+  const row = objectOf(value);
+  const unknown = { ok: false, code: "unknown" } as const;
+  if (!row) return unknown;
+  const keys = Object.keys(row);
+  if (row.ok === false && keys.length === 2 && keys.every(key => key === "ok" || key === "code")
+    && (row.code === "not_allowed" || row.code === "scope_changed" || row.code === "unavailable" || row.code === "unknown")) return { ok: false, code: row.code };
+  if (row.ok !== true || keys.length !== 3) return unknown;
+  if (row.state === "prepared" && keys.every(key => key === "ok" || key === "state" || key === "brief")
+    && typeof row.brief === "string" && row.brief.trim() && row.brief.length <= 10000 && !row.brief.includes("\0")) {
+    return { ok: true, state: "prepared", brief: row.brief.trim() };
+  }
+  if (row.state === "ready" && keys.every(key => key === "ok" || key === "state" || key === "session_id")
+    && typeof row.session_id === "string" && STUDIO_SESSION_ID.test(row.session_id)) return { ok: true, state: "ready", sessionId: row.session_id };
+  return unknown;
+}
+
+/** Read only: no project can be created by mount, reload or reference recovery. */
+export async function readTeamHubStudioReference(expectedTenant: string, messageId: string): Promise<TeamHubStudioReference> {
+  if (!STUDIO_SESSION_ID.test(expectedTenant) || !STUDIO_SESSION_ID.test(messageId)) return { ok: false, code: "not_allowed" };
+  try {
+    const { data, error } = await rpc("team_hub_studio_reference", { p_expected_tenant: expectedTenant, p_message_id: messageId });
+    return error ? { ok: false, code: "unknown" } : parseTeamHubStudioReference(data);
+  } catch { return { ok: false, code: "unknown" }; }
+}
+
+/** One explicit start using the SAME original posted source, never a fresh key.
+ * An uncertain answer must be reconciled through readTeamHubStudioReference. */
+export async function startTeamHubStudio(expectedTenant: string, messageId: string, context: StudioProjectContext): Promise<StudioStartedProject> {
+  if (!STUDIO_SESSION_ID.test(expectedTenant) || !STUDIO_SESSION_ID.test(messageId)) throw new Said("This Studio handoff is unavailable in the current workspace.");
+  let response: Awaited<ReturnType<Rpc>>;
+  try { response = await rpc("team_hub_start_studio", { p_expected_tenant: expectedTenant, p_message_id: messageId, p_project_context: context }); }
+  catch { throw new ProjectStartUnknown("The Studio start is not confirmed. Check this same handoff before trying again."); }
+  if (!response.error) {
+    const started = startedProject(response.data);
+    if (started) return started;
+    const refused = parseTeamHubStudioReference(response.data);
+    if (refused.ok === false && refused.code !== "unknown") throw new Said("This Studio handoff is unavailable in the current workspace.");
+  }
+  throw new ProjectStartUnknown("The Studio start is not confirmed. Check this same handoff before trying again.");
 }

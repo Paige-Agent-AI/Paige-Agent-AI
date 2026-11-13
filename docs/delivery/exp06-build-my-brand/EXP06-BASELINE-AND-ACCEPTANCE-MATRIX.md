@@ -100,6 +100,33 @@ with exact source/release identity + relevant legitimate runtime evidence;
 | 20 | AGENTIC BEHAVIOR (owner mandate b261cc11, 2026-10-27): PAIGE/NEXUS carries an authorized customer goal to a useful verified outcome, subcases A–H, tested beyond happy path | Per-subcase below; evidence = PR1–8 source/release records | ASSESS (statuses recorded; authenticated proof owed) | EXP08 (goal-directed Team Hub wiring, A2/A1c); EXP05 (Work/Harness runtime states) | **A** understand/clarify only missing material facts: BUILT at source (brief intake asks name/audience/outcome only; chat brief-flow SSE steps show what's asked) — authenticated proof PROOF OWED. **B** scoped plan/choose original tools: BUILT at flow level (brief→draft→approve chain; native Studio capabilities, no second runtime) — PROOF OWED authenticated. **C** execute via original doors, single writers: BUILT (ONE publish door UI+Chat; cross-domain via leases/handoffs only). **D** inspect actual result/receipt, not dispatch: BUILT (verified public HTTPS readback before any "live" claim; Rail receipts). **E** durable work save/reopen/resume: BUILT (studio_sessions/artifact_versions; brand floor survives reload — tested). **F** failure/refusal/stale/revoked/unknown recovery, no duplicate effects: BUILT at door level (single-redeem fingerprint, nothing-ran codes, role-change-mid-approval test PR8). **G** independent follow-through without routine prompting: PARTIAL — inside an active Studio session the chat drives brief→draft→approval→verified-live multi-step without owner prompts, but no standing-goal/background autonomy exists (correctly none; that wiring is EXP08 amendment §4/EXP05 runtime — named dependency, not this lane's to build). **H** concrete reviewable question only beyond authority: BUILT (Needs-your-OK card names the exact pending decision; blocker copy names the next permitted step). Team-Hub goal-directed NEXUS: MISSING (EXP08 A2). Algorithm grounding: §4 stands — NO VERIFIED SUPPORTING ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED. |
 | 21 | SANDBOX APPLICABILITY (owner mandate ae670ada, 2026-10-27): choose native capability vs isolated execution; untrusted-input boundaries; no unintended real effects | PR8 security negatives + retained denial wall | ASSESS (NOT APPLICABLE WITH REASON for isolated execution; boundaries verified) | — (future code-execution shapes: EXP19/ZION-under-PAIGE, held) | EXP06 surfaces execute NO untrusted code/files: page blocks render data-driven through React (no eval), forms are governed inputs (origin/bot-trap/rate gating retained), the export emits generated static bytes (negative tests: no private data, no secrets, no unsafe execution), guidance is read-only copy. Isolated execution: **NOT APPLICABLE WITH REASON** — no untrusted code/file/data execution exists in EXP06 outcomes today. Untrusted-content boundary (visitor input, hostile SEO fields): treated as inert data — PROVEN at source (hostile-SEO inert test; injection surfaces inert) — authenticated re-run PROOF OWED. A future custom-code/script block in pages would be **HELD** pending the isolated-execution owner (EXP19 general runner — UNVERIFIED/held per owner ae670ada); not buildable from this lane. Cross-tenant/task denial: retained RLS/scope negatives re-run green each PR. |
 
+### November 13, 2026 ET — approved NEXUS landing-page/window outcome IN PROGRESS
+
+Owner release ANT147/85dc8dd1 resumes the next already-approved ANT162/9408cd6f
+outcome after the completed native PAGE proof: one universal SOLO Studio project
+entered from PAIGE Chat, private Team Hub or Studio, actual original NEXUS
+identity/design skill, scoped saved business/project context, a reusable landing
+recipe, minimize/recover, native/external form/calendar destinations, original CRM
+routing/tags/segments, publication and original receipt/reopen. EXP06 remains
+STILL CODING; these 21 rows, WEB01–14 and existing ALG labels remain intact.
+
+The current implementation is local and unreleased. Actual finite E01/E08 source
+handbacks and receiving ACKs are recorded in original ANT147/1930b175. Coordinator
+45cfb235 assigns the never-published/unapplied Studio carrier32 after published
+EXP08 repair30 and EXP07 forward31; no applied/published migration is renamed.
+The native source-bound start/context/conversion work and bounded UI preservation
+tests have engineering evidence only. Original form-intake tag/segment custody
+is still a named dependency; no guessed writer or competing CRM implementation.
+The exact new patch, independent NON-AUTHOR review, required CI, ordered release,
+actual useful page, canonical receipt and full source/window reopen proof are
+still owed. See the owning implementation evidence:
+[NEXUS landing-page/window](../../evidence/ui-delivery/exp06-nexus-landing-window.md).
+
+The following November10 record remains completed historical proof. Its one test
+publish/takedown approval is consumed; the old page stays offline and is not a
+new test target. No source/test count promotes the full EXP06 assignment or owner
+acceptance, and no next outcome starts before this selected result is finished.
+
 ### November 10, 2026 ET — row 19 authenticated native PAGE subcase PASS
 
 This dated checkpoint supersedes only the older row 19 `STILL OWED (a)` for native

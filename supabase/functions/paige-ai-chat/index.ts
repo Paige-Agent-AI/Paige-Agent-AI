@@ -293,7 +293,6 @@ import { z } from "https://esm.sh/zod@3.22.4";
 // pure, testable home (§18/§32). The funding vertical reaches a client ONLY when the
 // tenant opted in (fundingEnabled); the platform default is coaching-generic (§2/§9).
 import {
-  buildBrandSection,
   buildFundingProgramVocab,
   buildNeutralCorePrompt,
   buildPaigePersonaBlock,
@@ -335,7 +334,9 @@ import { loadIntegrationsMindEvidence, renderIntegrationsMindEvidence } from "..
 import { loadResearchHistoryContext, renderResearchHistoryContext } from "../_shared/research-history-context.ts";
 // #292 / #343 U1 — the Studio design-agent system-prompt WRAPPER (identity + operating core + the
 // generative-UI choice-card rule), externalized so it lives in one editable home (§9/§12/§18).
-import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
+import { STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
+import { buildStudioNexusPersona } from "../_shared/growth/studio-nexus-persona.ts";
+import { CHAT_STUDIO_PREPARATION_PROMPT, CHAT_STUDIO_TARGET_QUESTION, createChatStudioPreparation, extractChatStudioPreparation, stripChatStudioControl } from "../_shared/growth/chat-studio-preparation.ts";
 // Tier Rail Spine (Phase D): the SAME declared-rail tier resolver + client-seat
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
@@ -4488,19 +4489,6 @@ JSON:`;
       timezoneNote = " (server time — user's local timezone unavailable)";
     }
 
-    // Studio-session identity (#292 / §8/§14): inside a Vibe Studio project the chat is NOT Paige —
-    // it's her creative-design specialist (the `design-studio` sub-agent), stationed in that project.
-    // Its identity is purely the agent's own system_prompt; we keep the tenant's brand context so it
-    // designs on-brand, and tell it where it is (creating artifacts that render in the studio window).
-    function buildStudioAgentPersonaBlock(agentPrompt: string, agentName: string, tenantName: string, brand: Record<string, any> | null): string {
-      const tenant = String(tenantName || "this practice").trim();
-      const name = String(agentName || "the Studio design agent").trim();
-      return `${String(agentPrompt || "").trim()}
-
-${buildStudioWhereYouAre(name, tenant)}`.trim()
-        + buildBrandSection(brand, tenant);
-    }
-
     // Read the ONE canonical RPC used by Paige, MCP, onboarding, and settings; never
     // reconstruct hostname/email semantics in this function.
     //
@@ -6745,6 +6733,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // non-Studio path. Mutually exclusive with `studioLinked`: populated ONLY when studioSessionId is
     // null, so a turn never emits both. `artifactType` distinguishes the card's render/hydrate lane.
     const chatArtifacts: Array<{ kind: string; id: string; title: string; url: string | null; artifactType: "document" | "image"; tenant_id: string | null }> = [];
+    const chatStudioReferences: Array<{ kind: "studio_source"; id: string; title: "Studio brief"; url: null; artifactType: "studio"; tenant_id: string }> = [];
 
     // #12 — pre-flight compaction frames are COLLECTED here (before inference) and FLUSHED as the very
     // first bytes of the response stream, so the client's compacting card renders before Paige's
@@ -7043,7 +7032,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // that says to keep them in step. Found by an independent reviewer driving a Studio turn.
       {
         const pre = await readSummaryThread(payloadThreadId);
-        if (pre?.studio_session_id) traceCtx.agent_id = "studio-design-agent";
+        if (pre?.studio_session_id) traceCtx.agent_id = "nexus";
         preStudioSessionId = pre?.studio_session_id ? String(pre.studio_session_id) : null;
       }
       await foldThreadSummary(payloadThreadId, {
@@ -7058,15 +7047,14 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           studioSessionId = preStudioSessionId;
           console.error("[paige] studio thread re-read failed; running the turn with the fail-closed Studio scope");
         }
-        // STUDIO SESSION → swap Paige's persona (aiMessages[0]) for her design-studio specialist's
-        // identity (#292). Gated on studio_session_id, which is NULL for EVERY Your-Paige/contact
-        // thread — so the main chat's identity is provably untouched by this branch.
+        // The original NEXUS platform identity builds in Studio. The existing
+        // design-studio role remains a separate narrow authorization policy.
         if (th?.studio_session_id) {
           studioSessionId = String(th.studio_session_id);
           // Idempotent with the pre-fold stamp above; kept because this is the branch that
           // actually establishes the Studio persona, and a reader looking for where the agent id
           // is decided should find it here too (§34).
-          traceCtx.agent_id = "studio-design-agent";
+          traceCtx.agent_id = "nexus";
           // V1 — the role's capability scope comes ONLY from the platform row (tenant_id IS NULL), read
           // with the server client: a tenant can neither author it nor narrow-then-widen it. A read
           // that fails, or a scope that is missing or malformed, leaves the fail-closed set.
@@ -7079,40 +7067,34 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
             studioScope = resolveRoleToolScope(null);
           }
           if (!studioScope.valid) console.error("[paige] design-studio capability scope unusable, failing closed:", studioScope.reason);
+          const clientCoreIdx = aiMessages.findIndex((m) => m.content === systemPrompt);
+          if (clientCoreIdx !== -1) aiMessages[clientCoreIdx] = { role: "system", content: STUDIO_OPERATING_CORE };
+          // The design desk receives the selected project's permitted facts,
+          // rather than the COO's unrelated operational/customer context.
+          const excludedStudioContext = new Set([tenantDomainContext, tenantTeamContext, businessContextReadinessBlock,
+            publicPresenceContextBlock, soloBusinessInterviewContextBlock, socialPresenceBlock, businessMissionContextBlock,
+            n8nReadinessBlock, integrationsMindBlock, researchHistoryBlock, spineEvidenceBlock].filter(Boolean));
+          for (let i = aiMessages.length - 1; i > 0; i--) if (excludedStudioContext.has(aiMessages[i].content)) aiMessages.splice(i, 1);
           try {
-            let q = supabaseClient
-              .from("paige_subagents").select("name, system_prompt")
-              .eq("slug", "design-studio").eq("enabled", true);
-            // Prefer a tenant-authored design agent over the platform default (NULLS LAST + limit 1).
-            q = personaCtx.tenant_id
-              ? q.or(`tenant_id.is.null,tenant_id.eq.${personaCtx.tenant_id}`)
-              : q.is("tenant_id", null);
-            const { data: agent } = await q.order("tenant_id", { nullsFirst: false }).limit(1).maybeSingle();
-            if (agent?.system_prompt) {
-              aiMessages[0] = {
-                role: "system",
-                content: buildStudioAgentPersonaBlock(
-                  agent.system_prompt, agent.name,
-                  personaCtx.tenant_name || "your practice", personaCtx.brand,
-                ),
-              };
-              // The generic client operating core casts Paige as a client-onboarding coach
-              // with CRM tooling — that contradicts the design specialist's identity and pulls it
-              // off building. Replace it with a creative operating core scoped to its real job
-              // (#292 / §8/§14). It builds by conversation; it never touches client/CRM/pipeline seams.
-              // Target the core by VALUE (=== systemPrompt), not a fixed index: the platform VOICE
-              // block now sits at [1] and tenantDomainContext may occupy a slot, so the client core
-              // is no longer at a hardcoded position. The audience-generic VOICE block above is kept
-              // for the design agent too (it never carries client-only greeting mechanics).
-              const clientCoreIdx = aiMessages.findIndex((m) => m.content === systemPrompt);
-              if (clientCoreIdx !== -1) {
-                aiMessages[clientCoreIdx] = {
-                  role: "system",
-                  content: STUDIO_OPERATING_CORE,
-                };
-              }
-            }
-          } catch (e) { console.warn("[paige] studio persona swap failed:", (e as Error)?.message); }
+            const [identityRead, contextRead, setupRead] = await Promise.all([
+              supabase.from("paige_subagents").select("slug,tenant_id,name,enabled,config").eq("slug", "nexus").is("tenant_id", null).maybeSingle(),
+              supabaseClient.rpc("studio_project_context", { p_expected_tenant: personaCtx.tenant_id, p_session_id: studioSessionId }),
+              supabaseClient.rpc("get_solo_business_context"),
+            ]);
+            const contextAnswer = contextRead.data as { ok?: unknown; context?: unknown } | null;
+            if (identityRead.error || contextRead.error || contextAnswer?.ok !== true || !await readSummaryThread(payloadThreadId)) throw new Error("Studio context unavailable");
+            const nexus = buildStudioNexusPersona({ platformRow: identityRead.data, expectedTenantId: personaCtx.tenant_id,
+              readStatus: setupRead.error ? "unavailable" : "available", setupContext: Array.isArray(setupRead.data) ? setupRead.data[0] : setupRead.data,
+              publicBrand: { tenantId: personaCtx.tenant_id, target: { kind: "workspace" }, readStatus: "available", values: personaCtx.brand, observedAt: new Date().toISOString() },
+              projectContext: contextAnswer.context });
+            if (!nexus?.projectContext.target) throw new Error("Studio identity or target unavailable");
+            markProtectedLate("studio_project_context");
+            aiMessages[0] = { role: "system", content: nexus.persona };
+          } catch (e) {
+            studioScope = resolveRoleToolScope(null);
+            aiMessages[0] = { role: "system", content: "The original NEXUS builder or selected project context is unavailable. Say that the project cannot build right now. Do not invent an identity, source facts, saved work or publication. No Studio tools are authorized in this turn." };
+            console.warn("[paige] NEXUS Studio context unavailable:", (e as Error)?.message);
+          }
           // #292 — tell the design agent what's already on the canvas so a REFINE turn updates that
           // same artifact (keeping its version history) instead of minting a new sibling. Only images
           // (content) and documents need the hint — pages/funnels already reuse by their own id via
@@ -11446,9 +11428,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
 
     // Live uses the SAME governed tool loop, then the existing tools-free
     // answer stream. Never speak speculative content from a tool-capable round.
+    // Optional proposed TEXT on the original admitted normal user turn. Native
+    // current/stage readers own source authority; this grants no tool or start.
+    const chatStudioPreparation = createChatStudioPreparation({
+      threadId: interactiveReceiptScope?.thread ?? "", actorId: user.id,
+      tenantId: personaCtx.tenant_id ?? "", intent: interactiveReceiptScope?.intent ?? "",
+      requestNonce: runtimeIdentity?.requestNonce ?? "",
+      eligible: !!interactive && !interactiveConversational && !interactiveRecoveryReadOnly
+        && callerTier === "tenant" && calendarBookingAccountShape === "solo" && !customerPortal && !scopedClientId
+        && interactiveReceiptScope?.tenant === personaCtx.tenant_id && interactiveReceiptScope?.thread === payloadThreadId
+        && validatedData.interactive?.kind === "message" && !validatedData.researchResume && !validatedData.resume
+        && !studioSessionId && !attachedDocument && !liveRuntimeScope && !answerBinding && resumeCalls.length === 0
+        && approvedConfirmations.size === 0 && declinedConfirmations.length === 0,
+    }, { service: supabase, signal: req.signal });
+    const chatStudioPromptAllowed = await chatStudioPreparation.current();
     const liveDecisionMessages = (messages: any[]) => liveRuntimeScope && !attachedDocument
       ? [...messages, { role: "system", content: "This is the internal tool-decision phase of a Live turn. Select the tools needed under the existing authority rules. Do not draft the user-facing answer here. When no further tool is needed, reply only with Ready. The same runtime will then request the final spoken answer in a tools-free phase." }]
-      : messages;
+      : chatStudioPromptAllowed ? [...messages, { role: "system", content: CHAT_STUDIO_PREPARATION_PROMPT }] : messages;
     // C4a — on a resume turn the first model call is LAZY: the resumed acts run first (the stream's
     // first round), and PAIGE is called with their results at the end of that round, through the
     // same loop call every later round uses. Every other turn makes this call exactly as before.
@@ -16712,7 +16708,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // Draft-only preview: designs the page blocks, writes nothing (§13). The
               // edge fn resolves the tenant brand and enforces §2 coaching-generic defaults.
               const { data: gd, error } = await supabaseClient.functions.invoke("growth-page-draft", {
-                body: { brief: args.brief, kind: "page", tone: args.tone ?? null, tenant_id: personaCtx?.tenant_id ?? null },
+                body: { brief: args.brief, kind: "page", tone: args.tone ?? null, tenant_id: personaCtx?.tenant_id ?? null,
+                  ...(studioSessionId ? { studio_session_id: studioSessionId, ...(canvasArtifact?.kind === "page" ? { studio_page_id: canvasArtifact.id } : {}) } : {}) },
               });
               // A workspace refusal arrives as a non-2xx whose reason only the body carries.
               const _gpRefusal = workspaceRefusal(await readInvokeBody(error, gd));
@@ -19998,7 +19995,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // path, URL, readback or record_locator; the address is rebuilt from the current account.
       const assistantTurnMetadata = () => ({
         surfaces: stepTrace.filter((s) => s.kind !== "thought").map((s) => s.group).filter((v, i, a) => v && a.indexOf(v) === i),
-        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length || interactiveEffects.length || readLinkTrace.length)
+        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length || interactiveEffects.length || readLinkTrace.length || chatStudioReferences.length)
           ? {
               approval_queued: queuedApprovals,
               ...(interactiveEffects.length ? { interactive: { request_intent_id: payloadRequestIntentId,
@@ -20018,6 +20015,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 run_id: r.run_id, question: r.question, saved: r.saved === true,
               })) } : {}),
               ...(readLinkTrace.length ? { paige_record_links: readRecordLinks(readLinkTrace) } : {}),
+              ...(chatStudioReferences.length ? { paige_artifact: chatStudioReferences } : {}),
             }
           : null,
       });
@@ -20169,6 +20167,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       let tenantKnowledgeScopeInvalidated = false;
       // Accumulates Paige's final reply text so we can persist the turn (#94).
       let finalAssistantText = "";
+      let chatStudioCandidate: ReturnType<typeof extractChatStudioPreparation> | null = null;
       // C4c — the question this turn ended on (the record saved as `bundle_ref.paige_ask`), if any.
       let askedThisTurn: AskRecord | null = null;
       let turnSavedSomething = false;
@@ -20755,7 +20754,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
             // C4c — a question asked beside other calls is answered in the conversation (so every
             // tool_use has its result) with "ask it on its own", never shown and never executed.
-            convo.push({ role: "assistant", content: content || null, tool_calls: askAlongside ? [...executed, chooseTc] : executed });
+            convo.push({ role: "assistant", content: stripChatStudioControl(content || "").cleanText || null, tool_calls: askAlongside ? [...executed, chooseTc] : executed });
             if (askAlongside) toolResults.push({ tool_call_id: chooseTc.id, role: "tool", content: JSON.stringify(ASK_ALONGSIDE_CALLS_RESULT) });
             // BEFORE the results reach the model, not after. Everything content-bearing is
             // emitted below this loop, so switching here is genuinely "before any protected
@@ -20798,6 +20797,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-tool-loop"), signal: req.signal, beforeProviderAttempt: revalidateTurnProvider }));
             if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
+
+          // Remove reserved control before the SAME continuation/claim checks.
+          // A candidate never changes their verdict or makes a partial answer final.
+          chatStudioCandidate = !liveRuntimeScope && finalChunks
+            ? extractChatStudioPreparation({ chunks: finalChunks, text: finalAssistantText }) : null;
+          if (chatStudioCandidate) { finalChunks = chatStudioCandidate.cleanChunks; finalAssistantText = chatStudioCandidate.cleanText; }
 
           // The round answered with no tool call (Live: decided to answer). Observed here, after the
           // loop, so the `!hasToolCall` block itself stays byte-identical (n5 runs it in isolation).
@@ -21222,7 +21227,28 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the new artifactType). A turn can produce several (a document AND an image), so each gets its
           // own frame — unlike the Studio path's single last-wins canvas frame above. chatArtifacts is
           // only populated when studioSessionId is null, so this and the studioLinked emit never both fire.
+          // Stage only the final, unchanged, fully completed zero-tool normal
+          // answer AFTER all existing claim/continuation verdicts. No project is
+          // started here; an uncertain stage is never blindly repeated.
+          if (chatStudioPromptAllowed && chatStudioCandidate?.preparation && !chatStudioCandidate.invalid
+              && finalChunks === chatStudioCandidate.cleanChunks && finalAssistantText === chatStudioCandidate.cleanText
+              && finalAssistantText.trim() === CHAT_STUDIO_TARGET_QUESTION
+              && finalAssistantText.trim() && lastRoundFinished && lastRoundCompletedAnswer && lastRoundAnswerEnd === "complete"
+              && turnTracker.state === "FINAL" && totalToolCalls === 0 && !unfinishedRound && !forcedTermination
+              && !tenantKnowledgeScopeInvalidated && !proposalScopeInvalidated && !tenantKnowledgeScopeRevoked
+              && !interactive?.superseded && !interactiveRecoveryReadOnly && !req.signal.aborted
+              && !requestExecutionState.needsReview && !durableApprovalPause && !durableResearchPause
+              && queuedApprovals.length === 0 && confirmTrace.length === 0 && interactiveEffects.length === 0) {
+            await interactive?.check();
+            const prepared = await chatStudioPreparation.stage(chatStudioCandidate.preparation);
+            if (prepared && !req.signal.aborted && !interactive?.superseded && !interactiveRecoveryReadOnly
+                && !proposalScopeInvalidated && !tenantKnowledgeScopeRevoked && await chatStudioPreparation.current()) {
+              chatStudioReferences.push({ artifactType: "studio", kind: "studio_source", id: prepared.sourceTurnId,
+                title: "Studio brief", url: null, tenant_id: personaCtx.tenant_id! });
+            }
+          }
           for (const a of chatArtifacts) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_artifact: a })}\n\n`));
+          for (const a of chatStudioReferences) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_artifact: a })}\n\n`));
           // A PROPOSAL RESUMED BY A TOOL LEAVES HERE, alongside the other frames a turn produces.
           //
           // The agentic path never passes through the close-out chain the document-UPLOAD path

@@ -24,10 +24,12 @@ const mocks = vi.hoisted(() => ({
   invoke: vi.fn(),
   storageFrom: vi.fn(),
   handoff: vi.fn(),
+  studio: vi.fn((_props: Record<string, unknown>) => null),
   tenant: { accountType: null as string | null },
 }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: mocks.rpc, from: mocks.from, functions: { invoke: mocks.invoke }, storage: { from: mocks.storageFrom } } }));
 vi.mock("@/lib/paigePromptHandoff", () => ({ handOffPaigePrompt: mocks.handoff }));
+vi.mock("../studio/TeamHubStudioHandoff", () => ({ TeamHubStudioHandoff: mocks.studio }));
 vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({
     activeTenant: { id: TENANT, account_type: mocks.tenant.accountType, parent_tenant_id: null, account_number: 4242424 }, activeTenantId: TENANT, activeUserId: ME,
@@ -177,6 +179,7 @@ beforeEach(() => {
   mocks.invoke.mockImplementation(turnDouble);
   mocks.from.mockReset();
   mocks.handoff.mockReset();
+  mocks.studio.mockClear();
   db = {
     people: [person(ME, "Morgan Reyes", null, "owner"), person("u-priya", "Priya Nair", "Operations lead", "admin"), person("u-sam", "Sam Lee", "Brand design")],
     conversations: [conv()],
@@ -231,6 +234,28 @@ async function click(element: HTMLElement | undefined | null) {
 const rowOf = (host: HTMLElement, id: string) => host.querySelector<HTMLElement>(`#th-msg-${id}`);
 const liveRegion = (host: HTMLElement) => host.querySelector<HTMLElement>("[aria-live=polite]")!;
 const turnBody = (index: number) => turns[index].teamHubAgentTurn as Row;
+
+describe("finite private Studio supplemental presentation", () => {
+  for (const agent of ["nexus", "paige"]) it(`passes only the original own-${agent}-DM source to the protected reader component`, async () => {
+    db.conversations = [agentDm(agent)];
+    db.messages[`c-dm-${agent}`] = [reply(agent, null, "Review a brief.", { id: "r-studio-own", studio_brief: "not trusted", session_id: "not trusted" }),
+      reply(agent, null, "Another person's reply.", { id: "r-studio-other", author_user_id: "u-priya" }),
+      reply(agent === "nexus" ? "paige" : "nexus", null, "Wrong agent.", { id: "r-studio-wrong" })];
+    const host = await mount(); await click(host.querySelector<HTMLButtonElement>(`[aria-label^="${agent.toUpperCase()}, agent,"]`));
+    expect(mocks.studio).toHaveBeenCalled();
+    const props = mocks.studio.mock.calls.map(call => call[0] as Record<string, unknown>);
+    expect(props.every(value => value.messageId === "r-studio-own")).toBe(true);
+    expect(props[0]).toEqual({ messageId: "r-studio-own", expectedTenant: TENANT, actorId: ME, agentKey: agent });
+  });
+  it("does not offer the handoff in shared messages or another specialist's DM", async () => {
+    db.messages["c-launch"] = [reply("nexus", null, "Shared reply.", { id: "r-studio-shared", studio_brief: "not trusted" })];
+    db.conversations.push(agentDm("merit"));
+    db.messages["c-dm-merit"] = [reply("merit", null, "Other specialist reply.", { id: "r-studio-merit", studio_brief: "not trusted" })];
+    const host = await mount(); expect(mocks.studio).not.toHaveBeenCalled();
+    await click(host.querySelector<HTMLButtonElement>('[aria-label^="MERIT, agent,"]'));
+    expect(mocks.studio).not.toHaveBeenCalled();
+  });
+});
 
 describe("source-backed MERIT answer and original record navigation", () => {
   const id = "12345678-1234-4234-8234-123456789012";

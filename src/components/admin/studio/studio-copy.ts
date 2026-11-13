@@ -389,6 +389,7 @@ export const BLOCK_LABELS: Record<GrowthBlock["type"], string> = {
   gallery: "Gallery",
   steps: "Steps",
   chatbot: "Chatbot",
+  conversion: "Form or booking",
 };
 
 /**

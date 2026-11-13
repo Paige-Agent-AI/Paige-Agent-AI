@@ -10,6 +10,7 @@ import "./zion-responsibility-context.test.ts";
 // Keep this outcome's controls in the existing hosted host suite, without a
 // parallel workflow/test registry or borrowing a helper-only green result.
 import "./nexus-email-prepare.test.ts";
+import "./studio-prepare.test.ts";
 import "./nexus-email-contract.test.ts";
 import "./nexus-email-draft.test.ts";
 import "./nexus-email-act.test.ts";
@@ -90,6 +91,8 @@ type Opts = {
   nativeReadStage?: (args: Record<string, unknown>) => unknown;
   nativeEmailScope?: () => unknown;
   stageEmailDraft?: (args: Record<string, unknown>) => unknown;
+  nativeStudioScope?: () => unknown;
+  stageStudioBrief?: (args: Record<string, unknown>) => unknown;
   personaTenant?: () => string; accountRows?: unknown;
   calendarRows?: () => unknown; calendarError?: unknown;
 };
@@ -211,6 +214,8 @@ function world(opts: Opts = {}) {
       }
       if (name === "team_hub_email_draft_scope") return Promise.resolve({ data: opts.nativeEmailScope?.() ?? { ok: false }, error: null });
       if (name === "team_hub_stage_email_draft") return Promise.resolve({ data: opts.stageEmailDraft?.(args) ?? { ok: true }, error: null });
+      if (name === "team_hub_studio_scope") return Promise.resolve({ data: opts.nativeStudioScope?.() ?? { ok: false }, error: null });
+      if (name === "team_hub_stage_studio_brief") return Promise.resolve({ data: opts.stageStudioBrief?.(args) ?? { ok: true }, error: null });
       if (name === "team_hub_stage_agent_suggestions") return Promise.resolve({ data: opts.stage ? opts.stage(args) : { ok: true }, error: null });
       if (name === "team_hub_stage_agent_read_context") {
         if (opts.nativeReadStage) {
@@ -261,6 +266,71 @@ function model(script: Script) {
 function turn(extra: Record<string, unknown> = {}) {
   return { teamHubAgentTurn: { conversationId: LAUNCH, sourceMessageId: ASK, threadRootId: null, agent: "merit", ...extra } };
 }
+
+describe("Studio brief on the same original private accepted turn", () => {
+  const brief = { brief: "Build the landing page requested in this private message." };
+  const setup = (agent: "nexus" | "paige" = "nexus", extra: Opts = {}) => world({ sourceIn: MERIT_DM, agentDmKey: agent,
+    config: { slug: agent, config: { ...MERIT_CONFIG, capability_scope: { mode: "allowlist", access: "read", tools: [PINNED_READ_TOOL] } } },
+    nativeStudioScope: () => ({ ok: true }), ...extra });
+  const request = (agent = "nexus") => turn({ conversationId: MERIT_DM, agent });
+  const prepared = () => model([{ content: JSON.stringify({ reply: "Review this Studio brief.", route: "answer", studio_brief: brief }) }]);
+  for (const agent of ["nexus", "paige"] as const) it(`${agent} stages bounded text before the original post without offering a Studio writer`, async () => {
+    const w = setup(agent), m = prepared();
+    assert.equal((await run(w, m, request(agent))).body.outcome, "posted");
+    const stage = w.calls.findIndex(call => call.name === "team_hub_stage_studio_brief");
+    const post = w.calls.findIndex(call => call.name === "team_hub_post_agent_message");
+    assert.ok(stage >= 0 && post > stage);
+    assert.deepEqual(Object.keys(w.calls[stage].args).sort(), ["p_brief", "p_token_hash", "p_turn_id"]);
+    assert.equal(w.calls[stage].args.p_brief, brief.brief);
+    assert.equal(w.calls[post].args.p_body, "Review this Studio brief.");
+    assert.ok(m.requests[0].request.messages.some(message => message.content?.includes("STUDIO BRIEF PREPARATION")));
+    assert.ok(!m.requests[0].request.tools?.some(tool => /studio|growth_page|publish/.test(tool.function.name)));
+    assert.ok(!w.calls.some(call => /^(?:studio_start|team_hub_start_studio|growth_page)/.test(call.name)));
+  });
+  it("missing native permission preserves ordinary replies without a staged handoff", async () => {
+    const w = setup("nexus", { nativeStudioScope: () => ({ ok: false }) }), m = prepared();
+    assert.equal((await run(w, m, request())).body.outcome, "posted");
+    assert.ok(!m.requests[0].request.messages.some(message => message.content?.includes("STUDIO BRIEF PREPARATION")));
+    assert.ok(!w.calls.some(call => call.name === "team_hub_stage_studio_brief"));
+  });
+  it("model-injected identity and stage refusal cannot publish a handoff", async () => {
+    for (const extra of [{ session_id: TURN }, { approved: true }, { url: "https://example.com" }]) {
+      const w = setup();
+      assert.equal((await run(w, model([{ content: JSON.stringify({ reply: "Prepared.", studio_brief: { ...brief, ...extra } }) }]), request())).body.outcome, "no_reply");
+      assert.ok(!w.calls.some(call => call.name === "team_hub_stage_studio_brief" || call.name === "team_hub_post_agent_message"));
+    }
+    const w = setup("nexus", { stageStudioBrief: () => ({ ok: false }) });
+    assert.equal((await run(w, prepared(), request())).body.outcome, "no_reply");
+    assert.ok(!w.calls.some(call => call.name === "team_hub_post_agent_message"));
+    assert.ok(w.calls.some(call => call.name === "team_hub_end_agent_turn"));
+  });
+  it("revalidates native scope on the actual provider continuation", async () => {
+    let allowed = true;
+    const w = setup("nexus", { nativeStudioScope: () => ({ ok: allowed }) });
+    const result = await runTeamHubAgentTurn({ caller: w.caller, service: w.service, userId: SAM,
+      complete: async (_input, options) => { allowed = false; assert.equal(await options.beforeProviderAttempt?.(), false); return { ok: false }; },
+    }, request());
+    assert.equal(result.body.outcome, "no_reply");
+    assert.ok(!w.calls.some(call => call.name === "team_hub_post_agent_message" || call.name === "team_hub_stage_studio_brief"));
+  });
+  it("retains original lost-post recovery instead of creating another project or post", async () => {
+    const w = setup("nexus", { post: (_args, attempt) => attempt === 1 ? raw(null, TRANSPORT, true) : undefined,
+      end: () => ({ ok: false, code: "not_found" }) });
+    assert.equal((await run(w, prepared(), request())).body.outcome, "posted");
+    const posts = w.calls.filter(call => call.name === "team_hub_post_agent_message");
+    assert.equal(posts.length, 2);
+    assert.deepEqual(posts[0].args, posts[1].args);
+    assert.equal(w.store.get(MERIT_DM)!.filter(row => row.author_kind === "agent").length, 1);
+    assert.equal(w.calls.filter(call => call.name === "team_hub_stage_studio_brief").length, 1);
+    assert.ok(!w.calls.some(call => call.name === "team_hub_start_studio"));
+  });
+  it("a shared-channel automatic private follow-up never exports its context to Studio", async () => {
+    const w = setup("nexus", { sourceIn: LAUNCH, mentions: ["nexus"] }), m = prepared();
+    await run(w, m, turn({ agent: "nexus", privateFollowUp: true }));
+    assert.ok(!w.calls.some(call => call.name === "team_hub_studio_scope" || call.name === "team_hub_stage_studio_brief"));
+    assert.ok(!m.requests.some(item => item.request.messages.some(message => message.content?.includes("STUDIO BRIEF PREPARATION"))));
+  });
+});
 
 describe("NEXUS unsent preparation on the original accepted private turn", () => {
   const preparation = { subject: "Project update", body: "The outline is ready for review." };

@@ -1,0 +1,42 @@
+/* The existing Studio inspector remains the single bounded scroll owner. */
+.vs-studio .vs-page-conversion { min-width: 0; overscroll-behavior: contain; }
+.vs-studio .vs-page-conversion > header { position: sticky; top: 0; z-index: 1; background: var(--vs-inspector); }
+.vs-studio .vs-page-conversion-form { min-width: 0; }
+.vs-studio .vs-page-conversion .vs-field { min-width: 0; }
+.vs-studio .vs-page-conversion .vs-field :is(input, select, textarea) {
+  box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; height: auto;
+  padding: 9px 10px; border: 1px solid var(--vs-line); border-radius: 9px;
+  background: var(--vs-panel-2); color: var(--vs-text); caret-color: var(--vs-text);
+  font: inherit; line-height: 1.5; transition: border-color .15s ease;
+}
+.vs-studio .vs-page-conversion .vs-field textarea { min-height: 112px; resize: vertical; }
+.vs-studio .vs-page-conversion .vs-field .vs-page-conversion-description { min-height: 76px; }
+.vs-studio .vs-page-conversion .vs-field :is(input, textarea)::placeholder { color: var(--vs-dim); }
+.vs-studio .vs-page-conversion :is(button, input, select, textarea):focus-visible,
+.vs-studio .vs-page-conversion-error:focus-visible { outline: 2px solid var(--vs-link); outline-offset: 3px; }
+.vs-studio .vs-page-conversion :is(input, select, textarea)[aria-invalid="true"] { border-color: var(--vs-bad); }
+.vs-studio .vs-page-conversion :is(input, select, textarea):disabled { cursor: not-allowed; opacity: .65; }
+.vs-studio .vs-page-conversion-help { margin: 0; color: var(--vs-dim); font-size: .75rem; line-height: 1.55; overflow-wrap: anywhere; }
+.vs-studio .vs-page-conversion-mode { min-width: 0; border: 0; padding: 0; margin: 0; }
+.vs-studio .vs-page-conversion-mode legend { padding: 0; margin-bottom: 8px; color: var(--vs-dim); font-size: .8125rem; }
+.vs-studio .vs-page-conversion-mode > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.vs-studio .vs-page-conversion-mode label {
+  display: flex; align-items: center; flex: 1 1 110px; gap: 8px; min-height: 44px; padding: 8px 10px;
+  border: 1px solid var(--vs-line); border-radius: 9px; color: var(--vs-dim); font-size: .75rem; cursor: pointer;
+}
+.vs-studio .vs-page-conversion-mode label:hover { background: var(--vs-panel-2); }
+.vs-studio .vs-page-conversion-mode label:has(input:checked) { border-color: var(--vs-violet-line); background: var(--vs-violet-soft); color: var(--vs-text); }
+.vs-studio .vs-page-conversion-mode input { margin: 0; accent-color: var(--vs-violet); }
+.vs-studio .vs-page-conversion-mode:disabled label { cursor: not-allowed; opacity: .65; }
+.vs-studio .vs-page-conversion-validation { display: grid; justify-items: start; gap: 8px; }
+.vs-studio .vs-page-conversion-error { margin: 0; color: var(--vs-bad); font-size: .8125rem; line-height: 1.5; overflow-wrap: anywhere; }
+.vs-studio .vs-page-conversion .vs-icon-btn { width: 44px; height: 44px; }
+.vs-studio .vs-page-conversion .vs-link { min-height: 44px; text-align: left; }
+.vs-studio .vs-page-conversion-foot {
+  position: sticky; bottom: 0; z-index: 1; flex-wrap: wrap; padding: 12px 16px;
+  background: var(--vs-inspector); border-top: 1px solid var(--vs-line-soft);
+}
+.vs-studio .vs-page-conversion-foot .vs-btn { min-height: 44px; white-space: normal; }
+@media (prefers-reduced-motion: reduce) {
+  .vs-studio .vs-page-conversion .vs-field :is(input, select, textarea) { transition: none; }
+}

@@ -3,8 +3,8 @@
 // owner never picks an artifact type: Paige decides from the brief, and the project holds whatever
 // she builds. Pending image approvals for this project surface here, beside the conversation.
 import React from "react";
-import { ArrowLeft, Monitor, Smartphone, MessageSquare, SlidersHorizontal, ArrowUp, Check, AlertCircle, Loader2, Circle } from "lucide-react";
-import { Logo } from "../_shared";
+import { ArrowLeft, Monitor, Smartphone, MessageSquare, SlidersHorizontal, ArrowUp, Check, AlertCircle, Loader2, Circle, Minimize2 } from "lucide-react";
+import { NexusGlyph, NexusIdentity } from "./NexusIdentity";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 import { useMediaJobs } from "../useMediaJobs";
 import { MediaApprovalCard } from "./MediaApprovalCard";
@@ -16,6 +16,11 @@ import { artifactId, loadArtifact, hasPendingChanges, isLive, type Brand, type D
 import { PublishPanel } from "./PublishPanel";
 import { FormSettings } from "./FormSettings";
 import { Timeline } from "./Timeline";
+import { PageConversionSettings, type PageConversionBlock } from "./PageConversionSettings";
+import { loadStudioConversionResources, saveStudioPageConversion, loadStudioProjectContext, saveStudioProjectContext, loadStudioPublicationReceipts, type StudioPublicationReceipt, type StudioConversionResources, type StudioProjectContext } from "./studio-data";
+import { StudioBusinessContextPanel } from "./StudioBusinessContextPanel";
+import { projectStudioBusinessContext } from "./business-context";
+import { useStudioBusinessContext } from "./useStudioBusinessContext";
 
 const KIND_WORD: Record<ArtifactRef["kind"], string> = { form: "Form", page: "Page", funnel: "Funnel", content: "Content" };
 
@@ -25,7 +30,7 @@ function AskCard({ choices, disabled, onAnswer }: { choices: Choices; disabled: 
   const toggle = (v: string) => setPicked((p) => (choices.multi ? (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]) : [v]));
   const chosen = choices.options.filter((o) => picked.includes(o.value));
   return (
-    <div className="vs-ask" role="group" aria-label={choices.prompt || "Paige has a question"}>
+    <div className="vs-ask" role="group" aria-label={choices.prompt || "NEXUS has a design question"}>
       {choices.prompt && <b>{choices.prompt}</b>}
       <div className="vs-ask-options">
         {choices.options.map((o) => (
@@ -39,19 +44,22 @@ function AskCard({ choices, disabled, onAnswer }: { choices: Choices; disabled: 
           onClick={() => onAnswer(chosen.map((o) => o.value).join(", "), chosen.map((o) => o.label).join(", "))}>
           {choices.multi ? "Use these" : "Use this"}
         </button>
-        <button type="button" className="vs-link" disabled={disabled} onClick={() => onAnswer("Use your best guess for that and carry on.", "Use your best guess")}>
-          Skip, use your best guess
+        <button type="button" className="vs-link" disabled={disabled} onClick={() => onAnswer("Use your design judgment and the saved permitted context. Do not invent business facts, offers, claims or destinations that were not provided.", "Use your design judgment")}>
+          Use your design judgment
         </button>
       </div>
     </div>
   );
 }
 
-export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNexusHandoff, onBack }: {
+export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNexusHandoff, onBack, onMinimize, minimized = false, onScopeRefused }: {
   tenantId: string; tenantSlug: string; sessionId: string; seedBrief: string | null;
   /** "Review with NEXUS" pre-approval handoff to the global PAIGE chat; absent ⇒ no affordance. */
   onNexusHandoff?: (prompt: string) => void;
   onBack: () => void;
+  onMinimize?: () => void;
+  minimized?: boolean;
+  onScopeRefused?: () => void;
 }) {
   const [session, setSession] = React.useState<Session | null>(null);
   const [sessionError, setSessionError] = React.useState<string | null>(null);
@@ -62,6 +70,19 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const [device, setDevice] = React.useState<Device>("desktop");
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [conversionOpen, setConversionOpen] = React.useState(false);
+  const [conversionResources, setConversionResources] = React.useState<StudioConversionResources | null>(null);
+  const [conversionSaving, setConversionSaving] = React.useState(false);
+  const [conversionError, setConversionError] = React.useState<string | null>(null);
+  const [projectContext, setProjectContext] = React.useState<StudioProjectContext | null>(null);
+  const [contextDraft, setContextDraft] = React.useState<StudioProjectContext | null>(null);
+  const [contextSaving, setContextSaving] = React.useState(false);
+  const [publicationReceipts, setPublicationReceipts] = React.useState<StudioPublicationReceipt[] | null>(null);
+  const [receiptUnavailable, setReceiptUnavailable] = React.useState(false);
+  const [arrivalMotion, setArrivalMotion] = React.useState(Boolean(seedBrief));
+  const alive = React.useRef(true), readEpoch = React.useRef(0);
+  React.useEffect(() => { const epoch = readEpoch; alive.current = true; return () => { alive.current = false; epoch.current++; }; }, []);
+  const contextProjection = useStudioBusinessContext(tenantId, tenantSlug, contextDraft?.target ?? { kind: "workspace" }, contextDraft?.values ?? {});
   const [chatOpen, setChatOpen] = React.useState(false);
   const [briefOpen, setBriefOpen] = React.useState(true);
   const [templating, setTemplating] = React.useState(false);
@@ -81,8 +102,15 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const named = React.useRef<string | null>(null);
   const renameFailed = React.useRef(false);
   const reloadSession = React.useCallback(async (select?: string) => {
+    const epoch = ++readEpoch.current;
     try {
-      let s = await openSession(sessionId);
+      const [opened, authored] = await Promise.all([openSession(sessionId), loadStudioProjectContext(tenantId, sessionId)]);
+      if (!alive.current || epoch !== readEpoch.current) return;
+      const input = authored && typeof authored === "object" && !Array.isArray(authored) ? authored as StudioProjectContext : null;
+      const admitted = projectStudioBusinessContext({ expectedTenantId: tenantId, target: input?.target, projectValues: input?.values, readStatus: "unavailable", context: null });
+      if (!input || !admitted.target) throw new Error("Project context is unavailable");
+      setProjectContext(input); setContextDraft(current => current ?? input);
+      let s = opened;
       // A project nobody named takes the name of the first thing Paige saves in it.
       const first = s.artifacts.find((r) => r.id === select) ?? s.artifacts[0];
       // A project is still unnamed while its name is a placeholder or just the brief it started from
@@ -96,6 +124,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
         named.current = first.title.trim();
         try {
           await renameSession(sessionId, named.current);
+          if (!alive.current || epoch !== readEpoch.current) return;
           s = { ...s, title: named.current };
         } catch (e) {
           // Only the creator or an admin may rename; anyone else keeps the brief as the name. Say so
@@ -105,14 +134,77 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
         }
       }
       setSession(s);
+      setSessionError(null);
       if (select) setActiveId(select);
     } catch (e) {
+      if (!alive.current || epoch !== readEpoch.current) return;
+      setSession(null); setArtifact(null); setProjectContext(null); setContextDraft(null);
       setSessionError(plainError(e, "This project couldn't be opened."));
+      if ((e as { code?: string })?.code === "42501") onScopeRefused?.();
     }
-  }, [sessionId]);
+  }, [sessionId, tenantId, onScopeRefused]);
 
   React.useEffect(() => { void reloadSession(); }, [reloadSession]);
-  React.useEffect(() => { void loadBrand(tenantSlug).then(setBrand); }, [tenantSlug]);
+  React.useEffect(() => {
+    let current = true;
+    if (!projectContext) return;
+    if (projectContext.target.kind !== "workspace") {
+      setBrand({ floor: { primary: projectContext.values.primaryColor || "#26242C", accent: projectContext.values.accentColor || "#D8D5DF" }, name: projectContext.values.publicName || null, logoUrl: projectContext.values.logoUrl || null, primaryColor: projectContext.values.primaryColor || null });
+      return;
+    }
+    void loadBrand(tenantSlug).then(next => {
+      if (!current) return;
+      const values = projectContext.values;
+      const own = (key: keyof typeof values) => Object.prototype.hasOwnProperty.call(values, key);
+      setBrand({ ...next,
+        floor: { ...next.floor, ...(own("primaryColor") ? { primary: values.primaryColor || "#26242C" } : {}), ...(own("accentColor") ? { accent: values.accentColor || "#D8D5DF" } : {}) },
+        ...(own("publicName") ? { name: values.publicName || null } : {}),
+        ...(own("logoUrl") ? { logoUrl: values.logoUrl || null } : {}),
+        ...(own("primaryColor") ? { primaryColor: values.primaryColor || null } : {}),
+      });
+    });
+    return () => { current = false; };
+  }, [tenantSlug, projectContext]);
+  const wasMinimized = React.useRef(minimized);
+  React.useEffect(() => {
+    if (minimized) setArrivalMotion(false);
+    if (wasMinimized.current && !minimized) { setSession(null); setArtifact(null); void reloadSession(); }
+    wasMinimized.current = minimized;
+  }, [minimized, reloadSession]);
+  React.useEffect(() => {
+    if (!conversionOpen) return;
+    let current = true;
+    setConversionResources(null);
+    void loadStudioConversionResources(tenantId).then(value => { if (current) setConversionResources(value); }).catch(() => { if (current) setConversionResources({ forms: [], bookingLinks: [], formsStatus: "unavailable", bookingLinksStatus: "unavailable" }); });
+    return () => { current = false; };
+  }, [conversionOpen, tenantId]);
+
+  const saveConversion = async (conversion: PageConversionBlock) => {
+    if (conversionSaving || artifact?.kind !== "page" || !artifact.page.updatedAt) return;
+    const page = artifact.page;
+    setConversionSaving(true); setConversionError(null);
+    try {
+      const saved = await saveStudioPageConversion({ tenantId, sessionId, pageId: page.id, expectedUpdatedAt: page.updatedAt!, conversion });
+      if (!alive.current) return;
+      setArtifact({ kind: "page", page: saved.page }); setRefreshKey(value => value + 1); setConversionOpen(false);
+      setNotice(saved.changed ? "Conversion saved in this page draft. Publish reviews the saved version." : "This conversion is already saved in the original page draft.");
+    } catch (e) { if (alive.current) setConversionError(plainError(e, "The conversion save isn't verified. Check the saved page before retrying.")); }
+    finally { if (alive.current) setConversionSaving(false); }
+  };
+  const saveContext = async () => {
+    if (!contextDraft || !projectContext || contextSaving) return false;
+    if (contextProjection.issues.some(issue => issue.source === "project" && issue.field && contextDraft.values[issue.field]?.trim())) { setNotice("Review the highlighted project values before saving."); return false; }
+    const values = Object.fromEntries(Object.keys(contextDraft.values).map(key => [key, contextProjection.projectValues[key as keyof typeof contextDraft.values] ?? ""]));
+    setContextSaving(true);
+    try {
+      const saved = await saveStudioProjectContext(tenantId, sessionId, { ...contextDraft, values }, projectContext);
+      if (!alive.current) return false;
+      setProjectContext(saved as StudioProjectContext); setContextDraft(saved as StudioProjectContext);
+      setNotice("Project context saved. Ask NEXUS to apply it to this draft; Setup stays unchanged.");
+      return true;
+    } catch (e) { if (alive.current) setNotice(plainError(e, "The context save isn't verified. Check the saved project before retrying.")); return false; }
+    finally { if (alive.current) setContextSaving(false); }
+  };
 
   // EXP07 row 6 — flag this project as a workspace template (or bring it back to drafts). The
   // governed setter answers; the returned row is what changed. A refusal (not owner/admin) is a
@@ -144,6 +236,15 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
       .catch((e) => { if (live) { setArtifact(null); setArtifactError(plainError(e, "This piece couldn't be loaded.")); } });
     return () => { live = false; };
   }, [activeRef?.id, activeRef?.kind, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const receiptPageId = artifact?.kind === "page" ? artifact.page.id : null;
+  React.useEffect(() => {
+    let current = true;
+    setPublicationReceipts(null); setReceiptUnavailable(false);
+    if (!receiptPageId) return;
+    void loadStudioPublicationReceipts(tenantId, sessionId, receiptPageId).then(value => { if (current) setPublicationReceipts(value); })
+      .catch(() => { if (current) setReceiptUnavailable(true); });
+    return () => { current = false; };
+  }, [tenantId, sessionId, receiptPageId, refreshKey]);
 
   const chat = useStudioChat({
     sessionId,
@@ -175,7 +276,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const waitingCount = chat.confirms.filter((c) => !c.state).length;
   React.useEffect(() => { if (chat.choices || chat.sending || waitingCount) setChatOpen(true); }, [chat.choices, chat.sending, waitingCount]);
   // Opening a project puts focus in the conversation (the card that opened it is gone).
-  React.useEffect(() => { if (chat.ready) inputRef.current?.focus({ preventScroll: true }); }, [chat.ready]);
+  React.useEffect(() => { if (chat.ready && !minimized) inputRef.current?.focus({ preventScroll: true }); }, [chat.ready, minimized]);
 
   React.useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
@@ -184,6 +285,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   // Esc steps back out of the project, unless the owner has typed something or a panel is open (each
   // panel closes itself first).
   React.useEffect(() => {
+    if (minimized) return;
     const k = (e: KeyboardEvent) => {
       if (e.key !== "Escape" || e.defaultPrevented) return;
       const t = e.target as HTMLElement | null;
@@ -191,18 +293,26 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
       if (t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT") && (t as HTMLInputElement).value.trim()) return;
       if (publishOpen) { setPublishOpen(false); publishBtnRef.current?.focus(); return; }
       if (settingsOpen) { setSettingsOpen(false); return; }
+      if (conversionOpen) { setConversionOpen(false); return; }
       if (chatOpen) { setChatOpen(false); return; }
       onBack();
     };
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
-  }, [onBack, publishOpen, settingsOpen, chatOpen]);
+  }, [onBack, publishOpen, settingsOpen, conversionOpen, chatOpen, minimized]);
 
-  const submit = () => {
+  const submit = async () => {
     const text = input.trim();
-    if (!text || chat.sending || !chat.ready) return;
+    if (!text || chat.sending || !chat.ready || contextSaving || conversionSaving) return;
+    if (contextDraft && JSON.stringify(contextDraft) !== JSON.stringify(projectContext) && !await saveContext()) return;
+    if (!alive.current) return;
     setInput("");
     void chat.send(text);
+  };
+  const buildSavedBrief = async () => {
+    if (!session?.seedBrief || chat.sending || !chat.ready || contextSaving || conversionSaving) return;
+    if (contextDraft && JSON.stringify(contextDraft) !== JSON.stringify(projectContext) && !await saveContext()) return;
+    if (alive.current) void chat.send(session.seedBrief);
   };
 
   // A picked version shows on the stage from its own snapshot until the owner goes back to it or
@@ -216,7 +326,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
 
   const live = artifact ? isLive(artifact) : false;
   const pending = artifact ? hasPendingChanges(artifact) : false;
-  const saveState = chat.sending ? { tone: "busy", text: chat.status ?? "Paige is building" }
+  const saveState = chat.sending ? { tone: "busy", text: chat.status ?? "NEXUS is building" }
     : !artifact ? (chat.preview ? { tone: "idle", text: chat.confirms.some((c) => !c.state) ? "Designed · waiting for your approval" : "Designed · not saved" } : { tone: "idle", text: "Nothing built yet" })
     : live ? (pending ? { tone: "good", text: "Saved · changes not live yet" } : { tone: "good", text: "Live" })
     : { tone: "good", text: "Saved · draft" };
@@ -239,7 +349,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
         <button type="button" className="vs-icon-btn" aria-label="Back to Studio" onClick={onBack}><ArrowLeft size={17} /></button>
         <button type="button" className="vs-btn vs-chat-toggle" aria-expanded={chatOpen} onClick={() => setChatOpen((o) => !o)}><MessageSquare size={15} aria-hidden="true" />{chatOpen ? "Hide chat" : "Chat"}</button>
         <nav className="vs-crumbs" aria-label="Project">
-          <span className="vs-crumb-studio">Studio /</span>
+          <NexusIdentity compact /><span aria-hidden="true">/</span>
           <b className="vs-trunc" style={{ maxWidth: 260 }} title={displayTitle}>{displayTitle}</b>
           {refs.length > 1 ? (
             <>
@@ -252,6 +362,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           <span className="vs-status" data-tone={saveState.tone} role="status" aria-live="polite" style={{ marginLeft: 8 }}>{saveState.text}</span>
         </nav>
         <div className="vs-top-actions">
+          {onMinimize && <button type="button" className="vs-icon-btn" aria-label="Minimize Studio" title="Minimize Studio" onClick={onMinimize}><Minimize2 size={16} aria-hidden="true" /></button>}
           {session && (
             <button
               type="button"
@@ -267,6 +378,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           {artifact?.kind === "form" && (
             <button type="button" className="vs-btn" aria-pressed={settingsOpen} onClick={() => setSettingsOpen((o) => !o)}><SlidersHorizontal size={14} />Form settings</button>
           )}
+          {artifact?.kind === "page" && <button type="button" className="vs-btn" aria-pressed={conversionOpen} disabled={chat.sending || !artifact.page.updatedAt} onClick={() => setConversionOpen(value => !value)}><SlidersHorizontal size={14} aria-hidden="true" />Form or booking</button>}
           <div className="vs-seg" role="group" aria-label="Preview size">
             <button type="button" aria-pressed={device === "desktop"} aria-label="Desktop" onClick={() => setDevice("desktop")}><Monitor size={14} /></button>
             <button type="button" aria-pressed={device === "phone"} aria-label="Phone" onClick={() => setDevice("phone")}><Smartphone size={14} /></button>
@@ -291,6 +403,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
             tenantName={brand.name}
             brandFloor={brand.floor}
             artifact={artifact}
+            minimized={minimized}
             onNexusHandoff={onNexusHandoff}
             onClose={() => { setPublishOpen(false); publishBtnRef.current?.focus(); }}
             onDone={(m) => { setNotice(m); setRefreshKey((k) => k + 1); }}
@@ -300,7 +413,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
       </header>
 
       <div className="vs-body">
-        <section className="vs-chat" aria-label="Chat with Paige" data-open={chatOpen}>
+        <section className="vs-chat" aria-label="Chat with NEXUS" data-open={chatOpen}>
           {/* The brief the project started from, pinned above the conversation so it survives reopen
               (EXP07 row 1): the chat's first message already carries it, but nothing showed it after
               that. Open when the project opens; the owner's own toggle always wins. */}
@@ -310,19 +423,22 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
               <MarkdownMessage content={session.seedBrief} className="vs-md" />
             </details>
           )}
-          {/* The brand this project's pages actually use (EXP06 row 2): the same anon-safe portal
-              read the published pages theme from, shown with its honest missing states so the owner
-              knows what visitors will see. Read-only — brand facts are set in Setup, not here. */}
+          {contextDraft && <div className="vs-project-context-editor">
+            <StudioBusinessContextPanel projection={contextProjection} projectValues={contextDraft.values} disabled={contextSaving || chat.sending}
+              onChange={values => setContextDraft(value => value ? { ...value, values } : value)}
+              onTargetChange={kind => setContextDraft(value => value ? { ...value, target: kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }, values: {} } : value)} />
+            {JSON.stringify(contextDraft) !== JSON.stringify(projectContext) && <button type="button" className="vs-btn" disabled={contextSaving || chat.sending} onClick={() => void saveContext()}>{contextSaving ? "Saving context…" : "Save project context"}</button>}
+          </div>}
           {session && (
             <p className="vs-brand-line">
-              <b>Working from your brand</b>
+              <b>{projectContext?.target.kind === "workspace" ? "Working from your brand" : "Selected project brand"}</b>
               {brand.logoUrl && <img className="vs-brand-logo" src={brand.logoUrl} alt="" loading="lazy" />}
               <span>
-                {brand.name ? brand.name : "No business name yet — add it in Setup"}
+                {brand.name ? brand.name : projectContext?.target.kind === "workspace" ? "No business name yet — add it in Setup" : "Business name not provided"}
                 {" · "}
                 {brand.primaryColor
                   ? <><i className="vs-brand-swatch" style={{ background: brand.primaryColor }} aria-hidden="true" />your page color</>
-                  : "Paige's default page color"}
+                  : "No saved page color"}
                 {!brand.logoUrl && " · no logo yet — pages use your name and color"}
               </span>
             </p>
@@ -330,18 +446,22 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           <div className="vs-chat-log" ref={logRef}>
             {chat.loadError && <p className="vs-alert" role="alert">{chat.loadError}</p>}
             {!chat.ready && !chat.loadError && <p className="vs-inspector-note" role="status">Opening the conversation…</p>}
+            {chat.ready && chat.turns.length === 0 && !chat.sending && <div className="vs-nexus-arrival" data-arrival={arrivalMotion ? "new" : undefined} onAnimationEnd={() => setArrivalMotion(false)}>
+              <NexusGlyph /><p>NEXUS is ready{session?.seedBrief ? " with your saved brief" : ""}.</p>
+              {!seedBrief && session?.seedBrief && refs.length === 0 && <button type="button" className="vs-btn vs-btn-violet" disabled={contextSaving || conversionSaving} onClick={() => void buildSavedBrief()}>Build from saved brief</button>}
+            </div>}
             {chat.turns.map((t, i) => t.role === "user" ? (
               <div key={i} className="vs-msg-you">{t.content}</div>
             ) : (
               <div key={i}>
                 {(t.content || (i === lastAssistant && chat.sending && chat.steps.length === 0)) && (
                   <div className="vs-msg-paige">
-                    <Logo size={16} />
+                    <NexusGlyph />
                     {t.content ? <MarkdownMessage content={t.content} className="vs-md" /> : <p>{chat.status ?? "Working on it…"}</p>}
                   </div>
                 )}
                 {i === lastAssistant && chat.steps.length > 0 && (
-                  <ol className="vs-steps" aria-label="What Paige did">
+                  <ol className="vs-steps" aria-label="What NEXUS did">
                     {chat.steps.map((s) => (
                       <li key={s.id} data-status={s.status}>
                         {s.status === "error" ? <AlertCircle size={14} color="var(--vs-bad)" aria-label="Didn't work" />
@@ -363,7 +483,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
             ))}
             {chat.choices && <AskCard choices={chat.choices} disabled={chat.sending} onAnswer={(v, d) => void chat.send(v, { display: d })} />}
             {chat.confirms.map((c) => (
-              <div key={c.fingerprint} className="vs-confirm" data-state={c.state ?? "waiting"} role="group" aria-label={c.state ? "Your decision" : "Paige is waiting for your approval"}>
+              <div key={c.fingerprint} className="vs-confirm" data-state={c.state ?? "waiting"} role="group" aria-label={c.state ? "Your decision" : "NEXUS is waiting for your approval"}>
                 <b>{!c.state ? "Waiting for your approval" : c.state === "declined" ? "Skipped" : c.state === "sent" ? "Approved" : c.state === "ran" ? "Done" : c.state === "not_run" ? "Didn't run" : "Not confirmed"}</b>
                 <span>{c.summary}</span>
                 {!c.state ? (
@@ -372,7 +492,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
                     <button type="button" className="vs-btn vs-btn-quiet" disabled={chat.sending} onClick={() => void chat.decide(c.fingerprint, false)}>Not this</button>
                   </div>
                 ) : c.state === "sent" ? (
-                  <small role="status">Paige is running it…</small>
+                  <small role="status">NEXUS is running it…</small>
                 ) : c.note ? <small role="status">{c.note}</small> : null}
               </div>
             ))}
@@ -382,16 +502,16 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           </div>
           <div className="vs-chat-input">
             <div className="vs-chat-box">
-              <label className="vs-sr" htmlFor="vs-chat-input">Tell Paige what to change</label>
+              <label className="vs-sr" htmlFor="vs-chat-input">Tell NEXUS what to change</label>
               <textarea
                 id="vs-chat-input"
                 ref={inputRef}
                 value={input}
-                placeholder={chat.choices ? "Answer above, or type here" : artifact ? "Tell Paige what to change" : "Tell Paige what to build"}
+                placeholder={chat.choices ? "Answer above, or type here" : artifact ? "Tell NEXUS what to change" : "Tell NEXUS what to build"}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
               />
-              <button type="button" className="vs-send" aria-label="Send" disabled={!input.trim() || chat.sending || !chat.ready} onClick={submit}><ArrowUp size={16} /></button>
+              <button type="button" className="vs-send" aria-label="Send" disabled={!input.trim() || chat.sending || !chat.ready || contextSaving || conversionSaving} onClick={() => void submit()}><ArrowUp size={16} /></button>
             </div>
           </div>
         </section>
@@ -419,6 +539,18 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           {settingsOpen && artifact?.kind === "form" && (
             <FormSettings tenantId={tenantId} formId={artifact.form.id} onClose={() => setSettingsOpen(false)} onSaved={() => setRefreshKey((k) => k + 1)} />
           )}
+          {conversionOpen && artifact?.kind === "page" && <PageConversionSettings key={`${tenantId}:${artifact.page.id}`}
+            value={artifact.page.blocks.find((block): block is PageConversionBlock => block.type === "conversion")}
+            forms={conversionResources?.forms ?? []} bookingLinks={conversionResources?.bookingLinks ?? []}
+            formsStatus={conversionResources?.formsStatus ?? "loading"} bookingLinksStatus={conversionResources?.bookingLinksStatus ?? "loading"}
+            saving={conversionSaving} error={conversionError} onSave={saveConversion} onClose={() => setConversionOpen(false)} />}
+          {artifact?.kind === "page" && <details className="vs-publication-receipts">
+            <summary>Publication receipts{publicationReceipts?.length ? ` · ${publicationReceipts.length}` : ""}</summary>
+            {receiptUnavailable ? <p role="status">Receipts are unavailable right now. This does not change the page’s published state.</p>
+              : publicationReceipts === null ? <p role="status">Reading original receipts…</p>
+                : publicationReceipts.length === 0 ? <p>No publication receipt is recorded for this page.</p>
+                  : <ol>{publicationReceipts.map(receipt => <li key={receipt.id}><b>{receipt.action === "publish" ? "Publish" : "Take offline"} · {receipt.outcome}</b><time dateTime={receipt.occurredAt}>{new Date(receipt.occurredAt).toLocaleString()}</time><code>{receipt.id}</code></li>)}</ol>}
+          </details>}
         </div>
       </div>
 

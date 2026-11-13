@@ -1,6 +1,6 @@
 // _shared/growth-blocks.ts — the ONE GrowthBlock contract for the Growth OS edge functions.
 //
-// Why this file exists (§12/§13 — extract, never fork): the 19-type block union is enforced
+// Why this file exists (§12/§13 — extract, never fork): the 20-type block union is enforced
 // in three places that must never drift apart:
 //   1. SQL  — public.growth_validate_blocks(jsonb)  (migration 20260714091000), which BOTH
 //             growth_page_upsert and growth_page_edit_blocks call. This is the hard gate: a
@@ -10,7 +10,7 @@
 //             so TS-valid ⊆ SQL-valid — anything this returns is guaranteed to survive the
 //             upsert. A revision we hand back that the save would reject is worse than no
 //             revision at all.
-//   3. PROMPT — GROWTH_BLOCK_SPEC below: the exact same 19 variants, in the shape the model
+//   3. PROMPT — GROWTH_BLOCK_SPEC below: the exact same 20 variants, in the shape the model
 //             must emit. Shared so a new block type is added in ONE place, not three.
 //
 // Callers: growth-block-edit (today). FOLLOW-UP: growth-page-draft/index.ts still carries a
@@ -20,6 +20,7 @@
 //
 // Doctrine: §2 (no finance/credit in platform defaults) · §13 (tenant-safe, structured,
 // no swallowed generics) · §15 (never fabricate a URL, a date, or a fact).
+import { normalizeConversionDestination } from "./growth/conversion-destination.ts";
 
 // ── Primitives ───────────────────────────────────────────────────────────────
 export const str = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -50,13 +51,13 @@ export function extractJson(text: string): any {
   return JSON.parse(raw.slice(start, end + 1));
 }
 
-// ── The 19-type union ────────────────────────────────────────────────────────
+// ── The 20-type union ────────────────────────────────────────────────────────
 // Kept in lockstep with src/lib/growth.ts (the renderer) and the SQL type list in
 // public.growth_validate_blocks. Adding a type means touching all three, deliberately.
 export const GROWTH_BLOCK_TYPES = [
   "hero", "hero_scene", "phase_cards", "feature_grid", "cta", "rich_text", "embedded_form",
   "social_proof", "testimonial", "pricing", "faq", "media", "stats", "countdown",
-  "two_column", "image", "gallery", "steps", "chatbot",
+  "two_column", "image", "gallery", "steps", "chatbot", "conversion",
 ] as const;
 
 export type GrowthBlockType = (typeof GROWTH_BLOCK_TYPES)[number];
@@ -145,6 +146,15 @@ export function validateBlock(b: any): any | null {
       const formSlug = slugify(b.form_slug, "");
       if (!formSlug) return null;
       return { type: "embedded_form", form_slug: formSlug };
+    }
+    case "conversion": {
+      const normalized = normalizeConversionDestination(b.destination);
+      if (normalized.ok === false) return null;
+      const block: Record<string, unknown> = { type: "conversion", destination: normalized.destination };
+      const title = trimStr(b.title, 160); if (title) block.title = title;
+      const description = trimStr(b.description, 400); if (description) block.description = description;
+      const label = trimStr(b.label, 60); if (label) block.label = label;
+      return block;
     }
     case "social_proof": {
       const logos = Array.isArray(b.logos) ? b.logos.map((l: any) => {
@@ -313,6 +323,7 @@ export const BLOCK_REQUIREMENTS: Record<string, string> = {
   cta: "a title, a cta_label and a cta_href",
   rich_text: "non-empty html (max 20000 chars)",
   embedded_form: "a non-empty form_slug",
+  conversion: "a normalized native_form/native_booking/external_form/external_booking destination; native identity and publication are checked by the original server contract",
   social_proof: "at least one logo with a name",
   testimonial: "at least one item with a quote",
   pricing: "at least one tier with a name, a price and at least one feature",
@@ -373,7 +384,7 @@ export function newPlaceholders(original: unknown, revised: unknown): string[] {
 
 // ── The block spec the model is held to ──────────────────────────────────────
 // One source of truth for every Growth OS prompt that emits blocks.
-export const GROWTH_BLOCK_SPEC = `GrowthBlock variants — 19 types (use the exact "type" strings and field names):
+export const GROWTH_BLOCK_SPEC = `GrowthBlock variants — 20 types (use the exact "type" strings and field names):
 - { "type": "hero", "eyebrow"?: string, "title": string, "subtitle"?: string, "cta_label"?: string, "cta_href"?: string, "image_url"?: https-string, "image_position"?: "full"|"split", "quote"?: string }
 - { "type": "hero_scene", "eyebrow"?: string, "title": string, "subtitle"?: string, "cta_label"?: string, "cta_href"?: string }   // an ANIMATED, brand-toned hero with a premium motion backdrop and NO image. Prefer this over "hero" as the opening block when you have NO real hero image/photo to use — it looks intentional and high-end instead of a flat color. Use "hero" (with image_url) only when there's a real image. Max ONE hero-type block, first.
 - { "type": "feature_grid", "title"?: string, "items": [{ "title": string, "body": string }] }
@@ -381,6 +392,7 @@ export const GROWTH_BLOCK_SPEC = `GrowthBlock variants — 19 types (use the exa
 - { "type": "cta", "title": string, "body"?: string, "cta_label": string, "cta_href": string }
 - { "type": "rich_text", "html": string }   // max 20000 chars
 - { "type": "embedded_form", "form_slug": string }
+- { "type": "conversion", "destination": { "kind": "native_form", "formId": UUID } | { "kind": "native_booking", "slug": string } | { "kind": "external_form" | "external_booking", "mode": "link" | "embed", "url": public_https_url }, "title"?: string, "description"?: string, "label"?: string } — only use an explicitly supplied native form UUID/booking slug or public provider URL; never invent identity, ownership, publication or CRM submission routing. Native slug max 128; title max 160; description max 400; label max 60. External embed only accepts the canonical supported provider shapes; unsupported public destinations use link mode. No raw HTML, JS, credentials, PII query/prefill, redirects or unreviewed URL options.
 - { "type": "social_proof", "title"?: string, "logos": [{ "name": string, "image_url"?: https-string }] }
 - { "type": "testimonial", "items": [{ "quote": string, "author"?: string, "role"?: string, "avatar_url"?: https-string, "rating"?: 1-5 }] }
 - { "type": "pricing", "title"?: string, "tiers": [{ "name": string, "price": string, "period"?: string, "features": [string], "cta_label"?: string, "cta_href"?: string, "featured"?: boolean }] }

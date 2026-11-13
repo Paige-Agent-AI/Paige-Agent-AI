@@ -27,13 +27,14 @@ const harness = vi.hoisted(() => ({
 
 vi.mock("./useMediaJobs", () => ({ useMediaJobs: () => harness.media }));
 vi.mock("@/hooks/useTenantContext", () => ({
-  useTenantContext: () => ({ activeTenantId: "t-synthetic", activeTenant: { slug: "northwind-studio" } }),
+  useTenantContext: () => ({ activeTenantId: "t-synthetic", activeUserId: "test-user-studio", activeTenant: { slug: "northwind-studio" } }),
 }));
 vi.mock("./studio/studio-data", async (orig) => ({
   ...(await orig<typeof import("./studio/studio-data")>()),
   listSessions: async () => [],
   // EXP07 row 6: Studio home also lists workspace templates on mount — no templates here.
   listTemplates: async () => [],
+  readStudioBusinessSources: async () => ({ readStatus: "unavailable", context: null, publicBrand: undefined }),
   // Studio home also reads the brand on mount. This render harness has no stored
   // brand; keep that seam explicit rather than catching a real backend failure.
   loadBrand: async () => ({
@@ -228,7 +229,7 @@ describe("Vibe Studio — the 18 owner-required states, rendered", () => {
 
   it("opens on Studio home: one brief composer, no artifact-type picker, and Back to Marketing", () => {
     renderAt(baseMedia(), "home");
-    expect(text()).toContain("What should Paige build?");
+    expect(text()).toContain("What should NEXUS build?");
     expect(text()).toContain("Back to Marketing");
     expect(host.querySelector("#vs-brief")).toBeTruthy();
     for (const tab of ["Page", "Form", "Funnel", "Copy"]) {

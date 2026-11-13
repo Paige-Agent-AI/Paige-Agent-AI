@@ -2,14 +2,19 @@
 // lives here as drafts; published work lives in Marketing › Overview. There is no artifact-type picker: the
 // brief decides what gets built.
 import React from "react";
-import { ArrowUp, FileText, Filter, Image as ImageIcon, LayoutTemplate, Sparkles, Images } from "lucide-react";
-import { Ic, Logo } from "../_shared";
+import { ArrowUp, FileText, Filter, Image as ImageIcon, LayoutTemplate, Sparkles, Images, Minimize2 } from "lucide-react";
+import { Ic } from "../_shared";
+import { NexusIdentity } from "./NexusIdentity";
 import { VsStars } from "./VsStars";
-import { createSession, listTemplates, loadBrand, plainError, sessionName, type StudioSession } from "./studio-data";
+import { listTemplates, loadBrand, plainError, sessionName, startStudioProject, lookupStudioProjectStart, ProjectStartUnknown, type StudioSession, type StudioProjectContext } from "./studio-data";
 import { BRIEF_FIELDS, EMPTY_BRIEF_DETAILS, composeBrief, hasBriefDetails, type BriefDetails } from "./brief-fields";
 import { loadArtifact, type Brand, type LoadedArtifact } from "./artifact-state";
 import { nexusDepartmentRemit, nexusDisplayName, planWithNexusPrompt } from "./nexus";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
+import { StudioBusinessContextPanel } from "./StudioBusinessContextPanel";
+import { useStudioBusinessContext } from "./useStudioBusinessContext";
+import { NEXUS_LANDING_TEMPLATE_ID } from "./nexus-landing-template";
+import type { StudioBusinessContext, StudioContextTarget } from "./business-context";
 
 const SUGGESTIONS = [
   "An intake form for new clients",
@@ -87,10 +92,11 @@ function describe(s: StudioSession): string {
   return kinds.join(" and ");
 }
 
-export function StudioRail({ view, sessions, onBack, onHome, onMedia, onOpen }: {
+export function StudioRail({ view, sessions, onBack, onMinimize, onHome, onMedia, onOpen }: {
   view: "home" | "media";
   sessions: StudioSession[] | null;
   onBack: () => void;
+  onMinimize?: () => void;
   onHome: () => void;
   onMedia: () => void;
   onOpen: (s: StudioSession) => void;
@@ -100,8 +106,9 @@ export function StudioRail({ view, sessions, onBack, onHome, onMedia, onOpen }: 
       <button type="button" className="vs-rail-back" onClick={onBack}>
         <span style={{ transform: "rotate(180deg)", display: "flex" }}><Ic.chev size={14} style={{}} /></span>Back to Marketing<kbd>Esc</kbd>
       </button>
-      <div className="vs-rail-brand"><Logo size={20} />Vibe Studio</div>
-      <button type="button" className="vs-rail-item" aria-current={view === "home" ? "page" : undefined} onClick={onHome}><Sparkles size={15} aria-hidden="true" />Build with Paige</button>
+      <div className="vs-rail-brand"><NexusIdentity /></div>
+      {onMinimize && <button type="button" className="vs-rail-item" onClick={onMinimize}><Minimize2 size={15} aria-hidden="true" />Minimize Studio</button>}
+      <button type="button" className="vs-rail-item" aria-current={view === "home" ? "page" : undefined} onClick={onHome}><Sparkles size={15} aria-hidden="true" />Build with NEXUS</button>
       <button type="button" className="vs-rail-item" aria-current={view === "media" ? "page" : undefined} onClick={onMedia}><Images size={15} aria-hidden="true" />Images &amp; video</button>
       <div className="vs-rail-label">Drafts</div>
       {sessions === null ? <span className="vs-rail-skel" role="status" aria-label="Loading your drafts"><i /><i /><i /></span>
@@ -116,9 +123,12 @@ export function StudioRail({ view, sessions, onBack, onHome, onMedia, onOpen }: 
   );
 }
 
-export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff, onOpen }: {
+export function StudioHome({ sessions, sessionsError, tenantId, tenantSlug, onNexusHandoff, onOpen, recoverStartId, onStartPending }: {
   sessions: StudioSession[] | null;
   sessionsError: string | null;
+  tenantId: string;
+  recoverStartId?: string;
+  onStartPending?: (requestId: string | null) => void;
   tenantSlug: string;
   /** Present only when the shell can open the global PAIGE chat; the affordance hides without it. */
   onNexusHandoff?: (prompt: string) => void;
@@ -134,35 +144,63 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [creating, setCreating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [target, setTarget] = React.useState<StudioContextTarget>({ kind: "workspace" });
+  const [projectValues, setProjectValues] = React.useState<StudioBusinessContext["projectValues"]>({});
+  const projection = useStudioBusinessContext(tenantId, tenantSlug, target, projectValues);
+  const [editorialTemplate, setEditorialTemplate] = React.useState(false);
+  const [unknownStart, setUnknownStart] = React.useState(!!recoverStartId);
+  const intent = React.useRef<{ requestId: string; brief: string; context: StudioProjectContext } | null>(null);
+  const alive = React.useRef(true);
+  React.useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const ref = React.useRef<HTMLTextAreaElement | null>(null);
   React.useEffect(() => { ref.current?.focus(); }, []);
 
   const start = async (text: string) => {
     // The owner's own words are the brief; details only add to them (the Build button gates the same way).
+    if (unknownStart) { await checkEarlierStart(); return; }
     if (text.trim().length < 4 || creating) return;
+    if (projection.issues.some(issue => issue.source === "project" && issue.field && projectValues[issue.field]?.trim())) {
+      setError("Review the highlighted project details before starting."); return;
+    }
+    const authoredValues = Object.fromEntries(Object.keys(projectValues).map(key => [key, projection.projectValues[key as keyof typeof projectValues] ?? ""]));
+    const context: StudioProjectContext = { target, values: authoredValues, ...(editorialTemplate ? { template_id: NEXUS_LANDING_TEMPLATE_ID } : {}) };
     const composed = composeBrief(text, details);
+    if (composed.length > 32000) { setError("The brief and selected context are too long. Shorten this project's details before starting."); return; }
+    intent.current = { requestId: crypto.randomUUID(), brief: composed, context };
+    onStartPending?.(intent.current.requestId);
     setCreating(true); setError(null);
     try {
-      const s = await createSession(composed);
-      onOpen(s.id, composed);
+      const result = await startStudioProject({ tenantId, ...intent.current });
+      if (!alive.current) return;
+      onStartPending?.(null);
+      onOpen(result.sessionId, result.created ? composed : null);
     } catch (e) {
-      setError(plainError(e, "The project couldn't be started. Try again."));
+      if (!alive.current) return;
+      setUnknownStart(e instanceof ProjectStartUnknown);
+      if (!(e instanceof ProjectStartUnknown)) onStartPending?.(null);
+      setError(plainError(e, "The project couldn't be started. Your brief is still here."));
       setCreating(false);
     }
+  };
+
+  const checkEarlierStart = async () => {
+    const requestId = intent.current?.requestId ?? recoverStartId;
+    if (!requestId || creating) return;
+    setCreating(true); setError(null);
+    try {
+      const result = await lookupStudioProjectStart(tenantId, requestId);
+      if (!alive.current) return;
+      if (result) { onStartPending?.(null); onOpen(result.sessionId, null); }
+      else setError("That earlier start is still unverified. No new project was started; your brief is preserved.");
+    } catch (e) { if (alive.current) setError(plainError(e, "The earlier start could not be checked. No new project was started.")); }
+    finally { if (alive.current) setCreating(false); }
   };
 
   // A template starts a NEW project seeded from its brief — the template itself never changes.
   const startFromTemplate = async (t: StudioSession) => {
     const brief = (t.seedBrief ?? sessionName(t)).trim();
     if (brief.length < 4 || creating) return;
-    setCreating(true); setError(null);
-    try {
-      const s = await createSession(brief);
-      onOpen(s.id, brief);
-    } catch (e) {
-      setError(plainError(e, "The project couldn't be started. Try again."));
-      setCreating(false);
-    }
+    await start(brief);
   };
 
   return (
@@ -170,9 +208,11 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
       <div className="vs-hero">
         <VsStars n={160} />
         <div className="vs-hero-inner">
-          <h1>What should Paige build?</h1>
+          <h1>What should NEXUS build?</h1>
+          <StudioBusinessContextPanel projection={projection} projectValues={projectValues} onChange={setProjectValues} disabled={creating || unknownStart}
+            onTargetChange={kind => { setProjectValues({}); setTarget(kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }); }} />
           <div className="vs-composer">
-            <label className="vs-sr" htmlFor="vs-brief">Describe what you want Paige to build</label>
+            <label className="vs-sr" htmlFor="vs-brief">Describe what you want NEXUS to build</label>
             <textarea
               id="vs-brief"
               ref={ref}
@@ -200,16 +240,20 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
               </div>
             )}
             <div className="vs-composer-foot">
-              <span>Paige works from <b>your brand</b> and your business details.</span>
+              <span>NEXUS uses the selected project context.</span>
               <button type="button" className="vs-link vs-brief-toggle" aria-expanded={detailsOpen} disabled={creating} onClick={() => setDetailsOpen((o) => !o)}>
                 {detailsOpen ? "Hide details" : hasBriefDetails(details) ? "Details · added" : "Add details"}
               </button>
-              <button type="button" className="vs-btn vs-btn-violet" style={{ marginLeft: "auto" }} disabled={brief.trim().length < 4 || creating} onClick={() => void start(brief)}>
-                {creating ? "Starting…" : "Build it"} <ArrowUp size={14} aria-hidden="true" />
+              <button type="button" className="vs-btn vs-btn-violet" style={{ marginLeft: "auto" }} disabled={(!unknownStart && brief.trim().length < 4) || creating} onClick={() => void start(brief)}>
+                {creating ? "Checking…" : unknownStart ? "Check earlier start" : "Build it"} <ArrowUp size={14} aria-hidden="true" />
               </button>
             </div>
           </div>
           {error && <p className="vs-alert" role="alert">{error}</p>}
+          <button type="button" className="vs-template-choice" aria-pressed={editorialTemplate} disabled={creating || unknownStart}
+            onClick={() => { setEditorialTemplate(value => !value); if (!brief.trim()) setBrief("Build a landing page for this offer"); ref.current?.focus(); }}>
+            <LayoutTemplate size={18} aria-hidden="true" /><span><b>Editorial landing page</b><small>A clear opening, your offer, one next step · built in your selected brand</small></span><span aria-hidden="true">{editorialTemplate ? "Selected" : "Use template"}</span>
+          </button>
           {onNexusHandoff && (
             <p className="vs-dept-line">
               Brand and public presence are {nexusDisplayName()}'s department ({nexusDepartmentRemit()}).

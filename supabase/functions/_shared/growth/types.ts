@@ -6,7 +6,8 @@
 // globals fail Deno's type-check. The app re-exports these from src/lib/growth.ts verbatim, so
 // every existing import path keeps working; this file is the definition and that is the alias.
 //
-// Pure types + this one const: no imports, no DOM, no npm — safe for both runtimes.
+// Pure types + this one const: no runtime imports, no DOM, no npm — safe for both runtimes.
+import type { ConversionDestination } from "./conversion-destination.ts";
 
 export interface GrowthCtaRef { cta_label?: string; cta_href?: string }
 
@@ -26,6 +27,7 @@ export type GrowthBlock =
   | { type: "cta"; title: string; body?: string; cta_label: string; cta_href: string }
   | { type: "rich_text"; html: string }
   | { type: "embedded_form"; form_slug: string; title?: string }
+  | { type: "conversion"; destination: ConversionDestination; title?: string; description?: string; label?: string }
   // — expansion (Framer/Webflow-class landing surfaces) —
   | { type: "social_proof"; title?: string; logos: { name: string; image_url?: string }[] }
   | { type: "testimonial";

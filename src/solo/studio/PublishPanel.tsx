@@ -155,11 +155,12 @@ function Checking({ text }: { text: string }) {
   );
 }
 
-export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefresh, tenantSlug, tenantName, brandFloor }: {
+export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefresh, tenantSlug, tenantName, brandFloor, minimized = false }: {
   artifact: LoadedArtifact;
   /** "Review with NEXUS" pre-approval handoff to the global PAIGE chat; absent ⇒ no affordance. */
   onNexusHandoff?: (prompt: string) => void;
   onClose: () => void;
+  minimized?: boolean;
   onDone: (message: string) => void;
   /** Re-read the artifact without announcing success (an unverified publish). */
   onRefresh?: () => void;
@@ -227,19 +228,20 @@ export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefr
     void prepare(view === "live" ? "unpublish" : "publish");
   }, [view, notPublishable, prepare]);
 
-  React.useEffect(() => { firstRef.current?.focus(); }, []);
-  React.useEffect(() => { if (url) doneRef.current?.focus(); }, [url]);
-  React.useEffect(() => { if (confirming) keepRef.current?.focus(); }, [confirming]);
+  React.useEffect(() => { if (!minimized) firstRef.current?.focus(); }, [minimized]);
+  React.useEffect(() => { if (url && !minimized) doneRef.current?.focus(); }, [url, minimized]);
+  React.useEffect(() => { if (confirming && !minimized) keepRef.current?.focus(); }, [confirming, minimized]);
   // When the panel's body changes under the focused control (a state replaced it, or the pressed
   // button went disabled while the door answered), focus drops to the page. Put it back: on the
   // act after a re-check ("press Publish now to go ahead"), otherwise on the panel's safe exit.
   React.useEffect(() => {
     const el = panelRef.current;
-    if (busy || !el || (document.activeElement && document.activeElement !== document.body)) return;
+    if (minimized || busy || !el || (document.activeElement && document.activeElement !== document.body)) return;
     const usable = (b: HTMLButtonElement | null) => (b && el.contains(b) && !b.disabled ? b : null);
     (usable(note ? primaryRef.current : null) ?? usable(firstRef.current) ?? el.querySelector<HTMLButtonElement>("button:not(:disabled)"))?.focus();
   });
   React.useEffect(() => {
+    if (minimized) return;
     const k = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       e.stopPropagation();
@@ -249,7 +251,7 @@ export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefr
     };
     window.addEventListener("keydown", k, true);
     return () => window.removeEventListener("keydown", k, true);
-  }, [onClose]);
+  }, [onClose, minimized]);
 
   const pub = preps.publish;
   const out = preps.unpublish;

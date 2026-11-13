@@ -1,11 +1,11 @@
 // The ONE block renderer. This exact tree draws the public landing page at
 // /p/<tenant>/<slug> AND the Studio live preview — preview == published, no fork. Every
-// one of the 19 GrowthBlock types renders here, token-driven (only `--gp-*` vars, zero
+// one of the 20 GrowthBlock types renders here, token-driven (only `--gp-*` vars, zero
 // hardcoded hex), responsive, motion-safe, AA-contrast, on a generous spacing rhythm.
 //
 // Theming: <GrowthBlocks> wraps the list in a scope div that applies resolveGrowthTheme()
 // as inline CSS variables, so the same component themes identically in both surfaces.
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import DOMPurify from "dompurify";
 import { assignBands, type GpBand } from "@/lib/growth/bands";
@@ -17,6 +17,7 @@ import { useBrandFontFaces } from "@/hooks/useBrandFontFaces";
 import "./growth-brand-fonts.css";
 import { GP_FADE_RISE, GP_PRESS, fadeRiseStyle, useReducedMotion } from "@/components/growth/growth-motion";
 import { GrowthFormEmbed } from "@/pages/public/GrowthFormRenderer";
+import { normalizeConversionDestination } from "../../../supabase/functions/_shared/growth/conversion-destination";
 
 // ── shared layout tokens ─────────────────────────────────────────────────────
 const SECTION = "px-6 md:px-10 py-16 md:py-24";
@@ -558,6 +559,77 @@ function MediaBlock({ block }: { block: Extract<GrowthBlock, { type: "media" }> 
   );
 }
 
+const CONVERSION_ACTION = `${GP_PRESS} inline-flex min-h-11 items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:opacity-60`;
+const conversionActionStyle: React.CSSProperties = {
+  background: "var(--gp-accent)", color: "var(--gp-accent-foreground)", outlineColor: "var(--gp-accent-ink)",
+};
+
+function ConversionLink({ href, label }: { href: string; label: string }) {
+  return <a href={href} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer" className={CONVERSION_ACTION} style={conversionActionStyle}>{label}</a>;
+}
+
+function NativeConversionForm({ formId }: { formId: string }) {
+  const [unavailable, setUnavailable] = useState(false);
+  return <>
+    <GrowthFormEmbed formId={formId} accent="var(--gp-accent)"
+      loading={<p role="status" style={{ color: "var(--gp-muted)" }}>Loading form…</p>}
+      onUnavailable={() => setUnavailable(true)} />
+    {unavailable && <p role="status" style={{ color: "var(--gp-muted)" }}>This form is unavailable.</p>}
+  </>;
+}
+
+function ConversionBlock({ block, preview }: { block: Extract<GrowthBlock, { type: "conversion" }>; preview: boolean }) {
+  const normalized = normalizeConversionDestination(block.destination);
+  const [activeUrl, setActiveUrl] = useState<string | null>(null);
+  const panelId = useId();
+  let body: React.ReactNode;
+  if (normalized.ok === false) {
+    body = <p role="status" style={{ color: "var(--gp-muted)" }}>This destination is unavailable.</p>;
+  } else {
+    const destination = normalized.destination;
+    const form = destination.kind === "native_form" || destination.kind === "external_form";
+    const noun = form ? "form" : "booking";
+    if (preview) {
+      body = <div className="space-y-3 text-center">
+        <button type="button" disabled className={CONVERSION_ACTION} style={conversionActionStyle}>{block.label || `Open ${noun}`}</button>
+        <p role="status" className="text-sm" style={{ color: "var(--gp-muted)" }}>Preview only. Visitors can use this {noun} on the published page.</p>
+      </div>;
+    } else if (destination.kind === "native_form") {
+      // Format admission is not authority. The original component resolves the
+      // public form through growth_public_form and submits through its writer.
+      body = <NativeConversionForm key={destination.formId} formId={destination.formId} />;
+    } else if (destination.kind === "native_booking") {
+      body = <ConversionLink href={`/book/${encodeURIComponent(destination.slug)}`} label={block.label || "Open booking"} />;
+    } else if (destination.mode === "link") {
+      body = <ConversionLink href={destination.url} label={block.label || `Open ${noun}`} />;
+    } else {
+      const active = activeUrl === destination.url;
+      body = <div className="space-y-5">
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <button type="button" className={CONVERSION_ACTION} style={conversionActionStyle}
+            aria-expanded={active} aria-controls={panelId}
+            onClick={() => setActiveUrl(active ? null : destination.url)}>
+            {active ? `Close ${noun}` : block.label || `Load ${noun}`}
+          </button>
+          {active && <a href={destination.url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer"
+            className="inline-flex min-h-11 items-center underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
+            style={{ color: "var(--gp-accent-ink)", outlineColor: "var(--gp-accent-ink)" }}>Open {noun} in a new tab</a>}
+        </div>
+        <div id={panelId}>
+          {active && <iframe src={destination.url} title={block.title || `${form ? "Form" : "Booking"} widget`}
+              className="w-full rounded-2xl" style={{ minHeight: "44rem", border: hairline, background: "var(--gp-surface)" }}
+              sandbox="allow-scripts allow-forms allow-same-origin allow-popups" referrerPolicy="no-referrer"
+              loading="lazy" />}
+        </div>
+      </div>;
+    }
+  }
+  return <section className={SECTION}><div className={WRAP_NARROW}>
+    <SectionHead title={block.title} subtitle={block.description} />
+    {body}
+  </div></section>;
+}
+
 function StatsBlock({ block }: { block: Extract<GrowthBlock, { type: "stats" }> }) {
   return (
     <section className={SECTION}>
@@ -892,7 +964,7 @@ function ChatbotBlock({ block, tenantId }: { block: Extract<GrowthBlock, { type:
 }
 
 // ── single-block dispatcher (exported for callers that render one block) ──────
-export function BlockRenderer({ block, tenantId }: { block: GrowthBlock; tenantId?: string }) {
+export function BlockRenderer({ block, tenantId, preview = false }: { block: GrowthBlock; tenantId?: string; preview?: boolean }) {
   switch (block.type) {
     case "hero": return <HeroBlock block={block} />;
     case "hero_scene": return <HeroSceneBlock block={block} />;
@@ -901,6 +973,7 @@ export function BlockRenderer({ block, tenantId }: { block: GrowthBlock; tenantI
     case "cta": return <CtaBlock block={block} />;
     case "rich_text": return <RichTextBlock block={block} />;
     case "embedded_form": return <EmbeddedFormBlock block={block} tenantId={tenantId} />;
+    case "conversion": return <ConversionBlock key={preview ? "preview" : "public"} block={block} preview={preview} />;
     case "social_proof": return <SocialProofBlock block={block} />;
     case "testimonial": return <TestimonialBlock block={block} />;
     case "pricing": return <PricingBlock block={block} />;
@@ -923,6 +996,8 @@ export interface GrowthBlocksProps {
   brandFloor?: GrowthPageTheme | null;
   /** Tenant id — lets `embedded_form` resolve a live form. Absent in bare preview. */
   tenantId?: string;
+  /** Studio sets this even with tenantId present: conversion resources never execute in preview. */
+  preview?: boolean;
   /** Rendered inside the themed scope, after the blocks (e.g. a page footer). */
   children?: React.ReactNode;
   className?: string;
@@ -933,7 +1008,7 @@ export interface GrowthBlocksProps {
  * preview both mount — one renderer, one theme resolver, so what you preview is what
  * publishes.
  */
-export function GrowthBlocks({ blocks, theme, brandFloor, tenantId, children, className = "" }: GrowthBlocksProps) {
+export function GrowthBlocks({ blocks, theme, brandFloor, tenantId, preview = false, children, className = "" }: GrowthBlocksProps) {
   const vars = resolveGrowthTheme(theme, brandFloor);
   // Brand fonts: load ONLY the resolved display + body faces, into the document this tree is actually
   // in (the Studio canvas is an iframe). `data-gp-font="brand"` arms the scoped heading rule in
@@ -955,7 +1030,7 @@ export function GrowthBlocks({ blocks, theme, brandFloor, tenantId, children, cl
     <div ref={scopeRef} data-gp="" data-gp-font={fontPair ? "brand" : undefined} className={className} style={scopeStyle}>
       {(blocks ?? []).map((block, i) => (
         <div key={i} className={GP_FADE_RISE} style={{ ...fadeRiseStyle(i), ...bandStyle(bands[i]) }}>
-          <BlockRenderer block={block} tenantId={tenantId} />
+          <BlockRenderer block={block} tenantId={tenantId} preview={preview} />
         </div>
       ))}
       {children}

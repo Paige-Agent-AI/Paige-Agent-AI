@@ -334,7 +334,7 @@ export function LivePreview({
   // The EXACT tree the published page mounts: same component, same theme, same floor, same
   // tenantId, same footer child. Skeletons ride inside the scope so they inherit the theme.
   const tree = (
-    <GrowthBlocks blocks={blocks} theme={theme} brandFloor={brandFloor} tenantId={tenantId}>
+    <GrowthBlocks blocks={blocks} theme={theme} brandFloor={brandFloor} tenantId={tenantId} preview>
       {skeletons}
       {showFooter && (
         <footer className="py-10 text-center text-xs" style={{ color: "var(--gp-muted)" }}>

@@ -1,0 +1,21 @@
+/* Supplemental private-row content; the original Hub stream owns scrolling. */
+.th-studio-handoff{min-width:0;margin-top:12px;padding-top:12px;border-top:1px solid var(--pg-line);color:var(--pg-ink);display:grid;gap:10px}
+.th-studio-summary{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;font-size:13px;font-weight:600}
+.th-studio-brief{margin:8px 0 12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.6}
+.th-studio-help,.th-studio-feedback{margin:0;color:var(--pg-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.th-studio-feedback{margin-top:10px}
+.th-studio-target-label{font-size:12px;font-weight:600}
+.th-studio-handoff>select{box-sizing:border-box;max-width:100%;width:100%;min-height:44px;padding:8px 10px;border:1px solid var(--pg-line);border-radius:8px;background:var(--pg-canvas);color:var(--pg-ink);font:inherit}
+.th-studio-handoff :is(button,select,input):focus-visible,.th-studio-summary:focus-visible{outline:2px solid var(--pg-violet);outline-offset:3px}
+.th-studio-actions{display:flex;flex-wrap:wrap;gap:8px}
+.th-studio-handoff .th-btn{min-height:44px;white-space:normal;padding:9px 13px;border:1px solid var(--pg-line);border-radius:8px;background:var(--pg-surface);color:var(--pg-ink);font:600 12px/1.4 var(--pg-font-ui);cursor:pointer}
+.th-studio-handoff .th-btn:disabled{opacity:.6;cursor:not-allowed}
+.th-studio-ready{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+/* Reuse Studio's actual project-context editor inside Hub's established palette. */
+.th-studio-handoff .th-studio-context.vs-studio{
+  --vs-text:var(--pg-ink);--vs-dim:var(--pg-muted);--vs-link:var(--pg-violet);--vs-line:var(--pg-line);--vs-line-soft:var(--pg-line-soft);
+  --vs-panel:var(--pg-surface);--vs-panel-2:var(--pg-raised);--vs-violet:var(--pg-violet);--vs-violet-soft:color-mix(in srgb,var(--pg-violet) 12%,transparent);
+  --vs-violet-line:var(--pg-violet);--vs-bad:var(--pg-ink);--font:var(--pg-font-ui);
+  display:block;position:static;inset:auto;width:100%;height:auto;min-height:0;max-height:none;margin:0;padding:0;overflow:visible;background:transparent;color:inherit;font:inherit
+}
+.th-studio-context .vs-context-targets button,.th-studio-context .vs-context-reset,.th-studio-context .vs-context-field input{min-height:44px}

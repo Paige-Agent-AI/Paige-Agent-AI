@@ -32,6 +32,7 @@ import { VoiceDeviceProvider } from "@/lib/voice/VoiceDeviceProvider";
 import { DialPadSurface } from "@/components/admin/voice/DialPadSurface";
 import { IncomingCallOverlay } from "@/components/admin/voice/IncomingCallOverlay";
 import { LiveTranscriptPanel } from "@/components/admin/voice/LiveTranscriptPanel";
+import { StudioWindowHost } from "./studio/StudioWindowHost";
 
 // Route-level code split (EXP01 outcome 1): the chat-first Solo entry previously
 // compiled EVERY screen into its first download — 2.6 MB raw / 739 kB gzip — because
@@ -51,7 +52,6 @@ const TeamHubWorkspace=React.lazy(()=>import("./team-hub/TeamHubWorkspace").then
 const TenantCanonicalCalendarWorkspace=React.lazy(()=>import("@/components/tenant-calendar/TenantCanonicalCalendarWorkspace").then(m=>({default:m.TenantCanonicalCalendarWorkspace})));
 const Marketplace=React.lazy(()=>import("./marketplace").then(m=>({default:m.Marketplace})));
 const SoloSettings=React.lazy(()=>import("./settings").then(m=>({default:m.SoloSettings})));
-const VibeStudio=React.lazy(()=>import("./vibe").then(m=>({default:m.VibeStudio})));
 const SCREEN_LABELS={operations:'Operations',teamhub:'Team Hub',finance:'Finance',cal:'Calendar',clients:'Clients',growth:'Growth',ads:'Ads',sales:'Sales',market:'Marketplace',settings:'Settings'};
 const ScreenOpening=({label})=>(<div role="status" style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'50vh',color:'var(--ink-3)',fontSize:13.5}}>Opening {label}…</div>);
 
@@ -393,32 +393,6 @@ React.useEffect(() => {
     navigate(`/solo/${urlAccount}/settings/${legacySettingsDestination}${location.search}`, { replace: true });
   }
 }, [urlDriven, urlAccount, urlSplat, activeTenant?.account_number, legacySettingsDestination, location.search, navigate]);
-const[studio,setStudio]=React.useState(false);
-const studioReturnFocus=React.useRef(null);
-const studioReturnOwner=React.useRef(null);
-const studioFocusPending=React.useRef(false);
-React.useEffect(()=>{const h=(event)=>{
-  const target=event instanceof CustomEvent?event.detail?.returnFocus:null;
-  const owner=target instanceof HTMLElement?target.closest('[data-tenant-shell]'):null;
-  if(!(target instanceof HTMLButtonElement)||target.disabled||!target.hasAttribute('data-solo-vibe-studio-launcher')||!owner)return;
-  studioReturnFocus.current=target;
-  studioReturnOwner.current=owner;
-  studioFocusPending.current=false;
-  setStudio(true);
-};window.addEventListener('paige-studio',h);return()=>window.removeEventListener('paige-studio',h)},[]);
-const closeStudio=React.useCallback(()=>{studioFocusPending.current=true;setStudio(false)},[]);
-React.useLayoutEffect(()=>{
-  if(studio||!studioFocusPending.current)return;
-  studioFocusPending.current=false;
-  const target=studioReturnFocus.current;
-  const owner=studioReturnOwner.current;
-  studioReturnFocus.current=null;
-  studioReturnOwner.current=null;
-  if(route!=='growth'||!(target instanceof HTMLButtonElement)||!target.isConnected||target.disabled)return;
-  if(!owner?.isConnected||target.closest('[data-tenant-shell]')!==owner||target.closest('[hidden],[aria-hidden="true"],[inert]'))return;
-  target.focus({preventScroll:true});
-},[route,studio]);
-React.useEffect(()=>{if(route==='growth')return;setStudio(false);studioFocusPending.current=false;studioReturnFocus.current=null;studioReturnOwner.current=null},[route]);
 const theme=resolvedTheme==='light'?'light':'dark';
 // Owner directive (2026-08-18) — the slide-in panel pops out from THIS launcher ONLY
 // (the TopBar spark / ⌘K). EVERY rail item, "Paige" included, navigates to its own URL
@@ -499,7 +473,7 @@ onSignOut={()=>void performSignOut({redirectTo:'/'})}>
 <SoloSetupReadinessNotice visible={showSetupReminder} setupHref={soloSetupHref} dismissed={setupReminderDismissed} onDismiss={()=>setSetupReminderDismissed(activeTenantId && activeUserId ? { tenant: activeTenantId, user: activeUserId } : null)}/>
 <div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>
 <main key={screenRoute} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary key={`${activeUserId??'resolving'}:${accountEpochKey}:${screenRoute==='operations'||screenRoute==='finance'?screenRoute:location.pathname}`} resetKey={location.pathname}><ScreenLoadBoundary resetKey={location.pathname}><React.Suspense fallback={<ScreenOpening label={SCREEN_LABELS[screenRoute]||[...NAV,...NAV2].find(n=>n[0]===screenRoute)?.[1]||'this view'}/>}>{screenRoute==='paige'?null:screens[screenRoute]}</React.Suspense></ScreenLoadBoundary></SoloScreenBoundary></main>
-{studio&&<React.Suspense fallback={null}><VibeStudio onBack={closeStudio} openPaige={openPaige}/></React.Suspense>}</div></div>
+<StudioWindowHost openPaige={openPaige}/></div></div>
 </TenantCommandCenterShell>};
 
 const SoloApp=()=> (

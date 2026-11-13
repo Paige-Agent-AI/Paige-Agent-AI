@@ -16,6 +16,7 @@ import { resolveGrowthTheme } from "./theme.ts";
 import { assignBands } from "./bands.ts";
 import { embedUrl } from "./media.ts";
 import type { GrowthBlock, GrowthPageTheme } from "./types.ts";
+import { normalizeConversionDestination } from "./conversion-destination.ts";
 
 /**
  * The rich_text sanitizer seam — the ONE environment-dependent step in an otherwise pure
@@ -26,7 +27,7 @@ import type { GrowthBlock, GrowthPageTheme } from "./types.ts";
  * file accepts nothing looser than the live page does.
  */
 export type RichTextSanitizer = (html: string) => string;
-const RICH_TEXT_FORBID_TAGS = /<\/?(?:script|style|iframe|object|embed|form)[^>]*>/gi;
+const RICH_TEXT_FORBID_TAGS = /<\/?(?:script|style|iframe|object|embed|form)\b[^>]*>/gi;
 const RICH_TEXT_FORBID_ATTR = /\s(?:onerror|onload|onclick|onmouseover|onfocus|onblur|onchange|onsubmit)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
 export function strictRichText(html: string): string {
   return html.replace(RICH_TEXT_FORBID_TAGS, "").replace(RICH_TEXT_FORBID_ATTR, "");
@@ -229,6 +230,19 @@ function renderBlock(b: GrowthBlock, ctx: Ctx): string {
       // source record). It never fabricates a form: it links to the live page's form.
       ctx.notes.push(`embedded_form “${b.form_slug}”: a static export links to the live page instead of fabricating intake — submissions stay on the live form.`);
       return `${heading(b.title ?? "Save your spot", "h2")}<p>Handled securely on the live page.</p><a class="gp-btn" href="${esc(ctx.liveUrl)}">${esc(b.title ? "Continue on the live page" : "Fill in the form on the live page")}</a>`;
+    }
+    case "conversion": {
+      const normalized = normalizeConversionDestination(b.destination);
+      if (normalized.ok === false) {
+        ctx.notes.push(`conversion: destination omitted (${normalized.code}); no unvalidated URL or markup is exported.`);
+        return `${heading(b.title, "h2")}<p>This destination is unavailable.</p>`;
+      }
+      const destination = normalized.destination;
+      const form = destination.kind === "native_form" || destination.kind === "external_form";
+      const url = destination.kind === "native_form" ? `${o}/form/${encodeURIComponent(destination.formId)}`
+        : destination.kind === "native_booking" ? `${o}/book/${encodeURIComponent(destination.slug)}` : destination.url;
+      ctx.notes.push("conversion: the static export uses an explicit link to the original public destination; it runs no widget, scheduler or intake executor.");
+      return `${heading(b.title, "h2")}${b.description ? `<p>${esc(b.description)}</p>` : ""}<a class="gp-btn" href="${esc(url)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">${esc(b.label || (form ? "Open form" : "Open booking"))}</a>`;
     }
     case "social_proof":
       return `${heading(b.title, "h2")}<div class="gp-logo-row">${b.logos.map((l) => {

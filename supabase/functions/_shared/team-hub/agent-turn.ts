@@ -79,6 +79,7 @@ import type { ContextIdentity } from "../paige-context/mod.ts";
 import { createWeeklyDraftDeadline } from "../paige-orchestration/weekly-draft-deadline.ts";
 import { createNexusEmailPreparation, nexusEmailPreparationFromAnswer, NEXUS_EMAIL_PREPARATION_PROMPT } from "./nexus-email-prepare.ts";
 import type { NexusEmailPreparation } from "./nexus-email-contract.ts";
+import { createTeamHubStudioPreparation, teamHubStudioPreparationFromAnswer, TEAM_HUB_STUDIO_PREPARATION_PROMPT, type TeamHubStudioPreparation } from "./studio-prepare.ts";
 
 // ---------------------------------------------------------------- the request
 
@@ -1079,10 +1080,14 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   const nexusPreparation = createNexusEmailPreparation({ agent, where: whereKind, turnId, tokenHash: hash,
     storedTools: storedDm }, { service, signal: deps.signal });
   const canPrepareEmail = await nexusPreparation.current();
+  const studioPreparation = createTeamHubStudioPreparation({ agent, where: whereKind, turnId, tokenHash: hash,
+    privateFollowUp: req.privateFollowUp === true }, { service, signal: deps.signal });
+  const canPrepareStudio = await studioPreparation.current();
   const messages: ChatMessage[] = [
     { role: "system", content: buildAgentSystemPrompt({ agent, tenantName, askerName, askerUserId: userId, where, privateFollowUp: req.privateFollowUp, personality, tools, privateRoute }) },
   ];
   if (canPrepareEmail) messages.push({ role: "system", content: NEXUS_EMAIL_PREPARATION_PROMPT });
+  if (canPrepareStudio) messages.push({ role: "system", content: TEAM_HUB_STUDIO_PREPARATION_PROMPT });
   if (here) messages.push({ role: "system", content: `${req.privateFollowUp ? "The conversation the question was asked in" : "This conversation"}, newest messages:\n${here}` });
   if (dmHistory) messages.push({ role: "system", content: `Your DM with ${askerName}, newest messages:\n${dmHistory}` });
   // JSON mode on OpenAI's Responses API needs the word "json" in the input messages themselves: the
@@ -1100,6 +1105,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   let text = "";
   let bringIn: BringInSuggestion[] = [];
   let emailPreparation: NexusEmailPreparation | null = null;
+  let preparedStudio: TeamHubStudioPreparation | null = null;
   const writes = mutatingTools();
   for (let round = 0; round < MAX_ROUNDS && control === null; round++) {
     if (deps.signal?.aborted) return endedWithoutPost("no_reply");
@@ -1110,7 +1116,8 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
         response_format: { type: "json_object" }, max_tokens: 900 },
         { trace, signal: deps.signal, beforeProviderAttempt: async () => !deps.signal?.aborted && (!cardReadTools.size || await currentCardReadScope()) && (!mentorReadsUsed || await currentMentorScope())
           && (!domainChecks.length || await currentPrivateScope(privateScope)) && (!zionReads.length || await currentZionModelScope())
-          && (!canPrepareEmail || await nexusPreparation.current()) });
+          && (!canPrepareEmail || await nexusPreparation.current())
+          && (!canPrepareStudio || await studioPreparation.current()) });
     } catch { return endedWithoutPost("no_reply"); }
     const choice = object((object(result?.response)?.choices as unknown[] | undefined)?.[0]);
     const message = object(choice?.message);
@@ -1123,6 +1130,11 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
         const candidate = nexusEmailPreparationFromAnswer(text);
         if (candidate === "invalid") return endedWithoutPost("no_reply");
         emailPreparation = candidate;
+      }
+      if (canPrepareStudio) {
+        const candidate = teamHubStudioPreparationFromAnswer(text);
+        if (candidate === "invalid") return endedWithoutPost("no_reply");
+        preparedStudio = candidate;
       }
       const answer = parseAgentAnswer(text);
       text = answer.reply;
@@ -1324,6 +1336,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   // revalidates this preparation atomically; its original end door can retire it
   // after revocation. No Messages write or send occurs in this model turn.
   if (emailPreparation && !await nexusPreparation.stage(emailPreparation)) return endedWithoutPost("no_reply");
+  if (preparedStudio && !await studioPreparation.stage(preparedStudio)) return endedWithoutPost("no_reply");
 
   // 7. The body. The fixed lines are the server's, never the model's: the private-part line is appended by
   // the definer (p_private_answer), the DM redirect line here (A2b, D7).

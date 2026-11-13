@@ -73,6 +73,7 @@ import {
 import { agentTurnKey, attachmentScope, teamHubNavigation, useTeamHub, type AgentTurn, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub, type TurnStateRead } from "./useTeamHub";
 import { useNexusEmailDrafts, type NexusEmailDraftView } from "./useNexusEmailDrafts";
 import { TeamHubEmailDraft } from "./TeamHubEmailDraft";
+import { TeamHubStudioHandoff } from "../studio/TeamHubStudioHandoff";
 import { PrivateDocumentWork } from "./PrivateDocumentWork";
 import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, dmRequestPrefill, endsWithRedirect, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
 import { AgentDmEmpty, AgentDmNote, AgentFailRow, AgentGlyph, AgentPlate, AgentProfilePanel, AgentTag, AgentTyping, BringInRow, PrivateNote, PrivateOthersNote } from "./TeamHubAgents";
@@ -1810,6 +1811,9 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
       {agentKey === "nexus" && place?.agentDm === "nexus" && isAsker && agent?.emailDrafts?.drafts[message.id]
         && <TeamHubEmailDraft key={`${meId}:${message.id}`} draft={agent.emailDrafts.drafts[message.id]}
           account={activeTenant} act={agent.emailDrafts.act} />}
+      {isAsker && (agentKey === "nexus" || agentKey === "paige") && place?.agentDm === agentKey
+        && <TeamHubStudioHandoff key={`${meId}:${activeTenant?.id ?? ""}:${message.id}:${agentKey}`} messageId={message.id}
+          expectedTenant={activeTenant?.id ?? ""} actorId={meId} agentKey={agentKey} />}
       {privatePart && !place?.agentDm && <p className="th-text th-text--fixed">{FIXED_PRIVATE_LINE}</p>}
       {privatePart && isAsker && privateStatus && agent && message.asked_in_message_id && <PrivateNote agent={agentKey} status={privateStatus} online={agent.online}
         onOpenDm={() => agent.onOpenDm(agentKey)}

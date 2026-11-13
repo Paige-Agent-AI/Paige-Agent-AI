@@ -47,7 +47,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
-  useTenantContext: () => ({ activeTenantId: "t-synthetic", activeTenant: { slug: "northwind-studio" } }),
+  useTenantContext: () => ({ activeTenantId: "t-synthetic", activeUserId: "test-user-studio", activeTenant: { slug: "northwind-studio" } }),
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
@@ -75,7 +75,10 @@ vi.mock("./studio-data", async (orig) => {
   return {
     ...real,
     listSessions: async () => h.sessions,
-    createSession: async (brief: string) => { h.created.push(brief); return session("s-new", brief, brief); },
+    createSession: async () => { throw new Error("Legacy non-idempotent start must not be called"); },
+    startStudioProject: async ({ brief }: { brief: string }) => { h.created.push(brief); return { sessionId: "s-new", threadId: "th-1", created: true }; },
+    readStudioBusinessSources: async () => ({ readStatus: "unavailable", context: null, publicBrand: undefined }),
+    loadStudioProjectContext: async () => ({ target: { kind: "workspace" }, values: {} }),
     openSession: async (id: string) => session(id, h.openTitle, h.openBrief),
     loadHeldConfirms: async () => h.held,
     renameSession: async (id: string, title: string) => { h.renamed.push([id, title]); h.openTitle = title; },
@@ -632,7 +635,7 @@ describe("Vibe Studio project workspace", () => {
     await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
     await flush();
     expect(host.querySelector(".vs-session")).toBeNull();
-    expect(text()).toContain("What should Paige build?");
+    expect(text()).toContain("What should NEXUS build?");
     expect(backs).toBe(0);
     await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
     expect(backs).toBe(1);
@@ -764,7 +767,7 @@ describe("Vibe Studio project workspace", () => {
       }), { status: 200 });
     }));
     await startProject("A landing page for my workshop");
-    const rows = () => Array.from(host.querySelectorAll<HTMLElement>('ol[aria-label="What Paige did"] li'));
+    const rows = () => Array.from(host.querySelectorAll<HTMLElement>('ol[aria-label="What NEXUS did"] li'));
     const glyph = (li: HTMLElement) => li.firstElementChild?.getAttribute("aria-label");
     expect(rows().map((li) => [li.dataset.status, glyph(li)])).toEqual([["done", "Done"], ["running", "Working on it"]]);
     // Both glyphs are drawn; studio.css shows the spinner, or the still ring under reduced motion.
@@ -1011,7 +1014,7 @@ describe("Vibe Studio project workspace", () => {
       await openProject();
       const t = host.querySelector(".vs-brand-line")!.textContent ?? "";
       expect(t).toContain("No business name yet — add it in Setup");
-      expect(t).toContain("Paige's default page color");
+      expect(t).toContain("No saved page color");
       expect(t).toContain("no logo yet");
     });
 

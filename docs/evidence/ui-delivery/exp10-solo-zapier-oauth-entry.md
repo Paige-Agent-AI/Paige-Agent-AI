@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: replace manual Zapier server-address entry with direc
 FLOW_PROTOTYPE: UNVERIFIED: existing drawer is retained; separate prototype and browser evidence have not been exercised for this candidate.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every eligible current/future Solo workspace admin can begin its own Zapier OAuth flow without creating a server or supplying an address.
 VISUAL_DIRECTION: PASS: preserve incumbent Obsidian/Mineral Settings drawer, semantic state words, ig-btn controls, existing focus and scroll ownership; Impeccable Operate refinement, no new visual world.
-AUTOMATED_EVIDENCE: PASS: focused UI/hook/address/release suites120 and resolver14 tests, plus existing MCP egress91 assertions including revoked-authority-before-dispatch; baseline OAuth84 and Gateway400 plus11 callbacks. Native full-schema lifecycle proof and exact-head CI remain UNVERIFIED.
+AUTOMATED_EVIDENCE: PASS: focused UI/hook/address/release suites120, resolver16 and callback3 tests; existing MCP egress91, baseline OAuth84 and Gateway400 plus11 callbacks. Full native run43511066206 at a561eb791 passed59 lifecycle assertions plus the complete database-contract job; native SQL is unchanged by the callback repair. Current exact-head CI remains UNVERIFIED.
 STATIC_EVIDENCE: PASS: scoped ESLint, type ratchet (no new errors), production build, Deno checks for both changed endpoints, definer function/ACL guards, integration registry, Solo parity plus negative controls and diff whitespace pass. Native proof and final exact-head CI remain UNVERIFIED.
 RENDERED_EVIDENCE: UNVERIFIED: candidate screenshots not captured.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: candidate browser interaction not driven.
@@ -35,12 +35,12 @@ ACCEPTANCE_CRITERIA: The Solo Zapier MCP tab offers a direct OAuth start with no
 MOTION_PURPOSE: NONE: no motion or theme changes.
 PROTECTED_SEAMS: Affected: workspace/account isolation, OAuth initiation, credential boundaries and provider status (owning tests and real provider proof required). Preserved: existing callback/store/discovery/action contracts, authority, Rail, unknown/no-replay recovery. Unaffected: app login, signup, billing/paywall/provisioning, Chat transcript/scroll/Live, native domain writers, Memory, durable scheduling and shell geometry; existing drawer accessibility still requires rendered proof.
 
-INTERNAL_BUILD_IDENTITY: source=64c96374ad390c30c0482e899942943359732a60; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271133000033_exp10_zapier_mcp_lifecycle native execution and ordered production apply); edge=PROOF_OWED(tenant-mcp-connect and call-zapier-action reviewed deployment and source readback); evidence=docs/evidence/ui-delivery/exp10-solo-zapier-oauth-entry.md and PR3347
+INTERNAL_BUILD_IDENTITY: source=cc12649107f3d05f878569c13f05f100c58864b8; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271133000033_exp10_zapier_mcp_lifecycle current-head verification and ordered production apply); edge=PROOF_OWED(tenant-mcp-connect and call-zapier-action reviewed deployment and source readback); evidence=docs/evidence/ui-delivery/exp10-solo-zapier-oauth-entry.md and PR3347
 RELEASE_CHANNEL: development: local candidate only.
 RELEASE_CLASSIFICATION: internal-only: original Solo connection repair increment, not a completed customer outcome.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release named.
 RELEASE_NOTE_REQUIRED: no: internal repair; completed outcome/publication is not yet proven.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: original Solo Zapier OAuth lifecycle requires native execution, ordered release and authenticated provider readback; source review and automated tests do not establish a working customer connection.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: original Solo Zapier OAuth lifecycle requires current-head verification, ordered release and authenticated provider readback; native/source tests do not establish a working customer connection.
 RELEASE_RECOVERY: position=retain original data and callback contracts; reference=original ANT164 finite source-custody packet and this record
 
 ## Pre-edit capability routing
@@ -75,6 +75,7 @@ Variants: authorized workspace admin, read-only member, unresolved account, acco
 | Beginning | error/malformed/off-origin response | refuse | existing inline error; no success | deliberate retry |
 | Beginning | account switch/unmount | invalidate request | no URL/navigation/state disclosure | begin in current account |
 | Provider return | original code/state | original server-side checks/store/probe | actual connection state | reconnect or honest needs attention |
+| Provider return | completion save response lost | one exact original-grant readback and same-generation probe | confirmed result or explicitly unconfirmed status | inspect current Integrations state; no code exchange replay or blind grant revocation |
 
 ## Source and provider evidence boundary
 
@@ -93,6 +94,8 @@ The source/native readback found that the original one-time state consumer does 
 Retained first native failure: run43505598171 failed at the candidate's attempt to add the already-existing zapier_generation column, before lifecycle assertions ran. Forward33 is still unapplied. The draft now asserts and reuses that original uuid NOT NULL field; original Zapier Rail revision/event triggers remain unchanged. Full replay must rerun and no native PASS is inferred from the correction.
 
 Uncertain renewal persistence is reconciled once through the original secret reader. Only the exact returned token/client/resource/scopes and completed nonce can confirm that save. The original row retains its completion marker across a scope-narrowing generation change; later reconnect/renewal replaces it. Native failure admission must match that nonce before token cleanup. An unrelated replacement is not adopted or revoked. If failure admission is also unavailable, no token is revoked and the response stays unconfirmed. Delayed probes and dispatch reads cannot promote/use a pending uncertain renewal. No second provider refresh is attempted. The review's lost-response/narrowed-generation finding remains retained; source re-review and full native execution must confirm the repair.
+
+Callback recovery reuses the same exact saved-grant matcher, with non-rotating refresh retention explicit only for renewals. A lost initial save response gets one original-reader check and its probe is bound to that confirmed generation; otherwise the original callback page says the final status is unconfirmed and offers Integrations inspection. It does not blindly revoke a potentially committed grant or exchange the code again. Three actual React callback cases exercise query clearing/StrictMode once-only exchange, confirmed return, saved failed probe and unconfirmed recovery exit. Candidate browser rendering remains UNVERIFIED.
 
 Forward carrier20271133000033 was created by the installed Supabase CLI and renumbered while unused. Native frontier read28; critical E08carrier30 releases first. No database change has been applied. Source window is recorded in original ANT147/3ca565c4-9440-42ff-93fc-47e03311c108 because ANT161 reached its comment quota. Platform Operator and n8n protocol remain outside this patch. Native proof will execute against a disposable full-schema test database, never production fixtures.
 

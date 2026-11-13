@@ -91,11 +91,10 @@ begin
   'MCP_OAUTH_RESTART_REQUIRED','old in-flight approval cannot mutate replacement grant');
  perform pg_temp.mcp_refuses(format('select public.clear_tenant_mcp_connection(%L,%L)','zapier',t),
   'MCP_OAUTH_RESTART_REQUIRED','old in-flight disconnect cannot clear replacement grant');
- update public.tenant_mcp_connections set approved_capabilities='["read"]',capability_pins='{"read":"pin-a"}'
-  where tenant_id=t and provider='zapier';
- perform pg_temp.mcp_assert(public.zapier_mcp_action_authorized(t,u,g,'read','pin-a'),'original approved pinned action admits current authority');
- update public.tenant_mcp_connections set approved_capabilities='[]' where tenant_id=t and provider='zapier';
- perform pg_temp.mcp_assert(not public.zapier_mcp_action_authorized(t,u,g,'read','pin-a'),'approval removal denies dispatch even without a generation change');
+ perform public.set_tenant_zapier_mcp_approval(t,u,g,array['read'],jsonb_build_object('read',repeat('a',64)));
+ perform pg_temp.mcp_assert(public.zapier_mcp_action_authorized(t,u,g,'read',repeat('a',64)),'original approved pinned action admits current authority');
+ perform public.set_tenant_zapier_mcp_approval(t,u,g,array[]::text[],'{}'::jsonb);
+ perform pg_temp.mcp_assert(not public.zapier_mcp_action_authorized(t,u,g,'read',repeat('a',64)),'approval removal denies dispatch even without a generation change');
 
  -- A check and an action compete for exactly one renewal; uncertain claims are not stolen.
  update public.tenant_mcp_connections set access_token_expires_at=clock_timestamp()-interval '1 minute' where tenant_id=t and provider='zapier';

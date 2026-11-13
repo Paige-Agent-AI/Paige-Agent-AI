@@ -1733,6 +1733,7 @@ const mirrorConfirms = (st) => (t, row) => {
     // The ordinary workspace process cases need the real server persona precondition,
     // not the harness's intentionally workspace-less client-seat default.
     get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT }], error: null },
+    is_tenant_admin_as: { data: true, error: null },
   } };
   const AS_CLIENT = { get_actor_access: { data: { tier: "client" }, error: null } };
   /** Model the process tables. The trigger catalogue is real reference data; the automations table

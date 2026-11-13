@@ -1209,6 +1209,7 @@ jobs:
           AUTOMATION_DRAFT_TEST=lost-ack node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           AUTOMATION_DRAFT_TEST=uncertain node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           AUTOMATION_DRAFT_TEST=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          AUTOMATION_DRAFT_TEST=member-denied node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           RESEARCH_READBACK_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           RESEARCH_READBACK_TEST=partial-library node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           RESEARCH_READBACK_TEST=unconfirmed node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs

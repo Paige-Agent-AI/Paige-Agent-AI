@@ -6,7 +6,7 @@ if(recoveryMode)assert.ok(['lost','gateway','missing-readback','refused'].includ
 const knowledgeMode=process.env.KNOWLEDGE_INGEST_TEST;
 if(knowledgeMode){assert.ok(['success','uncertain','refused','partial','unrecorded'].includes(knowledgeMode));assert.ok(!recoveryMode&&!unknownTool);}
 const automationMode=process.env.AUTOMATION_DRAFT_TEST;
-if(automationMode){assert.ok(['success','lost-ack','uncertain','refused'].includes(automationMode));assert.ok(!knowledgeMode&&!recoveryMode&&!unknownTool);}
+if(automationMode){assert.ok(['success','lost-ack','uncertain','refused','member-denied'].includes(automationMode));assert.ok(!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const researchMode=process.env.RESEARCH_READBACK_TEST;
 if(researchMode){assert.ok(['success','partial-library','unconfirmed'].includes(researchMode));assert.ok(!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const crmMode=process.env.CRM_ACK_TEST;
@@ -151,7 +151,7 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
  current_user_tenant_id:()=>({data:crmScopeMode||crmPauseMode?crmActiveTenant:tenant,error:null}),
  read_crm_command_result:{data:null,error:null},
  execute_crm_command:{data:{ok:true,outcome:'succeeded',readback:{id:id(19)}},error:null},
- is_tenant_admin_as:{data:!!bookingMode&&bookingMode!=='role-denied',error:null},agency_can_manage_child:{data:false,error:null},
+ is_tenant_admin_as:{data:(!!bookingMode&&bookingMode!=='role-denied')||(!!automationMode&&automationMode!=='member-denied'),error:null},agency_can_manage_child:{data:false,error:null},
  create_internal_booking:()=>{
   if(bookingMode==='transport')throw new TypeError('Failed to fetch after booking commit');
   if(bookingMode==='refused')return {data:null,error:{code:'42501',message:'BOOKING_FORBIDDEN'}};
@@ -341,7 +341,7 @@ if(researchMode){
 }
 if(automationMode){
  const drafts=rec.rpc.filter(c=>c.name==='save_automation_draft'),reads=rec.rpc.filter(c=>c.name==='read_automation_draft');
- assert.equal(drafts.length,automationMode==='refused'?0:1,'one atomic native save; never retry by name');
+ assert.equal(drafts.length,['refused','member-denied'].includes(automationMode)?0:1,'one authorized atomic native save; never retry by name');
  assert.equal(reads.length,['uncertain','lost-ack'].includes(automationMode)?1:0,'only original-identity reconciliation after lost acknowledgment');
  assert.ok(!rec.inserts.some(r=>['paige_automations','paige_automation_acts'].includes(r.table)),'obsolete two-write writer is gone');
  // This original harness records client kind only; exact forwarded JWT proof is
@@ -350,8 +350,8 @@ if(automationMode){
  assert.equal(rec.rpc.filter(c=>c.name==='plan_create').length,automationMode==='uncertain'?0:1,wire);
  assert.equal(receipts.length,1,'one durable canonical terminal receipt');
  const effect=receipts[0].bundle_ref.interactive.effects.find(e=>e.tool==='automation_draft');
- assert.equal(effect.outcome,automationMode==='uncertain'?'outcome_unknown':automationMode==='refused'?'reported_failure':'reported_success');
- if(automationMode!=='refused')assert.ok(effect.record_refs.some(r=>r.kind==='automation'&&r.id===drafts[0].args._request_id));
+ assert.equal(effect.outcome,automationMode==='uncertain'?'outcome_unknown':['refused','member-denied'].includes(automationMode)?'reported_failure':'reported_success');
+ if(!['refused','member-denied'].includes(automationMode))assert.ok(effect.record_refs.some(r=>r.kind==='automation'&&r.id===drafts[0].args._request_id));
  assert.ok(!rec.inserts.some(r=>r.table==='paige_act_executions'),'draft configuration is not an execution');
  console.log(`PASS actual handler automation draft ${automationMode}: native actor/workspace/configuration, canonical record receipt, correct successor hold; no execution`);
  process.exit(0);

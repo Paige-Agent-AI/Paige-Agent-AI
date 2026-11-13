@@ -688,8 +688,8 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
     'K5 instruction text/order/priority conserved at developer boundary');
   ok(JSON.stringify(after.input.slice(1)) === JSON.stringify(before.input)
     && JSON.stringify(after.tools) === JSON.stringify(before.tools), 'K6 conversation, tools, calls, outputs and reasoning remain identical');
-  ok(after.input[0].content[0].prompt_cache_breakpoint?.mode === 'explicit'
-    && after.input[0].content.slice(1).every(c => !c.prompt_cache_breakpoint)
+  ok(after.input[0].content[1].prompt_cache_breakpoint?.mode === 'explicit'
+    && after.input[0].content.filter(c => c.prompt_cache_breakpoint).length === 1
     && after.prompt_cache_options.mode === 'implicit' && after.prompt_cache_options.ttl === '30m'
     && after.store === false, 'K7 early reusable prefix plus original implicit loop reuse; no retention extension/storage');
   const changed = ad.buildResponsesRequest({ messages: CONVO.map((m, i) => i === 1 ? { ...m, content: 'Fresh current context.' } : m), tools: [TOOL] },
@@ -698,6 +698,24 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
     && changed.input[0].content[1].text.includes('Fresh current context.'), 'K8 changing later context preserves first prefix, never freezes stale context');
   const forged = ad.buildResponsesRequest({ messages: CONVO, prompt_cache_key: key, prompt_cache_options: { ttl: '12h' } }, { model: models.OPENAI_OPERATIONAL });
   ok(!forged.prompt_cache_key && !forged.prompt_cache_options && forged.instructions === before.instructions, 'K9 request JSON cannot opt into cache scope or retention');
+  const { buildPaigePersonaBlock } = await import('../../supabase/functions/_shared/client-context.ts');
+  const { PAIGE_VOICE_BLOCK } = await import('../../supabase/functions/_shared/paige-voice.ts');
+  const { PAIGE_PERSONA_CORE } = await import('../../supabase/functions/_shared/paige-persona/core.ts');
+  const persona = buildPaigePersonaBlock(null, 'test-tenant', false);
+  for (const prefix of [[persona, PAIGE_VOICE_BLOCK, PAIGE_PERSONA_CORE], [persona, 'Original specialist address.', PAIGE_VOICE_BLOCK]]) {
+    const request = current => ad.buildResponsesRequest({ messages: [
+      ...prefix.map(content => ({role:'system',content})), {role:'system',content:current}, {role:'user',content:'Read only.'}
+    ] }, {model:models.OPENAI_OPERATIONAL,promptCacheKey:key});
+    const first = request('Current permitted source revision A.');
+    const next = request('Current permitted source revision B.');
+    ok(first.input[0].content[2].prompt_cache_breakpoint?.mode === 'explicit'
+      && first.input[0].content.filter(c => c.prompt_cache_breakpoint).length === 1,
+      'KP1 one early boundary includes original stable persona/voice slots');
+    ok(prefix.join('').length > 6000 && JSON.stringify(first.input[0].content.slice(0,3)) === JSON.stringify(next.input[0].content.slice(0,3)),
+      'KP2 real canonical stable prefix survives changed context; size is characters, not a fabricated tokenizer count');
+    ok(next.input[0].content[3].text.includes('revision B') && !next.input[0].content[3].prompt_cache_breakpoint,
+      'KP3 current source is still delivered after stable boundary, never frozen or promoted to authority');
+  }
   const usage = { input_tokens: 12000, output_tokens: 500, input_tokens_details: { cached_tokens: 4000,
     cache_write_tokens: 7000, cache_write_tokens_details: { ttl_30m_tokens: 3000, ttl_12h_tokens: 4000 } } };
   const tx = transport(() => json({ status: 'completed', model: models.OPENAI_OPERATIONAL, usage, output: [] }));

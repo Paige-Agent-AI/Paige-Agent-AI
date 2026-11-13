@@ -33,7 +33,7 @@ MUST_PRESERVE: Original approval/decline filtering and reported refusal, card de
 ACCEPTANCE_CRITERIA: Released original caller-scoped binding excludes private card tokens and permits original unbound approvals under current authority. E03 separately verifies its single real update and same original receipt in both chats after reload.
 MOTION_PURPOSE: NONE: No motion change.
 PROTECTED_SEAMS: Affected/tested: current identity and tenant, private token exclusion, original approval and refusal, existing service isolation and no-write lookup. Unchanged: login/account choice, provisioning/billing, all domain writers/receipts/Memory, original durable Work/retry engine, Chat transcript/stream/history, Live state, provider/Vault, responsive geometry/accessibility presentation.
-INTERNAL_BUILD_IDENTITY: c4c70ad038541ce10cf4fd01897f2ad1c91f4b31; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271133000030); edge=PROOF_OWED(paige-ai-chat); evidence=grounded base plus candidate source/tests in this PR, exact final head in PR release receipt.
+INTERNAL_BUILD_IDENTITY: 81bef4c17b564149919684c6080d2206dc8a1988; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271133000030); edge=PROOF_OWED(paige-ai-chat); evidence=original implementation commit, exact final reviewed head and release identities in PR receipts.
 RELEASE_CHANNEL: development: Internal prelaunch repair, no customer announcement.
 RELEASE_CLASSIFICATION: internal-only: Original shared approval binding compatibility repair.
 CUSTOMER_RELEASE_IDENTITY: none: No customer release name or version assigned.

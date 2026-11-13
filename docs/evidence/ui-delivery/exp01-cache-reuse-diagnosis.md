@@ -32,3 +32,15 @@ No raw prompts, customer identities, cache key or response IDs enter this scalar
 All components are scoped by the same trusted server actor/workspace partition.
 No new ledger/store, runtime trace reader, scheduler, approval or provider grant.
 Original Root, shared-source windows, native writers, Auth and customer meter stay unchanged.
+
+## Post-release source readback — November 13, 2026
+
+The development attestation above is retained as history. Actual #3346 merged
+5d34e25d at the exact independently reviewed treef030d83c after all11 required
+checks/both web statuses. Both public origins serve5d34-mwfh39yg/200; normal
+Edge43508520196 first source39/41 failure retained, same-head retry41/41PASS.
+Independently opened certificate14077473738 confirms Chat676/JWTtrue and exact
+reviewed source. Candidate source is now RELEASED/VERIFIED; useful cache benefit
+and live diagnostic comparison remain UNVERIFIED. Chrome now shows Antonio Cook,
+so no request was sent there and owner was asked to restore designated MMA Chat.
+Earlier3345 exact18turn/7trace reload proof is separate; no login/account change.

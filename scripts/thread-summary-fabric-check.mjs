@@ -7,6 +7,8 @@ import {capturedHandler} from './client-memory-authz/stub-serve.mjs';
 globalThis.Deno={env:{get:key=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'test-anon',SUPABASE_SERVICE_ROLE_KEY:'test-service',
  ANTHROPIC_API_KEY:'test-anthropic',OPENAI_API_KEY:'test-openai',OPENAI_CANARY_CLASSES:'operational'})[key]}};
 await import('../supabase/functions/paige-ai-chat/index.ts');
+const {traceAdmin}=await import('../supabase/functions/_shared/llm-trace.ts');
+const {accruedSpendToday}=await import('../supabase/functions/_shared/router-budget/mod.ts');
 const handler=capturedHandler(),id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const actor=id(1),tenant=id(2),other=id(3),thread=id(4),intent=id(5);
 let state;
@@ -31,6 +33,9 @@ globalThis.fetch=async(url,options)=>{
   ?{intent:'answer',research:'none',difficulty:'routine',image:'none',needs_workspace_data:true,confidence:.99}
   :{intent:'converse',research:'none',difficulty:'trivial',image:'none',needs_workspace_data:false,confidence:.99}));
  state.mainBodies.push({provider,body,current:state.current,summaryReads:state.summaryReads,budgetReads:state.budgetReads});
+ // A real, explicitly ordered budget SELECT after dispatch, not an incidental
+ // detached trace INSERT whose completion can race the fixture's timer tick.
+ if(state.options.afterDispatchBudget)await accruedSpendToday(traceAdmin(),tenant);
  state.mainStreams++;
  state.answerProviders.push(provider);
  if(provider==='openai'){
@@ -172,8 +177,9 @@ await check('Anthropic-primary streaming budget workspace change refuses recalle
  assert.equal(r.current,other);assert.equal(r.mainBodies.length,0);assert.equal(r.summaryWrites,0);assert.ok(!r.wire.includes(privateSummaryMarker));
  assert.equal(r.status,409);assert.ok(r.wire.includes('ACTIVE_ACCOUNT_CHANGED'));
 });
-await check('later budget switch does not relabel already scoped primary dispatch',{noFold:true,prior:privateSummaryMarker,answerRoute:'primary',flipBudgetRead:4},r=>{
+await check('later budget switch does not relabel already scoped primary dispatch',{noFold:true,prior:privateSummaryMarker,answerRoute:'primary',flipBudgetRead:4,afterDispatchBudget:true},r=>{
  assert.equal(r.current,other);assert.equal(r.mainBodies.length,1);assert.equal(r.mainBodies[0].current,tenant);assert.equal(r.mainBodies[0].budgetReads,3);
+ assert.equal(r.rec.from.filter(call=>call.table==='paige_llm_trace'&&call.op==='select'&&call.filters.some(([op,value])=>op==='select'&&value==='cost_estimate_usd')).length,3);
 });
 console.log(`${checks} passed, ${failures} failed actual-handler summary Fabric checks; native SQL/provider acceptance remains unverified`);
 process.exitCode=failures?1:0;

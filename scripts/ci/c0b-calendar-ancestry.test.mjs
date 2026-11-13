@@ -58,7 +58,8 @@ const changes = [
 ];
 
 test('reviewed Calendar, Task, email, reminder and read-receipt context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 131);
+  assert.equal(incumbentSourcePaths.length, 132);
+  assert.ok(incumbentSourcePaths.includes('supabase/functions/_shared/paige-orchestration/automation-draft-save.ts'), 'the reviewed atomic-save and original-receipt helper remains an additional restrictive input alongside all original131 sources');
   for (const path of ['supabase/functions/_shared/client-portal-invoices-context.ts', 'supabase/functions/_shared/client-engagement/chat.ts', 'supabase/functions/_shared/client-engagement/money.ts']) {
     assert.ok(incumbentSourcePaths.includes(path), 'invoice source and original exact-string commercial presentation remain restrictive inputs');
   }

@@ -22,6 +22,7 @@ describe("original MCP OAuth callback recovery",()=>{
   it("keeps a lost save response unconfirmed, clears callback values and offers current-state inspection without replay",async()=>{
     await render({error:"oauth_store_unconfirmed"});
     expect(host.textContent).toContain("final status could not be confirmed");
+    expect(host.querySelector("h1")?.textContent).toBe("Connection status unconfirmed");
     expect(host.textContent).not.toContain("Saved, but not working yet");
     expect(location.search).toBe("");expect(location.pathname).toBe("/oauth/mcp/callback");
     expect(h.invoke).toHaveBeenCalledTimes(1);

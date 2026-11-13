@@ -251,7 +251,11 @@ export function resolveChatTools(source, resolveSpread) {
   if (!spliced.length) throw new Error("the legacy CRM splice set parsed empty");
   for (const n of spliced) names.delete(n);
 
-  const pushed = [...source.matchAll(/toolDefs\.push\(\s*\.\.\.([A-Za-z_$][\w$]*)/g)].map((m) => ({ symbol: m[1], call: false }));
+  const pushed = [...source.matchAll(/toolDefs\.push\(\s*\.\.\.([A-Za-z_$][\w$]*)(\(\))?(?:\s+as\s+any)?\s*\)/g)]
+    .map((m) => ({ symbol: m[1], call: Boolean(m[2]) }));
+  if ([...source.matchAll(/toolDefs\.push\(\s*\.\.\./g)].length !== pushed.length) {
+    throw new Error("toolDefs.push spread must be an imported array or explicit zero-argument factory");
+  }
   for (const spread of pushed) for (const n of resolveSpread(spread)) names.add(n);
 
   return names;
@@ -467,6 +471,25 @@ if (process.argv.includes("--self-test")) {
   ok("resolves a spread identifier", resolved.has("domain_write"));
   ok("resolves a spread CALL", resolved.has("capability_status"));
   ok("resolves a bare tool-definition CALL element", resolved.has("one_tool"));
+  const pushedFactoryCalls = [];
+  const pushedFactory = resolveChatTools(fixtureHandler + '\ntoolDefs.push(...buildPushedToolDefs());', (binding) => {
+    if (binding.symbol !== "buildPushedToolDefs") return fixtureSpread(binding);
+    pushedFactoryCalls.push(binding);
+    return binding.call && !binding.element ? ["pushed_factory_tool"] : [];
+  });
+  ok("resolves an actual pushed imported factory without losing its CALL shape", pushedFactory.has("pushed_factory_tool")
+    && pushedFactoryCalls.length === 1 && pushedFactoryCalls[0].call === true && !pushedFactoryCalls[0].element);
+  for (const unsupported of [
+    'toolDefs.push(...buildPushedToolDefs(argument));',
+    'toolDefs.push(...(true ? DOMAIN_TOOLS : CRM_COMMAND_TOOLS));',
+    'toolDefs.push(...buildPushedToolDefs.call(null));',
+    'toolDefs.push(...buildPushedToolDefs.bind(null)());',
+  ]) {
+    let refused = false;
+    try { resolveChatTools(fixtureHandler + '\n' + unsupported, fixtureSpread); }
+    catch (error) { refused = /toolDefs\.push spread/.test(error.message); }
+    ok(`refuses unsupported pushed callable/conditional shape: ${unsupported}`, refused);
+  }
   ok("keeps a studio-gated push that lives outside the literal", resolved.has("ask_choices"));
   ok("drops a spliced legacy name that nothing re-adds", !resolved.has("gone_for_good"));
   // THE NEGATIVE THAT PINS THE BUG: splice-then-push order. Delete-after-add loses this name.
@@ -665,8 +688,13 @@ const moduleCache = new Map();
   const symbols = [
     ...spreadSymbols(literal),
     ...elementCalls(literal),
-    ...[...source.matchAll(/toolDefs\.push\(\s*\.\.\.([A-Za-z_$][\w$]*)/g)].map((m) => ({ symbol: m[1], call: false })),
+    ...[...source.matchAll(/toolDefs\.push\(\s*\.\.\.([A-Za-z_$][\w$]*)(\(\))?(?:\s+as\s+any)?\s*\)/g)]
+      .map((m) => ({ symbol: m[1], call: Boolean(m[2]) })),
   ];
+  const supportedPushes = [...source.matchAll(/toolDefs\.push\(\s*\.\.\.([A-Za-z_$][\w$]*)(\(\))?(?:\s+as\s+any)?\s*\)/g)];
+  if ([...source.matchAll(/toolDefs\.push\(\s*\.\.\./g)].length !== supportedPushes.length) {
+    fail("toolDefs.push spread must be an imported array or explicit zero-argument factory");
+  }
   for (const { symbol } of symbols) {
     const specifier = imports.get(symbol);
     if (!specifier) continue; // resolveSpread reports it, with the full remedy.

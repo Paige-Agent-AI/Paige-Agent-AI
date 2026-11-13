@@ -77,12 +77,21 @@ describe("parseCardStates: the server's card, in the shape the approved card dra
     expect(cardExpiryNote(EXPIRES)).not.toMatch(/minute/);
   });
 
-  it("labels each of A2b's three kinds, and drops a kind this build does not know", () => {
-    expect(CARD_KIND_LABEL).toEqual({ task_handover: "Task hand-over", task_cancel: "Task cancel", page_publish: "Page publish" });
+  it("labels the four supported kinds, and drops a kind this build does not know", () => {
+    expect(CARD_KIND_LABEL).toEqual({ task_handover: "Task hand-over", task_cancel: "Task cancel", page_publish: "Page publish",social_publish:"Social publish" });
     for (const [kind, label] of Object.entries(CARD_KIND_LABEL)) {
       expect(parseCardStates({ ok: true, cards: [row({}, { kind })] }, null)!["m-card"].approval.kind).toBe(label);
     }
     expect(parseCardStates({ ok: true, cards: [row({}, { kind: "crm_delete_task" })] }, null)).toEqual({});
+  });
+
+  it("keeps a source-verified Social receipt after proposal cleanup using its original stored card summary",()=>{
+    const reference={schema:1,tenant_id:"11111111-1111-4111-8111-111111111111",content_id:"22222222-2222-4222-8222-222222222222",
+      content_revision:"2026-11-13T12:00:00Z",publication_id:"33333333-3333-4333-8333-333333333333"};
+    const native={...row({}, {kind:"social_publish",state:"done",expires_at:null,actions:[{summary:"Publish the original saved piece to the verified destination."}]}),social_reference:reference};
+    const parsed=parseCardStates({ok:true,cards:[native]},null)!;
+    expect(parsed["m-card"].approval.state).toBe("done");expect(parsed["m-card"].socialReference).toEqual(reference);
+    expect(parsed["m-card"].approval.actions[0].fingerprint).toBeUndefined();
   });
 
   it("keeps the binding only while the card waits, and says the expiry only then", () => {

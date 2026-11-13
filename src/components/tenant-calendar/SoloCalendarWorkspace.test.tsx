@@ -190,6 +190,13 @@ afterEach(() => {
 });
 
 describe("Solo Calendar — a truthful surface", () => {
+  it("keeps optional Marketing inside the existing header row and out of booking capacity",()=>{
+    mount();
+    act(()=>root.render(<SoloCalendarWorkspace activeTenantId="tenant-1" connectionsHref="/solo/1/integrations" marketingSchedules={({from,until})=><details data-marketing-range={`${from.toISOString()}/${until.toISOString()}`}><summary>Marketing schedules</summary></details>}/>));
+    const surface=container.querySelector(".sc-root")!,projection=container.querySelector("[data-marketing-range]")!;
+    expect(surface.children).toHaveLength(3);expect(projection.parentElement?.classList.contains("sc-truths")).toBe(true);
+    expect(container.querySelector(".sc-board [data-marketing-range]")).toBeNull();expect(container.querySelectorAll("button.sc-ev")).toHaveLength(0);
+  });
   it("renders no duplicate heading: the Clients tab strip already names this view", () => {
     mount();
     // The retired presentation drew an <h1>Calendar</h1> plus an eyebrow and a

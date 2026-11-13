@@ -68,3 +68,31 @@ export const SOCIAL_PRESENCE = {
   sharedPrimitiveChange: "NONE",
   maturity: "PARTIAL",
 } as const satisfies SpineCapability;
+
+// EXP07: the same original publisher and caller-JWT saved-publication reads.
+// These source bindings do not make declared handles into connected destinations.
+// Partial maturity retains authenticated/provider proof as separately owed.
+export {SOCIAL_PUBLICATION_READ_CAPABILITY,SOCIAL_PUBLICATION_CHECK_CAPABILITY} from "./social_publication.ts";
+export const SOCIAL_POST_PUBLICATION={
+ key:"social.post_publish",domain:"social",owner:"solo-campaigns",humanSurface:"/solo/:account/growth/social",readiness:"none",
+ action:{classification:"external_effect",executor:"edge.paige-ai-chat",chatTool:"social_post_publish",seatAuthority:"workspace-admin",riskPolicyKey:"high",approvalAuthority:"chat-canonical",
+  idempotency:"Original social.post_publish actor/tenant/null-thread/null-client stored approval CAS and native publication bind/version claim; exact saved revision/media/caption/destination/connection generation and UTC/civil/IANA/DST future instruction. Same-job edits/cancellation use a new exact approval. Unknown and duplicate attempts reconcile the same original receipt without replay."},
+ outcome:{kinds:["approval_required","published","scheduled","cancelled","partial","failed","refused","outcome_unknown"],projector:"public.content_publication_list",
+  railVisibility:"Original Social door records the act; durable content_publications/provider readback owns its result. No second Chat/Hub action receipt or model-authored success."},
+ chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
+} as const satisfies SpineCapability;
+export const SOCIAL_PUBLICATION_READ={
+ key:"social.publication_read",domain:"social",owner:"solo-campaigns",humanSurface:"/solo/:account/growth/social",readiness:"none",
+ action:{classification:"read",executor:"edge.paige-ai-chat",chatTool:"read_social_publication",seatAuthority:"workspace-admin",riskPolicyKey:"read_only",approvalAuthority:"none",
+  idempotency:"Caller-JWT exact original Content/native publication read; no provider, proposal, claim, publishing or reconciliation during render/history."},
+ outcome:{kinds:["available","unavailable","refused"],projector:"public.content_publication_list",railVisibility:"Governed tool use records a bounded read receipt; the original publication remains the sole action/result source. Rendering writes nothing."},
+ chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
+} as const satisfies SpineCapability;
+export const SOCIAL_PUBLICATION_CHECK={
+ key:"social.publication_check",domain:"social",owner:"solo-campaigns",humanSurface:"/solo/:account/growth/social",readiness:"none",
+ action:{classification:"read",executor:"edge.paige-ai-chat",chatTool:"check_social_publication",seatAuthority:"workspace-admin",riskPolicyKey:"read_only",approvalAuthority:"none",
+  idempotency:"Original caller-JWT door reads/reconciles only the named original attempt; no new createPost or approval. Uncertain readback remains unknown."},
+ outcome:{kinds:["available","unavailable","refused","outcome_unknown"],projector:"public.content_publication_list",railVisibility:"The original publication receipt records reconciliation; governed tool use records only its bounded read. No resend or parallel action record."},
+ chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
+} as const satisfies SpineCapability;
+export const SOCIAL_PUBLICATION_SPINE_CAPABILITIES=[SOCIAL_POST_PUBLICATION,SOCIAL_PUBLICATION_READ,SOCIAL_PUBLICATION_CHECK] as const;

@@ -223,9 +223,11 @@ export interface SoloCalendarWorkspaceProps {
   openPaige?: () => void;
   /** Owner-scoped visibility supplied by the canonical tenant adapter; never a booking producer. */
   weeklyResponsibility?: (controls: { closeViewOptions: () => void; returnFocus: () => void }) => ReactNode;
+  /** Optional original Social receipt projection; never passed into booking capacity. */
+  marketingSchedules?: (range: { from: Date; until: Date }) => ReactNode;
 }
 
-export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPaige, weeklyResponsibility }: SoloCalendarWorkspaceProps) {
+export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPaige, weeklyResponsibility, marketingSchedules }: SoloCalendarWorkspaceProps) {
   const [view, setView] = useState<ViewMode>("week");
   const [cursor, setCursor] = useState(() => new Date());
   const [colorBy, setColorBy] = useState<"calendar" | "host">("calendar");
@@ -533,6 +535,7 @@ export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPai
             </button>
           </div>
         )}
+        {marketingSchedules?.({ from: rangeFor(view, cursor)[0], until: rangeFor(view, cursor)[1] })}
       </div>
 
       <div className="sc-board" ref={boardRef} tabIndex={-1}>

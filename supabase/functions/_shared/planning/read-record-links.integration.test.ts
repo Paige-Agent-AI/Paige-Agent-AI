@@ -27,7 +27,7 @@ const metadataStart = source.indexOf("const assistantTurnMetadata = () => (");
 const metadataEnd = source.indexOf("\n      });", metadataStart);
 assert.ok(metadataStart > 0 && metadataEnd > metadataStart, "original durable metadata is inspectable");
 const metadata = new Function("readLinkTrace", "readRecordLinks", "stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace",
-  "interactiveEffects", "payloadRequestIntentId", "crmResultReferenceMetadata",
+  "interactiveEffects", "payloadRequestIntentId", "crmResultReferenceMetadata", "socialResultTrace",
   `return ${source.slice(metadataStart, metadataEnd + "\n      });".length).replace("const assistantTurnMetadata = ", "")}`);
 
 async function dispatch(input: unknown, options: { tool?: string; tenant?: string; receipt?: boolean | "unknown";
@@ -48,7 +48,7 @@ async function dispatch(input: unknown, options: { tool?: string; tenant?: strin
 function collect(read: Awaited<ReturnType<typeof dispatch>>, previous: unknown[] = []) {
   const trace = [...previous];
   collector(read.tc, read.parsed, read.map, trace, mergeRecordLinks, read.result);
-  const saved = metadata(trace, readRecordLinks, [], [], [], [], [], [], null, () => null)();
+  const saved = metadata(trace, readRecordLinks, [], [], [], [], [], [], null, () => null, [])();
   return { trace, saved };
 }
 
@@ -107,6 +107,24 @@ describe("Planning original dispatch → read receipt → collector → durable 
     const selected = collect(read, previous).trace;
     assert.equal(selected.length,6); assert.ok(selected.some(r=>r.record_kind==="planning_plan"&&r.record_id===planId));
     assert.ok(selected.some(r=>r.destination==="operations_weekly_plan")); assert.deepEqual(readRecordLinks(selected),selected);
+  });
+  it("keeps original Planning links beside a Social reference in the same durable turn", async () => {
+    const read = await dispatch(raw), original = collect(read);
+    // Controlled original trace input: projection proof, not Social authority or provider proof.
+    const social = [{ schema: 1, tenant_id: tenant, content_id: runId,
+      content_revision: "2026-11-13T12:00:00.000Z", publication_id: null }];
+    const { readSocialPublicationReference } = await import("../social-publish-command/reference.ts");
+    assert.deepEqual(readSocialPublicationReference(social[0]), social[0]);
+    const saved = metadata(original.trace, readRecordLinks, [], [], [], [], [], [], null, () => null, social)();
+    const reopened = JSON.parse(JSON.stringify(saved));
+    assert.deepEqual(reopened.bundleRef.paige_record_links, expected);
+    assert.deepEqual(reopened.bundleRef.paige_social_publications, social);
+    assert.deepEqual(readRecordLinks(reopened.bundleRef.paige_record_links), expected);
+    assert.deepEqual(readSocialPublicationReference(reopened.bundleRef.paige_social_publications[0]), social[0]);
+    assert.deepEqual(Object.keys(reopened.bundleRef.paige_social_publications[0]).sort(),
+      ["schema", "tenant_id", "content_id", "content_revision", "publication_id"].sort());
+    assert.equal(JSON.stringify(saved).includes(item.title), false);
+    assert.equal(read.records.length, 1);
   });
   it("does not turn an original Planning write into a read receipt", async () => {
     const read = await dispatch(raw, { tool: "plan_set_reminder" });

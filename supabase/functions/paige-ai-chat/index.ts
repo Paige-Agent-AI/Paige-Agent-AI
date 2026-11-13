@@ -12,6 +12,8 @@ import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
 import { readCalendarAccountShape, readCalendarBooking, readCalendarAgenda, calendarAgendaForModel, type CalendarBookingReadCaller } from "../_shared/calendar-booking-read.ts";
 import { CALENDAR_BOOKING_READ_TOOLS, CALENDAR_AGENDA_READ_TOOLS } from "../_shared/paige-spine/domains/calendar_booking.ts";
+import {dispatchSocialChat,socialChatToolDefs,SOCIAL_PUBLISH_TOOL,SOCIAL_READ_TOOL,SOCIAL_CHECK_TOOL,SOCIAL_PROPOSAL_KEY,socialResumeShape,type SocialApprovalQuery} from "../_shared/social-publish-command/chat.ts";
+import {readSocialPublicationReference,type SocialPublicationReference} from "../_shared/social-publish-command/reference.ts";
 import { readOperationsTask, type OperationsTaskReadCaller } from "../_shared/operations-task-read.ts";
 import { CRM_TASK_READ_TOOLS } from "../_shared/paige-spine/domains/crm_task.ts";
 import { WEEKLY_COMMITMENT_STATUS_TOOL_NAME, WEEKLY_COMMITMENT_STATUS_TOOLS, weeklyCommitmentStatusToolsForContext, WEEKLY_COMMITMENT_DRAFT_TOOL_NAME, WEEKLY_COMMITMENT_DRAFT_TOOLS, weeklyCommitmentDraftToolsForContext, WEEKLY_SCHEDULE_REVIEW_TOOL_NAME, WEEKLY_SCHEDULE_REVIEW_TOOLS, weeklyScheduleReviewToolsForContext, OWNER_TASK_HISTORY_TOOL_NAME, OWNER_TASK_HISTORY_TOOLS, ownerTaskHistoryToolsForContext } from "../_shared/paige-spine/domains/automations.ts";
@@ -210,7 +212,7 @@ const EMAIL_MARKETING_TOOL_NAMES: ReadonlySet<string> = new Set<string>([...EMAI
 // The one publish door (growth-publish-command, V2b) admits the workspace's owner, an admin or its
 // managing agency — the Studio build rule (its tools are in WORKSPACE_BUILD_TOOLS). It is outside the
 // owner-ops branch, so the projection names it here or it would describe publishing to a member.
-const PUBLISH_DOOR_ADMIN_TOOLS: ReadonlySet<string> = GROWTH_PUBLISH_DOOR_TOOL_NAMES;
+const PUBLISH_DOOR_ADMIN_TOOLS: ReadonlySet<string> = new Set([...GROWTH_PUBLISH_DOOR_TOOL_NAMES,SOCIAL_PUBLISH_TOOL]);
 // C2b — the per-round step hooks executeToolCalls drives: `start` when a call that passed every policy
 // gate reaches its handler, `finish` the moment it is over (with its one result, or none when it threw).
 type ToolStepHooks = {
@@ -2171,6 +2173,7 @@ serve(async (req) => {
     // they never enter model context. Keyed by the call OBJECT, as `finishedSteps` is: a provider may
     // omit `tc.id`. Read once per round, only for an available read or acknowledged CURA source.
     const readRecordLinkSource = new Map<object, ReadRecordLink[]>();
+    const socialPublicationSource = new Map<object,SocialPublicationReference[]>();
     // Before anything in this request can use an approval: one used before this moment was used by
     // an earlier request, and whatever that was may have done the work.
     const approvalRequestStartedAt = new Date().toISOString();
@@ -9248,6 +9251,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && !customerPortal) toolDefs.push(...PORTAL_REQUEST_SHARE_TOOLS as any);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_AGENDA_READ_TOOLS);
+    if(callerTier==="tenant"&&calendarBookingAccountShape==="solo"&&!scopedClientId&&!customerPortal){
+      const socialAuthority=await getWorkspaceAuthority();
+      if(socialAuthority.seat&&socialAuthority.workspaceAdmin)toolDefs.push(...socialChatToolDefs());
+    }
     // EXP08 Team Hub increment 4: read what the asker can see in Team Hub, and draft a reply they approve.
     // Tenant tier, canonical SOLO account only (Team Hub is a SOLO surface, as the Calendar and Task reads
     // beside it), never on a client seat or the customer portal. The offer is not the authority:
@@ -9660,7 +9667,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const { error: crmCancellationError } = await supabase.from("paige_pending_confirmations")
             .update({ consumed_at: new Date().toISOString() })
             .eq("user_id", user.id).eq("tenant_id", personaCtx.tenant_id)
-            .in("fingerprint", legacyFps).in("tool_name", [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES, ...GROWTH_PUBLISH_DOOR_TOOL_NAMES, ...COMMS_EMAIL_TOOL_NAMES])
+            .in("fingerprint", legacyFps).in("tool_name", [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES, ...GROWTH_PUBLISH_DOOR_TOOL_NAMES, ...COMMS_EMAIL_TOOL_NAMES,SOCIAL_PROPOSAL_KEY])
             .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
             .not("server_issued_at", "is", null);
           if (crmCancellationError) {
@@ -11277,7 +11284,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // allowance cannot reach a row this request did not see: a live row with the approved
           // fingerprint at this moment is the row the selection pins and hands to the door.
           const doorSelectedAt = new Date(Date.now() - 2_000).toISOString();
-          const doorToolNames = [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES, ...GROWTH_PUBLISH_DOOR_TOOL_NAMES, "comms_send_email"] as string[];
+          const doorToolNames = [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES, ...GROWTH_PUBLISH_DOOR_TOOL_NAMES, "comms_send_email",SOCIAL_PROPOSAL_KEY] as string[];
           const { data: doorRows, error: doorSelectError } = await supabase.from("paige_pending_confirmations")
             .select("fingerprint,args,tool_name,consumed_at,expires_at,server_issued_at,issued_in_request")
             // The door's own claim scope, predicate for predicate (crm-command ~L452, sales-invoice-command
@@ -11307,7 +11314,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // fingerprinted (confirmFingerprint(tool, args)), so a row whose args no longer hash to its
             // fingerprint is not carried forward.
             if (await confirmFingerprint(row.tool_name, row.args as Record<string, unknown>) !== row.fingerprint) continue;
-            let shape = doorResumeShape(row.tool_name, row.args, doorTenant, catalogs);
+            let shape = doorResumeShape(row.tool_name, row.args, doorTenant, catalogs) ?? socialResumeShape(row.tool_name,row.args);
+            const resumedTool=row.tool_name===SOCIAL_PROPOSAL_KEY?SOCIAL_PUBLISH_TOOL:row.tool_name;
             let previewValidation: { command: Record<string, unknown>; idempotency_key: string } | null = null;
             if (!shape && interactive && payloadThreadId && CRM_COMMAND_TOOL_NAMES.has(row.tool_name as any)) {
               const turns = await readThreadTurns();
@@ -11325,18 +11333,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
             if (!shape) continue;
-            approvalTokenTool.set(fp, row.tool_name);
+            approvalTokenTool.set(fp, resumedTool);
             resumeTokenTools.push(fp);
             // Past its window — unused, or retired by a door's expiry sweep. Nothing ran; the door is
             // not asked (it would only propose again).
             if (state === "expired") {
-              resumeTokens.set(fp, { tool: row.tool_name, state: "expired" });
+              resumeTokens.set(fp, { tool: resumedTool, state: "expired" });
               continue;
             }
             // Not offered on this turn: not run, and the approval is left unspent.
-            if (!offeredTools.has(row.tool_name)) {
+            if (!offeredTools.has(resumedTool)) {
               console.warn("[paige] approval resume: the approved door tool is not offered on this turn; not run", JSON.stringify({ tool: row.tool_name, correlation_id: requestNonce }));
-              resumeTokens.set(fp, { tool: row.tool_name, state: "withheld" });
+              resumeTokens.set(fp, { tool: resumedTool, state: "withheld" });
               continue;
             }
             // Already used. The CRM and Sales doors read back a result they committed under the stored
@@ -11344,16 +11352,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // what it did, and nothing runs twice. The publish door keeps no such result (it would only
             // answer "already used"), so a used publish approval reads "can't confirm, check first".
             if (state === "used" && shape.family === "publish") {
-              resumeTokens.set(fp, { tool: row.tool_name, state: "lost" });
-              resumeHandledDoorTools.set(row.tool_name, "elsewhere");
+              resumeTokens.set(fp, { tool: resumedTool, state: "lost" });
+              resumeHandledDoorTools.set(resumedTool, "elsewhere");
               continue;
             }
-            const call = buildResumeCall(fp, { tool_name: row.tool_name, args: shape.callArgs });
+            const call = buildResumeCall(fp, { tool_name: resumedTool, args: shape.callArgs });
             if (previewValidation) resumePreviewValidation.set(call.id, previewValidation);
             resumePin.set(call.id, fp);
             resumeDoorPin.set(call.id, { fingerprint: fp, toolName: row.tool_name, tenantId: doorTenant, issuedInRequest: String((row as StoredDoorRow & { issued_in_request?: unknown }).issued_in_request), args: row.args as Record<string, unknown>, expiresAt: row.expires_at, selectedAt: doorSelectedAt });
-            resumeTokens.set(fp, { tool: row.tool_name, state: "pending" });
-            resumeHandledDoorTools.set(row.tool_name, "here");
+            resumeTokens.set(fp, { tool: resumedTool, state: "pending" });
+            resumeHandledDoorTools.set(resumedTool, "here");
             resumeCalls.push(call);
           }
         }
@@ -12262,6 +12270,54 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (result.spent) approvalSpend.set(result.spent, tc.id);
           toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
           continue;
+        }
+
+        // Original Social door, under the same current scope and before the legacy
+        // Chat mutation gate. It alone proposes/claims/publishes; no second gate.
+        if(tc.function.name==="social_post_publish"||tc.function.name==="read_social_publication"||tc.function.name==="check_social_publication"){
+          if(!cancellationsRecorded||!(await revalidateProposalScope())){
+            toolResults.push({tool_call_id:tc.id,role:"tool",content:JSON.stringify({success:false,not_applied:true,error:"confirmation_context_unavailable"})});continue;
+          }
+          // The offered catalog is not execution authority. Re-read the original
+          // seat/role and canonical account classifier for this exact call.
+          if(callerTier!=="tenant"||calendarBookingAccountShape!=="solo"||scopedClientId||customerPortal||req.signal.aborted){
+            toolResults.push({tool_call_id:tc.id,role:"tool",content:JSON.stringify({success:false,not_applied:true,error:"social_scope_unavailable"})});continue;
+          }
+          const socialAuthority=await workspaceAuthorityNow();
+          const socialShape=await readCalendarAccountShape(supabaseClient as unknown as CalendarBookingReadCaller,turnScopeTenantId,req.signal);
+          if(!socialAuthority.seat||!socialAuthority.workspaceAdmin||socialShape.status!=="available"||socialShape.accountShape!=="solo"||req.signal.aborted){
+            toolResults.push({tool_call_id:tc.id,role:"tool",content:JSON.stringify({success:false,not_applied:true,error:"social_scope_unavailable"})});continue;
+          }
+          let socialArgs:Record<string,unknown>={};try{socialArgs=JSON.parse(tc.function.arguments||"{}");}catch{/* original door validates the closed request */}
+          const socialAdmin=createClient(supabaseUrl,supabaseServiceKey);
+          const result=await dispatchSocialChat({tenantId:personaCtx?.tenant_id??null,userId:user.id,toolName:tc.function.name,args:socialArgs,
+            approved:doorPin?new Set([doorPin.fingerprint]):approvedConfirmations,sameToolCalls:doorPin?1:toolCalls.filter((call:{function?:{name?:unknown}})=>call?.function?.name===tc.function.name).length,
+            ...(doorPin?{pinned:{fingerprint:doorPin.fingerprint,args:doorPin.args}}:{})},{
+            admin:{from:name=>({select:columns=>socialAdmin.from(name).select(columns) as unknown as SocialApprovalQuery})},
+            invoke:body=>supabaseClient.functions.invoke("social-publish-command",{headers:{Authorization:authHeader},body}),
+          });
+          for(const token of result.tokens??[])approvalTokenTool.set(token,tc.function.name);
+          if(result.refusal)approvalRefusals.set(tc.function.name,result.refusal);
+          if(!doorPin&&result.content.needs_confirm===true&&typeof result.content.confirm_fingerprint==="string"){
+            const waiting=await withoutTeamHubCardTokens(supabaseClient,user.id,[result.content.confirm_fingerprint]).catch(()=>null);
+            if(!waiting||waiting.failed||waiting.bound.length){
+              toolResults.push({tool_call_id:tc.id,role:"tool",content:JSON.stringify(waiting&&!waiting.failed&&waiting.bound.length?TEAM_HUB_CARD_ALREADY_WAITING:
+                {success:false,not_applied:true,error:"The original Social proposal could not be verified for this conversation."})});continue;
+            }
+          }
+          const candidates=Array.isArray(result.content.social_references)?result.content.social_references:[result.content.social_reference];
+          const references=candidates.flatMap(value=>{const ref=readSocialPublicationReference(value);return ref&&ref.tenant_id===personaCtx?.tenant_id?[ref]:[];}).slice(0,6);
+          if(references.length)socialPublicationSource.set(tc,references);
+          // Tool-use read receipt only. Render/history inspection does not write;
+          // the original publishing door remains the sole action receipt writer.
+          if((tc.function.name===SOCIAL_READ_TOOL||tc.function.name===SOCIAL_CHECK_TOOL)&&result.content.success===true&&references.length&&await revalidateProposalScope()){
+            const key=tc.function.name===SOCIAL_READ_TOOL?"social.publication_read":"social.publication_check";
+            await recordCapabilityRun(supabase,{tenantId:references[0].tenant_id,actorId:user.id,capabilityKey:key,outcome:"capability_succeeded",
+              runId:await stableRunId([key,requestNonce,tc.id]),agentSlug:null,detail:{channel:"chat",content_id:references[0].content_id,publication_id:references[0].publication_id}});
+          }
+          if(doorPin){toolResults.push({tool_call_id:tc.id,role:"tool",content:JSON.stringify(await settlePinnedDoorResult(tc,doorPin,result.spent,result.content,result.approvalUnavailable!==true))});continue;}
+          if(result.spent)approvalSpend.set(result.spent,tc.id);
+          toolResults.push({tool_call_id:tc.id,role:"tool",content:JSON.stringify(result.content)});continue;
         }
 
         // ── THE ONE PUBLISH DOOR (Vibe Studio V2b) ───────────────────────────
@@ -19985,7 +20041,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // render an Approve/Deny card instead of Paige asking in prose.
       // Carries the FINGERPRINT alongside the summary, because the surface that shows the card has
       // to echo it back for the approval to bind to this exact call rather than to a boolean.
-      const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; expires_at?: unknown; command?: Record<string, unknown>; idempotency_key?: string; preview?: Record<string, unknown> }> = [];
+      const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; expires_at?: unknown; command?: Record<string, unknown>; idempotency_key?: string; preview?: Record<string, unknown>;social_reference?:SocialPublicationReference }> = [];
+      const socialResultTrace:SocialPublicationReference[]=[];
       // A native proposal already supplies the exact approval. Do not spend another
       // model round before recording that pause, or publish a card before its receipt.
       let durableApprovalPause = false;
@@ -20011,12 +20068,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // path, URL, readback or record_locator; the address is rebuilt from the current account.
       const assistantTurnMetadata = () => ({
         surfaces: stepTrace.filter((s) => s.kind !== "thought").map((s) => s.group).filter((v, i, a) => v && a.indexOf(v) === i),
-        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length || interactiveEffects.length || readLinkTrace.length)
+        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length || interactiveEffects.length || readLinkTrace.length || socialResultTrace.length)
           ? {
               approval_queued: queuedApprovals,
               ...(interactiveEffects.length ? { interactive: { request_intent_id: payloadRequestIntentId,
                 effects: interactiveEffects.slice(0, 20) } } : {}),
               paige_confirm: confirmTrace,
+              ...(socialResultTrace.length?{paige_social_publications:socialResultTrace}:{}),
               paige_crm_result: crmResultTrace.map((result) => ({
                 action: result.action,
                 outcome: result.outcome,
@@ -20700,9 +20758,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     if (effect) interactiveEffects.push(effect);
                   }
                   ok = parsed?.success !== false;
+                  const socialReferences=socialPublicationSource.get(tc)??[];
+                  for(const reference of socialReferences){if(socialResultTrace.length<6&&!socialResultTrace.some(r=>r.content_id===reference.content_id&&r.publication_id===reference.publication_id&&r.content_revision===reference.content_revision))socialResultTrace.push(reference);}
                   // Capture a pending confirmation so the client renders an approve card.
                   if (parsed?.needs_confirm && parsed?.confirm_summary) {
-                    confirmTrace.push({ tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(Object.prototype.hasOwnProperty.call(parsed, "confirm_expires_at") ? { expires_at: parsed.confirm_expires_at } : {}), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}), ...(parsed.confirm_command && typeof parsed.confirm_command === "object" ? { command: parsed.confirm_command as Record<string, unknown> } : {}), ...(parsed.confirm_idempotency_key ? { idempotency_key: String(parsed.confirm_idempotency_key) } : {}), ...(parsed.confirm_preview && typeof parsed.confirm_preview === "object" && !Array.isArray(parsed.confirm_preview) ? { preview: parsed.confirm_preview as Record<string, unknown> } : {}) });
+                    confirmTrace.push({ ...(socialReferences[0]&&tc.function?.name===SOCIAL_PUBLISH_TOOL?{social_reference:socialReferences[0]}:{}), tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(Object.prototype.hasOwnProperty.call(parsed, "confirm_expires_at") ? { expires_at: parsed.confirm_expires_at } : {}), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}), ...(parsed.confirm_command && typeof parsed.confirm_command === "object" ? { command: parsed.confirm_command as Record<string, unknown> } : {}), ...(parsed.confirm_idempotency_key ? { idempotency_key: String(parsed.confirm_idempotency_key) } : {}), ...(parsed.confirm_preview && typeof parsed.confirm_preview === "object" && !Array.isArray(parsed.confirm_preview) ? { preview: parsed.confirm_preview as Record<string, unknown> } : {}) });
                   }
                   if (tc.function?.name === "deep_research" && parsed && typeof parsed === "object" && Array.isArray(parsed.findings)) {
                     researchTrace.push({
@@ -21215,6 +21275,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           await emitApprovalOutcome(controller);
           for (const c of confirmTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_confirm: c })}\n\n`));
           for (const result of crmResultTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_crm_result: result })}\n\n`));
+          if(socialResultTrace.length)emitContent(controller,enc.encode(`data: ${JSON.stringify({paige_social_publications:socialResultTrace})}\n\n`));
           // E4-S3 — one frame of read references per turn, through emitContent so a protected turn holds
           // (and a withheld one drops) it like every other card.
           if (readLinkTrace.length) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_record_links: readRecordLinks(readLinkTrace) })}\n\n`));

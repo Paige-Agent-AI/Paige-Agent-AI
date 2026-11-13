@@ -284,7 +284,6 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
       ["campaigns", "Campaigns"],
       ["audience", "Audience"],
       ["content", "Content"],
-      ["calendar", "Calendar"],
       ["social", "Social"],
       ["email", "Email"],
       ["analytics", "Analytics"],

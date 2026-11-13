@@ -17,6 +17,7 @@
  *   exact flow-9 line each outcome shows the asker. Nothing is ever shown as posted unless the server
  *   answered `posted` with the read-back message.
  */
+import {readSocialPublicationReference,type SocialPublicationReference} from "../../../supabase/functions/_shared/social-publish-command/reference";
 import {
   isTeamHubAgentKey,
   parseApproval,
@@ -415,6 +416,7 @@ export const CARD_KIND_LABEL: Readonly<Record<string, string>> = {
   task_handover: "Task hand-over",
   task_cancel: "Task cancel",
   page_publish: "Page publish",
+  social_publish:"Social publish",
 };
 
 /** What the act produced, by reference only (never its contents): where it lives, and its id. */
@@ -422,6 +424,7 @@ export interface CardRecord { destination: string; recordId: string }
 
 /** One card as the member-safe read says it stands, in the shape the approved card draws. */
 export interface CardRead {
+  socialReference?:SocialPublicationReference;
   approval: TeamHubApproval;
   /** The agent's outcome message in the card's thread, once it is posted. */
   outcomeMessageId: string | null;
@@ -477,7 +480,7 @@ function parseCardRecord(value: unknown): CardRecord | null | undefined {
  * the read may give it (the asker, while the card waits); a state or kind this build does not know is
  * dropped, never guessed at.
  */
-function parseServerCard(card: unknown, outcomeMessageId: unknown, record: unknown): CardRead | null {
+function parseServerCard(card: unknown, outcomeMessageId: unknown, record: unknown,socialReference?:unknown): CardRead | null {
   if (!isRow(card) || typeof card.state !== "string" || !(CARD_STATES as readonly string[]).includes(card.state)) return null;
   const kind = typeof card.kind === "string" ? CARD_KIND_LABEL[card.kind] : undefined;
   if (!kind || !Array.isArray(card.actions)) return null;
@@ -500,7 +503,8 @@ function parseServerCard(card: unknown, outcomeMessageId: unknown, record: unkno
   const approval = parseApproval({ state: card.state, kind, actions, ...(resumable ? { can_resume: true } : {}), asker_user_id: card.asker_user_id,
     decided_by_name: card.decided_by_name, decided_at: card.decided_at });
   if (!approval) return null;
-  return { approval, outcomeMessageId: isText(outcomeMessageId) ? outcomeMessageId : null, record: parsedRecord, expiresAt };
+  const social=card.kind==="social_publish"?readSocialPublicationReference(socialReference):null;
+  return { approval, outcomeMessageId: isText(outcomeMessageId) ? outcomeMessageId : null, record: parsedRecord, expiresAt,...(social?{socialReference:social}:{}) };
 }
 
 /** The read's answer by message id, checked; a malformed row is dropped. `null` when the read failed. */
@@ -509,7 +513,7 @@ export function parseCardStates(data: unknown, error: unknown): Record<string, C
   const out: Record<string, CardRead> = {};
   for (const row of data.cards) {
     if (!isRow(row) || !isText(row.message_id)) continue;
-    const card = parseServerCard(row.card, row.outcome_message_id, row.record);
+    const card = parseServerCard(row.card, row.outcome_message_id, row.record,row.social_reference);
     if (card) out[row.message_id] = card;
   }
   return out;
@@ -568,7 +572,7 @@ export function parseCardAct(data: unknown, error: unknown, request: CardActRequ
     // The card itself, or its whole state row; a row must name this card.
     const row = isRow(data.card) && "card" in data.card ? data.card : null;
     if (row && row.message_id !== request.messageId) return { outcome: "no_answer" };
-    card = row ? parseServerCard(row.card, row.outcome_message_id, row.record) : parseServerCard(data.card, undefined, undefined);
+    card = row ? parseServerCard(row.card, row.outcome_message_id, row.record,row.social_reference) : parseServerCard(data.card, undefined, undefined);
     if (!card) return { outcome: "no_answer" };
   }
   let outcomeMessage: TeamHubMessage | null = null;

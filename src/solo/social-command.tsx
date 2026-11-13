@@ -35,6 +35,7 @@ import { Link } from "react-router-dom";
 import { Ic } from "./_shared";
 import { useSocialCommand } from "./useSocialCommand";
 import { GoLive } from "./go-live";
+import { SocialPublishingDesk } from "./social-publishing-desk";
 import { useSoloPendingActions } from "./data/useSoloPendingActions";
 import { elapsedLabel } from "./data/useSoloActivityFeed";
 // useSoloTrust directly rather than compass.tsx's useTrustDepartments: the compass module pulls
@@ -443,8 +444,8 @@ function PaigeSeesPanel({ items, loading, error, onRetry }) {
           <h4>Nothing is waiting on you</h4>
           <p>
             When PAIGE has something ready she should not send on her own, it shows up here with the team
-            that raised it. No trend, posting window, or engagement number is measured for you, so
-            none is shown.
+            that raised it. These workspace cues do not measure posting windows or engagement trends.
+            Open an original post’s Result for its provider-reported performance.
           </p>
         </div>
       ) : (
@@ -622,7 +623,7 @@ function ChannelTelemetryPanel({ channels, onRecord, canManage, notPermitted, ha
           </ul>
           <p className="social-panel-foot">
             {channels.some((c) => c.connection?.status === "connected")
-              ? "Some of these are connected. A connection is consent to read the account — no audience, engagement or placement number exists for any of them, and posting stays off."
+              ? "These connected identities do not prove publishing permission or account-wide audience totals. Review a saved post in the publishing desk for its exact supported destination, approval and receipt."
               : "These are what you told PAIGE. No provider is connected, so no audience, engagement or placement number exists for any of them."}
           </p>
         </>
@@ -836,6 +837,8 @@ export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompa
 
   return (
     <div className="social-page">
+      {social.tenantId && <SocialPublishingDesk key={social.tenantId} tenantId={social.tenantId} canManage={social.canManage} onOpenStudio={onOpenStudio} onAskPaige={onAskPaige}/>}
+      <details className="social-existing-tools"><summary>Connections, broadcasts and workspace activity</summary>
       <SocialHero
         brief={brief}
         kpis={kpis}
@@ -880,6 +883,7 @@ export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompa
       </div>
 
       <TrustCompassSocialStatus trust={trust} />
+      </details>
 
       {social.recordChangedAt && (
         <p className="social-record-stamp">

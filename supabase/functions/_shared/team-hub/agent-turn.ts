@@ -65,6 +65,7 @@ import {
   A2B_CARD_TOOLS, A2B_READ_TOOLS, CardProvenance, KIND_LABEL, CARD_KIND, PAIGE_A2B_DM_SCOPE, REDIRECT_LINE, a2bAuthority, a2bToolDef,
   namesA2bTool, offeredA2bTools, prepareCard, runCardRead, type DoorInvoke, type PreparedCard,
 } from "./card-tools.ts";
+import {SOCIAL_PUBLISH_TOOL,SOCIAL_READ_TOOL,SOCIAL_PROPOSAL_KEY} from "../social-publish-command/chat.ts";
 import { MENTOR_PLAN_READ_TIMEOUT_MS, mentorPlanReadTools, readMentorPlan, type MentorPlanScope } from "./mentor-plan-read.ts";
 import { loadTeamAuthorityForChat } from "../paige-spine/domains/teamAuthorityChatEvidence.ts";
 import { meritServiceReadTools, readMeritService, type MeritServiceScope, type MeritServiceReadEvidence } from "../client-engagement/merit-team-hub-read.ts";
@@ -293,11 +294,12 @@ export function storedToolNames(list: unknown): string[] | null {
  * in every Team Hub turn until A2c. A shared conversation is unchanged.
  */
 export function effectiveAgentTools(stored: string[] | null, where: "shared" | "agent_dm", runnable: ReadonlySet<string> = EXECUTABLE_AGENT_TOOLS,
-  authority: { seat: boolean; workspaceAdmin: boolean } | null = null): string[] {
+  authority: { seat: boolean; workspaceAdmin: boolean } | null = null, agent?:string): string[] {
   if (!stored) return [];
   const writes = mutatingTools();
-  const base = [...new Set(stored)].filter((t) => runnable.has(t) && !writes.has(t));
-  const added = offeredA2bTools(stored, where, authority).filter((t) => !base.includes(t));
+  const base = [...new Set(stored)].filter((t) => runnable.has(t) && !writes.has(t)
+    &&![SOCIAL_PUBLISH_TOOL,SOCIAL_READ_TOOL,SOCIAL_PROPOSAL_KEY].includes(t));
+  const added = offeredA2bTools(stored, where, authority,agent).filter((t) => !base.includes(t));
   return [...base, ...added];
 }
 
@@ -1038,7 +1040,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     whereKind === "agent_dm" ? "agent_dm" : "shared",
     mentorReads.length || zionReads.length
       ? new Set([...EXECUTABLE_AGENT_TOOLS, MENTOR_PLAN_TOOL, ...zionReads.map(t => t.function.name)]) : EXECUTABLE_AGENT_TOOLS,
-    authority,
+    authority,agent,
   );
   // EXP10 NEXUS connection read (ANT-164, directive 385a54eb; contract efa6d22f on ANT-161): the one
   // nexus-DM domain read — integrations_list, the SAME invoker-scoped projection PAIGE chat calls,

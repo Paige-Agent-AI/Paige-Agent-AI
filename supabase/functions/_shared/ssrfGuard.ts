@@ -222,6 +222,24 @@ export async function safeFetch(
   init: RequestInit = {},
   opts: SafeFetchOptions = {},
 ): Promise<{ status: number; headers: Headers; body: string; truncated: boolean }> {
+  const response = await guardedFetch(url, init, opts);
+  return { ...response, body: new TextDecoder().decode(response.body) };
+}
+
+/** Binary view of the SAME guarded request/body reader; no decoding or second transport. */
+export async function safeFetchBytes(
+  url: string,
+  init: RequestInit = {},
+  opts: SafeFetchOptions = {},
+): Promise<{ status: number; headers: Headers; body: Uint8Array; truncated: boolean }> {
+  return await guardedFetch(url, init, opts);
+}
+
+async function guardedFetch(
+  url: string,
+  init: RequestInit,
+  opts: SafeFetchOptions,
+): Promise<{ status: number; headers: Headers; body: Uint8Array; truncated: boolean }> {
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxBytes = opts.maxBytes ?? DEFAULT_MAX_BYTES;
 
@@ -242,13 +260,15 @@ export async function safeFetch(
     }
     controller.signal.addEventListener("abort", onAbort, { once: true });
   });
+  let response: Response | null = null;
   try {
     await Promise.race([assertPublicHttpUrl(url), deadlineLoser]);
     if (controller.signal.aborted) throw new SsrfError("request_timed_out");
 
     let res: Response;
     try {
-      res = await fetch(url, { ...init, redirect: "manual", signal: controller.signal });
+      res = await Promise.race([fetch(url, { ...init, redirect: "manual", signal: controller.signal }), deadlineLoser]);
+      response = res;
     } catch (e) {
       if (controller.signal.aborted) throw new SsrfError("request_timed_out");
       throw new SsrfError("request_failed", e instanceof Error ? e.name : undefined);
@@ -267,13 +287,17 @@ export async function safeFetch(
       // Abort closes the actual request; cancellation releases the unused body. All URL,
       // redirect and deadline checks above are identical to ordinary body-reading calls.
       controller.abort();
-      try { await res.body?.cancel(); } catch { /* abort may have already closed it */ }
-      return { status: res.status, headers: res.headers, body: "", truncated: res.body !== null };
+      try { void res.body?.cancel().catch(() => {}); } catch { /* abort may have already closed it */ }
+      return { status: res.status, headers: res.headers, body: new Uint8Array(), truncated: res.body !== null };
     }
-    const { body, truncated } = await readBounded(res, maxBytes, controller);
+    const { body, truncated } = await readBounded(res, maxBytes, controller, deadlineLoser);
     return { status: res.status, headers: res.headers, body, truncated };
   } finally {
     clearTimeout(timer);
+    controller.abort();
+    // A failed/redirected response may never have reached the bounded reader. Cleanup
+    // starts immediately but cannot hold the request open beyond its deadline.
+    try { if (response?.body && !response.body.locked) void response.body.cancel().catch(() => {}); } catch { /* closed */ }
   }
 }
 
@@ -286,15 +310,16 @@ async function readBounded(
   res: Response,
   maxBytes: number,
   controller: AbortController,
-): Promise<{ body: string; truncated: boolean }> {
-  if (!res.body) return { body: "", truncated: false };
+  deadline: Promise<never>,
+): Promise<{ body: Uint8Array; truncated: boolean }> {
+  if (!res.body) return { body: new Uint8Array(), truncated: false };
   const reader = res.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
   let truncated = false;
   try {
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value } = await Promise.race([reader.read(), deadline]);
       if (done) break;
       if (!value) continue;
       if (total + value.byteLength > maxBytes) {
@@ -312,10 +337,11 @@ async function readBounded(
   } finally {
     // Releasing the lock and cancelling lets the connection close even when we stopped
     // early at the cap; without it an endless body keeps the socket alive.
-    try { await reader.cancel(); } catch { /* already closed */ }
+    try { void reader.cancel().catch(() => {}); } catch { /* already closed */ }
+    try { reader.releaseLock(); } catch { /* pending read is cancelled above */ }
   }
   const merged = new Uint8Array(total);
   let at = 0;
   for (const c of chunks) { merged.set(c, at); at += c.byteLength; }
-  return { body: new TextDecoder().decode(merged), truncated };
+  return { body: merged, truncated };
 }

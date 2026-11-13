@@ -37,6 +37,7 @@ import { dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from "../g
 import { invokeOutcomeUnknown } from "../approval-outcome.ts";
 import { confirmFingerprint } from "../confirm-fingerprint.ts";
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../capability-record.ts";
+import {dispatchSocialChat,socialResumeShape,SOCIAL_PUBLISH_TOOL,SOCIAL_READ_TOOL,SOCIAL_PROPOSAL_KEY,type SocialApprovalQuery} from "../social-publish-command/chat.ts";
 
 // ---------------------------------------------------------------- the request
 
@@ -109,6 +110,7 @@ export const OUTCOME_LINE = {
 export const DONE_NOTE: Readonly<Record<string, string>> = Object.freeze({
   task_handover: "The task is handed over.", task_cancel: "The task is cancelled.",
   page_publish: "The page is published. Its address didn't come back, so open it from your pages to check.",
+  social_publish:"The Social post is published. Open the original post for its receipt and performance.",
 });
 const quoteTitle = (title: string): string => {
   const flat = Array.from(title.replace(/\s+/g, " ").trim());
@@ -288,9 +290,9 @@ export async function runTeamHubCardAct(deps: CardActDeps, raw: unknown): Promis
   const fromKind = (k: "ran" | "not_run" | "unconfirmed", reason: keyof typeof FAILED_REASON): Classified =>
     k === "ran" ? { state: "done" } : k === "not_run" ? { state: "failed", reason } : { state: "unconfirmed" };
 
-  const shape = row && toolName && kind && storedArgs && A2B_CARD_TOOLS.has(toolName) && row.fingerprint === fp
+  const shape = row && toolName && kind && storedArgs && (A2B_CARD_TOOLS.has(toolName)||toolName===SOCIAL_PROPOSAL_KEY) && row.fingerprint === fp
     && await confirmFingerprint(toolName, storedArgs).catch(() => null) === fp
-    ? doorResumeShape(toolName, storedArgs, tenantId, {
+    ? socialResumeShape(toolName,storedArgs)??doorResumeShape(toolName, storedArgs, tenantId, {
       crmActionCapability: CRM_ACTION_CAPABILITY as Readonly<Record<string, string>>,
       crmPreviewActions: CRM_PREVIEW_REQUIRED_ACTIONS as ReadonlySet<string>,
       salesTools: new Set<string>(),
@@ -298,17 +300,20 @@ export async function runTeamHubCardAct(deps: CardActDeps, raw: unknown): Promis
     }) : null;
   const rowState = row ? storedRowState(row, Date.now()) : null;
   let publishedUrl: string | null = null;
+  let socialNote: string | null = null;
 
   // A stored proposal is not a standing agent grant. Re-resolve the platform-owned
   // scope for this card's verified agent immediately before dispatch, including resumes.
   const currentAgentAllows = async (): Promise<boolean> => {
-    if (!toolName || !A2B_CARD_TOOLS.has(toolName)) return false;
+    if (!toolName || !(A2B_CARD_TOOLS.has(toolName)||toolName===SOCIAL_PROPOSAL_KEY)) return false;
     if (meta!.agent === "paige") return (PAIGE_A2B_DM_SCOPE as readonly string[]).includes(toolName);
     try {
       const platform = await service.from("paige_subagents").select("slug,config")
         .eq("slug", meta!.agent).is("tenant_id", null).maybeSingle();
       if (platform?.error || platform?.data?.slug !== meta!.agent) return false;
       const scope = object(object(platform?.data?.config)?.capability_scope);
+      if(toolName===SOCIAL_PROPOSAL_KEY)return meta!.agent==="nexus"&&scope?.mode==="allowlist"&&scope.access==="card"
+        &&Array.isArray(scope.tools)&&scope.tools.includes(SOCIAL_PUBLISH_TOOL)&&scope.tools.includes(SOCIAL_READ_TOOL);
       return scope?.mode === "allowlist" && scope.access === "card"
         && Array.isArray(scope.tools) && scope.tools.every(t => typeof t === "string")
         && scope.tools.includes(toolName);
@@ -344,7 +349,16 @@ export async function runTeamHubCardAct(deps: CardActDeps, raw: unknown): Promis
       return fromKind(classifyResumedApproval({ spent: false, lost: true }).outcome, "unusable");
     };
     const family: DoorFamily = shape.family;
-    if (family === "publish") {
+    if(toolName===SOCIAL_PROPOSAL_KEY){
+      const dispatched=await dispatchSocialChat({tenantId,userId,toolName:SOCIAL_PUBLISH_TOOL,args:shape.callArgs,approved:new Set([fp]),sameToolCalls:1,
+        pinned:{fingerprint:fp,args:storedArgs}},{admin:{from:name=>({select:columns=>service.from(name).select(columns) as SocialApprovalQuery})},
+        invoke:body=>deps.invokeAs!("social-publish-command",body)});
+      const c=dispatched.content;
+      if(c.success===true&&c.state==="scheduled")socialNote="The provider accepted the exact schedule. Publication has not been confirmed. Open the original post for its schedule and receipt.";
+      if(c.success===true&&c.state==="cancelled")socialNote="The provider returned the original scheduled post to draft. This does not remove any post already live. Open its original receipt.";
+      if(dispatched.approvalUnavailable||c.needs_confirm===true)classified=await claimNotFound(null);
+      else classified=fromKind(classifyResumedApproval({spent:!!dispatched.spent,spentContent:JSON.stringify(c),refusal:dispatched.refusal}).outcome,"refused");
+    }else if (family === "publish") {
       const dispatched = await dispatchGrowthPublishChat({ tenantId, userId, toolName: toolName!, args: shape.callArgs,
         approved: new Set([fp]), sameToolCalls: 1, pinned: { fingerprint: fp, args: storedArgs } }, {
         admin: { from: (name: string) => ({ select: (columns: string) => service.from(name).select(columns) as GrowthPublishApprovalQuery }) },
@@ -385,7 +399,7 @@ export async function runTeamHubCardAct(deps: CardActDeps, raw: unknown): Promis
 
   // 5. Settle, BEFORE anything is posted (D9). A record only with done: the task this card changed.
   const taskId = uuid(object(storedArgs?.command)?.task_id);
-  const note = classified.state === "done" ? await doneNote(service, { kind: kind ?? "", tenantId, userId, taskId,
+  const note = classified.state === "done" ? socialNote ?? await doneNote(service, { kind: kind ?? "", tenantId, userId, taskId,
       assignee: uuid(object(object(storedArgs?.command)?.patch)?.assignee_user_id), url: publishedUrl })
     : classified.state === "failed" ? FAILED_REASON[classified.reason ?? "refused"] : null;
   const record = classified.state === "done" && (kind === "task_handover" || kind === "task_cancel") && taskId

@@ -72,8 +72,120 @@ vi.mock("../../supabase/functions/_shared/studio-caller.ts", () => ({
 }));
 
 import {
-  world, publishBody, connectedRow, accountRow, pieceRow, MINE, THEIRS, USER, PIECE, FOREIGN_PIECE, CONNECTION, PUBLICATION,
+  world, publishBody, connectedRow, accountRow, pieceRow, MINE, THEIRS, USER, PIECE, FOREIGN_PIECE, CONNECTION, PUBLICATION, ACCOUNT,
 } from "./social-publish-door.world.ts";
+
+describe("original publication performance cache",()=>{
+  const receipt = (over:Record<string,unknown>={})=>({ id:PUBLICATION,tenant_id:MINE,content_id:PIECE,platform:"threads",status:"published",connection_id:CONNECTION,
+    provider_request_id:"original-provider-request",provider_post_id:"original-native-post",provider_post_url:"https://www.threads.com/@fixture/post/one",
+    request_args:{account_id:ACCOUNT,caption:"Original caption",platform:"threads",content_id:PIECE},provider_response:{results:[{success:true}]},...over });
+  const setup=(over:Parameters<typeof world>[0]={})=>world({...over,tables:{paige_social_connections:[connectedRow({requested_platform:"threads"})],paige_social_accounts:[accountRow({platform:"threads"})],content_publications:[receipt()],...over.tables}});
+  const body={action:"performance",expected_tenant_id:MINE,content_id:PIECE,publication_id:PUBLICATION};
+  it("reads only the original exact account/post, caches through its original writer and never sends",async()=>{
+    const w=setup(),answer=await w.call(body);
+    expect(answer.body).toMatchObject({state:"performance",publication_id:PUBLICATION,analytics:{state:"available",metrics:{views:0,likes:2}}});
+    expect(w.seen.performanceReads).toMatchObject([{providerAccountId:"zernio-account-1",requestId:"original-provider-request",postId:"original-native-post",platform:"threads"}]);
+    expect(w.seen.createPost).toEqual([]);expect(w.seen.readPost).toEqual([]);
+    expect(w.tables.content_publications[0]).toMatchObject({id:PUBLICATION,status:"published",provider_post_id:"original-native-post",provider_request_id:"original-provider-request",provider_response:{results:[{success:true}],analytics:{state:"available"}}});
+  });
+  it("uses the original persisted cache for 60 minutes without another provider read",async()=>{
+    const w=setup({tables:{content_publications:[receipt({provider_response:{analytics:{state:"available",checked_at:new Date().toISOString(),metrics:{likes:0},measured_at:null}}})]}});
+    expect((await w.call(body)).body).toMatchObject({state:"performance",cached:true,analytics:{metrics:{likes:0}}});expect(w.seen.performanceReads).toEqual([]);
+  });
+  it.each([{admin:false},{active:THEIRS},{tables:{content_publications:[receipt({tenant_id:THEIRS})]}},{tables:{content_publications:[receipt({status:"outcome_unknown"})]}},{tables:{paige_social_accounts:[accountRow({id:"foreign",platform:"threads"})]} }])("refuses source/role/tenant/terminal mismatch before provider reads %j",async over=>{
+    const w=setup(over);expect((await w.call(body)).status).toBeGreaterThanOrEqual(400);expect(w.seen.performanceReads).toEqual([]);expect(w.seen.createPost).toEqual([]);
+  });
+  it("does not present unrecorded performance when the original native writer refuses",async()=>{
+    const w=setup({performanceReceiptFails:true}),answer=await w.call(body);expect(answer.status).toBeGreaterThanOrEqual(400);expect(answer.body.analytics).toBeUndefined();expect(w.seen.createPost).toEqual([]);
+  });
+  it("rechecks current authority after the provider read and refuses a revoked writer",async()=>{
+    const options:Parameters<typeof world>[0]={};options.readPerformance=()=>{options.admin=false;return {state:"available",metrics:{likes:1},measured_at:null};};
+    const w=setup(options); // setup copies options, so revoke the actual caller seam after the read.
+    w.adapter.readPerformance=async()=>{w.caller.rpc=async()=>({data:false,error:null});return {state:"available",metrics:{likes:1},measured_at:null};};
+    expect((await w.call(body)).status).toBe(403);expect(w.seen.rpc.filter(r=>r.fn==="content_publication_record")).toEqual([]);
+  });
+  it("reads the receipt-bound still-connected account after a different own publishing account is selected",async()=>{
+    const w=setup({tables:{paige_social_accounts:[accountRow({platform:"threads",selected:false}),accountRow({id:"99999999-9999-4999-8999-999999999999",platform:"threads",account_id:"another-own-account",selected:true})]}});
+    expect((await w.call(body)).body).toMatchObject({state:"performance"});expect(w.seen.performanceReads[0]?.providerAccountId).toBe("zernio-account-1");expect(w.seen.createPost).toEqual([]);
+  });
+});
+
+const MEDIA_ID = "88888888-8888-4888-8888-888888888888";
+const MEDIA_PATH = `${MINE}/saved/${MEDIA_ID}.png`;
+const MEDIA_FACTS = { contentType: "image/png", size: 16, etag: '"saved-object"', lastModified: "2026-11-13T12:00:00.000Z" };
+function mediaWorld(over: Parameters<typeof world>[0] = {}) {
+  return world({ ...over, storageObjects: { [MEDIA_PATH]: { ...MEDIA_FACTS } }, tables: {
+    marketing_content: [pieceRow({ channel: "social_post", meta: { media_content_ids: [MEDIA_ID] } }),
+      pieceRow({ id: MEDIA_ID, kind: "image", title: "Original saved image", image_path: MEDIA_PATH,
+        image_url: `https://test-project.supabase.co/storage/v1/object/public/paige-generated/${MEDIA_PATH}` })],
+    paige_social_connections: [connectedRow({ requested_platform: "threads" })],
+    paige_social_accounts: [accountRow({ platform: "threads" })],
+    ...over.tables,
+  } });
+}
+
+describe("media on the original governed publication attempt", () => {
+  it("previews saved media and dispatches only the exact approved snapshot", async () => {
+    const w = mediaWorld();
+    const first = await w.call(publishBody({ platform: "threads" }));
+    expect(first.status).toBe(202);
+    expect((first.body.preview as Record<string, unknown>).media).toEqual([expect.objectContaining({ content_id: MEDIA_ID, type: "image" })]);
+    expect(w.seen.createPost).toHaveLength(0);
+    const r = await w.call(publishBody({ platform: "threads", approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
+    expect(r.body.state).toBe("published");
+    expect(w.seen.createPost).toHaveLength(1);
+    expect(w.seen.createPost[0].media).toEqual([expect.objectContaining({ type: "image", contentType: "image/png", size: 16, readBytes: expect.any(Function) })]);
+    expect(JSON.stringify(w.seen.createPost[0])).not.toContain(MINE);
+    expect(w.seen.reads.filter(r => r.table === "marketing_content").every(r => r.client === "caller")).toBe(true);
+  });
+  it("rejects an unsaved media selection instead of approving different assets", async () => {
+    const w = mediaWorld();
+    const r = await w.call(publishBody({ platform: "threads", media_content_ids: [FOREIGN_PIECE] }));
+    expect(r.body.code).toBe("MEDIA_SELECTION_CHANGED");expect(w.seen.createPost).toHaveLength(0);
+  });
+  it("invalidates the original approval after the saved asset revision changes", async () => {
+    const w = mediaWorld();
+    const first = await w.call(publishBody({ platform: "threads" }));
+    // The effect-time recheck is independently exercised below. Here the saved asset revision
+    // changes between prepare and claim, and must no longer match the stored approval.
+    w.tables.marketing_content[1].updated_at = "2026-11-13T12:01:00.000Z";
+    const r = await w.call(publishBody({ platform: "threads", approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
+    expect(r.body.code).toBe("CLAIM_MISMATCH");expect(w.seen.createPost).toHaveLength(0);
+  });
+  it("re-reads original media after native binding and refuses a changed asset before dispatch", async () => {
+    const w = mediaWorld({ onBind: tables => { tables.marketing_content[1].updated_at = "2026-11-13T12:02:00.000Z"; } });
+    const first = await w.call(publishBody({ platform: "threads" }));
+    const r = await w.call(publishBody({ platform: "threads", approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
+    expect(r.body.code).toBe("MEDIA_CONTEXT_CHANGED");expect(w.seen.createPost).toHaveLength(0);
+    expect(w.tables.content_publications[0].status).toBe("refused");
+  });
+  it("refuses foreign media before privileged storage or provider reads", async () => {
+    const w = mediaWorld(); w.tables.marketing_content[1].tenant_id = THEIRS;
+    const r = await w.call(publishBody({ platform: "threads" }));
+    expect(r.body.code).toBe("MEDIA_NOT_AVAILABLE");
+    expect(w.seen.storageReads).toEqual([]);expect(w.seen.destinationReads).toEqual([]);expect(w.seen.createPost).toEqual([]);
+  });
+  it("states unsupported media truthfully on platforms outside the implemented media contract", async () => {
+    const w = mediaWorld();
+    const r = await w.call(publishBody({ platform: "instagram" }));
+    expect(r.body.code).toBe("MEDIA_PLATFORM_UNSUPPORTED");expect(w.seen.createPost).toEqual([]);
+  });
+  it.each(["role", "parent", "asset", "connection"])("refuses %s changes during upload at the final dispatch boundary", async changed => {
+    const w=mediaWorld(), originalCreate=w.adapter.createPost;
+    w.adapter.createPost=async input=>{
+      if(changed==="role") {const rpc=w.caller.rpc;w.caller.rpc=async(fn,args)=>fn==="is_tenant_admin"?{data:false,error:null}:rpc(fn,args);}
+      if(changed==="parent")w.tables.marketing_content[0].updated_at="2026-11-13T12:10:00.000Z";
+      if(changed==="asset")w.tables.marketing_content[1].status="archived";
+      if(changed==="connection")w.tables.paige_social_connections[0].status="disconnected";
+      await input.beforePublish!();
+      return originalCreate(input);
+    };
+    const first=await w.call(publishBody({platform:"threads"}));
+    const result=await w.call(publishBody({platform:"threads",approved_fingerprint:(first.body.approval as Record<string,string>).fingerprint}));
+    expect(result.body).toMatchObject({state:"refused",code:"PUBLICATION_CONTEXT_CHANGED"});
+    expect(w.seen.createPost).toHaveLength(0);expect(w.tables.content_publications[0].status).toBe("refused");
+  });
+});
 
 describe("social publish door — proposal, owner approval, provider execution, receipt (EXP07 row 10)", () => {
   it("reads protected content with the signed-in caller before preview and execution despite denied service SELECT", async () => {

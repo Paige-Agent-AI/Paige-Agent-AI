@@ -1403,6 +1403,13 @@ serve(async (req) => {
      *  snapshot taken at definition time, which would freeze the nulls above), so a site that runs
      *  after resolution is attributed even though the helper was defined before it. */
     const traceFor = (jobKind: string) => ({
+      // Verified actor and resolved context, read at call time; never request JSON.
+      // Provider adapters hash this transient partition, never log these identifiers.
+      prompt_cache_scope: {
+        actor_id: user.id,
+        tenant_id: traceCtx.tenant_id,
+        working_context_tenant_id: traceCtx.working_context_tenant_id,
+      },
       tenant_id: traceCtx.tenant_id,
       working_context_tenant_id: traceCtx.working_context_tenant_id,
       agent_id: traceCtx.agent_id,

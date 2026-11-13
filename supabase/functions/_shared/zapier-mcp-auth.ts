@@ -54,7 +54,7 @@ export async function resolveZapierMcpConnection(
     return { error: code, status };
   };
   let secret = original;
-  if (secret.auth_kind === "oauth" && (secret.refresh_claim || isExpired(secret.expires_at as string | null))) {
+  if (secret.auth_kind === "oauth" && ((secret.refresh_claim && !secret.refresh_completed_at) || isExpired(secret.expires_at as string | null))) {
     let server: AuthorizationServer;
     let resource = secret.server_url;
     try {
@@ -95,7 +95,7 @@ export async function resolveZapierMcpConnection(
           // once through the original reader; never repeat the provider refresh.
           const readback = await admin.rpc("get_tenant_mcp_secret", { _tenant_id: tenantId, _provider: "zapier" });
           const candidate = readback.error ? null : usable(readback.data);
-          if (candidate && candidate.auth_kind === "oauth" && !candidate.refresh_claim
+          if (candidate && candidate.auth_kind === "oauth" && candidate.refresh_claim === claim.claim && candidate.refresh_completed_at
             && candidate.auth_token === tokens.accessToken
             && (!tokens.refreshToken || candidate.refresh_token === tokens.refreshToken)
             && candidate.oauth_client_id === current.oauth_client_id
@@ -105,10 +105,13 @@ export async function resolveZapierMcpConnection(
         if (!saved) throw new Error("renewal_not_stored");
         secret = saved;
       } catch {
-        if (tokens) await discardFresh(server, current, tokens);
-        await admin.rpc("fail_tenant_zapier_mcp_refresh", {
+        const failed = await admin.rpc("fail_tenant_zapier_mcp_refresh", {
           _tenant: tenantId, _actor: actorId, _generation: current.generation, _claim: claim.claim,
         });
+        // Compensate only after the original row confirms this nonce is still its
+        // grant. Otherwise a committed renewal or unrelated reconnect may be healthy.
+        if (tokens && !failed.error && failed.data === true) await discardFresh(server, current, tokens);
+        if (failed.error || failed.data !== true) return { error: "authorization_renewal_unconfirmed", status: 409 };
         return await unavailable("reauthorization_required", 200);
       }
     } else {

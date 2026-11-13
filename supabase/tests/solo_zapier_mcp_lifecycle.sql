@@ -109,8 +109,9 @@ begin
  r:=public.finish_tenant_zapier_mcp_refresh(t,u,g,claim,'fixture-rotated',null,clock_timestamp()+interval '1 hour',array['records.read']);
  perform pg_temp.mcp_assert(r->>'state'='current' and r->'secret'->>'auth_token'='fixture-rotated'
   and r->'secret'->>'refresh_token'='fixture-refresh','rotation stored by original writer and non-rotating refresh retained');
- perform pg_temp.mcp_assert((select zapier_generation=g and zapier_refresh_claim is null from public.tenant_mcp_connections where tenant_id=t and provider='zapier'),
-  'ordinary renewal keeps connection generation and releases claim');
+ perform pg_temp.mcp_assert((select zapier_generation=g and zapier_refresh_claim=claim and zapier_refresh_completed_at is not null from public.tenant_mcp_connections where tenant_id=t and provider='zapier'),
+  'ordinary renewal retains its completion nonce without a pending renewal');
+ perform pg_temp.mcp_assert(public.claim_tenant_zapier_mcp_refresh(t,u,g)->>'state'='current','completed renewal nonce does not block a current grant');
  perform pg_temp.mcp_assert(public.finish_tenant_zapier_mcp_refresh(t,u,g,claim,'fixture-replay',null,null,array['records.read'])->>'state'='changed','finished renewal response cannot replay');
  perform pg_temp.mcp_assert(public.record_tenant_zapier_mcp_probe(t,u,g,'connected',null),'matching real-probe result can be persisted');
  update public.tenant_mcp_connections set access_token_expires_at=clock_timestamp()-interval '1 minute' where tenant_id=t and provider='zapier';
@@ -118,6 +119,18 @@ begin
  r:=public.finish_tenant_zapier_mcp_refresh(t,u,g,claim,'fixture-no-expiry',null,null,array['records.read']);
  perform pg_temp.mcp_assert(r->>'state'='current' and r->'secret'->'expires_at'='null'::jsonb,'missing renewal expiry does not retain expired timestamp');
  perform pg_temp.mcp_assert(public.claim_tenant_zapier_mcp_refresh(t,u,g)->>'state'='current','missing expiry cannot repeatedly consume refresh token');
+ -- Exact lost-finish/readback case: narrowing changes generation, but only this
+ -- completed nonce may mark the affected grant unavailable before compensation.
+ update public.tenant_mcp_connections set access_token_expires_at=clock_timestamp()-interval '1 minute' where tenant_id=t and provider='zapier';
+ r:=public.claim_tenant_zapier_mcp_refresh(t,u,g); claim:=(r->>'claim')::uuid;old_g:=g;
+ perform public.finish_tenant_zapier_mcp_refresh(t,u,g,claim,'fixture-narrowed',null,clock_timestamp()+interval '1 hour',array[]::text[]);
+ select zapier_generation into g from public.tenant_mcp_connections where tenant_id=t and provider='zapier';
+ perform pg_temp.mcp_assert(g<>old_g,'narrowed renewal changes generation');
+ perform pg_temp.mcp_assert(public.fail_tenant_zapier_mcp_refresh(t,u,old_g,claim),'completed nonce fences failed response across generation change');
+ perform pg_temp.mcp_assert((select status='error' and zapier_refresh_claim=claim and zapier_refresh_completed_at is null from public.tenant_mcp_connections where tenant_id=t and provider='zapier'),
+  'affected narrowed grant is unavailable before token compensation and cannot auto-refresh again');
+ perform pg_temp.mcp_assert(not public.record_tenant_zapier_mcp_probe(t,u,g,'connected',null),'a delayed probe cannot promote the uncertain renewal');
+ perform pg_temp.mcp_assert(not public.zapier_mcp_read_authorized(t,u,g),'uncertain renewal cannot admit provider access');
 
  -- New consent cancels even an exchanging older callback; disconnect cancels all pending flows.
  perform pg_temp.mcp_begin(t,u,'old-callback');
@@ -129,6 +142,7 @@ begin
  perform pg_temp.mcp_finish(t,u,'new-callback');
  select zapier_generation into g from public.tenant_mcp_connections where tenant_id=t and provider='zapier';
  perform pg_temp.mcp_assert(g<>old_g,'reconnect rotates connection identity');
+ perform pg_temp.mcp_assert(not public.fail_tenant_zapier_mcp_refresh(t,u,old_g,claim),'old completed nonce cannot mark unrelated reconnect unavailable');
  perform pg_temp.mcp_assert(not public.record_tenant_zapier_mcp_probe(t,u,old_g,'connected',null),'old check cannot promote replacement connection');
  perform pg_temp.mcp_assert(not public.disconnect_tenant_zapier_mcp(t,u,old_g),'stale disconnect cannot clear replacement grant');
  perform pg_temp.mcp_begin(t,u,'disconnect-pending');

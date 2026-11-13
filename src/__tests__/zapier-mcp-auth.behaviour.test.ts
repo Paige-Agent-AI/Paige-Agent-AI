@@ -71,8 +71,8 @@ describe("original Zapier MCP resolver shared by checks and actions", () => {
     expect(db.rpc).toHaveBeenCalledWith("fail_tenant_zapier_mcp_refresh", expect.objectContaining({ _claim: "claim-a" }));
     expect(db.rpc.mock.calls.map(([name]) => name)).not.toContain("finish_tenant_zapier_mcp_refresh");
   });
-  it.each([new Error("write failed"), { state: "changed" }])("refuses unpersisted rotation and withdraws only the fresh returned grant", async (result) => {
-    const db = database({ finish_tenant_zapier_mcp_refresh: result });
+  it("refuses unpersisted rotation and withdraws only the fresh returned grant after native failure admission", async () => {
+    const db = database({ finish_tenant_zapier_mcp_refresh: new Error("write failed") });
     expect(await resolveZapierMcpConnection(db, "workspace-a", "actor-a"))
       .toEqual({ error: "reauthorization_required", status: 200 });
     expect(oauth.revokeToken).toHaveBeenCalledWith(expect.objectContaining({ token: "fresh-refresh" }));
@@ -81,7 +81,8 @@ describe("original Zapier MCP resolver shared by checks and actions", () => {
     const db = database({ finish_tenant_zapier_mcp_refresh: new Error("response lost after commit") });
     const original = db.rpc.getMockImplementation()!;let reads = 0;
     db.rpc.mockImplementation(async (name, args) => name === "get_tenant_mcp_secret" && ++reads === 2
-      ? { data: { ...renewed(), auth_token: "fresh-access", refresh_token: "fresh-refresh" }, error: null }
+      ? { data: { ...renewed(), auth_token: "fresh-access", refresh_token: "fresh-refresh",
+        refresh_claim:"claim-a",refresh_completed_at:"2026-11-13T00:00:00Z" }, error: null }
       : original(name, args));
     expect(await resolveZapierMcpConnection(db,"workspace-a","actor-a")).toMatchObject({auth:{token:"fresh-access"}});
     expect(oauth.refreshTokens).toHaveBeenCalledTimes(1);expect(reads).toBe(2);
@@ -89,15 +90,35 @@ describe("original Zapier MCP resolver shared by checks and actions", () => {
     expect(db.rpc.mock.calls.map(([name])=>name)).not.toContain("fail_tenant_zapier_mcp_refresh");
   });
   it("does not adopt an unrelated grant observed after a lost save response", async () => {
-    const db = database({ finish_tenant_zapier_mcp_refresh: new Error("response lost") });
+    const db = database({ finish_tenant_zapier_mcp_refresh: { state:"changed" }, fail_tenant_zapier_mcp_refresh:false });
     const original = db.rpc.getMockImplementation()!;let reads = 0;
     db.rpc.mockImplementation(async (name, args) => name === "get_tenant_mcp_secret" && ++reads === 2
       ? { data: { ...renewed(), generation:"replacement", auth_token:"another-access" }, error:null }
       : original(name,args));
-    expect(await resolveZapierMcpConnection(db,"workspace-a","actor-a")).toMatchObject({error:"reauthorization_required"});
+    expect(await resolveZapierMcpConnection(db,"workspace-a","actor-a")).toMatchObject({error:"authorization_renewal_unconfirmed"});
     expect(oauth.refreshTokens).toHaveBeenCalledTimes(1);
-    expect(db.rpc).toHaveBeenCalledWith("record_tenant_zapier_mcp_probe",expect.objectContaining({_generation:"generation-a"}));
-    expect(oauth.revokeToken).toHaveBeenCalledWith(expect.objectContaining({token:"fresh-refresh"}));
+    expect(oauth.revokeToken).not.toHaveBeenCalled();
+  });
+  it("marks a completed narrowed renewal unavailable by its native nonce before revoking it",async()=>{
+    const db=database({finish_tenant_zapier_mcp_refresh:new Error("lost finish response")});
+    const original=db.rpc.getMockImplementation()!;let reads=0;
+    db.rpc.mockImplementation(async(name,args)=>name==="get_tenant_mcp_secret"&&++reads===2
+      ? {data:null,error:new Error("lost readback")} :original(name,args));
+    oauth.refreshTokens.mockResolvedValue({...tokenSet(),scopes:[]});
+    expect(await resolveZapierMcpConnection(db,"workspace-a","actor-a")).toMatchObject({error:"reauthorization_required"});
+    const index=db.rpc.mock.calls.findIndex(([name])=>name==="fail_tenant_zapier_mcp_refresh");
+    expect(db.rpc.mock.invocationCallOrder[index]).toBeLessThan(oauth.revokeToken.mock.invocationCallOrder[0]);
+    expect(oauth.refreshTokens).toHaveBeenCalledTimes(1);
+  });
+  it("does not revoke a possibly committed healthy grant when native failure admission is also unavailable",async()=>{
+    const db=database({finish_tenant_zapier_mcp_refresh:new Error("lost save response"),
+      fail_tenant_zapier_mcp_refresh:new Error("lost failure admission")});
+    const original=db.rpc.getMockImplementation()!;let reads=0;
+    db.rpc.mockImplementation(async(name,args)=>name==="get_tenant_mcp_secret"&&++reads===2
+      ? {data:null,error:new Error("lost readback")} :original(name,args));
+    oauth.refreshTokens.mockResolvedValue({...tokenSet(),scopes:[]});
+    expect(await resolveZapierMcpConnection(db,"workspace-a","actor-a")).toMatchObject({error:"authorization_renewal_unconfirmed"});
+    expect(oauth.revokeToken).not.toHaveBeenCalled();expect(oauth.refreshTokens).toHaveBeenCalledTimes(1);
   });
   it("preserves already-saved URL credentials without inventing an OAuth grant", async () => {
     const db = database({ get_tenant_mcp_secret: { ...old(), auth_kind: "url", auth_token: null } });

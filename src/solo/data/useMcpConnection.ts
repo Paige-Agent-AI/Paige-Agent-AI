@@ -121,6 +121,7 @@ export function mcpWriteMessage(code: unknown, kind: "write" | "probe" = "write"
     case "MCP_BAD_AUTH_KIND": return "That authentication method is not one this provider supports.";
     case "MCP_NO_TENANT": return "This workspace could not be identified, so nothing was changed.";
     case "authorization_renewal_pending": return "Zapier authorization is being renewed. Wait a moment, then check again.";
+    case "authorization_renewal_unconfirmed": return "Zapier renewal could not be confirmed. Check the connection before reconnecting; no action was run.";
     case "reauthorization_required": return "Zapier authorization could not be renewed. Reconnect with Zapier to restore access.";
     case "authorization_server_unavailable": return "Zapier sign-in is unavailable right now. Wait a moment, then check again.";
     case "connection_changed":

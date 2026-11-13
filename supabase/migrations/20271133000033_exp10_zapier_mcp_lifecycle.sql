@@ -21,8 +21,11 @@ end $original_source$;
 alter table public.tenant_mcp_connections
  add column zapier_refresh_claim uuid,
  add column zapier_refresh_claimed_at timestamptz,
+ add column zapier_refresh_completed_at timestamptz,
  add constraint zapier_mcp_refresh_claim_pair check
-  ((zapier_refresh_claim is null)=(zapier_refresh_claimed_at is null));
+  ((zapier_refresh_claim is null)=(zapier_refresh_claimed_at is null)),
+ add constraint zapier_mcp_refresh_completion_bound check
+  (zapier_refresh_completed_at is null or zapier_refresh_claim is not null);
 alter table public.tenant_mcp_oauth_state
  add column requested_scopes text[],
  add column zapier_connection_generation uuid,
@@ -46,13 +49,13 @@ begin
  if new.provider<>'zapier' then return new; end if;
  if tg_op='INSERT' then
   new.zapier_generation:=gen_random_uuid();
-  new.zapier_refresh_claim:=null; new.zapier_refresh_claimed_at:=null;
+  new.zapier_refresh_claim:=null; new.zapier_refresh_claimed_at:=null; new.zapier_refresh_completed_at:=null;
  elsif row(new.server_url_ct,new.auth_kind,new.transport,
   new.oauth_issuer,new.oauth_client_id,new.oauth_client_secret_ct,new.oauth_scopes,new.enabled)
   is distinct from row(old.server_url_ct,old.auth_kind,old.transport,
   old.oauth_issuer,old.oauth_client_id,old.oauth_client_secret_ct,old.oauth_scopes,old.enabled) then
   new.zapier_generation:=gen_random_uuid();
-  new.zapier_refresh_claim:=null; new.zapier_refresh_claimed_at:=null;
+  new.zapier_refresh_claim:=null; new.zapier_refresh_claimed_at:=null; new.zapier_refresh_completed_at:=null;
  end if;
  return new;
 end $$;
@@ -280,7 +283,8 @@ AS $function$ BEGIN
   updated_at=now(),
   zapier_generation=gen_random_uuid(),
   zapier_refresh_claim=NULL,
-  zapier_refresh_claimed_at=NULL;
+  zapier_refresh_claimed_at=NULL,
+  zapier_refresh_completed_at=NULL;
  RETURN jsonb_build_object('ok',true,'provider','zapier','status','pending_verification','auth_kind','oauth');
 END $function$;
 CREATE OR REPLACE FUNCTION public.rotate_tenant_mcp_tokens(_tenant_id uuid, _provider text, _access_token text, _refresh_token text DEFAULT NULL::text, _expires_at timestamp with time zone DEFAULT NULL::timestamp with time zone)
@@ -354,7 +358,8 @@ BEGIN
     'oauth_scopes', COALESCE(_row.oauth_scopes, ARRAY[]::text[]),
     'generation', _row.zapier_generation,
     'refresh_claim', _row.zapier_refresh_claim,
-    'refresh_claimed_at', _row.zapier_refresh_claimed_at
+    'refresh_claimed_at', _row.zapier_refresh_claimed_at,
+    'refresh_completed_at', _row.zapier_refresh_completed_at
   );
 END;
 $function$;
@@ -519,7 +524,7 @@ begin
   return jsonb_build_object('state','changed'); end if;
  if not c.enabled or c.auth_kind<>'oauth' or c.server_url_ct is null or c.auth_token_ct is null then
   return jsonb_build_object('state','not_connected'); end if;
- if c.zapier_refresh_claim is not null then
+ if c.zapier_refresh_claim is not null and c.zapier_refresh_completed_at is null then
   -- A lost refresh response may already have rotated the token. Never steal or
   -- replay that claim; only the same in-flight response or explicit reconnect can finish it.
   return jsonb_build_object('state',case when c.zapier_refresh_claimed_at>clock_timestamp()-interval '30 seconds'
@@ -531,7 +536,8 @@ begin
  if c.refresh_token_ct is null or nullif(c.oauth_client_id,'') is null or nullif(c.oauth_issuer,'') is null then
   return jsonb_build_object('state','reauthorization_required'); end if;
  claim:=gen_random_uuid();
- update public.tenant_mcp_connections set zapier_refresh_claim=claim,zapier_refresh_claimed_at=clock_timestamp()
+ update public.tenant_mcp_connections set zapier_refresh_claim=claim,zapier_refresh_claimed_at=clock_timestamp(),
+  zapier_refresh_completed_at=null
   where tenant_id=_tenant and provider='zapier';
  return jsonb_build_object('state','claimed','claim',claim,
   'secret',public.get_tenant_mcp_secret(_tenant,'zapier'));
@@ -549,7 +555,7 @@ begin
  select * into c from public.tenant_mcp_connections where tenant_id=_tenant and provider='zapier' for update;
  if not found or not c.enabled or c.auth_kind<>'oauth'
   or c.zapier_generation is distinct from _generation or _claim is null
-  or c.zapier_refresh_claim is distinct from _claim then
+  or c.zapier_refresh_claim is distinct from _claim or c.zapier_refresh_completed_at is not null then
   return jsonb_build_object('state','changed'); end if;
  if nullif(_access_token,'') is null or (_expires_at is not null and _expires_at<=clock_timestamp())
   or _scopes is null or not (_scopes <@ coalesce(c.oauth_scopes,array[]::text[])) then
@@ -558,8 +564,13 @@ begin
  perform set_config('paige.zapier_mcp_write','refresh',true);
  perform public.rotate_tenant_mcp_tokens(_tenant,'zapier',_access_token,_refresh_token,_expires_at);
  perform set_config('paige.zapier_mcp_write','',true);
- update public.tenant_mcp_connections set oauth_scopes=_scopes,
-  zapier_refresh_claim=null,zapier_refresh_claimed_at=null
+ update public.tenant_mcp_connections set oauth_scopes=_scopes
+  where tenant_id=_tenant and provider='zapier';
+ -- Keep the completion nonce on the SAME row, even if narrowing scopes changed its
+ -- generation. A lost save response can then be reconciled/failed against this exact
+ -- rotation; a later reconnect or renewal replaces the nonce and cannot be touched.
+ update public.tenant_mcp_connections set zapier_refresh_claim=_claim,
+  zapier_refresh_claimed_at=c.zapier_refresh_claimed_at,zapier_refresh_completed_at=clock_timestamp()
   where tenant_id=_tenant and provider='zapier';
  return jsonb_build_object('state','current','secret',public.get_tenant_mcp_secret(_tenant,'zapier'));
 end $$;
@@ -572,10 +583,12 @@ begin
  perform pg_advisory_xact_lock(hashtextextended(_tenant::text,920));
  perform private.zapier_mcp_assert_actor(_tenant,_actor);
  perform 1 from public.tenant_mcp_connections where tenant_id=_tenant and provider='zapier'
-  and zapier_generation=_generation and zapier_refresh_claim=_claim and enabled for update;
+  and zapier_refresh_claim=_claim and _claim is not null and enabled
+  and (zapier_generation=_generation or zapier_refresh_completed_at is not null) for update;
  if not found then return false; end if;
  -- Retain the claim after uncertain provider/rotation failure. A subsequent
  -- connection check cannot automatically repeat a possibly consumed refresh token.
+ update public.tenant_mcp_connections set zapier_refresh_completed_at=null where tenant_id=_tenant and provider='zapier';
  perform set_config('paige.zapier_mcp_write','probe',true);
  perform public.update_tenant_mcp_probe(_tenant,'zapier','error','authorization_renewal_unconfirmed',null);
  perform set_config('paige.zapier_mcp_write','',true);
@@ -591,7 +604,9 @@ begin
  perform pg_advisory_xact_lock(hashtextextended(_tenant::text,920));
  perform private.zapier_mcp_assert_actor(_tenant,_actor);
  perform 1 from public.tenant_mcp_connections where tenant_id=_tenant and provider='zapier'
-  and zapier_generation=_generation and enabled for update;
+  and zapier_generation=_generation and enabled
+  and (_status<>'connected' or ((zapier_refresh_claim is null or zapier_refresh_completed_at is not null)
+   and (auth_kind<>'oauth' or access_token_expires_at is null or access_token_expires_at>clock_timestamp()))) for update;
  if not found then return false; end if;
  perform set_config('paige.zapier_mcp_write','probe',true);
  perform public.update_tenant_mcp_probe(_tenant,'zapier',_status,_last_error,null);
@@ -609,7 +624,9 @@ returns boolean language sql stable security definer set search_path='' as $$
    and t.archived_at is null and t.account_type::text='standalone'
    and t.parent_tenant_id is null and not public.is_company_workspace(t.id))
   and exists(select 1 from public.tenant_mcp_connections c where c.tenant_id=_tenant
-   and c.provider='zapier' and c.zapier_generation=_generation and c.enabled),false);
+   and c.provider='zapier' and c.zapier_generation=_generation and c.enabled
+   and (c.zapier_refresh_claim is null or c.zapier_refresh_completed_at is not null)
+   and (c.auth_kind<>'oauth' or c.access_token_expires_at is null or c.access_token_expires_at>clock_timestamp())),false);
 $$;
 revoke all on function public.zapier_mcp_read_authorized(uuid,uuid,uuid) from public,anon;
 grant execute on function public.zapier_mcp_read_authorized(uuid,uuid,uuid) to authenticated,service_role;

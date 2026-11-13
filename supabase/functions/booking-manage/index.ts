@@ -13,6 +13,7 @@ import {
   type DayWindow,
   isFree,
   isValidSlotStart,
+  parseCalendarAvailability,
   type SlotRules,
 } from "../_shared/slotRules.ts";
 // Shared notification primitives (§12): Twilio sender, merge-field renderer, and
@@ -691,7 +692,7 @@ Deno.serve(async (req) => {
         .eq("id", b.calendar_id).maybeSingle();
       if (c) {
         cal = c; slug = c.slug as string;
-        avail = Array.isArray(c.availability_json) ? (c.availability_json as DayWindow[]) : [];
+        avail = parseCalendarAvailability(c.availability_json);
         calDurationMin = Math.max(5, (c.duration_min as number) ?? 30);
         minNotice = Math.max(0, (c.min_notice_min as number) ?? 60);
         bufferBeforeMin = Math.max(0, (c.buffer_before_min as number) ?? 0);

@@ -6,6 +6,7 @@ import { webcrypto } from 'node:crypto';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { databaseAnswered } from './approval-outcome.ts';
+import { parseCalendarAvailability } from './slotRules.ts';
 const base = new URL('../', import.meta.url);
 function source(name) { return (process.env.BOUNDARY_TEST_BASELINE ? execFileSync('git',['show',`${process.env.BOUNDARY_TEST_BASELINE}:supabase/functions/${name}/index.ts`],{encoding:'utf8'}) : readFileSync(new URL(`${name}/index.ts`, base),'utf8')).replace(/^import[\s\S]*?from\s+["'][^"']+["'];\s*/gm,''); }
 function harness(name, allowed, {providerOk=true,providerStatus,remindChannel='email',calendarTenant='tenant',fixtures,env}={}) {
@@ -20,6 +21,7 @@ function harness(name, allowed, {providerOk=true,providerStatus,remindChannel='e
  fixtures?.({booking,calendar,data});
  const admin={rpc:async(rpc,args)=>{ if(rpc==='comms_provider_execution_allowed'){scopes.push(args);if(allowed==='throw')throw Error('database unavailable');return allowed==='error'?{data:true,error:{message:'unavailable'}}:{data:allowed,error:null};}return {data:rpc==='verify_cron_token'||(name==='send-portal-invite'&&rpc==='is_tenant_admin')?true:null,error:null};}, auth:{...(name==='send-portal-invite'?{getUser:async()=>({data:{user:{id:'controlled-owner'}},error:null})}:{}),admin:{getUserById:async()=>({data:{user:{email:'host@example.test'}}})}},from(table){let mutation=null,payload=null,write=null;const query=new Proxy({}, {get(_,prop){if(prop==='then')return resolve=>resolve({data:mutation?null:(table==='plan_items'&&planFired?[]:(data[table]||[])),error:null});if(prop==='maybeSingle'||prop==='single')return async()=>{if(table==='plan_items'&&mutation){if(payload?.reminded_at){if(planFired)return {data:null,error:null};planFired=true;reminder.updated_at='2026-01-02T00:00:00Z';}return {data:{id:'reminder',updated_at:reminder.updated_at,...(payload?.reminded_at?{reminded_at:payload.reminded_at}:{})},error:null};}return {data:mutation?{id:'reminder'}:(data[table]?.[0]??null),error:null};};return (...args)=>{if(['insert','update','delete'].includes(prop)){mutation=prop;payload=args[0];write={table,kind:prop,payload};writes.push(write);}else if(write&&['eq','is'].includes(prop))(write.filters??=[]).push([prop,...args]);return query;};}});return query;}};
  const ctx=vm.createContext({console,Response,Request,Headers,URL,TextEncoder,TextDecoder,crypto:webcrypto,btoa,atob,Date,AbortSignal,databaseAnswered,createClient:()=>admin,clientIp:()=> 'test',overRateLimit:async()=>false,parseLifecycle:()=>[],channelsOf:()=>[],targetsOf:()=>[],primaryPhonesForUsers:async()=>new Map(),renderTemplate:(x)=>x,sendSms:async(...args)=>{effects.push({sms:args});return true;},Deno:{env:{get:(k)=>(env&&Object.prototype.hasOwnProperty.call(env,k)?env[k]:'configured')},serve:fn=>ctx.handler=fn},fetch:async(url,options)=>{effects.push({url,payload:JSON.parse(options.body)});return new Response(JSON.stringify({id:'controlled-message'}),{status:providerStatus??(providerOk?202:503),headers:{'X-Message-Id':'controlled-message'}});}});
+ Object.assign(ctx, { parseCalendarAvailability, parseAvailability: parseCalendarAvailability });
  const helper=readFileSync(new URL('_shared/comms-provider-boundary.ts',base),'utf8').replace(/\bexport /g,'');
  vm.runInContext(stripTypeScriptTypes(helper),ctx);
  // The real shared send gates the handlers import (E09 Slice 6): runPreSend and the contact opt-out
@@ -164,7 +166,7 @@ const ADMITTED = { ok: true, booking_id: BOOKING_ID, tenant_id: 'tenant', client
 // `.select()` after an update returns the rows it changed. `applied` records each update that
 // changed at least one row. `concurrent: n` holds every booking load until n requests have loaded,
 // so n requests all read the same pre-write state, exactly as two racing requests can.
-function customerHarness({ admit = ADMITTED, user = { id: 'customer-user' }, allowed = true, startInMin = 180, minNotice = 60, availability = null, bookingExtra = {}, calendarExtra = {}, extraBookings = [], concurrent = 0, updateError = null, env } = {}) {
+function customerHarness({ admit = ADMITTED, user = { id: 'customer-user' }, allowed = true, startInMin = 180, minNotice = 60, availability = null, hostAvailability, bookingExtra = {}, calendarExtra = {}, extraBookings = [], concurrent = 0, updateError = null, env } = {}) {
  let store;
  const h = harness('booking-manage', allowed, { env, fixtures: ({ booking, calendar, data }) => {
   store = data;
@@ -172,6 +174,7 @@ function customerHarness({ admit = ADMITTED, user = { id: 'customer-user' }, all
   Object.assign(booking, { id: BOOKING_ID, contact_id: 'contact', guest_name: 'Jordan Rivera', start_at: new Date(start).toISOString(), end_at: new Date(start + 30 * MIN).toISOString(), booking_kind: 'single' }, bookingExtra);
   Object.assign(calendar, { title: 'Northwind Studio consult', min_notice_min: minNotice, duration_min: 30, enabled: true, ...(availability ? { availability_json: availability } : {}) }, calendarExtra);
   data.tenants[0].name = 'Northwind Studio';
+  if (hostAvailability !== undefined) data.calendar_hosts = [{ user_id: 'host', availability_json: hostAvailability, timezone: null }];
   for (const extra of extraBookings) data.internal_bookings.push({ ...booking, ...extra });
  } });
  const admin = h.ctx.createClient();
@@ -356,6 +359,50 @@ test('booking-manage customer mode: the per-booking throttle also carries RATE_L
 // Every day open 00:00–23:30 UTC in 30-minute slots.
 const OPEN_ALL_DAY = [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, start: '00:00', end: '23:30' }));
 function tomorrowAtUtc(h, m) { const d = new Date(Date.now() + 86_400_000); d.setUTCHours(h, m, 0, 0); return d.toISOString(); }
+
+function nextWeekdayAtUtc(hour) {
+ const day = new Date(tomorrowAtUtc(hour, 0));
+ while (day.getUTCDay() === 0 || day.getUTCDay() === 6) day.setUTCDate(day.getUTCDate() + 1);
+ return day.toISOString();
+}
+
+for (const availability of [null, undefined, []]) test(`booking-manage customer mode: default calendar hours offered at booking remain movable (${JSON.stringify(availability)})`, async () => {
+ const h = customerHarness({ startInMin: 7 * 24 * 60, calendarExtra: { availability_json: availability } });
+ const to = nextWeekdayAtUtc(14);
+ const res = await h.run({ mode: 'customer', action: 'reschedule', booking_id: BOOKING_ID, request_id: 'req-default-hours', start: to });
+ assert.equal(res.status, 200);
+ assert.equal((await res.json()).start_at, to);
+ assert.equal(h.applied.length, 1);
+ assert.equal(h.rows()[0].start_at, to);
+ assert.equal(h.auditWrites().length, 1);
+ assert.equal(h.effects.length, 2);
+});
+
+test('booking-manage customer mode: default calendar hours still refuse a time outside the original weekday window', async () => {
+ const h = customerHarness({ startInMin: 7 * 24 * 60, calendarExtra: { availability_json: null } });
+ const res = await h.run({ mode: 'customer', action: 'reschedule', booking_id: BOOKING_ID, request_id: 'req-default-closed', start: nextWeekdayAtUtc(8) });
+ assert.equal(res.status, 409);
+ assert.equal((await res.json()).code, 'SLOT_UNAVAILABLE');
+ assert.equal(h.applied.length, 0);
+ assert.equal(h.auditWrites().length, 0);
+ assert.equal(h.effects.length, 0);
+});
+
+test('booking-manage customer mode: a host with explicit empty hours does not inherit the calendar default', async () => {
+ const h = customerHarness({ startInMin: 7 * 24 * 60, calendarExtra: { availability_json: null }, hostAvailability: [] });
+ const res = await h.run({ mode: 'customer', action: 'reschedule', booking_id: BOOKING_ID, request_id: 'req-host-closed', start: nextWeekdayAtUtc(14) });
+ assert.equal(res.status, 409);
+ assert.equal((await res.json()).code, 'SLOT_UNAVAILABLE');
+ assert.equal(h.applied.length, 0);
+ assert.equal(h.auditWrites().length, 0);
+ assert.equal(h.effects.length, 0);
+});
+
+test('calendar availability normalization preserves configured hours and the original malformed fallback', () => {
+ const custom = [{ day: 3, start: '13:00', end: '15:00' }];
+ assert.deepEqual(parseCalendarAvailability([...custom, { day: 'invalid', start: 'xx', end: '' }]), custom);
+ assert.deepEqual(parseCalendarAvailability([{ day: 'invalid' }]), parseCalendarAvailability(null));
+});
 
 test('booking-manage customer mode: a successful reschedule moves the booking through the slot rules and audits from/to', async () => {
  const h = customerHarness({ startInMin: 2 * 24 * 60, minNotice: 60, availability: OPEN_ALL_DAY });

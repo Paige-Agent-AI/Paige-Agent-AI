@@ -6,7 +6,7 @@ if(recoveryMode)assert.ok(['lost','gateway','missing-readback','refused'].includ
 const knowledgeMode=process.env.KNOWLEDGE_INGEST_TEST;
 if(knowledgeMode){assert.ok(['success','uncertain','refused','partial','unrecorded'].includes(knowledgeMode));assert.ok(!recoveryMode&&!unknownTool);}
 const automationMode=process.env.AUTOMATION_DRAFT_TEST;
-if(automationMode){assert.ok(['success','uncertain','refused'].includes(automationMode));assert.ok(!knowledgeMode&&!recoveryMode&&!unknownTool);}
+if(automationMode){assert.ok(['success','lost-ack','uncertain','refused'].includes(automationMode));assert.ok(!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const researchMode=process.env.RESEARCH_READBACK_TEST;
 if(researchMode){assert.ok(['success','partial-library','unconfirmed'].includes(researchMode));assert.ok(!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const crmMode=process.env.CRM_ACK_TEST;
@@ -27,6 +27,7 @@ const researchFixture=()=>({run_id:id(11),question:'Fixture public question',fin
  coverage:{configured:true,stop_reason:'answered',hops_used:1,searches:1,reads:1,note:'',
    source_policy:{max_sources:3,admitted_sources:1,limit_reached:false}}});
 const draftArgs={name:'Fixture process',trigger_key:'contact.created',steps:[{action_kind:'crm.advance_journey_stage',config:{stage:'review'}}]};
+let originalDraftState=null;
 const ingestRequests=[];
 let modelCalls=0;
 globalThis.fetch=async(url,opts)=>{
@@ -160,6 +161,18 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
  resolve_tool_autonomy:a=>({data:crmScopePinned||crmPauseMode&&JSON.stringify(a).includes('crm_')?'confirm':'auto',error:null}),resolve_tool_autonomy_detail:{data:{ceiling_allows_auto:true},error:null},
  resolve_tool_autonomy_many:{data:[{tool_key:"plan_create",mode:"auto",ceiling_allows_auto:true}],error:null},
  resolve_automation_autonomy:{data:{found:true,effective:'confirm',dark:[],state:'draft',granted:'confirm',would_run:false},error:null},
+ save_automation_draft:args=>{
+  assert.equal(args._expected_tenant_id,tenant);assert.deepEqual(args._draft,{...draftArgs,category:'general'});
+  originalDraftState={phase:'saved',request_id:args._request_id,automation_id:args._request_id,tenant_id:tenant,actor_id:actor,
+   receipt_id:id(19),steps:1,state:'draft',granted_lane:'confirm',execution_started:false,updated_at:'2026-11-13T17:00:00Z'};
+  if(automationMode==='lost-ack'||automationMode==='uncertain')throw new TypeError('Lost original atomic save acknowledgment');
+  return {data:originalDraftState,error:null};
+ },
+ read_automation_draft:args=>{
+  assert.equal(args._request_id,originalDraftState?.request_id);assert.equal(args._expected_tenant_id,tenant);
+  assert.deepEqual(args._expected_draft,{...draftArgs,category:'general'});
+  return {data:automationMode==='uncertain'?{phase:'absent',request_id:args._request_id}:originalDraftState,error:null};
+ },
  get_workspace_research_run:()=>{const r=researchFixture();return {data:{id:r.run_id,question:r.question,domain:'general',caller:'chat',
   configured:true,stop_reason:'answered',coverage:r.coverage,findings:r.findings,sources:researchMode==='partial-library'?[]:r.sources},error:null};},
  get_actor_access:{data:{tier:'tenant'},error:null},
@@ -327,15 +340,18 @@ if(researchMode){
  process.exit(0);
 }
 if(automationMode){
- const drafts=rec.inserts.filter(r=>r.table==='paige_automations'&&!r.update),acts=rec.inserts.filter(r=>r.table==='paige_automation_acts');
- assert.equal(drafts.length,automationMode==='refused'?0:1,'one native draft insert; never retry by name');
- assert.equal(acts.length,automationMode==='refused'?0:1,'one exact native acts insert');
- if(drafts.length){assert.equal(drafts[0].row.tenant_id,tenant);assert.equal(drafts[0].row.created_by,actor);assert.equal(drafts[0].row.granted_lane,'confirm');assert.equal(drafts[0].row.state,'draft');}
+ const drafts=rec.rpc.filter(c=>c.name==='save_automation_draft'),reads=rec.rpc.filter(c=>c.name==='read_automation_draft');
+ assert.equal(drafts.length,automationMode==='refused'?0:1,'one atomic native save; never retry by name');
+ assert.equal(reads.length,['uncertain','lost-ack'].includes(automationMode)?1:0,'only original-identity reconciliation after lost acknowledgment');
+ assert.ok(!rec.inserts.some(r=>['paige_automations','paige_automation_acts'].includes(r.table)),'obsolete two-write writer is gone');
+ // This original harness records client kind only; exact forwarded JWT proof is
+ // in the caller-header-aware client-memory harness and native scope controls.
+ for(const call of [...drafts,...reads])assert.equal(call.client,'jwt');
  assert.equal(rec.rpc.filter(c=>c.name==='plan_create').length,automationMode==='uncertain'?0:1,wire);
  assert.equal(receipts.length,1,'one durable canonical terminal receipt');
  const effect=receipts[0].bundle_ref.interactive.effects.find(e=>e.tool==='automation_draft');
  assert.equal(effect.outcome,automationMode==='uncertain'?'outcome_unknown':automationMode==='refused'?'reported_failure':'reported_success');
- if(automationMode!=='refused')assert.ok(effect.record_refs.some(r=>r.kind==='automation'&&r.id===id(10)));
+ if(automationMode!=='refused')assert.ok(effect.record_refs.some(r=>r.kind==='automation'&&r.id===drafts[0].args._request_id));
  assert.ok(!rec.inserts.some(r=>r.table==='paige_act_executions'),'draft configuration is not an execution');
  console.log(`PASS actual handler automation draft ${automationMode}: native actor/workspace/configuration, canonical record receipt, correct successor hold; no execution`);
  process.exit(0);

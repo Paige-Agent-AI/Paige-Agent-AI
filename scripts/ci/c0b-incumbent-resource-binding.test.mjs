@@ -18,7 +18,9 @@ const mutations=[
  ['verified actor refusal removed',s=>s.replace('if (authError || !user)', 'if (false)')],
  ['Research actor substituted',s=>s.replace(/user_id: user\.id,(\r?\n                expected_tenant_id: tenantId,\r?\n                caller: "chat",)/,'user_id: args.user_id,$1')],
  ['Research persistence changed',s=>s.replace('persist: true,','persist: false,')],
- ['automation grant broadened',s=>s.replace('granted_lane: "confirm",','granted_lane: "auto",')],
+ // The native transaction now owns the grant. The original Chat projection must
+ // still never advertise an auto grant for the saved confirm-only definition.
+ ['automation grant broadened',s=>s.replace('state: "draft", granted: "confirm",','state: "draft", granted: "auto",')],
  ['number tenant filter removed',s=>s.replace(/\.eq\("tenant_id", crmTenantId\)\r?\n                \.order\("is_primary"/, '.eq("tenant_id", args.tenant_id)\n                .order("is_primary"')],
  ['provider purchase price removed',s=>s.replace('agreed_monthly_cents: typeof args.monthly_cents === "number" ? args.monthly_cents : undefined,','agreed_monthly_cents: undefined,')],
  ['Knowledge caller bearer changed',s=>s.replace('fetch(`${supabaseUrl}/functions/v1/kb-ingest-doc`','fetch(`${supabaseUrl}/functions/v1/counterfeit-kb`')],
@@ -48,6 +50,15 @@ test('missing or modified endpoint/helper cannot be accepted',()=>{
  assert.ok(incumbentSourcePaths.length>10);
  const path=incumbentSourcePaths[0];const missing=new Map(sources);missing.delete(path);assert.ok(validateIncumbentResourceBindings(chat,missing).findings.length);
  const changed=new Map(sources);changed.set(path,sources.get(path)+'\nconst counterfeitEffect = () => fetch("https://counterfeit.invalid");');assert.ok(validateIncumbentResourceBindings(chat,changed).findings.length);
+});
+
+test('atomic automation draft cannot widen its native grant readback without review',()=>{
+ const path='supabase/functions/_shared/paige-orchestration/automation-draft-save.ts';
+ assert.ok(incumbentSourcePaths.includes(path));
+ const raw=sources.get(path),mutated=raw.replace('raw.granted_lane !== "confirm"','raw.granted_lane !== "auto"');
+ assert.notEqual(mutated,raw,'fixture must mutate the actual atomic readback guard');
+ const changed=new Map(sources);changed.set(path,mutated);
+ assert.ok(validateIncumbentResourceBindings(chat,changed).findings.includes(`incumbent reviewed source changed: ${path}`));
 });
 
 for(const path of ['supabase/functions/_shared/client-portal-invoices-context.ts','supabase/functions/_shared/client-engagement/chat.ts','supabase/functions/_shared/client-engagement/money.ts'])

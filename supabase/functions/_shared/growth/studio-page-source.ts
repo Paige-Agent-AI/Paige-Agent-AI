@@ -15,6 +15,7 @@ export type StudioPageProjectContext = {
   values?: Partial<Record<StudioEditableContextField, string>>;
   template_id?: typeof NEXUS_LANDING_TEMPLATE_ID;
   business_source?: StudioBusinessSource;
+  business_name?: string;
 };
 /** Exact native JSON data for the original writer's source comparison. Never model input or authority. */
 export type StudioPageSaveSource = {
@@ -70,7 +71,7 @@ function validManifest(raw: unknown): raw is StudioPageArtifactRef[] {
 }
 function validProjectContext(raw: unknown, tenantId: string): raw is StudioPageProjectContext {
   const context = record(raw);
-  if (!context || !keys(context, ["target", "values", "template_id", "business_source"])) return false;
+  if (!context || !keys(context, ["target", "values", "template_id", "business_source", "business_name"])) return false;
   const target = record(own(context, "target"));
   if (!target || !keys(target, ["kind", "reference", "label"])) return false;
   const kind = own(target, "kind");
@@ -83,6 +84,8 @@ function validProjectContext(raw: unknown, tenantId: string): raw is StudioPageP
     if ((kind !== "client" && kind !== "prospect") || !business || !keys(business, ["id", "updated_at"])
       || !sameId(business.id, target.reference) || !isoTimestamp(business.updated_at)) return false;
   }
+  if (Object.prototype.hasOwnProperty.call(context, "business_name") && (!Object.prototype.hasOwnProperty.call(context, "business_source")
+    || !boundedText(context.business_name) || !context.business_name.trim())) return false;
   if (Object.prototype.hasOwnProperty.call(context, "template_id") && context.template_id !== NEXUS_LANDING_TEMPLATE_ID) return false;
   if (Object.prototype.hasOwnProperty.call(context, "values")) {
     const values = record(context.values);

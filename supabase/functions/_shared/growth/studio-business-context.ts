@@ -173,6 +173,14 @@ function fieldValue(field: StudioEditableContextField, value: unknown): { value:
   return { value: cleaned, issue: "invalid_value" };
 }
 
+/** Selection defaults never become authored values. An explicit key, including
+ * a blank, wins; callers still need native source/permission revalidation. */
+export function studioProjectValues(values: StudioBusinessContext["projectValues"], selectedBusinessName?: unknown): StudioBusinessContext["projectValues"] {
+  if (Object.prototype.hasOwnProperty.call(values, "publicName")) return values;
+  const name = fieldValue("publicName", selectedBusinessName).value;
+  return name === null ? values : { ...values, publicName: name };
+}
+
 export function projectStudioBusinessContext(input: StudioBusinessContextInput): StudioBusinessContext {
   const target = targetOf(input.target);
   const issues: StudioContextIssue[] = [];

@@ -50,7 +50,7 @@ export class PublishUnverified extends Said {}
 export class ProjectStartUnknown extends Said {}
 
 /** Authored input on the original project, never a source/authority assertion. */
-export type StudioProjectContext = { target: StudioContextTarget; values: StudioBusinessContext["projectValues"]; template_id?: "nexus-editorial-landing-v1"; business_source?: StudioBusinessSource };
+export type StudioProjectContext = { target: StudioContextTarget; values: StudioBusinessContext["projectValues"]; template_id?: "nexus-editorial-landing-v1"; business_source?: StudioBusinessSource; business_name?: string };
 export type StudioBusinessTarget = StudioBusinessSource & { entity_name: string };
 export type StudioStartedProject = { sessionId: string; threadId: string; created: boolean };
 const objectOf = (v: unknown): Record<string, unknown> | null => v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;

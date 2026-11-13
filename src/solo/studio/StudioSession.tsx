@@ -22,6 +22,7 @@ import { loadStudioConversionResources, saveStudioPageConversion, loadStudioProj
 import { StudioBusinessContextPanel } from "./StudioBusinessContextPanel";
 import { StudioBusinessSelector } from "./StudioBusinessSelector";
 import { applyStudioBusinessSelection } from "./studio-business-selection";
+import { studioProjectValues } from "./business-context";
 import { projectStudioBusinessContext } from "./business-context";
 import { useStudioBusinessContext } from "./useStudioBusinessContext";
 
@@ -165,7 +166,8 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
     let current = true;
     if (!projectContext) return;
     if (projectContext.target.kind !== "workspace") {
-      setBrand({ floor: { primary: projectContext.values.primaryColor || "#26242C", accent: projectContext.values.accentColor || "#D8D5DF" }, name: projectContext.values.publicName || null, logoUrl: projectContext.values.logoUrl || null, primaryColor: projectContext.values.primaryColor || null });
+      const values = studioProjectValues(projectContext.values, projectContext.business_name);
+      setBrand({ floor: { primary: values.primaryColor || "#26242C", accent: values.accentColor || "#D8D5DF" }, name: values.publicName || null, logoUrl: values.logoUrl || null, primaryColor: values.primaryColor || null });
       return;
     }
     void loadBrand(tenantSlug).then(next => {
@@ -458,7 +460,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
             </details>
           )}
           {contextDraft && <div className="vs-project-context-editor">
-            <StudioBusinessContextPanel projection={contextProjection} projectValues={contextDraft.values} disabled={contextSaving || chat.sending}
+            <StudioBusinessContextPanel projection={contextProjection} projectValues={contextDraft.values} selectedBusinessName={contextDraft.business_name} disabled={contextSaving || chat.sending}
               businessSelection={<StudioBusinessSelector tenantId={tenantId} target={contextDraft.target} selected={contextDraft.business_source} disabled={contextSaving || chat.sending} onSelect={business => {
                 setContextDraft(value => value ? applyStudioBusinessSelection(value, business, crypto.randomUUID()) : value);
               }} />}
@@ -466,7 +468,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
               onTargetChange={kind => { if (legacyContext) setLegacyContext("chosen"); setContextDraft(value => {
                 if (!value) return value;
                 if (value.target.kind === kind && legacyContext !== "unselected") return value;
-                const { business_source: _previous, ...rest } = value;
+                const { business_source: _previous, business_name: _previousName, ...rest } = value;
                 return { ...rest, target: kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }, values: {} };
               }); }} />
             {legacyContext === "unselected" && <p className="vs-inspector-note">Choose the brand for this project before asking NEXUS to build. Your saved work is available.</p>}

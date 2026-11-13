@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ChevronRight } from "lucide-react";
-import type { StudioBusinessContext, StudioContextFact, StudioContextTarget, StudioEditableContextField } from "./business-context";
+import { studioProjectValues, type StudioBusinessContext, type StudioContextFact, type StudioContextTarget, type StudioEditableContextField } from "./business-context";
 import "./studio-business-context.css";
 
 type ProjectValues = StudioBusinessContext["projectValues"];
@@ -13,6 +13,7 @@ export interface StudioBusinessContextPanelProps {
   onTargetChange: (kind: StudioContextTarget["kind"]) => void;
   disabled?: boolean;
   businessSelection?: React.ReactNode;
+  selectedBusinessName?: string;
 }
 
 const TARGETS = [
@@ -42,12 +43,13 @@ function contextMessage(projection: StudioBusinessContext): string | null {
 }
 
 /** A project-only editor. It has no reader, authorization, save or publish seam. */
-export function StudioBusinessContextPanel({ projection, projectValues = projection.projectValues, onChange, onTargetChange, disabled = false, businessSelection }: StudioBusinessContextPanelProps) {
+export function StudioBusinessContextPanel({ projection, projectValues = projection.projectValues, onChange, onTargetChange, disabled = false, businessSelection, selectedBusinessName }: StudioBusinessContextPanelProps) {
   const uid = React.useId();
   const facts = [...projection.copyFacts, ...projection.privateGuidance, ...projection.brandFacts];
   const byField = new Map(facts.map((fact) => [fact.key, fact]));
   const ownValue = (field: StudioEditableContextField) => Object.prototype.hasOwnProperty.call(projectValues, field);
-  const businessName = ownValue("publicName") ? projectValues.publicName : byField.get("publicName")?.value;
+  const defaultName = studioProjectValues({}, selectedBusinessName).publicName;
+  const businessName = ownValue("publicName") ? projectValues.publicName : byField.get("publicName")?.value ?? defaultName;
   const target = projection.target;
   const targetLabel = target?.kind === "workspace" ? "My business"
     : target ? `${target.kind === "custom" ? "Custom" : target.kind === "client" ? "Client" : "Prospect"}${target.label ? ` · ${target.label}` : " brand"}` : "Choose a brand";
@@ -76,11 +78,12 @@ export function StudioBusinessContextPanel({ projection, projectValues = project
           const fact = byField.get(editor.key);
           const isEdit = ownValue(editor.key);
           const issue = projection.issues.find((item) => item.source === "project" && item.field === editor.key);
-          const hint = isEdit ? "Project edit" : fact ? sourceLabel(fact) : "Not provided";
+          const selectedName = editor.key === "publicName" ? defaultName : undefined;
+          const hint = isEdit ? "Project edit" : fact ? sourceLabel(fact) : selectedName ? "Selected business name" : "Not provided";
           const id = `${uid}-${editor.key}`;
           return <div className="vs-context-field" key={editor.key}>
             <label htmlFor={id}>{editor.label}</label>
-            <input id={id} type="text" value={isEdit ? projectValues[editor.key] ?? "" : fact?.value ?? ""}
+            <input id={id} type="text" value={isEdit ? projectValues[editor.key] ?? "" : fact?.value ?? selectedName ?? ""}
               maxLength={editor.key === "primaryColor" || editor.key === "accentColor" ? 7 : 4000}
               disabled={disabled} autoComplete="off" aria-describedby={`${id}-source`} aria-invalid={issue ? true : undefined}
               onChange={(event) => onChange({ ...projectValues, [editor.key]: event.target.value })} />

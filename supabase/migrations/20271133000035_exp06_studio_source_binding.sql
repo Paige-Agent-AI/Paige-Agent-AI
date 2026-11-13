@@ -58,7 +58,7 @@ RETURNS boolean LANGUAGE plpgsql IMMUTABLE SET search_path='' AS $$
 DECLARE entry record; target jsonb; value text;
 BEGIN
  IF v IS NULL OR jsonb_typeof(v) IS DISTINCT FROM 'object' OR octet_length(v::text)>32768
-  OR EXISTS(SELECT 1 FROM jsonb_object_keys(v) k WHERE k NOT IN ('target','values','template_id')) THEN RETURN false; END IF;
+  OR EXISTS(SELECT 1 FROM jsonb_object_keys(v) k WHERE k NOT IN ('target','values','template_id','business_source','business_name')) THEN RETURN false; END IF;
  IF v ? 'template_id' AND v->>'template_id' IS DISTINCT FROM 'nexus-editorial-landing-v1' THEN RETURN false; END IF;
  IF v ? 'target' THEN
   target:=v->'target';
@@ -72,6 +72,20 @@ BEGIN
   IF target ? 'label' AND (jsonb_typeof(target->'label') IS DISTINCT FROM 'string'
    OR length(btrim(target->>'label')) NOT BETWEEN 1 AND 200 OR target->>'label' ~ '[[:cntrl:]]') THEN RETURN false; END IF;
  END IF;
+ IF v ? 'business_source' THEN
+  IF jsonb_typeof(v->'business_source') IS DISTINCT FROM 'object' THEN RETURN false; END IF;
+  IF (SELECT count(*) FROM jsonb_object_keys(v->'business_source'))<>2
+   OR NOT(v->'business_source' ?& ARRAY['id','updated_at'])
+   OR jsonb_typeof(v#>'{business_source,id}') IS DISTINCT FROM 'string'
+   OR (v#>>'{business_source,id}') !~* '^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$'
+   OR jsonb_typeof(v#>'{business_source,updated_at}') IS DISTINCT FROM 'string'
+   OR (v#>>'{business_source,updated_at}') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}(:[0-9]{2})?)$'
+   OR coalesce(v#>>'{target,kind}','') NOT IN ('client','prospect')
+   OR v#>>'{target,reference}' IS DISTINCT FROM v#>>'{business_source,id}' THEN RETURN false; END IF;
+ END IF;
+ IF v ? 'business_name' AND (NOT(v ? 'business_source') OR jsonb_typeof(v->'business_name') IS DISTINCT FROM 'string'
+  OR length(btrim(v->>'business_name')) NOT BETWEEN 1 AND 4000
+  OR (v->>'business_name') ~ ('['||chr(1)||'-'||chr(31)||chr(127)||'-'||chr(159)||']')) THEN RETURN false; END IF;
  IF v ? 'values' THEN
   IF jsonb_typeof(v->'values') IS DISTINCT FROM 'object' THEN RETURN false; END IF;
   FOR entry IN SELECT * FROM jsonb_each(v->'values') LOOP
@@ -115,6 +129,81 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public._studio_current_scope(uuid) FROM PUBLIC,anon,authenticated,service_role;
 
+-- E03 finite business projection: original clients-admin SELECT class only.
+DO $business_source_baseline$
+DECLARE name text; expected text;
+BEGIN
+ IF NOT (SELECT relrowsecurity FROM pg_class WHERE oid='public.clients'::regclass)
+  OR md5(pg_get_functiondef('public.has_any_role(uuid,text[])'::regprocedure))<>'5f3084bb454ccf757b6f084d48ea38e9'
+  OR md5(pg_get_functiondef('public.map_tenant_role_to_app_role(public.tenant_role)'::regprocedure))<>'73646fcb609b1d0c2fb99e286d224cd4' THEN
+  RAISE EXCEPTION 'EXP06 original business visibility helpers changed' USING ERRCODE='55000'; END IF;
+ FOR name,expected IN SELECT * FROM (VALUES
+  ('clients_admins_full','050f04a23a80f5bb0d59cad80e49b5e4'),
+  ('clients_customer_raw_boundary','48a843d2c9b2c295bee65bdd2a07034b'),
+  ('tenant_isolation','2ebaf5880c7d5623ca270b91c71956b6')
+ ) p(name,expected) LOOP
+  IF NOT EXISTS(SELECT 1 FROM pg_policy WHERE polrelid='public.clients'::regclass AND polname=name
+   AND md5(pg_get_expr(polqual,polrelid))=expected AND md5(pg_get_expr(polwithcheck,polrelid))=expected
+   AND polcmd='*' AND polroles=ARRAY['authenticated'::regrole]::oid[]
+   AND polpermissive=(name='clients_admins_full')) THEN
+   RAISE EXCEPTION 'EXP06 original business visibility policy changed: %',name USING ERRCODE='55000'; END IF;
+ END LOOP;
+ IF (SELECT count(*) FROM pg_policy WHERE polrelid='public.clients'::regclass AND NOT polpermissive AND polcmd IN ('*','r'))<>2 THEN
+  RAISE EXCEPTION 'EXP06 business restrictive visibility changed' USING ERRCODE='55000'; END IF;
+END $business_source_baseline$;
+
+CREATE FUNCTION public.studio_business_targets(p_expected_tenant uuid,p_query text,p_limit integer)
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY INVOKER SET search_path='' AS $$
+DECLARE actor uuid:=auth.uid(); query text:=btrim(coalesce(p_query,'')); businesses jsonb;
+BEGIN
+ IF actor IS NULL OR p_expected_tenant IS NULL OR p_expected_tenant IS DISTINCT FROM public.current_user_tenant_id()
+  OR NOT coalesce(public.studio_role_ok(actor),false)
+  OR NOT coalesce(public.has_any_role(actor,ARRAY['admin','super_admin']::text[]),false) THEN
+  RETURN jsonb_build_object('ok',false,'code','scope_changed'); END IF;
+ IF length(query)>120 OR query ~ '[[:cntrl:]]' OR p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 20 THEN
+  RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('id',b.id,'entity_name',b.entity_name,'updated_at',b.updated_at)
+  ORDER BY lower(b.entity_name),b.id),'[]'::jsonb) INTO businesses FROM (
+   SELECT c.id,btrim(c.entity_name) AS entity_name,c.updated_at FROM public.clients c
+   WHERE c.tenant_id=p_expected_tenant AND c.entity_type='business' AND nullif(btrim(c.entity_name),'') IS NOT NULL
+    AND c.status<>'archived' AND c.merged_into_contact_id IS NULL AND c.merged_at IS NULL
+    AND (query='' OR position(lower(query) IN lower(c.entity_name))>0)
+   ORDER BY lower(btrim(c.entity_name)),c.id LIMIT p_limit
+  ) b;
+ RETURN jsonb_build_object('ok',true,'businesses',businesses);
+EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed');
+END $$;
+REVOKE ALL ON FUNCTION public.studio_business_targets(uuid,text,integer) FROM PUBLIC,anon,service_role;
+GRANT EXECUTE ON FUNCTION public.studio_business_targets(uuid,text,integer) TO authenticated;
+
+-- This is expected identity/version, never confirmed provenance or authority.
+-- Legacy read/reopen does not call this new-write validation.
+CREATE FUNCTION public._studio_validate_business_source(p_expected_tenant uuid,p_context jsonb)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE actor uuid; expected jsonb; business record; version timestamptz;
+BEGIN
+ IF NOT (p_context ? 'business_source') THEN RETURN; END IF;
+ actor:=public._studio_current_scope(p_expected_tenant); expected:=p_context->'business_source';
+ PERFORM 1 FROM public.user_roles WHERE user_id=actor AND role::text IN ('admin','super_admin') FOR SHARE NOWAIT;
+ IF NOT FOUND OR NOT coalesce(public.has_any_role(actor,ARRAY['admin','super_admin']::text[]),false) THEN
+  RAISE EXCEPTION 'STUDIO_BUSINESS_SOURCE_CHANGED: select an available business again' USING ERRCODE='42501'; END IF;
+ BEGIN version:=(expected->>'updated_at')::timestamptz;
+ EXCEPTION WHEN invalid_datetime_format OR datetime_field_overflow THEN
+  RAISE EXCEPTION 'STUDIO_BUSINESS_SOURCE_CHANGED: select an available business again' USING ERRCODE='42501'; END;
+ SELECT c.id,btrim(c.entity_name) AS entity_name,c.updated_at INTO business FROM public.clients c
+  WHERE c.id=(expected->>'id')::uuid AND c.tenant_id=p_expected_tenant AND c.entity_type='business'
+   AND nullif(btrim(c.entity_name),'') IS NOT NULL AND c.status<>'archived'
+   AND c.merged_into_contact_id IS NULL AND c.merged_at IS NULL FOR SHARE NOWAIT;
+ IF NOT FOUND OR business.updated_at IS DISTINCT FROM version
+  OR (p_context->'target' ? 'label' AND p_context#>>'{target,label}' IS DISTINCT FROM business.entity_name)
+  OR (p_context ? 'business_name' AND p_context->>'business_name' IS DISTINCT FROM business.entity_name)
+  OR NOT coalesce(public.has_any_role(actor,ARRAY['admin','super_admin']::text[]),false) THEN
+  RAISE EXCEPTION 'STUDIO_BUSINESS_SOURCE_CHANGED: select an available business again' USING ERRCODE='42501'; END IF;
+EXCEPTION WHEN lock_not_available THEN
+ RAISE EXCEPTION 'STUDIO_BUSINESS_SOURCE_CHANGED: business identity is changing' USING ERRCODE='42501';
+END $$;
+REVOKE ALL ON FUNCTION public._studio_validate_business_source(uuid,jsonb) FROM PUBLIC,anon,authenticated,service_role;
+
 -- New binding fields never inherit permission from an existing table-wide
 -- browser grant. Original definer writers can bind them; direct DML cannot.
 CREATE FUNCTION public._studio_start_binding_guard()
@@ -149,6 +238,8 @@ BEGIN
   IF s.studio_start_digest IS DISTINCT FROM fingerprint THEN RAISE EXCEPTION 'STUDIO_START_BOUND: this request already has different content' USING ERRCODE='40001'; END IF;
   IF s.status='archived' THEN RAISE EXCEPTION 'STUDIO_NOT_FOUND: original project unavailable' USING ERRCODE='42501'; END IF;
  ELSE
+  BEGIN PERFORM public._studio_validate_business_source(p_expected_tenant,p_project_context);
+  EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed'); END;
   s:=public.create_studio_session(left(regexp_replace(btrim(p_brief),'\s+',' ','g'),60),btrim(p_brief),'[]'::jsonb,false,NULL,NULL);
   UPDATE public.studio_sessions SET studio_start_request_id=p_request_id,studio_start_digest=fingerprint,
    studio_session_scratchpad=coalesce(studio_session_scratchpad,'{}'::jsonb)||jsonb_build_object('project_context',p_project_context)
@@ -210,6 +301,8 @@ BEGIN
  IF context=p_project_context THEN RETURN jsonb_build_object('ok',true,'context',context,'changed',false); END IF;
  IF p_expected_context IS NULL OR p_expected_context IS DISTINCT FROM context THEN
   RAISE EXCEPTION 'STUDIO_CONTEXT_CHANGED: the project context changed; reload it before saving' USING ERRCODE='40001'; END IF;
+ BEGIN PERFORM public._studio_validate_business_source(p_expected_tenant,p_project_context);
+ EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed'); END;
  UPDATE public.studio_sessions SET studio_session_scratchpad=coalesce(studio_session_scratchpad,'{}'::jsonb)||jsonb_build_object('project_context',p_project_context)
   WHERE id=p_session_id AND tenant_id=p_expected_tenant AND status<>'archived'
    AND (owner_user_id=actor OR public.is_tenant_admin(p_expected_tenant)) RETURNING studio_session_scratchpad->'project_context' INTO context;
@@ -934,6 +1027,7 @@ BEGIN
   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','unknown'); END IF;
   RETURN jsonb_build_object('ok',true,'page',to_jsonb(page),'updated_at',page.updated_at,'version_id',version.id,'changed',false);
  END IF;
+ PERFORM public._studio_validate_business_source(p_expected_tenant,coalesce(s.studio_session_scratchpad->'project_context','{}'::jsonb));
  IF p_expected_updated_at IS NULL OR p_expected_updated_at IS DISTINCT FROM page.updated_at THEN
   RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: the page changed; reopen its current version before saving' USING ERRCODE='40001'; END IF;
  IF chosen_index IS NULL THEN blocks:=blocks||jsonb_build_array(p_conversion);
@@ -978,6 +1072,7 @@ BEGIN
  IF NOT FOUND OR jsonb_typeof(s.artifact_refs) IS DISTINCT FROM 'array' THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
  context:=coalesce(s.studio_session_scratchpad->'project_context','{}'::jsonb);
  IF NOT public._studio_project_context_valid(context) OR NOT(context ? 'target') THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ PERFORM public._studio_validate_business_source(p_expected_tenant,context);
  IF p_page_id IS NOT NULL THEN
   IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(s.artifact_refs) r WHERE r->>'kind'='page' AND r->>'id'=p_page_id::text) THEN
    RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
@@ -1117,6 +1212,7 @@ BEGIN
  context:=coalesce(s.studio_session_scratchpad->'project_context','{}'::jsonb);
  IF s.artifact_refs IS DISTINCT FROM p_expected_artifact_refs OR context IS DISTINCT FROM p_expected_project_context THEN
   RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: original project source changed' USING ERRCODE='40001'; END IF;
+ PERFORM public._studio_validate_business_source(p_expected_tenant,context);
  IF p_page_id IS NOT NULL THEN
   SELECT * INTO page FROM public.growth_pages WHERE id=p_page_id AND tenant_id=p_expected_tenant AND status<>'archived' FOR UPDATE NOWAIT;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
@@ -1250,4 +1346,370 @@ BEGIN
   OR NOT (SELECT relrowsecurity AND NOT relforcerowsecurity FROM pg_class WHERE oid='public.paige_pending_confirmations'::regclass) THEN
   RAISE EXCEPTION 'Private Studio confirmation source boundary unavailable' USING ERRCODE='55000'; END IF;
 END $source_postflight$;
+
+-- E03 original intake writer extended once; old five/six argument ABIs remain.
+DO $intake_tags_baseline$
+DECLARE signature text; expected text;
+BEGIN
+ FOR signature,expected IN SELECT * FROM (VALUES
+  ('public.growth_form_set_intake(uuid,boolean,uuid,uuid,text)','e963cbff6abd16df5ced5b14e5ffd856'),
+  ('public.growth_form_set_intake(uuid,boolean,uuid,uuid,text,boolean)','aa25ff5facd65702a6d10356a619091a')
+ ) p(signature,expected) LOOP
+  IF md5(pg_get_functiondef(to_regprocedure(signature))) IS DISTINCT FROM expected
+   OR (SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM 'postgres'
+   OR (SELECT proacl::text FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM '{postgres=X/postgres,authenticated=X/postgres}' THEN
+   RAISE EXCEPTION 'EXP06 original intake source changed: %',signature USING ERRCODE='55000'; END IF;
+ END LOOP;
+ IF md5(pg_get_functiondef('public.upsert_contact(jsonb,uuid,uuid,uuid,text)'::regprocedure))<>'0d05ed2429366f1215c3d7363ee56b4b'
+  OR md5(pg_get_functiondef('public.growth_publish_state_guard()'::regprocedure))<>'bedfb266401e59224813f45ea5a6dfa7'
+  OR NOT EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='public.growth_forms'::regclass AND tgenabled='O'
+   AND tgfoid='public.growth_publish_state_guard()'::regprocedure AND NOT tgisinternal AND (tgtype&4)=4 AND (tgtype&16)=16) THEN
+  RAISE EXCEPTION 'EXP06 original contact writer/form browser-write guard changed' USING ERRCODE='55000'; END IF;
+ IF EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='public.growth_forms'::regclass AND attname='future_tags' AND NOT attisdropped)
+  OR to_regprocedure('public.growth_form_set_intake(uuid,boolean,uuid,uuid,text,boolean,text[])') IS NOT NULL THEN
+  RAISE EXCEPTION 'EXP06 future intake tags already installed; reconcile forward source' USING ERRCODE='55000'; END IF;
+END $intake_tags_baseline$;
+ALTER TABLE public.growth_forms ADD COLUMN future_tags text[] NOT NULL DEFAULT '{}'::text[];
+
+-- Data validation only. The ORIGINAL all-column publish-state guard already
+-- denies direct authenticated/anon form writes; no duplicate permission guard.
+CREATE FUNCTION public._growth_forms_validate_future_tags()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+DECLARE tag text; seen text[]:='{}';
+BEGIN
+ IF NEW.future_tags IS NULL OR cardinality(NEW.future_tags)>50 OR coalesce(array_ndims(NEW.future_tags),1)>1 THEN
+  RAISE EXCEPTION 'GROWTH_INVALID_INTAKE: future tags must be at most fifty unique names' USING ERRCODE='22023'; END IF;
+ FOREACH tag IN ARRAY NEW.future_tags LOOP
+  IF tag IS NULL OR tag<>btrim(tag) OR length(tag) NOT BETWEEN 1 AND 80 OR tag=ANY(seen)
+   OR tag ~ ('['||chr(1)||'-'||chr(31)||chr(127)||'-'||chr(159)||']') THEN
+   RAISE EXCEPTION 'GROWTH_INVALID_INTAKE: future tags need unique nonempty names of at most eighty characters' USING ERRCODE='22023'; END IF;
+  seen:=array_append(seen,tag);
+ END LOOP;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._growth_forms_validate_future_tags() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER zz_growth_forms_future_tags_validate BEFORE INSERT OR UPDATE OF future_tags ON public.growth_forms
+ FOR EACH ROW EXECUTE FUNCTION public._growth_forms_validate_future_tags();
+
+DO $intake_tags_writer$
+DECLARE target oid:='public.growth_form_set_intake(uuid,boolean,uuid,uuid,text,boolean)'::regprocedure;
+ original text; body text; next text; metadata jsonb;
+BEGIN
+ SELECT to_jsonb(p)-'prosrc' INTO metadata FROM pg_proc p WHERE oid=target;
+ original:=pg_get_functiondef(target); body:=original;
+ next:=replace(body,'p_notify_email text, _lead_reply_enabled boolean)',
+  'p_notify_email text, _lead_reply_enabled boolean, p_future_tags text[])');
+ IF next=body THEN RAISE EXCEPTION 'EXP06 intake ABI hunk missing' USING ERRCODE='55000'; END IF; body:=next;
+ next:=replace(body,'  _row    public.growth_forms;',E'  _row    public.growth_forms;\n  _future text[];');
+ IF next=body THEN RAISE EXCEPTION 'EXP06 intake declaration hunk missing' USING ERRCODE='55000'; END IF; body:=next;
+ next:=replace(body,'SELECT * INTO _form FROM public.growth_forms WHERE id = p_form_id;',
+  'SELECT * INTO _form FROM public.growth_forms WHERE id = p_form_id FOR UPDATE;');
+ IF next=body THEN RAISE EXCEPTION 'EXP06 intake owning row lock hunk missing' USING ERRCODE='55000'; END IF; body:=next;
+ next:=replace(body,'  IF COALESCE(p_auto_create_deal, false) THEN',
+  E'  IF p_future_tags IS NOT NULL THEN\n    IF coalesce(array_ndims(p_future_tags),1)>1 THEN\n      RAISE EXCEPTION ''GROWTH_INVALID_INTAKE: future tags must be one list'' USING ERRCODE=''22023'';\n    END IF;\n    _future:=ARRAY(SELECT value FROM (SELECT btrim(value) AS value,min(n) AS first_seen FROM unnest(p_future_tags) WITH ORDINALITY t(value,n) GROUP BY btrim(value)) tags ORDER BY first_seen);\n  END IF;\n\n  IF COALESCE(p_auto_create_deal, false) THEN');
+ IF next=body THEN RAISE EXCEPTION 'EXP06 intake future tags hunk missing' USING ERRCODE='55000'; END IF; body:=next;
+ next:=replace(body,'    lead_reply_enabled  = COALESCE(_lead_reply_enabled, lead_reply_enabled)',
+  E'    lead_reply_enabled  = COALESCE(_lead_reply_enabled, lead_reply_enabled),\n    future_tags         = COALESCE(_future, future_tags)');
+ IF next=body THEN RAISE EXCEPTION 'EXP06 intake form field hunk missing' USING ERRCODE='55000'; END IF; body:=next;
+ next:=replace(body,'  INSERT INTO public.audit_logs (user_id, entity, action, entity_id, data)',
+  E'  UPDATE public.growth_form_automations SET\n    config_json=coalesce(config_json,''{}''::jsonb)||jsonb_build_object(''future_tags'',to_jsonb(_row.future_tags)),\n    updated_at=now()\n  WHERE form_id=_form.id AND tenant_id=_form.tenant_id AND target_slug=''contact_upsert'';\n\n  INSERT INTO public.audit_logs (user_id, entity, action, entity_id, data)');
+ IF next=body THEN RAISE EXCEPTION 'EXP06 intake config hunk missing' USING ERRCODE='55000'; END IF; body:=next;
+ next:=replace(body,'''lead_reply_enabled'', _row.lead_reply_enabled));',
+  '''lead_reply_enabled'', _row.lead_reply_enabled, ''future_tags_count'', cardinality(_row.future_tags), ''future_tags_changed'', p_future_tags IS NOT NULL));');
+ IF next=body THEN RAISE EXCEPTION 'EXP06 intake audit hunk missing' USING ERRCODE='55000'; END IF;
+ EXECUTE next;
+ -- One actual implementation. Six-argument omission delegates without changing
+ -- tags; five-argument wrapper remains BYTE-EXACT and still delegates to six.
+ body:=regexp_replace(original,'AS \$function\$[\s\S]*\$function\$',
+  E'AS $function$\nBEGIN\n  RETURN public.growth_form_set_intake(p_form_id,p_auto_create_deal,p_pipeline_id,p_stage_id,p_notify_email,_lead_reply_enabled,NULL::text[]);\nEND;\n$function$');
+ IF body=original THEN RAISE EXCEPTION 'EXP06 six-argument wrapper hunk missing' USING ERRCODE='55000'; END IF;
+ EXECUTE body;
+ IF (SELECT to_jsonb(p)-'prosrc' FROM pg_proc p WHERE oid=target) IS DISTINCT FROM metadata
+  OR md5(pg_get_functiondef('public.growth_form_set_intake(uuid,boolean,uuid,uuid,text)'::regprocedure))<>'e963cbff6abd16df5ced5b14e5ffd856'
+  OR md5(pg_get_functiondef('public.upsert_contact(jsonb,uuid,uuid,uuid,text)'::regprocedure))<>'0d05ed2429366f1215c3d7363ee56b4b' THEN
+  RAISE EXCEPTION 'EXP06 intake compatibility/contact writer changed' USING ERRCODE='55000'; END IF;
+END $intake_tags_writer$;
+REVOKE ALL ON FUNCTION public.growth_form_set_intake(uuid,boolean,uuid,uuid,text,boolean,text[]) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.growth_form_set_intake(uuid,boolean,uuid,uuid,text,boolean,text[]) TO authenticated;
+
+-- E03: causal result on the ORIGINAL submission, never a second dispatch store.
+DO $contact_tags_baseline$
+DECLARE signature text; expected text; trigger_name text; incumbent text[]:=ARRAY[
+ 'id','form_id','tenant_id','contact_id','deal_id','source','external_source_id','payload_json','utm_json','referrer','ip','user_agent',
+ 'consent_json','funnel_session_id','processed','processed_at','created_at','processing_state','attempts','claimed_at','last_error',
+ 'alert_sent_at','alert_skipped_reason','visit_id','campaign_brief_id','campaign_attribution','lead_reply_skipped_reason'];
+BEGIN
+ IF (SELECT array_agg(attname::text ORDER BY attnum) FROM pg_attribute WHERE attrelid='public.growth_form_submissions'::regclass
+   AND attnum>0 AND NOT attisdropped) IS DISTINCT FROM incumbent
+  OR (SELECT NOT relrowsecurity OR relforcerowsecurity OR relacl::text IS DISTINCT FROM
+   CASE WHEN current_setting('server_version_num')::int>=170000
+    THEN '{postgres=arwdDxtm/postgres,authenticated=rwdDxtm/postgres,service_role=arwdDxtm/postgres}'
+    ELSE '{postgres=arwdDxt/postgres,authenticated=rwdDxt/postgres,service_role=arwdDxt/postgres}' END
+   FROM pg_class WHERE oid='public.growth_form_submissions'::regclass)
+  OR EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='public.growth_form_submissions'::regclass AND attnum>0 AND attacl IS NOT NULL)
+  OR (SELECT count(*) FROM pg_policy WHERE polrelid='public.growth_form_submissions'::regclass)<>2
+  OR (SELECT count(*) FROM pg_policy WHERE polrelid='public.growth_form_submissions'::regclass AND polpermissive
+   AND polroles=ARRAY['authenticated'::regrole]::oid[] AND polwithcheck IS NULL
+   AND md5(pg_get_expr(polqual,polrelid))='379f5c4eb185f78fd5385a8553643a5e'
+   AND ((polname='growth_form_submissions_tenant_read' AND polcmd='r')
+     OR (polname='growth_form_submissions_tenant_update' AND polcmd='w')))<>2
+  OR md5(pg_get_functiondef('public.growth_public_form(uuid,uuid,text)'::regprocedure))<>'d32a85cbc8c47d2831231916c799aeed' THEN
+  RAISE EXCEPTION 'EXP06 original submission/public-form privacy contract changed' USING ERRCODE='55000'; END IF;
+ FOR signature,expected IN SELECT * FROM (VALUES
+  ('public.upsert_contact(jsonb,uuid,uuid,uuid,text)','0d05ed2429366f1215c3d7363ee56b4b'),
+  ('public.growth_claim_submission(uuid)','ed763cd4842825b4da4400c264043eae'),
+  ('public.growth_complete_submission(uuid)','76d3be4daedd234c85ff0ce3fe7cb262'),
+  ('public.growth_fail_submission(uuid,text)','1e837d59e4d72d75870b3c44d9218979'),
+  ('public.growth_attach_submission_deal(uuid,integer,uuid)','cced6dc8d2410b82add277fc1fdbdc3b')
+ ) p(signature,expected) LOOP
+  IF md5(pg_get_functiondef(to_regprocedure(signature))) IS DISTINCT FROM expected
+   OR (SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM 'postgres'
+   OR (SELECT proacl::text FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM
+    (CASE WHEN signature LIKE 'public.upsert_contact%' THEN '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'
+     ELSE '{postgres=X/postgres,service_role=X/postgres}' END) THEN
+   RAISE EXCEPTION 'EXP06 original submission/contact source changed: %',signature USING ERRCODE='55000'; END IF;
+ END LOOP;
+ FOR trigger_name,signature,expected IN SELECT * FROM (VALUES
+  ('growth_submission_guard_contact','public.growth_submission_guard_contact()','c37785edec881ab3bcc244a548fcd5aa'),
+  ('growth_submissions_notify','public.trg_notify_form_submission()','8e30e18ee35e44dddb2f20ca0d0d7f52'),
+  ('trg_growth_submission_emit_form_submitted','public.trg_growth_submission_emit_form_submitted()','f16e23e44c45b1923b9c6c6300deef19'),
+  ('trg_growth_submission_stamp_campaign','public.growth_submission_stamp_campaign()','ee87eb93b42967c8776060385bd48907')
+ ) p(name,signature,expected) LOOP
+  IF NOT EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='public.growth_form_submissions'::regclass
+   AND tgname=trigger_name AND tgenabled='O' AND tgfoid=to_regprocedure(signature)
+   AND md5(pg_get_functiondef(tgfoid))=expected) THEN
+   RAISE EXCEPTION 'EXP06 original submission trigger changed: %',trigger_name USING ERRCODE='55000'; END IF;
+ END LOOP;
+ -- xmin correlation relies on the unchanged original writer inserting its own
+ -- audit outside its pre-write timestamp-parser savepoint, with no audit trigger.
+ IF (SELECT count(*) FROM pg_trigger WHERE tgrelid='public.growth_form_submissions'::regclass AND NOT tgisinternal)<>4
+  OR EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='public.audit_logs'::regclass AND NOT tgisinternal)
+  OR EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='public.growth_form_submissions'::regclass
+   AND attname='contact_tags_result' AND NOT attisdropped) THEN
+  RAISE EXCEPTION 'EXP06 submission/audit capture contract changed' USING ERRCODE='55000'; END IF;
+END $contact_tags_baseline$;
+ALTER TABLE public.growth_form_submissions ADD COLUMN contact_tags_result jsonb;
+REVOKE SELECT ON public.growth_form_submissions FROM authenticated;
+GRANT SELECT(id,form_id,tenant_id,contact_id,deal_id,source,external_source_id,payload_json,utm_json,referrer,ip,user_agent,
+ consent_json,funnel_session_id,processed,processed_at,created_at,processing_state,attempts,claimed_at,last_error,
+ alert_sent_at,alert_skipped_reason,visit_id,campaign_brief_id,campaign_attribution,lead_reply_skipped_reason)
+ ON public.growth_form_submissions TO authenticated;
+
+CREATE FUNCTION public._growth_submission_contact_tags_guard()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+DECLARE r jsonb:=NEW.contact_tags_result; item jsonb; seen text[]:='{}'; name text; field text;
+BEGIN
+ IF TG_OP='UPDATE' AND OLD.contact_tags_result IS NOT NULL THEN
+  IF r IS DISTINCT FROM OLD.contact_tags_result THEN
+   RAISE EXCEPTION 'FORM_CONTACT_TAGS_RESULT_IMMUTABLE' USING ERRCODE='40001'; END IF;
+  -- Preserve original lifecycle/FK writes. A later contact/form/tenant retarget
+  -- cannot change the saved source and is refused by the bound readers.
+  RETURN NEW;
+ END IF;
+ IF r IS NULL THEN RETURN NEW; END IF;
+ IF current_user<>'postgres' OR TG_OP='INSERT' THEN
+  RAISE EXCEPTION 'FORM_CONTACT_TAGS_NATIVE_ONLY' USING ERRCODE='42501'; END IF;
+ -- Fifty unique eighty-codepoint names can use 16,200 UTF8 JSONB bytes;
+ -- the fixed thirteen-field native envelope reaches 16,829. Keep it bounded
+ -- without rejecting the already-admitted Unicode maximum.
+ IF jsonb_typeof(r) IS DISTINCT FROM 'object' OR octet_length(r::text)>32768 THEN
+  RAISE EXCEPTION 'FORM_CONTACT_TAGS_INVALID_RESULT' USING ERRCODE='22023'; END IF;
+ IF (SELECT count(*) FROM jsonb_object_keys(r))<>13
+  OR NOT(r ?& ARRAY['v','submission_id','tenant_id','form_id','contact_id','automation_id','operator_user_id',
+   'outcome','future_tags','config_digest','source_updated_at','saved_updated_at','audit_id'])
+  OR r->'v' IS DISTINCT FROM '1'::jsonb OR r->>'submission_id' IS DISTINCT FROM NEW.id::text
+  OR r->>'tenant_id' IS DISTINCT FROM NEW.tenant_id::text OR r->>'form_id' IS DISTINCT FROM NEW.form_id::text
+  OR r->>'contact_id' IS DISTINCT FROM NEW.contact_id::text OR NEW.contact_id IS NULL
+  OR jsonb_typeof(r->'outcome') IS DISTINCT FROM 'string' OR r->>'outcome' NOT IN ('applied','no_change')
+  OR jsonb_typeof(r->'future_tags') IS DISTINCT FROM 'array'
+  OR jsonb_array_length(r->'future_tags')>50 OR coalesce(r->>'config_digest','') !~ '^[0-9a-f]{64}$'
+  OR jsonb_typeof(r->'source_updated_at') IS DISTINCT FROM 'string'
+  OR jsonb_typeof(r->'saved_updated_at') IS DISTINCT FROM 'string'
+  OR (r->>'outcome'='applied' AND jsonb_typeof(r->'audit_id') IS DISTINCT FROM 'string')
+  OR (r->>'outcome'='no_change' AND (r->'audit_id' IS DISTINCT FROM 'null'::jsonb
+   OR r->>'source_updated_at' IS DISTINCT FROM r->>'saved_updated_at')) THEN
+  RAISE EXCEPTION 'FORM_CONTACT_TAGS_INVALID_RESULT' USING ERRCODE='22023'; END IF;
+ FOREACH field IN ARRAY ARRAY['operator_user_id','automation_id','audit_id'] LOOP
+  IF field IN ('automation_id','audit_id') AND r->field='null'::jsonb THEN CONTINUE; END IF;
+  IF jsonb_typeof(r->field) IS DISTINCT FROM 'string' OR coalesce(r->>field,'') !~* '^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$' THEN
+   RAISE EXCEPTION 'FORM_CONTACT_TAGS_INVALID_RESULT' USING ERRCODE='22023'; END IF;
+ END LOOP;
+ FOREACH field IN ARRAY ARRAY['source_updated_at','saved_updated_at'] LOOP
+  IF length(r->>field)>64 OR (r->>field) !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}(:[0-9]{2})?)$' THEN
+   RAISE EXCEPTION 'FORM_CONTACT_TAGS_INVALID_RESULT' USING ERRCODE='22023'; END IF;
+  PERFORM (r->>field)::timestamptz;
+ END LOOP;
+ FOR item IN SELECT value FROM jsonb_array_elements(r->'future_tags') LOOP
+  name:=item#>>'{}';
+  IF jsonb_typeof(item) IS DISTINCT FROM 'string' OR name<>btrim(name) OR length(name) NOT BETWEEN 1 AND 80
+   OR name=ANY(seen) OR name ~ ('['||chr(1)||'-'||chr(31)||chr(127)||'-'||chr(159)||']') THEN
+   RAISE EXCEPTION 'FORM_CONTACT_TAGS_INVALID_RESULT' USING ERRCODE='22023'; END IF;
+  seen:=array_append(seen,name);
+ END LOOP;
+ IF r->>'config_digest' IS DISTINCT FROM encode(sha256(convert_to((r->'future_tags')::text,'UTF8')),'hex') THEN
+  RAISE EXCEPTION 'FORM_CONTACT_TAGS_INVALID_RESULT' USING ERRCODE='22023'; END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._growth_submission_contact_tags_guard() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER growth_submission_contact_tags_guard BEFORE INSERT OR UPDATE ON public.growth_form_submissions
+ FOR EACH ROW EXECUTE FUNCTION public._growth_submission_contact_tags_guard();
+
+-- Pure MVCC observation. An in-flight uncommitted result remains UNKNOWN; this
+-- function never acquires a claim, waits on a row, no-ops a row or calls a writer.
+CREATE FUNCTION public.growth_submission_contact_tags_state(p_submission_id uuid,p_contact_id uuid,p_automation_id uuid)
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
+DECLARE sub public.growth_form_submissions; form public.growth_forms; r jsonb;
+BEGIN
+ IF coalesce(auth.jwt()->>'role','')<>'service_role' OR auth.uid() IS NOT NULL THEN
+  RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ SELECT * INTO sub FROM public.growth_form_submissions WHERE id=p_submission_id;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','unknown'); END IF;
+ IF sub.contact_id IS DISTINCT FROM p_contact_id OR p_contact_id IS NULL
+  OR NOT EXISTS(SELECT 1 FROM public.tenants WHERE id=sub.tenant_id AND status IN ('active','trial','past_due'))
+  OR NOT EXISTS(SELECT 1 FROM public.clients WHERE id=p_contact_id AND tenant_id=sub.tenant_id
+   AND status<>'archived' AND merged_into_contact_id IS NULL AND merged_at IS NULL) THEN
+  RETURN jsonb_build_object('ok',false,'code','source_changed'); END IF;
+ SELECT * INTO form FROM public.growth_forms WHERE id=sub.form_id AND tenant_id=sub.tenant_id;
+ IF NOT FOUND OR NOT EXISTS(SELECT 1 FROM public.tenant_members m JOIN auth.users u ON u.id=m.user_id
+  WHERE m.tenant_id=sub.tenant_id AND m.status='active' AND m.role IN ('owner','admin')
+   AND u.deleted_at IS NULL AND (u.banned_until IS NULL OR u.banned_until<=now())
+   AND (m.user_id=form.created_by OR m.role='owner')) THEN
+  RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ r:=sub.contact_tags_result;
+ IF r IS NULL THEN RETURN jsonb_build_object('ok',false,'code','unknown'); END IF;
+ IF r->>'submission_id' IS DISTINCT FROM sub.id::text OR r->>'tenant_id' IS DISTINCT FROM sub.tenant_id::text
+  OR r->>'form_id' IS DISTINCT FROM sub.form_id::text OR r->>'contact_id' IS DISTINCT FROM p_contact_id::text
+  OR r->>'automation_id' IS DISTINCT FROM p_automation_id::text
+  OR (p_automation_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.growth_form_automations a
+   JOIN public.growth_automation_targets t ON t.slug=a.target_slug
+   WHERE a.id=p_automation_id AND a.form_id=form.id AND a.tenant_id=sub.tenant_id
+    AND a.target_slug='contact_upsert' AND t.executor='contact_upsert')) THEN
+  RETURN jsonb_build_object('ok',false,'code','source_changed'); END IF;
+ RETURN jsonb_build_object('ok',true,'state','recorded','replayed',true,'result',r);
+END $$;
+REVOKE ALL ON FUNCTION public.growth_submission_contact_tags_state(uuid,uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.growth_submission_contact_tags_state(uuid,uuid,uuid) TO service_role;
+
+CREATE FUNCTION public.growth_apply_submission_contact_tags(
+ p_submission_id uuid,p_claim_attempt integer,p_automation_id uuid,p_contact_id uuid,
+ p_actor_user_id uuid,p_expected_updated_at text,p_expected_future_tags text[])
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE sub public.growth_form_submissions; form public.growth_forms; route public.growth_form_automations;
+ contact public.clients; operator uuid; configured text[]; union_tags text[]; tag text;
+ r jsonb; observed jsonb; version timestamptz; saved text; tx text; before_audits uuid[]; audits uuid[]; audit uuid;
+ unchanged jsonb; outcome text; written uuid;
+BEGIN
+ IF coalesce(auth.jwt()->>'role','')<>'service_role' OR auth.uid() IS NOT NULL THEN
+  RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ IF p_submission_id IS NULL OR p_contact_id IS NULL THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ -- Only the admission lock block catches contention. No exception handler spans
+ -- the original contact mutation or checkpoint: either both commit or both roll back.
+ BEGIN
+  SELECT * INTO sub FROM public.growth_form_submissions WHERE id=p_submission_id FOR UPDATE NOWAIT;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','unknown'); END IF;
+  PERFORM 1 FROM public.tenants WHERE id=sub.tenant_id AND status IN ('active','trial','past_due') FOR SHARE NOWAIT;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+  SELECT * INTO form FROM public.growth_forms WHERE id=sub.form_id AND tenant_id=sub.tenant_id FOR SHARE NOWAIT;
+  IF NOT FOUND OR sub.contact_id IS DISTINCT FROM p_contact_id THEN RETURN jsonb_build_object('ok',false,'code','source_changed'); END IF;
+  IF p_automation_id IS NOT NULL THEN
+   SELECT a.* INTO route FROM public.growth_form_automations a JOIN public.growth_automation_targets t ON t.slug=a.target_slug
+    WHERE a.id=p_automation_id AND a.form_id=form.id AND a.tenant_id=sub.tenant_id
+     AND a.target_slug='contact_upsert' AND t.executor='contact_upsert' FOR SHARE OF a,t NOWAIT;
+   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','source_changed'); END IF;
+  END IF;
+  SELECT * INTO contact FROM public.clients WHERE id=p_contact_id AND tenant_id=sub.tenant_id
+   AND status<>'archived' AND merged_into_contact_id IS NULL AND merged_at IS NULL FOR UPDATE NOWAIT;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','source_changed'); END IF;
+  SELECT m.user_id INTO operator FROM public.tenant_members m JOIN auth.users u ON u.id=m.user_id
+   WHERE m.tenant_id=sub.tenant_id AND m.user_id=form.created_by AND m.status='active' AND m.role IN ('owner','admin')
+    AND u.deleted_at IS NULL AND (u.banned_until IS NULL OR u.banned_until<=now()) FOR SHARE OF m,u NOWAIT;
+  IF operator IS NULL THEN
+   SELECT m.user_id INTO operator FROM public.tenant_members m JOIN auth.users u ON u.id=m.user_id
+    WHERE m.tenant_id=sub.tenant_id AND m.status='active' AND m.role='owner'
+     AND u.deleted_at IS NULL AND (u.banned_until IS NULL OR u.banned_until<=now())
+    ORDER BY m.joined_at,m.user_id LIMIT 1 FOR SHARE OF m,u NOWAIT;
+  END IF;
+ EXCEPTION WHEN lock_not_available THEN RETURN jsonb_build_object('ok',false,'code','unknown'); END;
+ IF operator IS NULL THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ IF sub.contact_tags_result IS NOT NULL THEN
+  observed:=public.growth_submission_contact_tags_state(sub.id,p_contact_id,p_automation_id);
+  RETURN observed;
+ END IF;
+ IF sub.processing_state<>'claimed' OR sub.attempts IS DISTINCT FROM p_claim_attempt
+  OR sub.claimed_at IS NULL OR sub.claimed_at<clock_timestamp()-interval '5 minutes' THEN
+  RETURN jsonb_build_object('ok',false,'code','source_changed'); END IF;
+ IF p_actor_user_id IS DISTINCT FROM operator THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ IF p_automation_id IS NULL THEN
+  IF NOT form.auto_create_contact OR EXISTS(SELECT 1 FROM public.growth_form_automations WHERE form_id=form.id AND enabled) THEN
+   RETURN jsonb_build_object('ok',false,'code','source_changed'); END IF;
+ ELSE
+  IF NOT route.enabled OR NOT EXISTS(SELECT 1 FROM public.growth_automation_targets WHERE slug=route.target_slug AND enabled) THEN
+   RETURN jsonb_build_object('ok',false,'code','source_changed'); END IF;
+  IF route.config_json->'future_tags' IS DISTINCT FROM to_jsonb(form.future_tags) THEN
+   RETURN jsonb_build_object('ok',false,'code','config_changed'); END IF;
+ END IF;
+ configured:=form.future_tags;
+ IF p_expected_future_tags IS DISTINCT FROM configured THEN RETURN jsonb_build_object('ok',false,'code','config_changed'); END IF;
+ IF p_expected_updated_at IS NULL OR p_expected_updated_at !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}(:[0-9]{2})?)$' THEN
+  RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ BEGIN version:=p_expected_updated_at::timestamptz;
+ EXCEPTION WHEN invalid_datetime_format OR datetime_field_overflow THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END;
+ IF version IS DISTINCT FROM contact.updated_at THEN RAISE EXCEPTION 'CONTACT_VERSION_STALE' USING ERRCODE='40001'; END IF;
+ -- Preserve the entire existing array, including order/multiplicity. Append only
+ -- missing configured names; existing membership alone yields no_change, no audit.
+ union_tags:=coalesce(contact.tags,'{}'::text[]);
+ IF coalesce(array_ndims(union_tags),1)>1 THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ FOREACH tag IN ARRAY configured LOOP IF NOT(tag=ANY(union_tags)) THEN union_tags:=array_append(union_tags,tag); END IF; END LOOP;
+ IF cardinality(union_tags)>50 THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ -- Original arbitrary legacy values may remain; never trim/dedupe/delete them.
+ -- NULL elements cannot be round-tripped through the original JSON tag writer.
+ IF array_position(union_tags,NULL) IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ IF union_tags IS NOT DISTINCT FROM coalesce(contact.tags,'{}'::text[]) THEN
+  outcome:='no_change'; saved:=p_expected_updated_at; audit:=NULL;
+ ELSE
+  -- An actual row-version stamp obtains THIS subtransaction xid, including a
+  -- caller SAVEPOINT. The pinned original triggers do not fire on claimed_at.
+  unchanged:=to_jsonb(sub)-'contact_tags_result';
+  UPDATE public.growth_form_submissions SET claimed_at=claimed_at WHERE id=sub.id RETURNING xmin::text INTO tx;
+  IF (SELECT to_jsonb(s)-'contact_tags_result' FROM public.growth_form_submissions s WHERE id=sub.id) IS DISTINCT FROM unchanged THEN
+   RAISE EXCEPTION 'FORM_CONTACT_TAGS_CAPTURE_CHANGED_LIFECYCLE' USING ERRCODE='55000'; END IF;
+  SELECT coalesce(array_agg(id),'{}'::uuid[]) INTO before_audits FROM public.audit_logs
+   WHERE xmin::text=tx AND user_id=operator AND entity='client' AND action='update_contact' AND entity_id=contact.id;
+  written:=public.upsert_contact(jsonb_build_object('tags',to_jsonb(union_tags),'expected_updated_at',p_expected_updated_at),
+   contact.id,sub.tenant_id,operator,'api');
+  SELECT array_agg(id) INTO audits FROM public.audit_logs
+   WHERE xmin::text=tx AND NOT(id=ANY(before_audits)) AND user_id=operator AND entity='client' AND action='update_contact'
+    AND entity_id=contact.id AND data=jsonb_build_object('tenant_id',sub.tenant_id,'fields',jsonb_build_array('tags'),'channel','api');
+  IF written IS DISTINCT FROM contact.id OR cardinality(audits) IS DISTINCT FROM 1 THEN
+   RAISE EXCEPTION 'FORM_CONTACT_TAGS_AUDIT_AMBIGUOUS' USING ERRCODE='55000'; END IF;
+  audit:=audits[1]; outcome:='applied';
+  SELECT to_jsonb(c.updated_at)#>>'{}' INTO saved FROM public.clients c WHERE c.id=contact.id AND c.tenant_id=sub.tenant_id AND c.tags IS NOT DISTINCT FROM union_tags;
+  IF saved IS NULL THEN RAISE EXCEPTION 'FORM_CONTACT_TAGS_POSTCONDITION_CHANGED' USING ERRCODE='55000'; END IF;
+ END IF;
+ r:=jsonb_build_object('v',1,'submission_id',sub.id,'tenant_id',sub.tenant_id,'form_id',sub.form_id,
+  'contact_id',contact.id,'automation_id',p_automation_id,'operator_user_id',operator,'outcome',outcome,
+  'future_tags',to_jsonb(configured),'config_digest',encode(sha256(convert_to(to_jsonb(configured)::text,'UTF8')),'hex'),
+  'source_updated_at',p_expected_updated_at,'saved_updated_at',saved,'audit_id',audit);
+ UPDATE public.growth_form_submissions SET contact_tags_result=r WHERE id=sub.id;
+ RETURN jsonb_build_object('ok',true,'state','recorded','replayed',false,'result',r);
+END $$;
+REVOKE ALL ON FUNCTION public.growth_apply_submission_contact_tags(uuid,integer,uuid,uuid,uuid,text,text[]) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.growth_apply_submission_contact_tags(uuid,integer,uuid,uuid,uuid,text,text[]) TO service_role;
+DO $contact_tags_postflight$
+DECLARE column_name text;
+BEGIN
+ FOREACH column_name IN ARRAY ARRAY['id','form_id','tenant_id','contact_id','deal_id','source','external_source_id','payload_json','utm_json','referrer','ip','user_agent','consent_json','funnel_session_id','processed','processed_at','created_at','processing_state','attempts','claimed_at','last_error','alert_sent_at','alert_skipped_reason','visit_id','campaign_brief_id','campaign_attribution','lead_reply_skipped_reason'] LOOP
+  IF NOT has_column_privilege('authenticated','public.growth_form_submissions',column_name,'SELECT') THEN
+   RAISE EXCEPTION 'EXP06 original submission column read lost: %',column_name USING ERRCODE='55000'; END IF;
+ END LOOP;
+ IF has_column_privilege('authenticated','public.growth_form_submissions','contact_tags_result','SELECT')
+  OR has_column_privilege('anon','public.growth_form_submissions','contact_tags_result','SELECT')
+  OR NOT has_column_privilege('service_role','public.growth_form_submissions','contact_tags_result','SELECT')
+  OR (SELECT proacl::text FROM pg_proc WHERE oid='public.growth_apply_submission_contact_tags(uuid,integer,uuid,uuid,uuid,text,text[])'::regprocedure)
+   IS DISTINCT FROM '{postgres=X/postgres,service_role=X/postgres}'
+  OR (SELECT proacl::text FROM pg_proc WHERE oid='public.growth_submission_contact_tags_state(uuid,uuid,uuid)'::regprocedure)
+   IS DISTINCT FROM '{postgres=X/postgres,service_role=X/postgres}'
+  OR md5(pg_get_functiondef('public.upsert_contact(jsonb,uuid,uuid,uuid,text)'::regprocedure))<>'0d05ed2429366f1215c3d7363ee56b4b' THEN
+  RAISE EXCEPTION 'EXP06 contact tag private source/original writer boundary changed' USING ERRCODE='55000'; END IF;
+END $contact_tags_postflight$;
 COMMIT;

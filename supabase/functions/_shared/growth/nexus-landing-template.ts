@@ -1,18 +1,20 @@
 import type { GrowthBlock } from "./types.ts";
 import { normalizeConversionDestination, type ConversionDestination } from "./conversion-destination.ts";
-import { STUDIO_COPY_FIELDS, STUDIO_GUIDANCE_FIELDS, type StudioBusinessContext, type StudioContextFact, type StudioEditableContextField } from "./studio-business-context.ts";
+import { STUDIO_COPY_FIELDS, STUDIO_GUIDANCE_FIELDS, studioProjectValues, type StudioBusinessContext, type StudioContextFact, type StudioEditableContextField } from "./studio-business-context.ts";
 
 /** A recipe in the original seed brief, never a separate saved-template store. */
 export const NEXUS_LANDING_TEMPLATE_ID = "nexus-editorial-landing-v1";
 export type NexusLandingTemplateFact = {
   key: StudioEditableContextField;
   value: string;
-  source: StudioContextFact["source"] | { kind: "project"; field: string; confidence: "entered" };
+  source: StudioContextFact["source"] | { kind: "project"; field: string; confidence: "entered" } | { kind: "business_identity"; field: "entity_name"; confidence: "observed" };
 };
 export interface NexusLandingTemplateInput {
   context: StudioBusinessContext;
   /** Raw controlled project state; presence prevents fallback after a cleared or invalid edit. */
   projectValues?: StudioBusinessContext["projectValues"];
+  /** Only the original caller's validated selected-business identity name. */
+  observedBusinessName?: unknown;
   conversion?: { confirmed: boolean; ctaLabel: unknown; destination: unknown };
 }
 export interface NexusLandingTemplateRecipe {
@@ -44,8 +46,13 @@ function factsFor(context: StudioBusinessContext, fields: readonly StudioEditabl
 }
 
 /** Structure and truthful generation guidance; it never fabricates draft blocks. */
-export function buildNexusLandingTemplate({ context, projectValues = context.projectValues, conversion }: NexusLandingTemplateInput): NexusLandingTemplateRecipe {
+export function buildNexusLandingTemplate({ context, projectValues = context.projectValues, observedBusinessName, conversion }: NexusLandingTemplateInput): NexusLandingTemplateRecipe {
   const publicFacts = factsFor(context, STUDIO_COPY_FIELDS, context.copyFacts, projectValues);
+  if ((context.target?.kind === "client" || context.target?.kind === "prospect")
+    && !Object.prototype.hasOwnProperty.call(projectValues, "publicName")) {
+    const name = studioProjectValues({}, observedBusinessName).publicName;
+    if (name) publicFacts.push({ key: "publicName", value: name, source: { kind: "business_identity", field: "entity_name", confidence: "observed" } });
+  }
   const privateGuidance = factsFor(context, STUDIO_GUIDANCE_FIELDS, context.privateGuidance, projectValues);
   const observedBrand = factsFor(context, ["productName", "primaryColor", "accentColor", "font", "logoUrl", "logoDarkUrl", "tagline"], context.brandFacts, projectValues);
   const sections: NexusLandingTemplateRecipe["sections"] = [

@@ -150,6 +150,7 @@ export function StudioHome({ sessions, sessionsError, tenantId, tenantSlug, onNe
   const [target, setTarget] = React.useState<StudioContextTarget>({ kind: "workspace" });
   const [projectValues, setProjectValues] = React.useState<StudioBusinessContext["projectValues"]>({});
   const [businessSource, setBusinessSource] = React.useState<StudioBusinessSource>();
+  const [businessName, setBusinessName] = React.useState<string>();
   const manuallyEditedContext = React.useRef(false);
   const originalRequestProposal = projectStudioRequestIntent(brief);
   const contextConflict = manuallyEditedContext.current && originalRequestProposal && originalRequestProposal.kind !== target.kind;
@@ -180,7 +181,7 @@ export function StudioHome({ sessions, sessionsError, tenantId, tenantSlug, onNe
       setError("Review the highlighted project details before starting."); return;
     }
     const authoredValues = Object.fromEntries(Object.keys(projectValues).map(key => [key, projection.projectValues[key as keyof typeof projectValues] ?? ""]));
-    const context: StudioProjectContext = { target, values: authoredValues, ...(businessSource ? { business_source: businessSource } : {}), ...(editorialTemplate ? { template_id: NEXUS_LANDING_TEMPLATE_ID } : {}) };
+    const context: StudioProjectContext = { target, values: authoredValues, ...(businessSource ? { business_source: businessSource, ...(businessName ? { business_name: businessName } : {}) } : {}), ...(editorialTemplate ? { template_id: NEXUS_LANDING_TEMPLATE_ID } : {}) };
     const composed = composeBrief(text, details);
     if (composed.length > 32000) { setError("The brief and selected context are too long. Shorten this project's details before starting."); return; }
     intent.current = { requestId: crypto.randomUUID(), brief: composed, context };
@@ -226,12 +227,12 @@ export function StudioHome({ sessions, sessionsError, tenantId, tenantSlug, onNe
         <VsStars n={160} />
         <div className="vs-hero-inner">
           <h1>What should NEXUS build?</h1>
-          <StudioBusinessContextPanel projection={projection} projectValues={projectValues} onChange={values => { manuallyEditedContext.current = true; setProjectValues(values); }} disabled={creating || unknownStart}
+          <StudioBusinessContextPanel projection={projection} projectValues={projectValues} selectedBusinessName={businessName} onChange={values => { manuallyEditedContext.current = true; setProjectValues(values); }} disabled={creating || unknownStart}
             businessSelection={<StudioBusinessSelector tenantId={tenantId} target={target} selected={businessSource} disabled={creating || unknownStart} onSelect={business => {
               const next = applyStudioBusinessSelection({ target, values: projectValues }, business, crypto.randomUUID());
-              manuallyEditedContext.current = true; setTarget(next.target); setProjectValues(next.values); setBusinessSource(next.business_source);
+              manuallyEditedContext.current = true; setTarget(next.target); setProjectValues(next.values); setBusinessSource(next.business_source); setBusinessName(next.business_name);
             }} />}
-            onTargetChange={kind => { manuallyEditedContext.current = true; if (kind !== target.kind) { setBusinessSource(undefined); setProjectValues({}); setTarget(kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }); } }} />
+            onTargetChange={kind => { manuallyEditedContext.current = true; if (kind !== target.kind) { setBusinessSource(undefined); setBusinessName(undefined); setProjectValues({}); setTarget(kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }); } }} />
           {contextConflict && <p className="vs-brief-note" role="status">Review the selected brand: your brief names a different project target. Your choices are unchanged.</p>}
           <div className="vs-composer">
             <label className="vs-sr" htmlFor="vs-brief">Describe what you want NEXUS to build</label>

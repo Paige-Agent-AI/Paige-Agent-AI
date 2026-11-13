@@ -2,6 +2,19 @@ import { describe, expect, it } from "vitest";
 import { buildNexusLandingTemplate, NEXUS_LANDING_TEMPLATE_ID } from "./nexus-landing-template";
 import { projectStudioBusinessContext } from "./business-context";
 
+it("keeps a selected-business name observed and lets authored edits or blanks override it", () => {
+  const target = { kind: "client", reference: "selected-business" };
+  const base = projectStudioBusinessContext({ expectedTenantId: "test-tenant-recipe", target, readStatus: "unavailable", context: null, projectValues: { offers: "Workshop" } });
+  const selected = buildNexusLandingTemplate({ context: base, observedBusinessName: "Birch Consulting" });
+  expect(selected.publicFacts.find(fact => fact.key === "publicName")).toEqual({ key: "publicName", value: "Birch Consulting", source: { kind: "business_identity", field: "entity_name", confidence: "observed" } });
+  expect(selected.missing).not.toContain("businessName");
+  for (const publicName of ["Entered brand", ""]) {
+    const edited = projectStudioBusinessContext({ expectedTenantId: "test-tenant-recipe", target, readStatus: "unavailable", context: null, projectValues: { publicName } });
+    const recipe = buildNexusLandingTemplate({ context: edited, projectValues: { publicName }, observedBusinessName: "Birch Consulting" });
+    expect(recipe.publicFacts.some(fact => fact.value === "Birch Consulting")).toBe(false);
+  }
+});
+
 const confirmed = { source: "owner_confirmed", confidence: "confirmed" };
 function context() {
   return projectStudioBusinessContext({ expectedTenantId: "test-tenant-recipe", target: { kind: "workspace" }, readStatus: "available", context: {

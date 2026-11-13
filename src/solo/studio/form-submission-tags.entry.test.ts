@@ -61,7 +61,8 @@ describe("actual original contact_upsert → causal future-tag seam", () => {
     const w = world({ contact }), result = await w.run(); expect(result.status).toBe("done"); expect(applies(w)).toHaveLength(1);
     expect(applies(w)[0].args).toEqual({ p_submission_id: SUB, p_claim_attempt: 1, p_automation_id: AUTO, p_contact_id: CONTACT, p_actor_user_id: ACTOR,
       p_expected_updated_at: DATE, p_expected_future_tags: ["New tag"] });
-    expect(result.result).toHaveProperty("contact_id", CONTACT); expect(result.result).toHaveProperty("contact_tags.audit_id", AUDIT);
+    expect(result.result).toHaveProperty("contact_id", CONTACT); expect(result.result.contact_tags).toEqual({ outcome: "applied", replayed: false });
+    for (const privateValue of [AUDIT, SUB, TENANT, FORM, AUTO, ACTOR, DATE, SAVED, "New tag", "a".repeat(64)]) expect(JSON.stringify(result.result)).not.toContain(privateValue);
     expect(w.calls.some(c => c.name === "upsert_contact")).toBe(false);
     if (contact === "new") expect(w.calls.find(c => c.name === "create_contact")?.args).toMatchObject({ p_channel: "form", p_tags: [] });
     if (contact !== "linked") expect(w.tables.find(c => c.table === "growth_form_submissions")?.filters).toEqual(expect.arrayContaining([["eq", "tenant_id", TENANT], ["eq", "attempts", 1], ["is", "contact_id", null]]));
@@ -82,7 +83,9 @@ describe("actual original contact_upsert → causal future-tag seam", () => {
   it("lost apply ACK recovers only the same original native causal result", async () => {
     const w = world({ apply: { data: null, error: { message: "response lost" } } }); const result = await w.run();
     expect(result.status).toBe("done"); expect(w.calls.map(c => c.name)).toEqual(["growth_apply_submission_contact_tags", "growth_submission_contact_tags_state"]);
-    expect(w.calls[1].args).toEqual({ p_submission_id: SUB, p_contact_id: CONTACT, p_automation_id: AUTO }); expect(result.result).toHaveProperty("contact_tags.audit_id", AUDIT);
+    expect(w.calls[1].args).toEqual({ p_submission_id: SUB, p_contact_id: CONTACT, p_automation_id: AUTO });
+    expect(result.result.contact_tags).toEqual({ outcome: "applied", replayed: true });
+    expect(JSON.stringify(result.result)).not.toContain(AUDIT); expect(JSON.stringify(result.result)).not.toContain("future_tags");
   });
   it("lost apply ACK plus absent/UNKNOWN result never certifies current tag membership or replays", async () => {
     const w = world({ apply: { data: null, error: { message: "response lost" } }, state: { data: { ok: false, code: "unknown" }, error: null } });
@@ -92,6 +95,7 @@ describe("actual original contact_upsert → causal future-tag seam", () => {
   it("an existing causal checkpoint uses read-only state and retains historic tags after configuration changes", async () => {
     const w = world({ prior: recorded(), tags: [] }); const result = await w.run();
     expect(result.status).toBe("done"); expect(w.calls.map(c => c.name)).toEqual(["growth_submission_contact_tags_state"]);
-    expect(result.result).toHaveProperty("contact_tags.future_tags", ["New tag"]); expect(w.tables.some(c => c.table === "clients")).toBe(false);
+    expect(result.result.contact_tags).toEqual({ outcome: "applied", replayed: true }); expect(w.tables.some(c => c.table === "clients")).toBe(false);
+    expect(JSON.stringify(result.result)).not.toContain("New tag"); expect(JSON.stringify(result.result)).not.toContain(AUDIT);
   });
 });

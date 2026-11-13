@@ -17,14 +17,14 @@ export interface TeamHubStudioHandoffProps {
   originalRequestText?: string;
 }
 type Values = StudioBusinessContext["projectValues"];
-type ContextProps = { tenantId: string; tenantSlug: string; target: StudioContextTarget; values: Values; disabled: boolean; businessSelection?: React.ReactNode; onChange: (values: Values) => void; onTargetChange: (kind: StudioContextTarget["kind"]) => void };
+type ContextProps = { tenantId: string; tenantSlug: string; target: StudioContextTarget; values: Values; disabled: boolean; businessSelection?: React.ReactNode; selectedBusinessName?: string; onChange: (values: Values) => void; onTargetChange: (kind: StudioContextTarget["kind"]) => void };
 function WorkspaceContext({ tenantId, tenantSlug, target, values, ...props }: ContextProps) {
   const projection = useStudioBusinessContext(tenantId, tenantSlug, target, values);
   return <StudioBusinessContextPanel projection={projection} projectValues={values} {...props} />;
 }
 function AuthoredContext({ tenantId, target, values, ...props }: ContextProps) {
   const projection = projectStudioBusinessContext({ expectedTenantId: tenantId, target, projectValues: values, readStatus: "unavailable", context: null });
-  return <StudioBusinessContextPanel projection={projection} projectValues={values} businessSelection={props.businessSelection} disabled={props.disabled} onChange={props.onChange} onTargetChange={props.onTargetChange} />;
+  return <StudioBusinessContextPanel projection={projection} projectValues={values} businessSelection={props.businessSelection} selectedBusinessName={props.selectedBusinessName} disabled={props.disabled} onChange={props.onChange} onTargetChange={props.onTargetChange} />;
 }
 
 /** The native reader, not arbitrary message fields, supplies every preparation
@@ -48,6 +48,7 @@ export function BoundStudioSourceHandoff({ messageId, expectedTenant, tenantSlug
   const [target, setTarget] = useState<StudioContextTarget | null>(null);
   const [values, setValues] = useState<Values>({});
   const [businessSource, setBusinessSource] = useState<StudioBusinessSource>();
+  const [businessName, setBusinessName] = useState<string>();
   const [message, setMessage] = useState<string | null>(null);
   const alive = useRef(false), pending = useRef(false), sequence = useRef(0);
   const originalContext = useRef<StudioProjectContext | null>(null);
@@ -84,7 +85,7 @@ export function BoundStudioSourceHandoff({ messageId, expectedTenant, tenantSlug
     if (locked) return;
     proposalSettled.current = true;
     if (target?.kind === kind) return;
-    try { setTarget(kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }); setBusinessSource(undefined); setValues({}); setMessage(null); }
+    try { setTarget(kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }); setBusinessSource(undefined); setBusinessName(undefined); setValues({}); setMessage(null); }
     catch { setMessage("A project reference could not be created in this browser. Try again."); }
   }
   async function start(retry = false) {
@@ -94,7 +95,7 @@ export function BoundStudioSourceHandoff({ messageId, expectedTenant, tenantSlug
     // Blank keys are explicit project suppression, not permission to fall back
     // to saved Setup. Match the original Studio start's authored-value contract.
     const authoredValues = Object.fromEntries(Object.keys(values).map(key => [key, projection.projectValues[key as keyof typeof values] ?? ""]));
-    const context = retry ? originalContext.current : { target: projection.target, values: authoredValues, ...(businessSource ? { business_source: businessSource } : {}), template_id: "nexus-editorial-landing-v1" as const };
+    const context = retry ? originalContext.current : { target: projection.target, values: authoredValues, ...(businessSource ? { business_source: businessSource, ...(businessName ? { business_name: businessName } : {}) } : {}), template_id: "nexus-editorial-landing-v1" as const };
     if (!context) return;
     originalContext.current = context; pending.current = true; setPhase("starting"); setMessage(null);
     try {
@@ -104,7 +105,7 @@ export function BoundStudioSourceHandoff({ messageId, expectedTenant, tenantSlug
     } catch (error) {
       if (!alive.current) return;
       if (error instanceof ProjectStartUnknown) await readSame(true);
-      else { setReference({ ok: false, code: "unavailable" }); setPhase("refused"); originalContext.current = null; setValues({}); setBusinessSource(undefined); setTarget(null); }
+      else { setReference({ ok: false, code: "unavailable" }); setPhase("refused"); originalContext.current = null; setValues({}); setBusinessSource(undefined); setBusinessName(undefined); setTarget(null); }
     } finally { pending.current = false; }
   }
   if (phase === "refused") return <p className="th-studio-feedback" role="status">This Studio handoff is no longer available in the current workspace.</p>;
@@ -114,11 +115,11 @@ export function BoundStudioSourceHandoff({ messageId, expectedTenant, tenantSlug
   </div>;
   if (reference?.ok !== true) return null;
   if (reference.state === "ready") return <div className="th-studio-handoff th-studio-ready"><span>Studio project</span><StudioLaunchButton sessionId={reference.sessionId} className="th-btn" /></div>;
-  const contextProps: ContextProps | null = target ? { tenantId: expectedTenant, tenantSlug, target, values, disabled: locked,
+  const contextProps: ContextProps | null = target ? { tenantId: expectedTenant, tenantSlug, target, values, selectedBusinessName: businessName, disabled: locked,
     businessSelection: <StudioBusinessSelector tenantId={expectedTenant} target={target} selected={businessSource} disabled={locked} onSelect={business => {
       if (locked) return;
       const next = applyStudioBusinessSelection({ target, values }, business, crypto.randomUUID());
-      proposalSettled.current = true; setTarget(next.target); setValues(next.values); setBusinessSource(next.business_source);
+      proposalSettled.current = true; setTarget(next.target); setValues(next.values); setBusinessSource(next.business_source); setBusinessName(next.business_name);
     }} />,
     onChange: next => { if (!locked) { proposalSettled.current = true; setValues(next); } }, onTargetChange: chooseTarget } : null;
   return <div className="th-studio-handoff" role="group" aria-labelledby={labelId}>

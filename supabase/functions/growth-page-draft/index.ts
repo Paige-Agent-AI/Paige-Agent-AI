@@ -365,7 +365,7 @@ serve(async (req: Request) => {
     // (resolveStudioCaller, §9). `body.tenant_id` can only be refused here, never chosen.
     // Service-role caller: Paige's agent running headlessly (§10) may name the tenant.
     let tenantId: string | null = null;
-    let studioCallerClient: ReturnType<typeof createClient> | null = null;
+    let studioCallerClient: ReturnType<typeof createClient<any>> | null = null;
 
     if (isServiceRole) {
       const named = str(body?.tenant_id).trim();
@@ -428,7 +428,7 @@ serve(async (req: Request) => {
       studioNexus = buildStudioNexusPersona({ platformRow: nexusRow, expectedTenantId: tenantId, readStatus, setupContext, publicBrand, projectContext: authored });
       if (!studioNexus) return fail(503, "NEXUS_UNAVAILABLE", "NEXUS's original Studio identity is unavailable. Try again.");
       studioTheme = buildStudioLandingTheme(studioNexus.projectContext, authoredValues);
-      studioRecipe = buildNexusLandingTemplate({ context: studioNexus.projectContext, projectValues: authoredValues });
+      studioRecipe = buildNexusLandingTemplate({ context: studioNexus.projectContext, projectValues: authoredValues, observedBusinessName: studioNexus.selectedBusinessName });
       // There is deliberately no conversion field in project context. Initial
       // drafts omit automatic destinations; the original page conversion editor
       // writes the owner's selected canonical block after draft review.

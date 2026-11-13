@@ -159,6 +159,8 @@ const FORM = {
   routesToPipeline: false, pipelineId: null, stageId: null, notifyEmail: null,
 };
 const SELECTED_BUSINESS = { id: "77777777-7777-4777-8777-777777777777", entity_name: "Northwind Services", updated_at: "2026-11-13T10:20:30.123456+00:00" };
+const CEDAR_BUSINESS = { ...SELECTED_BUSINESS, entity_name: "Cedar Consulting" };
+const BIRCH_BUSINESS = { id: "88888888-8888-4888-8888-888888888888", entity_name: "Birch Consulting", updated_at: "2026-11-13T10:20:30.654321+00:00" };
 
 function sseBody(frames: string[]) {
   const enc = new TextEncoder();
@@ -401,14 +403,15 @@ describe("Vibe Studio project workspace", () => {
   async function openPanel() { await act(async () => { button("Publish")!.click(); }); await flush(); }
   async function press(label: string) { await act(async () => { button(label)!.click(); }); await flush(); }
 
-  async function selectExistingBusiness() {
+  async function selectExistingBusiness(business = SELECTED_BUSINESS, query = "Northwind") {
+    const reads = h.businesses.mock.calls.length;
     const label = [...host.querySelectorAll("label")].find(node => node.textContent === "Find an existing business")!;
     const input = document.getElementById(label.htmlFor) as HTMLInputElement;
-    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "Northwind"); input.dispatchEvent(new Event("input", { bubbles: true })); });
-    expect(h.businesses).not.toHaveBeenCalled(); await press("Search businesses");
-    expect(h.businesses).toHaveBeenCalledExactlyOnceWith("t-synthetic", "Northwind", expect.any(AbortSignal));
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, query); input.dispatchEvent(new Event("input", { bubbles: true })); });
+    expect(h.businesses).toHaveBeenCalledTimes(reads); await press("Search businesses");
+    expect(h.businesses).toHaveBeenCalledTimes(reads + 1); expect(h.businesses).toHaveBeenLastCalledWith("t-synthetic", query, expect.any(AbortSignal));
     const choose = [...host.querySelectorAll("label")].find(node => node.textContent === "Choose a business")!;
-    await act(async () => { const select = document.getElementById(choose.htmlFor) as HTMLSelectElement; select.value = SELECTED_BUSINESS.id; select.dispatchEvent(new Event("change", { bubbles: true })); });
+    await act(async () => { const select = document.getElementById(choose.htmlFor) as HTMLSelectElement; select.value = business.id; select.dispatchEvent(new Event("change", { bubbles: true })); });
   }
 
   it.each(["client", "prospect"])("saves a chosen %s business only through original native context CAS with exact source revision and authored blanks", async kind => {
@@ -418,14 +421,28 @@ describe("Vibe Studio project workspace", () => {
     await selectExistingBusiness(); await press(kind === "client" ? "Client" : "Prospect");
     expect(text()).toContain(`Selected business: ${SELECTED_BUSINESS.entity_name}`); expect(h.nativeContextCalls).toEqual([]);
     await press("Save project context");
-    const context = { ...initial, target: { kind, reference: SELECTED_BUSINESS.id, label: SELECTED_BUSINESS.entity_name }, business_source: { id: SELECTED_BUSINESS.id, updated_at: SELECTED_BUSINESS.updated_at } };
+    const context = { ...initial, target: { kind, reference: SELECTED_BUSINESS.id, label: SELECTED_BUSINESS.entity_name }, business_source: { id: SELECTED_BUSINESS.id, updated_at: SELECTED_BUSINESS.updated_at }, business_name: SELECTED_BUSINESS.entity_name };
     expect(h.nativeContextCalls).toEqual([{ p_expected_tenant: "t-synthetic", p_session_id: "s-1", p_project_context: context, p_expected_context: initial }]);
     expect(h.contextSaves).toEqual([{ tenantId: "t-synthetic", sessionId: "s-1", context, expected: initial }]);
     expect(h.projectContext).toEqual(context); expect(h.fetchBodies).toEqual([]); expect(h.conversionSaves).toEqual([]); expect(h.doorCalls).toEqual([]);
   });
+  it.each(["switch", "clear"])("%s keeps selected business defaults separate from authored values in original context CAS", async action => {
+    const initial = { target: { kind: "client", reference: "66666666-6666-4666-8666-666666666666" }, values: { offers: "Owner-authored offer" } };
+    h.projectContext = initial; h.nativeContextSave = true; h.businesses.mockResolvedValue([CEDAR_BUSINESS, BIRCH_BUSINESS]); await openPiece();
+    const name = () => document.getElementById([...host.querySelectorAll("label")].find(node => node.textContent === "Business name")!.htmlFor) as HTMLInputElement;
+    await selectExistingBusiness(CEDAR_BUSINESS, "Cedar"); expect(name().value).toBe(CEDAR_BUSINESS.entity_name);
+    await selectExistingBusiness(BIRCH_BUSINESS, "Birch"); expect(name().value).toBe(BIRCH_BUSINESS.entity_name);
+    if (action === "clear") { await press("Use project details only"); expect(name().value).toBe(""); }
+    await press("Save project context");
+    const saved = h.nativeContextCalls[0].p_project_context as Rec; expect(saved.values).toEqual(initial.values);
+    expect(h.nativeContextCalls[0].p_expected_context).toEqual(initial);
+    if (action === "clear") { expect(saved).not.toHaveProperty("business_source"); expect(saved).not.toHaveProperty("business_name"); }
+    else expect(saved).toMatchObject({ target: { reference: BIRCH_BUSINESS.id }, business_source: { id: BIRCH_BUSINESS.id, updated_at: BIRCH_BUSINESS.updated_at }, business_name: BIRCH_BUSINESS.entity_name });
+    expect(h.fetchBodies).toEqual([]); expect(h.conversionSaves).toEqual([]); expect(h.doorCalls).toEqual([]);
+  });
   it("changing category clears a saved business source while CAS retains the exact original selected context", async () => {
     const initial = { target: { kind: "client", reference: SELECTED_BUSINESS.id, label: SELECTED_BUSINESS.entity_name }, values: { publicName: "", offers: "Owner offer" },
-      business_source: { id: SELECTED_BUSINESS.id, updated_at: SELECTED_BUSINESS.updated_at } };
+      business_source: { id: SELECTED_BUSINESS.id, updated_at: SELECTED_BUSINESS.updated_at }, business_name: SELECTED_BUSINESS.entity_name };
     h.projectContext = initial; h.nativeContextSave = true; await openPiece();
     await press("Prospect"); expect(text()).not.toContain("Selected business:"); await press("Save project context");
     expect(h.nativeContextCalls).toEqual([{ p_expected_tenant: "t-synthetic", p_session_id: "s-1", p_expected_context: initial,
@@ -434,7 +451,7 @@ describe("Vibe Studio project workspace", () => {
   });
   it("a refused source CAS keeps original saved context and performs no generation or alternate write before an explicit same-context retry", async () => {
     const initial = { target: { kind: "client", reference: SELECTED_BUSINESS.id }, values: { publicName: "", offers: "Original offer" },
-      business_source: { id: SELECTED_BUSINESS.id, updated_at: "2026-11-13T10:20:30.000001+00:00" } };
+      business_source: { id: SELECTED_BUSINESS.id, updated_at: "2026-11-13T10:20:30.000001+00:00" }, business_name: "Prior business name" };
     h.projectContext = initial; h.nativeContextSave = true; h.refuseContextSave = true; await openPiece(); await selectExistingBusiness();
     await press("Save project context");
     expect(h.projectContext).toEqual(initial); expect(text()).toContain("The context change could not be verified. Check the saved project before retrying."); expect(button("Save project context")).toBeTruthy();

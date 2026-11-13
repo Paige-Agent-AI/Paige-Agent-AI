@@ -153,3 +153,35 @@ describe("Studio NEXUS identity and context assembly", () => {
     expect(missing.persona).not.toContain("Unconfirmed tenant name");
   });
 });
+
+describe("selected business defaults remain separate from authored copy", () => {
+  const id = "11111111-1111-4111-8111-111111111111";
+  const selected = (values: Record<string, string> = {}) => ({ target: { kind: "client", reference: id }, values,
+    business_source: { id, updated_at: "2026-11-13T10:20:30.123456+00:00" }, business_name: "Birch Consulting" });
+  it("names only the observed identity default and does not classify it as authored or confirmed facts", () => {
+    const result = buildStudioNexusPersona({ ...input(), projectContext: selected({ offers: "A workshop" }) })!;
+    expect(result.selectedBusinessName).toBe("Birch Consulting");
+    expect(result.projectContext.projectValues).toEqual({ offers: "A workshop" });
+    expect(result.projectContext.copyFacts).toEqual([]);
+    expect(result.persona).toContain('"observedBusinessIdentity":{"publicName":"Birch Consulting"}');
+    expect(result.persona).not.toContain('"missingMaterialFields":["businessName"');
+  });
+  it.each(["Entered project name", ""])("preserves the explicit authored value %j over the identity default", publicName => {
+    const result = buildStudioNexusPersona({ ...input(), projectContext: selected({ publicName }) })!;
+    expect(result.selectedBusinessName).toBeNull();
+    expect(result.projectContext.projectValues.publicName).toBe(publicName || undefined);
+    expect(result.persona).toContain('"observedBusinessIdentity":null');
+  });
+  it.each([
+    { ...selected(), business_source: undefined },
+    { ...selected(), business_source: { id: "22222222-2222-4222-8222-222222222222", updated_at: "2026-11-13T10:20:30.123456+00:00" } },
+    { ...selected(), target: { kind: "custom", reference: id } },
+    { ...selected(), target: { kind: "workspace" } },
+    { ...selected(), business_name: "api_key=private1234" },
+  ])("does not promote an unbound, unrelated or unsafe name into model context", projectContext => {
+    const result = buildStudioNexusPersona({ ...input(), projectContext })!;
+    expect(result.selectedBusinessName).toBeNull();
+    expect(result.persona).toContain('"observedBusinessIdentity":null');
+    expect(result.persona).not.toContain("api_key=private1234");
+  });
+});

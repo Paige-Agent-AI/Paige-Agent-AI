@@ -78,16 +78,37 @@ describe("original minimal Studio business selection", () => {
 });
 
 describe("business identity and authored context stay separate", () => {
+  const birch = { id: "22222222-2222-4222-8222-222222222222", entity_name: "Birch Consulting", updated_at: "2026-11-13T10:20:30.654321+00:00" };
+  it("switching selected Cedar to Birch updates only the business default and never authors the old name", () => {
+    const original = { target, values: { offers: "Owner-authored offer" } };
+    const cedar = applyStudioBusinessSelection(original, business, "manual-one");
+    const selected = applyStudioBusinessSelection(cedar, birch, "manual-two");
+    expect(selected.values).toEqual({ offers: "Owner-authored offer" });
+    expect(selected).toMatchObject({ target: { kind: "client", reference: birch.id, label: birch.entity_name },
+      business_source: { id: birch.id, updated_at: birch.updated_at }, business_name: birch.entity_name });
+    expect(original).toEqual({ target, values: { offers: "Owner-authored offer" } });
+  });
+  it("clearing selected Cedar drops its source and default without retaining an auto-authored name", () => {
+    const original = { target, values: { offers: "Owner-authored offer" } };
+    const selected = applyStudioBusinessSelection(original, business, "manual-one");
+    expect(applyStudioBusinessSelection(selected, null, "manual-two")).toEqual({ target: { kind: "client", reference: "manual-two" }, values: original.values });
+  });
+  it.each(["Owner-edited name", ""])("an authored name %j survives Cedar to Birch and default clearing", publicName => {
+    const original = { target, values: { publicName, offers: "Owner-authored offer" } };
+    const selected = applyStudioBusinessSelection(applyStudioBusinessSelection(original, business, "manual-one"), birch, "manual-two");
+    expect(selected.values).toEqual(original.values); expect(selected).toHaveProperty("business_name", birch.entity_name);
+    expect(applyStudioBusinessSelection(selected, null, "manual-three")).toEqual({ target: { kind: "client", reference: "manual-three" }, values: original.values });
+  });
   it("retains authored blanks and project choices while capturing exact expected identity", () => {
     const context = { target, values: { publicName: "", offers: "This project only" }, template_id: "nexus-editorial-landing-v1" as const };
     const selected = applyStudioBusinessSelection(context, business, "manual-new");
-    expect(selected).toEqual({ ...context, target: { kind: "client", reference: business.id, label: business.entity_name }, business_source: { id: business.id, updated_at: business.updated_at } });
+    expect(selected).toEqual({ ...context, target: { kind: "client", reference: business.id, label: business.entity_name }, business_source: { id: business.id, updated_at: business.updated_at }, business_name: business.entity_name });
     expect(applyStudioBusinessSelection(selected, null, "manual-new")).toEqual({ ...context, target: { kind: "client", reference: "manual-new" } });
   });
   it("does not bind workspace/custom or truncate a long business identity", () => {
     const workspace = { target: { kind: "workspace" as const }, values: {} };
     expect(applyStudioBusinessSelection(workspace, business, "unused")).toBe(workspace);
     const longName = { ...business, entity_name: "C".repeat(201) };
-    expect(applyStudioBusinessSelection({ target, values: {} }, longName, "unused")).toEqual({ target: { kind: "client", reference: business.id }, values: { publicName: longName.entity_name }, business_source: { id: business.id, updated_at: business.updated_at } });
+    expect(applyStudioBusinessSelection({ target, values: {} }, longName, "unused")).toEqual({ target: { kind: "client", reference: business.id }, values: {}, business_source: { id: business.id, updated_at: business.updated_at }, business_name: longName.entity_name });
   });
 });

@@ -18,13 +18,17 @@ describe("complete original Studio page save source", () => {
   it("preserves a selected business identity revision as expected state, without granting authority", () => {
     const raw = { ...source(), project_context: {
       target: { kind: "client", reference: OTHER, label: "Cedar Consulting" }, values: {},
-      business_source: { id: OTHER, updated_at: DATE },
+      business_source: { id: OTHER, updated_at: DATE }, business_name: "Cedar Consulting",
     } };
     expect(read(raw)).toEqual(raw);
     expect(read(raw)?.project_context.business_source).toEqual({ id: OTHER, updated_at: DATE });
+    expect(read(raw)?.project_context.business_name).toBe("Cedar Consulting");
+    expect(read(raw)?.project_context.values).toEqual({});
     const later = { ...raw, project_context: { ...raw.project_context, business_source: { id: OTHER, updated_at: "2026-11-13T17:05:06.123457+00:00" } } };
     const original = read(raw), changed = read(later);
     expect(original && changed && sameStudioPageSaveSource(original, changed)).toBe(false);
+    const renamed = read({ ...raw, project_context: { ...raw.project_context, business_name: "Birch Consulting" } });
+    expect(original && renamed && sameStudioPageSaveSource(original, renamed)).toBe(false);
   });
 
   it.each([
@@ -35,6 +39,8 @@ describe("complete original Studio page save source", () => {
     ["invalid revision", { target: { kind: "client", reference: OTHER }, values: {}, business_source: { id: OTHER, updated_at: "latest" } }],
     ["invented verified flag", { target: { kind: "client", reference: OTHER }, values: {}, business_source: { id: OTHER, updated_at: DATE, verified: true } }],
     ["null source", { target: { kind: "client", reference: OTHER }, values: {}, business_source: null }],
+    ["orphan name", { target: { kind: "client", reference: OTHER }, values: {}, business_name: "Cedar" }],
+    ...[null, 1, "", "   ", "x".repeat(4001), "Cedar\u0000"].map(business_name => ["invalid name", { target: { kind: "client", reference: OTHER }, values: {}, business_source: { id: OTHER, updated_at: DATE }, business_name }]),
   ])("refuses malformed business binding: %s", (_label, project_context) => {
     expect(read({ ...source(), project_context })).toBeNull();
   });

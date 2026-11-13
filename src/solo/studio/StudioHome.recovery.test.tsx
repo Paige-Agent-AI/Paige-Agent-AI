@@ -27,15 +27,18 @@ async function brief(text: string) {
   await act(async () => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(input, text); input.dispatchEvent(new Event("input", { bubbles: true })); });
 }
 const BUSINESS = { id: "77777777-7777-4777-8777-777777777777", entity_name: "Northwind Services", updated_at: "2026-11-13T10:20:30.123456+00:00" };
+const CEDAR = { id: "88888888-8888-4888-8888-888888888888", entity_name: "Cedar Consulting", updated_at: "2026-11-13T10:20:30.234567+00:00" };
+const BIRCH = { id: "99999999-9999-4999-8999-999999999999", entity_name: "Birch Consulting", updated_at: "2026-11-13T10:20:30.345678+00:00" };
 function field(label: string) { return document.getElementById([...host.querySelectorAll("label")].find(node => node.textContent === label)!.htmlFor) as HTMLInputElement; }
 async function input(label: string, text: string) { await act(async () => { const node = field(label); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(node, text); node.dispatchEvent(new Event("input", { bubbles: true })); }); }
-async function selectBusiness() {
-  await input("Find an existing business", "Northwind");
-  expect(h.businesses).not.toHaveBeenCalled();
+async function selectBusiness(business = BUSINESS, query = "Northwind") {
+  const reads = h.businesses.mock.calls.length;
+  await input("Find an existing business", query);
+  expect(h.businesses).toHaveBeenCalledTimes(reads);
   await act(async () => button("Search businesses").click());
-  expect(h.businesses).toHaveBeenCalledExactlyOnceWith("test-tenant-one", "Northwind", expect.any(AbortSignal));
+  expect(h.businesses).toHaveBeenCalledTimes(reads + 1); expect(h.businesses).toHaveBeenLastCalledWith("test-tenant-one", query, expect.any(AbortSignal));
   const label = [...host.querySelectorAll("label")].find(node => node.textContent === "Choose a business")!;
-  await act(async () => { const select = document.getElementById(label.htmlFor) as HTMLSelectElement; select.value = BUSINESS.id; select.dispatchEvent(new Event("change", { bubbles: true })); });
+  await act(async () => { const select = document.getElementById(label.htmlFor) as HTMLSelectElement; select.value = business.id; select.dispatchEvent(new Event("change", { bubbles: true })); });
 }
 it.each(["Client", "Prospect"])("%s business selection reaches only explicit original Start with the exact native revision and authored blanks", async category => {
   await render(); expect(h.businesses).not.toHaveBeenCalled();
@@ -45,7 +48,7 @@ it.each(["Client", "Prospect"])("%s business selection reaches only explicit ori
   expect(h.starts).toEqual([]); expect(field("Business name").value).toBe(""); expect(field("Offer").value).toBe("Owner-authored project offer");
   await act(async () => button("Build it").click());
   expect(h.starts).toHaveLength(1); expect(h.starts[0].context).toEqual({ target: { kind: category.toLowerCase(), reference: BUSINESS.id, label: BUSINESS.entity_name },
-    values: { offers: "Owner-authored project offer", publicName: "" }, business_source: { id: BUSINESS.id, updated_at: BUSINESS.updated_at } });
+    values: { offers: "Owner-authored project offer", publicName: "" }, business_source: { id: BUSINESS.id, updated_at: BUSINESS.updated_at }, business_name: BUSINESS.entity_name });
   expect(h.lookups).toEqual([]);
 });
 it("same-category clicks preserve the selected business and its source revision", async () => {
@@ -54,6 +57,24 @@ it("same-category clicks preserve the selected business and its source revision"
   expect(host.textContent).toContain(`Selected business: ${BUSINESS.entity_name}`);
   await act(async () => button("Build it").click());
   expect(h.starts[0].context).toMatchObject({ target: { kind: "client", reference: BUSINESS.id }, business_source: { id: BUSINESS.id, updated_at: BUSINESS.updated_at } });
+});
+it.each(["switch", "clear"])("%s uses selected names only as removable defaults in original Start", async action => {
+  h.businesses.mockResolvedValue([CEDAR, BIRCH]); await render(); await act(async () => button("Client").click());
+  await input("Offer", "Authored offer"); await selectBusiness(CEDAR, "Cedar"); expect(field("Business name").value).toBe(CEDAR.entity_name);
+  await selectBusiness(BIRCH, "Birch"); expect(field("Business name").value).toBe(BIRCH.entity_name);
+  if (action === "clear") { await act(async () => button("Use project details only").click()); expect(field("Business name").value).toBe(""); }
+  await brief("Build this service page"); await act(async () => button("Build it").click());
+  const context = h.starts[0].context; expect(context.values).toEqual({ offers: "Authored offer" });
+  if (action === "clear") { expect(context).not.toHaveProperty("business_source"); expect(context).not.toHaveProperty("business_name"); expect(context.target).not.toHaveProperty("reference", BIRCH.id); }
+  else { expect(context).toMatchObject({ target: { reference: BIRCH.id }, business_source: { id: BIRCH.id, updated_at: BIRCH.updated_at }, business_name: BIRCH.entity_name }); }
+});
+it.each(["Owner-edited name", ""])("keeps an authored name %j while switching and clearing selected business defaults", async publicName => {
+  h.businesses.mockResolvedValue([CEDAR, BIRCH]); await render(); await act(async () => button("Client").click()); await selectBusiness(CEDAR, "Cedar");
+  await input("Business name", "Owner-edited name"); if (!publicName) await input("Business name", "");
+  await selectBusiness(BIRCH, "Birch"); expect(field("Business name").value).toBe(publicName);
+  await act(async () => button("Use project details only").click()); expect(field("Business name").value).toBe(publicName);
+  await brief("Build this service page"); await act(async () => button("Build it").click());
+  expect(h.starts[0].context.values).toEqual({ publicName }); expect(h.starts[0].context).not.toHaveProperty("business_source"); expect(h.starts[0].context).not.toHaveProperty("business_name");
 });
 it("changing category clears the selected native source instead of inheriting it", async () => {
   await render(); await act(async () => button("Client").click()); await selectBusiness();

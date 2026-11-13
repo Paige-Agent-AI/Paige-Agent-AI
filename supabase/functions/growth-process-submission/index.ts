@@ -492,8 +492,7 @@ async function runExecutor(
           futureTags, hasRecordedResult: hasTagResult,
         }, { caller: admin });
         if (tagged.kind === "recorded") {
-          contactTags = { outcome: tagged.result.outcome, future_tags: tagged.result.future_tags,
-            audit_id: tagged.result.audit_id, replayed: tagged.replayed };
+          contactTags = { outcome: tagged.result.outcome, replayed: tagged.replayed };
         } else if (tagged.kind !== "not_requested") {
           return { status: "error", result: { contact_id: contactId,
             ...(customFieldsError ? { custom_fields_error: customFieldsError } : {}),

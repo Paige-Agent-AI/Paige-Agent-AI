@@ -116,3 +116,32 @@ no runtime, transport, model, native writer or assertion change. Focused24/24
 now PASS, versus20/24 before. Do not relabel the failed hosted run green. Latest
 incoming main71928f35 adds only six original E05 Master release lines; preserve
 them. Repaired exact-head independent review and full required CI remain owed.
+
+## Actual release and live failure — preserved
+
+Corrected source6ef7978a passed all11 required check-runs and both web contexts;
+NON-AUTHOR6860078913 cleared it. Normal merge35144df6d0be2167b8e361a90c4201116687b110
+has exactly the reviewed treed706e794. Web production dpl_3fvHMKVAmSAyJHkozVu1APYzGJR1
+is READY; both public roots/version endpoints returned200 and that exact build.
+Edge43477522711 attempt1 uploaded but source verification failed on three old
+llm-trace closures. Original artifact14062713618 retains39/42 PASS. The normal
+same-job retry passed42/42; independently opened artifact14064646190 records
+Chat668/JWTtrue/archive27cd31d7f16bbc312a82b349d797567f61b5cdf0c8df2f9cf5d75abc2d5da6a9.
+No compiler, security setting, migration, account or provider configuration changed.
+
+ONE postrelease ordinary read-only Chat request at18:07UTC failed: Luna classifier
+and Sol each returnedHTTP400/invalid_request. The original turn settled INTERRUPTED,
+not a fabricated answer or Work; no resend occurred. Metadata-only traces intentionally
+omit provider error text. Logs establish invalid_request, not its exact parameter.
+This is LIVE FAIL and the outcome remains incomplete, despite reviewed/green/released source.
+
+The first key producer emitted78 characters (version prefix plus full SHA256).
+The provider-compatible bound is64; the Responses reference omits this explicit
+length bound, so exact observed error attribution remains unproven until live recovery.
+The correction retains the version in the hashed preimage and the complete64-hex
+digest on the wire. Invalid/overlong internal keys disable reads/writes without
+breakpoints, never join a shared global group. The new length assertion genuinely
+failed against released source126PASS/1FAIL; corrected adapter132PASS and Fabric212PASS.
+Original privacy/current-authority/no-replay/implicit30m/customer-meter contracts stay.
+Independent review, fresh exact-head CI, ordered release and successful live proof
+are still required for this corrective source; no cache benefit or quality uplift claimed.

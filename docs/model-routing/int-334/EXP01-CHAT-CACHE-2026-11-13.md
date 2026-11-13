@@ -205,3 +205,22 @@ Real missing diagnostic tests140PASS4FAIL; candidate147adapter/24trace/212Fabric
 necessary original dependency pins are renewed after that immutable review.
 Exact final review/CI/release/readback and useful cache evidence remain owed;
 signature equality is a comparison, NOT a cache hit or full-prompt equality.
+
+## Diagnostic release readback
+
+PR3346 exact b0277786 passed independent NON-AUTHOR6864127509 and all11 required
+checks/both web statuses. Normal merge5d34e25d/treef030d83c is EXACT reviewed tree.
+Webdpl_AkBPEM72qfWP4FPmRZHqeQP6SRPQ READY, both public origins5d34-mwfh39yg/200.
+Original Edge43508520196 first source39/41FAIL retained in14077083574; normal
+same-head failed-job retry41/41PASS, independently opened14077473738 ZIP
+c2fd3f0df0ff6cef5506e95ab23445c09e7ed0f50b830a5e96db256e6ab6ee8e,
+Chat676/JWTtrue/archive3c300e86aa1a7308229c6880f25d7b08212500f344730ff77e942b0c6c9afbe2.
+Source-inspection scratch cleanup permission_denied remains recorded; no bypass.
+
+Actual diagnostic comparison is NOT RUN. Chrome changed to Antonio Cook while
+checks ran. No test was sent there, workspace switched or login/role/credential
+changed. Owner was asked to restore existing designated ordinary MMA Chat.
+This is a genuine test-context dependency, not a code/CI/release failure or cache
+success. Original3345 same18turn/7trace reload proof is preserved separately.
+Current cache benefit remains UNPROVEN; no new provider probe until authorized
+ordinary context is actually current. Full EXP01 and final owner acceptance remain.

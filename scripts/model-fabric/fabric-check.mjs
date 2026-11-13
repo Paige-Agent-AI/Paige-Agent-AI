@@ -1047,7 +1047,7 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   let checked = 0;
   const a = await run('operational', { ...ON, trace, beforeProviderAttempt: () => { checked++; return true; } });
   ok(a.s.ok && a.calls[0].provider === 'openai' && checked === 1
-    && /^paige-chat-v1:[a-f0-9]{64}$/.test(a.calls[0].req.prompt_cache_key), 'K1 real streaming Fabric forwards trusted scoped cache partition after authority check');
+    && /^[a-f0-9]{64}$/.test(a.calls[0].req.prompt_cache_key), 'K1 real streaming Fabric forwards trusted scoped cache partition after authority check');
   const b = await run('operational', { ...ON, trace: { ...trace,
     prompt_cache_scope: { ...trace.prompt_cache_scope, actor_id: '00000000-0000-4000-8000-000000000012' } } });
   ok(a.calls[0].req.prompt_cache_key !== b.calls[0].req.prompt_cache_key, 'K2 different admitted actor never shares the Chat cache group');

@@ -688,8 +688,8 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
     'K5 instruction text/order/priority conserved at developer boundary');
   ok(JSON.stringify(after.input.slice(1)) === JSON.stringify(before.input)
     && JSON.stringify(after.tools) === JSON.stringify(before.tools), 'K6 conversation, tools, calls, outputs and reasoning remain identical');
-  ok(after.input[0].content[0].prompt_cache_breakpoint?.mode === 'explicit'
-    && after.input[0].content.slice(1).every(c => !c.prompt_cache_breakpoint)
+  ok(after.input[0].content[1].prompt_cache_breakpoint?.mode === 'explicit'
+    && after.input[0].content.filter(c => c.prompt_cache_breakpoint).length === 1
     && after.prompt_cache_options.mode === 'implicit' && after.prompt_cache_options.ttl === '30m'
     && after.store === false, 'K7 early reusable prefix plus original implicit loop reuse; no retention extension/storage');
   const changed = ad.buildResponsesRequest({ messages: CONVO.map((m, i) => i === 1 ? { ...m, content: 'Fresh current context.' } : m), tools: [TOOL] },
@@ -698,6 +698,69 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
     && changed.input[0].content[1].text.includes('Fresh current context.'), 'K8 changing later context preserves first prefix, never freezes stale context');
   const forged = ad.buildResponsesRequest({ messages: CONVO, prompt_cache_key: key, prompt_cache_options: { ttl: '12h' } }, { model: models.OPENAI_OPERATIONAL });
   ok(!forged.prompt_cache_key && !forged.prompt_cache_options && forged.instructions === before.instructions, 'K9 request JSON cannot opt into cache scope or retention');
+  const { buildPaigePersonaBlock } = await import('../../supabase/functions/_shared/client-context.ts');
+  const { PAIGE_VOICE_BLOCK } = await import('../../supabase/functions/_shared/paige-voice.ts');
+  const { PAIGE_PERSONA_CORE } = await import('../../supabase/functions/_shared/paige-persona/core.ts');
+  const persona = buildPaigePersonaBlock(null, 'test-tenant', false);
+  for (const prefix of [[persona, PAIGE_VOICE_BLOCK, PAIGE_PERSONA_CORE], [persona, 'Original specialist address.', PAIGE_VOICE_BLOCK]]) {
+    const request = current => ad.buildResponsesRequest({ messages: [
+      ...prefix.map(content => ({role:'system',content})), {role:'system',content:current}, {role:'user',content:'Read only.'}
+    ] }, {model:models.OPENAI_OPERATIONAL,promptCacheKey:key});
+    const first = request('Current permitted source revision A.');
+    const next = request('Current permitted source revision B.');
+    ok(first.input[0].content[2].prompt_cache_breakpoint?.mode === 'explicit'
+      && first.input[0].content.filter(c => c.prompt_cache_breakpoint).length === 1,
+      'KP1 one early boundary includes original stable persona/voice slots');
+    ok(prefix.join('').length > 6000 && JSON.stringify(first.input[0].content.slice(0,3)) === JSON.stringify(next.input[0].content.slice(0,3)),
+      'KP2 real canonical stable prefix survives changed context; size is characters, not a fabricated tokenizer count');
+    ok(next.input[0].content[3].text.includes('revision B') && !next.input[0].content[3].prompt_cache_breakpoint,
+      'KP3 current source is still delivered after stable boundary, never frozen or promoted to authority');
+  }
+  const signatureDrive = async (extra = {}) => {
+    const from = traceCount();
+    const tx = transport(() => json({model:models.OPENAI_OPERATIONAL,status:'completed',
+      output:[{type:'message',role:'assistant',content:[{type:'output_text',text:'Read only.'}]}],
+      usage:{input_tokens:2000,output_tokens:3,input_tokens_details:{cached_tokens:0}}}));
+    const messages = [extra.persona??'Synthetic private persona.',PAIGE_VOICE_BLOCK,PAIGE_PERSONA_CORE,extra.current??'Current source A.']
+      .map(content=>({role:'system',content}));
+    await ad.responsesCompletion({messages:[...messages,{role:'user',content:extra.ask??'Read only.'}],tools:extra.tools??[TOOL]},
+      {model:extra.model??models.OPENAI_OPERATIONAL,effort:extra.effort??'medium',promptCacheKey:extra.key??key,fetchImpl:tx},
+      {...TRACE,content_policy:'metadata_only',prompt_cache_scope:scope});
+    const [row] = await tracesSince(from);
+    return {signature:row.metadata?.provider_cache_signature,row,wire:tx.calls[0].body,calls:tx.calls.length};
+  };
+  const diagnostic = await signatureDrive(), laterHistory = await signatureDrive({ask:'Different later user question.'});
+  const signatureShape = /^v1(?:\|[a-f0-9]{8}(?:-[a-f0-9]{8}){7}){4}$/;
+  ok(signatureShape.test(diagnostic.signature??''), 'KD1 actual original trace carries only fixed-format opaque cache comparison components');
+  ok(!!diagnostic.signature && diagnostic.signature===laterHistory.signature,
+    'KD2 later user history changes neither actual early prefix nor diagnostic signature');
+  ok(!JSON.stringify(diagnostic.row).includes('Synthetic private persona.') && !JSON.stringify(diagnostic.row).includes(key)
+    && diagnostic.row.input_excerpt==null && diagnostic.row.output_excerpt==null,
+    'KD3 metadata-only trace never gains prompt text, raw partition or output');
+  const changedModel = await signatureDrive({model:models.OPENAI_CHEAP});
+  const changedTool = await signatureDrive({tools:[{...TOOL,function:{...TOOL.function,name:'other_lookup'}}]});
+  const changedScope = await signatureDrive({key:await ad.chatPromptCacheKey({...scope,actor_id:'00000000-0000-4000-8000-000000000012'})});
+  const parts = value => (value??'').split('|');
+  ok(!!diagnostic.signature && parts(changedModel.signature)[2]!==parts(diagnostic.signature)[2]
+    && parts(changedTool.signature)[3]!==parts(diagnostic.signature)[3],
+    'KD4 actual model/settings and tool changes identify their own cache-sensitive component');
+  ok(!!diagnostic.signature && parts(changedScope.signature).slice(1).every((p,i)=>p!==parts(diagnostic.signature)[i+1]),
+    'KD5 every diagnostic component is partitioned by the server actor/workspace key');
+  const disabledSignature = await signatureDrive({key:'invalid'});
+  ok(disabledSignature.signature===undefined, 'KD6 invalid partition emits no diagnostic and retains cache-off transport');
+  const changedEarly = await signatureDrive({persona:'Changed permitted private persona.'});
+  const changedLate = await signatureDrive({current:'Current source B.'});
+  ok(!!diagnostic.signature && parts(changedEarly.signature)[4]!==parts(diagnostic.signature)[4]
+    && changedLate.signature===diagnostic.signature,
+    'KD7 real early instruction mutation identifies prefix mismatch while later current source stays fresh');
+  const oldDigest = crypto.subtle.digest;
+  let hashFailure;
+  try {
+    crypto.subtle.digest = async () => {throw new Error('Synthetic diagnostic hash unavailable');};
+    hashFailure = await signatureDrive();
+  } finally {crypto.subtle.digest = oldDigest;}
+  ok(hashFailure?.signature===undefined && hashFailure?.row.status==='success' && hashFailure?.calls===1,
+    'KD8 diagnostic failure never blocks, retries or changes original successful request');
   const usage = { input_tokens: 12000, output_tokens: 500, input_tokens_details: { cached_tokens: 4000,
     cache_write_tokens: 7000, cache_write_tokens_details: { ttl_30m_tokens: 3000, ttl_12h_tokens: 4000 } } };
   const tx = transport(() => json({ status: 'completed', model: models.OPENAI_OPERATIONAL, usage, output: [] }));
@@ -730,6 +793,8 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
   ok(streamRow.status === 'success' && streamRow.cache_creation_input_tokens === 7000
     && streamRow.metadata.provider_cost_estimate_usd === 0.0349 && traceCount() === streamFrom + 1,
     'K15 streamed final authoritative usage carries same cache/cost observations exactly once');
+  ok(signatureShape.test(streamRow.metadata?.provider_cache_signature??''),
+    'KD9 real streaming finalizer writes one fixed-format diagnostic through the same original trace');
 }
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

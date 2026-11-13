@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded November 13, 2026 UTC — EXP01 Chat cache source released; live failure retained.**
+
+| Increment | Exact reviewed source and production release | Proof boundary and original outcome |
+| --- | --- | --- |
+| [#3339](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3339) | Reviewed6ef7978a119c40471cb86281bf16b79e33589f65, NON-AUTHOR[6860078913](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3339#issuecomment-6860078913), all11 check-runs and both web contextsSUCCESS. Normal merge35144df6d0be2167b8e361a90c4201116687b110 has EXACT reviewed treed706e79478222dc047a9b8a1bcf66712cc11cafe. Productiondpl_3fvHMKVAmSAyJHkozVu1APYzGJR1 READY; both public roots/version200 at35144df6-mwfa2f4t/customerUpdate:null. Edge43477522711 first source-readbackFAIL retained in14062713618; normal retry42/42PASS certificate14064646190, Chat668/JWTtrue/archive27cd31d7f16bbc312a82b349d797567f61b5cdf0c8df2f9cf5d75abc2d5da6a9. No own migration; original native customer meter unchanged. | Adds server-scoped prefix caching and separately labelled provider usage/cost metadata; original routes/fallback/customer billing unchanged. Actual ONE postrelease read-only Chat test failed with Luna/SolHTTP400; original turnINTERRUPTED/zeroWork/no resend. Generated78-character key exceeds provider-compatible64 bound; corrective source and live recovery remain owed. Source release is NOT a working outcome or cache/latency/savings proof. [Original failure188b9b2e](https://linear.app/paigeagentai/issue/ANT-50#comment-188b9b2e-2f49-4196-beeb-cb8d1e2548a2), [research/recovery record](model-routing/int-334/EXP01-CHAT-CACHE-2026-11-13.md). Full EXP01, Live activation and owner acceptance remain separate; internal patch, no customer announcement/version. |
+
 **Recorded November 13, 2026 UTC — EXP05 original Zapier connection and explicit workflow consent.**
 
 | Increment | Exact reviewed source and production release | Proof boundary and original outcome |

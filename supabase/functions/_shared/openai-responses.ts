@@ -204,7 +204,8 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
     include: ["reasoning.encrypted_content"],
     max_output_tokens: body.max_tokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
   };
-  if (!opts.disablePromptCache && opts.promptCacheKey && /^paige-chat-v1:[a-f0-9]{64}$/.test(opts.promptCacheKey)) {
+  const validCacheKey = typeof opts.promptCacheKey === "string" && /^[a-f0-9]{64}$/.test(opts.promptCacheKey);
+  if (!opts.disablePromptCache && validCacheKey) {
     // Keep the exact instruction order/priority, but expose an early stable boundary
     // (tools + first persona block) before changing context. Implicit trailing
     // breakpoints still preserve the existing tool-loop/history reuse.
@@ -219,7 +220,7 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
     });
   } else if (instructions.length) req.instructions = instructions.join("\n\n");
   // Explicit-only with no breakpoints performs neither cache reads nor writes.
-  if (opts.disablePromptCache) req.prompt_cache_options = { mode: "explicit" };
+  if (opts.disablePromptCache || opts.promptCacheKey !== undefined && !validCacheKey) req.prompt_cache_options = { mode: "explicit" };
   if (opts.effort) req.reasoning = { effort: opts.effort === "none" && SOL_ASTRA_NO_NONE(opts.model) ? "low" : opts.effort };
   if (body.tools?.length) {
     req.tools = body.tools.map(toolDef);
@@ -250,7 +251,9 @@ export async function chatPromptCacheKey(scope: TraceCtx["prompt_cache_scope"]):
       scope.working_context_tenant_id?.toLowerCase() ?? null,
     ])));
   } catch { return undefined; } // original Fabric disables caching, never broadens the partition
-  return "paige-chat-v1:" + Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
+  // The version is already inside the hashed preimage. A wire prefix would push
+  // the full SHA-256 digest beyond the provider's 64-character key limit.
+  return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
 }
 
 // ── Responses result → chat shape ──────────────────────────────────────────────────────────────

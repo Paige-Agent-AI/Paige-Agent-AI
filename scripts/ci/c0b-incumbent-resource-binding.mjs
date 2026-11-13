@@ -1,3 +1,8 @@
+// EXP01 cache-key correction, November13. NON-AUTHOR /root/setup_contract_review
+// CLEAR on cf51ca1cd40fbaa00d2eeca3f90e209f924f39d0/tree8897a519.
+// Same canonical extractor reproduced old5da1999c and reviewed newbf4aa3f5.
+// Renew ONLY the openai-responses dependency literal; other130 pins and ALL29
+// dispatch fingerprints, metadata, inspector and hostile controls stay exact.
 // EXP01 Chat cache, November13. NON-AUTHOR /root/setup_contract_review independently
 // CLEAR on source8fe5acb4dd08fa251b34c74cfce9acc74024d65e/tree2680caa9.
 // All29 baseline fingerprints/131 dependency pins reproduce on c4c70ad03.
@@ -1551,7 +1556,7 @@ const SOURCES = {
   // unchanged. Old e2790d93… reproduced from main 5a4bfb1f0 first.
   "supabase/functions/_shared/comms-email/readiness.ts": "8bfab4b5fe9453736b8f68b82d76434cc9884e9ea39583d7d32e97454affba5f",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
-  "supabase/functions/_shared/openai-responses.ts": "5da1999c86aac36819d911deb4193b3965efa509a40f1ad476e6a22a63e4446f",
+  "supabase/functions/_shared/openai-responses.ts": "bf4aa3f567f5cb43dad68310ac8c8b81b1b845afb4fd57bac9e53734b3403d15",
   "supabase/functions/_shared/provider-failure.ts": "eef5a70437a8952dde4fbb46a29e9696d1b9f31c48e2a76a0c9ae60c99e7c35b",
   "supabase/functions/_shared/paige-turn/route.ts": "657f0c9ee1d3724a5eca72f661718d560e090cd7ee36707cadbbf94f1f463d6e",
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",

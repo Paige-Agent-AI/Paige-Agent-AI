@@ -24,6 +24,9 @@ export function StudioWindowHost({ openPaige }: { openPaige?: () => void }) {
   const returnFocus = React.useRef<{ button: HTMLButtonElement; owner: HTMLElement } | null>(null);
   const focusPending = React.useRef(false);
   const current = windowState?.launch.actorId === activeUserId && windowState.launch.tenantId === activeTenantId ? windowState : null;
+  const hostMarker = React.useRef<HTMLSpanElement>(null);
+  const renderedWindow = React.useRef(current);
+  renderedWindow.current = current;
 
   const pointer = React.useCallback((sessionId?: string, minimized = false, pendingStartId?: string) => {
     const params = new URLSearchParams(location.search);
@@ -76,6 +79,27 @@ export function StudioWindowHost({ openPaige }: { openPaige?: () => void }) {
   }, [activeTenantId, activeUserId]);
 
   React.useEffect(() => {
+    if (!current) return;
+    let live = true;
+    const leaveThroughHome = (event: MouseEvent) => {
+      if (!live || renderedWindow.current !== current || event.defaultPrevented || event.button !== 0
+        || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+      const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a.tcs-brand-home") : null;
+      const owner = hostMarker.current?.closest("[data-tenant-shell]");
+      if (!link || !owner?.isConnected || !link.isConnected || link.closest("[data-tenant-shell]") !== owner
+        || owner.querySelector("a.tcs-brand-home") !== link || link.closest('[hidden],[aria-hidden="true"],[inert]')
+        || link.hasAttribute("download") || link.origin !== window.location.origin
+        || (link.target && link.target.toLowerCase() !== "_self")) return;
+      returnFocus.current = null; focusPending.current = false;
+      // The original Router link owns navigation. Only dismiss this window;
+      // do not replace its destination with the previous Studio pathname.
+      setWindowState(previous => previous === current ? null : previous);
+    };
+    window.addEventListener("click", leaveThroughHome, true);
+    return () => { live = false; window.removeEventListener("click", leaveThroughHome, true); };
+  }, [current]);
+
+  React.useEffect(() => {
     if (current) pointer(current.launch.sessionId, current.minimized, current.launch.pendingStartId);
     else if (pendingStart.current) pointer(undefined, false, pendingStart.current);
   }, [current, pointer]);
@@ -100,6 +124,7 @@ export function StudioWindowHost({ openPaige }: { openPaige?: () => void }) {
   }, []);
 
   return <>
+    <span hidden ref={hostMarker} />
     {current && <React.Suspense fallback={<div role="status">Opening Studio…</div>}><VibeStudio
       launch={current.launch} minimized={current.minimized} onMinimize={minimize} onBack={close}
       onProjectChange={projectChanged} onStartPending={startPending} openPaige={openPaige} /></React.Suspense>}

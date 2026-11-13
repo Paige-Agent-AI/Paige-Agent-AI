@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
+import { Link, MemoryRouter, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const h = vi.hoisted(() => ({ tenant: "test-tenant-a", actor: "test-user-a", mounts: 0 }));
@@ -14,7 +14,14 @@ const { StudioWindowHost } = await import("./StudioWindowHost");
 const { StudioLaunchButton } = await import("./StudioLaunchButton");
 const ID = "11111111-1111-4111-8111-111111111111";
 let host: HTMLDivElement, root: Root;
-function Fixture() { const location = useLocation(), navigate = useNavigate(); return <div data-tenant-shell><StudioLaunchButton sessionId={ID} /><button onClick={() => navigate("/solo/test/team-hub")}>Team Hub</button><output>{location.pathname + location.search}</output><StudioWindowHost /></div>; }
+function Fixture() {
+  const location = useLocation(), navigate = useNavigate();
+  return <><div data-tenant-shell>
+    <Link className="tcs-brand-home" aria-label="PAIGE Solo home" to="/solo/test/command-center"><span>PAIGE Solo</span></Link>
+    <StudioLaunchButton sessionId={ID} /><button onClick={() => navigate("/solo/test/team-hub")}>Team Hub</button>
+    <output>{location.pathname + location.search}</output><StudioWindowHost />
+  </div><div data-tenant-shell><a className="tcs-brand-home" data-foreign-home href="/solo/foreign/command-center">Other shell home</a></div></>;
+}
 async function render(path = "/solo/test/chat") { await act(async () => root.render(<MemoryRouter initialEntries={[path]}><Fixture /></MemoryRouter>)); }
 function button(label: string) { return [...host.querySelectorAll<HTMLButtonElement>("button")].find(x => x.textContent === label)!; }
 beforeEach(() => { h.tenant = "test-tenant-a"; h.actor = "test-user-a"; h.mounts = 0; host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
@@ -67,4 +74,58 @@ it("retains the uncertain original start pointer when closed across route naviga
   h.actor = "test-user-b";
   await render();
   expect(host.querySelector("output")?.textContent).not.toContain("studio_start=");
+});
+
+function brandHome() { return host.querySelector<HTMLAnchorElement>('[aria-label="PAIGE Solo home"]')!; }
+function activateWithoutNavigation(link: HTMLAnchorElement, init: MouseEventInit = {}) {
+  // The Host's capture listener sees the actual activation. Suppress only the
+  // later browser default for negative controls, never substitute its handler.
+  link.addEventListener("click", event => event.preventDefault(), { once: true });
+  link.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0, ...init }));
+}
+it("closes the current Studio through its same-shell brand control without replacing Router navigation", async () => {
+  await render("/solo/test/command-center");
+  await act(async () => button("Open Studio").click());
+  expect(host.querySelector("[data-studio]")).not.toBeNull();
+  brandHome().focus();
+  await act(async () => brandHome().querySelector("span")!.click());
+  expect(host.querySelector("[data-studio]")).toBeNull();
+  expect(host.querySelector("output")?.textContent).toBe("/solo/test/command-center");
+  expect(document.activeElement).not.toBe(button("Open Studio"));
+});
+it("keeps the current Studio for modified, middle, new-tab, hidden and foreign brand controls", async () => {
+  await render(); await act(async () => button("Open Studio").click());
+  const frame = host.querySelector("[data-studio]"), home = brandHome();
+  for (const init of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 }]) {
+    await act(async () => activateWithoutNavigation(home, init)); expect(host.querySelector("[data-studio]")).toBe(frame);
+  }
+  home.target = "_blank";
+  await act(async () => activateWithoutNavigation(home)); expect(host.querySelector("[data-studio]")).toBe(frame);
+  home.removeAttribute("target"); home.hidden = true;
+  await act(async () => activateWithoutNavigation(home)); expect(host.querySelector("[data-studio]")).toBe(frame);
+  home.hidden = false;
+  await act(async () => activateWithoutNavigation(host.querySelector<HTMLAnchorElement>("[data-foreign-home]")!));
+  expect(host.querySelector("[data-studio]")).toBe(frame);
+  await act(async () => home.click()); expect(host.querySelector("[data-studio]")).toBeNull();
+});
+it("retires the exact brand listener on actor or tenant change and unmount", async () => {
+  const added = vi.spyOn(window, "addEventListener"), removed = vi.spyOn(window, "removeEventListener");
+  try {
+    await render(); await act(async () => button("Open Studio").click());
+    const first = added.mock.calls.filter(([type, , options]) => type === "click" && options === true).at(-1);
+    expect(first).toBeDefined();
+    h.actor = "test-user-b"; await render();
+    expect(removed).toHaveBeenCalledWith("click", first![1], true);
+    await act(async () => button("Open Studio").click());
+    const nextFrame = host.querySelector("[data-studio]"), oldActivation = new MouseEvent("click", { button: 0 });
+    Object.defineProperty(oldActivation, "target", { value: brandHome() });
+    (first![1] as EventListener)(oldActivation);
+    expect(host.querySelector("[data-studio]")).toBe(nextFrame);
+    h.tenant = "test-tenant-b"; await render();
+    expect(host.querySelector("[data-studio]")).toBeNull();
+    await act(async () => button("Open Studio").click());
+    const last = added.mock.calls.filter(([type, , options]) => type === "click" && options === true).at(-1);
+    await act(async () => root.render(null));
+    expect(removed).toHaveBeenCalledWith("click", last![1], true);
+  } finally { added.mockRestore(); removed.mockRestore(); }
 });

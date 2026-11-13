@@ -82,6 +82,7 @@ vi.mock("@/solo/studio/studio-data", async (original) => ({
   listSessions: async () => [],
   // EXP07 row 6: Studio home also lists workspace templates on mount — none in this harness.
   listTemplates: async () => [],
+  readStudioBusinessSources: async () => ({ readStatus: "unavailable", context: null, publicBrand: undefined }),
   loadBrand: async () => ({
     floor: (await import("@/components/growth/growth-theme")).buildGrowthBrandFloor(null),
     name: null, logoUrl: null,
@@ -103,6 +104,7 @@ vi.mock("@/components/ui/paige", () => ({
 vi.mock("@/hooks/usePendingApprovals", () => ({ usePendingApprovals: () => ({ items: [] }) }));
 vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({
+    activeUserId: "owner-1",
     activeTenantId: "tenant-42",
     activeTenant: { account_number: "42", name: "Supplied Solo account", account_type: "standalone", parent_tenant_id: null },
   }),
@@ -499,6 +501,7 @@ describe("tenant shell owns one PAIGE surface", () => {
   it("reuses the existing immersive Vibe Studio from Campaigns and returns through its owner", () => {
     const solo = source("src/solo/SoloApp.tsx");
     const campaigns = source("src/solo/growth2.tsx");
+    const studioHost = source("src/solo/studio/StudioWindowHost.tsx");
     const vibe = source("src/solo/vibe.tsx");
     const studioHome = source("src/solo/studio/StudioHome.tsx");
 
@@ -507,11 +510,15 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(campaigns).toContain(">Vibe Studio</button>");
     expect(campaigns).toContain('eyebrow="Marketing"');
     expect(campaigns).not.toContain('eyebrow="Growth & acquisition"');
-    expect(solo).toContain("window.addEventListener('paige-studio',h)");
+    expect(solo).toContain("<StudioWindowHost openPaige={openPaige}/>");
+    expect(solo.match(/<StudioWindowHost/g)).toHaveLength(1);
+    expect(studioHost).toContain('window.addEventListener("paige-studio", open)');
     // EXP06: the one Studio mount also receives the shell's openPaige (the NEXUS handoff's
     // destination); the ownership fact is unchanged — one VibeStudio, closed by its owner.
-    expect(solo).toContain("<VibeStudio onBack={closeStudio} openPaige={openPaige}/>");
-    expect(solo.match(/<VibeStudio/g)).toHaveLength(1);
+    expect(studioHost).toContain("<VibeStudio");
+    expect(studioHost).toContain("onBack={close}");
+    expect(studioHost).toContain("openPaige={openPaige}");
+    expect(studioHost.match(/<VibeStudio/g)).toHaveLength(1);
     expect(vibe).toContain("<StudioRail");
     expect(vibe).toContain("onBack={onBack}");
     expect(studioHome).toContain("Back to Marketing");
@@ -538,6 +545,9 @@ describe("tenant shell owns one PAIGE surface", () => {
     const launcher = Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
       .find((button) => button.textContent?.trim() === "Vibe Studio");
     expect(launcher).toBeTruthy();
+    // jsdom has no layout. Admit only this actual visible launcher for the
+    // Host's positive focus-return check; hidden/disconnected guards stay real.
+    vi.spyOn(launcher!, "getClientRects").mockReturnValue([new DOMRect(0, 0, 120, 36)] as unknown as DOMRectList);
     launcher?.focus();
     expect(document.activeElement).toBe(launcher);
     await act(async () => launcher?.click());

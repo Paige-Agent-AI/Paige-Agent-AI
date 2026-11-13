@@ -224,3 +224,17 @@ This is a genuine test-context dependency, not a code/CI/release failure or cach
 success. Original3345 same18turn/7trace reload proof is preserved separately.
 Current cache benefit remains UNPROVEN; no new provider probe until authorized
 ordinary context is actually current. Full EXP01 and final owner acceptance remain.
+
+## Original settlement-check timing repair
+
+Record closeout3349/head142582b69 failed required verify43510842250/job132180369913,
+step111: the last actual-handler summary case observed tenant2 rather than its
+expected later tenant3 switch (30PASS/1FAIL). Unchanged local31PASS does not erase
+that failure. Its fixture's historical budgetReads counter includes detached
+trace INSERT callbacks; the fourth callback was not a guaranteed budget SELECT.
+Post-response diagnostic hashing exposed that timing assumption. The owning
+fixture now explicitly awaits the original accruedSpendToday SELECT after the
+provider dispatch is recorded and asserts three actual cost SELECTs. All original
+31 cases and dispatch/authority assertions remain; no production source changes.
+Author31PASS; independent review/fresh final-head CI remain required. This repairs
+proof scheduling, not a measured cache miss. Cache benefit stays UNPROVEN.

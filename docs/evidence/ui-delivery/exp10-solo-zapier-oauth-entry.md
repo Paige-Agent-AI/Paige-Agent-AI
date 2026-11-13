@@ -12,8 +12,8 @@ STATIC_EVIDENCE: PASS: scoped ESLint, type ratchet (no new errors), production b
 RENDERED_EVIDENCE: UNVERIFIED: candidate screenshots not captured.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: candidate browser interaction not driven.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no customer OAuth grant, provider registration, token exchange, refresh, tool discovery or action performed for this candidate.
-KEYBOARD_FOCUS: UNVERIFIED: retain existing native buttons and drawer behavior; candidate browser keyboard proof pending.
-ZOOM_REFLOW: UNVERIFIED: candidate browser geometry proof pending.
+KEYBOARD_FOCUS: UNVERIFIED: existing tab-key behavior is exercised in src/solo/settings-integrations.test.tsx; manual focus, Tab, Escape and Back behavior for this candidate has not been measured in a browser.
+ZOOM_REFLOW: UNVERIFIED: no candidate viewport, zoom or PAIGE open/closed captures have been made; original drawer geometry and CSS are unchanged.
 REDUCED_MOTION: UNVERIFIED: no motion introduced; rendered preference check pending.
 STATE_COVERAGE: PASS: focused automation covers loading, unavailable, denied, duplicate begin, malformed response, retry, account/tab switch, unmount, renewal failure and unconfirmed provider revocation. Rendered/provider proof remains UNVERIFIED.
 TRUTHFUL_STATE_LABELS: PASS: an authorization URL is preparation only; provider probe plus durable readback remains necessary for Connected.
@@ -35,12 +35,12 @@ ACCEPTANCE_CRITERIA: The Solo Zapier MCP tab offers a direct OAuth start with no
 MOTION_PURPOSE: NONE: no motion or theme changes.
 PROTECTED_SEAMS: Affected: workspace/account isolation, OAuth initiation, credential boundaries and provider status (owning tests and real provider proof required). Preserved: existing callback/store/discovery/action contracts, authority, Rail, unknown/no-replay recovery. Unaffected: app login, signup, billing/paywall/provisioning, Chat transcript/scroll/Live, native domain writers, Memory, durable scheduling and shell geometry; existing drawer accessibility still requires rendered proof.
 
-INTERNAL_BUILD_IDENTITY: base=e865a1ae4ce9ca04d21832b7c99c750dfa526ece; candidate=exact head recorded in PR/review receipt; environment=development; migration=20271133000033_exp10_zapier_mcp_lifecycle, not applied; edge=tenant-mcp-connect/call-zapier-action not deployed; evidence=this record
+INTERNAL_BUILD_IDENTITY: source=f981d82a9f5ff458771a94740beb70c073b76566; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271133000033_exp10_zapier_mcp_lifecycle native execution and ordered production apply); edge=PROOF_OWED(tenant-mcp-connect and call-zapier-action reviewed deployment and source readback); evidence=docs/evidence/ui-delivery/exp10-solo-zapier-oauth-entry.md and PR3347
 RELEASE_CHANNEL: development: local candidate only.
 RELEASE_CLASSIFICATION: internal-only: original Solo connection repair increment, not a completed customer outcome.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release named.
 RELEASE_NOTE_REQUIRED: no: internal repair; completed outcome/publication is not yet proven.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: original Solo Zapier OAuth lifecycle requires native execution, ordered release and authenticated provider readback; source review and automated tests do not establish a working customer connection.
 RELEASE_RECOVERY: position=retain original data and callback contracts; reference=original ANT164 finite source-custody packet and this record
 
 ## Pre-edit capability routing

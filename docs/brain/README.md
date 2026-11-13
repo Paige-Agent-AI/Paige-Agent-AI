@@ -1,3 +1,12 @@
+## EXP01 November13 — original Chat model/cache candidate
+
+Existing Model Fabric only: transient server-derived actor/context cache partition,
+early stable OpenAI prefix plus existing implicit loop/history caching, and
+observed writes/lifetime-aware provider estimate in original trace metadata.
+Original model policy, customer metering, domain authority and fallback unchanged.
+[Research and actual baseline](../model-routing/int-334/EXP01-CHAT-CACHE-2026-11-13.md).
+Development only; review, exact CI, release/readback and authenticated proof owed.
+
 ## EXP03 November11 — original Opportunity receipt continuation, source only
 
 The existing CRM update writer, stored approval/idempotency and Rail remain authoritative. The original Chat result projection preserves its native correlation; the authenticated CRM door reads the same committed result under current actor/workspace/seat and caller-RLS record checks. Original result-card and private tab-local Team Hub saved-work consumers reopen only that reference; no new write, provider, private-context channel transfer or receipt store. Current source is development-only: required exact-head release and genuine update/interruption/full reload/both-chat original-receipt proof remain owed. [Original journey14.62](../delivery/exp03-grow-my-business-journey.md#1462-opportunity-update-continuity--selected-next-outcome-development-only) and [bounded evidence](../evidence/ui-delivery/exp03-opportunity-original-receipt.md) retain failures and limits. No algorithm maturity or full-assignment completion claim.

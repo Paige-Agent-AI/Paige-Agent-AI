@@ -38,6 +38,12 @@ export function traceAdmin(): SupabaseClient | null {
 /** The minimal correlation context an LLM-call site threads in. All optional — a site with no tenant
  *  in scope still writes an honest row (tenant_id null), never a fabricated one. */
 export interface TraceCtx {
+  /** Trusted server-derived Chat cache partition. Never persisted in trace metadata. */
+  prompt_cache_scope?: {
+    actor_id: string;
+    tenant_id: string | null;
+    working_context_tenant_id: string | null;
+  };
   /** Private customer AI text stays in its canonical customer-only transcript. */
   content_policy?: "metadata_only";
   tenant_id?: string | null;
@@ -144,7 +150,9 @@ export function toExcerpt(value: unknown): { text: string | null; truncated: boo
 /** Only these scalar keys survive into metadata — never a raw opts/headers object (S0/S6). */
 // stop_reason / stop_category (INT-329): why the provider stopped — `refusal` + its category, or a
 // `max_tokens` cut-off — which otherwise read exactly like a normal answer. Provider-enum strings only.
-const METADATA_ALLOWLIST = ["caller_function", "actor_role", "retry_of", "attempt", "capped", "low_confidence", "stop_reason", "stop_category"] as const;
+const METADATA_ALLOWLIST = ["caller_function", "actor_role", "retry_of", "attempt", "capped", "low_confidence", "stop_reason", "stop_category",
+  "provider_total_input_tokens", "provider_cache_write_30m_tokens", "provider_cache_write_12h_tokens",
+  "provider_cost_estimate_usd", "provider_cost_basis"] as const;
 /** #1856 — flatten the fabric's route telemetry into metadata SCALARS. The allowlist's rule is
  *  "scalars only, never an object" (an object could smuggle a secret); every value here is a closed
  *  enum, a validated job identity, or a provider/model id — scrubbed and capped like the rest. */
@@ -191,9 +199,11 @@ export interface TraceRow {
   status: "success" | "error" | "needs_config";
   tokens_in?: number | null;
   tokens_out?: number | null;
-  /** Anthropic prompt-cache counts. DELIBERATELY separate from tokens_in: input_tokens is the uncached
-   *  remainder, and meter_llm_usage bills quantity = tokens_in + tokens_out, so folding these in would
-   *  change every tenant's metered quantity. null = provider did not report; 0 = reported zero. */
+  /** Provider cache observations; null = not reported, zero = reported zero.
+   * Anthropic input excludes reads AND writes; incumbent OpenAI tokens_in excludes
+   * reads only. Preserve native metered quantities; never sum these fields across
+   * providers as if their input semantics were identical. OpenAI's additive
+   * provider_total_input_tokens + write-lifetime metadata carries the disjoint basis. */
   cache_read_input_tokens?: number | null;
   cache_creation_input_tokens?: number | null;
   latency_ms?: number | null;

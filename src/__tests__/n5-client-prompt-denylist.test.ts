@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { readRecordLinks } from "../../supabase/functions/_shared/paige-turn/record-links";
 import { crmResultReferenceMetadata } from "../../supabase/functions/_shared/paige-turn/crm-result-reference";
+import { CHAT_STUDIO_PREPARATION_PROMPT } from "../../supabase/functions/_shared/growth/chat-studio-preparation";
 import {
   buildFundingProgramVocab,
   buildLaneGuardSection,
@@ -86,10 +87,10 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     expect(rejectsInteractiveScope({ threadId: "thread", requestIntentId: "intent", liveRuntimeChallenge: "signed-fixture" })).toBeTruthy();
     expect(rejectsInteractiveScope({ threadId: "thread", requestIntentId: "intent" })).toBeFalsy();
     const messages = [{ role: "user", content: "Hello" }];
-    const make = new Function("liveRuntimeScope", "attachedDocument", js(`return ${initializer("liveDecisionMessages")};`));
-    expect(make(null, null)(messages)).toBe(messages);
-    expect(make({}, {})(messages)).toBe(messages);
-    const decision = make({}, null)(messages);
+    const make = new Function("liveRuntimeScope", "attachedDocument", "chatStudioPromptAllowed", "CHAT_STUDIO_PREPARATION_PROMPT", js(`return ${initializer("liveDecisionMessages")};`));
+    expect(make(null, null, false, CHAT_STUDIO_PREPARATION_PROMPT)(messages)).toBe(messages);
+    expect(make({}, {}, false, CHAT_STUDIO_PREPARATION_PROMPT)(messages)).toBe(messages);
+    const decision = make({}, null, false, CHAT_STUDIO_PREPARATION_PROMPT)(messages);
     expect(decision).toHaveLength(2);
     expect(decision[1].content).toContain("Do not draft the user-facing answer here");
     expect(messages).toHaveLength(1);
@@ -264,17 +265,38 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     // variable like every other one; an empty array must project to no research key.
     // E4-S3: the read-link trace is one more seam variable (empty here, so it projects to no key) and
     // its sanitiser `readRecordLinks` is the shared one the handler imports.
-    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", "readLinkTrace", "readRecordLinks", "crmResultReferenceMetadata", js(`return ${initializer("assistantTurnMetadata")};`));
+    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", "readLinkTrace", "readRecordLinks", "crmResultReferenceMetadata", "socialResultTrace", "chatStudioReferences", js(`return ${initializer("assistantTurnMetadata")};`));
     const result = { action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false, readback: { private: "fixture" }, record_locator: "private-fixture", contact_id: "private-fixture" };
-    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result], [], [], readRecordLinks, crmResultReferenceMetadata);
+    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result], [], [], readRecordLinks, crmResultReferenceMetadata, [], []);
     expect(project()).toEqual({ surfaces: ["client"], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [{ action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false }] } });
     // E4-S3: a turn whose only card is a read link still persists, as references only — never an address.
     const CLIENT = "e4000000-0000-4000-8000-0000000c0001";
-    const linksOnly = make([], [], [], [], [], [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null, subject: "dropped" }], readRecordLinks, crmResultReferenceMetadata);
+    const linksOnly = make([], [], [], [], [], [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null, subject: "dropped" }], readRecordLinks, crmResultReferenceMetadata, [], []);
     expect(linksOnly()).toEqual({ surfaces: [], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [],
       paige_record_links: [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null }] } });
     // The success persist goes through this same projection, with the turn record added at the call site.
     expect(code).toContain("persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()))");
+  });
+  it("round-trips an own Studio source pointer beside CRM and read references without retaining private payloads", () => {
+    // An admitted synthetic own reference is a projection input, not authority
+    // or evidence of a project start, write, publication or provider action.
+    const studio = { artifactType: "studio", kind: "studio_source", id: "a6000000-0000-4000-8000-000000000001",
+      title: "Studio brief", tenant_id: "b6000000-0000-4000-8000-000000000001", url: null };
+    const contact = "e4000000-0000-4000-8000-0000000c0001";
+    const result = { action: "contact.update", outcome: "succeeded", receipt_recorded: true, external_effect: false,
+      readback: { id: contact, client_ref: "CLT-1234", email: "private-studio-mixed@example.invalid", profile: { private: true } },
+      record_locator: { record_id: contact, deep_link: `/solo/999/clients/people?person=${contact}` } };
+    const links = [{ destination: "contacts", record_id: contact, subject: "CLT-1234" }];
+    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", "readLinkTrace", "readRecordLinks", "crmResultReferenceMetadata", "socialResultTrace", "chatStudioReferences", js(`return ${initializer("assistantTurnMetadata")};`));
+    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }], [], [], [result], [], links, readRecordLinks, crmResultReferenceMetadata, [], [studio]);
+    const reopened = JSON.parse(JSON.stringify(project()));
+    expect(reopened.surfaces).toEqual(["client"]);
+    expect(reopened.bundleRef.paige_artifact).toEqual([studio]);
+    expect(Object.keys(reopened.bundleRef.paige_artifact[0]).sort()).toEqual(["artifactType", "id", "kind", "tenant_id", "title", "url"]);
+    expect(reopened.bundleRef.paige_record_links).toEqual(links);
+    expect(reopened.bundleRef.paige_crm_result).toEqual([{ action: "contact.update", outcome: "succeeded", receipt_recorded: true, external_effect: false,
+      record_reference: { destination: "contacts", record_id: contact, subject: "CLT-1234" } }]);
+    expect(JSON.stringify(reopened)).not.toMatch(/private-studio-mixed|example\.invalid|readback|record_locator|\/solo\/999/);
   });
   it.each([false, true].flatMap((protectedTurn) => ["reject", "eof", "error-frame", "enqueue-reject", "non-ok", "bodyless", "empty-done", "whitespace-done"].map((ending) => ({ protectedTurn, ending }))))("settles an interrupted Live stream without success or transcript loss, %j", async ({ protectedTurn, ending }) => {
     const branch = find((n) => ts.isIfStatement(n) && n.expression.getText(source) === "finalStreamResponse?.ok && finalStreamResponse.body") as ts.IfStatement;

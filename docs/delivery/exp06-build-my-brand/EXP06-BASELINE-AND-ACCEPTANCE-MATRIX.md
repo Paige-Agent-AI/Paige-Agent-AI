@@ -112,8 +112,10 @@ STILL CODING; these 21 rows, WEB01–14 and existing ALG labels remain intact.
 
 The current implementation is local and unreleased. Actual finite E01/E08 source
 handbacks and receiving ACKs are recorded in original ANT147/1930b175. Coordinator
-45cfb235 assigns the never-published/unapplied Studio carrier32 after published
-EXP08 repair30 and EXP07 forward31; no applied/published migration is renamed.
+950a23fa supersedes the earlier unused32 reservation: the never-published/unapplied
+Studio carrier moves35 after immutable published33 and EXP07's new34. Only the
+local filename changes; SQL body094cc2275 and prior310/12 local proof are preserved.
+Critical EXP08 repair30 remains first; no applied/published migration is renamed.
 The native source-bound start/context/conversion work and bounded UI preservation
 tests have engineering evidence only. Original form-intake tag/segment custody
 is still a named dependency; no guessed writer or competing CRM implementation.

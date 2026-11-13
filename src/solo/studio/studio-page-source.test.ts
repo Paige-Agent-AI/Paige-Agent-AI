@@ -40,7 +40,7 @@ describe("complete original Studio page save source", () => {
     ["invented verified flag", { target: { kind: "client", reference: OTHER }, values: {}, business_source: { id: OTHER, updated_at: DATE, verified: true } }],
     ["null source", { target: { kind: "client", reference: OTHER }, values: {}, business_source: null }],
     ["orphan name", { target: { kind: "client", reference: OTHER }, values: {}, business_name: "Cedar" }],
-    ...[null, 1, "", "   ", "x".repeat(4001), "Cedar\u0000"].map(business_name => ["invalid name", { target: { kind: "client", reference: OTHER }, values: {}, business_source: { id: OTHER, updated_at: DATE }, business_name }]),
+    ...[null, 1, "", "   ", "x".repeat(4001), "Cedar\u0000"].map(business_name => ["invalid name", { target: { kind: "client", reference: OTHER }, values: {}, business_source: { id: OTHER, updated_at: DATE }, business_name }] as const),
   ])("refuses malformed business binding: %s", (_label, project_context) => {
     expect(read({ ...source(), project_context })).toBeNull();
   });

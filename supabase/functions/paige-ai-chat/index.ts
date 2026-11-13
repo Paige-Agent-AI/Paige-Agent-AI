@@ -9506,8 +9506,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           ? parseStudioPageSaveSource(personaCtx?.tenant_id, studioSessionId, generatedSource.page_id, generatedSource) : null;
         if (studioPageProposal && (!studioProposalSource || !studioPageSaveCurrent())) return { state: "failed" };
         const findReusable = async (): Promise<Array<{ fingerprint: string; summary: string; expires_at: string | null }>> => {
-          let existing = supabase.from("paige_pending_confirmations")
-            .select(studioPageProposal ? "fingerprint,args,issued_in_request,summary,expires_at,studio_page_save_source" : "fingerprint,args,issued_in_request,summary,expires_at").eq("user_id", user.id).eq("tool_name", tool)
+          const confirmations = supabase.from("paige_pending_confirmations");
+          let existing = (studioPageProposal
+            ? confirmations.select("fingerprint,args,issued_in_request,summary,expires_at,studio_page_save_source")
+            : confirmations.select("fingerprint,args,issued_in_request,summary,expires_at"))
+            .eq("user_id", user.id).eq("tool_name", tool)
             .is("consumed_at", null)
             .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
             .gt("expires_at", new Date().toISOString());
@@ -9524,7 +9527,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (!row?.args || typeof row.args !== "object" || Array.isArray(row.args)
               || await confirmFingerprint(tool, row.args) !== fp) continue;
             if (studioProposalSource) {
-              const savedSource = parseStudioPageSaveSource(personaCtx?.tenant_id, studioSessionId, studioProposalSource.page_id, row.studio_page_save_source);
+              const savedSource = parseStudioPageSaveSource(personaCtx?.tenant_id, studioSessionId, studioProposalSource.page_id,
+                "studio_page_save_source" in row ? row.studio_page_save_source : undefined);
               if (!savedSource || !sameStudioPageSaveSource(studioProposalSource, savedSource)) throw new Error("studio_source_changed");
             }
             const token = await confirmationToken(row, tool);

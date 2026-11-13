@@ -17,7 +17,8 @@
 // door call do not pass through paige-ai-chat. The same person could redeem their own card's proposal
 // there; it is the same person, so no authority widens, and the card then reads "unconfirmed".
 //
-// Service role, keyed on the VERIFIED user id: the binding is a fact about the person's own rows.
+// The VERIFIED person's own JWT reads only the native binding projection. Private card tables remain
+// postgres-only. The projection returns input-token facts, never card/message/conversation metadata.
 
 const BARE = /^[0-9a-f]{16}$/;
 
@@ -31,10 +32,9 @@ export const TEAM_HUB_CARD_ALREADY_WAITING = Object.freeze({
   error: "This is already waiting for an Approve on its card in Team Hub.",
   note: "Tell the person it is already waiting on its card in their Team Hub DM, and that nothing is live yet. Nothing new was prepared here. Do not call this tool again for it.",
 });
-const CHUNK = 100;
-
-// deno-lint-ignore no-explicit-any
-type FromClient = { from(table: string): any };
+const MAX_BARE = 100; // Technical payload bound; Chat's two validated lists contain at most 32 tokens.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+type Caller = { rpc(name: string, args: Record<string, unknown>): PromiseLike<{ data: unknown; error: unknown }> };
 export type CardBinding = {
   /** The tokens to keep, in their original order. */
   kept: string[];
@@ -44,29 +44,22 @@ export type CardBinding = {
   failed: boolean;
 };
 
-export async function withoutTeamHubCardTokens(service: FromClient, userId: string, tokens: readonly string[]): Promise<CardBinding> {
+export async function withoutTeamHubCardTokens(caller: Caller, userId: string, tokens: readonly string[]): Promise<CardBinding> {
   const bare = [...new Set(tokens.filter((t) => typeof t === "string" && BARE.test(t)))];
   if (!bare.length) return { kept: [...tokens], bound: [], failed: false };
   const dropAll = (): CardBinding => ({ kept: tokens.filter((t) => !BARE.test(t)), bound: [], failed: true });
+  if (!UUID.test(userId) || bare.length > MAX_BARE) return dropAll();
   try {
-    // Every door row of this person carrying one of these fingerprints, live or not: a consumed card's
-    // token is still a card's token.
-    const rows: Array<{ id: string; fingerprint: string }> = [];
-    for (let i = 0; i < bare.length; i += CHUNK) {
-      const read = await service.from("paige_pending_confirmations").select("id,fingerprint")
-        .eq("user_id", userId).in("fingerprint", bare.slice(i, i + CHUNK)).is("thread_id", null).limit(1000);
-      if (read?.error || !Array.isArray(read?.data)) return dropAll();
-      for (const r of read.data) if (r && typeof r.id === "string" && typeof r.fingerprint === "string") rows.push(r);
-    }
-    if (!rows.length) return { kept: [...tokens], bound: [], failed: false };
-    const carded = new Set<string>();
-    const ids = [...new Set(rows.map((r) => r.id))];
-    for (let i = 0; i < ids.length; i += CHUNK) {
-      const read = await service.from("team_hub_message_cards").select("confirmation_id").in("confirmation_id", ids.slice(i, i + CHUNK)).limit(1000);
-      if (read?.error || !Array.isArray(read?.data)) return dropAll();
-      for (const r of read.data) if (r && typeof r.confirmation_id === "string") carded.add(r.confirmation_id);
-    }
-    const boundFingerprints = new Set(rows.filter((r) => carded.has(r.id)).map((r) => r.fingerprint));
+    // One atomic projection, including consumed/expired proposals. No paginated/truncated table read
+    // can silently classify a missing card as unbound. A foreign/stale scope is a failed lookup.
+    const read = await caller.rpc("team_hub_card_binding", { p_expected_user_id: userId, p_fingerprints: bare });
+    const data = read?.data;
+    if (read?.error || !data || typeof data !== "object" || Array.isArray(data)) return dropAll();
+    const result = data as Record<string, unknown>;
+    if (result.ok !== true || !Array.isArray(result.bound) || result.bound.length > bare.length
+      || !result.bound.every((t): t is string => typeof t === "string" && bare.includes(t))
+      || new Set(result.bound).size !== result.bound.length) return dropAll();
+    const boundFingerprints = new Set(result.bound);
     return {
       kept: tokens.filter((t) => !boundFingerprints.has(t)),
       bound: bare.filter((t) => boundFingerprints.has(t)),

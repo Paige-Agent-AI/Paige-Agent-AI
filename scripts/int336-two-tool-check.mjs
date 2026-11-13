@@ -148,6 +148,15 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
  :{data:crmMode==='malformed'?{success:true,not_applied:true,refused_before_run:true}:crmMode==='refused'?{ok:false,code:'CRM_FORBIDDEN'}:{ok:true,outcome:'executed'},error:null};
 }},rpcs:{
  current_user_tenant_id:()=>({data:crmScopeMode||crmPauseMode?crmActiveTenant:tenant,error:null}),
+ // These two pinned cases use their own original bare CRM approval with no
+ // Hub card. Model the authenticated native input-token projection explicitly.
+ team_hub_card_binding:a=>{
+  assert.equal(crmScopePinned,true,'Only the explicit pinned CRM cases look up a bare token');
+  assert.equal(a.p_expected_user_id,actor);assert.deepEqual(a.p_fingerprints,[crmScopeFp]);
+  assert.equal(crmActiveTenant,tenant);assert.equal(crmScopeRow.tenant_id,tenant);
+  assert.equal(crmScopeRow.thread_id,null);assert.equal(crmScopeRow.user_id,actor);
+  return {data:{ok:true,bound:[]},error:null};
+ },
  read_crm_command_result:{data:null,error:null},
  execute_crm_command:{data:{ok:true,outcome:'succeeded',readback:{id:id(19)}},error:null},
  is_tenant_admin_as:{data:!!bookingMode&&bookingMode!=='role-denied',error:null},agency_can_manage_child:{data:false,error:null},
@@ -248,6 +257,10 @@ if(crmScopeMode){
   assert.equal(executions.length,refused?0:1);
   if(executions.length){assert.equal(executions[0].client,'service');assert.equal(executions[0].args._tenant_id,tenant);assert.equal(executions[0].args._actor_id,actor);}
   if(crmScopePinned){
+   const binding=rec.rpc.filter(c=>c.name==='team_hub_card_binding');
+   assert.equal(binding.length,1,'The original native binding lookup is modeled, never silently omitted');
+   assert.equal(binding[0].client,'jwt');
+   assert.deepEqual(binding[0].args,{p_expected_user_id:actor,p_fingerprints:[crmScopeFp]});
    assert.equal(calls[0].options.body.approved_fingerprint,crmScopeFp);
    assert.deepEqual(calls[0].options.body.command,crmScopeCommand);assert.equal(calls[0].options.body.idempotency_key,crmScopeArgs.idempotency_key);
    assert.equal(crmScopeRow.consumed_at!==null,!refused,'a scope refusal preserves the original approval; same-workspace execution claims once');

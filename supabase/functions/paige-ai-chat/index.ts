@@ -2121,6 +2121,9 @@ serve(async (req) => {
     // not pass through this handler (A2b plan D10).
     let requestApproved = validatedData.approvedConfirmations ?? [];
     let requestDeclined = validatedData.declinedConfirmations ?? [];
+    // Filtering restricts which tokens this Chat may cancel; it cannot erase the person's refusal.
+    // This request-local count grants no authority and survives every later model round.
+    const submittedDeclineCount = requestDeclined.length;
     // The approvals the choke point withheld, and why, so the approval report still answers for each one
     // instead of going silent (verifier fixes 1 and 3): a card's token is "unclaimable" here (it is decided
     // on its card in Team Hub), and a lookup that did not answer is "lookup_failed" (the person is told
@@ -2132,7 +2135,7 @@ serve(async (req) => {
       let keptTokens: ReadonlySet<string>;
       let bindingFailed = false;
       try {
-        const binding = await withoutTeamHubCardTokens(supabase, user.id, [...requestApproved, ...requestDeclined]);
+        const binding = await withoutTeamHubCardTokens(supabaseClient, user.id, [...requestApproved, ...requestDeclined]);
         keptTokens = new Set(binding.kept);
         bindingFailed = binding.failed;
       } catch (e) {
@@ -9699,7 +9702,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         return false;
       }
     };
-    const cancellationsRecorded = await cancelConfirmations(declinedConfirmations);
+    // Always attempt the lawful surviving declines through the original writer first. A withheld
+    // decline makes the whole cancellation disposition unverified, even if that pass had no error.
+    const cancellationPassRecorded = await cancelConfirmations(declinedConfirmations);
+    const cancellationsRecorded = cancellationPassRecorded && declinedConfirmations.length === submittedDeclineCount;
 
     const claimConfirmation = async (
       fp: string, tool: string,
@@ -11594,7 +11600,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         ? acceptedOfferNote(foreground.offer.offer, reply, { kind: acceptedKind ?? undefined })
         : ambiguousOfferNote(foreground.offer.offer, reply) });
     }
-    if (declinedConfirmations.length > 0) {
+    if (submittedDeclineCount > 0) {
       // The canonical history still contains the earlier approval_required receipt. Tell the
       // first reply model about THIS turn's choice; the existing tool loop inherits aiMessages.
       // A no-error cancellation pass can match zero rows, so it is not outcome evidence.
@@ -12111,7 +12117,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // Keep the existing mutator classification and also stop its three exempt persisted
         // decision writers. Reads and in-memory drafts remain available; no global risk changes.
         // Failed recording retains its existing uncertainty error.
-        if (declinedConfirmations.length > 0 && (MUTATING_TOOLS.has(tc.function.name)
+        if (submittedDeclineCount > 0 && (MUTATING_TOOLS.has(tc.function.name)
             || tc.function.name === "propose_action" || tc.function.name === "pipeline_archive_preview"
             || tc.function.name === "pipeline_folder_archive_preview")) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
@@ -12363,7 +12369,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // pointed at the card that already asks for it. A lookup that does not answer keeps today's card
           // (its Approve still passes the choke point, which fails closed on its own).
           if (!doorPin && result.content.needs_confirm === true && typeof result.content.confirm_fingerprint === "string") {
-            const waiting = await withoutTeamHubCardTokens(supabase, user.id, [result.content.confirm_fingerprint]).catch(() => null);
+            const waiting = await withoutTeamHubCardTokens(supabaseClient, user.id, [result.content.confirm_fingerprint]).catch(() => null);
             if (waiting && !waiting.failed && waiting.bound.length) {
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(TEAM_HUB_CARD_ALREADY_WAITING) });
               continue;

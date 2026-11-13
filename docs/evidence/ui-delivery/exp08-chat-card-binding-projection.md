@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: UNVERIFIED: Original controls unchanged; no new keyboard drive.
 ZOOM_REFLOW: UNVERIFIED: No layout source changed; no new browser reflow drive.
 REDUCED_MOTION: UNVERIFIED: No motion source changed; no new preference drive.
 STATE_COVERAGE: PASS: Scoped-only and empty bypass, bound/consumed/unbound/unknown tokens, duplicates/order, malformed/refused/unavailable projection, technical payload limit, current actor/tenant, foreign proposal, anonymous/service-role denial, suspended/banned/revoked membership, loss of Hub access, protected tables inaccessible and zero state mutation.
-TRUTHFUL_STATE_LABELS: PASS: Binding is an exclusion fact only, never an approval, execution, domain result or receipt. Failed or unknown lookup still withholds bare tokens. Provider and authenticated customer completion are not claimed.
+TRUTHFUL_STATE_LABELS: PASS: Binding is an exclusion fact only, never an approval, execution, domain result or receipt. An unavailable or unreadable lookup still withholds bare tokens. Provider and authenticated customer completion are not claimed.
 SOLO_UI: YES: Original Chat approval and original private Team Hub card boundary; backend-only repair.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: No UI source edit or new viewport capture.
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: No UI source edit or new viewport capture.

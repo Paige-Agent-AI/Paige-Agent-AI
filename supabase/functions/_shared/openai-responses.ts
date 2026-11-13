@@ -206,16 +206,17 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
   };
   const validCacheKey = typeof opts.promptCacheKey === "string" && /^[a-f0-9]{64}$/.test(opts.promptCacheKey);
   if (!opts.disablePromptCache && validCacheKey) {
-    // Keep the exact instruction order/priority, but expose an early stable boundary
-    // (tools + first persona block) before changing context. Implicit trailing
-    // breakpoints still preserve the existing tool-loop/history reuse.
+    // Original Chat starts with persona, optional specialist address, then the
+    // canonical voice/core. Include its first three available instruction blocks:
+    // persona alone can be shorter than the provider's cacheable-prefix minimum.
+    // Keep exact order/text; later current context and implicit history stay fresh.
     req.prompt_cache_key = opts.promptCacheKey;
     req.prompt_cache_options = { mode: "implicit", ttl: "30m" };
     if (instructions.length) input.unshift({
       role: "developer",
       content: instructions.map((text, i) => ({
         type: "input_text", text: i === 0 ? text : `\n\n${text}`,
-        ...(i === 0 ? { prompt_cache_breakpoint: { mode: "explicit" } } : {}),
+        ...(i === Math.min(2, instructions.length - 1) ? { prompt_cache_breakpoint: { mode: "explicit" } } : {}),
       })),
     });
   } else if (instructions.length) req.instructions = instructions.join("\n\n");

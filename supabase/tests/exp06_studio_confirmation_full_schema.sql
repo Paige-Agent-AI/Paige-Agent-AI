@@ -6,6 +6,16 @@ BEGIN;
 SET LOCAL lock_timeout='3s';
 SET LOCAL statement_timeout='90s';
 SET LOCAL timezone='UTC';
+-- Observe which reviewed original definition the genuine replay actually used.
+-- These four originals remain unchanged by native35; print hashes, never bodies.
+SELECT 'EXP06_ORIGINAL_SOURCE',signature,
+ md5(pg_get_functiondef(to_regprocedure(signature))) AS definition_md5
+FROM (VALUES
+ ('public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)'),
+ ('public.paige_studio_thread_ensure(uuid)'),
+ ('public.create_session_artifact(uuid,text,jsonb,uuid)'),
+ ('public.link_session_artifact(uuid,text,uuid,uuid)')
+) AS preimages(signature) ORDER BY signature;
 CREATE TEMP TABLE e06_full_assertions(label text);
 GRANT INSERT,SELECT ON e06_full_assertions TO authenticated,anon,service_role;
 CREATE FUNCTION pg_temp.e06_assert(value boolean,label text) RETURNS void LANGUAGE plpgsql AS $$

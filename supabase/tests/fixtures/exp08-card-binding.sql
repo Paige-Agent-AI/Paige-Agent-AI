@@ -23,11 +23,14 @@ RETURNS jsonb LANGUAGE sql AS $$
 SELECT fingerprint AS binding_card_fp FROM public.paige_pending_confirmations WHERE id=:'c_good'::uuid \gset
 SELECT fingerprint AS binding_chat_fp FROM public.paige_pending_confirmations WHERE id=:'c_tool'::uuid \gset
 SELECT fingerprint AS binding_foreign_fp FROM public.paige_pending_confirmations WHERE id=:'c_tenant'::uuid \gset
+SELECT fingerprint AS binding_thread_fp FROM public.paige_pending_confirmations WHERE id=:'c_thread'::uuid \gset
 SELECT md5((SELECT jsonb_agg(to_jsonb(p) ORDER BY id)::text FROM public.paige_pending_confirmations p)) AS binding_proposals_before,
  md5((SELECT jsonb_agg(to_jsonb(c) ORDER BY message_id)::text FROM public.team_hub_message_cards c)) AS binding_cards_before \gset
 SELECT pg_temp.check(pg_temp.binding(:'u2',ARRAY[:'binding_card_fp',:'binding_chat_fp','0123456789abcdef'])
  =jsonb_build_object('ok',true,'bound',jsonb_build_array(:'binding_card_fp')),
  'binding: own unbound and unknown tokens pass while the own consumed card remains excluded');
+SELECT pg_temp.check(pg_temp.binding(:'u2',ARRAY[:'binding_thread_fp'])='{"ok":true,"bound":[]}'::jsonb,
+ 'binding: a legacy bare token for an original threaded proposal reaches its original downstream refusal');
 SELECT pg_temp.check(pg_temp.binding(:'u3',ARRAY[:'binding_card_fp'])='{"ok":true,"bound":[]}'::jsonb
  AND pg_temp.binding(:'u7',ARRAY[:'binding_card_fp'])='{"ok":true,"bound":[]}'::jsonb,
  'binding: other actor and other tenant learn no private card binding');

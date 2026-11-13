@@ -10,6 +10,7 @@ const TENANT = "11111111-1111-4111-8111-111111111111", ACTOR = "22222222-2222-42
 const MESSAGE = "33333333-3333-4333-8333-333333333333", SESSION = "44444444-4444-4444-8444-444444444444", THREAD = "55555555-5555-4555-8555-555555555555";
 const OTHER = "66666666-6666-4666-8666-666666666666";
 const BRIEF = "Build the service page described in this private request.";
+const BUSINESS = { id: "77777777-7777-4777-8777-777777777777", entity_name: "Northwind Services", updated_at: "2026-11-13T10:20:30.123456+00:00" };
 const api = vi.hoisted(() => ({ rpc: vi.fn(), tenant: { value: {} as Record<string, unknown> } }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: api.rpc } }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => api.tenant.value }));
@@ -29,6 +30,18 @@ async function selectTarget(value: string) {
   const select = host.querySelector('select[aria-label="Project target"]') as HTMLSelectElement;
   expect(select).toBeTruthy();
   await act(async () => { select.value = value; select.dispatchEvent(new Event("change", { bubbles: true })); });
+}
+async function setField(label: string, value: string) {
+  const named = Array.from(host.querySelectorAll("label")).find(node => node.textContent === label)!;
+  const input = document.getElementById(named.htmlFor) as HTMLInputElement;
+  await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, value); input.dispatchEvent(new Event("input", { bubbles: true })); });
+}
+async function chooseBusiness() {
+  await setField("Find an existing business", "Northwind"); expect(calls("studio_business_targets")).toHaveLength(0);
+  await click("Search businesses");
+  expect(calls("studio_business_targets").map(call => call[1])).toEqual([{ p_expected_tenant: TENANT, p_query: "Northwind", p_limit: 20 }]);
+  const label = Array.from(host.querySelectorAll("label")).find(node => node.textContent === "Choose a business")!;
+  await act(async () => { const select = document.getElementById(label.htmlFor) as HTMLSelectElement; select.value = BUSINESS.id; select.dispatchEvent(new Event("change", { bubbles: true })); });
 }
 const calls = (name: string) => api.rpc.mock.calls.filter(call => call[0] === name);
 beforeEach(() => {
@@ -64,6 +77,37 @@ describe("original Team Hub Studio adapter", () => {
   });
 });
 describe("private same-source Studio handoff", () => {
+  it("freezes a selected native business and authored blank/offer through UNKNOWN and the same-source explicit retry", async () => {
+    let starts = 0;
+    api.rpc.mockImplementation(async name => name === "studio_business_targets" ? answer({ ok: true, businesses: [BUSINESS] })
+      : name === "team_hub_start_studio" ? ++starts === 1 ? answer(null, { message: "lost" }) : answer(ready())
+      : answer(name === "team_hub_studio_reference" ? prepared() : null));
+    await render("nexus", TENANT, "Build for my client."); expect(calls("studio_business_targets")).toHaveLength(0);
+    await setField("Offer", "Owner-authored offer"); await setField("Business name", "Temporary"); await setField("Business name", "");
+    await chooseBusiness(); await click("Client"); expect(calls("team_hub_start_studio")).toHaveLength(0);
+    await click("Start Studio project");
+    const original = structuredClone(calls("team_hub_start_studio")[0][1]);
+    expect(original).toEqual({ p_expected_tenant: TENANT, p_message_id: MESSAGE, p_project_context: {
+      target: { kind: "client", reference: BUSINESS.id, label: BUSINESS.entity_name }, values: { offers: "Owner-authored offer", publicName: "" },
+      business_source: { id: BUSINESS.id, updated_at: BUSINESS.updated_at }, template_id: "nexus-editorial-landing-v1" } });
+    expect((host.querySelector('select[aria-label="Project target"]') as HTMLSelectElement).disabled).toBe(true);
+    expect(Array.from(host.querySelectorAll("button")).find(node => node.textContent === "Search businesses")?.disabled).toBe(true);
+    await render("nexus", TENANT, "Build for my prospect.\nBusiness name: Different name"); await selectTarget("prospect"); await click("Retry same start");
+    expect(calls("team_hub_start_studio").map(call => call[1])).toEqual([original, original]); expect(calls("studio_business_targets")).toHaveLength(1);
+    expect(calls("get_solo_business_context")).toHaveLength(0);
+  });
+  it("a refused nonminimal business answer stays unselected and does not turn search into a write", async () => {
+    api.rpc.mockImplementation(async name => name === "studio_business_targets" ? answer({ ok: true, businesses: [{ ...BUSINESS, email: "private@example.invalid" }] })
+      : answer(name === "team_hub_studio_reference" ? prepared() : name === "team_hub_start_studio" ? ready() : null));
+    await render("nexus", TENANT, "Build for my prospect."); await setField("Offer", "Authored project offer");
+    await setField("Find an existing business", "Northwind"); await click("Search businesses");
+    expect(host.textContent).toContain("businesses could not be read"); expect(host.textContent).not.toContain("private@example.invalid");
+    expect(host.textContent).not.toContain("Selected business:"); expect(calls("team_hub_start_studio")).toHaveLength(0);
+    await click("Start Studio project");
+    const context = calls("team_hub_start_studio")[0][1].p_project_context;
+    expect(context).not.toHaveProperty("business_source"); expect(context.target.reference).not.toBe(BUSINESS.id);
+    expect(context.values).toEqual({ offers: "Authored project offer" });
+  });
   it("prefills explicit my-business data only after native preparation, and never starts automatically", async () => {
     let finish!: (value: unknown) => void;
     api.rpc.mockImplementation((name: string) => name === "team_hub_studio_reference" ? new Promise(resolve => { finish = resolve; }) : Promise.resolve(answer(null)));

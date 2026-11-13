@@ -20,6 +20,8 @@ import { PageConversionSettings, type PageConversionBlock } from "./PageConversi
 import { parseStudioChatConversionPaste } from "./conversion-input";
 import { loadStudioConversionResources, saveStudioPageConversion, loadStudioProjectContext, saveStudioProjectContext, loadStudioPublicationReceipts, type StudioPublicationReceipt, type StudioConversionResources, type StudioProjectContext } from "./studio-data";
 import { StudioBusinessContextPanel } from "./StudioBusinessContextPanel";
+import { StudioBusinessSelector } from "./StudioBusinessSelector";
+import { applyStudioBusinessSelection } from "./studio-business-selection";
 import { projectStudioBusinessContext } from "./business-context";
 import { useStudioBusinessContext } from "./useStudioBusinessContext";
 
@@ -457,8 +459,16 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           )}
           {contextDraft && <div className="vs-project-context-editor">
             <StudioBusinessContextPanel projection={contextProjection} projectValues={contextDraft.values} disabled={contextSaving || chat.sending}
+              businessSelection={<StudioBusinessSelector tenantId={tenantId} target={contextDraft.target} selected={contextDraft.business_source} disabled={contextSaving || chat.sending} onSelect={business => {
+                setContextDraft(value => value ? applyStudioBusinessSelection(value, business, crypto.randomUUID()) : value);
+              }} />}
               onChange={values => setContextDraft(value => value ? { ...value, values } : value)}
-              onTargetChange={kind => { if (legacyContext) setLegacyContext("chosen"); setContextDraft(value => value ? { ...value, target: kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }, values: {} } : value); }} />
+              onTargetChange={kind => { if (legacyContext) setLegacyContext("chosen"); setContextDraft(value => {
+                if (!value) return value;
+                if (value.target.kind === kind && legacyContext !== "unselected") return value;
+                const { business_source: _previous, ...rest } = value;
+                return { ...rest, target: kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }, values: {} };
+              }); }} />
             {legacyContext === "unselected" && <p className="vs-inspector-note">Choose the brand for this project before asking NEXUS to build. Your saved work is available.</p>}
             {(legacyContext || JSON.stringify(contextDraft) !== JSON.stringify(projectContext)) && <button type="button" className="vs-btn" disabled={contextSaving || chat.sending || legacyContext === "unselected"} onClick={() => void saveContext()}>{contextSaving ? "Saving context…" : "Save project context"}</button>}
           </div>}

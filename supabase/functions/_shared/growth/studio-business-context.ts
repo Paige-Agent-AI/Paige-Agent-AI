@@ -28,6 +28,8 @@ export type StudioContextReadStatus = "available" | "loading" | "unavailable" | 
 export type StudioContextTarget =
   | { kind: "workspace" }
   | { kind: "client" | "prospect" | "custom"; reference: string; label?: string };
+/** Expected identity revision only. Native callers independently prove access/currentness. */
+export type StudioBusinessSource = { id: string; updated_at: string };
 
 export type StudioContextFact = {
   key: StudioEditableContextField;

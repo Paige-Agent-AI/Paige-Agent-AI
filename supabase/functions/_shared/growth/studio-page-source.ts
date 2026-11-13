@@ -1,5 +1,5 @@
 import { NEXUS_LANDING_TEMPLATE_ID } from "./nexus-landing-template.ts";
-import { STUDIO_BRAND_FIELDS, STUDIO_COPY_FIELDS, STUDIO_GUIDANCE_FIELDS, projectStudioBusinessContext, type StudioEditableContextField } from "./studio-business-context.ts";
+import { STUDIO_BRAND_FIELDS, STUDIO_COPY_FIELDS, STUDIO_GUIDANCE_FIELDS, projectStudioBusinessContext, type StudioBusinessSource, type StudioEditableContextField } from "./studio-business-context.ts";
 import { parseStudioPageConversionRead, type StudioSavedConversionBlock } from "./studio-landing-draft.ts";
 
 export type StudioPageArtifactRef = {
@@ -14,6 +14,7 @@ export type StudioPageProjectContext = {
   target: { kind: "workspace"; label?: string } | { kind: "client" | "prospect" | "custom"; reference: string; label?: string };
   values?: Partial<Record<StudioEditableContextField, string>>;
   template_id?: typeof NEXUS_LANDING_TEMPLATE_ID;
+  business_source?: StudioBusinessSource;
 };
 /** Exact native JSON data for the original writer's source comparison. Never model input or authority. */
 export type StudioPageSaveSource = {
@@ -69,7 +70,7 @@ function validManifest(raw: unknown): raw is StudioPageArtifactRef[] {
 }
 function validProjectContext(raw: unknown, tenantId: string): raw is StudioPageProjectContext {
   const context = record(raw);
-  if (!context || !keys(context, ["target", "values", "template_id"])) return false;
+  if (!context || !keys(context, ["target", "values", "template_id", "business_source"])) return false;
   const target = record(own(context, "target"));
   if (!target || !keys(target, ["kind", "reference", "label"])) return false;
   const kind = own(target, "kind");
@@ -77,6 +78,11 @@ function validProjectContext(raw: unknown, tenantId: string): raw is StudioPageP
   if (kind === "workspace") { if (Object.prototype.hasOwnProperty.call(target, "reference")) return false; }
   else if (typeof own(target, "reference") !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(String(target.reference))) return false;
   if (Object.prototype.hasOwnProperty.call(target, "label") && (!boundedText(target.label, 200) || !target.label.trim() || /[\r\n\t]/.test(target.label))) return false;
+  if (Object.prototype.hasOwnProperty.call(context, "business_source")) {
+    const business = record(context.business_source);
+    if ((kind !== "client" && kind !== "prospect") || !business || !keys(business, ["id", "updated_at"])
+      || !sameId(business.id, target.reference) || !isoTimestamp(business.updated_at)) return false;
+  }
   if (Object.prototype.hasOwnProperty.call(context, "template_id") && context.template_id !== NEXUS_LANDING_TEMPLATE_ID) return false;
   if (Object.prototype.hasOwnProperty.call(context, "values")) {
     const values = record(context.values);

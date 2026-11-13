@@ -15,6 +15,30 @@ const source = () => ({ ok: true, tenant_id: TENANT, session_id: SESSION, artifa
 const read = (raw: unknown, page: unknown = PAGE) => parseStudioPageSaveSource(TENANT, SESSION, page, raw);
 
 describe("complete original Studio page save source", () => {
+  it("preserves a selected business identity revision as expected state, without granting authority", () => {
+    const raw = { ...source(), project_context: {
+      target: { kind: "client", reference: OTHER, label: "Cedar Consulting" }, values: {},
+      business_source: { id: OTHER, updated_at: DATE },
+    } };
+    expect(read(raw)).toEqual(raw);
+    expect(read(raw)?.project_context.business_source).toEqual({ id: OTHER, updated_at: DATE });
+    const later = { ...raw, project_context: { ...raw.project_context, business_source: { id: OTHER, updated_at: "2026-11-13T17:05:06.123457+00:00" } } };
+    const original = read(raw), changed = read(later);
+    expect(original && changed && sameStudioPageSaveSource(original, changed)).toBe(false);
+  });
+
+  it.each([
+    ["workspace", { target: { kind: "workspace" }, values: {}, business_source: { id: OTHER, updated_at: DATE } }],
+    ["custom", { target: { kind: "custom", reference: OTHER }, values: {}, business_source: { id: OTHER, updated_at: DATE } }],
+    ["different target", { target: { kind: "client", reference: PAGE }, values: {}, business_source: { id: OTHER, updated_at: DATE } }],
+    ["missing revision", { target: { kind: "client", reference: OTHER }, values: {}, business_source: { id: OTHER } }],
+    ["invalid revision", { target: { kind: "client", reference: OTHER }, values: {}, business_source: { id: OTHER, updated_at: "latest" } }],
+    ["invented verified flag", { target: { kind: "client", reference: OTHER }, values: {}, business_source: { id: OTHER, updated_at: DATE, verified: true } }],
+    ["null source", { target: { kind: "client", reference: OTHER }, values: {}, business_source: null }],
+  ])("refuses malformed business binding: %s", (_label, project_context) => {
+    expect(read({ ...source(), project_context })).toBeNull();
+  });
+
   it("admits the actual native tuple and preserves exact manifest/context/conversion data", () => {
     const raw = source();
     const admitted = read(raw);

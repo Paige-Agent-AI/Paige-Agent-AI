@@ -88,6 +88,7 @@ beforeEach(() => {
     if (name === "chat_studio_sources") return port.batch(args);
     if (name === "chat_studio_reference") return Promise.resolve({ data: { ok: true, state: "prepared", brief: BRIEF }, error: null });
     if (name === "chat_studio_start") return Promise.resolve({ data: { ok: true, state: "ready", session_id: SESSION, thread_id: THREAD, created: true }, error: null });
+    if (name === "get_solo_business_context" || name === "peek_tenant_portal_brand") return Promise.resolve({ data: null, error: null });
     throw Error(`Unexpected native call: ${name}`);
   });
   window.localStorage.clear(); window.sessionStorage.clear();
@@ -96,20 +97,85 @@ afterEach(async () => { while (mounted.length) await mounted.pop()!(); vi.useRea
 async function mount(thread: string | null = null) {
   const host = document.createElement("div"); document.body.appendChild(host); const root = createRoot(host); let closed = false;
   let selected = thread;
-  const render = async (next = selected) => { selected = next; await act(async () => { root.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety liveConversation={false} activeThreadId={selected ?? undefined} />); await flush(); }); };
+  const render = async (next = selected, focusedClientId?: string) => { selected = next; await act(async () => { root.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety liveConversation={false} activeThreadId={selected ?? undefined} clientId={focusedClientId} />); await flush(); }); };
   const close = async () => { if (closed) return; closed = true; await act(async () => root.unmount()); host.remove(); };
   mounted.push(close); await render();
   for (let i = 0; i < 6 && host.querySelector("textarea")?.disabled; i++) await act(flush);
   return { host, close, render };
 }
-async function ask(host: HTMLElement) {
+async function ask(host: HTMLElement, text = "Create a public launch page") {
   const textarea = host.querySelector("textarea")!;
-  await act(async () => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(textarea, "Create a public launch page"); textarea.dispatchEvent(new Event("input", { bubbles: true })); });
+  await act(async () => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(textarea, text); textarea.dispatchEvent(new Event("input", { bubbles: true })); });
   const send = host.querySelector<HTMLButtonElement>('button[aria-label="Send message"]')!;
   expect(send.disabled).toBe(false); await act(async () => { send.click(); await flush(); });
 }
 const handoffs = (host: ParentNode) => host.querySelectorAll(".th-studio-handoff");
 const generic = (host: HTMLElement) => Array.from(host.querySelectorAll('[data-testid="generic-artifact"]')).map(node => JSON.parse(node.textContent!));
+
+const selectedTarget = (host: HTMLElement) => host.querySelector<HTMLSelectElement>('select[aria-label="Project target"]')?.value;
+const CLIENT_REQUEST = "Build a landing page for my client.\nBusiness name: Northwind";
+describe("actual Chat forwards only the exact original human Studio request", () => {
+  it("binds a current live native source to its dispatched text even when the local USER UUID differs", async () => {
+    const requests = server([frame({ paige_artifact: pointer() }), say(QUESTION), DONE]);
+    const { host } = await mount(); await ask(host, CLIENT_REQUEST);
+    const sent = requests[0].messages as Array<{ id: string; role: string; content: string }>;
+    expect(sent.at(-1)?.id).not.toBe(SOURCE); expect(sent.at(-1)?.content).toBe(CLIENT_REQUEST);
+    expect(selectedTarget(host)).toBe("client"); expect(host.querySelector<HTMLInputElement>('input[value="Northwind"]')).toBeTruthy();
+    expect(calls("chat_studio_start")).toHaveLength(0);
+    // Proposal data remains outside all future serialized Chat messages.
+    await ask(host, "Continue discussing the layout.");
+    expect(JSON.stringify(requests[1])).not.toContain("originalRequestText");
+    expect(JSON.stringify(requests[1])).not.toContain("project_context");
+  });
+  it("reloads from the exact already-loaded native USER source, not the later user or model brief", async () => {
+    server(); port.turns = [{ id: SOURCE, role: "user", content: CLIENT_REQUEST }, ...history()];
+    const { host } = await mount(THREAD);
+    expect(selectedTarget(host)).toBe("client"); expect(host.querySelector<HTMLInputElement>('input[value="Northwind"]')).toBeTruthy();
+    expect(calls("chat_studio_start")).toHaveLength(0);
+  });
+  it("selects explicit my-business intent but keeps unavailable saved facts unknown", async () => {
+    server([frame({ paige_artifact: pointer() }), DONE]);
+    const { host } = await mount(); await ask(host, "Build a landing page for my business.");
+    expect(selectedTarget(host)).toBe("workspace"); expect(host.textContent).toContain("Saved context is unavailable");
+    expect(calls("get_solo_business_context")).toHaveLength(1); expect(calls("chat_studio_start")).toHaveLength(0);
+  });
+  it("does not rebind a previously admitted source to a later dispatch's different text", async () => {
+    server([frame({ paige_artifact: pointer() }), DONE]);
+    const { host } = await mount(); await ask(host, CLIENT_REQUEST); await ask(host, "Build for my prospect.");
+    const targets = Array.from(host.querySelectorAll<HTMLSelectElement>('select[aria-label="Project target"]')).map(select => select.value);
+    expect(targets).toEqual(["client", ""]); expect(calls("chat_studio_start")).toHaveLength(0);
+  });
+  it("forwards the same exact original USER source in the lost-ACK footer", async () => {
+    server(); port.turns = [{ ...lostHistory()[0], content: CLIENT_REQUEST }, lostHistory()[1]];
+    port.batch.mockResolvedValue({ data: { ok: true, source_turn_ids: [SOURCE] }, error: null });
+    const { host } = await mount(THREAD); await act(flush);
+    expect(selectedTarget(host)).toBe("client"); expect(host.querySelector('[data-studio-user-source]')).toBeTruthy();
+    expect(calls("chat_studio_start")).toHaveLength(0);
+  });
+  it.each(["missing", "assistant", "different-id", "duplicate"])("does not infer an original human source from %s reload data", async kind => {
+    server(); const source = { id: kind === "different-id" ? OTHER : SOURCE, role: kind === "assistant" ? "assistant" : "user", content: CLIENT_REQUEST };
+    port.turns = [...(kind === "missing" ? [] : [source]), ...(kind === "duplicate" ? [{ ...source, content: "Build for my prospect." }] : []), ...history()];
+    const { host } = await mount(THREAD); expect(handoffs(host)).toHaveLength(1); expect(selectedTarget(host)).toBe("");
+    expect(calls("chat_studio_start")).toHaveLength(0);
+  });
+  it.each(["actor", "tenant", "thread", "focus"])("rejects a late live pointer through %s A-B-A scope changes", async boundary => {
+    const gate = deferred(); server([gate.promise, frame({ paige_artifact: pointer() }), say(QUESTION), DONE]);
+    const mounted = await mount(THREAD); await ask(mounted.host, CLIENT_REQUEST);
+    const actor = port.actor, tenant = port.tenant, account = port.activeTenant;
+    if (boundary === "actor") port.actor = OTHER;
+    if (boundary === "tenant") { port.tenant = OTHER; port.activeTenant = { ...port.activeTenant, id: OTHER }; }
+    await mounted.render(boundary === "thread" ? OTHER : THREAD, boundary === "focus" ? OTHER : undefined);
+    port.actor = actor; port.tenant = tenant; port.activeTenant = account; await mounted.render(THREAD);
+    await act(async () => { gate.resolve(); await flush(); });
+    expect(handoffs(mounted.host)).toHaveLength(0); expect(calls("chat_studio_start")).toHaveLength(0);
+  });
+  it("does not forward a late pointer after the owner stops its request", async () => {
+    const gate = deferred(); server([gate.promise, frame({ paige_artifact: pointer() }), DONE]);
+    const { host } = await mount(); await ask(host, CLIENT_REQUEST);
+    await act(async () => { host.querySelector<HTMLButtonElement>('button[title="Stop the current response"]')!.click(); await flush(); gate.resolve(); await flush(); });
+    expect(handoffs(host)).toHaveLength(0); expect(calls("chat_studio_start")).toHaveLength(0);
+  });
+});
 
 describe("actual Chat saved assistant Studio reference", () => {
   it("survives full component unmount/reload with the exact original source and tenant, without starting", async () => {

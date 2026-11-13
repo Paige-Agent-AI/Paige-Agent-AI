@@ -49,18 +49,27 @@ const h = vi.hoisted(() => ({
   // The portal-brand read's answer for loadBrand; null keeps the honest-missing path.
   brand: null as Rec | null,
   projectContext: { target: { kind: "workspace" }, values: {} } as unknown,
-  contextSaves: [] as Array<{ context: unknown; expected: unknown }>,
+  contextSaves: [] as Array<{ tenantId: string; sessionId: string; context: unknown; expected: unknown }>,
+  businesses: vi.fn(),
+  nativeContextSave: false,
+  refuseContextSave: false,
+  nativeContextCalls: [] as Rec[],
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
-  useTenantContext: () => ({ activeTenantId: "t-synthetic", activeUserId: "test-user-studio", activeTenant: { slug: "northwind-studio" } }),
+  useTenantContext: () => ({ activeTenantId: "t-synthetic", activeUserId: "test-user-studio", activeTenant: { id: "t-synthetic", slug: "northwind-studio" }, accountContextLoading: false, accountContextStatus: "ready" }),
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: { getSession: async () => ({ data: { session: { access_token: "synthetic-token" } } }) },
     from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) }),
-    // No `rpc` here on purpose: a publish that bypassed the door would throw. (The portal-brand
-    // read is answered at the studio-data mock's loadBrand override, not here.)
+    // This only admits the existing context CAS in its focused cases. A publish
+    // or any other writer bypassing its original door still throws.
+    rpc: async (name: string, params: Rec) => {
+      if (!h.nativeContextSave || name !== "studio_set_project_context") throw new Error(`unexpected native writer ${name}`);
+      h.nativeContextCalls.push(params);
+      return { data: h.refuseContextSave ? { ok: false, code: "source_changed" } : { ok: true, context: params.p_project_context }, error: null };
+    },
     functions: {
       invoke: async (fn: string, opts: { body: Rec }) => {
         if (fn !== "growth-publish-command") throw new Error(`unexpected function ${fn}`);
@@ -84,8 +93,13 @@ vi.mock("./studio-data", async (orig) => {
     createSession: async () => { throw new Error("Legacy non-idempotent start must not be called"); },
     startStudioProject: async ({ brief }: { brief: string }) => { h.created.push(brief); return { sessionId: "s-new", threadId: "th-1", created: true }; },
     readStudioBusinessSources: async () => ({ readStatus: "unavailable", context: null, publicBrand: undefined }),
+    loadStudioBusinessTargets: h.businesses,
     loadStudioProjectContext: async () => h.projectContext,
-    saveStudioProjectContext: async (_tenant: string, _session: string, context: unknown, expected: unknown) => { h.contextSaves.push({ context, expected }); h.projectContext = context; return context; },
+    saveStudioProjectContext: async (tenantId: string, sessionId: string, context: Parameters<typeof real.saveStudioProjectContext>[2], expected: Parameters<typeof real.saveStudioProjectContext>[3]) => {
+      h.contextSaves.push({ tenantId, sessionId, context, expected });
+      const saved = h.nativeContextSave ? await real.saveStudioProjectContext(tenantId, sessionId, context, expected) : context;
+      h.projectContext = saved; return saved;
+    },
     openSession: async (id: string) => session(id, h.openTitle, h.openBrief),
     loadHeldConfirms: async () => h.held,
     renameSession: async (id: string, title: string) => { h.renamed.push([id, title]); h.openTitle = title; },
@@ -144,6 +158,7 @@ const FORM = {
   ],
   routesToPipeline: false, pipelineId: null, stageId: null, notifyEmail: null,
 };
+const SELECTED_BUSINESS = { id: "77777777-7777-4777-8777-777777777777", entity_name: "Northwind Services", updated_at: "2026-11-13T10:20:30.123456+00:00" };
 
 function sseBody(frames: string[]) {
   const enc = new TextEncoder();
@@ -169,6 +184,7 @@ function type(el: HTMLTextAreaElement, value: string) {
 
 beforeEach(() => {
   h.projectContext = { target: { kind: "workspace" }, values: {} }; h.contextSaves = [];
+  h.businesses.mockReset().mockResolvedValue([SELECTED_BUSINESS]); h.nativeContextSave = false; h.refuseContextSave = false; h.nativeContextCalls = [];
   h.page = null; h.conversionSaves = []; h.conversionSaveFails = false; h.conversionWait = null;
   Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients", templates: [], templateCalls: [], brand: null });
   backs = 0;
@@ -384,6 +400,49 @@ describe("Vibe Studio project workspace", () => {
   }
   async function openPanel() { await act(async () => { button("Publish")!.click(); }); await flush(); }
   async function press(label: string) { await act(async () => { button(label)!.click(); }); await flush(); }
+
+  async function selectExistingBusiness() {
+    const label = [...host.querySelectorAll("label")].find(node => node.textContent === "Find an existing business")!;
+    const input = document.getElementById(label.htmlFor) as HTMLInputElement;
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "Northwind"); input.dispatchEvent(new Event("input", { bubbles: true })); });
+    expect(h.businesses).not.toHaveBeenCalled(); await press("Search businesses");
+    expect(h.businesses).toHaveBeenCalledExactlyOnceWith("t-synthetic", "Northwind", expect.any(AbortSignal));
+    const choose = [...host.querySelectorAll("label")].find(node => node.textContent === "Choose a business")!;
+    await act(async () => { const select = document.getElementById(choose.htmlFor) as HTMLSelectElement; select.value = SELECTED_BUSINESS.id; select.dispatchEvent(new Event("change", { bubbles: true })); });
+  }
+
+  it.each(["client", "prospect"])("saves a chosen %s business only through original native context CAS with exact source revision and authored blanks", async kind => {
+    const initial = { target: { kind, reference: "66666666-6666-4666-8666-666666666666" }, values: { publicName: "", offers: "Owner-authored offer" }, template_id: "nexus-editorial-landing-v1" };
+    h.projectContext = initial; h.nativeContextSave = true; await openPiece();
+    expect(h.businesses).not.toHaveBeenCalled(); expect(h.nativeContextCalls).toEqual([]);
+    await selectExistingBusiness(); await press(kind === "client" ? "Client" : "Prospect");
+    expect(text()).toContain(`Selected business: ${SELECTED_BUSINESS.entity_name}`); expect(h.nativeContextCalls).toEqual([]);
+    await press("Save project context");
+    const context = { ...initial, target: { kind, reference: SELECTED_BUSINESS.id, label: SELECTED_BUSINESS.entity_name }, business_source: { id: SELECTED_BUSINESS.id, updated_at: SELECTED_BUSINESS.updated_at } };
+    expect(h.nativeContextCalls).toEqual([{ p_expected_tenant: "t-synthetic", p_session_id: "s-1", p_project_context: context, p_expected_context: initial }]);
+    expect(h.contextSaves).toEqual([{ tenantId: "t-synthetic", sessionId: "s-1", context, expected: initial }]);
+    expect(h.projectContext).toEqual(context); expect(h.fetchBodies).toEqual([]); expect(h.conversionSaves).toEqual([]); expect(h.doorCalls).toEqual([]);
+  });
+  it("changing category clears a saved business source while CAS retains the exact original selected context", async () => {
+    const initial = { target: { kind: "client", reference: SELECTED_BUSINESS.id, label: SELECTED_BUSINESS.entity_name }, values: { publicName: "", offers: "Owner offer" },
+      business_source: { id: SELECTED_BUSINESS.id, updated_at: SELECTED_BUSINESS.updated_at } };
+    h.projectContext = initial; h.nativeContextSave = true; await openPiece();
+    await press("Prospect"); expect(text()).not.toContain("Selected business:"); await press("Save project context");
+    expect(h.nativeContextCalls).toEqual([{ p_expected_tenant: "t-synthetic", p_session_id: "s-1", p_expected_context: initial,
+      p_project_context: { target: { kind: "prospect", reference: expect.stringMatching(/^[0-9a-f-]{36}$/i) }, values: {} } }]);
+    expect(h.businesses).not.toHaveBeenCalled(); expect(h.fetchBodies).toEqual([]); expect(h.conversionSaves).toEqual([]);
+  });
+  it("a refused source CAS keeps original saved context and performs no generation or alternate write before an explicit same-context retry", async () => {
+    const initial = { target: { kind: "client", reference: SELECTED_BUSINESS.id }, values: { publicName: "", offers: "Original offer" },
+      business_source: { id: SELECTED_BUSINESS.id, updated_at: "2026-11-13T10:20:30.000001+00:00" } };
+    h.projectContext = initial; h.nativeContextSave = true; h.refuseContextSave = true; await openPiece(); await selectExistingBusiness();
+    await press("Save project context");
+    expect(h.projectContext).toEqual(initial); expect(text()).toContain("The context change could not be verified. Check the saved project before retrying."); expect(button("Save project context")).toBeTruthy();
+    expect(h.nativeContextCalls).toHaveLength(1); expect(h.nativeContextCalls[0].p_expected_context).toEqual(initial);
+    expect(h.fetchBodies).toEqual([]); expect(h.conversionSaves).toEqual([]); expect(h.doorCalls).toEqual([]);
+    const refused = structuredClone(h.nativeContextCalls[0]); h.refuseContextSave = false; await press("Save project context");
+    expect(h.nativeContextCalls).toEqual([refused, refused]); expect(h.fetchBodies).toEqual([]);
+  });
 
   it("restores the saved artifact after immediate same-project revalidation without rebuilding", async () => {
     await openPiece();

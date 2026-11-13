@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormIntake } from "../useFormIntake";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
+import { parseFormFutureTagsInput } from "../../../supabase/functions/_shared/growth/form-intake-tags";
 
 interface Pipeline { id: string; name: string; stages: { id: string; label: string }[] }
 
@@ -44,18 +45,23 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
   const intake = useFormIntake(tenantId, formId, 1);
   const features = useTierFeatures();
   const { pipelines, loaded } = usePipelines(tenantId);
-  const [draft, setDraft] = React.useState<{ autoCreateDeal: boolean; pipelineId: string | null; stageId: string | null; notifyEmail: string; leadReplyEnabled: boolean }>({ autoCreateDeal: false, pipelineId: null, stageId: null, notifyEmail: "", leadReplyEnabled: false });
+  const [draft, setDraft] = React.useState<{ autoCreateDeal: boolean; pipelineId: string | null; stageId: string | null; notifyEmail: string; leadReplyEnabled: boolean; futureTagsInput: string }>({ autoCreateDeal: false, pipelineId: null, stageId: null, notifyEmail: "", leadReplyEnabled: false, futureTagsInput: "" });
   const [saving, setSaving] = React.useState(false);
   const [message, setMessage] = React.useState<{ ok: boolean; text: string } | null>(null);
+  const [tagsProblem, setTagsProblem] = React.useState<string | null>(null);
+  const tagsRef = React.useRef<HTMLTextAreaElement>(null);
+  const tagsHelpId = React.useId(), tagsErrorId = React.useId();
 
   React.useEffect(() => {
     if (!intake.settings) return;
+    setTagsProblem(null);
     setDraft({
       autoCreateDeal: intake.settings.autoCreateDeal,
       pipelineId: intake.settings.pipelineId,
       stageId: intake.settings.stageId,
       notifyEmail: intake.settings.notifyEmail ?? "",
       leadReplyEnabled: intake.settings.leadReplyEnabled === true,
+      futureTagsInput: (intake.settings.futureTags ?? []).join("\n"),
     });
   }, [intake.settings]);
 
@@ -63,10 +69,14 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
   // Routing to a pipeline needs one to route to.
   const cantSave = draft.autoCreateDeal && !pipeline;
   const save = async () => {
+    const tags = parseFormFutureTagsInput(draft.futureTagsInput);
+    if (tags.ok === false) { setTagsProblem(tags.message); tagsRef.current?.focus({ preventScroll: true }); return; }
+    setTagsProblem(null);
     setSaving(true); setMessage(null);
-    const { leadReplyEnabled, ...intakeDraft } = draft;
+    const { leadReplyEnabled, futureTagsInput: _futureTagsInput, ...intakeDraft } = draft;
     const res = await intake.save({ ...intakeDraft, notifyEmail: draft.notifyEmail.trim() || null,
       ...(leadReplyEnabled !== (intake.settings?.leadReplyEnabled === true) ? { leadReplyEnabled } : {}),
+      ...(JSON.stringify(tags.tags) !== JSON.stringify(intake.settings?.futureTags ?? []) ? { futureTags: tags.tags } : {}),
     });
     setSaving(false);
     setMessage({ ok: res.ok, text: res.ok ? "Saved." : res.message });
@@ -115,6 +125,15 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
               </>
             )
           )}
+          <label className="vs-field">
+            <span>Tags for future submissions</span>
+            <textarea ref={tagsRef} aria-label="Tags for future submissions" rows={3} maxLength={8050}
+              value={draft.futureTagsInput} disabled={saving} aria-invalid={tagsProblem ? true : undefined}
+              aria-describedby={`${tagsHelpId}${tagsProblem ? ` ${tagsErrorId}` : ""}`}
+              onChange={(event) => { setDraft((d) => ({ ...d, futureTagsInput: event.target.value })); setTagsProblem(null); setMessage(null); }} />
+            <small id={tagsHelpId}>One tag per line. Existing contact tags stay. Segments follow their rules; adding tags does not subscribe anyone.</small>
+            {tagsProblem && <span id={tagsErrorId} className="vs-alert" role="alert">{tagsProblem}</span>}
+          </label>
           {!features.loading && features.has("lead_reply") && <div className="vs-toggle">
             <div>
               <span id="vs-reply-label">Have PAIGE prepare a reply</span>

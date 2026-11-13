@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 import { STUDIO_SESSION_ID } from "./studio-reference";
-import type { StudioBusinessContext, StudioContextTarget } from "./business-context";
+import type { StudioBusinessContext, StudioBusinessSource, StudioContextTarget } from "./business-context";
 
 // Untyped rpc: several of these functions post-date the generated types.
 type Rpc = (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string; code?: string } | null }>;
@@ -50,9 +50,29 @@ export class PublishUnverified extends Said {}
 export class ProjectStartUnknown extends Said {}
 
 /** Authored input on the original project, never a source/authority assertion. */
-export type StudioProjectContext = { target: StudioContextTarget; values: StudioBusinessContext["projectValues"]; template_id?: "nexus-editorial-landing-v1" };
+export type StudioProjectContext = { target: StudioContextTarget; values: StudioBusinessContext["projectValues"]; template_id?: "nexus-editorial-landing-v1"; business_source?: StudioBusinessSource };
+export type StudioBusinessTarget = StudioBusinessSource & { entity_name: string };
 export type StudioStartedProject = { sessionId: string; threadId: string; created: boolean };
 const objectOf = (v: unknown): Record<string, unknown> | null => v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;
+/** Explicit, bounded search through the current caller's minimal business reader.
+ * Returned identity/version is expected state, never a client-side access grant. */
+export async function loadStudioBusinessTargets(tenantId: string, query: string, signal?: AbortSignal): Promise<StudioBusinessTarget[]> {
+  if (!STUDIO_SESSION_ID.test(tenantId) || typeof query !== "string" || query.trim().length > 120 || signal?.aborted) throw new Said("These businesses could not be read in the current workspace.");
+  const request = rpc("studio_business_targets", { p_expected_tenant: tenantId, p_query: query.trim(), p_limit: 20 }) as ReturnType<Rpc> & { abortSignal?: (signal: AbortSignal) => ReturnType<Rpc> };
+  const { data, error } = await (signal && typeof request.abortSignal === "function" ? request.abortSignal(signal) : request);
+  const row = objectOf(data);
+  if (signal?.aborted || error || !row || Object.keys(row).length !== 2 || row.ok !== true || !Array.isArray(row.businesses) || row.businesses.length > 20) throw new Said("These businesses could not be read. Try the same search again.");
+  const seen = new Set<string>();
+  return row.businesses.map((value: unknown) => {
+    const business = objectOf(value);
+    if (!business || Object.keys(business).sort().join(",") !== "entity_name,id,updated_at"
+      || typeof business.id !== "string" || !STUDIO_SESSION_ID.test(business.id) || seen.has(business.id.toLowerCase())
+      || typeof business.entity_name !== "string" || !business.entity_name.trim() || business.entity_name.length > 4000
+      || typeof business.updated_at !== "string" || business.updated_at.length > 64 || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?(?:Z|[+-]\d\d:\d\d)$/.test(business.updated_at) || !Number.isFinite(Date.parse(business.updated_at))) throw new Said("A business identity could not be verified. Try the same search again.");
+    seen.add(business.id.toLowerCase());
+    return { id: business.id, entity_name: business.entity_name, updated_at: business.updated_at };
+  });
+}
 function startedProject(value: unknown, lookup = false): StudioStartedProject | null {
   const row = objectOf(value);
   if (!row || row.ok !== true || row.state !== "ready" || typeof row.session_id !== "string" || !STUDIO_SESSION_ID.test(row.session_id)

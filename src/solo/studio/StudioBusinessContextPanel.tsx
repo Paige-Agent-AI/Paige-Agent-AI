@@ -12,6 +12,7 @@ export interface StudioBusinessContextPanelProps {
   /** Selection only. The caller must resolve any reference and its access. */
   onTargetChange: (kind: StudioContextTarget["kind"]) => void;
   disabled?: boolean;
+  businessSelection?: React.ReactNode;
 }
 
 const TARGETS = [
@@ -34,14 +35,14 @@ function sourceLabel(fact: StudioContextFact): string {
 function contextMessage(projection: StudioBusinessContext): string | null {
   if (projection.reason === "read_pending") return "Reading saved context. You can still enter project details.";
   if (projection.status === "conflict") return "Saved context has conflicting versions. Review its source before using it.";
-  if (projection.target?.kind !== "workspace" && projection.status !== "available") return "No saved context is selected for this brand. Workspace context is not used.";
+  if (projection.target?.kind !== "workspace" && projection.status !== "available") return "Workspace context is not used for this brand. Enter any missing project details below.";
   if (projection.status !== "available") return "Saved context is unavailable. Enter only the details needed for this project.";
   if (projection.issues.some((issue) => issue.code === "brand_unavailable" || issue.code === "brand_scope_mismatch")) return "Saved business facts are available; public branding is unavailable for this target.";
   return null;
 }
 
 /** A project-only editor. It has no reader, authorization, save or publish seam. */
-export function StudioBusinessContextPanel({ projection, projectValues = projection.projectValues, onChange, onTargetChange, disabled = false }: StudioBusinessContextPanelProps) {
+export function StudioBusinessContextPanel({ projection, projectValues = projection.projectValues, onChange, onTargetChange, disabled = false, businessSelection }: StudioBusinessContextPanelProps) {
   const uid = React.useId();
   const facts = [...projection.copyFacts, ...projection.privateGuidance, ...projection.brandFacts];
   const byField = new Map(facts.map((fact) => [fact.key, fact]));
@@ -67,6 +68,7 @@ export function StudioBusinessContextPanel({ projection, projectValues = project
           {TARGETS.map(([kind, label]) => <button key={kind} type="button" aria-pressed={target?.kind === kind} onClick={() => onTargetChange(kind)} disabled={disabled}>{label}</button>)}
         </div>
       </fieldset>
+      {businessSelection}
       {message && <p className="vs-context-notice" role="status">{message}</p>}
       <p className="vs-context-note">Edits apply to this project. Setup stays unchanged.</p>
       <div className="vs-context-fields">

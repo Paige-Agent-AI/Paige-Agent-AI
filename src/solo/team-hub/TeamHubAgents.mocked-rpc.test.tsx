@@ -236,6 +236,44 @@ const liveRegion = (host: HTMLElement) => host.querySelector<HTMLElement>("[aria
 const turnBody = (index: number) => turns[index].teamHubAgentTurn as Row;
 
 describe("finite private Studio supplemental presentation", () => {
+  for (const agent of ["nexus", "paige"]) it(`forwards only the exact original human question in the current own ${agent} DM`, async () => {
+    db.conversations = [agentDm(agent)];
+    db.messages[`c-dm-${agent}`] = [msg({ id: "q-studio", author_user_id: ME, body: "Build for my client.\nBusiness name: Northwind" }),
+      msg({ id: "later-question", author_user_id: ME, body: "Build for my prospect." }),
+      reply(agent, "q-studio", "Model brief: Build for my business.", { id: "r-studio" })];
+    const host = await mount(); await click(host.querySelector<HTMLButtonElement>(`[aria-label^="${agent.toUpperCase()}, agent,"]`));
+    const props = mocks.studio.mock.calls.map(call => call[0] as Record<string, unknown>);
+    expect(props.at(-1)?.originalRequestText).toBe("Build for my client.\nBusiness name: Northwind");
+    expect(props.at(-1)?.messageId).toBe("r-studio");
+  });
+  it.each(["missing", "agent", "other-author", "other-conversation"])("omits original request text for a %s source without model/history fallback", async kind => {
+    db.conversations = [agentDm("nexus"), conv()];
+    const question = msg({ id: "q-studio", author_user_id: kind === "other-author" ? "u-priya" : ME,
+      author_kind: kind === "agent" ? "agent" : "user", agent_key: kind === "agent" ? "nexus" : null, body: "Build for my client." });
+    db.messages["c-dm-nexus"] = [...(["missing", "other-conversation"].includes(kind) ? [] : [question]),
+      msg({ id: "nearby", author_user_id: ME, body: "Build for my prospect." }), reply("nexus", "q-studio", "Build for my business.", { id: "r-studio" })];
+    db.messages["c-launch"] = [question];
+    const host = await mount(); await click(host.querySelector<HTMLButtonElement>('[aria-label^="NEXUS, agent,"]'));
+    const props = mocks.studio.mock.calls.map(call => call[0] as Record<string, unknown>).filter(item => item.messageId === "r-studio");
+    expect(props.length).toBeGreaterThan(0); expect(props.every(item => item.originalRequestText === undefined)).toBe(true);
+  });
+  it("does not forward an old conversation's late source into the current private DM", async () => {
+    db.conversations = [agentDm("nexus"), agentDm("paige")];
+    db.messages["c-dm-paige"] = [reply("paige", "q-old", "Prepared model brief", { id: "r-current" })];
+    let finish!: (answer: unknown) => void;
+    const late = new Promise(resolve => { finish = resolve; });
+    mocks.rpc.mockImplementation(async (name: string, params: Row) => name === "team_hub_list_messages" && params.p_channel_id === "c-dm-nexus"
+      ? late : { data: backend(name, params), error: null });
+    const host = await mount(); await click(host.querySelector<HTMLButtonElement>('[aria-label^="NEXUS, agent,"]'));
+    await click(host.querySelector<HTMLButtonElement>('[aria-label^="PAIGE, agent,"]'));
+    mocks.studio.mockClear();
+    await act(async () => finish({ data: { ok: true, channel: { id: "c-dm-nexus", kind: "agent_dm", name: null, visibility: "private", joined: true },
+      messages: [msg({ id: "q-old", author_user_id: ME, body: "Build for my client." }), reply("nexus", "q-old", "Old reply")], has_more: false }, error: null }));
+    await flush();
+    const props = mocks.studio.mock.calls.map(call => call[0] as Record<string, unknown>);
+    expect(rowOf(host, "r-current")).toBeTruthy(); expect(rowOf(host, "r-nexus-q-old")).toBeNull();
+    expect(props.every(item => item.originalRequestText === undefined)).toBe(true);
+  });
   for (const agent of ["nexus", "paige"]) it(`passes only the original own-${agent}-DM source to the protected reader component`, async () => {
     db.conversations = [agentDm(agent)];
     db.messages[`c-dm-${agent}`] = [reply(agent, null, "Review a brief.", { id: "r-studio-own", studio_brief: "not trusted", session_id: "not trusted" }),

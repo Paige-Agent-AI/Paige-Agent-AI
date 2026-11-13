@@ -664,6 +664,12 @@ const PaigeAIChatInner = ({
     : "identity-unresolved";
   const requestScopeRef = useRef({ handle: requestScopeHandle, epoch: requestScopeEpoch });
   requestScopeRef.current = { handle: requestScopeHandle, epoch: requestScopeEpoch };
+  // Read-only proposal input, deliberately outside Message (which is re-POSTed).
+  // A fresh container fences composer incarnations, including A→B→A.
+  const studioSourceTextsRef = useRef({ epoch: requestScopeEpoch, loaded: new Map<string, string>(),
+    live: new Map<string, { localId: string; text: string; ticket: ComposerRequestTicket; intentId: string } | null>() });
+  if (studioSourceTextsRef.current.epoch !== requestScopeEpoch)
+    studioSourceTextsRef.current = { epoch: requestScopeEpoch, loaded: new Map(), live: new Map() };
   // A new scope gets new control state. Object identity also fences A→B→A replies;
   // a former actor/workspace must not install its retry delay in the current view.
   const controlScopeRef = useRef({ epoch: scopeEpoch, statusNotBefore: 0, stopRetryAt: 0 });
@@ -848,6 +854,21 @@ const PaigeAIChatInner = ({
     ),
     [],
   );
+  const studioOriginalRequestText = (reference: ChatStudioReference): string | undefined => {
+    const sources = studioSourceTextsRef.current, scope = requestScopeRef.current;
+    if (!soloTenantSafety || platform || !activeTenantId || !scopedUserId || reference.tenantId !== activeTenantId
+      || sources.epoch !== requestScopeEpoch || scope.epoch !== requestScopeEpoch
+      || scope.handle?.tenantId !== activeTenantId || scope.handle.userId !== scopedUserId
+      || !scope.handle.conversationId || hydratedFromRef.current !== scope.handle.conversationId
+      || activeThreadId !== scope.handle.conversationId) return undefined;
+    const loadedText = sources.loaded.get(reference.sourceTurnId);
+    const live = sources.live.get(reference.sourceTurnId);
+    const id = loadedText !== undefined ? reference.sourceTurnId : live?.localId;
+    const text = loadedText !== undefined ? loadedText : live && ticketAccepted(live.ticket)
+      && interactiveRequestRef.current?.intentId === live.intentId ? live.text : undefined;
+    const rows = id ? messages.filter(message => message.id === id) : [];
+    return text !== undefined && rows.length === 1 && rows[0].role === "user" && rows[0].content === text ? text : undefined;
+  };
   const claimRequestBusy = useCallback((ticket: ComposerRequestTicket) => {
     if (!requestFenceRef.current.claimBusy(ticket)) return false;
     setIsLoading(true);
@@ -859,6 +880,7 @@ const PaigeAIChatInner = ({
     return true;
   }, []);
   const abortActiveRequest = useCallback(() => {
+    studioSourceTextsRef.current = { epoch: requestScopeRef.current.epoch, loaded: new Map(), live: new Map() };
     originalReminderHydrationRef.current?.cancel();
     setMessages(previous => previous.map(message => ({ ...message,
       ...(message.originalReminderHistoryStatus === "checking" ? { originalReminderHistoryStatus: "unverified" as const } : {}),
@@ -1599,6 +1621,14 @@ const PaigeAIChatInner = ({
       const turns = await threadsApi.loadTurns(id);
       if (!ticketAccepted(requestTicket)) return;
       const hydrated = turnsToMessages(turns, id);
+      // Only actual native USER rows from this accepted load can supply reload text.
+      const loaded = new Map<string, string>();
+      const sourceCounts = new Map<string, number>();
+      for (const turn of turns) if (typeof turn.id === "string") sourceCounts.set(turn.id, (sourceCounts.get(turn.id) ?? 0) + 1);
+      for (const turn of turns) if (typeof turn.id === "string" && STUDIO_SESSION_ID.test(turn.id)
+        && turn.role === "user" && typeof turn.content === "string" && sourceCounts.get(turn.id) === 1)
+        loaded.set(turn.id, turn.content);
+      studioSourceTextsRef.current = { epoch: requestTicket.scopeEpoch, loaded, live: new Map() };
       setMessages(hydrated.messages.length ? hydrated.messages : [mkMsg({ role: "assistant", content: openingGreeting })]);
       hydratedFromRef.current = id;
       applyConversationEvent({ type: "thread-loaded", id });
@@ -1936,6 +1966,7 @@ const PaigeAIChatInner = ({
               threadRequestScope.handle,
               threadRequestScope.epoch,
             );
+            studioSourceTextsRef.current = { epoch: threadRequestScope.epoch, loaded: new Map(), live: new Map() };
             if (persistedDraft) {
               const threadDraft = { ...persistedDraft, conversationId: threadId };
               moveComposerDraft(persistedDraft, threadDraft);
@@ -1983,6 +2014,17 @@ const PaigeAIChatInner = ({
       // or say the message wasn't sent.
       approvalDispatched = Boolean(outcomeThisTurn);
       submissionPreflightRef.current = false;
+      const studioSources = studioSourceTextsRef.current;
+      const studioUser = newMessages.at(-1);
+      // Capture this dispatch's original human text; never a draft, nearest row,
+      // model brief, local UUID-as-native-ID, or a later retry's composer text.
+      const studioDispatch = typedInteractive && enableHistory && !platform && !doc && !answer && !decisionTurn
+        && !clientId && !businessMissionId && activeTenantId && scopedUserId && threadId && STUDIO_SESSION_ID.test(threadId)
+        && ticketAccepted(requestTicket) && requestTicket.scopeHandle.tenantId === activeTenantId
+        && requestTicket.scopeHandle.userId === scopedUserId && requestTicket.scopeHandle.conversationId === threadId
+        && studioSources.epoch === requestTicket.scopeEpoch && studioUser?.role === "user" && studioUser.content === userText
+        && newMessages.filter(message => message.id === studioUser.id).length === 1
+        ? { localId: studioUser.id, text: userText, ticket: requestTicket, intentId: requestIntentId } : null;
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`,
         {
@@ -2370,6 +2412,15 @@ const PaigeAIChatInner = ({
           // preserves artifactsThisTurn so the card survives the streaming text.
           const studioReference = parseChatStudioReference(parsed.paige_artifact);
           if (studioReference) {
+            if (studioDispatch && studioSources === studioSourceTextsRef.current && ticketAccepted(studioDispatch.ticket)
+              && studioReference.tenantId === studioDispatch.ticket.scopeHandle.tenantId
+              && interactiveRequestRef.current?.intentId === studioDispatch.intentId) {
+              const previous = studioSources.live.get(studioReference.sourceTurnId);
+              // A source already associated with another dispatch cannot be relabelled.
+              if (!studioSources.live.has(studioReference.sourceTurnId)) studioSources.live.set(studioReference.sourceTurnId, studioDispatch);
+              else if (!previous || previous.localId !== studioDispatch.localId || previous.text !== studioDispatch.text
+                || previous.intentId !== studioDispatch.intentId) studioSources.live.set(studioReference.sourceTurnId, null);
+            }
             if (!studioReferencesThisTurn.some(reference => reference.sourceTurnId === studioReference.sourceTurnId && reference.tenantId === studioReference.tenantId)) studioReferencesThisTurn.push(studioReference);
             setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage,
               approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined,
@@ -3867,7 +3918,7 @@ const PaigeAIChatInner = ({
                             through her own tools (§10/§16 — never a dead-end send button). Gold is spent
                             only on that Send inside the card. Needs a resolved tenant for the RLS hydrate. */}
                         {!!message.studioReferences?.length && <div className="mt-2 flex flex-col gap-2">
-                          {message.studioReferences.map(reference => <ChatStudioHandoff key={`${reference.tenantId}:${reference.sourceTurnId}`} reference={reference} />)}
+                          {message.studioReferences.map(reference => <ChatStudioHandoff key={`${reference.tenantId}:${reference.sourceTurnId}`} reference={reference} originalRequestText={studioOriginalRequestText(reference)} />)}
                         </div>}
                         {!!message.artifacts?.length && activeTenantId && (
                           <div className="mt-2 flex flex-col gap-2">
@@ -3913,7 +3964,7 @@ const PaigeAIChatInner = ({
                           and thus the transcript — wider than the panel (overflow cause #3). */}
                       {message.content && <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>}
                       {!!message.studioReferences?.length && <div className="mt-2 flex flex-col gap-2" data-studio-user-source>
-                        {message.studioReferences.map(reference => <ChatStudioHandoff key={`${reference.tenantId}:${reference.sourceTurnId}`} reference={reference} />)}
+                        {message.studioReferences.map(reference => <ChatStudioHandoff key={`${reference.tenantId}:${reference.sourceTurnId}`} reference={reference} originalRequestText={studioOriginalRequestText(reference)} />)}
                       </div>}
                     </>
                   )}

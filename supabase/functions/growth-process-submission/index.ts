@@ -55,6 +55,7 @@ import { isEmailAddress } from "../_shared/growth-intake.ts";
 import { appendLeadReply, fileLeadReply, LEAD_REPLY_ACTION_KIND, leadReplyEnabled } from "./lead-reply.ts";
 import { recordFormInquiry } from "./inquiry.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
+import { applySubmissionFutureTags } from "../_shared/growth/form-submission-tags.ts";
 // NOTE: the outbound_webhook executor (which uses the shared SSRF guard) is DEFERRED for the first
 // live ship (see its case below); its only shared import is the pure address check above.
 // The fast-follow that re-enables outbound_webhook re-adds: import { assertPublicHttpUrl } from
@@ -478,12 +479,36 @@ async function runExecutor(
         if (cfErr) customFieldsError = cfErr.message;
       }
 
+      // Only the original native submission operation may apply future tags.
+      // Its causal checkpoint survives retries/config changes independently of
+      // the outer dispatch summary. A lost ACK permits only same-source reads.
+      const futureTags = Object.prototype.hasOwnProperty.call(p.config, "future_tags") ? p.config.future_tags : form.future_tags;
+      const hasTagResult = ctx.submission?.contact_tags_result != null;
+      let contactTags: Record<string, unknown> | undefined;
+      if (hasTagResult || (futureTags !== undefined && (!Array.isArray(futureTags) || futureTags.length > 0))) {
+        const tagged = await applySubmissionFutureTags({ submissionId, tenantId, formId: form.id, contactId,
+          automationId: p.automationId, claimAttempt: ctx.claimAttempt,
+          operatorId: hasTagResult ? null : await resolveIntakeOperator(admin, tenantId, form.created_by),
+          futureTags, hasRecordedResult: hasTagResult,
+        }, { caller: admin });
+        if (tagged.kind === "recorded") {
+          contactTags = { outcome: tagged.result.outcome, future_tags: tagged.result.future_tags,
+            audit_id: tagged.result.audit_id, replayed: tagged.replayed };
+        } else if (tagged.kind !== "not_requested") {
+          return { status: "error", result: { contact_id: contactId,
+            ...(customFieldsError ? { custom_fields_error: customFieldsError } : {}),
+            contact_tags_state: tagged.kind === "unknown" ? "unknown" : "not_applied",
+          }, error: tagged.kind === "unknown" ? "contact_tags_unknown" : `contact_tags_${tagged.code}` };
+        }
+      }
+
       return {
         status: "done",
         result: {
           contact_id: contactId,
           ...(note ? { note } : {}),
           ...(customFieldsError ? { custom_fields_error: customFieldsError } : {}),
+          ...(contactTags ? { contact_tags: contactTags } : {}),
         },
       };
     }

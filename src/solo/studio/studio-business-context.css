@@ -20,7 +20,8 @@
 .vs-studio .vs-context-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .vs-studio .vs-context-field { display: grid; align-content: start; gap: 5px; min-width: 0; }
 .vs-studio .vs-context-field label { font-size: 12px; font-weight: 600; }
-.vs-studio .vs-context-field input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 40px; padding: 8px 10px; border: 1px solid var(--vs-line); border-radius: 8px; background: var(--vs-panel); color: var(--vs-text); caret-color: var(--vs-link); font: 13px/1.4 var(--font); }
+.vs-studio .vs-context-field :is(input, select) { box-sizing: border-box; width: 100%; min-width: 0; min-height: 40px; padding: 8px 10px; border: 1px solid var(--vs-line); border-radius: 8px; background: var(--vs-panel); color: var(--vs-text); caret-color: var(--vs-link); font: 13px/1.4 var(--font); }
+.vs-studio .vs-context-business { display: grid; gap: 10px; min-width: 0; }
 .vs-studio .vs-context-field input[aria-invalid="true"] { border-color: var(--vs-bad); }
 .vs-studio .vs-context-source { color: var(--vs-dim); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
 .vs-studio .vs-context-sources { border-top: 1px solid var(--vs-line-soft); padding-top: 4px; }
@@ -32,7 +33,7 @@
 .vs-studio .vs-context-sources dd > span { display: block; margin-top: 4px; color: var(--vs-dim); font-size: 12px; }
 .vs-studio .vs-context-reset { justify-self: start; min-height: 34px; padding: 6px 0; border: 0; background: transparent; color: var(--vs-dim); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-size: 12px; }
 .vs-studio .vs-context-reset:hover:not(:disabled) { color: var(--vs-text); }
-.vs-studio .vs-business-context :is(button, input):disabled { opacity: .55; cursor: not-allowed; }
+.vs-studio .vs-business-context :is(button, input, select):disabled { opacity: .55; cursor: not-allowed; }
 .vs-studio .vs-business-context ::selection { background: var(--vs-violet); color: var(--vs-text); }
 @container (max-width: 400px) { .vs-studio .vs-context-fields { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 600px) { .vs-studio .vs-context-fields { grid-template-columns: minmax(0, 1fr); } .vs-studio .vs-context-summary-action { display: none; } }

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useOptionalTenantContext } from "@/hooks/useTenantContext";
+import { normalizeFormFutureTags } from "../../supabase/functions/_shared/growth/form-intake-tags";
 
 /**
  * One form's intake: where its submissions go (pipeline → stage, alert email) and what visitors
@@ -18,6 +20,8 @@ export type FormIntakeSettings = {
   notifyEmail: string | null;
   /** Omitted on a save means preserve the existing opt-in through the five-argument seam. */
   leadReplyEnabled?: boolean;
+  /** Omitted preserves the setting. An explicit empty array clears future tags only. */
+  futureTags?: string[];
 };
 
 export type FormIntakeField = {
@@ -59,6 +63,7 @@ type FormRow = {
   stage_id: string | null;
   notify_email: string | null;
   lead_reply_enabled?: boolean;
+  future_tags?: unknown;
   schema_json: unknown;
 };
 
@@ -121,7 +126,9 @@ function refusalMessage(error: { message?: string } | null): string {
 }
 
 export function useFormIntake(tenantId: string | null, formId: string, pageSize = FORM_INTAKE_PAGE_SIZE) {
-  const scope = `${tenantId ?? ""}:${formId}`;
+  // Context retires stale UI work; the caller JWT and original RPC remain authority.
+  const actor = useOptionalTenantContext()?.activeUserId ?? null;
+  const scope = `${actor ?? ""}:${tenantId ?? ""}:${formId}`;
   const currentScope = useRef({ key: scope });
   if (currentScope.current.key !== scope) currentScope.current = { key: scope };
   const requestScope = currentScope.current;
@@ -141,7 +148,7 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
       const [formResponse, submissionResponse, authorityResponse] = await Promise.all([
         supabase
           .from("growth_forms")
-          .select("auto_create_deal,pipeline_id,stage_id,notify_email,lead_reply_enabled,schema_json" as never)
+          .select("auto_create_deal,pipeline_id,stage_id,notify_email,lead_reply_enabled,future_tags,schema_json" as never)
           .eq("id", formId)
           .eq("tenant_id", tenantId)
           .maybeSingle(),
@@ -162,6 +169,8 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
       }
       const form = formResponse.data as unknown as FormRow | null;
       if (!form) { setState((s) => ({ ...s, phase: "missing" })); return; }
+      const tags = normalizeFormFutureTags(form.future_tags === undefined ? [] : form.future_tags);
+      if (!tags.ok) { setState((s) => ({ ...s, phase: "error" })); return; }
       const rows = (submissionResponse.data ?? []) as unknown as SubmissionRow[];
       if (authorityResponse.error) console.error("[form-intake] authority read failed", authorityResponse.error);
       setState({
@@ -175,6 +184,7 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
           stageId: form.stage_id,
           notifyEmail: form.notify_email,
           leadReplyEnabled: form.lead_reply_enabled === true,
+          futureTags: tags.tags,
         },
         fields: formIntakeFields(form.schema_json),
         submissions: rows.slice(0, pageSize).map(toSubmission),
@@ -183,7 +193,7 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
       });
     })();
     return () => { current = false; };
-  }, [tenantId, formId, pageSize, attempt]);
+  }, [tenantId, formId, pageSize, attempt, requestScope]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
@@ -214,24 +224,42 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
 
   /** Save through the one write seam. Success means the server returned the saved row. */
   const save = useCallback(async (next: FormIntakeSettings): Promise<{ ok: boolean; message: string }> => {
-    const { data, error } = await supabase.rpc("growth_form_set_intake" as never, {
+    const futureTags = next.futureTags === undefined ? null : normalizeFormFutureTags(next.futureTags);
+    if (futureTags?.ok === false) return { ok: false, message: futureTags.message };
+    if (futureTags && (!live.current || currentScope.current !== requestScope)) {
+      return { ok: false, message: "The workspace or form changed. Reopen this form to check its saved settings." };
+    }
+    if (futureTags && (!tenantId || state.phase !== "ready" || !state.canEdit)) {
+      return { ok: false, message: "These settings cannot be changed right now. Reload this form to check your access." };
+    }
+    const { data, error } = await Promise.resolve(supabase.rpc("growth_form_set_intake" as never, {
       p_form_id: formId,
       p_auto_create_deal: next.autoCreateDeal,
       p_pipeline_id: next.autoCreateDeal ? next.pipelineId : null,
       p_stage_id: next.autoCreateDeal ? next.stageId : null,
       p_notify_email: next.notifyEmail?.trim() ? next.notifyEmail.trim() : null,
-      ...(typeof next.leadReplyEnabled === "boolean" ? { _lead_reply_enabled: next.leadReplyEnabled } : {}),
-    } as never);
+      ...(typeof next.leadReplyEnabled === "boolean" ? { _lead_reply_enabled: next.leadReplyEnabled }
+        : futureTags ? { _lead_reply_enabled: null } : {}),
+      ...(futureTags?.ok ? { p_future_tags: futureTags.tags } : {}),
+    } as never)).catch((failure: unknown) => {
+      if (!futureTags) throw failure;
+      return { data: null, error: null }; // Lost response: no automatic retry or fabricated refusal.
+    });
     if (!live.current || currentScope.current !== requestScope) {
       return { ok: false, message: "The workspace or form changed. Reopen this form to check its saved settings." };
     }
     const row = data as unknown as FormRow | null;
     if (error || !row) {
       if (error) console.error("[form-intake] save refused", error);
-      return { ok: false, message: refusalMessage(error) };
+      return { ok: false, message: futureTags && !/^GROWTH_[A-Z_]+:/.test(error?.message ?? "")
+        ? "The saved tags couldn't be confirmed. Reload this form before trying again." : refusalMessage(error) };
     }
     if (typeof next.leadReplyEnabled === "boolean" && row.lead_reply_enabled !== next.leadReplyEnabled) {
       return { ok: false, message: "The saved reply setting couldn't be confirmed. Reload this form before trying again." };
+    }
+    const savedTags = normalizeFormFutureTags(row.future_tags === undefined && !futureTags ? [] : row.future_tags);
+    if (!savedTags.ok || (futureTags?.ok && JSON.stringify(savedTags.tags) !== JSON.stringify(futureTags.tags))) {
+      return { ok: false, message: "The saved tags couldn't be confirmed. Reload this form before trying again." };
     }
     if (live.current) {
       setState((s) => ({
@@ -242,11 +270,12 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
           stageId: row.stage_id,
           notifyEmail: row.notify_email,
           leadReplyEnabled: row.lead_reply_enabled === true,
+          futureTags: savedTags.tags,
         },
       }));
     }
     return { ok: true, message: "Saved" };
-  }, [formId, requestScope]);
+  }, [tenantId, formId, requestScope, state.phase, state.canEdit]);
 
   return { ...state, retry, loadMore, save };
 }

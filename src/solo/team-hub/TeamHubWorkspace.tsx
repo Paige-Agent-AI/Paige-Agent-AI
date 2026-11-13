@@ -1761,7 +1761,7 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
   message: TeamHubMessage; agentKey: TeamHubAgentKey; people: TeamHubPerson[]; meId: string;
   onOpenThread?: (rootId: string, trigger: HTMLElement) => void; agent?: AgentView; place?: RowPlace;
 }) {
-  const { activeTenant } = useTenantContext();
+  const { activeTenant, activeUserId, accountContextStatus } = useTenantContext();
   const name = agentName(agentKey);
   const profile = TEAM_HUB_AGENT_PROFILES[agentKey];
   const asker = people.find((person) => person.user_id === message.author_user_id) ?? null;
@@ -1813,7 +1813,11 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
           account={activeTenant} act={agent.emailDrafts.act} />}
       {isAsker && (agentKey === "nexus" || agentKey === "paige") && place?.agentDm === agentKey
         && <TeamHubStudioHandoff key={`${meId}:${activeTenant?.id ?? ""}:${message.id}:${agentKey}`} messageId={message.id}
-          expectedTenant={activeTenant?.id ?? ""} actorId={meId} agentKey={agentKey} />}
+          expectedTenant={activeTenant?.id ?? ""} actorId={meId} agentKey={agentKey}
+          {...(accountContextStatus === "ready" && activeUserId === meId && activeTenant?.id && place.conversationId
+            && question?.author_kind === "user" && question.author_user_id === meId
+            && place.around.filter(item => item.id === message.asked_in_message_id).length === 1
+            ? { originalRequestText: question.body } : {})} />}
       {privatePart && !place?.agentDm && <p className="th-text th-text--fixed">{FIXED_PRIVATE_LINE}</p>}
       {privatePart && isAsker && privateStatus && agent && message.asked_in_message_id && <PrivateNote agent={agentKey} status={privateStatus} online={agent.online}
         onOpenDm={() => agent.onOpenDm(agentKey)}

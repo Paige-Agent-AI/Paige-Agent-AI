@@ -10,7 +10,13 @@ SET LOCAL statement_timeout='45s';
 
 DO $baseline$
 DECLARE signature text; expected text; expected_acl text;
+ actual_md5 text; actual_source_md5 text; actual_owner text; actual_acl text; prerequisite_detail text;
 BEGIN
+ -- This writer has two reviewed, token/literal-identical source preimages:
+ -- live compact6f0a... and original repository replayf42d... from
+ -- 20260716222837_studio_rpc_owner_gate_unify.sql (blob84e6893c6b84289d06e541c085d970a25edf6dd7).
+ -- Preserve both original consumers until a reviewed forward change makes the
+ -- live catalog and original full replay converge. Never normalize other bodies.
  FOR signature,expected IN SELECT * FROM (VALUES
   ('public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)','6f0a0cef4d411b4ef75a00a5bb5bec42'),
   ('public.studio_role_ok(uuid)','1cf44d6637a20846c7e52fc35ec7b6d3'),
@@ -28,10 +34,25 @@ BEGIN
  ) AS p(signature,expected) LOOP
   expected_acl:=CASE WHEN signature LIKE 'public._team_hub_%' OR signature IN ('public._growth_form_go_live(uuid,uuid)','public._growth_page_go_live(uuid,uuid)')
    THEN '{postgres=X/postgres}' ELSE '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}' END;
-  IF to_regprocedure(signature) IS NULL OR md5(pg_get_functiondef(to_regprocedure(signature))) IS DISTINCT FROM expected
+  IF signature='public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)' THEN
+   SELECT md5(pg_get_functiondef(p.oid)),md5(p.prosrc),pg_get_userbyid(p.proowner),p.proacl::text
+    INTO actual_md5,actual_source_md5,actual_owner,actual_acl FROM pg_proc p WHERE p.oid=to_regprocedure(signature);
+   prerequisite_detail:=format('definition_md5=%s; prosrc_md5=%s; search_path=%s; owner=%s; acl=%s',
+    coalesce(actual_md5,'<missing>'),coalesce(actual_source_md5,'<missing>'),
+    left(current_setting('search_path'),256),coalesce(actual_owner,'<missing>'),left(coalesce(actual_acl,'<missing>'),512));
+  END IF;
+  IF to_regprocedure(signature) IS NULL OR (md5(pg_get_functiondef(to_regprocedure(signature))) IS DISTINCT FROM expected
+   AND NOT (signature='public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)'
+    AND md5(pg_get_functiondef(to_regprocedure(signature))) IS NOT DISTINCT FROM 'f42d5a5d6d47fc4e7bd57e37cb909e85'))
    OR (SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM 'postgres'
    OR (SELECT proacl::text FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM expected_acl THEN
+   IF signature='public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)' THEN
+    RAISE EXCEPTION 'EXP06 original prerequisite changed: %',signature USING ERRCODE='55000',DETAIL=prerequisite_detail;
+   END IF;
    RAISE EXCEPTION 'EXP06 original prerequisite changed: %',signature USING ERRCODE='55000'; END IF;
+  IF signature='public.create_studio_session(text,text,jsonb,boolean,uuid,uuid)' THEN
+   RAISE NOTICE 'EXP06 original prerequisite accepted: %',signature USING DETAIL=prerequisite_detail;
+  END IF;
  END LOOP;
  IF NOT (SELECT relrowsecurity FROM pg_class WHERE oid='public.team_hub_agent_turns'::regclass)
   OR has_table_privilege('authenticated','public.team_hub_agent_turns','INSERT,UPDATE')

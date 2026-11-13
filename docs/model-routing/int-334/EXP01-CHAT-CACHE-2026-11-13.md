@@ -103,3 +103,16 @@ algorithm, execution authority or measured algorithm maturity is conferred.
 Release/native source verification and ordinary authenticated same-conversation
 quality/cache/latency/reopen observations remain PROOF OWED. No new paid Research
 job, fault injection, account/role/login/provider change or timer is authorized.
+
+## First exact-head CI failure and causal repair
+
+Published0661/tree966408d9 passed database/authority/Preview and other checks but
+FAILED Verify/Test in run43464513583 attempt1. Original attribution artifact
+14060571067 records actual merge-test6fd8e3fa:26948 PASS,4 FAIL,7 pending of26959.
+All four failures reproduce in `research-fabric-attempt-scope.test.ts`: its
+import-stripping real-module loader omitted the newly imported canonical pricing
+dependency. Bind the REAL `token-pricing.ts` module into that existing fixture;
+no runtime, transport, model, native writer or assertion change. Focused24/24
+now PASS, versus20/24 before. Do not relabel the failed hosted run green. Latest
+incoming main71928f35 adds only six original E05 Master release lines; preserve
+them. Repaired exact-head independent review and full required CI remain owed.

@@ -10,6 +10,28 @@ beforeEach(() => window.sessionStorage.clear());
 afterEach(() => vi.restoreAllMocks());
 
 describe("private original Work locator handoff", () => {
+  it("keeps only an original Opportunity and receipt locator in the same actor/workspace slot", () => {
+    const event = vi.spyOn(window, "dispatchEvent");
+    expect(handoff.keepPrivateOpportunity(actor, tenant, id(6), id(7))).toBe(true);
+    const raw = handoff.privateDocumentWorkSnapshot(actor, tenant);
+    expect(raw).toBe(JSON.stringify({ kind: "opportunity", dealId: id(6), correlationId: id(7) }));
+    expect(handoff.parsePrivateDocumentWork(raw)).toEqual({ kind: "opportunity", dealId: id(6), correlationId: id(7) });
+    expect(handoff.privateDocumentWorkSnapshot(id(8), tenant)).toBeNull();
+    expect(handoff.privateDocumentWorkSnapshot(actor, id(8))).toBeNull();
+    expect(event).toHaveBeenCalledTimes(1);
+    handoff.keepPrivateResearchWork(actor, tenant, reference);
+    expect(handoff.clearPrivateDocumentWork(actor, tenant, raw!)).toBe(false);
+  });
+  it("refuses malformed, expanded or private Opportunity locators without replacing saved work", () => {
+    handoff.keepPrivateDocumentWork(actor, tenant, reference);
+    const original = handoff.privateDocumentWorkSnapshot(actor, tenant);
+    for (const bad of ["", `${id(6)}\n`, "https://example.com/record"]) {
+      expect(handoff.keepPrivateOpportunity(actor, tenant, bad, id(7))).toBe(false);
+      expect(handoff.keepPrivateOpportunity(actor, tenant, id(6), bad)).toBe(false);
+    }
+    expect(handoff.parsePrivateDocumentWork(JSON.stringify({ kind: "opportunity", dealId: id(6), correlationId: id(7), notes: "private" }))).toBeNull();
+    expect(handoff.privateDocumentWorkSnapshot(actor, tenant)).toBe(original);
+  });
   it("preserves the exact legacy Document bytes and read contract", () => {
     expect(handoff.keepPrivateDocumentWork(actor, tenant, reference)).toBe(true);
     const raw = handoff.privateDocumentWorkSnapshot(actor, tenant);

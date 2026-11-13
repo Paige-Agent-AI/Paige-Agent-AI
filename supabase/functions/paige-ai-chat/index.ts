@@ -20710,6 +20710,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       outcome: String(parsed.outcome || "succeeded"),
                       readback: parsed.readback && typeof parsed.readback === "object" ? parsed.readback : null,
                       receipt_recorded: parsed.receipt_recorded === true,
+                      ...((parsed.action || CRM_TOOL_TO_ACTION[tc.function.name as keyof typeof CRM_TOOL_TO_ACTION]) === "deal.update"
+                        ? { correlation_id: parsed.correlation_id } : {}),
                       record_locator: parsed.record_locator && typeof parsed.record_locator === "object" ? parsed.record_locator : null,
                       ...(typeof parsed.external_effect === "boolean" ? { external_effect: parsed.external_effect } : {}),
                     });

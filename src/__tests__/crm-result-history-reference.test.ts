@@ -16,7 +16,7 @@ function metadata(result: Record<string, unknown>) {
   walk(source);
   expect(expression).toBeTruthy();
   const js = ts.transpileModule(`return (${expression})();`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
-  return new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", "readLinkTrace", "readRecordLinks", "interactiveEffects", "payloadRequestIntentId", "crmResultReferenceMetadata", js)([], [], [], [result], [], [], readRecordLinks, [], null, crmResultReferenceMetadata);
+  return new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", "readLinkTrace", "readRecordLinks", "interactiveEffects", "payloadRequestIntentId", "crmResultReferenceMetadata", "socialResultTrace", js)([], [], [], [result], [], [], readRecordLinks, [], null, crmResultReferenceMetadata, []);
 }
 
 describe("actual assistant CRM history projection", () => {

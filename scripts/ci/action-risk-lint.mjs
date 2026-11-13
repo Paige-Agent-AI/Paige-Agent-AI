@@ -222,8 +222,8 @@ export function socialPublishDoorBound(entryText, doorText, governanceText) {
   const [entry, door, governance] = [entryText, doorText, governanceText].map(parse);
   if ([entry, door, governance].some(source => source.parseDiagnostics.length)) return false;
   const imports = (source, path, symbol) => source.statements.some(n => ts.isImportDeclaration(n)
-    && n.moduleSpecifier.text === path && n.importClause?.namedBindings && ts.isNamedImports(n.importClause.namedBindings)
-    && n.importClause.namedBindings.elements.some(e => !e.propertyName && e.name.text === symbol));
+    && n.moduleSpecifier.text === path && n.importClause?.namedBindings && !n.importClause.isTypeOnly && ts.isNamedImports(n.importClause.namedBindings)
+    && n.importClause.namedBindings.elements.some(e => !e.isTypeOnly && !e.propertyName && e.name.text === symbol));
   const value = (source, name) => {
     const found = astNodes(source, n => ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.name.text === name);
     return found.length === 1 ? found[0].initializer : null;
@@ -247,13 +247,45 @@ export function socialPublishDoorBound(entryText, doorText, governanceText) {
     || !equals(value(governance, "SOCIAL_PUBLICATION_ACTION_RISK_KEY"), 'SOCIAL_PUBLICATION_CAPABILITY.governance.actionRiskKeyasstring')
     || !equals(value(governance, "actionRiskKey"), 'input.capability==="social.post_publish"?SOCIAL_PUBLICATION_ACTION_RISK_KEY:input.capability')) return false;
   const serve = astNodes(entry, n => ts.isCallExpression(n) && compactNode(n.expression) === "Deno.serve");
-  if (serve.length !== 1 || serve[0].arguments.length !== 1
-    || !compactNode(serve[0]).includes('returnhandleSocialPublishCommand(req,{caller,admin,adapter:zernioSocialAdapter});')) return false;
+  const unshadowed = (source, name) => !astNodes(source, n => (ts.isVariableDeclaration(n) || ts.isFunctionDeclaration(n)
+    || ts.isParameter(n) || ts.isBindingElement(n)) && n.name && ts.isIdentifier(n.name) && n.name.text === name).length;
+  if (serve.length !== 1 || serve[0].arguments.length !== 1) return false;
+  const handler = serve[0].arguments[0];
+  if (!ts.isArrowFunction(handler) || handler.parameters.length !== 1 || !equals(handler.parameters[0].name, "req")
+    || !ts.isBlock(handler.body) || !["Deno", "createClient", "handleSocialPublishCommand", "zernioSocialAdapter"].every(n => unshadowed(entry, n))
+    || !imports(entry, "https://esm.sh/@supabase/supabase-js@2.75.0", "createClient")
+    || !imports(entry, "../_shared/social-provider/zernio.ts", "zernioSocialAdapter")
+    || !equals(value(entry, "url"), 'Deno.env.get("SUPABASE_URL")')
+    || !equals(value(entry, "anonKey"), 'Deno.env.get("SUPABASE_ANON_KEY")')
+    || !equals(value(entry, "serviceKey"), 'Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")')
+    || !equals(value(entry, "caller"), 'createClient(url,anonKey,{global:{headers:{Authorization:req.headers.get("Authorization")??""}},auth:{persistSession:false,autoRefreshToken:false},})')
+    || !equals(value(entry, "admin"), 'createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}})')) return false;
+  const served = astNodes(entry, n => ts.isCallExpression(n) && compactNode(n.expression) === "handleSocialPublishCommand");
+  if (served.length !== 2 || served.some(n => n.arguments.length !== 2 || !equals(n.arguments[0], "req"))) return false;
+  const options = served.find(n => equals(n.arguments[1], '{caller:null,admin:null,adapter:zernioSocialAdapter}'));
+  const normal = served.find(n => equals(n.arguments[1], '{caller,admin,adapter:zernioSocialAdapter,storageOrigin:url}'));
+  if (!options || !normal || !ts.isReturnStatement(options.parent) || !ts.isIfStatement(options.parent.parent)
+    || !equals(options.parent.parent.expression, 'req.method==="OPTIONS"') || options.parent.parent.parent !== handler.body
+    || !ts.isReturnStatement(normal.parent) || normal.parent.parent !== handler.body) return false;
   const govern = astNodes(door, n => ts.isCallExpression(n) && compactNode(n.expression) === "governSocialMutation");
-  if (govern.length !== 1 || govern[0].arguments.length !== 1 || !ts.isObjectLiteralExpression(govern[0].arguments[0])) return false;
-  const fields = govern[0].arguments[0].properties;
-  if (fields.some(ts.isSpreadAssignment)
-    || !fields.some(n => ts.isPropertyAssignment(n) && n.name.text === "capability" && equals(n.initializer, "CAPABILITY"))) return false;
+  if (govern.length !== 2 || !unshadowed(door, "governSocialMutation")) return false;
+  // Both original publish and same-job schedule-change calls use the SAME gate.
+  // Inspect every call, reject duplicate fields/aliases, and never grade only the first.
+  for (const call of govern) {
+    if (call.arguments.length !== 1 || !ts.isObjectLiteralExpression(call.arguments[0])) return false;
+    if (!ts.isAwaitExpression(call.parent) || !ts.isVariableDeclaration(call.parent.parent)
+      || !equals(call.parent.parent.name, "governed") || call.parent.parent.initializer !== call.parent) return false;
+    const fields = call.arguments[0].properties;
+    const names = fields.map(n => n.name && (ts.isIdentifier(n.name) || ts.isStringLiteral(n.name)) ? n.name.text : null);
+    if (fields.some(ts.isSpreadAssignment) || names.some(n => n === null) || new Set(names).size !== names.length
+      || !fields.some(n => ts.isPropertyAssignment(n) && n.name.text === "capability" && equals(n.initializer, "CAPABILITY"))
+      || !equals(field(call.arguments[0], "callerDb"), "deps.caller")
+      || !equals(field(call.arguments[0], "adminDb"), "deps.admin")
+      || !equals(field(call.arguments[0], "accessAllowed"), "true")
+      || !equals(field(call.arguments[0], "availability"), '"needs_approval"')) return false;
+  }
+  if (astNodes(door, n => ts.isIdentifier(n) && n.text === "governSocialMutation"
+    && !ts.isImportSpecifier(n.parent) && !(ts.isCallExpression(n.parent) && n.parent.expression === n)).length) return false;
   const decisions = astNodes(governance, n => ts.isCallExpression(n) && compactNode(n.expression) === "decideGovernedExecution");
   return decisions.length === 1
     && compactNode(decisions[0]).includes('capability:{id:actionRiskKey,effect:"mutate",')
@@ -659,10 +691,26 @@ function selfTest() {
     bad += ok('the original Social publisher binds its stored identity to the real canonical risk key', socialPublishDoorBound(...original));
     for (const [index, label, before, after] of [
       [0, 'served import', '../_shared/social-publish-command/door.ts', '../_shared/fake.ts'],
-      [0, 'served handler', 'return handleSocialPublishCommand(req, { caller, admin, adapter: zernioSocialAdapter });', 'return anotherHandler(req);'],
+      [0, 'served handler', 'return handleSocialPublishCommand(req, { caller, admin, adapter: zernioSocialAdapter, storageOrigin: url });', 'return anotherHandler(req);'],
+      [0, 'server storage origin', 'storageOrigin: url', 'storageOrigin: req.url'],
+      [0, 'storage origin environment', 'Deno.env.get("SUPABASE_URL")', 'Deno.env.get("CUSTOMER_URL")'],
+      [0, 'caller credential', 'createClient(url, anonKey,', 'createClient(url, serviceKey,'],
+      [0, 'caller authentication', 'req.headers.get("Authorization") ?? ""', '""'],
+      [0, 'OPTIONS dependencies', '{ caller: null, admin: null, adapter: zernioSocialAdapter }', '{ caller, admin, adapter: zernioSocialAdapter }'],
+      [0, 'spread dependencies', '{ caller, admin, adapter: zernioSocialAdapter, storageOrigin: url }', '{ caller, admin, adapter: zernioSocialAdapter, ...requestOptions }'],
+      [0, 'extra dependencies', 'storageOrigin: url', 'storageOrigin: url, extra: requestOptions'],
       [1, 'governance import', '../social-provider/governance.ts', '../fake.ts'],
       [1, 'proposal identity', 'const CAPABILITY = "social.post_publish"', 'const CAPABILITY = "another_publish"'],
       [1, 'governed action', 'capability: CAPABILITY', 'capability: "another_publish"'],
+      [1, 'same-job governed action', 'capability:CAPABILITY', 'capability:"another_publish"'],
+      [1, 'same-job governed spread', 'governSocialMutation({callerDb:deps.caller', 'governSocialMutation({...other,callerDb:deps.caller'],
+      [1, 'duplicate governed key', 'capability:CAPABILITY', 'capability:CAPABILITY,capability:"another_publish"'],
+      [1, 'first caller database', 'callerDb: deps.caller', 'callerDb: deps.admin'],
+      [1, 'same-job caller database', 'callerDb:deps.caller', 'callerDb:deps.admin'],
+      [1, 'missing same-job governance', 'governSocialMutation({callerDb:deps.caller', 'anotherDecision({callerDb:deps.caller'],
+      [1, 'unawaited publish decision', 'const governed = await governSocialMutation(', 'const governed = governSocialMutation('],
+      [1, 'unawaited same-job decision', 'const governed=await governSocialMutation(', 'const governed=governSocialMutation('],
+      [1, 'ignored same-job decision', 'const governed=await governSocialMutation(', 'void await governSocialMutation('],
       [2, 'decision import', '../paige-spine/governedExecution.ts', '../fake.ts'],
       [2, 'risk key', 'actionRiskKey: "social_post_publish"', 'actionRiskKey: "another_publish"'],
       [2, 'Kit constructor', 'defineCapability({', 'anotherConstructor({'],
@@ -680,6 +728,9 @@ function selfTest() {
     }
     bad += ok('a missing publisher is not a classification declaration', !socialPublishDoorBound('', original[1], original[2]));
     bad += ok('a second served publisher is not the original door', !socialPublishDoorBound(original[0] + '\nDeno.serve(other);', original[1], original[2]));
+    bad += ok('a shadowed served adapter is refused', !socialPublishDoorBound(original[0] + '\nfunction alternate(zernioSocialAdapter) {}', original[1], original[2]));
+    bad += ok('an extra governed Social call is refused', !socialPublishDoorBound(original[0], original[1] + '\ngovernSocialMutation({capability:CAPABILITY});', original[2]));
+    bad += ok('an unbound Social governance alias is refused', !socialPublishDoorBound(original[0], original[1] + '\nconst unbound = governSocialMutation; unbound({});', original[2]));
     bad += ok('a missing Social publication classification is caught', findings({ ...base, governedEdgeActions: ['social_post_publish'], requiredClassifications: ['social_post_publish'] }).some(f => f.includes('social_post_publish is a canonical governed mutation')));
     bad += ok('outward Social publication cannot be ordinary', findings({ ...base, policy: [...base.policy, { tool: 'social_post_publish', risk: 'ordinary', reason: 'publishes approved content externally' }], governedEdgeActions: ['social_post_publish'] }).some(f => f.includes('social_post_publish is classified ordinary')));
   }

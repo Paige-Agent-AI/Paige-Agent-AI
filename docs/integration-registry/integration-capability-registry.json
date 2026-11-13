@@ -3493,7 +3493,7 @@
         },
         {
           "path": "supabase/functions/_shared/social-publish-command/door.ts",
-          "role": "governed_publish_door",
+          "role": "fail_closed_containment",
           "note": "Original caller-JWT workspace/role checks, stored approval/claim and native publication receipt. Candidate media/source/performance/schedule extensions retain this writer; exact future time and each change bind the same approval/version. Native34 precedes media Edge deployment. Combined release and fresh exact media/caption/destination/time consent remain owed."
         }
       ],

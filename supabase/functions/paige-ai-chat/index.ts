@@ -2122,7 +2122,7 @@ serve(async (req) => {
       let keptTokens: ReadonlySet<string>;
       let bindingFailed = false;
       try {
-        const binding = await withoutTeamHubCardTokens(supabase, user.id, [...requestApproved, ...requestDeclined]);
+        const binding = await withoutTeamHubCardTokens(supabaseClient, user.id, [...requestApproved, ...requestDeclined]);
         keptTokens = new Set(binding.kept);
         bindingFailed = binding.failed;
       } catch (e) {
@@ -12294,7 +12294,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // pointed at the card that already asks for it. A lookup that does not answer keeps today's card
           // (its Approve still passes the choke point, which fails closed on its own).
           if (!doorPin && result.content.needs_confirm === true && typeof result.content.confirm_fingerprint === "string") {
-            const waiting = await withoutTeamHubCardTokens(supabase, user.id, [result.content.confirm_fingerprint]).catch(() => null);
+            const waiting = await withoutTeamHubCardTokens(supabaseClient, user.id, [result.content.confirm_fingerprint]).catch(() => null);
             if (waiting && !waiting.failed && waiting.bound.length) {
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(TEAM_HUB_CARD_ALREADY_WAITING) });
               continue;

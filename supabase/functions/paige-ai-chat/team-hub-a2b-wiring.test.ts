@@ -111,9 +111,9 @@ describe("invokeAs, handed to all three Team Hub routes", () => {
 });
 
 describe("the one choke point for Team Hub card tokens (plan D10)", () => {
-  const CHOKE = "        const binding = await withoutTeamHubCardTokens(supabase, user.id, [...requestApproved, ...requestDeclined]);\n"
+  const CHOKE = "        const binding = await withoutTeamHubCardTokens(supabaseClient, user.id, [...requestApproved, ...requestDeclined]);\n"
     + "        keptTokens = new Set(binding.kept);\n";
-  it("passes every approved and declined token through the binding, with the service role and the verified actor", () => {
+  it("passes every approved and declined token through the binding with the original JWT caller and verified actor", () => {
     at(CHOKE);
     at("    let requestApproved = validatedData.approvedConfirmations ?? [];\n    let requestDeclined = validatedData.declinedConfirmations ?? [];\n");
   });
@@ -143,7 +143,7 @@ describe("the one choke point for Team Hub card tokens (plan D10)", () => {
 
 describe("an approval the choke point withheld is still answered for (verifier fixes 1 and 3)", () => {
   it("each withheld approval keeps its reason: a card's token is unclaimable here, a lookup that did not answer is lookup_failed", () => {
-    const choke = at("        const binding = await withoutTeamHubCardTokens(supabase, user.id, [...requestApproved, ...requestDeclined]);\n");
+    const choke = at("        const binding = await withoutTeamHubCardTokens(supabaseClient, user.id, [...requestApproved, ...requestDeclined]);\n");
     const record = at("      for (const token of requestApproved) if (!keptTokens.has(token)) teamHubWithheldApprovals.set(token, bindingFailed ? \"lookup_failed\" : \"unclaimable\");\n");
     assert.ok(choke < record);
     assert.ok(record < at("      requestApproved = requestApproved.filter((token) => keptTokens.has(token));\n"), "recorded before the list is filtered");
@@ -159,12 +159,12 @@ describe("an approval the choke point withheld is still answered for (verifier f
     assert.ok(guard < order && order < first);
     assert.ok(first < at("            if (resumeTokens.has(token)) return resumedApprovalClassified(token);"), "before the resume's own reading");
     at("    const approvalReportOrder = [...new Set(requestApproved)];\n");
-    assert.ok(at("    const approvalReportOrder = [...new Set(requestApproved)];\n") < at("        const binding = await withoutTeamHubCardTokens(supabase, user.id, [...requestApproved, ...requestDeclined]);\n"),
+    assert.ok(at("    const approvalReportOrder = [...new Set(requestApproved)];\n") < at("        const binding = await withoutTeamHubCardTokens(supabaseClient, user.id, [...requestApproved, ...requestDeclined]);\n"),
       "the order is taken from the request before the choke point filters it");
   });
   it("the publish door branch never shows a chat card for a proposal a Team Hub card already holds (D11, the other direction)", () => {
     const branch = at("        if (GROWTH_PUBLISH_DOOR_TOOL_NAMES.has(tc.function.name)) {");
-    const check = at("            const waiting = await withoutTeamHubCardTokens(supabase, user.id, [result.content.confirm_fingerprint]).catch(() => null);\n");
+    const check = at("            const waiting = await withoutTeamHubCardTokens(supabaseClient, user.id, [result.content.confirm_fingerprint]).catch(() => null);\n");
     const refuse = at("              toolResults.push({ tool_call_id: tc.id, role: \"tool\", content: JSON.stringify(TEAM_HUB_CARD_ALREADY_WAITING) });\n");
     assert.ok(branch < check && check < refuse);
     assert.ok(at("          if (!doorPin && result.content.needs_confirm === true && typeof result.content.confirm_fingerprint === \"string\") {\n") < check);

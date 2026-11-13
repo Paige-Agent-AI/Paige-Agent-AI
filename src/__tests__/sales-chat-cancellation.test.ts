@@ -24,7 +24,7 @@ async function dispatch(cancellationsRecorded:boolean,current=true,toolName='bil
  return {calls,caller:bindings.supabaseClient,result:JSON.parse(results[0].content)};
 }
 const cancelStart=source.indexOf('const cancelConfirmations = async');
-const cancelEnd=source.indexOf('const cancellationsRecorded = await cancelConfirmations',cancelStart);
+const cancelEnd=source.indexOf('const cancellationPassRecorded = await cancelConfirmations',cancelStart);
 if(cancelStart<0||cancelEnd<=cancelStart)throw Error('Actual canonical cancellation function missing');
 const weeklyStart=source.indexOf('const weeklyDraftScope =');
 const weeklyEnd=source.indexOf('const recordConfirmation = async',weeklyStart);

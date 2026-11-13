@@ -14374,6 +14374,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const draftCurrent = () => !req.signal.aborted && !tenantKnowledgeScopeRevoked && personaCtx?.tenant_id === draftTenant;
           // Reuse the existing elapsed-stage fence. Late preflight replies cannot
           // start another write, and an uncertain sent write is never replayed.
+          const draftStartedAt = performance.now();
           const draftStage = createWeeklyDraftDeadline(8_000, draftCurrent);
           let draftWriteAttempted = false;
           let draftId: string | null = null;
@@ -14423,7 +14424,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 draft: { name: args.name, category: args.category ?? "general", trigger_key: trig.key,
                   steps: steps.map(s => ({ ...(s.action_kind ? { action_kind: String(s.action_kind) } : { tool_key: String(s.tool_key) }),
                     config: (s.config ?? {}) as Record<string, unknown> })) },
-                current: draftCurrent, signal: req.signal, remainingMs: Math.min(8000, WALL_CLOCK_MS - (Date.now() - startedAt)),
+                current: draftCurrent, signal: req.signal,
+                remainingMs: Math.min(8000 - (performance.now() - draftStartedAt), WALL_CLOCK_MS - (Date.now() - startedAt)),
               });
               if (saved.status === "refused") return saved.reason === "name_conflict" ? { ...refused, reason: "name_conflict",
                 error: "A process with that name already exists.",

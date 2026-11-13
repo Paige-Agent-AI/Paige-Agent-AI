@@ -10,8 +10,8 @@ VISUAL_DIRECTION: PASS: Original PAIGE Chat source and saved-result presentation
 AUTOMATED_EVIDENCE: PASS: Real delayed-primary case213PASS1FAIL before,214PASS after; original route/classification16PASS.
 STATIC_EVIDENCE: PASS: Same Fabric cheap class, closed parser, conservative null and finite cancellation; no new executor or writer.
 RENDERED_EVIDENCE: UNVERIFIED: Candidate not yet released; prior answer/reopen proof is separate history.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: Candidate live classification and useful-answer/reopen proof pending.
-AUTHENTICATED_RUNTIME: UNVERIFIED: Normal candidate deployment/source readback and existing ordinary-account proof pending.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: Candidate is not deployed to production; live classification and saved-answer recovery require original Edge source readback.
+AUTHENTICATED_RUNTIME: UNVERIFIED: Candidate is not deployed to production; existing ordinary-account verification follows the same original Chat release.
 KEYBOARD_FOCUS: NOT_APPLICABLE: No focus or keyboard source change.
 ZOOM_REFLOW: NOT_APPLICABLE: No layout source change.
 REDUCED_MOTION: NOT_APPLICABLE: No motion source change.

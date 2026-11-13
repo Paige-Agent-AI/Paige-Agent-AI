@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded November 13, 2026 UTC — EXP01 original Chat request recovery; cache benefit still owed.**
+
+| Increment | Exact reviewed source and production release | Proof boundary and original outcome |
+| --- | --- | --- |
+| [#3342](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3342) | Reviewed4164da23eb7e510b8ef984a3e20d774dd663881f, NON-AUTHOR[6861317364](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3342#issuecomment-6861317364), all11 exact checks/bothwebSUCCESS. Normal merge6f6887668e72afb9c21a3a9df92a7ff0703a63a2/tree07b0349b151bbea0df32d1a8f7ac61635a339281 matches independent union review and preserves owner-rules3341. Webdpl_G3FsYmduCbMfStMVJRVh8P6ux7A6 READY/both roots/version200 exact6f-mwfcaadt. Edge43487573022 retained first mismatch then normal retry4/4PASS certificate14068067282; Chat671/JWTtrue/archive d17e65f6666a974ccc0b6b452caa87152e9f8e1675ba463f6faf97c896bfa2d3. No migration/customer-meter/Auth change. | Original inspected read-only question recovered through explicit Send; four correctFINAL answers honor changed hypothetical context, zero tools/Work, earlier interruption retained. First classifier network error retained; following3 succeeded. ALL4 Sol cache reads0 despite observed writes, so useful cache benefit remains UNPROVEN. New boundary refinement/review/CI/release/live cache proof continues in SAME outcome; no speed/savings/full EXP01/Live/owner-acceptance claim. [Original checkpoint](https://linear.app/paigeagentai/issue/ANT-50#comment-8a374698-8428-429c-8749-0038bf031d85), [research](model-routing/int-334/EXP01-CHAT-CACHE-2026-11-13.md). Internal patch, no customer announcement/version. |
+
 **Recorded November 13, 2026 UTC — EXP01 Chat cache source released; live failure retained.**
 
 | Increment | Exact reviewed source and production release | Proof boundary and original outcome |

@@ -1,3 +1,7 @@
+// EXP01 stable-prefix boundary, November13. NON-AUTHOR /root/setup_contract_review
+// CLEAR on 69e370451db1a2c2227e9c6c3a5fcacbc8c0a82e/treedd2ed8f0.
+// Same canonical extractor reproduced oldbf4aa3f5 and reviewed new42f0271b.
+// Renew ONLY the adapter dependency; all other130 pins/29 dispatches and controls exact.
 // EXP01 cache-key correction, November13. NON-AUTHOR /root/setup_contract_review
 // CLEAR on cf51ca1cd40fbaa00d2eeca3f90e209f924f39d0/tree8897a519.
 // Same canonical extractor reproduced old5da1999c and reviewed newbf4aa3f5.
@@ -1556,7 +1560,7 @@ const SOURCES = {
   // unchanged. Old e2790d93… reproduced from main 5a4bfb1f0 first.
   "supabase/functions/_shared/comms-email/readiness.ts": "8bfab4b5fe9453736b8f68b82d76434cc9884e9ea39583d7d32e97454affba5f",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
-  "supabase/functions/_shared/openai-responses.ts": "bf4aa3f567f5cb43dad68310ac8c8b81b1b845afb4fd57bac9e53734b3403d15",
+  "supabase/functions/_shared/openai-responses.ts": "42f0271bc4cc1852349f23f1a34ca61832d2241ded68db364eaee0abf17410be",
   "supabase/functions/_shared/provider-failure.ts": "eef5a70437a8952dde4fbb46a29e9696d1b9f31c48e2a76a0c9ae60c99e7c35b",
   "supabase/functions/_shared/paige-turn/route.ts": "657f0c9ee1d3724a5eca72f661718d560e090cd7ee36707cadbbf94f1f463d6e",
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",

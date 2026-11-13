@@ -145,3 +145,35 @@ failed against released source126PASS/1FAIL; corrected adapter132PASS and Fabric
 Original privacy/current-authority/no-replay/implicit30m/customer-meter contracts stay.
 Independent review, fresh exact-head CI, ordered release and successful live proof
 are still required for this corrective source; no cache benefit or quality uplift claimed.
+
+## Key correction released; useful cache proof still missing
+
+PR3342 reviewed4164da23 passed all11 exact checks and both web contexts, own
+NON-AUTHOR6861317364 plus incoming owner-rules union review. Normal merge
+6f6887668e72afb9c21a3a9df92a7ff0703a63a2/tree07b0349b preserves mainba635 rules.
+Webdpl_G3FsYmduCbMfStMVJRVh8P6ux7A6 READY; both public roots/version200 exact
+6f688766-mwfcaadt. Original approved3342 Preview recovery retained1602 history
+rows/frontier28/original duplicate-reported versionONCE/0authusers. No history rewrite.
+Edge43487573022 first mismatched Chat source is retained in14068436498; normal
+retry4/4PASS certificate14068067282 (ZIP84ac707cf180c0e170f62c753cec12301ecdbf1f6a2573767555823f385df9e6),
+Chat671/JWTtrue/archive d17e65f6666a974ccc0b6b452caa87152e9f8e1675ba463f6faf97c896bfa2d3.
+
+Real inspected interrupted question: original Ask again filled draft only, then
+ONE explicit Send. Three bounded read-only followups tested changed hypothetical
+retention context and exact repeated question. All4 Sol answers correct/FINAL,
+zero tools/Work; earlier interruption preserved. First classifier network error
+retained; following3 succeeded. No business goal/Memory approval or job execution.
+Observed Sol total inputs85082/17953/31757/18267 and cache writes85079/17950/31754/18264;
+ALL cache reads0. Provider estimatesUSD0.2133635/0.045431/0.080081/0.046226 are STANDARD
+list estimates, not invoice/customer meter. Request shapes differ; latency4862/2655/2205/1863ms
+is observational, not causal speedup. Cache benefit remains UNPROVEN.
+
+Inspection: first original neutral persona1822 characters, canonical voice4182,
+core2790. Character length is not tokenizer proof. Existing breakpoint covers only
+persona before longer stable voice/core. Current original Chat first3 slots are
+persona plus optional specialist address/voice plus voice/core. Move the ONE early
+boundary to end of these three available blocks, preserving all instruction text,
+order, current context, key scope, implicit30m and authority. No Root assembly change.
+Real canonical-prefix tests fail136PASS/2FAIL before this correction and138PASS after.
+Own NON-AUTHOR69e37045 independently138PASS and verifies source/digest before renewal.
+Fresh exact-head CI/release/readback and actual cache-read evidence remain owed.

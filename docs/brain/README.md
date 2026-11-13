@@ -1,3 +1,42 @@
+## EXP01 November13 — original Chat model/cache candidate
+
+Existing Model Fabric only: transient server-derived actor/context cache partition,
+early stable OpenAI prefix plus existing implicit loop/history caching, and
+observed writes/lifetime-aware provider estimate in original trace metadata.
+Original model policy, customer metering, domain authority and fallback unchanged.
+[Research and actual baseline](../model-routing/int-334/EXP01-CHAT-CACHE-2026-11-13.md).
+Development only; review, exact CI, release/readback and authenticated proof owed.
+
+## EXP03 November11 — original Opportunity receipt continuation, source only
+
+The existing CRM update writer, stored approval/idempotency and Rail remain authoritative. The original Chat result projection preserves its native correlation; the authenticated CRM door reads the same committed result under current actor/workspace/seat and caller-RLS record checks. Original result-card and private tab-local Team Hub saved-work consumers reopen only that reference; no new write, provider, private-context channel transfer or receipt store. Current source is development-only: required exact-head release and genuine update/interruption/full reload/both-chat original-receipt proof remain owed. [Original journey14.62](../delivery/exp03-grow-my-business-journey.md#1462-opportunity-update-continuity--selected-next-outcome-development-only) and [bounded evidence](../evidence/ui-delivery/exp03-opportunity-original-receipt.md) retain failures and limits. No algorithm maturity or full-assignment completion claim.
+
+## EXP03 November11 — original saved-email acknowledgement readback
+
+Original3319/e5cb2dea7 is actually released; Master4.0/originaljourney14.61/footer evidence retain exact7f9 review/gates, actualc891 union, production identity and both customer-origin module hashes. Ordinary-owner corrected Hub source FULLreload/Open email→same Delivered Messages email/FULLreload/no Save or Send now→keyboard Return to NEXUS verified, with original native operation/Message count1 and correlated delivered receipt unchanged. No additional send or authority/runtime/auth change. Eight scoped viewport/source-preservation checks and restored original view are recorded with their verifier failures; native zoom/other-role/cohort and wider full-assignment proof remain separate. This dated observation resolves the preceding footer-wording hold only; full EXP03/all50/ALG maturity and owner acceptance are unchanged. Historical source/receipt records below remain intact.
+
+## EXP03 November11 — original email result return and real receipt
+
+Original3315/c62ac214b is released on both current customer domains, exact source and production identity in Master4.0/originaljourney14.61. Same original Messages email passes actual authorized prepare/save/fullreload/reopen/exact approval/ONE send, correlated provider delivery receipt and read-only result reload/return to NEXUS. Source tests231/required checks/non-author review pass; no native/Edge/auth/permission/new writer. The original Hub source card's static Saved unsent/Open draft wording remains a routed E08 presentation defect after delivery, so selected outcome completion is withheld. All original matrices/all50/ALG maturity/full EXP03 remain STILL CODING and owner acceptance separate. Historical producer release record below is conserved from unmerged3230 without stale peer-document overwrite or a recursive shipped row.
+
+## EXP03 November2 — NEXUS email producer source release
+
+Original3224/a4f3f6195 is released: original first unsent Save creates one Messages draft/audit, same actor-operation replay, existing raw-version edit/reopen and original exact approval/send source. Native30010003+30010103/Save13FULL195f827 and original restricted metadata, all8Edge/source certificate1001bindings and both public web origins verified; Master4.0 and originaljourney14.60 retain exact source, review, checks and failures. No new writer/approval/runtime/permission or provider send. E08 retains actual NEXUS privateDM/admission/card/result/return integration. Selected integrated email outcome remains INCOMPLETE until authenticated save/fullreload/reopen, exact recipient/content approval, separately authorized particular send and truthful receipt/no-duplicate recovery. Provider acceptance is not delivery; full EXP03 STILL CODING/owner acceptance separate. No next outcome.
+
+## EXP08 November3 — original file sharing, one outcome in progress
+
+Original row10 reuses the existing private Storage/file/message pipeline. Current
+repair fences delayed download completion after departure/unmount and original
+upload admission after its uploader advisory wait. Two causal UI baseline failures
+become24 attachment controls PASS; original native wait/drift controls, final own
+NON-AUTHOR review/exact CI/release and authenticated upload/post/reload/reopen/SAME
+bytes remain pending. No new runtime/store, Knowledge save, provider, approval or
+permission authority. Original [attachment evidence](../evidence/ui-delivery/exp08-team-hub-increment3.md)
+retains chronology and limits. Existing MMA Edge session became signed out before
+selection; no file posted or download claimed. Full EXP08 STILL CODING; finish
+this outcome/report/STOP, then owner approves the next. Prior completed email
+receipt below remains intact.
+
 ## EXP08 November3 — original unsent NEXUS email release identity
 
 Original [3239](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3239)
@@ -1671,6 +1710,9 @@ Original2691/main3b8f9736621cf5763a0a398c7ab98ff5a5094ff0 passed all13 reviewed-
 PR2680 reviewedb0300921744d37f0a12f574f2a2c664b22b19516 mergedcb1d891d7b20e09d3d09263d3d9e4a6b690a8241/tree9c920fad; normal productionDQZE/publiccb1 and actual served Gateway/entry/landing source verified. Original receipt6374536491 and sole [Master4.0 log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) retain review/ten passing checks+PreviewSKIP/two statuses/145 focused and actual Native61+243/full grant proof. Original Auth/role priorities/native gate/unsaved work/domain sources remain; no workspace/identity writer/provider effect. Bounded raw render/keyboard proof is not customer acceptance; invalid foreign frame excluded. Global multiple-membership, complete owner/client/new-account/revoked/returning/all7/device/AT journey and one founder evaluation remain unfinished. Source candidates stay in the original [relationship packet](../delivery/e09-customer-relationships.md), not another ledger or Live promotion.
 
 ## EXP06 Build My Brand & Online Presence — workstream baseline, October23
+
+November10 source identity: [original publisher #3310](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3310)
+merged `49a0fb73c8744662a82aec2def5b76f35e327529` after independent NON-AUTHOR review and all15 hosted checks. Native `20271133000019` and publisher v78 were verified in production; the exact identities and proof boundary are in [Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log). The signed-in Team Hub attempt failed before execution at its protected provenance read. Public result/receipt/reopen, full EXP06 and owner acceptance remain pending in [original ANT-162](https://linear.app/paigeagentai/issue/ANT-162#comment-d2f738f9-9e8e-4778-ab5f-d7fa4a56ae2b). No capability or customer release is promoted.
 
 zCod accepted the EXP06 Experience (ANT-162 authorization; ACK comment 5da8bf50).
 The owning baseline and complete 18-row acceptance matrix live in

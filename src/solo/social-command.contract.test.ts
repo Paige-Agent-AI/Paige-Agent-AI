@@ -24,6 +24,7 @@ import {
   SOCIAL_NETWORKS,
   buildBrief,
   buildChannels,
+  buildConnectionsPanel,
   buildKpis,
   buildNextMove,
   buildPipeline,
@@ -197,9 +198,13 @@ describe("handle shape — the surface and Systems Check must agree on the count
   it("keeps the client allow-list identical to the server's, in both directions", () => {
     // A network the form offers and the function refuses is a save that fails after the person
     // typed it; one the function accepts and the form omits is a record nobody can edit here.
-    const declared = /_allowed constant text\[\] := ARRAY\[([^\]]+)\]/.exec(migration)?.[1] ?? "";
-    const server = [...declared.matchAll(/'([a-z]+)'/g)].map((m) => m[1]).sort();
-    expect(server).toEqual(SOCIAL_NETWORKS.map((n) => n.key).sort());
+    const current = read("supabase/migrations/20271133000025_exp07_threads_presence.sql");
+    const client = SOCIAL_NETWORKS.map((n) => n.key).sort();
+    for (const array of ["_allowed", "v_networks"]) {
+      const declared = current.split(`${array} constant text[] := ARRAY[`)[1]?.split("]")[0] ?? "";
+      const server = [...declared.matchAll(/'([a-z]+)'/g)].map((m) => m[1]).sort();
+      expect(server).toEqual(client);
+    }
   });
 });
 
@@ -310,11 +315,21 @@ describe("§13 fabrication guard — the shapes this surface must never grow", (
       publishedOutputs: 31, approvalGatedForms: 4, formsNeedingRepair: 2,
       capturedSubmissions: 88, waitingOnYou: 6,
     };
+    // The wired input exercises the owner-directive (2026-11-04) branches: connected accounts
+    // appear on the tab, and the copy those branches add is policed by this guard forever, not
+    // just the zero-connection sentences.
+    const wired: SocialCommandInput = {
+      ...loud,
+      connections: [
+        { network: "facebook", status: "connected", label: "Acme Media Page", verifiedAt: "2026-11-04T10:00:00.000Z", profiles: 1 },
+        { network: "instagram", status: "needs_reauth", label: null, verifiedAt: null, profiles: 1 },
+      ],
+    };
     // LABELS are checked by a different rule below, because a label is a name rather than a claim:
     // "Scheduled" is the honest name of a stage whose figure is absent and whose note says why.
     // What must carry the denial is the prose beside it.
     const copy: string[] = [];
-    for (const input of [EMPTY, loud]) {
+    for (const input of [EMPTY, loud, wired]) {
       const brief = buildBrief(input);
       copy.push(brief.headline, brief.body);
       for (const kpi of buildKpis(input)) copy.push(kpi.detail, kpi.figure.note);
@@ -341,8 +356,12 @@ describe("§13 fabrication guard — the shapes this surface must never grow", (
       publishedOutputs: 31, approvalGatedForms: 4, formsNeedingRepair: 2,
       capturedSubmissions: 88, waitingOnYou: 6,
     };
+    const wired: SocialCommandInput = {
+      ...loud,
+      connections: [{ network: "facebook", status: "connected", label: "Acme Media Page", verifiedAt: "2026-11-04T10:00:00.000Z", profiles: 1 }],
+    };
     const unmeasurable = /\b(follower|reach|engagement|impression|audience|placement|queue|schedul)/i;
-    for (const input of [EMPTY, loud]) {
+    for (const input of [EMPTY, loud, wired]) {
       for (const tile of [...buildKpis(input), ...buildPipeline(input)]) {
         if (!unmeasurable.test(tile.label)) continue;
         expect(tile.figure.value, `"${tile.label}" must not carry a figure`).toBeNull();
@@ -635,5 +654,71 @@ describe("shell contract — this tab may not break the five beside it", () => {
       expect(css, `${selector} needs min-width:0`).toContain(selector);
     }
     expect((css.match(/min-width: 0/g) ?? []).length).toBeGreaterThan(6);
+  });
+});
+
+describe("live-connected accounts show up on this tab (owner directive 2026-11-04)", () => {
+  const connected: SocialCommandInput = {
+    ...EMPTY,
+    handles: [{ network: "facebook", label: "Facebook", handle: "acme" }],
+    connections: [
+      { network: "facebook", status: "connected", label: "Acme Media Page", verifiedAt: "2026-11-04T10:00:00.000Z", profiles: 2 },
+    ],
+  };
+
+  it("the brief names the connection instead of asserting absence", () => {
+    const brief = buildBrief(connected);
+    expect(brief.body).toContain("One account is connected");
+    expect(brief.body).toContain("Facebook (Acme Media Page)");
+    expect(brief.body).toContain("consent to read the account, not to publish");
+    expect(brief.body).toContain("Manage connections in Settings → Integrations");
+    // The zero-connection sentence is the OTHER branch's truth; it must not survive a connection.
+    expect(brief.body).not.toContain("No account is connected for publishing");
+  });
+
+  it("the zero-connection brief keeps its absence sentence unchanged", () => {
+    const brief = buildBrief({ ...EMPTY, handles: [{ network: "x", label: "X", handle: "@acme" }] });
+    expect(brief.body).toContain("No account is connected for publishing");
+    expect(brief.body).not.toContain("is connected —");
+  });
+
+  it("the queue and placements tiles key their copy on the connection lifecycle, never on nothing", () => {
+    const zero = buildKpis({ ...EMPTY });
+    const queue = zero.find((k) => k.id === "queue")!;
+    const placements = zero.find((k) => k.id === "placements")!;
+    expect(queue.figure.note).toContain("No account is connected to publish through");
+    expect(placements.detail).toContain("No social account can be connected yet");
+
+    const wired = buildKpis(connected);
+    const queueOn = wired.find((k) => k.id === "queue")!;
+    const placementsOn = wired.find((k) => k.id === "placements")!;
+    // A connected account means the capability exists — the tiles still report their true empty
+    // figures, but they may no longer claim nothing can be connected (§13).
+    expect(queueOn.figure.note).toContain("An account is connected, and nothing is queued yet.");
+    expect(queueOn.figure.note).not.toContain("No account is connected to publish through");
+    expect(placementsOn.detail).toContain("the provider's own report is what appears here");
+    expect(placementsOn.detail).not.toContain("No social account can be connected yet");
+    expect(queueOn.figure.value).toBeNull();
+    expect(placementsOn.figure.value).toBeNull();
+  });
+
+  it("buildConnectionsPanel lists every lifecycle-live connection and drops disconnected rows", () => {
+    const entries = buildConnectionsPanel([
+      { network: "facebook", status: "connected", label: "Acme Media Page", verifiedAt: "2026-11-04T10:00:00.000Z", profiles: 2 },
+      { network: "instagram", status: "needs_reauth", label: null, verifiedAt: null, profiles: 1 },
+      { network: "x", status: "disconnected", label: null, verifiedAt: null, profiles: 0 },
+    ]);
+    expect(entries.map((e) => e.network)).toEqual(["facebook", "instagram"]);
+    expect(entries[0].networkLabel).toBe("Facebook");
+    expect(entries[0].label).toBe("Acme Media Page");
+    expect(entries[0].verifiedAt).toBe("2026-11-04T10:00:00.000Z");
+    expect(entries[1].status).toBe("needs_reauth");
+  });
+
+  it("buildConnectionsPanel is empty when nothing is connected — the Channels panel owns that state", () => {
+    expect(buildConnectionsPanel([])).toEqual([]);
+    expect(
+      buildConnectionsPanel([{ network: "x", status: "disconnected", label: null, verifiedAt: null, profiles: 0 }]),
+    ).toEqual([]);
   });
 });

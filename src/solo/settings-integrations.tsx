@@ -5,9 +5,9 @@ import { SoloAutomationsView } from "./settings-automations";
 import { IntegrationsGatewaySection, connectionForProvider, ConnectionForm, SLACK_MCP_PRESET, type GatewayLegacyTarget } from "./settings-integrations-gateway";
 import { useMcpGateway } from "./data/useMcpGateway";
 import { IntegrationLogo } from "./integration-logos";
-import { SocialDrawer } from "./settings-integrations-social";
+import { SocialDrawer, SocialHubPanel } from "./settings-integrations-social";
 import { socialCardState } from "./settings-integrations-social-state";
-import { SOCIAL_PLATFORMS, type SocialPlatformDefinition } from "./social-platform-catalog";
+import { SOCIAL_CONNECTION_APPS, SOCIAL_PLATFORMS, connectionAppAsPlatform, type SocialConnectionApp, type SocialDrawerPlatform, type SocialPlatformDefinition } from "./social-platform-catalog";
 import { useSocialConnections } from "./data/useSocialConnections";
 import { useN8nConnection, readN8nReadiness, type N8nConnection } from "./data/useN8nConnection";
 import { useN8nOAuth, n8nMcpStateWords, type N8nReadiness } from "./data/useN8nOAuth";
@@ -89,7 +89,7 @@ function sanitizeMcpByProvider(value: unknown): Partial<Record<"n8n" | "zapier",
 }
 
 type ProviderIdentity = "n8n" | "zapier" | "mcp" | "slack" | "microsoft-teams" | "quickbooks" | "stripe" | "paypal" | "docusign" | "apollo" | "plaid" | "api";
-type CatalogueCategory = "all" | "social" | "marketing" | "automation" | "collaboration" | "financial" | "documents" | "client-data" | "developer";
+type CatalogueCategory = "all" | "social" | "marketing" | "automation" | "collaboration" | "messaging" | "email-calendar" | "financial" | "documents" | "client-data" | "developer";
 
 
 function statusPresentation(value: SafeConnectionStatus | null) {
@@ -205,10 +205,14 @@ function providerMark(id: ProviderIdentity) {
  * so it is named once, on the group heading, and the tools below it carry only their own identity.
  * Each group takes one of the platform's existing --k-* accents; no new colour enters the system.
  */
-type GroupId = "automation" | "collaboration" | "social" | "financial" | "documents" | "client-data" | "developer";
+type GroupId = "automation" | "collaboration" | "messaging" | "email-calendar" | "social" | "financial" | "documents" | "client-data" | "developer";
 const GROUPS: ReadonlyArray<{ id: GroupId; label: string; accent: string; blurb: string; note?: string }> = [
   { id: "automation", label: "Automation", accent: "var(--k-automation)", blurb: "Run workflows and reach other apps." },
   { id: "collaboration", label: "Team chat", accent: "var(--k-integration)", blurb: "Workplace chat and channels." },
+  // The provider's connection apps (owner 2026-11-06: every account connects what the
+  // platform account connects) — same groups, accents and blurbs as the Operator page.
+  { id: "messaging", label: "Messaging", accent: "var(--k-template)", blurb: "Reach people where they are." },
+  { id: "email-calendar", label: "Email & Calendar", accent: "var(--k-integration)", blurb: "Send mail and book time." },
   {
     id: "social", label: "Social", accent: "var(--k-template)", blurb: "Post, schedule and read.",
     // Shipped copy, kept verbatim and on its original condition (it showed only while the Social
@@ -362,21 +366,31 @@ function CapabilityApproval({ provider, onChanged }: { provider: "n8n" | "zapier
   </div>;
 }
 
-function ZapierApiPanel({ api, onChanged }: { api: ReturnType<typeof useZapierApi>; onChanged: () => void }) {
+export function ZapierApiPanel({ api, onChanged }: { api: ReturnType<typeof useZapierApi>; onChanged: () => void }) {
   const[confirming,setConfirming]=useState(false);
-  const begin=async()=>{const url=await api.begin();if(url){armOAuthReturn(`${window.location.pathname}${window.location.search}`);window.location.assign(url);}};
+  const[reviewingPermissions,setReviewingPermissions]=useState(false);
+  const permissionTrigger=useRef<HTMLButtonElement>(null);
+  useEffect(()=>setReviewingPermissions(false),[api.tenantId,api.canAuthorizeWorkflowManagement]);
+  const begin=async(profile:"read_only"|"workflow_management"="read_only")=>{const url=await api.begin(profile);if(url){armOAuthReturn(`${window.location.pathname}${window.location.search}`);window.location.assign(url);}};
   if(api.loading)return <p className="ig-state" role="status">Checking the Zapier API connection…</p>;
   if(api.error)return <div className="ig-state" role="alert"><span>{api.message}</span><button className="ig-btn" onClick={()=>void api.reload()}>Try again</button></div>;
-  return <><p className="ig-lede">Connect the workspace’s Zapier account for provider-supported, read-only workflow visibility.</p>
-   <dl className="ig-facts"><div><dt>API connection</dt><dd>{zapierApiWords(api.state)}</dd></div><div><dt>Accessible workflows</dt><dd>{api.state==="connected"&&api.accessibleZapCount!==null?api.accessibleZapCount:"Unavailable until a complete check succeeds"}</dd></div><div><dt>Authority</dt><dd>Read workflows and run a safe connection check</dd></div>{api.lastCheckedAt&&<div><dt>Last check</dt><dd>{safeCheckDate(api.lastCheckedAt)}</dd></div>}</dl>
-   <p className="ig-note">This connection does not list workflow contents here and cannot edit, activate, deactivate, archive, delete, or run Zaps. PAIGE tools are authorized separately.</p>
+  return <><p className="ig-lede">Connect this workspace’s Zapier account. Start with read-only visibility; workflow management needs separate authorization.</p>
+   <dl className="ig-facts"><div><dt>API connection</dt><dd>{zapierApiWords(api.state)}</dd></div><div><dt>Accessible workflows</dt><dd>{api.state==="connected"&&api.accessibleZapCount!==null?api.accessibleZapCount:"Unavailable until a complete check succeeds"}</dd></div><div><dt>Connection permissions</dt><dd>{api.workflowManagementAuthorized?"Workflow management authorized":"Read workflows and run a safe connection check"}</dd></div>{api.lastCheckedAt&&<div><dt>Last check</dt><dd>{safeCheckDate(api.lastCheckedAt)}</dd></div>}</dl>
+   <p className="ig-note">Connection permissions do not approve a workflow change or live trigger. Each action still needs its own authorization. PAIGE tools access remains separate.</p>
+   {api.state==="capability_unavailable"&&<p className="ig-note" role="status">Zapier API authorization is unavailable until PAIGE’s provider app is configured. Your existing PAIGE tools connection is separate.</p>}
    {api.message&&<p className="ig-error" role="alert">{api.message}</p>}
-   {!api.canManage?<p className="ig-note">Only the workspace owner can authorize or remove this API connection.</p>:<div className="ig-actions">
-    <button type="button" className="ig-btn" data-primary disabled={api.busy||api.state==="capability_unavailable"} onClick={()=>void begin()}><KeyRound aria-hidden size={14}/>{api.state==="capability_unavailable"?"Provider authorization unavailable":api.busy?"Opening Zapier…":api.state==="not_connected"?"Connect API":"Reconnect API"}</button>
+   {!api.canManage?<p className="ig-note">Only the workspace owner can authorize or remove this API connection.</p>:<div className="ig-actions ig-zapier-scope-actions">
+    <button type="button" className="ig-btn" data-primary disabled={api.busy||api.state==="capability_unavailable"} onClick={()=>void begin(api.workflowManagementAuthorized?"workflow_management":"read_only")}><KeyRound aria-hidden size={14}/>{api.state==="capability_unavailable"?"Provider authorization unavailable":api.busy?"Opening Zapier…":api.state==="not_connected"?"Connect API":"Reconnect API"}</button>
+    {api.canAuthorizeWorkflowManagement&&!api.workflowManagementAuthorized&&<button ref={permissionTrigger} type="button" className="ig-btn" disabled={api.busy||api.state==="capability_unavailable"||api.hasPendingAuthorization} aria-expanded={reviewingPermissions} onClick={()=>setReviewingPermissions(value=>!value)}>Authorize workflow management</button>}
+    <button type="button" className="ig-btn" disabled={api.busy} onClick={()=>void api.reload().then(onChanged)}>Refresh status</button>
     {api.hasPendingAuthorization&&<button type="button" className="ig-btn" disabled={api.busy} onClick={()=>void api.cancel().then(onChanged)}>Cancel authorization</button>}
     {api.hasLocalConnection&&!api.hasPendingAuthorization&&api.state!=="capability_unavailable"&&<button type="button" className="ig-btn" disabled={api.busy} onClick={()=>void api.test().then(onChanged)}><RefreshCw aria-hidden size={14}/>Run safe connection test</button>}
     {api.hasLocalConnection&&(confirming?<span className="ig-confirm"><button type="button" className="ig-btn" data-danger disabled={api.busy} onClick={()=>{setConfirming(false);void api.disconnect().then(onChanged);}}>Disconnect API</button><button type="button" className="ig-btn" onClick={()=>setConfirming(false)}>Keep it</button></span>:<button type="button" className="ig-btn" onClick={()=>setConfirming(true)}>Disconnect API</button>)}
-   </div>}</>;
+   </div>}
+   {api.canAuthorizeWorkflowManagement&&reviewingPermissions&&<section className="ig-note ig-zapier-scope-review" aria-label="Workflow permission review">
+    <h3>Review workflow permissions</h3><p>Allow PAIGE to inspect app connections and workflow history, create or change workflows, and pause or enable them. Creating a Zap or replacing its steps can enable it immediately. This connection permission does not authorize any of those actions.</p>
+    <div className="ig-actions"><button type="button" className="ig-btn" disabled={api.busy||api.state==="capability_unavailable"} onClick={()=>void begin("workflow_management")}>Continue to Zapier</button><button type="button" className="ig-btn" disabled={api.busy} onClick={()=>{setReviewingPermissions(false);permissionTrigger.current?.focus();}}>Keep current permissions</button></div>
+   </section>}</>;
 }
 
 /**
@@ -925,7 +939,7 @@ export function SoloIntegrationsView() {
     : { account: "Setup not finished", tone: "neutral" as const };
   const [category, setCategory] = useState<CatalogueCategory>("all");
   const [open, setOpen] = useState<{ row: ProviderRow; scope: string; initialMcp?: boolean } | null>(null);
-  const [socialOpen, setSocialOpen] = useState<{ platform: SocialPlatformDefinition; scope: string } | null>(null);
+  const [socialOpen, setSocialOpen] = useState<{ platform: SocialDrawerPlatform; scope: string; kindLabel?: string } | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const [mcpReturn, setMcpReturn] = useState<{ connectionId: string; result: "connected" | "cancelled" | "error"; scope: string } | null>(null);
@@ -982,10 +996,14 @@ export function SoloIntegrationsView() {
    */
   type Tile =
     | { kind: "social"; group: GroupId; id: string; name: string; platform: SocialPlatformDefinition }
+    | { kind: "app"; group: GroupId; id: string; name: string; app: SocialConnectionApp }
     | { kind: "provider"; group: GroupId; id: string; name: string; row: ProviderRow };
   const tiles: Tile[] = [
     ...SOCIAL_PLATFORMS.map((platform): Tile => ({
       kind: "social", group: "social", id: `social-${platform.key}`, name: platform.name, platform,
+    })),
+    ...SOCIAL_CONNECTION_APPS.map((app): Tile => ({
+      kind: "app", group: app.group, id: `app-${app.key}`, name: app.name, app,
     })),
     ...PROVIDERS.map((row): Tile => ({
       kind: "provider", group: GROUP_OF[row.filter] ?? "developer", id: row.id, name: row.name, row,
@@ -1046,6 +1064,25 @@ export function SoloIntegrationsView() {
             data-owner="social" onClick={() => setSocialOpen({ platform: t.platform, scope: scopeKey })} aria-haspopup="dialog">
             <IntegrationLogo id={t.platform.key} fallback={t.platform.mark} />
             <span className="ig-card-title"><strong>{t.platform.name}</strong></span>
+            <span className="ig-card-foot"><N8nStateLabel value={state} /></span>
+          </button>
+        </li>
+      );
+    }
+    if (t.kind === "app") {
+      const app = t.app;
+      const platformConnections = social.connections.filter((c) => c.requestedPlatform === app.key);
+      const connectionIds = new Set(platformConnections.map((c) => c.id));
+      const platformAccounts = social.accounts.filter((a) => a.platform === app.key && connectionIds.has(a.connectionId));
+      const state = socialCardState({ loading: social.loading, statusError: social.statusError, connections: platformConnections, accounts: platformAccounts });
+      return (
+        <li key={t.id}>
+          <button type="button" className="ig-card social-platform-card" data-provider={`app-${app.key}`}
+            data-owner="social" onClick={() => setSocialOpen({ platform: connectionAppAsPlatform(app), scope: scopeKey, kindLabel: app.kind })} aria-haspopup="dialog">
+            {app.logoId
+              ? <IntegrationLogo id={app.logoId} fallback={app.mark} />
+              : <span className="ig-logo" data-letter="" aria-hidden style={{ ["--ig-brand" as string]: app.brandHex }}>{app.mark}</span>}
+            <span className="ig-card-title"><strong>{app.name}</strong></span>
             <span className="ig-card-foot"><N8nStateLabel value={state} /></span>
           </button>
         </li>
@@ -1114,6 +1151,7 @@ export function SoloIntegrationsView() {
       : open.row.id === "stripe"
       ? <StripeMerchantDrawer key={`${scopeKey}:stripe`} merchant={stripe} onClose={() => setOpen(null)} />
       : <ProviderPanel initialMcp={open.initialMcp} m={oauth} a={api} key={`${scopeKey}:${open.row.id}`} row={open.row} onClose={() => setOpen(null)} onChanged={status.retry} />)}
-    {socialOpen && !tenantLoading && socialOpen.scope === scopeKey && <SocialDrawer social={social} platform={socialOpen.platform} key={`${scopeKey}:social:${socialOpen.platform.key}`} onClose={() => setSocialOpen(null)} />}
+    {!tenantLoading && social.canManage && <SocialHubPanel social={social} key={`${scopeKey}:social-hub`} />}
+    {socialOpen && !tenantLoading && socialOpen.scope === scopeKey && <SocialDrawer social={social} platform={socialOpen.platform} kindLabel={socialOpen.kindLabel} key={`${scopeKey}:social:${socialOpen.platform.key}`} onClose={() => setSocialOpen(null)} />}
   </div>;
 }

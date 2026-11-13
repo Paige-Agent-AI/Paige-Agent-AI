@@ -27,6 +27,7 @@ import { classifyProviderFailure, type ProviderFailureClass } from "./provider-f
 import { envKey } from "./env-key.ts";
 import { traceLLMCall, type TraceCtx } from "./llm-trace.ts";
 import { assertModelAllowed } from "./model-allowlist.ts";
+import { estimateOpenAIProviderUsageCost } from "./token-pricing.ts";
 import {
   OPENAI_EFFORT_BY_CLASS,
   OPENAI_MODEL_BY_CLASS,
@@ -79,6 +80,10 @@ export interface ChatShapeBody {
 
 export interface ResponsesCallOpts {
   model: string;
+  /** Internal provider option, derived only from trusted TraceCtx by the call seam. */
+  promptCacheKey?: string;
+  /** A present but invalid/unavailable trusted partition must never join a global cache. */
+  disablePromptCache?: boolean;
   effort?: "none" | "low" | "medium" | "high" | "xhigh";
   /** Injectable transport for tests; production uses global fetch. */
   fetchImpl?: typeof fetch;
@@ -199,7 +204,24 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
     include: ["reasoning.encrypted_content"],
     max_output_tokens: body.max_tokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
   };
-  if (instructions.length) req.instructions = instructions.join("\n\n");
+  const validCacheKey = typeof opts.promptCacheKey === "string" && /^[a-f0-9]{64}$/.test(opts.promptCacheKey);
+  if (!opts.disablePromptCache && validCacheKey) {
+    // Original Chat starts with persona, optional specialist address, then the
+    // canonical voice/core. Include its first three available instruction blocks:
+    // persona alone can be shorter than the provider's cacheable-prefix minimum.
+    // Keep exact order/text; later current context and implicit history stay fresh.
+    req.prompt_cache_key = opts.promptCacheKey;
+    req.prompt_cache_options = { mode: "implicit", ttl: "30m" };
+    if (instructions.length) input.unshift({
+      role: "developer",
+      content: instructions.map((text, i) => ({
+        type: "input_text", text: i === 0 ? text : `\n\n${text}`,
+        ...(i === Math.min(2, instructions.length - 1) ? { prompt_cache_breakpoint: { mode: "explicit" } } : {}),
+      })),
+    });
+  } else if (instructions.length) req.instructions = instructions.join("\n\n");
+  // Explicit-only with no breakpoints performs neither cache reads nor writes.
+  if (opts.disablePromptCache || opts.promptCacheKey !== undefined && !validCacheKey) req.prompt_cache_options = { mode: "explicit" };
   if (opts.effort) req.reasoning = { effort: opts.effort === "none" && SOL_ASTRA_NO_NONE(opts.model) ? "low" : opts.effort };
   if (body.tools?.length) {
     req.tools = body.tools.map(toolDef);
@@ -215,16 +237,73 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
   return req;
 }
 
+/** A partition is not authority: existing caller checks still guard every attempt.
+ * No raw identities, prompt text, timestamps or per-turn IDs enter the provider key.
+ * Missing/malformed scope keeps non-Chat callers on their existing adapter contract. */
+export async function chatPromptCacheKey(scope: TraceCtx["prompt_cache_scope"]): Promise<string | undefined> {
+  if (!scope) return undefined;
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuid.test(scope.actor_id) || [scope.tenant_id, scope.working_context_tenant_id]
+    .some((id) => id !== null && (typeof id !== "string" || !uuid.test(id)))) return undefined;
+  let digest: ArrayBuffer;
+  try {
+    digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify([
+      "paige-chat-v1", scope.actor_id.toLowerCase(), scope.tenant_id?.toLowerCase() ?? null,
+      scope.working_context_tenant_id?.toLowerCase() ?? null,
+    ])));
+  } catch { return undefined; } // original Fabric disables caching, never broadens the partition
+  // The version is already inside the hashed preimage. A wire prefix would push
+  // the full SHA-256 digest beyond the provider's 64-character key limit.
+  return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
+}
+
 // ── Responses result → chat shape ──────────────────────────────────────────────────────────────
 
-interface Usage { tokens_in: number | null; tokens_out: number | null; cached: number | null }
+/** Diagnose the actual wire prefix without retaining content, identities or the cache key.
+ * Components are partition, settings, tools, explicit prefix. Every digest is scoped to
+ * the original server partition; no cross-account content correlation or new store. */
+async function cacheRequestSignature(req: Record<string, unknown>): Promise<string | undefined> {
+  const partition = req.prompt_cache_key;
+  if (typeof partition !== "string" || !/^[a-f0-9]{64}$/.test(partition)) return undefined;
+  const first = (req.input as any[] | undefined)?.[0];
+  if (first?.role !== "developer" || !Array.isArray(first.content)) return undefined;
+  const end = first.content.findIndex((part: any) => part?.prompt_cache_breakpoint?.mode === "explicit");
+  if (end < 0) return undefined;
+  try {
+    const values = [null, { model: req.model, reasoning: req.reasoning, text: req.text,
+      tool_choice: req.tool_choice, parallel_tool_calls: req.parallel_tool_calls,
+      service_tier: req.service_tier, store: req.store }, req.tools ?? [], first.content.slice(0, end + 1)];
+    const digests = await Promise.all(values.map(async (value, index) => {
+      const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(
+        JSON.stringify(["paige-cache-diagnostic-v1", partition, index, value])));
+      // Delimited fixed-width digest, not a raw key or a scrubber exception.
+      return Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, "0")).join("").match(/.{8}/g)!.join("-");
+    }));
+    return ["v1", ...digests].join("|");
+  } catch { return undefined; } // observability failure never blocks or repeats a request
+}
+
+interface Usage {
+  tokens_in: number | null; tokens_out: number | null; cached: number | null;
+  total_input: number | null; write: number | null; write30m: number | null; write12h: number | null;
+}
 function readUsage(u: any): Usage {
   const input = typeof u?.input_tokens === "number" ? u.input_tokens : null;
   const cached = typeof u?.input_tokens_details?.cached_tokens === "number" ? u.input_tokens_details.cached_tokens : null;
   const out = typeof u?.output_tokens === "number" ? u.output_tokens : null;
   // tokens_in is the UNCACHED remainder, matching the Anthropic seam's meter semantics; cached tokens
   // are reported separately so a cached prefix is never billed as fresh input.
-  return { tokens_in: input == null ? null : Math.max(0, input - (cached ?? 0)), tokens_out: out, cached };
+  const count = (n: unknown): number | null => typeof n === "number" && Number.isSafeInteger(n) && n >= 0 ? n : null;
+  const write = count(u?.input_tokens_details?.cache_write_tokens);
+  const detail = u?.input_tokens_details?.cache_write_tokens_details;
+  let write30m = count(detail?.ttl_30m_tokens), write12h = count(detail?.ttl_12h_tokens);
+  if (write === null || write30m === null || write12h === null || write30m + write12h !== write) {
+    write30m = null; write12h = null;
+  }
+  // Existing metered tokens_in remains input minus reads (including writes).
+  // Provider-only estimate uses the disjoint categories, never silently reprices bills.
+  return { tokens_in: input == null ? null : Math.max(0, input - (cached ?? 0)), tokens_out: out, cached,
+    total_input: count(input), write, write30m, write12h };
 }
 
 /** Map a Responses status to PAIGE's provider-neutral stop vocabulary. */
@@ -284,7 +363,7 @@ export function toChatCompletion(resp: any, requestedModel: string): Record<stri
 
 function emitTrace(trace: TraceCtx | undefined, row: {
   model: string; status: "success" | "error"; started: number; usage?: Usage; input?: unknown; output?: string;
-  error_class?: string | null; error_message?: string | null; stop_reason?: string;
+  error_class?: string | null; error_message?: string | null; stop_reason?: string; cache_signature?: string;
 }) {
   if (!trace) return;
   // Cost is priced once, in traceLLMCall (token-pricing.ts), so this path cannot drift from the meter.
@@ -298,12 +377,24 @@ function emitTrace(trace: TraceCtx | undefined, row: {
     tokens_in: row.usage?.tokens_in ?? null,
     tokens_out: row.usage?.tokens_out ?? null,
     cache_read_input_tokens: row.usage?.cached ?? null,
+    cache_creation_input_tokens: row.usage?.write ?? null,
     latency_ms: Date.now() - row.started,
     input: row.input,
     output: row.output,
     error_class: row.error_class ?? null,
     error_message: row.error_message ?? null,
-    metadata: { caller_function: trace.agent_id, ...(row.stop_reason ? { stop_reason: row.stop_reason } : {}) },
+    metadata: {
+      caller_function: trace.agent_id, ...(row.stop_reason ? { stop_reason: row.stop_reason } : {}),
+      ...(row.cache_signature ? { provider_cache_signature: row.cache_signature } : {}),
+      ...(row.usage ? {
+        provider_total_input_tokens: row.usage.total_input,
+        provider_cache_write_30m_tokens: row.usage.write30m,
+        provider_cache_write_12h_tokens: row.usage.write12h,
+        provider_cost_estimate_usd: estimateOpenAIProviderUsageCost(row.model, row.usage.total_input,
+          row.usage.tokens_out, row.usage.cached, row.usage.write30m, row.usage.write12h),
+        provider_cost_basis: "OpenAI STANDARD short-context <=272K list USD; cache-inclusive; 2026-11-13; not invoice/customer meter",
+      } : {}),
+    },
   });
 }
 
@@ -366,6 +457,7 @@ export async function responsesCompletion(body: ChatShapeBody, opts: ResponsesCa
   emitTrace(trace, {
     model: chat.model as string, status: "success", started, usage: readUsage(data?.usage), input: body.messages,
     output: msg.content, stop_reason: (chat.paige_stop as { stop_reason: string }).stop_reason,
+    cache_signature: trace ? await cacheRequestSignature(req) : undefined,
   });
   return chat;
 }
@@ -620,6 +712,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesStream
           status: errored || cancelled ? "error" : "success",
           started,
           usage: readUsage(finalResponse?.usage),
+          cache_signature: trace ? await cacheRequestSignature(req) : undefined,
           input: body.messages,
           output: outText,
           error_class: acquisitionFailed && failure ? "response_failed" : streamErrored || cancelled ? "stream_interrupted" : failure ? "response_failed" : truncated ? "stream_truncated" : null,

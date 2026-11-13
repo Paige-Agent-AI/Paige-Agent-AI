@@ -609,7 +609,64 @@ describe("Truth boundary", () => {
     expect(host.textContent).toContain("Not checked yet");
     expect(host.textContent).not.toMatch(/\bReady\b/);
     expect(host.textContent).not.toMatch(/Checking…/);
-    expect(host.textContent).toContain("not usable yet");
+  });
+
+  it("a never-finished row reads 'Setup not finished'; a broken one keeps its true state", async () => {
+    // EXP10 (owner finding 2026-11-04 + review): the owner's half-done rows (saved with no
+    // auth) must name the recovery; but a row whose setup WAS finished and then failed must
+    // never be relabeled "Setup not finished" — that erases the error it is telling him.
+    world({ rows: [
+      row({ connection_id: "conn-dead", label: "Slack", provider_key: "slack", auth_kind: "none", enabled: false, status: "unconfigured", health: "unknown" }),
+      row({ connection_id: "conn-broken", label: "Scheduling tool", status: "error", health: "unknown" }),
+    ] });
+    const { host } = await render();
+    expect(host.textContent).toContain("Setup not finished");
+    expect(host.textContent).toContain("Couldn’t reach it");
+  });
+
+  it("the catalogue tile and the drawer header say what the wall says — never 'Turned off' for a setup that never finished", async () => {
+    // Owner finding 2026-11-05: the HighLevel tile wore "Turned off" about his half-done
+    // September row while the wall card said "Setup not finished" — three surfaces showing
+    // one row must agree, and none of them may claim somebody turned something off when
+    // nobody did. A genuinely broken row keeps its error everywhere.
+    world({ rows: [
+      row({ connection_id: "conn-ghl", label: "GoHighLevel", provider_key: "gohighlevel", server_url_host: "services.leadconnectorhq.com", auth_kind: "none", enabled: false, status: "unconfigured", health: "unknown", last_checked_at: null }),
+      row({ connection_id: "conn-broken", label: "Scheduling tool", status: "error", health: "unknown" }),
+    ] });
+    const { host } = await render();
+    expect(host.textContent).not.toMatch(/turned off/i);
+    // The detail drawer agrees with the wall — chip AND body line.
+    await click(host.querySelector('[data-gateway-tool="conn-ghl"]'));
+    expect(dialog(host)?.textContent).toContain("Setup not finished");
+    expect(dialog(host)?.textContent).not.toMatch(/turned off/i);
+    expect(dialog(host)?.textContent).toMatch(/this setup never finished/i);
+    await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
+    // The held catalogue tile agrees too, and its screen-reader label no longer claims the
+    // tool is connected.
+    await openCatalogue(host);
+    const ghlTile = tile(host, "HighLevel · LeadConnector");
+    expect(ghlTile?.textContent).toContain("Setup not finished");
+    expect(ghlTile?.getAttribute("aria-label")).toMatch(/already added, setup not finished/i);
+    // An errored row's tile keeps its error — never softened, never "Turned off".
+    await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
+    await click(host.querySelector('[data-gateway-tool="conn-broken"]'));
+    expect(dialog(host)?.textContent).toContain("Couldn’t reach it");
+    expect(dialog(host)?.textContent).not.toMatch(/turned off/i);
+  });
+
+  it("a deliberate turn-off keeps 'Turned off' when the row's state survived it (legacy shape)", async () => {
+    // The writer contract zeroes status on a native disable, so those rows are
+    // indistinguishable from never-finished ones and read "Setup not finished" (documented
+    // boundary on neverFinishedRow). Rows whose status SURVIVED a disable — the registry
+    // backfill preserved them verbatim — must keep the truthful "Turned off" everywhere.
+    world({ rows: [
+      row({ connection_id: "conn-off", label: "Zapier", provider_key: "zapier", server_url_host: "mcp.zapier.com", auth_kind: "oauth", enabled: false, status: "connected", health: "healthy" }),
+    ] });
+    const { host } = await render();
+    expect(host.textContent).toContain("Turned off");
+    await click(host.querySelector('[data-gateway-tool="conn-off"]'));
+    expect(dialog(host)?.textContent).toContain("Turned off");
+    expect(dialog(host)?.textContent).toMatch(/this tool is turned off/i);
   });
 
   it("keeps a failed read distinct from an account with no tools", async () => {
@@ -712,7 +769,11 @@ describe("Adding a tool", () => {
     const { host } = await render();
     await openCatalogue(host);
     await click(tile(host, "Slack"));
-    expect((fieldFor(host, "Server URL") as HTMLInputElement).value).toBe("https://mcp.slack.com/mcp");
+    // Owner direction 2026-11-05: a curated provider's address is the same for every
+    // customer, so the form never asks for it — it states the endpoint it already knows and
+    // carries it on save (the payload below still receives mcp.slack.com).
+    expect(fieldFor(host, "Server URL")).toBeFalsy();
+    expect(dialog(host)?.textContent).toMatch(/Paige already knows this provider’s address \(mcp\.slack\.com\)/i);
     // Curated: one button, the provider's own words — never a generic OAuth/None wall
     // (Slack does not support dynamic registration; sign-in style OAuth is not offered).
     const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
@@ -729,6 +790,127 @@ describe("Adding a tool", () => {
       server_url: "https://mcp.slack.com/mcp",
       auth_kind: "bearer",
     });
+  });
+
+  it("locks HighLevel to its Private Integration Token contract — never a four-way auth wall", async () => {
+    // EXP10 (owner finding 2026-11-04): the owner opened HighLevel and met a developer's
+    // question — OAuth / Token / Token + headers / None — instead of a connect form.
+    // HighLevel's proven contract is ONE mode: the Private Integration Token as the
+    // credential plus the required locationId header. The catalogue row carries auth so
+    // the curated lock engages, exactly as Slack's already did.
+    world({ rows: [] });
+    const { host } = await render();
+    await openCatalogue(host);
+    await click(tile(host, "HighLevel · LeadConnector"));
+    // 2026-11-05: the address is never asked for (identical for every customer — carried,
+    // stated, not entered), and the credential fields wear GHL's own words.
+    expect(fieldFor(host, "Server URL")).toBeFalsy();
+    expect(dialog(host)?.textContent).toMatch(/Paige already knows this provider’s address \(services\.leadconnectorhq\.com\)/i);
+    const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
+    expect(authButtons.map(b => b.textContent)).toEqual(["Private Integration Token"]);
+    expect(authButtons[0].getAttribute("aria-pressed")).toBe("true");
+    await type(fieldFor(host, "Name"), "Main location");
+    await type(fieldFor(host, "Private Integration Token"), "pit_loc_abcdefghijklmnopqrstuvwxyz012345");
+    await type(fieldFor(host, "Location ID"), " ABcdEf123456 ");
+    await click(byText(host, "Save configuration"));
+    expect(lastEdgeBody()).toMatchObject({
+      action: "create",
+      facet: "mcp",
+      provider_key: "gohighlevel",
+      label: "Main location",
+      server_url: "https://services.leadconnectorhq.com/mcp/",
+      auth_kind: "bearer",
+    });
+    // The Location ID arrives as the locationId header — name from the contract, value
+    // trimmed (an owner-observed failure mode: a trailing space silently killed the connect).
+    expect(lastEdgeBody().custom_headers).toEqual({ locationId: "ABcdEf123456" });
+  });
+
+  it("finishes an unfinished connection instead of adding a second one for the same server", async () => {
+    // EXP10 duplicate-guard (owner finding 2026-11-04): retrying a half-done connect must
+    // complete THE row, never stack another. Production held exactly this trap — a Slack row
+    // saved with no auth, where every retry read as "it creates an additional connection".
+    world({ rows: [row({ connection_id: "conn-slack", provider_key: "slack", label: "Slack",
+      auth_kind: "none", enabled: false, status: "unconfigured", health: "unknown", server_url_host: "mcp.slack.com" })] });
+    const { host } = await render();
+    await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Operations workspace");
+    await type(fieldFor(host, "Server URL"), "https://mcp.slack.com/mcp");
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "xoxp-slack-user-token-123456");
+    await click(byText(host, "Save configuration"));
+    // No second row: the write is a REPLACEMENT of the unfinished one, and the receipt says so.
+    expect(edgeCalls("create")).toHaveLength(0);
+    const rekey = rpc.mock.calls.find(c => c[0] === "set_mcp_connection_endpoint")?.[1] as Record<string, unknown>;
+    expect(rekey).toMatchObject({ _connection_id: "conn-slack", _server_url: "https://mcp.slack.com/mcp", _auth_kind: "bearer" });
+    expect(dialog(host)?.textContent).toMatch(/instead of adding a second one/i);
+  });
+
+  it("never duplicates a WORKING connection: the save is refused with a plain explanation", async () => {
+    world({ rows: [row({ connection_id: "conn-live", provider_key: "slack", label: "Slack",
+      status: "connected", health: "healthy", server_url_host: "mcp.slack.com" })] });
+    const { host } = await render();
+    await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Second try");
+    await type(fieldFor(host, "Server URL"), "https://mcp.slack.com/mcp");
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "xoxp-slack-user-token-123456");
+    await click(byText(host, "Save configuration"));
+    expect(edgeCalls("create")).toHaveLength(0);
+    expect(rpc.mock.calls.some(c => c[0] === "set_mcp_connection_endpoint")).toBe(false);
+    expect(dialog(host)?.textContent).toMatch(/already has a working Slack connection/i);
+  });
+
+  it("locks the RE-KEY door too: the owner's dead HighLevel row collapses to its one contract", async () => {    // Review finding / the owner's literal screenshot: the four-way OAuth/Token/Token+headers/
+    // None wall he met was the re-key form of his unfinished generic-remote GoHighLevel row
+    // (host services.leadconnectorhq.com, auth none). Recognition is by provider key OR
+    // host, so this generic row must lock to "Private Integration Token" exactly like the
+    // catalogue door — and the required locationId header is enforced on this door as well.
+    world({ rows: [row({ connection_id: "conn-ghl", label: "GoHighLevel", provider_key: "generic-remote",
+      auth_kind: "none", enabled: true, status: "pending_verification", health: "unknown",
+      server_url_host: "services.leadconnectorhq.com" })] });
+    const { host } = await render();
+    await openCatalogue(host);
+    await click(tile(host, "HighLevel · LeadConnector")); // held by host → opens the connection, not an add
+    await click(byText(host, "Re-key"));
+    const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
+    expect(authButtons.map(b => b.textContent)).toEqual(["Private Integration Token"]);
+    expect(authButtons[0].getAttribute("aria-pressed")).toBe("true");
+    // The re-key door asks ONLY for what the owner supplies: no address field (the catalogue's
+    // canonical endpoint is carried — and silently repairs this row's host), no header-name
+    // machinery — just the token and the Location ID in GHL's own words.
+    expect(fieldFor(host, "Full address")).toBeFalsy();
+    expect(dialog(host)?.textContent).toMatch(/Paige already knows this provider’s address \(services\.leadconnectorhq\.com\)/i);
+    await type(fieldFor(host, "Private Integration Token"), "pit_loc_abcdefghijklmnopqrstuvwxyz012345");
+    await click(byText(host, "Save configuration"));
+    // The Location ID is required on THIS door too — the save refuses in plain words.
+    expect(dialog(host)?.textContent).toMatch(/Enter the Location ID\./i);
+    await type(fieldFor(host, "Location ID"), "ABcdEf123456");
+    invoke.mockResolvedValueOnce({ data: { connection_id: "conn-ghl", config_generation: 2 }, error: null });
+    await click(byText(host, "Save configuration"));
+    const rekey = rpc.mock.calls.find(c => c[0] === "set_mcp_connection_endpoint")?.[1] as Record<string, unknown>;
+    expect(rekey).toMatchObject({ _connection_id: "conn-ghl", _server_url: "https://services.leadconnectorhq.com/mcp/", _auth_kind: "bearer" });
+    expect(rekey?._custom_headers).toEqual({ locationId: "ABcdEf123456" });
+  });
+
+  it("a row the catalogue knows ONLY by host keeps the manual re-key: blank address, every mode", async () => {
+    // Review P2 (2026-11-05): recognition reaches ~50 host-matched catalogue rows (Notion,
+    // Stripe, …) but only a LOCKED contract may carry its endpoint. A non-curated recognized
+    // row's re-key must still ask for the full address (blank, never prefilled — a prefill
+    // would silently rewrite a tenant's saved endpoint) and keep all four modes.
+    world({ rows: [row({ connection_id: "conn-notion", label: "Notion", provider_key: "generic-remote",
+      auth_kind: "none", enabled: true, status: "pending_verification", health: "unknown",
+      server_url_host: "mcp.notion.com" })] });
+    const { host } = await render();
+    const card = host.querySelector(`[data-gateway-tool="conn-notion"]`);
+    await click(card ?? undefined);
+    await click(byText(host, "Re-key"));
+    const address = fieldFor(host, "Full address") as HTMLInputElement | null;
+    expect(address).toBeTruthy();
+    expect(address?.value).toBe("");
+    const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
+    expect(authButtons.length).toBe(4);
+    expect(dialog(host)?.textContent).not.toMatch(/Paige already knows this provider’s address/i);
   });
 
   it("finds HighLevel under the LeadConnector name the provider's own API uses", async () => {
@@ -832,14 +1014,16 @@ describe("Adding a tool", () => {
     expect(authButtons.map(b => b.textContent)).toEqual(["Private Integration Token"]);
     expect(dialog(host)?.textContent).not.toContain("Token + headers");
     expect(dialog(host)?.textContent).toMatch(/Private Integration token/i);
-    // Saving without the locationId header is refused in the product's own words.
-    await type(fieldFor(host, "Token"), "pit-token-value-0123456789");
+    // 2026-11-05: the address is carried (never asked) and the credentials wear GHL's words.
+    expect(fieldFor(host, "Server URL")).toBeFalsy();
+    expect(dialog(host)?.textContent).toMatch(/Starts with pit-/i);
+    // Saving without the Location ID is refused in the provider's own words.
+    await type(fieldFor(host, "Private Integration Token"), "pit-token-value-0123456789");
     await click(byText(host, "Save configuration"));
-    expect(dialog(host)?.textContent).toMatch(/requires the locationId header/i);
-    // With the header present, the create carries the provider identity and the header.
-    await click(byText(host, "Add header"));
-    await type(fieldFor(host, "Header 1 name"), "locationId");
-    await type(fieldFor(host, "Header 1 value"), "loc-123");
+    expect(dialog(host)?.textContent).toMatch(/Enter the Location ID\./i);
+    // With it present, the create carries the provider identity, the carried address, and
+    // the header — name from the contract, value from the owner.
+    await type(fieldFor(host, "Location ID"), "loc-123");
     invoke.mockResolvedValueOnce({ data: { connection_id: "conn-ghl", config_generation: 1 }, error: null });
     await click(byText(host, "Save configuration"));
     const call = edgeCalls("create")[0];
@@ -1247,11 +1431,14 @@ describe("A turned-off tool offers only the recovery it actually has", () => {
 
   it("names Re-key for a turned-off tool that genuinely has it", async () => {
     // A successful re-key restores enabled=true, so for a re-keyable row this really is the path.
+    // This row carries the writer's disable shape (unconfigured + off), so its body names the
+    // never-finished recovery; the true "switch it back on" copy is pinned by the legacy
+    // turn-off test (a row whose status survived the disable).
     world({ rows: [row({ enabled: false, status: "unconfigured", auth_kind: "bearer" })] });
     const { host } = await render();
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
     expect(byText(host, "Re-key")).toBeTruthy();
-    expect(dialog(host)?.textContent).toMatch(/Re-key it to switch it back on/i);
+    expect(dialog(host)?.textContent).toMatch(/Re-key it to add what is missing/i);
   });
 });
 
@@ -1664,7 +1851,7 @@ describe("a tool the tenant already has is one tile, not two", () => {
     expect(tile!.querySelector(".ig-gw-badge")).toBeNull();
     expect(tile!.getAttribute("data-held")).toBe("");
     // And it says so to a screen reader, rather than leaving the label claiming an add flow.
-    expect(tile!.getAttribute("aria-label")).toContain("connected");
+    expect(tile!.getAttribute("aria-label")).toContain("already added");
   });
 
   it("opens the connection it represents rather than the add form", async () => {

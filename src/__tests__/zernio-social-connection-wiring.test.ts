@@ -45,7 +45,7 @@ describe("Zernio provider wiring", () => {
     expect(shared).toContain("export async function buildSocialProfileKey");
     expect(shared).toContain("export function normalizeSocialProfile");
     expect(adapter).toContain('from "./mod.ts"');
-    expect(endpoint).toContain('buildSocialProfileKey, SOCIAL_OAUTH_PLATFORMS, SocialProviderError } from "../_shared/social-provider/mod.ts"');
+    expect(endpoint).toContain('buildSocialProfileKey, GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SocialProviderError } from "../_shared/social-provider/mod.ts"');
   });
 
   it("carries the provider credential only in the Authorization header and never in a URL", () => {
@@ -59,7 +59,7 @@ describe("Zernio provider wiring", () => {
     expect(adapter).toContain('request("/posts"');
     expect(adapter).toContain('"Idempotency-Key": input.externalId');
     expect(adapter).toContain("publishNow: true");
-    expect(adapter).toContain('"provider_idempotency_or_dedup_conflict"');
+    expect(adapter).toContain('"provider_dispatch_unconfirmed"');
     expect(adapter).not.toContain("provider_publishing_unavailable");
     // The publish door injects Zernio alone — no retired-provider fallback anywhere.
     const publishDoor = read("supabase/functions/social-publish-command/index.ts");

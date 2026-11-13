@@ -709,6 +709,24 @@ describe("Zapier API and PAIGE tools are independent", () => {
     expect(assigned).toEqual(["https://api.zapier.com/v2/authorize?state=bound"]);
   });
 
+  it("names the management profile only after separate consequence review", async () => {
+    world();
+    invoke.mockImplementation((name: string, options: { body: Record<string, unknown> }) => {
+      if (name === "tenant-zapier-api-connect" && options.body.action === "status") return Promise.resolve({ data: { ok: true, connection: { tenant_id: "tenant-a", can_manage: true, state: "not_connected", can_authorize_workflow_management: true, permission_profiles_supported: true, failure_code: null, accessible_zap_count: null, last_checked_at: null, last_success_at: null, capabilities: [], limitations: [] } }, error: null });
+      if (name === "tenant-zapier-api-connect" && options.body.action === "oauth_begin") return Promise.resolve({ data: { ok: true, authorize_url: "https://api.zapier.com/v2/authorize?state=bound" }, error: null });
+      return Promise.resolve({ data: { ok: true }, error: null });
+    });
+    const { host } = await render(); await openCard(host, "mcp");
+    await click(panelButton(host, "Authorize workflow management"));
+    expect(invoke.mock.calls.some(call => call[0] === "tenant-zapier-api-connect" && call[1].body.action === "oauth_begin")).toBe(false);
+    expect(panel(host).textContent).toContain("Creating a Zap or replacing its steps can enable it immediately.");
+    await click(panelButton(host, "Continue to Zapier"));
+    const body = invoke.mock.calls.at(-1)![1].body;
+    expect(body).toEqual({ action: "oauth_begin", expected_tenant_id: "tenant-a", permission_profile: "workflow_management" });
+    expect(Object.keys(body).join(",")).not.toMatch(/token|secret|key|verifier/i);
+    expect(assigned).toEqual(["https://api.zapier.com/v2/authorize?state=bound"]);
+  });
+
   it("starts MCP OAuth from the exact Zapier server and clears it", async () => {
     world();
     invoke.mockResolvedValue({ data: { ok: true, authorize_url: "https://zapier.com/oauth/authorize?state=mcp" }, error: null });
@@ -1188,9 +1206,11 @@ describe("Team chat — Slack first-class, Teams honest", () => {
       server_url_host: "mcp.slack.com" }] });
     const { host } = await render();
     await openCard(host, "slack");
-    // The form's edit shape: the address field becomes "Full address" (re-key), and the
-    // Name field is absent — this is the EXISTING connection, not a fresh add.
-    expect(fieldFor(host, "Full address")).toBeTruthy();
+    // The form's edit shape for a CURATED provider (owner direction 2026-11-05): no address
+    // field at all — the endpoint is carried, not entered — and the Name field is absent;
+    // this is the EXISTING connection, not a fresh add.
+    expect(fieldFor(host, "Full address")).toBeFalsy();
+    expect(host.querySelector('[role="dialog"]')?.textContent).toMatch(/Paige already knows this provider’s address \(mcp\.slack\.com\)/i);
     expect(fieldFor(host, "Name")).toBeFalsy();
     const create = invoke.mock.calls.find(([name, options]) => name === "mcp-gateway" && options.body.action === "create");
     expect(create).toBeUndefined();
@@ -1202,7 +1222,9 @@ describe("Team chat — Slack first-class, Teams honest", () => {
     await openCard(host, "slack");
     const dialog = host.querySelector('[role="dialog"]');
     expect(dialog?.textContent).toContain("Slack");
-    expect((fieldFor(host, "Server URL") as HTMLInputElement)?.value).toBe("https://mcp.slack.com/mcp");
+    // Curated (2026-11-05): the address is stated, never asked — the create still carries it.
+    expect(fieldFor(host, "Server URL")).toBeFalsy();
+    expect(dialog?.textContent).toMatch(/Paige already knows this provider’s address \(mcp\.slack\.com\)/i);
     await type(fieldFor(host, "Name"), "Operations workspace");
     await type(fieldFor(host, "Token"), "xoxp-slack-user-token-123456");
     await click(byText(host, "Save configuration"));
@@ -1225,5 +1247,31 @@ describe("Team chat — Slack first-class, Teams honest", () => {
     // No gateway create ever fires for Teams — there is no native path to create.
     const create = invoke.mock.calls.find(([name, options]) => name === "mcp-gateway" && options.body.action === "create");
     expect(create).toBeUndefined();
+  });
+});
+
+
+describe("EXP07 slice 1 — the provider's connection apps on the Solo page (owner 2026-11-06)", () => {
+  it("renders Google, Discord and Telegram beside the social cards, in the shared groups", async () => {
+    world();
+    const { host } = await render();
+    for (const key of ["google", "discord", "telegram"]) {
+      const card = host.querySelector(`.ig-card[data-provider="app-${key}"]`);
+      expect(card, `missing connection app card: ${key}`).toBeTruthy();
+    }
+    expect(host.textContent).toContain("Reach people where they are.");
+    expect(host.textContent).toContain("Send mail and book time.");
+  });
+
+  it("opens the governed Social drawer for a connection app with its own kind label", async () => {
+    world();
+    const { host, root } = await render();
+    const googleCard = host.querySelector<HTMLButtonElement>('.ig-card[data-provider="app-google"]');
+    expect(googleCard).toBeTruthy();
+    await act(async () => { googleCard!.click(); await Promise.resolve(); });
+    const drawer = host.querySelector('[role="dialog"]');
+    expect(drawer?.textContent).toContain("Google");
+    expect(drawer?.textContent).toContain("Gmail, Calendar and more");
+    await act(async () => root.unmount());
   });
 });

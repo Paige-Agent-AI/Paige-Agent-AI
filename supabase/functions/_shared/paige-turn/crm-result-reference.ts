@@ -7,6 +7,8 @@ export type CrmResultMetadata = {
   receipt_recorded: boolean;
   external_effect?: boolean;
   record_reference?: ReadRecordLink;
+  /** Original native receipt locator only; the current reader must reauthorize it. */
+  correlation_id?: string;
 };
 
 // Existing single-contact native actions whose readback names the surviving contact.
@@ -28,6 +30,7 @@ const DEAL_ACTIONS = new Set([
 // immutable CLT references may be shorter. Never persist a name/profile as subject.
 const CLIENT_REFERENCE = /^CLT-[0-9A-F]{1,12}$/;
 const METADATA_KEYS = new Set(["action", "outcome", "receipt_recorded", "external_effect", "record_reference"]);
+const RECEIPT_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const object = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 
@@ -81,10 +84,17 @@ export function crmResultRecordReference(value: unknown): ReadRecordLink | null 
   return reference?.record_id ? reference : null;
 }
 
-/** The one additive field allowed beside the existing reduced history projection. */
-export function crmResultReferenceMetadata(value: unknown): Pick<CrmResultMetadata, "record_reference"> {
+/** Minimized original record/receipt locators, never a saved command or private readback. */
+export function crmResultReferenceMetadata(value: unknown): Pick<CrmResultMetadata, "record_reference" | "correlation_id"> {
   const reference = crmResultRecordReference(value);
-  return reference ? { record_reference: reference } : {};
+  if (!reference) return {};
+  const result = object(value);
+  // Only this selected native update adopts receipt recovery. Older rows and
+  // other action families retain their original reduced reference contract.
+  const correlation = result?.action === "deal.update" ? result.correlation_id : null;
+  return { record_reference: reference,
+    ...(typeof correlation === "string" && correlation.length === 36 && RECEIPT_UUID.test(correlation)
+      ? { correlation_id: correlation.toLowerCase() } : {}) };
 }
 
 /** Legacy reduced rows remain generic; persisted raw URLs/readback/extra payload never hydrate. */
@@ -97,6 +107,7 @@ export function readCrmResultMetadata(value: unknown): CrmResultMetadata[] {
       ...(typeof row.external_effect === "boolean" ? { external_effect: row.external_effect } : {}),
       // Historical raw payloads are never evidence for a new reference. Only the
       // separately projected field may hydrate; injected old payload fields fail closed.
-      ...(Object.keys(row).some(key => !METADATA_KEYS.has(key)) ? {} : crmResultReferenceMetadata(row)) }];
+      ...(Object.keys(row).some(key => !METADATA_KEYS.has(key)
+        && !(key === "correlation_id" && row.action === "deal.update")) ? {} : crmResultReferenceMetadata(row)) }];
   });
 }

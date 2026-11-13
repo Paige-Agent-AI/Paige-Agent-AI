@@ -39,15 +39,16 @@ export async function readDurableContinuation(
   reference: DurableContinuationReference,
   caller: ContinuationReadCaller,
   _budgetDb: BudgetDb | null,
-): Promise<ContinuationProjection | null> {
+): Promise<(ContinuationProjection & { completion?: { resultRef: string; receiptRef: string } }) | null> {
   try {
     if (!reference || ![reference.threadId, reference.intentId, reference.workId].every(UUID)) return null;
     const pin = Object.freeze({ ...reference });
     const auth = await caller.auth.getUser();
     if (auth.error || !UUID(auth.data.user?.id)) return null;
-    const read = await caller.rpc('read_paige_durable_continuation', {
+    const args = {
       _thread: pin.threadId, _intent: pin.intentId, _work: pin.workId,
-    });
+    };
+    const read = await caller.rpc('read_paige_durable_continuation', args);
     if (read.error || !object(read.data)) return null;
     const r = read.data;
     if (r.actorId !== auth.data.user!.id || r.tenantId == null || !UUID(r.tenantId) ||
@@ -88,7 +89,7 @@ export async function readDurableContinuation(
       // never mistaken for an independent reconstruction check.
       originalObjective: r.canonicalObjective,
     };
-    return projectDurableContinuation({
+    const projection = projectDurableContinuation({
       work: {
         id: pin.workId,
         tenant_id: r.tenantId,
@@ -116,6 +117,42 @@ export async function readDurableContinuation(
       },
       now: new Date().toISOString(),
     });
+    if (r.completion === undefined) return projection;
+    const completion = r.completion;
+    const document = r.workKind === 'document_authoring' && r.capabilityKey === 'document_generate';
+    const research = r.workKind === 'research' && r.capabilityKey === 'deep_research';
+    const resultField = document ? 'content_id' : 'run_id';
+    if (!projection.eligibleForContext || projection.state !== 'succeeded'
+      || (!document && !research)
+      || !object(completion) || !UUID(completion.resultRef) || !UUID(completion.receiptRef)
+      || !object(r.terminalOutcome) || r.terminalOutcome[resultField] !== completion.resultRef) return null;
+    if (research && (r.workIntentId !== pin.intentId || completion.resultRef !== pin.workId
+      || r.terminalOutcome.receipt_id !== completion.receiptRef
+      || r.terminalOutcome.receipt_outcome !== 'capability_succeeded'
+      || typeof r.terminalOutcome.report_sha256 !== 'string'
+      || !/^[a-f0-9]{64}$/.test(r.terminalOutcome.report_sha256))) return null;
+
+    const tenant = await caller.rpc('current_user_tenant_id');
+    if (tenant.error || tenant.data !== r.tenantId) return null;
+    const fresh = await caller.rpc('read_paige_durable_continuation', args);
+    if (fresh.error || !object(fresh.data)) return null;
+    const current = fresh.data;
+    const fields = ['actorId', 'tenantId', 'workId', 'threadId', 'intentId', 'workIntentId',
+      'scopeEpoch', 'capabilityKey', 'workKind', 'canonicalObjective', 'status', 'settledAt', 'approvalPending'];
+    if (fields.some((key) => current[key] !== r[key]) || !object(current.terminalOutcome)
+      || current.terminalOutcome.verified_readback !== true || current.terminalOutcome[resultField] !== completion.resultRef
+      || !object(current.completion) || current.completion.resultRef !== completion.resultRef
+      || current.completion.receiptRef !== completion.receiptRef) return null;
+    if (research) {
+      if (current.terminalOutcome.receipt_id !== completion.receiptRef
+        || current.terminalOutcome.receipt_outcome !== 'capability_succeeded'
+        || current.terminalOutcome.report_sha256 !== r.terminalOutcome.report_sha256) return null;
+      const [identity, workspace] = await Promise.all([
+        caller.auth.getUser(), caller.rpc('current_user_tenant_id'),
+      ]);
+      if (identity.error || identity.data.user?.id !== r.actorId || workspace.error || workspace.data !== r.tenantId) return null;
+    }
+    return { ...projection, completion: { resultRef: completion.resultRef, receiptRef: completion.receiptRef } };
   } catch {
     return null;
   }

@@ -39,6 +39,7 @@ export const DESTINATION_LABEL: Readonly<Record<ReadLinkDestination, string>> = 
   sales_invoices: "Open invoices",
   sales_collections: "Open collections",
   operations_work: "Open delivery work",
+  operations_weekly_plan: "Review and save weekly plan",
   team_hub: "Open Team Hub",
   business_time_zone: "Open business time zone setting",
   executive: "Open Executive",
@@ -90,7 +91,7 @@ export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, a
       : resolved.status === "exact" && link.destination === "pipeline"
         ? "Open deal"
         : resolved.status === "exact" && link.destination === "operations_work"
-          ? link.record_kind === "planning_item" ? "Open work item" : "Open task"
+          ? link.record_kind === "planning_plan" ? "Open saved plan" : link.record_kind === "planning_item" ? "Open work item" : "Open task"
           : resolved.status === "exact" && link.destination === "business_game_plan"
             ? "Open Strategic Play"
             : resolved.status === "exact" && link.destination === "business_knowledge"

@@ -1,6 +1,7 @@
 import { CheckCircle2, ExternalLink } from "lucide-react";
 import { workspaceLinkTarget, workspaceLinkTier, type WorkspaceLinkTenant } from "@/lib/links/workspaceLinks";
-import { crmResultRecordReference, type CrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
+import { crmResultRecordReference, crmResultReferenceMetadata, type CrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
+import { OpportunityResultReceipt } from "./OpportunityResultReceipt";
 
 export type PaigeCrmResult = CrmResultMetadata & {
   readback?: Record<string, unknown> | null;
@@ -33,6 +34,7 @@ export function PaigeCrmResultCard({ result, account }: { result: PaigeCrmResult
   const href = target?.to || liveLocator?.deep_link || liveLocator?.surface_url || null;
   const exact = target?.status === "exact" || (!target && liveLocator?.deep_link_status === "exact");
   const record = String(reference?.subject || result.readback?.client_ref || result.readback?.title || result.record_locator?.record_id || "CRM record");
+  const correlation = soloTaskOrDeal && target ? crmResultReferenceMetadata(result).correlation_id : null;
   return (
     <div className="mt-2 rounded-md border border-border bg-muted/30 p-3" data-paige-crm-result>
       <div className="flex items-start gap-2">
@@ -50,6 +52,8 @@ export function PaigeCrmResultCard({ result, account }: { result: PaigeCrmResult
                 : exact ? "Open exact record" : "Open CRM surface"}<ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           )}
+          {correlation && reference?.record_id && account?.account_number != null && <OpportunityResultReceipt
+            dealId={reference.record_id} correlationId={correlation} accountNumber={account.account_number} />}
         </div>
       </div>
     </div>

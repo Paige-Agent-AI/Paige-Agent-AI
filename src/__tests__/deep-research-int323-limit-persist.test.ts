@@ -143,8 +143,8 @@ describe("INT-323 — both sites (research + empty prose → the copy rides the 
     expect(site2).toContain("finalAssistantText = limited;");
   });
 
-  it("proofs 2/3 (persist half): the ONE ordinary persist site saves the SAME variable and excludes an already-recorded approval pause", () => {
-    const guard = "if (!durableApprovalPause && payloadThreadId && finalAssistantText.trim()) {";
+  it("proofs 2/3 (persist half): the ONE ordinary persist site saves the SAME variable and excludes already-recorded approval and Research pauses", () => {
+    const guard = "if (!durableApprovalPause && !(interactive && durableResearchPause) && payloadThreadId && finalAssistantText.trim()) {";
     expect(core).toContain(guard);
     const site = core.indexOf(guard);
     const persistCall = core.slice(site, core.indexOf("} catch", site));
@@ -153,7 +153,7 @@ describe("INT-323 — both sites (research + empty prose → the copy rides the 
     const sites: ts.IfStatement[] = [];
     const calls: ts.CallExpression[] = [];
     const visit = (node: ts.Node) => {
-      if (ts.isIfStatement(node) && node.expression.getText(source) === "!durableApprovalPause && payloadThreadId && finalAssistantText.trim()") sites.push(node);
+      if (ts.isIfStatement(node) && node.expression.getText(source) === "!durableApprovalPause && !(interactive && durableResearchPause) && payloadThreadId && finalAssistantText.trim()") sites.push(node);
       ts.forEachChild(node, visit);
     };
     visit(source);
@@ -169,12 +169,14 @@ describe("INT-323 — both sites (research + empty prose → the copy rides the 
     ]);
     // Evaluate the production predicate: ordinary research still persists, but a
     // pause already saved through canonical settlement cannot be persisted twice.
-    const shouldPersist = new Function("durableApprovalPause", "payloadThreadId", "finalAssistantText",
+    const shouldPersist = new Function("durableApprovalPause", "durableResearchPause", "payloadThreadId", "finalAssistantText", "interactive",
       js(`return (${sites[0].expression.getText(source)});`));
-    expect(shouldPersist(false, "thread", "Research limit reached.")).toBeTruthy();
-    expect(shouldPersist(true, "thread", "Research limit reached.")).toBeFalsy();
-    expect(shouldPersist(false, null, "Research limit reached.")).toBeFalsy();
-    expect(shouldPersist(false, "thread", "   ")).toBeFalsy();
+    expect(shouldPersist(false, false, "thread", "Research limit reached.")).toBeTruthy();
+    expect(shouldPersist(true, false, "thread", "Research limit reached.")).toBeFalsy();
+    expect(shouldPersist(false, true, "thread", "Original Research accepted.", {})).toBeFalsy();
+    expect(shouldPersist(false, true, "thread", "Ordinary Live answer.")).toBeTruthy();
+    expect(shouldPersist(false, false, null, "Research limit reached.")).toBeFalsy();
+    expect(shouldPersist(false, false, "thread", "   ")).toBeFalsy();
   });
 
   it("proof 5 — ordinary FINAL research turns (prose present) can never enter either site", () => {

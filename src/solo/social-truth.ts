@@ -86,6 +86,12 @@ export const SOCIAL_NETWORKS = [
   { key: "youtube", label: "YouTube", hint: "@yourbusiness" },
   { key: "tiktok", label: "TikTok", hint: "@yourbusiness" },
   { key: "x", label: "X", hint: "@yourbusiness" },
+  { key: "threads", label: "Threads", hint: "@yourbusiness" },
+  // The provider's messaging post targets (owner 2026-11-06: connected Discord and
+  // Telegram channels become publishable). Readiness still comes from the presence
+  // read alone — an unconnected channel says "Not connected", never "probably fine".
+  { key: "discord", label: "Discord", hint: "your server" },
+  { key: "telegram", label: "Telegram", hint: "t.me/yourchannel" },
 ] as const;
 
 export type SocialNetworkKey = (typeof SOCIAL_NETWORKS)[number]["key"];
@@ -287,6 +293,12 @@ export type SocialCommandInput = {
 const KPI_ORDER = ["waiting", "channels", "captured", "queue", "placements"] as const;
 
 export function buildKpis(input: SocialCommandInput): SocialKpi[] {
+  // Owner directive 2026-11-04: a live-connected account shows up on this tab. These two tiles
+  // asserted "no social account can be connected yet" unconditionally — written when the connect
+  // door did not exist yet. The door is live now, so the assertion is keyed on the connection
+  // lifecycle's own answer instead of on nothing: with a connected account the tiles still report
+  // their true empty figures, but never claim the capability is absent (§13).
+  const connectedNow = input.connections.filter((c) => c.status === "connected").length;
   const tiles: SocialKpi[] = [
     {
       id: "channels",
@@ -311,15 +323,21 @@ export function buildKpis(input: SocialCommandInput): SocialKpi[] {
       id: "queue",
       label: "Publishing queue",
       glyph: "clock",
-      figure: absent("No account is connected to publish through, so nothing can be queued for you."),
-      detail: "Connecting an account is what turns this on. No social account can be connected yet.",
+      figure: absent(connectedNow
+        ? "An account is connected, and nothing is queued yet."
+        : "No account is connected to publish through, so nothing can be queued for you."),
+      detail: connectedNow
+        ? "A queue fills only when a post is waiting to publish through a connected account. None is."
+        : "Connecting an account is what turns this on. No social account can be connected yet.",
     },
     {
       id: "placements",
       label: "Recorded placements",
       glyph: "spark",
       figure: absent("No supported provider has told PAIGE where any of your work went live."),
-      detail: "A connection is what turns this on. No social account can be connected yet.",
+      detail: connectedNow
+        ? "A connection exists. When a post goes live through it, the provider's own report is what appears here."
+        : "A connection is what turns this on. No social account can be connected yet.",
     },
     {
       id: "waiting",
@@ -483,6 +501,42 @@ export function buildChannels(handles: SocialHandle[], connections: Array<Social
   });
 }
 
+export { CONNECTION_COPY };
+
+/**
+ * One lifecycle-live connection, prepared for the Social tab's connections panel.
+ *
+ * Owner directive 2026-11-04: live-connected accounts "should show up in the Marketing Social
+ * subtab" — not only in Settings → Integrations where they are managed. This builder is that
+ * showing-up: every connection row the lifecycle still holds (anything but `disconnected`),
+ * each with the network's display name, the connected identity's own label, and its state in the
+ * lifecycle's own vocabulary. It produces no figure and no inference — a connection has never
+ * granted audience, reach or schedule, and the panel says so rather than decorating the row.
+ */
+export type SocialConnectionEntry = {
+  network: string;
+  networkLabel: string;
+  status: SocialConnectionStatus;
+  label: string | null;
+  verifiedAt: string | null;
+  profiles: number;
+};
+
+export function buildConnectionsPanel(
+  connections: Array<SocialChannelConnection & { network: string }>,
+): SocialConnectionEntry[] {
+  return connections
+    .filter((c) => c.status !== "disconnected")
+    .map((c) => ({
+      network: c.network,
+      networkLabel: NETWORK_LABEL[c.network] ?? c.network,
+      status: c.status,
+      label: c.label,
+      verifiedAt: c.verifiedAt,
+      profiles: c.profiles,
+    }));
+}
+
 /** The desks whose filed work belongs on a growth surface. Slugs are the seeded §16 department set. */
 const GROWTH_DESKS = new Set(["marketing", "sales", "client_experience", "owner_ops"]);
 
@@ -531,11 +585,34 @@ export function buildBrief(input: SocialCommandInput): { headline: string; body:
     };
   }
 
+  // Owner directive 2026-11-04: when an account is live-connected it shows up HERE, in the brief
+  // itself — named, bounded by what connection grants, and pointing at the one place connections
+  // are managed — even when nothing else is on record yet (a fresh workspace whose first act was
+  // connecting an account still reads "connected", not "PAIGE does not know which accounts are
+  // yours"). The absence sentence stays exactly as it was for the zero-connection workspace.
+  const connected = input.connections.filter((c) => c.status === "connected");
+  const named = connected
+    .map((c) => `${NETWORK_LABEL[c.network] ?? c.network}${c.label ? ` (${c.label})` : ""}`)
+    .join(", ");
+  const connectionSentence = `${connected.length === 1 ? "One account is connected" : `${connected.length} accounts are connected`} — ${named}. Connection is consent to read the account, not to publish: posting turns on only through an approved plan. Manage connections in Settings → Integrations.`;
+
   if (!parts.length) {
+    if (connected.length) {
+      return {
+        headline: "PAIGE is working from what you have given her.",
+        body: connectionSentence,
+      };
+    }
     return {
       headline: "Nothing is on record yet.",
       body:
         "PAIGE does not know which accounts are yours, and you have not published anything for her to work with. Name the accounts you post from and she has something to draft against — that is the whole of what this page needs from you today.",
+    };
+  }
+  if (connected.length) {
+    return {
+      headline: "PAIGE is working from what you have given her.",
+      body: `${parts.join(", ")}. ${connectionSentence}`,
     };
   }
   return {

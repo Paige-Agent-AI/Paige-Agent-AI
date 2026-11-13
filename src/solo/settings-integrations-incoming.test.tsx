@@ -1,6 +1,6 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IntegrationsGatewaySection } from "./settings-integrations-gateway";
 import { useMcpGateway } from "./data/useMcpGateway";
 
@@ -302,4 +302,49 @@ it("protects a new source name against Escape before passive effects", async () 
   });
   expect(host.querySelector('[role="dialog"]')).not.toBeNull();
   expect(host.textContent).toContain("Discard these unsaved details?");
+});
+
+
+describe("owner direction 2026-11-05: an outbound connection drawer never pitches incoming setup", () => {
+  const outboundRow = { ...connection, connection_id: "connection-ghl", provider_key: "gohighlevel",
+    label: "GoHighLevel", address_configured: true, credentials_configured: true, configured: true,
+    auth_kind: "bearer", status: "connected", health: "healthy" };
+  // The shared beforeEach mounts with the DEFAULT connection row — the list read already ran with
+  // it, so rebinding `rows` alone leaves the mounted wall stale (the read never re-fires; that is
+  // exactly what felled the first cut of these tests). Swap the connection set and REMOUNT so
+  // this describe's wall genuinely renders the GHL row its drawer is opened from.
+  const mountWith = async (contactSync: ReturnType<typeof sync>) => {
+    await act(async () => root.unmount()); host.remove();
+    rows = [outboundRow]; saved = contactSync;
+    host = document.createElement("div"); document.body.append(host);
+    root = createRoot(host);
+    await act(async () => root.render(<Subject />));
+  };
+  const openGhl = async () => {
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-gateway-tool="connection-ghl"]')!.click());
+  };
+
+  it("a never-configured incoming grant renders NOTHING on the outbound drawer", async () => {
+    await mountWith(sync({ connection_id: "connection-ghl" }));
+    await openGhl();
+    expect(host.querySelector('[role="dialog"]')!.textContent).not.toContain("Incoming contacts");
+    expect(button("Set up incoming contacts")).toBeUndefined();
+    // Hidden must mean hidden-but-alive, never frozen: the initial read still fired, so a
+    // configured grant on a later mount can un-hide this section (regression guard for the
+    // early-return-above-the-hooks bug the non-author review caught).
+    expect(h.rpc.mock.calls.some(c => c[0] === "get_mcp_contact_sync")).toBe(true);
+  });
+
+  it("a CONFIGURED incoming grant keeps its manage affordances on the outbound drawer", async () => {
+    await mountWith(sync({ connection_id: "connection-ghl", enabled: true, configured_enabled: true, credential_configured: true, generation: 3, granted_at: "2026-11-01T12:00:00Z" }));
+    await openGhl();
+    const dialog = host.querySelector('[role="dialog"]')!;
+    expect(dialog.textContent).toContain("Incoming contacts");
+    expect(button("Replace sync credential")).toBeTruthy();
+    expect(button("Revoke incoming access")).toBeTruthy();
+    expect(button("Set up incoming contacts")).toBeUndefined();
+    // The section is visible BECAUSE the initial read resolved configured — prove the read ran
+    // rather than a default-visible render.
+    expect(h.rpc.mock.calls.some(c => c[0] === "get_mcp_contact_sync")).toBe(true);
+  });
 });

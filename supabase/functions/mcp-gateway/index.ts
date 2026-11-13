@@ -24,7 +24,7 @@ import { corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
 import { runVerify } from "../_shared/mcp-gateway/verify.ts";
 import { readCreateInput, runCreate } from "../_shared/mcp-gateway/create.ts";
 import { runOauthBegin } from "../_shared/mcp-gateway/oauth.ts";
-import { readApproveInput, runApprove } from "../_shared/mcp-gateway/approve.ts";
+import { makeReadToolPin, readApproveInput, runApprove } from "../_shared/mcp-gateway/approve.ts";
 import { readExecuteInput, runExecute } from "../_shared/mcp-gateway/execute.ts";
 import { readToolsInput, runTools } from "../_shared/mcp-gateway/tools.ts";
 
@@ -53,7 +53,13 @@ Deno.serve(async (req) => {
     // touch it (§59): create reads no secret and writes no probe, so its authority is the writer
     // RPC's own in-body §9 gate, resolved through the caller's userClient.
     const admin = createClient(supabaseUrl, serviceKey);
-    const result = await runVerify({ userClient, admin }, { connectionId, expectedTenantId });
+    // readToolPin: the connect-consent pass (owner decision 2026-11-05) resolves each discovered
+    // tool's live pin through the same one-home reader the approve branch uses — required by
+    // VerifyDeps so a verify can never ship without its consent seam wired.
+    const result = await runVerify(
+      { userClient, admin, readToolPin: makeReadToolPin(admin) },
+      { connectionId, expectedTenantId },
+    );
     return jsonResponse(result.body, result.httpStatus);
   }
 
@@ -88,20 +94,10 @@ Deno.serve(async (req) => {
     // live-verified tool pin server-side (neither is client-visible). The approval WRITE itself goes
     // through the caller's userClient, so the writer's in-body admin+tenant gate is the authority.
     const admin = createClient(supabaseUrl, serviceKey);
-    // The tool pin lives in mcp_connection_tools (service-role read only) — resolve it with the admin
-    // client. Injected as a seam so runApprove stays headless-testable (§39).
-    const readToolPin = async (connectionId: string, toolName: string): Promise<string | null> => {
-      const { data, error } = await admin
-        .from("mcp_connection_tools")
-        .select("pin")
-        .eq("connection_id", connectionId)
-        .eq("tool_name", toolName)
-        .maybeSingle();
-      if (error || !data) return null;
-      return typeof (data as { pin?: unknown }).pin === "string" ? (data as { pin: string }).pin : null;
-    };
+    // The tool pin lives in mcp_connection_tools (service-role read only) — resolved through the
+    // one-home makeReadToolPin builder (shared with the verify branch's connect-consent pass).
     const result = await runApprove(
-      { userClient, admin, readToolPin },
+      { userClient, admin, readToolPin: makeReadToolPin(admin) },
       readApproveInput(body, expectedTenantId),
     );
     return jsonResponse(result.body, result.httpStatus);

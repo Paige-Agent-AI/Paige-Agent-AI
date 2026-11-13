@@ -47,6 +47,10 @@ import type { QuickChip } from "@/components/paige/commandCenterTypes";
 import { usePaigeThreads, type PaigeThread } from "@/hooks/usePaigeThreads";
 import { readOriginalReminderHistory, type OriginalReminderHistory } from "@/components/chat/reminderHistory";
 import { originalSpecialistOrigin, readOriginalSpecialistHistory, type OriginalSpecialistHistory } from "@/components/chat/specialistHistory";
+import { OriginalDocumentWork } from "@/components/chat/OriginalDocumentWork";
+import { originalDocumentReference, type OriginalDocumentReference } from "@/components/chat/documentWorkRecovery";
+import { OriginalResearchWork } from "@/components/chat/OriginalResearchWork";
+import { originalResearchReference, type OriginalResearchReference } from "@/components/chat/researchWorkRecovery";
 import { OriginalSpecialistResult } from "@/components/chat/OriginalSpecialistResult";
 import { readOriginalCuraPreparationHistory, preparationWorkLabel, type OriginalCuraPreparationHistory, type OriginalPreparationScope } from "@/components/chat/curaPreparationHistory";
 import { useScopedUserId } from "@/hooks/useScopedUserId";
@@ -58,6 +62,7 @@ import { DocumentAttachmentChip } from "@/components/chat/DocumentAttachmentChip
 import { ChatKnowledgeDocuments } from "@/components/chat/ChatKnowledgeDocuments";
 import { DocumentMessageBubble } from "@/components/chat/DocumentMessageBubble";
 import { MessageAudioButton } from "@/components/chat/MessageAudioButton";
+import { PaigeDocumentWindowHost } from "@/components/paige/chat/PaigeDocumentWindow";
 import { PaigeArtifactCard, type PaigeArtifact } from "@/components/paige/chat/PaigeArtifactCard";
 import { ExtractionProposalCard, type ExtractionProposal } from "@/components/chat/ExtractionProposalCard";
 import { PaigeCompactingCard, type CompactingSignal } from "@/components/paige/chat/PaigeCompactingCard";
@@ -164,6 +169,8 @@ type Message = {
   originalCuraPreparationHistory?: OriginalCuraPreparationHistory;
   originalCuraPreparationHistoryStatus?: "checking" | "unverified";
   originalSpecialistOrigin?: OriginalPreparationScope;
+  originalDocumentWork?: OriginalDocumentReference;
+  originalResearchWork?: OriginalResearchReference;
   originalSpecialistHistory?: OriginalSpecialistHistory;
   originalSpecialistHistoryStatus?: "checking" | "unverified";
   recoveredApprovalExpiresAt?: string;
@@ -1254,6 +1261,8 @@ const PaigeAIChatInner = ({
           queued: queued?.length ? queued : undefined,
           confirm: confirm?.length ? confirm : undefined,
           confirmResolved: true,
+          ...(originThreadId ? { originalDocumentWork: originalDocumentReference(t, originThreadId) ?? undefined } : {}),
+          ...(originThreadId ? { originalResearchWork: originalResearchReference(t, originThreadId) ?? undefined } : {}),
           ...(activeTenantId && originThreadId ? { originalSpecialistOrigin:
             originalSpecialistOrigin(t, { threadId: originThreadId, tenantId: activeTenantId }) ?? undefined } : {}),
           // This only offers an inert read. Native status re-proves the actual
@@ -2100,6 +2109,7 @@ const PaigeAIChatInner = ({
       let proposalThisTurn: ExtractionProposal | null = null;
       // C4c — the question this answer ended on, if PAIGE paused to ask (`paige_choices`).
       let askThisTurn: Message["ask"] | undefined;
+      let nativeWorkMayExist = false;
       let streamDone = false;
 
       setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: "", approvalOutcome: outcomeThisTurn }]);
@@ -2130,6 +2140,10 @@ const PaigeAIChatInner = ({
         if (frame.type === "malformed") { halted = true; continue; }
         if (frame.type === "turn") {
           const turnFrame = frame.turn;
+          // A read hint only. Research can retain an earlier build/multi-agent
+          // mode, and unknown effects stay INTERRUPTED. The protected stored
+          // turn alone decides whether this intent has a Research locator.
+          if (turnFrame.state === "WAIT_WORK" || turnFrame.state === "INTERRUPTED") nativeWorkMayExist = true;
           // C4a — `resumed` sticks for the rest of the read: later frames (the terminal) replace the
           // frame, never the fact that this answer carries an approval forward.
           updateLiveTurn(assistantId, (t) => ({ ...t, frame: turnFrame, resumed: t.resumed || (turnFrame.event === "resumed" && !t.answering) }));
@@ -2365,6 +2379,25 @@ const PaigeAIChatInner = ({
         // turn + title write run in the edge fn's waitUntil after the stream
         // closes, so refresh once now and again shortly to catch that commit.
         threadsApi.onTurnPersisted();
+        if (typedInteractive && nativeWorkMayExist && threadId) {
+          const originalThreadId = threadId;
+          void (async () => {
+            try {
+              if (!ticketAccepted(requestTicket) || hydratedFromRef.current !== originalThreadId) return;
+              const turns = await threadsApi.loadTurns(originalThreadId);
+              if (!ticketAccepted(requestTicket) || hydratedFromRef.current !== originalThreadId) return;
+              const canonical = turnsToMessages(turns, originalThreadId).messages.find(message =>
+                message.originalResearchWork?.threadId === originalThreadId &&
+                message.originalResearchWork.intentId === requestIntentId);
+              if (!canonical) return;
+              // Replace only this live answer. Never reset history, unsent
+              // composer text, a newer send or a newly selected conversation.
+              setMessages(current => ticketAccepted(requestTicket) && hydratedFromRef.current === originalThreadId
+                ? preserveSettledResearchHistory(current.map(message => message.id === assistantId ? canonical : message), current)
+                : current);
+            } catch { /* Inspection failed: retain the original transcript, never replay. */ }
+          })();
+        }
         window.setTimeout(() => {
           if (ticketAccepted(requestTicket)) threadsApi.onTurnPersisted();
         }, 1800);
@@ -3366,6 +3399,10 @@ const PaigeAIChatInner = ({
   };
 
   return (
+    <PaigeDocumentWindowHost enabled={soloTenantSafety && !platform} scope={soloTenantSafety && !platform && scopedUserId && activeTenantId &&
+      activeThreadId && composerScope.writable ? {
+        key: JSON.stringify([requestScopeEpoch, activeThreadId]), actorId: scopedUserId, tenantId: activeTenantId,
+      } : null}>
     <div data-solo-chat-engine={soloTenantSafety ? "true" : undefined} className={fill ? "w-full h-full" : `max-w-4xl mx-auto w-full ${hideHeader ? "h-full" : "h-[calc(100vh-4rem)]"}`}
       onDragOver={preventFileNavigation} onDrop={preventFileNavigation}>
       <div className={enableHistory ? (cd ? "flex h-full min-h-0 gap-3.5" : "flex h-full min-h-0 gap-4 px-3 pt-3 md:px-4") : "flex flex-col h-full"}>
@@ -3737,6 +3774,31 @@ const PaigeAIChatInner = ({
                               if (origin.threadId !== activeThreadId) return;
                               void restoreOriginalReminderHistory(origin.threadId, [], () => composerScopeRef.current.writable, origin, "specialist");
                             }} />
+                        )}
+                        {soloTenantSafety && !platform && scopedUserId && activeTenantId &&
+                          composerScope.writable && !isLoading && message.originalDocumentWork &&
+                          message.originalDocumentWork.threadId === activeThreadId && (
+                            <OriginalDocumentWork
+                              key={`${scopedUserId}:${activeTenantId}:${requestScopeEpoch}:${message.originalDocumentWork.workId}`}
+                              reference={message.originalDocumentWork}
+                              actorId={scopedUserId}
+                              tenantId={activeTenantId}
+                              current={() => requestScopeRef.current.epoch === requestScopeEpoch &&
+                                composerScopeRef.current.writable && !submissionPreflightRef.current}
+                              artifacts={messages.flatMap(turn => turn.artifacts ?? [])}
+                            />
+                        )}
+                        {soloTenantSafety && !platform && scopedUserId && activeTenantId &&
+                          composerScope.writable && !isLoading && message.originalResearchWork &&
+                          message.originalResearchWork.threadId === activeThreadId && (
+                            <OriginalResearchWork
+                              key={`${scopedUserId}:${activeTenantId}:${requestScopeEpoch}:${message.originalResearchWork.workId}`}
+                              reference={message.originalResearchWork}
+                              actorId={scopedUserId}
+                              tenantId={activeTenantId}
+                              current={() => requestScopeRef.current.epoch === requestScopeEpoch &&
+                                composerScopeRef.current.writable && !submissionPreflightRef.current}
+                            />
                         )}
                         {/* #29 — inline handoff cards for the deliverables Paige produced this turn. Open
                             renders the real artifact; Send prefills the composer so Paige drives the send
@@ -4198,6 +4260,7 @@ const PaigeAIChatInner = ({
         </div>
       </div>
     </div>
+    </PaigeDocumentWindowHost>
   );
 };
 

@@ -28,6 +28,11 @@ import { makeRpcConnectionLoader } from "./connection.ts";
 import { runReadOnlyIntake } from "./intake.ts";
 import type { IntakeResult } from "./types.ts";
 import type { McpAuth, McpToolFingerprint } from "../mcp-client.ts";
+import {
+  autoApproveDiscoveredTools,
+  type AutoApproveOutcome,
+} from "./auto-approve.ts";
+import type { ApproveDeps } from "./approve.ts";
 
 // The one thing runVerify needs from a Supabase client: an awaitable `rpc`. The real
 // `SupabaseClient.rpc()` returns a PostgrestFilterBuilder — a thenable (`PromiseLike`), NOT a full
@@ -42,6 +47,13 @@ export type VerifyDeps = {
   userClient: RpcClient;
   /** service-role client — the ONLY thing allowed to read the decrypted secret and write the probe. */
   admin: RpcClient;
+  /** Service-role read of the live-verified tool pin (mcp_connection_tools) — the seam connect-consent
+   *  approvals resolve pins through (owner decision 2026-11-05). The wrapper builds it beside its
+   *  client, exactly as the approve branch does; required so the wrapper CANNOT silently ship a
+   * verify that forgot consent. */
+  readToolPin: ApproveDeps["readToolPin"];
+  /** Injectable spy seam for headless tests; defaults to the real connect-consent pass. */
+  autoApprove?: typeof autoApproveDiscoveredTools;
 };
 
 export type VerifyInput = {
@@ -260,6 +272,28 @@ export async function runVerify(deps: VerifyDeps, input: VerifyInput): Promise<V
     return { httpStatus: 409, body: { ok: false, status: "pending_verification", tool_count: 0, error_code: "config_changed_during_verify" } };
   }
 
+  // CONNECT-CONSENT (owner decision 2026-11-05, ANT-164 3c731bae; amended same day "EVERYTHING
+  // SHOULD BE APPROVED"): "all the tools approved once the connection is made." A healthy catalog
+  // just persisted IS the operator's consent moment — this check runs as the connecting admin
+  // (every gate above re-proved that), so EVERY discovered tool receives a durable permanent
+  // approval through the same per-tool authority path the drawer's Approve button used. Reached
+  // ONLY after the probe write applied — a failed intake or a re-key race returned above, so
+  // consent never attaches to a catalog this verify did not just persist. Per-tool failures are
+  // reported in the body, never fatal: the connection stands, transient failures retry on the
+  // next check, and the one permanent class (an unrecordable tool NAME) surfaces only as the
+  // failed count — see auto-approve.ts's honest-degrade note.
+  let consent: AutoApproveOutcome | null = null;
+  if (intake.ok) {
+    consent = await (deps.autoApprove ?? autoApproveDiscoveredTools)(
+      { userClient, admin, readToolPin: deps.readToolPin },
+      {
+        connectionId: id,
+        expectedTenantId,
+        tools: intake.tools.map((t: McpToolFingerprint) => ({ name: t.name, effects: t.effects })),
+      },
+    );
+  }
+
   return {
     httpStatus: 200,
     body: {
@@ -268,6 +302,9 @@ export async function runVerify(deps: VerifyDeps, input: VerifyInput): Promise<V
       health: intake.health,
       tool_count: intake.ok ? intake.tools.length : 0,
       error_code: intake.errorCode,
+      ...(consent
+        ? { auto_approved: consent.approved.length, auto_approve_failed: consent.failed.length }
+        : {}),
     },
   };
 }

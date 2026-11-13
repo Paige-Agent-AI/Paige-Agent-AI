@@ -28,9 +28,10 @@
 // caller without executing anything.
 //
 // SECRET DISCIPLINE (§13). The endpoint + credential are decrypted only inside the runner's loader,
-// used for one session, and dropped. This handler's response carries a closed outcome vocabulary
-// (never provider prose, never a secret): the runner outcome, its closed code, the run id, and
-// whether the canonical-Rail receipt persisted.
+// used for one session, and dropped. This handler's response carries the runner outcome, its closed
+// code, the run id, whether the canonical-Rail receipt persisted, and — for a VALIDATED clean
+// success only — a bounded, sanitized `data` projection of the tool result (never secrets, never an
+// unvalidated payload, never provider prose for any non-success outcome).
 
 import { runConnectionCapability } from "./runner.ts";
 import { makeRpcConnectionLoader } from "./connection.ts";
@@ -190,7 +191,11 @@ export async function runExecute(deps: ExecuteDeps, input: ExecuteInput): Promis
 
   return {
     httpStatus: httpForOutcome(result.outcome),
-    body: { outcome: result.outcome, code: result.code, run_id: result.runId, recorded },
+    // `data` is the bounded, sanitized projection of a VALIDATED clean result (read_observed /
+    // executed only — null everywhere else, see types.ts). It is provider-written content crossing
+    // to the caller on purpose: without it a successful read is unconfirmable by the caller's
+    // model. Callers forwarding it to a model must label it as data, not instructions.
+    body: { outcome: result.outcome, code: result.code, run_id: result.runId, data: result.data, recorded },
   };
 }
 

@@ -150,9 +150,19 @@ jobs:
           EXP08_DISPOSABLE: '1'
           PGHOST: 127.0.0.1
           PGPORT: '5432'
+          PROOF_POSTGRES_SERVICE: ${{ job.services.postgres.id }}
         run: |
+          # The host pg_dump can emit settings the pinned PostgreSQL 16 server
+          # cannot restore. Dump with the client from that same service image.
+          test -n "$PROOF_POSTGRES_SERVICE"
+          dump_client="$RUNNER_TEMP/exp08-proof-pg-dump"
+          cat > "$dump_client" <<'EOF'
+          #!/usr/bin/env bash
+          exec docker exec "$PROOF_POSTGRES_SERVICE" pg_dump "$@"
+          EOF
+          chmod +x "$dump_client"
           node scripts/proof/exp08-owner-recovery-carrier.mjs --check
-          node scripts/proof/exp08-owner-recovery-writers.mjs
+          OPERATOR_PROOF_PG_DUMP="$dump_client" node scripts/proof/exp08-owner-recovery-writers.mjs
       - name: EXP08 Team Hub agents A1a, accepted-turn record, single-use agent posts, one-reply rule, per-seat cap, agent DM isolation, roster correction and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_agents_a1.sql
       - name: EXP08 Team Hub agents A1b, member-safe turn-state read, staged Bring in suggestions, same-token acceptance retry and mutants in a disposable database
@@ -421,7 +431,12 @@ jobs:
 
       - name: Install Chromium for the Secure Browser hostile-page proof
         if: ${{ !cancelled() }}
-        run: npx playwright install --with-deps chromium
+        run: |
+          npx playwright install chromium
+          if ! node --input-type=module -e 'import { chromium } from "playwright"; const browser = await chromium.launch({ headless: true }); await browser.close();'; then
+            npx playwright install --with-deps chromium
+            node --input-type=module -e 'import { chromium } from "playwright"; const browser = await chromium.launch({ headless: true }); await browser.close();'
+          fi
 
       - name: Secure Browser hostile-page egress proof (reads pass; writes, beacon, WebSockets, service workers stop)
         if: ${{ !cancelled() }}
@@ -913,6 +928,8 @@ jobs:
         run: deno test --allow-sys --no-lock supabase/functions/_shared/solo-beta-stripe-shapes.test.ts
       - name: SendGrid webhook-admin broker (mocked provider IO)
         run: deno test --allow-sys --no-lock supabase/functions/_shared/comms-email/sendgrid-webhook-admin.test.ts
+      - name: MCP gateway connect-consent auto-approve (real runApprove stack)
+        run: deno test --allow-sys --no-lock supabase/functions/_shared/mcp-gateway/auto-approve.test.ts
       - name: SendGrid provider adapter (mocked fetch; synthetic key values only)
         run: deno test --allow-sys --allow-env --no-lock supabase/functions/_shared/email/sendgrid-provider.test.ts
       - name: Customer email footer names the business, never the platform's COO (E09 CURA)
@@ -1155,6 +1172,7 @@ jobs:
           node --import ./scripts/client-memory-authz/register.mjs scripts/chat-turn-model-metadata-check.mjs
           deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/paige-turn/interactive.test.ts \
+            supabase/functions/_shared/paige-turn/research-work.test.ts \
             supabase/functions/_shared/paige-turn/interactive-approval.test.ts
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/chat-control-rate.mjs

@@ -2,81 +2,97 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import ComposeOutbound, { CHANNELS } from "./ComposeOutbound";
-import IntegrationsSurface, { INTEGRATIONS, INT_KINDS } from "./IntegrationsSurface";
+import IntegrationsSurface from "./IntegrationsSurface";
+import { SOCIAL_PLATFORMS } from "../../solo/social-platform-catalog";
 
 /**
  * The failure these assertions exist to stop is the one this console has already shipped twice:
  * a surface that typechecks, lints, resolves a route and renders NOTHING a human can read.
  * Counting exports proves the module is addressed; only rendered CONTENT proves the port.
  *
- * Every string asserted below is verbatim pack copy with its line cited in the component, and
- * no assertion is on a figure that was typed — the counts are derived from the catalogue, so a
- * catalogue edit moves them rather than making this file lie.
+ * The Integrations surface is the SOLO SHELL page carrying the platform's own connections
+ * (owner ruling 2026-11-05, mockup po-integrations-solo-shell.html: "make the Platform
+ * Operator account Integrations look just like the Solo Shell account"): the Solo page's
+ * count chips, section headings with their one-line descriptions, and brand-tile cards —
+ * the SAME fixed options every Solo account sees. The per-workspace grants matrix is
+ * deleted, not hidden ("There should be no reason that I need to approve any of the Solo
+ * account"), and the social provider behind the platform's channels is never named.
+ *
+ * renderToStaticMarkup runs no effects, so the Social door is still reading on first
+ * paint: cards assert nothing ("Checking connection…") — which is itself the doctrine
+ * under test.
  */
 
-describe("Integrations grid — pack L1577–L1659 / L7928–L8082", () => {
-  it("draws both filter bands with the pack's labels and notes", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface />);
-    for (const s of [
-      "State",
-      "Consequence",
-      "Implemented adapters",
-      "Catalogue readiness; access unverified",
-      "Half-wired",
-      "Waiting on credentials",
-      "Not built",
-      "Nothing behind it",
-      "Blocking",
-      "A built surface is dark",
-      "Nice to have",
-      "Blocks nothing we built",
+describe("Integrations — the Solo Shell layout carrying the platform's own connections", () => {
+  const html = renderToStaticMarkup(<IntegrationsSurface />);
+
+  it("opens as the Solo page: one Integrations tab, count chips that agree with the wall below", () => {
+    expect(html).toContain("Integrations");
+    // The chip ladder and its counts are computed from the same tiles the wall renders.
+    for (const [label, count] of [
+      ["All", "25"], ["Automation", "2"], ["Team chat", "3"], ["Messaging", "1"],
+      ["Email &amp; Calendar", "1"], ["Social", "11"],
+      ["Finance", "4"], ["Documents", "1"], ["Client data", "1"], ["Developer", "1"],
+    ] as const) {
+      expect(html, `missing chip: ${label}`).toContain(`>${label}<em>${count}</em>`);
+    }
+  });
+
+  it("carries the same fixed options every Solo account sees, in the Solo group vocabulary", () => {
+    for (const platform of SOCIAL_PLATFORMS) {
+      expect(html, `missing social card: ${platform.name}`).toContain(platform.name);
+    }
+    // The provider's connection apps ride the same governed door as the Social cards.
+    for (const app of ["Google", "Discord", "Telegram"]) {
+      expect(html, `missing connection app: ${app}`).toContain(app);
+    }
+    expect(html).toContain("Reach people where they are.");
+    expect(html).toContain("Send mail and book time.");
+    for (const row of [
+      "n8n", "Zapier", "Slack", "Microsoft Teams", "Stripe Connect", "PayPal",
+      "QuickBooks", "Plaid", "DocuSign", "Apollo", "Webhooks &amp; direct API",
     ]) {
-      expect(html, `missing band copy: ${s}`).toContain(s);
+      expect(html, `missing provider card: ${row}`).toContain(row);
+    }
+    for (const blurb of [
+      "Run workflows and reach other apps.",
+      "Workplace chat and channels.",
+      "Post, schedule and read.",
+      "Invoices, payments and books.",
+      "Send, sign and track.",
+      "Find and enrich contacts.",
+      "Wire it up yourself.",
+    ]) {
+      expect(html, `missing group blurb: ${blurb}`).toContain(blurb);
     }
   });
 
-  it("draws the search field, all six connection kinds and every shelf chip", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface />);
-    expect(html).toContain("Search 42 integrations");
-    for (const k of Object.keys(INT_KINDS)) expect(html, `missing kind: ${k}`).toContain(k);
-    expect(html).toContain(">All<");
-    for (const sh of INTEGRATIONS) expect(html, `missing shelf: ${sh.cat}`).toContain(sh.cat);
+  it("states the platform-only truth on the Social section and honest states on every card", () => {
+    expect(html).toContain("These connections belong to the platform itself.");
+    expect(html).toContain("every account in Paige gets the same fixed options");
+    // First paint: the door is still reading, so cards assert nothing…
+    // 10 social OAuth platforms + the 3 connection apps, all still reading on first paint.
+    expect((html.match(/Checking connection…/g) ?? []).length).toBe(13);
+    // …except the one platform whose OAuth is provider-side unavailable, pinned by the catalogue.
+    expect(html).toContain("OAuth unavailable");
+    // No platform-level seam exists behind the non-social providers yet — said plainly.
+    expect((html.match(/>Not available</g) ?? []).length).toBe(11);
   });
 
-  it("renders every vendor tile, its action verb and the foot", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface />);
-    for (const sh of INTEGRATIONS) {
-      for (const it of sh.items) {
-        // `renderToStaticMarkup` escapes `&`, so compare against the escaped form.
-        expect(html, `missing vendor: ${it.name}`).toContain(it.name.replace(/&/g, "&amp;"));
-      }
-    }
-    for (const verb of ["Configure", "Finish", "Connect"]) expect(html).toContain(verb);
-    expect(html).toContain("Blocking is the one that ranks the list");
-  });
-
-  it("composes the result line from the catalogue rather than typing it", () => {
-    const total = INTEGRATIONS.reduce((n, sh) => n + sh.items.length, 0);
-    const live = INTEGRATIONS.reduce((n, sh) => n + sh.items.filter((i) => i.state === "live").length, 0);
-    const html = renderToStaticMarkup(<IntegrationsSurface />);
-    expect(html).toContain(`${total} of ${total} shown · ${live} adapters described as implemented`);
-    expect(html).toContain("Verified account connections and current provider health are not loaded");
-    expect(html).not.toContain("A seam exists and runs today");
-    expect(html).not.toContain("Connected means");
-  });
-
-  it("lets a live read override the catalogue's authored state (slice I drop-in)", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface connectionStates={{ Stripe: "live" }} />);
-    // Stripe is `planned` in the catalogue and carries a `blocks` line; a live read retires it.
-    expect(html).not.toContain("Dark without it: tenant subscription billing");
-    expect(html).toContain("1 reported connected");
-    expect(html).toContain("catalogue-only implemented");
-    expect(html).toContain("Catalogue readiness; account access and health unverified");
-  });
-
-  it("says what is there rather than blanking when a shelf matches nothing", () => {
-    const html = renderToStaticMarkup(<IntegrationsSurface shelves={[]} />);
-    expect(html).toContain("Nothing matches. 0 integrations exist across 0 shelves.");
+  it("has no approvals apparatus and no retired chrome anywhere on the page", () => {
+    expect(html).not.toContain("Which workspaces may use which company channels");
+    expect(html).not.toContain("Grant");
+    expect(html).not.toContain("Revoke");
+    expect(html).not.toContain("Company channels");
+    expect(html).not.toContain("Load channels");
+    expect(html).not.toContain("Load workspaces");
+    expect(html).not.toContain("Social hub");
+    expect(html).not.toContain("Browse directory");
+    // The six typed tabs of the superseded redesign are gone with it.
+    expect(html).not.toContain("Email &amp; Messaging");
+    expect(html).not.toContain("Web &amp; Hosting");
+    // WHITE-LABEL (owner, 2026-11-05): the provider behind the channels gets no surface branding.
+    expect(html).not.toMatch(/zernio/i);
   });
 });
 

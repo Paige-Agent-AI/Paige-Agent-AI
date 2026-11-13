@@ -71,7 +71,7 @@ export function TeamHubEmailDraft({ draft, account, act }: {
           </div>}
     </details>
     <div className="th-email-footer">
-      {saved ? <><span className="th-email-status"><Check aria-hidden="true" />Saved unsent in Messages</span>{href && <CheckLinks links={[{ label: "Open draft", to: href }]} />}</>
+      {saved ? <><span className="th-email-status"><Check aria-hidden="true" />Saved in Messages</span>{href && <CheckLinks links={[{ label: "Open email", to: href }]} />}</>
         : bound ? <>
           <button type="button" className="th-btn" disabled={busy} onClick={() => void run("check")}>{state === "checking" ? "Checking…" : "Check saved status"}</button>
           {state === "unknown" && selectedContact && selectedSender && <button type="button" className="th-btn" disabled={busy} onClick={() => void run("save")}>Retry same save</button>}

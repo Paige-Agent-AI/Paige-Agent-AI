@@ -264,6 +264,11 @@ const verifyCallsBeforeRead = verifyCalls.length;
 const readRun = await runOn("https://public.example/mcp-run", { toolName: "list_records", args: { q: "x" }, mode: "execute" });
 check("a read tool executes without approval → read_observed", readRun.outcome === "read_observed");
 check("a read tool never even consults the consent verifier", verifyCalls.length === verifyCallsBeforeRead);
+// The 2026-11-06 owner incident: a successful read that carries NO data is unconfirmable by the
+// caller's model (PAIGE narrated a SUCCEEDED lookup as "couldn't confirm whether it went through").
+// The runner now attaches the bounded projection of the validated clean result — the fake server's
+// tools/call default answers text "ok", so that is exactly what must cross.
+check("a successful read CARRIES the bounded data projection (the unconfirmable-read fix)", readRun.data === "ok", JSON.stringify(readRun.data));
 
 // mutation WITHOUT a durable approval → refused: approval_required (NOT unavailable)
 const noApp = await runOn("https://public.example/mcp-run", { toolName: "send_message", args: {}, mode: "execute" });
@@ -1078,19 +1083,26 @@ console.log("\n— slice ①: verify (runVerify) —");
     },
   });
   // Fake caller (RLS-scoped) client: the three §9 authority gates.
+  const consentWrites = [];
   const makeUser = (o = {}) => ({
-    rpc: async (fn) => {
+    rpc: async (fn, params) => {
       if (fn === "current_user_tenant_id") return { data: o.tenant === undefined ? TEN : o.tenant, error: o.tenantErr ?? null };
       if (fn === "is_current_user_tenant_admin") return { data: o.admin === undefined ? true : o.admin, error: null };
       if (fn === "get_mcp_connections_v2") return { data: o.v2 === undefined ? [{ connection_id: CONN }] : o.v2, error: o.v2Err ?? null };
+      // Connect-consent (owner decision 2026-11-05): capture the durable-approval writes the
+      // verify path now records, so the smoke can assert their shape (permanent, tool-level).
+      if (fn === "set_mcp_connection_approval") { consentWrites.push(params); return { data: null, error: null }; }
       return { data: null, error: null };
     },
   });
+  // The pin reader verify now REQUIRES (VerifyDeps.readToolPin): a deterministic hex pin per tool.
+  const readToolPin = async (_id, toolName) => "0".repeat(60) + String(toolName.length).padStart(4, "0");
   const okSecret = { configured: true, enabled: true, connection_id: CONN, tenant_id: TEN, server_url: VERIFY_URL, endpoint_hash: endpointHashOf(VERIFY_URL), auth_token: "secret-token", auth_kind: "bearer", transport: "http", visibility: "tenant", config_generation: 7 };
 
   // Happy path — authorized admin, connection in v2, loader resolves, live intake → connected.
   probeCalls.length = 0;
-  const okRes = await verifyMod.runVerify({ userClient: makeUser(), admin: makeAdmin(okSecret) }, { connectionId: CONN, expectedTenantId: TEN });
+  consentWrites.length = 0;
+  const okRes = await verifyMod.runVerify({ userClient: makeUser(), admin: makeAdmin(okSecret), readToolPin }, { connectionId: CONN, expectedTenantId: TEN });
   check("verify happy path → 200 ok connected healthy", okRes.httpStatus === 200 && okRes.body.ok === true && okRes.body.status === "connected" && okRes.body.health === "healthy", JSON.stringify(okRes.body));
   check("verify reports the discovered tool count", okRes.body.tool_count === 6, JSON.stringify(okRes.body));
   check("verify persists via the service-role probe exactly once (connected/healthy)", probeCalls.length === 1 && probeCalls[0]._status === "connected" && probeCalls[0]._health === "healthy", JSON.stringify(probeCalls.map((p) => p._status)));
@@ -1103,12 +1115,25 @@ console.log("\n— slice ①: verify (runVerify) —");
   const bodyJson = JSON.stringify(okRes.body);
   check("verify response leaks NO secret / server url / provider prose", !bodyJson.includes("secret-token") && !bodyJson.includes("public.example") && !bodyJson.includes("RAW PROVIDER PROSE"), bodyJson);
 
+  // Connect-consent (owner decision 2026-11-05, amended same day: "EVERYTHING SHOULD BE
+  // APPROVED"): the healthy persisted catalog IS the operator's consent moment — EVERY tool the
+  // intake kept (the effect-gated send_message + mystery_action [undeclared] + delete_records
+  // [name floor] + submit_form [declared create], AND the declared read list_records) receives a
+  // durable PERMANENT tool-level approval through the real runApprove stack, so the ledger
+  // matches the owner's all-of-them grant. The one refusal is the hostile injection NAME — the
+  // writer's tool-name contract refuses it and it lands in the reported failures (honest degrade:
+  // never fatal, never a silent approval of an unrecordable name).
+  check("connect-consent approves EVERY clean discovered tool (5 of 5)", okRes.body.auto_approved === 5 && okRes.body.auto_approve_failed === 1, JSON.stringify({ approved: okRes.body.auto_approved, failed: okRes.body.auto_approve_failed }));
+  check("...through the durable writer, exactly once per tool", consentWrites.length === 5, JSON.stringify(consentWrites.map((w) => w._tool_name)));
+  check("...each PERMANENT (no expiry) and tool-level (no args-shape binding)", consentWrites.every((w) => w._expires_at === null && w._args_shape_hash === null), JSON.stringify(consentWrites.map((w) => [w._tool_name, w._expires_at, w._args_shape_hash])));
+  check("...declared reads included (the amendment)", consentWrites.some((w) => w._tool_name === "list_records"), JSON.stringify(consentWrites.map((w) => w._tool_name)));
+
   // INT-152 — a probe that no-ops because the connection was RE-KEYED mid-verify (config_generation moved)
   // returns {applied:false}; verify must report the race honestly (409 config_changed_during_verify), NOT a
   // fabricated connected. The fresh config was not clobbered — this is the caller-visible side of the guard.
   probeCalls.length = 0;
   const staleRes = await verifyMod.runVerify(
-    { userClient: makeUser(), admin: makeAdmin(okSecret, null, { applied: false, reason: "stale_generation" }) },
+    { userClient: makeUser(), admin: makeAdmin(okSecret, null, { applied: false, reason: "stale_generation" }), readToolPin },
     { connectionId: CONN, expectedTenantId: TEN },
   );
   check("verify reports a mid-verify re-key honestly (INT-152 → 409 config_changed_during_verify)", staleRes.httpStatus === 409 && staleRes.body.ok === false && staleRes.body.error_code === "config_changed_during_verify", JSON.stringify(staleRes.body));
@@ -1122,7 +1147,7 @@ console.log("\n— slice ①: verify (runVerify) —");
     const MIXED = "AAAAAAAA-BBBB-4CCC-8DDD-EEEEFFFF0000";
     probeCalls.length = 0;
     const mixedRes = await verifyMod.runVerify(
-      { userClient: makeUser({ v2: [{ connection_id: CANON }] }), admin: makeAdmin({ ...okSecret, connection_id: CANON }) },
+      { userClient: makeUser({ v2: [{ connection_id: CANON }] }), admin: makeAdmin({ ...okSecret, connection_id: CANON }), readToolPin },
       { connectionId: MIXED, expectedTenantId: TEN },
     );
     check("verify normalizes a mixed-case uuid → owned, 200 connected (no spurious 404)", mixedRes.httpStatus === 200 && mixedRes.body.ok === true && mixedRes.body.status === "connected", JSON.stringify(mixedRes.body));
@@ -1130,24 +1155,24 @@ console.log("\n— slice ①: verify (runVerify) —");
   }
 
   // §9 authority refusals.
-  const badId = await verifyMod.runVerify({ userClient: makeUser(), admin: makeAdmin(okSecret) }, { connectionId: "not-a-uuid", expectedTenantId: TEN });
+  const badId = await verifyMod.runVerify({ userClient: makeUser(), admin: makeAdmin(okSecret), readToolPin }, { connectionId: "not-a-uuid", expectedTenantId: TEN });
   check("verify refuses a malformed connection_id (400)", badId.httpStatus === 400 && badId.body.error === "bad_connection_id");
-  const noTen = await verifyMod.runVerify({ userClient: makeUser({ tenant: null }), admin: makeAdmin(okSecret) }, { connectionId: CONN, expectedTenantId: null });
+  const noTen = await verifyMod.runVerify({ userClient: makeUser({ tenant: null }), admin: makeAdmin(okSecret), readToolPin }, { connectionId: CONN, expectedTenantId: null });
   check("verify refuses when the caller has no tenant (400)", noTen.httpStatus === 400 && noTen.body.error === "no_tenant");
-  const mism = await verifyMod.runVerify({ userClient: makeUser(), admin: makeAdmin(okSecret) }, { connectionId: CONN, expectedTenantId: "ten-OTHER" });
+  const mism = await verifyMod.runVerify({ userClient: makeUser(), admin: makeAdmin(okSecret), readToolPin }, { connectionId: CONN, expectedTenantId: "ten-OTHER" });
   check("verify refuses a workspace-switch tenant mismatch (409)", mism.httpStatus === 409 && mism.body.error === "tenant_mismatch");
-  const nonAdmin = await verifyMod.runVerify({ userClient: makeUser({ admin: false }), admin: makeAdmin(okSecret) }, { connectionId: CONN, expectedTenantId: TEN });
+  const nonAdmin = await verifyMod.runVerify({ userClient: makeUser({ admin: false }), admin: makeAdmin(okSecret), readToolPin }, { connectionId: CONN, expectedTenantId: TEN });
   check("verify refuses a non-admin caller — the manage gate (403)", nonAdmin.httpStatus === 403 && nonAdmin.body.error === "forbidden");
-  const notMine = await verifyMod.runVerify({ userClient: makeUser({ v2: [] }), admin: makeAdmin(okSecret) }, { connectionId: CONN, expectedTenantId: TEN });
+  const notMine = await verifyMod.runVerify({ userClient: makeUser({ v2: [] }), admin: makeAdmin(okSecret), readToolPin }, { connectionId: CONN, expectedTenantId: TEN });
   check("verify refuses a connection not visible to the caller — §9 (404, no info leak)", notMine.httpStatus === 404 && notMine.body.error === "not_found");
   probeCalls.length = 0;
-  const crossTenant = await verifyMod.runVerify({ userClient: makeUser(), admin: makeAdmin({ ...okSecret, tenant_id: "ten-ELSEWHERE" }) }, { connectionId: CONN, expectedTenantId: TEN });
+  const crossTenant = await verifyMod.runVerify({ userClient: makeUser(), admin: makeAdmin({ ...okSecret, tenant_id: "ten-ELSEWHERE" }), readToolPin }, { connectionId: CONN, expectedTenantId: TEN });
   check("verify refuses when the loaded row's tenant ≠ the caller's (defense in depth, 403)", crossTenant.httpStatus === 403 && crossTenant.body.error === "forbidden");
   check("...and writes NO probe on that refusal (no cross-tenant side effect)", probeCalls.length === 0);
 
   // Honest degrade — a disabled row: the loader refuses; verify records an honest error, never a fake connected.
   probeCalls.length = 0;
-  const disabled = await verifyMod.runVerify({ userClient: makeUser(), admin: makeAdmin({ ...okSecret, enabled: false }) }, { connectionId: CONN, expectedTenantId: TEN });
+  const disabled = await verifyMod.runVerify({ userClient: makeUser(), admin: makeAdmin({ ...okSecret, enabled: false }), readToolPin }, { connectionId: CONN, expectedTenantId: TEN });
   check("verify on a disabled connection → 200 ok:false, honest error status", disabled.httpStatus === 200 && disabled.body.ok === false && disabled.body.status === "error", JSON.stringify(disabled.body));
   check("...records an error probe (never a fabricated connected), catalog untouched (_tools=null)", probeCalls.length === 1 && probeCalls[0]._status === "error" && probeCalls[0]._tools === null, JSON.stringify(probeCalls[0]));
 
@@ -1784,6 +1809,7 @@ console.log("\n— slice ③: execute (runExecute) —");
   // A read tool in execute mode dispatches → read_observed → 200.
   const readRun = await executeMod.runExecute({ userClient: makeExecuteUser(), admin: makeExecuteAdmin() }, inExec({ toolName: "list_records", args: { q: "x" } }));
   check("execute a read tool → 200 read_observed", readRun.httpStatus === 200 && readRun.body.outcome === "read_observed", JSON.stringify(readRun.body));
+  check("...and the HTTP body carries the bounded data projection (unconfirmable-read fix)", readRun.body.data === "ok", JSON.stringify(readRun.body.data));
 
   // A mutation without a durable approval → refused approval_required → 403.
   const noApp = await executeMod.runExecute({ userClient: makeExecuteUser(), admin: makeExecuteAdmin() }, inExec({ toolName: "send_message", args: { to: "a" } }));
@@ -1794,11 +1820,13 @@ console.log("\n— slice ③: execute (runExecute) —");
   const okExec = await executeMod.runExecute({ userClient: makeExecuteUser(), admin: makeExecuteAdmin({ approval: { authorized: true, reason: "authorized" } }) }, inExec({ toolName: "send_message", args: { to: "a" } }));
   check("execute a mutation with durable approval → 200 executed", okExec.httpStatus === 200 && okExec.body.outcome === "executed", JSON.stringify(okExec.body));
   check("...and the canonical Rail receipt persisted (recorded:true)", okExec.body.recorded === true && recordCalls.length === 1, JSON.stringify({ recorded: okExec.body.recorded, calls: recordCalls.length }));
+  check("...and the executed body carries the provider's clean confirmation data", okExec.body.data === "ok", JSON.stringify(okExec.body.data));
 
   // A mutation that dispatches then reports isError → outcome_unknown → 200 (NEVER a 5xx that invites a
   // duplicating retry). The body.outcome is the authoritative "check before running again" signal.
   const unknownExec = await executeMod.runExecute({ userClient: makeExecuteUser(), admin: makeExecuteAdmin({ secret: secretFor(XEURL), approval: { authorized: true, reason: "authorized" } }) }, inExec({ toolName: "send_message", args: { to: "a" } }));
   check("execute a mutation that dispatched then errored → 200 outcome_unknown (never a retry-inviting 5xx)", unknownExec.httpStatus === 200 && unknownExec.body.outcome === "outcome_unknown", JSON.stringify(unknownExec.body));
+  check("...and an unvalidated payload is NEVER echoed (outcome_unknown carries no data)", unknownExec.body.data === null, JSON.stringify(unknownExec.body.data));
 
   // A READ that dispatches then reports isError → tool_error → 502 (no side effect to be unknown about).
   const readErr = await executeMod.runExecute({ userClient: makeExecuteUser(), admin: makeExecuteAdmin({ secret: secretFor(XEURL) }) }, inExec({ toolName: "list_records" }));

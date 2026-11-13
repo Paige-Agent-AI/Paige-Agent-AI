@@ -5,7 +5,8 @@
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: vi.fn(), functions: { invoke: vi.fn() } } }));
 
 import { describe, expect, it, vi } from "vitest";
-import { classifyPublishNetworks, doorFace, defaultCaption, PUBLICATION_STATUS_WORDS } from '@/solo/publish-piece';
+import { classifyPublishNetworks, doorFace, defaultCaption, prioritizePublicationReceipts, PUBLICATION_STATUS_WORDS } from '@/solo/publish-piece';
+import { SOCIAL_NETWORKS } from '@/solo/social-truth';
 
 const NETWORKS = [
   { key: 'instagram', label: 'Instagram' },
@@ -13,7 +14,25 @@ const NETWORKS = [
   { key: 'x', label: 'X' },
 ];
 
+it('keeps old unresolved attempts actionable beyond five newer terminal receipts', () => {
+  const recent = Array.from({ length: 7 }, (_, i) => ({
+    id: String(i), platform: 'instagram', destination: null, status: 'published', url: null,
+    createdAt: '2026-10-20', providerProcessing: false,
+  }));
+  const original = { ...recent[0], id: 'original', status: 'outcome_unknown' };
+  expect(prioritizePublicationReceipts([...recent, original]).map(({ id }) => id)).toEqual(['original', '0', '1', '2', '3']);
+});
+
 describe('EXP07 · publish affordance · network readiness', () => {
+  it.each(['connected', 'needs_reauth', 'disconnected'])(
+    'makes the original connected Threads destination reachable without inventing readiness: %s', (status) => {
+      const row = classifyPublishNetworks(SOCIAL_NETWORKS, [{ network: 'threads', status }])
+        .find((network) => network.key === 'threads');
+      expect(row).toMatchObject({ key: 'threads', label: 'Threads',
+        readiness: status === 'connected' ? 'connected' : status === 'needs_reauth' ? 'needs_reauth' : 'not_connected' });
+    },
+  );
+
   it('renders each network from the presence read alone — never a guess from a handle', () => {
     const rows = classifyPublishNetworks(NETWORKS, [
       { network: 'instagram', status: 'connected' },

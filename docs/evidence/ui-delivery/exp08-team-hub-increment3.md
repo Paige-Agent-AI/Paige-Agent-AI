@@ -1,5 +1,65 @@
 # UI delivery evidence: EXP08 Team Hub, increment 3 (attachments)
 
+## November 3, 2026 — ONE selected file-sharing outcome, in progress
+
+Owner authorized the next ONE outcome: attach a permitted file, post one original
+Hub message, fully reload/manual reopen, and download the SAME original bytes.
+The original matrix row10, original attachment pipeline and all historical evidence
+below remain intact. This is not full EXP08 completion or owner acceptance.
+
+Current baseline is `fded22618d1078433622d6bf61f359b366b830ba`.
+Independent NON-AUTHOR source review found two bounded P2s: a signed download's late
+continuation could navigate after departure/unmount, and the original upload-begin
+writer could retain admission across its uploader advisory wait. Current Storage
+policies separately refuse unauthorized bytes; no byte-access defect was reproduced.
+
+The two new download tests first FAILED on unchanged source (both navigated), then
+all24 selected attachment tests PASSED after repair (101 unrelated tests skipped).
+`fileUrl` now retires an obsolete lifetime/navigation/actor/status result silently;
+`FileRow` fences its own mount/path lifetime, including unmount/remount. A current
+mint failure retains its original error and Retry behavior. Thumbnails ignore a
+retired result. No layout, copy, color, icon, menu, external send or approval changed.
+Flow Prototype: NOT_REQUIRED for this repair of the existing approved flow.
+Flow-by-Flow and Impeccable harden/craft-floor applied; targeted detector exits0.
+
+Forward-only `20271130020018_exp08_file_admission_currentness.sql` changes ONLY
+`team_hub_begin_file(uuid,uuid,text,text,bigint,uuid)`. It preserves its original
+body except one guarded span around the uploader advisory wait: the existing
+retirement tenant-catalog gate precedes advisory/identity → seat → profile →
+channel/private-member locking and fresh admission.
+Original request identity, limit, MIME/size rules, path generation and ACL remain.
+Applied history is untouched. Actual production incumbent OID310795/body
+`74917c7d31eaab3c7c8c597ea1a61095` and metadata were read before coding.
+The owning disposable fixture adds25 actual wait/withdrawal/rollback, same-file
+retry, atomic source/ACL/metadata-drift and original retirement-gate controls; all
+original controls remain. Selected `--hub-files-only` ran all41 controls PASS,
+including actual40P01 with the tenant gate removed and repaired retirement-first
+commit/rollback/admission-first waits. Source pins/replay/full catalogue fields
+are conserved. This uses the actual unchanged retirement primitive plus explicit
+withdrawal ports; complete archive/Auth/customer proof is not inferred. Initial
+proof assertions incorrectly expected suspension to rewrite the stored active
+workspace; the original resolver actually falls back to the other active seat.
+The test now asserts that exact resolved workspace and zero-effect refusal.
+Final independent review/required CI/release/readback remain PENDING here. Full
+local typecheck FAILED outside changed paths; no baseline-PASS or waiver claimed.
+
+Production baseline: original native file migrations160008/160108/260008 are
+installed; four restrictive Storage policies remain, files RLS enabled/no browser
+table grants. `team-hub-file`21 ACTIVE/JWTtrue and all THREE deployed source files
+match current source byte-for-byte. This is baseline source proof, not a new release
+or authenticated upload/download. Existing MMA Owner/general Hub was visible in
+Edge; filechooser timed out BEFORE file selection, then Edge became signed out.
+No upload, post, receipt, reload/download or completed outcome is claimed. Owner
+was asked to restore SAME existing MMA. No borrowed account, new QA account,
+permission change or peer source/runtime takeover. Continue SAME outcome, then
+report owner/original Linear/Coordinator and STOP. Full18+6/five journeys remain
+STILL CODING; automation remains paused. ALG01 bounded original request dedup only;
+no model, algorithm maturity, routing, provider or standing-authority promotion.
+
+The existing full type/role/revocation, malformed-file, withdrawal, sweep and
+retirement acceptance criteria below remain assigned; local/synthetic controls
+never establish authenticated customer authority or malware scanning.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: flow packet is docs/delivery/exp08-team-hub-increment3-attachments-contract.md — §1 the four flows (attach files to a message or thread reply by paperclip or drop, see files on messages, download through a fresh 60-second signed URL, read the not-scanned disclosure), §1 allowed types and real-type checks, §2 storage boundary, §3 table, §4 functions and refusal codes, §5 the team-hub-file edge function, §7 interface, §8 the proof plan; every increment-1 and increment-2 rule in docs/delivery/exp08-team-hub-collaboration-contract.md and docs/delivery/exp08-team-hub-increment2-work-contract.md still holds
 PAIGE_UI_DESIGN: PASS: Impeccable's reference/craft-floor.md governs the craft floor; .claude/skills/paige-ui-design routes to .agents/skills/paige-ui-design/SKILL.md (Solo verification: four viewports PAIGE closed and open, both themes, states, keyboard, reflow, reduced motion), applied below; the first rendered pass (about 02:52Z) found four defects; a fix lane then changed src/solo/team-hub (TeamHubWorkspace.tsx, team-hub.css and two test files, uncommitted on 09852573f), and this re-capture (about 03:24Z) re-measured all four — three are fixed and one was not a defect; the 200% zoom stream height with many chips is improved but still small (see Review and limitations); neither evidence step edited src/

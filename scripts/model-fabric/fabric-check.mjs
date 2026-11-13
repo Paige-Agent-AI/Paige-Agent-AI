@@ -1039,5 +1039,56 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     p => ts.isPropertyAssignment(p) && p.name.getText(root) === 'signal' && p.initializer.getText(root) === 'req.signal')),
     'J10 every original Root stream forwards its true request signal');
 }
+{
+  openaiPlan = { status: 200 };
+  const trace = { tenant_id: '00000000-0000-4000-8000-000000000001', agent_id: 'fabric-cache-check',
+    prompt_cache_scope: { actor_id: '00000000-0000-4000-8000-000000000011',
+      tenant_id: '00000000-0000-4000-8000-000000000001', working_context_tenant_id: '00000000-0000-4000-8000-000000000001' } };
+  let checked = 0;
+  const a = await run('operational', { ...ON, trace, beforeProviderAttempt: () => { checked++; return true; } });
+  ok(a.s.ok && a.calls[0].provider === 'openai' && checked === 1
+    && /^[a-f0-9]{64}$/.test(a.calls[0].req.prompt_cache_key), 'K1 real streaming Fabric forwards trusted scoped cache partition after authority check');
+  const b = await run('operational', { ...ON, trace: { ...trace,
+    prompt_cache_scope: { ...trace.prompt_cache_scope, actor_id: '00000000-0000-4000-8000-000000000012' } } });
+  ok(a.calls[0].req.prompt_cache_key !== b.calls[0].req.prompt_cache_key, 'K2 different admitted actor never shares the Chat cache group');
+  const invalid = await run('operational', { ...ON, trace: { ...trace,
+    prompt_cache_scope: { ...trace.prompt_cache_scope, actor_id: 'invalid' } } });
+  ok(invalid.s.ok && !invalid.calls[0].req.prompt_cache_key
+    && invalid.calls[0].req.prompt_cache_options.mode === 'explicit'
+    && !JSON.stringify(invalid.calls[0].req).includes('prompt_cache_breakpoint'),
+    'K2b malformed trusted partition disables all cache reads/writes instead of joining a global group');
+  const refused = await run('operational', { ...ON, trace, beforeProviderAttempt: () => false });
+  ok(!refused.s.ok && refused.calls.length === 0 && refused.s.attempts.at(-1)?.failure === 'caller_refused',
+    'K3 cache preparation never bypasses current authority or triggers fallback');
+  calls = [];
+  const r = await fabric.fabricCompletion({ cognitive_class: 'operational', job: 'thread_summary_fold',
+    messages: BODY.messages }, { ...ON, trace, openaiFetch, beforeProviderAttempt: () => true });
+  ok(r.ok && calls.length === 1 && calls[0].req.prompt_cache_key === a.calls[0].req.prompt_cache_key
+    && calls[0].req.input[0].role === 'developer', 'K4 nonstreaming original Fabric uses the same current private cache contract');
+  const digest = crypto.subtle.digest;
+  try {
+    let current = true;
+    crypto.subtle.digest = async function(...args) {
+      const hash = await digest.apply(this, args); current = false; return hash;
+    };
+    const revoked = await run('operational', { ...ON, trace, beforeProviderAttempt: () => current });
+    ok(!revoked.s.ok && revoked.calls.length === 0 && revoked.s.attempts.at(-1)?.failure === 'caller_refused',
+      'K5 revocation DURING the real hashing await is revalidated before any provider attempt or fallback');
+    const cancel = new AbortController();
+    crypto.subtle.digest = async function(...args) {
+      const hash = await digest.apply(this, args); cancel.abort(); return hash;
+    };
+    calls = [];
+    const aborted = await fabric.fabricCompletion({ cognitive_class: 'operational', job: 'thread_summary_fold', messages: BODY.messages },
+      { ...ON, trace, signal: cancel.signal, openaiFetch });
+    ok(!aborted.ok && calls.length === 0 && aborted.error.failure === 'aborted',
+      'K6 cancellation during hashing with no callback causes zero nonstream provider attempts');
+    crypto.subtle.digest = async () => { throw new Error('synthetic hash unavailable'); };
+    const unavailable = await run('operational', { ...ON, trace });
+    ok(unavailable.s.ok && !unavailable.calls[0].req.prompt_cache_key
+      && unavailable.calls[0].req.prompt_cache_options.mode === 'explicit',
+      'K7 hash failure preserves inference but disables cache reuse instead of joining a global group');
+  } finally { crypto.subtle.digest = digest; }
+}
 console.log(`fabric-check: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

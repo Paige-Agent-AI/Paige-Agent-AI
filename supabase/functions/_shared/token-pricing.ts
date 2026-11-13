@@ -93,3 +93,25 @@ export function estimateTokenCostUsd(
   if (!rate) return undefined;
   return round4(((tokensIn ?? 0) / 1000) * rate.in + ((tokensOut ?? 0) / 1000) * rate.out);
 }
+
+/** Provider-only STANDARD short-context list estimate, NOT customer/native metering.
+ * Official OpenAI pricing/cache docs checked 2026-11-13. All input categories
+ * are disjoint. Missing write lifetimes or inconsistent usage stays UNKNOWN. */
+export function estimateOpenAIProviderUsageCost(
+  model: string, input: number | null, output: number | null, cached: number | null,
+  write30m: number | null, write12h: number | null,
+): number | undefined {
+  const counts = [input, output, cached, write30m, write12h];
+  if (counts.some(n => n === null || !Number.isSafeInteger(n) || n < 0)) return undefined;
+  // Long-context pricing is a distinct schedule. Never silently understate it.
+  if (input! > 272000) return undefined;
+  const known = OPENAI_MODEL_PER_1K.find(([id]) => model === id ||
+    (model.startsWith(`${id}-`) && /^\d{4}-\d{2}-\d{2}$/.test(model.slice(id.length + 1))));
+  if (!known) return undefined;
+  const ordinary = input! - cached! - write30m! - write12h!;
+  if (ordinary < 0) return undefined;
+  const cachedMultiplier = known[0] === "gpt-6.1-sol" ? 0.05 : 0.1;
+  const cost = ((ordinary + cached! * cachedMultiplier + write30m! * 1.25 + write12h! * 2.5)
+    * known[1].in + output! * known[1].out) / 1000;
+  return Number.isFinite(cost) ? Math.round(cost * 1e8) / 1e8 : undefined;
+}

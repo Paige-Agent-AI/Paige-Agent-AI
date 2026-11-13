@@ -2,9 +2,8 @@
  * Zernio adapter — the Social connection provider Paige selected on 2026-10-29
  * (owner decision; API key vaulted by the owner as ZERNIO_API_KEY in Edge Secrets).
  *
- * It satisfies the same SocialProviderAdapter contract the Social doors were built
- * against, so paige-social and paige-social-callback select whichever provider is
- * configured. Tenant identity stays the opaque provider profile key
+ * The Social doors use this adapter for the provider connection and publish paths.
+ * Tenant identity stays the opaque provider profile key
  * (ps_<hmac>) minted by the doors — Zernio knows it only as the profile's
  * externalId, never as a Paige tenant or customer id.
  *
@@ -12,22 +11,21 @@
  * parameters: the callback therefore verifies Zernio rows by reading the profile
  * back and requiring the requested platform's account to be present.
  *
- * The posting arm (owner-approved November 3): one POST /v1/posts call, publishNow,
- * the publication row's UUID as the Idempotency-Key (one approval = one provider post;
- * a retry can never double-publish), per-platform outcomes mapped honestly — only
- * platformResults prove anything; an accepted-but-unproven post is the processing
- * outcome with the provider's own post id, and a 409 or transport failure after send
- * is an uncertain outcome for reconciliation, never a clean failure.
+ * Posting sends one account-scoped target with the publication row's UUID as its
+ * idempotency key. The same UUID in Zernio metadata supports read-only reconciliation
+ * if the response is lost.
  */
 import { envKey } from "../env-key.ts";
 import { NeedsConfigError } from "../provider-types.ts";
 import { safeFetch } from "../ssrfGuard.ts";
-import { SOCIAL_OAUTH_PLATFORMS } from "./mod.ts";
+import { GOOGLE_CONNECT_AREAS, SOCIAL_CONNECTION_PLATFORMS, SOCIAL_OAUTH_PLATFORMS, SOCIAL_POST_PLATFORMS } from "./mod.ts";
 import {
   SocialProviderError,
   type SocialProviderAccount,
   type SocialProviderAdapter,
   type SocialProviderProfile,
+  type SocialPostInput,
+  type SocialProviderPostOutcome,
 } from "./mod.ts";
 
 const DEFAULT_API_BASE = "https://zernio.com/api/v1";
@@ -41,6 +39,21 @@ const AUTHORIZATION_HOSTS: Readonly<Record<string, readonly string[]>> = {
   x: ["x.com", "twitter.com"], threads: ["threads.net", "facebook.com"],
   pinterest: ["pinterest.com"], google_business: ["google.com"],
   snapchat: ["snapchat.com"], internal_bounce: ["zernio.com"],
+  // Connection apps (owner 2026-11-05): Google's consent lives on Google, Discord's on
+  // Discord; Telegram has no OAuth redirect at all — its flow may hand back a Telegram
+  // deep link or bounce through the provider, so both are accepted launch targets.
+  google: ["google.com", "accounts.google.com"],
+  discord: ["discord.com"],
+  telegram: ["telegram.org", "t.me", "zernio.com"],
+};
+
+/** Paige's catalogue key -> the path/slug Zernio's API addresses that platform by.
+ *  The docs' own pages name the endpoints: /connect/twitter (not x) and
+ *  /connect/google-business (not google_business). Inbound account names fold back
+ *  the other way through PLATFORM_ALIASES below. */
+const PROVIDER_PATH: Readonly<Record<string, string>> = {
+  google_business: "google-business",
+  x: "twitter",
 };
 
 /** The platform names Zernio reports on accounts, folded into Paige's catalogue keys. */
@@ -71,15 +84,39 @@ function assertProfileKey(value: string): void {
   }
 }
 
-function connectPlatform(value: string): typeof SOCIAL_OAUTH_PLATFORMS[number] {
-  if (!SOCIAL_OAUTH_PLATFORMS.includes(value as typeof SOCIAL_OAUTH_PLATFORMS[number])) {
+function connectPlatform(value: string): typeof SOCIAL_CONNECTION_PLATFORMS[number] {
+  if (!SOCIAL_CONNECTION_PLATFORMS.includes(value as typeof SOCIAL_CONNECTION_PLATFORMS[number])) {
     throw new SocialProviderError("unsupported_oauth_platform", 400, "This Social OAuth platform is unavailable.");
   }
-  return value as typeof SOCIAL_OAUTH_PLATFORMS[number];
+  return value as typeof SOCIAL_CONNECTION_PLATFORMS[number];
+}
+
+/** Publishing rides the POST set: the social networks plus the provider's
+ *  documented messaging targets (discord, telegram). A connectable app is still not
+ *  automatically a publish target — google connects but does not receive posts. */
+const PLATFORMS_WITH_MUTABLE_DESTINATIONS = new Set(["facebook", "linkedin", "google_business", "pinterest"]);
+
+function postPlatform(value: string): typeof SOCIAL_POST_PLATFORMS[number] {
+  if (!SOCIAL_POST_PLATFORMS.includes(value as typeof SOCIAL_POST_PLATFORMS[number])) {
+    throw new SocialProviderError("unsupported_post_platform", 400, "This platform cannot be published to yet.");
+  }
+  if (PLATFORMS_WITH_MUTABLE_DESTINATIONS.has(value)) {
+    throw new SocialProviderError("destination_selection_unavailable", 409, "This network needs a specific Page, organization, location or board before publishing.");
+  }
+  return value as typeof SOCIAL_POST_PLATFORMS[number];
 }
 
 const hostnameMatches = (hostname: string, expected: string) =>
   hostname === expected || hostname.endsWith(`.${expected}`);
+
+function isDuplicatePost(payload: Record<string, unknown>, requestBody: unknown): boolean {
+  const details = asRecord(payload.details) ?? payload;
+  const requested = asRecord(requestBody);
+  const target = Array.isArray(requested?.platforms) ? asRecord(requested.platforms[0]) : null;
+  return typeof details.existingPostId === "string" && /^[a-f0-9]{24}$/i.test(details.existingPostId)
+    && typeof target?.accountId === "string" && details.accountId === target.accountId
+    && normalizePlatform(details.platform) === normalizePlatform(target.platform);
+}
 
 async function request(path: string, init: RequestInit = {}): Promise<unknown> {
   const response = await safeFetch(`${apiBase()}${path}`, {
@@ -92,12 +129,17 @@ async function request(path: string, init: RequestInit = {}): Promise<unknown> {
   }, { timeoutMs: 15_000, maxBytes: 262_144 });
   if (response.status < 200 || response.status >= 300) {
     let providerCode = "";
+    let duplicatePost = false;
     try {
       const body = response.body ? JSON.parse(response.body) as Record<string, unknown> : {};
       const raw = body.error_code ?? body.code;
       providerCode = typeof raw === "string" ? raw.toUpperCase() : "";
+      duplicatePost = response.status === 409 && path === "/posts" && init.method === "POST"
+        && providerCode !== "IDEMPOTENCY_CONFLICT" && typeof init.body === "string"
+        && isDuplicatePost(body, JSON.parse(init.body));
     } catch { providerCode = ""; }
-    const code = providerCode === "PROFILE_LIMIT_REACHED" || providerCode === "PROFILE_BLOCKED"
+    const code = duplicatePost ? "provider_duplicate_content"
+      : providerCode === "PROFILE_LIMIT_REACHED" || providerCode === "PROFILE_BLOCKED"
       ? "provider_profile_limit"
       : response.status === 401 || response.status === 403
       ? "provider_authorization_rejected"
@@ -126,7 +168,7 @@ function stringList(value: unknown): string[] {
     .map((item) => item.trim()))].slice(0, 64);
 }
 
-function safeImage(value: unknown): string | null {
+function safeHttpsUrl(value: unknown): string | null {
   const candidate = text(value, 2048);
   if (!candidate) return null;
   try {
@@ -135,12 +177,16 @@ function safeImage(value: unknown): string | null {
   } catch { return null; }
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
 /** Zernio answers lists as bare arrays or wrapped ({data:[…]}, {profiles:[…]}, {accounts:[…]}). */
 function listOf(payload: unknown): Array<Record<string, unknown>> {
   if (Array.isArray(payload)) return payload.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object" && !Array.isArray(item));
   if (payload && typeof payload === "object") {
     const root = payload as Record<string, unknown>;
-    for (const wrapper of ["data", "profiles", "accounts", "items"]) {
+    for (const wrapper of ["data", "profiles", "accounts", "items", "posts"]) {
       if (Array.isArray(root[wrapper])) return listOf(root[wrapper]);
     }
   }
@@ -185,12 +231,60 @@ export function normalizeZernioAccounts(payload: unknown): SocialProviderAccount
       providerAccountId,
       handle: text(row.handle ?? row.username, 160),
       displayName: text(row.displayName ?? row.name, 200),
-      avatarUrl: safeImage(row.avatarUrl ?? row.avatar ?? row.social_images),
+      avatarUrl: safeHttpsUrl(row.avatarUrl ?? row.avatar ?? row.social_images),
       status: needsReauth ? "needs_reauth" : "connected",
       capabilities: stringList(row.capabilities ?? row.permissions),
     });
   }
   return accounts;
+}
+
+const POST_REJECTED_BEFORE_DISPATCH = new Set([400, 401, 402, 403, 404, 405, 413, 415, 429]);
+const PUBLICATION_METADATA_KEY = "paigePublicationId";
+
+function publicationTag(input: SocialPostInput): string | null {
+  // Zernio forwards tags as YouTube keywords. Keep internal correlation out of those.
+  return input.platform === "youtube" ? null : `paige-publication-${input.externalId}`;
+}
+
+/** Parse only evidence for the single approved target. Zernio's inline examples
+ * sometimes omit accountId. A GET readback must explicitly name that account. */
+function postOutcome(
+  payload: unknown,
+  target: SocialPostInput,
+  lookupId?: string,
+): SocialProviderPostOutcome {
+  const envelope = asRecord(payload);
+  const post = asRecord(envelope?.post);
+  const requestId = text(post?._id, 128);
+  const targets = Array.isArray(post?.platforms) ? post.platforms : [];
+  const row = targets.length === 1 ? asRecord(targets[0]) : null;
+  const accountId = text(asRecord(row?.accountId)?._id ?? row?.accountId, 200);
+  const matches = requestId && (!lookupId || (requestId === lookupId
+    && asRecord(post?.metadata)?.[PUBLICATION_METADATA_KEY] === target.externalId))
+    && normalizePlatform(row?.platform) === target.platform
+    && (accountId === target.providerAccountId || (!lookupId && row?.accountId == null));
+  if (!matches) {
+    return { kind: "unknown", requestId: lookupId ?? null, reason: "provider_target_unverified" };
+  }
+  const url = safeHttpsUrl(row?.platformPostUrl);
+  const discordChannelMatches = target.platform !== "discord"
+    || (url && new URL(url).hostname === "discord.com" && new URL(url).pathname.split("/")[3] === target.channelId);
+  if (post?.status === "published" && row?.status === "published" && url && discordChannelMatches) {
+    return { kind: "published", requestId, results: [{
+      platform: target.platform, success: true, postId: text(row.platformPostId, 200) ?? requestId, postUrl: url, error: null,
+    }] };
+  }
+  if (row?.status === "failed" && post?.status === "failed") {
+    return { kind: "published", requestId, results: [{
+      platform: target.platform, success: false, postId: requestId, postUrl: null, error: "provider_rejected",
+    }] };
+  }
+  if (post?.status === "publishing" && typeof row?.status === "string"
+      && ["pending", "processing", "uploading"].includes(row.status)) {
+    return { kind: "processing", requestId };
+  }
+  return { kind: "unknown", requestId, reason: "provider_receipt_unverified" };
 }
 
 function authorizationUrl(raw: unknown, platform: string): string {
@@ -220,6 +314,59 @@ function firstOf(payload: unknown, field: string): unknown {
   return undefined;
 }
 
+/** Operator-hub helpers — the ONLY code that may address a Zernio profile by the
+ *  provider's own id. Tenant-facing adapter methods keep addressing profiles by the
+ *  opaque ps_<hmac> key exclusively; PROFILE_KEY_PATTERN stays strict for tenants, and
+ *  profiles whose externalId IS a tenant key are never offered for adoption. */
+export type ZernioHubProfile = {
+  profileId: string;
+  name: string | null;
+  accounts: SocialProviderAccount[];
+};
+
+const HUB_PROFILE_ID_PATTERN = /^[A-Za-z0-9_-]{6,64}$/;
+
+function hubProfileRow(row: Record<string, unknown>): string | null {
+  const id = text(row._id ?? row.id, 200);
+  const externalId = text(row.externalId, 200);
+  // Tenant-owned profiles (externalId is a ps_ key) are excluded from hub surfaces.
+  if (!id || (externalId && PROFILE_KEY_PATTERN.test(externalId))) return null;
+  return id;
+}
+
+/** Lists the workspace's non-tenant Zernio profiles with their connected accounts. */
+export async function listZernioHubProfiles(): Promise<ZernioHubProfile[]> {
+  const rows = listOf(await request("/profiles?limit=100"));
+  const hubs: ZernioHubProfile[] = [];
+  for (const row of rows) {
+    const id = hubProfileRow(row);
+    if (!id) continue;
+    hubs.push({
+      profileId: id,
+      name: text(row.name, 160),
+      accounts: normalizeZernioAccounts(await request("/accounts?profileId=" + encodeURIComponent(id) + "&limit=100")),
+    });
+  }
+  return hubs;
+}
+
+/** Reads one hub profile by the provider's own id — adoption's readback truth. */
+export async function readZernioHubProfile(profileId: string): Promise<ZernioHubProfile> {
+  if (!HUB_PROFILE_ID_PATTERN.test(profileId)) {
+    throw new SocialProviderError("invalid_hub_profile", 400, "The hub profile identifier is invalid.");
+  }
+  const rows = listOf(await request("/profiles?limit=100"));
+  const match = rows.find((row) => hubProfileRow(row) === profileId);
+  if (!match) {
+    throw new SocialProviderError("provider_profile_not_found", 404, "The Social provider profile was not found.");
+  }
+  return {
+    profileId,
+    name: text(match.name, 160),
+    accounts: normalizeZernioAccounts(await request("/accounts?profileId=" + encodeURIComponent(profileId) + "&limit=100")),
+  };
+}
+
 export const zernioSocialAdapter: SocialProviderAdapter = {
   key: "zernio",
   isConfigured: () => Boolean(envKey("ZERNIO_API_KEY")),
@@ -238,17 +385,30 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
       throw error;
     }
   },
-  async createConnectUrl({ providerProfileKey, redirectUrl, platform }) {
+  async createConnectUrl({ providerProfileKey, redirectUrl, platform, scopes }) {
     assertProfileKey(providerProfileKey);
     const requested = connectPlatform(platform);
     const callback = new URL(redirectUrl);
     if (callback.protocol !== "https:" || callback.username || callback.password) {
       throw new SocialProviderError("invalid_redirect_url", 400, "The Social return destination must be a secure URL.");
     }
+    // Google REQUIRES its areas on connect (the provider 400s without them); the other
+    // platforms either ignore or actively reject a scopes parameter, so it goes only to
+    // Google. Absent areas default to the owner's Gmail-and-Calendar starting set.
+    let areaQuery = "";
+    if (requested === "google") {
+      const areas = (scopes === undefined || scopes.length === 0 ? ["email", "calendar"] : scopes)
+        .filter((area): area is typeof GOOGLE_CONNECT_AREAS[number] =>
+          (GOOGLE_CONNECT_AREAS as readonly string[]).includes(area));
+      if (!areas.length) {
+        throw new SocialProviderError("invalid_connect_areas", 400, "The Google connection needs at least one area.");
+      }
+      areaQuery = `&scopes=${encodeURIComponent(areas.join(","))}`;
+    }
     const profileId = await resolveProfileId(providerProfileKey);
-    const providerPath = requested === "google_business" ? "google-business" : requested;
+    const providerPath = PROVIDER_PATH[requested] ?? requested;
     const payload = await request(
-      `/connect/${encodeURIComponent(providerPath)}?profileId=${encodeURIComponent(profileId)}&redirect_url=${encodeURIComponent(callback.href)}`,
+      `/connect/${encodeURIComponent(providerPath)}?profileId=${encodeURIComponent(profileId)}&redirect_url=${encodeURIComponent(callback.href)}${areaQuery}`,
     );
     const url = authorizationUrl(firstOf(payload, "authUrl") ?? firstOf(payload, "url"), requested);
     return { url, expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString() };
@@ -284,64 +444,100 @@ export const zernioSocialAdapter: SocialProviderAdapter = {
       throw error;
     }
   },
+  async readPostDestination(input) {
+    const requested = postPlatform(input.platform);
+    const profileId = await resolveProfileId(input.providerProfileKey);
+    const accounts = listOf(await request(`/accounts?profileId=${encodeURIComponent(profileId)}&limit=100`));
+    const row = accounts.find((account) =>
+      text(account._id ?? account.accountId ?? account.id, 200) === input.providerAccountId
+      && normalizePlatform(account.platform) === requested);
+    const returnedProfile = text(asRecord(row?.profileId)?._id ?? row?.profileId, 200);
+    if (!row || returnedProfile !== profileId || row.isActive !== true || row.enabled === false
+        || normalizeZernioAccounts([row])[0]?.status !== "connected") {
+      throw new SocialProviderError("destination_unavailable", 409, "The approved account is no longer connected.");
+    }
+    let details = row;
+    let channelId: string | null = null;
+    if (requested === "discord") {
+      // The generic account list proves membership in the profile. Discord's
+      // dedicated settings read supplies the channel that the POST must pin.
+      const settings = asRecord(await request(`/accounts/${encodeURIComponent(input.providerAccountId)}/discord-settings`));
+      const discord = asRecord(settings?.account);
+      channelId = text(discord?.channelId, 32);
+      if (!discord || discord._id !== input.providerAccountId || discord.platform !== "discord"
+          || !channelId || !/^\d{16,22}$/.test(channelId)) {
+        throw new SocialProviderError("destination_unverified", 409, "The Discord channel could not be verified.");
+      }
+      details = discord;
+    }
+    const name = text(details.displayName ?? details.name, 160);
+    const handle = text(details.username ?? details.handle, 100);
+    const channelName = text(details.channelName, 100);
+    const identity = [...new Set([name, channelName, handle].filter(Boolean))].join(" · ");
+    if (!identity) {
+      throw new SocialProviderError("destination_unverified", 409, "The destination name could not be verified.");
+    }
+    return { channelId, label: identity };
+  },
   async createPost(input) {
     assertProfileKey(input.providerProfileKey);
-    const requested = connectPlatform(input.platform);
-    // The publication row's UUID is the Idempotency-Key: one approved publication = one
-    // provider post, and a retry of the same publication can never create a second. Zernio
-    // matches on the key ALONE (not the body), so the key must never be reused for
-    // different content — the door guarantees that by construction.
+    const requested = postPlatform(input.platform);
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.externalId)) {
       throw new SocialProviderError("invalid_publication_id", 400, "The publication identifier is invalid.");
     }
-    const content = typeof input.text === "string" && input.text.trim() ? input.text.trim().slice(0, 6000) : "";
-    const profileId = await resolveProfileId(input.providerProfileKey);
-    const providerPath = requested === "google_business" ? "google-business" : requested;
+    if (!input.providerAccountId || (requested === "discord" && !input.channelId)) {
+      throw new SocialProviderError("destination_unverified", 400, "The exact publishing destination is missing.");
+    }
+    // Telegram interprets HTML by default. Escape the approved plain text for literal delivery.
+    const content = requested === "telegram"
+      ? input.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      : input.text;
+    const platformSpecificData = requested === "discord" ? { channelId: input.channelId }
+      : requested === "telegram" ? { parseMode: "HTML" } : undefined;
+    const tag = publicationTag(input);
     try {
       const payload = await request("/posts", {
         method: "POST",
         headers: { "Idempotency-Key": input.externalId },
-        body: JSON.stringify({ profileId, content, platforms: [providerPath], publishNow: true }),
-      }) as Record<string, unknown>;
-      // 200 = idempotent retry of the original answer; 201 = created; 207 = inline publish.
-      // Every 2xx carries the post object; only platformResults prove per-platform outcomes.
-      const post = payload.post && typeof payload.post === "object" && !Array.isArray(payload.post)
-        ? payload.post as Record<string, unknown> : payload;
-      const postId = text(post.id, 128);
-      const mapped: Array<{ platform: string; success: boolean; postId: string | null; postUrl: string | null; error: string | null }> = [];
-      for (const row of listOf(payload.platformResults)) {
-        const platform = normalizePlatform(row.platform);
-        const status = typeof row.status === "string" ? row.status.toLowerCase() : "";
-        const url = /^https:\/\//.test(String(row.platformPostUrl ?? "")) ? String(row.platformPostUrl) : null;
-        if (!platform) continue;
-        mapped.push({
-          platform,
-          success: status === "published",
-          postId: text(row.platformPostId, 200) ?? postId,
-          postUrl: url,
-          error: text(row.error, 300),
-        });
-      }
-      if (mapped.length) {
-        return { kind: "published" as const, results: mapped };
-      }
-      const status = text(post.status, 40) ?? "";
-      if (postId && ["publishing", "published", "partial", "pending", "processing"].includes(status)) {
-        // Accepted but not yet proven per-platform — the honest processing outcome with the
-        // provider's own post id as the reconciliation handle.
-        return { kind: "processing" as const, requestId: postId };
-      }
-      return { kind: "unknown" as const, requestId: postId, reason: "provider_answered_without_results" };
+        body: JSON.stringify({
+          content,
+          platforms: [{ platform: PROVIDER_PATH[requested] ?? requested, accountId: input.providerAccountId, platformSpecificData }],
+          publishNow: true,
+          metadata: { [PUBLICATION_METADATA_KEY]: input.externalId },
+          ...(tag ? { tags: [tag] } : {}),
+        }),
+      });
+      return postOutcome(payload, input);
     } catch (error) {
-      if (error instanceof SocialProviderError) {
-        // A 409 here means either the first attempt with this key is STILL processing or the
-        // provider's content dedup refused — the post may exist either way, so this is an
-        // uncertain outcome for reconciliation, never a clean failure.
-        if (error.status === 409) return { kind: "unknown" as const, requestId: null, reason: "provider_idempotency_or_dedup_conflict" };
-        throw error;
-      }
-      // A transport failure AFTER the request was sent is an unknown outcome, never a failure.
-      return { kind: "unknown" as const, requestId: null, reason: error instanceof Error ? error.name : "transport_uncertain" };
+      if (error instanceof SocialProviderError
+          && (POST_REJECTED_BEFORE_DISPATCH.has(error.status) || error.code === "provider_duplicate_content")) throw error;
+      // Conflicts, 5xx, malformed responses and transport errors may follow a real dispatch.
+      return { kind: "unknown", requestId: null, reason: "provider_dispatch_unconfirmed" };
     }
+  },
+  async readPost(input, providerPostId) {
+    let id = providerPostId;
+    if (!id) {
+      const profileId = await resolveProfileId(input.providerProfileKey);
+      const query = new URLSearchParams({
+        profileId, accountId: input.providerAccountId, limit: "25", fields: "metadata",
+      });
+      const tag = publicationTag(input);
+      if (tag) query.set("tags", tag);
+      for (let page = 0; page < 3; page += 1) {
+        const listed = await request(`/posts?${query}`);
+        const candidates = listOf(listed).filter((post) =>
+          asRecord(post.metadata)?.[PUBLICATION_METADATA_KEY] === input.externalId);
+        if (candidates.length) {
+          id = candidates.length === 1 ? text(candidates[0]._id, 128) : null;
+          break;
+        }
+        const cursor = text(asRecord(asRecord(listed)?.pagination)?.nextCursor, 2048);
+        if (!cursor || cursor === query.get("cursor")) break;
+        query.set("cursor", cursor);
+      }
+    }
+    if (!id) return { kind: "unknown", requestId: null, reason: "provider_attempt_not_found" };
+    return postOutcome(await request(`/posts/${encodeURIComponent(id)}`), input, id);
   },
 };

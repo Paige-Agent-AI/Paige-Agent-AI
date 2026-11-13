@@ -21,6 +21,7 @@ on:
     paths:
       - "supabase/functions/**"
       - "supabase/config.toml"
+      - "supabase/secrets/**"
       - ".github/workflows/deploy-edge-functions.yml"
       - ".github/scripts/edge-source-readback.py"
       - ".github/scripts/edge-source-emit.ts"
@@ -138,7 +139,9 @@ jobs:
           echo "count=$(grep -c . affected.txt || true)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Supabase CLI
-        if: steps.affected.outcome == 'success' && (steps.affected.outputs.count != '0' || steps.retired.outputs.count != '0')
+        # Also needed when only supabase/secrets/** changed (no function deploy, but the
+        # secrets-sync step below still runs) — a secrets-only merge must not skip the flag.
+        if: steps.affected.outcome == 'success'
         uses: supabase/setup-cli@v1
         with:
           # PINNED -- this file already anticipated pinning "if a CLI release ever
@@ -193,6 +196,47 @@ jobs:
           fi
           echo "✓ credential accepted by project $ref"
 
+      # EDGE-FUNCTION RUNTIME ENV — checked-in declaration → provider secrets. The pinned CLI
+      # (2.116.0) rejects a per-function `env` key in config.toml (strict UnmarshalExact), so
+      # runtime env for edge functions is delivered as PROJECT secrets synced from a file in git.
+      # Git is the audit log: the value, its owner-authorization and its revert all review like
+      # code. Runs on its own credential probe (secrets scope ≠ functions scope), independently of
+      # whether any function deployed this run.
+      - name: Sync declared edge-function secrets
+        if: steps.affected.outcome == 'success'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
+            echo "::error::SUPABASE_ACCESS_TOKEN secret is not set — cannot sync edge-function secrets."
+            echo "::error::Add it in Settings → Secrets and variables → Actions (see this workflow's header)."
+            exit 1
+          fi
+          ref="$(sed -n 's/^project_id = "\(.*\)"/\1/p' supabase/config.toml | head -1)"
+          if [ -z "$ref" ]; then echo "::error::could not read project_id from supabase/config.toml"; exit 1; fi
+          if ! supabase secrets list --project-ref "$ref" > /dev/null 2>&1; then
+            echo "::error::The provider rejected SUPABASE_ACCESS_TOKEN for secrets (list failed) — the token lacks the scope this sync needs. Rotate it with secrets access (Supabase dashboard → Account → Access Tokens), then re-run."
+            exit 1
+          fi
+          env_file="supabase/secrets/mcp-gateway.env"
+          if [ -f "$env_file" ]; then
+            supabase secrets set --env-file "$env_file" --project-ref "$ref"
+            echo "✓ secrets applied from $env_file"
+          else
+            echo "$env_file absent — ensuring its keys are unset (revert restores the platform default)"
+          fi
+          # A declaration removed in git must not survive at the provider: unset every key this
+          # step owns that the declaration no longer carries. The ownership list is the governed
+          # keys of the declaration file — extend it alongside the file.
+          for key in MCP_GATEWAY_EXECUTE_ENABLED; do
+            declared=""
+            [ -f "$env_file" ] && declared="$(grep -E "^${key}=" "$env_file" | head -1 || true)"
+            if [ -z "$declared" ] && supabase secrets list --project-ref "$ref" 2>/dev/null | awk '{print $1}' | grep -qx "$key"; then
+              supabase secrets unset "$key" --project-ref "$ref"
+              echo "✓ unset ${key} (absent from the declaration — platform default restored)"
+            fi
+          done
+
       # RETIREMENT RUNS FIRST AND IS NEVER STRANDED BY A DEPLOY FAILURE. The
       # 2026-09-19 run proved the old order (deploy → delete) strands the
       # retirement: every deploy 401'd, the failed step suppressed the delete,
@@ -241,6 +285,13 @@ jobs:
             echo "::endgroup::"
           done < retired.txt
           exit $fail
+
+      - name: Refresh Social native publication checkpoint
+        if: steps.affected.outcome == 'success' && steps.affected.outputs.count != '0' && steps.upload.outputs.required != 'false'
+        run: |
+          if grep -Fxq 'social-publish-command' affected.txt; then
+            git fetch -q --force origin 'refs/tags/db-live:refs/tags/db-live'
+          fi
 
       - name: Deploy affected functions
         if: steps.affected.outcome == 'success' && steps.affected.outputs.count != '0' && steps.upload.outputs.required != 'false'

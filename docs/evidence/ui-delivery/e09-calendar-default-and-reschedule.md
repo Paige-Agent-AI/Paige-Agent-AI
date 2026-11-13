@@ -52,3 +52,11 @@ RELEASE_RECOVERY: position=normal forward fix or revert the bounded PR; referenc
 - Ownership: E09 consumes Calendar and E03 Communications contracts. The finite parser/UI source window was sent to the existing Coordinator; no active overlapping source edit was identified. Weekly Work responsibility, protected Auth/Knowledge and peer Chat work are excluded.
 - Universal scope: all eligible SOLO users receive the same display default; calendar fallback is identical for all affected calendars. No business/account-specific source branch.
 - Algorithm boundary: ALG-01 original conditional/reconciled booking recovery preserved; no algorithm maturity or full capability closure inferred.
+
+## November 13 resumption and lifecycle boundary
+
+Original reviewed product changes are retained while composing current main `3cad98b393076f8ca6f11035b8ca677f4cd487e2`; no incoming overlap in these owning paths. All other incoming source, immutable migrations, incident corrections and release-pipeline changes are preserved. The November 4 head's CI and non-author review are historical evidence; the composed final head requires its own non-author integration review and exact-head checks.
+
+The original one-day booking test and temporary customer-access window are expired. Actual ordinary owner End access cleanup occurred November 13 at 23:20:50 UTC; canonical access is ended and the original customer link is cleared. This is overdue cleanup, never backdated. Contact/history remain under the original access contract; no new invitation, independent restoration, account/data deletion or further customer action was performed. Original ANT-52 cleanup receipt `61001875-6850-484a-8062-30d9209dfa22` and ANT-163 resumption `baef05f4-e2a1-4bba-b389-946be0cbd70c` retain the actual boundary.
+
+Further customer acceptance needs a newly approved bounded lifecycle and ordinary recipient-bound rejoin. Missing customer login is not a safe-release gate. No new REST poller, scheduler or timer is introduced. Verification remains finite and announced in original ANT-52 under its November 6 incident/custody rules; SQLSTATE 40001 means reload and retry later, never an immediate loop. No broad polling rewrite or unrelated infrastructure campaign is included in this Calendar increment.

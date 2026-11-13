@@ -91,4 +91,3 @@ export function buildNexusLandingTemplate({ context, projectValues = context.pro
   ].join("\n\n");
   return { id: NEXUS_LANDING_TEMPLATE_ID, title: "Editorial landing page", brief, sections, missing, publicFacts, privateGuidance, observedBrand, conversion: accepted };
 }
-

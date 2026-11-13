@@ -34,6 +34,7 @@ const CLIENT_CTX = "Focused client file: current stage is onboarding, last revie
 const VECTOR = Array.from({ length: 1024 }, (_, i) => (i % 7) / 10);
 
 let failures = 0, checks = 0;
+let unboundBindingProjections = 0;
 function assert(label, cond, detail) {
   checks += 1;
   if (cond) console.log(`  ok   ${label}`);
@@ -509,6 +510,23 @@ async function drive({
     // caller tenant and a mismatch is always resolver-side, never an accident of the harness.
     declaredActiveTenantId: CALLER_TENANT,
     rpcs: {
+      // This downstream-authorizer matrix explicitly has NO Hub-card fixtures.
+      // Script the admitted unbound projection so the original later authority,
+      // claim and recovery controls are reached, including defense-in-depth cases.
+      // Native projection scope/refusal/private facts are tested by the real SQL
+      // fixture and adapter suite; this transport port is not that native proof.
+      team_hub_card_binding: (a) => {
+        if (Object.hasOwn(tablesExtra, "team_hub_message_cards") || Object.hasOwn(serviceTablesExtra, "team_hub_message_cards"))
+          throw new Error("Hub-card scenarios require their own explicit binding response");
+        if (rec.rpc.at(-1)?.client !== "jwt" || a.p_expected_user_id !== authUser?.id
+          || Object.keys(a).sort().join(",") !== "p_expected_user_id,p_fingerprints"
+          || !Array.isArray(a.p_fingerprints) || a.p_fingerprints.length > 100
+          || !a.p_fingerprints.every(t => typeof t === "string" && /^[0-9a-f]{16}$/.test(t))
+          || new Set(a.p_fingerprints).size !== a.p_fingerprints.length)
+          throw new Error("Original caller/input-token binding interface required");
+        unboundBindingProjections++;
+        return { data: { ok: true, bound: [] }, error: null };
+      },
       check_rate_limit: { data: true, error: null },
       current_user_tenant_id: { data: CALLER_TENANT, error: null },
       is_platform_operator: { data: false, error: null },
@@ -10476,5 +10494,6 @@ console.log("\nJ19 native thread fixture defaults preserve real omissions and ex
   }
 }
 
+assert("Original downstream matrix exercises the authenticated input-token projection", unboundBindingProjections > 0);
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

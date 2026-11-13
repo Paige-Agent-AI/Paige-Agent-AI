@@ -4,6 +4,9 @@ begin;
 
 do $original_source$
 begin
+ if not exists(select 1 from pg_attribute where attrelid='public.tenant_mcp_connections'::regclass
+  and attname='zapier_generation' and atttypid='uuid'::regtype and attnotnull and not attisdropped) then
+  raise exception 'ZAPIER_MCP_EXISTING_GENERATION_MISSING'; end if;
  if (select md5(prosrc) from pg_proc where oid='public.set_tenant_mcp_approved_capabilities(text,text[],uuid,jsonb)'::regprocedure) is distinct from 'f1010d0118cba5571a89e04505d2a411' then raise exception 'ZAPIER_MCP_SOURCE_CHANGED_set_tenant_mcp_approved_capabilities'; end if;
  if (select md5(prosrc) from pg_proc where oid='public.begin_tenant_mcp_oauth(uuid,text,text,text,text,text,text,text,text,uuid)'::regprocedure) is distinct from '6d050ef34b7f1238960bd30721c592cc' then raise exception 'ZAPIER_MCP_SOURCE_CHANGED_begin_tenant_mcp_oauth'; end if;
  if (select md5(prosrc) from pg_proc where oid='public.consume_tenant_mcp_oauth_state(text)'::regprocedure) is distinct from 'b02372566cb7a3f5cd797de5d25f0e99' then raise exception 'ZAPIER_MCP_SOURCE_CHANGED_consume_tenant_mcp_oauth_state'; end if;
@@ -16,7 +19,6 @@ begin
 end $original_source$;
 
 alter table public.tenant_mcp_connections
- add column zapier_generation uuid not null default gen_random_uuid(),
  add column zapier_refresh_claim uuid,
  add column zapier_refresh_claimed_at timestamptz,
  add constraint zapier_mcp_refresh_claim_pair check
@@ -35,6 +37,7 @@ update public.tenant_mcp_oauth_state s set zapier_connection_generation=c.zapier
   and s.provider='zapier' and c.provider='zapier' and s.consumed_at is null
   and s.expires_at>clock_timestamp();
 
+-- Reuse the original Zapier Rail generation field, preserving existing values.
 -- An identity/credential change invalidates any in-flight renewal. Health checks and
 -- tool approval edits do not. n8n keeps its existing independent lifecycle contract.
 create function private.zapier_mcp_generation_changed()

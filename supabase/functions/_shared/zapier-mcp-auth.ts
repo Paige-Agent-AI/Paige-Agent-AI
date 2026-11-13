@@ -89,7 +89,19 @@ export async function resolveZapierMcpConnection(
           _expires_at: tokens.expiresAt, _scopes: tokens.scopes,
         });
         const result = stored.data as Record<string, unknown> | null;
-        const saved = result?.state === "current" && !stored.error ? usable(result.secret) : null;
+        let saved = result?.state === "current" && !stored.error ? usable(result.secret) : null;
+        if (!saved) {
+          // The database may have committed before its response was lost. Reconcile
+          // once through the original reader; never repeat the provider refresh.
+          const readback = await admin.rpc("get_tenant_mcp_secret", { _tenant_id: tenantId, _provider: "zapier" });
+          const candidate = readback.error ? null : usable(readback.data);
+          if (candidate && candidate.auth_kind === "oauth" && !candidate.refresh_claim
+            && candidate.auth_token === tokens.accessToken
+            && (!tokens.refreshToken || candidate.refresh_token === tokens.refreshToken)
+            && candidate.oauth_client_id === current.oauth_client_id
+            && candidate.oauth_issuer === current.oauth_issuer && candidate.server_url === current.server_url
+            && JSON.stringify(candidate.oauth_scopes) === JSON.stringify(tokens.scopes)) saved = candidate;
+        }
         if (!saved) throw new Error("renewal_not_stored");
         secret = saved;
       } catch {
@@ -97,7 +109,7 @@ export async function resolveZapierMcpConnection(
         await admin.rpc("fail_tenant_zapier_mcp_refresh", {
           _tenant: tenantId, _actor: actorId, _generation: current.generation, _claim: claim.claim,
         });
-        return { error: "reauthorization_required", status: 200 };
+        return await unavailable("reauthorization_required", 200);
       }
     } else {
       if (claim.state === "reauthorization_required") return await unavailable("reauthorization_required", 200);

@@ -77,6 +77,28 @@ describe("original Zapier MCP resolver shared by checks and actions", () => {
       .toEqual({ error: "reauthorization_required", status: 200 });
     expect(oauth.revokeToken).toHaveBeenCalledWith(expect.objectContaining({ token: "fresh-refresh" }));
   });
+  it("recovers a committed renewal after a lost save response using one native readback and no provider replay", async () => {
+    const db = database({ finish_tenant_zapier_mcp_refresh: new Error("response lost after commit") });
+    const original = db.rpc.getMockImplementation()!;let reads = 0;
+    db.rpc.mockImplementation(async (name, args) => name === "get_tenant_mcp_secret" && ++reads === 2
+      ? { data: { ...renewed(), auth_token: "fresh-access", refresh_token: "fresh-refresh" }, error: null }
+      : original(name, args));
+    expect(await resolveZapierMcpConnection(db,"workspace-a","actor-a")).toMatchObject({auth:{token:"fresh-access"}});
+    expect(oauth.refreshTokens).toHaveBeenCalledTimes(1);expect(reads).toBe(2);
+    expect(oauth.revokeToken).not.toHaveBeenCalled();
+    expect(db.rpc.mock.calls.map(([name])=>name)).not.toContain("fail_tenant_zapier_mcp_refresh");
+  });
+  it("does not adopt an unrelated grant observed after a lost save response", async () => {
+    const db = database({ finish_tenant_zapier_mcp_refresh: new Error("response lost") });
+    const original = db.rpc.getMockImplementation()!;let reads = 0;
+    db.rpc.mockImplementation(async (name, args) => name === "get_tenant_mcp_secret" && ++reads === 2
+      ? { data: { ...renewed(), generation:"replacement", auth_token:"another-access" }, error:null }
+      : original(name,args));
+    expect(await resolveZapierMcpConnection(db,"workspace-a","actor-a")).toMatchObject({error:"reauthorization_required"});
+    expect(oauth.refreshTokens).toHaveBeenCalledTimes(1);
+    expect(db.rpc).toHaveBeenCalledWith("record_tenant_zapier_mcp_probe",expect.objectContaining({_generation:"generation-a"}));
+    expect(oauth.revokeToken).toHaveBeenCalledWith(expect.objectContaining({token:"fresh-refresh"}));
+  });
   it("preserves already-saved URL credentials without inventing an OAuth grant", async () => {
     const db = database({ get_tenant_mcp_secret: { ...old(), auth_kind: "url", auth_token: null } });
     expect(await resolveZapierMcpConnection(db, "workspace-a", "actor-a")).toMatchObject({ auth: { kind: "none" } });

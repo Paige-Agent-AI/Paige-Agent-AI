@@ -23,6 +23,20 @@ it("reviews and sends only the exact schedule through the original post approval
  await click("Approve this schedule once");expect(h.invoke.mock.calls[1][1].body).toMatchObject({action:"publish",approved_fingerprint:"0123456789abcdef",expected_content_revision:piece.updated_at,schedule:{scheduled_for:"2027-01-02T10:00:00.000Z",timezone:"UTC",civil_time:"2027-01-02T10:00",offset_minutes:0,disambiguation:"unique"}});
  expect(host.textContent).toContain("Publication has not been confirmed");expect(recorded).toHaveBeenCalledExactlyOnceWith(publication);
 });
+it.each(["omitted","changed"] as const)("refuses a requested future post when the original approval time is %s",async variant=>{
+ h.invoke.mockImplementation(async(_,options)=>{
+  const reply=answer(options.body);
+  if(variant==="omitted")delete reply.data.preview.schedule;
+  else reply.data.preview.schedule={...options.body.schedule,scheduled_for:"2027-01-02T11:00:00.000Z",civil_time:"2027-01-02T11:00"};
+  return reply;
+ });
+ await render();await click("ThreadsConnected");await click("Schedule for later");
+ const fields=host.querySelectorAll("fieldset input");await input(fields[1] as HTMLInputElement,"UTC");await input(fields[0] as HTMLInputElement,"2027-01-02T10:00");
+ await click("Review schedule");
+ expect(host.textContent).toContain("did not match the requested publishing time");
+ expect([...host.querySelectorAll("button")].some(b=>/^Approve/.test(b.textContent??""))).toBe(false);
+ expect(h.invoke).toHaveBeenCalledTimes(1);expect(recorded).not.toHaveBeenCalled();
+});
 it("requires an explicit DST-fold occurrence instead of selecting one silently",async()=>{
  await render();await click("ThreadsConnected");await click("Schedule for later");const fields=host.querySelectorAll("fieldset input");
  await input(fields[1] as HTMLInputElement,"America/New_York");await input(fields[0] as HTMLInputElement,"2027-11-07T01:30");
@@ -36,6 +50,47 @@ it("clears the original approval view when its actor changes and ignores the lat
  let resolve!:(value:unknown)=>void;h.invoke.mockImplementation(()=>new Promise(answer=>{resolve=answer;}));await render();await click("ThreadsConnected");await click("Prepare to publish");
  h.actor="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";await render();await act(async()=>resolve(answer({})));
  expect(host.textContent).not.toContain("Original connected destination");expect(host.textContent).not.toContain("Approve and post once");expect(recorded).not.toHaveBeenCalled();
+});
+const originalSchedule={scheduled_for:"2027-01-02T10:00:00.000Z",timezone:"UTC",civil_time:"2027-01-02T10:00",offset_minutes:0,disambiguation:"unique"};
+async function renderScheduledAttempt(){
+ const row={id:publication,platform:"threads",status:"scheduled",request_args:{channel_label:"Original connected destination",schedule:JSON.stringify(originalSchedule)},provider_response:{schedule:{current:originalSchedule,version:3}},created_at:"2026-12-01T00:00Z"};
+ h.rpc.mockImplementation(async name=>({data:name==="content_publication_list"?[row]:[],error:null}));
+ await act(async()=>root.render(<PublishPiece tenantId={tenant} originalAttempt={{contentId:piece.id,publicationId:publication}} onPublicationRecorded={recorded}/>));
+}
+function changeAnswer(operation:string,schedule:unknown){const reply=answer({schedule});Object.assign(reply.data.preview,{operation,publication_id:publication,publication_version:3});return reply;}
+it("refuses an unexpected future approval for an immediate post",async()=>{
+ h.invoke.mockImplementation(async()=>answer({schedule:originalSchedule}));
+ await render();await click("ThreadsConnected");await click("Prepare to publish");
+ expect(host.textContent).toContain("did not match the requested publishing time");
+ expect([...host.querySelectorAll("button")].some(b=>/^Approve/.test(b.textContent??""))).toBe(false);
+ expect(h.invoke).toHaveBeenCalledTimes(1);expect(recorded).not.toHaveBeenCalled();
+});
+it.each(["operation","time","publication","version"] as const)("refuses a cancellation approval that changes the original %s",async variant=>{
+ h.invoke.mockImplementation(async()=>{
+  const reply=changeAnswer("cancel_schedule",originalSchedule),preview=reply.data.preview as Record<string,unknown>;
+  if(variant==="operation")delete preview.operation;
+  if(variant==="time")delete preview.schedule;
+  if(variant==="publication")preview.publication_id="44444444-4444-4444-8444-444444444444";
+  if(variant==="version")preview.publication_version=4;
+  return reply;
+ });
+ await renderScheduledAttempt();await click("Review cancellation");
+ expect(host.textContent).toContain("did not match this original schedule change");
+ expect([...host.querySelectorAll("button")].some(b=>/^Approve/.test(b.textContent??""))).toBe(false);
+ expect(h.invoke).toHaveBeenCalledTimes(1);expect(recorded).not.toHaveBeenCalled();
+});
+it("retains a matching original cancellation through its one existing approval",async()=>{
+ h.invoke.mockImplementation(async(_,options)=>options.body.approved_fingerprint?{data:{state:"cancelled",publication_id:publication,schedule:originalSchedule},error:null}:changeAnswer("cancel_schedule",originalSchedule));
+ await renderScheduledAttempt();await click("Review cancellation");await click("Approve stopping this schedule");
+ expect(h.invoke.mock.calls[1][1].body).toMatchObject({action:"cancel_schedule",publication_id:publication,publication_version:3,schedule:originalSchedule,approved_fingerprint:"0123456789abcdef"});
+ expect(recorded).toHaveBeenCalledExactlyOnceWith(publication);
+});
+it("retains a matching new time on the same original publication/version",async()=>{
+ h.invoke.mockImplementation(async(_,options)=>options.body.approved_fingerprint?{data:{state:"scheduled",publication_id:publication,schedule:options.body.schedule},error:null}:changeAnswer("reschedule",options.body.schedule));
+ await renderScheduledAttempt();await click("Change scheduled time");const fields=host.querySelectorAll("fieldset input");
+ await input(fields[1] as HTMLInputElement,"UTC");await input(fields[0] as HTMLInputElement,"2027-01-03T10:00");await click("Review new time");await click("Approve this schedule once");
+ expect(h.invoke.mock.calls[1][1].body).toMatchObject({action:"reschedule",publication_id:publication,publication_version:3,approved_fingerprint:"0123456789abcdef",schedule:{scheduled_for:"2027-01-03T10:00:00.000Z"}});
+ expect(recorded).toHaveBeenCalledExactlyOnceWith(publication);
 });
 it("keeps an explicitly selected old stopped receipt beyond five newer terminal attempts",async()=>{
  const schedule={scheduled_for:"2027-01-02T10:00:00.000Z",timezone:"UTC",civil_time:"2027-01-02T10:00",offset_minutes:0,disambiguation:"unique"};

@@ -54,6 +54,8 @@ export type PublicationReceipt = {
 };
 
 const canCheckAttempt = (status: string) => ["approved", "publishing", "outcome_unknown", "scheduled", "schedule_changing", "cancelled"].includes(status);
+const sameSchedule = (expected: SocialSchedule | null | undefined, actual: SocialSchedule | null | undefined) =>
+  JSON.stringify(expected ?? null) === JSON.stringify(actual ?? null);
 
 export function prioritizePublicationReceipts(receipts: PublicationReceipt[]): PublicationReceipt[] {
   const active = (receipt:PublicationReceipt) => canCheckAttempt(receipt.status) && receipt.status !== "cancelled";
@@ -270,12 +272,14 @@ function PublishPieceWorkspace({ piece, originalAttempt, tenantId, captionReadOn
 
   const prepare = async () => {
     if (!piece || !platform || busy || onlyPublicationId) return;
-    if (timing === "later" && !readSocialSchedule(schedule, Date.now())) {setFace({face:"refused",sentence:"Choose a valid time more than two minutes ahead, then review the schedule."});return;}
+    const requestedSchedule = timing === "later" ? readSocialSchedule(schedule, Date.now()) : null;
+    if (timing === "later" && !requestedSchedule) {setFace({face:"refused",sentence:"Choose a valid time more than two minutes ahead, then review the schedule."});return;}
     setBusy(true);
     setFace({ face: "calling", sentence: "Asking for the exact post to approve…" });
     const next = await callDoor({ action: "publish", expected_tenant_id: tenantId, content_id: piece.id,
-      expected_content_revision: piece.updated_at, platform, caption: caption.trim() || null, ...(timing === "later" ? {schedule} : {}) });
-    accept(next);
+      expected_content_revision: piece.updated_at, platform, caption: caption.trim() || null, ...(requestedSchedule ? {schedule:requestedSchedule} : {}) });
+    accept(next.face === "approval_required" && (next.operation || !sameSchedule(requestedSchedule, next.schedule))
+      ? {face:"refused",sentence:"That approval did not match the requested publishing time. Review the post again."} : next);
   };
   const approve = async () => {
     if (face.face !== "approval_required" || busy || (!face.operation && (!piece || onlyPublicationId))) return;
@@ -305,10 +309,15 @@ function PublishPieceWorkspace({ piece, originalAttempt, tenantId, captionReadOn
     accept(next);
   };
   const changeSchedule = async (receipt: PublicationReceipt, operation: "reschedule"|"cancel_schedule") => {
-    if (busy || !receipt.scheduleVersion || (operation === "reschedule" && !readSocialSchedule(schedule, Date.now()))) return;
+    if (busy || !receipt.scheduleVersion) return;
+    const requestedSchedule = operation === "reschedule" ? readSocialSchedule(schedule, Date.now()) : readSocialSchedule(receipt.schedule);
+    if (!requestedSchedule) {setFace({face:"refused",sentence:"The scheduled time could not be verified. Check the original attempt, then review the change again."});return;}
     setBusy(true);setFace({face:"calling",sentence:"Preparing the exact schedule change to approve…"});
-    accept(await callDoor({action:operation,expected_tenant_id:tenantId,content_id:contentId,publication_id:receipt.id,publication_version:receipt.scheduleVersion,
-      ...(operation === "reschedule" ? {schedule} : {})}));
+    const next = await callDoor({action:operation,expected_tenant_id:tenantId,content_id:contentId,publication_id:receipt.id,publication_version:receipt.scheduleVersion,
+      ...(operation === "reschedule" ? {schedule:requestedSchedule} : {})});
+    accept(next.face === "approval_required" && (next.operation !== operation || next.publicationId !== receipt.id
+      || next.publicationVersion !== receipt.scheduleVersion || !sameSchedule(requestedSchedule, next.schedule))
+      ? {face:"refused",sentence:"That approval did not match this original schedule change. Check the same original receipt and review again."} : next);
   };
   const reset = () => { setFace({ face: "idle" }); };
 

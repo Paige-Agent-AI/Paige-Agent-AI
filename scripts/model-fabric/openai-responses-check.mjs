@@ -662,5 +662,68 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
   ok(!stopped.ok && !stopped.body && preHeaderTrace?.error_class === 'stream_interrupted'
     && traceCount() === preHeaderFrom + 1, '10.4 pre-header caller cancellation retains one interrupted trace, not a provider network incident');
 }
+// Cache policy is server-scope only, preserves instruction/tool/history semantics,
+// and records provider categories without changing the incumbent customer meter.
+{
+  const scope = { actor_id: '00000000-0000-4000-8000-000000000011',
+    tenant_id: TRACE.tenant_id, working_context_tenant_id: TRACE.tenant_id };
+  const key = await ad.chatPromptCacheKey(scope);
+  ok(/^paige-chat-v1:[a-f0-9]{64}$/.test(key) && !key.includes(scope.actor_id), 'K1 opaque stable server partition');
+  ok(key === await ad.chatPromptCacheKey({ ...scope }), 'K2 same actor/context is stable across turns');
+  for (const field of ['actor_id', 'tenant_id', 'working_context_tenant_id']) {
+    ok(key !== await ad.chatPromptCacheKey({ ...scope, [field]: '00000000-0000-4000-8000-000000000012' }), `K3 ${field} separates cache accounting`);
+  }
+  ok(await ad.chatPromptCacheKey(undefined) === undefined
+    && await ad.chatPromptCacheKey({ ...scope, actor_id: 'untrusted' }) === undefined, 'K4 absent/malformed scope never makes a shared global key');
+  const before = ad.buildResponsesRequest({ messages: CONVO, tools: [TOOL] }, { model: models.OPENAI_OPERATIONAL });
+  const after = ad.buildResponsesRequest({ messages: CONVO, tools: [TOOL] }, { model: models.OPENAI_OPERATIONAL, promptCacheKey: key });
+  ok(!after.instructions && after.input[0].role === 'developer'
+    && after.input[0].content.map(c => c.text).join('') === before.instructions,
+    'K5 instruction text/order/priority conserved at developer boundary');
+  ok(JSON.stringify(after.input.slice(1)) === JSON.stringify(before.input)
+    && JSON.stringify(after.tools) === JSON.stringify(before.tools), 'K6 conversation, tools, calls, outputs and reasoning remain identical');
+  ok(after.input[0].content[0].prompt_cache_breakpoint?.mode === 'explicit'
+    && after.input[0].content.slice(1).every(c => !c.prompt_cache_breakpoint)
+    && after.prompt_cache_options.mode === 'implicit' && after.prompt_cache_options.ttl === '30m'
+    && after.store === false, 'K7 early reusable prefix plus original implicit loop reuse; no retention extension/storage');
+  const changed = ad.buildResponsesRequest({ messages: CONVO.map((m, i) => i === 1 ? { ...m, content: 'Fresh current context.' } : m), tools: [TOOL] },
+    { model: models.OPENAI_OPERATIONAL, promptCacheKey: key });
+  ok(JSON.stringify(changed.input[0].content[0]) === JSON.stringify(after.input[0].content[0])
+    && changed.input[0].content[1].text.includes('Fresh current context.'), 'K8 changing later context preserves first prefix, never freezes stale context');
+  const forged = ad.buildResponsesRequest({ messages: CONVO, prompt_cache_key: key, prompt_cache_options: { ttl: '12h' } }, { model: models.OPENAI_OPERATIONAL });
+  ok(!forged.prompt_cache_key && !forged.prompt_cache_options && forged.instructions === before.instructions, 'K9 request JSON cannot opt into cache scope or retention');
+  const usage = { input_tokens: 12000, output_tokens: 500, input_tokens_details: { cached_tokens: 4000,
+    cache_write_tokens: 7000, cache_write_tokens_details: { ttl_30m_tokens: 3000, ttl_12h_tokens: 4000 } } };
+  const tx = transport(() => json({ status: 'completed', model: models.OPENAI_OPERATIONAL, usage, output: [] }));
+  const from = traceCount();
+  await ad.responsesCompletion({ messages: CONVO }, { model: models.OPENAI_OPERATIONAL, promptCacheKey: key, fetchImpl: tx }, { ...TRACE, prompt_cache_scope: scope });
+  const [row] = await tracesSince(from);
+  ok(row.tokens_in === 8000 && row.tokens_out === 500 && row.cache_read_input_tokens === 4000
+    && row.cache_creation_input_tokens === 7000, 'K10 incumbent metered quantity unchanged; reads/writes observed separately');
+  ok(row.metadata.provider_cache_write_30m_tokens === 3000 && row.metadata.provider_cache_write_12h_tokens === 4000
+    && row.metadata.provider_cost_estimate_usd === 0.0349, 'K11 provider-only estimate prices disjoint categories at exact model rates');
+  ok(!JSON.stringify(row).includes(scope.actor_id) && !JSON.stringify(row).includes(key)
+    && row.metadata.provider_cost_basis.includes('not invoice/customer meter'), 'K12 no raw actor/key persisted, cost basis explicit');
+  ok(row.cost_estimate_usd === 0.021, 'K13 incumbent estimator/billing input remains unchanged, separate from provider cache cost');
+  const badUsage = { ...usage, input_tokens_details: { ...usage.input_tokens_details,
+    cache_write_tokens_details: { ttl_30m_tokens: 3000, ttl_12h_tokens: 3000 } } };
+  const badFrom = traceCount();
+  await ad.responsesCompletion({ messages: CONVO }, { model: models.OPENAI_OPERATIONAL,
+    fetchImpl: transport(() => json({ status: 'completed', model: models.OPENAI_OPERATIONAL, usage: badUsage, output: [] })) }, TRACE);
+  const [badRow] = await tracesSince(badFrom);
+  ok(badRow.cache_creation_input_tokens === 7000 && badRow.metadata.provider_cost_estimate_usd === undefined
+    && badRow.metadata.provider_cache_write_30m_tokens === undefined, 'K14 contradictory lifetime sum is unknown cost, never fabricated zero or inferred TTL');
+  const streamFrom = traceCount();
+  const streamed = await ad.responsesStream({ messages: CONVO }, { model: models.OPENAI_OPERATIONAL, promptCacheKey: key,
+    fetchImpl: transport(() => sse([
+      { type: 'response.output_text.delta', delta: 'Existing saved result.' },
+      { type: 'response.completed', response: { status: 'completed', model: models.OPENAI_OPERATIONAL, usage, output: [] } },
+    ])) }, TRACE);
+  await drain(streamed.body);
+  const [streamRow] = await tracesSince(streamFrom);
+  ok(streamRow.status === 'success' && streamRow.cache_creation_input_tokens === 7000
+    && streamRow.metadata.provider_cost_estimate_usd === 0.0349 && traceCount() === streamFrom + 1,
+    'K15 streamed final authoritative usage carries same cache/cost observations exactly once');
+}
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

@@ -668,7 +668,8 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
   const scope = { actor_id: '00000000-0000-4000-8000-000000000011',
     tenant_id: TRACE.tenant_id, working_context_tenant_id: TRACE.tenant_id };
   const key = await ad.chatPromptCacheKey(scope);
-  ok(/^paige-chat-v1:[a-f0-9]{64}$/.test(key) && !key.includes(scope.actor_id), 'K1 opaque stable server partition');
+  ok(key.length <= 64, 'K0 provider cache key never exceeds the 64-character transport bound');
+  ok(/^[a-f0-9]{64}$/.test(key) && !key.includes(scope.actor_id), 'K1 opaque stable server partition');
   ok(key === await ad.chatPromptCacheKey({ ...scope }), 'K2 same actor/context is stable across turns');
   for (const field of ['actor_id', 'tenant_id', 'working_context_tenant_id']) {
     ok(key !== await ad.chatPromptCacheKey({ ...scope, [field]: '00000000-0000-4000-8000-000000000012' }), `K3 ${field} separates cache accounting`);
@@ -677,6 +678,11 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
     && await ad.chatPromptCacheKey({ ...scope, actor_id: 'untrusted' }) === undefined, 'K4 absent/malformed scope never makes a shared global key');
   const before = ad.buildResponsesRequest({ messages: CONVO, tools: [TOOL] }, { model: models.OPENAI_OPERATIONAL });
   const after = ad.buildResponsesRequest({ messages: CONVO, tools: [TOOL] }, { model: models.OPENAI_OPERATIONAL, promptCacheKey: key });
+  for (const invalid of ['paige-chat-v1:' + key, key + 'a', key.slice(1), '', 'a'.repeat(128)]) {
+    const refused = ad.buildResponsesRequest({ messages: CONVO }, { model: models.OPENAI_OPERATIONAL, promptCacheKey: invalid });
+    ok(!refused.prompt_cache_key && refused.prompt_cache_options?.mode === 'explicit'
+      && !JSON.stringify(refused).includes('prompt_cache_breakpoint'), 'K0b invalid/overlong partition disables cache reads and writes before transport');
+  }
   ok(!after.instructions && after.input[0].role === 'developer'
     && after.input[0].content.map(c => c.text).join('') === before.instructions,
     'K5 instruction text/order/priority conserved at developer boundary');

@@ -1,0 +1,49 @@
+# PAIGE Agent AI — MANDATORY Coordinator-First AI COO MVP Experience
+
+> **OWNER DIRECTIVE — NOVEMBER 12, 2026. APPROVED AND CONTROLLING PRODUCT NORTH STAR.**
+>
+> The owner establishes direction. PAIGE coordinates execution. The organization moves together.
+
+## What the customer is buying
+
+PAIGE is the **AI Chief Operating Officer** for a business: one accountable management and coordination layer across people, departments, the original six permanent AI specialists, the customer's current software, and PAIGE's approved native software. She interprets the business owner's operating goal, understands current capabilities and responsibilities, constructs a permitted plan, delegates original work, synchronizes handoffs, follows through within real authority, recovers disruptions and returns verifiable business results. This is the **mandatory full-platform MVP EXPERIENCE**, not an optional assistant feature, marketing descriptor, future backlog idea, or replacement for existing approved complete EXP/PO-EXP scope.
+
+The owner should not need to understand Experience numbers, select a specialist, manually bridge the CRM/finance/communications/marketing/service departments, or recreate workflows in a proprietary vendor just to coordinate a business. PAIGE Chat/eligible Live, the existing COO Briefing, Team Hub, Work and original native departments must present one coherent and lawful operating experience.
+
+## Universal coordinator-first acceptance contract
+
+For every applicable original customer/company Experience and accountable activity, identify and prove the following. Mark a grounded N/A only when genuinely inapplicable, not as a way to escape end-to-end delivery.
+
+1. **Authorized company understanding.** Map goals, real organization/management structure, human and specialist responsibilities, existing software and processes, connection status, original source, entity/tenant membership, role, consent, data freshness, ambiguity and uncertainty. Never invent a business fact or transfer private team/DM data across boundaries.
+2. **Actual tool capability and readiness.** On legitimate connector consent, inventory the provider's verified read/write/report/trigger/automation-create-or-modify capabilities, scope, cost, limits, auth lifecycle, tool identity and valid action schemas. A credential or API/MCP endpoint alone proves neither workflow management nor permission to send, publish, charge, import, move money, or act. Show precise supported/needs-setup/unavailable/held states.
+3. **Native or existing external choice.** Prefer original approved PAIGE-native services when enough; preserve and use the customer's existing authorized tools where appropriate; recommend integrations only when genuinely useful. A tenant without external integrations can still obtain PAIGE-native functions that are actually implemented. Unsupported functions must be called out plainly; no second external management engine and no fake execution.
+4. **One accountable original job.** Construct success criteria, required resources and policies, human/AI assignments, dependencies, owners, permitted tools and accepted original artifact/result. EXP05 Work/Harness/Orchestration Layer is the producer; original domain writers retain source and effect custody; EXP01 and EXP08 consume the SAME task status, result and receipt.
+5. **Handoff, execution and continuity.** Demonstrate intent→policy→plan→original writer assignment→durable handoff→receiving ACK→actual authorized action→reliable provider/domain result→source readback/Rail receipt→original Chat/Team Hub/Briefing update→reopen/resume across disconnection. Include partial, error, UNKNOWN, timeout, revoked, stale, cancel and no-duplicate-effect recovery.
+6. **Management and proactive coordination.** Within approved event triggers, lawful authority and working source freshness, PAIGE detects missed or competing commitments, communication interruptions, pipeline bottlenecks, service risks, financial exceptions and owner decision needs. She recommends/coordinates eligible follow-up and escalates material consequences, never unilaterally creating unchecked cost or effects.
+7. **Quality and economics.** Evaluate cost per verified customer/company outcome, source accuracy, time to useful result, outcome success, human coordination minutes saved, model/voice/provider usage and tenant charge attribution. No fabricated ROI or unmetered third-party charges.
+
+## Three portfolio-wide acceptance journeys (mandatory, not substitutes for original complete matrices)
+
+**A — Lead to revenue to delivery:** Original Marketing/CRM captures consented interest and attribution → original Sales verifies qualification, offer, agreement and invoice → authentic source verifies payment/settlement and separate company L1 vs tenant L2 cash → original Work/Operations executes accepted fulfillment → original CURA customer support/Portal closes the real loop → PAIGE reports actual verified owner outcome. Prove duplicate, missing agreement, failed payment, opt-out, partial fulfillment and role isolation negatives.
+
+**B — Owner's operating goal to COO result:** PAIGE receives an ordinary business owner goal through Chat/eligible Live → current Business Operating Map and permissions guide a plan → ZION EXP05 produces one original durable job with genuine receiving specialists/human ACK → Team Hub surfaces exact authorized staff and specialist progress, decisions, recoveries → VERA/EXP02 gives a source-backed COO Briefing and owner decision queue → Chat/Team Hub can reopen original artifacts, results and receipts after reload or disconnection. Prove no fake human/AI handoffs, no second work ledger and no shared private DM data.
+
+**C — Connect tool to coordinated execution:** Owner connects a supported CRM, social, webinar, community, communications or other eligible external service using real tenant-owned consent → EXP10 produces a verifiable capability/readiness inventory → PAIGE selects original permitted domain tool or eligible native replacement/fallback and proposes a materially useful workflow → owner approval or standing authority is checked immediately at effect time → original domain writer executes → real external event/receipt is reconciled and shown with no replay. Prove insufficient scope, missing action, unsupported workflow create/edit, rate limit, revoked token and wrong-workspace negatives.
+
+## Ownership is unchanged
+
+- **PAIGE** is principal AI COO; **VERA** finance/intelligence, **NEXUS** marketing/growth, **CURA** clients/service, **MENTOR** business guidance/setup, **MERIT** sales/commercial, **ZION** Work/operations. Preserve original identities, private channels, colors/personalities and native Team Hub direct interactions.
+- **EXP01** original PAIGE Chat/Live and setup/continuity; **EXP02** operating intelligence and briefing; **EXP03** CRM/growth/communications; **EXP04** commercial truth; **EXP05** ONE Orchestration Layer/Work/Harness, automation, delegation and recovery; **EXP06** native web/forms; **EXP07** content/social; **EXP08** human team/Team Hub UI, permissions and access; **EXP09** clients/Portal/delivery; **EXP10** third-party connection/Vault/capability custody. Other original EXP11–19 and PO-EXP01–30 retain their original authorized/held writers and complete assignment statuses.
+- **Model Fabric/ALG11** chooses cognition tier/provider for tasks. It is **NOT** the business orchestration layer. Reuse original Spine, Trust, Vault, Rail, Knowledge/Memory and metering; no second agent fleet, duplicate ledger, shadow CRM, finance engine, provider router, scheduler or business runtime.
+
+## Evidence and hard release gates
+
+Each original EXP/PO-EXP matrix must add coordinator-first applicability to its existing outcome: business trigger, real actor/tenant/role, permitted data/versions, native/external choices and connection readiness, accountable source writer and receiving human/specialist, durable job/handoff/ACK, effect/receipt, owner brief or original surface return, negative/UNKNOWN/cancel/revocation/retry recovery, latency/quality/cost, test provenance and maturity classification. Distinguish **BUILT / PARTIAL / MISSING / PROOF OWED / HELD / genuine N/A**. Distinguish code merged from deployed, authenticated positive/negative/recovery proof and owner acceptance.
+
+No public commercial launch until the full approved EXP00–19 and requisite PO-EXP experience gates are satisfied. **No new agent, project, EXP alias, provider effect, spending authorization, live route switch, held staffing activation, invoice change or permission override follows from this record.** Complete ONE currently authorized original business outcome; use FLOW BY FLOW then IMPECCABLE where applicable; author must use a separate spun-up reviewer who did not write the change; exact-head CI; safe merge/deploy; genuine authenticated proof; report owner/Coordinator in ORIGINAL records; STOP for owner approval of next work. EXP08's owner-approved queued internal SOLO invitation/signup fix remains next after its current selected outcome.
+
+## Canonical durable records
+
+Owner North Star / Coordinator Bootstrap, ANT-161 controlling Master Development Strategy, ANT-147 original integration, all original EXP/PO-EXP issues/matrices and the existing PAIGE Delivery Evidence Register **MVP COO Acceptance** tab reflect this directive. The register is the existing evidence ledger, not an additional source of truth. Source-level evidence is required independently; a signed-off document is not proof of live coordination.
+
+> This direction supersedes the narrower *product positioning* that treats the COO function as a later add-on or an aggregation of separate department tools. It does NOT erase dated historical evidence, standing permissions, existing outcomes, original source custody, safety gates or owner release control.

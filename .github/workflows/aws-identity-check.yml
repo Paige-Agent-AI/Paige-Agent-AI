@@ -1,0 +1,42 @@
+name: AWS identity connection check
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/aws-identity-check.yml]
+
+permissions: {}
+
+jobs:
+  identity:
+    if: github.repository == 'Paige-Agent-AI/Paige-Agent-AI' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      id-token: write
+    steps:
+      - name: Assume the repository-scoped AWS role
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
+        with:
+          role-to-assume: arn:aws:iam::915087794461:role/PaigeGitHubDeploy
+          aws-region: us-east-2
+          allowed-account-ids: '915087794461'
+          role-session-name: PaigeGitHubIdentityCheck
+          role-duration-seconds: 900
+          unset-current-credentials: true
+      - name: Verify the expected AWS identity without resource access
+        shell: bash
+        run: |
+          set -euo pipefail
+          identity="$(aws sts get-caller-identity --output json)"
+          IDENTITY_JSON="$identity" python3 - <<'PY'
+          import json
+          import os
+          identity = json.loads(os.environ["IDENTITY_JSON"])
+          assert identity["Account"] == "915087794461", "Unexpected AWS account"
+          assert identity["Arn"].startswith(
+              "arn:aws:sts::915087794461:assumed-role/PaigeGitHubDeploy/"
+          ), "Unexpected AWS role"
+          print("AWS OIDC identity verified for the expected PAIGE account and deployment role.")
+          PY

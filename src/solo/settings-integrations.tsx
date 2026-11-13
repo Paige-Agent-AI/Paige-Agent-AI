@@ -366,21 +366,31 @@ function CapabilityApproval({ provider, onChanged }: { provider: "n8n" | "zapier
   </div>;
 }
 
-function ZapierApiPanel({ api, onChanged }: { api: ReturnType<typeof useZapierApi>; onChanged: () => void }) {
+export function ZapierApiPanel({ api, onChanged }: { api: ReturnType<typeof useZapierApi>; onChanged: () => void }) {
   const[confirming,setConfirming]=useState(false);
-  const begin=async()=>{const url=await api.begin();if(url){armOAuthReturn(`${window.location.pathname}${window.location.search}`);window.location.assign(url);}};
+  const[reviewingPermissions,setReviewingPermissions]=useState(false);
+  const permissionTrigger=useRef<HTMLButtonElement>(null);
+  useEffect(()=>setReviewingPermissions(false),[api.tenantId,api.canAuthorizeWorkflowManagement]);
+  const begin=async(profile:"read_only"|"workflow_management"="read_only")=>{const url=await api.begin(profile);if(url){armOAuthReturn(`${window.location.pathname}${window.location.search}`);window.location.assign(url);}};
   if(api.loading)return <p className="ig-state" role="status">Checking the Zapier API connection…</p>;
   if(api.error)return <div className="ig-state" role="alert"><span>{api.message}</span><button className="ig-btn" onClick={()=>void api.reload()}>Try again</button></div>;
-  return <><p className="ig-lede">Connect the workspace’s Zapier account for provider-supported, read-only workflow visibility.</p>
-   <dl className="ig-facts"><div><dt>API connection</dt><dd>{zapierApiWords(api.state)}</dd></div><div><dt>Accessible workflows</dt><dd>{api.state==="connected"&&api.accessibleZapCount!==null?api.accessibleZapCount:"Unavailable until a complete check succeeds"}</dd></div><div><dt>Authority</dt><dd>Read workflows and run a safe connection check</dd></div>{api.lastCheckedAt&&<div><dt>Last check</dt><dd>{safeCheckDate(api.lastCheckedAt)}</dd></div>}</dl>
-   <p className="ig-note">This connection does not list workflow contents here and cannot edit, activate, deactivate, archive, delete, or run Zaps. PAIGE tools are authorized separately.</p>
+  return <><p className="ig-lede">Connect this workspace’s Zapier account. Start with read-only visibility; workflow management needs separate authorization.</p>
+   <dl className="ig-facts"><div><dt>API connection</dt><dd>{zapierApiWords(api.state)}</dd></div><div><dt>Accessible workflows</dt><dd>{api.state==="connected"&&api.accessibleZapCount!==null?api.accessibleZapCount:"Unavailable until a complete check succeeds"}</dd></div><div><dt>Connection permissions</dt><dd>{api.workflowManagementAuthorized?"Workflow management authorized":"Read workflows and run a safe connection check"}</dd></div>{api.lastCheckedAt&&<div><dt>Last check</dt><dd>{safeCheckDate(api.lastCheckedAt)}</dd></div>}</dl>
+   <p className="ig-note">Connection permissions do not approve a workflow change or live trigger. Each action still needs its own authorization. PAIGE tools access remains separate.</p>
+   {api.state==="capability_unavailable"&&<p className="ig-note" role="status">Zapier API authorization is unavailable until PAIGE’s provider app is configured. Your existing PAIGE tools connection is separate.</p>}
    {api.message&&<p className="ig-error" role="alert">{api.message}</p>}
-   {!api.canManage?<p className="ig-note">Only the workspace owner can authorize or remove this API connection.</p>:<div className="ig-actions">
-    <button type="button" className="ig-btn" data-primary disabled={api.busy||api.state==="capability_unavailable"} onClick={()=>void begin()}><KeyRound aria-hidden size={14}/>{api.state==="capability_unavailable"?"Provider authorization unavailable":api.busy?"Opening Zapier…":api.state==="not_connected"?"Connect API":"Reconnect API"}</button>
+   {!api.canManage?<p className="ig-note">Only the workspace owner can authorize or remove this API connection.</p>:<div className="ig-actions ig-zapier-scope-actions">
+    <button type="button" className="ig-btn" data-primary disabled={api.busy||api.state==="capability_unavailable"} onClick={()=>void begin(api.workflowManagementAuthorized?"workflow_management":"read_only")}><KeyRound aria-hidden size={14}/>{api.state==="capability_unavailable"?"Provider authorization unavailable":api.busy?"Opening Zapier…":api.state==="not_connected"?"Connect API":"Reconnect API"}</button>
+    {api.canAuthorizeWorkflowManagement&&!api.workflowManagementAuthorized&&<button ref={permissionTrigger} type="button" className="ig-btn" disabled={api.busy||api.state==="capability_unavailable"||api.hasPendingAuthorization} aria-expanded={reviewingPermissions} onClick={()=>setReviewingPermissions(value=>!value)}>Authorize workflow management</button>}
+    <button type="button" className="ig-btn" disabled={api.busy} onClick={()=>void api.reload().then(onChanged)}>Refresh status</button>
     {api.hasPendingAuthorization&&<button type="button" className="ig-btn" disabled={api.busy} onClick={()=>void api.cancel().then(onChanged)}>Cancel authorization</button>}
     {api.hasLocalConnection&&!api.hasPendingAuthorization&&api.state!=="capability_unavailable"&&<button type="button" className="ig-btn" disabled={api.busy} onClick={()=>void api.test().then(onChanged)}><RefreshCw aria-hidden size={14}/>Run safe connection test</button>}
     {api.hasLocalConnection&&(confirming?<span className="ig-confirm"><button type="button" className="ig-btn" data-danger disabled={api.busy} onClick={()=>{setConfirming(false);void api.disconnect().then(onChanged);}}>Disconnect API</button><button type="button" className="ig-btn" onClick={()=>setConfirming(false)}>Keep it</button></span>:<button type="button" className="ig-btn" onClick={()=>setConfirming(true)}>Disconnect API</button>)}
-   </div>}</>;
+   </div>}
+   {api.canAuthorizeWorkflowManagement&&reviewingPermissions&&<section className="ig-note ig-zapier-scope-review" aria-label="Workflow permission review">
+    <h3>Review workflow permissions</h3><p>Allow PAIGE to inspect app connections and workflow history, create or change workflows, and pause or enable them. Creating a Zap or replacing its steps can enable it immediately. This connection permission does not authorize any of those actions.</p>
+    <div className="ig-actions"><button type="button" className="ig-btn" disabled={api.busy||api.state==="capability_unavailable"} onClick={()=>void begin("workflow_management")}>Continue to Zapier</button><button type="button" className="ig-btn" disabled={api.busy} onClick={()=>{setReviewingPermissions(false);permissionTrigger.current?.focus();}}>Keep current permissions</button></div>
+   </section>}</>;
 }
 
 /**

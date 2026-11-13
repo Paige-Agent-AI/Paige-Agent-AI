@@ -709,6 +709,24 @@ describe("Zapier API and PAIGE tools are independent", () => {
     expect(assigned).toEqual(["https://api.zapier.com/v2/authorize?state=bound"]);
   });
 
+  it("names the management profile only after separate consequence review", async () => {
+    world();
+    invoke.mockImplementation((name: string, options: { body: Record<string, unknown> }) => {
+      if (name === "tenant-zapier-api-connect" && options.body.action === "status") return Promise.resolve({ data: { ok: true, connection: { tenant_id: "tenant-a", can_manage: true, state: "not_connected", can_authorize_workflow_management: true, permission_profiles_supported: true, failure_code: null, accessible_zap_count: null, last_checked_at: null, last_success_at: null, capabilities: [], limitations: [] } }, error: null });
+      if (name === "tenant-zapier-api-connect" && options.body.action === "oauth_begin") return Promise.resolve({ data: { ok: true, authorize_url: "https://api.zapier.com/v2/authorize?state=bound" }, error: null });
+      return Promise.resolve({ data: { ok: true }, error: null });
+    });
+    const { host } = await render(); await openCard(host, "mcp");
+    await click(panelButton(host, "Authorize workflow management"));
+    expect(invoke.mock.calls.some(call => call[0] === "tenant-zapier-api-connect" && call[1].body.action === "oauth_begin")).toBe(false);
+    expect(panel(host).textContent).toContain("Creating a Zap or replacing its steps can enable it immediately.");
+    await click(panelButton(host, "Continue to Zapier"));
+    const body = invoke.mock.calls.at(-1)![1].body;
+    expect(body).toEqual({ action: "oauth_begin", expected_tenant_id: "tenant-a", permission_profile: "workflow_management" });
+    expect(Object.keys(body).join(",")).not.toMatch(/token|secret|key|verifier/i);
+    expect(assigned).toEqual(["https://api.zapier.com/v2/authorize?state=bound"]);
+  });
+
   it("starts MCP OAuth from the exact Zapier server and clears it", async () => {
     world();
     invoke.mockResolvedValue({ data: { ok: true, authorize_url: "https://zapier.com/oauth/authorize?state=mcp" }, error: null });

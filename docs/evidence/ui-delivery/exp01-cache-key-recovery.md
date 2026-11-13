@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: Released3339 source is not described as a successfu
 SOLO_UI: NO: Shared backend request serialization only; all Solo/Chat UI source remains unchanged.
 UNVERIFIED: Live correction, exact-head CI/release, provider cache/latency/cost observations and final saved-conversation reopen remain owed.
 
-INTERNAL_BUILD_IDENTITY: source=cf51ca1cd40fbaa00d2eeca3f90e209f924f39d0; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED; evidence=ANT-50/188b9b2e and model-routing/int-334/EXP01-CHAT-CACHE-2026-11-13.md
+INTERNAL_BUILD_IDENTITY: source=cf51ca1cd40fbaa00d2eeca3f90e209f924f39d0; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(corrected adapter release and actual deployed-source verification); evidence=ANT-50/188b9b2e and model-routing/int-334/EXP01-CHAT-CACHE-2026-11-13.md
 RELEASE_CHANNEL: development: Candidate only; normal production release follows independent final-head review and required checks.
 RELEASE_CLASSIFICATION: internal-only: Corrective transport increment in the same approved Chat outcome.
 CUSTOMER_RELEASE_IDENTITY: none: No owner-approved customer announcement or version.

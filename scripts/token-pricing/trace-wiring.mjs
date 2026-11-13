@@ -151,5 +151,19 @@ console.log("5. a refused row is not silent, and a missing cache column degrades
      "5.8 cache counts are NOT folded into tokens_in — meter_llm_usage bills tokens_in + tokens_out");
 }
 
+console.log('6. cache diagnostic metadata is a closed opaque scalar');
+{
+  const digest = '01234567-89abcdef-01234567-89abcdef-01234567-89abcdef-01234567-89abcdef';
+  const valid = ['v1',digest,digest,digest,digest].join('|');
+  const r = await traced({...base,content_policy:'metadata_only',input:'Synthetic private input',output:'Synthetic private answer',
+    metadata:{provider_cache_signature:valid}});
+  ok(r?.metadata?.provider_cache_signature===valid && r?.input_excerpt==null && r?.output_excerpt==null,
+    '6.1 fixed-format fingerprints survive original scalar scrub without retaining customer content');
+  for (const forged of ['Synthetic private text',{prompt:'Synthetic private text'},valid+'|'+digest]) {
+    const bad = await traced({...base,content_policy:'metadata_only',metadata:{provider_cache_signature:forged}});
+    ok(bad?.metadata?.provider_cache_signature===undefined,
+      '6.2 arbitrary, structured or oversized diagnostic content cannot pass the original trace writer');
+  }
+}
 console.log(`\ntrace-wiring: ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

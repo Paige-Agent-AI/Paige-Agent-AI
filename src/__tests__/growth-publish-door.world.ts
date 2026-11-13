@@ -38,6 +38,9 @@ export interface WorldOptions {
   onTenantRead?: (count: number) => void | Promise<void>;
   recordFails?: boolean;
   auditFails?: boolean;
+  /** Synthetic readiness-read failures; no remote requests are made. */
+  readErrors?: readonly string[];
+  onRead?: (table: string, filters: ReadonlyArray<Filter>) => void;
   /** Wrap the real Kit gate, to observe it or make it refuse. */
   decideOverride?: (key: string, input: Parameters<typeof realDecide>[1], real: typeof realDecide) => ReturnType<typeof realDecide>;
 }
@@ -67,6 +70,7 @@ export function world(o: WorldOptions = {}) {
     rpc: [] as Array<{ fn: string; args?: Row; client: "caller" | "admin" }>,
     receipts: [] as Row[],
     reads: [] as Array<{ table: string; filters: Filter[] }>,
+    selects: [] as Array<{ table: string; columns: string }>,
   };
   let tenantReads = 0;
 
@@ -91,6 +95,8 @@ export function world(o: WorldOptions = {}) {
     const run = () => {
       const rows = tables[table] ?? (tables[table] = []);
       seen.reads.push({ table, filters: [...filters] });
+      o.onRead?.(table, filters);
+      if (o.readErrors?.includes(table)) return { data: null, error: { message: "synthetic readiness read failed" } };
       if (insert) {
         if (table === "paige_audit_log" && o.auditFails) return { data: null, error: { message: "audit down" } };
         if (table === "paige_pending_confirmations" && rows.some((r) => r.consumed_at == null
@@ -106,7 +112,7 @@ export function world(o: WorldOptions = {}) {
       return { data: hit, error: null };
     };
     const q: Record<string, unknown> = {
-      select: () => q, order: () => q,
+      select: (columns: string) => { seen.selects.push({ table, columns }); return q; }, order: () => q,
       eq: (c: string, v: unknown) => { filters.push(["eq", c, v]); return q; },
       neq: (c: string, v: unknown) => { filters.push(["neq", c, v]); return q; },
       is: (c: string, v: unknown) => { filters.push(["is", c, v]); return q; },

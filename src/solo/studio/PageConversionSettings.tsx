@@ -15,6 +15,7 @@ export type PageConversionBlock = Extract<GrowthBlock, { type: "conversion" }>;
 export type ConversionOptionsStatus = "loading" | "ready" | "unavailable";
 export interface PageConversionSettingsProps {
   value?: PageConversionBlock;
+  paste?: { input: string; kind: "external_form" | "external_booking" | null; mode: ConversionMode };
   legacyForm?: { slug: string; title?: string };
   /** Options come from the caller's original scoped readers; this panel grants no access. */
   forms: readonly { id: string; title: string }[];
@@ -29,42 +30,46 @@ export interface PageConversionSettingsProps {
 }
 type Kind = ConversionDestination["kind"];
 interface Draft {
-  kind: Kind; formId: string; bookingSlug: string; input: string; mode: ConversionMode;
+  kind: Kind | ""; formId: string; bookingSlug: string; input: string; mode: ConversionMode;
   title: string; description: string; label: string;
 }
 type Candidate = { ok: true; block: PageConversionBlock } | { ok: false; message: string; canUseLink?: boolean };
 
-function seed(value?: PageConversionBlock): Draft {
+function seed(value?: PageConversionBlock, paste?: PageConversionSettingsProps["paste"]): Draft {
   const destination = value?.destination;
   const external = destination?.kind === "external_form" || destination?.kind === "external_booking";
   return {
-    kind: destination?.kind ?? "native_form",
+    kind: paste ? paste.kind ?? "" : destination?.kind ?? "native_form",
     formId: destination?.kind === "native_form" ? destination.formId : "",
     bookingSlug: destination?.kind === "native_booking" ? destination.slug : "",
-    input: external ? destination.url : "", mode: external ? destination.mode : "link",
+    input: paste?.input ?? (external ? destination.url : ""), mode: paste?.mode ?? (external ? destination.mode : "link"),
     title: value?.title ?? "", description: value?.description ?? "", label: value?.label ?? "",
   };
 }
-function defaultLabel(kind: Kind, mode: ConversionMode): string {
+function defaultLabel(kind: Draft["kind"], mode: ConversionMode): string {
+  if (!kind) return "Open destination";
   const booking = kind === "native_booking" || kind === "external_booking";
   return `${(kind === "external_form" || kind === "external_booking") && mode === "embed" ? "Load" : "Open"} ${booking ? "booking" : "form"}`;
 }
 
 /** A local draft only. The caller saves through the original page/version writer and
  *  keys this panel by tenant + page so input never crosses a resource/context switch. */
-export function PageConversionSettings({ value, legacyForm, forms, bookingLinks, formsStatus = "ready", bookingLinksStatus = "ready", onSave, onClose, saving = false, disabled = false, error }: PageConversionSettingsProps) {
-  const [draft, setDraft] = useState(() => seed(value));
+export function PageConversionSettings({ value, paste, legacyForm, forms, bookingLinks, formsStatus = "ready", bookingLinksStatus = "ready", onSave, onClose, saving = false, disabled = false, error }: PageConversionSettingsProps) {
+  const [draft, setDraft] = useState(() => seed(value, paste));
   const [attempted, setAttempted] = useState(false);
   const [pending, setPending] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const savePending = useRef(false);
   const sourceRef = useRef<HTMLSelectElement | HTMLTextAreaElement | null>(null);
+  const kindRef = useRef<HTMLSelectElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const inspectorRef = useRef<HTMLElement>(null);
   const id = useId();
   const busy = saving || pending || disabled;
   const external = draft.kind === "external_form" || draft.kind === "external_booking";
   const actionLabel = defaultLabel(draft.kind, draft.mode);
   const candidate = useMemo<Candidate>(() => {
+    if (!draft.kind) return { ok: false, message: "Choose whether this destination is a form or booking link." };
     let normalized: ConversionDestinationResult;
     if (draft.kind === "native_form") {
       if (formsStatus !== "ready") return { ok: false, message: formsStatus === "loading" ? "Wait for the form list to finish loading." : "The form list could not be loaded. Close these settings and try again." };
@@ -97,7 +102,26 @@ export function PageConversionSettings({ value, legacyForm, forms, bookingLinks,
   const validation = attempted && candidate.ok === false ? candidate : null;
   const validationId = `${id}-validation`;
   const helpId = `${id}-source-help`;
-  const sourceDescriptions = [helpId, validation ? validationId : null].filter(Boolean).join(" ");
+  const sourceValidation = draft.kind ? validation : null;
+  const sourceDescriptions = [helpId, sourceValidation ? validationId : null].filter(Boolean).join(" ");
+
+  function focusInvalid(target: HTMLElement | null) {
+    if (!target) return;
+    target.focus({ preventScroll: true });
+    // The aside's overflow:auto is the inspector's only scroll owner. Reveal
+    // locally around its sticky header/footer; never move Studio's ancestors.
+    const inspector = inspectorRef.current;
+    if (!inspector?.contains(target)) return;
+    const bounds = inspector.getBoundingClientRect();
+    const headerHeight = inspector.querySelector(":scope > header")?.getBoundingClientRect().height ?? 0;
+    const footerHeight = inspector.querySelector(".vs-inspector-foot")?.getBoundingClientRect().height ?? 0;
+    const top = bounds.top + inspector.clientTop + headerHeight;
+    const bottom = bounds.top + inspector.clientTop + inspector.clientHeight - footerHeight;
+    if (bottom <= top) return;
+    const field = (target.closest(".vs-field") ?? target).getBoundingClientRect();
+    const delta = field.top < top + 8 ? field.top - top - 8 : field.bottom > bottom - 8 ? field.bottom - bottom + 8 : 0;
+    if (delta) inspector.scrollTo({ top: Math.max(0, Math.min(inspector.scrollHeight - inspector.clientHeight, inspector.scrollTop + delta)), behavior: "instant" });
+  }
 
   function change<K extends keyof Draft>(key: K, next: Draft[K]) {
     setDraft((current) => {
@@ -112,8 +136,9 @@ export function PageConversionSettings({ value, legacyForm, forms, bookingLinks,
     if (busy || savePending.current) return;
     setAttempted(true); setSaveError(null);
     if (candidate.ok === false) {
-      if (sourceRef.current && !sourceRef.current.disabled) sourceRef.current.focus();
-      else errorRef.current?.focus();
+      if (!draft.kind) focusInvalid(kindRef.current);
+      else if (sourceRef.current && !sourceRef.current.disabled) focusInvalid(sourceRef.current);
+      else focusInvalid(errorRef.current);
       return;
     }
     savePending.current = true; setPending(true);
@@ -122,7 +147,7 @@ export function PageConversionSettings({ value, legacyForm, forms, bookingLinks,
     finally { savePending.current = false; setPending(false); }
   }
 
-  return <aside className="vs-inspector vs-page-conversion" aria-label="Page conversion settings" aria-busy={saving || pending}>
+  return <aside ref={inspectorRef} className="vs-inspector vs-page-conversion" aria-label="Page conversion settings" aria-busy={saving || pending}>
     <header><b>Page conversion</b><button type="button" className="vs-icon-btn" aria-label="Close conversion settings" onClick={onClose}><X size={16} /></button></header>
     <form onSubmit={save} className="vs-page-conversion-form" noValidate>
       <div className="vs-inspector-body">
@@ -130,7 +155,10 @@ export function PageConversionSettings({ value, legacyForm, forms, bookingLinks,
         {!value && legacyForm && <p className="vs-page-conversion-help">Current saved form: <b>{legacyForm.title || legacyForm.slug}</b>. Saving a destination replaces this form on the page.</p>}
         <div className="vs-field">
           <label htmlFor={`${id}-kind`}>Destination</label>
-          <select id={`${id}-kind`} value={draft.kind} required disabled={busy} onChange={(event) => change("kind", event.target.value as Kind)}>
+          <select ref={kindRef} id={`${id}-kind`} value={draft.kind} required disabled={busy}
+            aria-invalid={validation && !draft.kind ? true : undefined} aria-describedby={validation && !draft.kind ? validationId : undefined}
+            onChange={(event) => change("kind", event.target.value as Draft["kind"])}>
+            {!draft.kind && <option value="" disabled>Choose form or booking</option>}
             <option value="native_form">PAIGE form</option><option value="native_booking">PAIGE booking</option>
             <option value="external_form">External form</option><option value="external_booking">External booking</option>
           </select>
@@ -138,7 +166,7 @@ export function PageConversionSettings({ value, legacyForm, forms, bookingLinks,
         {draft.kind === "native_form" ? <div className="vs-field">
           <label htmlFor={`${id}-form`}>PAIGE form</label>
           <select ref={(node) => { sourceRef.current = node; }} id={`${id}-form`} value={draft.formId} required
-            disabled={busy || formsStatus !== "ready" || forms.length === 0} aria-invalid={validation ? true : undefined} aria-describedby={sourceDescriptions}
+            disabled={busy || formsStatus !== "ready" || forms.length === 0} aria-invalid={sourceValidation ? true : undefined} aria-describedby={sourceDescriptions}
             onChange={(event) => change("formId", event.target.value)}>
             <option value="">Choose a form</option>
             {draft.formId && !forms.some((form) => form.id === draft.formId) && <option value={draft.formId} disabled>{formsStatus === "ready" ? "Previously selected form unavailable" : "Current form selection"}</option>}
@@ -151,7 +179,7 @@ export function PageConversionSettings({ value, legacyForm, forms, bookingLinks,
         </div> : draft.kind === "native_booking" ? <div className="vs-field">
           <label htmlFor={`${id}-booking`}>PAIGE booking link</label>
           <select ref={(node) => { sourceRef.current = node; }} id={`${id}-booking`} value={draft.bookingSlug} required
-            disabled={busy || bookingLinksStatus !== "ready" || bookingLinks.length === 0} aria-invalid={validation ? true : undefined} aria-describedby={sourceDescriptions}
+            disabled={busy || bookingLinksStatus !== "ready" || bookingLinks.length === 0} aria-invalid={sourceValidation ? true : undefined} aria-describedby={sourceDescriptions}
             onChange={(event) => change("bookingSlug", event.target.value)}>
             <option value="">Choose a booking link</option>
             {draft.bookingSlug && !bookingLinks.some((link) => link.slug === draft.bookingSlug) && <option value={draft.bookingSlug} disabled>{bookingLinksStatus === "ready" ? "Previously selected link unavailable" : "Current booking selection"}</option>}
@@ -171,7 +199,7 @@ export function PageConversionSettings({ value, legacyForm, forms, bookingLinks,
           <div className="vs-field">
             <label htmlFor={`${id}-input`}>Public URL or embed code</label>
             <textarea ref={(node) => { sourceRef.current = node; }} id={`${id}-input`} value={draft.input} maxLength={CONVERSION_LIMITS.html} required
-              disabled={busy} spellCheck={false} autoCapitalize="off" autoComplete="off" aria-invalid={validation ? true : undefined} aria-describedby={sourceDescriptions}
+              disabled={busy} spellCheck={false} autoCapitalize="off" autoComplete="off" aria-invalid={sourceValidation ? true : undefined} aria-describedby={sourceDescriptions}
               onChange={(event) => change("input", event.target.value)} />
             <p id={helpId} className="vs-page-conversion-help">Use a public HTTPS URL or a supported iframe/Jotform embed code. It won’t run in settings.</p>
           </div>

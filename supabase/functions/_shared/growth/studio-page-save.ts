@@ -32,7 +32,7 @@ function saved(source: StudioPageSaveSource, value: unknown): StudioPageSaved | 
 export function createStudioPageSave(source: StudioPageSaveSource, deps: Dependencies) {
   let attempted = false, frozen: Row | null = null, wire: string | null = null;
   const current = () => !deps.signal?.aborted && deps.current();
-  const rpc = deps.caller.rpc.bind(deps.caller);
+  const rpc = (name: string, args: Row) => deps.caller.rpc(name, args);
   const call = (name: string, args: Row) => createWeeklyDraftDeadline(deps.timeoutMs ?? 5000, current)(() => rpc(name, args));
   const unknown = (): StudioPageSaveResult => ({ ok: false, code: "unknown", notApplied: false });
   const inspect = async (): Promise<StudioPageSaveResult> => {

@@ -220,4 +220,69 @@ describe("page conversion settings — canonical draft editing", () => {
     expect(props.onClose).toHaveBeenCalledTimes(2);
     expect(props.onSave).not.toHaveBeenCalled();
   });
+  it("seeds pasted destination while preserving saved cosmetics, without saving on review", async () => {
+    const url = "https://calendly.com/example-studio/consultation";
+    await render({ value: { type: "conversion", destination: { kind: "native_booking", slug: "discovery-call" }, title: "Talk with us", description: "Pick a useful next step", label: "Discuss your visit" },
+      paste: { input: url, kind: "external_booking", mode: "link" } });
+    expect(control("Destination").value).toBe("external_booking"); expect(control("Public URL or embed code").value).toBe(url);
+    expect(control("Section title").value).toBe("Talk with us"); expect(control("Description").value).toBe("Pick a useful next step");
+    expect(control("Button label").value).toBe("Discuss your visit"); expect(props.onSave).not.toHaveBeenCalled();
+    await click("Save conversion"); expect(props.onSave).toHaveBeenCalledWith({ type: "conversion", destination: { kind: "external_booking", mode: "link", url, provider: "calendly" }, title: "Talk with us", description: "Pick a useful next step", label: "Discuss your visit" });
+  });
+  it("requires explicit form versus booking for an unknown pasted public link", async () => {
+    const input = "https://forms.example.com/intake";
+    await render({ paste: { input, kind: null, mode: "link" } });
+    expect(control("Destination").value).toBe(""); expect(control("Public URL or embed code").value).toBe(input);
+    await click("Save conversion"); expect(props.onSave).not.toHaveBeenCalled();
+    expect(host.querySelector('[role="alert"]')?.textContent).toMatch(/form.*booking/i);
+    expect(document.activeElement).toBe(control("Destination")); expect(control("Destination").getAttribute("aria-invalid")).toBe("true");
+    const validUrl = control("Public URL or embed code"), validationId = host.querySelector('[role="alert"]')!.id;
+    expect(validUrl.getAttribute("aria-invalid")).not.toBe("true");
+    expect(validUrl.getAttribute("aria-describedby")?.split(" ")).not.toContain(validationId);
+    expect(document.getElementById(validUrl.getAttribute("aria-describedby")!)?.textContent).toContain("public HTTPS URL");
+    await enter("Destination", "external_form"); await click("Save conversion");
+    expect(props.onSave).toHaveBeenCalledWith({ type: "conversion", destination: { kind: "external_form", mode: "link", url: input, provider: "other" }, label: "Open form" });
+  });
+  it("keeps pasted HTML inert and editable on Cancel and rejected save", async () => {
+    const input = `<iframe src="${JOTFORM}" onload="window.pasteExecuted=true"></iframe><script>window.pasteExecuted=true</script>`;
+    const fetch = vi.spyOn(globalThis, "fetch");
+    await render({ paste: { input, kind: "external_form", mode: "embed" }, onSave: vi.fn().mockRejectedValue(new Error("private-paste-diagnostic")) });
+    expect(control("Public URL or embed code").value).toBe(input); expect(host.querySelector("iframe,script")).toBeNull();
+    expect(props.onSave).not.toHaveBeenCalled(); await click("Cancel"); expect(props.onClose).toHaveBeenCalledOnce();
+    expect(control("Public URL or embed code").value).toBe(input);
+    await click("Save conversion"); expect(props.onSave).toHaveBeenCalledWith({ type: "conversion", destination: { kind: "external_form", mode: "embed", url: JOTFORM, provider: "jotform" }, label: "Load form" });
+    expect(control("Public URL or embed code").value).toBe(input); expect(fetch).not.toHaveBeenCalled();
+    expect(host.textContent).not.toContain("private-paste-diagnostic"); expect(JSON.stringify(vi.mocked(props.onSave).mock.calls)).not.toMatch(/<iframe|onload|script/);
+  });
+  it("focuses missing kind without ancestor scrolling and reveals only within the inspector scroll owner", async () => {
+    // Controlled DOM/scroll ports prove the local operation and arithmetic,
+    // not actual browser layout. The coordinator owns the phone-frame proof.
+    await render({ paste: { input: "https://forms.example.com/intake", kind: null, mode: "link" } });
+    const kind = control("Destination"), inspector = host.querySelector("aside")!;
+    const field = kind.closest(".vs-field")!, header = inspector.querySelector("header")!, footer = inspector.querySelector(".vs-inspector-foot")!;
+    Object.defineProperties(inspector, { clientHeight: { configurable: true, value: 300 }, scrollHeight: { configurable: true, value: 1000 } });
+    inspector.scrollTop = 500; host.scrollTop = 41;
+    vi.spyOn(inspector, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 100, 320, 300));
+    vi.spyOn(header, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 100, 320, 60));
+    vi.spyOn(footer, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 350, 320, 50));
+    vi.spyOn(field, "getBoundingClientRect").mockReturnValue(new DOMRect(0, -250, 320, 70));
+    const localScroll = vi.fn(); inspector.scrollTo = localScroll;
+    const ancestorScroll = vi.fn(); host.scrollTo = ancestorScroll;
+    const intoView = vi.fn(); kind.scrollIntoView = intoView;
+    const focus = vi.spyOn(kind, "focus");
+    await click("Save conversion");
+    expect(focus).toHaveBeenCalledExactlyOnceWith({ preventScroll: true }); expect(document.activeElement).toBe(kind);
+    expect(localScroll).toHaveBeenCalledExactlyOnceWith({ top: 82, behavior: "instant" });
+    expect(ancestorScroll).not.toHaveBeenCalled(); expect(intoView).not.toHaveBeenCalled(); expect(host.scrollTop).toBe(41);
+    expect(props.onSave).not.toHaveBeenCalled();
+  });
+  it("keeps actual URL errors on the URL control and uses the same no-ancestor-scroll focus", async () => {
+    await render({ paste: { input: "javascript:bad()", kind: "external_form", mode: "link" } });
+    const url = control("Public URL or embed code"), focus = vi.spyOn(url, "focus");
+    await click("Save conversion");
+    expect(focus).toHaveBeenCalledExactlyOnceWith({ preventScroll: true }); expect(document.activeElement).toBe(url);
+    expect(url.getAttribute("aria-invalid")).toBe("true");
+    expect(url.getAttribute("aria-describedby")?.split(" ")).toContain(host.querySelector('[role="alert"]')!.id);
+    expect(control("Destination").getAttribute("aria-invalid")).not.toBe("true"); expect(props.onSave).not.toHaveBeenCalled();
+  });
 });

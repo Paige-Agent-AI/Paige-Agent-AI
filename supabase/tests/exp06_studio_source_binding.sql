@@ -772,6 +772,94 @@ BEGIN
   AND NOT has_function_privilege('service_role','public.studio_page_save_state(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb)','execute'),'native generation/save/reconciliation require actual authenticated Studio authority');
 END $page_save_cas$;
 
+DO $form_takedown$
+DECLARE
+ t uuid:='f0060000-0000-4000-8000-000000000010'; u uuid:='f0060000-0000-4000-8000-000000000001';
+ page public.growth_pages; legacy public.growth_pages; draft_only public.growth_pages; form_id uuid; other_form uuid; foreign_form uuid;
+ legacy_form uuid; funnel_form uuid; draft_form uuid; funnel uuid; blocks jsonb; response jsonb; before_audits integer;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ INSERT INTO public.growth_forms(tenant_id,slug,name,status,draft_schema_json,draft_success_action_json)
+  VALUES(t,'canonical-takedown-dependency','Actual native conversion form','draft','{"sections":[]}','{"type":"thank_you"}') RETURNING id INTO form_id;
+ blocks:=jsonb_build_array(jsonb_build_object('type','conversion','destination',jsonb_build_object('kind','native_form','formId',form_id)));
+ page:=public.growth_page_upsert(NULL,'canonical-takedown-page','Published canonical native conversion',blocks,NULL,NULL,NULL,NULL);
+ page:=public._growth_page_go_live(t,page.id);
+ PERFORM set_config('request.jwt.claim.sub','',true);
+ PERFORM set_config('request.jwt.claim.role','service_role',true);
+ PERFORM pg_temp.studio_refuses(format('select public.growth_form_unpublish(%L,%L,%L)',t,form_id,u),'22023',
+  'published canonical native-form page prevents original service form takedown');
+ PERFORM pg_temp.studio_assert((SELECT status='active' FROM public.growth_forms WHERE id=form_id)
+  AND (SELECT status='published' FROM public.growth_pages WHERE id=page.id),'refused canonical form takedown preserves live page and active original form');
+ UPDATE public.growth_pages SET draft_blocks_json='[{"type":"hero","title":"Pending removal"}]' WHERE id=page.id;
+ PERFORM pg_temp.studio_refuses(format('select public.growth_form_unpublish(%L,%L,%L)',t,form_id,u),'22023',
+  'draft removal cannot erase dependency still present in original live page blocks');
+ INSERT INTO public.growth_forms(tenant_id,slug,name,status) VALUES(t,'unrelated-takedown-form','Unrelated active form','active') RETURNING id INTO other_form;
+ response:=public.growth_form_unpublish(t,other_form,u);
+ PERFORM pg_temp.studio_assert(response->>'status'='draft' AND (SELECT status='published' FROM public.growth_pages WHERE id=page.id),
+  'published canonical dependency never blocks unrelated original form takedown');
+ UPDATE public.growth_pages SET status='draft' WHERE id=page.id;
+ SELECT count(*) INTO before_audits FROM public.audit_logs WHERE entity_id=form_id AND action='growth_form_unpublish';
+ response:=public.growth_form_unpublish(t,form_id,u);
+ PERFORM pg_temp.studio_assert(response=jsonb_build_object('id',form_id,'status','draft')
+  AND (SELECT count(*)=before_audits+1 FROM public.audit_logs WHERE entity_id=form_id AND action='growth_form_unpublish'),
+  'original form takedown succeeds and audits once after its actual page is taken down');
+ response:=public.growth_form_unpublish(t,form_id,u);
+ PERFORM pg_temp.studio_assert(response->>'status'='draft'
+  AND (SELECT count(*)=before_audits+1 FROM public.audit_logs WHERE entity_id=form_id AND action='growth_form_unpublish'),
+  'original nonactive early return preserves takedown idempotency and audit count');
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ legacy:=public.growth_page_upsert(NULL,'retained-legacy-takedown','Original legacy dependency','[{"type":"embedded_form","form_slug":"retained-legacy-takedown-form"}]',NULL,NULL,NULL,NULL);
+ legacy:=public._growth_page_go_live(t,legacy.id);
+ SELECT id INTO legacy_form FROM public.growth_forms WHERE tenant_id=t AND slug='retained-legacy-takedown-form';
+ PERFORM set_config('request.jwt.claim.sub','',true);
+ PERFORM pg_temp.studio_refuses(format('select public.growth_form_unpublish(%L,%L,%L)',t,legacy_form,u),'22023',
+  'original published embedded-form slug dependency remains protected');
+ INSERT INTO public.growth_forms(tenant_id,slug,name,status) VALUES(t,'retained-funnel-takedown-form','Original funnel form','active') RETURNING id INTO funnel_form;
+ INSERT INTO public.growth_funnels(tenant_id,slug,name,status) VALUES(t,'retained-funnel-takedown','Original live funnel','active') RETURNING id INTO funnel;
+ INSERT INTO public.growth_funnel_steps(tenant_id,funnel_id,form_id) VALUES(t,funnel,funnel_form);
+ PERFORM pg_temp.studio_refuses(format('select public.growth_form_unpublish(%L,%L,%L)',t,funnel_form,u),'22023',
+  'original live funnel step dependency remains protected');
+ INSERT INTO public.growth_forms(tenant_id,slug,name,status,draft_schema_json) VALUES(t,'draft-only-takedown-form','Draft-only page form','active','{"sections":[]}') RETURNING id INTO draft_form;
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ blocks:=jsonb_build_array(jsonb_build_object('type','conversion','destination',jsonb_build_object('kind','native_form','formId',draft_form)));
+ draft_only:=public.growth_page_upsert(NULL,'draft-only-takedown-page','Only a saved draft',blocks,NULL,NULL,NULL,NULL);
+ PERFORM set_config('request.jwt.claim.sub','',true);
+ response:=public.growth_form_unpublish(t,draft_form,u);
+ PERFORM pg_temp.studio_assert(response->>'status'='draft' AND (SELECT status='draft' FROM public.growth_pages WHERE id=draft_only.id),
+  'draft-only canonical page does not create a live dependency or block original takedown');
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ draft_only:=public.growth_page_upsert(NULL,draft_only.slug,draft_only.title,'[{"type":"hero","title":"Actual live content"}]',NULL,NULL,draft_only.id,NULL);
+ draft_only:=public._growth_page_go_live(t,draft_only.id);
+ UPDATE public.growth_forms SET status='active' WHERE id=draft_form;
+ draft_only:=public.growth_page_upsert(NULL,draft_only.slug,draft_only.title,blocks,NULL,NULL,draft_only.id,NULL);
+ PERFORM set_config('request.jwt.claim.sub','',true);
+ response:=public.growth_form_unpublish(t,draft_form,u);
+ PERFORM pg_temp.studio_assert(response->>'status'='draft'
+  AND (SELECT status='published' AND blocks_json='[{"type":"hero","title":"Actual live content"}]'::jsonb FROM public.growth_pages WHERE id=draft_only.id),
+  'pending new form on a live pages draft does not block takedown when actual live blocks do not collect through it');
+ INSERT INTO public.growth_forms(tenant_id,slug,name,status) VALUES('f0060000-0000-4000-8000-000000000020','foreign-takedown-form','Foreign active form','active') RETURNING id INTO foreign_form;
+ PERFORM pg_temp.studio_refuses(format('select public.growth_form_unpublish(%L,%L,%L)',t,foreign_form,u),'P0002','foreign native form ID cannot be taken down through authorized current tenant');
+ PERFORM pg_temp.studio_assert((SELECT status='active' FROM public.growth_forms WHERE id=foreign_form),'foreign form remains active after refused cross-tenant takedown');
+ UPDATE public.growth_forms SET status='active' WHERE id=other_form;
+ UPDATE public.tenant_members SET role='member' WHERE tenant_id=t AND user_id=u;
+ PERFORM pg_temp.studio_refuses(format('select public.growth_form_unpublish(%L,%L,%L)',t,other_form,u),'42501','original actor authority revocation independently refuses form takedown');
+ PERFORM pg_temp.studio_assert((SELECT status='active' FROM public.growth_forms WHERE id=other_form),'revoked actor cannot modify an unrelated active form');
+ UPDATE public.tenant_members SET role='owner' WHERE tenant_id=t AND user_id=u;
+ PERFORM pg_temp.studio_refuses(format('select public.growth_form_unpublish(%L,%L,%L)',t,other_form,'f0060000-0000-4000-8000-000000000002'),'42501','service key cannot nominate an unauthorized original actor');
+ UPDATE public.growth_forms SET status='archived' WHERE id=other_form;
+ SELECT count(*) INTO before_audits FROM public.audit_logs WHERE entity_id=other_form AND action='growth_form_unpublish';
+ response:=public.growth_form_unpublish(t,other_form,u);
+ PERFORM pg_temp.studio_assert(response->>'status'='archived'
+  AND (SELECT count(*)=before_audits FROM public.audit_logs WHERE entity_id=other_form AND action='growth_form_unpublish'),
+  'archived original form retains nonactive early return without a new audit');
+ PERFORM pg_temp.studio_assert((SELECT proacl::text='{postgres=X/postgres,service_role=X/postgres}' AND pg_get_userbyid(proowner)='postgres'
+  FROM pg_proc WHERE oid='public.growth_form_unpublish(uuid,uuid,uuid)'::regprocedure)
+  AND NOT has_function_privilege('authenticated','public.growth_form_unpublish(uuid,uuid,uuid)','execute')
+  AND NOT has_function_privilege('anon','public.growth_form_unpublish(uuid,uuid,uuid)','execute'),
+  'forward form takedown repair retains exact original service-only owner and ACL');
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+END $form_takedown$;
+
 -- Exercise the actual SQL role too; JWT verification remains outside this local port.
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.studio_assert(public.studio_lookup_project_start('f0060000-0000-4000-8000-000000000010','f0060000-0000-4000-8000-000000000030')->'ok'='true','ordinary authenticated role uses protected recovery RPC');
@@ -780,6 +868,7 @@ SELECT pg_temp.studio_assert(public.chat_studio_reference('f0060000-0000-4000-80
 SELECT pg_temp.studio_assert((SELECT public.chat_studio_sources('f0060000-0000-4000-8000-000000000010',(value->>'thread')::uuid,ARRAY[(value->>'source')::uuid])->'source_turn_ids'=jsonb_build_array(value->'source') FROM chat_studio_cases WHERE label='primary'),'actual authenticated SQL role discovers only its original historical user pointer');
 SELECT pg_temp.studio_assert((SELECT public.studio_page_save_source('f0060000-0000-4000-8000-000000000010',id,NULL)->'ok'='true' FROM public.studio_sessions WHERE title='Atomic Studio save'),'actual authenticated SQL role uses protected original project source');
 SELECT pg_temp.studio_refuses('select id from public.paige_workspace_events limit 1','42501','ordinary actor cannot directly select original private Rail');
+SELECT pg_temp.studio_refuses('select public.growth_form_unpublish(gen_random_uuid(),gen_random_uuid(),NULL)','42501','actual authenticated SQL role cannot bypass original service-only takedown door');
 SELECT pg_temp.studio_refuses(format('update public.paige_chat_turns set studio_brief=%L where id=%L','{"brief":"Forged prepared text"}',(SELECT value->>'source' FROM chat_studio_cases WHERE label='primary')),'42501','incumbent issued-row guard protects new preparation field');
 SELECT pg_temp.studio_refuses(format('update public.paige_chat_turns set studio_session_id=gen_random_uuid() where id=%L',(SELECT value->>'source' FROM chat_studio_cases WHERE label='primary')),'42501','incumbent issued-row guard protects new ready reference');
 SELECT pg_temp.studio_refuses(format('update public.paige_chat_turns set interactive_intent_id=NULL,interactive_actor_id=NULL,interactive_tenant_id=NULL,studio_brief=NULL,studio_session_id=NULL where id=%L',(SELECT value->>'source' FROM chat_studio_cases WHERE label='primary')),'42501','clearing authority fields cannot bypass incumbent old-row immutability');

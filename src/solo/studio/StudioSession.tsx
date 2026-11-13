@@ -17,6 +17,7 @@ import { PublishPanel } from "./PublishPanel";
 import { FormSettings } from "./FormSettings";
 import { Timeline } from "./Timeline";
 import { PageConversionSettings, type PageConversionBlock } from "./PageConversionSettings";
+import { parseStudioChatConversionPaste } from "./conversion-input";
 import { loadStudioConversionResources, saveStudioPageConversion, loadStudioProjectContext, saveStudioProjectContext, loadStudioPublicationReceipts, type StudioPublicationReceipt, type StudioConversionResources, type StudioProjectContext } from "./studio-data";
 import { StudioBusinessContextPanel } from "./StudioBusinessContextPanel";
 import { projectStudioBusinessContext } from "./business-context";
@@ -71,6 +72,11 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [conversionOpen, setConversionOpen] = React.useState(false);
+  const [conversionPaste, setConversionPaste] = React.useState<{
+    pageId: string; originalText: string; sequence: number;
+    input: string; kind: "external_form" | "external_booking" | null; mode: "link" | "embed";
+  } | null>(null);
+  const conversionPasteSequence = React.useRef(0);
   const [conversionResources, setConversionResources] = React.useState<StudioConversionResources | null>(null);
   const [conversionSaving, setConversionSaving] = React.useState(false);
   const [conversionError, setConversionError] = React.useState<string | null>(null);
@@ -195,6 +201,10 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
       const saved = await saveStudioPageConversion({ tenantId, sessionId, pageId: page.id, expectedUpdatedAt: page.updatedAt!, conversion });
       if (!alive.current) return;
       setArtifact({ kind: "page", page: saved.page }); setRefreshKey(value => value + 1); setConversionOpen(false);
+      if (conversionPaste?.pageId === page.id) {
+        setInput(current => current.trim() === conversionPaste.originalText ? "" : current);
+        setConversionPaste(null);
+      }
       setNotice(saved.changed ? "Conversion saved in this page draft. Publish reviews the saved version." : "This conversion is already saved in the original page draft.");
     } catch (e) { if (alive.current) setConversionError(plainError(e, "The conversion save isn't verified. Check the saved page before retrying.")); }
     finally { if (alive.current) setConversionSaving(false); }
@@ -313,6 +323,17 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const submit = async () => {
     const text = input.trim();
     if (!text || chat.sending || !chat.ready || contextSaving || conversionSaving) return;
+    if (artifact?.kind === "page" && artifact.page.updatedAt) {
+      const paste = parseStudioChatConversionPaste(text);
+      if (paste.matched) {
+        if (paste.error) { setNotice(paste.error); return; }
+        setConversionPaste({ pageId: artifact.page.id, originalText: text, sequence: ++conversionPasteSequence.current,
+          input: paste.input, kind: paste.kind, mode: paste.mode });
+        setConversionError(null); setConversionOpen(true);
+        setNotice("Review the form or booking destination before saving it in this page draft.");
+        return;
+      }
+    }
     if (contextDraft && (legacyContext || JSON.stringify(contextDraft) !== JSON.stringify(projectContext)) && !await saveContext()) return;
     if (!alive.current) return;
     setInput("");
@@ -388,7 +409,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           {artifact?.kind === "form" && (
             <button type="button" className="vs-btn" aria-pressed={settingsOpen} onClick={() => setSettingsOpen((o) => !o)}><SlidersHorizontal size={14} />Form settings</button>
           )}
-          {artifact?.kind === "page" && <button type="button" className="vs-btn" aria-pressed={conversionOpen} disabled={chat.sending || !artifact.page.updatedAt} onClick={() => setConversionOpen(value => !value)}><SlidersHorizontal size={14} aria-hidden="true" />Form or booking</button>}
+          {artifact?.kind === "page" && <button type="button" className="vs-btn" aria-pressed={conversionOpen} disabled={chat.sending || !artifact.page.updatedAt} onClick={() => { setConversionPaste(null); setConversionOpen(value => !value); }}><SlidersHorizontal size={14} aria-hidden="true" />Form or booking</button>}
           <div className="vs-seg" role="group" aria-label="Preview size">
             <button type="button" aria-pressed={device === "desktop"} aria-label="Desktop" onClick={() => setDevice("desktop")}><Monitor size={14} /></button>
             <button type="button" aria-pressed={device === "phone"} aria-label="Phone" onClick={() => setDevice("phone")}><Smartphone size={14} /></button>
@@ -552,11 +573,12 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           {settingsOpen && artifact?.kind === "form" && (
             <FormSettings tenantId={tenantId} formId={artifact.form.id} onClose={() => setSettingsOpen(false)} onSaved={() => setRefreshKey((k) => k + 1)} />
           )}
-          {conversionOpen && artifact?.kind === "page" && <PageConversionSettings key={`${tenantId}:${artifact.page.id}`}
+          {conversionOpen && artifact?.kind === "page" && <PageConversionSettings key={`${tenantId}:${artifact.page.id}:${conversionPaste?.pageId === artifact.page.id ? conversionPaste.sequence : "saved"}`}
             value={savedConversion} legacyForm={savedLegacyForm?.type === "embedded_form" ? { slug: savedLegacyForm.form_slug, title: savedLegacyForm.title } : undefined}
+            paste={conversionPaste?.pageId === artifact.page.id ? conversionPaste : undefined}
             forms={conversionResources?.forms ?? []} bookingLinks={conversionResources?.bookingLinks ?? []}
             formsStatus={conversionResources?.formsStatus ?? "loading"} bookingLinksStatus={conversionResources?.bookingLinksStatus ?? "loading"}
-            saving={conversionSaving} disabled={chat.sending} error={conversionError} onSave={saveConversion} onClose={() => setConversionOpen(false)} />}
+            saving={conversionSaving} disabled={chat.sending} error={conversionError} onSave={saveConversion} onClose={() => { setConversionPaste(null); setConversionOpen(false); }} />}
           {artifact?.kind === "page" && <details className="vs-publication-receipts">
             <summary>Publication receipts{publicationReceipts?.length ? ` · ${publicationReceipts.length}` : ""}</summary>
             {receiptUnavailable ? <p role="status">Receipts are unavailable right now. This does not change the page’s published state.</p>

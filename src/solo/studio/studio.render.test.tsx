@@ -25,6 +25,10 @@ const h = vi.hoisted(() => ({
   created: [] as string[],
   manifest: [] as Array<{ kind: string; id: string; title: string }>,
   form: null as Rec | null,
+  page: null as Rec | null,
+  conversionSaves: [] as Rec[],
+  conversionSaveFails: false,
+  conversionWait: null as Promise<void> | null,
   versions: [] as Rec[],
   restored: [] as string[],
   // The publish door: every invoke is recorded; `door` answers each body.
@@ -93,6 +97,15 @@ vi.mock("./studio-data", async (orig) => {
       ? { floor: {}, name: (h.brand.tenant_name as string) ?? null, logoUrl: (h.brand.logo_url as string) ?? null, primaryColor: (h.brand.primary_color as string) ?? null }
       : { floor: {}, name: null, logoUrl: null, primaryColor: null },
     loadForm: async () => { if (!h.form) throw new Error("missing"); return h.form; },
+    loadPage: async () => { if (!h.page) throw new Error("missing"); return real.pageFromRow(h.page); },
+    loadStudioConversionResources: async () => ({ forms: [], bookingLinks: [], formsStatus: "ready", bookingLinksStatus: "ready" }),
+    saveStudioPageConversion: async (input: Rec) => {
+      h.conversionSaves.push(input);
+      if (h.conversionSaveFails) throw new Error("The conversion save is not confirmed.");
+      h.page = { ...h.page, draft_blocks_json: [{ type: "hero", title: "Northwind workshop" }, input.conversion], updated_at: "2026-11-13T19:30:00Z" };
+      if (h.conversionWait) await h.conversionWait;
+      return { page: real.pageFromRow(h.page), changed: true, versionId: "00000000-0000-4000-8000-000000000090" };
+    },
     listVersions: async () => { h.versionReads += 1; return h.versions; },
     loadImage: async () => { if (!h.content) throw new Error("missing"); return h.content; },
     loadFunnel: async () => { if (!h.funnel) throw new Error("missing"); return h.funnel; },
@@ -156,6 +169,7 @@ function type(el: HTMLTextAreaElement, value: string) {
 
 beforeEach(() => {
   h.projectContext = { target: { kind: "workspace" }, values: {} }; h.contextSaves = [];
+  h.page = null; h.conversionSaves = []; h.conversionSaveFails = false; h.conversionWait = null;
   Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients", templates: [], templateCalls: [], brand: null });
   backs = 0;
   host = document.createElement("div");
@@ -190,6 +204,75 @@ async function startProject(brief: string) {
 }
 
 describe("Vibe Studio project workspace", () => {
+  async function openSavedConversionPage(includeForm = false) {
+    h.page = { id: "00000000-0000-4000-8000-000000000080", tenant_id: "t-synthetic", title: "Northwind workshop", slug: "northwind-workshop", status: "draft",
+      draft_blocks_json: [{ type: "hero", title: "Northwind workshop" }], updated_at: "2026-11-13T19:20:00Z" };
+    h.manifest = [{ kind: "page", id: String(h.page.id), title: "Northwind workshop" }];
+    if (includeForm) { h.form = FORM; h.manifest.push({ kind: "form", id: "f-1", title: "Original intake" }); }
+    h.sessions = [{ id: "s-1", title: "Northwind workshop", seedBrief: null, artifacts: h.manifest, updatedAt: "2026-11-13T19:20:00Z" }];
+    await mount();
+    await act(async () => { host.querySelector<HTMLButtonElement>(".vs-card")!.click(); });
+    await flush();
+  }
+  async function sendConversionPaste(value: string) {
+    type(host.querySelector<HTMLTextAreaElement>("#vs-chat-input")!, value);
+    await act(async () => { host.querySelector<HTMLButtonElement>("button[aria-label='Send']")!.click(); });
+    await flush();
+  }
+  it("a conversion pasted into Chat opens original settings without sending or saving, and Cancel retains the input", async () => {
+    await openSavedConversionPage();
+    const input = '<iframe src="https://calendly.com/northwind/intro"></iframe>';
+    await sendConversionPaste(input);
+    expect(h.fetchBodies).toEqual([]); expect(h.conversionSaves).toEqual([]); expect(h.contextSaves).toEqual([]);
+    expect(text()).toContain("Page conversion");
+    const label = [...host.querySelectorAll("label")].find(element => element.textContent === "Destination")!;
+    expect(host.querySelector<HTMLSelectElement>(`select[id='${label.htmlFor}']`)?.value).toBe("external_booking");
+    await act(async () => { button("Cancel")!.click(); });
+    expect(host.querySelector<HTMLTextAreaElement>("#vs-chat-input")?.value).toBe(input);
+    expect(h.conversionSaves).toEqual([]);
+  });
+  it("a conversion pasted into Chat saves only after explicit review through the same native page revision", async () => {
+    await openSavedConversionPage();
+    await sendConversionPaste("https://calendly.com/northwind/intro");
+    expect(h.conversionSaves).toEqual([]);
+    expect(button("Save conversion")).toBeTruthy();
+    await act(async () => { button("Save conversion")!.click(); }); await flush();
+    expect(h.conversionSaves).toEqual([{ tenantId: "t-synthetic", sessionId: "s-1", pageId: "00000000-0000-4000-8000-000000000080", expectedUpdatedAt: "2026-11-13T19:20:00Z",
+      conversion: expect.objectContaining({ type: "conversion", destination: { kind: "external_booking", mode: "link", provider: "calendly", url: "https://calendly.com/northwind/intro" } }) }]);
+    expect(h.fetchBodies).toEqual([]);
+    expect(host.querySelector<HTMLTextAreaElement>("#vs-chat-input")?.value).toBe("");
+  });
+  it("an unsafe conversion pasted into Chat preserves input without a model call or native write", async () => {
+    await openSavedConversionPage();
+    const input = "https://calendly.com/northwind/intro?token=private-example";
+    await sendConversionPaste(input);
+    expect(h.fetchBodies).toEqual([]); expect(h.conversionSaves).toEqual([]);
+    expect(host.querySelector<HTMLTextAreaElement>("#vs-chat-input")?.value).toBe(input);
+    expect(host.querySelector(".vs-notice")?.textContent).not.toContain("private-example");
+  });
+  it("a conversion pasted into Chat remains in the composer after an unconfirmed save", async () => {
+    await openSavedConversionPage(); h.conversionSaveFails = true;
+    const input = "https://calendly.com/northwind/intro";
+    await sendConversionPaste(input);
+    expect(button("Save conversion")).toBeTruthy();
+    await act(async () => { button("Save conversion")!.click(); }); await flush();
+    expect(h.conversionSaves).toHaveLength(1); expect(h.fetchBodies).toEqual([]);
+    expect(host.querySelector<HTMLTextAreaElement>("#vs-chat-input")?.value).toBe(input);
+    expect(text()).toContain("The conversion save isn't verified. Check the saved page before retrying.");
+  });
+  it("a conversion pasted into Chat cannot replace another selected piece when its native acknowledgment arrives late", async () => {
+    await openSavedConversionPage(true);
+    let finish!: () => void; h.conversionWait = new Promise<void>(resolve => { finish = resolve; });
+    await sendConversionPaste("https://calendly.com/northwind/intro");
+    expect(button("Save conversion")).toBeTruthy();
+    await act(async () => { button("Save conversion")!.click(); }); await flush();
+    const select = host.querySelector<HTMLSelectElement>('select[aria-label="Piece in this project"]')!;
+    await act(async () => { select.value = "f-1"; select.dispatchEvent(new Event("change", { bubbles: true })); }); await flush();
+    expect(button("Form settings")).toBeTruthy();
+    await act(async () => { finish(); }); await flush();
+    expect(button("Form settings")).toBeTruthy(); expect(button("Form or booking")).toBeUndefined();
+    expect(h.conversionSaves).toHaveLength(1); expect(h.fetchBodies).toEqual([]);
+  });
   it("a brief opens a project and Paige's first build lands on the stage, with her steps", async () => {
     h.sse = [
       JSON.stringify({ paige_step: { id: "a", label: "Wrote 3 questions" } }),

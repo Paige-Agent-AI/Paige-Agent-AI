@@ -32,7 +32,7 @@ import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
 import { classifyStudioRun, studioReceiptDetail } from "../studio-run-outcome.ts";
 import { publishVerified, PUBLISH_UNVERIFIED_ERROR } from "../artifact-receipt.ts";
 import {
-  buildPublishPreview, pageFormSlugsNeeded, parsePublishCommand, plainRefusal, previewReady, previewSummary,
+  buildPublishPreview, pageFormSlugsNeeded, pageFormIdsNeeded, pageUsesForm, parsePublishCommand, plainRefusal, previewReady, previewSummary,
   publishRpc, PUBLISH_KEYS, REFUSAL_CODES, UNPUBLISH_UNVERIFIED_ERROR, unpublishVerified, UUID,
   type PublishCommand, type PublishKind, type ReadinessFacts,
 } from "./contract.ts";
@@ -103,12 +103,29 @@ async function loadFacts(admin: Client, tenantId: string, cmd: PublishCommand): 
       facts.page = await one("growth_pages", "id,tenant_id,title,slug,status,blocks_json,draft_blocks_json,draft_seo_json");
     }
     const slugs = pageFormSlugsNeeded(facts.page);
-    if (slugs.length) {
-      const { data, error } = await admin.from("growth_forms").select("slug,status").eq("tenant_id", tenantId).in("slug", slugs);
-      if (error) throw new Error("readiness_read_failed");
-      facts.pageFormSlugs = new Set(((data ?? []) as Array<Record<string, unknown>>)
-        .filter((r) => r.status !== "archived" && typeof r.slug === "string").map((r) => String(r.slug)));
-    } else facts.pageFormSlugs = new Set();
+    const ids = cmd.action === "publish" ? pageFormIdsNeeded(facts.page) : [];
+    const resolveForms = async (field: "id" | "slug", requested: string[]): Promise<Array<{ id: string; slug: string }>> => {
+      if (!requested.length) return [];
+      const { data, error } = await admin.from("growth_forms").select("id,tenant_id,slug,status").eq("tenant_id", tenantId).in(field, requested);
+      if (error || !Array.isArray(data)) throw new Error("readiness_read_failed");
+      const forms: Array<{ id: string; slug: string }> = [];
+      for (const value of data) {
+        const form = object(value);
+        if (!form || typeof form.id !== "string" || !UUID.test(form.id) || form.tenant_id !== tenantId
+          || typeof form.slug !== "string" || !form.slug || typeof form.status !== "string"
+          || !["draft", "active", "archived"].includes(form.status)
+          || !requested.includes(field === "id" ? form.id.toLowerCase() : form.slug)) throw new Error("readiness_read_failed");
+        if (form.status !== "archived") forms.push({ id: form.id.toLowerCase(), slug: form.slug });
+      }
+      return forms;
+    };
+    const legacyForms = await resolveForms("slug", slugs);
+    const nativeForms = await resolveForms("id", ids);
+    // A canonical ID must resolve through its own requested-ID read. An older
+    // alias result cannot mask that ID being absent or archived on re-read.
+    const forms = new Map([...legacyForms.filter((form) => !ids.includes(form.id)), ...nativeForms].map((form) => [form.id, form]));
+    facts.pageForms = [...forms.values()];
+    facts.pageFormSlugs = new Set(legacyForms.map((form) => form.slug));
   } else if (cmd.kind === "form") {
     facts.form = await one("growth_forms", "id,tenant_id,name,slug,status,schema_json,draft_schema_json,success_action_json,draft_success_action_json,auto_create_deal,pipeline_id,notify_email");
   } else if (cmd.kind === "funnel") {
@@ -144,12 +161,10 @@ async function loadLiveDependents(admin: Client, tenantId: string, cmd: PublishC
     const uses = stepFunnels.has(String(f.id)) || (cmd.kind === "page" && (f.entry_page_id === cmd.id || f.success_page_id === cmd.id));
     if (uses) out.push({ kind: "funnel", name: named(f.name, "a funnel") });
   }
-  if (cmd.kind === "form" && typeof row.slug === "string" && row.slug) {
+  if (cmd.kind === "form") {
     const pages = await read(admin.from("growth_pages").select("title,blocks_json").eq("tenant_id", tenantId).eq("status", "published"));
     for (const p of pages) {
-      const blocks = Array.isArray(p.blocks_json) ? p.blocks_json : [];
-      if (blocks.some((b) => b && typeof b === "object" && (b as Record<string, unknown>).type === "embedded_form"
-        && typeof (b as Record<string, unknown>).form_slug === "string" && String((b as Record<string, unknown>).form_slug).trim() === row.slug)) {
+      if (pageUsesForm(p.blocks_json, cmd.id, row.slug)) {
         out.unshift({ kind: "page", name: named(p.title, "a page") });
       }
     }

@@ -10,6 +10,7 @@
 // Pure: no I/O and no Deno globals, so the readiness checks and the sentence mapping are driven by
 // tests directly. The executor lives in ./door.ts.
 import { PAIGE_APP_ORIGIN } from "../canonical-app-url.ts";
+import { normalizeConversionDestination } from "../growth/conversion-destination.ts";
 
 export const PUBLISH_ACTIONS = ["publish", "unpublish"] as const;
 export const PUBLISH_KINDS = ["page", "form", "funnel", "image"] as const;
@@ -107,6 +108,9 @@ export interface ReadinessFacts {
   page?: Record<string, unknown> | null;
   /** Forms on the page, by slug: whether a non-archived form with that slug exists in the tenant. */
   pageFormSlugs?: ReadonlySet<string>;
+  /** Actual non-archived form resources resolved in the same tenant. IDs also
+   * identify a canonical native_form; slug links deduplicate its legacy alias. */
+  pageForms?: ReadonlyArray<{ id: string; slug: string }>;
   form?: Record<string, unknown> | null;
   funnel?: Record<string, unknown> | null;
   funnelSteps?: ReadonlyArray<Record<string, unknown>>;
@@ -159,16 +163,27 @@ function formFieldCount(form: Record<string, unknown>): { fields: number; email:
   return { fields, email };
 }
 
-function embeddedFormSlugs(blocks: unknown[]): { missing: boolean; slugs: string[] } {
+function pageFormReferences(blocks: unknown[]): { missing: boolean; slugs: string[]; ids: string[] } {
   let missing = false;
   const slugs = new Set<string>();
+  const ids = new Set<string>();
   for (const b of blocks) {
-    if (!b || typeof b !== "object" || (b as Record<string, unknown>).type !== "embedded_form") continue;
-    const slug = (b as Record<string, unknown>).form_slug;
-    if (typeof slug === "string" && slug.trim()) slugs.add(slug.trim());
-    else missing = true;
+    if (!b || typeof b !== "object" || Array.isArray(b)) continue;
+    const block = b as Record<string, unknown>;
+    if (block.type === "embedded_form") {
+      const slug = block.form_slug;
+      if (typeof slug === "string" && slug.trim()) slugs.add(slug.trim());
+      else missing = true;
+    } else if (block.type === "conversion") {
+      const destination = block.destination;
+      if (!destination || typeof destination !== "object" || Array.isArray(destination)
+        || (destination as Record<string, unknown>).kind !== "native_form") continue;
+      const parsed = normalizeConversionDestination(destination);
+      if (parsed.ok && parsed.destination.kind === "native_form") ids.add(parsed.destination.formId);
+      else missing = true;
+    }
   }
-  return { missing, slugs: [...slugs] };
+  return { missing, slugs: [...slugs], ids: [...ids] };
 }
 
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
@@ -177,7 +192,21 @@ const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
 export function pageFormSlugsNeeded(page: Record<string, unknown> | null | undefined): string[] {
   if (!page) return [];
   const blocks = blocksToPublish(page);
-  return blocks ? embeddedFormSlugs(blocks).slugs : [];
+  return blocks ? pageFormReferences(blocks).slugs : [];
+}
+
+/** Canonical native form IDs in the same working/live copy used for readiness. */
+export function pageFormIdsNeeded(page: Record<string, unknown> | null | undefined): string[] {
+  if (!page) return [];
+  const blocks = blocksToPublish(page);
+  return blocks ? pageFormReferences(blocks).ids : [];
+}
+
+/** Callers supply LIVE blocks_json for unpublish dependency presentation. */
+export function pageUsesForm(blocks: unknown, formId: string, formSlug: unknown): boolean {
+  const refs = pageFormReferences(Array.isArray(blocks) ? blocks : []);
+  return (UUID.test(formId) && refs.ids.includes(formId.toLowerCase()))
+    || (typeof formSlug === "string" && !!formSlug && refs.slugs.includes(formSlug));
 }
 
 /** The public address a published artifact is reached at — the same paths the publish RPCs return. */
@@ -250,13 +279,22 @@ export function buildPublishPreview(action: PublishAction, kind: PublishKind, id
     const unfinished = (blocks ? hasPlaceholder(blocks) : false) || hasPlaceholder(row.draft_seo_json);
     add("no_placeholders", !unfinished, unfinished ? "Some text still needs filling in" : "No unfinished text", true,
       unfinished ? "Replace every bracketed prompt, like [ADD_DATE], before publishing." : undefined);
-    const embedded = blocks ? embeddedFormSlugs(blocks) : { missing: false, slugs: [] };
+    const embedded = blocks ? pageFormReferences(blocks) : { missing: false, slugs: [], ids: [] };
     add("signup_has_form", !embedded.missing, embedded.missing ? "A signup section has no form behind it" : "Every signup section has a form", true);
     const known = facts.pageFormSlugs ?? new Set<string>();
-    const absent = embedded.slugs.filter((s) => !known.has(s));
-    add("forms_exist", absent.length === 0, absent.length === 0
-      ? (embedded.slugs.length ? `${plural(embedded.slugs.length, "form")} on this page go${embedded.slugs.length === 1 ? "es" : ""} live with it` : "No forms on this page")
-      : "A signup form on this page doesn't exist yet", true, absent.length ? "Save the page again so its form is created." : undefined);
+    const resources = facts.pageForms ?? [];
+    const knownIds = new Set(resources.map((form) => form.id.toLowerCase()));
+    const absentIds = embedded.ids.some((id) => !knownIds.has(id));
+    const absent = embedded.slugs.some((slug) => !known.has(slug)) || absentIds;
+    const identities = new Set(embedded.ids.map((id) => `id:${id}`));
+    for (const slug of embedded.slugs) {
+      const actual = resources.find((form) => form.slug === slug);
+      identities.add(actual ? `id:${actual.id.toLowerCase()}` : `slug:${slug}`);
+    }
+    const count = identities.size;
+    add("forms_exist", !absent, !absent
+      ? (count ? `${plural(count, "form")} on this page go${count === 1 ? "es" : ""} live with it` : "No forms on this page")
+      : "A signup form on this page doesn't exist yet", true, absent ? (absentIds ? "Choose an existing form in this workspace, then review the page again." : "Save the page again so its form is created.") : undefined);
   } else if (kind === "form") {
     const { fields, email } = formFieldCount(row);
     add("has_questions", fields > 0, fields > 0 ? `Has ${plural(fields, "question")}` : "Has no questions yet", true);

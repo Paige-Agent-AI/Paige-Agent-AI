@@ -158,7 +158,7 @@ Session uses a content-sized top bar with a 54px minimum, a flexible body and an
 
 At 980px and below, Home's rail becomes a compact two-row header that retains the full canonical Studio/NEXUS identity. Session's header reorganizes into identity, project/status and action rows. Chat becomes a left overlay (`min(380px, 92vw)`); the closed panel is hidden from interaction. Inspector becomes a right overlay (`min(340px, 92vw)`) instead of the desktop 320px inset panel. At 600px and below the compact Session identity hides its Studio label while retaining NEXUS and its glyph; Home retains both identity labels. Restore respects the bottom safe area.
 
-Business context fields stack below a 400px container or a 600px viewport. Context choices gain a 44px minimum on coarse pointers. Top-bar actions and conversion controls already use 44px targets; compact legacy controls elsewhere are not evidence for extending smaller targets. Conversion header/footer stay sticky within the inspector. Publish panels cap height to `calc(100dvh - 62px)` and scroll internally for short viewports and zoom.
+Business context fields stack below a 400px container or a 600px viewport. Context choices gain a 44px minimum on coarse pointers. Top-bar actions and conversion controls already use 44px targets; compact legacy controls elsewhere are not evidence for extending smaller targets. Conversion header/footer stay sticky within the inspector. Its mobile height is bounded to the stage; validation focuses without scrolling ancestors and reveals fields through that inspector alone. Publish panels cap height to `calc(100dvh - 62px)` and scroll internally for short viewports and zoom.
 
 ## Elevation & Depth
 

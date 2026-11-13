@@ -785,6 +785,43 @@ BEGIN
   RAISE EXCEPTION 'EXP06 page cascade metadata changed' USING ERRCODE='55000'; END IF;
 END $growth$;
 
+-- The inverse of the original page cascade must use the same canonical form
+-- identity. Serialize on the ORIGINAL form before checking live dependencies.
+DO $form_takedown$
+DECLARE target oid; signature text; expected text; expected_acl text; metadata jsonb; body text; amended text;
+BEGIN
+ FOR signature,expected,expected_acl IN SELECT * FROM (VALUES
+  ('public.growth_form_unpublish(uuid,uuid,uuid)','f3224f45f8ee96962de54702fc8f9ab1','{postgres=X/postgres,service_role=X/postgres}'),
+  ('public._growth_admin_tenant(uuid)','6afa5f1c7fb298dc77d748abe6c70ce2','{postgres=X/postgres}'),
+  ('public._studio_publish_actor(uuid,uuid)','10b5277c8cdb0a38fde88e5856f43ca4','{postgres=X/postgres}')
+ ) AS p(signature,expected,expected_acl) LOOP
+  IF to_regprocedure(signature) IS NULL OR md5(pg_get_functiondef(to_regprocedure(signature))) IS DISTINCT FROM expected
+   OR (SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM 'postgres'
+   OR (SELECT proacl::text FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM expected_acl THEN
+   RAISE EXCEPTION 'EXP06 original form takedown prerequisite changed: %',signature USING ERRCODE='55000'; END IF;
+ END LOOP;
+ target:=to_regprocedure('public.growth_form_unpublish(uuid,uuid,uuid)');
+ SELECT to_jsonb(p)-'prosrc' INTO metadata FROM pg_proc p WHERE oid=target;
+ body:=pg_get_functiondef(target);
+ amended:=replace(body,
+  'SELECT * INTO _row FROM public.growth_forms WHERE id = p_id AND tenant_id = _tenant;',
+  'SELECT * INTO _row FROM public.growth_forms WHERE id = p_id AND tenant_id = _tenant FOR UPDATE;');
+ IF amended=body THEN RAISE EXCEPTION 'EXP06 form takedown lock hunk missing' USING ERRCODE='55000'; END IF;
+ body:=amended;
+ amended:=replace(body,'  IF _row.status <> ''active'' THEN',
+  E'  -- Waiting for the form may outlive the previously verified authority.\n  IF public._growth_admin_tenant(p_tenant_id) IS DISTINCT FROM _tenant THEN\n    RAISE EXCEPTION ''GROWTH_FORBIDDEN: workspace authority changed'' USING ERRCODE = ''42501'';\n  END IF;\n  _actor := public._studio_publish_actor(_tenant, p_actor_id);\n  IF _row.status <> ''active'' THEN');
+ IF amended=body THEN RAISE EXCEPTION 'EXP06 form takedown authority hunk missing' USING ERRCODE='55000'; END IF;
+ body:=amended;
+ amended:=replace(body,
+  '     AND b->>''type'' = ''embedded_form'' AND btrim(b->>''form_slug'') = _row.slug LIMIT 1;',
+  E'     AND ((b->>''type'' = ''embedded_form'' AND btrim(b->>''form_slug'') = _row.slug)\n       OR (b->>''type'' = ''conversion'' AND b#>>''{destination,kind}'' = ''native_form''\n         AND b#>>''{destination,formId}'' = _row.id::text)) LIMIT 1;');
+ IF amended=body THEN RAISE EXCEPTION 'EXP06 form takedown dependency hunk missing' USING ERRCODE='55000'; END IF;
+ EXECUTE amended;
+ IF (SELECT to_jsonb(p)-'prosrc' FROM pg_proc p WHERE oid=target) IS DISTINCT FROM metadata THEN
+  RAISE EXCEPTION 'EXP06 original form takedown metadata changed' USING ERRCODE='55000'; END IF;
+END $form_takedown$;
+
+
 -- Source-bound refinement reads the saved choice; a model cannot replace it
 -- with an invented URL or lose it by regenerating the page. No touch or write.
 CREATE FUNCTION public.studio_page_conversion(p_expected_tenant uuid,p_session_id uuid,p_page_id uuid)

@@ -21,10 +21,15 @@ Notable doctrine overrides of common agent-skill advice:
 - **Silent improvement:** no self-modifying prompts/skills/policies; improvement is owner-reviewed
   and versioned (Master §3, Controlled improvement).
 
+## Owner-approved SD-01 — Skill Discovery, Qualification & Controlled Deployment (2026-11-13)
+
+**SD-01 is a supporting standard**, not an additional mandatory software-design skill. Flow by Flow remains first and Impeccable remains mandatory for applicable UI/UX. [Read the canonical SD-01 policy](../../docs/doctrine/SD-01-skill-discovery-qualification-deployment.md) and [the project-owned PAIGE Skill Scout](paige-skill-scout/SKILL.md) when an approved task exposes a genuine skill gap. Search this installed inventory first; compare and vet external source, scripts, license, permissions, network effects and architecture. Stage any candidate as a pinned review-gated PR; no blind/global installs or untrusted instructions. The Vercel Labs `find-skills` package is a **researched candidate, NOT installed or promoted**. A pending GitHub PR does not establish a skill is deployed to all existing agent sessions.
+
 ## Inventory
 
 | Skill | Source | License |
 |---|---|---|
+| `paige-skill-scout` | PAIGE-owned SD-01 routing skill; staged in this PR, available only after reviewed merge | project-owned |
 | `paige-ui-design` | in-house (owner design pack port) | — |
 | `supabase`, `supabase-postgres-best-practices` | in-house | — |
 | `agentic-harness-patterns` | `keli-wen/agentic-harness-patterns-skill` | MIT (`LICENSE-agentic-harness-patterns`) |

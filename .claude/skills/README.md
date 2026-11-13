@@ -9,6 +9,7 @@ must not be used as a summary or substitute.
 
 | Path | What it is |
 |---|---|
+| `paige-skill-scout/SKILL.md` | Thin router → canonical `.agents/skills/paige-skill-scout/SKILL.md`, implementing owner-approved SD-01 skill discovery/vetting and review-gated deployment; no new Claude engineering staffing, install permission or independent policy |
 | `second-brain/SKILL.md` | Ours. BOTH bookends: read the brain before work (so nothing already written down gets re-diagnosed), and record + sweep before calling it done. Bound to §0 / §BRAIN.3 / §66 |
 | `paige-ui-design/SKILL.md` | Router → the mandatory entry skill for any visible-interface change (`CLAUDE.md` §00); routes to the five composable quality modules below. Canonical body: `.agents/skills/paige-ui-design/` |
 | `paige-owner-intent-fidelity/SKILL.md` | Router → module 1 of the Paige UI Delivery Standard: the pre-edit Owner Intent & Experience Contract (what must happen, what must NOT happen, what must be preserved, acceptance criteria) |

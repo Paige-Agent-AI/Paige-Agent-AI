@@ -15,6 +15,7 @@ export type PageConversionBlock = Extract<GrowthBlock, { type: "conversion" }>;
 export type ConversionOptionsStatus = "loading" | "ready" | "unavailable";
 export interface PageConversionSettingsProps {
   value?: PageConversionBlock;
+  legacyForm?: { slug: string; title?: string };
   /** Options come from the caller's original scoped readers; this panel grants no access. */
   forms: readonly { id: string; title: string }[];
   bookingLinks: readonly { slug: string; title: string }[];
@@ -23,6 +24,7 @@ export interface PageConversionSettingsProps {
   onSave: (block: PageConversionBlock) => void | Promise<void>;
   onClose: () => void;
   saving?: boolean;
+  disabled?: boolean;
   error?: string | null;
 }
 type Kind = ConversionDestination["kind"];
@@ -50,7 +52,7 @@ function defaultLabel(kind: Kind, mode: ConversionMode): string {
 
 /** A local draft only. The caller saves through the original page/version writer and
  *  keys this panel by tenant + page so input never crosses a resource/context switch. */
-export function PageConversionSettings({ value, forms, bookingLinks, formsStatus = "ready", bookingLinksStatus = "ready", onSave, onClose, saving = false, error }: PageConversionSettingsProps) {
+export function PageConversionSettings({ value, legacyForm, forms, bookingLinks, formsStatus = "ready", bookingLinksStatus = "ready", onSave, onClose, saving = false, disabled = false, error }: PageConversionSettingsProps) {
   const [draft, setDraft] = useState(() => seed(value));
   const [attempted, setAttempted] = useState(false);
   const [pending, setPending] = useState(false);
@@ -59,7 +61,7 @@ export function PageConversionSettings({ value, forms, bookingLinks, formsStatus
   const sourceRef = useRef<HTMLSelectElement | HTMLTextAreaElement | null>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const id = useId();
-  const busy = saving || pending;
+  const busy = saving || pending || disabled;
   const external = draft.kind === "external_form" || draft.kind === "external_booking";
   const actionLabel = defaultLabel(draft.kind, draft.mode);
   const candidate = useMemo<Candidate>(() => {
@@ -120,10 +122,12 @@ export function PageConversionSettings({ value, forms, bookingLinks, formsStatus
     finally { savePending.current = false; setPending(false); }
   }
 
-  return <aside className="vs-inspector vs-page-conversion" aria-label="Page conversion settings" aria-busy={busy}>
+  return <aside className="vs-inspector vs-page-conversion" aria-label="Page conversion settings" aria-busy={saving || pending}>
     <header><b>Page conversion</b><button type="button" className="vs-icon-btn" aria-label="Close conversion settings" onClick={onClose}><X size={16} /></button></header>
     <form onSubmit={save} className="vs-page-conversion-form" noValidate>
       <div className="vs-inspector-body">
+        {disabled && <p className="vs-page-conversion-help" role="status">These settings will be available when NEXUS finishes this build.</p>}
+        {!value && legacyForm && <p className="vs-page-conversion-help">Current saved form: <b>{legacyForm.title || legacyForm.slug}</b>. Saving a destination replaces this form on the page.</p>}
         <div className="vs-field">
           <label htmlFor={`${id}-kind`}>Destination</label>
           <select id={`${id}-kind`} value={draft.kind} required disabled={busy} onChange={(event) => change("kind", event.target.value as Kind)}>
@@ -184,7 +188,7 @@ export function PageConversionSettings({ value, forms, bookingLinks, formsStatus
       </div>
       <div className="vs-inspector-foot vs-page-conversion-foot">
         <button type="button" className="vs-btn vs-btn-quiet" onClick={onClose}>{busy ? "Close" : "Cancel"}</button>
-        <button type="submit" className="vs-btn vs-btn-violet" disabled={busy}>{busy ? "Saving…" : "Save conversion"}</button>
+        <button type="submit" className="vs-btn vs-btn-violet" disabled={busy}>{saving || pending ? "Saving…" : "Save conversion"}</button>
       </div>
     </form>
   </aside>;

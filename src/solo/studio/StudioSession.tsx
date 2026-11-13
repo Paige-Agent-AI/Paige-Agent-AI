@@ -3,7 +3,7 @@
 // owner never picks an artifact type: Paige decides from the brief, and the project holds whatever
 // she builds. Pending image approvals for this project surface here, beside the conversation.
 import React from "react";
-import { ArrowLeft, Monitor, Smartphone, MessageSquare, SlidersHorizontal, ArrowUp, Check, AlertCircle, Loader2, Circle, Minimize2 } from "lucide-react";
+import { ArrowLeft, Monitor, Smartphone, MessageSquare, SlidersHorizontal, ArrowUp, Check, AlertCircle, Loader2, Circle, Minimize2, ChevronRight } from "lucide-react";
 import { NexusGlyph, NexusIdentity } from "./NexusIdentity";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 import { useMediaJobs } from "../useMediaJobs";
@@ -76,13 +76,14 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const [conversionError, setConversionError] = React.useState<string | null>(null);
   const [projectContext, setProjectContext] = React.useState<StudioProjectContext | null>(null);
   const [contextDraft, setContextDraft] = React.useState<StudioProjectContext | null>(null);
+  const [legacyContext, setLegacyContext] = React.useState<false | "unselected" | "chosen">(false);
   const [contextSaving, setContextSaving] = React.useState(false);
   const [publicationReceipts, setPublicationReceipts] = React.useState<StudioPublicationReceipt[] | null>(null);
   const [receiptUnavailable, setReceiptUnavailable] = React.useState(false);
   const [arrivalMotion, setArrivalMotion] = React.useState(Boolean(seedBrief));
   const alive = React.useRef(true), readEpoch = React.useRef(0);
   React.useEffect(() => { const epoch = readEpoch; alive.current = true; return () => { alive.current = false; epoch.current++; }; }, []);
-  const contextProjection = useStudioBusinessContext(tenantId, tenantSlug, contextDraft?.target ?? { kind: "workspace" }, contextDraft?.values ?? {});
+  const contextProjection = useStudioBusinessContext(tenantId, tenantSlug, legacyContext === "unselected" ? undefined : contextDraft?.target, contextDraft?.values ?? {});
   const [chatOpen, setChatOpen] = React.useState(false);
   const [briefOpen, setBriefOpen] = React.useState(true);
   const [templating, setTemplating] = React.useState(false);
@@ -108,8 +109,15 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
       if (!alive.current || epoch !== readEpoch.current) return;
       const input = authored && typeof authored === "object" && !Array.isArray(authored) ? authored as StudioProjectContext : null;
       const admitted = projectStudioBusinessContext({ expectedTenantId: tenantId, target: input?.target, projectValues: input?.values, readStatus: "unavailable", context: null });
-      if (!input || !admitted.target) throw new Error("Project context is unavailable");
-      setProjectContext(input); setContextDraft(current => current ?? input);
+      if (input && Object.keys(input).length === 0) {
+        // Existing projects have no authored target. Their saved work remains
+        // readable; an explicit choice is required before new generation.
+        setProjectContext(null); setLegacyContext(current => current || "unselected");
+        setContextDraft(current => current ?? { target: { kind: "workspace" }, values: {} });
+      } else {
+        if (!input || !admitted.target || !input.values || typeof input.values !== "object" || Array.isArray(input.values)) throw new Error("Project context is unavailable");
+        setProjectContext(input); setLegacyContext(false); setContextDraft(current => current ?? input);
+      }
       let s = opened;
       // A project nobody named takes the name of the first thing Paige saves in it.
       const first = s.artifacts.find((r) => r.id === select) ?? s.artifacts[0];
@@ -138,7 +146,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
       if (select) setActiveId(select);
     } catch (e) {
       if (!alive.current || epoch !== readEpoch.current) return;
-      setSession(null); setArtifact(null); setProjectContext(null); setContextDraft(null);
+      setSession(null); setArtifact(null); setProjectContext(null); setContextDraft(null); setLegacyContext(false);
       setSessionError(plainError(e, "This project couldn't be opened."));
       if ((e as { code?: string })?.code === "42501") onScopeRefused?.();
     }
@@ -180,7 +188,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   }, [conversionOpen, tenantId]);
 
   const saveConversion = async (conversion: PageConversionBlock) => {
-    if (conversionSaving || artifact?.kind !== "page" || !artifact.page.updatedAt) return;
+    if (chat.sending || conversionSaving || artifact?.kind !== "page" || !artifact.page.updatedAt) return;
     const page = artifact.page;
     setConversionSaving(true); setConversionError(null);
     try {
@@ -192,14 +200,15 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
     finally { if (alive.current) setConversionSaving(false); }
   };
   const saveContext = async () => {
-    if (!contextDraft || !projectContext || contextSaving) return false;
+    if (legacyContext === "unselected") { setNotice("Choose the brand for this project before asking NEXUS to build."); return false; }
+    if (!contextDraft || (!projectContext && !legacyContext) || contextSaving) return false;
     if (contextProjection.issues.some(issue => issue.source === "project" && issue.field && contextDraft.values[issue.field]?.trim())) { setNotice("Review the highlighted project values before saving."); return false; }
     const values = Object.fromEntries(Object.keys(contextDraft.values).map(key => [key, contextProjection.projectValues[key as keyof typeof contextDraft.values] ?? ""]));
     setContextSaving(true);
     try {
-      const saved = await saveStudioProjectContext(tenantId, sessionId, { ...contextDraft, values }, projectContext);
+      const saved = await saveStudioProjectContext(tenantId, sessionId, { ...contextDraft, values }, projectContext ?? {});
       if (!alive.current) return false;
-      setProjectContext(saved as StudioProjectContext); setContextDraft(saved as StudioProjectContext);
+      setProjectContext(saved as StudioProjectContext); setContextDraft(saved as StudioProjectContext); setLegacyContext(false);
       setNotice("Project context saved. Ask NEXUS to apply it to this draft; Setup stays unchanged.");
       return true;
     } catch (e) { if (alive.current) setNotice(plainError(e, "The context save isn't verified. Check the saved project before retrying.")); return false; }
@@ -304,14 +313,14 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const submit = async () => {
     const text = input.trim();
     if (!text || chat.sending || !chat.ready || contextSaving || conversionSaving) return;
-    if (contextDraft && JSON.stringify(contextDraft) !== JSON.stringify(projectContext) && !await saveContext()) return;
+    if (contextDraft && (legacyContext || JSON.stringify(contextDraft) !== JSON.stringify(projectContext)) && !await saveContext()) return;
     if (!alive.current) return;
     setInput("");
     void chat.send(text);
   };
   const buildSavedBrief = async () => {
     if (!session?.seedBrief || chat.sending || !chat.ready || contextSaving || conversionSaving) return;
-    if (contextDraft && JSON.stringify(contextDraft) !== JSON.stringify(projectContext) && !await saveContext()) return;
+    if (contextDraft && (legacyContext || JSON.stringify(contextDraft) !== JSON.stringify(projectContext)) && !await saveContext()) return;
     if (alive.current) void chat.send(session.seedBrief);
   };
 
@@ -331,6 +340,8 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
     : live ? (pending ? { tone: "good", text: "Saved · changes not live yet" } : { tone: "good", text: "Live" })
     : { tone: "good", text: "Saved · draft" };
   const publishLabel = live ? (pending ? "Publish changes" : "Live · Manage") : "Publish";
+  const savedConversion = artifact?.kind === "page" ? artifact.page.blocks.find((block): block is PageConversionBlock => block.type === "conversion") : undefined;
+  const savedLegacyForm = artifact?.kind === "page" && !savedConversion ? artifact.page.blocks.find(block => block.type === "embedded_form") : undefined;
 
   const lastAssistant = (() => { for (let i = chat.turns.length - 1; i >= 0; i--) if (chat.turns[i].role === "assistant") return i; return -1; })();
 
@@ -347,22 +358,21 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
     <div className="vs-session">
       <header className="vs-top">
         <button type="button" className="vs-icon-btn" aria-label="Back to Studio" onClick={onBack}><ArrowLeft size={17} /></button>
+        <NexusIdentity compact />
         <button type="button" className="vs-btn vs-chat-toggle" aria-expanded={chatOpen} onClick={() => setChatOpen((o) => !o)}><MessageSquare size={15} aria-hidden="true" />{chatOpen ? "Hide chat" : "Chat"}</button>
         <nav className="vs-crumbs" aria-label="Project">
-          <NexusIdentity compact /><span aria-hidden="true">/</span>
-          <b className="vs-trunc" style={{ maxWidth: 260 }} title={displayTitle}>{displayTitle}</b>
-          {refs.length > 1 ? (
-            <>
-              <span aria-hidden="true">/</span>
-              <select aria-label="Piece in this project" value={activeRef?.id ?? ""} onChange={(e) => setActiveId(e.target.value)}>
-                {refs.map((r) => <option key={r.id} value={r.id}>{r.title} · {KIND_WORD[r.kind]}</option>)}
-              </select>
-            </>
-          ) : activeRef && activeRef.title !== session?.title ? <><span aria-hidden="true">/</span><span className="vs-trunc" style={{ maxWidth: 220, color: "var(--vs-text)" }}>{activeRef.title}</span></> : null}
-          <span className="vs-status" data-tone={saveState.tone} role="status" aria-live="polite" style={{ marginLeft: 8 }}>{saveState.text}</span>
+          <div className="vs-project-heading">
+            <b className="vs-trunc vs-project-title" title={displayTitle}>{displayTitle}</b>
+            <span className="vs-status" data-tone={saveState.tone} role="status" aria-live="polite">{saveState.text}</span>
+          </div>
+          {refs.length > 1 && (
+            <select aria-label="Piece in this project" value={activeRef?.id ?? ""} onChange={(e) => setActiveId(e.target.value)}>
+              {refs.map((r) => <option key={r.id} value={r.id}>{r.title} · {KIND_WORD[r.kind]}</option>)}
+            </select>
+          )}
         </nav>
+        {onMinimize && <button type="button" className="vs-icon-btn" aria-label="Minimize Studio" title="Minimize Studio" onClick={onMinimize}><Minimize2 size={16} aria-hidden="true" /></button>}
         <div className="vs-top-actions">
-          {onMinimize && <button type="button" className="vs-icon-btn" aria-label="Minimize Studio" title="Minimize Studio" onClick={onMinimize}><Minimize2 size={16} aria-hidden="true" /></button>}
           {session && (
             <button
               type="button"
@@ -414,20 +424,22 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
 
       <div className="vs-body">
         <section className="vs-chat" aria-label="Chat with NEXUS" data-open={chatOpen}>
+          <div className="vs-chat-context">
           {/* The brief the project started from, pinned above the conversation so it survives reopen
               (EXP07 row 1): the chat's first message already carries it, but nothing showed it after
               that. Open when the project opens; the owner's own toggle always wins. */}
           {session?.seedBrief && (
             <details className="vs-brief-card" open={briefOpen} onToggle={(e) => setBriefOpen(e.currentTarget.open)}>
-              <summary>The brief</summary>
+              <summary><ChevronRight className="vs-brief-chevron" size={14} aria-hidden="true" />The brief</summary>
               <MarkdownMessage content={session.seedBrief} className="vs-md" />
             </details>
           )}
           {contextDraft && <div className="vs-project-context-editor">
             <StudioBusinessContextPanel projection={contextProjection} projectValues={contextDraft.values} disabled={contextSaving || chat.sending}
               onChange={values => setContextDraft(value => value ? { ...value, values } : value)}
-              onTargetChange={kind => setContextDraft(value => value ? { ...value, target: kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }, values: {} } : value)} />
-            {JSON.stringify(contextDraft) !== JSON.stringify(projectContext) && <button type="button" className="vs-btn" disabled={contextSaving || chat.sending} onClick={() => void saveContext()}>{contextSaving ? "Saving context…" : "Save project context"}</button>}
+              onTargetChange={kind => { if (legacyContext) setLegacyContext("chosen"); setContextDraft(value => value ? { ...value, target: kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }, values: {} } : value); }} />
+            {legacyContext === "unselected" && <p className="vs-inspector-note">Choose the brand for this project before asking NEXUS to build. Your saved work is available.</p>}
+            {(legacyContext || JSON.stringify(contextDraft) !== JSON.stringify(projectContext)) && <button type="button" className="vs-btn" disabled={contextSaving || chat.sending || legacyContext === "unselected"} onClick={() => void saveContext()}>{contextSaving ? "Saving context…" : "Save project context"}</button>}
           </div>}
           {session && (
             <p className="vs-brand-line">
@@ -443,6 +455,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
               </span>
             </p>
           )}
+          </div>
           <div className="vs-chat-log" ref={logRef}>
             {chat.loadError && <p className="vs-alert" role="alert">{chat.loadError}</p>}
             {!chat.ready && !chat.loadError && <p className="vs-inspector-note" role="status">Opening the conversation…</p>}
@@ -540,10 +553,10 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
             <FormSettings tenantId={tenantId} formId={artifact.form.id} onClose={() => setSettingsOpen(false)} onSaved={() => setRefreshKey((k) => k + 1)} />
           )}
           {conversionOpen && artifact?.kind === "page" && <PageConversionSettings key={`${tenantId}:${artifact.page.id}`}
-            value={artifact.page.blocks.find((block): block is PageConversionBlock => block.type === "conversion")}
+            value={savedConversion} legacyForm={savedLegacyForm?.type === "embedded_form" ? { slug: savedLegacyForm.form_slug, title: savedLegacyForm.title } : undefined}
             forms={conversionResources?.forms ?? []} bookingLinks={conversionResources?.bookingLinks ?? []}
             formsStatus={conversionResources?.formsStatus ?? "loading"} bookingLinksStatus={conversionResources?.bookingLinksStatus ?? "loading"}
-            saving={conversionSaving} error={conversionError} onSave={saveConversion} onClose={() => setConversionOpen(false)} />}
+            saving={conversionSaving} disabled={chat.sending} error={conversionError} onSave={saveConversion} onClose={() => setConversionOpen(false)} />}
           {artifact?.kind === "page" && <details className="vs-publication-receipts">
             <summary>Publication receipts{publicationReceipts?.length ? ` · ${publicationReceipts.length}` : ""}</summary>
             {receiptUnavailable ? <p role="status">Receipts are unavailable right now. This does not change the page’s published state.</p>

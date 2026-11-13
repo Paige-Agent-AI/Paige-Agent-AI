@@ -65,7 +65,8 @@ import { MessageAudioButton } from "@/components/chat/MessageAudioButton";
 import { PaigeDocumentWindowHost } from "@/components/paige/chat/PaigeDocumentWindow";
 import { PaigeArtifactCard, type PaigeArtifact } from "@/components/paige/chat/PaigeArtifactCard";
 import { ChatStudioHandoff } from "@/solo/studio/ChatStudioHandoff";
-import { parseChatStudioReference, type ChatStudioReference } from "@/solo/studio/studio-reference";
+import { parseChatStudioReference, STUDIO_SESSION_ID, type ChatStudioReference } from "@/solo/studio/studio-reference";
+import { loadChatStudioSources } from "@/solo/studio/studio-data";
 import { ExtractionProposalCard, type ExtractionProposal } from "@/components/chat/ExtractionProposalCard";
 import { PaigeCompactingCard, type CompactingSignal } from "@/components/paige/chat/PaigeCompactingCard";
 import { PaigeLiveConversation, type LiveVoiceSink } from "@/components/paige/live/PaigeLiveConversation";
@@ -1218,7 +1219,7 @@ const PaigeAIChatInner = ({
                 && typeof ref.question === "string"
                 ? [{ run_id: ref.run_id as string | null, question: ref.question, saved: ref.saved === true }] : [];
             }) : undefined;
-        const studioReferences = Array.isArray(b.paige_artifact) ? b.paige_artifact.flatMap(candidate => {
+        const studioReferences = t.role === "assistant" && Array.isArray(b.paige_artifact) ? b.paige_artifact.flatMap(candidate => {
           const reference = parseChatStudioReference(candidate); return reference ? [reference] : [];
         }) : undefined;
         const artifacts = Array.isArray(b.paige_artifact)
@@ -1601,6 +1602,48 @@ const PaigeAIChatInner = ({
       setMessages(hydrated.messages.length ? hydrated.messages : [mkMsg({ role: "assistant", content: openingGreeting })]);
       hydratedFromRef.current = id;
       applyConversationEvent({ type: "thread-loaded", id });
+      // Lost stage ACK/assistant settlement: only the native read can prove an
+      // original loaded USER source. One history budget, sequential <=50 reads;
+      // a failed/unknown chunk stops here without retrying stage or project start.
+      if (soloTenantSafety && !platform && activeTenantId && scopedUserId && STUDIO_SESSION_ID.test(id)) {
+        const tenant = activeTenantId, actor = scopedUserId;
+        const assistantSources = new Set(hydrated.messages.filter(message => message.role === "assistant")
+          .flatMap(message => (message.studioReferences ?? []).filter(reference => reference.tenantId === tenant).map(reference => reference.sourceTurnId)));
+        const originals = new Map(hydrated.messages.filter(message => message.role === "user" && STUDIO_SESSION_ID.test(message.id) && !assistantSources.has(message.id))
+          .map(message => [message.id, { content: message.content, ts: message.ts }]));
+        const sourceIds = [...originals.keys()].reverse();
+        if (sourceIds.length) {
+          const controller = new AbortController(), deadline = Date.now() + 10_000;
+          let expire!: () => void;
+          const expired = new Promise<{ ok: false }>(resolve => { expire = () => { controller.abort(); resolve({ ok: false }); }; });
+          const timer = window.setTimeout(expire, 10_000);
+          requestTicket.signal.addEventListener("abort", expire, { once: true });
+          if (requestTicket.signal.aborted) expire();
+          const current = () => !controller.signal.aborted && Date.now() < deadline && ticketAccepted(requestTicket)
+            && requestScopeRef.current.handle?.userId === actor && requestScopeRef.current.handle?.tenantId === tenant
+            && hydratedFromRef.current === id && conversationStateRef.current.displayed.kind === "thread" && conversationStateRef.current.displayed.id === id;
+          void (async () => {
+            try {
+              for (let offset = 0; offset < sourceIds.length && current(); offset += 50) {
+                const found = await Promise.race([loadChatStudioSources(tenant, id, sourceIds.slice(offset, offset + 50), controller.signal), expired]);
+                if (!current() || found.ok !== true) break;
+                if (!found.references.length) continue;
+                setMessages(previous => {
+                  if (!current()) return previous;
+                  const alreadyInAssistant = new Set(previous.filter(message => message.role === "assistant")
+                    .flatMap(message => (message.studioReferences ?? []).filter(reference => reference.tenantId === tenant).map(reference => reference.sourceTurnId)));
+                  return previous.map(message => {
+                    const original = originals.get(message.id), reference = found.references.find(candidate => candidate.sourceTurnId === message.id);
+                    return message.role === "user" && original && reference && !alreadyInAssistant.has(message.id)
+                      && message.content === original.content && message.ts === original.ts
+                      ? { ...message, studioReferences: [reference] } : message;
+                  });
+                });
+              }
+            } finally { window.clearTimeout(timer); requestTicket.signal.removeEventListener("abort", expire); }
+          })();
+        }
+      }
       restoreResearchReferences(id, hydrated.researchRefsAll);
       void restorePendingApproval(id, turns, () => ticketAccepted(requestTicket));
       void restoreOriginalReminderHistory(id, turns, () => ticketAccepted(requestTicket));
@@ -2329,7 +2372,11 @@ const PaigeAIChatInner = ({
           if (studioReference) {
             if (!studioReferencesThisTurn.some(reference => reference.sourceTurnId === studioReference.sourceTurnId && reference.tenantId === studioReference.tenantId)) studioReferencesThisTurn.push(studioReference);
             setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage,
-              studioReferences: [...studioReferencesThisTurn], artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined }]);
+              approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined,
+              confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined,
+              recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined,
+              studioReferences: [...studioReferencesThisTurn], artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined,
+              extractionProposal: proposalThisTurn ?? undefined, ...(askThisTurn ? { ask: askThisTurn } : {}) }]);
             continue;
           }
           if (parsed.paige_artifact?.id && (parsed.paige_artifact.artifactType === "document" || parsed.paige_artifact.artifactType === "image")) {
@@ -3227,7 +3274,7 @@ const PaigeAIChatInner = ({
   };
   const assistantIsEmpty = (m: Message) =>
     !m.content.trim() && !m.approvalOutcome && !m.queued?.length && !m.crmResults?.length && !m.recordLinks?.length && !m.research?.length
-    && !m.confirm?.length && !m.artifacts?.length && !m.extractionProposal;
+    && !m.confirm?.length && !m.artifacts?.length && !m.studioReferences?.length && !m.extractionProposal;
   const liveInputFor = (lt: LiveTurn, hasContent: boolean, awaitingApproval: boolean) => ({
     frame: lt.frame, rows: lt.rows, streaming: lt.streaming, writing: lt.writing, gateOpen: lt.gateOpen,
     startedAt: lt.startedAt, endCause: lt.endCause, elapsedMs: lt.elapsedMs, hasContent, awaitingApproval,
@@ -3865,6 +3912,9 @@ const PaigeAIChatInner = ({
                           a long unbroken token (a URL, path, or id) instead of forcing the bubble —
                           and thus the transcript — wider than the panel (overflow cause #3). */}
                       {message.content && <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>}
+                      {!!message.studioReferences?.length && <div className="mt-2 flex flex-col gap-2" data-studio-user-source>
+                        {message.studioReferences.map(reference => <ChatStudioHandoff key={`${reference.tenantId}:${reference.sourceTurnId}`} reference={reference} />)}
+                      </div>}
                     </>
                   )}
                   {/* Hover-revealed meta: timestamp + copy (both roles), regenerate

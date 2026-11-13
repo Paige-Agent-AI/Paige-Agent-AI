@@ -45,6 +45,27 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); host.remove(); vi.restoreAllMocks(); });
 
 describe("page conversion settings — canonical draft editing", () => {
+  it("shows the actual legacy form being replaced and requires an explicit new destination", async () => {
+    await render({ legacyForm: { slug: "original-signup", title: "Original signup" } });
+    expect(host.textContent).toContain("Current saved form: Original signup");
+    await click("Save conversion");
+    expect(props.onSave).not.toHaveBeenCalled();
+    await enter("Destination", "native_booking");
+    await enter("PAIGE booking link", "discovery-call");
+    await click("Save conversion");
+    expect(props.onSave).toHaveBeenCalledWith({ type: "conversion", destination: { kind: "native_booking", slug: "discovery-call" }, label: "Open booking" });
+  });
+  it("preserves edited input while a build disables settings without claiming a conversion save", async () => {
+    await render(); await enter("PAIGE form", FORM_ID);
+    await render({ disabled: true });
+    expect(control("Destination").disabled).toBe(true);
+    expect(control("PAIGE form").disabled).toBe(true);
+    expect(host.textContent).not.toContain("Saving…");
+    await click("Save conversion"); expect(props.onSave).not.toHaveBeenCalled();
+    await render({ disabled: false });
+    expect(control("PAIGE form").value).toBe(FORM_ID);
+    await click("Save conversion"); expect(props.onSave).toHaveBeenCalledTimes(1);
+  });
   it("requires an explicit native choice from the caller's scoped options", async () => {
     await render();
     expect(control("PAIGE form").value).toBe("");

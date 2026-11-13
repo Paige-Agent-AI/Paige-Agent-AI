@@ -19,6 +19,8 @@ BEGIN
   ('public._team_hub_is_active(uuid,uuid)','8a17dba7a1a8fd50bcc5c7457e6caa05'),
   ('public._team_hub_participates(uuid,uuid)','c204534d91951e1a6841003f1b9976a7'),
   ('public.save_artifact_version(uuid,text,uuid,uuid)','414256973e5858b5ace8f3d38e57d725'),
+  ('public.create_session_artifact(uuid,text,jsonb,uuid)','ee7d9b1a6201f210e88f08c9b1e4dd87'),
+  ('public.link_session_artifact(uuid,text,uuid,uuid)','151a9d791c8c7de43e44a78f4834d5f9'),
   ('public.growth_page_upsert(uuid,text,text,jsonb,jsonb,jsonb,uuid,jsonb)','b58fbbc9b18a40de26fc85e5937d2298'),
   ('public._growth_form_go_live(uuid,uuid)','4183c4f3fc90f0ed58d751482f896620'),
   ('public.growth_validate_blocks(jsonb)','264e09051c47a6282950b94c4ddb968c'),
@@ -545,6 +547,31 @@ END $$;
 REVOKE ALL ON FUNCTION public.chat_studio_reference(uuid,uuid) FROM PUBLIC,anon,service_role;
 GRANT EXECUTE ON FUNCTION public.chat_studio_reference(uuid,uuid) TO authenticated;
 
+-- Lost stage/assistant acknowledgments recover from the ORIGINAL loaded user
+-- sources. This exposes pointers only; no bundle, assistant, status or receipt
+-- is manufactured, and no project is created from history discovery.
+CREATE FUNCTION public.chat_studio_sources(p_expected_tenant uuid,p_thread_id uuid,p_source_turn_ids uuid[])
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE actor uuid; source_ids jsonb;
+BEGIN
+ actor:=public._studio_current_scope(p_expected_tenant);
+ IF p_source_turn_ids IS NULL OR cardinality(p_source_turn_ids)>50 OR coalesce(array_ndims(p_source_turn_ids),1)>1 THEN
+  RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ IF array_position(p_source_turn_ids,NULL) IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ PERFORM 1 FROM public.paige_chat_threads WHERE id=p_thread_id AND caller_user_id=actor AND tenant_id=p_expected_tenant
+  AND audience='workspace' AND NOT is_archived FOR SHARE NOWAIT;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ SELECT coalesce(jsonb_agg(s.id ORDER BY array_position(p_source_turn_ids,s.id)),'[]'::jsonb) INTO source_ids
+ FROM public.paige_chat_turns s WHERE s.id=ANY(p_source_turn_ids) AND s.thread_id=p_thread_id AND s.role='user'
+  AND s.interactive_actor_id=actor AND s.interactive_tenant_id=p_expected_tenant AND s.interactive_intent_id IS NOT NULL
+  AND s.studio_brief IS NOT NULL AND public._chat_studio_binding_valid(s.interactive_runtime_binding,s.id,s.interactive_intent_id);
+ RETURN jsonb_build_object('ok',true,'source_turn_ids',source_ids);
+EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed');
+ WHEN lock_not_available THEN RETURN jsonb_build_object('ok',false,'code','not_allowed');
+END $$;
+REVOKE ALL ON FUNCTION public.chat_studio_sources(uuid,uuid,uuid[]) FROM PUBLIC,anon,service_role;
+GRANT EXECUTE ON FUNCTION public.chat_studio_sources(uuid,uuid,uuid[]) TO authenticated;
+
 CREATE FUNCTION public.chat_studio_start(p_expected_tenant uuid,p_source_turn_id uuid,p_project_context jsonb DEFAULT '{}'::jsonb)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE actor uuid; source public.paige_chat_turns; started jsonb;
@@ -856,6 +883,14 @@ BEGIN
  FOR item IN SELECT value,ordinality FROM jsonb_array_elements(blocks) WITH ORDINALITY LOOP
   IF item.value->>'type'='conversion' THEN chosen:=item.value; chosen_index:=item.ordinality-1; EXIT; END IF;
  END LOOP;
+ -- Match studio_page_conversion's primary-choice projection: the first
+ -- canonical conversion wins; otherwise replace the first original form.
+ -- Other form blocks remain independent, exactly where the owner put them.
+ IF chosen_index IS NULL THEN
+  FOR item IN SELECT value,ordinality FROM jsonb_array_elements(blocks) WITH ORDINALITY LOOP
+   IF item.value->>'type'='embedded_form' THEN chosen:=item.value; chosen_index:=item.ordinality-1; EXIT; END IF;
+  END LOOP;
+ END IF;
  IF chosen=p_conversion THEN
   SELECT * INTO version FROM public.studio_artifact_versions WHERE session_id=s.id AND tenant_id=p_expected_tenant
    AND kind='page' AND lineage_id=page.id AND is_current AND snapshot=to_jsonb(page);
@@ -876,4 +911,217 @@ EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,
 END $$;
 REVOKE ALL ON FUNCTION public.studio_set_page_conversion(uuid,uuid,uuid,timestamptz,jsonb) FROM PUBLIC,anon,service_role;
 GRANT EXECUTE ON FUNCTION public.studio_set_page_conversion(uuid,uuid,uuid,timestamptz,jsonb) TO authenticated;
+
+-- A Studio generation carries this native source outside model-facing results.
+-- It is a snapshot of the ORIGINAL project, not a new admission or save token.
+CREATE FUNCTION public._studio_primary_conversion(p_blocks jsonb)
+RETURNS jsonb LANGUAGE plpgsql IMMUTABLE SET search_path='' AS $$
+DECLARE chosen jsonb;
+BEGIN
+ SELECT value INTO chosen FROM jsonb_array_elements(p_blocks) WITH ORDINALITY
+  WHERE value->>'type'='conversion' ORDER BY ordinality LIMIT 1;
+ IF chosen IS NOT NULL THEN PERFORM public._growth_validate_conversion_block(chosen); RETURN chosen; END IF;
+ SELECT value INTO chosen FROM jsonb_array_elements(p_blocks) WITH ORDINALITY
+  WHERE value->>'type'='embedded_form' ORDER BY ordinality LIMIT 1;
+ IF chosen IS NULL THEN RETURN NULL; END IF;
+ IF jsonb_typeof(chosen->'form_slug') IS DISTINCT FROM 'string' OR nullif(btrim(chosen->>'form_slug'),'') IS NULL THEN
+  RAISE EXCEPTION 'STUDIO_INVALID_CONVERSION: original form unavailable' USING ERRCODE='22023'; END IF;
+ RETURN jsonb_build_object('type','embedded_form','form_slug',chosen->'form_slug')
+  ||CASE WHEN jsonb_typeof(chosen->'title')='string' THEN jsonb_build_object('title',chosen->'title') ELSE '{}'::jsonb END;
+END $$;
+REVOKE ALL ON FUNCTION public._studio_primary_conversion(jsonb) FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE FUNCTION public.studio_page_save_source(p_expected_tenant uuid,p_session_id uuid,p_page_id uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE actor uuid; s public.studio_sessions; page public.growth_pages; context jsonb; blocks jsonb; chosen jsonb;
+BEGIN
+ actor:=public._studio_current_scope(p_expected_tenant);
+ SELECT * INTO s FROM public.studio_sessions WHERE id=p_session_id AND tenant_id=p_expected_tenant AND status<>'archived'
+  AND (owner_user_id=actor OR public.is_tenant_admin(p_expected_tenant)) FOR SHARE NOWAIT;
+ IF NOT FOUND OR jsonb_typeof(s.artifact_refs) IS DISTINCT FROM 'array' THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ context:=coalesce(s.studio_session_scratchpad->'project_context','{}'::jsonb);
+ IF NOT public._studio_project_context_valid(context) OR NOT(context ? 'target') THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ IF p_page_id IS NOT NULL THEN
+  IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(s.artifact_refs) r WHERE r->>'kind'='page' AND r->>'id'=p_page_id::text) THEN
+   RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+  SELECT * INTO page FROM public.growth_pages WHERE id=p_page_id AND tenant_id=p_expected_tenant AND status<>'archived' FOR SHARE NOWAIT;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+  blocks:=CASE WHEN jsonb_typeof(page.draft_blocks_json)='array' THEN page.draft_blocks_json
+   WHEN jsonb_typeof(page.blocks_json)='array' THEN page.blocks_json ELSE '[]'::jsonb END;
+  chosen:=public._studio_primary_conversion(blocks);
+ END IF;
+ RETURN jsonb_build_object('ok',true,'tenant_id',p_expected_tenant,'session_id',s.id,'artifact_refs',s.artifact_refs,
+  'project_context',context,'page_id',page.id,'updated_at',page.updated_at,'conversion',chosen);
+EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed');
+ WHEN lock_not_available THEN RETURN jsonb_build_object('ok',false,'code','changed');
+ WHEN invalid_parameter_value THEN RETURN jsonb_build_object('ok',false,'code','invalid');
+END $$;
+REVOKE ALL ON FUNCTION public.studio_page_save_source(uuid,uuid,uuid) FROM PUBLIC,anon,service_role;
+GRANT EXECUTE ON FUNCTION public.studio_page_save_source(uuid,uuid,uuid) TO authenticated;
+
+-- Reconciliation permits exactly the original appended page/form references
+-- produced by this save. An unrelated manifest edit makes the result unknown.
+CREATE FUNCTION public._studio_save_manifest_matches(p_actual jsonb,p_expected jsonb,p_page uuid,p_forms jsonb)
+RETURNS boolean LANGUAGE plpgsql IMMUTABLE SET search_path='' AS $$
+DECLARE prior_count integer; expected_page boolean; item record; page_count integer:=0;
+BEGIN
+ IF jsonb_typeof(p_actual) IS DISTINCT FROM 'array' OR jsonb_typeof(p_expected) IS DISTINCT FROM 'array' THEN RETURN false; END IF;
+ prior_count:=jsonb_array_length(p_expected);
+ IF jsonb_array_length(p_actual)<prior_count THEN RETURN false; END IF;
+ FOR item IN SELECT value,ordinality FROM jsonb_array_elements(p_expected) WITH ORDINALITY LOOP
+  IF p_actual->(item.ordinality::integer-1) IS DISTINCT FROM item.value THEN RETURN false; END IF;
+ END LOOP;
+ expected_page:=EXISTS(SELECT 1 FROM jsonb_array_elements(p_expected) r WHERE r->>'kind'='page' AND r->>'id'=p_page::text);
+ FOR item IN SELECT value FROM jsonb_array_elements(p_actual) WITH ORDINALITY WHERE ordinality>prior_count LOOP
+  IF item.value->>'kind'='page' AND item.value->>'id'=p_page::text AND NOT expected_page THEN page_count:=page_count+1;
+  ELSIF item.value->>'kind'='form' AND EXISTS(SELECT 1 FROM jsonb_array_elements(p_forms) f WHERE f->>'id'=item.value->>'id')
+   AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(p_expected) r WHERE r->>'kind'='form' AND r->>'id'=item.value->>'id') THEN NULL;
+  ELSE RETURN false; END IF;
+ END LOOP;
+ RETURN page_count=CASE WHEN expected_page THEN 0 ELSE 1 END;
+END $$;
+REVOKE ALL ON FUNCTION public._studio_save_manifest_matches(jsonb,jsonb,uuid,jsonb) FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE FUNCTION public._studio_page_saved_result(p_session uuid,p_page public.growth_pages)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE version public.studio_artifact_versions; forms jsonb; form record; refs jsonb;
+BEGIN
+ SELECT * INTO version FROM public.studio_artifact_versions WHERE session_id=p_session AND tenant_id=p_page.tenant_id
+  AND kind='page' AND lineage_id=p_page.id AND is_current AND snapshot=to_jsonb(p_page);
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','unknown'); END IF;
+ SELECT artifact_refs INTO refs FROM public.studio_sessions WHERE id=p_session AND tenant_id=p_page.tenant_id;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('id',f.id,'slug',f.slug) ORDER BY f.slug,f.id),'[]'::jsonb) INTO forms
+  FROM public.growth_forms f WHERE f.tenant_id=p_page.tenant_id AND f.slug IN (
+   SELECT btrim(value->>'form_slug') FROM jsonb_array_elements(p_page.draft_blocks_json) WHERE value->>'type'='embedded_form');
+ IF EXISTS(SELECT 1 FROM jsonb_array_elements(p_page.draft_blocks_json) b WHERE b->>'type'='embedded_form'
+  AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(forms) f WHERE f->>'slug'=btrim(b->>'form_slug'))) THEN
+  RETURN jsonb_build_object('ok',false,'code','unknown'); END IF;
+ FOR form IN SELECT f.* FROM public.growth_forms f WHERE f.tenant_id=p_page.tenant_id AND f.id::text IN
+  (SELECT value->>'id' FROM jsonb_array_elements(forms)) LOOP
+  IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(refs) r WHERE r->>'kind'='form' AND r->>'id'=form.id::text)
+   OR NOT EXISTS(SELECT 1 FROM public.studio_artifact_versions v WHERE v.session_id=p_session AND v.tenant_id=p_page.tenant_id
+    AND v.kind='form' AND v.lineage_id=form.id AND v.is_current AND v.snapshot=to_jsonb(form)) THEN
+   RETURN jsonb_build_object('ok',false,'code','unknown'); END IF;
+ END LOOP;
+ RETURN jsonb_build_object('ok',true,'page',to_jsonb(p_page),'version_id',version.id,'forms',forms,'changed',false,'reconciled',true);
+END $$;
+REVOKE ALL ON FUNCTION public._studio_page_saved_result(uuid,public.growth_pages) FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE FUNCTION public.studio_page_save_state(
+ p_expected_tenant uuid,p_session_id uuid,p_expected_artifact_refs jsonb,p_expected_project_context jsonb,
+ p_page_id uuid,p_expected_updated_at timestamptz,p_expected_conversion jsonb,
+ p_slug text,p_title text,p_blocks_json jsonb,p_theme_json jsonb,p_seo_json jsonb,p_form_schema_json jsonb DEFAULT NULL)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE actor uuid; s public.studio_sessions; page public.growth_pages; context jsonb; response jsonb; candidates integer;
+BEGIN
+ actor:=public._studio_current_scope(p_expected_tenant);
+ IF jsonb_typeof(p_expected_artifact_refs) IS DISTINCT FROM 'array'
+  OR NOT public._studio_project_context_valid(p_expected_project_context) OR NOT(p_expected_project_context ? 'target')
+  OR jsonb_typeof(p_blocks_json) IS DISTINCT FROM 'array' OR nullif(btrim(p_slug),'') IS NULL
+  OR (p_page_id IS NULL AND (p_expected_updated_at IS NOT NULL OR p_expected_conversion IS NOT NULL))
+  OR (p_page_id IS NOT NULL AND p_expected_updated_at IS NULL) THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ PERFORM public.growth_validate_blocks(p_blocks_json);
+ IF p_form_schema_json IS NOT NULL THEN PERFORM public.growth_validate_form_schema(p_form_schema_json); END IF;
+ IF public._studio_primary_conversion(p_blocks_json) IS DISTINCT FROM p_expected_conversion THEN RETURN jsonb_build_object('ok',false,'code','changed'); END IF;
+ SELECT * INTO s FROM public.studio_sessions WHERE id=p_session_id AND tenant_id=p_expected_tenant AND status<>'archived'
+  AND (owner_user_id=actor OR public.is_tenant_admin(p_expected_tenant)) FOR SHARE NOWAIT;
+ IF NOT FOUND OR jsonb_typeof(s.artifact_refs) IS DISTINCT FROM 'array' THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ context:=coalesce(s.studio_session_scratchpad->'project_context','{}'::jsonb);
+ IF context IS DISTINCT FROM p_expected_project_context THEN RETURN jsonb_build_object('ok',false,'code','changed'); END IF;
+ IF p_page_id IS NOT NULL THEN
+  IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(p_expected_artifact_refs) r WHERE r->>'kind'='page' AND r->>'id'=p_page_id::text)
+   OR NOT EXISTS(SELECT 1 FROM jsonb_array_elements(s.artifact_refs) r WHERE r->>'kind'='page' AND r->>'id'=p_page_id::text) THEN
+   RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+  SELECT * INTO page FROM public.growth_pages WHERE id=p_page_id AND tenant_id=p_expected_tenant AND status<>'archived' FOR SHARE NOWAIT;
+ ELSE
+  SELECT count(*) INTO candidates FROM public.growth_pages p WHERE p.tenant_id=p_expected_tenant AND p.slug=btrim(p_slug) AND p.status<>'archived'
+   AND EXISTS(SELECT 1 FROM jsonb_array_elements(s.artifact_refs) WITH ORDINALITY r(value,n)
+    WHERE n>jsonb_array_length(p_expected_artifact_refs) AND value->>'kind'='page' AND value->>'id'=p.id::text);
+  IF candidates<>1 THEN RETURN jsonb_build_object('ok',false,'code','unknown'); END IF;
+  SELECT p.* INTO page FROM public.growth_pages p WHERE p.tenant_id=p_expected_tenant AND p.slug=btrim(p_slug) AND p.status<>'archived'
+   AND EXISTS(SELECT 1 FROM jsonb_array_elements(s.artifact_refs) WITH ORDINALITY r(value,n)
+    WHERE n>jsonb_array_length(p_expected_artifact_refs) AND value->>'kind'='page' AND value->>'id'=p.id::text) FOR SHARE NOWAIT;
+ END IF;
+ IF page.id IS NULL OR page.slug IS DISTINCT FROM btrim(p_slug)
+  OR page.title IS DISTINCT FROM coalesce(nullif(btrim(p_title),''),page.title)
+  OR page.draft_blocks_json IS DISTINCT FROM p_blocks_json
+  OR (p_theme_json IS NOT NULL AND page.draft_theme_json IS DISTINCT FROM p_theme_json)
+  OR (p_seo_json IS NOT NULL AND page.draft_seo_json IS DISTINCT FROM p_seo_json) THEN
+  RETURN jsonb_build_object('ok',false,'code','unknown'); END IF;
+ response:=public._studio_page_saved_result(s.id,page);
+ IF response->'ok' IS DISTINCT FROM 'true'::jsonb THEN RETURN response; END IF;
+ IF NOT public._studio_save_manifest_matches(s.artifact_refs,p_expected_artifact_refs,page.id,response->'forms') THEN
+  RETURN jsonb_build_object('ok',false,'code','unknown'); END IF;
+ RETURN response;
+EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed');
+ WHEN lock_not_available THEN RETURN jsonb_build_object('ok',false,'code','changed');
+ WHEN invalid_parameter_value THEN RETURN jsonb_build_object('ok',false,'code','invalid');
+END $$;
+REVOKE ALL ON FUNCTION public.studio_page_save_state(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb) FROM PUBLIC,anon,service_role;
+GRANT EXECUTE ON FUNCTION public.studio_page_save_state(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb) TO authenticated;
+
+-- Atomic ORIGINAL page/create/link/version composition. No standalone writer,
+-- receipt, recovery ledger or guessed UUID insertion is introduced.
+CREATE FUNCTION public.studio_save_page(
+ p_expected_tenant uuid,p_session_id uuid,p_expected_artifact_refs jsonb,p_expected_project_context jsonb,
+ p_page_id uuid,p_expected_updated_at timestamptz,p_expected_conversion jsonb,
+ p_slug text,p_title text,p_blocks_json jsonb,p_theme_json jsonb,p_seo_json jsonb,p_form_schema_json jsonb DEFAULT NULL)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE actor uuid; s public.studio_sessions; created public.studio_sessions; page public.growth_pages; version public.studio_artifact_versions;
+ context jsonb; blocks jsonb; response jsonb; form record; new_id uuid;
+BEGIN
+ actor:=public._studio_current_scope(p_expected_tenant);
+ SELECT * INTO s FROM public.studio_sessions WHERE id=p_session_id AND tenant_id=p_expected_tenant AND status<>'archived'
+  AND (owner_user_id=actor OR public.is_tenant_admin(p_expected_tenant)) FOR UPDATE NOWAIT;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ response:=public.studio_page_save_state(p_expected_tenant,p_session_id,p_expected_artifact_refs,p_expected_project_context,
+  p_page_id,p_expected_updated_at,p_expected_conversion,p_slug,p_title,p_blocks_json,p_theme_json,p_seo_json,p_form_schema_json);
+ IF response->'ok'='true'::jsonb OR response->>'code' IN ('invalid','scope_changed','not_allowed','changed') THEN RETURN response; END IF;
+ context:=coalesce(s.studio_session_scratchpad->'project_context','{}'::jsonb);
+ IF s.artifact_refs IS DISTINCT FROM p_expected_artifact_refs OR context IS DISTINCT FROM p_expected_project_context THEN
+  RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: original project source changed' USING ERRCODE='40001'; END IF;
+ IF p_page_id IS NOT NULL THEN
+  SELECT * INTO page FROM public.growth_pages WHERE id=p_page_id AND tenant_id=p_expected_tenant AND status<>'archived' FOR UPDATE NOWAIT;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+  blocks:=CASE WHEN jsonb_typeof(page.draft_blocks_json)='array' THEN page.draft_blocks_json
+   WHEN jsonb_typeof(page.blocks_json)='array' THEN page.blocks_json ELSE '[]'::jsonb END;
+  IF page.updated_at IS DISTINCT FROM p_expected_updated_at OR page.slug IS DISTINCT FROM btrim(p_slug)
+   OR public._studio_primary_conversion(blocks) IS DISTINCT FROM p_expected_conversion THEN
+   RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: reopen the current original page before saving' USING ERRCODE='40001'; END IF;
+ ELSE
+  -- Original creator allocates the real ID and appends its original manifest.
+  -- Upsert by that actual ID cannot enter the slug-conflict overwrite branch.
+  created:=public.create_session_artifact(s.id,'page',jsonb_build_object('title',p_title),NULL);
+  SELECT p.id INTO new_id FROM public.growth_pages p
+   WHERE p.tenant_id=p_expected_tenant AND EXISTS(SELECT 1 FROM jsonb_array_elements(created.artifact_refs) r
+    WHERE r->>'kind'='page' AND r->>'id'=p.id::text)
+   AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(s.artifact_refs) r WHERE r->>'kind'='page' AND r->>'id'=p.id::text);
+  IF new_id IS NULL THEN RAISE EXCEPTION 'STUDIO_SAVE_UNKNOWN: original creation readback unavailable' USING ERRCODE='40001'; END IF;
+  SELECT * INTO page FROM public.growth_pages WHERE id=new_id AND tenant_id=p_expected_tenant FOR UPDATE;
+ END IF;
+ page:=public.growth_page_upsert(NULL,btrim(p_slug),p_title,p_blocks_json,p_theme_json,p_seo_json,page.id,p_form_schema_json);
+ IF new_id IS NOT NULL THEN
+  UPDATE public.studio_sessions SET artifact_refs=(SELECT jsonb_agg(
+   CASE WHEN r->>'kind'='page' AND r->>'id'=page.id::text THEN r||jsonb_build_object('title',page.title,'slug',page.slug) ELSE r END ORDER BY n)
+   FROM jsonb_array_elements(artifact_refs) WITH ORDINALITY r(r,n)) WHERE id=s.id AND tenant_id=p_expected_tenant;
+ END IF;
+ FOR form IN SELECT f.id FROM public.growth_forms f WHERE f.tenant_id=p_expected_tenant AND f.slug IN (
+  SELECT btrim(value->>'form_slug') FROM jsonb_array_elements(p_blocks_json) WHERE value->>'type'='embedded_form') ORDER BY f.id LOOP
+  PERFORM 1 FROM public.growth_forms WHERE id=form.id AND tenant_id=p_expected_tenant FOR SHARE NOWAIT;
+  PERFORM public.link_session_artifact(s.id,'form',form.id,NULL);
+  PERFORM public.save_artifact_version(s.id,'form',form.id,NULL);
+ END LOOP;
+ PERFORM public.link_session_artifact(s.id,'page',page.id,NULL);
+ version:=public.save_artifact_version(s.id,'page',page.id,NULL);
+ response:=public._studio_page_saved_result(s.id,page);
+ IF response->'ok' IS DISTINCT FROM 'true'::jsonb OR response->>'version_id' IS DISTINCT FROM version.id::text THEN
+  RAISE EXCEPTION 'STUDIO_SAVE_UNKNOWN: original version readback unavailable' USING ERRCODE='40001'; END IF;
+ RETURN response||jsonb_build_object('changed',true,'reconciled',false);
+EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed');
+ WHEN lock_not_available OR unique_violation THEN
+  RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: original page or address changed; inspect the same source before saving' USING ERRCODE='40001';
+END $$;
+REVOKE ALL ON FUNCTION public.studio_save_page(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb) FROM PUBLIC,anon,service_role;
+GRANT EXECUTE ON FUNCTION public.studio_save_page(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb) TO authenticated;
+
 COMMIT;

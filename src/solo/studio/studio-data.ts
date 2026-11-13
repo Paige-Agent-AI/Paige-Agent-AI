@@ -102,7 +102,7 @@ export async function loadStudioProjectContext(tenantId: string, sessionId: stri
   return objectOf(data)?.context;
 }
 
-export async function saveStudioProjectContext(tenantId: string, sessionId: string, context: StudioProjectContext, expectedContext: StudioProjectContext): Promise<unknown> {
+export async function saveStudioProjectContext(tenantId: string, sessionId: string, context: StudioProjectContext, expectedContext: StudioProjectContext | Record<string, never>): Promise<unknown> {
   const { data, error } = await rpc("studio_set_project_context", { p_expected_tenant: tenantId, p_session_id: sessionId, p_project_context: context, p_expected_context: expectedContext });
   if (error || objectOf(data)?.ok !== true) throw new Said("The context change could not be verified. Check the saved project before retrying.");
   return objectOf(data)?.context;
@@ -113,6 +113,30 @@ export async function readChatStudioReference(expectedTenant: string, sourceTurn
     const { data, error } = await rpc("chat_studio_reference", { p_expected_tenant: expectedTenant, p_source_turn_id: sourceTurnId });
     return error ? { ok: false, code: "unavailable" } : parseTeamHubStudioReference(data);
   } catch { return { ok: false, code: "unavailable" }; }
+}
+
+/** One read-only batch over already loaded original USER rows. Format and a
+ * returned pointer grant no authority; protected reference/start readers recheck. */
+export async function loadChatStudioSources(expectedTenant: string, threadId: string, sourceTurnIds: readonly string[], signal?: AbortSignal): Promise<
+  { ok: true; references: Array<{ sourceTurnId: string; tenantId: string }> } | { ok: false }
+> {
+  if (signal?.aborted || !STUDIO_SESSION_ID.test(expectedTenant) || !STUDIO_SESSION_ID.test(threadId)
+    || !Array.isArray(sourceTurnIds) || sourceTurnIds.length > 50
+    || sourceTurnIds.some(id => typeof id !== "string" || !STUDIO_SESSION_ID.test(id))
+    || new Set(sourceTurnIds).size !== sourceTurnIds.length) return { ok: false };
+  if (!sourceTurnIds.length) return { ok: true, references: [] };
+  const requested = new Set(sourceTurnIds);
+  try {
+    const request = rpc("chat_studio_sources", { p_expected_tenant: expectedTenant, p_thread_id: threadId, p_source_turn_ids: [...sourceTurnIds] }) as ReturnType<Rpc> & { abortSignal?: (signal: AbortSignal) => ReturnType<Rpc> };
+    const { data, error } = await (signal && typeof request.abortSignal === "function" ? request.abortSignal(signal) : request);
+    const row = objectOf(data);
+    if (signal?.aborted || error || !row || Object.keys(row).length !== 2
+      || !Object.prototype.hasOwnProperty.call(row, "ok") || !Object.prototype.hasOwnProperty.call(row, "source_turn_ids")
+      || row.ok !== true || !Array.isArray(row.source_turn_ids) || row.source_turn_ids.length > sourceTurnIds.length
+      || row.source_turn_ids.some(id => typeof id !== "string" || !STUDIO_SESSION_ID.test(id) || !requested.has(id))
+      || new Set(row.source_turn_ids).size !== row.source_turn_ids.length) return { ok: false };
+    return { ok: true, references: row.source_turn_ids.map(sourceTurnId => ({ sourceTurnId, tenantId: expectedTenant })) };
+  } catch { return { ok: false }; }
 }
 
 export async function startChatStudio(expectedTenant: string, sourceTurnId: string, context: StudioProjectContext): Promise<StudioStartedProject> {

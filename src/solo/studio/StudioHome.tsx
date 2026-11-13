@@ -103,13 +103,13 @@ export function StudioRail({ view, sessions, onBack, onMinimize, onHome, onMedia
 }) {
   return (
     <nav className="vs-rail" aria-label="Studio">
-      <button type="button" className="vs-rail-back" onClick={onBack}>
-        <span style={{ transform: "rotate(180deg)", display: "flex" }}><Ic.chev size={14} style={{}} /></span>Back to Marketing<kbd>Esc</kbd>
+      <button type="button" className="vs-rail-back" aria-label="Back to Marketing" onClick={onBack}>
+        <span aria-hidden="true" style={{ transform: "rotate(180deg)", display: "flex" }}><Ic.chev size={14} style={{}} /></span><span className="vs-rail-back-label">Back to Marketing</span><kbd>Esc</kbd>
       </button>
       <div className="vs-rail-brand"><NexusIdentity /></div>
-      {onMinimize && <button type="button" className="vs-rail-item" onClick={onMinimize}><Minimize2 size={15} aria-hidden="true" />Minimize Studio</button>}
-      <button type="button" className="vs-rail-item" aria-current={view === "home" ? "page" : undefined} onClick={onHome}><Sparkles size={15} aria-hidden="true" />Build with NEXUS</button>
-      <button type="button" className="vs-rail-item" aria-current={view === "media" ? "page" : undefined} onClick={onMedia}><Images size={15} aria-hidden="true" />Images &amp; video</button>
+      {onMinimize && <button type="button" className="vs-rail-item vs-rail-minimize" aria-label="Minimize Studio" onClick={onMinimize}><Minimize2 size={15} aria-hidden="true" /><span className="vs-rail-minimize-label">Minimize Studio</span></button>}
+      <button type="button" className="vs-rail-item vs-rail-build" aria-current={view === "home" ? "page" : undefined} onClick={onHome}><Sparkles size={15} aria-hidden="true" />Build with NEXUS</button>
+      <button type="button" className="vs-rail-item vs-rail-media" aria-current={view === "media" ? "page" : undefined} onClick={onMedia}><Images size={15} aria-hidden="true" />Images &amp; video</button>
       <div className="vs-rail-label">Drafts</div>
       {sessions === null ? <span className="vs-rail-skel" role="status" aria-label="Loading your drafts"><i /><i /><i /></span>
         : sessions.length === 0 ? <span className="vs-rail-note" style={{ marginTop: 0 }}>Nothing yet.</span>

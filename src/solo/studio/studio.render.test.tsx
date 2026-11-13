@@ -44,6 +44,8 @@ const h = vi.hoisted(() => ({
   templateCalls: [] as Array<[string, boolean]>,
   // The portal-brand read's answer for loadBrand; null keeps the honest-missing path.
   brand: null as Rec | null,
+  projectContext: { target: { kind: "workspace" }, values: {} } as unknown,
+  contextSaves: [] as Array<{ context: unknown; expected: unknown }>,
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -78,7 +80,8 @@ vi.mock("./studio-data", async (orig) => {
     createSession: async () => { throw new Error("Legacy non-idempotent start must not be called"); },
     startStudioProject: async ({ brief }: { brief: string }) => { h.created.push(brief); return { sessionId: "s-new", threadId: "th-1", created: true }; },
     readStudioBusinessSources: async () => ({ readStatus: "unavailable", context: null, publicBrand: undefined }),
-    loadStudioProjectContext: async () => ({ target: { kind: "workspace" }, values: {} }),
+    loadStudioProjectContext: async () => h.projectContext,
+    saveStudioProjectContext: async (_tenant: string, _session: string, context: unknown, expected: unknown) => { h.contextSaves.push({ context, expected }); h.projectContext = context; return context; },
     openSession: async (id: string) => session(id, h.openTitle, h.openBrief),
     loadHeldConfirms: async () => h.held,
     renameSession: async (id: string, title: string) => { h.renamed.push([id, title]); h.openTitle = title; },
@@ -152,6 +155,7 @@ function type(el: HTMLTextAreaElement, value: string) {
 }
 
 beforeEach(() => {
+  h.projectContext = { target: { kind: "workspace" }, values: {} }; h.contextSaves = [];
   Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients", templates: [], templateCalls: [], brand: null });
   backs = 0;
   host = document.createElement("div");
@@ -297,6 +301,42 @@ describe("Vibe Studio project workspace", () => {
   }
   async function openPanel() { await act(async () => { button("Publish")!.click(); }); await flush(); }
   async function press(label: string) { await act(async () => { button(label)!.click(); }); await flush(); }
+
+  it("restores the saved artifact after immediate same-project revalidation without rebuilding", async () => {
+    await openPiece();
+    expect(host.querySelector(".vs-sheet")).not.toBeNull();
+    await act(async () => { root!.render(<VibeStudio minimized onBack={() => { backs++; }} />); });
+    await act(async () => { root!.render(<VibeStudio minimized={false} onBack={() => { backs++; }} />); });
+    await flush();
+    expect(host.querySelector(".vs-sheet")?.getAttribute("aria-label")).toBe("New client intake, as visitors see it");
+    expect(text()).toContain("Saved · draft");
+    expect(h.fetchBodies).toEqual([]);
+  });
+
+  it("opens a legacy project without inventing saved target context or rebuilding it", async () => {
+    h.projectContext = {};
+    await openPiece();
+    expect(host.querySelector(".vs-sheet")?.getAttribute("aria-label")).toBe("New client intake, as visitors see it");
+    expect(text()).toContain("Saved · draft");
+    expect(text()).toContain("Choose a brand");
+    expect(h.fetchBodies).toEqual([]); expect(h.contextSaves).toEqual([]);
+  });
+
+  it("requires a chosen target before new generation in a legacy project and saves against its actual empty context", async () => {
+    h.projectContext = {};
+    await openPiece();
+    const input = host.querySelector<HTMLTextAreaElement>("#vs-chat-input")!;
+    expect(input).not.toBeNull();
+    type(input, "Make the title clearer");
+    await act(async () => { host.querySelector<HTMLButtonElement>(".vs-send")!.click(); }); await flush();
+    expect(h.fetchBodies).toEqual([]); expect(input.value).toBe("Make the title clearer");
+    expect(text()).toContain("Choose the brand for this project before asking NEXUS to build");
+    await act(async () => { button("Custom")!.click(); });
+    await act(async () => { host.querySelector<HTMLButtonElement>(".vs-send")!.click(); }); await flush();
+    expect(h.contextSaves).toHaveLength(1);
+    expect(h.contextSaves[0]).toMatchObject({ context: { target: { kind: "custom" }, values: {} }, expected: {} });
+    expect(h.fetchBodies).toHaveLength(1);
+  });
 
   it("opening Publish prepares through the door; the click redeems that fingerprint; 'It's live' only with the returned address", async () => {
     await openPiece();

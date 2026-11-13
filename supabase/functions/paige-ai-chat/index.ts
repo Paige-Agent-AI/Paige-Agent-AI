@@ -336,6 +336,8 @@ import { loadResearchHistoryContext, renderResearchHistoryContext } from "../_sh
 // generative-UI choice-card rule), externalized so it lives in one editable home (§9/§12/§18).
 import { STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
 import { buildStudioNexusPersona } from "../_shared/growth/studio-nexus-persona.ts";
+import { parseStudioPageSaveSource, type StudioPageSaveSource } from "../_shared/growth/studio-page-source.ts";
+import { createStudioPageSave } from "../_shared/growth/studio-page-save.ts";
 import { CHAT_STUDIO_PREPARATION_PROMPT, CHAT_STUDIO_TARGET_QUESTION, createChatStudioPreparation, extractChatStudioPreparation, stripChatStudioControl } from "../_shared/growth/chat-studio-preparation.ts";
 // Tier Rail Spine (Phase D): the SAME declared-rail tier resolver + client-seat
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
@@ -6727,6 +6729,18 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // thread; after that a refine mints a fresh image (the anchor's expiry clear).
     const IMAGE_REFINE_ANCHOR_WINDOW_MS = 30 * 60 * 1000;
     const studioLinked: Array<{ kind: string; id: string; title: string; url: string | null }> = [];
+    // Invocation-local generation snapshots, never model arguments or another
+    // durable store. The native original writer compares this whole source
+    // under lock before any page/form/manifest/version change.
+    const studioPageSaves = new Map<string, { source: StudioPageSaveSource; save: ReturnType<typeof createStudioPageSave>["save"] }>();
+    const studioPageSavedCalls = new Set<object>();
+    let studioPageSaveWithdrawn = false;
+    const studioPageSaveCurrent = (): boolean => {
+      if (req.signal.aborted || proposalScopeInvalidated || tenantKnowledgeScopeRevoked
+        || interactive?.superseded || interactiveRecoveryReadOnly || interactiveConversational
+        || !studioSessionId || personaCtx?.tenant_id !== turnScopeTenantId) studioPageSaveWithdrawn = true;
+      return !studioPageSaveWithdrawn;
+    };
     // A page designed in a Studio project but not saved this turn (the save waited on approval, or
     // the model stopped short). The stage shows it, marked as not saved, instead of staying empty:
     // it is the tenant's own draft, generated from their brief and brand, and nothing is claimed
@@ -16714,9 +16728,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else if (tc.function.name === "growth_page_generate") {
               // Draft-only preview: designs the page blocks, writes nothing (§13). The
               // edge fn resolves the tenant brand and enforces §2 coaching-generic defaults.
+              const studioGeneratedSessionId = studioSessionId;
+              const studioGeneratedPageId = canvasArtifact?.kind === "page" ? canvasArtifact.id : null;
+              const studioGeneratedKey = studioGeneratedPageId ?? "new";
+              if (studioGeneratedSessionId) {
+                studioPageSaves.delete(studioGeneratedKey);
+                studioPreview = null;
+              }
               const { data: gd, error } = await supabaseClient.functions.invoke("growth-page-draft", {
                 body: { brief: args.brief, kind: "page", tone: args.tone ?? null, tenant_id: personaCtx?.tenant_id ?? null,
-                  ...(studioSessionId ? { studio_session_id: studioSessionId, ...(canvasArtifact?.kind === "page" ? { studio_page_id: canvasArtifact.id } : {}) } : {}) },
+                  ...(studioGeneratedSessionId ? { studio_session_id: studioGeneratedSessionId, ...(studioGeneratedPageId ? { studio_page_id: studioGeneratedPageId } : {}) } : {}) },
               });
               // A workspace refusal arrives as a non-2xx whose reason only the body carries.
               const _gpRefusal = workspaceRefusal(await readInvokeBody(error, gd));
@@ -16725,6 +16746,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               } else {
               if (error) throw error;
               if ((gd as any)?.error) throw new Error((gd as any).error);
+              const studioGeneratedSource = studioGeneratedSessionId
+                ? parseStudioPageSaveSource(personaCtx?.tenant_id, studioGeneratedSessionId, studioGeneratedPageId, (gd as any)?.studio_source) : null;
+              if (studioGeneratedSessionId && (!studioGeneratedSource || !studioPageSaveCurrent()
+                  || studioSessionId !== studioGeneratedSessionId || (canvasArtifact?.kind === "page" ? canvasArtifact.id : null) !== studioGeneratedPageId
+                  || !Array.isArray((gd as any)?.blocks) || !(gd as any).blocks.length)) {
+                result = { success: false, code: "STUDIO_PAGE_SOURCE_UNAVAILABLE", not_applied: true,
+                  error: "The current project source could not be confirmed. Reopen this project and generate from its current saved context before saving. Nothing was saved." };
+              } else {
+              if (studioGeneratedSource) {
+                const writer = createStudioPageSave(studioGeneratedSource, {
+                  caller: supabaseClient, current: studioPageSaveCurrent, signal: req.signal,
+                });
+                studioPageSaves.set(studioGeneratedKey, { source: studioGeneratedSource, save: writer.save });
+              }
               result = {
                 success: true,
                 blocks: (gd as any)?.blocks ?? [],
@@ -16740,7 +16775,57 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 };
               }
               }
+              }
             } else if (tc.function.name === "growth_page_save") {
+              if (studioSessionId) {
+                const studioSave = studioPageSaves.get(canvasArtifact?.kind === "page" ? canvasArtifact.id : "new");
+                if (!studioSave || !studioPageSaveCurrent()) {
+                  result = { success: false, code: "STUDIO_PAGE_SOURCE_REQUIRED", not_applied: true,
+                    error: "Generate this page from the current saved project context before saving. No page was changed by this call." };
+                } else if (args.page_id != null && args.page_id !== studioSave.source.page_id) {
+                  result = { success: false, code: "STUDIO_PAGE_TARGET_CHANGED", not_applied: true,
+                    error: "That page is not the original generated target. Reopen the intended page and generate from its current saved context." };
+                } else {
+                  let studioSlug: string | null = null;
+                  if (studioSave.source.page_id) {
+                    const { data: existing, error: readError } = await supabaseClient.from("growth_pages").select("slug")
+                      .eq("id", studioSave.source.page_id).eq("tenant_id", studioSave.source.tenant_id).maybeSingle();
+                    if (!readError && typeof existing?.slug === "string" && existing.slug.trim()) studioSlug = existing.slug;
+                  } else {
+                    const base = String(args.slug || args.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "page";
+                    const { data: taken, error: readError } = await supabaseClient.from("growth_pages").select("slug")
+                      .eq("tenant_id", studioSave.source.tenant_id).like("slug", `${base}%`);
+                    if (!readError && Array.isArray(taken)) {
+                      const slugs = new Set(taken.map((row: { slug: string }) => row.slug));
+                      studioSlug = base;
+                      if (slugs.has(base)) {
+                        studioSlug = `${base}-${Date.now()}`;
+                        for (let n = 2; n < 200; n++) { if (!slugs.has(`${base}-${n}`)) { studioSlug = `${base}-${n}`; break; } }
+                      }
+                    }
+                  }
+                  if (studioSlug === null) {
+                    result = { success: false, code: "STUDIO_PAGE_ADDRESS_UNAVAILABLE", not_applied: true,
+                      error: "The original page address could not be confirmed. Reopen this project before saving. No save was dispatched." };
+                  } else {
+                    const saved = await studioSave.save({ pageId: args.page_id, slug: studioSlug, title: args.title,
+                      blocks: Array.isArray(args.blocks) ? args.blocks : [], theme: args.theme ?? null, seo: args.seo ?? null });
+                    if (saved.ok) {
+                      result = { success: true, page_id: saved.page.id, title: saved.page.title, slug: saved.page.slug, status: saved.page.status,
+                        version_id: saved.versionId, forms_on_page: saved.forms.map((form) => form.slug), form_ids: saved.forms.map((form) => form.id) };
+                      studioPageSavedCalls.add(tc);
+                      canvasArtifact = { kind: "page", id: saved.page.id };
+                    } else if (saved.notApplied) {
+                      result = { success: false, code: `STUDIO_PAGE_SAVE_${saved.code.toUpperCase()}`, not_applied: true,
+                        error: "The original project or page changed, or this save is no longer allowed. Reopen its current saved state and generate again before saving." };
+                    } else {
+                      requestExecutionState.needsReview = true;
+                      result = { success: false, code: "STUDIO_PAGE_SAVE_UNKNOWN", outcome_unknown: true,
+                        error: "The page save could not be confirmed. Inspect this same project's saved page and version before any further write. Do not retry creation or claim that nothing was saved." };
+                    }
+                  }
+                }
+              } else {
               // p_tenant_id is IGNORED for JWT callers by the DEFINER RPC (no IDOR, §9) —
               // it pins to current_user_tenant_id(). Writes the DRAFT only; never goes live.
               // An edit keeps the page's address (a live page's is locked; an echoed slug must not
@@ -16791,6 +16876,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               result = artifactProduced("saved_id", (row as any)?.id)
                 ? { success: true, page_id: (row as any)?.id, slug: (row as any)?.slug, status: (row as any)?.status, forms_on_page: pageForms.map((f) => f.slug), form_ids: pageForms.map((f) => f.id) }
                 : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
+              }
             } else if (tc.function.name === "growth_form_save") {
               // A form the owner asked for, written by Paige as structured questions and validated by
               // the DEFINER RPC (§9: p_tenant_id is ignored for a signed-in caller; it pins to the
@@ -17592,7 +17678,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // fails the creation the owner already got. VISUAL artifacts (page/funnel/image) are
             // also collected in `studioLinked` so the stream can tell the client exactly what to
             // open — pure copy is a chat deliverable and is deliberately NOT put on the canvas.
-            if (studioSessionId && result && (result as any).success) {
+            if (studioSessionId && result && (result as any).success && studioPageSavedCalls.has(tc)) {
+              // This exact call completed the original native transaction, which
+              // already linked forms/page and saved their original versions.
+              // Only its display pointer is collected here; never repeat those writes.
+              const r = result as any;
+              r.studio_session_id = studioSessionId;
+              studioLinked.push({ kind: "page", id: r.page_id, title: String(r.title ?? r.slug ?? ""), url: null });
+            } else if (studioSessionId && result && (result as any).success) {
               const r = result as any;
               // `kind` is what the MANIFEST stores (link_session_artifact — constrained to
               // page/form/funnel/content); `frameKind` (when it differs) is what the CLIENT renders.

@@ -11,7 +11,7 @@ export function NexusIdentity({ compact = false }: { compact?: boolean }) {
   return (
     <span className="vs-nexus-identity" data-compact={compact || undefined}>
       <NexusGlyph />
-      <span className="vs-nexus-title">Vibe Studio<span className="vs-nexus-name">{nexusDisplayName()}</span></span>
+      <span className="vs-nexus-title"><span className="vs-nexus-label">Vibe Studio</span><span className="vs-nexus-name">{nexusDisplayName()}</span></span>
     </span>
   );
 }

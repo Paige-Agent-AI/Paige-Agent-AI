@@ -2,7 +2,7 @@ import React from "react";
 import { readStudioBusinessSources } from "./studio-data";
 import { projectStudioBusinessContext, type StudioBusinessContext, type StudioContextTarget } from "./business-context";
 
-export function useStudioBusinessContext(tenantId: string, tenantSlug: string, target: StudioContextTarget, values: StudioBusinessContext["projectValues"]) {
+export function useStudioBusinessContext(tenantId: string, tenantSlug: string, target: StudioContextTarget | undefined, values: StudioBusinessContext["projectValues"]) {
   const [sources, setSources] = React.useState<{ tenantId: string; readStatus: "available" | "unavailable"; context: unknown; publicBrand: unknown } | null>(null);
   React.useEffect(() => {
     let current = true;

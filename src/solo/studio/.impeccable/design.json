@@ -1,0 +1,499 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-13T19:03:06.494473Z",
+  "title": "Design System: Vibe Studio — incumbent ink workspace",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0341 287.53)",
+          "oklch(26.43% 0.0341 287.53)",
+          "oklch(37.86% 0.0341 287.53)",
+          "oklch(49.29% 0.0341 287.53)",
+          "oklch(60.71% 0.0341 287.53)",
+          "oklch(72.14% 0.0341 287.53)",
+          "oklch(83.57% 0.0341 287.53)",
+          "oklch(95% 0.0341 287.53)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "tonalRamp": [
+          "oklch(15% 0.0440 287.42)",
+          "oklch(26.43% 0.0440 287.42)",
+          "oklch(37.86% 0.0440 287.42)",
+          "oklch(49.29% 0.0440 287.42)",
+          "oklch(60.71% 0.0440 287.42)",
+          "oklch(72.14% 0.0440 287.42)",
+          "oklch(83.57% 0.0440 287.42)",
+          "oklch(95% 0.0440 287.42)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "panel-2": {
+        "role": "neutral",
+        "displayName": "Panel 2",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "line-soft": {
+        "role": "neutral",
+        "displayName": "Line Soft",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text",
+        "tonalRamp": [
+          "oklch(15% 0.0176 296.63)",
+          "oklch(26.43% 0.0176 296.63)",
+          "oklch(37.86% 0.0176 296.63)",
+          "oklch(49.29% 0.0176 296.63)",
+          "oklch(60.71% 0.0176 296.63)",
+          "oklch(72.14% 0.0176 296.63)",
+          "oklch(83.57% 0.0176 296.63)",
+          "oklch(95% 0.0176 296.63)"
+        ]
+      },
+      "dim": {
+        "role": "neutral",
+        "displayName": "Dim",
+        "tonalRamp": [
+          "oklch(15% 0.0478 292.10)",
+          "oklch(26.43% 0.0478 292.10)",
+          "oklch(37.86% 0.0478 292.10)",
+          "oklch(49.29% 0.0478 292.10)",
+          "oklch(60.71% 0.0478 292.10)",
+          "oklch(72.14% 0.0478 292.10)",
+          "oklch(83.57% 0.0478 292.10)",
+          "oklch(95% 0.0478 292.10)"
+        ]
+      },
+      "faint": {
+        "role": "neutral",
+        "displayName": "Faint",
+        "tonalRamp": [
+          "oklch(15% 0.0535 291.19)",
+          "oklch(26.43% 0.0535 291.19)",
+          "oklch(37.86% 0.0535 291.19)",
+          "oklch(49.29% 0.0535 291.19)",
+          "oklch(60.71% 0.0535 291.19)",
+          "oklch(72.14% 0.0535 291.19)",
+          "oklch(83.57% 0.0535 291.19)",
+          "oklch(95% 0.0535 291.19)"
+        ]
+      },
+      "violet": {
+        "role": "secondary",
+        "displayName": "Violet",
+        "tonalRamp": [
+          "oklch(15% 0.2111 285.27)",
+          "oklch(26.43% 0.2111 285.27)",
+          "oklch(37.86% 0.2111 285.27)",
+          "oklch(49.29% 0.2111 285.27)",
+          "oklch(60.71% 0.2111 285.27)",
+          "oklch(72.14% 0.2111 285.27)",
+          "oklch(83.57% 0.2111 285.27)",
+          "oklch(95% 0.2111 285.27)"
+        ]
+      },
+      "violet-soft": {
+        "role": "secondary",
+        "displayName": "Violet Soft",
+        "tonalRamp": [
+          "oklch(15% 0.2111 285.27)",
+          "oklch(26.43% 0.2111 285.27)",
+          "oklch(37.86% 0.2111 285.27)",
+          "oklch(49.29% 0.2111 285.27)",
+          "oklch(60.71% 0.2111 285.27)",
+          "oklch(72.14% 0.2111 285.27)",
+          "oklch(83.57% 0.2111 285.27)",
+          "oklch(95% 0.2111 285.27)"
+        ]
+      },
+      "violet-line": {
+        "role": "secondary",
+        "displayName": "Violet Line",
+        "tonalRamp": [
+          "oklch(15% 0.1997 287.70)",
+          "oklch(26.43% 0.1997 287.70)",
+          "oklch(37.86% 0.1997 287.70)",
+          "oklch(49.29% 0.1997 287.70)",
+          "oklch(60.71% 0.1997 287.70)",
+          "oklch(72.14% 0.1997 287.70)",
+          "oklch(83.57% 0.1997 287.70)",
+          "oklch(95% 0.1997 287.70)"
+        ]
+      },
+      "link": {
+        "role": "secondary",
+        "displayName": "Link",
+        "tonalRamp": [
+          "oklch(15% 0.1231 292.27)",
+          "oklch(26.43% 0.1231 292.27)",
+          "oklch(37.86% 0.1231 292.27)",
+          "oklch(49.29% 0.1231 292.27)",
+          "oklch(60.71% 0.1231 292.27)",
+          "oklch(72.14% 0.1231 292.27)",
+          "oklch(83.57% 0.1231 292.27)",
+          "oklch(95% 0.1231 292.27)"
+        ]
+      },
+      "good": {
+        "role": "tertiary",
+        "displayName": "Good",
+        "tonalRamp": [
+          "oklch(15% 0.1358 159.87)",
+          "oklch(26.43% 0.1358 159.87)",
+          "oklch(37.86% 0.1358 159.87)",
+          "oklch(49.29% 0.1358 159.87)",
+          "oklch(60.71% 0.1358 159.87)",
+          "oklch(72.14% 0.1358 159.87)",
+          "oklch(83.57% 0.1358 159.87)",
+          "oklch(95% 0.1358 159.87)"
+        ]
+      },
+      "bad": {
+        "role": "tertiary",
+        "displayName": "Bad",
+        "tonalRamp": [
+          "oklch(15% 0.1824 15.71)",
+          "oklch(26.43% 0.1824 15.71)",
+          "oklch(37.86% 0.1824 15.71)",
+          "oklch(49.29% 0.1824 15.71)",
+          "oklch(60.71% 0.1824 15.71)",
+          "oklch(72.14% 0.1824 15.71)",
+          "oklch(83.57% 0.1824 15.71)",
+          "oklch(95% 0.1824 15.71)"
+        ]
+      },
+      "gold": {
+        "role": "primary",
+        "displayName": "Gold",
+        "tonalRamp": [
+          "oklch(15% 0.1243 80.48)",
+          "oklch(26.43% 0.1243 80.48)",
+          "oklch(37.86% 0.1243 80.48)",
+          "oklch(49.29% 0.1243 80.48)",
+          "oklch(60.71% 0.1243 80.48)",
+          "oklch(72.14% 0.1243 80.48)",
+          "oklch(83.57% 0.1243 80.48)",
+          "oklch(95% 0.1243 80.48)"
+        ]
+      },
+      "gold-ink": {
+        "role": "primary",
+        "displayName": "Gold Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0489 82.45)",
+          "oklch(26.43% 0.0489 82.45)",
+          "oklch(37.86% 0.0489 82.45)",
+          "oklch(49.29% 0.0489 82.45)",
+          "oklch(60.71% 0.0489 82.45)",
+          "oklch(72.14% 0.0489 82.45)",
+          "oklch(83.57% 0.0489 82.45)",
+          "oklch(95% 0.0489 82.45)"
+        ]
+      },
+      "nexus": {
+        "role": "secondary",
+        "displayName": "Nexus",
+        "tonalRamp": [
+          "oklch(15% 0.1494 330.10)",
+          "oklch(26.43% 0.1494 330.10)",
+          "oklch(37.86% 0.1494 330.10)",
+          "oklch(49.29% 0.1494 330.10)",
+          "oklch(60.71% 0.1494 330.10)",
+          "oklch(72.14% 0.1494 330.10)",
+          "oklch(83.57% 0.1494 330.10)",
+          "oklch(95% 0.1494 330.10)"
+        ]
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Sheet",
+        "tonalRamp": [
+          "oklch(15% 0.0054 95.10)",
+          "oklch(26.43% 0.0054 95.10)",
+          "oklch(37.86% 0.0054 95.10)",
+          "oklch(49.29% 0.0054 95.10)",
+          "oklch(60.71% 0.0054 95.10)",
+          "oklch(72.14% 0.0054 95.10)",
+          "oklch(83.57% 0.0054 95.10)",
+          "oklch(95% 0.0054 95.10)"
+        ]
+      },
+      "sheet-ink": {
+        "role": "neutral",
+        "displayName": "Sheet Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0155 290.81)",
+          "oklch(26.43% 0.0155 290.81)",
+          "oklch(37.86% 0.0155 290.81)",
+          "oklch(49.29% 0.0155 290.81)",
+          "oklch(60.71% 0.0155 290.81)",
+          "oklch(72.14% 0.0155 290.81)",
+          "oklch(83.57% 0.0155 290.81)",
+          "oklch(95% 0.0155 290.81)"
+        ]
+      },
+      "sheet-hint": {
+        "role": "neutral",
+        "displayName": "Sheet Hint",
+        "tonalRamp": [
+          "oklch(15% 0.0343 293.54)",
+          "oklch(26.43% 0.0343 293.54)",
+          "oklch(37.86% 0.0343 293.54)",
+          "oklch(49.29% 0.0343 293.54)",
+          "oklch(60.71% 0.0343 293.54)",
+          "oklch(72.14% 0.0343 293.54)",
+          "oklch(83.57% 0.0343 293.54)",
+          "oklch(95% 0.0343 293.54)"
+        ]
+      },
+      "sheet-line": {
+        "role": "neutral",
+        "displayName": "Sheet Line",
+        "tonalRamp": [
+          "oklch(15% 0.0113 89.73)",
+          "oklch(26.43% 0.0113 89.73)",
+          "oklch(37.86% 0.0113 89.73)",
+          "oklch(49.29% 0.0113 89.73)",
+          "oklch(60.71% 0.0113 89.73)",
+          "oklch(72.14% 0.0113 89.73)",
+          "oklch(83.57% 0.0113 89.73)",
+          "oklch(95% 0.0113 89.73)"
+        ]
+      },
+      "pop": {
+        "role": "neutral",
+        "displayName": "Pop",
+        "tonalRamp": [
+          "oklch(15% 0.0576 286.29)",
+          "oklch(26.43% 0.0576 286.29)",
+          "oklch(37.86% 0.0576 286.29)",
+          "oklch(49.29% 0.0576 286.29)",
+          "oklch(60.71% 0.0576 286.29)",
+          "oklch(72.14% 0.0576 286.29)",
+          "oklch(83.57% 0.0576 286.29)",
+          "oklch(95% 0.0576 286.29)"
+        ]
+      },
+      "inspector": {
+        "role": "neutral",
+        "displayName": "Inspector",
+        "tonalRamp": [
+          "oklch(15% 0.0457 287.08)",
+          "oklch(26.43% 0.0457 287.08)",
+          "oklch(37.86% 0.0457 287.08)",
+          "oklch(49.29% 0.0457 287.08)",
+          "oklch(60.71% 0.0457 287.08)",
+          "oklch(72.14% 0.0457 287.08)",
+          "oklch(83.57% 0.0457 287.08)",
+          "oklch(95% 0.0457 287.08)"
+        ]
+      }
+    },
+    "shadows": [
+      {
+        "name": "sheet",
+        "value": "0 30px 80px -40px rgba(0, 0, 0, .7)",
+        "purpose": "Lit form sheet above the ink stage."
+      },
+      {
+        "name": "publish-panel",
+        "value": "0 24px 60px -24px rgba(0, 0, 0, .8)",
+        "purpose": "Publication overlay."
+      },
+      {
+        "name": "mobile-chat",
+        "value": "20px 0 60px -30px rgba(0, 0, 0, .8)",
+        "purpose": "Mobile conversation over the stage."
+      },
+      {
+        "name": "restore",
+        "value": "0 8px 28px #0005",
+        "purpose": "Minimized Studio restore action."
+      }
+    ],
+    "motion": [
+      {
+        "name": "nexus-arrival",
+        "value": "240ms ease-out",
+        "purpose": "New arrival only; fade and 4px rise. Disabled under reduced motion."
+      },
+      {
+        "name": "chat-slide",
+        "value": "220ms cubic-bezier(.2, .8, .2, 1)",
+        "purpose": "Only with no-preference motion; closed panel also hides from interaction."
+      },
+      {
+        "name": "brief-chevron",
+        "value": "150ms ease",
+        "purpose": "Disclosure rotation; disabled under reduced motion."
+      },
+      {
+        "name": "build-draw",
+        "value": "500ms cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "No-preference build drawing; static structure remains with motion reduced."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "panel-layout",
+        "value": "980px"
+      },
+      {
+        "name": "compact-mobile",
+        "value": "600px"
+      },
+      {
+        "name": "context-container",
+        "value": "400px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Studio top-bar control; preserves its existing action color and 44px target.",
+      "html": "<button class=\"ds-secondary\">Secondary action</button>",
+      "css": ".ds-secondary{display:inline-flex;align-items:center;gap:7px;height:44px;padding:0 12px;border:1px solid rgba(255,255,255,.12);border-radius:9px;font-size:12.8px;cursor:pointer;font-family:'Geist','Söhne',-apple-system,'Segoe UI',sans-serif;background:rgba(255,255,255,.07);color:#EDEAF7;}.ds-secondary:hover:not(:disabled){background:rgba(255,255,255,.11);}.ds-secondary:focus-visible{outline:2px solid #9C86FF;outline-offset:2px;}.ds-secondary:disabled{opacity:.5;cursor:not-allowed;}"
+    },
+    {
+      "name": "Build action",
+      "kind": "button",
+      "refersTo": "button-violet",
+      "description": "Studio top-bar control; preserves its existing action color and 44px target.",
+      "html": "<button class=\"ds-violet\">Build action</button>",
+      "css": ".ds-violet{display:inline-flex;align-items:center;gap:7px;height:44px;padding:0 12px;border:1px solid rgba(255,255,255,.12);border-radius:9px;font-size:12.8px;cursor:pointer;font-family:'Geist','Söhne',-apple-system,'Segoe UI',sans-serif;background:#6549DB;color:#fff;}.ds-violet:hover:not(:disabled){background:#7558EA;}.ds-violet:focus-visible{outline:2px solid #9C86FF;outline-offset:2px;}.ds-violet:disabled{opacity:.5;cursor:not-allowed;}"
+    },
+    {
+      "name": "Publication action",
+      "kind": "button",
+      "refersTo": "button-publish",
+      "description": "Studio top-bar control; preserves its existing action color and 44px target.",
+      "html": "<button class=\"ds-publish\">Publication action</button>",
+      "css": ".ds-publish{display:inline-flex;align-items:center;gap:7px;height:44px;padding:0 12px;border:1px solid rgba(255,255,255,.12);border-radius:9px;font-size:12.8px;cursor:pointer;font-family:'Geist','Söhne',-apple-system,'Segoe UI',sans-serif;background:var(--gold-bright,#F5C266);color:#2A1C00;font-weight:600;}.ds-publish:hover:not(:disabled){filter:brightness(1.05);}.ds-publish:focus-visible{outline:2px solid #9C86FF;outline-offset:2px;}.ds-publish:disabled{opacity:.5;cursor:not-allowed;}"
+    },
+    {
+      "name": "Context field",
+      "kind": "input",
+      "refersTo": "context-field",
+      "description": "Compact saved-context input with explicit label and Studio focus treatment.",
+      "html": "<label class=\"ds-field\">Business name<input placeholder=\"Business name\" /></label>",
+      "css": ".ds-field{display:grid;gap:5px;color:#EDEAF7;font-size:12px;font-family:'Geist','Söhne',-apple-system,'Segoe UI',sans-serif;}.ds-field input{min-width:0;min-height:40px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.045);color:#EDEAF7;font:13px/1.4 'Geist','Söhne',-apple-system,'Segoe UI',sans-serif;caret-color:#B9A8FF;}.ds-field input:focus-visible{outline:2px solid #9C86FF;outline-offset:2px;}.ds-field input[aria-invalid=\"true\"]{border-color:#EB576B;}"
+    },
+    {
+      "name": "Studio navigation",
+      "kind": "nav",
+      "description": "Rail treatment with selected state and readable text.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Studio\"><button aria-current=\"page\">Build</button><button>Media</button></nav>",
+      "css": ".ds-nav{display:grid;gap:6px;font-family:'Geist','Söhne',-apple-system,'Segoe UI',sans-serif;}.ds-nav button{min-height:44px;padding:7px 8px;border:0;border-radius:8px;background:transparent;color:#EDEAF7;text-align:left;font-size:12.8px;cursor:pointer;}.ds-nav button:hover{background:rgba(255,255,255,.045);}.ds-nav button[aria-current=\"page\"]{background:rgba(255,255,255,.07);}.ds-nav button:focus-visible{outline:2px solid #9C86FF;outline-offset:2px;}"
+    },
+    {
+      "name": "Selected choice",
+      "kind": "chip",
+      "description": "Violet choice treatment shared with current versions.",
+      "html": "<button class=\"ds-choice\" aria-pressed=\"true\">Selected brand</button>",
+      "css": ".ds-choice{min-height:34px;padding:6px 11px;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:transparent;color:#A49FC0;font-size:12px;cursor:pointer;font-family:'Geist','Söhne',-apple-system,'Segoe UI',sans-serif;}.ds-choice[aria-pressed=\"true\"]{border-color:rgba(140,115,255,.55);background:rgba(101,73,219,.18);color:#EDEAF7;}.ds-choice:hover{background:rgba(255,255,255,.07);}.ds-choice:focus-visible{outline:2px solid #9C86FF;outline-offset:2px;}@media(pointer:coarse){.ds-choice{min-height:44px;}}"
+    },
+    {
+      "name": "Saved-work card",
+      "kind": "card",
+      "description": "Quiet saved-work card with an honest empty-sheet sample.",
+      "html": "<button class=\"ds-card\"><span class=\"ds-card-sheet\">Saved work</span><strong>Project title</strong><span class=\"ds-card-status\">Draft</span></button>",
+      "css": ".ds-card{display:grid;width:240px;padding:0;overflow:hidden;text-align:left;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:#110E24;color:#EDEAF7;cursor:pointer;font-family:'Geist','Söhne',-apple-system,'Segoe UI',sans-serif;}.ds-card-sheet{height:120px;display:grid;place-items:center;background:#F6F5F1;color:#1B1A22;}.ds-card strong{padding:10px 12px 4px;font-size:13px;}.ds-card-status{padding:0 12px 12px;color:#8E89AD;font-size:11.8px;}.ds-card:hover{border-color:rgba(140,115,255,.55);}.ds-card:focus-visible{outline:2px solid #9C86FF;outline-offset:2px;}"
+    },
+    {
+      "name": "Project brief disclosure",
+      "kind": "custom",
+      "description": "Existing brief disclosure with Lucide chevron geometry and reduced-motion behavior.",
+      "html": "<details class=\"ds-brief\"><summary><svg class=\"ds-chevron\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg>Project brief</summary><p>Saved project context remains with this conversation.</p></details>",
+      "css": ".ds-brief{padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.045);color:#A49FC0;font-family:'Geist','Söhne',-apple-system,'Segoe UI',sans-serif;}.ds-brief summary{display:flex;align-items:center;gap:6px;min-height:44px;list-style:none;cursor:pointer;font-size:12.3px;font-weight:600;}.ds-brief summary::-webkit-details-marker{display:none;}.ds-chevron{color:#8E89AD;transition:transform .15s ease;}.ds-brief[open] .ds-chevron{transform:rotate(90deg);}.ds-brief p{padding-bottom:12px;font-size:12.6px;line-height:1.6;}.ds-brief summary:focus-visible{outline:2px solid #9C86FF;outline-offset:2px;}@media(prefers-reduced-motion:reduce){.ds-chevron{transition:none;}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The incumbent Studio ink world",
+    "overview": "Studio is a working desk: quiet violet-black chrome surrounds a lit, tenant-branded artifact. NEXUS retains its original specialist identity while the conversation, saved work and version history share one workspace. This records the established system rather than choosing a new world.\n\nThis file applies to the Studio window rendered through `src/solo/vibe.tsx` and the Home, Session, Stage and inspector components in this directory. The repository root DESIGN.md explicitly excludes Studio. This scoped record does not govern Team Hub handoff surfaces, other SOLO departments, public marketing, or a tenant's published page design. PRODUCT.md supplies durable mobile, keyboard and reduced-motion commitments; its public Twilight identity is not Studio chrome authority.",
+    "keyCharacteristics": [
+      "Ink layers, translucent panels and hairline seams.",
+      "Violet working states; gold publication authority.",
+      "Canonical NEXUS glyph and agent color, separate from tenant branding.",
+      "Bounded scroll regions and responsive panels around the real artifact."
+    ],
+    "rules": [
+      {
+        "name": "Publication Act",
+        "body": "Spend gold on publication authority; keep convenience copies, domain guidance and ordinary editing controls quiet. Existing paid-media approval also uses gold for its explicit spending act.",
+        "section": "colors"
+      },
+      {
+        "name": "Brand Boundary",
+        "body": "Studio chrome keeps its ink world; the artifact renders with the selected business brand and saved page theme.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do preserve the canonical NEXUS Megaphone and inherited agent color.",
+      "Do keep the original project title, save status and truthful receipt states readable.",
+      "Do preserve panel scroll ownership, wrapping, visible focus and reduced-motion alternatives.",
+      "Do render the selected business brand on the artifact through the existing preview path."
+    ],
+    "donts": [
+      "Don't use gold for export, copy, domain guidance or routine editing.",
+      "Don't apply this scoped record to other SOLO departments or tenant page styling.",
+      "Don't replace the established identity with invented glyphs or decorative kickers.",
+      "Don't turn a preview, source capture or static component sample into authenticated publication evidence."
+    ]
+  }
+}

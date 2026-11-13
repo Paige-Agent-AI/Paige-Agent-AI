@@ -303,6 +303,82 @@ BEGIN
   AND NOT has_function_privilege('service_role','public.studio_page_conversion(uuid,uuid,uuid)','execute'),'conversion refinement reader cannot impersonate browser actor');
 END $conversion$;
 
+DO $legacy_conversion$
+DECLARE
+ t uuid:='f0060000-0000-4000-8000-000000000010'; u uuid:='f0060000-0000-4000-8000-000000000001'; project uuid;
+ destination_kind text; suffix text; primary_slug text; additional_slug text; calendar_id uuid;
+ page public.growth_pages; previous_version public.studio_artifact_versions; saved_version public.studio_artifact_versions;
+ blocks jsonb; chosen jsonb; response jsonb; repeated jsonb; scratchpad jsonb; other_history jsonb; versions_before integer;
+ retained_theme jsonb:='{"primary":"#123456","accent":"#fedcba"}'; retained_seo jsonb:='{"description":"Retained legacy metadata"}';
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ SELECT id INTO project FROM public.studio_sessions WHERE tenant_id=t AND studio_start_request_id='f0060000-0000-4000-8000-000000000031';
+ UPDATE public.studio_sessions SET studio_session_scratchpad=studio_session_scratchpad||'{"legacy_replacement_note":"Retain original working memory"}' WHERE id=project;
+ SELECT studio_session_scratchpad INTO scratchpad FROM public.studio_sessions WHERE id=project;
+ INSERT INTO public.calendars(tenant_id,slug,title,enabled) VALUES(t,'legacy-replacement-calendar','Existing published calendar',true) RETURNING id INTO calendar_id;
+ INSERT INTO public.calendar_hosts(calendar_id,user_id) VALUES(calendar_id,u);
+ FOREACH destination_kind IN ARRAY ARRAY['external_booking','native_booking'] LOOP
+  suffix:=replace(destination_kind,'_','-'); primary_slug:='legacy-primary-'||suffix; additional_slug:='legacy-additional-'||suffix;
+  blocks:=jsonb_build_array('{"type":"hero","title":"Retain the original heading"}'::jsonb,
+   jsonb_build_object('type','embedded_form','form_slug',primary_slug,'title','Original primary signup'),
+   '{"type":"rich_text","html":"<p>Retain the original explanation.</p>"}'::jsonb,
+   jsonb_build_object('type','embedded_form','form_slug',additional_slug,'title','Independent additional signup'),
+   '{"type":"cta","title":"Retain the original ending","cta_label":"Read more","cta_href":"https://public-business.com/about"}'::jsonb);
+  page:=public.growth_page_upsert(NULL,'legacy-replacement-'||suffix,'Original legacy page',blocks,retained_theme,retained_seo,NULL,NULL);
+  UPDATE public.studio_sessions SET artifact_refs=artifact_refs||jsonb_build_array(jsonb_build_object('kind','page','id',page.id)) WHERE id=project;
+  previous_version:=public.save_artifact_version(project,'page',page.id,NULL);
+  SELECT count(*) INTO versions_before FROM public.studio_artifact_versions WHERE session_id=project AND lineage_id=page.id;
+  SELECT coalesce(jsonb_agg(to_jsonb(v) ORDER BY id),'[]'::jsonb) INTO other_history FROM public.studio_artifact_versions v WHERE lineage_id<>page.id;
+  chosen:=jsonb_build_object('type','conversion','title','Choose the actual next step','destination',CASE destination_kind
+   WHEN 'external_booking' THEN '{"kind":"external_booking","mode":"link","url":"https://calendly.com/test-business/intro","provider":"calendly"}'::jsonb
+   ELSE '{"kind":"native_booking","slug":"legacy-replacement-calendar"}'::jsonb END);
+  response:=public.studio_set_page_conversion(t,project,page.id,page.updated_at,chosen);
+  -- Regression first: the predecessor appends a sixth block and keeps publishing
+  -- the primary legacy form. This must replace the SAME saved primary choice.
+  PERFORM pg_temp.studio_assert(response->'ok'='true' AND response->'changed'='true'
+   AND jsonb_array_length(response#>'{page,draft_blocks_json}')=5 AND response#>'{page,draft_blocks_json,1}'=chosen,
+   'legacy '||destination_kind||' replaces original primary form instead of appending');
+  PERFORM pg_temp.studio_assert(response#>'{page,draft_blocks_json,0}'=blocks->0 AND response#>'{page,draft_blocks_json,2}'=blocks->2
+   AND response#>'{page,draft_blocks_json,3}'=blocks->3 AND response#>'{page,draft_blocks_json,4}'=blocks->4,
+   'legacy replacement preserves every unrelated block including additional form');
+  PERFORM pg_temp.studio_assert(response#>'{page,draft_theme_json}'=retained_theme AND response#>'{page,draft_seo_json}'=retained_seo
+   AND response#>>'{page,slug}'=page.slug AND response#>>'{page,title}'=page.title,'legacy replacement preserves theme, metadata, title and address');
+  PERFORM pg_temp.studio_assert((SELECT studio_session_scratchpad=scratchpad FROM public.studio_sessions WHERE id=project),
+   'legacy replacement preserves original project working memory');
+  SELECT * INTO saved_version FROM public.studio_artifact_versions WHERE id=(response->>'version_id')::uuid;
+  PERFORM pg_temp.studio_assert(saved_version.is_current AND saved_version.version_no=previous_version.version_no+1
+   AND saved_version.snapshot=response->'page' AND (SELECT count(*)=versions_before+1 FROM public.studio_artifact_versions WHERE session_id=project AND lineage_id=page.id),
+   'legacy replacement records exactly one original saved version');
+  PERFORM pg_temp.studio_assert((SELECT snapshot=previous_version.snapshot AND version_no=previous_version.version_no AND NOT is_current
+   FROM public.studio_artifact_versions WHERE id=previous_version.id),'legacy replacement retains original version snapshot and lineage');
+  PERFORM pg_temp.studio_assert((SELECT coalesce(jsonb_agg(to_jsonb(v) ORDER BY id),'[]'::jsonb)=other_history FROM public.studio_artifact_versions v WHERE lineage_id<>page.id),
+   'legacy replacement leaves unrelated version history untouched');
+  repeated:=public.studio_set_page_conversion(t,project,page.id,page.updated_at,chosen);
+  PERFORM pg_temp.studio_assert(repeated->'changed'='false' AND repeated->>'version_id'=response->>'version_id'
+   AND (SELECT count(*)=versions_before+1 FROM public.studio_artifact_versions WHERE session_id=project AND lineage_id=page.id),
+   'legacy replacement lost-response retry returns same saved version');
+  PERFORM pg_temp.studio_assert(public.studio_page_conversion(t,project,page.id)->'conversion'=chosen,
+   'legacy replacement source reader returns the same selected primary destination');
+  page:=public._growth_page_go_live(t,page.id);
+  PERFORM pg_temp.studio_assert(page.blocks_json->1=chosen AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(page.blocks_json) b
+   WHERE b->>'type'='embedded_form' AND b->>'form_slug'=primary_slug),'published replacement has no stale primary form block');
+  PERFORM pg_temp.studio_assert((SELECT status='draft' FROM public.growth_forms WHERE tenant_id=t AND slug=primary_slug),
+   'replacement does not publish the removed primary form');
+  PERFORM pg_temp.studio_assert((SELECT status='active' FROM public.growth_forms WHERE tenant_id=t AND slug=additional_slug),
+   'replacement preserves original publication of unrelated additional form');
+ END LOOP;
+ -- A canonical conversion remains primary even when an additional legacy form
+ -- occurs earlier in the page. The fallback must not select that earlier form.
+ blocks:=jsonb_build_array(jsonb_build_object('type','embedded_form','form_slug','legacy-before-canonical'),chosen);
+ page:=public.growth_page_upsert(NULL,'canonical-primary-before-legacy','Canonical primary page',blocks,retained_theme,retained_seo,NULL,NULL);
+ UPDATE public.studio_sessions SET artifact_refs=artifact_refs||jsonb_build_array(jsonb_build_object('kind','page','id',page.id)) WHERE id=project;
+ PERFORM public.save_artifact_version(project,'page',page.id,NULL);
+ chosen:=jsonb_build_object('type','conversion','destination','{"kind":"external_booking","mode":"link","url":"https://calendly.com/test-business/intro","provider":"calendly"}'::jsonb);
+ response:=public.studio_set_page_conversion(t,project,page.id,page.updated_at,chosen);
+ PERFORM pg_temp.studio_assert(jsonb_array_length(response#>'{page,draft_blocks_json}')=2 AND response#>'{page,draft_blocks_json,0}'=blocks->0
+  AND response#>'{page,draft_blocks_json,1}'=chosen,'canonical primary is replaced before any earlier additional legacy form');
+END $legacy_conversion$;
+
 -- Synthetic admission inputs, followed by the ACTUAL captured R2 acquire,
 -- executor/state/evidence and immutable-column guards. This port does not
 -- claim browser JWT verification or the complete Supabase admission schema.
@@ -437,6 +513,78 @@ BEGIN
   AND NOT has_function_privilege('service_role','public.chat_studio_start(uuid,uuid,jsonb)','execute'),'service preparation never impersonates explicit owner handoff');
 END $chat$;
 
+DO $source_projection$
+DECLARE
+ t uuid:='f0060000-0000-4000-8000-000000000010'; u uuid:='f0060000-0000-4000-8000-000000000001';
+ t2 uuid:='f0060000-0000-4000-8000-000000000020'; u2 uuid:='f0060000-0000-4000-8000-000000000002';
+ c jsonb; other jsonb; response jsonb; repeated jsonb; source uuid; thread uuid; legacy uuid; assistant uuid;
+ binding jsonb; before_turns jsonb; before_thread jsonb; before_sessions bigint; before_versions bigint; before_audits bigint;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ c:=pg_temp.chat_source(u,t); other:=pg_temp.chat_source(u,t);
+ thread:=(c->>'thread')::uuid; source:=(c->>'source')::uuid;
+ response:=public.chat_studio_sources(t,thread,ARRAY[source]);
+ PERFORM pg_temp.studio_assert(response='{"ok":true,"source_turn_ids":[]}'::jsonb,'unstaged issued source is not discovered as prepared');
+ PERFORM public.chat_stage_studio_brief(thread,u,t,(c->>'intent')::uuid,(c->>'nonce')::uuid,'A committed preparation with lost stage and assistant acknowledgments');
+ PERFORM public.chat_stage_studio_brief((other->>'thread')::uuid,u,t,(other->>'intent')::uuid,(other->>'nonce')::uuid,'Prepared in a different original thread');
+ INSERT INTO chat_studio_cases VALUES('lost-ack-projection',c);
+ response:=public.chat_studio_sources(t,thread,ARRAY[source]);
+ PERFORM pg_temp.studio_assert(response=jsonb_build_object('ok',true,'source_turn_ids',jsonb_build_array(source)),
+  'lost stage and assistant acknowledgments recover only the actual original source pointer');
+ PERFORM pg_temp.studio_assert(NOT EXISTS(SELECT 1 FROM public.paige_chat_turns WHERE thread_id=thread AND role='assistant')
+  AND (SELECT bundle_ref='{"original":"kept"}'::jsonb AND studio_session_id IS NULL FROM public.paige_chat_turns WHERE id=source),
+  'source recovery needs no fabricated assistant, bundle mutation or ready project');
+ legacy:=gen_random_uuid(); assistant:=gen_random_uuid();
+ INSERT INTO public.paige_chat_turns(id,thread_id,role,content) VALUES(legacy,thread,'user','An unadmitted loaded user message'),(assistant,thread,'assistant','An ordinary loaded answer');
+ response:=public.chat_studio_sources(t,thread,ARRAY[legacy,(other->>'source')::uuid,source,assistant,source,gen_random_uuid()]);
+ PERFORM pg_temp.studio_assert(response=jsonb_build_object('ok',true,'source_turn_ids',jsonb_build_array(source)),
+  'loaded legacy, assistant, foreign-thread, duplicate and invented pointers cannot widen discovery');
+ PERFORM pg_temp.studio_assert((SELECT count(*)=2 FROM jsonb_object_keys(response)) AND NOT(response ?| ARRAY['brief','state','session_id','history','request_nonce']),
+  'history projection returns exactly ok and source IDs without content or status');
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,'{}'::uuid[])='{"ok":true,"source_turn_ids":[]}'::jsonb,'empty loaded-user batch returns an honest empty projection');
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,array_fill(source,ARRAY[50]))->'source_turn_ids'=jsonb_build_array(source),'maximum fifty loaded IDs are bounded and deduplicated');
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,array_fill(source,ARRAY[51]))->>'code'='invalid','more than fifty loaded IDs refuse');
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,NULL)->>'code'='invalid','unknown loaded-user batch refuses');
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,ARRAY[source,NULL])->>'code'='invalid','NULL loaded ID refuses rather than widening discovery');
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,ARRAY[ARRAY[source]])->>'code'='invalid','multidimensional loaded ID input refuses');
+ SELECT jsonb_agg(to_jsonb(s) ORDER BY s.id) INTO before_turns FROM public.paige_chat_turns s;
+ SELECT to_jsonb(th) INTO before_thread FROM public.paige_chat_threads th WHERE id=thread;
+ SELECT count(*) INTO before_sessions FROM public.studio_sessions;
+ SELECT count(*) INTO before_versions FROM public.studio_artifact_versions;
+ SELECT count(*) INTO before_audits FROM public.audit_logs;
+ repeated:=public.chat_studio_sources(t,thread,ARRAY[source]);
+ PERFORM pg_temp.studio_assert(repeated=jsonb_build_object('ok',true,'source_turn_ids',jsonb_build_array(source))
+  AND (SELECT jsonb_agg(to_jsonb(s) ORDER BY s.id)=before_turns FROM public.paige_chat_turns s)
+  AND (SELECT to_jsonb(th)=before_thread FROM public.paige_chat_threads th WHERE id=thread)
+  AND (SELECT count(*)=before_sessions FROM public.studio_sessions)
+  AND (SELECT count(*)=before_versions FROM public.studio_artifact_versions)
+  AND (SELECT count(*)=before_audits FROM public.audit_logs),'repeated loaded-source discovery performs zero source, thread, project, version or audit writes');
+ UPDATE public.paige_chat_threads SET interactive_latest_intent=gen_random_uuid(),interactive_executor_intent=NULL,interactive_runtime_binding=NULL WHERE id=thread;
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,ARRAY[source])->'source_turn_ids'=jsonb_build_array(source),
+  'later native runtime preserves historical issued-source discoverability without replay');
+ SELECT interactive_runtime_binding INTO binding FROM public.paige_chat_turns WHERE id=source;
+ UPDATE public.paige_chat_turns SET interactive_runtime_binding=jsonb_set(binding,'{function_slug}','"invented-runtime"') WHERE id=source;
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,ARRAY[source])->'source_turn_ids'='[]'::jsonb,'invalid original runtime issuance cannot be recovered as a source');
+ UPDATE public.paige_chat_turns SET interactive_runtime_binding=binding WHERE id=source;
+ UPDATE public.paige_chat_threads SET is_archived=true WHERE id=thread;
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,ARRAY[source])->>'code'='not_allowed','archived original history refuses source projection');
+ UPDATE public.paige_chat_threads SET is_archived=false,audience='customer_private' WHERE id=thread;
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,ARRAY[source])->>'code'='not_allowed','private audience cannot enter workspace source projection');
+ UPDATE public.paige_chat_threads SET audience='workspace' WHERE id=thread;
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,gen_random_uuid(),ARRAY[source])->>'code'='not_allowed','loaded ID never authorizes a different thread');
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t2,thread,ARRAY[source])->>'code'='scope_changed','wrong active tenant refuses source projection');
+ PERFORM set_config('request.jwt.claim.sub',u2::text,true);
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t2,thread,ARRAY[source])->>'code'='not_allowed','different actual actor cannot project another actors original history');
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ UPDATE public.tenant_members SET role='member' WHERE tenant_id=t AND user_id=u;
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,ARRAY[source])->>'code'='scope_changed','revoked Studio authority refuses loaded-source recovery');
+ UPDATE public.tenant_members SET role='owner' WHERE tenant_id=t AND user_id=u;
+ DELETE FROM public.paige_chat_turns WHERE id=source;
+ PERFORM pg_temp.studio_assert(public.chat_studio_sources(t,thread,ARRAY[source])->'source_turn_ids'='[]'::jsonb,'deleted source is not reconstructed from history pointers');
+ PERFORM pg_temp.studio_assert(NOT has_function_privilege('service_role','public.chat_studio_sources(uuid,uuid,uuid[])','execute')
+  AND NOT has_function_privilege('anon','public.chat_studio_sources(uuid,uuid,uuid[])','execute'),'batch history recovery has no service or anonymous impersonation path');
+END $source_projection$;
+
 DO $receipts$
 DECLARE
  t uuid:='f0060000-0000-4000-8000-000000000010'; u uuid:='f0060000-0000-4000-8000-000000000001';
@@ -498,11 +646,139 @@ BEGIN
   AND NOT has_function_privilege('anon','public.studio_publication_receipts(uuid,uuid,uuid)','execute'),'publication history requires actual authenticated owner scope');
 END $receipts$;
 
+
+DO $page_save_cas$
+DECLARE
+ t uuid:='f0060000-0000-4000-8000-000000000010'; u uuid:='f0060000-0000-4000-8000-000000000001';
+ t2 uuid:='f0060000-0000-4000-8000-000000000020'; project uuid; empty_project uuid; page_id uuid;
+ context jsonb:='{"target":{"kind":"workspace"},"values":{"offers":"Current project offer"}}'; changed_context jsonb;
+ source jsonb; before_source jsonb; response jsonb; recovered jsonb; b_source jsonb; c_source jsonb;
+ blocks_a jsonb:='[{"type":"hero","title":"Generation A"}]'; blocks_b jsonb:='[{"type":"hero","title":"Generation B"}]';
+ conversion jsonb:='{"type":"conversion","destination":{"kind":"external_booking","mode":"link","provider":"other","url":"https://public-business.com/book"}}';
+ existing public.growth_pages; legacy public.growth_pages; before_versions bigint; before_audits bigint; before_pages bigint; before_sessions jsonb;
+ form_id uuid; history jsonb; snapshot jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ response:=public.studio_start_project(t,gen_random_uuid(),'Atomic Studio save',context); project:=(response->>'session_id')::uuid;
+ response:=public.studio_start_project(t,gen_random_uuid(),'Unselected legacy project','{}'); empty_project:=(response->>'session_id')::uuid;
+ PERFORM pg_temp.studio_assert(public.studio_page_save_source(t,empty_project,NULL)->>'code'='invalid','generation source refuses unselected context instead of guessing workspace');
+ UPDATE public.studio_sessions SET studio_session_scratchpad=studio_session_scratchpad||'{"current_goal":"Retain original memory","tried":["Earlier approach"]}' WHERE id=project;
+ SELECT to_jsonb(s) INTO before_sessions FROM public.studio_sessions s WHERE id=project;
+ source:=public.studio_page_save_source(t,project,NULL);
+ PERFORM pg_temp.studio_assert(source->'ok'='true' AND (SELECT count(*)=8 FROM jsonb_object_keys(source))
+  AND source->'artifact_refs'='[]'::jsonb AND source->'project_context'=context AND source->'page_id'='null'::jsonb
+  AND source->'updated_at'='null'::jsonb AND source->'conversion'='null'::jsonb,'new-page source contains only actual native project snapshot and explicit absence');
+ PERFORM pg_temp.studio_assert((SELECT to_jsonb(s)=before_sessions FROM public.studio_sessions s WHERE id=project),'generation source snapshot performs zero project writes');
+ response:=public.studio_page_save_state(t,project,source->'artifact_refs',context,NULL,NULL,NULL,'atomic-studio-page','Atomic title',blocks_a,'{"primary":"#123456"}','{"description":"Original SEO"}',NULL);
+ PERFORM pg_temp.studio_assert(response->>'code'='unknown','unknown absent-page lookup never creates a placeholder or claims a save');
+ response:=public.studio_save_page(t,project,source->'artifact_refs',context,NULL,NULL,NULL,'atomic-studio-page','Atomic title',blocks_a,'{"primary":"#123456"}','{"description":"Original SEO"}',NULL);
+ page_id:=(response#>>'{page,id}')::uuid;
+ PERFORM pg_temp.studio_assert(response->'ok'='true' AND response->'changed'='true' AND response->'reconciled'='false' AND page_id IS NOT NULL,'atomic save uses original creator actual ID then original upsert');
+ PERFORM pg_temp.studio_assert(response#>>'{page,slug}'='atomic-studio-page' AND response#>'{page,draft_blocks_json}'=blocks_a
+  AND response#>'{page,draft_theme_json}'='{"primary":"#123456"}'::jsonb AND response#>'{page,draft_seo_json}'='{"description":"Original SEO"}'::jsonb,'original save retains desired slug, blocks, theme and SEO semantics');
+ PERFORM pg_temp.studio_assert((SELECT jsonb_array_length(artifact_refs)=1 AND artifact_refs#>>'{0,id}'=page_id::text
+  AND artifact_refs#>>'{0,slug}'='atomic-studio-page' AND artifact_refs#>>'{0,title}'='Atomic title'
+  AND studio_session_scratchpad->>'current_goal'='Retain original memory'
+  AND studio_session_scratchpad->'tried'='["Earlier approach"]'::jsonb FROM public.studio_sessions WHERE id=project),'actual original manifest reference is refreshed without replacing working memory');
+ PERFORM pg_temp.studio_assert((SELECT count(*)=1 AND bool_and(is_current) FROM public.studio_artifact_versions WHERE session_id=project AND kind='page' AND lineage_id=page_id),'native atomic save records one original current page version');
+ SELECT count(*) INTO before_versions FROM public.studio_artifact_versions;
+ SELECT count(*) INTO before_audits FROM public.audit_logs;
+ SELECT count(*) INTO before_pages FROM public.growth_pages;
+ SELECT jsonb_agg(to_jsonb(v) ORDER BY v.id) INTO history FROM public.studio_artifact_versions v;
+ recovered:=public.studio_page_save_state(t,project,source->'artifact_refs',context,NULL,NULL,NULL,'atomic-studio-page','Atomic title',blocks_a,'{"primary":"#123456"}','{"description":"Original SEO"}',NULL);
+ PERFORM pg_temp.studio_assert(recovered->'ok'='true' AND recovered->'reconciled'='true' AND recovered->'changed'='false'
+  AND recovered#>>'{page,id}'=page_id::text AND recovered->>'version_id'=response->>'version_id','lost new-page ACK recovers same actual original page and version from manifest delta');
+ recovered:=public.studio_save_page(t,project,source->'artifact_refs',context,NULL,NULL,NULL,'atomic-studio-page','Atomic title',blocks_a,'{"primary":"#123456"}','{"description":"Original SEO"}',NULL);
+ PERFORM pg_temp.studio_assert(recovered->'reconciled'='true' AND recovered#>>'{page,id}'=page_id::text
+  AND (SELECT count(*)=before_pages FROM public.growth_pages) AND (SELECT count(*)=before_audits FROM public.audit_logs)
+  AND (SELECT count(*)=before_versions FROM public.studio_artifact_versions),'same-source lost-ACK retry performs no page, link, audit or version write');
+ PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,NULL,NULL,NULL,%L,%L,%L,NULL,NULL,NULL)',t,project,source->'artifact_refs',context,'atomic-studio-page','Different generation',blocks_b),'40001','two new-page results from same absent manifest cannot create or overwrite twice');
+ PERFORM pg_temp.studio_assert((SELECT draft_blocks_json=blocks_a FROM public.growth_pages WHERE id=page_id),'losing new-page result preserves first committed page');
+ before_source:=public.studio_page_save_source(t,project,page_id);
+ PERFORM pg_temp.studio_assert(before_source->>'page_id'=page_id::text AND before_source->'conversion'='null'::jsonb
+  AND before_source->'updated_at'=response#>'{page,updated_at}','existing source returns actual bound page revision and no invented conversion');
+ response:=public.studio_save_page(t,project,before_source->'artifact_refs',context,page_id,(before_source->>'updated_at')::timestamptz,NULL,
+  'atomic-studio-page','Newer B title',blocks_b,NULL,NULL,NULL);
+ PERFORM pg_temp.studio_assert(response->'changed'='true' AND response#>'{page,draft_blocks_json}'=blocks_b,'newer native generation B saves through original page/version writer');
+ snapshot:=response->'page';
+ PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,%L,%L,NULL,%L,%L,%L,NULL,NULL,NULL)',t,project,before_source->'artifact_refs',context,page_id,before_source->>'updated_at','atomic-studio-page','Late A title',blocks_a),'40001','late generation A cannot overwrite page B after source snapshot');
+ PERFORM pg_temp.studio_assert((SELECT to_jsonb(p)=snapshot FROM public.growth_pages p WHERE id=page_id),'failed cross-tab stale save preserves exact B row');
+ recovered:=public.studio_page_save_state(t,project,before_source->'artifact_refs',context,page_id,(before_source->>'updated_at')::timestamptz,NULL,
+  'atomic-studio-page','Newer B title',blocks_b,NULL,NULL,NULL);
+ PERFORM pg_temp.studio_assert(recovered->'ok'='true' AND recovered->>'version_id'=response->>'version_id','existing-page unknown ACK reads same original current version without re-saving');
+ b_source:=public.studio_page_save_source(t,project,page_id);
+ changed_context:=jsonb_set(context,'{values,offers}','"Changed explicit project offer"');
+ PERFORM public.studio_set_project_context(t,project,changed_context,context);
+ response:=public.studio_save_page(t,project,b_source->'artifact_refs',context,page_id,(b_source->>'updated_at')::timestamptz,NULL,
+  'atomic-studio-page','Stale project context',blocks_a,NULL,NULL,NULL);
+ PERFORM pg_temp.studio_assert(response->>'code'='changed' AND (SELECT to_jsonb(p)=snapshot FROM public.growth_pages p WHERE id=page_id),'changed project context refuses late generated result before page effect');
+ PERFORM public.studio_set_project_context(t,project,context,changed_context);
+ response:=public.studio_set_page_conversion(t,project,page_id,(b_source->>'updated_at')::timestamptz,conversion);
+ PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,%L,%L,NULL,%L,%L,%L,NULL,NULL,NULL)',t,project,b_source->'artifact_refs',context,page_id,b_source->>'updated_at','atomic-studio-page','Model removed conversion',blocks_a),'40001','late model result cannot remove newly saved actual conversion');
+ c_source:=public.studio_page_save_source(t,project,page_id);
+ response:=public.studio_save_page(t,project,c_source->'artifact_refs',context,page_id,(c_source->>'updated_at')::timestamptz,conversion,
+  'atomic-studio-page','Model changed conversion',blocks_a,NULL,NULL,NULL);
+ PERFORM pg_temp.studio_assert(response->>'code'='changed','desired blocks cannot silently drop conversion even with current revision');
+ response:=public.studio_save_page(t,project,c_source->'artifact_refs',context,page_id,(c_source->>'updated_at')::timestamptz,conversion,
+  'atomic-studio-page','Conversion retained',blocks_a||jsonb_build_array(conversion),NULL,NULL,NULL);
+ PERFORM pg_temp.studio_assert(response->'ok'='true' AND response#>'{page,draft_blocks_json,1}'=conversion,'current native source permits refinement that retains actual selected conversion');
+ SELECT count(*) INTO before_audits FROM public.audit_logs;
+ UPDATE public.studio_sessions SET artifact_refs=artifact_refs||jsonb_build_array(jsonb_build_object('kind','content','id',gen_random_uuid())) WHERE id=project;
+ recovered:=public.studio_page_save_state(t,project,c_source->'artifact_refs',context,page_id,(c_source->>'updated_at')::timestamptz,conversion,
+  'atomic-studio-page','Conversion retained',blocks_a||jsonb_build_array(conversion),NULL,NULL,NULL);
+ PERFORM pg_temp.studio_assert(recovered->>'code'='unknown' AND (SELECT count(*)=before_audits FROM public.audit_logs),'unrelated later manifest delta leaves unknown save reconciliation read-only');
+ response:=public.studio_start_project(t,gen_random_uuid(),'Collision project',context); empty_project:=(response->>'session_id')::uuid;
+ source:=public.studio_page_save_source(t,empty_project,NULL);
+ existing:=public.growth_page_upsert(NULL,'collision-protected-page','Someone elses native page',blocks_b,NULL,NULL,NULL,NULL);
+ SELECT count(*) INTO before_pages FROM public.growth_pages;
+ SELECT count(*) INTO before_audits FROM public.audit_logs;
+ PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,NULL,NULL,NULL,%L,%L,%L,NULL,NULL,NULL)',t,empty_project,source->'artifact_refs',context,'collision-protected-page','Colliding generated page',blocks_a),'40001','native new-page slug collision rolls back instead of original null-ID overwrite branch');
+ PERFORM pg_temp.studio_assert((SELECT to_jsonb(p)=to_jsonb(existing) FROM public.growth_pages p WHERE id=existing.id)
+  AND (SELECT count(*)=before_pages FROM public.growth_pages) AND (SELECT count(*)=before_audits FROM public.audit_logs)
+  AND (SELECT artifact_refs='[]'::jsonb FROM public.studio_sessions WHERE id=empty_project),'collision leaves competing page and own original manifest/audits unchanged without orphan placeholder');
+ legacy:=public.growth_page_upsert(NULL,'atomic-legacy-form-page','Original form page','[{"type":"embedded_form","form_slug":"atomic-original-signup","title":"Keep this form"}]',NULL,NULL,NULL,'{"sections":[]}');
+ PERFORM public.link_session_artifact(empty_project,'page',legacy.id,NULL);
+ source:=public.studio_page_save_source(t,empty_project,legacy.id);
+ response:=public.studio_save_page(t,empty_project,source->'artifact_refs',context,legacy.id,(source->>'updated_at')::timestamptz,source->'conversion',
+  legacy.slug,'Refined original form page',blocks_a||legacy.draft_blocks_json,NULL,NULL,'{"sections":[]}');
+ SELECT id INTO form_id FROM public.growth_forms WHERE tenant_id=t AND slug='atomic-original-signup';
+ PERFORM pg_temp.studio_assert(response->'ok'='true' AND response->'forms'=jsonb_build_array(jsonb_build_object('id',form_id,'slug','atomic-original-signup'))
+  AND (SELECT status='draft' FROM public.growth_forms WHERE id=form_id),'atomic Studio save preserves original form-result IDs and draft authoring semantics');
+ PERFORM pg_temp.studio_assert((SELECT count(*)=1 FROM public.studio_artifact_versions WHERE session_id=empty_project AND kind='page' AND lineage_id=legacy.id)
+  AND (SELECT count(*)=1 FROM public.studio_artifact_versions WHERE session_id=empty_project AND kind='form' AND lineage_id=form_id),'original page and embedded form each link/version once inside native save');
+ recovered:=public.studio_page_save_state(t,empty_project,source->'artifact_refs',context,legacy.id,(source->>'updated_at')::timestamptz,source->'conversion',
+  legacy.slug,'Refined original form page',blocks_a||legacy.draft_blocks_json,NULL,NULL,'{"sections":[]}');
+ PERFORM pg_temp.studio_assert(recovered->'ok'='true' AND recovered->'forms'=response->'forms' AND recovered->>'version_id'=response->>'version_id','lost form-save ACK reconciles original appended form reference and version');
+ PERFORM pg_temp.studio_assert(public.studio_page_save_source(t,gen_random_uuid(),page_id)->>'code'='not_allowed'
+  AND public.studio_page_save_source(t,empty_project,page_id)->>'code'='not_allowed','page source requires actual same original project manifest');
+ PERFORM pg_temp.studio_assert(public.studio_page_save_source(t2,project,page_id)->>'code'='scope_changed','wrong tenant cannot obtain save authority source');
+ UPDATE public.tenant_members SET role='member' WHERE tenant_id=t AND user_id=u;
+ PERFORM pg_temp.studio_assert(public.studio_page_save_source(t,empty_project,legacy.id)->>'code'='scope_changed'
+  AND public.studio_page_save_state(t,empty_project,source->'artifact_refs',context,legacy.id,(source->>'updated_at')::timestamptz,source->'conversion',
+   legacy.slug,'Refined original form page',blocks_a||legacy.draft_blocks_json,NULL,NULL,NULL)->>'code'='scope_changed','role revocation closes source and unknown-save readback');
+ response:=public.studio_save_page(t,empty_project,source->'artifact_refs',context,legacy.id,(source->>'updated_at')::timestamptz,source->'conversion',
+  legacy.slug,'Revoked actor write',blocks_b||legacy.draft_blocks_json,NULL,NULL,NULL);
+ PERFORM pg_temp.studio_assert(response->>'code'='scope_changed' AND (SELECT title='Refined original form page' FROM public.growth_pages WHERE id=legacy.id),
+  'role revocation independently refuses final atomic page writer before effect');
+ UPDATE public.tenant_members SET role='owner' WHERE tenant_id=t AND user_id=u;
+ PERFORM pg_temp.studio_assert(public.studio_save_page(t2,empty_project,source->'artifact_refs',context,legacy.id,(source->>'updated_at')::timestamptz,source->'conversion',
+  legacy.slug,'Foreign tenant write',blocks_b||legacy.draft_blocks_json,NULL,NULL,NULL)->>'code'='scope_changed','final native page writer independently rejects wrong current tenant');
+ response:=public.studio_page_save_state(t,empty_project,source->'artifact_refs',context,legacy.id,(source->>'updated_at')::timestamptz,source->'conversion',
+  legacy.slug,'Refined original form page',blocks_a||legacy.draft_blocks_json,NULL,NULL,'42');
+ PERFORM pg_temp.studio_assert(response->>'code'='invalid','saved-state readback retains original supplied form-schema validation semantics');
+ PERFORM pg_temp.studio_assert(NOT has_function_privilege('service_role','public.studio_save_page(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb)','execute')
+  AND NOT has_function_privilege('anon','public.studio_save_page(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb)','execute')
+  AND NOT has_function_privilege('service_role','public.studio_page_save_source(uuid,uuid,uuid)','execute')
+  AND NOT has_function_privilege('service_role','public.studio_page_save_state(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb)','execute'),'native generation/save/reconciliation require actual authenticated Studio authority');
+END $page_save_cas$;
+
 -- Exercise the actual SQL role too; JWT verification remains outside this local port.
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.studio_assert(public.studio_lookup_project_start('f0060000-0000-4000-8000-000000000010','f0060000-0000-4000-8000-000000000030')->'ok'='true','ordinary authenticated role uses protected recovery RPC');
 SELECT pg_temp.studio_refuses($q$update public.studio_sessions set studio_start_request_id=gen_random_uuid(),studio_start_digest=repeat('a',64) where studio_start_request_id='f0060000-0000-4000-8000-000000000030'$q$,'42501','table grant cannot forge original request binding');
 SELECT pg_temp.studio_assert(public.chat_studio_reference('f0060000-0000-4000-8000-000000000010',(SELECT(value->>'source')::uuid FROM chat_studio_cases WHERE label='primary'))->>'state'='ready','actual authenticated SQL role reopens historical original project');
+SELECT pg_temp.studio_assert((SELECT public.chat_studio_sources('f0060000-0000-4000-8000-000000000010',(value->>'thread')::uuid,ARRAY[(value->>'source')::uuid])->'source_turn_ids'=jsonb_build_array(value->'source') FROM chat_studio_cases WHERE label='primary'),'actual authenticated SQL role discovers only its original historical user pointer');
+SELECT pg_temp.studio_assert((SELECT public.studio_page_save_source('f0060000-0000-4000-8000-000000000010',id,NULL)->'ok'='true' FROM public.studio_sessions WHERE title='Atomic Studio save'),'actual authenticated SQL role uses protected original project source');
 SELECT pg_temp.studio_refuses('select id from public.paige_workspace_events limit 1','42501','ordinary actor cannot directly select original private Rail');
 SELECT pg_temp.studio_refuses(format('update public.paige_chat_turns set studio_brief=%L where id=%L','{"brief":"Forged prepared text"}',(SELECT value->>'source' FROM chat_studio_cases WHERE label='primary')),'42501','incumbent issued-row guard protects new preparation field');
 SELECT pg_temp.studio_refuses(format('update public.paige_chat_turns set studio_session_id=gen_random_uuid() where id=%L',(SELECT value->>'source' FROM chat_studio_cases WHERE label='primary')),'42501','incumbent issued-row guard protects new ready reference');
@@ -518,6 +794,8 @@ SELECT pg_temp.studio_assert(auth.uid() IS NULL,'service preparation does not fo
 SELECT pg_temp.studio_assert((SELECT public.chat_stage_studio_brief((value->>'thread')::uuid,'f0060000-0000-4000-8000-000000000001','f0060000-0000-4000-8000-000000000010',(value->>'intent')::uuid,(value->>'nonce')::uuid,'Actual service-role preparation')->>'outcome'='staged' FROM chat_studio_cases WHERE label='service-role'),'actual service role stages only with original runtime-issued nonce');
 SELECT pg_temp.studio_assert((SELECT public.chat_studio_scope((value->>'thread')::uuid,'f0060000-0000-4000-8000-000000000001','f0060000-0000-4000-8000-000000000010',(value->>'intent')::uuid,gen_random_uuid())->'ok'='false' FROM chat_studio_cases WHERE label='service-role'),'actual service key alone cannot replace issued nonce');
 SELECT pg_temp.studio_refuses(format('select public.chat_studio_start(%L,%L,%L)','f0060000-0000-4000-8000-000000000010',(SELECT value->>'source' FROM chat_studio_cases WHERE label='service-role'),'{}'),'42501','service staging cannot execute explicit browser start');
+SELECT pg_temp.studio_refuses(format('select public.chat_studio_sources(%L,%L,ARRAY[%L::uuid])','f0060000-0000-4000-8000-000000000010',(SELECT value->>'thread' FROM chat_studio_cases WHERE label='service-role'),(SELECT value->>'source' FROM chat_studio_cases WHERE label='service-role')),'42501','actual service role cannot invoke owner loaded-history projection');
+SELECT pg_temp.studio_refuses('select public.studio_page_save_source(gen_random_uuid(),gen_random_uuid(),NULL)','42501','actual service role cannot request server-bound Studio generation source');
 RESET ROLE;
 SELECT count(*) AS passed_native_studio_assertions FROM studio_binding_assertions;
 ROLLBACK;

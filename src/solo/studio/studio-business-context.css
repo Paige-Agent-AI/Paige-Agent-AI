@@ -1,5 +1,5 @@
 /* A compact extension of Studio's existing ink workspace; the parent owns scroll. */
-.vs-studio .vs-business-context { container-type: inline-size; min-width: 0; border-top: 1px solid var(--vs-line-soft); border-bottom: 1px solid var(--vs-line-soft); color: var(--vs-text); font-size: 13px; text-align: left; }
+.vs-studio .vs-business-context { container-type: inline-size; box-sizing: border-box; width: 100%; min-width: 0; border-top: 1px solid var(--vs-line-soft); border-bottom: 1px solid var(--vs-line-soft); color: var(--vs-text); font-size: 13px; text-align: left; }
 .vs-studio .vs-business-context > summary { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 0; cursor: pointer; list-style: none; }
 .vs-studio .vs-business-context > summary::-webkit-details-marker { display: none; }
 .vs-studio .vs-context-chevron { width: 16px; height: 16px; flex-shrink: 0; color: var(--vs-dim); }

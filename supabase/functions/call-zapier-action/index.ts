@@ -72,11 +72,16 @@ Deno.serve(async (req) => {
   const isList = body?.action === "list";
   if (!isList && !body?.tool_name) return jsonResponse({ error: "missing_tool_name" }, 400);
 
+  const expectedTenantId = typeof body.expected_tenant_id === "string"
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.expected_tenant_id)
+    ? body.expected_tenant_id.toLowerCase() : null;
+  if (!expectedTenantId) return jsonResponse({ error: "context_required" }, 400);
+
   // current_user_tenant_id runs in the caller's JWT context → their own tenant.
   // NEVER trust a client-supplied tenant_id for the secret read (§9).
   const { data: tenantId, error: tErr } = await userClient.rpc("current_user_tenant_id");
   if (tErr || !tenantId) return jsonResponse({ error: "no_tenant" }, 400);
-  if (typeof body.expected_tenant_id === "string" && body.expected_tenant_id !== tenantId) {
+  if (expectedTenantId !== tenantId) {
     return jsonResponse({ error: "tenant_changed" }, 409);
   }
   const fileConnectionTest = async (succeeded: boolean) => {

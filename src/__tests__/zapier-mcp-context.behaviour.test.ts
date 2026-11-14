@@ -62,4 +62,3 @@ describe("actual Zapier endpoint's captured-workspace entry contract", () => {
     expect(f.resolver).not.toHaveBeenCalled(); expect(f.provider).not.toHaveBeenCalled();
   });
 });
-

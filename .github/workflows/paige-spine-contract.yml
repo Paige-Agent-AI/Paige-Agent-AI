@@ -651,6 +651,11 @@ jobs:
       # browser, and a form's intake settings change only for its own business's owner/admin.
       - run: supabase test db supabase/tests/public_form_intake.sql
         if: ${{ !cancelled() }}
+      - name: Original EXP06 Studio full-schema source composition
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/proof/exp06-studio-confirmation-full-schema.mjs --sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/tests/exp06_studio_intake_full_schema.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Where the RAG ingest, the security canary and the funding report read a person's address:
       # the old profiles.email read fails, the user_contact_methods reads they now send run as the
       # service role, and every new account has exactly one primary email to send to.
@@ -1219,6 +1224,9 @@ jobs:
       - run: node scripts/proof/business-mission-target-concurrency.mjs
         env:
           MISSION_TARGET_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      - name: Original EXP06 Studio populated local Data API composition
+        if: ${{ !cancelled() }}
+        run: node scripts/proof/exp06-studio-confirmation-full-schema.mjs --http-final --original-ci-teardown
       # The grant reproduction must never overwrite the change under review. A migration production
       # has not recorded is written at runtime (never committed); its GRANT and REVOKE must survive
       # the job's rebuild → reproduce → apply sequence, and the reconcile alone must erase them

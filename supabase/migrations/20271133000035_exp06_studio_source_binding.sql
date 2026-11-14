@@ -1302,7 +1302,26 @@ BEGIN
    AND polroles=ARRAY['authenticated'::regrole]::oid[] AND polwithcheck IS NULL
    AND pg_get_expr(polqual,polrelid)='(user_id = auth.uid())')
   OR EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='public.paige_pending_confirmations'::regclass AND NOT tgisinternal) THEN
-  RAISE EXCEPTION 'Original confirmation source protection changed; re-ground before applying' USING ERRCODE='55000';
+  RAISE EXCEPTION USING ERRCODE='55000', MESSAGE=
+   'Original confirmation source protection changed; re-ground before applying; schema_metadata='||
+   (SELECT CASE WHEN octet_length(info)<=7600 THEN info ELSE left(info,1800)||' [truncated]' END FROM (
+    SELECT jsonb_build_object(
+     'columns',(SELECT jsonb_agg(jsonb_build_array(attnum,attname) ORDER BY attnum) FROM
+      (SELECT attnum,attname FROM pg_attribute WHERE attrelid=c.oid AND attnum>0 AND NOT attisdropped ORDER BY attnum LIMIT 24) a),
+     'owner',pg_get_userbyid(c.relowner),'table_acl',left(c.relacl::text,512),
+     'rls',c.relrowsecurity,'force_rls',c.relforcerowsecurity,
+     'column_acls',(SELECT jsonb_agg(jsonb_build_array(attname,left(attacl::text,256)) ORDER BY attnum) FROM
+      (SELECT attnum,attname,attacl FROM pg_attribute WHERE attrelid=c.oid AND attnum>0 AND NOT attisdropped AND attacl IS NOT NULL ORDER BY attnum LIMIT 16) a),
+     'policies',(SELECT jsonb_agg(jsonb_build_object('name',polname,'cmd',polcmd,'permissive',polpermissive,
+      'roles',(SELECT jsonb_agg(CASE WHEN role_oid=0 THEN 'PUBLIC' ELSE pg_get_userbyid(role_oid) END) FROM
+       (SELECT role_oid FROM unnest(polroles) role_oid ORDER BY role_oid LIMIT 8) roles),
+      'qual',left(pg_get_expr(polqual,polrelid),512),'check',left(pg_get_expr(polwithcheck,polrelid),512)) ORDER BY polname) FROM
+      (SELECT * FROM pg_policy WHERE polrelid=c.oid ORDER BY polname LIMIT 4) p),
+     'custom_triggers',(SELECT jsonb_agg(tgname ORDER BY tgname) FROM
+      (SELECT tgname FROM pg_trigger WHERE tgrelid=c.oid AND NOT tgisinternal ORDER BY tgname LIMIT 8) t),
+     'search_path',left(current_setting('search_path'),256),'server_version',left(current_setting('server_version'),96)
+    )::text AS info FROM pg_class c WHERE c.oid='public.paige_pending_confirmations'::regclass
+   ) diagnostic);
  END IF;
 END $source_preflight$;
 

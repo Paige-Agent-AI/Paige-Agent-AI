@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
   const { data: canManage } = await userClient.rpc("is_tenant_owner", { _user_id: user.id, _tenant_id: tenantId });
   if (action === "status") return jsonResponse({ ok: true, connection: await readiness(userClient, tenantId, canManage === true) });
   if (canManage !== true) return jsonResponse({ error: "forbidden" }, 403);
-  if (!configured() && !["cancel", "disconnect", "oauth_refuse", "provision_intake_route"].includes(action)) return jsonResponse({ error: "capability_unavailable", connection: await readiness(userClient, tenantId, true) }, 503);
+  if (!configured() && !["cancel", "disconnect", "oauth_refuse"].includes(action)) return jsonResponse({ error: "capability_unavailable", connection: await readiness(userClient, tenantId, true) }, 503);
 
   if (action === "workflow_read") {
     const operation = typeof body.operation === "string" ? body.operation : "";
@@ -181,22 +181,6 @@ Deno.serve(async (req) => {
     if (refuseError) return jsonResponse({ error: "refusal_persist_failed" }, 503);
     if (refused !== true) return jsonResponse({ error: "oauth_state_invalid" }, 409);
     return jsonResponse({ ok: true, outcome: "refused", connection: await readiness(userClient, tenantId, true) });
-  }
-
-  if (action === "provision_intake_route") {
-    const label = typeof body.label === "string" ? body.label.trim() : "";
-    if (!label || label.length > 80) return jsonResponse({ error: "route_label_invalid" }, 400);
-    const routeToken = `zir_${safeState()}`;
-    const { data: routeId, error: routeError } = await admin.rpc("zapier_intake_route_create", {
-      _tenant: tenantId, _actor: user.id, _label: label, _token_hash: await digest(routeToken),
-    });
-    if (routeError || typeof routeId !== "string") return jsonResponse({ error: "route_provision_failed" }, 503);
-    const endpoint = `${Deno.env.get("SUPABASE_URL")}/functions/v1/zapier-skool-intake`;
-    // This owner-only response is the sole disclosure; no UI/chat surface calls this action.
-    return new Response(JSON.stringify({ ok: true, route_id: routeId, endpoint_url: endpoint, header_name: "x-paige-route-token", route_token: routeToken, one_time_secret: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
-    });
   }
 
   if (action === "oauth_begin") {

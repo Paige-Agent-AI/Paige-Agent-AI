@@ -2682,12 +2682,12 @@
         "(governed) dispatch a Zapier action as a worker; credentials service-role-resolved",
         "Separate Workflow API facet: owner-consented workflow metadata and optional management scope; connection permissions do not approve or activate a workflow. Complete Skool-to-GHL onboarding remains PROOF OWED."
       ],
-      "connection_prerequisite": "Per-tenant Zapier MCP connection (tenant_mcp_connections, the LIVE per-provider state); also represented 1:1 in the canonical mcp_connections gateway registry that the PR-1 outbound connection-loader reads.",
+      "connection_prerequisite": "Each Solo workspace authorizes its own Zapier account through the original tenant-mcp-connect OAuth flow and tenant_mcp_connections store. The entry candidate uses Zapier's documented shared MCP endpoint without asking for an address or credential. The gateway registry is a separate existing projection, not proof of a completed Zapier cutover or a usable grant. Metadata discovery and local tests are not authenticated connection proof. Platform Operator UI is deferred to PO EXP work by the owner's November13 direction.",
       "required_scopes": [
         "Zapier MCP connection"
       ],
       "safe_readable_context": "Connection status; never credentials (fenced as untrusted data).",
-      "allowed_writes_external_effects": "Zapier actions — governed via the one approval path; no chat shortcut around the gate.",
+      "allowed_writes_external_effects": "Server-advertised Zapier app actions the workspace authorizes, without a fixed PAIGE app allowlist. Existing customer permission, tool-contract binding and the one governed authority/approval path still apply; a connection alone is not an executed or approved business action.",
       "authority_lane": [
         "read",
         "draft",
@@ -2735,6 +2735,16 @@
         "next_slice": "Unify the risk gate across regimes (decideGovernedExecution on the worker path, slice 5)."
       },
       "code_anchors": [
+        {
+          "path": "supabase/functions/tenant-mcp-connect/index.ts",
+          "role": "provider_adapter",
+          "note": "Original Solo Zapier OAuth begin/callback, connection check and tool discovery; same encrypted state/token RPCs, not a new provider client."
+        },
+        {
+          "path": "supabase/functions/_shared/zapier-mcp-address.ts",
+          "role": "provider_adapter",
+          "note": "Credential-free canonical MCP endpoint and the moved original server-address predicate for deployed address-bearing caller compatibility."
+        },
         {
           "path": "supabase/functions/call-zapier-action/index.ts",
           "role": "provider_adapter",

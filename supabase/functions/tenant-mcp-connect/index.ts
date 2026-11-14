@@ -39,13 +39,18 @@
 // than followed, bounded wall clock, bounded response size, fail-closed on every branch.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
-import { mcpListToolFingerprints, mcpProbe, type McpAuth, type McpErrorCode, authFromSecret } from "../_shared/mcp-client.ts";
+import { mcpListToolFingerprints, mcpProbe, type McpAuth, authFromSecret } from "../_shared/mcp-client.ts";
 import {
   buildAuthorizationUrl, createPkce, createState, discoverAuthorizationServer,
-  discoverProtectedResource, exchangeCode, OAuthError, registerClient, revokeToken,
+  discoverProtectedResource, exchangeCode, OAuthError, registerClient,
   statesMatch, type AuthorizationServer,
 } from "../_shared/mcp-oauth.ts";
 import { verifyApprovalPins } from "../_shared/mcp-outcome.ts";
+import { isZapierMcpAddress, ZAPIER_MCP_URL } from "../_shared/zapier-mcp-address.ts";
+import {
+  resolveZapierMcpConnection, revokeZapierMcpSecret, savedZapierMcpGrantMatches, zapierMcpReadAuthorized,
+  type McpRpcClient,
+} from "../_shared/zapier-mcp-auth.ts";
 
 /** Providers that connect by a tenant-supplied credential. */
 const CONNECTABLE = new Set(["n8n"]);
@@ -60,7 +65,7 @@ const PUBLIC_BASE = (Deno.env.get("PUBLIC_SITE_URL") ?? "https://paigeagent.ai")
  */
 const REDIRECT_URI = `${PUBLIC_BASE}/oauth/mcp/callback`;
 
-type ProbeOutcome = { status: "connected"; toolCount: number } | { status: "error"; code: McpErrorCode };
+type ProbeOutcome = { status: "connected"; toolCount: number } | { status: "error"; code: string };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -122,16 +127,26 @@ Deno.serve(async (req) => {
     const { data: canDisconnect } = await userClient.rpc("is_current_user_tenant_admin");
     if (canDisconnect !== true) return jsonResponse({ error: "forbidden" }, 403);
 
-    // For a granted connection, revoke at the provider BEFORE clearing locally. Clearing
-    // first would leave a live grant nobody can see and nobody can withdraw — the local
-    // row is the only record of what to revoke.
     let revoked: boolean | null = null;
-    if (OAUTH_PROVIDERS.has(provider)) revoked = await revokeGrant(admin, tenantId, provider);
+    if (provider === "zapier") {
+      const { data: secret, error: readError } = await admin.rpc("get_tenant_mcp_secret", {
+        _tenant_id: tenantId, _provider: provider,
+      });
+      if (readError) return jsonResponse({ error: "secret_lookup_failed" }, 500);
+      // Keep this exact grant in memory while the original native writer detaches it.
+      // A stale disconnect cannot clear or revoke a grant saved by a newer reconnect.
+      const { data: cleared, error } = await userClient.rpc("disconnect_tenant_zapier_mcp", {
+        _tenant: tenantId, _actor: user.id, _generation: secret?.generation ?? null,
+      });
+      if (error || cleared !== true) return jsonResponse({ error: "connection_changed" }, 409);
+      revoked = secret?.configured ? await revokeZapierMcpSecret(secret) : null;
+      return jsonResponse({ ok: true, status: "unconfigured", revoked_at_provider: revoked });
+    }
 
     // Authority lives in the RPC too: it raises unless the caller is an admin of this
     // tenant. Kept as well as the check above — this is the boundary that actually holds
     // for every other caller of the RPC.
-    const { error } = await userClient.rpc("clear_tenant_mcp_connection", { _provider: provider });
+    const { error } = await userClient.rpc("clear_tenant_mcp_connection", { _provider: provider, _tenant_id: tenantId });
     if (error) {
       const code = writeCode(error.message);
       return jsonResponse({ error: "write_failed", code }, code === "MCP_FORBIDDEN" ? 403 : 400);
@@ -178,7 +193,7 @@ Deno.serve(async (req) => {
       const code = writeCode(error.message);
       return jsonResponse({ error: "write_failed", code }, code === "MCP_FORBIDDEN" ? 403 : 400);
     }
-    return jsonResponse({ ok: true, ...(await probeAndRecord(admin, tenantId, provider)) });
+    return jsonResponse({ ok: true, ...(await probeAndRecord(admin, userClient, tenantId, provider, user.id)) });
   }
 
   if (action === "verify") {
@@ -186,7 +201,7 @@ Deno.serve(async (req) => {
     // made explicitly rather than assumed.
     const { data: isAdmin } = await userClient.rpc("is_current_user_tenant_admin");
     if (isAdmin !== true) return jsonResponse({ error: "forbidden" }, 403);
-    return jsonResponse({ ok: true, ...(await probeAndRecord(admin, tenantId, provider)) });
+    return jsonResponse({ ok: true, ...(await probeAndRecord(admin, userClient, tenantId, provider, user.id)) });
   }
 
   // ── Discovery and approval ──────────────────────────────────────────────────
@@ -196,10 +211,13 @@ Deno.serve(async (req) => {
   if (action === "discover") {
     const { data: isAdmin } = await userClient.rpc("is_current_user_tenant_admin");
     if (isAdmin !== true) return jsonResponse({ error: "forbidden" }, 403);
-    const resolved = await resolveConnection(admin, tenantId, provider);
+    const resolved = await resolveConnection(admin, userClient, tenantId, provider, user.id);
     if ("error" in resolved) return jsonResponse(resolved.error, resolved.status);
     try {
       const tools = await mcpListToolFingerprints({ serverUrl: resolved.serverUrl, auth: resolved.auth });
+      if (provider === "zapier" && !await zapierMcpReadAuthorized(userClient, tenantId, user.id, resolved.generation!)) {
+        return jsonResponse({ error: "connection_changed" }, 409);
+      }
       const approved = new Set(resolved.approved);
       return jsonResponse({
         ok: true,
@@ -252,7 +270,7 @@ Deno.serve(async (req) => {
     // approving cannot be used to pin a contract the provider never offered. The client's
     // pins are used only to detect that the provider changed BETWEEN the person looking
     // and the person approving — in which case nothing is approved and they look again.
-    const resolved = await resolveConnection(admin, tenantId, provider);
+    const resolved = await resolveConnection(admin, userClient, tenantId, provider, user.id);
     if ("error" in resolved) return jsonResponse(resolved.error, resolved.status);
     let live;
     try {
@@ -270,8 +288,12 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "capabilities_changed", changed: stale.slice(0, 50) }, 409);
     }
 
-    const { data, error } = await userClient.rpc("set_tenant_mcp_approved_capabilities", {
+    const { data, error } = provider === "zapier" ? await userClient.rpc("set_tenant_zapier_mcp_approval", {
+      _tenant: tenantId, _actor: user.id, _generation: resolved.generation,
+      _capabilities: Object.keys(verified), _pins: verified,
+    }) : await userClient.rpc("set_tenant_mcp_approved_capabilities", {
       _provider: provider,
+      _tenant_id: tenantId,
       _capabilities: Object.keys(verified),
       _pins: verified,
     });
@@ -291,9 +313,10 @@ Deno.serve(async (req) => {
     const { data: isAdmin } = await userClient.rpc("is_current_user_tenant_admin");
     if (isAdmin !== true) return jsonResponse({ error: "forbidden" }, 403);
     try {
-      const serverUrl = typeof body.server_url === "string" ? body.server_url.trim() : "";
+      const serverUrl = body.server_url === undefined ? ZAPIER_MCP_URL
+        : typeof body.server_url === "string" ? body.server_url.trim() : "";
       if (!isZapierMcpAddress(serverUrl)) return jsonResponse({ error: "address_rejected" }, 400);
-      const { server, resource } = await resolveZapierAuthority(serverUrl);
+      const { server, resource, scopes } = await resolveZapierAuthority(serverUrl);
       const registration = await registerClient({
         server, redirectUri: REDIRECT_URI, clientName: "Paige",
       });
@@ -302,9 +325,8 @@ Deno.serve(async (req) => {
 
       // The verifier is stored before the browser is sent anywhere. Storing it after the
       // redirect would leave a consent that can complete against nothing.
-      const { error } = await admin.rpc("begin_tenant_mcp_oauth", {
-        _tenant_id: tenantId,
-        _provider: provider,
+      const { error } = await admin.rpc("begin_tenant_zapier_mcp_oauth", {
+        _tenant: tenantId,
         _state: state,
         _verifier: pkce.verifier,
         _redirect_uri: REDIRECT_URI,
@@ -313,6 +335,7 @@ Deno.serve(async (req) => {
         _client_id: registration.clientId,
         _client_secret: registration.clientSecret,
         _actor: user.id,
+        _requested_scopes: scopes,
       });
       if (error) return jsonResponse({ error: "oauth_begin_failed" }, 500);
 
@@ -322,7 +345,7 @@ Deno.serve(async (req) => {
         // challenge, never the verifier.
         authorize_url: buildAuthorizationUrl({
           server, clientId: registration.clientId, redirectUri: REDIRECT_URI,
-          state, challenge: pkce.challenge, scopes: server.scopesSupported, resource,
+          state, challenge: pkce.challenge, scopes, resource,
         }),
       });
     } catch (e) {
@@ -348,16 +371,14 @@ Deno.serve(async (req) => {
     // was not, which left the second half of an admin-only flow open to any member who
     // ended up holding the callback.
     //
-    // Checked BEFORE the state is spent. A state is single-use, so a caller who fails a
-    // check after redemption has still destroyed the flow, and the admin who started it
-    // would have to begin again with no explanation. (This does not make the state
-    // unburnable — anyone holding it can spend it — but it stops a member of the same
-    // workspace burning one by trying.)
+    // The native consumer also binds the initiating actor BEFORE spending the state.
     const { data: canComplete } = await userClient.rpc("is_current_user_tenant_admin");
     if (canComplete !== true) return jsonResponse({ error: "forbidden" }, 403);
 
     // Redeemed exactly once, in SQL. A replayed callback finds nothing.
-    const { data: pending, error: sErr } = await admin.rpc("consume_tenant_mcp_oauth_state", { _state: returnedState });
+    const { data: pending, error: sErr } = await admin.rpc("consume_tenant_zapier_mcp_oauth", {
+      _tenant: tenantId, _actor: user.id, _state: returnedState,
+    });
     if (sErr || pending?.found !== true) return jsonResponse({ error: "oauth_state_invalid" }, 400);
 
     // The stored state is compared in constant time against the one the provider echoed.
@@ -371,7 +392,7 @@ Deno.serve(async (req) => {
     // The tenant comes from the STORED flow, never from the caller. Whoever completes the
     // callback cannot redirect a grant into a workspace that did not start it.
     const flowTenant = String(pending.tenant_id);
-    if (flowTenant !== tenantId) return jsonResponse({ error: "oauth_state_invalid" }, 400);
+    if (flowTenant !== tenantId || pending.provider !== provider) return jsonResponse({ error: "oauth_state_invalid" }, 400);
 
     try {
       const server = await discoverAuthorizationServer(String(pending.issuer));
@@ -383,25 +404,32 @@ Deno.serve(async (req) => {
         code,
         verifier: String(pending.code_verifier),
         resource: String(pending.resource),
+        requestedScopes: Array.isArray(pending.requested_scopes) ? pending.requested_scopes : undefined,
       });
 
-      const { error } = await admin.rpc("set_tenant_zapier_mcp_connection", {
-        _tenant_id: flowTenant,
-        _server_url: String(pending.resource),
+      const { data: completed, error } = await admin.rpc("complete_tenant_zapier_mcp_oauth", {
+        _tenant: flowTenant,
+        _state: returnedState,
         _access_token: tokens.accessToken,
         _refresh_token: tokens.refreshToken,
         _expires_at: tokens.expiresAt,
-        _issuer: server.issuer,
-        _client_id: String(pending.client_id),
-        _client_secret: pending.client_secret ? String(pending.client_secret) : null,
         _scopes: tokens.scopes,
-        _label: null,
         _actor: user.id,
       });
-      if (error) return jsonResponse({ error: "oauth_store_failed" }, 500);
+      let completedGeneration = typeof completed?.generation === "string" ? completed.generation : null;
+      if (error) {
+        // A lost response can follow a committed grant. Reconcile once, without
+        // exchanging the code again or revoking a possibly healthy saved connection.
+        const readback = await admin.rpc("get_tenant_mcp_secret", { _tenant_id: flowTenant, _provider: provider });
+        if (readback.error || !savedZapierMcpGrantMatches(readback.data, tokens, {
+          clientId: String(pending.client_id), issuer: server.issuer, resource: String(pending.resource),
+        })) return jsonResponse({ error: "oauth_store_unconfirmed" }, 409);
+        completedGeneration = readback.data.generation;
+      }
+      if (!completedGeneration) return jsonResponse({ error: "oauth_store_unconfirmed" }, 409);
 
       // A granted token is still not a working connection until the probe says so.
-      return jsonResponse({ ok: true, ...(await probeAndRecord(admin, flowTenant, provider)) });
+      return jsonResponse({ ok: true, ...(await probeAndRecord(admin, userClient, flowTenant, provider, user.id, completedGeneration)) });
     } catch (e) {
       return jsonResponse({ error: "oauth_exchange_failed", code: e instanceof OAuthError ? e.code : "token_exchange_failed" }, 502);
     }
@@ -429,16 +457,12 @@ Deno.serve(async (req) => {
  * string. A FRAGMENT is still refused: it is never sent to a server, so its presence
  * means the address was copied out of a browser bar rather than off the Connect tab.
  */
-function isZapierMcpAddress(value: string): boolean {
-  try { const u=new URL(value);return u.protocol==="https:"&&u.hostname==="mcp.zapier.com"&&!u.username&&!u.password&&!u.hash&&(u.pathname.startsWith("/api/v1/")||u.pathname.startsWith("/api/mcp/")); }
-  catch { return false; }
-}
-async function resolveZapierAuthority(serverUrl: string): Promise<{ server: AuthorizationServer; resource: string }> {
-  const pr = await discoverProtectedResource(serverUrl);
+async function resolveZapierAuthority(serverUrl: string): Promise<{ server: AuthorizationServer; resource: string; scopes: string[] }> {
+  const pr = await discoverProtectedResource(serverUrl, { requestChallenge: true });
   // The first advertised authorization server. Its metadata still has to name itself as
   // the issuer, so accepting the advertisement is not the same as trusting it.
   const server = await discoverAuthorizationServer(pr.authorizationServers[0]);
-  return { server, resource: pr.resource };
+  return { server, resource: pr.resource, scopes: pr.challengeScopes ?? pr.scopesSupported };
 }
 
 /**
@@ -448,12 +472,25 @@ async function resolveZapierAuthority(serverUrl: string): Promise<{ server: Auth
 async function resolveConnection(
   // deno-lint-ignore no-explicit-any
   admin: any,
+  userClient: McpRpcClient,
   tenantId: string,
   provider: string,
+  actorId: string,
 ): Promise<
-  | { serverUrl: string; auth: McpAuth; approved: string[] }
+  | { serverUrl: string; auth: McpAuth; approved: string[]; generation?: string }
   | { error: Record<string, unknown>; status: number }
 > {
+  if (provider === "zapier") {
+    const resolved = await resolveZapierMcpConnection(admin, tenantId, actorId);
+    if ("error" in resolved) return { error: { ok: false, error: resolved.error }, status: resolved.status };
+    if (!await zapierMcpReadAuthorized(userClient, tenantId, actorId, resolved.secret.generation)) {
+      return { error: { error: "connection_changed" }, status: 409 };
+    }
+    return { serverUrl: resolved.secret.server_url, auth: resolved.auth,
+      approved: Array.isArray(resolved.secret.approved_capabilities)
+        ? resolved.secret.approved_capabilities.filter((v): v is string => typeof v === "string") : [],
+      generation: resolved.secret.generation };
+  }
   const { data: secret, error } = await admin.rpc("get_tenant_mcp_secret", {
     _tenant_id: tenantId,
     _provider: provider,
@@ -484,9 +521,26 @@ async function resolveConnection(
 async function probeAndRecord(
   // deno-lint-ignore no-explicit-any
   admin: any,
+  userClient: McpRpcClient,
   tenantId: string,
   provider: string,
+  actorId: string,
+  expectedGeneration?: string,
 ): Promise<ProbeOutcome> {
+  if (provider === "zapier") {
+    const resolved = await resolveConnection(admin, userClient, tenantId, provider, actorId);
+    if ("error" in resolved) return { status: "error", code: String(resolved.error.error ?? "connection_changed") };
+    if (expectedGeneration && resolved.generation !== expectedGeneration) return { status: "error", code: "connection_changed" };
+    const result = await mcpProbe({ serverUrl: resolved.serverUrl, auth: resolved.auth });
+    const { data, error } = await admin.rpc("record_tenant_zapier_mcp_probe", {
+      _tenant: tenantId, _actor: actorId, _generation: resolved.generation,
+      _status: result.ok ? "connected" : "error", _last_error: result.ok ? null : result.code,
+    });
+    if (error || data !== true || !await zapierMcpReadAuthorized(userClient, tenantId, actorId, resolved.generation!)) {
+      return { status: "error", code: "connection_changed" };
+    }
+    return result.ok ? { status: "connected", toolCount: result.toolCount } : { status: "error", code: result.code };
+  }
   const { data: secret, error } = await admin.rpc("get_tenant_mcp_secret", {
     _tenant_id: tenantId,
     _provider: provider,
@@ -547,37 +601,7 @@ async function record(
   return !error;
 }
 
-/**
- * Maps the setter's prefixed, non-sensitive exception codes to a stable code for the
- * browser. Raw database text never crosses this boundary.
- */
-/**
- * Withdraws the grant at the provider. Never throws: a provider that is down must not stop
- * a workspace disconnecting, and the caller reports what actually happened either way.
- */
-async function revokeGrant(
-  // deno-lint-ignore no-explicit-any
-  admin: any,
-  tenantId: string,
-  provider: string,
-): Promise<boolean> {
-  try {
-    const { data: secret } = await admin.rpc("get_tenant_mcp_secret", { _tenant_id: tenantId, _provider: provider });
-    if (!secret?.configured || !secret?.oauth_issuer) return false;
-    const server = await discoverAuthorizationServer(String(secret.oauth_issuer));
-    // The refresh token is the durable grant; revoking it is what actually ends access.
-    const token = secret.refresh_token ?? secret.auth_token;
-    if (!token) return false;
-    return await revokeToken({
-      server,
-      clientId: String(secret.oauth_client_id ?? ""),
-      clientSecret: secret.oauth_client_secret ? String(secret.oauth_client_secret) : null,
-      token: String(token),
-      tokenTypeHint: secret.refresh_token ? "refresh_token" : "access_token",
-    });
-  } catch { return false; }
-}
-
+/** Stable non-sensitive setter codes only. */
 function writeCode(raw: unknown): string {
   const s = typeof raw === "string" ? raw : "";
   for (const code of ["MCP_NO_URL", "MCP_INSECURE_URL", "MCP_URL_CREDENTIALS", "MCP_NO_TOKEN",

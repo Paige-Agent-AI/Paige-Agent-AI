@@ -548,3 +548,28 @@ Owner activation (ANT-37, 2026-10-10): safe source + metadata development now. D
 **Integration matrix (§6):** Spine — no capability declared (discovery is not a governed tool; no executor); Harness — `discovery-check.mjs` in CI beside the fabric harnesses; Orchestration — none (no agent lane reads it); Trust — nothing trusted from discovery; no approvals consumable; Rail — no receipts (nothing acts); Metric/Evidence — reads AGGREGATE `paige_llm_trace` percentiles only (no excerpts/PII); writes its own observation/event tables; Mind — untouched (no prompt/persona change); Memory — untouched; Knowledge — untouched; Model/Intelligence Fabric — SOLE consumer boundary: the fabric imports NOTHING from discovery (structural pin 2.4); Agent Intelligence (AI-2/ANT-36) — owns scorers/scorecards; discovery cites and defers, builds no evaluator; Chat/Live — zero behavioral surface (no routing, admission, or lifecycle effect).
 
 **Gates remaining (owner):** any priced/benchmark validation; candidate lifecycle advances beyond DISCOVERED (each is a hand-recorded owner action); a dedicated operator-console feed for event surfacing (the events table + beat summary are the current surface; coordinate with the operator-console lane as one writer before wiring a UI).
+
+## EXP01 — bounded everyday Chat classification repair (2026-11-13)
+
+Owner approved this next outcome after the separate cache/reopen result. The
+original advisory classifier's whole-call deadline is recalibrated from 2500 to
+4000ms, through the same cheap-class Fabric call and closed-enum parser. Maximum
+additional advisory wait on an expired call is 1500ms. This does not promise a
+speedup, change models or grant tool/execution authority.
+
+The new real classifier/Fabric/adapter control supplies a valid 3000ms primary
+reply: old runtime213PASS/1FAIL; candidate214PASS/0FAIL, all212 original controls
+preserved. Actual transport attempts are counted before the synthetic delay;
+one primary call/no fallback is a separate control. Deadline exhaustion and a
+slow budget read still return null without later provider dispatch. Original
+route/classification tests16PASS with runtime network/env/file access denied;
+the first cached-only invocation lacked the official assertion dependency and
+is retained as an infrastructure failure, not a passing test.
+
+Source19d496f85d0a0f492c5b2897bc2bc5938f5459e2. No Root, adapter, Fabric, source
+pin, native writer, authentication, billing or UI change. Production deadline-tail
+truncation is supported by the current timing pattern, not proof of an external
+network outage. Independent review, fresh exact-head CI, normal release/source
+readback and actual useful classification/answer/reopen remain PROOF OWED.
+The older organic50-turn calibration gate is not claimed complete or replaced
+with synthetic samples. Original ANT-50/c4c7cfac holds the current outcome.

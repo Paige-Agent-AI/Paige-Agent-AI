@@ -12,8 +12,8 @@ export const C0B_RESOURCE_OPERATION_CAPABILITIES = ([
     replay:"Existing caller-JWT fetch-url-content performs a bounded SSRF-guarded outbound public HTTPS fetch. Untrusted content and provenance are fenced before model readback; repeated reads may differ and no immutable snapshot is claimed." },
   { tool:"save_to_knowledge_base", domain:"research_knowledge", executor:"edge.paige-ai-chat", classification:"mutate", risk:"ordinary", admin:false, visible:true, readiness:"none",
     replay:"Without a purpose, existing caller-JWT kb-ingest-doc stores workspace-private reference material and invokes the incumbent embedding provider; no request-key or full-operation exactly-once guarantee. Explicit cura_customer_knowledge instead uses the original publisher-authorized native extraction preparation, bound to the server-claimed original approval or verified request intent. Its acknowledgment is private preparation only, never publication, indexing or customer sharing. Unknown results are observed before another attempt; no automatic retry." },
-  { tool:"automation_draft", domain:"automations", executor:"edge.paige-ai-chat", classification:"mutate", risk:"ordinary", admin:false, visible:true, readiness:"none",
-    replay:"Existing caller-JWT automation and ordered acts inserts are pinned to state draft and granted_lane confirm. It dispatches nothing and grants no auto lane. No operation receipt; failed step insertion uses checked best-effort shell cleanup and may report uncertain rollback." },
+  { tool:"automation_draft", domain:"automations", executor:"edge.paige-ai-chat", classification:"mutate", risk:"ordinary", admin:true, visible:true, readiness:"none",
+    replay:"Original caller-JWT save_automation_draft atomically saves the process, ordered acts and original capability-run Rail, pinned to draft/confirm. Server-bound approval or admitted turn identity selects the original record; read_automation_draft reconciles acknowledgment loss without a second save. A receipt is bound to the exact original content and creation; changed or unreceipted records remain unconfirmed. No provider, enablement or execution authority." },
   { tool:"comms_connection_summary", domain:"communications", executor:"public.tenant_comms_readiness", classification:"read", risk:"read_only", admin:true, visible:true, readiness:"none",
     replay:"Existing caller-JWT tenant_comms_readiness and list_tool_autonomy reads project named readiness fields after server workspace resolution. No connector secrets, immutable snapshot or provider availability guarantee." },
   { tool:"comms_registration_status", domain:"communications", executor:"public.tenant_comms_readiness", classification:"read", risk:"read_only", admin:true, visible:true, readiness:"none",
@@ -35,7 +35,7 @@ export const C0B_RESOURCE_OPERATION_CAPABILITIES = ([
 ] as const).map(({tool,domain,executor,classification,risk,admin,visible,readiness,replay})=>({
   key:`${domain}.${tool}`,domain,owner: domain === "communications" ? "tenant-comms" : domain === "automations" ? "paige-automations" : "paige-research-knowledge",
   humanSurface:"PAIGE workspace",selfDescribe:visible,readiness,
-  action:{executor,chatTool:tool,classification,riskPolicyKey:risk,seatAuthority:admin?"workspace-admin":"member",
+  action:{executor,chatTool:tool,classification,riskPolicyKey:risk,seatAuthority:admin?(tool==="automation_draft"?"door-seat":"workspace-admin"):"member",
     approvalAuthority:classification==="read"?"none":"chat-canonical",idempotency:replay},
   chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
 } as const satisfies SpineCapability));

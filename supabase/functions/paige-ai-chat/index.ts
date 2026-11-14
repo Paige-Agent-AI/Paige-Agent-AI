@@ -25,6 +25,7 @@ import type { OwnerTaskHistoryClients } from "../_shared/paige-orchestration/own
 import { bindWeeklyControlForReview, parseWeeklyControlIntent } from "../_shared/paige-orchestration/weekly-commitment-control-input.ts";
 import { claimWeeklyDraftChatApproval, weeklyDraftNativeArgs } from "../_shared/paige-orchestration/weekly-draft-chat-claim.ts";
 import { commitWeeklyDraftChatApproval } from "../_shared/paige-orchestration/weekly-draft-chat-commit.ts";
+import { saveAutomationDraft } from "../_shared/paige-orchestration/automation-draft-save.ts";
 import { declineWeeklyDraftChatApproval } from "../_shared/paige-orchestration/weekly-draft-chat-decline.ts";
 import { readWeeklyDraftChatStatus } from "../_shared/paige-orchestration/weekly-draft-chat-read.ts";
 import { adoptApprovedReminder, executeApprovedReminder, type ReminderExecutionBinding } from "../_shared/planning/approved-reminder.ts";
@@ -14379,6 +14380,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const draftCurrent = () => !req.signal.aborted && !tenantKnowledgeScopeRevoked && personaCtx?.tenant_id === draftTenant;
           // Reuse the existing elapsed-stage fence. Late preflight replies cannot
           // start another write, and an uncertain sent write is never replayed.
+          const draftStartedAt = performance.now();
           const draftStage = createWeeklyDraftDeadline(8_000, draftCurrent);
           let draftWriteAttempted = false;
           let draftId: string | null = null;
@@ -14416,66 +14418,35 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (triggerError || !await scopeHolds()) return refused;
               if (!trig || trig.key !== args.trigger_key) return { ...refused,
                 error: "That trigger is not registered. Call automation_triggers_list and pick an available trigger; do not invent one." };
-              const { data: created, error: creationError } = await draftStage(() => {
-                draftWriteAttempted = true;
-                return supabaseClient.from("paige_automations").insert({
-                tenant_id: tenantId, name: args.name, category: args.category ?? "general", trigger_key: trig.key,
-                created_by: user.id, granted_lane: "confirm", state: "draft",
-                }).select("id,updated_at").single();
+              // The ORIGINAL claimed approval is stable across reconnects. A
+              // standing-autonomy call instead uses its admitted turn/tool identity.
+              // Neither identity nor tenant is accepted from model arguments.
+              const approvalToken = [...approvalSpend].find(([, callId]) => callId === tc.id)?.[0];
+              draftId = await draftStage(() => stableRunId(["automation_draft", tenantId!, user.id,
+                payloadThreadId ?? "", approvalToken ?? `${payloadRequestIntentId ?? requestNonce}:${tc.id}`]));
+              draftWriteAttempted = true;
+              const saved = await saveAutomationDraft(supabaseClient, {
+                actorId: user.id, tenantId: tenantId!, requestId: draftId,
+                draft: { name: args.name, category: args.category ?? "general", trigger_key: trig.key,
+                  steps: steps.map(s => ({ ...(s.action_kind ? { action_kind: String(s.action_kind) } : { tool_key: String(s.tool_key) }),
+                    config: (s.config ?? {}) as Record<string, unknown> })) },
+                current: draftCurrent, signal: req.signal,
+                remainingMs: Math.min(8000 - (performance.now() - draftStartedAt), WALL_CLOCK_MS - (Date.now() - startedAt)),
               });
-              if (creationError || !created) {
-                if (databaseAnswered(creationError) && !created) {
-                  return creationError?.code === "23505" ? { ...refused, reason: "name_conflict",
-                    error: "A process with that name already exists.",
-                    note: "Inspect the existing process. For a distinct process, choose a different name and obtain new approval before creating it. Do not rename or retry automatically." } : refused;
-                }
-                return draftUnknown();
-              }
-              if (!validId(created.id)) return draftUnknown();
-              draftId = created.id;
-              if (typeof created.updated_at !== "string" || !Number.isFinite(Date.parse(created.updated_at)) || !await scopeHolds()) return draftUnknown();
-              const rows = steps.map((s, n) => ({
-                automation_id: created.id, position: n + 1,
-                action_kind: s.action_kind ?? null, tool_key: s.tool_key ?? null, config: s.config ?? {},
-              }));
-              const { error: actsError } = await draftStage(() => supabaseClient.from("paige_automation_acts").insert(rows));
-              if (databaseAnswered(actsError)) {
-                // Only compensate this new, unchanged draft after a definite single-statement refusal.
-                if (!await scopeHolds()) return draftUnknown();
-                const cleanup = await draftStage(() => supabaseClient.from("paige_automations").delete()
-                  .eq("tenant_id", tenantId).eq("id", created.id).eq("created_by", user.id)
-                  .eq("state", "draft").eq("granted_lane", "confirm").eq("updated_at", created.updated_at).select("id"));
-                return !cleanup.error && Array.isArray(cleanup.data) && cleanup.data.length === 1 &&
-                  cleanup.data[0]?.id === created.id ? refused : draftUnknown();
-              }
-              // A lost steps response is reconciled by reads, never by a repeat insert or deletion.
-              const reopened = await draftStage(() => supabaseClient.from("paige_automations")
-                .select("id,tenant_id,name,category,trigger_key,created_by,state,granted_lane,updated_at")
-                .eq("tenant_id", tenantId).eq("id", created.id).maybeSingle());
-              const savedActs = await draftStage(() => supabaseClient.from("paige_automation_acts")
-                .select("automation_id,position,action_kind,tool_key,config")
-                .eq("automation_id", created.id).order("position"));
-              const canonical = (value: unknown): string => JSON.stringify(value, (_key, v) =>
-                object(v) ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]])) : v);
-              const saved = reopened.data;
-              if (reopened.error || savedActs.error || !saved || saved.id !== created.id || saved.tenant_id !== tenantId ||
-                  saved.name !== args.name || saved.category !== (args.category ?? "general") || saved.trigger_key !== trig.key ||
-                  saved.created_by !== user.id || saved.state !== "draft" || saved.granted_lane !== "confirm" ||
-                  typeof saved.updated_at !== "string" || !Number.isFinite(Date.parse(saved.updated_at)) ||
-                  !Array.isArray(savedActs.data) || savedActs.data.length !== rows.length ||
-                  savedActs.data.some((row, i) => canonical(row) !== canonical(rows[i])) || !await scopeHolds()) return draftUnknown();
-              const stable = await draftStage(() => supabaseClient.from("paige_automations").select("updated_at")
-                .eq("tenant_id", tenantId).eq("id", created.id).maybeSingle());
-              if (stable.error || stable.data?.updated_at !== saved.updated_at) return draftUnknown();
+              if (saved.status === "refused") return saved.reason === "name_conflict" ? { ...refused, reason: "name_conflict",
+                error: "A process with that name already exists.",
+                note: "Inspect the existing process. For a distinct process, choose a different name and obtain new approval before creating it. Do not rename or retry automatically." } : refused;
+              if (saved.status !== "saved" || !await scopeHolds()) return draftUnknown();
               let posture: Record<string, unknown> | null = null;
               try {
-                const resolved = await draftStage(() => supabaseClient.rpc("resolve_automation_autonomy", { _automation_id: created.id }));
+                const resolved = await draftStage(() => supabaseClient.rpc("resolve_automation_autonomy", { _automation_id: saved.automationId }));
                 if (!resolved.error && object(resolved.data)) posture = resolved.data;
               } catch (_e) { /* Saved configuration is known; read-only readiness remains unverified. */ }
               const readinessVerified = object(posture) && ["auto", "confirm", "off"].includes(String(posture.effective)) &&
                 Array.isArray(posture.dark);
               if (!draftCurrent()) return draftUnknown();
-              return { success: true, automation_id: created.id, steps: rows.length, state: "draft", granted: "confirm",
+              return { success: true, automation_id: saved.automationId, steps: saved.steps, state: "draft", granted: "confirm",
+                receipt_id: saved.receiptId, receipt_recorded: true, recovered: saved.recovered,
                 verified_readback: true, execution_started: false, readiness: readinessVerified ? "resolved" : "unverified",
                 what_it_would_do: readinessVerified ? posture?.effective : null,
                 cannot_fire_because: readinessVerified ? posture?.dark : null,

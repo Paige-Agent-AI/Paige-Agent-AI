@@ -11,29 +11,29 @@ AUTOMATED_EVIDENCE: PASS: Seven focused suites181PASS plus five original door/ap
 STATIC_EVIDENCE: PASS: Changed UI lint0; compiler canonical ratchet baseline10/current6/0NEW; pinned Impeccable4.1.0 detect exit0. Independently decomposed protected-source scalar renewal reproduces all29 tools with zero validator findings.
 RENDERED_EVIDENCE: PASS: OpportunityResultReceipt.test.tsx and PrivateDocumentWork.opportunity.test.tsx mount actual original result/private Hub consumers with synthetic transport, covering read/keep/remount/late-answer/collapse. No screenshot geometry or customer proof inferred.
 BEHAVIORAL_EVIDENCE: PASS: Original receipt identity, version, read-only body, fresh reopen, scope retirement, stall timeout and late answer rejection exercised in actual DOM components; storage keeps only original opaque locators.
-AUTHENTICATED_RUNTIME: UNVERIFIED: Source is development-only; exact production update/interruption/full document reload/both-surface reopen/original receipt and second legitimate SOLO cohort proof remain owed.
-KEYBOARD_FOCUS: UNVERIFIED: Native buttons, links, disclosure semantics and visible focus styles preserved; actual keyboard drive in the released original shell still owed.
-ZOOM_REFLOW: UNVERIFIED: Inline wrapping uses original container; actual native zoom and original-shell viewport geometry are not yet measured.
+AUTHENTICATED_RUNTIME: PASS: Released original notes-only update saved once; interrupted full reload, original Chat result/receipt, private Hub full reload/fresh SAME receipt and exact record/words reopen verified. Second existing SOLO sample read-only; not universal manual testing.
+KEYBOARD_FOCUS: PASS: Original receipt disclosure and sidebar scroll preserved; Tab focused original record link, Return opened exact saved Opportunity, Close and Hub return worked.
+ZOOM_REFLOW: UNVERIFIED: Actual two-account four-size closed/open viewport reflow16states has no document horizontal overflow; native zoom keys did not change measured scale, so native zoom remains unverified.
 REDUCED_MOTION: PASS: This change adds no animation; original disclosure and scroll owner remain unchanged.
 STATE_COVERAGE: PASS: Closed/loading/verified/refused/not-found/unavailable/timeout/read retry/collapse/unmount/user-workspace retirement/storage refusal/late result and clock response covered with original consumers.
-TRUTHFUL_STATE_LABELS: UNVERIFIED: Actual released current-permission receipt labels need genuine customer verification; fixture refusals never offer a mutation and kept references are explicitly private and tab-local.
+TRUTHFUL_STATE_LABELS: PASS: Actual prior approval failure/refusal and later original Done/receipt/version verified; private kept-reference notice explicitly says tab-local. No provider delivery or universal manual acceptance inferred.
 SOLO_UI: YES: Existing PAIGE CRM result card and Team Hub Saved PAIGE work disclosure, available through standard current workspace context rather than named-account branches.
-UNVERIFIED: Production release, exact-head final review/CI, native and Edge source readback, real customer update/interruption/reload/reopen, actual shell keyboard/zoom and role/cohort acceptance remain owed.
-INTERNAL_BUILD_IDENTITY: c45247b8bacb7cb04c30b32aa6c4a3d81875d1a8; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original CRM command and Chat functions require normal production release and source readback); evidence=original journey14.62 and owning source tests.
-RELEASE_CHANNEL: development: original CRM/Chat/private Hub integration not yet released.
+UNVERIFIED: Native zoom, assistive-technology/live role-revocation drives and every-account manual acceptance are not claimed. Bounded functional live proof and source release are verified below; owner acceptance and full EXP03 remain separate.
+INTERNAL_BUILD_IDENTITY: a7464576f85b94a7c9d3b2798ea0abe6eac2a80f; deployment=VERIFIED; environment=production; migrations=NOT_APPLICABLE(EXP03; original E08 binding30 separately released); edge=VERIFIED(original CRM261/Chat662 source certificate, subsequent original E08 Chat678 handback); evidence=original journey14.62 and dated authenticated receipt proof below.
+RELEASE_CHANNEL: production: original3336 source and required original3340 binding repair released; actual bounded save/interruption/reload/receipt proof verified below.
 RELEASE_CLASSIFICATION: patch: preserve original native update receipt identity and add guarded original receipt reopening; no new mutation or provider capability.
 CUSTOMER_RELEASE_IDENTITY: none: internal selected-outcome repair, no announcement or version assigned.
 RELEASE_NOTE_REQUIRED: no: internal repair evidence only, customer publication not requested.
-RELEASE_TRUTH_BOUNDARY: PARTIAL: local integrated receipt continuity; PROOF OWED: required exact-head release and genuine authenticated same-result both-surface recovery.
+RELEASE_TRUTH_BOUNDARY: PASS: Selected original save/interruption/fullreload/both-surface SAME receipt and exact record reopen verified; full EXP03, every-account manual proof and owner acceptance remain separate.
 RELEASE_RECOVERY: position=reviewed source rollback or forward fix without changing native business records or receipts; reference=original CRM command contract and release governance policy.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: actual original-shell geometry not measured.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: actual original-shell geometry not measured.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: actual original-shell geometry not measured.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: actual original-shell geometry not measured.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: actual original-shell geometry not measured.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: actual original-shell geometry not measured.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: actual original-shell geometry not measured.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: actual original-shell geometry not measured.
+SOLO_1536X770_PAIGE_CLOSED: PASS: Two actual existing SOLO sessions; original private reference present only in its own tab, no document horizontal overflow.
+SOLO_1536X770_PAIGE_OPEN: PASS: Two actual existing SOLO sessions; original Chat mounted, no document horizontal overflow.
+SOLO_1366X768_PAIGE_CLOSED: PASS: Two actual existing SOLO sessions; original private reference retained only in its own tab, no document horizontal overflow.
+SOLO_1366X768_PAIGE_OPEN: PASS: Two actual existing SOLO sessions; original Chat mounted, no document horizontal overflow.
+SOLO_1024X768_PAIGE_CLOSED: PASS: Two actual existing SOLO sessions; original private reference retained only in its own tab, no document horizontal overflow.
+SOLO_1024X768_PAIGE_OPEN: PASS: Two actual existing SOLO sessions; original Chat mounted, no document horizontal overflow; original header fold control used after ambiguous locator.
+SOLO_900X1000_PAIGE_CLOSED: PASS: Two actual existing SOLO sessions; original private reference retained only in its own tab, no document horizontal overflow.
+SOLO_900X1000_PAIGE_OPEN: PASS: Two actual existing SOLO sessions; original Chat mounted, no document horizontal overflow; overrides reset.
 
 ## Contract, authority and regression
 
@@ -64,3 +64,11 @@ Final bd3 source was independently NON-AUTHOR cleared and published ready. Renew
 Required bd3 verify is NOT green: live original GitHub step28 logs show Ubuntu azure/archive/security mirror DNS failure during dependency install; Chromium was not downloaded and dependent hostile/render/PC1 browser proofs failed. Earlier progress-as-success commentary was explicitly corrected. The Deno artifact13874830819 has two OWN CRM structural-client diagnostics versus clean base, while original Chat stays9base/9head. First from/select shape correction then exposed TS2589 on the recursive SDK assignment. Final c452 uses the actual from→select→filter interface plus a documented narrow type-only boundary on the ORIGINAL server-created clients after verifiedgetUser. No request-supplied client/actor, any-type exemption or authority/guard change. Official repository-frozen Deno2.1.4 check now exits0; actual reader/door49PASS and scoped lint0. Reader emitted runtime bytes are unchanged; the door's explicit property spelling/format differs, so full emitted-door byte equality is NOT claimed. The failed byte-equivalence oracle is retained rather than rewriting runtime to satisfy it.
 
 Only the exact already-published EXP05#3335/24268df0310eb387c3b83fc4c8d2fab1c76a1765 Chromium installer hunk is carried unchanged: download original pinned browser first; require actual blank-page launch; use original with-deps fallback and require launch again if needed. EXP05 remains implementing owner, its branch/reservation untouched; no Zapier/native/consent code copied or competing installer created. All browser security proofs remain required. Current recovery c452 is not released; independent exact-head review and ALL fresh required hosted gates remain required. Prior failures, skipped dependent checks and earlier assurance remain historical, never substitutes for the new head.
+
+## November 13 released and authenticated result
+
+This dated entry supersedes only the older development/proof-owed claims above. Product3336 reviewed1293/all11required+bothweb/NON-AUTHOR5862608130 merged normally as a7464576f85b94a7c9d3b2798ea0abe6eac2a80f at exact reviewed tree95394679. Normal CRM/Chat source certificate14055736501 digest5ec0979cbb36b974a07fce01aa1bd000d6f6ff7467651f0935c4191c2bfd637c/all_pass, original native source/ACL and official web identity readbacks are in journey14.62/Master4.0. Required original E08 approval repair3340/native30 is separately releasedfa7a/source verified; earlier failed approval/P1/CI evidence retained, old proposals never replayed.
+
+Genuine original notes-only update saved ONCE(version3→4). Full document reload interrupted Running after native commit. Original Chat history reopened same result/native receipt, then fresh receipt check verified saved/current version4. Private Keep retained opaque original locator; full Hub reload/fresh read returned SAME original receipt/time/version. Keyboard original link reopened exact record/words. Final authoritative native counts: one new update result and one correlated successful Rail event, unchanged after every read/reload/return; historic previous result remains separate. No customer IDs, private words, approval tokens or raw session evidence are published here; original private proof stays in ANT87/ANT147.
+
+Two distinct existing ordinary-owner SOLO sessions checked, second read-only/no foreign saved reference. Actual four required viewport sizes with PAIGE closed/open in each:16 states/no document horizontal overflow. Header fold locator initially ambiguous at narrower size, corrected by original title; no source change. Original sidebar scroll/Tab/Return receipt-link reachability verified. Native zoom keystrokes produced no measured scaling, so native zoom stays UNVERIFIED; no assistive-tech or live role-change claims. Overrides reset. Standard eligible existing/future SOLO source and real-role isolated SQL remain distinct from bounded manual samples. Private Hub handoff is explicitly tab-local; original saved result/Chat history is durable. Full EXP03/all50/ALG maturity/owner acceptance remain separate. No next outcome/timer.

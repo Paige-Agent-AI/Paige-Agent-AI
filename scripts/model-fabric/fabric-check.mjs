@@ -392,12 +392,12 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const { classifyTurn, TURN_CLASSIFY_DEADLINE_MS } = await import("../../supabase/functions/_shared/paige-turn/classify-call.ts");
   const CLASSIFY_TRACE = { tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a1", agent_id: "paige-ai-chat", job_kind: "turn-classify" };
 
-  // D0 — the RECALIBRATED deadline (ANT-20, 2026-10-10): the value is pinned because changing it is
+  // D0 — the RECALIBRATED deadline (EXP01, 2026-11-13): the value is pinned because changing it is
   // a reviewed decision, and it stays above the incumbent p90 the parameter was first calibrated on.
   const classifySource = readFileSync(fileURLToPath(new URL("../../supabase/functions/_shared/paige-turn/classify-call.ts", import.meta.url)), "utf8");
-  ok(TURN_CLASSIFY_DEADLINE_MS === 2500,
-    "D0 the deadline is the recalibrated 2500 ms (Luna production evidence 2026-10-09/10: 1 completion / 20 aborts at 1200)");
-  ok(classifySource.includes("TURN_CLASSIFY_DEADLINE_MS = 2500") && classifySource.includes("tune-or-revert"),
+  ok(TURN_CLASSIFY_DEADLINE_MS === 4000,
+    "D0 the deadline is the bounded 4000 ms recalibration (original 2500ms censored-tail failure retained)");
+  ok(classifySource.includes("TURN_CLASSIFY_DEADLINE_MS = 4000") && classifySource.includes("tune-or-revert"),
     "D0 the constant's own record names the calibration basis and the acceptance gate");
   ok(TURN_CLASSIFY_DEADLINE_MS > 1460,
     "D0 the deadline stays above the incumbent classifier p90 it was first calibrated on (Haiku 1460 ms)");
@@ -421,6 +421,33 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     "D1 the classifier's shape rides the wire; sampling is never sent to a reasoning model (2.4 rule)");
   ok(d1row?.job_kind === "turn-classify" && d1row?.provider === "openai",
     `D1 the trace keeps the caller's job_kind tag (${d1row?.job_kind}) — no trace-history break`);
+
+  // D1-tail — drive the REAL classifier/Fabric/adapter with a response in the
+  // censored tail of the former 2500ms window. No provider or authority bypass.
+  setScenario({});
+  calls.length = 0;
+  const tailFetch = globalThis.fetch;
+  let tailAborted = false;
+  const tailDispatches = [];
+  globalThis.fetch = async (url, init) => {
+    tailDispatches.push(String(url));
+    if (String(url).startsWith("https://api.openai.com/")) {
+      await new Promise((resolve, reject) => {
+        const abort = () => { tailAborted = true; clearTimeout(timer); reject(init.signal.reason); };
+        const timer = setTimeout(() => { init.signal?.removeEventListener("abort", abort); resolve(); }, 3000);
+        if (init.signal?.aborted) abort();
+        else init.signal?.addEventListener("abort", abort, { once: true });
+      });
+    }
+    return tailFetch(url, init);
+  };
+  let tailClassification;
+  try { tailClassification = await classifyTurn("thanks so much", null, CLASSIFY_TRACE); }
+  finally { globalThis.fetch = tailFetch; }
+  ok(tailClassification?.intent === "converse" && tailClassification.needs_workspace_data === false && !tailAborted,
+    "D1-tail a valid 3000ms Luna classification survives without taking unclassified_default");
+  ok(tailDispatches.length === 1 && tailDispatches[0].startsWith("https://api.openai.com/"),
+    "D1-tail one original primary request, no retry or second-provider dispatch");
 
   // D2 — the known ceiling, under the ESTABLISHED contract: the classifier is a CHEAP-band call,
   // and the budget contract deliberately allows gated continuation for the cheap band at the hard

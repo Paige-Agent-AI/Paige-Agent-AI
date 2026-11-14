@@ -1168,7 +1168,7 @@ const CONTRACTS = {
     "classification": "mutate",
     "riskPolicyKey": "ordinary",
     "approvalAuthority": "chat-canonical",
-    "seatAuthority": "workspace-admin",
+    "seatAuthority": "door-seat",
     "selfDescribe": true,
     "readiness": "none",
     "fingerprint": "de74d943583bf1e8a096d0dace8a96fdfb51187930af03d8a23f80b78a265bcd"

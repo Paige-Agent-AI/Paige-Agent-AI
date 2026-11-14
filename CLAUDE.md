@@ -1,5 +1,15 @@
 # Paige Agent AI — Working Doctrine
 
+## MANDATORY — ONE OUTCOME DOES NOT MEAN ONE PR — November 13, 2026
+
+The Coordinator and every current/future authorized EXP and PO-EXP agent must finish ONE owner-selected original outcome at a time through small, cohesive, independently reviewable PRs. One outcome may require several PRs. Do not accumulate the entire outcome in one large PR merely because all changes serve that outcome.
+
+Split implementation along actual safe dependency boundaries and merge ready increments in dependency order without waiting to bundle the whole outcome. Keep tightly coupled changes together only when separation would create an unsafe or incompatible intermediate state; state that concrete reason in the existing PR. Do not split mechanically by file count or separate code from the tests, permissions or migration changes necessary for that increment to be safe. This adds no numerical size threshold, recurring audit, checklist or new approval gate.
+
+Preserve original scope, source ownership and finite shared-source windows, peer changes, saved data/receipts, pending or UNKNOWN operations and immutable applied migrations. Each PR still receives the author's own independent NON-AUTHOR agent review and required exact-head engineering checks before safe merge/deployment. Missing preview/browser login or an automated Codex review is never a wait gate.
+
+A merged increment is not a completed outcome and is not a reason to stop or request approval for the next increment of that same authorized outcome. Continue integration, release and LIVE useful-result/receipt/reopen/recovery verification; update the existing Outcomes and original Linear/matrix, report to the owner and Coordinator, then STOP before another outcome. Held agents/outcomes remain held. Timers remain OFF.
+
 ## MANDATORY OWNER CODING RULES — November 13, 2026
 
 These rules bind the Coordinator and every current/future authorized EXP and PO-EXP agent. Apply them within the ONE authorized outcome and original source ownership, universally for eligible existing/future SOLO accounts and separately authorized Platform Operator work.

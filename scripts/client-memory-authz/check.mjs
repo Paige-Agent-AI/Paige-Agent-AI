@@ -1758,6 +1758,10 @@ const mirrorConfirms = (st) => (t, row) => {
    *  records what was inserted so the invariant can be read off the write itself. */
   function processStore({ resolved = { effective: "confirm", capped_by: null, would_run: false, dark: [] } } = {}) {
     return {
+      // Explicit ordinary owner seat for this process fixture, not a global
+      // authority default. Native authorization remains a separate real proof.
+      tenant_members: filters => [{ tenant_id: CALLER_TENANT, user_id: USER, role: "owner", status: "active" }]
+        .filter(row => filters.every(([op, column, value]) => op !== "eq" || row[column] === value)),
       paige_automation_triggers: (filters) => {
         const key = filters.find((f) => f[0] === "eq" && f[1] === "key")?.[2];
         const rows = [
@@ -1789,6 +1793,8 @@ const mirrorConfirms = (st) => (t, row) => {
         toolCall: { name, args: { automation_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", lane: "auto", state: "live", confirm: true } },
         rpcOverrides: {
           get_actor_access: { data: { tier: "tenant" }, error: null },
+          get_paige_persona_context: AUTO.rpcOverrides.get_paige_persona_context,
+          is_tenant_admin_as: AUTO.rpcOverrides.is_tenant_admin_as,
           ...store.__rpc,
           ...(lane === null ? {} : { resolve_tool_autonomy: { data: lane, error: null } }),
         },

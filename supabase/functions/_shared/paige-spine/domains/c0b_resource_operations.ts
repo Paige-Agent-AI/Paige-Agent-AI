@@ -35,7 +35,7 @@ export const C0B_RESOURCE_OPERATION_CAPABILITIES = ([
 ] as const).map(({tool,domain,executor,classification,risk,admin,visible,readiness,replay})=>({
   key:`${domain}.${tool}`,domain,owner: domain === "communications" ? "tenant-comms" : domain === "automations" ? "paige-automations" : "paige-research-knowledge",
   humanSurface:"PAIGE workspace",selfDescribe:visible,readiness,
-  action:{executor,chatTool:tool,classification,riskPolicyKey:risk,seatAuthority:admin?"workspace-admin":"member",
+  action:{executor,chatTool:tool,classification,riskPolicyKey:risk,seatAuthority:admin?(tool==="automation_draft"?"door-seat":"workspace-admin"):"member",
     approvalAuthority:classification==="read"?"none":"chat-canonical",idempotency:replay},
   chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
 } as const satisfies SpineCapability));

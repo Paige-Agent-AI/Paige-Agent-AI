@@ -561,7 +561,7 @@ Owner activation (ANT-37, 2026-10-10): safe source + metadata development now. D
 **Implementation (evidence class: static/source).** `openrouter-models.ts` is the one home for the namespaced ids; `model-allowlist.ts` admits only those three; `paige-turn/route.ts` adds `openrouter` to `FabricProvider` and puts it first per class; `openai-responses.ts` gains a provider profile (own base URL, own key, optional attribution headers, provider-scoped replay tags, truthful trace provider); `model-fabric.ts` adds key-and-cohort-gated admission, candidate ordering and a separate OpenRouter transport seam; `token-pricing.ts` prices `openai/*` ids on the identical GPT-6 rows (unknown OpenRouter ids stay unpriced, never zero). No key is configured in code and no credential value appears in any committed artifact.
 
 **Automated proof (evidence class: local automated, exact commands run on this worktree).**
-- `npm run test:model-fabric` → **228 passed, 0 failed** (new openrouter primary/fallback/key-gate/telemetry cases included).
+- `npm run test:model-fabric` → **229 passed, 0 failed** (new openrouter primary/fallback/key-gate/telemetry cases included).
 - `npm run test:openai-responses` → **123 passed, 0 failed** (new §11 provider-tag, allowlist, key/base/attribution, trace and streaming cases).
 - `npm run test:token-pricing` → **26 passed, 0 failed**; `npm run test:trace-wiring` → **20 passed, 0 failed**.
 - `deno test … paige-turn/route.test.ts round.test.ts classify.test.ts exposure.test.ts provider-failure.test.ts` → **49 passed, 0 failed** (policy pin updated to name OpenRouter first).

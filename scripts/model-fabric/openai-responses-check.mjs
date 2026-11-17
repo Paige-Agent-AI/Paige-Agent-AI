@@ -694,6 +694,8 @@ console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry"
 {
   ENV.OPENROUTER_SITE_URL = "https://paige.ai";
   ENV.OPENROUTER_APP_NAME = "PAIGE-Fabric-Check";
+  // The configured Edge Function Secret is OPEN_ROUTER_AI_API; when both names are present it wins.
+  ENV.OPEN_ROUTER_AI_API = "sk-or-configured-edge-secret";
   const from = traceCount();
   const t = transport(() => json({
     id: "resp_or", model: or.OPENROUTER_OPERATIONAL, status: "completed",
@@ -703,8 +705,8 @@ console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry"
   const r = await ad.responsesCompletion({ messages: CONVO }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter", fetchImpl: t }, TRACE);
   ok(t.calls.length === 1 && t.calls[0].url === "https://openrouter.ai/api/v1/responses",
     "11.6 OpenRouter uses its own /api/v1 base URL");
-  ok(t.calls[0].headers.authorization === "Bearer sk-or-test-not-a-real-key" && t.calls[0].headers.authorization !== "Bearer sk-test-not-a-real-key",
-    "11.7 OpenRouter uses its OWN key, never the OpenAI key");
+  ok(t.calls[0].headers.authorization === "Bearer sk-or-configured-edge-secret" && t.calls[0].headers.authorization !== "Bearer sk-test-not-a-real-key",
+    "11.7 the configured OPEN_ROUTER_AI_API Edge secret is the key on the wire, never the OpenAI key or the legacy alias");
   ok(t.calls[0].headers["HTTP-Referer"] === "https://paige.ai" && t.calls[0].headers["X-Title"] === "PAIGE-Fabric-Check",
     "11.8 optional attribution headers ride the wire (never a credential)");
   ok(r.choices[0].message.content === "PONG" && r.choices[0].message.paige_provider === "openrouter:openai/gpt-6.1-sol",
@@ -716,6 +718,7 @@ console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry"
     "11.11 OpenRouter GPT-6 tokens are metered on the SAME row as direct OpenAI");
   delete ENV.OPENROUTER_SITE_URL;
   delete ENV.OPENROUTER_APP_NAME;
+  delete ENV.OPEN_ROUTER_AI_API;
 }
 {
   const saved = ENV.OPENROUTER_API_KEY;

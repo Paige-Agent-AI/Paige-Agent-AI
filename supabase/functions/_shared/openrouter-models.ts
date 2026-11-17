@@ -10,6 +10,16 @@
 // 2026-10-06 class policy (Luna / Sol / Astra) stays intact.
 export const OPENROUTER_PROVIDER_PREFIX = "openai/";
 
+/**
+ * Edge Function Secret names that may carry the OpenRouter key, in priority order.
+ * `OPEN_ROUTER_AI_API` is the configured production secret name; `OPENROUTER_API_KEY`
+ * is the original local name and stays as a back-compat alias. NAMES ONLY — no value
+ * is ever stored, logged or committed here. Both the Fabric admission gate and the
+ * Responses adapter must resolve through this one list so a configured key cannot be
+ * admitted on one side and skipped on the other.
+ */
+export const OPENROUTER_KEY_ENV_NAMES = ["OPEN_ROUTER_AI_API", "OPENROUTER_API_KEY"];
+
 export const OPENROUTER_CHEAP = `${OPENROUTER_PROVIDER_PREFIX}gpt-6-luna`;
 export const OPENROUTER_OPERATIONAL = `${OPENROUTER_PROVIDER_PREFIX}gpt-6.1-sol`;
 export const OPENROUTER_FRONTIER = `${OPENROUTER_PROVIDER_PREFIX}gpt-6-astra`;

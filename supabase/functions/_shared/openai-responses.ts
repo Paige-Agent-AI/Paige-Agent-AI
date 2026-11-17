@@ -25,6 +25,7 @@
 import { NeedsConfigError } from "./provider-types.ts";
 import { classifyProviderFailure, type ProviderFailureClass } from "./provider-failure.ts";
 import { envKey } from "./env-key.ts";
+import { OPENROUTER_KEY_ENV_NAMES } from "./openrouter-models.ts";
 import { traceLLMCall, type TraceCtx } from "./llm-trace.ts";
 import { assertModelAllowed } from "./model-allowlist.ts";
 import {
@@ -51,7 +52,7 @@ function openRouterBaseUrl(): string {
   return Deno.env.get("OPENROUTER_BASE_URL") ?? "https://openrouter.ai/api/v1";
 }
 function openRouterKey(): string {
-  const k = envKey("OPENROUTER_API_KEY");
+  const k = envKey(...OPENROUTER_KEY_ENV_NAMES);
   if (!k) throw new NeedsConfigError("openrouter");
   return k;
 }

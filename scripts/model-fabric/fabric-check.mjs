@@ -218,14 +218,20 @@ for (const [cls, model] of [["operational", "openai/gpt-6.1-sol"], ["frontier", 
   delete ENV.OPENROUTER_CANARY_TENANTS;
   ok(fabric.openRouterAdmitted("7e5a0000-0000-4000-8000-0000000000f1", "operational") === true,
     "an attributed tenant is admitted by default when the key is configured");
+  delete ENV.OPENROUTER_API_KEY;
+  delete ENV.OPEN_ROUTER_AI_API;
+  ok(fabric.openRouterAdmitted("7e5a0000-0000-4000-8000-0000000000f1", "operational") === false,
+    "no configured key under either name means no admission — fail closed, never a hard failure");
+  // The configured Edge Function Secret name is OPEN_ROUTER_AI_API. Admission must resolve it
+  // through the SAME case-insensitive helper the Responses adapter uses, not the legacy alias only.
+  ENV.OPEN_ROUTER_AI_API = "sk-or-production-name-test";
+  ok(fabric.openRouterAdmitted("7e5a0000-0000-4000-8000-0000000000f1", "operational") === true,
+    "the configured OPEN_ROUTER_AI_API Edge secret admits OpenRouter on its own");
+  delete ENV.OPEN_ROUTER_AI_API;
+  ENV.OPENROUTER_API_KEY = "sk-or-test-not-a-real-key";
   ENV.OPENROUTER_CANARY_TENANTS = "";
   ok(fabric.openRouterAdmitted("7e5a0000-0000-4000-8000-0000000000f1", "operational") === false,
     "an explicitly empty tenant cohort is the kill switch");
-  delete ENV.OPENROUTER_API_KEY;
-  ok(fabric.openRouterAdmitted("7e5a0000-0000-4000-8000-0000000000f1", "operational") === false,
-    "no configured key means no admission — fail closed, never a hard failure");
-  ENV.OPENROUTER_API_KEY = "sk-or-test-not-a-real-key";
-  ENV.OPENROUTER_CANARY_TENANTS = "";
 }
 {
   openaiPlan = { status: 401, type: "invalid_request_error", code: "invalid_api_key" };

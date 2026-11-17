@@ -30,6 +30,8 @@ import { OPENAI_EFFORT_BY_CLASS, type OpenAIReasoningClass } from "./openai-mode
 import { responsesCompletion, responsesStream, type ChatShapeBody, type ResponsesProvider } from "./openai-responses.ts";
 import { classifyProviderFailure, PROVIDER_FAILURE_CLASSES, type ProviderFailureClass } from "./provider-failure.ts";
 import { CLASS_POLICY, mayFallback, type CognitiveClass, type FabricProvider, type RouteCandidate } from "./paige-turn/route.ts";
+import { envKey } from "./env-key.ts";
+import { OPENROUTER_KEY_ENV_NAMES } from "./openrouter-models.ts";
 
 /**
  * The owner-directed primary switch (ON since the 2026-10-08 directive; the validation staging and
@@ -154,7 +156,9 @@ export function openRouterCohortAdmits(tenantId: string | null | undefined, cls:
 
 /** Master flag AND configured key AND tenant cohort AND class scope must all admit it. */
 export function openRouterAdmitted(tenantId: string | null | undefined, cls: CognitiveClass): boolean {
-  return OPENROUTER_CHAT_ENABLED && !!fabricEnv("OPENROUTER_API_KEY") && openRouterCohortAdmits(tenantId, cls);
+  // The SAME case-insensitive resolver as the Responses adapter, over the SAME name list. The
+  // configured Edge secret is OPEN_ROUTER_AI_API; OPENROUTER_API_KEY remains a back-compat alias.
+  return OPENROUTER_CHAT_ENABLED && !!envKey(...OPENROUTER_KEY_ENV_NAMES) && openRouterCohortAdmits(tenantId, cls);
 }
 
 /** Providers that can serve a streamed, tool-bearing chat round today. The open pool does not stream. */

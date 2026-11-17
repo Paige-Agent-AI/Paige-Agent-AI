@@ -18,7 +18,7 @@ The **business area** (Operations, Social, Marketing, Sales, Advertising, Integr
 | `operational` | `openai/gpt-6.1-sol` | normal conversation, tool reasoning, planning, synthesis, drafting, multi-step orchestration | `openai/gpt-6.1-sol` → `claude-sonnet-5-5` |
 | `frontier` | `openai/gpt-6-astra` | hard ambiguity, long-horizon orchestration, deep research, large documents, high-stakes synthesis | `openai/gpt-6-astra` → `claude-sonnet-5-5` |
 
-`gpt-6.2-astra` and the `-pro` variants exist on OpenRouter but are **not** adopted by any class. No unproven or renamed id is used. A missing `OPENROUTER_API_KEY`, an unattributed tenant, or an excluded class makes the OpenRouter candidate fail closed and skipped; the fallback chain above serves the turn. An explicitly empty `OPENROUTER_CANARY_TENANTS` is the kill switch.
+`gpt-6.2-astra` and the `-pro` variants exist on OpenRouter but are **not** adopted by any class. No unproven or renamed id is used. A missing `OPEN_ROUTER_AI_API` secret (the configured Edge name; `OPENROUTER_API_KEY` is a back-compat alias), an unattributed tenant, or an excluded class makes the OpenRouter candidate fail closed and skipped; the fallback chain above serves the turn. An explicitly empty `OPENROUTER_CANARY_TENANTS` is the kill switch.
 
 ## 3. Capability map by business area
 

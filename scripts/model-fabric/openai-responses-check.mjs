@@ -37,6 +37,7 @@ const { estimateTokenCostUsd } = await import("../../supabase/functions/_shared/
 const models = await import("../../supabase/functions/_shared/openai-models.ts");
 const or = await import("../../supabase/functions/_shared/openrouter-models.ts");
 const { NeedsConfigError } = await import("../../supabase/functions/_shared/provider-types.ts");
+const { envKey } = await import("../../supabase/functions/_shared/env-key.ts");
 
 let pass = 0, fail = 0;
 const ok = (cond, name) => { if (cond) pass++; else { fail++; console.log(`  FAIL  ${name}`); } };
@@ -887,6 +888,24 @@ console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry"
     'K15 streamed final authoritative usage carries same cache/cost observations exactly once');
   ok(signatureShape.test(streamRow.metadata?.provider_cache_signature??''),
     'KD9 real streaming finalizer writes one fixed-format diagnostic through the same original trace');
+}
+
+console.log("12. canonical key resolver tolerates a get-only env surface");
+{
+  const fullEnv = globalThis.Deno.env;
+  try {
+    // Offline contract harnesses expose only get(); the case-insensitive scan needs toObject().
+    // A missing key must stay an honest undefined, never a TypeError that aborts the whole turn.
+    globalThis.Deno.env = { get: () => undefined };
+    let missing;
+    try { missing = envKey("OPEN_ROUTER_AI_API", "OPENROUTER_API_KEY"); } catch { missing = "THREW"; }
+    ok(missing === undefined, '12.1 get-only env with no matching key returns undefined, does not throw');
+    globalThis.Deno.env = { get: (k) => k === "OPEN_ROUTER_AI_API" ? "rotated-test-value" : undefined };
+    ok(envKey("OPEN_ROUTER_AI_API", "OPENROUTER_API_KEY") === "rotated-test-value",
+      '12.2 exact match still wins on a get-only env without reaching toObject');
+  } finally {
+    globalThis.Deno.env = fullEnv;
+  }
 }
 
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);

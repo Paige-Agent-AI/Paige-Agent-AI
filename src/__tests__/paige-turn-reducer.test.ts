@@ -21,11 +21,22 @@ const WORK_B = "66666666-7777-4888-8999-aaaaaaaaaaaa";
 const CLASSIFY: TurnClassifiers = {
   isMutating: (t) => ["contact_create", "document_generate", "propose_action"].includes(t),
   isBuild: (t) => t === "growth_page_save",
-  isResearch: (t) => t === "web_search",
+  isResearch: (t) => t === "web_search" || t === "deep_research",
   isDelegation: (t) => t === "delegate_to_subagent",
 };
 const tracker = () => createTurnTracker(CLASSIFY);
 const ran = (name: string, extra: Record<string, unknown> = {}) => ({ name, ran: true, ...extra });
+
+it("keeps native-accepted Research on its original WAIT_WORK without a new decision round", () => {
+  const t = tracker(); t.roundStarted();
+  const result = observeToolResult("deep_research", JSON.stringify({ accepted: true, work_id: WORK_A,
+    success: true, saved: true }));
+  t.toolsExecuted([result]);
+  expect(t.state).toBe("WAIT_WORK");
+  expect(t.mode).toBe("research");
+  expect(t.record().waiting_on).toEqual({ kind: "work", work_ids: [WORK_A] });
+  expect(observeToolResult("deep_research", JSON.stringify({ success: true, run_id: WORK_A })).acceptedWorkId).toBeNull();
+});
 
 describe("mode is observed from what the turn actually did", () => {
   it("is pending until the first round resolves", () => {

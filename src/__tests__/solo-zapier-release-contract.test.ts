@@ -38,7 +38,7 @@ describe("Solo Zapier API and MCP release contract", () => {
   it("keeps local cleanup available and preserves non-rotating refresh tokens", () => {
     const api = read("supabase/functions/tenant-zapier-api-connect/index.ts");
     const sql = readMigration();
-    expect(api).toContain('["cancel", "disconnect", "oauth_refuse", "provision_intake_route"]');
+    expect(api).toContain('["cancel", "disconnect", "oauth_refuse"]');
     expect(api).toContain("retainedRefresh");
     expect(api).toContain("String(data.refresh_token)");
     expect(api).toContain("_expected_generation: expectedGeneration");
@@ -71,7 +71,7 @@ describe("Solo Zapier API and MCP release contract", () => {
     expect(sql).toContain("tools_cache=NULL");
     expect(sql).toContain("'auth_kind','oauth'");
   });
-  it("binds inbound routes on the server and deduplicates per tenant", () => {
+  it("preserves original route isolation while retiring new route provisioning", () => {
     const intake = read("supabase/functions/zapier-skool-intake/index.ts");
     const sql = readMigration();
     const api = read("supabase/functions/tenant-zapier-api-connect/index.ts");
@@ -94,8 +94,8 @@ describe("Solo Zapier API and MCP release contract", () => {
     expect(sql).toContain("EXCEPTION WHEN unique_violation");
     expect(sql).toContain("FUNCTION public.zapier_intake_route_create");
     expect(sql).toContain("route_token_hash");
-    expect(api).toContain("route_token: routeToken");
-    expect(api).toContain("one_time_secret: true");
+    expect(api).not.toContain("provision_intake_route");
+    expect(api).not.toContain("zapier-skool-intake");
     const ui = read("src/solo/settings-integrations.tsx");
     expect(ui).not.toContain("route_token");
     expect(ui).not.toContain("x-paige-route-token");

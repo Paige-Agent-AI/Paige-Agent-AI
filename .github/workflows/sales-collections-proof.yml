@@ -73,7 +73,13 @@ jobs:
         with:
           node-version: '24'
       - name: Install PostgreSQL client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+        run: |
+          if command -v psql >/dev/null 2>&1 && psql --version; then
+            echo "Using the installed PostgreSQL client."
+          else
+            sudo apt-get update && sudo apt-get install -y postgresql-client
+            psql --version
+          fi
       - name: Actual Collections migration, tenant gates, atomic import, receipt and reversal races
         env:
           PGPASSWORD: isolated-test-password

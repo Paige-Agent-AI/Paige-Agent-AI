@@ -67,6 +67,62 @@ describe("2. refusals before a proposal reach the Rail for attempts", () => {
 });
 
 describe("3. one approval settles the act", () => {
+  it("refuses the old card after the same page receives a different saved draft", async () => {
+    const w = world({ rpc: pagePublished });
+    const first = await w.call(chat);
+    expect(first.status).toBe(202);
+    expect(first.body.fingerprint).toEqual(expect.any(String));
+    w.tables.growth_pages[0] = livePage({
+      publish_revision: "b".repeat(64), draft_blocks_json: [{ type: "hero", title: "Edited after review" }],
+    });
+    const renewed = await w.call(chat);
+    expect(renewed.body.fingerprint).toEqual(expect.any(String));
+    expect(renewed.body.fingerprint).not.toBe(first.body.fingerprint);
+    const result = await w.call({ ...chat, approved_fingerprint: first.body.fingerprint });
+    expect(result).toMatchObject({ status: 409, body: { code: "PAGE_REVIEW_STALE", refused: true } });
+    expect(w.executorCalls()).toHaveLength(0);
+    expect((await w.call({ ...chat, approved_fingerprint: renewed.body.fingerprint })).status).toBe(200);
+    expect(w.executorCalls()).toHaveLength(1);
+  });
+
+  it("refuses the old destination even when the draft is unchanged", async () => {
+    const w = world({ rpc: pagePublished });
+    const first = await w.call(chat);
+    w.tables.tenants[0].slug = "new-acme";
+    expect(await w.call({ ...chat, approved_fingerprint: first.body.fingerprint }))
+      .toMatchObject({ status: 409, body: { code: "PAGE_REVIEW_STALE" } });
+    expect(w.executorCalls()).toHaveLength(0);
+  });
+
+  it("reports the database's refusal if the version changes after the approval is claimed", async () => {
+    const w = world({ rpc: () => ({ data: null, error: { code: "22023", message: "GROWTH_PAGE_REVIEW_STALE: changed" } }) });
+    const first = await w.call(chat);
+    expect(await w.call({ ...chat, approved_fingerprint: first.body.fingerprint }))
+      .toMatchObject({ status: 409, body: { code: "PAGE_REVIEW_STALE", receipt_recorded: true } });
+    expect(w.executorCalls()).toEqual([expect.objectContaining({ args: expect.objectContaining({
+      p_reviewed_revision: "a".repeat(64), p_reviewed_path: "/p/acme/spring-offer",
+    }) })]);
+  });
+
+  it("keeps a newer card prepared during an older redemption usable", async () => {
+    let fresh: unknown;
+    const w = world({
+      onTenantRead: async (n) => {
+        if (n !== 4) return; // Old redemption has read its snapshot and is about to claim.
+        w.tables.growth_pages[0] = livePage({ publish_revision: "b".repeat(64) });
+        fresh = (await w.call(chat)).body.fingerprint;
+      },
+      rpc: (fn, args) => args.p_reviewed_revision === "a".repeat(64)
+        ? { data: null, error: { code: "22023", message: "GROWTH_PAGE_REVIEW_STALE: changed" } }
+        : pagePublished(fn, args),
+    });
+    const first = await w.call(chat);
+    expect(await w.call({ ...chat, approved_fingerprint: first.body.fingerprint }))
+      .toMatchObject({ status: 409, body: { code: "PAGE_REVIEW_STALE" } });
+    expect(fresh).toEqual(expect.any(String));
+    expect(await w.call({ ...chat, approved_fingerprint: fresh })).toMatchObject({ status: 200, body: { ok: true } });
+  });
+
   it("a successful claim retires a sibling proposal for the same act on the same artifact, and nothing else", async () => {
     const w = world({ rpc: pagePublished });
     const first = await w.call(publishPage);

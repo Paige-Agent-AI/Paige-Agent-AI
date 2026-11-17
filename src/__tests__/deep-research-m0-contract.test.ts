@@ -19,6 +19,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
+import ts from "typescript";
 
 const root = join(__dirname, "..", "..");
 const engine = readFileSync(join(root, "supabase/functions/paige-deep-research/index.ts"), "utf8");
@@ -56,9 +57,21 @@ describe("the engine's persistence lineage is strict (fail-closed)", () => {
     expect(engine).toContain("// Sources inherit the parent run's lineage VERBATIM — never independently resolved.");
   });
 
-  it("all three persist call sites carry the lineage argument", () => {
-    // R3: the trailing dossier arg is optional diagnostics — the lineage contract is the 6 required args.
-    expect(engine.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope\)/g)?.length).toBeGreaterThanOrEqual(3); // Every native persistence path retains the actor/tenant checkpoint.
+  it("every canonical persistence call carries the server lineage and current-scope check", () => {
+    // C4e shares the save boundary; verify every real call rather than the former exit count.
+    const source = ts.createSourceFile("research.ts", engine, ts.ScriptTarget.Latest, true);
+    const calls: string[][] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "persistRun") {
+        calls.push(node.arguments.map(argument => argument.getText(source)));
+      }
+      node.forEachChild(visit);
+    };
+    visit(source);
+    expect(calls.length).toBeGreaterThan(0);
+    for (const args of calls) expect(args).toEqual([
+      "SUPABASE_URL", "SERVICE_KEY", "runId", "body", "result", "lineageTenantId", "dossier", "assertResearchScope",
+    ]);
     expect(engine).not.toContain("persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result);");
   });
 

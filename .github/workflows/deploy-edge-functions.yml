@@ -286,6 +286,13 @@ jobs:
           done < retired.txt
           exit $fail
 
+      - name: Refresh Social native publication checkpoint
+        if: steps.affected.outcome == 'success' && steps.affected.outputs.count != '0' && steps.upload.outputs.required != 'false'
+        run: |
+          if grep -Fxq 'social-publish-command' affected.txt; then
+            git fetch -q --force origin 'refs/tags/db-live:refs/tags/db-live'
+          fi
+
       - name: Deploy affected functions
         if: steps.affected.outcome == 'success' && steps.affected.outputs.count != '0' && steps.upload.outputs.required != 'false'
         env:

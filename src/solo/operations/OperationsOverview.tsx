@@ -5,6 +5,8 @@ import type { Plan, PlanItem } from "@/hooks/usePlanList";
 import type { TeamMemberRecord } from "../team-workspace-contract";
 import { OperationsAssignee } from "./OperationsAssignee";
 import { OperationsWeek } from "./OperationsWeek";
+import type { WeeklyPlanReviewEntry } from "./OperationsWeeklyPlanReview";
+import { weeklyPlanReferenceCount } from "./operations-weekly-plan-reference";
 import { workDateLabel, workStatusLabel } from "./operations-presentation";
 import { overviewNativeWork, type OperationsWorkSet } from "./operations-overview-work";
 import type { CrmWorkRecord, NativeOperationsWork } from "./operations-native-work";
@@ -13,6 +15,7 @@ import "./operations-overview.css";
 
 type Destination = "Work" | "Projects" | "Delivery" | "Playbooks" | "Capacity";
 export interface OperationsOverviewProps {
+  weeklyPlanning?: WeeklyPlanReviewEntry;
   tenantId: string; plans: Plan[]; items: PlanItem[]; members: TeamMemberRecord[];
   crmTasks?: CrmWorkRecord[]; onInspectCrmTask?: (task: CrmWorkRecord) => void;
   onInspectItem: (item: PlanItem) => void; onInspectPlan: (plan: Plan) => void;
@@ -27,7 +30,7 @@ export interface OperationsOverviewProps {
 
 export function OperationsOverview({ tenantId, plans, items, members, crmTasks = [], onInspectCrmTask,
   onInspectItem, onInspectPlan, onNavigate, onInspectWorkSet, onReviewWithPaige, onReviewWorkWithPaige,
-  recordedFindings, nativeWorkState = 'ready', onOpenBusinessTimeZone, businessTimeZoneRef }: OperationsOverviewProps) {
+  recordedFindings, nativeWorkState = 'ready', onOpenBusinessTimeZone, businessTimeZoneRef, weeklyPlanning }: OperationsOverviewProps) {
   const people = new Map(members.map(member => [member.user_id, member]));
   const projects = new Map(plans.map(plan => [plan.id, plan]));
   const work = overviewNativeWork(tenantId, nativeWorkState === 'ready' ? items : [], nativeWorkState === 'ready' ? crmTasks : []);
@@ -61,7 +64,7 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
       </div>
     </header>
     {work.active.length > 0 && <p className="ops-desk-read-scope">{work.active.length} active {work.active.length === 1 ? "commitment" : "commitments"} · {work.inProgress.length} in progress · {work.reminders.length} {work.reminders.length === 1 ? "reminder" : "reminders"} in the sources shown</p>}
-    {hasNativeWork && <OperationsWeek tenantId={tenantId} items={items} tasks={crmTasks} members={members}
+    {hasNativeWork && <OperationsWeek tenantId={tenantId} items={items} tasks={crmTasks} members={members} weeklyPlanning={weeklyPlanning}
       onInspectItem={onInspectItem} onInspectTask={onInspectCrmTask} onOpenBusinessTimeZone={onOpenBusinessTimeZone} businessTimeZoneRef={businessTimeZoneRef} />}
     <div className={hasNativeWork ? 'ops-desk-columns' : undefined}><div className={hasNativeWork ? 'ops-desk-primary-column' : undefined}>
       {hasNativeWork && (spotlight ? <section className="ops-desk-attention" aria-label="Priority work to inspect"><header>
@@ -89,7 +92,7 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
       </section>
       {plans.length > 0 && <section className="ops-desk-projects"><div className="ops-desk-section-heading"><h2>Projects and milestones</h2>{navigate("All projects", "Projects")}</div>
         <ul className="ops-desk-project-list">{plans.slice(0, 3).map(plan => <li key={plan.id}><button type="button" className="ops-view-text-action" onClick={() => onInspectPlan(plan)}>{plan.title}<ArrowUpRight size={15} aria-hidden="true" /></button>
-          <span className="ops-view-muted">{plan.items.filter(item => item.status === "done").length} of {plan.items.filter(item => item.status !== "cancelled").length} recorded items completed</span></li>)}</ul>
+          <span className="ops-view-muted">{weeklyPlanReferenceCount(plan) ? `${weeklyPlanReferenceCount(plan)} original weekly commitments` : `${plan.items.filter(item => item.status === "done").length} of ${plan.items.filter(item => item.status !== "cancelled").length} recorded items completed`}</span></li>)}</ul>
       </section>}
       {onNavigate && <nav className="ops-desk-connections" aria-label="Connected Operations work">{navigate("Client promises", "Delivery")}{navigate("People and workload", "Capacity")}{navigate("Procedures", "Playbooks")}</nav>}</>}
     </div>{hasNativeWork && <aside className="ops-desk-next-column">

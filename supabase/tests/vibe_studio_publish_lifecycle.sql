@@ -60,31 +60,39 @@ DECLARE
   _role   text := current_user;
   _claims text := current_setting('request.jwt.claims', true);
   _r      jsonb;
+  _review jsonb;
 BEGIN
   PERFORM set_config('request.jwt.claims', '{"role":"service_role"}', true);
   EXECUTE 'SET LOCAL ROLE service_role';
-  EXECUTE format('SELECT public.%I(p_tenant_id => $1, p_id => $2, p_actor_id => $3)', _fn)
-    INTO _r USING _tenant, _id, _actor;
+  IF _fn = 'growth_page_publish' THEN
+    _review := public.growth_page_publish_review(_tenant, _id);
+    _r := public.growth_page_publish(_tenant, _id, _actor, _review #>> '{page,publish_revision}',
+      '/p/' || (_review->>'tenant_slug') || '/' || (_review #>> '{page,slug}'));
+  ELSE
+    EXECUTE format('SELECT public.%I(p_tenant_id => $1, p_id => $2, p_actor_id => $3)', _fn)
+      INTO _r USING _tenant, _id, _actor;
+  END IF;
   EXECUTE format('SET LOCAL ROLE %I', _role);
   PERFORM set_config('request.jwt.claims', coalesce(_claims, ''), true);
   RETURN _r;
 END $$;
-CREATE TABLE pg_temp.eight (fn text PRIMARY KEY);
-INSERT INTO pg_temp.eight VALUES ('growth_page_publish'), ('growth_page_unpublish'), ('growth_form_publish'),
+CREATE TABLE pg_temp.eight (fn text PRIMARY KEY, signature text NOT NULL DEFAULT 'uuid,uuid,uuid');
+INSERT INTO pg_temp.eight (fn) VALUES ('growth_page_unpublish'), ('growth_form_publish'),
   ('growth_form_unpublish'), ('growth_funnel_publish'), ('growth_funnel_unpublish'), ('studio_image_publish'),
   ('studio_image_unpublish');
+INSERT INTO pg_temp.eight VALUES ('growth_page_publish', 'uuid,uuid,uuid,text,text');
 
 -- ── Who may call what ──
 SELECT ok(NOT has_function_privilege('anon', 'public.list_artifact_versions(uuid,text,uuid,uuid)', 'EXECUTE'),
   'a signed-out visitor cannot read version history');
 SELECT ok(NOT EXISTS (SELECT 1 FROM pg_temp.eight
-                       WHERE has_function_privilege('anon', format('public.%s(uuid,uuid,uuid)', fn), 'EXECUTE')),
+                       WHERE has_function_privilege('anon', format('public.%s(%s)', fn, signature), 'EXECUTE')),
   'a signed-out visitor cannot run any of the eight publish/unpublish functions');
 SELECT ok(NOT EXISTS (SELECT 1 FROM pg_temp.eight
-                       WHERE has_function_privilege('authenticated', format('public.%s(uuid,uuid,uuid)', fn), 'EXECUTE')),
+                       WHERE has_function_privilege('authenticated', format('public.%s(%s)', fn, signature), 'EXECUTE')),
   'a signed-in user cannot run any of them directly either (Migration G: only the publish door)');
 SELECT ok(NOT EXISTS (SELECT 1 FROM pg_temp.eight
-                       WHERE NOT has_function_privilege('service_role', format('public.%s(uuid,uuid,uuid)', fn), 'EXECUTE')),
+                       WHERE NOT has_function_privilege('service_role', format('public.%s(%s)', fn, signature), 'EXECUTE')),
   'the server (service role) can run all eight');
 SELECT ok(NOT EXISTS (SELECT 1 FROM pg_temp.eight WHERE to_regprocedure(format('public.%s(uuid,uuid)', fn)) IS NOT NULL),
   'the two-argument signatures are gone');
@@ -101,7 +109,7 @@ SELECT ok(NOT public.studio_role_ok('5d5d0000-0000-4000-8000-000000000002'),
 SELECT pg_temp.as_caller('5d5d0000-0000-4000-8000-000000000001');
 SELECT ok(public.studio_role_ok('5d5d0000-0000-4000-8000-000000000001'), 'the workspace owner does');
 SELECT ok(NOT public.studio_role_ok('5d5d0000-0000-4000-8000-000000000002'), 'and cannot vouch for anyone else');
-SELECT throws_ok($$SELECT public.growth_page_publish(NULL, '5d5d0000-0000-4000-8000-00000000ffff', NULL)$$,
+SELECT throws_ok($$SELECT public.growth_page_publish(NULL, '5d5d0000-0000-4000-8000-00000000ffff', NULL, NULL, NULL)$$,
   '42501', NULL, 'the owner''s own direct call (a browser console) is refused: publishing is the door only');
 
 -- ── Forms: new work starts unpublished; edits to a live form wait for Publish ──

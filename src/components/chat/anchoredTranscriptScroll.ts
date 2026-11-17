@@ -61,6 +61,7 @@ export function createAnchoredTranscriptScroll({
   let intentEpoch = 0;
   let lastScrollTop = 0;
   let keyboardKey: string | null = null;
+  let pointerFocusTarget: Element | null = null;
   let gestureNode: HTMLElement | null = null;
   let gestureNodeTop = 0;
   let gestureViewportHeight = 0;
@@ -338,7 +339,7 @@ export function createAnchoredTranscriptScroll({
     if (!NodeConstructor || !(event.target instanceof NodeConstructor) || !element.contains(event.target)) return;
     // Programmatic focus is not owner intent. Real Tab keydown already armed
     // the gesture before the browser reveals a focused message control.
-    if (keyboardKey === "Tab") return;
+    if (keyboardKey === "Tab" || event.target === pointerFocusTarget) return;
     pendingUserMovement = false;
     continuousUserMovement = false;
     trace("focus", "rejected");
@@ -346,14 +347,24 @@ export function createAnchoredTranscriptScroll({
   };
 
   const beginPointerUserMovement = (event: Event) => {
-    // Native scrollbar drags target the scroll owner. A click on message
-    // content is not a scroll instruction and must not arm a later update.
+    // A native pointer focuses a message control before its click. Do not
+    // restore an anchor between those events and move the control out of reach.
+    const ElementConstructor = element?.ownerDocument.defaultView?.Element;
+    if (ElementConstructor && event.target instanceof ElementConstructor && element?.contains(event.target)) {
+      pointerFocusTarget = event.target.closest("button, a[href], input, textarea, select, [tabindex]");
+      if (pointerFocusTarget && pointerFocusTarget !== element) {
+        cancelProgrammaticMovement();
+        return;
+      }
+    }
+    // Scrollbar drags own scroll intent; message activation does not.
     if (event.target !== element) return;
     beginContinuousUserMovement();
     trace("owner-pointer", "intent");
   };
 
   const finishContinuousUserInput = () => {
+    pointerFocusTarget = null;
     continuousUserMovement = false;
     // Tab focus completes synchronously; a later layout scroll is not that Tab.
     // Wheel/touch/key scrolling finishes on native scrollend, never a timer.
@@ -450,6 +461,7 @@ export function createAnchoredTranscriptScroll({
     intentionalBottom = false;
     pendingUserMovement = false;
     continuousUserMovement = false;
+    pointerFocusTarget = null;
     element = null;
   };
 

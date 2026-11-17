@@ -174,6 +174,15 @@ async function refuses(sql, code, label) {
   let error;try {await call(sql);} catch(e){error=e;}
   check(error?.code===code,`${label} (${code})`);
 }
+if (process.argv.includes('--weekly-plan-review-only')) {
+  const {proveWeeklyPlanReviewSave}=await import('../proof/weekly-plan-review-save.mjs');
+  try { await proveWeeklyPlanReviewSave({db,read,definition,actor,admin,tenant,foreign,setActor}); }
+  finally {
+    assert.match(db.database,/^operator_account_lifecycle_proof_\d+_\d+$/);
+    db.run(`DROP DATABASE ${db.database}`,[],'postgres');
+  }
+  process.exit(0);
+}
 await setActor(actor);await db.exec('SET ROLE authenticated');
 const saved=await call(`public.plan_set_reminder('Private fixture title','2099-01-01T13:00:00Z')`);
 check(saved.ok===true&&saved.railRecorded===true&&saved.receipt_status==='recorded','ordinary native reminder has atomic receipt');
@@ -533,3 +542,7 @@ await refuses(reschedule(finalScheduleVersion),'42501','actorless service cannot
 await db.exec('RESET ROLE');await db.exec('SET ROLE authenticated');
 await refuses(reschedule(finalScheduleVersion),'42501','authenticated database role without an actor cannot reschedule');
 console.log(`PASS ${checks} native Planning receipt/history/reschedule checks; fixture auth/bus/realtime ports are not production acceptance`);
+if (process.argv.includes('--weekly-plan-review')) {
+  const {proveWeeklyPlanReviewSave}=await import('../proof/weekly-plan-review-save.mjs');
+  await proveWeeklyPlanReviewSave({db,read,definition,actor,admin,tenant,foreign,setActor});
+}

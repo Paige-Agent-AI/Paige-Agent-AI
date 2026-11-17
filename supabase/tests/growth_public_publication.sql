@@ -31,6 +31,10 @@ CREATE FUNCTION pg_temp.as_anon() RETURNS void LANGUAGE sql AS $$
   SELECT set_config('request.jwt.claims','{"role":"anon"}',true), set_config('request.jwt.claim.sub','',true) $$;
 CREATE FUNCTION pg_temp.as_server() RETURNS void LANGUAGE sql AS $$
   SELECT set_config('request.jwt.claim.sub','',true),set_config('request.jwt.claims','{"role":"service_role"}',true) $$;
+CREATE FUNCTION pg_temp.publish_reviewed(p_tenant uuid, p_page uuid, p_actor uuid) RETURNS jsonb LANGUAGE sql AS $$
+  SELECT public.growth_page_publish(p_tenant, p_page, p_actor,
+    s #>> '{page,publish_revision}', '/p/' || (s->>'tenant_slug') || '/' || (s #>> '{page,slug}'))
+  FROM (SELECT public.growth_page_publish_review(p_tenant, p_page) AS s) reviewed $$;
 
 DO $fixture$ DECLARE owner_id uuid; n_super bigint; BEGIN
  SELECT count(*) INTO n_super FROM public.user_roles WHERE role='super_admin';
@@ -78,15 +82,43 @@ INSERT INTO public.growth_pages(id,tenant_id,slug,title,status,draft_blocks_json
 
 -- 1. AUTHORITY: the stored call refuses a person who is not this workspace's owner/admin.
 SELECT pg_temp.require_error(
-  $$SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000722')$$,
+  $$SELECT pg_temp.publish_reviewed('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000722')$$,
   'GROWTH_FORBIDDEN','a foreign workspace owner cannot drive another workspace''s publish');
+SELECT pg_temp.require_true(NOT has_function_privilege('anon','public.growth_page_publish_review(uuid,uuid)','EXECUTE')
+  AND NOT has_function_privilege('authenticated','public.growth_page_publish_review(uuid,uuid)','EXECUTE')
+  AND NOT has_function_privilege('authenticated','public.growth_page_publish(uuid,uuid,uuid,text,text)','EXECUTE')
+  AND has_function_privilege('service_role','public.growth_page_publish(uuid,uuid,uuid,text,text)','EXECUTE'),
+  'the review snapshot and writer stay server-only');
+
+DO $stale$
+DECLARE
+  tenant uuid := 'b1900700-0000-4000-8000-000000000711';
+  page uuid := 'b1900700-0000-4000-8000-0000000007a2';
+  actor uuid := 'b1900700-0000-4000-8000-000000000721';
+  rev text;
+BEGIN
+  SELECT public.growth_page_publish_review(tenant, page) #>> '{page,publish_revision}' INTO rev;
+  UPDATE public.growth_pages SET draft_seo_json = '{"description":"Changed after review"}' WHERE id = page;
+  PERFORM pg_temp.require_error(format('SELECT public.growth_page_publish(%L,%L,%L,%L,%L)', tenant, page, actor, rev,
+    '/p/pubbrand-a/never-published'), 'GROWTH_PAGE_REVIEW_STALE', 'a stale revision cannot publish');
+  SELECT public.growth_page_publish_review(tenant, page) #>> '{page,publish_revision}' INTO rev;
+  UPDATE public.growth_pages SET slug = 'new-address' WHERE id = page;
+  SELECT public.growth_page_publish_review(tenant, page) #>> '{page,publish_revision}' INTO rev;
+  PERFORM pg_temp.require_error(format('SELECT public.growth_page_publish(%L,%L,%L,%L,%L)', tenant, page, actor, rev,
+    '/p/pubbrand-a/never-published'), 'GROWTH_PAGE_REVIEW_STALE', 'the wrong public path cannot publish a current draft');
+  PERFORM pg_temp.require_error(format('SELECT public.growth_page_publish(%L,%L,%L)', tenant, page, actor),
+    'GROWTH_PAGE_REVIEW_STALE', 'the old signature cannot bypass review');
+  PERFORM pg_temp.require_true((SELECT status = 'draft' FROM public.growth_pages WHERE id = page),
+    'no stale or legacy approval changed publication');
+  UPDATE public.growth_pages SET slug = 'never-published' WHERE id = page;
+END $stale$;
 
 -- 2. FAILED PUBLICATION STAYS PRIVATE: a page with an unresolved placeholder refuses and nothing
 --    becomes public (the door's truthfulness, at the stored call it runs).
 UPDATE public.growth_pages SET draft_blocks_json='[{"type":"hero","title":"Come on [ADD_DATE]"}]'::jsonb
  WHERE id='b1900700-0000-4000-8000-0000000007a2';
 SELECT pg_temp.require_error(
-  $$SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a2','b1900700-0000-4000-8000-000000000721')$$,
+  $$SELECT pg_temp.publish_reviewed('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a2','b1900700-0000-4000-8000-000000000721')$$,
   'GROWTH_UNRESOLVED_PLACEHOLDER','a placeholder page refuses to publish');
 SELECT pg_temp.as_anon();
 SET LOCAL ROLE anon;
@@ -98,7 +130,7 @@ RESET ROLE;
 --    seo byte-equal, status published — with the page's signup form going live with it.
 SELECT pg_temp.as_server();
 DO $publish$ DECLARE reply jsonb; served jsonb; BEGIN
- SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000721') INTO reply;
+ SELECT pg_temp.publish_reviewed('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000721') INTO reply;
  PERFORM pg_temp.require_true((reply->>'url')='/p/pubbrand-a/workshop','the door''s stored call returns the public address');
  PERFORM pg_temp.require_true((reply->>'status')='published','the stored call answers published');
  -- The real anonymous read, as the anon role so the RLS policy applies.
@@ -155,14 +187,14 @@ INSERT INTO public.studio_artifact_versions(id,tenant_id,session_id,kind,lineage
   jsonb_build_object('draft_blocks_json','[{"type":"hero","title":"Turn clients into a referral engine"},{"type":"embedded_form","form_slug":"workshop-signup"}]'::jsonb),'Referral workshop'),
  ('b1900700-0000-4000-8000-0000000007a6','b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a4','page','b1900700-0000-4000-8000-0000000007a1',2,true,
   jsonb_build_object('draft_blocks_json','[{"type":"hero","title":"v2 - bring a friend"}]'::jsonb),'Referral workshop');
-SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000721');
+SELECT pg_temp.publish_reviewed('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000721');
 SET LOCAL ROLE anon;
 SELECT set_config('request.jwt.claims','{"role":"anon"}',true);
 SELECT pg_temp.require_true((SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000711','workshop')->0->'blocks'->0->>'title')='v2 - bring a friend','the visitor first receives v2');
 RESET ROLE;
 SELECT pg_temp.as_server();
 SELECT public.restore_artifact_version('b1900700-0000-4000-8000-0000000007a5','b1900700-0000-4000-8000-000000000711');
-SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000721');
+SELECT pg_temp.publish_reviewed('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000721');
 SET LOCAL ROLE anon;
 SELECT set_config('request.jwt.claims','{"role":"anon"}',true);
 SELECT pg_temp.require_true((SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000711','workshop')->0->'blocks')::text=

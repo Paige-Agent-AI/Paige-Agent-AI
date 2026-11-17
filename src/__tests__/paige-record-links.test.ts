@@ -59,7 +59,7 @@ describe("typed original Planning work references", () => {
     expect(mergeRecordLinks([crm], [planning, crm])).toEqual([crm, planning]);
   });
   it("rejects unknown or misplaced record kinds instead of silently reinterpreting them as CRM", () => {
-    for (const record_kind of ["crm_task", "plan_items", "", null, {}, ["planning_item"]]) {
+    for (const record_kind of ["crm_task", "plan_items", "", null, {}, ["planning_item"], ["planning_plan"]]) {
       expect(readRecordLinks([{ destination: "operations_work", record_id: A, record_kind }])).toEqual([]);
     }
     expect(readRecordLinks([{ destination: "contacts", record_id: A, record_kind: "planning_item" }])).toEqual([]);
@@ -77,7 +77,7 @@ it("retains a Systems Check finding UUID through the original reference frame wi
 describe("readRecordLinks — the defensive reader for live frames and persisted bundle_ref", () => {
   it("retains the existing destinations and separates internal Knowledge from Portal Knowledge", () => {
     expect([...READ_LINK_DESTINATIONS]).toEqual([
-      "contacts", "sales_agreements", "sales_invoices", "sales_collections", "operations_work", "team_hub", "business_time_zone",
+      "contacts", "sales_agreements", "sales_invoices", "sales_collections", "operations_work", "operations_weekly_plan", "team_hub", "business_time_zone",
       "executive", "finance", "marketing", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind", "business_knowledge", "portal_knowledge", "calendar", "pipeline", "conversations",
     ]);
   });

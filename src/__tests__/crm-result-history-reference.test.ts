@@ -74,6 +74,7 @@ describe("bounded CRM reference normalization", () => {
 });
 
 const OTHER_ID = "e4000000-0000-4000-8000-0000000c0002";
+const RECEIPT = "e4000000-0000-4000-8000-0000000c0003";
 const taskActions = ["task.create", "task.update", "task.assign", "task.reschedule", "task.complete", "task.reopen", "task.cancel"];
 const dealActions = ["deal.create", "deal.update", "deal.assign_owner", "deal.assign_contact", "deal.move", "deal.close", "deal.reopen"];
 const nativeFamily = (family: "task" | "deal") => ({ action: `${family}.update`, outcome: "succeeded", receipt_recorded: true,
@@ -134,6 +135,60 @@ describe("recorded Task and Deal history uses only native receipt references", (
     for (const family of ["task", "deal"] as const) {
       const result = nativeFamily(family);
       expect(crmResultRecordReference({ ...result, readback: { id: ID.toUpperCase(), title: "Private title", client_ref: "CLT-1234" } })).toEqual(familyReference(family));
+    }
+  });
+});
+
+describe("original Opportunity update receipt continuity", () => {
+  const update = () => ({ ...nativeFamily("deal"), correlation_id: RECEIPT });
+  it("keeps the original native receipt identity through the actual assistant projection and JSON reload", () => {
+    const saved = JSON.parse(JSON.stringify(metadata(update()))).bundleRef.paige_crm_result[0];
+    expect(saved).toEqual({ action: "deal.update", outcome: "succeeded", receipt_recorded: true,
+      record_reference: familyReference("deal"), correlation_id: RECEIPT });
+    expect(readCrmResultMetadata([saved])).toEqual([saved]);
+    expect(JSON.stringify(saved)).not.toMatch(/Private|metadata|readback|locator|999|foreign/);
+  });
+  it("carries the original door correlation through the actual successful CRM trace entry", () => {
+    let entry = "";
+    const walk = (node: ts.Node) => {
+      if (ts.isCallExpression(node) && node.expression.getText(source) === "crmResultTrace.push") {
+        entry = node.arguments[0].getText(source);
+      }
+      ts.forEachChild(node, walk);
+    };
+    walk(source);
+    expect(entry).toBeTruthy();
+    const native = { ...update(), success: true };
+    const js = ts.transpileModule(`return (${entry});`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+    const traced = new Function("parsed", "tc", "CRM_TOOL_TO_ACTION", js)(
+      native, { function: { name: "crm_update_deal" } }, { crm_update_deal: "deal.update" });
+    expect(traced.correlation_id).toBe(RECEIPT);
+    const saved = JSON.parse(JSON.stringify(metadata(traced))).bundleRef.paige_crm_result[0];
+    expect(saved.correlation_id).toBe(RECEIPT);
+  });
+  it("normalizes only the opaque native correlation, never a route or private payload", () => {
+    expect(crmResultReferenceMetadata({ ...update(), correlation_id: RECEIPT.toUpperCase() }).correlation_id).toBe(RECEIPT);
+    for (const correlation_id of [null, false, {}, 3, "", "bad-id", `${RECEIPT}\n`, `/receipt/${RECEIPT}`]) {
+      expect(crmResultReferenceMetadata({ ...update(), correlation_id }).correlation_id).toBeUndefined();
+    }
+  });
+  it("requires successful recorded update and the original exact record reference", () => {
+    for (const patch of [{ receipt_recorded: false }, { receipt_recorded: "true" }, { outcome: "unknown" },
+      { outcome: "failed" }, { readback: { id: ID, absent: true } }, { record_locator: null },
+      { record_locator: { record_id: OTHER_ID, deep_link_status: "exact" } }]) {
+      expect(crmResultReferenceMetadata({ ...update(), ...patch }).correlation_id).toBeUndefined();
+    }
+  });
+  it.each(["deal.create", "deal.move", "deal.delete", "contact.update", "task.update"])("does not widen receipt recovery to %s", action => {
+    expect(crmResultReferenceMetadata({ ...update(), action }).correlation_id).toBeUndefined();
+  });
+  it("does not recover receipt identity from legacy or injected raw history", () => {
+    const row = { action: "deal.update", outcome: "succeeded", receipt_recorded: true };
+    const saved = { ...row, record_reference: familyReference("deal"), correlation_id: RECEIPT };
+    expect(readCrmResultMetadata([row])).toEqual([row]);
+    for (const injected of [{ readback: { id: ID, title: "Private title" } }, { command: { notes: "Private words" } },
+      { actor_id: ID }, { tenant_id: OTHER_ID }, { url: "https://example.invalid" }]) {
+      expect(readCrmResultMetadata([{ ...saved, ...injected }])).toEqual([row]);
     }
   });
 });

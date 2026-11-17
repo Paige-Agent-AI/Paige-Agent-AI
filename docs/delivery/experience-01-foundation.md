@@ -1,5 +1,19 @@
 # Experience 01 foundation — ANT-50
 
+### November 13 owner-approved next sequential outcome — Chat model/cache
+
+Original document closeout is incorporated on main; old #3320 closed unmerged
+after exact duplicate readback and independent review. Verified C4e is retained
+without another Research execution. Under ANT147/85dc8dd1, ONE original Chat
+model/cache outcome is now in development through the existing Fabric:
+[research, actual aggregate baseline and current evidence](../model-routing/int-334/EXP01-CHAT-CACHE-2026-11-13.md).
+Existing model choices/authority/customer metering remain unchanged. Independent
+review, exact CI, release/native source and authenticated useful-result/cache/
+latency/reopen proof remain owed. Original outcome/case IDs, all23 obligations
+and amendments are preserved below; full assignment and owner acceptance remain
+pending. Live remains NOT ACTIVATED. Timers off; original Linear/repository
+records used under owner's workbook-access deferral.
+
 ### November 3 actual-schema checkpoint — same safe-save outcome
 
 Exact c3a82154ed1095ee675da0435c64e0935f928673 dedicated original Setup

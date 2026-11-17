@@ -11,7 +11,7 @@ const tenant = "11111111-1111-4111-8111-111111111111", foreign = "22222222-2222-
 const runId = "00000000-0000-4000-8000-000000000099";
 const item = { id: "00000000-0000-4000-8000-000000000001", tenant_id: tenant, plan_id: null, title: "Original private work" };
 const raw = { plans: [], loose_items: [item] };
-const expected = [{ destination: "operations_work", record_id: item.id, record_kind: "planning_item" }];
+const expected = [{ destination: "operations_work", record_id: item.id, record_kind: "planning_item" }, { destination: "operations_weekly_plan", record_id: null }];
 const producerStart = source.indexOf("// O01 original Planning read: receipt before facts and references.");
 const producerEnd = source.indexOf("// O01 Planning read complete;", producerStart);
 assert.ok(producerStart > 0 && producerEnd > producerStart, "original successful dispatch is inspectable");
@@ -86,7 +86,7 @@ describe("Planning original dispatch → read receipt → collector → durable 
   });
   it("keeps authoritative empty and unavailable distinct", async () => {
     const read = await dispatch({ plans: [], loose_items: [] });
-    assert.equal(read.parsed.status, "available"); assert.equal(read.records.length, 1); assert.deepEqual(collect(read).trace, []);
+    assert.equal(read.parsed.status, "available"); assert.equal(read.records.length, 1); assert.deepEqual(collect(read).trace, [{ destination: "operations_weekly_plan", record_id: null }]);
   });
   it("never takes result-supplied links instead of the admitted original source", async () => {
     const read = await dispatch({ ...raw, record_links: [{ destination: "contacts", record_id: runId }] });
@@ -96,8 +96,17 @@ describe("Planning original dispatch → read receipt → collector → durable 
   it("does not promise a Planning control dropped by the existing six-reference cap", async () => {
     const read = await dispatch(raw);
     const previous = Array.from({ length: 6 }, (_, i) => ({ destination: "operations_work", record_id: `00000000-0000-4000-8000-${String(i + 10).padStart(12, "0")}` }));
-    assert.deepEqual(collect(read, previous).trace, previous);
+    assert.deepEqual(collect(read, previous).trace, [{ destination: "operations_weekly_plan", record_id: null }, ...previous.slice(0,5)]);
     assert.match(JSON.parse(read.result.content).navigation_note, /not in this response's bounded selection/);
+  });
+  it("keeps the original Plan/review controls through a populated mixed-source Chat turn and durable metadata", async () => {
+    const planId = "00000000-0000-4000-8000-000000000100";
+    const items = Array.from({length:6},(_,n)=>({...item,id:`00000000-0000-4000-8000-${String(n+200).padStart(12,"0")}`,plan_id:planId}));
+    const read = await dispatch({plans:[{id:planId,tenant_id:tenant,items}],loose_items:[]});
+    const previous = Array.from({length:6},(_,n)=>({destination:"operations_work",record_id:`00000000-0000-4000-8000-${String(n+400).padStart(12,"0")}`}));
+    const selected = collect(read, previous).trace;
+    assert.equal(selected.length,6); assert.ok(selected.some(r=>r.record_kind==="planning_plan"&&r.record_id===planId));
+    assert.ok(selected.some(r=>r.destination==="operations_weekly_plan")); assert.deepEqual(readRecordLinks(selected),selected);
   });
   it("does not turn an original Planning write into a read receipt", async () => {
     const read = await dispatch(raw, { tool: "plan_set_reminder" });

@@ -12,6 +12,8 @@ const platformMigration = read("supabase/migrations/20271131000001_social_platfo
 const adapter = read("supabase/functions/_shared/social-provider/zernio.ts");
 const integrationsSurface = read("src/operator/surfaces/IntegrationsSurface.tsx");
 const operatorSocialDoor = read("src/operator/surfaces/OperatorSocialDoor.tsx");
+const providerSeam = read("supabase/functions/_shared/social-provider/mod.ts");
+const publishDoor = read("supabase/functions/_shared/social-publish-command/door.ts");
 const hook = read("src/solo/data/useSocialConnections.ts");
 const drawer = read("src/solo/settings-integrations-social.tsx");
 const catalogue = read("src/solo/settings-integrations.tsx");
@@ -197,6 +199,53 @@ describe("Social authorization callback", () => {
     }
   });
 
+  it("widens CONNECTING to the provider's apps while publishing stays social-only (owner 2026-11-05)", () => {
+    expect(providerSeam).toContain("export const SOCIAL_CONNECTION_PLATFORMS");
+    for (const app of ['"google"', '"discord"', '"telegram"']) expect(providerSeam).toContain(app);
+    expect(providerSeam).toContain("export const GOOGLE_CONNECT_AREAS");
+    expect(endpoint).toContain("SOCIAL_CONNECTION_PLATFORMS.includes");
+    // Google requires its areas; the door defaults the operator's start to Gmail-and-Calendar.
+    expect(endpoint).toContain('["email", "calendar"]');
+    // The posting arm must NOT widen with the connection set.
+    expect(adapter).toContain("function postPlatform");
+    expect(adapter).toContain('"unsupported_post_platform"');
+    // The callback accepts the SAME return destinations as the door — the Solo-only check
+    // silently killed every Operator connect at the return step (fixed with this change).
+    expect(callback).toContain("|operator)");
+  });
+
+  it("shows the platform's held channels at card level and adopts them across the full connection set (owner 2026-11-06)", () => {
+    // "My connections are not live on the Platform Operator Integrations": channels the
+    // provider hub already holds are provider-proven truth — the card states them and
+    // the drawer's governed bring-in adopts them, now for every connection platform.
+    expect(operatorSocialDoor).toContain("Held by the platform");
+    expect(operatorSocialDoor).toContain("bring it in");
+    expect(operatorSocialDoor).toContain("SOCIAL_PROVIDER_UNAVAILABLE");
+    expect(endpoint).toContain("adoptable: (SOCIAL_CONNECTION_PLATFORMS as readonly string[]).includes(account.platform)");
+    expect(endpoint).toContain("&& SOCIAL_CONNECTION_PLATFORMS.includes(p as typeof SOCIAL_CONNECTION_PLATFORMS[number])");
+  });
+
+  it("addresses the provider by ITS slugs, not ours (X connects and posts as twitter)", () => {
+    // Diagnosed live 2026-11-06: every X connect on both workspaces failed with
+    // provider_request_failed because the door called /connect/x while the provider's
+    // own page and post examples use twitter. google_business already had its alias.
+    expect(adapter).toContain('x: "twitter"');
+    expect(adapter).toContain('google_business: "google-business"');
+    // And the SQL shapes accept the single-letter key end to end (migration 20271133000006).
+    const singleLetterShapes = read("supabase/migrations/20271133000006_single_letter_platform_shapes.sql");
+    expect((singleLetterShapes.match(/\{0,31\}/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    expect((adapter.match(/PROVIDER_PATH\[requested\] \?\? requested/g) ?? []).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("publishes to the messaging channels the platform actually connects (owner 2026-11-06)", () => {
+    expect(providerSeam).toContain("export const SOCIAL_POST_PLATFORMS");
+    expect(providerSeam).toContain('"discord", "telegram"');
+    expect(adapter).toContain("SOCIAL_POST_PLATFORMS.includes");
+    // The publish door's own gate carries the same two, and google never receives posts.
+    expect(publishDoor).toContain("new Set<string>(SOCIAL_POST_PLATFORMS)");
+    expect(publishDoor).not.toMatch(/PLATFORMS[^;]*"google"/);
+  });
+
   it("keeps per-workspace platform-channel grants service-role-only and empty by default", () => {
     expect(platformMigration).toContain("create table if not exists public.paige_social_platform_grants");
     expect(platformMigration).toContain("force row level security");
@@ -224,7 +273,9 @@ describe("customer-facing identity truth", () => {
     expect(drawer).toContain("Select this account");
     expect(endpoint).toContain('.eq("tenant_id", tenantId).eq("connection_id", connectionId).eq("id", accountId)');
     expect(drawer).toContain("connection.requestedPlatform === platform.key");
-    expect(endpoint).toContain("SOCIAL_OAUTH_PLATFORMS.includes");
+    // The OAuth list now lives at the publishing boundary (adapter postPlatform);
+    // the endpoint gates everything on the connection superset.
+    expect(adapter).toContain("SOCIAL_POST_PLATFORMS.includes");
     expect(callback).toContain("returnedPlatform !== claim.requested_platform");
     expect(migration).toContain("not selected or status='connected'");
     expect(migration).toContain("provider_account_id text;");

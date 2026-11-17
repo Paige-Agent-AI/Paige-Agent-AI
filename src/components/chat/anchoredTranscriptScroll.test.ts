@@ -164,6 +164,36 @@ describe("createAnchoredTranscriptScroll", () => {
     controller.destroy();
   });
 
+  it("does not schedule an anchor restore between pointer focus and the first control click", () => {
+    const geometry: Geometry = { viewportTop: 0, clientHeight: 300, scrollHeight: 1200,
+      items: { a: { top: 0, height: 1200 } } };
+    const { element, render } = transcriptFixture(geometry);
+    render(["a"]);
+    const button = document.createElement("button");
+    button.textContent = "Open";
+    element.firstElementChild!.append(button);
+    const callbacks = new Map<number, FrameRequestCallback>();
+    let nextFrame = 0;
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation(callback => {
+      callbacks.set(++nextFrame, callback); return nextFrame;
+    });
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(id => { callbacks.delete(id); });
+    const controller = createAnchoredTranscriptScroll({ storagePrefix: "pointer-open" });
+    controller.attach(element);
+    callbacks.clear();
+    button.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+    button.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    expect(callbacks.size).toBe(0);
+    const activated = vi.fn();
+    button.addEventListener("click", activated);
+    button.click();
+    window.dispatchEvent(new MouseEvent("pointerup"));
+    expect(activated).toHaveBeenCalledTimes(1);
+    button.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    expect(callbacks.size).toBe(1);
+    controller.destroy();
+  });
+
   it("does not grant a delayed programmatic focus permission to replace the reading anchor", () => {
     const geometry: Geometry = {
       viewportTop: 0, clientHeight: 300, scrollHeight: 1200,

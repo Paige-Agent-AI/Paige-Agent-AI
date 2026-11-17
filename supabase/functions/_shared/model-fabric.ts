@@ -27,7 +27,7 @@ import { NeedsConfigError } from "./provider-types.ts";
 import { traceAdmin, traceLLMCall, type FabricRouteTelemetry, type TraceCtx } from "./llm-trace.ts";
 import { accruedSpendToday, BudgetExceeded, enforceBudget, resolveCeiling, type BudgetDb } from "./router-budget/mod.ts";
 import { OPENAI_EFFORT_BY_CLASS, type OpenAIReasoningClass } from "./openai-models.ts";
-import { responsesCompletion, responsesStream, type ChatShapeBody, type ResponsesProvider } from "./openai-responses.ts";
+import { responsesCompletion, responsesStream, chatPromptCacheKey, type ChatShapeBody, type ResponsesProvider } from "./openai-responses.ts";
 import { classifyProviderFailure, PROVIDER_FAILURE_CLASSES, type ProviderFailureClass } from "./provider-failure.ts";
 import { CLASS_POLICY, mayFallback, type CognitiveClass, type FabricProvider, type RouteCandidate } from "./paige-turn/route.ts";
 import { envKey } from "./env-key.ts";
@@ -322,6 +322,7 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
         if (opts.trace?.tenant_id) {
           await fabricBudgetGate(opts.trace.tenant_id, "reasoning", "chat", opts.trace, Date.now(), opts.trace, body.messages);
         }
+        const promptCacheKey = await chatPromptCacheKey(opts.trace?.prompt_cache_scope);
         if (opts.beforeProviderAttempt) {
           let current = false;
           try { current = await opts.beforeProviderAttempt() === true; } catch { /* authority unavailable */ }
@@ -332,6 +333,7 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
         const effort = OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass];
         opened = await responsesStream(body, {
           model, effort, provider: responsesProvider,
+          promptCacheKey, disablePromptCache: !!opts.trace?.prompt_cache_scope && !promptCacheKey,
           fetchImpl: responsesProvider === "openrouter" ? opts.openrouterFetch : opts.openaiFetch,
           signal: opts.signal,
         }, opts.trace);
@@ -574,9 +576,10 @@ export async function fabricCompletion(
       continue;
     }
 
-    if (opts.beforeProviderAttempt) {
-      let current = false;
-      try { current = await opts.beforeProviderAttempt() === true; } catch { /* authority unavailable */ }
+    const promptCacheKey = c.provider === "openai" ? await chatPromptCacheKey(opts.trace?.prompt_cache_scope) : undefined;
+    if (opts.beforeProviderAttempt || opts.signal?.aborted) {
+      let current = !opts.beforeProviderAttempt;
+      try { if (opts.beforeProviderAttempt) current = await opts.beforeProviderAttempt() === true; } catch { current = false; /* authority unavailable */ }
       if (!current || opts.signal?.aborted) {
         const failure = opts.signal?.aborted ? "aborted" as const : "caller_refused" as const;
         attempts.push({ provider: c.provider, model: c.model ?? "", failure, status: 0 });
@@ -605,7 +608,7 @@ export async function fabricCompletion(
         // The trace carries the CONSUMER's job identity, never the adapter's "chat" default; the
         // Responses leg self-traces through responsesCompletion under this context, with the REAL
         // serving provider ("openrouter" when OpenRouter carried it).
-        ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], provider: responsesProvider, fetchImpl: opts.signal ? (u, i) => (responsesFetch ?? fetch)(u, { ...i, signal: opts.signal }) : responsesFetch }, opts.trace ? { ...opts.trace, job_kind: opts.trace.job_kind ?? request.job, ...(gateHitForTrace ? { doctrine_gate_hits: gateHitForTrace } : {}) } : undefined)
+        ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], provider: responsesProvider, promptCacheKey, disablePromptCache: !!opts.trace?.prompt_cache_scope && !promptCacheKey, fetchImpl: opts.signal ? (u, i) => (responsesFetch ?? fetch)(u, { ...i, signal: opts.signal }) : responsesFetch }, opts.trace ? { ...opts.trace, job_kind: opts.trace.job_kind ?? request.job, ...(gateHitForTrace ? { doctrine_gate_hits: gateHitForTrace } : {}) } : undefined)
         : await callAnthropicTraced(request, anthropicTier as ClaudeTier, request.job, opts.trace, gateHitForTrace, opts.signal, projectedRoute);
       const servedModel = typeof resp.model === "string" && resp.model
         ? resp.model

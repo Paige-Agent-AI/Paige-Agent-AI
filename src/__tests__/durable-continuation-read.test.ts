@@ -14,7 +14,7 @@ const row = (patch: Record<string, unknown> = {}) => ({
 });
 function caller(rowValue: unknown = row(), opts: { driftActor?: boolean } = {}) {
   const getUser = vi.fn(async () => ({ data: { user: { id: id(5) } }, error: null }));
-  const rpc = vi.fn(async () => ({ data: rowValue, error: null }));
+  const rpc = vi.fn(async (_name: string, _args?: Record<string, unknown>) => ({ data: rowValue, error: null }));
   const c = {
     auth: { getUser },
     rpc,
@@ -127,5 +127,110 @@ describe('durable continuation eligibility adapter', () => {
   ])('shape drift (%s) returns null', async (_label, bad) => {
     clearCeilingCacheForTests();
     expect(await readDurableContinuation(ref, caller(bad), budgetDb(50, 1))).toBeNull();
+  });
+});
+
+describe('reconnecting to the original document completion', () => {
+  const completion = { resultRef: id(7), receiptRef: id(8) };
+  const completed = row({ terminalOutcome: { verified_readback: true, content_id: id(7) }, completion });
+  const reconnect = (responses: unknown[] = [completed, completed]) => {
+    const c = caller();
+    let index = 0;
+    c.rpc.mockImplementation(async (name) => ({
+      data: name === 'current_user_tenant_id' ? id(4) : responses[index++],
+      error: null,
+    }));
+    return c;
+  };
+
+  it('returns the original result and receipt on repeated reads using only observation RPCs', async () => {
+    const c = reconnect([completed, completed, completed, completed]);
+    const first = await readDurableContinuation(ref, c, null);
+    expect(first).toMatchObject({ workId: ref.workId, completion });
+    expect(await readDurableContinuation(ref, c, null)).toEqual(first);
+    expect(c.rpc.mock.calls.map(([name]) => name)).toEqual([
+      'read_paige_durable_continuation', 'current_user_tenant_id', 'read_paige_durable_continuation',
+      'read_paige_durable_continuation', 'current_user_tenant_id', 'read_paige_durable_continuation',
+    ]);
+  });
+
+  it.each([
+    null,
+    { ...completed, completion: { ...completion, receiptRef: id(9) } },
+    { ...completed, tenantId: id(9) },
+  ])('withholds the pair when the authoritative re-read changes', async (changed) => {
+    expect(await readDurableContinuation(ref, reconnect([completed, changed]), null)).toBeNull();
+  });
+
+  it.each([
+    { ...completed, completion: { ...completion, resultRef: id(9) } },
+    { ...completed, status: 'outcome_unknown' },
+    { ...completed, workKind: 'research' },
+  ])('refuses an inconsistent completion tuple', async (changed) => {
+    expect(await readDurableContinuation(ref, reconnect([changed, changed]), null)).toBeNull();
+  });
+});
+
+describe('reconnecting to the original Research completion', () => {
+  const completion = { resultRef: ref.workId, receiptRef: id(8) };
+  const completed = row({ capabilityKey: 'deep_research', workKind: 'research',
+    workIntentId: ref.intentId, canonicalObjective: 'Read the original cited report', completion,
+    terminalOutcome: { verified_readback: true, run_id: ref.workId, receipt_id: id(8),
+      receipt_outcome: 'capability_succeeded', report_sha256: 'a'.repeat(64) } });
+  const reconnect = (responses: unknown[] = [completed, completed]) => {
+    const c = caller();
+    let index = 0;
+    c.rpc.mockImplementation(async (name) => ({
+      data: name === 'current_user_tenant_id' ? id(4) : responses[index++], error: null,
+    }));
+    return c;
+  };
+
+  it('reopens the same Research report and receipt without a provider or mutation RPC', async () => {
+    const c = reconnect([completed, completed, completed, completed]);
+    const first = await readDurableContinuation(ref, c, null);
+    expect(first).toEqual({ eligibleForContext: true, state: 'succeeded', reason: 'canonical_terminal',
+      workId: ref.workId, completion });
+    expect(await readDurableContinuation(ref, c, null)).toEqual(first);
+    expect(c.rpc.mock.calls.every(([name]) => ['read_paige_durable_continuation', 'current_user_tenant_id'].includes(name))).toBe(true);
+  });
+
+  it.each([
+    { workIntentId: id(9) },
+    { terminalOutcome: { ...completed.terminalOutcome, run_id: id(9) } },
+    { terminalOutcome: { ...completed.terminalOutcome, receipt_id: id(9) } },
+    { terminalOutcome: { ...completed.terminalOutcome, receipt_outcome: 'capability_failed' } },
+    { terminalOutcome: { ...completed.terminalOutcome, report_sha256: null } },
+    { completion: { ...completion, resultRef: id(9) } },
+  ])('withholds inconsistent original Research evidence (%j)', async patch => {
+    const changed = { ...completed, ...patch };
+    expect(await readDurableContinuation(ref, reconnect([changed, changed]), null)).toBeNull();
+  });
+
+  it('withholds a changed report digest on the authoritative re-read', async () => {
+    const changed = { ...completed, terminalOutcome: { ...completed.terminalOutcome, report_sha256: 'b'.repeat(64) } };
+    expect(await readDurableContinuation(ref, reconnect([completed, changed]), null)).toBeNull();
+  });
+
+  it('withholds a changed native receipt even when the completion locator is unchanged', async () => {
+    const changed = { ...completed, terminalOutcome: { ...completed.terminalOutcome, receipt_id: id(9) } };
+    expect(await readDurableContinuation(ref, reconnect([completed, changed]), null)).toBeNull();
+  });
+
+  it('withholds a changed identity after the final record read', async () => {
+    const c = reconnect();
+    c.auth.getUser.mockResolvedValueOnce({ data: { user: { id: id(5) } }, error: null })
+      .mockResolvedValueOnce({ data: { user: { id: id(5) } }, error: null })
+      .mockResolvedValueOnce({ data: { user: { id: id(9) } }, error: null });
+    expect(await readDurableContinuation(ref, c, null)).toBeNull();
+  });
+
+  it('withholds a workspace change after the final record read', async () => {
+    const c = reconnect();
+    let tenants = 0;
+    c.rpc.mockImplementation(async name => ({
+      data: name === 'current_user_tenant_id' ? ++tenants === 1 ? id(4) : id(9) : completed, error: null,
+    }));
+    expect(await readDurableContinuation(ref, c, null)).toBeNull();
   });
 });

@@ -89,6 +89,15 @@ def checked_source(repo, commit, name):
                             'refs/tags/edge-live^{commit}').decode().strip()
     readback.changed_function_configuration(repo, baseline, commit)
     project, expected = readback.expected_release(repo, commit, [name])
+    if name == 'social-publish-command':
+        # Its new account-bound receipts need the native private projection first.
+        database_commit = readback.git(repo, 'rev-parse', '--verify',
+                                       'refs/tags/db-live^{commit}').decode().strip()
+        privacy = 'supabase/migrations/20271133000022_exp07_publication_receipt_privacy.sql'
+        persisted_privacy = readback.git(repo, 'cat-file', 'blob', f'{database_commit}:{privacy}')
+        expected_privacy = readback.git(repo, 'cat-file', 'blob', f'{commit}:{privacy}')
+        if persisted_privacy != expected_privacy:
+            raise readback.ReadbackError('social_publication_privacy_not_persisted')
     if readback.git(repo, 'status', '--porcelain=v1', '--untracked-files=all', '--',
                     'supabase/config.toml', 'supabase/functions').strip():
         raise readback.ReadbackError('dirty_deployment_source')

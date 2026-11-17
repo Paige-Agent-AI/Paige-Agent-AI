@@ -8,7 +8,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { isTeamHubCardActRequest, parseCardActRequest, runTeamHubCardAct, STRANDED_APPROVAL_MS, type CardActDeps } from "./card-act.ts";
+import { isTeamHubCardActRequest, parseCardActRequest, runTeamHubCardAct, STRANDED_APPROVAL_MS, type CardActDeps, type CardActResponse } from "./card-act.ts";
 import { uuidFrom } from "./agent-turn.ts";
 import { confirmFingerprint } from "../confirm-fingerprint.ts";
 import { eqOf, fakeDb, type Query } from "./a2b-test-fakes.ts";
@@ -39,14 +39,17 @@ type Opts = {
   rowError?: boolean;
   currentScope?: unknown;
   scopeError?: boolean;
-  /** The card's message row as the service read returns it, or "error" for a read that does not answer. */
+  /** Native provenance fixtures, projected only through the protected caller reader. */
   msg?: Record<string, unknown> | null | "error";
+  context?: Record<string, unknown> | null;
+  cardRead?: () => unknown;
   /** The task's title and the assignee's name, as the done note reads them (absent: no row). */
   title?: string; fullName?: string; args?: Record<string, unknown>;
 };
 
 async function world(opts: Opts = {}) {
   const tool = opts.tool ?? "crm_cancel_task";
+  const agent = tool === "growth_page_publish" ? "nexus" : "zion";
   const args = opts.args ?? (tool === "growth_page_publish" ? PUBLISH_ARGS : CRM_ARGS);
   const fp = await confirmFingerprint(tool, args);
   const calls: Call[] = [];
@@ -63,9 +66,21 @@ async function world(opts: Opts = {}) {
           case "team_hub_decide_card": return opts.decide ? opts.decide(a) : a.p_decision === "decline"
             ? { ok: true, decision: "declined", confirmation_id: CONF } : { ok: true, decision: "approved", confirmation_id: CONF };
           case "team_hub_post_agent_message": return opts.post ? opts.post() : { ok: true, message: { id: OUTCOME_MSG } };
-          case "team_hub_list_messages": return { ok: true, messages: [{ id: OUTCOME_MSG, author_kind: "agent", agent_key: "zion", body: "x", parent_message_id: CARD }], has_more: false,
-            root: { id: CARD, author_kind: "agent", agent_key: "zion" } };
-          case "team_hub_card_states": return { ok: true, cards: [{ message_id: CARD, card: { state: "done", kind: "task_cancel", actions: [{ summary: "Cancel" }] }, outcome_message_id: OUTCOME_MSG, record: null }] };
+          case "team_hub_list_messages": return { ok: true, messages: [{ id: OUTCOME_MSG, author_kind: "agent", agent_key: agent, body: "x", parent_message_id: CARD }], has_more: false,
+            root: { id: CARD, author_kind: "agent", agent_key: agent } };
+          case "team_hub_card_states": {
+            if (opts.cardRead) return opts.cardRead();
+            if (opts.msg === "error") return null;
+            const msg = opts.msg === undefined ? { id: CARD, channel_id: ZION_DM, parent_message_id: null, agent_key: agent, author_kind: "agent" } : opts.msg;
+            const valid = msg?.id === CARD && msg.channel_id === ZION_DM && msg.author_kind === "agent" && msg.agent_key === agent;
+            return { ok: true, cards: [{ message_id: CARD,
+              card: { state: "done", kind: "task_cancel", asker_user_id: SAM, actions: [{ summary: "Cancel" }] },
+              ...(valid ? { approval_context: opts.context === undefined ? {
+                tenant_id: TENANT, channel_id: ZION_DM, approver_user_id: SAM,
+                agent_key: agent, source_message_id: ASK, root_message_id: msg.parent_message_id ?? CARD,
+              } : opts.context } : {}),
+              outcome_message_id: OUTCOME_MSG, record: null }] };
+          }
           default: return null;
         }
       })();
@@ -79,14 +94,13 @@ async function world(opts: Opts = {}) {
       if (rowReads > 1 && opts.rowAfter) return { data: opts.rowAfter(), error: null };
       return { data: opts.row ? opts.row(fp) : live, error: null };
     }
-    if (q.table === "team_hub_messages") return opts.msg === "error" ? { data: null, error: { message: "down" } }
-      : { data: opts.msg !== undefined ? opts.msg : { id: CARD, channel_id: ZION_DM, parent_message_id: null, agent_key: "zion", author_kind: "agent" }, error: null };
-    if (q.table === "paige_subagents") return { data: { slug: "zion", config: { capability_scope: opts.currentScope ?? {
+    if (q.table === "team_hub_messages" || q.table === "team_hub_agent_turns" || q.table === "team_hub_message_cards")
+      return { data: null, error: { message: "permission denied for protected Team Hub table" } };
+    if (q.table === "paige_subagents") return { data: { slug: agent, config: { capability_scope: opts.currentScope ?? {
       mode: "allowlist", access: "card", tools: ["crm_cancel_task", "crm_assign_task", "growth_page_publish"],
     } } }, error: opts.scopeError ? { message: "unavailable" } : null };
     if (q.table === "tasks") return { data: opts.title ? { title: opts.title } : null, error: null };
     if (q.table === "profiles") return { data: opts.fullName ? { full_name: opts.fullName } : null, error: null };
-    if (q.table === "team_hub_agent_turns") return { data: { source_message_id: ASK, agent_key: "zion", channel_id: ZION_DM }, error: null };
     return { data: null, error: null };
   }, queries);
   const service = {
@@ -94,7 +108,7 @@ async function world(opts: Opts = {}) {
       calls.push({ who: "service", name, args: a });
       if (name === "team_hub_accept_agent_turn") return Promise.resolve({ data: opts.accept ? opts.accept() : { ok: true, turn_id: TURN, accepted_at: "2026-10-28T10:01:00Z" }, error: null });
       // Codex P1: the outcome is the server's to settle, as the service role with the verified approver.
-      if (name === "team_hub_settle_card") return Promise.resolve({ data: opts.settle ? opts.settle(a) : { ok: true, outcome: (a.p_outcome as any).state }, error: null });
+      if (name === "team_hub_settle_card") return Promise.resolve({ data: opts.settle ? opts.settle(a) : { ok: true, outcome: (a.p_outcome as Record<string, unknown>).state }, error: null });
       return Promise.resolve({ data: null, error: null });
     },
     from: db.from,
@@ -137,8 +151,8 @@ describe("Approve (CRM): decide, the stored call through its door, settle, then 
     const w = await world();
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
     assert.equal(r.status, 200);
-    assert.equal((r.body as any).outcome, "done");
-    assert.equal((r.body as any).ok, true);
+    assert.equal(r.body.outcome, "done");
+    assert.equal(r.body.ok, true);
     const [decide] = named(w, "team_hub_decide_card");
     assert.deepEqual(decide.args, { p_expected_tenant: TENANT, p_message_id: CARD, p_decision: "approve", p_fingerprint: w.fp });
     assert.equal(decide.who, "caller");
@@ -164,7 +178,7 @@ describe("Approve (CRM): decide, the stored call through its door, settle, then 
     assert.equal(post.args.p_turn_token, TOKEN);
     assert.equal(post.args.p_client_request_id, await uuidFrom(CARD, "zion", "outcome"));
     assert.deepEqual(post.args.p_card_outcome, { state: "done" });
-    assert.equal((r.body as any).outcome_message.id, OUTCOME_MSG);
+    assert.equal((r.body as CardActResponse).outcome_message?.id, OUTCOME_MSG);
     const receipt = w.calls.find((c) => c.name === "record_capability_run")!;
     assert.equal(receipt.args._capability_key, "team_hub_agent_post");
     assert.ok(!JSON.stringify(receipt.args).includes("zion") && !JSON.stringify(receipt.args).includes(TASK), "metadata only");
@@ -183,13 +197,13 @@ describe("Approve (CRM): decide, the stored call through its door, settle, then 
       const r = await runTeamHubCardAct(w.deps, act(w.fp));
       assert.equal(named(w, "team_hub_accept_agent_turn").length, 0);
       assert.equal(named(w, "team_hub_post_agent_message").length, 0);
-      assert.equal((r.body as any).outcome_message, null);
+      assert.equal((r.body as CardActResponse).outcome_message, null);
     }
   });
   it("the door's claim found nothing and the proposal is still live: didn't run, and settle is told failed (it consumes the row)", async () => {
     const w = await world({ door: () => ({ data: null, error: { name: "FunctionsHttpError", context: { status: 403, json: async () => ({ ok: false, outcome: "refused", code: "CRM_APPROVAL_UNCONFIRMED" }) } } }) });
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
-    assert.equal((r.body as any).outcome, "failed");
+    assert.equal(r.body.outcome, "failed");
     assert.deepEqual(named(w, "team_hub_settle_card")[0].args.p_outcome, { state: "failed", note: "that approval couldn't be used" });
     assert.equal(named(w, "team_hub_post_agent_message")[0].args.p_body, "That didn't run: that approval couldn't be used. Nothing was changed.");
   });
@@ -197,7 +211,7 @@ describe("Approve (CRM): decide, the stored call through its door, settle, then 
     const w = await world({ rowAfter: () => ({ id: CONF, consumed_at: "2026-10-28T10:02:00Z", expires_at: "2999-01-01T00:00:00Z" }),
       door: () => ({ data: null, error: { name: "FunctionsHttpError", context: { status: 403, json: async () => ({ ok: false, code: "CRM_APPROVAL_UNCONFIRMED" }) } } }) });
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
-    assert.equal((r.body as any).outcome, "unconfirmed");
+    assert.equal(r.body.outcome, "unconfirmed");
     assert.deepEqual(named(w, "team_hub_settle_card")[0].args.p_outcome, { state: "unconfirmed" });
     assert.equal(named(w, "team_hub_post_agent_message")[0].args.p_body, "I couldn't confirm that ran. Check it before asking again.");
   });
@@ -205,7 +219,7 @@ describe("Approve (CRM): decide, the stored call through its door, settle, then 
     for (const door of [() => new Error("TypeError: fetch failed"), () => ({ data: null, error: { name: "FunctionsFetchError", message: "fetch failed" } })]) {
       const w = await world({ door });
       const r = await runTeamHubCardAct(w.deps, act(w.fp));
-      assert.equal((r.body as any).outcome, "unconfirmed");
+      assert.equal(r.body.outcome, "unconfirmed");
       assert.deepEqual(named(w, "team_hub_settle_card")[0].args.p_outcome, { state: "unconfirmed" });
     }
   });
@@ -217,7 +231,7 @@ describe("Approve (CRM): decide, the stored call through its door, settle, then 
   it("a proposal past its window is not sent to the door: didn't run, expired", async () => {
     const w = await world({ row: (fp) => ({ id: CONF, fingerprint: fp, tool_name: "crm_cancel_task", args: CRM_ARGS, consumed_at: null, expires_at: "2020-01-01T00:00:00Z", issued_in_request: ISSUED }) });
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
-    assert.equal((r.body as any).outcome, "failed");
+    assert.equal(r.body.outcome, "failed");
     assert.equal(named(w, "crm-command").length, 0);
     assert.deepEqual(named(w, "team_hub_settle_card")[0].args.p_outcome, { state: "failed", note: "the approval ran out of time" });
   });
@@ -226,7 +240,7 @@ describe("Approve (CRM): decide, the stored call through its door, settle, then 
       consumed_at: null, expires_at: "2999-01-01T00:00:00Z", issued_in_request: ISSUED }) });
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
     assert.equal(named(w, "crm-command").length, 0);
-    assert.equal((r.body as any).outcome, "failed");
+    assert.equal(r.body.outcome, "failed");
   });
 });
 
@@ -234,7 +248,7 @@ describe("Approve (page publish): the same door dispatch, pinned", () => {
   it("passes the pinned proposal and exactly Set([fp]): the door gets approved_fingerprint, and no approval lookup runs", async () => {
     const w = await world({ tool: "growth_page_publish" });
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
-    assert.equal((r.body as any).outcome, "done");
+    assert.equal(r.body.outcome, "done");
     const [door] = named(w, "growth-publish-command");
     assert.equal(door.args.approved_fingerprint, w.fp);
     assert.equal(door.args.id, PAGE);
@@ -248,7 +262,7 @@ describe("Approve (page publish): the same door dispatch, pinned", () => {
     const w = await world({ tool: "growth_page_publish", door: () => ({ data: null, error: { name: "FunctionsHttpError",
       context: { status: 409, json: async () => ({ ok: false, refused: true, outcome: "refused", code: "APPROVAL_NOT_AVAILABLE", error: "That approval was already used or has expired" }) } } }) });
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
-    assert.equal((r.body as any).outcome, "failed");
+    assert.equal(r.body.outcome, "failed");
     assert.deepEqual(named(w, "team_hub_settle_card")[0].args.p_outcome, { state: "failed", note: "that approval couldn't be used" });
   });
 });
@@ -271,7 +285,7 @@ describe("compliance fixes 1, 3 and 7: what the outcome says", () => {
   it("a page is never called live without the address the door returned", async () => {
     const w = await world({ tool: "growth_page_publish", door: () => ({ data: { ok: true, id: PAGE, status: "published" }, error: null }) });
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
-    assert.equal((r.body as any).outcome, "done");
+    assert.equal(r.body.outcome, "done");
     const note = String(named(w, "team_hub_settle_card")[0].args.p_outcome.note);
     assert.ok(!/is live/.test(note), note);
     assert.equal(note, "The page is published. Its address didn't come back, so open it from your pages to check.");
@@ -287,12 +301,57 @@ describe("compliance fixes 1, 3 and 7: what the outcome says", () => {
 });
 
 describe("verifier fix 4: the conversation is checked BEFORE anything is decided", () => {
+  it("NEXUS publishes through the original sequence with protected table SELECT denied", async () => {
+    const w = await world({ tool: "growth_page_publish" });
+    const r = await runTeamHubCardAct(w.deps, act(w.fp));
+    assert.equal(r.body.outcome, "done");
+    for (const name of ["growth-publish-command", "team_hub_settle_card", "team_hub_accept_agent_turn", "team_hub_post_agent_message"])
+      assert.equal(named(w, name).length, 1, name);
+    assert.equal(w.queries.filter(q => ["team_hub_messages", "team_hub_agent_turns", "team_hub_message_cards"].includes(q.table)).length, 0);
+    assert.equal(named(w, "team_hub_accept_agent_turn")[0].args.p_agent_key, "nexus");
+    assert.equal(named(w, "team_hub_accept_agent_turn")[0].args.p_source_message_id, ASK);
+    assert.equal(named(w, "team_hub_post_agent_message")[0].args.p_parent_message_id, CARD);
+  });
+  it("uses the accepted source for a private follow-up card whose visible asked-in field is absent", async () => {
+    const w = await world({ tool: "growth_page_publish", msg: {
+      id: CARD, channel_id: ZION_DM, parent_message_id: null, asked_in_message_id: null,
+      agent_key: "nexus", author_kind: "agent",
+    } });
+    assert.equal((await runTeamHubCardAct(w.deps, act(w.fp))).body.outcome, "done");
+    assert.equal(named(w, "team_hub_accept_agent_turn")[0].args.p_source_message_id, ASK);
+  });
+  it("withholds every effect when the protected reader omits or mismatches provenance", async () => {
+    const valid = { tenant_id: TENANT, channel_id: ZION_DM, approver_user_id: SAM,
+      agent_key: "nexus", source_message_id: ASK, root_message_id: CARD };
+    for (const context of [null, {}, { ...valid, tenant_id: ASK }, { ...valid, channel_id: ASK },
+      { ...valid, approver_user_id: ASK }, { ...valid, agent_key: "unknown" },
+      { ...valid, source_message_id: null }, { ...valid, root_message_id: "invalid" }]) {
+      const w = await world({ tool: "growth_page_publish", context });
+      assert.equal((await runTeamHubCardAct(w.deps, act(w.fp))).body.outcome, "not_visible");
+      for (const name of ["team_hub_decide_card", "growth-publish-command", "team_hub_settle_card", "team_hub_accept_agent_turn", "team_hub_post_agent_message"])
+        assert.equal(named(w, name).length, 0, name);
+    }
+  });
+  it("refuses malformed, missing and duplicate card reads before deciding", async () => {
+    for (const cardRead of [
+      () => ({ ok: true }),
+      () => ({ ok: true, cards: [] }),
+      () => ({ ok: true, cards: [{ message_id: ASK }] }),
+      () => ({ ok: true, cards: [{ message_id: CARD }, { message_id: CARD }] }),
+      () => ({ ok: false, code: "not_yours" }),
+    ]) {
+      const w = await world({ tool: "growth_page_publish", cardRead });
+      const result = await runTeamHubCardAct(w.deps, act(w.fp));
+      assert.notEqual(result.body.outcome, "done");
+      assert.equal(named(w, "team_hub_decide_card").length + named(w, "growth-publish-command").length, 0);
+    }
+  });
   it("a card that is not this conversation's (or not an agent's) is not_visible, and decide is never asked", async () => {
     for (const msg of [{ id: CARD, channel_id: "88888888-8888-4888-8888-888888888888", parent_message_id: null, agent_key: "zion", author_kind: "agent" },
       { id: CARD, channel_id: ZION_DM, parent_message_id: null, agent_key: null, author_kind: "user" }, null]) {
       const w = await world({ msg });
       const r = await runTeamHubCardAct(w.deps, act(w.fp));
-      assert.equal((r.body as any).outcome, "not_visible", JSON.stringify(msg));
+      assert.equal(r.body.outcome, "not_visible", JSON.stringify(msg));
       assert.equal(named(w, "team_hub_decide_card").length, 0, "nothing is decided");
       assert.equal(named(w, "team_hub_settle_card").length, 0);
     }
@@ -301,7 +360,7 @@ describe("verifier fix 4: the conversation is checked BEFORE anything is decided
     for (const a of ["approve", "decline"]) {
       const w = await world({ msg: "error" });
       const r = await runTeamHubCardAct(w.deps, act(w.fp, { act: a }));
-      assert.equal((r.body as any).outcome, "could_not_start");
+      assert.equal(r.body.outcome, "could_not_start");
       assert.equal(named(w, "team_hub_decide_card").length, 0);
     }
   });
@@ -311,7 +370,7 @@ describe("Not now, and the people who cannot decide", () => {
   it("decline: the door decides (and consumes); nothing is dispatched, settled or posted", async () => {
     const w = await world();
     const r = await runTeamHubCardAct(w.deps, act(w.fp, { act: "decline" }));
-    assert.equal((r.body as any).outcome, "declined");
+    assert.equal(r.body.outcome, "declined");
     assert.equal(named(w, "team_hub_decide_card")[0].args.p_decision, "decline");
     for (const n of ["crm-command", "growth-publish-command", "team_hub_settle_card", "team_hub_accept_agent_turn", "team_hub_post_agent_message"]) assert.equal(named(w, n).length, 0, n);
   });
@@ -320,7 +379,7 @@ describe("Not now, and the people who cannot decide", () => {
       ["already_decided", "already_decided"], ["conversations_off", "conversations_off"], ["invalid", "could_not_start"], ["scope_changed", "could_not_start"]]) {
       const w = await world({ decide: () => ({ ok: false, code }) });
       const r = await runTeamHubCardAct(w.deps, act(w.fp));
-      assert.equal((r.body as any).outcome, outcome, code);
+      assert.equal(r.body.outcome, outcome, code);
       assert.equal(named(w, "crm-command").length + named(w, "team_hub_settle_card").length + named(w, "team_hub_post_agent_message").length, 0, code);
     }
     const w = await world({ decide: () => ({ ok: true, already: true, decision: "approved", outcome: "done", confirmation_id: CONF, decided_at: "2026-10-28T10:00:00Z" }) });
@@ -340,7 +399,7 @@ describe("Not now, and the people who cannot decide", () => {
     it("once it is stranded, the approver's Approve resumes it: the door runs once and the outcome is settled", async () => {
       const w = await world({ decide: unsettled(STRANDED_APPROVAL_MS + 5_000) });
       const r = await runTeamHubCardAct(w.deps, act(w.fp));
-      assert.equal((r.body as any).outcome, "done");
+      assert.equal(r.body.outcome, "done");
       assert.equal(named(w, "crm-command").length, 1);
       assert.equal(named(w, "team_hub_settle_card")[0].args.p_outcome.state, "done");
     });
@@ -362,14 +421,14 @@ describe("Not now, and the people who cannot decide", () => {
   it("a proposal that can't be read never reached the door: it didn't run, and settling it retires the proposal", async () => {
     const w = await world({ rowError: true });
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
-    assert.equal((r.body as any).outcome, "failed");
+    assert.equal(r.body.outcome, "failed");
     assert.equal(named(w, "crm-command").length, 0);
     assert.deepEqual(named(w, "team_hub_settle_card")[0].args.p_outcome, { state: "failed", note: "that approval couldn't be used" });
   });
   it("a decide whose answer was lost is not retried (a retry could read our own decision as someone else's)", async () => {
     const w = await world({ decide: () => null });
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
-    assert.equal((r.body as any).outcome, "could_not_start");
+    assert.equal(r.body.outcome, "could_not_start");
     assert.equal(named(w, "team_hub_decide_card").length, 1);
     assert.equal(named(w, "crm-command").length, 0);
   });
@@ -377,7 +436,7 @@ describe("Not now, and the people who cannot decide", () => {
     const w = await world({ accept: () => ({ ok: false, code: "duplicate", message_id: OUTCOME_MSG }) });
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
     assert.equal(named(w, "team_hub_post_agent_message").length, 0);
-    assert.equal((r.body as any).outcome_message.id, OUTCOME_MSG);
+    assert.equal((r.body as CardActResponse).outcome_message?.id, OUTCOME_MSG);
   });
 });
 
@@ -394,7 +453,7 @@ describe("current agent permission at redemption", () => {
     assert.equal(named(w, "crm-command").length, 0);
     assert.equal(r.body.outcome, "failed");
     assert.equal(named(w, "team_hub_settle_card").length, 1);
-    assert.equal((named(w, "team_hub_settle_card")[0].args.p_outcome as any).state, "failed");
+    assert.equal((named(w, "team_hub_settle_card")[0].args.p_outcome as Record<string, unknown>).state, "failed");
   });
   it("an unavailable current scope cannot invoke the writer", async () => {
     const w = await world({ scopeError: true });

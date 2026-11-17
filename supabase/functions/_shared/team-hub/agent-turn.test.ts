@@ -1901,8 +1901,9 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
       assert.equal(binding.source.plans[0].updated_at, "2026-10-31T00:00:00.000001Z");
       assert.equal(binding.source.plans[0].items[0].updated_at, "2026-10-31T00:00:00.000002Z");
       assert.ok(!JSON.stringify(binding).includes("Confirm venue"));
-      assert.deepEqual(args.p_record_links, [{ destination: "operations_work", record_id: PLAN_ITEM, record_kind: "planning_item" }],
-        "only original items use the existing typed Work route");
+      assert.deepEqual(args.p_record_links, [{ destination: "operations_work", record_id: PLAN_ITEM, record_kind: "planning_item" },
+        { destination: "operations_work", record_id: PLAN_ROW, record_kind: "planning_plan" }, { destination: "operations_weekly_plan", record_id: null }],
+        "only original items and Plans use typed Work routes; the bounded review link adds no record authority");
       return { ok: true };
     } });
     const m = model([{ tool_calls: [{ name: "plan_list", args: { horizon: "week" } }] }, { content: planningAnswer }]);

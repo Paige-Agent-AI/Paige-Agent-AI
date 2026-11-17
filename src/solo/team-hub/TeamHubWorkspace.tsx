@@ -73,6 +73,7 @@ import {
 import { agentTurnKey, attachmentScope, teamHubNavigation, useTeamHub, type AgentTurn, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub, type TurnStateRead } from "./useTeamHub";
 import { useNexusEmailDrafts, type NexusEmailDraftView } from "./useNexusEmailDrafts";
 import { TeamHubEmailDraft } from "./TeamHubEmailDraft";
+import { PrivateDocumentWork } from "./PrivateDocumentWork";
 import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, dmRequestPrefill, endsWithRedirect, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
 import { AgentDmEmpty, AgentDmNote, AgentFailRow, AgentGlyph, AgentPlate, AgentProfilePanel, AgentTag, AgentTyping, BringInRow, PrivateNote, PrivateOthersNote } from "./TeamHubAgents";
 import { TeamHubApprovalCard, type TeamHubApprovalAct } from "./TeamHubApproval";
@@ -128,13 +129,13 @@ function HubEntry({ onOpenTeamSettings, openPaige, onApprovalAct, referenceSearc
     </CenterState></div>;
   }
   // Remount per actor and workspace: a switch clears every conversation, draft and pending send.
-  return <ScopedTeamHub key={`${activeUserId}:${tenantId}`} tenantId={tenantId} onTenantRefresh={refresh}
+  return <ScopedTeamHub key={`${activeUserId}:${tenantId}`} actorId={activeUserId} tenantId={tenantId} onTenantRefresh={refresh}
     onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct}
     referenceSearch={referenceSearch} referenceKey={referenceKey} />;
 }
 
-function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
-  tenantId: string; onTenantRefresh?: () => unknown; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
+function ScopedTeamHub({ actorId, tenantId, onTenantRefresh, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
+  actorId: string; tenantId: string; onTenantRefresh?: () => unknown; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
   referenceSearch: string; referenceKey: string;
 }) {
   const [announcement, setAnnouncement] = useState("");
@@ -196,6 +197,7 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
     return <HubSkeleton />;
   }
   return <ReadyHub hub={hub} nexusEmails={nexusEmails} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct}
+    privateWorkScope={hub.overview.me.user_id === actorId && hub.overview.tenant_id === tenantId ? { actorId, tenantId } : null}
     referenceSearch={referenceSearch} referenceKey={referenceKey} />;
 }
 
@@ -275,10 +277,11 @@ const localDay = (instant: string | null) => {
   return Number.isNaN(date.getTime()) ? "" : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
-function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
+function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey, privateWorkScope }: {
   hub: TeamHub; announce: (text: string) => void; announcement: string; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
   referenceSearch: string; referenceKey: string;
   nexusEmails: NexusEmailDraftView;
+  privateWorkScope: { actorId: string; tenantId: string } | null;
 }) {
   const overview = hub.overview!;
   const people = overview.people;
@@ -711,7 +714,7 @@ function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings
     window.requestAnimationFrame(() => (target?.isConnected ? target : composerRef.current)?.focus());
   }, [hub]);
 
-  const { openMessageReference, cancelReferenceNavigation } = hub;
+  const { openMessageReference, cancelPendingNavigation } = hub;
   useEffect(() => {
     const key = `${referenceKey}:${referenceSearch}`;
     const generation = ++referenceGeneration.current;
@@ -740,10 +743,10 @@ function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings
       threadReturn.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       setReferenceFocus({ rootId: result.value.rootId, messageId: result.value.messageId });
     });
-    return () => { retired = true; referenceGeneration.current += 1; cancelReferenceNavigation(); };
+    return () => { retired = true; referenceGeneration.current += 1; cancelPendingNavigation(); };
     // Layout and already-visible conversation state do not restart an accepted URL intent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [referenceSearch, referenceKey, referenceBlocked, openMessageReference, cancelReferenceNavigation, prepareThreadDraft, announce]);
+  }, [referenceSearch, referenceKey, referenceBlocked, openMessageReference, cancelPendingNavigation, prepareThreadDraft, announce]);
   useEffect(() => {
     if (!referenceFocus) return;
     const thread = hub.thread;
@@ -997,6 +1000,8 @@ function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings
           })}
           {!agentRows.length && <p className="th-note">No agents match.</p>}
         </div>}
+        {!query && privateWorkScope && (me?.permission === "owner" || me?.permission === "admin") &&
+          <PrivateDocumentWork {...privateWorkScope} />}
         {query && <p className="th-note">Search covers the conversations you can see.</p>}
       </div>
     </section>
@@ -1009,7 +1014,13 @@ function ReadyHub({ hub, nexusEmails, announce, announcement, onOpenTeamSettings
       {firstUse && !hub.activeId
         ? (oneColumn ? null : firstUseState("conv"))
         : <Conversation hub={hub} people={people} meId={meId} active={active} agent={agentProps}
-          onBack={() => { setMobileView("list"); window.requestAnimationFrame(() => document.getElementById(`th-conv-${hub.activeId}`)?.focus()); }}
+          onBack={() => {
+            // The narrow list hides the conversation without unmounting its file rows.
+            referenceGeneration.current += 1;
+            cancelPendingNavigation();
+            setMobileView("list");
+            window.requestAnimationFrame(() => document.getElementById(`th-conv-${hub.activeId}`)?.focus());
+          }}
           onOpenThread={openThread} announce={announce} pending={pendingTop} onRetry={retry}
           onMembershipDone={(left) => { if (left) window.requestAnimationFrame(() => searchRef.current?.focus()); else focusComposer(); }}
           onDiscard={(item) => { hub.discard(item.localId); announce("Removed from this screen"); focusComposer(); }}
@@ -2373,7 +2384,7 @@ function WorkPanel({ hub, people, conversations, headingRef, onClose, onJump }: 
 const FILE_DISCLOSURE_ID = "th-file-disclosure";
 
 /** How file rows mint their URLs and speak, without threading both through every message row. */
-const FileAccess = createContext<{ sign: (path: string, download?: string) => Promise<string | null>; announce: (text: string) => void }>({
+const FileAccess = createContext<{ sign: (path: string, download?: string) => Promise<string | null | undefined>; announce: (text: string) => void }>({
   sign: async () => null, announce: () => undefined,
 });
 
@@ -2481,15 +2492,20 @@ function MessageFiles({ files }: { files: TeamHubFile[] }) {
  */
 function FileRow({ file }: { file: TeamHubFile }) {
   const access = useContext(FileAccess);
+  const lifetime = useRef(0);
+  useLayoutEffect(() => { lifetime.current += 1; return () => { lifetime.current += 1; }; }, [file.path]);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const errorId = `th-file-error-${file.id}`;
   const download = async () => {
     if (busy) return;
+    const generation = lifetime.current;
     setBusy(true);
     setFailed(false);
     const url = await access.sign(file.path, file.name);
+    if (lifetime.current !== generation) return;
     setBusy(false);
+    if (url === undefined) return;
     if (!url) { setFailed(true); access.announce(TEAM_HUB_DOWNLOAD_FAILED); return; }
     teamHubNavigation.assign(url);
   };
@@ -2520,7 +2536,7 @@ function FileThumb({ file }: { file: TeamHubFile }) {
   const current = useRef({ path: file.path, reminted: false });
   const mint = useCallback((path: string) => {
     void sign(path).then((next) => {
-      if (current.current.path !== path) return;
+      if (current.current.path !== path || next === undefined) return;
       if (next) setUrl(next); else setBroken(true);
     });
   }, [sign]);

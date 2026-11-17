@@ -25,7 +25,7 @@
  * that only runs on the author's Node version is not a gate. The loader is already proven in CI by
  * the sibling `trace-wiring` suite and is version-independent.
  */
-import { ANTHROPIC_MODEL_PER_1K, estimateTokenCostUsd, tokenRate } from "../../supabase/functions/_shared/token-pricing.ts";
+import { ANTHROPIC_MODEL_PER_1K, estimateTokenCostUsd, estimateOpenAIProviderUsageCost, tokenRate } from "../../supabase/functions/_shared/token-pricing.ts";
 
 let pass = 0, fail = 0;
 const ok = (cond, name) => { if (cond) { pass++; } else { fail++; console.log(`  FAIL  ${name}`); } };
@@ -100,17 +100,32 @@ const haikuNew = estimateTokenCostUsd("anthropic", "claude-haiku-4-5", 4267724, 
 ok(haikuOld > haikuNew * 2.9 && haikuOld < haikuNew * 3.1,
    `4.1 the old provider-only rate over-prices haiku by ~3× (old $${haikuOld} vs new $${haikuNew})`);
 
-// ── 5. OPENROUTER — SAME MODEL, SAME PRICE ───────────────────────────────────────────────────
+console.log('5. provider-only cache pricing is disjoint and cannot reprice the incumbent meter');
+eq(estimateOpenAIProviderUsageCost('gpt-6.1-sol', 12000, 500, 4000, 3000, 4000), 0.0349, '5.1 Sol 5% read and mixed write lifetimes');
+eq(estimateOpenAIProviderUsageCost('gpt-6-luna', 12000, 500, 4000, 3000, 4000), 0.001765, '5.2 Luna exact list basis');
+eq(estimateOpenAIProviderUsageCost('gpt-6-astra', 12000, 500, 4000, 3000, 4000), 0.1765, '5.3 Astra exact list basis');
+eq(estimateOpenAIProviderUsageCost('gpt-6.1-sol-2026-11-01', 1000, 500, 1000, 0, 0), 0.0051, '5.4 dated snapshot and full cache read');
+eq(estimateOpenAIProviderUsageCost('gpt-6.1-sol', 0, 0, 0, 0, 0), 0, '5.5 reported zero is real zero');
+eq(estimateOpenAIProviderUsageCost('gpt-6.1-sol', 272000, 0, 0, 0, 0), 0.544, '5.5b short-context boundary inclusive');
+eq(estimateOpenAIProviderUsageCost('gpt-6.1-sol', 272001, 0, 0, 0, 0), undefined, '5.5c larger context stays UNKNOWN rather than using cheaper short schedule');
+for (const args of [
+  ['unknown', 1, 1, 0, 0, 0], ['gpt-6.1-sol-pretend', 100, 1, 0, 0, 0],
+  ['gpt-6.1-sol', 100, 1, 90, 20, 0], ['gpt-6.1-sol', 100, 1, 0, null, 0],
+  ['gpt-6.1-sol', 100, 1, 0, -1, 0], ['gpt-6.1-sol', 100, Infinity, 0, 0, 0],
+  ['gpt-6.1-sol', 100, 1, 0, 0.5, 0], ['gpt-6.1-soluble', 100, 1, 0, 0, 0],
+]) eq(estimateOpenAIProviderUsageCost(...args), undefined, `5.6 unknown/inconsistent/nonfinite usage stays unknown ${args}`);
+
+// ── 6. OPENROUTER — SAME MODEL, SAME PRICE ───────────────────────────────────────────────────
 // OpenRouter carries the GPT-6 family under an `openai/` namespace. An OpenRouter-served turn must
 // be metered IDENTICALLY to the direct-OpenAI turn it replaced; an unrecognised OpenRouter model
 // stays unpriced (undefined), never a fabricated default or a zero.
-console.log("5. OpenRouter-served GPT-6 ids are metered on the same rows as direct OpenAI");
+console.log("6. OpenRouter-served GPT-6 ids are metered on the same rows as direct OpenAI");
 for (const [id, direct] of [["openai/gpt-6-luna", "gpt-6-luna"], ["openai/gpt-6.1-sol", "gpt-6.1-sol"], ["openai/gpt-6-astra", "gpt-6-astra"]]) {
   eq(estimateTokenCostUsd("openrouter", id, 1000, 1000), estimateTokenCostUsd("openai", direct, 1000, 1000),
-    `5.${direct} ${id} costs exactly the same as direct ${direct}`);
+    `6.${direct} ${id} costs exactly the same as direct ${direct}`);
 }
 eq(estimateTokenCostUsd("openrouter", "some-future/open-model", 1000, 1000), undefined,
-   "5.4 an unrecognised OpenRouter model is UNPRICED, never a fabricated or zero cost");
+   "6.4 an unrecognised OpenRouter model is UNPRICED, never a fabricated or zero cost");
 
 console.log(`\ntoken-pricing: ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

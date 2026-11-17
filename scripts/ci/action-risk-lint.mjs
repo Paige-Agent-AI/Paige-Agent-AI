@@ -81,6 +81,9 @@ const POLICY = "supabase/functions/_shared/action-risk.ts";
 const CHAT = "supabase/functions/paige-ai-chat/index.ts";
 const MCP_POLICY = "supabase/functions/_shared/paige-mcp/capability-policy.ts";
 const SOCIAL_HANDLER = "supabase/functions/paige-social/index.ts";
+const SOCIAL_PUBLISH_ENTRY = "supabase/functions/social-publish-command/index.ts";
+const SOCIAL_PUBLISH_DOOR = "supabase/functions/_shared/social-publish-command/door.ts";
+const SOCIAL_GOVERNANCE = "supabase/functions/_shared/social-provider/governance.ts";
 const CONTACT_SCOPED_EDGE_HANDLERS = [
   "supabase/functions/_shared/nav-pull-profile/governed-adapter.ts",
   "supabase/functions/smartcredit-pull-snapshot/index.ts",
@@ -210,6 +213,51 @@ export function parseMcpCanonicals(src) {
 /** Domain-owned edge mutations that enter the same governed decision seam. */
 export function parseGovernedEdgeActions(src) {
   return [...new Set([...src.matchAll(/await govern\(\s*"([a-z0-9_]+)"/g)].map((m) => m[1]))];
+}
+
+/** Classification discovery for the existing saved-content publisher. This
+ * proves the actual identity/key binding, not runtime authorization or Chat admission. */
+export function socialPublishDoorBound(entryText, doorText, governanceText) {
+  const parse = text => ts.createSourceFile("social.ts", text, ts.ScriptTarget.Latest, true);
+  const [entry, door, governance] = [entryText, doorText, governanceText].map(parse);
+  if ([entry, door, governance].some(source => source.parseDiagnostics.length)) return false;
+  const imports = (source, path, symbol) => source.statements.some(n => ts.isImportDeclaration(n)
+    && n.moduleSpecifier.text === path && n.importClause?.namedBindings && ts.isNamedImports(n.importClause.namedBindings)
+    && n.importClause.namedBindings.elements.some(e => !e.propertyName && e.name.text === symbol));
+  const value = (source, name) => {
+    const found = astNodes(source, n => ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.name.text === name);
+    return found.length === 1 ? found[0].initializer : null;
+  };
+  const equals = (node, text) => !!node && compactNode(node) === text;
+  const declaration = value(governance, "SOCIAL_PUBLICATION_CAPABILITY");
+  const field = (node, name) => node && ts.isObjectLiteralExpression(node)
+    ? node.properties.find(n => ts.isPropertyAssignment(n) && n.name.text === name)?.initializer : null;
+  const definition = declaration && ts.isCallExpression(declaration) && equals(declaration.expression, "defineCapability")
+    && declaration.arguments.length === 1 ? declaration.arguments[0] : null;
+  if (!imports(entry, "../_shared/social-publish-command/door.ts", "handleSocialPublishCommand")
+    || !imports(door, "../social-provider/governance.ts", "governSocialMutation")
+    || !imports(governance, "../paige-spine/governedExecution.ts", "decideGovernedExecution")
+    || !equals(value(door, "CAPABILITY"), '"social.post_publish"')
+    || !imports(governance, "../capability-kit/mod.ts", "defineCapability")
+    || !equals(field(field(definition, "identity"), "id"), '"social.post_publish"')
+    || !equals(field(field(definition, "governance"), "actionRiskKey"), '"social_post_publish"')
+    || !equals(field(field(definition, "governance"), "risk"), '"high"')
+    || !equals(field(field(definition, "governance"), "approval"), '"confirm"')
+    || !equals(field(definition, "effect"), '"external_effect"')
+    || !equals(value(governance, "SOCIAL_PUBLICATION_ACTION_RISK_KEY"), 'SOCIAL_PUBLICATION_CAPABILITY.governance.actionRiskKeyasstring')
+    || !equals(value(governance, "actionRiskKey"), 'input.capability==="social.post_publish"?SOCIAL_PUBLICATION_ACTION_RISK_KEY:input.capability')) return false;
+  const serve = astNodes(entry, n => ts.isCallExpression(n) && compactNode(n.expression) === "Deno.serve");
+  if (serve.length !== 1 || serve[0].arguments.length !== 1
+    || !compactNode(serve[0]).includes('returnhandleSocialPublishCommand(req,{caller,admin,adapter:zernioSocialAdapter});')) return false;
+  const govern = astNodes(door, n => ts.isCallExpression(n) && compactNode(n.expression) === "governSocialMutation");
+  if (govern.length !== 1 || govern[0].arguments.length !== 1 || !ts.isObjectLiteralExpression(govern[0].arguments[0])) return false;
+  const fields = govern[0].arguments[0].properties;
+  if (fields.some(ts.isSpreadAssignment)
+    || !fields.some(n => ts.isPropertyAssignment(n) && n.name.text === "capability" && equals(n.initializer, "CAPABILITY"))) return false;
+  const decisions = astNodes(governance, n => ts.isCallExpression(n) && compactNode(n.expression) === "decideGovernedExecution");
+  return decisions.length === 1
+    && compactNode(decisions[0]).includes('capability:{id:actionRiskKey,effect:"mutate",')
+    && compactNode(decisions[0]).includes('claimedFor:actionRiskKey');
 }
 
 /** Canonical capability constants used by governed, contact-scoped Edge adapters. */
@@ -606,6 +654,35 @@ function selfTest() {
     bad += ok('a missing weekly entry is not a native classification exemption',!weeklyDraftDoorBound('',original[1],original[2]));
     bad += ok('a second served path is not the one canonical weekly door',!weeklyDraftDoorBound(original[0]+'\nDeno.serve(other);',original[1],original[2]));
   }
+  if (fs.existsSync(SOCIAL_PUBLISH_ENTRY)) {
+    const original = [SOCIAL_PUBLISH_ENTRY, SOCIAL_PUBLISH_DOOR, SOCIAL_GOVERNANCE].map(path => fs.readFileSync(path, 'utf8'));
+    bad += ok('the original Social publisher binds its stored identity to the real canonical risk key', socialPublishDoorBound(...original));
+    for (const [index, label, before, after] of [
+      [0, 'served import', '../_shared/social-publish-command/door.ts', '../_shared/fake.ts'],
+      [0, 'served handler', 'return handleSocialPublishCommand(req, { caller, admin, adapter: zernioSocialAdapter });', 'return anotherHandler(req);'],
+      [1, 'governance import', '../social-provider/governance.ts', '../fake.ts'],
+      [1, 'proposal identity', 'const CAPABILITY = "social.post_publish"', 'const CAPABILITY = "another_publish"'],
+      [1, 'governed action', 'capability: CAPABILITY', 'capability: "another_publish"'],
+      [2, 'decision import', '../paige-spine/governedExecution.ts', '../fake.ts'],
+      [2, 'risk key', 'actionRiskKey: "social_post_publish"', 'actionRiskKey: "another_publish"'],
+      [2, 'Kit constructor', 'defineCapability({', 'anotherConstructor({'],
+      [2, 'Kit import', '../capability-kit/mod.ts', '../fake-kit.ts'],
+      [2, 'Kit risk', 'risk: "high"', 'risk: "ordinary"'],
+      [2, 'Kit approval', 'approval: "confirm"', 'approval: "none"'],
+      [2, 'Kit binding', 'SOCIAL_PUBLICATION_CAPABILITY.governance.actionRiskKey as string', '"social_post_publish"'],
+      [2, 'mapping identity', 'input.capability === "social.post_publish"', 'input.capability === "another_publish"'],
+      [2, 'decision identity', 'id: actionRiskKey', 'id: input.capability'],
+      [2, 'claim identity', 'claimedFor: actionRiskKey', 'claimedFor: input.capability'],
+    ]) {
+      const changed = [...original]; changed[index] = changed[index].replace(before, after);
+      if (changed[index] === original[index]) throw Error(`Social fixture did not alter actual ${label}`);
+      bad += ok(`Social publisher discovery refuses changed ${label}`, !socialPublishDoorBound(...changed));
+    }
+    bad += ok('a missing publisher is not a classification declaration', !socialPublishDoorBound('', original[1], original[2]));
+    bad += ok('a second served publisher is not the original door', !socialPublishDoorBound(original[0] + '\nDeno.serve(other);', original[1], original[2]));
+    bad += ok('a missing Social publication classification is caught', findings({ ...base, governedEdgeActions: ['social_post_publish'], requiredClassifications: ['social_post_publish'] }).some(f => f.includes('social_post_publish is a canonical governed mutation')));
+    bad += ok('outward Social publication cannot be ordinary', findings({ ...base, policy: [...base.policy, { tool: 'social_post_publish', risk: 'ordinary', reason: 'publishes approved content externally' }], governedEdgeActions: ['social_post_publish'] }).some(f => f.includes('social_post_publish is classified ordinary')));
+  }
   console.log(bad === 0 ? "\n✓ action-risk-lint self-test passed." : `\n✗ ${bad} self-test(s) failed.`);
   process.exit(bad === 0 ? 0 : 1);
 }
@@ -866,6 +943,12 @@ if (fs.existsSync(WEEKLY_DRAFT_ENTRY)) {
     fs.readFileSync(WEEKLY_DRAFT_DOMAIN, 'utf8'))) throw new Error('Weekly draft door lost its original entry/adapter/declared Kit binding');
   governedEdgeActions.push('weekly_commitment_draft');
   requiredClassifications.push('weekly_commitment_draft');
+}
+if (fs.existsSync(SOCIAL_PUBLISH_ENTRY)) {
+  if (!socialPublishDoorBound(fs.readFileSync(SOCIAL_PUBLISH_ENTRY, 'utf8'), fs.readFileSync(SOCIAL_PUBLISH_DOOR, 'utf8'),
+    fs.readFileSync(SOCIAL_GOVERNANCE, 'utf8'))) throw new Error('Social publisher lost its original stored-identity/canonical-risk binding');
+  governedEdgeActions.push('social_post_publish');
+  requiredClassifications.push('social_post_publish');
 }
 if (!mcpCanonicals.length) {
   console.error(`✗ action-risk-lint: read no canonical keys out of ${MCP_POLICY}. That file is the MCP door's second declaring surface, so an empty read would silently condemn every MCP-only classification as a ghost. Fix this guard rather than letting it pass.`);

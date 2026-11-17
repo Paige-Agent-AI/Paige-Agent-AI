@@ -990,6 +990,12 @@
       "receipt": "seeded_undeclared"
     },
     {
+      "tool": "social_post_publish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "The original _shared/social-publish-command/door.ts record helper invokes canonical recordCapabilityRun with social_post_publish, stable approval-bound run identity and bounded publication detail. finish records succeeded, failed or outcome_unknown after the original durable publication result; effect-time refusal uses the same helper. Rail emission is best-effort; the primary durable receipt remains the original content_publications record. Real-governance and original door suites exercise the existing path; unresolved attempts are read back without another createPost."
+    },
+    {
       "tool": "studio_image_publish",
       "risk": "high",
       "receipt": "emits",

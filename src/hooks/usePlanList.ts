@@ -48,6 +48,8 @@ export interface Plan {
   owner_user_id: string | null;
   created_by: string | null;
   items: PlanItem[];
+  /** Original Planning metadata; never interpreted as execution authority. */
+  metadata?: unknown;
   /** Raw canonical project version; missing versions remain inspect-only. */
   updated_at?: string;
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Check, ExternalLink, Link2Off, Plus, RefreshCw, ShieldCheck, X } from "lucide-react";
 import type { useSocialConnections } from "./data/useSocialConnections";
-import type { SocialPlatformDefinition } from "./social-platform-catalog";
+import type { SocialDrawerPlatform } from "./social-platform-catalog";
 
 type SocialState = ReturnType<typeof useSocialConnections>;
 
@@ -39,7 +39,7 @@ function CapabilityList({ values }: { values: string[] }) {
   </ul>;
 }
 
-export function SocialDrawer({ social, platform, onClose }: { social: SocialState; platform: SocialPlatformDefinition; onClose: () => void }) {
+export function SocialDrawer({ social, platform, onClose, kindLabel = "Social, workspace-owned accounts" }: { social: SocialState; platform: SocialDrawerPlatform; onClose: () => void; kindLabel?: string }) {
   const panel = useRef<HTMLElement>(null);
   const close = useRef<HTMLButtonElement>(null);
   const location = useLocation();
@@ -87,7 +87,7 @@ export function SocialDrawer({ social, platform, onClose }: { social: SocialStat
     <aside className="ig-panel social-ig-panel" ref={panel} role="dialog" aria-modal="true" aria-labelledby="ig-social-title">
       <header>
         <span className="ss-provider-mark social-platform-mark" data-social-platform={platform.key} aria-hidden>{platform.mark}</span>
-        <div><h2 id="ig-social-title">{platform.name}</h2><span>Social, workspace-owned accounts</span></div>
+        <div><h2 id="ig-social-title">{platform.name}</h2><span>{kindLabel}</span></div>
         <button ref={close} className="ig-close" type="button" aria-label={`Close ${platform.name}`} disabled={social.busy} onClick={requestClose}><X aria-hidden size={16} /></button>
       </header>
 

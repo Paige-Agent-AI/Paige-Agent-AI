@@ -74,6 +74,7 @@ const object = (value: unknown): Record<string, unknown> | null =>
 
 const PROPOSAL_TTL_MS = 10 * 60 * 1000;
 const NOTHING_CHANGED = "Nothing changed.";
+const PAGE_REVIEW_STALE = "The page or its public address changed after this approval was prepared. Review it again before publishing. Nothing changed.";
 
 /** The id field a Studio receipt carries for each kind (studioReceiptDetail reads these). */
 const RECEIPT_ID_KEY: Readonly<Record<PublishKind, string>> = { page: "page_id", form: "form_id", funnel: "funnel_id", image: "content_id" };
@@ -85,13 +86,22 @@ async function loadFacts(admin: Client, tenantId: string, cmd: PublishCommand): 
     return object(data);
   };
   const facts: ReadinessFacts = { tenantSlug: null };
-  if (cmd.kind !== "image") {
+  if (cmd.action === "publish" && cmd.kind === "page") {
+    // The review's content, destination and revision come from one database snapshot.
+    const { data, error } = await admin.rpc("growth_page_publish_review", { p_tenant_id: tenantId, p_id: cmd.id });
+    if (error) throw new Error("readiness_read_failed");
+    const snapshot = object(data);
+    facts.page = object(snapshot?.page);
+    facts.tenantSlug = typeof snapshot?.tenant_slug === "string" ? snapshot.tenant_slug : null;
+  } else if (cmd.kind !== "image") {
     const { data, error } = await admin.from("tenants").select("slug").eq("id", tenantId).maybeSingle();
     if (error) throw new Error("readiness_read_failed");
     facts.tenantSlug = typeof object(data)?.slug === "string" ? String(object(data)!.slug) : null;
   }
   if (cmd.kind === "page") {
-    facts.page = await one("growth_pages", "id,tenant_id,title,slug,status,blocks_json,draft_blocks_json,draft_seo_json");
+    if (cmd.action !== "publish") {
+      facts.page = await one("growth_pages", "id,tenant_id,title,slug,status,blocks_json,draft_blocks_json,draft_seo_json");
+    }
     const slugs = pageFormSlugsNeeded(facts.page);
     if (slugs.length) {
       const { data, error } = await admin.from("growth_forms").select("slug,status").eq("tenant_id", tenantId).in("slug", slugs);
@@ -299,6 +309,18 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
         error: `It isn't ready yet: ${preview.checks.filter((c) => c.blocking && !c.ok).map((c) => c.label).join("; ")}. ${NOTHING_CHANGED}` });
     }
 
+    const isPagePublish = cmd.action === "publish" && cmd.kind === "page";
+    const revision = facts.page?.publish_revision;
+    const pageReview = isPagePublish && typeof revision === "string" && /^[0-9a-f]{64}$/.test(revision) && preview.address
+      ? { reviewed_page_revision: revision, reviewed_page_path: preview.address } : null;
+    if (isPagePublish && !pageReview) {
+      return respond(503, { ok: false, code: "READINESS_UNAVAILABLE", error: `I couldn't verify which version is ready. ${NOTHING_CHANGED}` });
+    }
+    if (pageReview) {
+      // Keep the canonical artifact subject used to find the card in PAIGE Chat.
+      Object.assign(requestArgs, pageReview);
+    }
+
     // THE CLAIM — single use, bound to this user, this workspace, this act (the tool key names action
     // and kind) and this artifact, and never a proposal this same request issued.
     // Only a lane that could execute spends an approval; an unreadable lane is refused below with the
@@ -319,14 +341,19 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
         .contains("args", { id: cmd.id }).select("args").maybeSingle();
       if (claimError) return respond(503, { ok: false, code: "APPROVAL_STORE_UNAVAILABLE", error: `I couldn't check that approval just now. ${NOTHING_CHANGED}` });
       claimedArgs = object(claimed?.args);
-      // One approval settles the act: a sibling proposal for the same act on the same artifact (two
-      // panels opened at once, or a chat card beside a panel) is retired with it, so it cannot redeem
-      // the same act a second time. Best effort: a failure leaves siblings to expire, and is logged.
+      if (claimedArgs && pageReview && (claimedArgs.reviewed_page_revision !== pageReview.reviewed_page_revision
+        || claimedArgs.reviewed_page_path !== pageReview.reviewed_page_path)) {
+        // Retire only this old card. A fresh approval for the new draft must remain usable.
+        const recorded = await fileAttemptRefusal("page_review_stale");
+        return respond(409, { ok: false, refused: true, code: "PAGE_REVIEW_STALE", error: PAGE_REVIEW_STALE, receipt_recorded: recorded });
+      }
+      // Retire siblings for this same review. A new draft may already have its own card while this
+      // approval waits for a database lock. That card is a different decision and stays usable.
       if (claimedArgs) {
         const { error: retireError } = await admin.from("paige_pending_confirmations")
           .update({ consumed_at: now }).eq("user_id", userId).eq("tenant_id", tenantId).eq("tool_name", key)
           .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
-          .contains("args", { id: cmd.id });
+          .contains("args", { id: cmd.id, ...(pageReview ?? {}) });
         if (retireError) console.error("[growth-publish-command] sibling proposals not retired", JSON.stringify({ key, reason: retireError.message ?? "unknown" }));
       }
     }
@@ -361,6 +388,8 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
       if (pendingError) return respond(503, { ok: false, code: "APPROVAL_STORE_UNAVAILABLE", error: `I couldn't prepare the approval just now. ${NOTHING_CHANGED}` });
       const cycle = object(pending?.args);
       const reuse = cycle && cycle.approval_subject === requestArgs.approval_subject && cycle.expected_tenant_id === tenantId
+        && (!pageReview || (cycle.reviewed_page_revision === pageReview.reviewed_page_revision
+          && cycle.reviewed_page_path === pageReview.reviewed_page_path))
         && typeof cycle.approval_cycle_nonce === "string" && UUID.test(cycle.approval_cycle_nonce);
       const proposalArgs = { ...requestArgs, approval_cycle_nonce: reuse ? String(cycle!.approval_cycle_nonce) : crypto.randomUUID() };
       const fingerprint = await confirmFingerprint(key, proposalArgs);
@@ -405,7 +434,10 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
       // Migration G: the publish RPCs run for the server only. The workspace is the one resolved from
       // the caller's session (and re-checked just above); the person is the verified user. The RPC
       // refuses a call without either, and re-checks that this person holds the authority there.
-      const reply = await admin.rpc(publishRpc(cmd.action, cmd.kind), { p_tenant_id: tenantId, p_id: String(args.id), p_actor_id: userId });
+      const reply = await admin.rpc(publishRpc(cmd.action, cmd.kind), {
+        p_tenant_id: tenantId, p_id: String(args.id), p_actor_id: userId,
+        ...(pageReview ? { p_reviewed_revision: args.reviewed_page_revision, p_reviewed_path: args.reviewed_page_path } : {}),
+      });
       data = reply?.data ?? null; error = reply?.error ?? null;
     } catch (e) {
       error = { message: e instanceof Error ? e.message : String(e) };
@@ -413,6 +445,10 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
     if (error) {
       const code = typeof error.code === "string" ? error.code : "";
       const recorded = await fileReceipt({ thrown: error, threw: true }, anchor, approval);
+      if (isPagePublish && code === "22023" && String(error.message).startsWith("GROWTH_PAGE_REVIEW_STALE:")) {
+        return respond(409, { ok: false, refused: true, outcome: "refused", code: "PAGE_REVIEW_STALE", governance,
+          error: PAGE_REVIEW_STALE, receipt_recorded: recorded });
+      }
       if (code && REFUSAL_CODES.has(code)) {
         return respond(code === "42501" ? 403 : 409, { ok: false, refused: true, outcome: "refused", capability: key, governance,
           error: plainRefusal(error.message, cmd.action), receipt_recorded: recorded });

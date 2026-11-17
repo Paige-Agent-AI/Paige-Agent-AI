@@ -78,4 +78,7 @@ do $fixture$ declare prior_sub text := current_setting('request.jwt.claim.sub',t
  perform set_config('request.jwt.claim.sub',coalesce(prior_sub,''),true);
  perform set_config('request.jwt.claims',coalesce(prior_claims,'{}'),true);
 end $fixture$;
+-- Preserve the original authority cases; extend their SAME rollback-owned users,
+-- tenant and original Plan/milestone for the O02 save/recovery contract.
+\ir fixtures/exp05-weekly-plan-original-source.sql
 rollback;

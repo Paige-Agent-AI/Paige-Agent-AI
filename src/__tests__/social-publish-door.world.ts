@@ -8,6 +8,7 @@
 // the three outcome classes the real adapter can return (published / processing / unknown) and the
 // thrown-error class (SocialProviderError).
 import { handleSocialPublishCommand } from "../../supabase/functions/_shared/social-publish-command/door.ts";
+import { SocialProviderError, type SocialPostInput, type SocialProviderPostOutcome } from "../../supabase/functions/_shared/social-provider/mod.ts";
 
 export const USER = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 export const OTHER_USER = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -16,6 +17,8 @@ export const THEIRS = "22222222-2222-4222-8222-222222222222";
 export const PIECE = "33333333-3333-4333-8333-333333333333";
 export const FOREIGN_PIECE = "44444444-4444-4444-8444-444444444444";
 export const CONNECTION = "55555555-5555-4555-8555-555555555555";
+export const ACCOUNT = "66666666-6666-4666-8666-666666666666";
+export const PUBLICATION = "77777777-7777-4777-8777-777777777777";
 
 type Row = Record<string, unknown>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- filter args vary by operation
@@ -28,29 +31,38 @@ export interface WorldOptions {
   manages?: boolean;
   lane?: string;
   laneError?: boolean;
+  canonicalLane?: string;
+  canonicalLaneError?: boolean;
   adapterConfigured?: boolean;
   /** The adapter's createPost answer, or a function of its input. */
-  createPost?: (input: { providerProfileKey: string; platform: string; text: string; externalId: string }) =>
-    | { kind: "published"; results: Array<{ platform: string; success: boolean; postId: string | null; postUrl: string | null; error: string | null }> }
-    | { kind: "processing"; requestId: string }
-    | { kind: "unknown"; requestId: string | null; reason: string };
+  createPost?: (input: SocialPostInput) => SocialProviderPostOutcome;
+  readPost?: (input: SocialPostInput, providerId: string | null) => SocialProviderPostOutcome;
   createPostThrows?: { code: string };
   tables?: Partial<Record<string, Row[]>>;
   /** Make the connection read answer a DIFFERENT status on the recheck (post-claim). */
   revokeAfterClaim?: boolean;
   /** Pending-reconcile answer. */
   pendingReconcile?: boolean;
+  /** The original caller loses SELECT/RLS visibility before prepare or after native binding. */
+  callerContentReadDenied?: boolean;
+  revokeContentAfterClaim?: boolean;
 }
 
 export const connectedRow = (over: Row = {}): Row => ({
-  id: CONNECTION, tenant_id: MINE, provider_key: "upload_post",
+  id: CONNECTION, tenant_id: MINE, provider_key: "zernio", provided_by_platform: false,
   provider_profile_key: "ps_aaaa000000000000000000000000000000000000",
   requested_platform: "instagram", status: "connected", label: "Northfield Coaching (main)",
   updated_at: "2026-10-20T10:00:00Z", ...over,
 });
 
+export const accountRow = (over: Row = {}): Row => ({
+  id: ACCOUNT, tenant_id: MINE, connection_id: CONNECTION, provider_key: "zernio",
+  platform: "instagram", status: "connected", account_id: "zernio-account-1", selected: true, ...over,
+});
+
 export const pieceRow = (over: Row = {}): Row => ({
-  id: PIECE, tenant_id: MINE, title: "Spring workshop reminder", kind: "text", ...over,
+  id: PIECE, tenant_id: MINE, title: "Spring workshop reminder", kind: "text",
+  status: "draft", updated_at: "2026-10-20T10:00:00Z", ...over,
 });
 
 export function world(o: WorldOptions = {}) {
@@ -60,6 +72,7 @@ export function world(o: WorldOptions = {}) {
       { id: FOREIGN_PIECE, tenant_id: THEIRS, title: "Their piece", kind: "text" },
     ],
     paige_social_connections: [connectedRow()],
+    paige_social_accounts: [accountRow()],
     paige_pending_confirmations: [],
     content_publications: [],
     ...(o.tables as Record<string, Row[]>),
@@ -67,10 +80,13 @@ export function world(o: WorldOptions = {}) {
   const seen = {
     rpc: [] as Array<{ fn: string; args?: Row; client: "caller" | "admin" }>,
     receipts: [] as Row[],
-    reads: [] as Array<{ table: string; filters: Filter[] }>,
-    createPost: [] as Array<{ providerProfileKey: string; platform: string; text: string; externalId: string }>,
+    reads: [] as Array<{ table: string; filters: Filter[]; client: "caller" | "admin" }>,
+    destinationReads: [] as unknown[],
+    createPost: [] as SocialPostInput[],
+    readPost: [] as Array<{ input: SocialPostInput; providerId: string | null }>,
   };
   let connectionReads = 0;
+  let contentClaimed = false;
 
   const matches = (row: Row, filters: Filter[]) => filters.every(([op, col, value]) => {
     const v = row[col];
@@ -85,13 +101,25 @@ export function world(o: WorldOptions = {}) {
     }
   });
 
-  const from = (table: string) => {
+  const from = (table: string, client: "caller" | "admin") => {
     const filters: Filter[] = [];
     let update: Row | null = null;
+    let inserted: Row | null = null;
     let single = false;
     const run = () => {
       const rows = tables[table] ?? (tables[table] = []);
-      seen.reads.push({ table, filters: [...filters] });
+      if (inserted) {
+        rows.push({ id: crypto.randomUUID(), consumed_at: null,
+          expires_at: new Date(Date.now() + 600000).toISOString(), ...inserted });
+        inserted = null;
+      }
+      seen.reads.push({ table, filters: [...filters], client });
+      // Production grants authenticated SELECT, but service_role has no table SELECT.
+      // BYPASSRLS does not supply a missing grant. Keep the clients distinct in this world.
+      if (table === "marketing_content" && (client === "admin" || o.callerContentReadDenied
+          || (o.revokeContentAfterClaim && contentClaimed))) {
+        return { data: null, error: { code: "42501", message: "permission denied for table marketing_content" } };
+      }
       const hit = rows.filter((r) => matches(r, filters));
       if (update) for (const r of hit) Object.assign(r, update);
       return { data: single ? hit[0] ?? null : hit, error: null };
@@ -106,6 +134,7 @@ export function world(o: WorldOptions = {}) {
       not: (c: string, op: string, v: unknown) => { filters.push(["not", c, op, v]); return q; },
       gt: (c: string, v: unknown) => { filters.push(["gt", c, v]); return q; },
       update: (patch: Row) => { update = patch; return q; },
+      insert: (row: Row) => { inserted = row; return q; },
       maybeSingle: () => { single = true; return q; },
       then: (ok: (v: unknown) => unknown, bad: (e: unknown) => unknown) => Promise.resolve(run()).then(ok, bad),
     };
@@ -113,18 +142,24 @@ export function world(o: WorldOptions = {}) {
   };
 
   const caller = {
+    from: (table: string) => from(table, "caller"),
     auth: { getUser: async () => (o.user === null ? { data: { user: null }, error: { message: "bad jwt" } } : { data: { user: { id: o.user ?? USER } }, error: null }) },
     rpc: async (fn: string, args?: Row) => {
       seen.rpc.push({ fn, args, client: "caller" });
       if (fn === "current_user_tenant_id") return { data: o.active === undefined ? MINE : o.active, error: null };
       if (fn === "is_tenant_admin") return { data: o.admin !== false, error: null };
       if (fn === "agency_can_manage_child") return { data: o.manages === true, error: null };
-      if (fn === "resolve_tool_autonomy") return o.laneError ? { data: null, error: { message: "down" } } : { data: o.lane ?? "confirm", error: null };
+      if (fn === "resolve_tool_autonomy") {
+        const canonical = args?._tool_key === "social_post_publish";
+        return o.laneError || (canonical && o.canonicalLaneError)
+          ? { data: null, error: { message: "down" } }
+          : { data: canonical ? o.canonicalLane ?? o.lane ?? "confirm" : o.lane ?? "confirm", error: null };
+      }
       return { data: null, error: { code: "PGRST202", message: `no rpc ${fn}` } };
     },
   };
   const admin = {
-    from,
+    from: (table: string) => from(table, "admin"),
     rpc: async (fn: string, args?: Row) => {
       seen.rpc.push({ fn, args, client: "admin" });
       if (fn === "record_capability_run") {
@@ -132,10 +167,34 @@ export function world(o: WorldOptions = {}) {
         return { data: true, error: null };
       }
       if (fn === "content_publication_pending_reconcile") {
-        return { data: o.pendingReconcile === true, error: null };
+        return { data: o.pendingReconcile === true || tables.content_publications.some((row) =>
+          row.tenant_id === args?.p_tenant_id && row.content_id === args?.p_content_id
+          && row.platform === args?.p_platform && row.status === "outcome_unknown"), error: null };
       }
-      if (fn === "content_publication_record" || fn === "content_publication_bind") {
-        return { data: { id: (args?.p_id as string) ?? "pub-1", tenant_id: args?.p_tenant_id, status: "ok" }, error: null };
+      if (fn === "content_publication_record") {
+        let row = tables.content_publications.find((candidate) => candidate.id === args?.p_id);
+        if (!args?.p_id) {
+          row = { id: PUBLICATION, tenant_id: args?.p_tenant_id };
+          tables.content_publications.push(row);
+        }
+        Object.assign(row ?? {}, {
+          status: args?.p_status, provider_request_id: args?.p_provider_request_id,
+          provider_post_id: args?.p_provider_post_id, provider_post_url: args?.p_provider_post_url,
+        });
+        return { data: row, error: null };
+      }
+      if (fn === "content_publication_bind") {
+        contentClaimed = true;
+        let row = tables.content_publications.find((candidate) => candidate.id === args?.p_id);
+        if (!args?.p_id) {
+          row = { id: PUBLICATION, tenant_id: args?.p_tenant_id };
+          tables.content_publications.push(row);
+        }
+        Object.assign(row ?? {}, {
+          status: "approved", content_id: args?.p_content_id, platform: args?.p_platform,
+          connection_id: args?.p_connection_id, confirmation_id: args?.p_confirmation_id, request_args: args?.p_request_args,
+        });
+        return { data: row, error: null };
       }
       return { data: null, error: { message: `unexpected admin rpc ${fn}` } };
     },
@@ -143,10 +202,19 @@ export function world(o: WorldOptions = {}) {
 
   // The provider adapter double — records calls, answers from options.
   const adapter = {
+    key: "zernio",
     isConfigured: () => o.adapterConfigured !== false,
-    createPost: async (input: { providerProfileKey: string; platform: string; text: string; externalId: string }) => {
+    readPostDestination: async (input: unknown) => {
+      seen.destinationReads.push(input);
+      return { channelId: null, label: "Northfield Coaching (main)" };
+    },
+    readPost: async (input: SocialPostInput, providerId: string | null): Promise<SocialProviderPostOutcome> => {
+      seen.readPost.push({ input, providerId });
+      return o.readPost?.(input, providerId) ?? { kind: "unknown", requestId: providerId, reason: "not_found" };
+    },
+    createPost: async (input: SocialPostInput) => {
       seen.createPost.push(input);
-      if (o.createPostThrows) throw Object.assign(new Error("provider down"), { code: o.createPostThrows.code });
+      if (o.createPostThrows) throw new SocialProviderError(o.createPostThrows.code, 429, "Provider rejected the request");
       if (o.createPost) return o.createPost(input);
       // Default: a successful single-platform result.
       return {
@@ -165,7 +233,7 @@ export function world(o: WorldOptions = {}) {
 
   // On the connection recheck (the second read of paige_social_connections with eq id), optionally
   // flip the status to simulate a post-claim revocation.
-  const origFrom = from;
+  const origFrom = admin.from;
   const fromWrapped = (table: string) => {
     if (table === "paige_social_connections") {
       connectionReads += 1;
@@ -176,7 +244,7 @@ export function world(o: WorldOptions = {}) {
     }
     return origFrom(table);
   };
-  admin.from = fromWrapped as typeof from;
+  admin.from = fromWrapped as typeof origFrom;
 
   return { tables, seen, call, caller, adapter };
 }

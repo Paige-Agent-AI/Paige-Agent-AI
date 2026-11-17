@@ -1,0 +1,81 @@
+.paige-document-host:not([data-paige-document-mode]),
+.paige-document-host:not([data-paige-document-mode]) > .paige-document-chat {
+  display: contents;
+}
+
+.paige-document-host[data-paige-document-mode] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.paige-document-host[data-paige-document-mode="beside"] {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+}
+
+.paige-document-chat {
+  min-width: 0;
+  min-height: 0;
+}
+
+.paige-document-pane {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--pg-workspace);
+  border-inline-start: 1px solid var(--pg-line);
+}
+
+.paige-document-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-block-start: 1px solid var(--pg-gold-deep);
+  border-block-end: 1px solid var(--pg-line);
+  background: var(--pg-spine);
+}
+
+.paige-document-toolbar button {
+  min-height: 44px;
+}
+
+.paige-document-flight {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  background: #fbf9f5;
+  border-block-start: 2px solid #b1915f;
+  transform-origin: top left;
+}
+
+[data-tenant-shell] .tcs-paige:not([hidden]):has(.spw-chat-panel:not([hidden]) [data-paige-document-mode]) {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  /* Keep the shell entrance animation attached so closing cannot restart it. */
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+/* Keep covered workspace controls out of both the tab order and hit testing. */
+[data-tenant-shell]:has(.tcs-paige:not([hidden]) .spw-chat-panel:not([hidden]) [data-paige-document-mode])
+  > :is(.tcs-skip, .tcs-nav, .tcs-canvas, .tcs-paige-backdrop) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+[data-paige-document-mode="beside"] [data-solo-thread-rail] {
+  display: none;
+}
+
+[data-paige-document-mode="beside"] [data-solo-mobile-history] {
+  display: flex;
+}

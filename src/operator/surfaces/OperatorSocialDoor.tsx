@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { IntegrationLogo } from "../../solo/integration-logos";
-import type { SocialPlatformDefinition } from "../../solo/social-platform-catalog";
 
 /**
  * The Platform Operator's Social door — the machinery behind the Social cards on
@@ -111,7 +110,12 @@ export function useOperatorSocialDoor() {
       return payload;
     }
     if (payload.ok !== true) {
-      setError("The request was refused. Nothing was changed.");
+      // The provider refused the SETUP request itself (not a consent decline) — the
+      // honest recovery names both paths: retry, or bring in a channel the platform
+      // already holds, which needs no new provider profile at all.
+      setError(payload.code === "SOCIAL_PROVIDER_UNAVAILABLE"
+        ? "The connection provider refused the setup request. Nothing was changed — try again, or bring in a channel the platform already holds."
+        : "The request was refused. Nothing was changed.");
       return payload;
     }
     if (payload.state === "authorization_required" && typeof payload.authorization_url === "string") {
@@ -245,19 +249,29 @@ export function useOperatorSocialDoor() {
     [channels],
   );
 
-  /** The honest foot a Social card renders: unread states assert nothing. */
-  const cardState = useCallback((platform: string): { account: string; tone: "ok" | "warn" | "neutral" } => {
-    if (channels === null) return busy ? { account: "Checking connection…", tone: "neutral" } : { account: "Status unavailable", tone: "neutral" };
-    const row = (channels ?? []).find((candidate) => candidate.platform === platform);
-    if (!row) return { account: "Setup required", tone: "neutral" };
-    if (!HEALTHY.has(row.status)) return { account: "Needs attention", tone: "warn" };
-    return channelWords(row);
-  }, [busy, channels]);
-
   const hubHoldFor = useCallback(
     (platform: string) => hub?.find((channel) => channel.platform === platform && channel.adoptable) ?? null,
     [hub],
   );
+
+  /** The honest foot a Social card renders: unread states assert nothing. A channel
+   *  the platform hub already holds is REAL (provider-proven) but not yet usable by
+   *  PAIGE — the card says exactly that, with the one-click bring-in in its drawer. */
+  const cardState = useCallback((platform: string): { account: string; tone: "ok" | "warn" | "neutral" } => {
+    if (channels === null) return busy ? { account: "Checking connection…", tone: "neutral" } : { account: "Status unavailable", tone: "neutral" };
+    // A healthy row wins; only when none exists does an older errored row of the same
+    // platform surface as Needs attention — it can never shadow a fresh adoption.
+    const row = (channels ?? []).find((candidate) => candidate.platform === platform && HEALTHY.has(candidate.status))
+      ?? (channels ?? []).find((candidate) => candidate.platform === platform);
+    if (!row) {
+      const held = hubHoldFor(platform);
+      return held
+        ? { account: held.handle ? `Held by the platform · ${held.handle}` : "Held by the platform · bring it in", tone: "warn" }
+        : { account: "Setup required", tone: "neutral" };
+    }
+    if (!HEALTHY.has(row.status)) return { account: "Needs attention", tone: "warn" };
+    return channelWords(row);
+  }, [busy, channels, hubHoldFor]);
 
   return {
     channels, hub, busy, error, notice, authorizationUrl, pending,
@@ -277,7 +291,12 @@ function Fact({ label, value }: { label: string; value: string }) {
  *  disconnect) behind the governed approval. Chrome mirrors the surface family's
  *  drawers: focus lands on close, Tab stays inside, Escape closes, focus returns
  *  to the opener card, and closing clears the door's transient state. */
-export function OperatorSocialDrawer({ platform, door, onClose }: { platform: SocialPlatformDefinition; door: OperatorSocialDoor; onClose: () => void }) {
+/** Structural: the drawer reads shape, not catalogue membership — the social
+ *  catalogue's definitions (narrower literal key) widen into this safely, and the
+ *  provider's connection apps fit without claiming to be social catalogue entries. */
+export type DrawerPlatform = { key: string; name: string; mark: string; oauthAvailable: boolean; connectionNote: string };
+
+export function OperatorSocialDrawer({ platform, door, onClose, kindLabel = "Platform channel" }: { platform: DrawerPlatform; door: OperatorSocialDoor; onClose: () => void; kindLabel?: string }) {
   const panel = useRef<HTMLElement>(null);
   const close = useRef<HTMLButtonElement>(null);
   const handleClose = useCallback(() => { door.clearTransient(); onClose(); }, [door, onClose]);
@@ -326,7 +345,7 @@ export function OperatorSocialDrawer({ platform, door, onClose }: { platform: So
           <IntegrationLogo id={platform.key} fallback={platform.mark} />
           <div>
             <h2 id="op-social-drawer-title">{platform.name}</h2>
-            <span>Platform channel</span>
+            <span>{kindLabel}</span>
           </div>
           <button ref={close} className="ig-close" type="button" aria-label={`Close ${platform.name}`} onClick={handleClose}><X aria-hidden size={16} /></button>
         </header>

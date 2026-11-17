@@ -561,12 +561,38 @@ Owner activation (ANT-37, 2026-10-10): safe source + metadata development now. D
 **Implementation (evidence class: static/source).** `openrouter-models.ts` is the one home for the namespaced ids; `model-allowlist.ts` admits only those three; `paige-turn/route.ts` adds `openrouter` to `FabricProvider` and puts it first per class; `openai-responses.ts` gains a provider profile (own base URL, own key, optional attribution headers, provider-scoped replay tags, truthful trace provider); `model-fabric.ts` adds key-and-cohort-gated admission, candidate ordering and a separate OpenRouter transport seam; `token-pricing.ts` prices `openai/*` ids on the identical GPT-6 rows (unknown OpenRouter ids stay unpriced, never zero). No key is configured in code and no credential value appears in any committed artifact.
 
 **Automated proof (evidence class: local automated, exact commands run on this worktree).**
-- `npm run test:model-fabric` → **229 passed, 0 failed** (new openrouter primary/fallback/key-gate/telemetry cases included).
-- `npm run test:openai-responses` → **123 passed, 0 failed** (new §11 provider-tag, allowlist, key/base/attribution, trace and streaming cases).
-- `npm run test:token-pricing` → **26 passed, 0 failed**; `npm run test:trace-wiring` → **20 passed, 0 failed**.
+- `npm run test:model-fabric` → **239 passed, 0 failed** (OpenRouter primary/fallback/key-gate/telemetry cases united with main's EXP01 prompt-cache cases after the 2026-11-17 conflict resolution; the pre-merge count was 229).
+- `npm run test:openai-responses` → **161 passed, 0 failed** (§11 provider-tag, allowlist, key/base/attribution, trace and streaming cases united with main's K/KD cache-policy cases; the pre-merge count was 123).
+- `npm run test:token-pricing` → **41 passed, 0 failed**; `npm run test:trace-wiring` → **24 passed, 0 failed** (OpenRouter same-price cases united with main's provider-only cache-cost cases; pre-merge counts were 26/20).
 - `deno test … paige-turn/route.test.ts round.test.ts classify.test.ts exposure.test.ts provider-failure.test.ts` → **49 passed, 0 failed** (policy pin updated to name OpenRouter first).
 - `deno check --allow-import --node-modules-dir=none` on all six changed shared modules → **clean**. `deno check` on `paige-ai-chat/index.ts` reports 9 pre-existing supabase-js generic errors; the same 9 are produced by the unmodified `HEAD` file, so this change adds none.
-- `npm run lint:integration-registry` → clean (40 providers, 126 anchors resolve).
+- `npm run lint:integration-registry` → clean (40 providers, 127 anchors resolve).
+
+**PR #3361 release-blocker resolution (2026-11-17).** The branch was published from base `0a6b8193…` and later found 248 commits behind current `main` (`1b2d40059…`) with `mergeable_state=dirty`. The three failing gates on the stale head — Security Audit (six high / seven moderate dependency advisories), Spine contract (`research_knowledge.web_fetch: binding positive failed`) and `ci` (governed-tool autonomy catalogue step) — are each **green on current main** (`Security Audit` success on `1b2d40059…`, `PAIGE Spine contract` success on `9fc77e3f29…`, `ci` success on `1b2d40059…`). They are therefore pre-existing failures of the stale base, not regressions introduced by this diff; `ui-delivery-evidence` and `migration-lint` passed on both. `origin/main` was merged into the feature branch without rebase, reset or force-push, preserving all four original commits. Five files conflicted (`model-fabric.ts`, `openai-responses.ts`, `openai-responses-check.mjs`, `token-pricing/check.mjs`, `EVIDENCE.md`); each was resolved as a union of the OpenRouter change and main's EXP01 prompt-cache work, with no EXP01 source ownership taken over. The united harness counts above are the post-resolution exact-head results.
 
 **Honest boundary — PROOF OWED / UNVERIFIED.** The configured Edge Function Secret name is `OPEN_ROUTER_AI_API` (owner-confirmed 2026-11-17; `OPENROUTER_API_KEY` is a back-compat alias), but whether that secret holds a valid, rotated key is not verified here; the earlier probe key was exposed in chat and must be rotated before production use. There is no merge to `main`, no Edge deployment/readback and no authenticated in-product Chat trace in this record. The served-provider fact that will close this is a real `paige_llm_trace` row with `provider='openrouter'` and `metadata->>'route_served_provider'='openrouter'` (the one trace writer flattens `fabric_route` into allowlisted scalar `route_*` metadata; there is no `fabric_route` object on the row) on an authenticated Chat turn after deployment. Until then the integration is **PROOF OWED** in `docs/integration-registry/integration-capability-registry.json` (recorded under excluded delivery infrastructure, not as a tenant capability) and must not be reported as LIVE. The key used for the local provider probes appeared in a chat message and must be rotated by the authorized owner before any production use; its value is never reproduced here.
 
+## EXP01 — bounded everyday Chat classification repair (2026-11-13)
+
+Owner approved this next outcome after the separate cache/reopen result. The
+original advisory classifier's whole-call deadline is recalibrated from 2500 to
+4000ms, through the same cheap-class Fabric call and closed-enum parser. Maximum
+additional advisory wait on an expired call is 1500ms. This does not promise a
+speedup, change models or grant tool/execution authority.
+
+The new real classifier/Fabric/adapter control supplies a valid 3000ms primary
+reply: old runtime213PASS/1FAIL; candidate214PASS/0FAIL, all212 original controls
+preserved. Actual transport attempts are counted before the synthetic delay;
+one primary call/no fallback is a separate control. Deadline exhaustion and a
+slow budget read still return null without later provider dispatch. Original
+route/classification tests16PASS with runtime network/env/file access denied;
+the first cached-only invocation lacked the official assertion dependency and
+is retained as an infrastructure failure, not a passing test.
+
+Source19d496f85d0a0f492c5b2897bc2bc5938f5459e2. No Root, adapter, Fabric, source
+pin, native writer, authentication, billing or UI change. Production deadline-tail
+truncation is supported by the current timing pattern, not proof of an external
+network outage. Independent review, fresh exact-head CI, normal release/source
+readback and actual useful classification/answer/reopen remain PROOF OWED.
+The older organic50-turn calibration gate is not claimed complete or replaced
+with synthetic samples. Original ANT-50/c4c7cfac holds the current outcome.

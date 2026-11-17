@@ -128,6 +128,108 @@ describe("ordinary Chat history restores existing Research through its governed 
     });
   };
   const cards = () => Array.from(host.querySelectorAll<HTMLElement>("[data-research-card]"));
+
+  it.each(["WAIT_WORK", "INTERRUPTED"].flatMap(state => ["research", "build", "multi_agent"].map(mode => ({ state, mode }))))(
+    "hydrates the same protected Research turn after live $state/$mode without reload or losing the next draft", async ({ state: terminalState, mode }) => {
+    const thread = "00000000-0000-4000-8000-000000000001";
+    const work = "00000000-0000-4000-8000-000000000003";
+    port.turns = [];
+    const pending = deferred<Array<Record<string, unknown>>>();
+    port.loadTurns.mockImplementationOnce(async () => []).mockImplementation(() => pending.promise);
+    vi.mocked(fetch).mockImplementation(async (_url, options) => {
+      const body = JSON.parse(String(options?.body));
+      port.turns = [{ id: "canonical-accepted", role: "assistant", content: "Original research accepted.",
+        interactive_intent_id: body.requestIntentId, interactive_terminal_state: "WAIT_WORK",
+        bundle_ref: { turn_state: { v: 1, state: "WAIT_WORK", mode }, interactive: { request_intent_id: body.requestIntentId,
+          effects: [{ tool: "deep_research", outcome: "durable_accepted", work_id: work }] } } }];
+      return new Response('data: {"paige_turn":{"v":1,"event":"completed","state":"' + terminalState + '","mode":"' + mode + '"}}\n\ndata: {"choices":[{"delta":{"content":"Original research accepted."}}]}\n\ndata: [DONE]\n\n',
+        { status: 200, headers: { "Content-Type": "text/event-stream" } });
+    });
+    await render(thread);
+    const textarea = host.querySelector("textarea")!;
+    const type = async (value: string) => act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(textarea, value);
+      textarea.dispatchEvent(new Event("input", { bubbles: true })); await flush();
+    });
+    await type("One public research question");
+    await act(async () => { (host.querySelector('button[aria-label="Send message"]') as HTMLButtonElement).click(); await flush(); });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(port.loadTurns).toHaveBeenCalledTimes(2);
+    await type("Unsent next question");
+    await act(async () => { pending.resolve(port.turns); await flush(); });
+    expect(textarea.value).toBe("Unsent next question");
+    expect(host.querySelectorAll('[aria-label="Original research job"]')).toHaveLength(1);
+    expect(host.textContent).toContain("Original research accepted.");
+    expect(port.read).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["actor", "workspace", "conversation", "unmount", "denied", "other-intent", "newer-send"])(
+    "does not hydrate a late or unconfirmed live Research locator after %s", async changed => {
+      const thread = "00000000-0000-4000-8000-000000000001";
+      const pending = deferred<Array<Record<string, unknown>>>();
+      let accepted: Array<Record<string, unknown>> = [];
+      port.turns = [];
+      port.loadTurns.mockResolvedValue([]).mockImplementationOnce(async () => []).mockImplementationOnce(() => pending.promise);
+      vi.mocked(fetch).mockImplementation(async (_url, options) => {
+        const body = JSON.parse(String(options?.body));
+        const intent = changed === "other-intent" ? "00000000-0000-4000-8000-000000000099" : body.requestIntentId;
+        accepted = [{ id: "late-native-answer", role: "assistant", content: "Late canonical research.",
+          interactive_intent_id: intent, interactive_terminal_state: "WAIT_WORK",
+          bundle_ref: { turn_state: { v: 1, state: "WAIT_WORK" }, interactive: { request_intent_id: intent,
+            effects: [{ tool: "deep_research", outcome: "durable_accepted", work_id: "00000000-0000-4000-8000-000000000003" }] } } }];
+        return new Response('data: {"paige_turn":{"v":1,"event":"completed","state":"WAIT_WORK","mode":"research"}}\n\ndata: {"choices":[{"delta":{"content":"Inspect the original job."}}]}\n\ndata: [DONE]\n\n',
+          { status: 200, headers: { "Content-Type": "text/event-stream" } });
+      });
+      await render(thread);
+      const textarea = host.querySelector("textarea")!;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(textarea, "One public research question");
+        textarea.dispatchEvent(new Event("input", { bubbles: true })); await flush();
+      });
+      await act(async () => { (host.querySelector('button[aria-label="Send message"]') as HTMLButtonElement).click(); await flush(); });
+      expect(port.loadTurns).toHaveBeenCalledTimes(2);
+      if (changed === "actor") { port.actor = "test-owner-b"; await render(thread); }
+      if (changed === "workspace") { port.tenant = "test-tenant-b"; await render(thread); }
+      if (changed === "conversation") await render("00000000-0000-4000-8000-000000000002");
+      if (changed === "unmount") { await act(async () => root.unmount()); root = createRoot(host); }
+      if (changed === "newer-send") {
+        vi.mocked(fetch).mockResolvedValueOnce(new Response('data: {"choices":[{"delta":{"content":"The newer answer."}}]}\n\ndata: [DONE]\n\n',
+          { status: 200, headers: { "Content-Type": "text/event-stream" } }));
+        await act(async () => {
+          Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(textarea, "A newer question");
+          textarea.dispatchEvent(new Event("input", { bubbles: true })); await flush();
+        });
+        await act(async () => { (host.querySelector('button[aria-label="Send message"]') as HTMLButtonElement).click(); await flush(); });
+      }
+      await act(async () => { pending.resolve(changed === "denied" ? [] : accepted); await flush(); });
+      expect(host.querySelector('[aria-label="Original research job"]')).toBeNull();
+      expect(host.textContent).not.toContain("Late canonical research.");
+      expect(fetch).toHaveBeenCalledTimes(changed === "newer-send" ? 2 : 1);
+      if (changed === "newer-send") expect(host.textContent).toContain("The newer answer.");
+      expect(port.read).not.toHaveBeenCalled();
+    });
+
+  it("mounts an inert original Research status control from the protected accepted message after reopening", async () => {
+    const thread = "00000000-0000-4000-8000-000000000001";
+    const intent = "00000000-0000-4000-8000-000000000002";
+    const work = "00000000-0000-4000-8000-000000000003";
+    port.turns = [{ id: "accepted-research", role: "assistant", content: "Research accepted.",
+      interactive_intent_id: intent, interactive_terminal_state: "WAIT_WORK",
+      bundle_ref: { turn_state: { v: 1, state: "WAIT_WORK" }, interactive: { request_intent_id: intent,
+        effects: [{ tool: "deep_research", outcome: "durable_accepted", work_id: work }] } } }];
+    await render(thread);
+    expect(host.querySelector('[aria-label="Original research job"]')?.textContent).toContain("Check original research status");
+    expect(host.querySelector('[aria-label="Original document job"]')).toBeNull();
+    expect(port.read).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+    root = createRoot(host);
+    await render(thread);
+    expect(host.querySelector('[aria-label="Original research job"]')).not.toBeNull();
+    expect(port.read).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
   const unavailable = () => {
     expect(host.textContent).toContain("Unavailable");
     expect(host.textContent).not.toContain("Reloading");

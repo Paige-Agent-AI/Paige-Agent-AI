@@ -2,7 +2,7 @@
 // This grants no authority and reads no database. Native staging binds it to the
 // accepted turn and verifies the canonical rows before any model disclosure.
 import { MENTOR_PLAN_MAX_ROWS, planReadArgumentsFor, type MentorPlanScope } from "./mentor-plan-read.ts";
-import type { ReadRecordLink } from "../paige-turn/record-links.ts";
+import { boundedPlanningNavigation, type ReadRecordLink } from "../paige-turn/record-links.ts";
 
 type Version = Readonly<{ id: string; updated_at: string }>;
 export type ZionPlanningSource = Readonly<{
@@ -21,10 +21,13 @@ function dataObject(value: unknown): Record<string, unknown> | null {
     ? null : value as Record<string, unknown>;
 }
 
-/** Existing typed Work references only. Plans are containers, never item IDs. */
+/** Existing source identities; Plan containers never masquerade as Work items. */
 export function zionPlanningRecordLinks(source: ZionPlanningSource): ReadRecordLink[] {
-  return [...source.source.plans.flatMap(p => p.items), ...source.source.loose_items].slice(0, 6)
+  const links: ReadRecordLink[] = [...source.source.plans.flatMap(p => p.items), ...source.source.loose_items]
     .map(item => ({ destination: "operations_work", record_id: item.id, record_kind: "planning_item" }));
+  links.push(...source.source.plans.map(plan => ({ destination: "operations_work" as const, record_id: plan.id, record_kind: "planning_plan" as const })));
+  links.push({ destination: "operations_weekly_plan", record_id: null });
+  return boundedPlanningNavigation(links);
 }
 function dataArray(value: unknown): unknown[] | null {
   return Array.isArray(value) && Object.values(Object.getOwnPropertyDescriptors(value)).every(d => "value" in d)

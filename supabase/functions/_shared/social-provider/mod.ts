@@ -9,6 +9,34 @@ export const SOCIAL_OAUTH_PLATFORMS = [
   "pinterest", "google_business", "snapchat",
 ] as const;
 
+/**
+ * The platforms a workspace may CONNECT through the Social door — the OAuth list
+ * plus the connection apps the provider exposes behind the same profile flow
+ * (owner ruling 2026-11-05: the Platform Operator connects Gmail/Calendar,
+ * Discord and Telegram here; docs-verified slugs and readback values).
+ * Connection and publishing have separate allowlists.
+ */
+export const SOCIAL_CONNECTION_PLATFORMS = [
+  ...SOCIAL_OAUTH_PLATFORMS,
+  "google", "discord", "telegram",
+] as const;
+
+/**
+ * The platforms a piece may be PUBLISHED to — the social set plus the provider's
+ * documented messaging post targets (owner 2026-11-06: the Discord and Telegram
+ * channels the platform and Solo accounts connect become usable for content).
+ * Google is deliberately absent: Gmail/Calendar are connections, not post targets.
+ */
+export const SOCIAL_POST_PLATFORMS = [
+  ...SOCIAL_OAUTH_PLATFORMS,
+  "discord", "telegram",
+] as const;
+export type SocialConnectionPlatform = (typeof SOCIAL_CONNECTION_PLATFORMS)[number];
+
+/** The areas a Google connect may request — the provider's own closed set
+ *  (docs: scopes REQUIRED for google, subset of email/calendar/files/contacts). */
+export const GOOGLE_CONNECT_AREAS = ["email", "calendar", "files", "contacts"] as const;
+
 export interface SocialProviderAccount {
   platform: string;
   providerAccountId: string;
@@ -35,13 +63,30 @@ export interface SocialProviderPostResult {
 
 /** The provider's answer to one createPost call. */
 export type SocialProviderPostOutcome =
-  | { kind: "published"; results: SocialProviderPostResult[] }
+  | { kind: "published"; results: SocialProviderPostResult[]; requestId?: string }
   /** The provider accepted the post for background processing and named it — the outcome is
    *  UNKNOWN until its status is reconciled; the requestId is the reconciliation handle. */
   | { kind: "processing"; requestId: string }
   /** The transport itself was uncertain (network failure after send, or an unusable answer).
    *  The post MAY exist; nothing here may be reported as either success or failure. */
   | { kind: "unknown"; requestId: string | null; reason: string };
+
+export interface SocialPostAccount {
+  providerProfileKey: string;
+  platform: string;
+  providerAccountId: string;
+}
+
+export interface SocialPostDestination {
+  channelId: string | null;
+  label: string;
+}
+
+export interface SocialPostInput extends SocialPostAccount {
+  channelId: string | null;
+  text: string;
+  externalId: string;
+}
 
 export interface SocialProviderAdapter {
   readonly key: string;
@@ -51,17 +96,16 @@ export interface SocialProviderAdapter {
     providerProfileKey: string;
     redirectUrl: string;
     platform: string;
+    /** Google requires its connect areas; other platforms ignore this (some reject scopes). */
+    scopes?: readonly string[];
   }): Promise<{ url: string; expiresAt: string }>;
   readProfile(input: { providerProfileKey: string }): Promise<SocialProviderProfile>;
   deleteProfile(input: { providerProfileKey: string }): Promise<void>;
-  /** Publish one text post to one platform under one provider profile. Never schedules, queues,
-   *  or fans out — the door publishes exactly what one approval claimed, now. */
-  createPost(input: {
-    providerProfileKey: string;
-    platform: string;
-    text: string;
-    externalId: string;
-  }): Promise<SocialProviderPostOutcome>;
+  readPostDestination(input: SocialPostAccount): Promise<SocialPostDestination>;
+  /** One immediate text post to the approved account and channel. */
+  createPost(input: SocialPostInput): Promise<SocialProviderPostOutcome>;
+  /** Read the original provider attempt without dispatching another post. */
+  readPost(input: SocialPostInput, providerPostId: string | null): Promise<SocialProviderPostOutcome>;
 }
 
 export class SocialProviderError extends Error {

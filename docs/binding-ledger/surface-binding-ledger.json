@@ -1081,7 +1081,8 @@
         "another workspace's channels or messages",
         "private channel names, members, counts or text for non-members",
         "member emails",
-        "Team Hub file bytes for anyone who cannot see the conversation now, including a person removed from a private channel"
+        "Team Hub file bytes for anyone who cannot see the conversation now, including a person removed from a private channel",
+        "private PAIGE Chat transcripts and document-job locators in shared conversations, URLs or model context"
       ],
       "chain": {
         "canonical_source": {
@@ -1109,8 +1110,8 @@
         },
         "rail_evidence": {
           "producer": "none",
-          "read": "n/a",
-          "note": "Team conversation is not a business outcome; no Rail row"
+          "read": "original authorized document status control",
+          "note": "Team conversations produce no Rail row. C4d reads the original PAIGE Chat document completion via EXP05's read_paige_durable_continuation, for the same admitted initiator with current workspace owner/admin and the original thread, intent and Work. The explicit same-tab reference conveys no authority. Team Hub authenticated readback remains owed."
         },
         "mind_eligibility": {
           "axis_a": "BLOCKED",
@@ -1134,7 +1135,8 @@
         "docs/delivery/exp08-team-hub-increment2-work-contract.md",
         "docs/delivery/exp08-team-hub-increment3-attachments-contract.md",
         "docs/delivery/exp08-team-hub-increment4-paige-contract.md",
-        "docs/delivery/exp08-team-hub-agents-contract.md"
+        "docs/delivery/exp08-team-hub-agents-contract.md",
+        "docs/evidence/ui-delivery/exp08-c4d-private-document-reopen.md"
       ],
       "next_slice": "An authenticated SOLO drive of increments 1-4 (including a PAIGE read, search, an approved reply and a declined card), the §32 readback of 20271114240008 and 20271114240108, a scheduled stale-file sweep, a Team Hub record-link destination so PAIGE can link to a conversation, and the four rendered defects from the increment-3 evidence record.",
       "sources": [

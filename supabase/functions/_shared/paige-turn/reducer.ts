@@ -100,8 +100,8 @@ export function observeToolResult(name: string, content: string | undefined | nu
     || (parsed?.success === false && parsed?.error === "outside_studio_scope"));
   const needsConfirm = (!!parsed?.needs_confirm && !!parsed?.confirm_summary)
     || (parsed?.queued === true && parsed?.success === true);
-  const acceptedWorkId = name === "document_generate" && parsed?.accepted === true
-      && parsed?.work_status === "claimed" && typeof parsed?.work_id === "string"
+  const acceptedWorkId = (name === "document_generate" && parsed?.work_status === "claimed" || name === "deep_research")
+      && parsed?.accepted === true && typeof parsed?.work_id === "string"
     ? parsed.work_id
     : null;
   return { name, ran, needsConfirm, acceptedWorkId };

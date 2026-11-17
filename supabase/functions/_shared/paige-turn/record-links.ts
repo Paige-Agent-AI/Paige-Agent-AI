@@ -18,6 +18,7 @@ export const READ_LINK_DESTINATIONS = [
   "sales_invoices",
   "sales_collections",
   "operations_work",
+  "operations_weekly_plan",
   "team_hub",
   "business_time_zone",
   "executive",
@@ -39,7 +40,7 @@ export const READ_LINK_DESTINATIONS = [
 export type ReadLinkDestination = (typeof READ_LINK_DESTINATIONS)[number];
 
 /** UUID references support clients, agreement documents, managed invoices, pipeline deals, Tasks, Plays, internal business Knowledge, separate CURA Knowledge and recorded Systems Check findings. Subject text is contact-only. */
-export type ReadRecordLink = { destination: ReadLinkDestination; record_id: string | null; subject?: string; record_kind?: "planning_item" };
+export type ReadRecordLink = { destination: ReadLinkDestination; record_id: string | null; subject?: string; record_kind?: "planning_item" | "planning_plan" };
 
 export const MAX_RECORD_LINKS = 6;
 const MAX_SUBJECT = 80;
@@ -69,10 +70,10 @@ function one(value: unknown): ReadRecordLink | null {
     return { destination, record_id: v.record_id.toLowerCase() };
   }
   const typedPlanning = Object.prototype.hasOwnProperty.call(v, "record_kind");
-  if (typedPlanning && (destination !== "operations_work" || v.record_kind !== "planning_item")) return null;
+  if (typedPlanning && (destination !== "operations_work" || (v.record_kind !== "planning_item" && v.record_kind !== "planning_plan"))) return null;
   if (destination !== "contacts" && destination !== "sales_agreements" && destination !== "sales_invoices" && destination !== "pipeline" && destination !== "operations_work" && destination !== "business_game_plan" && destination !== "business_knowledge" && destination !== "portal_knowledge" && destination !== "systems_check") return { destination, record_id: null };
   const record_id = typeof v.record_id === "string" && UUID.test(v.record_id) ? v.record_id.toLowerCase() : null;
-  if (typedPlanning) return { destination, record_id, record_kind: "planning_item" };
+  if (typedPlanning) return v.record_kind === "planning_plan" ? record_id ? { destination, record_id, record_kind: "planning_plan" } : null : { destination, record_id, record_kind: "planning_item" };
   if (destination === "sales_agreements" || destination === "sales_invoices" || destination === "pipeline" || destination === "operations_work" || destination === "business_game_plan" || destination === "business_knowledge" || destination === "portal_knowledge" || destination === "systems_check") return { destination, record_id };
   const subject = subjectOf(v.subject);
   return subject ? { destination, record_id, subject } : { destination, record_id };
@@ -97,5 +98,15 @@ export function readRecordLinks(value: unknown): ReadRecordLink[] {
 
 /** Two rounds of the same turn, under the same rules (the first occurrence wins). */
 export function mergeRecordLinks(a: unknown, b: unknown): ReadRecordLink[] {
-  return readRecordLinks([...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])]);
+  const links = [...readRecordLinks(a), ...readRecordLinks(b)];
+  return boundedPlanningNavigation(links);
+}
+
+/** Preserve the review/reopen entry in populated mixed-read turns, within SIX.
+ * This changes presentation selection only; original domain admission is separate. */
+export function boundedPlanningNavigation(links: ReadRecordLink[]): ReadRecordLink[] {
+  if (links.length <= MAX_RECORD_LINKS) return readRecordLinks(links);
+  const review = links.find(link => link.destination === "operations_weekly_plan");
+  const plan = links.find(link => link.destination === "operations_work" && link.record_kind === "planning_plan");
+  return readRecordLinks([...(plan ? [plan] : []), ...(review ? [review] : []), ...links]);
 }

@@ -15,6 +15,7 @@
 import { DoctrineViolation } from "./model-router-gates.ts";
 import { CLAUDE_CLASSIFICATION, CLAUDE_REASONING } from "./claude-models.ts";
 import { OPENAI_CHEAP, OPENAI_FRONTIER, OPENAI_OPERATIONAL } from "./openai-models.ts";
+import { OPENROUTER_CHEAP, OPENROUTER_FRONTIER, OPENROUTER_OPERATIONAL } from "./openrouter-models.ts";
 
 /**
  * Per-provider allowed model ids. Keys are the router's provider slugs. Anything not listed
@@ -45,6 +46,15 @@ export const MODEL_ALLOWLIST: Record<string, string[]> = {
     "gpt-4o",
     "gpt-4o-mini",
     "gpt-image-1",
+  ],
+
+  // OpenRouter — the SAME GPT-6 class models PAIGE already routes, under OpenRouter's `openai/`
+  // namespace (openrouter-models.ts). Ids are exact and verified against GET /api/v1/models
+  // (2026-11-17); the adapter sends them verbatim. No open-source or unvetted id is admitted.
+  openrouter: [
+    OPENROUTER_CHEAP,
+    OPENROUTER_OPERATIONAL,
+    OPENROUTER_FRONTIER,
   ],
 
   // Groq — open-fast text (OpenAI-compatible). Llama 3.3 70B is the workhorse.

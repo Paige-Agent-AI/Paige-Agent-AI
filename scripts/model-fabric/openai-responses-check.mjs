@@ -24,6 +24,7 @@ import { setScenario, recorder } from "../client-memory-authz/fake-supabase.mjs"
 
 const ENV = {
   OPENAI_API_KEY: "sk-test-not-a-real-key",
+  OPENROUTER_API_KEY: "sk-or-test-not-a-real-key",
   SUPABASE_URL: "https://test.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
 };
@@ -34,6 +35,7 @@ const ad = await import("../../supabase/functions/_shared/openai-responses.ts");
 const { assertModelAllowed } = await import("../../supabase/functions/_shared/model-allowlist.ts");
 const { estimateTokenCostUsd } = await import("../../supabase/functions/_shared/token-pricing.ts");
 const models = await import("../../supabase/functions/_shared/openai-models.ts");
+const or = await import("../../supabase/functions/_shared/openrouter-models.ts");
 const { NeedsConfigError } = await import("../../supabase/functions/_shared/provider-types.ts");
 
 let pass = 0, fail = 0;
@@ -662,5 +664,92 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
   ok(!stopped.ok && !stopped.body && preHeaderTrace?.error_class === 'stream_interrupted'
     && traceCount() === preHeaderFrom + 1, '10.4 pre-header caller cancellation retains one interrupted trace, not a provider network incident');
 }
+console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry");
+{
+  ok(or.OPENROUTER_CHEAP === "openai/gpt-6-luna" && or.OPENROUTER_OPERATIONAL === "openai/gpt-6.1-sol"
+    && or.OPENROUTER_FRONTIER === "openai/gpt-6-astra",
+    "11.1 OpenRouter serves the SAME three class ids, under its openai/ namespace");
+  const orTag = ad.providerTag(or.OPENROUTER_OPERATIONAL, "openrouter");
+  const directTag = ad.providerTag(or.OPENROUTER_OPERATIONAL);
+  ok(orTag === "openrouter:openai/gpt-6.1-sol" && directTag === "openai:openai/gpt-6.1-sol" && orTag !== directTag,
+    "11.2 replay tags are provider-scoped — an OpenRouter item cannot replay into a direct-OpenAI call");
+}
+{
+  const req = ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter", effort: "medium" });
+  ok(req.store === false && req.reasoning?.effort === "medium" && req.model === or.OPENROUTER_OPERATIONAL,
+    "11.3 the shared request builder produces the same Responses shape for OpenRouter");
+  let threw = null;
+  try { ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", provider: "openrouter" }); }
+  catch (e) { threw = e; }
+  ok(threw && /allow-list/i.test(threw.message),
+    "11.4 a direct (non-namespaced) id is rejected against the OpenRouter allow-list before any call");
+}
+{
+  const item = { type: "reasoning", id: "rs_or", encrypted_content: "opaque" };
+  const own = ad.buildResponsesRequest({ messages: [{ role: "user", content: "a" }, { role: "assistant", content: "b", paige_provider_items: [item], paige_provider: "openrouter:openai/gpt-6.1-sol" }, { role: "user", content: "c" }] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter" });
+  const borrowed = ad.buildResponsesRequest({ messages: [{ role: "user", content: "a" }, { role: "assistant", content: "b", paige_provider_items: [item], paige_provider: "openai:gpt-6.1-sol" }, { role: "user", content: "c" }] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter" });
+  ok(own.input.some((x) => x.type === "reasoning" && x.id === "rs_or") && !borrowed.input.some((x) => x.type === "reasoning"),
+    "11.5 OpenRouter reasoning replays only when tagged for OpenRouter — no cross-provider item injection");
+}
+{
+  ENV.OPENROUTER_SITE_URL = "https://paige.ai";
+  ENV.OPENROUTER_APP_NAME = "PAIGE-Fabric-Check";
+  const from = traceCount();
+  const t = transport(() => json({
+    id: "resp_or", model: or.OPENROUTER_OPERATIONAL, status: "completed",
+    output: [{ type: "reasoning", id: "rs_or", encrypted_content: "opaque" }, { type: "message", content: [{ type: "output_text", text: "PONG" }] }],
+    usage: { input_tokens: 1000, output_tokens: 1000 },
+  }));
+  const r = await ad.responsesCompletion({ messages: CONVO }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter", fetchImpl: t }, TRACE);
+  ok(t.calls.length === 1 && t.calls[0].url === "https://openrouter.ai/api/v1/responses",
+    "11.6 OpenRouter uses its own /api/v1 base URL");
+  ok(t.calls[0].headers.authorization === "Bearer sk-or-test-not-a-real-key" && t.calls[0].headers.authorization !== "Bearer sk-test-not-a-real-key",
+    "11.7 OpenRouter uses its OWN key, never the OpenAI key");
+  ok(t.calls[0].headers["HTTP-Referer"] === "https://paige.ai" && t.calls[0].headers["X-Title"] === "PAIGE-Fabric-Check",
+    "11.8 optional attribution headers ride the wire (never a credential)");
+  ok(r.choices[0].message.content === "PONG" && r.choices[0].message.paige_provider === "openrouter:openai/gpt-6.1-sol",
+    "11.9 the completion result tags replay items with the REAL serving provider");
+  const [row] = await tracesSince(from);
+  ok(row?.provider === "openrouter" && row.model === or.OPENROUTER_OPERATIONAL && row.status === "success",
+    "11.10 the trace names OpenRouter as the provider, never a borrowed 'openai'");
+  ok(row?.cost_estimate_usd === estimateTokenCostUsd("openrouter", or.OPENROUTER_OPERATIONAL, 1000, 1000) && row.cost_estimate_usd === 0.012,
+    "11.11 OpenRouter GPT-6 tokens are metered on the SAME row as direct OpenAI");
+  delete ENV.OPENROUTER_SITE_URL;
+  delete ENV.OPENROUTER_APP_NAME;
+}
+{
+  const saved = ENV.OPENROUTER_API_KEY;
+  delete ENV.OPENROUTER_API_KEY;
+  const t = transport(() => json({}));
+  let threw = null;
+  try { await ad.responsesCompletion({ messages: [{ role: "user", content: "x" }] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter", fetchImpl: t }); }
+  catch (e) { threw = e; }
+  ENV.OPENROUTER_API_KEY = saved;
+  ok(threw instanceof NeedsConfigError && t.calls.length === 0,
+    "11.12 a missing OpenRouter key is NeedsConfigError with no call — the fabric falls back to the recorded chain");
+}
+{
+  ENV.OPENROUTER_BASE_URL = "https://or.internal/v1";
+  const t = transport(() => json({ model: or.OPENROUTER_OPERATIONAL, status: "completed", output: [{ type: "message", content: [{ type: "output_text", text: "ok" }] }] }));
+  await ad.responsesCompletion({ messages: [{ role: "user", content: "x" }] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter", fetchImpl: t });
+  delete ENV.OPENROUTER_BASE_URL;
+  ok(t.calls[0].url === "https://or.internal/v1/responses", "11.13 OPENROUTER_BASE_URL overrides the transport endpoint");
+}
+{
+  const from = traceCount();
+  const t = transport(() => sse([
+    { type: "response.created", response: { model: or.OPENROUTER_OPERATIONAL, status: "in_progress" } },
+    { type: "response.output_item.done", output_index: 0, item: { type: "reasoning", id: "rs_or2", encrypted_content: "opaque" } },
+    { type: "response.output_text.delta", output_index: 1, delta: "PONG" },
+    { type: "response.completed", response: { model: or.OPENROUTER_OPERATIONAL, status: "completed", usage: { input_tokens: 5, output_tokens: 3 } } },
+  ]));
+  const res = await ad.responsesStream({ messages: [{ role: "user", content: "x" }], stream: true }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter", effort: "medium", fetchImpl: t }, TRACE);
+  const parsed = frames(await drain(res.body)).filter((x) => x !== "[DONE]").map((x) => JSON.parse(x));
+  const [row] = await tracesSince(from);
+  ok(res.ok && parsed.some((p) => p.choices[0].delta.paige_provider === "openrouter:openai/gpt-6.1-sol")
+    && row?.provider === "openrouter" && row.status === "success",
+    "11.14 a streamed OpenRouter round tags replay and traces the REAL provider throughout");
+}
+
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

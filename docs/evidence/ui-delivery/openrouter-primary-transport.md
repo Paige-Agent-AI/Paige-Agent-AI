@@ -1,0 +1,56 @@
+# OpenRouter as the primary Chat transport — UI delivery evidence
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: Flow-by-Flow read in full this session (SKILL.md plus references/orchestration.md, audit.md, build.md, verification.md) and applied in audit/extension mode to the existing Chat turn flow: intent -> class -> Fabric candidate -> transport -> trace/readback. Verification gates are split below by class; authenticated-runtime stays UNVERIFIED.
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md read in full this session. No visible-interface change: no UI file, component, token, layout or surface shape was touched. This is a backend provider-transport swap behind the existing Fabric seam; the established Chat surface and design system are preserved. Impeccable is not invoked because there is no UI/UX design, visual-polish or interaction task in this change.
+MATERIAL_FLOW_CHANGE: NO: No user goal, choice, step, transition, confirmation, exit, recovery path or side effect changed. The Chat screen is byte-identical; only the provider that serves the already-existing routed classes changes, with fail-closed fallback if admission gates refuse it.
+FLOW_PROTOTYPE: NOT_REQUIRED: Non-material change with no UI state or interaction to prototype; routing behavior is proven by the automated Fabric/adapter/route harnesses named below, and the live authenticated Chat drive is recorded as UNVERIFIED for post-release verification.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Owner outcome in docs/model-routing/int-334/EVIDENCE.md: an eligible tenant user sends a normal Chat message and receives a governed model answer, now served primarily by OpenRouter through the existing Model Fabric; primary action and audience are unchanged from today's Chat.
+VISUAL_DIRECTION: PASS: No visual direction change. Existing Chat components, Paige tokens, type, spacing and motion are untouched; no new colors, gradients, decorative chrome or effects were introduced.
+AUTOMATED_EVIDENCE: PASS: npm run test:model-fabric 228 passed/0 failed; npm run test:openai-responses 123 passed/0 failed; npm run test:token-pricing 26 passed/0 failed; npm run test:trace-wiring 20 passed/0 failed; deno test on paige-turn/route.test.ts round.test.ts classify.test.ts exposure.test.ts provider-failure.test.ts 49 passed/0 failed. New cases cover primary ordering, key/cohort/class gating, fail-closed fallback, own key/base, attribution headers, provider-scoped replay tags, truthful trace provider and streaming.
+STATIC_EVIDENCE: PASS: deno check --allow-import --node-modules-dir=none clean on openrouter-models.ts, model-allowlist.ts, token-pricing.ts, openai-responses.ts, paige-turn/route.ts and model-fabric.ts; deno test reader suite passes with deny-net/deny-env/deny-read/deny-write; npm run lint:integration-registry clean (40 providers, 126 anchors resolve); integration registry JSON parses. deno check on the unmodified paige-ai-chat/index.ts emits the same 9 pre-existing supabase-js generic errors as the unmodified HEAD file, so this change adds none.
+RENDERED_EVIDENCE: UNVERIFIED: No browser session, screenshot or recording was driven in this local worktree; no visual surface changed, so no rendered artifact was captured. The Chat surface must be rendered in an authenticated browser after production deployment and key configuration.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: No in-product click-through or turn was driven here. Provider selection is proven only by the automated harnesses; a real authenticated Chat turn showing OpenRouter as the serving provider remains unproven.
+AUTHENTICATED_RUNTIME: UNVERIFIED: No authenticated production Chat turn was driven and no production OPENROUTER_API_KEY exists through an authorized path; the local probe key was exposed in chat and must be rotated by the owner before any production use. No paige_llm_trace row with provider='openrouter' and metadata.fabric_route.served_provider='openrouter' exists yet. Affected claim: OpenRouter serving Chat for every eligible SOLO tenant; that claim stays PROOF OWED.
+KEYBOARD_FOCUS: NOT_APPLICABLE: No control, label, accessible name, tab order or focus behavior changed; the Chat composer and buttons are untouched.
+ZOOM_REFLOW: NOT_APPLICABLE: No layout, geometry or responsive rule changed; no new clipping or scroll-owner behavior.
+REDUCED_MOTION: NOT_APPLICABLE: No animation or motion behavior was added or modified.
+STATE_COVERAGE: PASS: Fabric harness covers the routing states that changed: OpenRouter primary success, missing-key skip to the recorded OpenAI then Anthropic chain, tenant-attribution and canary-cohort/class exclusion, document-bearing turns skipped to Anthropic, tool-type refusal with no network call, provider-scoped replay-tag isolation, and success/error trace metering. UI loading/empty/error/retry/permission/success/cancel/workspace-switch states are unchanged by this backend swap.
+TRUTHFUL_STATE_LABELS: PASS: docs/model-routing/int-334/EVIDENCE.md and the Integration Capability Registry record OpenRouter as PROOF OWED under excluded delivery infrastructure, not as a tenant capability or a LIVE connection; docs/model-routing/int-334/CAPABILITY-MODEL-MAP.md declares UNAVAILABLE for a dedicated model.* Spine capability instead of inventing one. No rendered or fixture-only claim is labelled LIVE.
+SOLO_UI: NO: Backend model-routing transport, not a Solo interface surface. No tenant-specific code or UI was added; the seam is identical for every eligible SOLO account.
+UNVERIFIED: Authenticated production Chat trace proving OpenRouter served a turn; production secret rotation and configuration through the authorized path; Edge deployment and readback; rendered and behavioral browser proof; exact-head CI on the merge commit and independent non-author review disposition. No PR, merge, deployment or customer release exists in this worktree.
+OWNER_INTENT: Owner directive 2026-11-17: make OpenRouter the primary provider for PAIGE Chat through the existing Model Fabric, preserving class-based routing, sensitive/send/approval carve-outs and graceful fallback, so the owner can test PAIGE live. No UI behavior was in scope.
+MUST_NOT_HAPPEN: No sensitive/final/send/approval or approved-card execution may be routed to OpenRouter; no cross-provider replay item injection; no fallback after a person has seen text or after a possible tool execution; no leaked credential value may be committed or reused; no listed-provider or fixture-only claim may be called LIVE; no second router or authority engine may be created.
+MUST_PRESERVE: The 2026-10-06 class->model policy as the fallback chain, the pinned judge and Anthropic carve-outs, the one approval gate, Trust-Compass lanes, RLS/tenant isolation, the OpenAI/Anthropic transport chain, the existing Chat UI and all design tokens.
+ACCEPTANCE_CRITERIA: After merge, Edge deployment and owner-set rotated key: an authenticated Chat turn produces a paige_llm_trace row with provider='openrouter' and metadata.fabric_route.served_provider='openrouter' for a routed class; removing the key or excluding the tenant/class serves the unchanged OpenAI then Anthropic chain; document-bearing and sensitive/approval turns remain Anthropic/governed; no new trace shows cross-provider replay leakage or a zero/unknown price.
+MOTION_PURPOSE: NONE: no motion change.
+PROTECTED_SEAMS: Impacted and tested: FabricProvider/CLASS_POLICY ordering (paige-turn/route.test.ts), Responses adapter allow-list and provider tags (openai-responses-check.mjs), key/cohort/class admission and fallback (fabric-check.mjs), GPT-6 pricing (token-pricing/check.mjs), trace attribution (trace-wiring.mjs), integration registry lint. Unaffected by construction and not re-tested here: pinned judge/send/approval/approved-card lanes, RLS and tenant authorization, tool approval gate, browser authority, all UI components and the native provider connections.
+
+## Release governance (docs/doctrine/release-governance-and-customer-update-policy.md)
+
+INTERNAL_BUILD_IDENTITY: 0a6b8193ef2456cc2bae1897944ea015cdf28681; deployment=LOCAL_WORKTREE_UNCOMMITTED_BASE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat and dependent Edge functions not deployed to production); evidence=docs/model-routing/int-334/EVIDENCE.md and this record
+RELEASE_CHANNEL: development: local isolated worktree, not customer-reachable; production promotion requires exact-head CI, independent non-author review, merge, Edge deploy/readback and an authenticated Chat turn.
+RELEASE_CLASSIFICATION: internal-only: Harness transport swap with no owner-approved customer release identity.
+CUSTOMER_RELEASE_IDENTITY: none: internal model-transport change; no named customer release was approved.
+RELEASE_NOTE_REQUIRED: NO: internal-only plumbing; the owner evaluates the live Chat experience directly after release.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: OpenRouter as primary Chat transport — implementation and automated harness proof are complete, but production key, deployment and authenticated trace are owed. PARTIAL: routed GPT-6 class Chat behind OpenRouter with fail-closed fallback; document-bearing turns remain Anthropic-served. UNAVAILABLE: a dedicated model.* Spine capability, which is a Harness seam and was not invented.
+RELEASE_RECOVERY: position=With no OPENROUTER_API_KEY or when the tenant/class canary excludes a turn the OpenRouter candidate is skipped and the unchanged OpenAI then Anthropic chain serves it (an explicitly empty OPENROUTER_CANARY_TENANTS is the kill switch and no code revert is needed); reference=docs/brain/config-registry.md and supabase/functions/_shared/model-fabric.ts
+
+## Scope and collisions
+
+- Classification: backend/supabase functions change with a declared `Visible-Flow-Impact: yes` commit trailer; no UI source changed.
+- Affected flows: one — tenant Chat turn model selection and serving; UI flow and exits unchanged.
+- Neighboring regressions: model allow-list, token pricing, trace wiring, paige-turn route policy and integration registry lint, all covered by the checks above.
+- Active-owner/file collisions: none known in this worktree at the recorded base.
+- Explicit exclusions: OpenCode Desktop App routing (already stores OpenRouter), pinned judge/send/approval lanes, document-bearing Chat transport, provider connection registry rows.
+
+## Evidence index
+
+- Local real-provider probes (2026-11-17): GET https://openrouter.ai/api/v1/models -> 200, 439 models, exact three GPT-6 ids present; POST https://openrouter.ai/api/v1/responses with openai/gpt-6.1-sol -> 200, completed, output PONG. These prove the upstream wire, not production PAIGE.
+- Automated, static, and honest boundary: docs/model-routing/int-334/EVIDENCE.md.
+- Capability-to-class study with real Spine keys: docs/model-routing/int-334/CAPABILITY-MODEL-MAP.md.
+- Secret names and gating (names only, never values): docs/brain/config-registry.md.
+
+## Review and limitations
+
+Independent non-author review and exact-head CI are recorded in the PR when one exists. In this worktree no PR, merge, deployment, production secret, or authenticated in-product drive exists; every claim requiring them is UNVERIFIED/PROOF OWED above.

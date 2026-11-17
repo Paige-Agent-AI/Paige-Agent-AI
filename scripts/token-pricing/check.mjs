@@ -100,5 +100,17 @@ const haikuNew = estimateTokenCostUsd("anthropic", "claude-haiku-4-5", 4267724, 
 ok(haikuOld > haikuNew * 2.9 && haikuOld < haikuNew * 3.1,
    `4.1 the old provider-only rate over-prices haiku by ~3× (old $${haikuOld} vs new $${haikuNew})`);
 
+// ── 5. OPENROUTER — SAME MODEL, SAME PRICE ───────────────────────────────────────────────────
+// OpenRouter carries the GPT-6 family under an `openai/` namespace. An OpenRouter-served turn must
+// be metered IDENTICALLY to the direct-OpenAI turn it replaced; an unrecognised OpenRouter model
+// stays unpriced (undefined), never a fabricated default or a zero.
+console.log("5. OpenRouter-served GPT-6 ids are metered on the same rows as direct OpenAI");
+for (const [id, direct] of [["openai/gpt-6-luna", "gpt-6-luna"], ["openai/gpt-6.1-sol", "gpt-6.1-sol"], ["openai/gpt-6-astra", "gpt-6-astra"]]) {
+  eq(estimateTokenCostUsd("openrouter", id, 1000, 1000), estimateTokenCostUsd("openai", direct, 1000, 1000),
+    `5.${direct} ${id} costs exactly the same as direct ${direct}`);
+}
+eq(estimateTokenCostUsd("openrouter", "some-future/open-model", 1000, 1000), undefined,
+   "5.4 an unrecognised OpenRouter model is UNPRICED, never a fabricated or zero cost");
+
 console.log(`\ntoken-pricing: ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

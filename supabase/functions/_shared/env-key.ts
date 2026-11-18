@@ -44,7 +44,10 @@ export function envKey(...names: string[]): string | undefined {
     if (v) return v;
   }
   // 2. No exact hit — scan the env map ONCE (not cached: respects secret rotation) and match
-  //    a candidate name case-insensitively.
+  //    a candidate name case-insensitively. A get-only env surface (offline contract harnesses,
+  //    restricted runtimes) has no map to scan; return undefined rather than throwing so a
+  //    missing key stays an honest miss and the caller's fail-closed path still runs.
+  if (typeof envApi.toObject !== "function") return undefined;
   const lowered = names.map((n) => n.toLowerCase());
   const env = envApi.toObject();
   for (const [k, v] of Object.entries(env)) {

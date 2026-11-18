@@ -38,6 +38,7 @@
 
 import { OPENAI_CHEAP, OPENAI_FRONTIER, OPENAI_OPERATIONAL } from "../openai-models.ts";
 import { CLAUDE_CLASSIFICATION, CLAUDE_REASONING } from "../claude-models.ts";
+import { OPENROUTER_CHEAP, OPENROUTER_FRONTIER, OPENROUTER_OPERATIONAL } from "../openrouter-models.ts";
 import type { Foreground, OfferKind } from "./continuity.ts";
 
 export const TURN_ROUTE_VERSION = 1 as const;
@@ -277,28 +278,39 @@ export function resolveTurnRoute(facts: TurnRouteFacts): TurnRoute {
 
 // ── Class → provider policy (data, consumed by the Model Fabric in R5–R7) ─────────────────────────
 
-export type FabricProvider = "openai" | "anthropic" | "featherless" | "groq";
+export type FabricProvider = "openrouter" | "openai" | "anthropic" | "featherless" | "groq";
 
 /** One candidate in a class's ordered list. `model: null` means the fabric's own pool picks (open models are config). */
 export interface RouteCandidate { provider: FabricProvider; model: string | null }
 
 /**
- * The owner's policy (2026-10-06): Sol is the operational default, Astra the frontier default, Sonnet
- * 5.5 the secondary peer for both, and cheap cognition on Luna then the open pool then Haiku. Order is
- * preference; the fabric moves to the next candidate only on a fallback-eligible failure (below).
+ * The owner's policy. OpenRouter is the PRIMARY transport (owner directive 2026-11-17) for all three
+ * classes; it serves the SAME class models through its Responses endpoint, so this is a transport
+ * change, not a change to what a class thinks with (Luna / Sol / Astra remain the class models).
+ * The recorded 2026-10-06 order is preserved intact BEHIND it as the fallback chain: Sol then
+ * Sonnet 5.5 (operational/frontier), Luna then the open pool then Haiku (cheap). Order is preference;
+ * the fabric moves to the next candidate only on a fallback-eligible failure (below). An unconfigured
+ * OpenRouter key is `auth_config` and simply falls through to that chain — chat keeps working.
+ *
+ * Sensitive/final/send/approval work is NOT decided here: the pinned judge carve-out stays Anthropic,
+ * an approved card executes deterministically with no model, and every tool call still passes the
+ * governed gate. A provider chosen here grants no authority (owner's binding rule).
  */
 export const CLASS_POLICY: Readonly<Record<Exclude<CognitiveClass, "deterministic">, readonly RouteCandidate[]>> = {
   cheap: [
+    { provider: "openrouter", model: OPENROUTER_CHEAP },
     { provider: "openai", model: OPENAI_CHEAP },
     { provider: "featherless", model: null },
     { provider: "groq", model: null },
     { provider: "anthropic", model: CLAUDE_CLASSIFICATION },
   ],
   operational: [
+    { provider: "openrouter", model: OPENROUTER_OPERATIONAL },
     { provider: "openai", model: OPENAI_OPERATIONAL },
     { provider: "anthropic", model: CLAUDE_REASONING },
   ],
   frontier: [
+    { provider: "openrouter", model: OPENROUTER_FRONTIER },
     { provider: "openai", model: OPENAI_FRONTIER },
     { provider: "anthropic", model: CLAUDE_REASONING },
   ],

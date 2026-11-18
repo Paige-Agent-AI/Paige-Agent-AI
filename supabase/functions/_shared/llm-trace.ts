@@ -152,7 +152,8 @@ export function toExcerpt(value: unknown): { text: string | null; truncated: boo
 // `max_tokens` cut-off — which otherwise read exactly like a normal answer. Provider-enum strings only.
 const METADATA_ALLOWLIST = ["caller_function", "actor_role", "retry_of", "attempt", "capped", "low_confidence", "stop_reason", "stop_category",
   "provider_total_input_tokens", "provider_cache_write_30m_tokens", "provider_cache_write_12h_tokens",
-  "provider_cost_estimate_usd", "provider_cost_basis", "provider_cache_signature"] as const;
+  "provider_cost_estimate_usd", "provider_cost_basis", "provider_cache_signature",
+  "provider_failure_class"] as const;
 /** #1856 — flatten the fabric's route telemetry into metadata SCALARS. The allowlist's rule is
  *  "scalars only, never an object" (an object could smuggle a secret); every value here is a closed
  *  enum, a validated job identity, or a provider/model id — scrubbed and capped like the rest. */
@@ -169,7 +170,7 @@ function fabricRouteMetadata(route: FabricRouteTelemetry | null | undefined): Re
   return out;
 }
 
-function safeMetadata(meta: Record<string, unknown> | undefined): Record<string, unknown> {
+export function safeMetadata(meta: Record<string, unknown> | undefined): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (!meta) return out;
   for (const k of METADATA_ALLOWLIST) {

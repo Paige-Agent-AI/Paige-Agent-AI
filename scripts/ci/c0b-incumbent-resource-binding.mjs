@@ -1556,7 +1556,17 @@ const SOURCES = {
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",
   "supabase/functions/_shared/agreements/token.ts": "793e1c0a521fc0ea3b39e5761f87cdad7fee67a73b2110ac1f2963992b20eeea",
   "supabase/functions/_shared/model-fabric.ts": "9058cc767840247d076ec3eefa0390c716c2868c923c8e376bf70b8cc70c2a43",
-  "supabase/functions/_shared/llm-trace.ts": "588857f4c1c2026b08a0f1ae4b8e69a49e941dbf8e21c940d7afba6c40727ea3",
+  // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): `llm-trace.ts` METADATA_ALLOWLIST gains
+  // `provider_failure_class` so the sanitized closed-code billing subtype (billing_account,
+  // billing_key_limit, billing_per_request, billing) is persisted even for metadata_only traces.
+  // Only the allowlist scalar is added; no trace content, scrubbing or schema changes.
+  // Old 588857f4… reproduced from origin/main 89d72496. Renewed 330aee2e… via the guard's own
+  // canonicalization (TS printer {removeComments:true} + SHA-256), never raw bytes.
+  // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): `llm-trace.ts` METADATA_ALLOWLIST gains
+  // `provider_failure_class` so the sanitized closed-code billing subtype is persisted even for
+  // metadata_only traces. `safeMetadata` exported for regression testing. Old 588857f4… reproduced
+  // from origin/main 89d72496. Renewed e87ad6af… via the guard's own canonicalization.
+  "supabase/functions/_shared/llm-trace.ts": "e87ad6af6e9a7dddaaa2e9349de98c731c8ff87aec0eb99b4a314e32336f46a7",
   "supabase/functions/_shared/prompt-forge.ts": "0abdeb7a887ac7b566dd8f21c11140122985d2acf0b5b6020596974ffd3e11ee",
   "supabase/functions/_shared/voyage.ts": "4eb1a516b2ce4679e83bfa62bb908a4b2e3be4d48dcdc89df75bb160bd6569b2",
   "supabase/functions/_shared/claude.ts": "cfbb18ce156d2259bf1904d6f6eaed8262e007c70929958c7261f185e20747ff",
@@ -1605,9 +1615,18 @@ const SOURCES = {
   // renewal, before non-author review and before the required exact-head CI passed. The distinct NON-AUTHOR
   // post-deployment review (change author did not write it) returned APPROVE-WITH-REMEDIATION and named this renewal;
   // it does not cure the ordering violation. Owner authorization: PO-EXP25, 2026-11-18.
-  "supabase/functions/_shared/openai-responses.ts": "a50cc17faae541c693b9c00458fc60a19b3fcc71aadf1e3abc19a4d017f2d9b8",
-  "supabase/functions/_shared/provider-failure.ts": "eef5a70437a8952dde4fbb46a29e9696d1b9f31c48e2a76a0c9ae60c99e7c35b",
-  "supabase/functions/_shared/paige-turn/route.ts": "b361efabef805d1fd37ea4e871d57c360135112a726980823c65d9cd8e101f9e",
+  // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): openai-responses.ts gains provider_failure_class
+  // in emitTrace metadata (sanitized closed-code billing subtype). Old a50cc17f… reproduced from origin/main
+  // 89d72496. Renewed 942ee7ce… via the guard's own canonicalization.
+  "supabase/functions/_shared/openai-responses.ts": "942ee7ce0b29eeb6000ec80c02f20aa50064b9449a13979d65391e566b126bda",
+  // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): provider-failure.ts gains billing_account,
+  // billing_key_limit, billing_per_request subtypes for sanitized 402 classification.
+  // Old eef5a704… reproduced from origin/main 89d72496. Renewed dea94f3f… via the guard's own canonicalization.
+  "supabase/functions/_shared/provider-failure.ts": "dea94f3fbb0e1ba037b4e2546b2bafca043b25e0c341e42729bc85e91202eb89",
+  // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): route.ts FALLBACK_ON gains billing_account,
+  // billing_key_limit, billing_per_request subtypes. Old b361efab… reproduced from origin/main 89d72496.
+  // Renewed 36e3f4fa… via the guard's own canonicalization.
+  "supabase/functions/_shared/paige-turn/route.ts": "36e3f4fa43b2ce408117723f4f5c07d40dd0120b9061ddc444a6b5c8874e8477",
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",
   "supabase/functions/_shared/cheesy-tells.ts": "7710d88a2999f0ab23870ff22f9ce46999d35d598982ce7f517a7fea0f4fab9a",
   "supabase/functions/_shared/claude-models.ts": "026a3b83753bd302319a1f671cfb560bb788c96b4f27bc44222cd6650fcc34fd",

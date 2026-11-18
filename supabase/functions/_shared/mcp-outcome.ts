@@ -201,6 +201,8 @@ export async function callApprovedCapability(opts: {
   /** Used by the caller to scope the evidence record. Never placed in the outcome. */
   tenantId: string;
   args?: Record<string, unknown>;
+  /** Revalidate the original domain authority after discovery, immediately before dispatch. */
+  authorize?: () => Promise<boolean>;
   timeoutMs?: number;
 }): Promise<CapabilityCallResult> {
   const { provider, capability } = opts;
@@ -261,6 +263,15 @@ export async function callApprovedCapability(opts: {
             outcome: outcomeOf(provider, capability, "denied",
               "That capability has changed since it was approved, so it was not run. Review and approve it again.",
               null, "not_approved", "contract_changed"),
+            evidence: null,
+          };
+          return undefined;
+        }
+        if (opts.authorize && !await opts.authorize()) {
+          denial = {
+            outcome: outcomeOf(provider, capability, "denied",
+              "Access changed while the capability was being checked, so it was not run.",
+              null, "not_approved", "not_approved"),
             evidence: null,
           };
           return undefined;

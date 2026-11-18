@@ -727,13 +727,36 @@ describe("Zapier API and PAIGE tools are independent", () => {
     expect(assigned).toEqual(["https://api.zapier.com/v2/authorize?state=bound"]);
   });
 
-  it("starts MCP OAuth from the exact Zapier server and clears it", async () => {
+  it("starts MCP OAuth without asking the customer for an address or credentials", async () => {
     world();
-    invoke.mockResolvedValue({ data: { ok: true, authorize_url: "https://zapier.com/oauth/authorize?state=mcp" }, error: null });
+    const other=invoke.getMockImplementation()!;
+    invoke.mockImplementation((name,options)=>name==="tenant-mcp-connect"&&options.body.action==="oauth_begin"
+      ? Promise.resolve({data:{ok:true,authorize_url:"https://mcp.zapier.com/oauth/authorize?state=mcp"},error:null}) : other(name,options));
     const { host } = await render(); await openCard(host, "mcp"); await click(panelButton(host, "Paige tools (MCP)"));
-    const field=panel(host).querySelector<HTMLInputElement>('input[type="url"]')!;const address="https://mcp.zapier.com/api/mcp/s/server-id/mcp";await type(field,address);await submit(host);
-    expect(invoke.mock.calls.at(-1)![1].body).toEqual({ provider:"zapier",action:"oauth_begin",server_url:address,expected_tenant_id:"tenant-a" });
-    expect(field.value).toBe("");expect(assigned).toEqual(["https://zapier.com/oauth/authorize?state=mcp"]);
+    expect(panel(host).querySelector("input")).toBeNull();
+    await click(panelButton(host,"Connect with Zapier"));
+    expect(invoke.mock.calls.at(-1)![1].body).toEqual({ provider:"zapier",action:"oauth_begin",expected_tenant_id:"tenant-a" });
+    expect(assigned).toEqual(["https://mcp.zapier.com/oauth/authorize?state=mcp"]);
+  });
+
+  it("does not navigate after leaving the MCP tab while sign-in is pending", async () => {
+    world();const pending=deferred<unknown>();const other=invoke.getMockImplementation()!;
+    invoke.mockImplementation((name,options)=>name==="tenant-mcp-connect"&&options.body.action==="oauth_begin"
+      ? pending.promise : other(name,options));
+    const {host}=await render();await openCard(host,"mcp");await click(panelButton(host,"Paige tools (MCP)"));
+    await click(panelButton(host,"Connect with Zapier"));await click(panelButton(host,"API connection"));
+    await act(async()=>pending.resolve({data:{ok:true,authorize_url:"https://mcp.zapier.com/oauth/authorize?state=old-tab"},error:null}));
+    expect(assigned).toEqual([]);expect(panel(host).querySelector('[role="tabpanel"]')?.id).toBe("ig-zapier-panel-api");
+  });
+
+  it("keeps a rejected MCP sign-in retryable without navigating or claiming a connection",async()=>{
+    world();const other=invoke.getMockImplementation()!;
+    invoke.mockImplementation((name,options)=>name==="tenant-mcp-connect"&&options.body.action==="oauth_begin"
+      ? Promise.resolve({data:{ok:true,authorize_url:"https://foreign.example/authorize"},error:null}) : other(name,options));
+    const{host}=await render();await openCard(host,"mcp");await click(panelButton(host,"Paige tools (MCP)"));await click(panelButton(host,"Connect with Zapier"));
+    expect(assigned).toEqual([]);expect(panel(host).textContent).toContain("Zapier sign-in could not start. Try again.");
+    expect((panelButton(host,"Connect with Zapier") as HTMLButtonElement).disabled).toBe(false);
+    expect(panel(host).textContent).toContain("Not connected");
   });
 
   it("keeps MCP disconnect independent from the API connection", async () => {

@@ -393,43 +393,18 @@ export function ZapierApiPanel({ api, onChanged }: { api: ReturnType<typeof useZ
    </section>}</>;
 }
 
-/**
- * The SAME rule tenant-mcp-connect applies (index.ts, isZapierMcpAddress), restated here so the
- * button refuses exactly what the server refuses -- and SAYS SO. It previously gated on a raw
- * `startsWith` against the untrimmed field, so an address pasted with any surrounding
- * whitespace, or with the host in capitals, left the button dead with no reason shown and no
- * way for the owner to find out why. A control that refuses in silence is not usable.
- * Returns null when the address is acceptable, otherwise the reason to show the owner.
- * solo-zapier-release-contract.test.ts pins this against the edge function's predicate.
- */
-export function zapierMcpAddressProblem(raw: string): string | null {
-  const value = raw.trim();
-  if (!value) return null;
-  let u: URL;
-  try { u = new URL(value); } catch { return "That is not a complete web address. Paste the whole address, starting with https://"; }
-  if (u.protocol !== "https:") return "The address must start with https://";
-  if (u.hostname.toLowerCase() !== "mcp.zapier.com") return "This is the Zapier connection, so the address must be on mcp.zapier.com";
-  if (u.username || u.password) return "Remove the sign-in details from the address";
-  // A fragment is never sent to a server, so it means the address came out of a browser
-  // bar. A query string is fine and Zapier's own copy-to-clipboard address carries one.
-  if (u.hash) return "Remove everything from the # onward";
-  if (!u.pathname.startsWith("/api/v1/") && !u.pathname.startsWith("/api/mcp/")) {
-    return "That is a Zapier address, but not an MCP server one. Open your server's Connect tab at mcp.zapier.com and copy the address it shows there.";
-  }
-  return null;
-}
-
 function ZapierMcpPanel({ m, onChanged }: { m: ReturnType<typeof useMcpConnection>; onChanged: () => void }) {
- const{activeTenantId}=useTenantContext();const[serverUrl,setServerUrl]=useState("");const[starting,setStarting]=useState(false);const[message,setMessage]=useState<string|null>(null);const[confirming,setConfirming]=useState(false);const[editing,setEditing]=useState(false);useBeforeUnloadGuard(serverUrl.trim().length > 0 || starting || m.saving);
- const begin=async()=>{setStarting(true);setMessage(null);const{data,error}=await supabase.functions.invoke("tenant-mcp-connect",{body:{provider:"zapier",action:"oauth_begin",server_url:serverUrl.trim(),expected_tenant_id:activeTenantId}});const url=data?.authorize_url;setServerUrl("");if(error||typeof url!=="string"){setStarting(false);setMessage("Zapier did not offer a compatible authorization flow for that MCP server. Confirm the server address and try again.");return;}armOAuthReturn(`${window.location.pathname}${window.location.search}`);window.location.assign(url);};
+ const mounted=useRef(true);useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+ const[starting,setStarting]=useState(false);const[confirming,setConfirming]=useState(false);const[editing,setEditing]=useState(false);useBeforeUnloadGuard(starting || m.saving);
+ const begin=async()=>{if(starting||m.saving)return;setStarting(true);const url=await m.beginOAuth();if(!mounted.current)return;if(!url){setStarting(false);return;}armOAuthReturn(`${window.location.pathname}${window.location.search}`);window.location.assign(url);};
  if(m.loading)return <p className="ig-state" role="status">Checking PAIGE tools access…</p>;
  if(m.error)return <div className="ig-state" role="alert"><span>The PAIGE tools connection could not be read, so no state is being claimed.</span><button className="ig-btn" onClick={()=>void m.reload()}>Try again</button></div>;
- const oauth=m.authKind==="oauth";const addressProblem=zapierMcpAddressProblem(serverUrl);
- return <><p className="ig-lede">Connect PAIGE to the narrow Zapier MCP server and app actions you approve.</p><dl className="ig-facts"><div><dt>PAIGE tools (MCP)</dt><dd>{zapierMcpSummary(m).account}</dd></div><div><dt>Authorization</dt><dd>{oauth?"Granted through Zapier OAuth":m.configured?"Legacy connection — reconnect with OAuth":"Not authorized"}</dd></div><div><dt>Approved tools</dt><dd>{m.approvedToolCount??"Unavailable"}</dd></div><div><dt>Last health check</dt><dd>{m.lastProbedAt?safeCheckDate(m.lastProbedAt):"No successful check yet"}</dd></div></dl>
-  <p className="ig-note">Create a Zapier MCP server, add only the app actions this workspace needs, then paste its HTTPS server address to begin Zapier’s authorization. The address is cleared immediately and credentials are never shown.</p>
-  {m.canWrite&&(!m.configured||editing)&&<form className="ig-form" onSubmit={e=>{e.preventDefault();void begin();}}><label className="ig-field"><span>Zapier MCP server address</span><input type="url" required autoComplete="off" spellCheck={false} placeholder="https://mcp.zapier.com/api/v1/connect" value={serverUrl} onChange={e=>setServerUrl(e.target.value)} disabled={starting||m.saving}/><small>{addressProblem??"From the MCP server you created at Zapier. Connecting does not approve every action."}</small></label><div className="ig-actions"><button type="submit" className="ig-btn" data-primary disabled={starting||m.saving||!serverUrl.trim()||addressProblem!==null}>{starting?"Opening Zapier…":oauth?"Reconnect to Zapier MCP":"Connect to Zapier MCP"}</button>{m.configured&&<button type="button" className="ig-btn" onClick={()=>{setServerUrl("");setEditing(false);}}>Cancel</button>}</div></form>}
+ const oauth=m.authKind==="oauth";
+ return <><p className="ig-lede">Use the apps and actions you authorize in your own Zapier account.</p><dl className="ig-facts"><div><dt>PAIGE tools (MCP)</dt><dd>{zapierMcpSummary(m).account}</dd></div><div><dt>Authorization</dt><dd>{oauth?"Granted through Zapier OAuth":m.configured?"Legacy connection — reconnect with OAuth":"Not authorized"}</dd></div><div><dt>Approved tools</dt><dd>{m.approvedToolCount??"Unavailable"}</dd></div><div><dt>Last health check</dt><dd>{m.lastProbedAt?safeCheckDate(m.lastProbedAt):"No successful check yet"}</dd></div></dl>
+  <p className="ig-note">Sign in to Zapier, then choose the app actions PAIGE may use. Zapier keeps your app credentials.</p>
+  {m.canWrite&&(!m.configured||editing)&&<div className="ig-actions"><button type="button" className="ig-btn" data-primary disabled={starting||m.saving} onClick={()=>void begin()}>{starting?"Opening Zapier…":oauth?"Reconnect with Zapier":"Connect with Zapier"}</button>{m.configured&&<button type="button" className="ig-btn" disabled={starting||m.saving} onClick={()=>setEditing(false)}>Cancel</button>}</div>}
   {oauth&&m.status==="connected"&&m.canWrite&&<CapabilityApproval provider="zapier" onChanged={onChanged}/>}
-  {(message||m.writeError)&&<p className="ig-error" role="alert">{message??m.writeError}</p>}
+  {m.writeError&&<p className="ig-error" role="alert">{m.writeError}</p>}
   {!m.canWrite?<p className="ig-note">Only a workspace admin can change PAIGE tools access.</p>:m.configured&&<div className="ig-actions"><button type="button" className="ig-btn" data-primary disabled={m.saving||starting} onClick={()=>setEditing(true)}>Reconnect authorization</button><button type="button" className="ig-btn" disabled={m.saving} onClick={()=>void m.verify().then(onChanged)}>Check it again</button>{confirming?<span className="ig-confirm"><button type="button" className="ig-btn" data-danger disabled={m.saving} onClick={()=>{setConfirming(false);void m.disconnect().then(onChanged);}}>Disconnect</button><button type="button" className="ig-btn" onClick={()=>setConfirming(false)}>Keep it</button></span>:<button type="button" className="ig-btn" onClick={()=>setConfirming(true)}><Link2Off aria-hidden size={14}/>Disconnect</button>}</div>}
  </>;
 }

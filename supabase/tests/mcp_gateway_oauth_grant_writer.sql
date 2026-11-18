@@ -169,3 +169,6 @@ ROLLBACK;
 -- Same native CI entrypoint; exercise the state-bound writer after the legacy grant cases.
 -- This file and its include are disposable-database tests, never production smoke tests.
 \ir mcp_oauth_completion_binding.sql
+
+-- Solo's original provider-scoped MCP writer shares this existing required CI entry.
+\ir solo_zapier_mcp_lifecycle.sql

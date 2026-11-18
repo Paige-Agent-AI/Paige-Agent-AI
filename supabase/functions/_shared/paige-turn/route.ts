@@ -334,7 +334,7 @@ export const NOT_FALLBACK = [
 ] as const;
 export type NotFallback = (typeof NOT_FALLBACK)[number];
 
-const FALLBACK_ON: ReadonlySet<ProviderFailure> = new Set(["auth_config", "billing", "rate_limit", "model_unavailable", "provider_outage"]);
+const FALLBACK_ON: ReadonlySet<ProviderFailure> = new Set(["auth_config", "billing", "billing_account", "billing_key_limit", "billing_per_request", "rate_limit", "model_unavailable", "provider_outage"]);
 
 /**
  * May the fabric retry this round on the next candidate?

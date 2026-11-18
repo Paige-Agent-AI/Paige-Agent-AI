@@ -71,7 +71,7 @@ export function classifyProviderFailure(e: ProviderFailureEvidence): ProviderFai
     if (BILLING.test(msg)) return "billing";
     if (LIMIT.test(msg)) return "rate_limit";
     if (MODEL.test(msg)) return "model_unavailable";
-    return msg || type ? "invalid_request" : "unknown";
+    return "invalid_request";
   }
   return "unknown";
 }

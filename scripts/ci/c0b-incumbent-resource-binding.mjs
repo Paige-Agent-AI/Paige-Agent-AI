@@ -1592,7 +1592,20 @@ const SOURCES = {
   // unchanged. Old e2790d93… reproduced from main 5a4bfb1f0 first.
   "supabase/functions/_shared/comms-email/readiness.ts": "8bfab4b5fe9453736b8f68b82d76434cc9884e9ea39583d7d32e97454affba5f",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
-  "supabase/functions/_shared/openai-responses.ts": "92426905312b30441b81589610163b8cbb93bf3295dad71a58827c8f68295703",
+  // ANT-166 OpenRouter wire-field repair (2026-11-18), head 38169eec7. `buildResponsesRequest` now omits the four
+  // OpenAI-only Responses fields (`store`, `include`, `prompt_cache_key`, `prompt_cache_options`) when the provider is
+  // `openrouter`; they are still sent, unchanged, on the direct OpenAI path. `model`, `input`, `instructions`,
+  // `max_output_tokens`, `reasoning`, `tools` and `tool_choice` (including explicit `"none"`) remain sent to both.
+  // No tool definition, dispatch, authorization, approval, cancellation, fallback or no-replay contract changed; the
+  // change is one provider's outbound field set. Old 92426905… was first reproduced from parent 69b13fc2a, proving the
+  // pin was valid and this renewal uses the guard's own canonicalization (TS printer {removeComments:true} + SHA-256),
+  // never raw bytes and never snapshot regeneration. Reviewed new a50cc17f…. Renew ONLY this dependency literal; the
+  // other 130 pins, all 29 dispatch fingerprints, the extractor, metadata, assertions and hostile controls stay exact.
+  // PROCESS NOTE, recorded honestly: 38169eec7 was pushed directly to protected main and deployed BEFORE this reviewed
+  // renewal, before non-author review and before the required exact-head CI passed. The distinct NON-AUTHOR
+  // post-deployment review (change author did not write it) returned APPROVE-WITH-REMEDIATION and named this renewal;
+  // it does not cure the ordering violation. Owner authorization: PO-EXP25, 2026-11-18.
+  "supabase/functions/_shared/openai-responses.ts": "a50cc17faae541c693b9c00458fc60a19b3fcc71aadf1e3abc19a4d017f2d9b8",
   "supabase/functions/_shared/provider-failure.ts": "eef5a70437a8952dde4fbb46a29e9696d1b9f31c48e2a76a0c9ae60c99e7c35b",
   "supabase/functions/_shared/paige-turn/route.ts": "b361efabef805d1fd37ea4e871d57c360135112a726980823c65d9cd8e101f9e",
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",

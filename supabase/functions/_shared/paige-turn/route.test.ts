@@ -141,8 +141,8 @@ Deno.test("policy: OpenRouter leads with the same class models; the recorded cha
 
 Deno.test("fallback: provider health only; never on an answer; never after output, unless proven unexecuted", () => {
   const clean = { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: false };
-  for (const f of ["auth_config", "billing", "rate_limit", "model_unavailable", "provider_outage"] as const) assert(mayFallback(f, clean), f);
-  for (const f of ["invalid_request", "unknown"] as const) assert(!mayFallback(f, clean), f);
+  for (const f of ["auth_config", "billing", "rate_limit", "model_unavailable", "provider_outage", "invalid_request"] as const) assert(mayFallback(f, clean), f);
+  for (const f of ["unknown"] as const) assert(!mayFallback(f, clean), f);
   for (const f of NOT_FALLBACK) assert(!mayFallback(f, clean), f);
   assert(!mayFallback("provider_outage", { ...clean, emittedToolCalls: true }), "a round that showed a tool call does not move");
   assert(!mayFallback("provider_outage", { ...clean, emittedText: true }), "a round the person already saw does not move");

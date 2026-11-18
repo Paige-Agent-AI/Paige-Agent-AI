@@ -17,21 +17,18 @@
 // round gate's business. A provider being chosen grants nothing: tools, approvals and authority are decided
 // downstream, unchanged.
 //
-// OPENROUTER IS THE OWNER-DIRECTED PRIMARY (2026-11-17): it serves the SAME class models through the
-// Responses wire, with OpenAI (the 2026-10-08 primary, flag below) and Anthropic preserved behind it
-// as the fallback chain. Both transports are key-gated and cohort-gated; the key is an extra master
-// switch for OpenRouter so an unconfigured deployment silently keeps the recorded chain.
+// OPENAI IS THE OWNER-DIRECTED PRIMARY (2026-10-08): the flag below is ON, admission is
+// production-wide under the class scope (all three classes since the 2026-10-09 completion;
+// the env stages or kills).
 
 import { chatCompletionCompat, gatewayCompat, messagesCarryDocument, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
 import { NeedsConfigError } from "./provider-types.ts";
 import { traceAdmin, traceLLMCall, type FabricRouteTelemetry, type TraceCtx } from "./llm-trace.ts";
 import { accruedSpendToday, BudgetExceeded, enforceBudget, resolveCeiling, type BudgetDb } from "./router-budget/mod.ts";
 import { OPENAI_EFFORT_BY_CLASS, type OpenAIReasoningClass } from "./openai-models.ts";
-import { responsesCompletion, responsesStream, chatPromptCacheKey, type ChatShapeBody, type ResponsesProvider } from "./openai-responses.ts";
+import { responsesCompletion, responsesStream, chatPromptCacheKey, type ChatShapeBody } from "./openai-responses.ts";
 import { classifyProviderFailure, PROVIDER_FAILURE_CLASSES, type ProviderFailureClass } from "./provider-failure.ts";
 import { CLASS_POLICY, mayFallback, type CognitiveClass, type FabricProvider, type RouteCandidate } from "./paige-turn/route.ts";
-import { envKey } from "./env-key.ts";
-import { OPENROUTER_KEY_ENV_NAMES } from "./openrouter-models.ts";
 
 /**
  * The owner-directed primary switch (ON since the 2026-10-08 directive; the validation staging and
@@ -124,45 +121,8 @@ export function openAiAdmitted(tenantId: string | null | undefined, cls: Cogniti
   return OPENAI_CHAT_ENABLED && openAiCohortAdmits(tenantId, cls);
 }
 
-// ── OPENROUTER (owner directive 2026-11-17): the PRIMARY Responses transport ──────────────────────
-// Same class models, same budget/trace/fallback doctrine. Admission mirrors the OpenAI staged gate:
-// production-wide for attributed tenants unless an explicit tenant list restricts it, an explicitly
-// SET EMPTY env is the kill switch, and `OPENROUTER_CANARY_CLASSES` scopes the classes. The API KEY is
-// an additional master switch: with no key configured the candidate is skipped and the recorded
-// OpenAI → Anthropic chain serves exactly as before. Adding the provider can never take chat down.
-const OPENROUTER_CANARY_TENANTS_ENV = "OPENROUTER_CANARY_TENANTS";
-const OPENROUTER_CANARY_CLASSES_ENV = "OPENROUTER_CANARY_CLASSES";
-export const OPENROUTER_CHAT_ENABLED = true;
-
-/** NULL = production-wide (the default); a set list restricts; an explicitly SET EMPTY value admits nobody. */
-export function openRouterCanaryTenants(): string[] | null {
-  const raw = fabricEnv(OPENROUTER_CANARY_TENANTS_ENV);
-  if (raw === undefined) return null;
-  return raw.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
-}
-
-export function openRouterCanaryClasses(): string[] {
-  const listed = csvEnv(OPENROUTER_CANARY_CLASSES_ENV).map((c) => c.toLowerCase()).filter((c) => CANARY_CLASS_SET.has(c));
-  return listed.length ? listed : ["cheap", "operational", "frontier"];
-}
-
-/** Attributed traffic only: a canary never rides a platform/system call with no tenant id. */
-export function openRouterCohortAdmits(tenantId: string | null | undefined, cls: CognitiveClass): boolean {
-  if (!tenantId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) return false;
-  const cohort = openRouterCanaryTenants();
-  if (cohort !== null && !cohort.includes(tenantId.toLowerCase())) return false;
-  return openRouterCanaryClasses().includes(streamingClass(cls));
-}
-
-/** Master flag AND configured key AND tenant cohort AND class scope must all admit it. */
-export function openRouterAdmitted(tenantId: string | null | undefined, cls: CognitiveClass): boolean {
-  // The SAME case-insensitive resolver as the Responses adapter, over the SAME name list. The
-  // configured Edge secret is OPEN_ROUTER_AI_API; OPENROUTER_API_KEY remains a back-compat alias.
-  return OPENROUTER_CHAT_ENABLED && !!envKey(...OPENROUTER_KEY_ENV_NAMES) && openRouterCohortAdmits(tenantId, cls);
-}
-
 /** Providers that can serve a streamed, tool-bearing chat round today. The open pool does not stream. */
-const STREAMING_PROVIDERS: ReadonlySet<FabricProvider> = new Set(["openrouter", "openai", "anthropic"]);
+const STREAMING_PROVIDERS: ReadonlySet<FabricProvider> = new Set(["openai", "anthropic"]);
 
 export interface FabricAttempt {
   provider: FabricProvider;
@@ -190,9 +150,8 @@ export interface FabricOptions {
   /** Anthropic-only request extras the chat already sends (e.g. the dormant Studio thinking flag). */
   anthropicExtras?: Record<string, unknown>;
   /** Test seam: override the enabled set and transports. Never set by production callers. */
-  enabled?: { openai?: boolean; openrouter?: boolean };
+  enabled?: { openai?: boolean };
   openaiFetch?: typeof fetch;
-  openrouterFetch?: typeof fetch;
   /** Test seam: the Anthropic gateway. Never set by production callers. */
   anthropicGateway?: typeof gatewayCompat;
 }
@@ -202,13 +161,11 @@ export function streamingClass(cls: CognitiveClass): Exclude<CognitiveClass, "de
   return cls === "deterministic" ? "operational" : cls;
 }
 
-export function candidatesFor(cls: CognitiveClass, enabled: { openai: boolean; openrouter: boolean }): { use: RouteCandidate[]; skipped: RouteCandidate[] } {
+export function candidatesFor(cls: CognitiveClass, enabled: { openai: boolean }): { use: RouteCandidate[]; skipped: RouteCandidate[] } {
   const use: RouteCandidate[] = [];
   const skipped: RouteCandidate[] = [];
   for (const c of CLASS_POLICY[streamingClass(cls)]) {
-    const on = STREAMING_PROVIDERS.has(c.provider) && !!c.model
-      && (c.provider !== "openai" || enabled.openai)
-      && (c.provider !== "openrouter" || enabled.openrouter);
+    const on = STREAMING_PROVIDERS.has(c.provider) && !!c.model && (c.provider !== "openai" || enabled.openai);
     (on ? use : skipped).push(c);
   }
   return { use, skipped };
@@ -269,10 +226,7 @@ async function fabricBudgetGate(
 }
 
 export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody & { tool_choice?: unknown }, opts: FabricOptions = {}): Promise<FabricStream> {
-  const enabled = {
-    openai: opts.enabled?.openai ?? openAiAdmitted(opts.trace?.tenant_id, cls),
-    openrouter: opts.enabled?.openrouter ?? openRouterAdmitted(opts.trace?.tenant_id, cls),
-  };
+  const enabled = { openai: opts.enabled?.openai ?? openAiAdmitted(opts.trace?.tenant_id, cls) };
   const { use, skipped } = candidatesFor(cls, enabled);
   const attempts: FabricAttempt[] = skipped.map((c) => ({ provider: c.provider, model: c.model ?? "", failure: "skipped_disabled" as const }));
   let last: FabricStream = { ok: false, status: 0, served: null, attempts };
@@ -306,13 +260,12 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
       };
     }
     try {
-      if (c.provider === "openai" || c.provider === "openrouter") {
-        const responsesProvider: ResponsesProvider = c.provider === "openrouter" ? "openrouter" : "openai";
-        // #1850 — DOCUMENT TURNS go to the document-capable provider: the Responses adapter refuses
+      if (c.provider === "openai") {
+        // #1850 — DOCUMENT TURNS go to the document-capable provider: the OpenAI adapter refuses
         // document parts by design (never a silent omission), so the fabric skips the candidate
         // before the key is read and Anthropic (document-capable, #587) serves the round.
         if (messagesCarryDocument(body.messages as never)) {
-          attempts.push({ provider: c.provider, model, failure: "unsupported_document" });
+          attempts.push({ provider: "openai", model, failure: "unsupported_document" });
           last = { ok: false, status: 0, served: null, attempts };
           continue;
         }
@@ -331,12 +284,7 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
         }
         if (opts.signal?.aborted) return aborted();
         const effort = OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass];
-        opened = await responsesStream(body, {
-          model, effort, provider: responsesProvider,
-          promptCacheKey, disablePromptCache: !!opts.trace?.prompt_cache_scope && !promptCacheKey,
-          fetchImpl: responsesProvider === "openrouter" ? opts.openrouterFetch : opts.openaiFetch,
-          signal: opts.signal,
-        }, opts.trace);
+        opened = await responsesStream(body, { model, effort, promptCacheKey, disablePromptCache: !!opts.trace?.prompt_cache_scope && !promptCacheKey, fetchImpl: opts.openaiFetch, signal: opts.signal }, opts.trace);
         if (opts.signal?.aborted) { await opened.body?.cancel().catch(() => {}); return aborted(); }
         if (opened.acquisition) {
           const acquired = await opened.acquisition;
@@ -486,10 +434,9 @@ export interface FabricCompletionOpts {
    * Anthropic-only by construction (the frozen instrument's provider).
    */
   pinned?: { tier: ClaudeTier };
-  /** Test seams: the enabled set and the Responses transports. Never set by production callers. */
-  enabled?: { openai?: boolean; openrouter?: boolean };
+  /** Test seams: the enabled set and the OpenAI transport. Never set by production callers. */
+  enabled?: { openai?: boolean };
   openaiFetch?: typeof fetch;
-  openrouterFetch?: typeof fetch;
 }
 
 function budgetDb(): BudgetDb | null {
@@ -511,10 +458,7 @@ export async function fabricCompletion(
   const cls = request.cognitive_class;
   const klass = streamingClass(cls);
   if (!JOB_IDENTITY.test(request.job)) throw new Error("fabricCompletion: job must be a snake_case job identity");
-  const enabled = {
-    openai: opts.enabled?.openai ?? openAiAdmitted(opts.trace?.tenant_id, cls),
-    openrouter: opts.enabled?.openrouter ?? openRouterAdmitted(opts.trace?.tenant_id, cls),
-  };
+  const enabled = { openai: opts.enabled?.openai ?? openAiAdmitted(opts.trace?.tenant_id, cls) };
   const attempts: FabricAttempt[] = [];
   let gateHitForTrace: { budget: Record<string, unknown> } | null = null;
   const route = (served: FabricCompletionRoute["served"], reason: FabricRouteReason, fallback: boolean): FabricCompletionRoute =>
@@ -569,8 +513,8 @@ export async function fabricCompletion(
     }
     // #1850 — document turns never reach the OpenAI adapter (it refuses document parts by design;
     // the refusal stays as defense in depth). The document-capable provider serves them instead.
-    if ((c.provider === "openai" || c.provider === "openrouter") && messagesCarryDocument(request.messages as never)) {
-      attempts.push({ provider: c.provider, model: c.model ?? "", failure: "unsupported_document" });
+    if (c.provider === "openai" && messagesCarryDocument(request.messages as never)) {
+      attempts.push({ provider: "openai", model: c.model ?? "", failure: "unsupported_document" });
       last = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "unsupported_document" } };
       if (opts.pinned) { clearRoute(); return last; }
       continue;
@@ -602,13 +546,10 @@ export async function fabricCompletion(
     };
     if (opts.trace) opts.trace.fabric_route = projectedRoute;
     try {
-      const responsesProvider: ResponsesProvider = c.provider === "openrouter" ? "openrouter" : "openai";
-      const responsesFetch = responsesProvider === "openrouter" ? opts.openrouterFetch : opts.openaiFetch;
-      const resp: Record<string, unknown> = c.provider === "openai" || c.provider === "openrouter"
+      const resp: Record<string, unknown> = c.provider === "openai"
         // The trace carries the CONSUMER's job identity, never the adapter's "chat" default; the
-        // Responses leg self-traces through responsesCompletion under this context, with the REAL
-        // serving provider ("openrouter" when OpenRouter carried it).
-        ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], provider: responsesProvider, promptCacheKey, disablePromptCache: !!opts.trace?.prompt_cache_scope && !promptCacheKey, fetchImpl: opts.signal ? (u, i) => (responsesFetch ?? fetch)(u, { ...i, signal: opts.signal }) : responsesFetch }, opts.trace ? { ...opts.trace, job_kind: opts.trace.job_kind ?? request.job, ...(gateHitForTrace ? { doctrine_gate_hits: gateHitForTrace } : {}) } : undefined)
+        // OpenAI leg self-traces through responsesCompletion under this context.
+        ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], promptCacheKey, disablePromptCache: !!opts.trace?.prompt_cache_scope && !promptCacheKey, fetchImpl: opts.signal ? (u, i) => (opts.openaiFetch ?? fetch)(u, { ...i, signal: opts.signal }) : opts.openaiFetch }, opts.trace ? { ...opts.trace, job_kind: opts.trace.job_kind ?? request.job, ...(gateHitForTrace ? { doctrine_gate_hits: gateHitForTrace } : {}) } : undefined)
         : await callAnthropicTraced(request, anthropicTier as ClaudeTier, request.job, opts.trace, gateHitForTrace, opts.signal, projectedRoute);
       const servedModel = typeof resp.model === "string" && resp.model
         ? resp.model

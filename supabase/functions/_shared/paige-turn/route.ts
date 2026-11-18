@@ -334,14 +334,12 @@ export const NOT_FALLBACK = [
 ] as const;
 export type NotFallback = (typeof NOT_FALLBACK)[number];
 
-const FALLBACK_ON: ReadonlySet<ProviderFailure> = new Set(["auth_config", "billing", "rate_limit", "model_unavailable", "provider_outage", "invalid_request"]);
+const FALLBACK_ON: ReadonlySet<ProviderFailure> = new Set(["auth_config", "billing", "rate_limit", "model_unavailable", "provider_outage"]);
 
 /**
  * May the fabric retry this round on the next candidate?
  *  - only for a provider/configuration/transport health failure it recognised;
- *  - `invalid_request` IS retried: a provider may reject a request shape (e.g. tool definitions)
- *    that another provider accepts, so an invalid_request from one candidate is not fatal;
- *  - never for `unknown`;
+ *  - never for an invalid request (another provider would get the same broken request) or `unknown`;
  *  - never once text reached the person — it cannot be unsaid, and a retry would say it twice;
  *  - never once the round showed a tool call, unless that call is proven not executed
  *    (`sideEffectProvenNone`).

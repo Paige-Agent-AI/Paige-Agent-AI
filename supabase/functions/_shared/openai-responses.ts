@@ -271,11 +271,7 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
   if (body.tools?.length) {
     req.tools = body.tools.map(toolDef);
     // PAIGE never forces a tool through the provider: "none" is honoured, anything else is "auto".
-    // OpenRouter's Responses API does not accept tool_choice; omit it for OpenRouter so the
-    // provider's own tool selection applies. OpenAI keeps tool_choice as before.
-    if (opts.provider !== "openrouter") {
-      req.tool_choice = body.tool_choice === "none" ? "none" : "auto";
-    }
+    req.tool_choice = body.tool_choice === "none" ? "none" : "auto";
   }
   const rf = body.response_format;
   if (rf?.type === "json_schema" && rf.json_schema?.schema) {

@@ -11,8 +11,8 @@
 // IT NEVER INFERS. A class is assigned only when the response proves it (a status, a provider error
 // type or code, or a phrase the provider uses for exactly that condition). Body length, timing, or
 // "it is probably billing" are not evidence: anything unproven is `unknown`. A 400 the provider does
-// not attribute to billing or limits is `invalid_request` — another provider would get the same
-// broken request, so it is never a reason to fall back.
+// not attribute to billing or limits is `invalid_request` — another provider may accept the same
+// request shape, so it IS a reason to fall back.
 //
 // Pure TypeScript, no imports.
 
@@ -71,7 +71,7 @@ export function classifyProviderFailure(e: ProviderFailureEvidence): ProviderFai
     if (BILLING.test(msg)) return "billing";
     if (LIMIT.test(msg)) return "rate_limit";
     if (MODEL.test(msg)) return "model_unavailable";
-    return msg || type ? "invalid_request" : "unknown";
+    return "invalid_request";
   }
   return "unknown";
 }

@@ -161,7 +161,7 @@ function bearerChallenge(header: string | null): Record<string, string> | null {
     const parameter = /^([!#$%&'*+.^_`|~0-9a-z-]+)\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([!#$%&'*+.^_`|~0-9a-z-]+))$/i.exec(part);
     if (!parameter || !bearer) throw new OAuthError("malformed_metadata");
     const key = parameter[1].toLowerCase();
-    if (Object.hasOwn(bearer, key)) throw new OAuthError("malformed_metadata");
+    if (Object.prototype.hasOwnProperty.call(bearer, key)) throw new OAuthError("malformed_metadata");
     bearer[key] = parameter[2] === undefined ? parameter[3] : parameter[2].replace(/\\(.)/g, "$1");
   }
   return bearer;
@@ -188,13 +188,13 @@ export async function discoverProtectedResource(serverUrl: string, options: { re
     if (response.status === 401) challenge = bearerChallenge(response.headers.get("www-authenticate"));
     else if (![200, 204, 404, 405].includes(response.status)) throw new OAuthError("discovery_failed", response.status);
   }
-  const challengeScopes = challenge && Object.hasOwn(challenge, "scope")
+  const challengeScopes = challenge && Object.prototype.hasOwnProperty.call(challenge, "scope")
     ? metadataScopes(challenge.scope.split(" ")) : null;
   // RFC 9728 §3.1: the path is appended to the well-known segment, so a server hosted at
   // a sub-path advertises its own metadata rather than the origin's.
   const path = u.pathname === "/" ? "" : u.pathname.replace(/\/$/, "");
   let metadata;
-  if (challenge && Object.hasOwn(challenge, "resource_metadata")) {
+  if (challenge && Object.prototype.hasOwnProperty.call(challenge, "resource_metadata")) {
     // safeFetch applies the same HTTPS/public-address/no-redirect boundary to this URL.
     // An explicit advertised document failing is an error, not permission to guess another.
     metadata = await getJson(challenge.resource_metadata);

@@ -26,7 +26,7 @@ type Phase =
   | { kind: "working" }
   | { kind: "done"; connected: boolean }
   /** Owner-language only. A provider's own error text never reaches this screen. */
-  | { kind: "failed"; message: string };
+  | { kind: "failed" | "unconfirmed"; message: string };
 
 /** The provider may report its own refusal instead of returning a code. */
 function describeProviderRefusal(error: string): string {
@@ -37,6 +37,8 @@ function describeProviderRefusal(error: string): string {
 
 function describeFailure(code: string | undefined): string {
   switch (code) {
+    case "oauth_store_unconfirmed":
+      return "The connection’s final status could not be confirmed. Review the existing connection in Integrations before reconnecting.";
     case "oauth_state_invalid":
       return "That link has already been used or has expired. Start the connection again from Integrations.";
     case "oauth_bad_callback":
@@ -71,7 +73,8 @@ export default function McpOAuthCallback() {
     if (error || typeof failure?.error === "string") {
       const code = typeof failure?.code === "string" ? failure.code : undefined;
       const reason = typeof failure?.error === "string" ? failure.error : undefined;
-      setPhase({ kind: "failed", message: describeFailure(code ?? reason) });
+      const failureCode = code ?? reason;
+      setPhase({ kind: failureCode === "oauth_store_unconfirmed" ? "unconfirmed" : "failed", message: describeFailure(failureCode) });
       return;
     }
     // Granted is not the same as working: the probe decides. Both are honest outcomes and
@@ -138,8 +141,8 @@ export default function McpOAuthCallback() {
           <button type="button" className="mcp-cb-btn" onClick={goBack}>Back to Integrations</button>
         </>}
 
-        {phase.kind === "failed" && <>
-          <h1>That did not connect</h1>
+        {(phase.kind === "failed" || phase.kind === "unconfirmed") && <>
+          <h1>{phase.kind === "unconfirmed" ? "Connection status unconfirmed" : "That did not connect"}</h1>
           <p>{phase.message}</p>
           <button type="button" className="mcp-cb-btn" onClick={goBack}>Back to Integrations</button>
         </>}

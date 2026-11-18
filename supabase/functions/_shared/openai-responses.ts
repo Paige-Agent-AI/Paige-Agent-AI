@@ -245,12 +245,18 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
   const req: Record<string, unknown> = {
     model: opts.model,
     input,
-    store: false,
-    include: ["reasoning.encrypted_content"],
     max_output_tokens: body.max_tokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
   };
+  // OpenAI-only request fields. OpenRouter's documented Responses API accepts
+  // model, input, tools, tool_choice and stream; it does not accept OpenAI's
+  // `store`, `include`, prompt-cache or `store` parameters. Sending them to
+  // OpenRouter produces HTTP 400 before the model ever processes the turn.
+  if (provider !== "openrouter") {
+    req.store = false;
+    req.include = ["reasoning.encrypted_content"];
+  }
   const validCacheKey = typeof opts.promptCacheKey === "string" && /^[a-f0-9]{64}$/.test(opts.promptCacheKey);
-  if (!opts.disablePromptCache && validCacheKey) {
+  if (!opts.disablePromptCache && validCacheKey && provider !== "openrouter") {
     // Original Chat starts with persona, optional specialist address, then the
     // canonical voice/core. Include its first three available instruction blocks:
     // persona alone can be shorter than the provider's cacheable-prefix minimum.
@@ -264,9 +270,10 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
         ...(i === Math.min(2, instructions.length - 1) ? { prompt_cache_breakpoint: { mode: "explicit" } } : {}),
       })),
     });
-  } else if (instructions.length) req.instructions = instructions.join("\n\n");
+  } else if (instructions.length && provider !== "openrouter") req.instructions = instructions.join("\n\n");
+  else if (instructions.length) req.instructions = instructions.join("\n\n");
   // Explicit-only with no breakpoints performs neither cache reads nor writes.
-  if (opts.disablePromptCache || opts.promptCacheKey !== undefined && !validCacheKey) req.prompt_cache_options = { mode: "explicit" };
+  if ((opts.disablePromptCache || opts.promptCacheKey !== undefined && !validCacheKey) && provider !== "openrouter") req.prompt_cache_options = { mode: "explicit" };
   if (opts.effort) req.reasoning = { effort: opts.effort === "none" && SOL_ASTRA_NO_NONE(opts.model) ? "low" : opts.effort };
   if (body.tools?.length) {
     req.tools = body.tools.map(toolDef);

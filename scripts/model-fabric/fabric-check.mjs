@@ -203,8 +203,11 @@ for (const [cls, model] of [["operational", "openai/gpt-6.1-sol"], ["frontier", 
   ok(served(r) === `openrouter:${model}`, `${cls}: OpenRouter serves the SAME class model first (${served(r)})`);
   ok(r.calls.length === 1 && r.calls[0].provider === "openrouter" && r.calls[0].req.model === model,
     `${cls}: no other transport is called when OpenRouter answers`);
-  ok(r.calls[0].req.store === false && typeof r.calls[0].req.reasoning?.effort === "string",
-    `${cls}: class effort and store:false ride the OpenRouter wire`);
+  // OpenRouter's documented Responses API accepts model, input, tools, tool_choice and stream.
+  // OpenAI-only fields (store, include, prompt_cache_key, prompt_cache_options) are omitted.
+  ok(!("store" in r.calls[0].req) && !("include" in r.calls[0].req) && !("prompt_cache_key" in r.calls[0].req),
+     `${cls}: OpenRouter omits OpenAI-only fields (store, include, prompt_cache_key)`);
+  ok(typeof r.calls[0].req.reasoning?.effort === "string", `${cls}: the class's effort is sent (${r.calls[0].req.reasoning?.effort})`);
   ok(r.runnable.length === 1 && r.runnable[0].arguments === '{"q":"Acme"}',
     `${cls}: the chat-shaped round reaches the gate unchanged from OpenRouter`);
 }

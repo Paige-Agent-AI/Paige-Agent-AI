@@ -677,8 +677,12 @@ console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry"
 }
 {
   const req = ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter", effort: "medium" });
-  ok(req.store === false && req.reasoning?.effort === "medium" && req.model === or.OPENROUTER_OPERATIONAL,
-    "11.3 the shared request builder produces the same Responses shape for OpenRouter");
+  // OpenRouter's documented Responses API accepts model, input, tools, tool_choice and stream.
+  // OpenAI-only fields (store, include, prompt_cache_key, prompt_cache_options) are omitted for OpenRouter.
+  ok(!("store" in req) && !("include" in req) && !("prompt_cache_key" in req) && !("prompt_cache_options" in req),
+     "11.3 OpenRouter requests omit OpenAI-only fields (store, include, prompt_cache_*)");
+  ok(req.reasoning?.effort === "medium" && req.model === or.OPENROUTER_OPERATIONAL,
+     "11.3b OpenRouter still sends reasoning, model and OpenRouter-supported fields");
   let threw = null;
   try { ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", provider: "openrouter" }); }
   catch (e) { threw = e; }

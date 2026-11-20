@@ -1,5 +1,18 @@
 # Paige agent delivery rules
 
+## OWNER CANONICAL PRODUCT STATE — PRE-LAUNCH / ZERO PAYING CUSTOMERS (November 20, 2026)
+
+**CONTROLLING OWNER DECISION; applies to every EXP, PO-EXP, Codex, OpenCode and Cloud/Desktop agent.** PAIGE Agent AI Inc. is **PRE-LAUNCH**. The platform is under active build, integration, test and owner acceptance. **There are ZERO paying customers.** No agent may describe it as commercially launched, generally available, serving paid subscribers, having live customer-revenue/traffic, or requiring migration of an existing paying-customer business without a newer explicit owner declaration and evidence.
+
+**Distinguish technical from commercial production.** "Production" Supabase/Vercel/Edge environment, `edge-live`, `db-live`, real project URLs, Stripe billing schema/config, tenant rows and test/user records mean deployed technical assets, **NOT** paid customers or a commercially launched PAIGE platform. Existing datasets, test accounts and secrets can nevertheless be sensitive and MUST retain all security, Auth/RLS, owner approval, independent non-author review, migration, no-replay, provenance, and receipt requirements. Do not assert every historical record is synthetic or disposable, and do not mistake the term `customer` in a test/contract for proven commercial adoption.
+
+**Owner-directed build-to-launch strategy:** Owner-controlled prelaunch testing; no independent activation of billing, customer onboarding, external messages/financial effects, public launch, DNS cutover, paid resource, extra staging database or customer migration. Owner selected Hostinger/Coolify as intended Vercel frontend replacement while retaining the existing single PAIGE Supabase Auth/database/Edge backend, unless separately approved. A Coolify public homepage preview is not authenticated commercial service. A test frontend that shares existing Supabase is **production-backed prelaunch QA**, not isolated; risk-scope it and get owner authorization for any consequential operations. A temporary Supabase branch is billable and must not be treated as a permanent precondition to hosting. Any old Vercel billing obligation is an owner-admin matter, not Model Fabric's dependency.
+
+**Required context header in new engineering reports and handoffs:** `PAIGE PRODUCT STATE: PRE-LAUNCH | PAYING CUSTOMERS: 0 | EVALUATORS: OWNER/EXPLICITLY AUTHORIZED TESTERS | COMMERCIAL GA: NOT LAUNCHED | OWNER ACCEPTANCE: OPEN unless specifically evidenced`. Qualify every "customer", "paid", "tenant", "live" and "production" claim. Focus on demonstrated engineering progress, safe owner-first tests, and honest remaining launch gates. Historical audit receipts are retained rather than rewritten.
+
+**Precedence:** This owner declaration supersedes any language below or elsewhere that *implies commercially live paying customers*. Existing source ownership, one-outcome-at-a-time, independent NON-AUTHOR review, exact-head CI, protected production technical operations, Supabase migration safeguards and permission gates remain binding. Canonical owner record: ANT-161 (Nov 20 pre-launch correction).
+
+
 ## MANDATORY — ONE OUTCOME DOES NOT MEAN ONE PR — November 13, 2026
 
 The Coordinator and every current/future authorized EXP and PO-EXP agent must finish ONE owner-selected original outcome at a time through small, cohesive, independently reviewable PRs. One outcome may require several PRs. Do not accumulate the entire outcome in one large PR merely because all changes serve that outcome.

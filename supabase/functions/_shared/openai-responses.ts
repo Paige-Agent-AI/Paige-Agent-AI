@@ -418,6 +418,8 @@ function emitTrace(trace: TraceCtx | undefined, row: {
   error_class?: string | null; error_message?: string | null; stop_reason?: string;
   provider?: ResponsesProvider;
   cache_signature?: string;
+  /** Sanitized closed-code provider failure class (never the raw message). Stored even for metadata_only traces. */
+  provider_failure_class?: string | null;
 }) {
   if (!trace) return;
   // Cost is priced once, in traceLLMCall (token-pricing.ts), so this path cannot drift from the meter.
@@ -440,6 +442,7 @@ function emitTrace(trace: TraceCtx | undefined, row: {
     metadata: {
       caller_function: trace.agent_id, ...(row.stop_reason ? { stop_reason: row.stop_reason } : {}),
       ...(row.cache_signature ? { provider_cache_signature: row.cache_signature } : {}),
+      ...(row.provider_failure_class ? { provider_failure_class: row.provider_failure_class } : {}),
       ...(row.usage ? {
         provider_total_input_tokens: row.usage.total_input,
         provider_cache_write_30m_tokens: row.usage.write30m,
@@ -487,7 +490,7 @@ export async function responsesCompletion(body: ChatShapeBody, opts: ResponsesCa
   if (!resp.ok) {
     // failureOf reads the body ONCE: the trace's short detail and the fabric's closed class.
     const f = await failureOf(resp, profile.provider);
-    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: f.detail });
+    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass });
     // INT-334 — carry the closed failure class (and the status) ON the throw, so the fabric's
     // consumer seam can classify a failed non-stream leg without parsing the message text.
     throw Object.assign(new Error(`${profile.provider} ${resp.status}: ${f.detail}`), { status: resp.status, failureClass: f.failureClass });
@@ -559,7 +562,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesStream
   }
   if (!resp.ok || !resp.body) {
     const f = resp.ok ? { detail: "missing_body", failureClass: "provider_outage" as ProviderFailureClass } : await failureOf(resp, profile.provider);
-    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: resp.ok ? "missing_body" : `http_${resp.status}`, error_message: f.detail });
+    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: resp.ok ? "missing_body" : `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass });
     return { ok: false, status: resp.status, error: f.detail, failureClass: f.failureClass };
   }
 

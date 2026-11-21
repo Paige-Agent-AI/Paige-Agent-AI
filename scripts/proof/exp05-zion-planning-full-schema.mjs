@@ -2,11 +2,12 @@
 // Replay the latest correction twice here; never reapply an old superseded body.
 // No new project, migration-ledger entry or business fixture.
 import assert from 'node:assert/strict';
-import { readFileSync,writeFileSync,unlinkSync } from 'node:fs';
+import { readFileSync,writeFileSync,unlinkSync,existsSync } from 'node:fs';
 import { randomUUID,createHash } from 'node:crypto';
 import { dirname,join,resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { socialPlanningComposition } from './exp07-planning-social-composition.mjs';
 const repo=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const weeklyAtomic=readFileSync(join(repo,'supabase/migrations/20271133000009_exp05_reviewed_weekly_plan_atomic.sql'),'utf8').replace(/\r\n/g,'\n');
 const weeklyComponent=(start,end)=>weeklyAtomic.slice(weeklyAtomic.indexOf(start)+start.length,weeklyAtomic.indexOf(end));
@@ -281,12 +282,42 @@ SELECT ok(NOT has_function_privilege('authenticated','public.team_hub_stage_agen
 `;
  sql=sql.replace('SELECT plan(25);',()=>`SELECT plan(27);\n${rewind}`).replace('SELECT * FROM finish();',()=>`${restore}SELECT * FROM finish();`);
 }
+const originalPlan=calendarMode?27:13;
+const socialMode=existsSync(join(repo,'supabase/migrations/20271133000034_exp07_media_snapshot_receipt_compatibility.sql'));
+const historyCompatibilityMode=existsSync(join(repo,'supabase/migrations/20271133000038_exp07_planning_history_social_compatibility.sql'));
+let fixtureInspectionSql=sql;
+if(socialMode||historyCompatibilityMode){
+ // Outer composition only: every incumbent assertion and inverse stays exact.
+ // Recognize the two Social bodies and exact compatible private history body,
+ // under ANT147/85e64fd6, then restore the entire entry catalog.
+ const prior=sql;
+ const {rewind,restore,sourceLiterals}=socialPlanningComposition(repo);
+ const plan=`SELECT plan(${originalPlan});`;
+ assert.equal(prior.split(plan).length,2,'One original full-schema plan');
+ assert.equal(prior.split('SELECT * FROM finish();').length,2,'One original finish');
+ sql=prior.replace(plan,()=>`SELECT plan(${originalPlan+2});\n${rewind}`)
+  .replace('SELECT * FROM finish();',()=>`${restore}SELECT * FROM finish();`);
+ assert(sql.includes(prior.slice(prior.indexOf(plan)+plan.length,prior.indexOf('SELECT * FROM finish();'))),
+  'All original assertions, setup, replay and inverse sources remain byte-exact');
+ // The immutable post bodies contain INSERT text as quoted source DATA. Inspect
+ // everything else, including every DO body; never discard arbitrary SQL quotes.
+ // Exactly six complete, hash-checked source literals may be treated as data.
+ assert.equal(sourceLiterals.length,socialMode?6:2);
+ fixtureInspectionSql=sql;
+ for(const literal of sourceLiterals){
+  assert.equal(fixtureInspectionSql.split(literal).length,2,'One exact known native source literal');
+  fixtureInspectionSql=fixtureInspectionSql.replace(literal,()=>"'known immutable function source data'");
+ }
+}
+const expectedPlan=originalPlan+((socialMode||historyCompatibilityMode)?2:0);
 if(process.argv.includes('--self-test')){
- assert(sql.startsWith(`BEGIN;\nSELECT plan(${calendarMode?27:13});`));assert(sql.endsWith('ROLLBACK;\n'));
+ assert(sql.startsWith(`BEGIN;\nSELECT plan(${expectedPlan});`));assert(sql.endsWith('ROLLBACK;\n'));
  assert.equal((sql.match(/^BEGIN;$/gm)??[]).length,1);assert.equal((sql.match(/^COMMIT;$/gm)??[]).length,0);
  assert.equal(sql.split(body).length,3,'Exact candidate bytes embedded twice without transaction wrappers');
- assert(!/INSERT INTO (public|auth)\./i.test(sql));
- console.log(`PASS: original carrier conservation plus O02 forwards; one rollback-only test;${calendarMode?27:13} assertions; no business fixture/ledger`);
+ assert(!/INSERT INTO (public|auth)\./i.test(fixtureInspectionSql));
+ assert(/INSERT INTO (public|auth)\./i.test(fixtureInspectionSql+'\nINSERT INTO public.unexpected_fixture VALUES (1);'));
+ assert(/INSERT INTO (public|auth)\./i.test(fixtureInspectionSql+'\nDO $$ BEGIN INSERT INTO auth.unexpected_fixture VALUES (1); END $$;'));
+ console.log(`PASS: original carrier conservation plus O02 forwards${socialMode?' and exact Social composition':''}; one rollback-only test;${expectedPlan} assertions; no business fixture/ledger`);
 }else{
  const cli=process.env.SUPABASE_BIN??'supabase';
  const state=spawnSync(cli,['status','-o','json'],{cwd:repo,encoding:'utf8',timeout:30000});

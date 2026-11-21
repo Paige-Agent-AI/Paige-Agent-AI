@@ -16,6 +16,7 @@ import {historyPerformanceProof} from './weekly-commitment-history-performance.m
 import {weeklyDraftCommandProof} from './weekly-commitment-draft-command.mjs';
 import {weeklyDeadlineProof} from './weekly-commitment-deadlines.mjs';
 import {weeklyAuthorizationControlProof} from './weekly-authorization-control.mjs';
+import {automationDraftAtomicProof} from './automation-draft-atomic.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const migration='supabase/migrations/20271028000000_experience05_weekly_commitment_check.sql';
@@ -187,7 +188,8 @@ try{
     run("UPDATE paige_automation_triggers SET is_live=true,dark_reason=NULL WHERE key='schedule.weekly_commitment_check';");
     run("SELECT set_tool_autonomy('planning_weekly_commitment_check','auto');",ownerCtx);
     const draftCommand=await weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin,catalogueSource});
-    evidence={status:'PASS',cases:cases.length,checks:cases,draft_command:draftCommand,fixture_service_role:roleParity,
+    const atomicDraft=await automationDraftAtomicProof({run,json,literal,source,check,refuses,concurrent});
+    evidence={status:'PASS',cases:cases.length,checks:cases,draft_command:draftCommand,atomic_automation_draft:atomicDraft,fixture_service_role:roleParity,
       boundary:'local additive draft-only iteration; full native CI unchanged; no production/provider/authenticated acceptance'};
     writeFileSync(join(scratch,'result.json'),JSON.stringify(evidence,null,2));console.log(JSON.stringify(evidence));console.log(`Evidence: ${join(scratch,'result.json')}`);
   }else{
@@ -631,11 +633,12 @@ try{
     run(`DELETE FROM tenants WHERE id=${literal(foreign)};`);
     assert.equal(run(`SELECT count(*) FROM tenants WHERE id=${literal(foreign)};`),'0');
   });
+  const atomicDraft=await automationDraftAtomicProof({run,json,literal,source,check,refuses,concurrent});
   const schemaFingerprint=run("SELECT md5(string_agg(pg_get_functiondef(p.oid),E'\\n' ORDER BY p.oid)) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE '%weekly_commitment%';");
   evidence={status:'PASS',cases:cases.length,checks:cases,source:migration,migration_sha256:migrationHash,
     read_preparation:{source:readMigration,migration_sha256:readMigrationHash,actual_canonical_owner_rpc:true,actual_prepared_owner_reader:true,calendar_records_written:0},
     schema_fingerprint:schemaFingerprint,history_performance:historyPerformance,draft_command:draftCommand,deadline_proof:deadlineProof,
-    authorization_control:authorizationControl,
+    authorization_control:authorizationControl,atomic_automation_draft:atomicDraft,
     fixture_service_role:roleParity,
     incumbent_catalogue:{source:declarations.at(-1).file,rows:priorCatalogue.length,preserved_metadata_and_defaults:true},
     boundary:'isolated PostgreSQL selected canonical substrate; auth/context/trust/cron/network/display and operator preflight/provider/inventory doubles; actual operator gate/delete loop; no deployed/authenticated browser claim'};

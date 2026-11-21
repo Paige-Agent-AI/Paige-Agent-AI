@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded November 21, 2026 UTC — EXP07 Planning history compatibility.**
+
+| Increment | Reviewed source and production release | Verified result and boundary |
+| --- | --- | --- |
+| [#3368](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3368) | Reviewed head `ca72784bb3ca7ad8c617d940f7ba7525c1ac436e`, all 11 engineering checks successful, independent non-author composition receipt `3e73e8bdd59f97628af48a3ad3fd484527d1f398620768fbec046b369fcfab16`. Main `a5b7445ff739cd8ff843b06575cb51c01a681aa0` matches reviewed tree `55bf02c5f41a28e8f287a8ea88220dbaef7d19f2`. [Canonical production migration run 44956612309](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/44956612309) succeeded. Production migration `20271133000038` is recorded once, statement digest `c8a19bc648c3274db8998f80ce1c006b`. This is a database increment with no Edge or product web changes. | The private Planning history reader accepts both verified Social scope bodies while retaining its exact identity, metadata and permissions. All 1,606 production migration versions match canonical source, and original 33 is unchanged. [Readback and outcome boundary](https://linear.app/paigeagentai/issue/ANT-162#comment-c41be05d-24d0-422c-a733-c1ff9377f518). Internal release. Original 34, the Visual Desk and authenticated Solo acceptance remain open. A later correction would use a new reviewed forward migration. |
+
 **Recorded November 13, 2026 UTC — EXP03 original Opportunity save and receipt continuity.**
 
 | Increment | Reviewed source and release | Verified result and boundary |

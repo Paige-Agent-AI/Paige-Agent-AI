@@ -1,0 +1,39 @@
+name: Send merged PAIGE main to Coolify
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [closed]
+
+permissions: {}
+
+jobs:
+  dispatch:
+    if: >-
+      github.repository == 'Paige-Agent-AI/Paige-Agent-AI' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Dispatch the exact merge to the private release workflow
+        env:
+          CLOUD_DISPATCH_TOKEN: ${{ secrets.PAIGE_CLOUD_DISPATCH_TOKEN }}
+          FRONTEND_COMMIT: ${{ github.event.pull_request.merge_commit_sha }}
+          MERGE_PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          [[ "$FRONTEND_COMMIT" =~ ^[a-f0-9]{40}$ && "$MERGE_PR" =~ ^[1-9][0-9]{0,8}$ ]]
+          if [[ -z "$CLOUD_DISPATCH_TOKEN" ]]; then
+            echo 'PAIGE_CLOUD_DISPATCH_TOKEN is not configured.' >&2
+            exit 1
+          fi
+          jq -n --arg commit "$FRONTEND_COMMIT" --arg pr "$MERGE_PR" \
+            '{ref:"main",inputs:{frontend_commit:$commit,merge_pr:$pr}}' \
+            | curl --fail --silent --show-error --max-time 30 --output /dev/null \
+                -H "Authorization: Bearer $CLOUD_DISPATCH_TOKEN" \
+                -H 'Accept: application/vnd.github+json' \
+                -H 'Content-Type: application/json' \
+                --data-binary @- \
+                'https://api.github.com/repos/Paige-Agent-AI/paige-cloud-preview/actions/workflows/cloud-app-host.yml/dispatches'
+          printf 'Dispatched canonical pull request #%s at %s.\n' "$MERGE_PR" "$FRONTEND_COMMIT"

@@ -51,13 +51,13 @@ BEGIN
  SELECT count(*) INTO prior FROM public.studio_sessions;
  b:=public.studio_lookup_project_start(t,gen_random_uuid());
  PERFORM pg_temp.studio_assert(b->>'code'='unknown' AND (SELECT count(*)=prior FROM public.studio_sessions),'unknown lookup creates nothing');
- PERFORM pg_temp.studio_refuses(format('select public.studio_start_project(%L,%L,%L,%L)',t,key,'Different request',context),'40001','consumed request cannot change brief');
- PERFORM pg_temp.studio_refuses(format('select public.studio_start_project(%L,%L,%L,%L)',t,key,'Create a consulting landing page','{}'),'40001','consumed request cannot replace target context');
+ PERFORM pg_temp.studio_refuses(format('select public.studio_start_project(%L,%L,%L,%L)',t,key,'Different request',context),'PT409','consumed request cannot change brief');
+ PERFORM pg_temp.studio_refuses(format('select public.studio_start_project(%L,%L,%L,%L)',t,key,'Create a consulting landing page','{}'),'PT409','consumed request cannot replace target context');
  UPDATE public.studio_sessions SET studio_session_scratchpad=studio_session_scratchpad||'{"working_memory":"retained"}' WHERE id=s;
  b:=public.studio_set_project_context(t,s,'{"target":{"kind":"custom","reference":"new-brand","label":"Other business"},"values":{"publicName":"Other business"}}',context);
  PERFORM pg_temp.studio_assert(b->'ok'='true' AND b#>>'{context,target,kind}'='custom','explicit project-only target edit persists');
  PERFORM pg_temp.studio_assert((SELECT studio_session_scratchpad->>'working_memory'='retained' FROM public.studio_sessions WHERE id=s),'project edit preserves original working memory');
- PERFORM pg_temp.studio_refuses(format('select public.studio_set_project_context(%L,%L,%L,%L)',t,s,'{"values":{"publicName":"Stale edit"}}',context),'40001','stale project context cannot overwrite a newer correction');
+ PERFORM pg_temp.studio_refuses(format('select public.studio_set_project_context(%L,%L,%L,%L)',t,s,'{"values":{"publicName":"Stale edit"}}',context),'PT409','stale project context cannot overwrite a newer correction');
  c:=public.studio_set_project_context(t,s,b->'context','{}');
  PERFORM pg_temp.studio_assert(c->'changed'='false' AND c->'context'=b->'context','lost context save recovers equal current state without rewrite');
  b:=public.studio_start_project(t,key,'Create a consulting landing page',context);
@@ -106,7 +106,7 @@ BEGIN
  PERFORM pg_temp.studio_assert(c->>'session_id'=b->>'session_id' AND c->>'thread_id'=b->>'thread_id' AND c->'created'='false','repeat same-source handoff recovers exactly one project/thread');
  c:=public.team_hub_studio_reference(t,message_id);
  PERFORM pg_temp.studio_assert(c->>'state'='ready' AND c->>'session_id'=b->>'session_id' AND NOT(c ? 'brief'),'ready reader exposes original project pointer without private brief replay');
- PERFORM pg_temp.studio_refuses(format('select public.team_hub_start_studio(%L,%L,%L)',t,message_id,'{"target":{"kind":"workspace"}}'),'40001','same Hub binding cannot change confirmed start context');
+ PERFORM pg_temp.studio_refuses(format('select public.team_hub_start_studio(%L,%L,%L)',t,message_id,'{"target":{"kind":"workspace"}}'),'PT409','same Hub binding cannot change confirmed start context');
  PERFORM pg_temp.studio_refuses(format('update public.team_hub_agent_turns set studio_brief=%L where id=%L','{"brief":"Injected","session_id":"forged"}',turn_id),'22023','model-supplied identity/status fields refused natively');
  UPDATE public.tenant_members SET team_hub_access=false WHERE tenant_id=t AND user_id=u;
  PERFORM pg_temp.studio_assert(public.team_hub_studio_reference(t,message_id)->'ok'='false','revoked Hub access removes stale presentation');
@@ -264,7 +264,7 @@ BEGIN
  PERFORM pg_temp.studio_assert(readback->'conversion'=item,'published conversion is fallback only when no draft array exists');
  PERFORM pg_temp.studio_assert((SELECT status='draft' FROM public.growth_forms WHERE id=form_id),'saving a native form reference does not publish it');
  item:=jsonb_set(item,'{title}','"Changed heading"');
- PERFORM pg_temp.studio_refuses(format('select public.studio_set_page_conversion(%L,%L,%L,%L,%L)',t,project_id,page.id,revision,item),'40001','stale conversion edit cannot overwrite a newer page');
+ PERFORM pg_temp.studio_refuses(format('select public.studio_set_page_conversion(%L,%L,%L,%L,%L)',t,project_id,page.id,revision,item),'PT409','stale conversion edit cannot overwrite a newer page');
  PERFORM pg_temp.studio_assert(public.studio_set_page_conversion(t,gen_random_uuid(),page.id,(a->>'updated_at')::timestamptz,item)->>'code'='not_allowed','page ID alone is not project authority');
  PERFORM pg_temp.studio_refuses(format('select public.growth_page_upsert(NULL,%L,%L,%L)', 'foreign-form-page','Test',jsonb_build_array(jsonb_build_object('type','conversion','destination',jsonb_build_object('kind','native_form','formId',foreign_form)))),'42501','foreign native form cannot enter an original page writer');
  item:=jsonb_build_object('type','conversion','destination',jsonb_build_object('kind','native_booking','slug','selected-native-calendar'));
@@ -440,7 +440,7 @@ BEGIN
  PERFORM pg_temp.studio_assert(response->'created'='false' AND response->>'session_id'=started->>'session_id' AND response->>'thread_id'=started->>'thread_id','same-source retry returns same actual session/thread without generation');
  response:=public.chat_studio_reference(t,source);
  PERFORM pg_temp.studio_assert(response->>'state'='ready' AND response->>'session_id'=started->>'session_id' AND NOT(response ? 'brief'),'reloaded reference returns ready original ID rather than replaying brief');
- PERFORM pg_temp.studio_refuses(format('select public.chat_studio_start(%L,%L,%L)',t,source,'{}'),'40001','source-bound project context cannot be changed by retry');
+ PERFORM pg_temp.studio_refuses(format('select public.chat_studio_start(%L,%L,%L)',t,source,'{}'),'PT409','source-bound project context cannot be changed by retry');
  UPDATE public.paige_chat_threads SET interactive_latest_intent=gen_random_uuid(),interactive_executor_intent=NULL,interactive_runtime_binding=NULL WHERE id=thread;
  PERFORM pg_temp.studio_assert(public.chat_studio_reference(t,source)->>'session_id'=started->>'session_id','later conversation runtime does not erase historical original project binding');
  PERFORM set_config('request.jwt.claim.sub',u2::text,true);
@@ -692,7 +692,7 @@ BEGIN
  PERFORM pg_temp.studio_assert(recovered->'reconciled'='true' AND recovered#>>'{page,id}'=page_id::text
   AND (SELECT count(*)=before_pages FROM public.growth_pages) AND (SELECT count(*)=before_audits FROM public.audit_logs)
   AND (SELECT count(*)=before_versions FROM public.studio_artifact_versions),'same-source lost-ACK retry performs no page, link, audit or version write');
- PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,NULL,NULL,NULL,%L,%L,%L,NULL,NULL,NULL)',t,project,source->'artifact_refs',context,'atomic-studio-page','Different generation',blocks_b),'40001','two new-page results from same absent manifest cannot create or overwrite twice');
+ PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,NULL,NULL,NULL,%L,%L,%L,NULL,NULL,NULL)',t,project,source->'artifact_refs',context,'atomic-studio-page','Different generation',blocks_b),'PT409','two new-page results from same absent manifest cannot create or overwrite twice');
  PERFORM pg_temp.studio_assert((SELECT draft_blocks_json=blocks_a FROM public.growth_pages WHERE id=page_id),'losing new-page result preserves first committed page');
  before_source:=public.studio_page_save_source(t,project,page_id);
  PERFORM pg_temp.studio_assert(before_source->>'page_id'=page_id::text AND before_source->'conversion'='null'::jsonb
@@ -701,7 +701,7 @@ BEGIN
   'atomic-studio-page','Newer B title',blocks_b,NULL,NULL,NULL);
  PERFORM pg_temp.studio_assert(response->'changed'='true' AND response#>'{page,draft_blocks_json}'=blocks_b,'newer native generation B saves through original page/version writer');
  snapshot:=response->'page';
- PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,%L,%L,NULL,%L,%L,%L,NULL,NULL,NULL)',t,project,before_source->'artifact_refs',context,page_id,before_source->>'updated_at','atomic-studio-page','Late A title',blocks_a),'40001','late generation A cannot overwrite page B after source snapshot');
+ PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,%L,%L,NULL,%L,%L,%L,NULL,NULL,NULL)',t,project,before_source->'artifact_refs',context,page_id,before_source->>'updated_at','atomic-studio-page','Late A title',blocks_a),'PT409','late generation A cannot overwrite page B after source snapshot');
  PERFORM pg_temp.studio_assert((SELECT to_jsonb(p)=snapshot FROM public.growth_pages p WHERE id=page_id),'failed cross-tab stale save preserves exact B row');
  recovered:=public.studio_page_save_state(t,project,before_source->'artifact_refs',context,page_id,(before_source->>'updated_at')::timestamptz,NULL,
   'atomic-studio-page','Newer B title',blocks_b,NULL,NULL,NULL);
@@ -714,7 +714,7 @@ BEGIN
  PERFORM pg_temp.studio_assert(response->>'code'='changed' AND (SELECT to_jsonb(p)=snapshot FROM public.growth_pages p WHERE id=page_id),'changed project context refuses late generated result before page effect');
  PERFORM public.studio_set_project_context(t,project,context,changed_context);
  response:=public.studio_set_page_conversion(t,project,page_id,(b_source->>'updated_at')::timestamptz,conversion);
- PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,%L,%L,NULL,%L,%L,%L,NULL,NULL,NULL)',t,project,b_source->'artifact_refs',context,page_id,b_source->>'updated_at','atomic-studio-page','Model removed conversion',blocks_a),'40001','late model result cannot remove newly saved actual conversion');
+ PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,%L,%L,NULL,%L,%L,%L,NULL,NULL,NULL)',t,project,b_source->'artifact_refs',context,page_id,b_source->>'updated_at','atomic-studio-page','Model removed conversion',blocks_a),'PT409','late model result cannot remove newly saved actual conversion');
  c_source:=public.studio_page_save_source(t,project,page_id);
  response:=public.studio_save_page(t,project,c_source->'artifact_refs',context,page_id,(c_source->>'updated_at')::timestamptz,conversion,
   'atomic-studio-page','Model changed conversion',blocks_a,NULL,NULL,NULL);
@@ -732,7 +732,7 @@ BEGIN
  existing:=public.growth_page_upsert(NULL,'collision-protected-page','Someone elses native page',blocks_b,NULL,NULL,NULL,NULL);
  SELECT count(*) INTO before_pages FROM public.growth_pages;
  SELECT count(*) INTO before_audits FROM public.audit_logs;
- PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,NULL,NULL,NULL,%L,%L,%L,NULL,NULL,NULL)',t,empty_project,source->'artifact_refs',context,'collision-protected-page','Colliding generated page',blocks_a),'40001','native new-page slug collision rolls back instead of original null-ID overwrite branch');
+ PERFORM pg_temp.studio_refuses(format('select public.studio_save_page(%L,%L,%L,%L,NULL,NULL,NULL,%L,%L,%L,NULL,NULL,NULL)',t,empty_project,source->'artifact_refs',context,'collision-protected-page','Colliding generated page',blocks_a),'PT409','native new-page slug collision rolls back instead of original null-ID overwrite branch');
  PERFORM pg_temp.studio_assert((SELECT to_jsonb(p)=to_jsonb(existing) FROM public.growth_pages p WHERE id=existing.id)
   AND (SELECT count(*)=before_pages FROM public.growth_pages) AND (SELECT count(*)=before_audits FROM public.audit_logs)
   AND (SELECT artifact_refs='[]'::jsonb FROM public.studio_sessions WHERE id=empty_project),'collision leaves competing page and own original manifest/audits unchanged without orphan placeholder');
@@ -921,9 +921,9 @@ BEGIN
  SELECT id INTO selected FROM studio_confirmation_cases WHERE label='prepared';
  SELECT source INTO captured_source FROM studio_confirmation_cases WHERE label='expected';
  PERFORM pg_temp.studio_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=NULL where id=%L',selected),
-  '40001','private source cannot be cleared after original insertion');
+  'PT409','private source cannot be cleared after original insertion');
  PERFORM pg_temp.studio_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=%L where id=%L','{"changed":true}',selected),
-  '40001','private source cannot be rebound to a newer project read');
+  'PT409','private source cannot be rebound to a newer project read');
  FOREACH assignment IN ARRAY ARRAY[
   'id=gen_random_uuid()','user_id=''f0060000-0000-4000-8000-000000000002''::uuid',
   'tenant_id=''f0060000-0000-4000-8000-000000000020''::uuid','thread_id=gen_random_uuid()',
@@ -931,14 +931,14 @@ BEGIN
   'args=''{"title":"Changed model args"}''::jsonb','issued_in_request=gen_random_uuid()',
   'server_issued_at=server_issued_at+interval ''1 second'''
  ] LOOP
-  PERFORM pg_temp.studio_refuses(format('update public.paige_pending_confirmations set %s where id=%L',assignment,selected),'40001',
+  PERFORM pg_temp.studio_refuses(format('update public.paige_pending_confirmations set %s where id=%L',assignment,selected),'PT409',
    'private source keeps original approval binding: '||split_part(assignment,'=',1));
  END LOOP;
  INSERT INTO public.paige_pending_confirmations(user_id,tenant_id,tool_name,fingerprint,args,summary)
   VALUES('f0060000-0000-4000-8000-000000000001','f0060000-0000-4000-8000-000000000010','growth_page_save','0350000000000002','{}','Legacy NULL source') RETURNING id INTO legacy;
  INSERT INTO studio_confirmation_cases VALUES('legacy',legacy,NULL,'{}',NULL);
  PERFORM pg_temp.studio_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=%L where id=%L',captured_source,legacy),
-  '40001','legacy NULL source cannot be blessed by a later update');
+  'PT409','legacy NULL source cannot be blessed by a later update');
  PERFORM pg_temp.studio_refuses($q$insert into public.paige_pending_confirmations(user_id,tool_name,fingerprint,args,summary,studio_page_save_source)
   values('f0060000-0000-4000-8000-000000000001','other_tool','0350000000000010','{}','Wrong tool','{}')$q$,'23514','private Studio source cannot be attached to a different tool');
  PERFORM pg_temp.studio_refuses($q$insert into public.paige_pending_confirmations(user_id,tool_name,fingerprint,args,summary,studio_page_save_source)

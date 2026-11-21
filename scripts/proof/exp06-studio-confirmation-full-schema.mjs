@@ -12,8 +12,8 @@ const repo=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const sqlPath=resolve(repo,'supabase/tests/exp06_studio_confirmation_full_schema.sql');
 const carrierPath=resolve(repo,'supabase/migrations/20271133000039_exp06_studio_source_binding.sql');
 const minimalPath=resolve(repo,'supabase/tests/exp06_studio_source_binding.sql');
-const expectedCarrier='59545eaaafaa6332e112301eaa367c55b7735c94545e38a971032c6c73c86378';
-const expectedMinimal='00f73a8eb3f4141371ac96d367fb47e8da29b392f86fb5f0a11de286ff818a9a';
+const expectedCarrier='4be82240a69248660f359e8acb0017f604203795aeaf6e8af9a518fee7411c3c';
+const expectedMinimal='9d9fe6a40caa062f52b531eac1007e3822c38b9e1bb2f6246c486e99c332f3e4';
 const read=path=>readFileSync(path,'utf8');
 const hash=path=>createHash('sha256').update(readFileSync(path)).digest('hex');
 const proofSql=read(sqlPath).replaceAll('\r\n','\n');
@@ -86,10 +86,10 @@ if(process.argv.includes('--self-test')){
   'tag_columns',(select count(*) from pg_attribute where attrelid='public.growth_form_submissions'::regclass and attnum>0 and not attisdropped),
   'private_publications',(select count(*) from pg_publication_tables where schemaname='public'
    and tablename in ('paige_pending_confirmations','growth_form_submissions')));`,'Actual native35 prerequisite metadata'));
- assert(metadata.guard==='7858e187f58d2c824b70093e0fcc8ea1'
+ assert(metadata.guard==='f447f18978029294dd46cc73a8f5ffdc'
   &&metadata.signup==='9a1e676ad5daab60e9c9d79c6df8bbe4'&&metadata.tenant_delete==='c960dc79a2c86f63045aa16e4bd01e2f'
   &&metadata.auth_source===false&&metadata.anon_source===false&&metadata.columns===16
-  &&metadata.tag_guard==='6b3dc1efe7182da53d3c8a358057f0e0'&&metadata.tag_apply==='da223c05b9495be6c475b387eb99d9c9'
+  &&metadata.tag_guard==='22f718255d9f44d42eeb824829df9a9f'&&metadata.tag_apply==='af986655410fc1491dc2440f9a3c1765'
   &&metadata.tag_state==='b6145ef929d90b3966d646a46a090563'&&metadata.auth_tags===false&&metadata.anon_tags===false
   &&metadata.tag_columns===28&&metadata.private_publications===0,
   'Actual full-schema35/signup/lifecycle/private grants missing or changed; do not install ports or relax pins');
@@ -206,10 +206,10 @@ if(process.argv.includes('--self-test')){
   }
   for(const payload of [{studio_page_save_source:null},{studio_page_save_source:{changed:true}},{args:{changed:true}},{issued_in_request:randomUUID()}]){
    r=await call('PATCH','/paige_pending_confirmations?id=eq.'+proposal,'service',payload);
-   check('immutable original source/binding refuses update',r,r.status>=400&&r.data?.code==='40001');
+   check('immutable original source/binding refuses update',r,r.status===409&&r.data?.code==='PT409');
   }
   r=await call('PATCH','/paige_pending_confirmations?id=eq.'+legacy,'service',{studio_page_save_source:source});
-  check('legacy NULL source cannot be attached later',r,r.status>=400&&r.data?.code==='40001');
+  check('legacy NULL source cannot be attached later',r,r.status===409&&r.data?.code==='PT409');
   const filters=new URLSearchParams([['id','eq.'+proposal],['user_id','eq.'+f.actorA],['tenant_id','eq.'+f.tenantA],['thread_id','eq.'+thread],
    ['scoped_client_id','is.null'],['tool_name','eq.growth_page_save'],['fingerprint','eq.'+f.fingerprint],['issued_in_request','eq.'+f.nonce],
    ['issued_in_request','neq.'+f.claim],['issued_in_request','not.is.null'],['server_issued_at','not.is.null'],['consumed_at','is.null'],
@@ -287,7 +287,7 @@ if(process.argv.includes('--self-test')){
   for(const method of ['POST','PATCH']){
    r=await call(method,'/growth_form_submissions'+(method==='POST'?'':'?id=eq.'+intake.submission),'service',method==='POST'
     ?{form_id:intake.form,tenant_id:f.tenantA,contact_tags_result:originalTagResult}:{contact_tags_result:null});
-   check('raw service '+method+' cannot forge/reset causal checkpoint',r,r.status>=400&&['42501','40001'].includes(r.data?.code));
+   check('raw service '+method+' cannot forge/reset causal checkpoint',r,(method==='POST'?r.status===403&&r.data?.code==='42501':r.status===409&&r.data?.code==='PT409'));
   }
   r=await call('POST','/rpc/growth_submission_contact_tags_state','a',tagState);
   check('causal projection remains service-only',r,[401,403].includes(r.status));

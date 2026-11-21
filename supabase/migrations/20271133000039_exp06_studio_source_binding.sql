@@ -234,7 +234,7 @@ BEGIN
  IF TG_OP='UPDATE' AND OLD.studio_start_request_id IS NOT NULL AND
   (NEW.tenant_id IS DISTINCT FROM OLD.tenant_id OR NEW.owner_user_id IS DISTINCT FROM OLD.owner_user_id
    OR NEW.studio_start_request_id IS DISTINCT FROM OLD.studio_start_request_id OR NEW.studio_start_digest IS DISTINCT FROM OLD.studio_start_digest) THEN
-  RAISE EXCEPTION 'STUDIO_START_BOUND: original request binding is immutable' USING ERRCODE='40001'; END IF;
+  RAISE EXCEPTION 'STUDIO_START_BOUND: original request binding is immutable' USING ERRCODE='PT409'; END IF;
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._studio_start_binding_guard() FROM PUBLIC,anon,authenticated,service_role;
@@ -252,7 +252,7 @@ BEGIN
  PERFORM pg_advisory_xact_lock(hashtextextended(p_expected_tenant::text||':'||actor::text||':'||p_request_id::text,0));
  SELECT * INTO s FROM public.studio_sessions WHERE tenant_id=p_expected_tenant AND owner_user_id=actor AND studio_start_request_id=p_request_id FOR UPDATE;
  IF FOUND THEN
-  IF s.studio_start_digest IS DISTINCT FROM fingerprint THEN RAISE EXCEPTION 'STUDIO_START_BOUND: this request already has different content' USING ERRCODE='40001'; END IF;
+  IF s.studio_start_digest IS DISTINCT FROM fingerprint THEN RAISE EXCEPTION 'STUDIO_START_BOUND: this request already has different content' USING ERRCODE='PT409'; END IF;
   IF s.status='archived' THEN RAISE EXCEPTION 'STUDIO_NOT_FOUND: original project unavailable' USING ERRCODE='42501'; END IF;
  ELSE
   BEGIN PERFORM public._studio_validate_business_source(p_expected_tenant,p_project_context);
@@ -261,12 +261,12 @@ BEGIN
   UPDATE public.studio_sessions SET studio_start_request_id=p_request_id,studio_start_digest=fingerprint,
    studio_session_scratchpad=coalesce(studio_session_scratchpad,'{}'::jsonb)||jsonb_build_object('project_context',p_project_context)
    WHERE id=s.id AND tenant_id=p_expected_tenant AND owner_user_id=actor RETURNING * INTO s;
-  IF NOT FOUND THEN RAISE EXCEPTION 'STUDIO_START_UNKNOWN: original project readback unavailable' USING ERRCODE='40001'; END IF;
+  IF NOT FOUND THEN RAISE EXCEPTION 'STUDIO_START_UNKNOWN: original project readback unavailable' USING ERRCODE='PT409'; END IF;
   created:=true;
  END IF;
  thread_id:=public.paige_studio_thread_ensure(s.id);
  IF NOT EXISTS(SELECT 1 FROM public.paige_chat_threads WHERE id=thread_id AND caller_user_id=actor AND tenant_id=p_expected_tenant
-  AND studio_session_id=s.id AND NOT is_archived) THEN RAISE EXCEPTION 'STUDIO_START_UNKNOWN: original thread readback unavailable' USING ERRCODE='40001'; END IF;
+  AND studio_session_id=s.id AND NOT is_archived) THEN RAISE EXCEPTION 'STUDIO_START_UNKNOWN: original thread readback unavailable' USING ERRCODE='PT409'; END IF;
  RETURN jsonb_build_object('ok',true,'state','ready','session_id',s.id,'thread_id',thread_id,'created',created);
 END $$;
 REVOKE ALL ON FUNCTION public.studio_start_project(uuid,uuid,text,jsonb) FROM PUBLIC,anon,service_role;
@@ -317,7 +317,7 @@ BEGIN
  context:=coalesce(s.studio_session_scratchpad->'project_context','{}'::jsonb);
  IF context=p_project_context THEN RETURN jsonb_build_object('ok',true,'context',context,'changed',false); END IF;
  IF p_expected_context IS NULL OR p_expected_context IS DISTINCT FROM context THEN
-  RAISE EXCEPTION 'STUDIO_CONTEXT_CHANGED: the project context changed; reload it before saving' USING ERRCODE='40001'; END IF;
+  RAISE EXCEPTION 'STUDIO_CONTEXT_CHANGED: the project context changed; reload it before saving' USING ERRCODE='PT409'; END IF;
  BEGIN PERFORM public._studio_validate_business_source(p_expected_tenant,p_project_context);
  EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed'); END;
  UPDATE public.studio_sessions SET studio_session_scratchpad=coalesce(studio_session_scratchpad,'{}'::jsonb)||jsonb_build_object('project_context',p_project_context)
@@ -326,7 +326,7 @@ BEGIN
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
  RETURN jsonb_build_object('ok',true,'context',context,'changed',true);
 EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed');
- WHEN lock_not_available THEN RAISE EXCEPTION 'STUDIO_CONTEXT_CHANGED: this project is being edited; reload before saving' USING ERRCODE='40001';
+ WHEN lock_not_available THEN RAISE EXCEPTION 'STUDIO_CONTEXT_CHANGED: this project is being edited; reload before saving' USING ERRCODE='PT409';
 END $$;
 REVOKE ALL ON FUNCTION public.studio_set_project_context(uuid,uuid,jsonb,jsonb) FROM PUBLIC,anon,service_role;
 GRANT EXECUTE ON FUNCTION public.studio_set_project_context(uuid,uuid,jsonb,jsonb) TO authenticated;
@@ -391,7 +391,7 @@ BEGIN
   OR translate(v->>'brief',E'\n\r\t','') ~ '[[:cntrl:]]' THEN RAISE EXCEPTION 'Invalid Studio preparation' USING ERRCODE='22023'; END IF;
  IF TG_OP='UPDATE' AND OLD.studio_brief IS NOT NULL AND OLD.posted_message_id IS NOT NULL
   AND (NEW.studio_brief IS DISTINCT FROM OLD.studio_brief OR (OLD.studio_session_id IS NOT NULL AND NEW.studio_session_id IS DISTINCT FROM OLD.studio_session_id)) THEN
-  RAISE EXCEPTION 'Studio preparation is already bound' USING ERRCODE='40001'; END IF;
+  RAISE EXCEPTION 'Studio preparation is already bound' USING ERRCODE='PT409'; END IF;
  IF TG_OP='UPDATE' AND NEW.posted_message_id IS DISTINCT FROM OLD.posted_message_id AND NEW.accepted_at<clock_timestamp()-interval '5 minutes' THEN
   RAISE EXCEPTION 'Studio preparation expired before publication' USING ERRCODE='42501'; END IF;
  PERFORM public._team_hub_studio_scope(NEW);
@@ -468,7 +468,7 @@ BEGIN
  PERFORM public._team_hub_studio_scope(t);
  started:=public.studio_start_project(p_expected_tenant,t.id,t.studio_brief->>'brief',p_project_context);
  IF t.studio_session_id IS NOT NULL AND t.studio_session_id::text IS DISTINCT FROM started->>'session_id' THEN
-  RAISE EXCEPTION 'STUDIO_START_UNKNOWN: original binding changed' USING ERRCODE='40001'; END IF;
+  RAISE EXCEPTION 'STUDIO_START_UNKNOWN: original binding changed' USING ERRCODE='PT409'; END IF;
  UPDATE public.team_hub_agent_turns SET studio_session_id=(started->>'session_id')::uuid WHERE id=t.id;
  RETURN started;
 EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed');
@@ -692,7 +692,7 @@ BEGIN
  source:=public._chat_studio_historical_source(p_expected_tenant,actor,p_source_turn_id);
  started:=public.studio_start_project(p_expected_tenant,source.id,source.studio_brief->>'brief',p_project_context);
  IF source.studio_session_id IS NOT NULL AND source.studio_session_id::text IS DISTINCT FROM started->>'session_id' THEN
-  RAISE EXCEPTION 'STUDIO_START_UNKNOWN: original Chat binding changed' USING ERRCODE='40001'; END IF;
+  RAISE EXCEPTION 'STUDIO_START_UNKNOWN: original Chat binding changed' USING ERRCODE='PT409'; END IF;
  IF source.studio_session_id IS NULL THEN
   UPDATE public.paige_chat_turns SET studio_session_id=(started->>'session_id')::uuid WHERE id=source.id;
  END IF;
@@ -1046,16 +1046,16 @@ BEGIN
  END IF;
  PERFORM public._studio_validate_business_source(p_expected_tenant,coalesce(s.studio_session_scratchpad->'project_context','{}'::jsonb));
  IF p_expected_updated_at IS NULL OR p_expected_updated_at IS DISTINCT FROM page.updated_at THEN
-  RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: the page changed; reopen its current version before saving' USING ERRCODE='40001'; END IF;
+  RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: the page changed; reopen its current version before saving' USING ERRCODE='PT409'; END IF;
  IF chosen_index IS NULL THEN blocks:=blocks||jsonb_build_array(p_conversion);
  ELSE blocks:=jsonb_set(blocks,ARRAY[chosen_index::text],p_conversion,false); END IF;
  page:=public.growth_page_upsert(NULL,page.slug,page.title,blocks,page.draft_theme_json,page.draft_seo_json,page.id,NULL);
  version:=public.save_artifact_version(s.id,'page',page.id,NULL);
  IF version.snapshot IS DISTINCT FROM to_jsonb(page) OR version.lineage_id IS DISTINCT FROM page.id OR NOT version.is_current THEN
-  RAISE EXCEPTION 'STUDIO_SAVE_UNKNOWN: original version readback unavailable' USING ERRCODE='40001'; END IF;
+  RAISE EXCEPTION 'STUDIO_SAVE_UNKNOWN: original version readback unavailable' USING ERRCODE='PT409'; END IF;
  RETURN jsonb_build_object('ok',true,'page',to_jsonb(page),'updated_at',page.updated_at,'version_id',version.id,'changed',true);
 EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed');
- WHEN lock_not_available THEN RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: this page is being edited; reopen before saving' USING ERRCODE='40001';
+ WHEN lock_not_available THEN RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: this page is being edited; reopen before saving' USING ERRCODE='PT409';
 END $$;
 REVOKE ALL ON FUNCTION public.studio_set_page_conversion(uuid,uuid,uuid,timestamptz,jsonb) FROM PUBLIC,anon,service_role;
 GRANT EXECUTE ON FUNCTION public.studio_set_page_conversion(uuid,uuid,uuid,timestamptz,jsonb) TO authenticated;
@@ -1228,7 +1228,7 @@ BEGIN
  IF response->'ok'='true'::jsonb OR response->>'code' IN ('invalid','scope_changed','not_allowed','changed') THEN RETURN response; END IF;
  context:=coalesce(s.studio_session_scratchpad->'project_context','{}'::jsonb);
  IF s.artifact_refs IS DISTINCT FROM p_expected_artifact_refs OR context IS DISTINCT FROM p_expected_project_context THEN
-  RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: original project source changed' USING ERRCODE='40001'; END IF;
+  RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: original project source changed' USING ERRCODE='PT409'; END IF;
  PERFORM public._studio_validate_business_source(p_expected_tenant,context);
  IF p_page_id IS NOT NULL THEN
   SELECT * INTO page FROM public.growth_pages WHERE id=p_page_id AND tenant_id=p_expected_tenant AND status<>'archived' FOR UPDATE NOWAIT;
@@ -1237,7 +1237,7 @@ BEGIN
    WHEN jsonb_typeof(page.blocks_json)='array' THEN page.blocks_json ELSE '[]'::jsonb END;
   IF page.updated_at IS DISTINCT FROM p_expected_updated_at OR page.slug IS DISTINCT FROM btrim(p_slug)
    OR public._studio_primary_conversion(blocks) IS DISTINCT FROM p_expected_conversion THEN
-   RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: reopen the current original page before saving' USING ERRCODE='40001'; END IF;
+   RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: reopen the current original page before saving' USING ERRCODE='PT409'; END IF;
  ELSE
   -- Original creator allocates the real ID and appends its original manifest.
   -- Upsert by that actual ID cannot enter the slug-conflict overwrite branch.
@@ -1246,7 +1246,7 @@ BEGIN
    WHERE p.tenant_id=p_expected_tenant AND EXISTS(SELECT 1 FROM jsonb_array_elements(created.artifact_refs) r
     WHERE r->>'kind'='page' AND r->>'id'=p.id::text)
    AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(s.artifact_refs) r WHERE r->>'kind'='page' AND r->>'id'=p.id::text);
-  IF new_id IS NULL THEN RAISE EXCEPTION 'STUDIO_SAVE_UNKNOWN: original creation readback unavailable' USING ERRCODE='40001'; END IF;
+  IF new_id IS NULL THEN RAISE EXCEPTION 'STUDIO_SAVE_UNKNOWN: original creation readback unavailable' USING ERRCODE='PT409'; END IF;
   SELECT * INTO page FROM public.growth_pages WHERE id=new_id AND tenant_id=p_expected_tenant FOR UPDATE;
  END IF;
  page:=public.growth_page_upsert(NULL,btrim(p_slug),p_title,p_blocks_json,p_theme_json,p_seo_json,page.id,p_form_schema_json);
@@ -1265,11 +1265,11 @@ BEGIN
  version:=public.save_artifact_version(s.id,'page',page.id,NULL);
  response:=public._studio_page_saved_result(s.id,page);
  IF response->'ok' IS DISTINCT FROM 'true'::jsonb OR response->>'version_id' IS DISTINCT FROM version.id::text THEN
-  RAISE EXCEPTION 'STUDIO_SAVE_UNKNOWN: original version readback unavailable' USING ERRCODE='40001'; END IF;
+  RAISE EXCEPTION 'STUDIO_SAVE_UNKNOWN: original version readback unavailable' USING ERRCODE='PT409'; END IF;
  RETURN response||jsonb_build_object('changed',true,'reconciled',false);
 EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('ok',false,'code','scope_changed');
  WHEN lock_not_available OR unique_violation THEN
-  RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: original page or address changed; inspect the same source before saving' USING ERRCODE='40001';
+  RAISE EXCEPTION 'STUDIO_PAGE_CHANGED: original page or address changed; inspect the same source before saving' USING ERRCODE='PT409';
 END $$;
 REVOKE ALL ON FUNCTION public.studio_save_page(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb) FROM PUBLIC,anon,service_role;
 GRANT EXECUTE ON FUNCTION public.studio_save_page(uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text,text,jsonb,jsonb,jsonb,jsonb) TO authenticated;
@@ -1387,7 +1387,7 @@ CREATE FUNCTION public._paige_confirmation_studio_source_immutable()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
 BEGIN
  IF NEW.studio_page_save_source IS DISTINCT FROM OLD.studio_page_save_source THEN
-  RAISE EXCEPTION 'STUDIO_CONFIRMATION_SOURCE_CHANGED: original proposal source is immutable' USING ERRCODE='40001';
+  RAISE EXCEPTION 'STUDIO_CONFIRMATION_SOURCE_CHANGED: original proposal source is immutable' USING ERRCODE='PT409';
  END IF;
  IF OLD.studio_page_save_source IS NOT NULL AND (
   NEW.id IS DISTINCT FROM OLD.id OR NEW.user_id IS DISTINCT FROM OLD.user_id
@@ -1396,7 +1396,7 @@ BEGIN
   OR NEW.fingerprint IS DISTINCT FROM OLD.fingerprint OR NEW.args IS DISTINCT FROM OLD.args
   OR NEW.issued_in_request IS DISTINCT FROM OLD.issued_in_request OR NEW.server_issued_at IS DISTINCT FROM OLD.server_issued_at
  ) THEN
-  RAISE EXCEPTION 'STUDIO_CONFIRMATION_BINDING_CHANGED: original proposal binding is immutable' USING ERRCODE='40001';
+  RAISE EXCEPTION 'STUDIO_CONFIRMATION_BINDING_CHANGED: original proposal binding is immutable' USING ERRCODE='PT409';
  END IF;
  -- consumed_at, claimed_in_request, expires_at and unrelated legacy-row updates
  -- retain their original behavior. This guard neither claims nor authorizes.
@@ -1583,7 +1583,7 @@ DECLARE r jsonb:=NEW.contact_tags_result; item jsonb; seen text[]:='{}'; name te
 BEGIN
  IF TG_OP='UPDATE' AND OLD.contact_tags_result IS NOT NULL THEN
   IF r IS DISTINCT FROM OLD.contact_tags_result THEN
-   RAISE EXCEPTION 'FORM_CONTACT_TAGS_RESULT_IMMUTABLE' USING ERRCODE='40001'; END IF;
+   RAISE EXCEPTION 'FORM_CONTACT_TAGS_RESULT_IMMUTABLE' USING ERRCODE='PT409'; END IF;
   -- Preserve original lifecycle/FK writes. A later contact/form/tenant retarget
   -- cannot change the saved source and is refused by the bound readers.
   RETURN NEW;
@@ -1736,7 +1736,7 @@ BEGIN
   RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
  BEGIN version:=p_expected_updated_at::timestamptz;
  EXCEPTION WHEN invalid_datetime_format OR datetime_field_overflow THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END;
- IF version IS DISTINCT FROM contact.updated_at THEN RAISE EXCEPTION 'CONTACT_VERSION_STALE' USING ERRCODE='40001'; END IF;
+ IF version IS DISTINCT FROM contact.updated_at THEN RAISE EXCEPTION 'CONTACT_VERSION_STALE' USING ERRCODE='PT409'; END IF;
  -- Preserve the entire existing array, including order/multiplicity. Append only
  -- missing configured names; existing membership alone yields no_change, no audit.
  union_tags:=coalesce(contact.tags,'{}'::text[]);

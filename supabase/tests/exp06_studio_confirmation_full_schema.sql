@@ -43,7 +43,7 @@ SELECT pg_temp.e06_assert(
  AND to_regprocedure('public.studio_page_save_source(uuid,uuid,uuid)') IS NOT NULL
  AND to_regprocedure('public.read_weekly_commitment_draft(uuid)') IS NOT NULL,
  'candidate35 original source/wrapper prerequisites installed');
-SELECT pg_temp.e06_assert((SELECT md5(pg_get_functiondef(oid))='7858e187f58d2c824b70093e0fcc8ea1'
+SELECT pg_temp.e06_assert((SELECT md5(pg_get_functiondef(oid))='f447f18978029294dd46cc73a8f5ffdc'
  AND NOT prosecdef AND proowner='postgres'::regrole AND proacl::text='{postgres=X/postgres}'
  AND proconfig=ARRAY['search_path=""']::text[] FROM pg_proc
  WHERE oid='public._paige_confirmation_studio_source_immutable()'::regprocedure),
@@ -188,14 +188,14 @@ DO $immutability$
 DECLARE f record; assignment text;
 BEGIN
  SELECT proposal_id,legacy_id,source INTO f FROM e06_full_fixture;
- PERFORM pg_temp.e06_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=NULL where id=%L',f.proposal_id),'40001','source clearing refused');
- PERFORM pg_temp.e06_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=''{"changed":true}'' where id=%L',f.proposal_id),'40001','source rebinding refused');
- PERFORM pg_temp.e06_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=%L where id=%L',f.source,f.legacy_id),'40001','NULL legacy source cannot be blessed later');
+ PERFORM pg_temp.e06_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=NULL where id=%L',f.proposal_id),'PT409','source clearing refused');
+ PERFORM pg_temp.e06_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=''{"changed":true}'' where id=%L',f.proposal_id),'PT409','source rebinding refused');
+ PERFORM pg_temp.e06_refuses(format('update public.paige_pending_confirmations set studio_page_save_source=%L where id=%L',f.source,f.legacy_id),'PT409','NULL legacy source cannot be blessed later');
  FOREACH assignment IN ARRAY ARRAY['id=gen_random_uuid()','user_id=gen_random_uuid()','tenant_id=gen_random_uuid()',
   'thread_id=gen_random_uuid()','scoped_client_id=gen_random_uuid()','tool_name=''other_tool''',
   'fingerprint=''035f000000000002''','args=''{"changed":true}''','issued_in_request=gen_random_uuid()',
   'server_issued_at=server_issued_at+interval ''1 second'''] LOOP
-  PERFORM pg_temp.e06_refuses(format('update public.paige_pending_confirmations set %s where id=%L',assignment,f.proposal_id),'40001','original binding immutable: '||split_part(assignment,'=',1));
+  PERFORM pg_temp.e06_refuses(format('update public.paige_pending_confirmations set %s where id=%L',assignment,f.proposal_id),'PT409','original binding immutable: '||split_part(assignment,'=',1));
  END LOOP;
  UPDATE public.paige_pending_confirmations SET expires_at=expires_at+interval '1 minute',claimed_in_request=gen_random_uuid() WHERE id=f.proposal_id;
  PERFORM pg_temp.e06_assert((SELECT studio_page_save_source=f.source FROM public.paige_pending_confirmations WHERE id=f.proposal_id),

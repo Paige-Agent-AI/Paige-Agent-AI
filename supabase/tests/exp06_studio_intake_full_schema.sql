@@ -33,7 +33,7 @@ SELECT pg_temp.e06it_assert(
  to_regprocedure('public.growth_form_set_intake(uuid,boolean,uuid,uuid,text,boolean,text[])') IS NOT NULL
  AND to_regprocedure('public.growth_apply_submission_contact_tags(uuid,integer,uuid,uuid,uuid,text,text[])') IS NOT NULL
  AND to_regprocedure('public.growth_submission_contact_tags_state(uuid,uuid,uuid)') IS NOT NULL
- AND md5(pg_get_functiondef('public._growth_submission_contact_tags_guard()'::regprocedure))='6b3dc1efe7182da53d3c8a358057f0e0'
+ AND md5(pg_get_functiondef('public._growth_submission_contact_tags_guard()'::regprocedure))='22f718255d9f44d42eeb824829df9a9f'
  AND EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='public.growth_form_submissions'::regclass
   AND attname='contact_tags_result' AND atttypid='jsonb'::regtype AND NOT attnotnull AND NOT attisdropped),
  'actual candidate35 setting/apply/state/private-field and strict thirty-two KiB guard prerequisites installed');
@@ -389,7 +389,7 @@ BEGIN
  PERFORM pg_temp.e06it_assert(date_trunc('milliseconds',actual_version)=date_trunc('milliseconds',other_version)
   AND actual_version IS DISTINCT FROM other_version,'microsecond negative differs below millisecond precision without modifying native version');
  PERFORM pg_temp.e06it_refuses(format('select public.growth_apply_submission_contact_tags(%L,1,%L,%L,%L,%L,ARRAY[''Campaign'',''North''])',
-  f.sub_stale,f.automation_a,f.contact_existing,f.actor_a,micro_token),'40001','original native CAS refuses a one-microsecond version mismatch');
+  f.sub_stale,f.automation_a,f.contact_existing,f.actor_a,micro_token),'PT409','original native CAS refuses a one-microsecond version mismatch');
  reply:=public.growth_apply_submission_contact_tags(f.sub_badclaim,2,f.automation_a,f.contact_existing,f.actor_a,token,ARRAY['Campaign','North']);
  PERFORM pg_temp.e06it_assert(reply->>'code'='source_changed','wrong current claim attempt never authorizes first tag effect');
  UPDATE public.growth_form_submissions SET claimed_at=clock_timestamp()-interval '6 minutes' WHERE id=f.sub_badclaim;
@@ -534,8 +534,8 @@ DO $causal_field_guard$
 DECLARE f e06it_fixture; r jsonb;
 BEGIN
  SELECT * INTO f FROM e06it_fixture; SELECT result INTO r FROM e06it_results WHERE label='applied';
- PERFORM pg_temp.e06it_refuses(format('update public.growth_form_submissions set contact_tags_result=NULL where id=%L',f.sub_applied),'40001','raw service cannot clear an original result');
- PERFORM pg_temp.e06it_refuses(format('update public.growth_form_submissions set contact_tags_result=%L::jsonb where id=%L',jsonb_set(r,'{audit_id}',to_jsonb(gen_random_uuid()))::text,f.sub_applied),'40001','raw service cannot replace the original audit receipt');
+ PERFORM pg_temp.e06it_refuses(format('update public.growth_form_submissions set contact_tags_result=NULL where id=%L',f.sub_applied),'PT409','raw service cannot clear an original result');
+ PERFORM pg_temp.e06it_refuses(format('update public.growth_form_submissions set contact_tags_result=%L::jsonb where id=%L',jsonb_set(r,'{audit_id}',to_jsonb(gen_random_uuid()))::text,f.sub_applied),'PT409','raw service cannot replace the original audit receipt');
  PERFORM pg_temp.e06it_refuses(format('update public.growth_form_submissions set contact_tags_result=%L::jsonb where id=%L',r::text,f.sub_forgery),'42501','raw service cannot forge first causal capture with copied native evidence');
  PERFORM pg_temp.e06it_refuses(format('insert into public.growth_form_submissions(form_id,tenant_id,contact_id,contact_tags_result) values(%L,%L,%L,%L::jsonb)',f.form_a,f.tenant_a,f.contact_existing,r::text),'42501','service INSERT cannot bypass native-only causal capture');
  PERFORM pg_temp.e06it_assert((SELECT contact_tags_result=r FROM public.growth_form_submissions WHERE id=f.sub_applied)

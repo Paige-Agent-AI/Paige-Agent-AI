@@ -127,17 +127,49 @@ if(process.argv.includes('--self-test')){
    commit;`,'Original native HTTP fixture creation');
   const tokens={a:token('authenticated',f.actorA),b:token('authenticated',f.actorB)};
   const cases=[];
+  let requestNumber=0;
   async function call(method,path,who,payload){
    const service=who==='service',headers={apikey:service?state.SERVICE_ROLE_KEY:state.ANON_KEY,Accept:'application/json',Prefer:'return=representation'};
    if(service)headers.Authorization='Bearer '+state.SERVICE_ROLE_KEY;
    else if(who)headers.Authorization='Bearer '+tokens[who];
    if(payload!==undefined)headers['Content-Type']='application/json';
-   const response=await fetch(new URL('/rest/v1'+path,api),{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),signal:AbortSignal.timeout(15000)});
-   let data;try{data=await response.json();}catch{data=null;}
-   return {status:response.status,data};
+   const route=path.split('?')[0],trace={proof:'EXP06 HTTP request',request:++requestNumber,method,
+    route:/^\/(?:rpc\/)?[a-z_]+$/.test(route)?route:'[redacted route]',caller:service?'service_role':who?'authenticated_'+who:'anon'};
+   const started=performance.now();let phase='fetch',status=null;
+   console.log(JSON.stringify({...trace,phase:'start'}));
+   try{
+    const response=await fetch(new URL('/rest/v1'+path,api),{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),signal:AbortSignal.timeout(15000)});
+    status=response.status;phase='body';
+    let data;try{data=await response.json();}catch(error){
+     if(error?.name==='TimeoutError'||error?.name==='AbortError')throw error;
+     data=null;
+    }
+    console.log(JSON.stringify({...trace,phase:'complete',status,elapsed_ms:Math.round(performance.now()-started)}));
+    return {status,data};
+   }catch(error){
+    const errorName=['TimeoutError','AbortError','TypeError','SyntaxError','Error'].includes(error?.name)?error.name:'Error';
+    const causeCode=['UND_ERR_CONNECT_TIMEOUT','UND_ERR_HEADERS_TIMEOUT','UND_ERR_BODY_TIMEOUT','UND_ERR_SOCKET',
+     'ECONNREFUSED','ECONNRESET','ENOTFOUND','EHOSTUNREACH','ENETUNREACH','EAI_AGAIN','ETIMEDOUT'].includes(error?.cause?.code)?error.cause.code:undefined;
+    console.error(JSON.stringify({...trace,phase,status,elapsed_ms:Math.round(performance.now()-started),
+     error_name:errorName,cause_code:causeCode}));
+    // Failure-only, bounded observation of the SAME local stack. No query text,
+    // caller identity, retry or readiness gate; the original request still fails.
+    try{
+     const waits=spawnSync(process.env.PSQL_BIN??'psql',psqlArgs,{cwd:repo,encoding:'utf8',timeout:2000,input:
+      "select coalesce(json_agg(x),'[]'::json) from (select state,wait_event_type,wait_event,count(*)::int as connections from pg_stat_activity where datname=current_database() and lower(application_name) like 'postgrest%' group by state,wait_event_type,wait_event order by state,wait_event_type,wait_event limit 8) x;"});
+     const rows=waits.status===0?JSON.parse(waits.stdout):null;
+     console.error(JSON.stringify({proof:'EXP06 HTTP local wait categories',request:trace.request,
+      available:Array.isArray(rows),categories:Array.isArray(rows)?rows.slice(0,8).map(row=>({state:row.state,
+       wait_event_type:row.wait_event_type,wait_event:row.wait_event,connections:row.connections})):undefined}));
+    }catch{
+     console.error(JSON.stringify({proof:'EXP06 HTTP local wait categories',request:trace.request,available:false}));
+    }
+    throw new Error('EXP06_HTTP_REQUEST_FAILED: see sanitized request diagnostics above');
+   }
   }
   function check(name,result,condition){
    cases.push({name,status:result.status,pass:Boolean(condition)});
+   console.log(JSON.stringify({proof:'EXP06 HTTP check',name,status:result.status,pass:Boolean(condition)}));
    assert(condition,name+' failed: HTTP'+result.status+' code'+(typeof result.data?.code==='string'?result.data.code:'unavailable'));
   }
   let r=await call('POST','/rpc/studio_start_project','a',{p_expected_tenant:f.tenantA,p_request_id:f.request,

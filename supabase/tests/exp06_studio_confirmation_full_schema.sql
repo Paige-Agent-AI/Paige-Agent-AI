@@ -286,7 +286,7 @@ END $business_fixture$;
 
 DO $business_source$
 DECLARE f e06_full_fixture; i e06_business_fixture; selected jsonb; ctx jsonb; started jsonb; token text; cnt bigint;
- request_id uuid:=gen_random_uuid(); original_session uuid; reply jsonb;
+ request_id uuid:=gen_random_uuid(); original_session uuid; reply jsonb; merge_preview jsonb; merge_result jsonb;
 BEGIN
  SELECT * INTO f FROM e06_full_fixture; SELECT * INTO i FROM e06_business_fixture;
  PERFORM pg_temp.e06_assert(public.has_any_role(f.actor_a,ARRAY['admin','super_admin']),
@@ -349,13 +349,30 @@ BEGIN
  RESET ROLE;
  PERFORM pg_temp.e06_assert(selected->>'code'='scope_changed','business selector refuses foreign expected tenant');
  PERFORM pg_temp.e06_actor(f.actor_a);
+ PERFORM pg_temp.e06_refuses(format('UPDATE public.clients SET merged_at=clock_timestamp() WHERE id=%L',i.long_business_id),
+  '42501','direct merge-lineage writes remain governed');
+ -- Use the incumbent preview/execute protocol while both original rows are active.
+ -- Its merge sets both lineage markers and archives the loser; this is not an
+ -- isolated single-marker fixture. Every effect remains inside this ROLLBACK.
+ PERFORM pg_temp.e06_server(); SET LOCAL ROLE service_role;
+ merge_preview:=public.preview_crm_command(f.tenant_a,f.actor_a,jsonb_build_object(
+  'approval_channel','operator_card','action','contact.merge','contact_id',i.business_id,'loser_contact_id',i.long_business_id,
+  'expected_updated_at',(SELECT updated_at FROM public.clients WHERE id=i.business_id AND tenant_id=f.tenant_a),
+  'expected_loser_updated_at',(SELECT updated_at FROM public.clients WHERE id=i.long_business_id AND tenant_id=f.tenant_a),
+  'resolutions',jsonb_build_object('entity_name','survivor')),f.tag||':business-merge:preview');
+ merge_result:=public.execute_crm_command(f.tenant_a,f.actor_a,jsonb_build_object(
+  'approval_channel','operator_card','action','contact.merge','preview_id',merge_preview->>'preview_id'),f.tag||':business-merge');
+ RESET ROLE;
+ PERFORM pg_temp.e06_assert(merge_result->>'outcome'='succeeded'
+  AND (SELECT merged_into_contact_id=i.business_id AND merged_at IS NOT NULL FROM public.clients WHERE id=i.long_business_id),
+  'original governed merge produces the actual losing business lineage');
+ PERFORM pg_temp.e06_actor(f.actor_a);
  UPDATE public.clients SET status='archived' WHERE id=i.business_id;
- UPDATE public.clients SET merged_at=clock_timestamp() WHERE id=i.long_business_id;
  SET LOCAL ROLE authenticated;
  selected:=public.studio_business_targets(f.tenant_a,'',20);
  RESET ROLE;
  PERFORM pg_temp.e06_assert(NOT EXISTS(SELECT 1 FROM jsonb_array_elements(selected->'businesses') b
-  WHERE b->>'id' IN (i.business_id::text,i.long_business_id::text)),'archived and either merged marker exclude business source');
+  WHERE b->>'id' IN (i.business_id::text,i.long_business_id::text)),'archived and genuinely governed-merged businesses are excluded');
 END $business_source$;
 
 SELECT pg_temp.e06_assert(NOT EXISTS(

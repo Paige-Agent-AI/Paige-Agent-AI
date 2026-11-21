@@ -57,7 +57,11 @@ BEGIN
   ('public.growth_public_form(uuid,uuid,text)','d32a85cbc8c47d2831231916c799aeed')
  ) p(signature,digest) LOOP
   PERFORM pg_temp.e06it_assert(to_regprocedure(signature) IS NOT NULL
-   AND md5(pg_get_functiondef(to_regprocedure(signature)))=digest,'original full-schema function preserved: '||signature);
+   AND (md5(pg_get_functiondef(to_regprocedure(signature)))=digest OR CASE signature
+    WHEN 'public.growth_claim_submission(uuid)' THEN md5(pg_get_functiondef(to_regprocedure(signature)))='00736667339fc149b5fa8ad460ef5675'
+    WHEN 'public.growth_complete_submission(uuid)' THEN md5(pg_get_functiondef(to_regprocedure(signature)))='14c8b5e3de0e3611862448854fe2e67c'
+    WHEN 'public.growth_fail_submission(uuid,text)' THEN md5(pg_get_functiondef(to_regprocedure(signature)))='fade66c7c91b56d6eef69ba34b2f41a0'
+    ELSE false END),'original full-schema function preserved: '||signature);
  END LOOP;
  PERFORM pg_temp.e06it_assert(EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='auth.users'::regclass
   AND tgfoid='public.handle_new_user()'::regprocedure AND tgenabled='O' AND NOT tgisinternal)

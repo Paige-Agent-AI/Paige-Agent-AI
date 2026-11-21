@@ -6,7 +6,7 @@ if(recoveryMode)assert.ok(['lost','gateway','missing-readback','refused'].includ
 const knowledgeMode=process.env.KNOWLEDGE_INGEST_TEST;
 if(knowledgeMode){assert.ok(['success','uncertain','refused','partial','unrecorded'].includes(knowledgeMode));assert.ok(!recoveryMode&&!unknownTool);}
 const automationMode=process.env.AUTOMATION_DRAFT_TEST;
-if(automationMode){assert.ok(['success','uncertain','refused'].includes(automationMode));assert.ok(!knowledgeMode&&!recoveryMode&&!unknownTool);}
+if(automationMode){assert.ok(['success','lost-ack','uncertain','refused','member-denied'].includes(automationMode));assert.ok(!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const researchMode=process.env.RESEARCH_READBACK_TEST;
 if(researchMode){assert.ok(['success','partial-library','unconfirmed'].includes(researchMode));assert.ok(!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const crmMode=process.env.CRM_ACK_TEST;
@@ -27,6 +27,7 @@ const researchFixture=()=>({run_id:id(11),question:'Fixture public question',fin
  coverage:{configured:true,stop_reason:'answered',hops_used:1,searches:1,reads:1,note:'',
    source_policy:{max_sources:3,admitted_sources:1,limit_reached:false}}});
 const draftArgs={name:'Fixture process',trigger_key:'contact.created',steps:[{action_kind:'crm.advance_journey_stage',config:{stage:'review'}}]};
+let originalDraftState=null;
 const ingestRequests=[];
 let modelCalls=0;
 globalThis.fetch=async(url,opts)=>{
@@ -116,7 +117,7 @@ const bookingTurns=bookingApproved?[{id:id(14),role:'user',content:'Book the exa
  {id:id(15),role:'assistant',content:'Approval is needed.',bundle_ref:{paige_confirm:[{tool:'calendar_book_meeting',fingerprint:bookingFp,...bookingArgs}],turn_state:{state:'WAIT_APPROVAL'}}}]:[];
 const project=(row,filters)=>{const columns=filters.find(f=>f[0]==='select')?.[1];return columns&&columns!=='*'?Object.fromEntries(columns.split(',').map(k=>[k,row[k]])):row;};
 const rec=fake.setScenario({authUser:{id:actor},tables:{
- profiles:()=>[{active_tenant_id:crmScopeMode||crmPauseMode?crmActiveTenant:tenant}],tenant_members:crmScopeMode||crmPauseMode?filters=>[tenant,id(18)].map(tenant_id=>({tenant_id,user_id:actor,role:crmScopeMode==='member-refused'?'member':'owner',status:'active'})).filter(row=>filters.every(([op,col,value])=>op!=='eq'||row[col]===value)):[{tenant_id:tenant,...(bookingMode?{role:bookingMode==='role-denied'?'member':'owner',status:'active'}:{})}],
+ profiles:()=>[{active_tenant_id:crmScopeMode||crmPauseMode?crmActiveTenant:tenant}],tenant_members:crmScopeMode||crmPauseMode?filters=>[tenant,id(18)].map(tenant_id=>({tenant_id,user_id:actor,role:crmScopeMode==='member-refused'?'member':'owner',status:'active'})).filter(row=>filters.every(([op,col,value])=>op!=='eq'||row[col]===value)):[{tenant_id:tenant,...(bookingMode?{role:bookingMode==='role-denied'?'member':'owner',status:'active'}:automationMode?{user_id:actor,role:automationMode==='member-denied'?'member':'owner',status:'active'}:{})}],
  tenants:crmScopeMode||crmPauseMode?[{account_number:1001,account_type:'standalone',parent_tenant_id:null}]:[],
  paige_pending_confirmations:crmScopeMode||crmPauseMode?crmScopeTable:bookingApproved?[bookingDoor]:[],
  internal_bookings:bookingMode==='missing-row'?[]:[{id:id(12),tenant_id:bookingMode==='foreign-row'?id(13):tenant,host_user_id:actor,contact_id:null,
@@ -159,7 +160,7 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
  },
  read_crm_command_result:{data:null,error:null},
  execute_crm_command:{data:{ok:true,outcome:'succeeded',readback:{id:id(19)}},error:null},
- is_tenant_admin_as:{data:!!bookingMode&&bookingMode!=='role-denied',error:null},agency_can_manage_child:{data:false,error:null},
+ is_tenant_admin_as:{data:(!!bookingMode&&bookingMode!=='role-denied')||(!!automationMode&&automationMode!=='member-denied'),error:null},agency_can_manage_child:{data:false,error:null},
  create_internal_booking:()=>{
   if(bookingMode==='transport')throw new TypeError('Failed to fetch after booking commit');
   if(bookingMode==='refused')return {data:null,error:{code:'42501',message:'BOOKING_FORBIDDEN'}};
@@ -169,6 +170,18 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
  resolve_tool_autonomy:a=>({data:crmScopePinned||crmPauseMode&&JSON.stringify(a).includes('crm_')?'confirm':'auto',error:null}),resolve_tool_autonomy_detail:{data:{ceiling_allows_auto:true},error:null},
  resolve_tool_autonomy_many:{data:[{tool_key:"plan_create",mode:"auto",ceiling_allows_auto:true}],error:null},
  resolve_automation_autonomy:{data:{found:true,effective:'confirm',dark:[],state:'draft',granted:'confirm',would_run:false},error:null},
+ save_automation_draft:args=>{
+  assert.equal(args._expected_tenant_id,tenant);assert.deepEqual(args._draft,{...draftArgs,category:'general'});
+  originalDraftState={phase:'saved',request_id:args._request_id,automation_id:args._request_id,tenant_id:tenant,actor_id:actor,
+   receipt_id:id(19),steps:1,state:'draft',granted_lane:'confirm',execution_started:false,updated_at:'2026-11-13T17:00:00Z'};
+  if(automationMode==='lost-ack'||automationMode==='uncertain')throw new TypeError('Lost original atomic save acknowledgment');
+  return {data:originalDraftState,error:null};
+ },
+ read_automation_draft:args=>{
+  assert.equal(args._request_id,originalDraftState?.request_id);assert.equal(args._expected_tenant_id,tenant);
+  assert.deepEqual(args._expected_draft,{...draftArgs,category:'general'});
+  return {data:automationMode==='uncertain'?{phase:'absent',request_id:args._request_id}:originalDraftState,error:null};
+ },
  get_workspace_research_run:()=>{const r=researchFixture();return {data:{id:r.run_id,question:r.question,domain:'general',caller:'chat',
   configured:true,stop_reason:'answered',coverage:r.coverage,findings:r.findings,sources:researchMode==='partial-library'?[]:r.sources},error:null};},
  get_actor_access:{data:{tier:'tenant'},error:null},
@@ -340,15 +353,18 @@ if(researchMode){
  process.exit(0);
 }
 if(automationMode){
- const drafts=rec.inserts.filter(r=>r.table==='paige_automations'&&!r.update),acts=rec.inserts.filter(r=>r.table==='paige_automation_acts');
- assert.equal(drafts.length,automationMode==='refused'?0:1,'one native draft insert; never retry by name');
- assert.equal(acts.length,automationMode==='refused'?0:1,'one exact native acts insert');
- if(drafts.length){assert.equal(drafts[0].row.tenant_id,tenant);assert.equal(drafts[0].row.created_by,actor);assert.equal(drafts[0].row.granted_lane,'confirm');assert.equal(drafts[0].row.state,'draft');}
+ const drafts=rec.rpc.filter(c=>c.name==='save_automation_draft'),reads=rec.rpc.filter(c=>c.name==='read_automation_draft');
+ assert.equal(drafts.length,['refused','member-denied'].includes(automationMode)?0:1,'one authorized atomic native save; never retry by name');
+ assert.equal(reads.length,['uncertain','lost-ack'].includes(automationMode)?1:0,'only original-identity reconciliation after lost acknowledgment');
+ assert.ok(!rec.inserts.some(r=>['paige_automations','paige_automation_acts'].includes(r.table)),'obsolete two-write writer is gone');
+ // This original harness records client kind only; exact forwarded JWT proof is
+ // in the caller-header-aware client-memory harness and native scope controls.
+ for(const call of [...drafts,...reads])assert.equal(call.client,'jwt');
  assert.equal(rec.rpc.filter(c=>c.name==='plan_create').length,automationMode==='uncertain'?0:1,wire);
  assert.equal(receipts.length,1,'one durable canonical terminal receipt');
  const effect=receipts[0].bundle_ref.interactive.effects.find(e=>e.tool==='automation_draft');
- assert.equal(effect.outcome,automationMode==='uncertain'?'outcome_unknown':automationMode==='refused'?'reported_failure':'reported_success');
- if(automationMode!=='refused')assert.ok(effect.record_refs.some(r=>r.kind==='automation'&&r.id===id(10)));
+ assert.equal(effect.outcome,automationMode==='uncertain'?'outcome_unknown':['refused','member-denied'].includes(automationMode)?'reported_failure':'reported_success');
+ if(!['refused','member-denied'].includes(automationMode))assert.ok(effect.record_refs.some(r=>r.kind==='automation'&&r.id===drafts[0].args._request_id));
  assert.ok(!rec.inserts.some(r=>r.table==='paige_act_executions'),'draft configuration is not an execution');
  console.log(`PASS actual handler automation draft ${automationMode}: native actor/workspace/configuration, canonical record receipt, correct successor hold; no execution`);
  process.exit(0);

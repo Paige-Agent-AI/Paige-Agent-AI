@@ -128,6 +128,18 @@ describe("C0b canonical read declaration convergence", () => {
         }
         continue;
       }
+      // The repaired atomic draft intentionally narrows the frozen member
+      // declaration to its native ACTIVE owner/admin seat, without an override.
+      if (tool === "automation_draft") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        expect(PAIGE_SPINE_CAPABILITIES.find(cap => cap.action?.chatTool === tool)?.action).toMatchObject({
+          classification: "mutate", riskPolicyKey: "ordinary", approvalAuthority: "chat-canonical", seatAuthority: "door-seat",
+        });
+        for (const workspaceAdmin of [false, true]) for (const platformOperator of [false, true]) for (const seat of [false, true]) {
+          expect(authorityAdmits(tool, { workspaceAdmin, platformOperator, seat }, new Set())).toBe(seat);
+        }
+        continue;
+      }
       expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(tool !== "capability_status" && (OWNER_OPS_BEFORE.includes(tool) || outsideBefore.has(tool)));
     }
   });

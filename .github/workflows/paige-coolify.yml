@@ -36,6 +36,8 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
+      - name: Test the production promotion contract without provider credentials
+        run: node --test .github/paige-coolify/deploy.test.mjs
       - name: Build and check the pull request image
         run: bash .github/paige-coolify/build.sh "$GITHUB_SHA" "paige-pr:$GITHUB_SHA"
 
@@ -95,7 +97,8 @@ jobs:
           jq -n --arg cloud "$FRONTEND_COMMIT" --arg frontend "$FRONTEND_COMMIT" \
             --arg image "$IMAGE_REPO@$digest" --arg tag "$tag" \
             --arg run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
-            '{cloudCommit:$cloud,frontendCommit:$frontend,image:$image,coolifyTag:$tag,run:$run}' \
+            --arg ci "$CI_RUN" \
+            '{cloudCommit:$cloud,frontendCommit:$frontend,image:$image,coolifyTag:$tag,run:$run,ciRun:$ci}' \
             | tee "$RUNNER_TEMP/paige-app-release.json" "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -136,11 +139,60 @@ jobs:
         with:
           ref: ${{ needs.build.outputs.frontend }}
           persist-credentials: false
-      - name: Deploy the verified image to the public PAIGE domains
+      - name: Prepare the release and verified rollback target
+        id: prepare
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PAIGE_COOLIFY_DEPLOY_TOKEN: ${{ secrets.PAIGE_COOLIFY_DEPLOY_TOKEN }}
           FRONTEND_COMMIT: ${{ needs.build.outputs.frontend }}
           IMAGE_DIGEST: ${{ needs.build.outputs.digest }}
           CI_RUN: ${{ github.event.workflow_run.id || inputs.ci_run }}
+          PAIGE_RELEASE_RECEIPT: ${{ runner.temp }}/paige-production-intent.json
+        run: node .github/paige-coolify/deploy.mjs --prepare "$FRONTEND_COMMIT" "$IMAGE_DIGEST" "$CI_RUN"
+      - name: Retain preflight evidence before changing Coolify
+        id: intent
+        if: ${{ always() && (steps.prepare.outcome == 'success' || steps.prepare.outcome == 'failure') }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: paige-production-intent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/paige-production-intent.json
+          if-no-files-found: error
+      - name: Deploy the verified image to the public PAIGE domains
+        id: promote
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PAIGE_COOLIFY_DEPLOY_TOKEN: ${{ secrets.PAIGE_COOLIFY_DEPLOY_TOKEN }}
+          FRONTEND_COMMIT: ${{ needs.build.outputs.frontend }}
+          IMAGE_DIGEST: ${{ needs.build.outputs.digest }}
+          CI_RUN: ${{ github.event.workflow_run.id || inputs.ci_run }}
+          PAIGE_RELEASE_PLAN: ${{ runner.temp }}/paige-production-intent.json
+          PAIGE_RELEASE_PLAN_ARTIFACT: ${{ steps.intent.outputs.artifact-id }}
+          PAIGE_RELEASE_RECEIPT: ${{ runner.temp }}/paige-production-receipt.json
         run: node .github/paige-coolify/deploy.mjs --promote "$FRONTEND_COMMIT" "$IMAGE_DIGEST" "$CI_RUN"
+      - name: Summarize the production receipt
+        if: ${{ always() && (steps.prepare.outcome == 'success' || steps.prepare.outcome == 'failure') }}
+        env:
+          PAIGE_RELEASE_RECEIPT: ${{ runner.temp }}/paige-production-receipt.json
+          PAIGE_RELEASE_PLAN: ${{ runner.temp }}/paige-production-intent.json
+        run: |
+          if [[ ! -f "$PAIGE_RELEASE_RECEIPT" && -f "$PAIGE_RELEASE_PLAN" ]]; then
+            echo '### PAIGE production preflight. No final promotion receipt is available.' >> "$GITHUB_STEP_SUMMARY"
+            PAIGE_RELEASE_RECEIPT="$PAIGE_RELEASE_PLAN"
+          fi
+          if [[ -f "$PAIGE_RELEASE_RECEIPT" ]]; then
+            {
+              echo '### PAIGE production release receipt'
+              echo '```json'
+              cat "$PAIGE_RELEASE_RECEIPT"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Production receipt was unavailable. Reconcile job and provider history before retrying.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Retain the production receipt
+        if: ${{ always() && (steps.promote.outcome == 'success' || steps.promote.outcome == 'failure') }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: paige-production-receipt-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/paige-production-receipt.json
+          if-no-files-found: error

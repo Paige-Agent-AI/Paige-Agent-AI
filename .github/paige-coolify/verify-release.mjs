@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 const repository = "Paige-Agent-AI/Paige-Agent-AI";
 const api = `https://api.github.com/repos/${repository}`;
 // GitHub user ID of the existing organization release maintainer (mrmogulmaker-bot).
-const releaseMaintainer = 232259757;
+export const releaseMaintainer = 232259757;
 
 async function github(path) {
   const response = await fetch(`${api}${path}`, {

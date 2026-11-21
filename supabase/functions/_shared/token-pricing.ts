@@ -71,6 +71,15 @@ export function tokenRate(provider: string, model?: string | null): { in: number
     const m = model.toLowerCase();
     for (const [prefix, rate] of OPENAI_MODEL_PER_1K) if (m.startsWith(prefix)) return rate;
   }
+  if (provider === "openrouter" && typeof model === "string") {
+    // OpenRouter serves the SAME GPT-6 family under its `openai/` namespace (openrouter-models.ts).
+    // Price those ids on the IDENTICAL GPT-6 rows so an OpenRouter-served turn is metered the same as
+    // the direct-OpenAI turn it replaced. No silent default for any other OpenRouter model: an
+    // unrecognised id stays unpriced (undefined), never a fabricated or zero cost.
+    const m = model.toLowerCase();
+    const bare = m.startsWith("openai/") ? m.slice("openai/".length) : m;
+    for (const [prefix, rate] of OPENAI_MODEL_PER_1K) if (bare.startsWith(prefix)) return rate;
+  }
   return TEXT_PER_1K[provider];
 }
 

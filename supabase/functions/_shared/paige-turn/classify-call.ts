@@ -29,7 +29,7 @@ export { routeNeedsClassifier } from "./classify.ts";
  * the classifier is ignored and the route takes its conservative default (operational, governed
  * tools) — a timeout costs the cheap-tier saving, never correctness.
  *
- * RECALIBRATED for the serving model (ANT-20, 2026-10-10). The original 1200 ms came from production
+ * HISTORICAL calibration (ANT-20, 2026-10-10). The original 1200 ms came from production
  * traces of small HAIKU calls (session-summary workload, 30 days: p50 840 ms, p90 1.46 s — the bound
  * deliberately truncated that tail). The 2026-10-08 owner policy moved the classifier's cheap class
  * to GPT-6 LUNA, and production evidence shows Luna sits above the old bound: across 2026-10-09/10,
@@ -38,10 +38,19 @@ export { routeNeedsClassifier } from "./classify.ts";
  * the recalibration, NOT a promise: acceptance is measured from post-deploy organic traces over the
  * first 50 classifier turns (success share and p50/p90 of completed calls; accept at >=80%
  * success and p90 <= 2400 ms), with a one-line tune-or-revert if the measured distribution
- * says the bound is wrong. Every other bound is
+ * says the bound is wrong. That organic 50-turn evaluation is not claimed complete here.
+ *
+ * EXP01, 2026-11-13: the owner-approved routing repair recalibrates the whole-call window to 4000ms.
+ * The current scoped sample has 7 successes, 3 network-tagged misses at 2423/2438/2471ms, and one
+ * historical request error; budget reads consume the remainder of the old 2500ms window. The real
+ * classifier/Fabric/adapter regression demonstrates a valid 3000ms response being discarded at the
+ * old deadline. 4000ms permits that tail while retaining a finite bound, at most 1500ms more wait on
+ * a miss. This is not evidence that an external network failed, nor a general latency improvement.
+ * Post-release useful routing must be verified; production success share remains measured evidence.
+ * Every other bound is
  * unchanged — the conservative null, the closed-enum parse, the abort signal, and all gates.
  */
-export const TURN_CLASSIFY_DEADLINE_MS = 2500;
+export const TURN_CLASSIFY_DEADLINE_MS = 4000;
 
 /** The fabric-side job identity (snake_case). The trace keeps the caller's `turn-classify` tag. */
 export const TURN_CLASSIFY_JOB = "turn_classify";

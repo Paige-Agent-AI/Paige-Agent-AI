@@ -234,35 +234,16 @@ describe("Solo Zapier API and MCP release contract", () => {
     expect(sql).toContain("OLD.capability_pins IS DISTINCT FROM NEW.capability_pins");
     expect(sql).toContain("NEW.capability_pins IS DISTINCT FROM OLD.capability_pins");
   });
-  it("refuses exactly what the server refuses, and says why", () => {
+  it("uses the original OAuth writer with a server-owned default instead of a pasted address", () => {
     const ui = read("src/solo/settings-integrations.tsx");
     const fn = read("supabase/functions/tenant-mcp-connect/index.ts");
-    // The server's rule, in one line. If it changes, the button must change with it.
-    const at = fn.indexOf('u.hostname==="mcp.zapier.com"');
-    expect(at).toBeGreaterThan(-1);
-    const serverRule = fn.slice(fn.lastIndexOf("\n", at) + 1, fn.indexOf("\n", at));
-    for (const clause of ["u.protocol===\"https:\"", "!u.username", "!u.password", "!u.hash", 'u.pathname.startsWith("/api/v1/")', 'u.pathname.startsWith("/api/mcp/")']) {
-      expect(serverRule).toContain(clause);
-    }
-    // A query is deliberately NOT refused: Zapier's own copy-to-clipboard address has one.
-    expect(serverRule).not.toContain("!u.search");
-    // ...and the button applies the same clauses rather than a raw prefix match.
-    const client = ui.slice(ui.indexOf("export function zapierMcpAddressProblem"));
-    const body = client.slice(0, client.indexOf("\n}"));
-    for (const clause of ['u.protocol !== "https:"', "u.username || u.password", "u.hash", 'u.pathname.startsWith("/api/v1/")', 'u.pathname.startsWith("/api/mcp/")', 'u.hostname.toLowerCase()']) {
-      expect(body).toContain(clause);
-    }
-    expect(body).not.toContain("u.search");
-    // The field is trimmed before it is judged -- an address pasted with surrounding
-    // whitespace used to leave the button permanently dead with no reason given.
-    expect(body).toContain("raw.trim()");
-    // A refusal is shown to the owner rather than expressed only as a dead button.
-    expect(ui).toContain("<small>{addressProblem??");
-    expect(ui).toContain("addressProblem!==null}");
-    expect(ui).not.toContain('!serverUrl.startsWith("https://mcp.zapier.com/api/mcp/")');
-    // Owner wording: the control names the thing being connected, not the protocol.
-    expect(ui).toContain('"Reconnect to Zapier MCP":"Connect to Zapier MCP"');
-    expect(ui).not.toContain("Connect PAIGE tools with OAuth");
+    expect(fn).toContain('from "../_shared/zapier-mcp-address.ts"');
+    expect(fn).toContain("body.server_url === undefined ? ZAPIER_MCP_URL");
+    expect(fn).toContain('typeof body.server_url === "string" ? body.server_url.trim() : ""');
+    expect(ui).not.toContain("zapierMcpAddressProblem");
+    expect(ui).not.toContain("Zapier MCP server address");
+    expect(ui).toContain("await m.beginOAuth()");
+    expect(ui).toContain('"Reconnect with Zapier":"Connect with Zapier"');
   });
 
   it("states one PAIGE-tools connection state, not one per surface", () => {

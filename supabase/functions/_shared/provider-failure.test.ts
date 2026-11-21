@@ -38,6 +38,30 @@ Deno.test("OpenAI: codes decide before status", () => {
   assertEquals(O(503, null, "Service unavailable"), "provider_outage");
 });
 
+Deno.test("OpenRouter 402 subtypes: sanitized closed codes, never the raw message", () => {
+  // Account-level credit exhaustion.
+  assertEquals(c({ provider: "openrouter", status: 402, message: "Your credit balance is too low to process this request." }), "billing_account");
+  assertEquals(c({ provider: "openrouter", status: 402, message: "Insufficient credits. Please add credits to continue." }), "billing_account");
+  assertEquals(c({ provider: "openrouter", status: 402, message: "Billing not active for this account." }), "billing_account");
+  assertEquals(c({ provider: "openrouter", status: 402, message: "No credits remaining." }), "billing_account");
+  assertEquals(c({ provider: "openrouter", status: 402, message: "Out of credits." }), "billing_account");
+  // Key-level spending/usage limit.
+  assertEquals(c({ provider: "openrouter", status: 402, message: "You have reached your specified API usage limits." }), "billing_key_limit");
+  assertEquals(c({ provider: "openrouter", status: 402, message: "Spend limit exceeded for this key." }), "billing_key_limit");
+  assertEquals(c({ provider: "openrouter", status: 402, message: "Exceeded your spending limit." }), "billing_key_limit");
+  assertEquals(c({ provider: "openrouter", status: 402, message: "Key limit reached." }), "billing_key_limit");
+  // Per-request cost limit.
+  assertEquals(c({ provider: "openrouter", status: 402, message: "Max cost per request exceeded." }), "billing_per_request");
+  assertEquals(c({ provider: "openrouter", status: 402, message: "This request exceeds your max cost per request limit." }), "billing_per_request");
+  assertEquals(c({ provider: "openrouter", status: 402, message: "Request too expensive for the configured limit." }), "billing_per_request");
+  // Generic (null message or unclassified) → billing.
+  assertEquals(c({ provider: "openrouter", status: 402, message: null }), "billing");
+  assertEquals(c({ provider: "openrouter", status: 402, message: "Something unexpected happened." }), "billing");
+  // Closed-code invariant: no message ever comes back.
+  const secret = "SECRET-REQUEST-MATERIAL";
+  assertEquals(String(c({ provider: "openrouter", status: 402, message: `credit balance ${secret}` })).includes(secret), false);
+});
+
 Deno.test("transport failures are outages; unknown stays unknown", () => {
   assertEquals(c({ provider: "openai", status: 0, transport: "timeout" }), "provider_outage");
   assertEquals(c({ provider: "anthropic", status: 0, transport: "network" }), "provider_outage");

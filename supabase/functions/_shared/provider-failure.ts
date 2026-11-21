@@ -18,8 +18,11 @@
 
 export const PROVIDER_FAILURE_CLASSES = [
   "auth_config",       // the key or configuration is missing or rejected
-  "billing",           // the provider said the account lacks credit / has a billing problem
-  "rate_limit",        // a rate, usage or spend limit the provider named
+  "billing",           // the provider said the account lacks credit / has a billing problem (generic)
+  "billing_account",   // account-level credit exhaustion ("credit balance too low", "insufficient credits")
+  "billing_key_limit", // key-level spending/usage limit ("spend limit", "usage limit", "reached your limit")
+  "billing_per_request", // per-request cost limit ("request exceeds max cost", "too expensive")
+  "rate_limit",        // a rate, usage or spend limit the provider named (429)
   "model_unavailable", // the model does not exist or this key may not use it
   "invalid_request",   // the provider attributed the failure to the request
   "provider_outage",   // a server-side error, overload, timeout or broken connection
@@ -64,7 +67,17 @@ export function classifyProviderFailure(e: ProviderFailureEvidence): ProviderFai
     if (BILLING.test(msg)) return "billing";
     return "rate_limit";
   }
-  if (status === 402) return "billing";
+  if (status === 402) {
+    // OpenRouter 402 subtypes — sanitized closed codes, never the raw message.
+    // Account-level credit exhaustion.
+    if (/\bcredit balance\b|\binsufficient (?:credits?|funds|balance)\b|\bbilling not active\b|\bno credits\b|\bout of credits\b|\baccount (?:credit|balance)\b/i.test(msg)) return "billing_account";
+    // Per-request cost limit (check before key-level, since "max cost per request" contains "request").
+    if (/\brequest (?:too expensive|cost exceeds|exceeds (?:max|limit))\b|\btoo expensive\b|\bmax cost per request\b/i.test(msg)) return "billing_per_request";
+    // Key-level spending/usage limit.
+    if (/\b(?:spend(?:ing)?|usage) (?:limit|cap)\b|\breached your\b|\bexceeded your\b|\bkey (?:limit|cap)\b/i.test(msg)) return "billing_key_limit";
+    // Generic billing (message null or unclassified) — preserves backward compat.
+    return "billing";
+  }
   if (status === 404) return MODEL.test(msg) ? "model_unavailable" : "unknown";
   if (status === 400 || status === 413 || status === 422 || type === "invalid_request_error") {
     // A 400 is the request's fault unless the provider says otherwise in words it uses for that.

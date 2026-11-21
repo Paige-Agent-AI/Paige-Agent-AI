@@ -1490,7 +1490,10 @@ const SOURCES = {
   // redirect refusal and size caps byte-identical; pinned by the new 8-test suite). Old pin
   // ab192431c1d51594a551184bc0e029a2a47a96a408f9f5935e0e13c8bbfe4db8 reproduced from main with
   // printer {removeComments:true}+sha256 before renewing. Renew this digest only.
-  "supabase/functions/_shared/ssrfGuard.ts": "656797b1b724d61b766a88787a803286bf56637050d8d8e715b3310628d51490",
+  // EXP07 finite original binary-export window, Coordinator937b794c. Both byte/text
+  // views retain one guarded core/reader. Split unchanged from reviewed f0dde0a2;
+  // only this source digest is renewed, no enclosing identity or other pin changes.
+  "supabase/functions/_shared/ssrfGuard.ts": "6cf5da0b8b9808bfe5fec48e04424af7f07692cf4d43c562ccfbb39692b6e243",
   "supabase/functions/_shared/kb-ingest-core.ts": "7001d69379463479e816922b58e911effa3ce0bf0d6f4377ce5b71b21aad070a",
   "supabase/functions/_shared/knowledge-ingest-scope.ts": "d7d21c4f3f76bdab286c3ef89132584358d3b5f5d05c087d0c27c1117c75904c",
   "supabase/functions/_shared/twilio-webhook-auth.ts": "70015f70ca2250b4a991d7c15d54f27bc7fb17d937c386d48621af749f48bf05",
@@ -1566,15 +1569,25 @@ const SOURCES = {
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",
   "supabase/functions/_shared/agreements/token.ts": "793e1c0a521fc0ea3b39e5761f87cdad7fee67a73b2110ac1f2963992b20eeea",
-  "supabase/functions/_shared/model-fabric.ts": "63929332c5c47f841fc8fdb543b28247996efec3374557535c66d0c939113841",
-  "supabase/functions/_shared/llm-trace.ts": "588857f4c1c2026b08a0f1ae4b8e69a49e941dbf8e21c940d7afba6c40727ea3",
+  "supabase/functions/_shared/model-fabric.ts": "9058cc767840247d076ec3eefa0390c716c2868c923c8e376bf70b8cc70c2a43",
+  // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): `llm-trace.ts` METADATA_ALLOWLIST gains
+  // `provider_failure_class` so the sanitized closed-code billing subtype (billing_account,
+  // billing_key_limit, billing_per_request, billing) is persisted even for metadata_only traces.
+  // Only the allowlist scalar is added; no trace content, scrubbing or schema changes.
+  // Old 588857f4… reproduced from origin/main 89d72496. Renewed 330aee2e… via the guard's own
+  // canonicalization (TS printer {removeComments:true} + SHA-256), never raw bytes.
+  // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): `llm-trace.ts` METADATA_ALLOWLIST gains
+  // `provider_failure_class` so the sanitized closed-code billing subtype is persisted even for
+  // metadata_only traces. `safeMetadata` exported for regression testing. Old 588857f4… reproduced
+  // from origin/main 89d72496. Renewed e87ad6af… via the guard's own canonicalization.
+  "supabase/functions/_shared/llm-trace.ts": "e87ad6af6e9a7dddaaa2e9349de98c731c8ff87aec0eb99b4a314e32336f46a7",
   "supabase/functions/_shared/prompt-forge.ts": "0abdeb7a887ac7b566dd8f21c11140122985d2acf0b5b6020596974ffd3e11ee",
   "supabase/functions/_shared/voyage.ts": "4eb1a516b2ce4679e83bfa62bb908a4b2e3be4d48dcdc89df75bb160bd6569b2",
   "supabase/functions/_shared/claude.ts": "cfbb18ce156d2259bf1904d6f6eaed8262e007c70929958c7261f185e20747ff",
   "supabase/functions/_shared/router-budget/mod.ts": "9b12ac32282e4223238688feef1d3e384406e9d9e1378fc94c9d937d7d6a20c4",
   "supabase/functions/_shared/model-router-gates.ts": "551cf84756d3a5b56a82c645c96ce51f0318f065b5969d19885ba591a506a566",
-  "supabase/functions/_shared/model-allowlist.ts": "3b1e162f042a34357eb4ba6fb2e9bd7cafeb9725f07df655ac43f3233d215377",
-  "supabase/functions/_shared/env-key.ts": "bbf7dd1e08f48f272e8311f49f9951a850154ed451c4eb3be99a0de8a57c3878",
+  "supabase/functions/_shared/model-allowlist.ts": "d6b31c5c492d49a1872080a92bc1be5d086f1b68d0319cabf101d0a3a0b7d80e",
+  "supabase/functions/_shared/env-key.ts": "796414f8b20785e10903af3794a6e31f9d8e7ca43de0404846def1fd11e3679e",
   "supabase/functions/_shared/provider-types.ts": "8d79766668fcee619bb09f8281f68face325e60182235535c90c42a26410c05b",
   "supabase/functions/_shared/openai.ts": "8b3b1f2c880e6517d5b7fffd56be603ab0e772ba3668d1992c60aa82c08368c9",
   "supabase/functions/_shared/groq.ts": "451b1d60d277816b4912893a08b050b293a05db393f2ee210ea369c8d84d8181",
@@ -1583,7 +1596,7 @@ const SOURCES = {
   "supabase/functions/_shared/meshy.ts": "41aac6540ec0b2a3f4ec4e2bce1acf44f36a55625e9ee9331d76d270c0f450e6",
   "supabase/functions/_shared/gemini-image.ts": "68d384818fd85679b70deebbdc567d688fe97425670bd205be93e231f91614b1",
   "supabase/functions/_shared/doc-render.ts": "56e5fd5223120d45d2f445f4f53eeaeb8d69dac9b253c52fe915026d746a5b95",
-  "supabase/functions/_shared/token-pricing.ts": "99a311abb6b9a0d5af8d3ae00422e19cc517c1354c3237808c2046293a8b9a39",
+  "supabase/functions/_shared/token-pricing.ts": "4bcc128b7f520e9eef4a98bd8739eb0b38f2d4f6639d72b0dc859011dc969b0f",
   "supabase/functions/_shared/paige-spine/governedExecution.ts": "771d67a36c3a88323690e528df35b5355f74a5b6ff330d7262952a7eb87a83a9",
   // Experience 05: independently reviewed process-subject registration; all refusal branches retained.
   "supabase/functions/_shared/paige-orchestration/subject-tenant.ts": "79bfca5cada98f8226a533684556c2b6035ec8aaf0855c06846b035ef4d778bd",
@@ -1603,9 +1616,31 @@ const SOURCES = {
   // unchanged. Old e2790d93… reproduced from main 5a4bfb1f0 first.
   "supabase/functions/_shared/comms-email/readiness.ts": "8bfab4b5fe9453736b8f68b82d76434cc9884e9ea39583d7d32e97454affba5f",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
-  "supabase/functions/_shared/openai-responses.ts": "3293523c9621ae12deb1380e5e9d84de03fe64e15788dfff1c8c93637d622d46",
-  "supabase/functions/_shared/provider-failure.ts": "eef5a70437a8952dde4fbb46a29e9696d1b9f31c48e2a76a0c9ae60c99e7c35b",
-  "supabase/functions/_shared/paige-turn/route.ts": "657f0c9ee1d3724a5eca72f661718d560e090cd7ee36707cadbbf94f1f463d6e",
+  // ANT-166 OpenRouter wire-field repair (2026-11-18), head 38169eec7. `buildResponsesRequest` now omits the four
+  // OpenAI-only Responses fields (`store`, `include`, `prompt_cache_key`, `prompt_cache_options`) when the provider is
+  // `openrouter`; they are still sent, unchanged, on the direct OpenAI path. `model`, `input`, `instructions`,
+  // `max_output_tokens`, `reasoning`, `tools` and `tool_choice` (including explicit `"none"`) remain sent to both.
+  // No tool definition, dispatch, authorization, approval, cancellation, fallback or no-replay contract changed; the
+  // change is one provider's outbound field set. Old 92426905… was first reproduced from parent 69b13fc2a, proving the
+  // pin was valid and this renewal uses the guard's own canonicalization (TS printer {removeComments:true} + SHA-256),
+  // never raw bytes and never snapshot regeneration. Reviewed new a50cc17f…. Renew ONLY this dependency literal; the
+  // other 130 pins, all 29 dispatch fingerprints, the extractor, metadata, assertions and hostile controls stay exact.
+  // PROCESS NOTE, recorded honestly: 38169eec7 was pushed directly to protected main and deployed BEFORE this reviewed
+  // renewal, before non-author review and before the required exact-head CI passed. The distinct NON-AUTHOR
+  // post-deployment review (change author did not write it) returned APPROVE-WITH-REMEDIATION and named this renewal;
+  // it does not cure the ordering violation. Owner authorization: PO-EXP25, 2026-11-18.
+  // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): openai-responses.ts gains provider_failure_class
+  // in emitTrace metadata (sanitized closed-code billing subtype). Old a50cc17f… reproduced from origin/main
+  // 89d72496. Renewed 942ee7ce… via the guard's own canonicalization.
+  "supabase/functions/_shared/openai-responses.ts": "942ee7ce0b29eeb6000ec80c02f20aa50064b9449a13979d65391e566b126bda",
+  // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): provider-failure.ts gains billing_account,
+  // billing_key_limit, billing_per_request subtypes for sanitized 402 classification.
+  // Old eef5a704… reproduced from origin/main 89d72496. Renewed dea94f3f… via the guard's own canonicalization.
+  "supabase/functions/_shared/provider-failure.ts": "dea94f3fbb0e1ba037b4e2546b2bafca043b25e0c341e42729bc85e91202eb89",
+  // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): route.ts FALLBACK_ON gains billing_account,
+  // billing_key_limit, billing_per_request subtypes. Old b361efab… reproduced from origin/main 89d72496.
+  // Renewed 36e3f4fa… via the guard's own canonicalization.
+  "supabase/functions/_shared/paige-turn/route.ts": "36e3f4fa43b2ce408117723f4f5c07d40dd0120b9061ddc444a6b5c8874e8477",
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",
   "supabase/functions/_shared/cheesy-tells.ts": "7710d88a2999f0ab23870ff22f9ce46999d35d598982ce7f517a7fea0f4fab9a",
   "supabase/functions/_shared/claude-models.ts": "026a3b83753bd302319a1f671cfb560bb788c96b4f27bc44222cd6650fcc34fd",

@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { readFunctionErrorBody } from "@/lib/integrations/connectError";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { createSettingsRequestGate } from "../settings-contract";
+import { ZAPIER_MCP_URL } from "../../../supabase/functions/_shared/zapier-mcp-address";
 
 export type McpProvider = "n8n" | "zapier";
 
@@ -119,6 +120,14 @@ export function mcpWriteMessage(code: unknown, kind: "write" | "probe" = "write"
     case "MCP_BAD_TRANSPORT": return "That transport is not one this provider supports.";
     case "MCP_BAD_AUTH_KIND": return "That authentication method is not one this provider supports.";
     case "MCP_NO_TENANT": return "This workspace could not be identified, so nothing was changed.";
+    case "authorization_renewal_pending": return "Zapier authorization is being renewed. Wait a moment, then check again.";
+    case "authorization_renewal_unconfirmed": return "Zapier renewal could not be confirmed. Check the connection before reconnecting; no action was run.";
+    case "reauthorization_required": return "Zapier authorization could not be renewed. Reconnect with Zapier to restore access.";
+    case "authorization_server_unavailable": return "Zapier sign-in is unavailable right now. Wait a moment, then check again.";
+    case "connection_changed":
+    case "tenant_changed": return "This connection or workspace changed. Check its current state before trying again.";
+    case "not_connected": return "Connect with Zapier before checking this connection.";
+    case "connection_disabled": return "This connection is disabled. Reconnect with Zapier to restore access.";
     // The probe reached the network and came back with an answer.
     case "url_must_be_https": return "The address has to start with https:// so the credential is never sent in the clear.";
     case "url_has_embedded_credentials": return "Remove the username and password from the address; the credential belongs in its own field.";
@@ -147,6 +156,7 @@ export function useMcpConnection(provider: McpProvider) {
   const mounted = useRef(false);
   const mutation = useRef(0);
   const pendingMutation = useRef(false);
+  const disconnectNotice = useRef<string | null>(null);
   const [loadedScope, setLoadedScope] = useState<string | null>(null);
   // Mask and invalidate during render, before an effect can expose the old workspace.
   if (scopeRef.current !== scope) {
@@ -154,6 +164,7 @@ export function useMcpConnection(provider: McpProvider) {
     gate.current.clear();
     mutation.current += 1;
     pendingMutation.current = false;
+    disconnectNotice.current = null;
   }
   const [state, setState] = useState<McpState>({
     ...EMPTY, loading: true, error: false, canWrite: false, saving: false, writeError: null,
@@ -184,7 +195,7 @@ export function useMcpConnection(provider: McpProvider) {
       error: false,
       canWrite: admin?.error ? false : admin?.data === true,
       saving: pendingMutation.current,
-      writeError: null,
+      writeError: disconnectNotice.current,
     });
   }, [activeTenantId, provider, scope, tenantLoading]);
 
@@ -195,7 +206,7 @@ export function useMcpConnection(provider: McpProvider) {
     return () => { mounted.current = false; mutation.current += 1; pendingMutation.current = false; activeGate.clear(); };
   }, [load, tenantLoading]);
 
-  const invoke = useCallback(async (body: Record<string, unknown>): Promise<boolean> => {
+  const invoke = useCallback(async (body: Record<string, unknown>, prepared?: (url: string) => void): Promise<boolean> => {
     if (!activeTenantId || tenantLoading || !mounted.current || scopeRef.current !== scope || loadedScope !== scope || !state.canWrite || pendingMutation.current) return false;
     pendingMutation.current = true;
     const request = ++mutation.current;
@@ -221,11 +232,30 @@ export function useMcpConnection(provider: McpProvider) {
     const failure = await readFunctionErrorBody(error, data);
     if (!current()) return false;
     if (error || typeof failure?.error === "string") {
-      const code = typeof failure?.code === "string" ? failure.code : undefined;
-      setState((prev) => ({ ...prev, saving: false, writeError: mcpWriteMessage(code, "write") }));
+      const code = typeof failure?.code === "string" ? failure.code : failure?.error;
+      setState((prev) => ({ ...prev, saving: false, writeError: body.action === "oauth_begin"
+        ? "Zapier sign-in could not start. Try again."
+        : mcpWriteMessage(code, "write") }));
       return false;
     }
-    const result = data as { status?: string; code?: string };
+    if (body.action === "oauth_begin") {
+      // Release a URL only to this still-current caller. It never becomes hook state,
+      // and preparing OAuth cannot promote the existing connection to Connected.
+      try {
+        const url = new URL(typeof data?.authorize_url === "string" ? data.authorize_url : "");
+        if (data?.ok !== true || url.origin !== new URL(ZAPIER_MCP_URL).origin
+          || url.username || url.password || url.hash) throw new Error("invalid_authorization_url");
+        prepared?.(url.toString());
+        return true;
+      } catch {
+        setState((prev) => ({ ...prev, writeError: "Zapier sign-in could not start. Try again." }));
+        return false;
+      }
+    }
+    const result = data as { status?: string; code?: string; revoked_at_provider?: boolean | null };
+    if (body.action === "disconnect" && result.revoked_at_provider === false) {
+      disconnectNotice.current = "Disconnected from PAIGE. Zapier has not confirmed revocation of the previous grant; review PAIGE’s access in Zapier.";
+    }
     pendingMutation.current = false;
     await load();
     if (!current()) return false;
@@ -272,11 +302,18 @@ export function useMcpConnection(provider: McpProvider) {
 
   const disconnect = useCallback(() => invoke({ action: "disconnect" }), [invoke]);
 
+  const beginOAuth = useCallback(async (): Promise<string | null> => {
+    if (provider !== "zapier") return null;
+    let url: string | null = null;
+    const ok = await invoke({ action: "oauth_begin" }, (prepared) => { url = prepared; });
+    return ok ? url : null;
+  }, [invoke, provider]);
+
   const dismissWriteError = useCallback(() => setState((prev) => ({ ...prev, writeError: null })), []);
 
   const visible = loadedScope === scope && !tenantLoading ? state : {
     ...EMPTY, loading: !!activeTenantId || tenantLoading, error: false,
     canWrite: false, saving: false, writeError: null,
   };
-  return { ...visible, connect, connectByUrl, verify, disconnect, reload: load, dismissWriteError };
+  return { ...visible, connect, connectByUrl, beginOAuth, verify, disconnect, reload: load, dismissWriteError };
 }

@@ -550,6 +550,23 @@ if (!BASELINE) {
     !JSON.stringify(unverifiable).includes("down"));
 }
 
+// Native authority is revalidated AFTER asynchronous provider discovery. No second
+// executor or approval lane: the existing governed session invokes its domain guard.
+if (!BASELINE) {
+  serve("/revoked-during-discovery", { content: [{ type: "text", text: "must not run" }] });
+  sessionLog.length = 0;
+  let discoveredBeforeAdmission = false;
+  const refused = await outcomeMod.callApprovedCapability({
+    serverUrl: "https://public.example/revoked-during-discovery", auth: { kind: "bearer", token: "t" },
+    provider: "zapier", capability: CAPABILITY, approvedCapabilities: [CAPABILITY],
+    capabilityPins: { [CAPABILITY]: await outcome.fingerprintOf(DEFAULT_SCHEMA) }, tenantId: TENANT,
+    authorize: async () => { discoveredBeforeAdmission = sessionLog.some(e => e.method === "tools/list"); return false; },
+  });
+  check("domain admission happens after provider discovery", discoveredBeforeAdmission);
+  check("revoked access during discovery refuses the governed call", refused.outcome.status === "denied");
+  check("revoked access sends no tools/call", !sessionLog.some(e => e.method === "tools/call"));
+}
+
 // ── 12. Provenance: the Action Bus and the Rail ───────────────────────────────
 // A record the organisation can read is still a place a provider payload could end up.
 if (!BASELINE) {

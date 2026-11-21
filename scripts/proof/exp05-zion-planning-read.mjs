@@ -7,6 +7,7 @@ import { dirname, resolve, join, isAbsolute, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { provePlanningConcurrency, provePlanningReadOnlyHistory } from './exp05-zion-planning-concurrency.mjs';
+import {planningHistoryCompatibilityChecks,provePlanningScopeHistory} from './exp07-planning-history-proof.mjs';
 const repo=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 assert(['127.0.0.1','localhost'].includes(process.env.PGHOST??'127.0.0.1'),'Disposable local PostgreSQL only');
 const run=join(repo,'work','planning-native-proof',`run-${Date.now()}`);mkdirSync(run,{recursive:true});
@@ -32,12 +33,22 @@ function materialize(path){
  if(path===join(repo,'supabase/tests/exp08_team_hub_a2b_cards.sql')){
   const anchor="RESET ROLE;\n\\c postgres\nDROP DATABASE exp08_team_hub_a2b_proof;\n\\echo 'PASS: EXP08 Team Hub agents A2b proof complete; disposable database dropped'";
   assert.equal(sql.split(anchor).length,2,'Exactly one final disposable cleanup');
-  sql=sql.replace(anchor,`\\ir '${join(repo,'supabase/tests/exp05_zion_planning_read.sql').replaceAll('\\','/')}'\n${calendarMode ? `\\ir '${join(repo,'supabase/tests/exp05_zion_calendar_read.sql').replaceAll('\\','/')}'\n` : ''}${taskLinksMode ? `\\ir '${join(repo,'supabase/tests/exp05_zion_task_references.sql').replaceAll('\\','/')}'\n` : ''}\\if :{?exp05_concurrent}\n\\echo 'EXP05 retained original disposable fixture only for concurrent probes'\n\\else\n${anchor}\n\\endif`);
+  const checks=`\\ir '${join(repo,'supabase/tests/exp05_zion_planning_read.sql').replaceAll('\\','/')}'\n${calendarMode ? `\\ir '${join(repo,'supabase/tests/exp05_zion_calendar_read.sql').replaceAll('\\','/')}'\n` : ''}${taskLinksMode ? `\\ir '${join(repo,'supabase/tests/exp05_zion_task_references.sql').replaceAll('\\','/')}'\n` : ''}`;
+  // Run the incumbent installers/probes before Social34 extends their protected
+  // scope. Social still runs in full, before the same concurrency/history tail.
+  const social="\\ir fixtures/exp07-social-card-compatibility.sql";
+  const before=sql.includes(social)?social:anchor;
+  assert.equal(sql.split(before).length,2,'Exactly one original proof insertion point');
+  sql=sql.replace(before,()=>checks+planningHistoryCompatibilityChecks(repo)+before);
+  sql=sql.replace(anchor,`\\if :{?exp05_concurrent}\n\\echo 'EXP05 retained original disposable fixture only for concurrent probes'\n\\else\n${anchor}\n\\endif`);
  }
  if(path===join(repo,'supabase/tests/exp08_team_hub_a2b_cards.sql')&&weeklyPlanLinksMode){
   const hold='\\if :{?exp05_concurrent}';
   assert.equal(sql.split(hold).length,2,'Exactly one original fixture retention boundary');
-  sql=sql.replace(hold,`\\ir '${join(repo,'supabase/tests/exp05_weekly_plan_references.sql').replaceAll('\\','/')}'\n${hold}`);
+  const social="\\ir fixtures/exp07-social-card-compatibility.sql";
+  const before=sql.includes(social)?social:hold;
+  assert.equal(sql.split(before).length,2,'Exactly one weekly-reference insertion point');
+  sql=sql.replace(before,()=>`\\ir '${join(repo,'supabase/tests/exp05_weekly_plan_references.sql').replaceAll('\\','/')}'\n${before}`);
  }
  // Incumbent sed commands extract SQL text only. Feed the exact same ranges
  // through SQL literals on Windows; preserve every original drift/mutant probe.
@@ -68,7 +79,7 @@ const result=spawnSync(psql,['-X',...connection,'-d','postgres','-v','ON_ERROR_S
 writeFileSync(join(run,'stdout.txt'),result.stdout??'');writeFileSync(join(run,'stderr.txt'),result.stderr??'');
 const contractLine=(result.stdout??'').split(/\r?\n/).find(line=>line.startsWith('EXP05_NATIVE_CONTRACT:'));
 const contract=contractLine?JSON.parse(contractLine.slice('EXP05_NATIVE_CONTRACT:'.length)):null;
-let proofError=null,races=[],calendarRaces=[],taskRaces=[],readOnlyHistory=[],taskContract=null;
+let proofError=null,races=[],calendarRaces=[],taskRaces=[],readOnlyHistory=[],scopeHistory=[],taskContract=null;
 if(result.status===0){
  try{
   assert(contract?.length===14,'Successful proof includes the actual native source/metadata contract');
@@ -98,6 +109,7 @@ if(result.status===0){
    // The incumbent final history control ends the seat and canonically deletes
    // its DM/turns. Preserve that destructive negative LAST, after Calendar has
    // used the same original conversation; never recreate it to bypass cleanup.
+   scopeHistory=provePlanningScopeHistory(psql,[...connection,'-d','exp08_team_hub_a2b_proof'],context);
    readOnlyHistory=provePlanningReadOnlyHistory(psql,[...connection,'-d','exp08_team_hub_a2b_proof'],context);
   }
  }catch(error){proofError=error.stack??String(error);}
@@ -112,7 +124,7 @@ if(result.status===0){
 if(contract)writeFileSync(join(run,'native-contract.json'),JSON.stringify(contract,null,2)+'\n');
 if(taskContract)writeFileSync(join(run,'task-native-contract.json'),JSON.stringify(taskContract,null,2)+'\n');
 const exit=result.status===0&&!proofError?0:1;
-writeFileSync(join(run,'result.json'),JSON.stringify({exit,error:proofError??result.error?.message??null,races,calendarRaces,taskRaces,readOnlyHistory,
+writeFileSync(join(run,'result.json'),JSON.stringify({exit,error:proofError??result.error?.message??null,races,calendarRaces,taskRaces,readOnlyHistory,scopeHistory,
  inputs:[...inputs].map(([path,value])=>({path:relative(repo,path),sha256:value.sha256})),
  proof:'Original E08 reduced-schema disposable fixture plus EXP05 extension; no customer/full-schema/production claim'},null,2));
 console.log((result.stdout??'').split(/\r?\n/).filter(line=>line.startsWith('PASS:')).join('\n'));
@@ -120,6 +132,7 @@ if(result.status!==0)console.error((result.stderr??'').slice(-6000));
 if(proofError)console.error(proofError);
 if(exit===0&&concurrent)console.log('PASS: four actual native source/role publication blocking pairs; same original retry/history; disposable database dropped');
 if(exit===0&&concurrent)console.log(`PASS: ${readOnlyHistory.length} actual read-only original history/Search positive, revocation and recovery controls; no new messages`);
+if(exit===0&&concurrent)console.log(`PASS: ${scopeHistory.length} additional unknown read-scope history/Search refusal controls; exact scope restored`);
 if(exit===0&&calendarRaces.length)console.log('PASS: four additional actual Calendar source/role publication blocking pairs, same-message retry and history masking');
 if(exit===0&&taskRaces.length)console.log('PASS: four actual Task scope/role publication blocking pairs, same-message retry and history masking');
 console.log(`Evidence: ${run}`);process.exitCode=exit;

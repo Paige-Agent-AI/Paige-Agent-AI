@@ -7,7 +7,11 @@ Original model policy, customer metering, domain authority and fallback unchange
 [Research and actual baseline](../model-routing/int-334/EXP01-CHAT-CACHE-2026-11-13.md).
 Development only; review, exact CI, release/readback and authenticated proof owed.
 
-## EXP03 November11 — original Opportunity receipt continuation, source only
+## EXP03 November13 — original Opportunity receipt continuity verified
+
+Original notes-only update approved/saved ONCE through the existing native writer. Full document reload interrupted its response; Chat recovered the original saved result and native receipt. Private tab-local Team Hub survived full reload, freshly checked SAME receipt/version and reopened exact record/words, without another update. Native result/Rail counts each ONE. Product3336 and original E08 binding3340 are released/source verified; earlier refusal/no-write history remains in [journey14.62](../delivery/exp03-grow-my-business-journey.md#1462-opportunity-update-continuity--selected-next-outcome-development-only) and [evidence](../evidence/ui-delivery/exp03-opportunity-original-receipt.md). Standard eligible existing/future SOLO scope; two ordinary-owner samples do not mean every account was manually tested. Full EXP03/all50/ALG maturity and owner acceptance separate. Selected outcome only; report then STOP.
+
+## EXP03 November11 — original Opportunity receipt continuation, historical source checkpoint
 
 The existing CRM update writer, stored approval/idempotency and Rail remain authoritative. The original Chat result projection preserves its native correlation; the authenticated CRM door reads the same committed result under current actor/workspace/seat and caller-RLS record checks. Original result-card and private tab-local Team Hub saved-work consumers reopen only that reference; no new write, provider, private-context channel transfer or receipt store. Current source is development-only: required exact-head release and genuine update/interruption/full reload/both-chat original-receipt proof remain owed. [Original journey14.62](../delivery/exp03-grow-my-business-journey.md#1462-opportunity-update-continuity--selected-next-outcome-development-only) and [bounded evidence](../evidence/ui-delivery/exp03-opportunity-original-receipt.md) retain failures and limits. No algorithm maturity or full-assignment completion claim.
 

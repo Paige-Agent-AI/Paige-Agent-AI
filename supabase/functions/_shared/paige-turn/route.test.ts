@@ -127,25 +127,28 @@ Deno.test("deterministic: the same facts always give the same route", () => {
   }
 });
 
-Deno.test("policy: Sol and Astra lead, Sonnet 5.5 is second, Luna leads cheap", () => {
-  assertEquals(CLASS_POLICY.operational.map((x) => `${x.provider}:${x.model}`), ["openai:gpt-6.1-sol", "anthropic:claude-sonnet-5-5"]);
-  assertEquals(CLASS_POLICY.frontier.map((x) => `${x.provider}:${x.model}`), ["openai:gpt-6-astra", "anthropic:claude-sonnet-5-5"]);
-  assertEquals(CLASS_POLICY.cheap.map((x) => x.provider), ["openai", "featherless", "groq", "anthropic"]);
-  assertEquals(CLASS_POLICY.cheap[0].model, "gpt-6-luna");
-  assertEquals(CLASS_POLICY.cheap[3].model, "claude-haiku-4-5");
+Deno.test("policy: OpenRouter leads with the same class models; the recorded chain stays behind it", () => {
+  // Owner directive 2026-11-17: OpenRouter is the PRIMARY transport. It serves the SAME class ids, so
+  // this is a transport change — the 2026-10-06 Sol/Astra/Luna policy is preserved intact behind it as
+  // the fallback chain. Order is preference; the fabric moves only on a proven health failure.
+  assertEquals(CLASS_POLICY.operational.map((x) => `${x.provider}:${x.model}`), ["openrouter:openai/gpt-6.1-sol", "openai:gpt-6.1-sol", "anthropic:claude-sonnet-5-5"]);
+  assertEquals(CLASS_POLICY.frontier.map((x) => `${x.provider}:${x.model}`), ["openrouter:openai/gpt-6-astra", "openai:gpt-6-astra", "anthropic:claude-sonnet-5-5"]);
+  assertEquals(CLASS_POLICY.cheap.map((x) => x.provider), ["openrouter", "openai", "featherless", "groq", "anthropic"]);
+  assertEquals(CLASS_POLICY.cheap[0].model, "openai/gpt-6-luna");
+  assertEquals(CLASS_POLICY.cheap[4].model, "claude-haiku-4-5");
   assert(!("deterministic" in CLASS_POLICY), "deterministic work is code, never a model");
 });
 
-Deno.test("fallback: provider health only; never on an answer; never after output, unless proven unexecuted", () => {
+Deno.test("fallback: provider health only; never for invalid_request or unknown; never after output, unless proven unexecuted", () => {
   const clean = { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: false };
-  for (const f of ["auth_config", "billing", "rate_limit", "model_unavailable", "provider_outage"] as const) assert(mayFallback(f, clean), f);
+  for (const f of ["auth_config", "billing", "billing_account", "billing_key_limit", "billing_per_request", "rate_limit", "model_unavailable", "provider_outage"] as const) assert(mayFallback(f, clean), f);
   for (const f of ["invalid_request", "unknown"] as const) assert(!mayFallback(f, clean), f);
   for (const f of NOT_FALLBACK) assert(!mayFallback(f, clean), f);
   assert(!mayFallback("provider_outage", { ...clean, emittedToolCalls: true }), "a round that showed a tool call does not move");
   assert(!mayFallback("provider_outage", { ...clean, emittedText: true }), "a round the person already saw does not move");
   assert(mayFallback("provider_outage", { emittedToolCalls: true, emittedText: false, sideEffectProvenNone: true }), "a tool call proven unexecuted may move");
   assert(!mayFallback("provider_outage", { emittedToolCalls: true, emittedText: true, sideEffectProvenNone: true }), "text the person saw cannot be unsaid");
-  assertEquals(PROVIDER_FAILURES.length, 7);
+  assertEquals(PROVIDER_FAILURES.length, 10);
 });
 
 // ── R5b: the escalation fact (the rescue contract's route half) ────────────────────────────────

@@ -25,6 +25,7 @@
 import { NeedsConfigError } from "./provider-types.ts";
 import { classifyProviderFailure, type ProviderFailureClass } from "./provider-failure.ts";
 import { envKey } from "./env-key.ts";
+import { OPENROUTER_KEY_ENV_NAMES } from "./openrouter-models.ts";
 import { traceLLMCall, type TraceCtx } from "./llm-trace.ts";
 import { assertModelAllowed } from "./model-allowlist.ts";
 import { estimateOpenAIProviderUsageCost } from "./token-pricing.ts";
@@ -33,6 +34,43 @@ import {
   OPENAI_MODEL_BY_CLASS,
   type OpenAIReasoningClass,
 } from "./openai-models.ts";
+
+// ── Provider profile: one Responses wire, two transports (§18) ───────────────────────────────────
+// OpenRouter speaks the same Responses API shape at its own base URL with its own key. The adapter
+// keeps ONE request builder and ONE SSE reader; a profile only supplies base URL, key, headers and
+// the allow-list namespace. Telemetry records the REAL serving provider, never a borrowed "openai".
+export type ResponsesProvider = "openai" | "openrouter";
+
+interface ResponsesProfile {
+  provider: ResponsesProvider;
+  baseUrl: string;
+  headers: Record<string, string>;
+  allowlistProvider: string;
+  key: () => string;
+}
+
+function openRouterBaseUrl(): string {
+  return Deno.env.get("OPENROUTER_BASE_URL") ?? "https://openrouter.ai/api/v1";
+}
+function openRouterKey(): string {
+  const k = envKey(...OPENROUTER_KEY_ENV_NAMES);
+  if (!k) throw new NeedsConfigError("openrouter");
+  return k;
+}
+function openRouterHeaders(): Record<string, string> {
+  // Optional OpenRouter analytics attribution — never a credential, never request material.
+  const h: Record<string, string> = {};
+  const site = Deno.env.get("OPENROUTER_SITE_URL");
+  const title = Deno.env.get("OPENROUTER_APP_NAME");
+  if (site) h["HTTP-Referer"] = site;
+  if (title) h["X-Title"] = title;
+  return h;
+}
+function profileOf(provider: ResponsesProvider = "openai"): ResponsesProfile {
+  return provider === "openrouter"
+    ? { provider, baseUrl: openRouterBaseUrl(), headers: openRouterHeaders(), allowlistProvider: "openrouter", key: openRouterKey }
+    : { provider, baseUrl: baseUrl(), headers: {}, allowlistProvider: "openai", key: openaiKey };
+}
 
 const RESPONSES_PATH = "/responses";
 const DEFAULT_MAX_OUTPUT_TOKENS = 4096;
@@ -85,6 +123,8 @@ export interface ResponsesCallOpts {
   /** A present but invalid/unavailable trusted partition must never join a global cache. */
   disablePromptCache?: boolean;
   effort?: "none" | "low" | "medium" | "high" | "xhigh";
+  /** Which Responses transport serves this call. Defaults to direct OpenAI (all existing callers). */
+  provider?: ResponsesProvider;
   /** Injectable transport for tests; production uses global fetch. */
   fetchImpl?: typeof fetch;
 }
@@ -102,8 +142,10 @@ export class ProviderToolRefused extends Error {
 /** The provider+model tag carried on assistant turns that hold replayable provider items. It names the
  *  model PAIGE REQUESTED (the alias it will request again), never the dated id the provider served, so a
  *  turn's reasoning replays on the next round of the same tool loop. */
-export function providerTag(model: string): string {
-  return `openai:${model}`;
+export function providerTag(model: string, provider: ResponsesProvider = "openai"): string {
+  // Replay isolation: reasoning items from OpenRouter are only ever replayed to OpenRouter, and an
+  // existing stored `openai:...` turn keeps replaying to OpenAI. No cross-provider item injection.
+  return `${provider}:${model}`;
 }
 
 /** Only encrypted reasoning items may be replayed, rebuilt field by field. Anything else a stored history
@@ -123,7 +165,8 @@ function replayableItems(items: unknown[]): unknown[] {
   return out;
 }
 
-const SOL_ASTRA_NO_NONE = (model: string) => !model.startsWith("gpt-6-luna");
+// Accept both the direct id (`gpt-6-luna`) and OpenRouter's namespaced id (`openai/gpt-6-luna`).
+const SOL_ASTRA_NO_NONE = (model: string) => !/(^|\/)gpt-6-luna$/.test(model);
 
 // ── chat shape → Responses request ─────────────────────────────────────────────────────────────
 
@@ -167,14 +210,16 @@ function toolDef(t: ChatShapeTool): Record<string, unknown> {
   };
 }
 
-/** Build the Responses request body. Pure: no env, no I/O — exported for the conformance gate. */
+/** Build the Responses request body. No network/key I/O (the profile only reads optional env settings). */
 export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOpts): Record<string, unknown> {
+  const provider = opts.provider ?? "openai";
+  const profile = profileOf(provider);
   // The adapter enforces its own limits rather than trusting every caller to: an id off the allow-list is
-  // refused, and Sol/Astra (which reject `none`) never receive it.
-  assertModelAllowed("openai", opts.model);
+  // refused (against the SERVING provider's list), and Sol/Astra (which reject `none`) never receive it.
+  assertModelAllowed(profile.allowlistProvider, opts.model);
   const instructions: string[] = [];
   const input: unknown[] = [];
-  const tag = providerTag(opts.model);
+  const tag = providerTag(opts.model, provider);
   for (const m of body.messages ?? []) {
     if (m.role === "system") {
       const t = textOf(m.content);
@@ -200,12 +245,18 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
   const req: Record<string, unknown> = {
     model: opts.model,
     input,
-    store: false,
-    include: ["reasoning.encrypted_content"],
     max_output_tokens: body.max_tokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
   };
+  // OpenAI-only request fields. OpenRouter's documented Responses API accepts
+  // model, input, tools, tool_choice and stream; it does not accept OpenAI's
+  // `store`, `include`, prompt-cache or `store` parameters. Sending them to
+  // OpenRouter produces HTTP 400 before the model ever processes the turn.
+  if (provider !== "openrouter") {
+    req.store = false;
+    req.include = ["reasoning.encrypted_content"];
+  }
   const validCacheKey = typeof opts.promptCacheKey === "string" && /^[a-f0-9]{64}$/.test(opts.promptCacheKey);
-  if (!opts.disablePromptCache && validCacheKey) {
+  if (!opts.disablePromptCache && validCacheKey && provider !== "openrouter") {
     // Original Chat starts with persona, optional specialist address, then the
     // canonical voice/core. Include its first three available instruction blocks:
     // persona alone can be shorter than the provider's cacheable-prefix minimum.
@@ -219,9 +270,10 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
         ...(i === Math.min(2, instructions.length - 1) ? { prompt_cache_breakpoint: { mode: "explicit" } } : {}),
       })),
     });
-  } else if (instructions.length) req.instructions = instructions.join("\n\n");
+  } else if (instructions.length && provider !== "openrouter") req.instructions = instructions.join("\n\n");
+  else if (instructions.length) req.instructions = instructions.join("\n\n");
   // Explicit-only with no breakpoints performs neither cache reads nor writes.
-  if (opts.disablePromptCache || opts.promptCacheKey !== undefined && !validCacheKey) req.prompt_cache_options = { mode: "explicit" };
+  if ((opts.disablePromptCache || opts.promptCacheKey !== undefined && !validCacheKey) && provider !== "openrouter") req.prompt_cache_options = { mode: "explicit" };
   if (opts.effort) req.reasoning = { effort: opts.effort === "none" && SOL_ASTRA_NO_NONE(opts.model) ? "low" : opts.effort };
   if (body.tools?.length) {
     req.tools = body.tools.map(toolDef);
@@ -321,7 +373,7 @@ export function stopFor(status: string | undefined, incompleteReason: string | u
 }
 
 /** Convert a completed Responses object to the chat-completion shape PAIGE's non-streaming readers use. */
-export function toChatCompletion(resp: any, requestedModel: string): Record<string, unknown> {
+export function toChatCompletion(resp: any, requestedModel: string, provider: ResponsesProvider = "openai"): Record<string, unknown> {
   let text = "";
   let refused = false;
   const toolCalls: ChatShapeToolCall[] = [];
@@ -350,7 +402,7 @@ export function toChatCompletion(resp: any, requestedModel: string): Record<stri
         role: "assistant",
         content: text,
         ...(toolCalls.length ? { tool_calls: toolCalls } : {}),
-        ...(providerItems.length ? { paige_provider_items: providerItems, paige_provider: providerTag(requestedModel) } : {}),
+        ...(providerItems.length ? { paige_provider_items: providerItems, paige_provider: providerTag(requestedModel, provider) } : {}),
       },
       finish_reason: stop.finish_reason,
     }],
@@ -363,13 +415,17 @@ export function toChatCompletion(resp: any, requestedModel: string): Record<stri
 
 function emitTrace(trace: TraceCtx | undefined, row: {
   model: string; status: "success" | "error"; started: number; usage?: Usage; input?: unknown; output?: string;
-  error_class?: string | null; error_message?: string | null; stop_reason?: string; cache_signature?: string;
+  error_class?: string | null; error_message?: string | null; stop_reason?: string;
+  provider?: ResponsesProvider;
+  cache_signature?: string;
+  /** Sanitized closed-code provider failure class (never the raw message). Stored even for metadata_only traces. */
+  provider_failure_class?: string | null;
 }) {
   if (!trace) return;
   // Cost is priced once, in traceLLMCall (token-pricing.ts), so this path cannot drift from the meter.
   traceLLMCall({
     ...trace,
-    provider: "openai",
+    provider: row.provider ?? "openai",
     model: row.model,
     job_kind: trace.job_kind ?? "chat",
     modality: "text",
@@ -386,6 +442,7 @@ function emitTrace(trace: TraceCtx | undefined, row: {
     metadata: {
       caller_function: trace.agent_id, ...(row.stop_reason ? { stop_reason: row.stop_reason } : {}),
       ...(row.cache_signature ? { provider_cache_signature: row.cache_signature } : {}),
+      ...(row.provider_failure_class ? { provider_failure_class: row.provider_failure_class } : {}),
       ...(row.usage ? {
         provider_total_input_tokens: row.usage.total_input,
         provider_cache_write_30m_tokens: row.usage.write30m,
@@ -399,12 +456,12 @@ function emitTrace(trace: TraceCtx | undefined, row: {
 }
 
 /** The failure, read once: a short detail for the trace, and the class the provider's response proves. */
-async function failureOf(resp: Response): Promise<{ detail: string; failureClass: ProviderFailureClass }> {
+async function failureOf(resp: Response, provider: ResponsesProvider = "openai"): Promise<{ detail: string; failureClass: ProviderFailureClass }> {
   let e: any = null;
   try { e = (await resp.json())?.error ?? null; } catch { /* not JSON */ }
   const detail = e ? [e.type, e.code, e.message].filter((x) => typeof x === "string").join(": ").slice(0, 500) || `http_${resp.status}` : `http_${resp.status}`;
   const failureClass = classifyProviderFailure({
-    provider: "openai", status: resp.status,
+    provider, status: resp.status,
     errorType: typeof e?.type === "string" ? e.type : null, errorCode: typeof e?.code === "string" ? e.code : null,
     message: typeof e?.message === "string" ? e.message : null,
   });
@@ -413,49 +470,50 @@ async function failureOf(resp: Response): Promise<{ detail: string; failureClass
 
 /** Non-streaming Responses call, returned in chat-completion shape. Throws on any failure. */
 export async function responsesCompletion(body: ChatShapeBody, opts: ResponsesCallOpts, trace?: TraceCtx): Promise<Record<string, unknown>> {
+  const profile = profileOf(opts.provider);
   const req = buildResponsesRequest({ ...body, stream: false }, opts); // refuses governed tool types before the key is read
-  const key = openaiKey();
+  const key = profile.key();
   const started = Date.now();
   const doFetch = opts.fetchImpl ?? fetch;
   let resp: Response;
   try {
-    resp = await doFetch(`${baseUrl()}${RESPONSES_PATH}`, {
+    resp = await doFetch(`${profile.baseUrl}${RESPONSES_PATH}`, {
       method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+      headers: { "content-type": "application/json", authorization: `Bearer ${key}`, ...profile.headers },
       body: JSON.stringify(req),
       signal: AbortSignal.timeout(MODEL_CALL_DEADLINE_MS),
     });
   } catch (e) {
-    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: "network", error_message: String((e as Error)?.message ?? e).slice(0, 500) });
+    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: "network", error_message: String((e as Error)?.message ?? e).slice(0, 500) });
     throw e;
   }
   if (!resp.ok) {
     // failureOf reads the body ONCE: the trace's short detail and the fabric's closed class.
-    const f = await failureOf(resp);
-    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: f.detail });
+    const f = await failureOf(resp, profile.provider);
+    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass });
     // INT-334 — carry the closed failure class (and the status) ON the throw, so the fabric's
     // consumer seam can classify a failed non-stream leg without parsing the message text.
-    throw Object.assign(new Error(`OpenAI ${resp.status}: ${f.detail}`), { status: resp.status, failureClass: f.failureClass });
+    throw Object.assign(new Error(`${profile.provider} ${resp.status}: ${f.detail}`), { status: resp.status, failureClass: f.failureClass });
   }
   let data: any;
   try {
     data = await resp.json();
   } catch (e) {
     const m = String((e as Error)?.message ?? e).slice(0, 500);
-    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: "invalid_json", error_message: m });
-    throw new Error(`OpenAI returned a non-JSON body: ${m}`);
+    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: "invalid_json", error_message: m });
+    throw new Error(`${profile.provider} returned a non-JSON body: ${m}`);
   }
   // Only a completed or incomplete response carries an answer; failed, cancelled, queued or in-progress
   // (or an error object) is an error, never a quiet empty success.
   if (data?.error || (data?.status !== "completed" && data?.status !== "incomplete")) {
     const msg = String(data?.error?.message ?? `response status ${data?.status ?? "missing"}`).slice(0, 500);
-    emitTrace(trace, { model: typeof data?.model === "string" ? data.model : opts.model, status: "error", started, input: body.messages, error_class: "response_failed", error_message: msg });
-    throw new Error(`OpenAI response not completed: ${msg}`);
+    emitTrace(trace, { provider: profile.provider, model: typeof data?.model === "string" ? data.model : opts.model, status: "error", started, input: body.messages, error_class: "response_failed", error_message: msg });
+    throw new Error(`${profile.provider} response not completed: ${msg}`);
   }
-  const chat = toChatCompletion(data, opts.model);
+  const chat = toChatCompletion(data, opts.model, profile.provider);
   const msg = (chat.choices as any[])[0].message;
   emitTrace(trace, {
-    model: chat.model as string, status: "success", started, usage: readUsage(data?.usage), input: body.messages,
+    provider: profile.provider, model: chat.model as string, status: "success", started, usage: readUsage(data?.usage), input: body.messages,
     output: msg.content, stop_reason: (chat.paige_stop as { stop_reason: string }).stop_reason,
     cache_signature: trace ? await cacheRequestSignature(req) : undefined,
   });
@@ -481,8 +539,9 @@ export interface ResponsesAcquisition {
 }
 
 export async function responsesStream(body: ChatShapeBody, opts: ResponsesStreamOpts, trace?: TraceCtx): Promise<{ ok: boolean; status: number; body?: ReadableStream<Uint8Array>; error?: string; failureClass?: ProviderFailureClass; acquisition?: Promise<ResponsesAcquisition> }> {
+  const profile = profileOf(opts.provider);
   const req = buildResponsesRequest(body, opts);
-  const key = openaiKey();
+  const key = profile.key();
   const started = Date.now();
   const doFetch = opts.fetchImpl ?? fetch;
   if (opts.signal?.aborted) return { ok: false, status: 0, failureClass: "unknown" };
@@ -490,20 +549,20 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesStream
   const signal = opts.signal ? AbortSignal.any([opts.signal, deadline]) : deadline;
   let resp: Response;
   try {
-    resp = await doFetch(`${baseUrl()}${RESPONSES_PATH}`, {
+    resp = await doFetch(`${profile.baseUrl}${RESPONSES_PATH}`, {
       method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+      headers: { "content-type": "application/json", authorization: `Bearer ${key}`, ...profile.headers },
       body: JSON.stringify({ ...req, stream: true }),
       signal,
     });
   } catch (e) {
     const m = String((e as Error)?.message ?? e).slice(0, 500);
-    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: opts.signal?.aborted ? "stream_interrupted" : "network", error_message: m });
-    return { ok: false, status: 0, error: m, failureClass: opts.signal?.aborted ? "unknown" : classifyProviderFailure({ provider: "openai", status: 0, transport: (e as Error)?.name === "TimeoutError" ? "timeout" : "network" }) };
+    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: opts.signal?.aborted ? "stream_interrupted" : "network", error_message: m });
+    return { ok: false, status: 0, error: m, failureClass: opts.signal?.aborted ? "unknown" : classifyProviderFailure({ provider: profile.provider, status: 0, transport: (e as Error)?.name === "TimeoutError" ? "timeout" : "network" }) };
   }
   if (!resp.ok || !resp.body) {
-    const f = resp.ok ? { detail: "missing_body", failureClass: "provider_outage" as ProviderFailureClass } : await failureOf(resp);
-    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: resp.ok ? "missing_body" : `http_${resp.status}`, error_message: f.detail });
+    const f = resp.ok ? { detail: "missing_body", failureClass: "provider_outage" as ProviderFailureClass } : await failureOf(resp, profile.provider);
+    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: resp.ok ? "missing_body" : `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass });
     return { ok: false, status: resp.status, error: f.detail, failureClass: f.failureClass };
   }
 
@@ -654,7 +713,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesStream
               const t = toolFor(ev) ?? await openTool(controller, [keyOf(ev), typeof ev.output_index === "number" ? `ix:${ev.output_index}` : null], ev.item.call_id, ev.item.name);
               await settleArgs(controller, t, ev.item.arguments);
             } else if (type === "response.output_item.done" && ev.item?.type === "reasoning") {
-              await send(controller, { choices: [{ index: 0, delta: { paige_provider_items: [ev.item], paige_provider: providerTag(opts.model) }, finish_reason: null }] });
+              await send(controller, { choices: [{ index: 0, delta: { paige_provider_items: [ev.item], paige_provider: providerTag(opts.model, profile.provider) }, finish_reason: null }] });
             } else if (type === "response.completed" || type === "response.incomplete") {
               acquire({ ok: true });
               finalResponse = ev.response;
@@ -664,7 +723,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesStream
               failure = String(ev.response?.error?.message ?? "response failed").slice(0, 500);
               const error = ev.response?.error;
               const failureClass = ev.response?.status === "failed" ? classifyProviderFailure({
-                provider: "openai", status: resp.status,
+                provider: profile.provider, status: resp.status,
                 errorCode: typeof error?.code === "string" ? error.code : null,
                 errorType: typeof error?.type === "string" ? error.type : null,
               }) : "unknown";
@@ -674,7 +733,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesStream
               failure = String(ev.message ?? ev.error?.message ?? "stream error").slice(0, 500);
               const error = ev.error ?? ev;
               acquisitionFailed = acquire({ ok: false, failureClass: classifyProviderFailure({
-                provider: "openai", status: resp.status,
+                provider: profile.provider, status: resp.status,
                 errorCode: typeof error?.code === "string" ? error.code : null,
                 errorType: typeof error?.type === "string" ? error.type : null,
               }) });
@@ -708,6 +767,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesStream
           }
         } finally {
         emitTrace(trace, {
+          provider: profile.provider,
           model: servedModel ?? opts.model,
           status: errored || cancelled ? "error" : "success",
           started,

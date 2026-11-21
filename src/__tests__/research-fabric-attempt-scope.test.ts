@@ -41,14 +41,18 @@ function fixture(options: { primaryStatus?: number; budget?: () => Promise<numbe
   });
   const constants = { ...moduleAt('_shared/openai-models.ts'), ...moduleAt('_shared/claude-models.ts') };
   const failures = moduleAt('_shared/provider-failure.ts'); const types = moduleAt('_shared/provider-types.ts');
+  // moduleAt strips imports: the OpenRouter Model Fabric change made openrouter-models.ts a
+  // dependency of these modules. Supply the real canonical constants; with no key resolved here
+  // the OpenRouter candidate stays skipped and the original recorded chain is unchanged.
+  const openrouter = moduleAt('_shared/openrouter-models.ts');
   const budget = { traceAdmin: () => ({}), resolveCeiling: async () => 10, accruedSpendToday: options.budget ?? (async () => 0), BudgetExceeded, enforceBudget };
   const ports = { ...constants, ...failures, ...types, ...budget, Deno: { env: { get: (key: string) => key.endsWith('API_KEY') ? 'controlled-not-a-secret' : undefined } }, fetch: fetchPort, traceLLMCall };
   const claude = moduleAt('_shared/claude.ts', ports);
   // moduleAt strips imports: supply the REAL new canonical pricing dependency,
   // preserving actual provider translation rather than stubbing its arithmetic.
-  const openai = moduleAt('_shared/openai-responses.ts', { ...ports, ...moduleAt('_shared/token-pricing.ts'), envKey: () => 'controlled-not-a-secret', assertModelAllowed: () => {} });
-  const policy = moduleAt('_shared/paige-turn/route.ts', constants);
-  const fabric = moduleAt('_shared/model-fabric.ts', { ...ports, ...claude, ...openai, ...policy });
+  const openai = moduleAt('_shared/openai-responses.ts', { ...ports, ...openrouter, ...moduleAt('_shared/token-pricing.ts'), envKey: () => 'controlled-not-a-secret', assertModelAllowed: () => {} });
+  const policy = moduleAt('_shared/paige-turn/route.ts', { ...constants, ...openrouter });
+  const fabric = moduleAt('_shared/model-fabric.ts', { ...ports, ...claude, ...openai, ...policy, ...openrouter, envKey: () => undefined });
   const legacy = vi.fn(async (_job?: unknown, _body?: unknown, _trace?: unknown) => ({ model: 'controlled-legacy', choices: [{ message: { content: strategyText } }] }));
   const adapter = (flag: boolean) => moduleAt<ResearchModule>('paige-deep-research/fabric.ts', { routedChatCompletion: legacy, fabricCompletion: fabric.fabricCompletion }, flag);
   const recall = vi.fn(options.recall ?? (async () => []));

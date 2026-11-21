@@ -1278,6 +1278,47 @@ GRANT EXECUTE ON FUNCTION public.studio_save_page(uuid,uuid,jsonb,jsonb,uuid,tim
 -- clearance. Original service INSERT and claim CAS stay canonical. PG17's exact
 -- ACL includes built-in MAINTAIN; the isolated PG16 port has the same grants
 -- without that version-specific privilege. No legacy rows are rewritten.
+-- E01 finite ACK df69c01b: validate and serialize the entire original PPA
+-- source before removing ONLY the measured PG17+ bootstrap maintenance excess.
+DO $source_maintenance_preflight$
+DECLARE columns_now text[]; original_acl text; pg_version integer:=current_setting('server_version_num')::integer;
+BEGIN
+ BEGIN
+  LOCK TABLE public.paige_pending_confirmations IN ACCESS EXCLUSIVE MODE;
+ EXCEPTION WHEN undefined_table THEN
+  RAISE EXCEPTION 'Original confirmation source relation unavailable before maintenance repair' USING ERRCODE='55000';
+ END;
+ SELECT array_agg(attname::text ORDER BY attnum) INTO columns_now
+ FROM pg_attribute WHERE attrelid='public.paige_pending_confirmations'::regclass
+  AND attnum>0 AND NOT attisdropped;
+ SELECT relacl::text INTO original_acl FROM pg_class WHERE oid='public.paige_pending_confirmations'::regclass;
+ IF (pg_version>=170000
+     AND original_acl IS DISTINCT FROM '{postgres=arwdDxtm/postgres,authenticated=r/postgres,service_role=arwdDxtm/postgres}'
+     AND original_acl IS DISTINCT FROM '{postgres=arwdDxtm/postgres,anon=m/postgres,authenticated=rm/postgres,service_role=arwdDxtm/postgres}')
+  OR (pg_version<170000 AND original_acl IS DISTINCT FROM '{postgres=arwdDxt/postgres,authenticated=r/postgres,service_role=arwdDxt/postgres}') THEN
+  RAISE EXCEPTION 'Original confirmation source ACL preimage changed before maintenance repair' USING ERRCODE='55000';
+ END IF;
+ IF columns_now IS DISTINCT FROM ARRAY['id','user_id','tenant_id','thread_id','scoped_client_id','tool_name','fingerprint','args','summary','created_at','expires_at','consumed_at','issued_in_request','server_issued_at','claimed_in_request']
+  OR (SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid='public.paige_pending_confirmations'::regclass) IS DISTINCT FROM 'postgres'
+  OR NOT (SELECT relrowsecurity AND NOT relforcerowsecurity FROM pg_class WHERE oid='public.paige_pending_confirmations'::regclass)
+  OR EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='public.paige_pending_confirmations'::regclass AND attnum>0 AND NOT attisdropped AND attacl IS NOT NULL)
+  OR (SELECT count(*) FROM pg_policy WHERE polrelid='public.paige_pending_confirmations'::regclass)<>2
+  OR NOT EXISTS(SELECT 1 FROM pg_policy WHERE polrelid='public.paige_pending_confirmations'::regclass
+   AND polname='paige_pending_confirmations_own' AND polcmd='*' AND NOT polpermissive
+   AND polroles=ARRAY['authenticated'::regrole]::oid[]
+   AND pg_get_expr(polqual,polrelid)='(user_id = auth.uid())' AND pg_get_expr(polwithcheck,polrelid)='(user_id = auth.uid())')
+  OR NOT EXISTS(SELECT 1 FROM pg_policy WHERE polrelid='public.paige_pending_confirmations'::regclass
+   AND polname='paige_pending_confirmations_read' AND polcmd='r' AND polpermissive
+   AND polroles=ARRAY['authenticated'::regrole]::oid[] AND polwithcheck IS NULL
+   AND pg_get_expr(polqual,polrelid)='(user_id = auth.uid())')
+  OR EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='public.paige_pending_confirmations'::regclass AND NOT tgisinternal) THEN
+  RAISE EXCEPTION 'Original confirmation source protection changed before maintenance repair' USING ERRCODE='55000';
+ END IF;
+ IF pg_version>=170000 AND original_acl='{postgres=arwdDxtm/postgres,anon=m/postgres,authenticated=rm/postgres,service_role=arwdDxtm/postgres}' THEN
+  EXECUTE 'REVOKE MAINTAIN ON TABLE public.paige_pending_confirmations FROM anon, authenticated';
+ END IF;
+END $source_maintenance_preflight$;
+
 DO $source_preflight$
 DECLARE columns_now text[];
 BEGIN

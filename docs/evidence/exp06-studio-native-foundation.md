@@ -1,5 +1,9 @@
 # EXP06 native foundation increment
 
+## Current migration order
+
+EXP05's original migration 33 is on main in `e735e98be253c71d712ebcbbed2974dd915f7864`, with its production receipt in run 44951682629, artifact 14726001659. EXP07's migration 38 reached main in `a5b7445ff739cd8ff843b06575cb51c01a681aa0` and is recorded in production. The existing version guard refuses unapplied Studio migration 37 against that frontier. Main and production have no 37 or 39, and the existing managed-branch inventory contains no EXP06 Preview. Following [the conditional reservation](https://linear.app/paigeagentai/issue/ANT-147#comment-8d9844ed-f7eb-4380-a11e-1117d9af0096), the same SQL moves to `20271133000039_exp06_studio_source_binding.sql`. The SQL retains SHA-256 `59545eaaafaa6332e112301eaa367c55b7735c94545e38a971032c6c73c86378`, and the proof runner follows its new path. The earlier carrier and test results below are historical. Full checks and production verification for the composed head remain pending.
+
 This is the first independently releasable native increment of the same approved universal SOLO NEXUS landing-page and continuous Studio-window outcome. The complete implementation/history is preserved on `codex/exp06-nexus-landing-window`, now local `383004dfeb8a8435fd2cc80572d3a86ce47a042f`; draft #3351 is its earlier published reference. No original scope or receipt is discarded by the split.
 
 ## November 21 genuine PG17 checkpoint

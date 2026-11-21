@@ -1751,12 +1751,17 @@ const mirrorConfirms = (st) => (t, row) => {
     // The ordinary workspace process cases need the real server persona precondition,
     // not the harness's intentionally workspace-less client-seat default.
     get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT }], error: null },
+    is_tenant_admin_as: { data: true, error: null },
   } };
   const AS_CLIENT = { get_actor_access: { data: { tier: "client" }, error: null } };
   /** Model the process tables. The trigger catalogue is real reference data; the automations table
    *  records what was inserted so the invariant can be read off the write itself. */
   function processStore({ resolved = { effective: "confirm", capped_by: null, would_run: false, dark: [] } } = {}) {
     return {
+      // Explicit ordinary owner seat for this process fixture, not a global
+      // authority default. Native authorization remains a separate real proof.
+      tenant_members: filters => [{ tenant_id: CALLER_TENANT, user_id: USER, role: "owner", status: "active" }]
+        .filter(row => filters.every(([op, column, value]) => op !== "eq" || row[column] === value)),
       paige_automation_triggers: (filters) => {
         const key = filters.find((f) => f[0] === "eq" && f[1] === "key")?.[2];
         const rows = [
@@ -1767,7 +1772,12 @@ const mirrorConfirms = (st) => (t, row) => {
       },
       paige_automations: () => [{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "New lead welcome", granted_lane: "auto", state: "live" }],
       paige_automation_acts: () => [],
-      __rpc: { resolve_automation_autonomy: { data: resolved, error: null } },
+      __rpc: { resolve_automation_autonomy: { data: resolved, error: null },
+        save_automation_draft: args => ({ data: { phase: 'saved', request_id: args._request_id,
+          automation_id: args._request_id, tenant_id: args._expected_tenant_id, actor_id: USER,
+          receipt_id: 'a5500000-0000-4000-8000-000000000004', steps: args._draft.steps.length,
+          state: 'draft', granted_lane: 'confirm', execution_started: false, updated_at: '2026-11-13T17:00:00Z' }, error: null }),
+      },
     };
   }
 
@@ -1783,6 +1793,8 @@ const mirrorConfirms = (st) => (t, row) => {
         toolCall: { name, args: { automation_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", lane: "auto", state: "live", confirm: true } },
         rpcOverrides: {
           get_actor_access: { data: { tier: "tenant" }, error: null },
+          get_paige_persona_context: AUTO.rpcOverrides.get_paige_persona_context,
+          is_tenant_admin_as: AUTO.rpcOverrides.is_tenant_admin_as,
           ...store.__rpc,
           ...(lane === null ? {} : { resolve_tool_autonomy: { data: lane, error: null } }),
         },
@@ -1861,18 +1873,23 @@ const mirrorConfirms = (st) => (t, row) => {
     rpcOverrides: { ...AUTO.rpcOverrides, ...st.__rpc },
     tablesExtra: st,
   });
-  const row = built.rec.inserts.find((i) => i.table === "paige_automations")?.row;
+  const draftCall = built.rec.rpc.find(c => c.name === "save_automation_draft");
+  const row = draftCall?.args?._draft;
   assert("15.1 a process Paige builds is born asking-first and switched off",
-    !!row && row.granted_lane === "confirm" && row.state === "draft",
+    !!row && !('granted_lane' in row) && !('state' in row)
+      && built.modelEgress.map(b=>typeof b==='string'?b:JSON.stringify(b)).join('').replace(/\\"/g,'"').includes('"state":"draft"'),
     JSON.stringify(row ?? null));
   // Kills: passing the model's arguments straight through, or defaulting these columns instead of
   // setting them. Either would let "just run it automatically" arm a process nobody reviewed.
   assert("15.2 …even when the call it was given said auto and live",
-    !!row && row.granted_lane !== "auto" && row.state !== "live",
+    !!row && row.granted_lane !== "auto" && row.state !== "live"
+      && !built.rec.inserts.some(i=>['paige_automations','paige_automation_acts'].includes(i.table)),
     JSON.stringify(row ?? null));
   assert("15.3 …and it is stamped with the server-resolved tenant and its author",
-    !!row && Object.prototype.hasOwnProperty.call(row, "tenant_id") && row.created_by === USER,
-    JSON.stringify(row ?? null));
+    !!row && draftCall.client === 'jwt' && draftCall.authorization === 'Bearer test-jwt'
+      && draftCall.args._expected_tenant_id === CALLER_TENANT
+      && !('tenant_id' in row) && !('created_by' in row),
+    JSON.stringify(draftCall ?? null));
 
   // A trigger that is not in the catalogue must be refused rather than invented, or Paige will
   // cheerfully build a process that can never fire.

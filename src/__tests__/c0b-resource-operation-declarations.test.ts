@@ -4,6 +4,7 @@ import { C0B_RESOURCE_OPERATION_CAPABILITIES } from "../../supabase/functions/_s
 import { LEGACY_CAPABILITIES } from "../../supabase/functions/_shared/paige-capability-status/legacy-capabilities";
 import { classifyAction, mutatingTools } from "../../supabase/functions/_shared/action-risk";
 import { projectCapabilities, type Lane } from "../../supabase/functions/_shared/paige-capability-status/projection";
+import { authorityAdmits, requiresWorkspaceAdmin } from "../../supabase/functions/_shared/workspace-authority";
 
 // Frozen incumbent declarations, not expectations derived from the new declarations.
 const prior = [
@@ -26,7 +27,9 @@ describe("C0b incumbent resource operations", () => {
     const cap = C0B_RESOURCE_OPERATION_CAPABILITIES.find(c => c.action?.chatTool === tool);
     expect(cap).toMatchObject({ domain, selfDescribe, readiness, maturity: "PARTIAL", mindBinding: "UNAVAILABLE", chatBinding: "LIVE",
       action: { classification, riskPolicyKey: classification === "read" ? "read_only" : classifyAction(tool),
-        approvalAuthority: classification === "read" ? "none" : "chat-canonical", seatAuthority: admin ? "workspace-admin" : "member" } });
+        // Preserve the frozen roster above: only the repaired atomic draft now
+        // requires the same active owner/admin seat as its native writer.
+        approvalAuthority: classification === "read" ? "none" : "chat-canonical", seatAuthority: tool === "automation_draft" ? "door-seat" : admin ? "workspace-admin" : "member" } });
     expect(cap?.action?.idempotency.length).toBeGreaterThan(70);
   });
   it("preserves visible facts for admin/member and confirm/auto/off, including provider unavailable", () => {
@@ -48,5 +51,22 @@ describe("C0b incumbent resource operations", () => {
     }
     expect(classifyAction("automation_set_grant")).toBe("owner_only");
     expect(classifyAction("automation_set_state")).toBe("owner_only");
+  });
+  it("projects atomic draft availability from the original active-seat gate without an Operator override", () => {
+    const tool = "automation_draft";
+    expect(prior.find(row => row[0] === tool)?.[3]).toBe(false);
+    expect(requiresWorkspaceAdmin(tool, new Set())).toBe(true);
+    for (const workspaceAdmin of [false, true]) for (const platformOperator of [false, true]) for (const seat of [false, true]) {
+      for (const lane of ["confirm", "auto", "off"] as Lane[]) {
+        const authority = { workspaceAdmin, platformOperator, seat };
+        const rows = projectCapabilities({ tools: [{ name: tool, description: "Save an unapproved automation draft." }],
+          spine: C0B_RESOURCE_OPERATION_CAPABILITIES, legacy: {}, isMutating: name => mutatingTools().has(name),
+          lanes: new Map([[tool, lane]]), workspaceAdminTools: new Set([tool]),
+          isWorkspaceAdmin: name => authorityAdmits(name, authority, new Set()), readiness: new Map() });
+        expect(rows).toHaveLength(1);
+        expect(rows[0].availability).toBe(!seat ? "not_for_tier" : lane === "auto" ? "live" : "needs_approval");
+        expect(rows[0].actionKind).toBe("update");
+      }
+    }
   });
 });

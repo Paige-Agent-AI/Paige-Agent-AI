@@ -11,6 +11,7 @@ import { runEventActs, type EngineDb } from '../../supabase/functions/_shared/pa
 import { executeApprovedLayerCAct, type ApproveExecutorDb } from '../../supabase/functions/_shared/paige-orchestration/approve-executor';
 import { nativeAdapter } from '../../supabase/functions/_shared/paige-orchestration/native-adapter';
 import { createWeeklyDraftDeadline } from '../../supabase/functions/_shared/paige-orchestration/weekly-draft-deadline';
+import { saveAutomationDraft } from '../../supabase/functions/_shared/paige-orchestration/automation-draft-save';
 const source = readFileSync('supabase/functions/paige-ai-chat/index.ts', 'utf8');
 const ast = ts.createSourceFile('chat.ts', source, ts.ScriptTarget.Latest, true);
 let branch: ts.Statement | undefined;
@@ -23,7 +24,8 @@ function visit(n: ts.Node) {
 visit(ast);
 if (!branch) throw new Error('Canonical automation draft dispatch missing');
 const code = ts.transpileModule(`async function dispatch(tc, supabaseClient, personaCtx, user, toolResults,
-  databaseAnswered, OUTCOME_UNKNOWN_NOTE, requestExecutionState, createWeeklyDraftDeadline, req, tenantKnowledgeScopeRevoked) ${branch.getText(ast)}`,
+  databaseAnswered, OUTCOME_UNKNOWN_NOTE, requestExecutionState, createWeeklyDraftDeadline, req, tenantKnowledgeScopeRevoked,
+  saveAutomationDraft, approvalSpend, stableRunId, payloadThreadId, payloadRequestIntentId, requestNonce, WALL_CLOCK_MS, startedAt) ${branch.getText(ast)}`,
 { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const dispatch = new Function(`${code}; return dispatch;`)();
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -34,48 +36,55 @@ async function drive(fault = '', args: object = input, onStage?: (name: string) 
   const state = { processes: [] as Row[], acts: [] as Row[], writes: [] as { table: string; op: string; filters: unknown[] }[], reads: [] as string[] };
   const recovery = { needsReview: false }, outputs: Array<{ content: string }> = [];
   let scopeReads = 0;
-  const caller = { rpc: async (name: string) => { await onStage?.(`rpc:${name}`); return name === 'current_user_tenant_id'
-    ? { data: fault === 'wrong-scope' || fault === 'scope-after-create' && ++scopeReads > 2 ? id(99) : tenant, error: null }
-    : fault === 'posture-throws' ? Promise.reject(new TypeError('response lost'))
-    : fault === 'posture-unavailable' ? { data: null, error: { code: 'PGRST000' } } : { data: { effective: 'confirm', dark: [], can_fire: false }, error: null }; },
+  const nativeRead = () => ({ phase: ['concurrent-edit', 'missing-steps'].includes(fault) ? 'changed' : 'saved',
+    request_id: process, automation_id: process, actor_id: actor, tenant_id: tenant, receipt_id: id(7),
+    state: 'draft', granted_lane: 'confirm', steps: state.acts.length, execution_started: false, updated_at: version });
+  const caller = { rpc: async (name: string, nativeArgs?: Record<string, unknown>) => {
+    if (name === 'save_automation_draft') state.writes.push({ table: 'rpc:save_automation_draft', op: 'call', filters: [] });
+    state.reads.push('rpc:' + name);
+    await onStage?.('rpc:' + name);
+    if (name === 'current_user_tenant_id') return {
+      data: fault === 'wrong-scope' || fault === 'scope-after-create' && ++scopeReads > 2 ? id(99) : tenant, error: null };
+    if (name === 'save_automation_draft') {
+      expect(nativeArgs?._request_id).toBe(process); expect(nativeArgs?._expected_tenant_id).toBe(tenant);
+      const d = nativeArgs?._draft as typeof input & { category: string };
+      expect(d).not.toHaveProperty('state'); expect(d).not.toHaveProperty('granted_lane');
+      expect(d).not.toHaveProperty('tenant_id'); expect(d).not.toHaveProperty('created_by');
+      if (['create-refused', 'name-conflict', 'step-fail'].includes(fault)) return {
+        data: null, error: { code: fault === 'create-refused' ? '42501' : fault === 'name-conflict' ? '23505' : '23514' } };
+      // Explicit atomic-native port only. The real SQL/rollback/receipt proof is
+      // scripts/proof/automation-draft-atomic.mjs; this does not pretend to run SQL.
+      state.processes.push({ id: process, tenant_id: tenant, created_by: actor, name: d.name, category: d.category,
+        trigger_key: d.trigger_key, state: 'draft', granted_lane: 'confirm', updated_at: version });
+      state.acts.push(...d.steps.map((s, n) => ({ id: id(30 + n), automation_id: process, position: n + 1,
+        action_kind: s.action_kind ?? null, tool_key: (s as { tool_key?: string }).tool_key ?? null, config: s.config ?? {} })));
+      if (fault === 'concurrent-edit') state.processes[0].name = 'Changed by another authorized request';
+      if (fault === 'missing-steps') state.acts = [];
+      if (['create-lost','steps-lost','read-unavailable','concurrent-edit','missing-steps'].includes(fault))
+        throw new TypeError('Lost atomic save acknowledgment');
+      return { data: nativeRead(), error: null };
+    }
+    if (name === 'read_automation_draft') {
+      expect(nativeArgs?._request_id).toBe(process); expect(nativeArgs?._expected_tenant_id).toBe(tenant);
+      return fault === 'read-unavailable' ? { data: null, error: { code: '08006' } } : { data: nativeRead(), error: null };
+    }
+    if (fault === 'posture-throws') throw new TypeError('Read-only readiness response lost');
+    return fault === 'posture-unavailable' ? { data: null, error: { code: 'PGRST000' } }
+      : { data: { effective: 'confirm', dark: [], can_fire: false }, error: null };
+  },
   from(table: string) {
-    let op = 'read', value: unknown, columns = '', single = false;
-    const filters: Array<[string, unknown]> = [];
-    const execute = async () => {
-      await onStage?.(`${table}:${op}`);
-      if (op !== 'read') state.writes.push({ table, op, filters }); else state.reads.push(table);
-      if (table === 'paige_automation_triggers') return { data: { key: input.trigger_key, is_live: true, dark_reason: null }, error: null };
-      const rows = table === 'paige_automations' ? state.processes : state.acts;
-      if (op === 'insert') {
-        if (table === 'paige_automations' && fault === 'create-refused') return { data: null, error: { code: '42501', message: 'denied' } };
-        if (table === 'paige_automations' && fault === 'name-conflict') return { data: null, error: { code: '23505', message: 'duplicate' } };
-        if (table === 'paige_automation_acts' && ['step-fail', 'cleanup-zero', 'concurrent-edit'].includes(fault)) {
-          if (fault === 'concurrent-edit') state.processes[0].updated_at = '2026-10-15T16:01:00Z';
-          return { data: null, error: { code: '23514', message: 'step refused' } };
-        }
-        rows.push(...(Array.isArray(value) ? value : [value]).map((v: Row) => ({ ...v, id: process, updated_at: version })));
-        // The real acts trigger fingerprints the chain and updates its parent revision.
-        if (table === 'paige_automation_acts') state.processes[0].updated_at = '2026-10-15T16:00:01Z';
-        if (table === 'paige_automations' && fault === 'create-lost') return { data: null, error: { code: '', message: 'response lost' } };
-        if (table === 'paige_automation_acts' && fault === 'steps-lost') return { data: null, error: { code: '', message: 'response lost' } };
-      }
-      const matches = rows.filter(row => filters.every(([k, v]) => row[k] === v));
-      if (op === 'delete' && fault !== 'cleanup-zero') {
-        state.processes = state.processes.filter(row => !matches.includes(row));
-        state.acts = state.acts.filter(row => !matches.some(p => p.id === row.automation_id));
-      }
-      if (op === 'read' && table === 'paige_automation_acts' && fault === 'missing-steps') return { data: [], error: null };
-      if (op === 'delete' && fault === 'cleanup-zero') return { data: [], error: null };
-      const project = (row: Row) => !columns ? row : Object.fromEntries(columns.split(',').map(k => [k, row[k]]));
-      return { data: single ? matches[0] ? project(matches[0]) : null : matches.map(project), error: null };
-    };
-    const q = { select(c: string) { columns = c; return q; }, insert(v: unknown) { value = v; op = 'insert'; return q; }, delete() { op = 'delete'; return q; },
-      eq(k: string, v: unknown) { filters.push([k, v]); return q; }, order() { return q; },
-      single() { single = true; return q; }, maybeSingle() { single = true; return q; }, then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) { return execute().then(resolve, reject); } };
+    // All original table writes/cleanup have been retired from this handler.
+    expect(table).toBe('paige_automation_triggers');
+    const execute = async () => { state.reads.push(table); await onStage?.(table + ':read');
+      return { data: { key: input.trigger_key, is_live: true, dark_reason: null }, error: null }; };
+    const q = { select() { return q; }, eq() { return q; }, maybeSingle() { return q; },
+      then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) { return execute().then(resolve, reject); } };
     return q;
   } };
   await dispatch({ id: 'draft-call', function: { name: 'automation_draft', arguments: JSON.stringify(args) } }, caller, { tenant_id: tenant }, { id: actor }, outputs,
-    databaseAnswered, OUTCOME_UNKNOWN_NOTE, recovery, createWeeklyDraftDeadline, { signal }, false);
+    databaseAnswered, OUTCOME_UNKNOWN_NOTE, recovery, createWeeklyDraftDeadline, { signal }, false,
+    saveAutomationDraft, new Map([['original-claimed-approval', 'draft-call']]), async () => process,
+    id(4), id(5), id(6), 22_000, Date.now());
   expect(outputs).toHaveLength(1);
   return { state, result: JSON.parse(outputs[0].content), recovery };
 }
@@ -106,14 +115,15 @@ describe('automation draft elapsed budget and late replies', () => {
     vi.useFakeTimers();
     const stages: string[] = []; let settled = false;
     const pending = drive('', input, name => {
-      stages.push(name); return new Promise<void>(resolve => setTimeout(resolve, 2_000));
+      stages.push(name); return new Promise<void>(resolve => setTimeout(resolve, name === 'rpc:save_automation_draft' ? 4_000 : 2_000));
     }).then(result => { settled = true; return result; });
     try {
       await vi.advanceTimersByTimeAsync(8_001);
       expect(settled).toBe(true);
       const r = await pending;
       expect(r.result).toMatchObject({ success: false, outcome_unknown: true, execution_started: false });
-      expect(stages).not.toContain('paige_automation_acts:insert');
+      expect(stages.filter(s => s === 'rpc:save_automation_draft')).toHaveLength(1);
+      expect(stages).not.toContain('rpc:read_automation_draft');
       expect(r.state.writes).toHaveLength(1);
     } finally { try { await vi.runAllTimersAsync(); await pending; } finally { vi.useRealTimers(); } }
   });
@@ -131,7 +141,7 @@ describe('automation draft elapsed budget and late replies', () => {
     expect(r.result).toMatchObject({ success: false, outcome_unknown: true, automation_id: process });
     expect(r.recovery.needsReview).toBe(true);
     expect(r.state.processes).toHaveLength(1); expect(r.state.acts).toHaveLength(1);
-    expect(r.state.writes).toHaveLength(2);
+    expect(r.state.writes).toHaveLength(1);
   });
 
   it.each(['rpc:current_user_tenant_id', 'paige_automation_triggers:read'])('expires before a write when %s is delayed; late completion cannot resume it', async stage => {
@@ -142,33 +152,33 @@ describe('automation draft elapsed budget and late replies', () => {
     expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
   });
 
-  it('retains unknown creation after its reply expires and never starts late steps or cleanup', async () => {
-    const r = await delayedDraft('paige_automations:insert');
+  it('retains uncertain atomic creation after expiry and never starts a second write or cleanup', async () => {
+    const r = await delayedDraft('rpc:save_automation_draft');
     expect(r.settledAtDeadline).toBe(true);
     expect(r.result).toMatchObject({ success: false, outcome_unknown: true, execution_started: false });
     expect(r.recovery.needsReview).toBe(true);
     expect(r.state.processes).toHaveLength(1);
-    expect(r.state.acts).toHaveLength(0);
+    expect(r.state.acts).toHaveLength(1);
     expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
     expect(r.state.writes).toHaveLength(1);
   });
 
-  it('retains the original ID when steps finish after expiry; no replay or cleanup follows', async () => {
-    const r = await delayedDraft('paige_automation_acts:insert');
+  it('retains the original ID when atomic readback finishes after expiry; no replay or cleanup follows', async () => {
+    const r = await delayedDraft('rpc:read_automation_draft', 'steps-lost');
     expect(r.settledAtDeadline).toBe(true);
     expect(r.result).toMatchObject({ success: false, outcome_unknown: true, automation_id: process, execution_started: false });
     expect(r.state.processes).toHaveLength(1); expect(r.state.acts).toHaveLength(1);
     expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
-    expect(r.state.writes).toHaveLength(2);
+    expect(r.state.writes).toHaveLength(1);
   });
 
   it('does not turn a late readback into a verified save', async () => {
-    const r = await delayedDraft('paige_automations:read');
+    const r = await delayedDraft('rpc:read_automation_draft', 'create-lost');
     expect(r.settledAtDeadline).toBe(true);
     expect(r.result).toMatchObject({ success: false, outcome_unknown: true, automation_id: process });
     expect(r.result.verified_readback).not.toBe(true);
     expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
-    expect(r.state.writes).toHaveLength(2);
+    expect(r.state.writes).toHaveLength(1);
   });
 
   it('bounds optional readiness without discarding an already verified saved draft', async () => {
@@ -176,17 +186,17 @@ describe('automation draft elapsed budget and late replies', () => {
     expect(r.settledAtDeadline).toBe(true);
     expect(r.result).toMatchObject({ success: true, verified_readback: true, state: 'draft', granted: 'confirm', readiness: 'unverified', what_it_would_do: null, execution_started: false });
     expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
-    expect(r.state.writes).toHaveLength(2);
+    expect(r.state.writes).toHaveLength(1);
   });
 
-  it('never calls a late compensation acknowledgement proof of non-application', async () => {
-    const r = await delayedDraft('paige_automations:delete', 'step-fail');
+  it('never calls a late native rollback acknowledgement proof of non-application', async () => {
+    const r = await delayedDraft('rpc:save_automation_draft', 'step-fail');
     expect(r.settledAtDeadline).toBe(true);
     expect(r.result).toMatchObject({ success: false, outcome_unknown: true, automation_id: process });
     expect(r.result.not_applied).not.toBe(true);
     expect(r.recovery.needsReview).toBe(true);
     expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
-    expect(r.state.writes.filter(w => w.op === 'delete')).toHaveLength(1);
+    expect(r.state.writes.filter(w => w.op === 'delete')).toHaveLength(0);
   });
 });
 
@@ -218,7 +228,8 @@ describe('automation draft exact configuration and recovery', () => {
   it('verifies the native process and ordered acts before claiming it was built', async () => {
     const { state, result } = await drive();
     expect(result).toMatchObject({ success: true, automation_id: process, state: 'draft', granted: 'confirm', verified_readback: true, execution_started: false });
-    expect(state.reads).toContain('paige_automations'); expect(state.reads).toContain('paige_automation_acts');
+    expect(state.reads).toContain('rpc:save_automation_draft');
+    expect(result).toMatchObject({ receipt_recorded: true, receipt_id: id(7) });
     expect(state.processes[0]).toMatchObject({ tenant_id: tenant, created_by: actor, state: 'draft', granted_lane: 'confirm' });
   });
   it('never grants autonomy from model-supplied grant or state fields', async () => {
@@ -236,20 +247,20 @@ describe('automation draft exact configuration and recovery', () => {
   });
   it('retains a committed process when its creation response is lost', async () => {
     const { state, result, recovery } = await drive('create-lost');
-    expect(state.processes).toHaveLength(1); expect(result).toMatchObject({ success: false, outcome_unknown: true });
-    expect(recovery.needsReview).toBe(true); expect(JSON.stringify(result)).not.toMatch(/different name|try again/i);
+    expect(state.processes).toHaveLength(1); expect(result).toMatchObject({ success: true, recovered: true, receipt_id: id(7) });
+    expect(state.writes).toHaveLength(1); expect(recovery.needsReview).toBe(false);
+    expect(JSON.stringify(result)).not.toMatch(/different name|try again/i);
   });
-  it('a zero-row cleanup acknowledgement does not prove the partial process was removed', async () => {
-    const { state, result, recovery } = await drive('cleanup-zero');
+  it('an unavailable original readback cannot prove rollback or authorize another save', async () => {
+    const { state, result, recovery } = await drive('read-unavailable');
     expect(state.processes).toHaveLength(1); expect(result).toMatchObject({ success: false, outcome_unknown: true, automation_id: process });
     expect(recovery.needsReview).toBe(true); expect(result.not_applied).not.toBe(true);
   });
-  it('known step refusal may report non-application only after deleting the exact unchanged new draft', async () => {
+  it('known native step refusal reports non-application without a compensating delete', async () => {
     const { state, result } = await drive('step-fail');
     expect(state.processes).toHaveLength(0); expect(result).toMatchObject({ success: false, not_applied: true });
-    expect(state.writes.find(w => w.op === 'delete')?.filters).toEqual(expect.arrayContaining([
-      ['id', process], ['tenant_id', tenant], ['created_by', actor], ['state', 'draft'], ['granted_lane', 'confirm'], ['updated_at', version],
-    ]));
+    expect(state.writes).toHaveLength(1); expect(state.acts).toHaveLength(0);
+    expect(state.writes.some(w => w.op === 'delete')).toBe(false);
   });
   it('never compensates away a process another legitimate request has changed', async () => {
     const { state, result } = await drive('concurrent-edit');
@@ -258,7 +269,7 @@ describe('automation draft exact configuration and recovery', () => {
   it('reconciles an acknowledged-lost steps write by exact readback without rewriting or deleting it', async () => {
     const { state, result } = await drive('steps-lost');
     expect(result).toMatchObject({ success: true, verified_readback: true });
-    expect(state.writes.filter(w => w.table === 'paige_automation_acts' && w.op === 'insert')).toHaveLength(1);
+    expect(state.writes.filter(w => w.table === 'rpc:save_automation_draft')).toHaveLength(1);
     expect(state.writes.some(w => w.op === 'delete')).toBe(false);
   });
   it('does not claim a built process when the requested acts cannot be reopened', async () => {
@@ -283,9 +294,9 @@ describe('automation draft exact configuration and recovery', () => {
   it('retains verified saved configuration when the read-only readiness response is lost', async () => {
     expect((await drive('posture-throws')).result).toMatchObject({ success: true, readiness: 'unverified', what_it_would_do: null, execution_started: false });
   });
-  it('stops after creation when workspace authorization changes', async () => {
+  it('suppresses the saved result after workspace authorization changes', async () => {
     const { state, result } = await drive('scope-after-create');
-    expect(state.writes.filter(w => w.table === 'paige_automation_acts')).toHaveLength(0);
+    expect(state.writes).toHaveLength(1); expect(state.acts).toHaveLength(1);
     expect(result).toMatchObject({ success: false, outcome_unknown: true, automation_id: process });
   });
   it('retains a native single-insert authorization refusal as non-application', async () => {

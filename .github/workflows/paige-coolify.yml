@@ -1,0 +1,146 @@
+name: Deploy PAIGE app to Coolify
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/paige-coolify.yml'
+      - '.github/paige-coolify/**'
+  workflow_run:
+    workflows: [ci]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      ci_run:
+        description: Successful canonical main push CI run ID for a retry
+        type: string
+      verify_coolify:
+        description: Check the app-scoped Coolify token without deploying
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paige-coolify-${{ github.event.pull_request.number || 'production' }}
+  cancel-in-progress: false
+
+jobs:
+  check-pr-image:
+    if: github.repository == 'Paige-Agent-AI/Paige-Agent-AI' && github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - name: Build and check the pull request image
+        run: bash .github/paige-coolify/build.sh "$GITHUB_SHA" "paige-pr:$GITHUB_SHA"
+
+  build:
+    if: >-
+      github.repository == 'Paige-Agent-AI/Paige-Agent-AI' &&
+      ((github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository) ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && !inputs.verify_coolify))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+      packages: write
+    outputs:
+      frontend: ${{ steps.release.outputs.frontend }}
+      digest: ${{ steps.release.outputs.digest }}
+    env:
+      IMAGE_REPO: ghcr.io/paige-agent-ai/paige-agent-ai-web
+      FRONTEND_COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
+      CI_RUN: ${{ github.event.workflow_run.id || inputs.ci_run }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: ${{ env.FRONTEND_COMMIT }}
+          persist-credentials: false
+      - name: Verify primary CI and authorized merge
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/paige-coolify/verify-release.mjs "$FRONTEND_COMMIT" "$CI_RUN"
+      - name: Build the exact commit and check routes
+        run: |
+          image="$IMAGE_REPO:app-$FRONTEND_COMMIT-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          bash .github/paige-coolify/build.sh "$FRONTEND_COMMIT" "$image"
+          printf 'CANDIDATE=%s\n' "$image" >> "$GITHUB_ENV"
+      - name: Publish verified production image
+        id: release
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io >/dev/null' EXIT
+          docker push "$CANDIDATE"
+          digest=$(docker buildx imagetools inspect --format '{{json .Manifest.Digest}}' "$CANDIDATE" | tr -d '"')
+          [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          docker pull "$IMAGE_REPO@$digest"
+          test "$(docker image inspect --format '{{.Id}}' "$CANDIDATE")" = "$(docker image inspect --format '{{.Id}}' "$IMAGE_REPO@$digest")"
+          tag="${digest/:/-}"
+          docker tag "$CANDIDATE" "$IMAGE_REPO:$tag"
+          docker push "$IMAGE_REPO:$tag"
+          test "$(docker buildx imagetools inspect --format '{{json .Manifest.Digest}}' "$IMAGE_REPO:$tag" | tr -d '"')" = "$digest"
+          printf 'frontend=%s\ndigest=%s\n' "$FRONTEND_COMMIT" "$digest" >> "$GITHUB_OUTPUT"
+          jq -n --arg cloud "$FRONTEND_COMMIT" --arg frontend "$FRONTEND_COMMIT" \
+            --arg image "$IMAGE_REPO@$digest" --arg tag "$tag" \
+            --arg run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            '{cloudCommit:$cloud,frontendCommit:$frontend,image:$image,coolifyTag:$tag,run:$run}' \
+            | tee "$RUNNER_TEMP/paige-app-release.json" "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: paige-app-release-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/paige-app-release.json
+          if-no-files-found: error
+  verify-coolify:
+    if: >-
+      github.repository == 'Paige-Agent-AI/Paige-Agent-AI' && github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' && inputs.verify_coolify
+    environment: paige-coolify-production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - name: Check the Coolify token and live domains
+        env:
+          PAIGE_COOLIFY_DEPLOY_TOKEN: ${{ secrets.PAIGE_COOLIFY_DEPLOY_TOKEN }}
+        run: node .github/paige-coolify/deploy.mjs --check
+  deploy:
+    needs: build
+    if: >-
+      github.repository == 'Paige-Agent-AI/Paige-Agent-AI' && github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request' && vars.PAIGE_AUTO_DEPLOY_ENABLED == 'true'
+    environment:
+      name: paige-coolify-production
+      url: https://paigeagent.ai
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: ${{ needs.build.outputs.frontend }}
+          persist-credentials: false
+      - name: Deploy the verified image to the public PAIGE domains
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PAIGE_COOLIFY_DEPLOY_TOKEN: ${{ secrets.PAIGE_COOLIFY_DEPLOY_TOKEN }}
+          FRONTEND_COMMIT: ${{ needs.build.outputs.frontend }}
+          IMAGE_DIGEST: ${{ needs.build.outputs.digest }}
+          CI_RUN: ${{ github.event.workflow_run.id || inputs.ci_run }}
+        run: node .github/paige-coolify/deploy.mjs --promote "$FRONTEND_COMMIT" "$IMAGE_DIGEST" "$CI_RUN"

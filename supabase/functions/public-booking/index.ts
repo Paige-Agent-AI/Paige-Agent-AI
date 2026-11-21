@@ -1,5 +1,6 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
+import { parseCalendarAvailability as parseAvailability } from "../_shared/slotRules.ts";
 // Native booking engine — public availability + appointment creation.
 // Anon-callable (verify_jwt=false); all writes go through the service role after
 // server-side validation, so the public never touches tables directly.
@@ -50,20 +51,6 @@ const json = (body: unknown, status = 200) =>
 
 // --- Weekly availability contract -------------------------------------------
 interface DayWindow { day: number; start: string; end: string } // day 0=Sun..6=Sat, "HH:MM"
-const DEFAULT_AVAILABILITY: DayWindow[] = [1, 2, 3, 4, 5].map((day) => ({ day, start: "09:00", end: "17:00" }));
-
-function parseAvailability(raw: unknown): DayWindow[] {
-  if (!Array.isArray(raw)) return DEFAULT_AVAILABILITY;
-  const out = raw.filter(
-    (w): w is DayWindow =>
-      w && typeof w === "object" &&
-      typeof (w as DayWindow).day === "number" &&
-      /^\d{2}:\d{2}$/.test((w as DayWindow).start ?? "") &&
-      /^\d{2}:\d{2}$/.test((w as DayWindow).end ?? ""),
-  );
-  return out.length ? out : DEFAULT_AVAILABILITY;
-}
-
 // Per-host availability: absent/NULL/malformed → inherit the calendar's (return
 // null so the engine falls back). A present array is used verbatim after
 // validation — an EMPTY custom set legitimately means "this host keeps no hours

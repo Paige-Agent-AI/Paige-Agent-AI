@@ -13,6 +13,7 @@ import {
   type CalendarReminder, type CreateBookingInput, type SoloBooking, type SoloCalendarMeta, type ViewMode,
 } from "./useSoloCalendar";
 import { useSoloDealClients, type DealClient } from "@/solo/deals/useSoloDealClients";
+import { readCalendarDefaultView, saveCalendarDefaultView } from "./calendarViewPreference";
 import "./solo-calendar.css";
 
 /**
@@ -219,14 +220,31 @@ function Drawer({ title, sub, onClose, children, foot, wide, focusFallbackRef }:
 
 export interface SoloCalendarWorkspaceProps {
   activeTenantId: string;
+  activeUserId?: string | null;
   connectionsHref: string;
   openPaige?: () => void;
   /** Owner-scoped visibility supplied by the canonical tenant adapter; never a booking producer. */
   weeklyResponsibility?: (controls: { closeViewOptions: () => void; returnFocus: () => void }) => ReactNode;
 }
 
-export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPaige, weeklyResponsibility }: SoloCalendarWorkspaceProps) {
-  const [view, setView] = useState<ViewMode>("week");
+export function SoloCalendarWorkspace({ activeTenantId, activeUserId, connectionsHref, openPaige, weeklyResponsibility }: SoloCalendarWorkspaceProps) {
+  const [defaultView, setDefaultView] = useState<ViewMode>(() => readCalendarDefaultView(activeUserId, activeTenantId));
+  const [view, setView] = useState<ViewMode>(defaultView);
+  const [preferenceError, setPreferenceError] = useState(false);
+  const defaultViewId = useId();
+  useEffect(() => {
+    const saved = readCalendarDefaultView(activeUserId, activeTenantId);
+    setDefaultView(saved);
+    setView(saved);
+    setPreferenceError(false);
+  }, [activeUserId, activeTenantId]);
+
+  const chooseDefaultView = (next: ViewMode) => {
+    setView(next);
+    const saved = saveCalendarDefaultView(activeUserId, activeTenantId, next);
+    setPreferenceError(!saved);
+    if (saved) setDefaultView(next);
+  };
   const [cursor, setCursor] = useState(() => new Date());
   const [colorBy, setColorBy] = useState<"calendar" | "host">("calendar");
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
@@ -361,7 +379,7 @@ export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPai
   // ONE definition of the rail's controls. It renders in the rail at wide widths
   // and inside the "View options" drawer when the rail collapses — a control that
   // exists in only one of those places is a hidden control, not a responsive one.
-  const railBody = (
+  const railBody = (placement: "rail" | "drawer") => (
     <>
       {weeklyResponsibility?.({ closeViewOptions: () => setOptionsOpen(false), returnFocus: () => boardRef.current?.focus() })}
             <RailGroup title="Calendars">
@@ -439,6 +457,21 @@ export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPai
                 without leaving the grid. What changed is that editing has a named
                 home, and this rail says where it is instead of implying there
                 isn't one. */}
+            <RailGroup title="Default view">
+              <div role="radiogroup" aria-label="Default calendar view" aria-describedby={`${defaultViewId}-${placement}-hint`}>
+                {(["month", "week", "agenda"] as ViewMode[]).map((mode) => (
+                  <label className="sc-check" key={mode}>
+                    <input type="radio" name={`${defaultViewId}-${placement}`} value={mode} checked={defaultView === mode}
+                      disabled={!activeUserId} onChange={() => chooseDefaultView(mode)} />
+                    <span className="sc-label">{mode[0].toUpperCase() + mode.slice(1)}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="sc-note" id={`${defaultViewId}-${placement}-hint`}>Applies when you open Calendar for this business on this browser.</p>
+              {!activeUserId && <p className="sc-note">Sign in to save your default view.</p>}
+              {preferenceError && <p className="sc-note" role="alert">This view is open, but your browser could not save the default. Allow site storage and try again.</p>}
+            </RailGroup>
+
             <RailGroup title="Settings" defaultOpen={false}>
               <p className="sc-note">
                 <Settings2 className="sc-swatch" style={{ border: 0 }} aria-hidden="true" />
@@ -538,7 +571,7 @@ export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPai
       <div className="sc-board" ref={boardRef} tabIndex={-1}>
         <div className="sc-rail">
           <div className="sc-rail-scroll">
-            {railBody}
+            {railBody("rail")}
           </div>
         </div>
 
@@ -861,7 +894,7 @@ export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPai
           sub="Calendars, colour coding and settings"
           onClose={() => setOptionsOpen(false)}
         >
-          {railBody}
+          {railBody("drawer")}
         </Drawer>
       )}
 

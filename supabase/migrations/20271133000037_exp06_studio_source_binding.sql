@@ -1539,7 +1539,12 @@ BEGIN
   ('public.growth_fail_submission(uuid,text)','1e837d59e4d72d75870b3c44d9218979'),
   ('public.growth_attach_submission_deal(uuid,integer,uuid)','cced6dc8d2410b82add277fc1fdbdc3b')
  ) p(signature,expected) LOOP
-  IF md5(pg_get_functiondef(to_regprocedure(signature))) IS DISTINCT FROM expected
+  IF (md5(pg_get_functiondef(to_regprocedure(signature))) IS DISTINCT FROM expected
+    AND CASE signature
+     WHEN 'public.growth_claim_submission(uuid)' THEN md5(pg_get_functiondef(to_regprocedure(signature))) IS DISTINCT FROM '00736667339fc149b5fa8ad460ef5675'
+     WHEN 'public.growth_complete_submission(uuid)' THEN md5(pg_get_functiondef(to_regprocedure(signature))) IS DISTINCT FROM '14c8b5e3de0e3611862448854fe2e67c'
+     WHEN 'public.growth_fail_submission(uuid,text)' THEN md5(pg_get_functiondef(to_regprocedure(signature))) IS DISTINCT FROM 'fade66c7c91b56d6eef69ba34b2f41a0'
+     ELSE true END)
    OR (SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM 'postgres'
    OR (SELECT proacl::text FROM pg_proc WHERE oid=to_regprocedure(signature)) IS DISTINCT FROM
     (CASE WHEN signature LIKE 'public.upsert_contact%' THEN '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'

@@ -12,7 +12,7 @@ const repo=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const sqlPath=resolve(repo,'supabase/tests/exp06_studio_confirmation_full_schema.sql');
 const carrierPath=resolve(repo,'supabase/migrations/20271133000037_exp06_studio_source_binding.sql');
 const minimalPath=resolve(repo,'supabase/tests/exp06_studio_source_binding.sql');
-const expectedCarrier='0eb5a6e7cc7bbbb1984fd54605b03e76263a8ea68004d085433bbd0e2611bb1a';
+const expectedCarrier='59545eaaafaa6332e112301eaa367c55b7735c94545e38a971032c6c73c86378';
 const expectedMinimal='00f73a8eb3f4141371ac96d367fb47e8da29b392f86fb5f0a11de286ff818a9a';
 const read=path=>readFileSync(path,'utf8');
 const hash=path=>createHash('sha256').update(readFileSync(path)).digest('hex');

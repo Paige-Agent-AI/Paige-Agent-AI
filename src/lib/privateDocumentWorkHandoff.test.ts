@@ -12,7 +12,7 @@ afterEach(() => vi.restoreAllMocks());
 describe("private original Work locator handoff", () => {
   it("keeps only an original Opportunity and receipt locator in the same actor/workspace slot", () => {
     const event = vi.spyOn(window, "dispatchEvent");
-    expect(handoff.keepPrivateOpportunity(actor, tenant, id(6), id(7))).toBe(true);
+    expect(handoff.keepPrivateCrmUpdate(actor, tenant, { kind: "opportunity", dealId: id(6), correlationId: id(7) })).toBe(true);
     const raw = handoff.privateDocumentWorkSnapshot(actor, tenant);
     expect(raw).toBe(JSON.stringify({ kind: "opportunity", dealId: id(6), correlationId: id(7) }));
     expect(handoff.parsePrivateDocumentWork(raw)).toEqual({ kind: "opportunity", dealId: id(6), correlationId: id(7) });
@@ -26,8 +26,8 @@ describe("private original Work locator handoff", () => {
     handoff.keepPrivateDocumentWork(actor, tenant, reference);
     const original = handoff.privateDocumentWorkSnapshot(actor, tenant);
     for (const bad of ["", `${id(6)}\n`, "https://example.com/record"]) {
-      expect(handoff.keepPrivateOpportunity(actor, tenant, bad, id(7))).toBe(false);
-      expect(handoff.keepPrivateOpportunity(actor, tenant, id(6), bad)).toBe(false);
+      expect(handoff.keepPrivateCrmUpdate(actor, tenant, { kind: "opportunity", dealId: bad, correlationId: id(7) })).toBe(false);
+      expect(handoff.keepPrivateCrmUpdate(actor, tenant, { kind: "opportunity", dealId: id(6), correlationId: bad })).toBe(false);
     }
     expect(handoff.parsePrivateDocumentWork(JSON.stringify({ kind: "opportunity", dealId: id(6), correlationId: id(7), notes: "private" }))).toBeNull();
     expect(handoff.privateDocumentWorkSnapshot(actor, tenant)).toBe(original);
@@ -38,6 +38,17 @@ describe("private original Work locator handoff", () => {
     expect(raw).toBe(JSON.stringify(reference));
     expect(handoff.parsePrivateDocumentWork(raw)).toEqual(reference);
     expect(handoff.parsePrivateDocumentWork(JSON.stringify({ ...reference, padding: "123456789012345" }))).toBeNull();
+  });
+  it("keeps only the exact Task locator and rejects expanded saved Task data", () => {
+    const task = { kind: "task_update" as const, taskId: id(6), correlationId: id(7) };
+    expect(handoff.keepPrivateCrmUpdate(actor, tenant, task)).toBe(true);
+    const raw = handoff.privateDocumentWorkSnapshot(actor, tenant);
+    expect(raw).toBe(JSON.stringify(task));
+    expect(handoff.parsePrivateDocumentWork(raw)).toEqual(task);
+    expect(handoff.keepPrivateCrmUpdate(actor, tenant, { ...task, taskId: "not an ID" })).toBe(false);
+    expect(handoff.parsePrivateDocumentWork(JSON.stringify({ ...task, title: "private" }))).toBeNull();
+    expect(handoff.privateDocumentWorkSnapshot(id(9), tenant)).toBeNull();
+    expect(handoff.privateDocumentWorkSnapshot(actor, tenant)).toBe(raw);
   });
 
   it("distinguishes original Research without storing report, receipt or private context", () => {

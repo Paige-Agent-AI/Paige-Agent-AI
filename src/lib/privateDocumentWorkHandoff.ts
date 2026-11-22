@@ -21,7 +21,9 @@ export function privateDocumentWorkSnapshot(actorId: string, tenantId: string): 
 }
 
 export type PrivateOpportunityReference = { kind: "opportunity"; dealId: string; correlationId: string };
-export type PrivateOriginalWorkReference = (OriginalDocumentReference & { kind?: "research" }) | PrivateOpportunityReference;
+export type PrivateTaskUpdateReference = { kind: "task_update"; taskId: string; correlationId: string };
+export type PrivateCrmUpdateReference = PrivateOpportunityReference | PrivateTaskUpdateReference;
+export type PrivateOriginalWorkReference = (OriginalDocumentReference & { kind?: "research" }) | PrivateCrmUpdateReference;
 
 export function parsePrivateDocumentWork(raw: string | null): PrivateOriginalWorkReference | null {
   if (!raw || raw.length > 184) return null;
@@ -31,6 +33,11 @@ export function parsePrivateDocumentWork(raw: string | null): PrivateOriginalWor
       return Object.keys(saved).length === 3 && uuid(saved.dealId) && uuid(saved.correlationId)
         && saved.dealId.length === 36 && saved.correlationId.length === 36
         ? { kind: "opportunity", dealId: saved.dealId, correlationId: saved.correlationId } : null;
+    }
+    if (saved?.kind === "task_update") {
+      return Object.keys(saved).length === 3 && uuid(saved.taskId) && uuid(saved.correlationId)
+        && saved.taskId.length === 36 && saved.correlationId.length === 36
+        ? { kind: "task_update", taskId: saved.taskId, correlationId: saved.correlationId } : null;
     }
     if (!saved || typeof saved !== "object" || Array.isArray(saved) ||
       (saved.kind !== undefined && saved.kind !== "research")) return null;
@@ -53,12 +60,12 @@ export function keepPrivateResearchWork(actorId: string, tenantId: string, refer
   return keepPrivateWork(actorId, tenantId, reference, "research");
 }
 
-export function keepPrivateOpportunity(actorId: string, tenantId: string, dealId: string, correlationId: string) {
+export function keepPrivateCrmUpdate(actorId: string, tenantId: string, value: PrivateCrmUpdateReference) {
   const key = storageKey(actorId, tenantId);
-  const value = { kind: "opportunity" as const, dealId, correlationId };
+  const serialized = JSON.stringify(value);
   if (!key || actorId.length !== 36 || tenantId.length !== 36
-    || !parsePrivateDocumentWork(JSON.stringify(value))) return false;
-  try { window.sessionStorage.setItem(key, JSON.stringify(value)); } catch { return false; }
+    || !parsePrivateDocumentWork(serialized)) return false;
+  try { window.sessionStorage.setItem(key, serialized); } catch { return false; }
   window.dispatchEvent(new Event(PRIVATE_DOCUMENT_WORK_CHANGED));
   return true;
 }

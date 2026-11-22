@@ -2,7 +2,8 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PrivateDocumentWork } from "./PrivateDocumentWork";
-import { keepPrivateOpportunity } from "@/lib/privateDocumentWorkHandoff";
+import { keepPrivateCrmUpdate } from "@/lib/privateDocumentWorkHandoff";
+import { PaigeCrmResultCard } from "@/components/chat/PaigeCrmResultCard";
 
 const mock = vi.hoisted(() => ({ invoke: vi.fn(), scope: {} as Record<string, unknown> }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: mock.invoke } } }));
@@ -33,7 +34,7 @@ async function open(user = actor, workspace = tenant) {
 async function check() { await act(async () => button("View saved receipt")!.click()); }
 describe("private Team Hub original Opportunity receipt", () => {
   it("reopens the same original receipt after remount without another mutation or copied private result", async () => {
-    keepPrivateOpportunity(actor, tenant, deal, receipt);
+    keepPrivateCrmUpdate(actor, tenant, { kind: "opportunity", dealId: deal, correlationId: receipt });
     for (let visit = 0; visit < 2; visit++) {
       await open(); expect(host.textContent).not.toContain(receipt); await check();
       expect(host.textContent).toContain(receipt); expect(host.textContent).toContain("Saved version 3");
@@ -48,7 +49,7 @@ describe("private Team Hub original Opportunity receipt", () => {
     }
   });
   it("does not expose the reference in a different actor or workspace slot", async () => {
-    keepPrivateOpportunity(actor, tenant, deal, receipt);
+    keepPrivateCrmUpdate(actor, tenant, { kind: "opportunity", dealId: deal, correlationId: receipt });
     await open(id(8)); expect(button("View saved receipt")).toBeUndefined();
     await open(actor, id(8)); expect(button("View saved receipt")).toBeUndefined();
     expect(mock.invoke).not.toHaveBeenCalled();
@@ -56,7 +57,7 @@ describe("private Team Hub original Opportunity receipt", () => {
   it("retires an interrupted read on collapse before the answer arrives", async () => {
     let finish!: (value: ReturnType<typeof answer>) => void;
     mock.invoke.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
-    keepPrivateOpportunity(actor, tenant, deal, receipt); await open(); await check();
+    keepPrivateCrmUpdate(actor, tenant, { kind: "opportunity", dealId: deal, correlationId: receipt }); await open(); await check();
     const signal = mock.invoke.mock.calls[0][1].signal as AbortSignal;
     await act(async () => { const details = host.querySelector("details")!; details.open = false; details.dispatchEvent(new Event("toggle")); });
     expect(signal.aborted).toBe(true);
@@ -64,4 +65,35 @@ describe("private Team Hub original Opportunity receipt", () => {
     await open(); await check(); expect(host.textContent).toContain(receipt);
     expect(mock.invoke).toHaveBeenCalledTimes(2);
   });
+});
+
+it("reopens the same original Task and Rail receipt through Chat and private Team Hub after a remount", async () => {
+  const task = id(6), rail = id(7);
+  const original = { error: null, data: { ok: true, outcome: "recorded", receipt: {
+    id: rail, action: "task.update", correlation_id: receipt, record_id: task, recorded_at: "2026-11-21T12:00:00Z",
+  } } };
+  mock.invoke.mockResolvedValue(original);
+  const account = { account_type: "standalone", parent_tenant_id: null, account_number: 98765 };
+  const result = { action: "task.update", outcome: "succeeded", receipt_recorded: true, correlation_id: receipt,
+    record_reference: { destination: "operations_work" as const, record_id: task } };
+  await act(async () => root.render(<PaigeCrmResultCard result={result} account={account} />));
+  await check();
+  expect(host.textContent).toContain(rail);
+  await act(async () => button("Keep in Team Hub")!.click());
+  expect(window.sessionStorage.getItem(window.sessionStorage.key(0)!)).toEqual(JSON.stringify({
+    kind: "task_update", taskId: task, correlationId: receipt,
+  }));
+  await act(async () => root.render(null));
+  await open();
+  expect(host.textContent).not.toContain(rail);
+  await check();
+  expect(host.textContent).toContain(rail);
+  expect(host.querySelector("a")?.getAttribute("href")).toContain(`operations/work?task=${task}`);
+  expect(mock.invoke).toHaveBeenCalledTimes(2);
+  for (const [name, options] of mock.invoke.mock.calls) {
+    expect(name).toBe("crm-command");
+    expect(options.body).toEqual({ expected_tenant_id: tenant, inspect_task_update_result: {
+      task_id: task, correlation_id: receipt,
+    } });
+  }
 });

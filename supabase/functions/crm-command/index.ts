@@ -20,6 +20,8 @@ import { canonicalAppUrl, PAIGE_APP_ORIGIN, resolveCanonicalRecordLink, type Can
 import { dealCreateRelationshipIssue, UNLINKED_DEAL_REASONS } from "../_shared/crm-command/deal-relationship-integrity.ts";
 import { resolveCommandContactRefs } from "../_shared/crm-command/contact-refs.ts";
 import { inspectOpportunityResult, type OpportunityReadClient } from "../_shared/crm-command/opportunity-result-read.ts";
+import { inspectTaskUpdateReceipt } from "../_shared/crm-command/task-update-result-read.ts";
+import type { OperationsTaskReadCaller } from "../_shared/operations-task-read.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -325,6 +327,12 @@ serve(async (req) => {
     // generics. These are the original server-created clients, never request data.
     const answer = await inspectOpportunityResult({ raw: inspection, actorId: user.id,
       caller: caller as unknown as OpportunityReadClient, admin: admin as unknown as OpportunityReadClient });
+    return response(answer.status, answer.body);
+  }
+  if (inspection && typeof inspection === "object" && !Array.isArray(inspection)
+    && Object.prototype.hasOwnProperty.call(inspection, "inspect_task_update_result")) {
+    const answer = await inspectTaskUpdateReceipt({ raw: inspection, actorId: user.id,
+      caller: caller as unknown as OperationsTaskReadCaller, admin: admin as unknown as OpportunityReadClient });
     return response(answer.status, answer.body);
   }
 

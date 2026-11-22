@@ -375,7 +375,7 @@ import { specialistStepLabel, specialistAssignmentSummary, type SpecialistStepId
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../_shared/paige-turn/record-links.ts";
 import { finishPlanningChatRead } from "../_shared/planning/read-record-links.ts";
-import { crmResultReferenceMetadata } from "../_shared/paige-turn/crm-result-reference.ts";
+import { crmResultReferenceMetadata, crmResultSupportsReceipt } from "../_shared/paige-turn/crm-result-reference.ts";
 import { answerClaim, answerClaimBound, answerTurnsAfterAdmission, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
 import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "../_shared/paige-turn/route.ts";
 import { classifyTurn, routeNeedsClassifier } from "../_shared/paige-turn/classify-call.ts";
@@ -20694,7 +20694,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       outcome: String(parsed.outcome || "succeeded"),
                       readback: parsed.readback && typeof parsed.readback === "object" ? parsed.readback : null,
                       receipt_recorded: parsed.receipt_recorded === true,
-                      ...((parsed.action || CRM_TOOL_TO_ACTION[tc.function.name as keyof typeof CRM_TOOL_TO_ACTION]) === "deal.update"
+                      ...(crmResultSupportsReceipt(parsed.action || CRM_TOOL_TO_ACTION[tc.function.name as keyof typeof CRM_TOOL_TO_ACTION])
                         ? { correlation_id: parsed.correlation_id } : {}),
                       record_locator: parsed.record_locator && typeof parsed.record_locator === "object" ? parsed.record_locator : null,
                       ...(typeof parsed.external_effect === "boolean" ? { external_effect: parsed.external_effect } : {}),

@@ -8,7 +8,7 @@
 // the three outcome classes the real adapter can return (published / processing / unknown) and the
 // thrown-error class (SocialProviderError).
 import { handleSocialPublishCommand } from "../../supabase/functions/_shared/social-publish-command/door.ts";
-import { SocialProviderError, type SocialPostInput, type SocialProviderPostOutcome } from "../../supabase/functions/_shared/social-provider/mod.ts";
+import { SocialProviderError, type SocialPostInput, type SocialProviderPostOutcome, type SocialPerformanceInput, type SocialPostPerformance } from "../../supabase/functions/_shared/social-provider/mod.ts";
 
 export const USER = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 export const OTHER_USER = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -37,6 +37,8 @@ export interface WorldOptions {
   /** The adapter's createPost answer, or a function of its input. */
   createPost?: (input: SocialPostInput) => SocialProviderPostOutcome;
   readPost?: (input: SocialPostInput, providerId: string | null) => SocialProviderPostOutcome;
+  readPerformance?: (input: SocialPerformanceInput) => SocialPostPerformance | Promise<SocialPostPerformance>;
+  performanceReceiptFails?: boolean;
   createPostThrows?: { code: string };
   tables?: Partial<Record<string, Row[]>>;
   /** Make the connection read answer a DIFFERENT status on the recheck (post-claim). */
@@ -46,6 +48,11 @@ export interface WorldOptions {
   /** The original caller loses SELECT/RLS visibility before prepare or after native binding. */
   callerContentReadDenied?: boolean;
   revokeContentAfterClaim?: boolean;
+  storageObjects?: Record<string, { contentType: string; size: number; etag: string; lastModified: string }>;
+  onBind?: (tables: Record<string, Row[]>) => void;
+  bindConflict?:boolean;
+  updateSchedule?: (input: SocialPostInput, providerId: string, version: number) => SocialProviderPostOutcome;
+  onScheduleClaim?: (tables: Record<string, Row[]>) => void;
 }
 
 export const connectedRow = (over: Row = {}): Row => ({
@@ -84,6 +91,9 @@ export function world(o: WorldOptions = {}) {
     destinationReads: [] as unknown[],
     createPost: [] as SocialPostInput[],
     readPost: [] as Array<{ input: SocialPostInput; providerId: string | null }>,
+    storageReads: [] as string[],
+    performanceReads: [] as SocialPerformanceInput[],
+    updateSchedule: [] as Array<{input:SocialPostInput;providerId:string;version:number}>,
   };
   let connectionReads = 0;
   let contentClaimed = false;
@@ -149,6 +159,7 @@ export function world(o: WorldOptions = {}) {
       if (fn === "current_user_tenant_id") return { data: o.active === undefined ? MINE : o.active, error: null };
       if (fn === "is_tenant_admin") return { data: o.admin !== false, error: null };
       if (fn === "agency_can_manage_child") return { data: o.manages === true, error: null };
+      if (fn === "content_publication_list") return {data:tables.content_publications.filter(row=>row.tenant_id===args?.p_tenant_id&&row.content_id===args?.p_content_id),error:null};
       if (fn === "resolve_tool_autonomy") {
         const canonical = args?._tool_key === "social_post_publish";
         return o.laneError || (canonical && o.canonicalLaneError)
@@ -160,6 +171,11 @@ export function world(o: WorldOptions = {}) {
   };
   const admin = {
     from: (table: string) => from(table, "admin"),
+    storage: { from: (bucket: string) => ({ info: async (path: string) => {
+      seen.storageReads.push(`${bucket}/${path}`);
+      const data = o.storageObjects?.[path];
+      return { data: data ?? null, error: data ? null : { message: "not found" } };
+    } }) },
     rpc: async (fn: string, args?: Row) => {
       seen.rpc.push({ fn, args, client: "admin" });
       if (fn === "record_capability_run") {
@@ -172,19 +188,30 @@ export function world(o: WorldOptions = {}) {
           && row.platform === args?.p_platform && row.status === "outcome_unknown"), error: null };
       }
       if (fn === "content_publication_record") {
+        if (o.performanceReceiptFails && (args?.p_provider_response as Row)?.analytics) return { data: null, error: { code: "P0002" } };
         let row = tables.content_publications.find((candidate) => candidate.id === args?.p_id);
         if (!args?.p_id) {
           row = { id: PUBLICATION, tenant_id: args?.p_tenant_id };
           tables.content_publications.push(row);
         }
+        if (row && args?.p_status === "schedule_changing") {
+          const claim = (args.p_provider_response as Row)?.schedule_claim as Row;
+          row.status="schedule_changing";
+          row.provider_response={...((row.provider_response as Row)??{}),schedule:{...(((row.provider_response as Row)?.schedule as Row)??{}),mutation:claim}};
+          o.onScheduleClaim?.(tables);
+          return {data:row,error:null};
+        }
         Object.assign(row ?? {}, {
           status: args?.p_status, provider_request_id: args?.p_provider_request_id,
           provider_post_id: args?.p_provider_post_id, provider_post_url: args?.p_provider_post_url,
         });
+        if (row && args?.p_provider_response) row.provider_response = { ...((row.provider_response as Row) ?? {}), ...(args.p_provider_response as Row) };
         return { data: row, error: null };
       }
       if (fn === "content_publication_bind") {
+        if(o.bindConflict)return {data:null,error:{code:"PT409"}};
         contentClaimed = true;
+        o.onBind?.(tables);
         let row = tables.content_publications.find((candidate) => candidate.id === args?.p_id);
         if (!args?.p_id) {
           row = { id: PUBLICATION, tenant_id: args?.p_tenant_id };
@@ -212,6 +239,15 @@ export function world(o: WorldOptions = {}) {
       seen.readPost.push({ input, providerId });
       return o.readPost?.(input, providerId) ?? { kind: "unknown", requestId: providerId, reason: "not_found" };
     },
+    readPerformance: async (input: SocialPerformanceInput): Promise<SocialPostPerformance> => {
+      seen.performanceReads.push(input);
+      return o.readPerformance?.(input) ?? { state: "available", metrics: { views: 0, likes: 2 }, measured_at: "2026-11-13T16:00:00Z" };
+    },
+    updateSchedule: async (input:SocialPostInput,providerId:string,version:number):Promise<SocialProviderPostOutcome> => {
+      await input.beforePublish?.();seen.updateSchedule.push({input,providerId,version});
+      return o.updateSchedule?.(input,providerId,version) ?? (input.cancelSchedule ? {kind:"cancelled",requestId:providerId,version:version+1}
+        : {kind:"scheduled",requestId:providerId,version:version+1,scheduledFor:input.schedule!.scheduled_for,timezone:input.schedule!.timezone});
+    },
     createPost: async (input: SocialPostInput) => {
       seen.createPost.push(input);
       if (o.createPostThrows) throw new SocialProviderError(o.createPostThrows.code, 429, "Provider rejected the request");
@@ -227,7 +263,7 @@ export function world(o: WorldOptions = {}) {
   const call = async (body: Row, method = "POST") => {
     const res = await handleSocialPublishCommand(new Request("https://edge.test/social-publish-command", {
       method, headers: { Authorization: "Bearer test" }, ...(method === "POST" ? { body: JSON.stringify(body) } : {}),
-    }), { caller, admin, adapter });
+    }), { caller, admin, adapter, storageOrigin: "https://test-project.supabase.co" });
     return { status: res.status, body: await res.json().catch(() => null) as Row };
   };
 

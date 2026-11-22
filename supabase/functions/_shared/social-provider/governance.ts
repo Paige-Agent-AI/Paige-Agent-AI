@@ -1,6 +1,7 @@
 import { confirmFingerprint } from "../confirm-fingerprint.ts";
 import { defineCapability, objectInputSchema, ownerGrantablePermission } from "../capability-kit/mod.ts";
 import { SOCIAL_POST_PLATFORMS } from "./mod.ts";
+import { SOCIAL_SCHEDULE_SCHEMA } from "../social-publish-command/schedule.ts";
 import {
   decideGovernedExecution,
   type GovernedDecision,
@@ -12,8 +13,8 @@ import {
 export const SOCIAL_PUBLICATION_CAPABILITY = defineCapability({
   identity: {
     id: "social.post_publish", version: 1, domain: "social", owner: "solo-campaigns",
-    humanSurface: "/solo/:account/growth/content",
-    description: "Publish one approved caption from a saved content piece to one freshly verified Social destination.",
+    humanSurface: "/solo/:account/growth/social",
+    description: "Publish now or commit one exactly approved future Social instruction; reschedule or stop the same original job through a new current-authority approval.",
   },
   input: objectInputSchema({
     description: "The original publishing door's saved piece, channel and caption; authority is resolved by the server.",
@@ -21,6 +22,9 @@ export const SOCIAL_PUBLICATION_CAPABILITY = defineCapability({
       content_id: { type: "string", format: "uuid" },
       platform: { type: "string", enum: [...SOCIAL_POST_PLATFORMS] },
       caption: { type: "string", maxLength: 2200 },
+      schedule: SOCIAL_SCHEDULE_SCHEMA,
+      operation:{type:"string",enum:["publish","reschedule","cancel_schedule"]},
+      publication_id:{type:"string",format:"uuid"},publication_version:{type:"integer",minimum:1},
     },
     required: ["content_id", "platform"],
   }),

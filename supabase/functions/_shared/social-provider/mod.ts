@@ -62,14 +62,17 @@ export interface SocialProviderPostResult {
 }
 
 /** The provider's answer to one createPost call. */
-export type SocialProviderPostOutcome =
+export type SocialScheduledMedia = {url:string;type:"image"|"video";altText?:string};
+export type SocialProviderPostOutcome = (
+  | { kind: "scheduled"; requestId: string; scheduledFor: string; timezone: string; version: number }
+  | { kind: "cancelled"; requestId: string; version: number }
   | { kind: "published"; results: SocialProviderPostResult[]; requestId?: string }
   /** The provider accepted the post for background processing and named it — the outcome is
    *  UNKNOWN until its status is reconciled; the requestId is the reconciliation handle. */
   | { kind: "processing"; requestId: string }
   /** The transport itself was uncertain (network failure after send, or an unusable answer).
    *  The post MAY exist; nothing here may be reported as either success or failure. */
-  | { kind: "unknown"; requestId: string | null; reason: string };
+  | { kind: "unknown"; requestId: string | null; reason: string }) & {scheduledMedia?:SocialScheduledMedia[]};
 
 export interface SocialPostAccount {
   providerProfileKey: string;
@@ -86,6 +89,45 @@ export interface SocialPostInput extends SocialPostAccount {
   channelId: string | null;
   text: string;
   externalId: string;
+  /** Exact approved future instruction. Omission alone means immediate publishing. */
+  schedule?: import("../social-publish-command/schedule.ts").SocialSchedule;
+  scheduleVersion?: number;
+  cancelSchedule?: boolean;
+  /** Provider-owned media URLs already bound to this same original job. Comparison only. */
+  scheduledMedia?: readonly SocialScheduledMedia[];
+  /** Internal approved-byte suppliers. No tenant/source URL is sent to the provider. */
+  media?: readonly SocialPostMedia[];
+  /** Original door's fresh authority/context read after upload, before the final post. */
+  beforePublish?: () => Promise<void>;
+}
+
+export interface SocialPostMedia {
+  type: "image" | "video";
+  contentType: string;
+  size: number;
+  altText: string | null;
+  readBytes(): Promise<Uint8Array>;
+}
+
+export type SocialPostPerformance = {
+  state: "available" | "pending" | "unsupported" | "error";
+  metrics: Record<string, number>;
+  measured_at: string | null;
+};
+export type SocialPerformanceInput = SocialPostAccount & { requestId: string; postId: string };
+
+/** Implemented formats, shared by approval preview and the provider dispatch gate. */
+export function socialPostMediaIssue(platform: string, caption: string, media: readonly Pick<SocialPostMedia, "type" | "contentType" | "size">[]): { code: string; message: string } | null {
+  if (!media.length) return null;
+  if (platform !== "threads") return { code: "media_platform_unsupported", message: "Media publishing to this platform is not available in PAIGE yet. Your saved media remains in Content." };
+  if (media.filter(item => item.type === "video").length > 1) return { code: "media_count_exceeded", message: "Threads accepts at most one video per post." };
+  if ([...caption].length > 500) return { code: "caption_too_long", message: "Threads captions can contain at most 500 characters. Shorten the caption and review again." };
+  if (media.length > (media.some(item => item.type === "video") ? 10 : 20)) return { code: "media_count_exceeded", message: "Threads accepts up to 20 images, or 10 items when a video is included." };
+  if (media.some(item => !Number.isSafeInteger(item.size) || item.size <= 0 || item.size > 25 * 1024 * 1024
+    || (item.type === "video" ? item.contentType !== "video/mp4" : item.type !== "image" || !["image/png", "image/jpeg"].includes(item.contentType)))) {
+    return { code: "media_type_unsupported", message: "This publishing path accepts saved PNG/JPEG images or MP4 video up to 25 MB each. Other formats remain in Content." };
+  }
+  return null;
 }
 
 export interface SocialProviderAdapter {
@@ -106,15 +148,23 @@ export interface SocialProviderAdapter {
   createPost(input: SocialPostInput): Promise<SocialProviderPostOutcome>;
   /** Read the original provider attempt without dispatching another post. */
   readPost(input: SocialPostInput, providerPostId: string | null): Promise<SocialProviderPostOutcome>;
+  /** Change only the same verified provider job; no media upload or post creation. */
+  updateSchedule?(input: SocialPostInput, providerPostId: string, expectedVersion: number, mutationId: string, previousSchedule: import("../social-publish-command/schedule.ts").SocialSchedule): Promise<SocialProviderPostOutcome>;
+  /** Read only the original account/post; never refresh/publish or import another post. */
+  readPerformance?(input: SocialPerformanceInput): Promise<SocialPostPerformance>;
 }
 
 export class SocialProviderError extends Error {
+  readonly code: string;
+  readonly status: number;
   constructor(
-    readonly code: string,
-    readonly status: number,
+    code: string,
+    status: number,
     message: string,
   ) {
     super(message);
+    this.code=code;
+    this.status=status;
     this.name = "SocialProviderError";
   }
 }

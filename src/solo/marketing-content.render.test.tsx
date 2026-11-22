@@ -30,6 +30,16 @@ vi.mock("@/integrations/supabase/client", () => {
 });
 const access = { phase: "ready", canManage: true };
 vi.mock("./useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => access }));
+const workspace = { tenantId: "t-1" };
+vi.mock("@/hooks/useTenantContext", () => ({
+  useTenantContext: () => ({
+    activeUserId: "content-preview-test-user",
+    activeTenantId: workspace.tenantId,
+    activeTenant: { account_number: "1234567" },
+    loading: false,
+    accountContextLoading: false,
+  }),
+}));
 vi.mock("@/components/admin/studio/DocumentPreview", () => ({ DocumentPreview: ({ document, toolbar }: { document: { title: string; blocks: unknown[] }; toolbar?: boolean }) => <div data-doc-preview data-toolbar={String(toolbar)}>{`${document.title} (${document.blocks.length} blocks)`}</div> }));
 
 import { MarketingContent } from "./marketing-content";
@@ -61,6 +71,7 @@ type Props = Partial<React.ComponentProps<typeof MarketingContent>>;
 const published = { phase: "ready", pages: 2, funnels: 0, forms: 1, unpublished: 4 };
 // The hub's frame: the drawer marks .campaigns-scroll inert, so the view must portal its preview out of it.
 const renderContent = async (props: Props = {}) => {
+  workspace.tenantId = props.tenantId ?? "t-1";
   act(() => root.render(<div className="solo-campaigns"><nav className="campaigns-nav"/><div className="campaigns-scroll"><MarketingContent tenantId="t-1" published={published} onOpenCapture={vi.fn()} onRetryPublished={vi.fn()} studioLauncher={<button>Open Vibe Studio</button>} kind="all" onKind={vi.fn()} piece={null} onPiece={vi.fn()} {...props}/></div></div>));
   await flush();
 };

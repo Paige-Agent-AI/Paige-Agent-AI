@@ -1658,7 +1658,7 @@ const SOURCES = {
   "supabase/functions/_shared/paige-turn/continuity.ts": "ca8c258d200a59a573a3c0cc2a3ad253cbed1239da24afdd1efc0fdbc90dec69",
   "supabase/functions/_shared/paige-turn/contract.ts": "317424344aeb669ef5885b36bbe61c66f94ad3fce994c966203cd6c8f42763f4"
 ,
- "supabase/functions/_shared/paige-orchestration/automation-draft-save.ts": "1f2aa2bd531e92c4e011593eaf80d8585e721f113e19a38d01a6ab052a921038",
+ "supabase/functions/_shared/paige-orchestration/automation-draft-save.ts": "bf11de6979c7265d799b9ef0b56474b795c32bba60aa8097c721c694c098aeee",
 };
 // The separately reviewed metric read was inserted before the incumbent chain.
 // Its adapter/validator are additional ancestry context, not changes to the 88

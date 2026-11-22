@@ -78,8 +78,22 @@ Deno.test("atomic draft: cancellation before dispatch makes no request", async (
   assertEquals(result.status, "unavailable"); assertEquals(calls, 0);
 });
 
-Deno.test("atomic draft: elapsed limit cannot start another save or read", async () => {
-  let calls = 0;
-  const result = await saveAutomationDraft({ rpc: () => { calls++; return new Promise(() => {}); } }, { ...options(), remainingMs: 5 });
-  assertEquals(result.status, "unknown"); assertEquals(calls, 1);
+Deno.test("atomic draft: a fired deadline cannot start a read before the clock catches up", async () => {
+  const calls: string[] = [];
+  const clock = Object.getOwnPropertyDescriptor(performance, "now");
+  const now = performance.now();
+  // The runtime can truncate a fractional timer delay. Keep the monotonic
+  // clock behind the timer to reproduce that ordering on every runner.
+  Object.defineProperty(performance, "now", { configurable: true, value: () => now });
+  try {
+    const result = await saveAutomationDraft({ rpc: name => {
+      calls.push(name);
+      return new Promise(() => {});
+    } }, { ...options(), remainingMs: 5 });
+    assertEquals(result.status, "unknown");
+    assertEquals(calls, ["save_automation_draft"]);
+  } finally {
+    if (clock) Object.defineProperty(performance, "now", clock);
+    else Reflect.deleteProperty(performance, "now");
+  }
 });

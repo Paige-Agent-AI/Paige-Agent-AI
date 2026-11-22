@@ -18,7 +18,7 @@ type Entry = {
   kind: Kind;
   title: string;
   text?: string;
-  origin: string;
+  origin?: string;
   href: string | null;
   updatedAt: string;
   media?: SocialDeskPost["media"][number];
@@ -34,7 +34,7 @@ function entriesFor(artifacts: CampaignArtifact[], posts: SocialDeskPost[]) {
   const studio: Entry[] = artifacts
     .filter(({ type, status }) => type === "page" ? status === "published" : status === "active")
     .map(item => ({
-      id: `${item.type}:${item.id}`, kind: item.type, title: item.name, origin: "Vibe Studio",
+      id: `${item.type}:${item.id}`, kind: item.type, title: item.name,
       href: safeMediaUrl(item.publicHref), updatedAt: item.updatedAt,
     }));
   const social: Entry[] = posts.map(post => ({
@@ -43,6 +43,10 @@ function entriesFor(artifacts: CampaignArtifact[], posts: SocialDeskPost[]) {
     href: safeMediaUrl(post.url), updatedAt: post.updatedAt, media: post.media[0],
   }));
   return [...studio, ...social].sort((a, b) => (Date.parse(b.updatedAt) || 0) - (Date.parse(a.updatedAt) || 0) || a.id.localeCompare(b.id));
+}
+
+function entryLabel(entry: Entry) {
+  return [TYPES[entry.kind], entry.origin].filter(Boolean).join(" · ");
 }
 
 function CatalogArt({ entry, motion = false }: { entry: Entry; motion?: boolean }) {
@@ -76,7 +80,7 @@ export function ContentCatalog({ tenantId, artifacts, phase, onRetry }: {
   const recent = entries.slice(0, 5);
   const query = search.trim().toLowerCase();
   const visible = entries.filter(item => (!kind || item.kind === kind) &&
-    (!query || `${item.title} ${item.origin}`.toLowerCase().includes(query)));
+    (!query || `${item.title} ${entryLabel(item)}`.toLowerCase().includes(query)));
 
   function shift(delta: number) {
     if (recent.length < 2) return;
@@ -138,7 +142,7 @@ export function ContentCatalog({ tenantId, artifacts, phase, onRetry }: {
       <CatalogArt entry={entry} motion/>
       <div>
         <h2 tabIndex={-1} ref={heading}>{entry.title}</h2>
-        <p className="content-catalog-meta">{TYPES[entry.kind]} · {entry.origin}</p>
+        <p className="content-catalog-meta">{entryLabel(entry)}</p>
         {entry.text && <p className="content-catalog-caption">{entry.text}</p>}
         {entry.href && <a className="content-catalog-primary" href={entry.href} target="_blank" rel="noreferrer">View published {entry.kind === "social" ? "post" : "work"} <ExternalLink size={15}/></a>}
       </div>
@@ -152,7 +156,7 @@ export function ContentCatalog({ tenantId, artifacts, phase, onRetry }: {
         <CatalogArt entry={featured}/>
         <div className="content-catalog-stage-copy">
           <h2>{featured.title}</h2>
-          <p className="content-catalog-meta">{TYPES[featured.kind]} · {featured.origin}</p>
+          <p className="content-catalog-meta">{entryLabel(featured)}</p>
           <button type="button" className="content-catalog-primary" data-content-opener="featured" onClick={event => open(featured, event)}>Open {TYPES[featured.kind].toLowerCase()} <ArrowRight size={16}/></button>
         </div>
       </article>
@@ -181,7 +185,7 @@ export function ContentCatalog({ tenantId, artifacts, phase, onRetry }: {
       </div>
     </header>
     {(failed || social.phase === "error") && <p className="content-catalog-notice" role="status">
-      {failed && <>Vibe Studio’s published work couldn’t load. <button type="button" onClick={onRetry}>Retry Studio work</button> </>}
+      {failed && <>Published pages, forms and funnels couldn’t load. <button type="button" onClick={onRetry}>Retry published work</button> </>}
       {social.phase === "error" && <>Published social posts couldn’t load. <button type="button" onClick={social.retry}>Retry social posts</button></>}
     </p>}
     {!entries.length && !failed && social.phase !== "error" && <p role="status">{phase !== "ready" || social.phase === "loading" ? "Reading published content…" : "No published work yet."}</p>}

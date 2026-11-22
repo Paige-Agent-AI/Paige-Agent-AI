@@ -10,6 +10,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type Answer = { data: unknown; error: unknown };
 const db: { tables: Record<string, Answer>; single: Answer; receipts: Answer; calls: { table: string; filters: [string, unknown][]; single: boolean }[] } = { tables: {}, single: { data: null, error: null }, receipts: { data: [], error: null }, calls: [] };
+let videoRows: unknown[] = [];
+let requestedVideoTenant: string | undefined;
 
 vi.mock("@/integrations/supabase/client", () => {
   const from = (table: string) => {
@@ -26,7 +28,13 @@ vi.mock("@/integrations/supabase/client", () => {
     chain.then = (resolve: (value: Answer) => unknown, reject: (reason: unknown) => unknown) => Promise.resolve(answer).then(resolve, reject);
     return chain;
   };
-  return { supabase: { from, rpc: (name: string) => Promise.resolve(name === "content_publication_list" ? db.receipts : { data: null, error: null }) } };
+  return { supabase: { from, rpc: (name: string, args?: { p_tenant_id?: string }) => {
+    if (name === "tenant_media_asset_list") {
+      requestedVideoTenant = args?.p_tenant_id;
+      return Promise.resolve({ data: videoRows, error: null });
+    }
+    return Promise.resolve(name === "content_publication_list" ? db.receipts : { data: null, error: null });
+  } } };
 });
 const access = { phase: "ready", canManage: true };
 vi.mock("./useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => access }));
@@ -84,6 +92,7 @@ const renderContent = async (props: Props = {}) => {
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   db.tables = {}; db.single = { data: null, error: null }; db.receipts = { data: [], error: null }; db.calls = [];
+  videoRows = []; requestedVideoTenant = undefined;
   access.phase = "ready"; access.canManage = true;
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -309,8 +318,16 @@ describe("Marketing › Content", () => {
     expect(host.textContent).toContain("No published work yet.");
     const onRetryPublished = vi.fn();
     await renderContent({ view: "published", publishedPhase: "error", onRetryPublished });
-    act(() => button("Retry Studio work")!.click());
+    act(() => button("Retry published work")!.click());
     expect(onRetryPublished).toHaveBeenCalled();
+  });
+
+  it("refuses video list results from a different workspace", async () => {
+    videoRows = [{ id: "video-1", tenant_id: "t-2", title: "Other workspace recording", status: "ready" }];
+    await renderContent();
+    expect(requestedVideoTenant).toBe("t-1");
+    expect(host.textContent).not.toContain("Other workspace recording");
+    expect(host.textContent).toContain("Your videos couldn't be read.");
   });
 
   it("marks a full library read as the newest pieces, never a total", async () => {

@@ -78,10 +78,23 @@ const harness = vi.hoisted(() => ({
 
 vi.mock("./useSocialCommand", () => ({
   useSocialCommand: () => ({
-    tenantId: "tenant-1", phase: "ready", handles: [], canManage: true,
-    recordChangedAt: null, notPermitted: false,
+    tenantId: "tenant-1", phase: "ready", handles: [], connections: [], canManage: true,
+    recordChangedAt: null, notPermitted: false, authorityUnknown: false, handlesUnknown: false,
     recordHandles: async () => ({ ok: true, recordedCount: 0 }), retry() {},
+  } satisfies import("./useSocialCommand").SocialCommandState),
+}));
+// The Marketing Social view mounts under the real App tenant provider.
+vi.mock("@/hooks/useTenantContext", () => ({
+  useTenantContext: () => ({
+    activeTenantId: harness.state.tenantId,
+    activeUserId: "marketing-tabs-test-user",
+    loading: false,
+    accountContextLoading: false,
   }),
+}));
+vi.mock("./social-publishing-data", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./social-publishing-data")>()),
+  readSocialDesk: async () => ({ pieces: [], posts: [] }),
 }));
 // The Social tab mounts the Go Live panel; its own door/world suite owns its proof.
 vi.mock("./go-live", () => ({ GoLive: () => <div data-golive-stub /> }));
@@ -341,7 +354,7 @@ describe("§58 — behaviour that shipped on Sales and must survive the command-
     const tabs = [...host.querySelectorAll('[role="tablist"][aria-label="Marketing views"] [role="tab"]')]
       .map((t) => t.textContent?.trim())
       .filter(Boolean);
-    expect(tabs).toEqual(["Overview", "Campaigns", "Audience", "Content", "Calendar", "Social", "Email", "Analytics"]);
+    expect(tabs).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Analytics"]);
   });
 
   it("keeps SalesOps' own four load phases distinct from the Campaigns snapshot's", () => {

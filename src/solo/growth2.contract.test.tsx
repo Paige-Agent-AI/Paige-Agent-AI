@@ -44,7 +44,6 @@ describe("Solo Campaigns approved contract", () => {
       ["campaigns", "Campaigns"],
       ["audience", "Audience"],
       ["content", "Content"],
-      ["calendar", "Calendar"],
       ["social", "Social"],
       ["email", "Email"],
       ["analytics", "Analytics"],
@@ -54,7 +53,9 @@ describe("Solo Campaigns approved contract", () => {
     expect(source).not.toContain("<MarketingAds");
     // Old `/growth/ads` links replace into the Ads department before any Marketing reader mounts.
     expect(source).toMatch(/legacySalesRoute\([^)]*\)\?\?legacyAdsRoute\(/);
-    expect(tabBlock).not.toMatch(/'planned'/);
+    expect(tabBlock).not.toMatch(/'planned'|'calendar'/);
+    expect(source).toMatch(/legacySocialPlansTarget\(params\.account,segment\)/);
+    expect(source).not.toContain("<ContentCalendar");
     expect([...tabBlock.matchAll(/\['([^']+)','[^']+',\(\)=>[^,\]]+,'sales'\]/g)].map((match) => match[1])).toEqual([]);
     expect(tabBlock).not.toMatch(/Active|Brand Kit|Pages|Funnels|Forms|Builders/);
   });

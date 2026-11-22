@@ -1,0 +1,248 @@
+{
+  "before": {
+    "frontier": "20271133000038",
+    "functions": [
+      {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "definer": true,
+        "body_md5": "5545c370d54a7baef54ba37f9619e729",
+        "defaults": null,
+        "signature": "public._team_hub_assert_agent_read_scope(public.team_hub_agent_turns)",
+        "volatility": "v",
+        "metadata_md5": "e30e5e143c79db1c92d1c7788c6c47b3"
+      },
+      {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "definer": false,
+        "body_md5": "a8ede8a4929e497b23f5b1c998587f3f",
+        "defaults": null,
+        "signature": "public._team_hub_card_scope_guard()",
+        "volatility": "v",
+        "metadata_md5": "e1c938d9a09f2d87449d221979144a9a"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "definer": true,
+        "body_md5": "a883690aca797065aa234f1b7fbe2a0c",
+        "defaults": null,
+        "signature": "public.content_publication_bind(uuid,uuid,uuid,text,uuid,uuid,jsonb)",
+        "volatility": "v",
+        "metadata_md5": "46c7b9d1fc33e51213db755c7cf29605"
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "definer": true,
+        "body_md5": "d0cdbf3a8efd27bf81e3b67a60e1a21c",
+        "defaults": "NULL::uuid, NULL::uuid",
+        "signature": "public.content_publication_list(uuid,uuid)",
+        "volatility": "s",
+        "metadata_md5": "2bc1678da9088b619aba8311c881080d"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "definer": true,
+        "body_md5": "1d9e3efa875530e9486f4909fb09a742",
+        "defaults": "NULL::text, NULL::text, NULL::text, NULL::text, NULL::jsonb",
+        "signature": "public.content_publication_record(uuid,uuid,text,text,text,text,text,jsonb)",
+        "volatility": "v",
+        "metadata_md5": "448a1d67988de76ebbd87cccf7b09208"
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "definer": true,
+        "body_md5": "942febe890d60e20b3470f2175a2dafd",
+        "defaults": null,
+        "signature": "public.team_hub_card_states(uuid,uuid,uuid[])",
+        "volatility": "s",
+        "metadata_md5": "837775b02c6647ac2b1d04822d1585c9"
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "definer": true,
+        "body_md5": "bd0e68f3c3e88976786d716dc4a870a6",
+        "defaults": "false, NULL::uuid, NULL::text, NULL::jsonb, NULL::text",
+        "signature": "public.team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean,uuid,text,jsonb,text)",
+        "volatility": "v",
+        "metadata_md5": "9473dfa83c502db9a08be9fdd4f794e6"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "definer": true,
+        "body_md5": "83eb8b40e802e18982c4a165c50662f6",
+        "defaults": null,
+        "signature": "public.team_hub_settle_card(uuid,uuid,uuid,jsonb)",
+        "volatility": "v",
+        "metadata_md5": "94ef2f02caea47174141b4b217a97b0d"
+      }
+    ],
+    "nexus_seed": {
+      "count": 1,
+      "tools": [
+        [
+          "ask_choices",
+          "capability_status",
+          "read_business_time_zone",
+          "team_hub_read_conversation",
+          "growth_list",
+          "campaign_brief_list",
+          "read_campaign_leads",
+          "integrations_list",
+          "growth_page_publish",
+          "comms_send_email"
+        ]
+      ],
+      "config_without_tools": "79f22f6c5f2c0211859ddfaa7bcf9cee"
+    },
+    "constraints": [
+      {
+        "name": "content_publications_status_check",
+        "type": "c",
+        "relation": "content_publications",
+        "validated": true,
+        "definition": "CHECK ((status = ANY (ARRAY['registered'::text, 'approved'::text, 'publishing'::text, 'published'::text, 'partial'::text, 'failed'::text, 'outcome_unknown'::text, 'refused'::text])))"
+      },
+      {
+        "name": "team_hub_message_cards_kind_chk",
+        "type": "c",
+        "relation": "team_hub_message_cards",
+        "validated": true,
+        "definition": "CHECK (((((tool_name = 'crm_assign_task'::text) AND (kind = 'task_handover'::text)) OR ((tool_name = 'crm_cancel_task'::text) AND (kind = 'task_cancel'::text))) OR ((tool_name = 'growth_page_publish'::text) AND (kind = 'page_publish'::text))))"
+      }
+    ],
+    "prerequisites": [
+      {
+        "name": "exp05_atomic_automation_draft",
+        "version": "20271133000033",
+        "statements_md5": "213989b7436bd934ad6ad2abbbd6727f"
+      },
+      {
+        "name": "exp07_planning_history_social_compatibility",
+        "version": "20271133000038",
+        "statements_md5": "c8a19bc648c3274db8998f80ce1c006b"
+      }
+    ],
+    "private_history": {
+      "body_md5": "cc46be59b917b6eceb6df323f74b451f",
+      "metadata_md5": "3e85074d55627e4083338fec91616c88"
+    },
+    "roster_triggers": [
+      {
+        "name": "paige_subagent_rail_name",
+        "enabled": "O",
+        "body_md5": "79cfafd207a68e37f2a2a75166bdca08",
+        "function": "_paige_subagent_rail_name()",
+        "definition": "CREATE TRIGGER paige_subagent_rail_name BEFORE INSERT OR UPDATE OF name, tenant_id ON public.paige_subagents FOR EACH ROW EXECUTE FUNCTION _paige_subagent_rail_name()"
+      }
+    ],
+    "ledger_without34": "f8baff72877f2f8026ce1089090f69e6"
+  },
+  "after": {
+    "functionBodies": [
+      {
+        "signature": "public._team_hub_assert_agent_read_scope(public.team_hub_agent_turns)",
+        "body_md5": "da16cf7c4a5341338b16a010fdfcc605"
+      },
+      {
+        "signature": "public._team_hub_card_scope_guard()",
+        "body_md5": "3144dc31e84efba511cc15d4babce71a"
+      },
+      {
+        "signature": "public.content_publication_bind(uuid,uuid,uuid,text,uuid,uuid,jsonb)",
+        "body_md5": "8817ca0548a47ac3d54fabfa438759af"
+      },
+      {
+        "signature": "public.content_publication_list(uuid,uuid)",
+        "body_md5": "c0abaf2525ee411ade5f5e07cfe3cc7d"
+      },
+      {
+        "signature": "public.content_publication_record(uuid,uuid,text,text,text,text,text,jsonb)",
+        "body_md5": "4778a678cd552c3d324443ac5ec7c657"
+      },
+      {
+        "signature": "public.team_hub_card_states(uuid,uuid,uuid[])",
+        "body_md5": "4f986b550ad1b28c277e1db308a16f75"
+      },
+      {
+        "signature": "public.team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean,uuid,text,jsonb,text)",
+        "body_md5": "fb04b67134a1323117836978a66c0bfa"
+      },
+      {
+        "signature": "public.team_hub_settle_card(uuid,uuid,uuid,jsonb)",
+        "body_md5": "9f196e1a1ab64597fce7a9f357ecc5bd"
+      }
+    ],
+    "constraints": [
+      {
+        "name": "content_publications_status_check",
+        "type": "c",
+        "relation": "content_publications",
+        "validated": true,
+        "definition": "CHECK ((status = ANY (ARRAY['registered'::text, 'approved'::text, 'publishing'::text, 'published'::text, 'partial'::text, 'failed'::text, 'outcome_unknown'::text, 'refused'::text, 'scheduled'::text, 'schedule_changing'::text, 'cancelled'::text])))"
+      },
+      {
+        "name": "team_hub_message_cards_kind_chk",
+        "type": "c",
+        "relation": "team_hub_message_cards",
+        "validated": true,
+        "definition": "CHECK ((((tool_name = 'crm_assign_task'::text) AND (kind = 'task_handover'::text)) OR ((tool_name = 'crm_cancel_task'::text) AND (kind = 'task_cancel'::text)) OR ((tool_name = 'growth_page_publish'::text) AND (kind = 'page_publish'::text)) OR ((tool_name = 'social.post_publish'::text) AND (kind = 'social_publish'::text))))"
+      }
+    ],
+    "nexusSeed": {
+      "count": 1,
+      "tools": [
+        [
+          "ask_choices",
+          "capability_status",
+          "read_business_time_zone",
+          "team_hub_read_conversation",
+          "growth_list",
+          "campaign_brief_list",
+          "read_campaign_leads",
+          "integrations_list",
+          "growth_page_publish",
+          "comms_send_email",
+          "read_social_publication",
+          "social_post_publish"
+        ]
+      ],
+      "config_without_tools": "79f22f6c5f2c0211859ddfaa7bcf9cee"
+    },
+    "ledgerRow": {
+      "name": "exp07_media_snapshot_receipt_compatibility",
+      "version": "20271133000034",
+      "statements_md5": "bde163f0a08d446bc44a8c4caff0a21c"
+    }
+  }
+}

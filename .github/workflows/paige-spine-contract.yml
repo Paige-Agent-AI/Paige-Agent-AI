@@ -892,6 +892,7 @@ jobs:
       # and that the fixed offer/atomic fulfillment functions retain their least-privilege grants.
       - run: supabase test db supabase/tests/solo_beta_authz_hardening.sql
       - run: supabase test db supabase/tests/solo_beta_offer_boundary.sql
+      - run: supabase test db supabase/tests/solo_beta_protected_offer.sql
       - run: supabase test db supabase/tests/solo_beta_welcome_lifecycle.sql
       # EXP00 live-incident regression: the REAL claim→fulfill sequence must
       # complete end-to-end (the ambiguous reference_id broke the first-ever

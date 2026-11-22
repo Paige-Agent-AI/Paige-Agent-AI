@@ -46,16 +46,16 @@ export function RecordAccountsForm({ handles, canManage, onSave, onClose }: Reco
     const result = await onSave(toHandlePayload(draft));
     if (!mounted.current) return;
     setSaving(false);
-    if (result.ok) {
-      // Reports the count the SERVER read back, not the length of what was typed.
-      setMessage(
-        result.recordedCount === 0
-          ? "Saved. No account is on record now."
-          : `Saved. ${result.recordedCount} account${result.recordedCount === 1 ? "" : "s"} on record.`,
-      );
+    if (result.ok === false) {
+      setMessage(result.message);
       return;
     }
-    setMessage(result.message);
+    // Report the count the server read back.
+    setMessage(
+      result.recordedCount === 0
+        ? "Saved. No account is on record now."
+        : `Saved. ${result.recordedCount} account${result.recordedCount === 1 ? "" : "s"} on record.`,
+    );
   };
 
   return (
@@ -68,7 +68,7 @@ export function RecordAccountsForm({ handles, canManage, onSave, onClose }: Reco
             <h2 id="social-record-title">The accounts this business posts from</h2>
           </div>
           <button type="button" className="btn btn-s" onClick={onClose} disabled={saving}>
-            <Ic.x size={13} />Close
+            <Ic.x size={13} style={undefined} />Close
           </button>
         </header>
         <form onSubmit={submit}>
@@ -102,7 +102,7 @@ export function RecordAccountsForm({ handles, canManage, onSave, onClose }: Reco
           <div className="social-dialog-actions">
             <button type="button" className="btn btn-s" onClick={onClose} disabled={saving}>Cancel</button>
             <button type="submit" className="btn btn-s btn-g" disabled={!canManage || saving}>
-              <Ic.check size={13} />{saving ? "Saving…" : "Save to record"}
+              <Ic.check size={13} style={undefined} />{saving ? "Saving…" : "Save to record"}
             </button>
           </div>
         </form>

@@ -97,7 +97,7 @@ export function createMeetPaigeGalaxy(ink: CanvasRenderingContext2D) {
     const reveal = intro ? ease((elapsed - 2720) / 1550) : 1;
     const turn = reduced ? .32 : elapsed * .00031 + reveal * 1.04;
     const compact = width < 650;
-    const x = width * .5, y = height * (compact ? .32 : .365);
+    const x = width * .5, y = height * (compact ? .36 : .4);
     const radius = Math.min(width * .32, height * .335) * mix(.06, 1, ease(light));
     const tilt = mix(1.02, .47, reveal);
     const outline = -.19;

@@ -27,10 +27,6 @@ vi.mock("@/lib/paigeLiveConversation/client", () => ({
   renewPaigeLiveRelayTicket: control.renew,
   acceptPaigeLiveTerms: control.acceptTerms,
 }));
-// The 3D presence fetches a 3.7 MB GLB through a lazy import and needs a WebGL context; neither
-// exists here. The component already falls back to the flat presence when WebGL is absent, which is
-// exactly what happens in this environment, so these tests exercise the real fallback path rather
-// than a stub of it.
 vi.mock("@/lib/paigeLiveConversation/relayTransport", () => ({
   connectPaigeLiveRelay: relay.connect,
 }));
@@ -279,9 +275,40 @@ describe("Paige Live Conversation owner surface", () => {
     expect(ensureThread).toHaveBeenCalledTimes(1);
     expect(control.start).toHaveBeenCalledWith(expect.objectContaining({ threadId: "11111111-1111-4111-8111-111111111111", contextEpoch: "tenant-a||", entryMode: "embedded" }));
     expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Same workspace · same conversation");
+    expect(document.querySelector('[role="dialog"]')?.getAttribute("data-layout")).toBe("conversation-film");
+    expect(document.querySelector(".plc-film-galaxy")).not.toBeNull();
+    expect(document.querySelector(".paige-presence-3d")).toBeNull();
+    expect(document.querySelector(".plc-transcript")?.hasAttribute("hidden")).toBe(true);
+    await act(async () => clickText("Transcript"));
+    expect(document.querySelector(".plc-transcript")?.hasAttribute("hidden")).toBe(false);
     expect(document.querySelector(".plc-transcript")?.textContent).toContain("We are still in the same thread.");
     expect(document.querySelector(".plc-notice")?.textContent).toContain("PROOF OWED");
     expect(getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it("gives regular Live one skippable Command Logo intro without replaying onboarding", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+    const threadId = "11111111-1111-4111-8111-111111111111";
+    await render(null, "returning-live", false, threadId);
+    await act(async () => clickText("Talk live with Paige"));
+    expect(document.querySelector("[data-film-intro]")).not.toBeNull();
+    expect(control.start).not.toHaveBeenCalled();
+    await act(async () => clickText("Skip intro"));
+    expect(control.start).toHaveBeenCalledWith(expect.objectContaining({ threadId, contextEpoch: "returning-live" }));
+    expect(document.querySelector("[data-film-intro]")).toBeNull();
+    expect(document.querySelector(".plc-film-audio")).not.toBeNull();
+    expect(fetchGreeting).not.toHaveBeenCalled();
+    await act(async () => clickText("Minimize"));
+    await act(async () => clickText("Talk live with Paige"));
+    expect(document.querySelector("[data-film-intro]")).toBeNull();
+    await render(null, "another-context", false, threadId);
+    await act(async () => clickText("Talk live with Paige"));
+    expect(document.querySelector("[data-film-intro]")).not.toBeNull();
+    await render(null, "returning-live", false, threadId);
+    await act(async () => clickText("Talk live with Paige"));
+    expect(document.querySelector("[data-film-intro]")).toBeNull();
+    expect(fetchGreeting).not.toHaveBeenCalled();
   });
 
   it("opens the stage from the first-run voice-entry request and ANSWERS a blocked request", async () => {
@@ -402,10 +429,11 @@ describe("Paige Live Conversation owner surface", () => {
     await act(async () => clickText("Talk live with Paige"));
     await render(null, "tenant-a||", true);
     expect(document.querySelector('[data-presence-state="working"]')).not.toBeNull();
+    expect(document.querySelector(".plc-working")?.textContent).toContain("Paige is working on");
     expect(document.querySelector(".plc-notice")?.textContent).toContain("PROOF OWED");
     await render();
     expect(document.querySelector('[data-presence-state="unavailable"]')).not.toBeNull();
-    expect(document.querySelector(".plc-working")?.textContent).toContain("No active work");
+    expect(document.querySelector(".plc-working")).toBeNull();
   });
 
   it("ends late setup results instead of reviving a closed stage", async () => {

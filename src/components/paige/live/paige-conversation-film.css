@@ -23,6 +23,7 @@
   --film-gutter: clamp(1.15rem, 6vw, 7rem);
   --film-arrival: cubic-bezier(.23, 1, .32, 1);
   color-scheme: dark;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
   background: radial-gradient(ellipse at 50% -17%, #193b4b, #141e2b 31%, #100d18 68%);
 }
 
@@ -51,7 +52,7 @@
 [data-layout="conversation-film"] .plc-stage__main {
   isolation: isolate;
   grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr);
   padding: clamp(.85rem, 3vh, 1.65rem) var(--film-gutter);
   row-gap: 1rem;
 }
@@ -112,7 +113,7 @@
   61% { transform: translate(21%, 12%); }
   72% { transform: translate(0, -2%); }
   90% { opacity: 1; }
-  100% { transform: translate(calc(-50% + var(--film-gutter) + 1.5rem), calc(55% - 7.5rem)); opacity: 0; }
+  100% { transform: translate(calc(-50% + var(--film-gutter) + 1.5rem), calc(55% - 3rem)); opacity: 0; }
 }
 
 @keyframes plc-film-mark-turn {
@@ -188,10 +189,13 @@
   font: 400 .85rem / 1.5 system-ui, sans-serif;
 }
 
+.plc-film-audio-dock {
+  display: grid;
+  justify-items: center;
+  padding: 0 var(--film-gutter) .75rem;
+}
+
 .plc-film-audio {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  justify-self: center;
   width: min(29rem, 100%);
   min-width: 0;
   display: grid;
@@ -306,15 +310,13 @@
 
   [data-layout="conversation-film"] .plc-stage__main {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(18rem, 1fr) auto;
+    grid-template-rows: minmax(18rem, 1fr);
     overflow-y: auto;
   }
 
-  [data-layout="conversation-film"]:not([data-film-welcome]) .plc-stage__main:has(.plc-workspace:not([hidden])) {
-    grid-template-rows: minmax(16rem, auto) auto auto;
+  [data-layout="conversation-film"] .plc-stage__main:has(.plc-workspace:not([hidden])) {
+    grid-template-rows: minmax(16rem, auto) auto;
   }
-
-  [data-layout="conversation-film"] .plc-stage__main:has(.plc-workspace:not([hidden])) .plc-film-audio { grid-row: 3; }
 
   [data-layout="conversation-film"] .plc-presence::before {
     inset: 32% 0 -12%;

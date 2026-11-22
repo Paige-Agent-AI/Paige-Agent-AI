@@ -67,9 +67,10 @@ test("binds a completed SetupIntent to a trial with renewal stopped at creation"
   const result = buildProtectedSoloTrial(enrollment, checkout, setup, price);
   assert.equal(result.ok, true);
   if (!result.ok) return;
-  assert.equal(result.params.cancel_at_period_end, true);
+  assert.equal(result.params.trial_settings.end_behavior.missing_payment_method, "cancel");
   assert.equal(result.params.trial_period_days, SOLO_BETA_TRIAL_DAYS);
-  assert.equal(result.params.default_payment_method, setup.payment_method);
+  assert.ok(!("default_payment_method" in result.params));
+  assert.equal(result.paymentMethodId, setup.payment_method);
   assert.deepEqual(result.params.items, [{ price: enrollment.stripePriceId, quantity: 1 }]);
   assert.equal(result.options.idempotencyKey, `solo-beta-protected-trial-${enrollment.referenceId}`);
   assert.deepEqual(buildProtectedSoloTrial(enrollment, checkout, setup, price), result);

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { createHash } from "node:crypto";
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -26,8 +27,12 @@ const other = "10000000-0000-4000-8000-000000000002";
 const id = "20000000-0000-4000-8000-000000000001";
 const expected: StudioSavedMediaHandoff = { source: "marketing_content", id, expectedTenantId: tenant, kind: "image" };
 const url = "https://test-project.supabase.co/storage/v1/object/public/paige-generated/original";
+const bytes = new Uint8Array([1, 2, 3, 4]);
+const sha256 = createHash("sha256").update(bytes).digest("hex");
+const previewUrl = "blob:verified-media";
 const result = (kind: StudioSavedMediaHandoff["kind"]) => ({ error: null, data: {
-  ok: true, tenant_id: tenant, piece: { id, kind, status: "draft", title: "Original file", image_url: url, updated_at: "2026-11-22T17:00:00Z" },
+  ok: true, tenant_id: tenant, media: { size: bytes.length, sha256, content_type: kind === "image" ? "image/png" : "video/mp4" },
+  piece: { id, kind, status: "draft", title: "Original file", image_url: url, updated_at: "2026-11-22T17:00:00Z" },
 } });
 
 let host: HTMLDivElement;
@@ -44,8 +49,12 @@ beforeEach(() => {
   testState.listSessions.mockReset();
   testState.scope.activeTenantId = tenant;
   back = vi.fn();
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(bytes)));
+  vi.stubGlobal("crypto", { subtle: { digest: async (_algorithm: string, input: Uint8Array) =>
+    new Uint8Array(createHash("sha256").update(input).digest()).buffer } });
+  vi.stubGlobal("URL", Object.assign(class extends URL {}, { createObjectURL: vi.fn(() => previewUrl), revokeObjectURL: vi.fn() }));
 });
-afterEach(() => { act(() => root.unmount()); host.remove(); });
+afterEach(() => { act(() => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
 
 describe("Content opens the original saved media in Vibe Studio", () => {
   it.each([["image", "img"], ["video", "video"]] as const)("checks the original %s and then mounts the existing post composer", async (kind, selector) => {
@@ -54,15 +63,26 @@ describe("Content opens the original saved media in Vibe Studio", () => {
     expect(host.querySelector('[role="status"]')?.textContent).toContain("original saved file");
     expect(host.querySelector("[data-original-piece]")).toBeNull();
     await act(async () => {});
-    expect(testState.invoke).toHaveBeenCalledExactlyOnceWith("social-publish-command", { body: {
-      action: "preview_media", expected_tenant_id: tenant, content_id: id, kind,
-    } });
+    expect(testState.invoke).toHaveBeenCalledExactlyOnceWith("social-publish-command", {
+      signal: expect.any(AbortSignal), body: { action: "preview_media", expected_tenant_id: tenant, content_id: id, kind },
+    });
     expect(testState.listSessions).not.toHaveBeenCalled();
-    expect(host.querySelector(selector)?.getAttribute("src")).toBe(url);
+    expect(fetch).toHaveBeenCalledExactlyOnceWith(url, expect.objectContaining({ credentials: "omit", redirect: "error" }));
+    expect(host.querySelector(selector)?.getAttribute("src")).toBe(previewUrl);
     expect(host.querySelector("[data-original-piece]")?.getAttribute("data-original-piece")).toBe(id);
     act(() => { host.querySelector(selector)?.dispatchEvent(new Event("error")); });
     expect(host.querySelector('[role="alert"]')?.textContent).toMatch(/check the original file/);
     expect(host.querySelector("[data-original-piece]")).toBeNull();
+  });
+
+  it("refuses changed bytes served from the original URL before opening the composer", async () => {
+    testState.invoke.mockResolvedValue(result("image"));
+    vi.mocked(fetch).mockResolvedValue(new Response(new Uint8Array([9, 2, 3, 4])));
+    render();
+    await act(async () => {});
+    expect(host.querySelector('[role="alert"]')?.textContent).toMatch(/check the original file/);
+    expect(host.querySelector("img, [data-original-piece]")).toBeNull();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
 
   it("refuses a foreign response or changed workspace and never shows the prior file", async () => {

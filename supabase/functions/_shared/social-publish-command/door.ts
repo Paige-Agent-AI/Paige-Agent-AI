@@ -158,6 +158,9 @@ async function previewSavedMedia(deps: SocialPublishDeps, tenantId: string, body
   }
   const bytes = await readResolvedPublicationAsset({ tenantId, storageOrigin: deps.storageOrigin ?? "", asset });
   if (!bytes) return respond(409, { ok: false, code: "MEDIA_SOURCE_UNVERIFIED" });
+  const verifiedBytes = new Uint8Array(bytes.buffer as ArrayBuffer, bytes.byteOffset, bytes.byteLength);
+  const digest = await crypto.subtle.digest("SHA-256", verifiedBytes);
+  const sha256 = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 
   const fresh = await resolveStudioCaller(deps.caller, tenantId);
   if (!fresh.ok) return respond(403, { ok: false, code: "SOCIAL_SOURCE_SCOPE_CHANGED" });
@@ -171,7 +174,7 @@ async function previewSavedMedia(deps: SocialPublishDeps, tenantId: string, body
     return respond(409, { ok: false, code: "MEDIA_SOURCE_CHANGED" });
   }
 
-  return respond(200, { ok: true, tenant_id: tenantId, piece: {
+  return respond(200, { ok: true, tenant_id: tenantId, media: { content_type: asset.contentType, size: asset.size, sha256 }, piece: {
     id, kind, status: piece.status, updated_at: asset.contentRevision, image_url: asset.sourceUrl,
     title: typeof piece.title === "string" ? piece.title.slice(0, 180) : null,
     body: typeof piece.body === "string" ? piece.body.slice(0, 2200) : null,

@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: A saved file opens directly into the existing Studio 
 FLOW_PROTOTYPE: UNVERIFIED: No separate prototype was exercised. The real receiver components ran against synthetic responses in Vitest.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An eligible Solo owner or admin can select an original saved image or video and prepare a social post in Studio.
 VISUAL_DIRECTION: PASS: Follow the existing Studio ink world and typography. Keep the saved media next to the composer on wide screens and above it on narrow screens.
-AUTOMATED_EVIDENCE: PASS: 220 tests across seven focused UI, shared shell, Social door, original media, and byte validation suites passed locally.
+AUTOMATED_EVIDENCE: PASS: 221 tests across seven focused UI, shared shell, Social door, original media, and byte validation suites passed locally. The Edge handler passed Deno type checking.
 STATIC_EVIDENCE: PASS: Trace the shared launch shape into the protected Social read door and existing composer. The sender-controlled payload supplies no URL, revision, destination or permission.
 RENDERED_EVIDENCE: UNVERIFIED: The receiver rendered in jsdom. Full browser geometry and composed Content and Studio evidence remain open.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Component tests covered image and video, missing and foreign responses, decoder errors, and Escape ownership. The signed-in browser composition remains open.
@@ -50,8 +50,8 @@ EXP06 owns the Studio receiver. EXP07 owns the Content sender and drawer on [#33
 | State | Transition and recovery |
 | --- | --- |
 | Content detail | An enabled **Use in social post** button names the saved original and expected workspace. The Content detail stays mounted. |
-| Checking | The existing Studio modal takes focus and the source screen is inert. Back or Escape returns to the initiating button. |
-| Original verified | The same file is visible with the existing composer. On narrow viewports the Studio is the scroll owner. |
+| Checking | A cancellable loading dialog takes focus while the Studio chunk loads. Once open, Studio owns focus and the source screen is inert. Back or Escape returns to the initiating button. |
+| Original verified | Studio renders only a browser copy whose SHA-256 matches the server-verified original. On narrow viewports the Studio is the scroll owner. |
 | Missing, changed, unsupported or unreadable file | The composer stays closed. The error points back to the original Content detail. |
 | Workspace or actor change | The prior overlay is cleared without focusing an action from the old workspace. |
 

@@ -3,6 +3,7 @@
 // only the clients, the provider adapter, and the governance seam (which is Deno-runtime and
 // proven separately by paige-social's production use) are doubles.
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
 
 // The governance module (governSocialMutation → decideGovernedExecution) runs in Deno edge
 // functions and has Deno-specific dependencies (paige-spine's governedExecution.ts). It is
@@ -159,7 +160,9 @@ describe("read-only Studio saved media handoff", () => {
       const read = served(mime, bytes);
       const answer = await w.call({ ...request, kind, url: "https://untrusted.example/other" });
       expect(answer.status).toBe(200);
-      expect(answer.body).toEqual({ ok: true, tenant_id: MINE, piece: {
+      expect(answer.body).toEqual({ ok: true, tenant_id: MINE, media: {
+        size: bytes.length, content_type: mime, sha256: createHash("sha256").update(new Uint8Array(bytes)).digest("hex"),
+      }, piece: {
         id: MEDIA_ID, kind, status: "draft", updated_at: piece.updated_at, image_url: url,
         title: "Saved original", body: "Original caption",
       } });

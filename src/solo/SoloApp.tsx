@@ -422,13 +422,22 @@ React.useEffect(()=>{const h=(event)=>{
   const owner=target instanceof HTMLElement?target.closest('[data-tenant-shell]'):null;
   if(!(target instanceof HTMLButtonElement)||target.disabled||!target.hasAttribute('data-solo-vibe-studio-launcher')||!owner)return;
   const asset=detail.asset===undefined?null:parseStudioSavedMediaHandoff(detail.asset);
-  if(detail.asset!==undefined&&(!asset||!target.isConnected||!activeUserId||asset.expectedTenantId!==activeTenantId||route!=='growth'))return;
+  if(detail.asset!==undefined&&(!asset||!target.isConnected||target.closest('[inert]')||!activeUserId||asset.expectedTenantId!==activeTenantId||route!=='growth'))return;
   studioReturnFocus.current=target;
   studioReturnOwner.current=owner;
   studioFocusPending.current=false;
   setStudio({asset,actorId:activeUserId});
 };window.addEventListener('paige-studio',h);return()=>window.removeEventListener('paige-studio',h)},[activeTenantId,activeUserId,route]);
 const closeStudio=React.useCallback(()=>{studioFocusPending.current=true;setStudio(null)},[]);
+const studioScopeChanged=Boolean(studio?.asset&&(studio.asset.expectedTenantId!==activeTenantId||studio.actorId!==activeUserId));
+const studioMediaOpen=Boolean(studio?.asset&&!studioScopeChanged&&route==='growth');
+React.useLayoutEffect(()=>{
+  if(!studioMediaOpen)return;
+  const host=studioReturnFocus.current?.closest('[data-solo-screen-host]');
+  if(!host||host.hasAttribute('inert'))return;
+  host.setAttribute('inert','');
+  return()=>host.removeAttribute('inert');
+},[studioMediaOpen]);
 React.useLayoutEffect(()=>{
   if(studio||!studioFocusPending.current)return;
   studioFocusPending.current=false;
@@ -440,7 +449,6 @@ React.useLayoutEffect(()=>{
   if(!owner?.isConnected||target.closest('[data-tenant-shell]')!==owner||target.closest('[hidden],[aria-hidden="true"],[inert]'))return;
   target.focus({preventScroll:true});
 },[route,studio]);
-const studioScopeChanged=Boolean(studio?.asset&&(studio.asset.expectedTenantId!==activeTenantId||studio.actorId!==activeUserId));
 React.useEffect(()=>{if(route==='growth'&&!studioScopeChanged)return;setStudio(null);studioFocusPending.current=false;studioReturnFocus.current=null;studioReturnOwner.current=null},[route,studioScopeChanged]);
 const theme=resolvedTheme==='light'?'light':'dark';
 // Owner directive (2026-08-18) — the slide-in panel pops out from THIS launcher ONLY
@@ -521,7 +529,7 @@ onSignOut={()=>void performSignOut({redirectTo:'/'})}>
 <div className="paige-solo" data-theme={theme} style={{width:'100%',maxWidth:'none',height:'100%',minWidth:0,minHeight:0,alignSelf:'stretch',display:'flex',flexDirection:'column'}}>
 <SoloSetupReadinessNotice visible={showSetupReminder} setupHref={soloSetupHref} dismissed={setupReminderDismissed} onDismiss={()=>setSetupReminderDismissed(activeTenantId && activeUserId ? { tenant: activeTenantId, user: activeUserId } : null)}/>
 <div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>
-<main key={screenRoute} data-solo-screen-host inert={studio?.asset&&!studioScopeChanged?"":undefined} style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary key={`${activeUserId??'resolving'}:${accountEpochKey}:${screenRoute==='operations'||screenRoute==='finance'?screenRoute:location.pathname}`} resetKey={location.pathname}><ScreenLoadBoundary resetKey={location.pathname}><React.Suspense fallback={<ScreenOpening label={SCREEN_LABELS[screenRoute]||[...NAV,...NAV2].find(n=>n[0]===screenRoute)?.[1]||'this view'}/>}>{screenRoute==='paige'?null:screens[screenRoute]}</React.Suspense></ScreenLoadBoundary></SoloScreenBoundary></main>
+<main key={screenRoute} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary key={`${activeUserId??'resolving'}:${accountEpochKey}:${screenRoute==='operations'||screenRoute==='finance'?screenRoute:location.pathname}`} resetKey={location.pathname}><ScreenLoadBoundary resetKey={location.pathname}><React.Suspense fallback={<ScreenOpening label={SCREEN_LABELS[screenRoute]||[...NAV,...NAV2].find(n=>n[0]===screenRoute)?.[1]||'this view'}/>}>{screenRoute==='paige'?null:screens[screenRoute]}</React.Suspense></ScreenLoadBoundary></SoloScreenBoundary></main>
 {studio&&!studioScopeChanged&&<React.Suspense fallback={studio.asset?<StudioMediaOpening onBack={closeStudio}/>:null}><VibeStudio onBack={closeStudio} openPaige={openPaige} savedMedia={studio.asset}/></React.Suspense>}</div></div>
 </TenantCommandCenterShell>};
 

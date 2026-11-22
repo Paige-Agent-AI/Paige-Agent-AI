@@ -8220,12 +8220,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               description: "Team only. Draft a branded landing page from a one-line brief — Paige designs the page blocks (hero, feature/phase cards, CTA, an embedded lead form) in the tenant's brand. Returns the draft blocks for the operator to review; drafting is safe and writes nothing (saving and publishing are separate steps). Defaults to a coaching-generic offer (webinar, strategy call, program, lead magnet) — never credit/funding framing unless the brief explicitly asks. Use when the operator asks you to build, design, or create a landing/sales/opt-in page.",
               parameters: {
                 type: "object",
-                properties: {
+                properties: Object.assign({
                   brief: { type: "string", description: "What the page is for — the offer, the audience, and the action you want visitors to take." },
                   tone: { type: "string", description: "Optional tone, e.g. bold, warm, professional, playful." },
-                  ...(studioSessionId ? { page_intent: { type: "string", enum: ["new", "refine"],
-                    description: "Use new for a separate page, even if another page is open. Use refine only when the user asks to change the open page. Carry the generated page_id to save for a refinement. Omit page_id when saving a new page." } } : {}),
-                },
+                }, studioSessionId ? { page_intent: { type: "string", enum: ["new", "refine"],
+                  description: "Use new for a separate page, even if another page is open. Use refine only when the user asks to change the open page. Carry the generated page_id to save for a refinement. Omit page_id when saving a new page." } } : {}),
                 required: ["brief"]
               }
             }

@@ -93,7 +93,7 @@ describe("complete original Studio page save source", () => {
     const result = read({ ...source(), conversion: legacy });
     expect(result?.conversion).toEqual(legacy);
     const draft = normalizeStudioLandingBlocks([{ type: "hero", title: "Editorial services" }], null, result?.conversion);
-    expect(draft.ok && draft.blocks.at(-1)).toEqual({ type: "embedded_form", form_slug: "northwind-intro" });
+    expect(draft.ok && draft.blocks.at(-1)).toEqual(legacy);
   });
 
   it.each([

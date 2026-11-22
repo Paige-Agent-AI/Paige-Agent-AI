@@ -6130,13 +6130,13 @@ console.log("\nC4a — an approval resumes the same objective on the server");
   const narrowed = await studioDrive(st20b, STUDIO_TOOLS20.filter((t) => t !== "growth_page_save"), { approvedConfirmations: [token20b] });
   const outcome20b = outcomeOf(narrowed.bodyText);
   assert("39.20b Studio scope narrowed after the card: not run, approval unspent, the card says it no longer matches",
-    !!token20b && narrowed.rec.rpc.every((c) => !["studio_save_page", "growth_page_upsert"].includes(c.name)) && !st20b.rows[0]?.consumed
+    !!token20b && narrowed.rec.rpc.every((c) => !["studio_save_page", "growth_page_upsert"].includes(c.name)) && st20b.rows[0]?.consumed === false
       && resumedFrames(narrowed.bodyText).length === 0 && /no longer matches anything Paige can run/.test(outcome20b?.note ?? ""),
     JSON.stringify({ outcome20b, consumed: st20b.rows[0]?.consumed }));
   if (st20b.rows[0]) st20b.rows[0].studio_page_save_source = null;
   const legacy20 = await studioDrive(st20b, STUDIO_TOOLS20, { approvedConfirmations: [token20b] });
   assert("39.20c a pre-source Studio approval stays unspent and never writes a page",
-    !!token20b && !st20b.rows[0]?.consumed
+    !!token20b && st20b.rows[0]?.consumed === false && st20b.rows[0]?.studio_page_save_source === null
       && legacy20.rec.rpc.every((c) => !["studio_save_page", "growth_page_upsert"].includes(c.name)),
     JSON.stringify({ consumed: st20b.rows[0]?.consumed }));
 

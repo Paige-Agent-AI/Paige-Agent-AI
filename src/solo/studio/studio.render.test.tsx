@@ -44,6 +44,8 @@ const h = vi.hoisted(() => ({
   templateCalls: [] as Array<[string, boolean]>,
   // The portal-brand read's answer for loadBrand; null keeps the honest-missing path.
   brand: null as Rec | null,
+  projectContext: {} as Rec,
+  contextWrites: [] as Array<{ tenant: string; session: string; context: Rec; expected: Rec }>,
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -77,6 +79,13 @@ vi.mock("./studio-data", async (orig) => {
     listSessions: async () => h.sessions,
     createSession: async (brief: string) => { h.created.push(brief); return session("s-new", brief, brief); },
     openSession: async (id: string) => session(id, h.openTitle, h.openBrief),
+    loadStudioProjectContext: async () => h.projectContext,
+    saveStudioProjectContext: async (tenant: string, sessionId: string, context: Rec, expected: Rec) => {
+      h.contextWrites.push({ tenant, session: sessionId, context, expected });
+      h.projectContext = context;
+      return context;
+    },
+    readStudioBusinessSources: async () => ({ readStatus: "unavailable", context: null, publicBrand: null }),
     loadHeldConfirms: async () => h.held,
     renameSession: async (id: string, title: string) => { h.renamed.push([id, title]); h.openTitle = title; },
     ensureThread: async () => "th-1",
@@ -150,6 +159,8 @@ function type(el: HTMLTextAreaElement, value: string) {
 
 beforeEach(() => {
   Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients", templates: [], templateCalls: [], brand: null });
+  h.projectContext = { target: { kind: "workspace" }, values: {} };
+  h.contextWrites = [];
   backs = 0;
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -183,6 +194,25 @@ async function startProject(brief: string) {
 }
 
 describe("Vibe Studio project workspace", () => {
+  it("sets an older project's brand only after selection and starts its brief once using that project", async () => {
+    h.projectContext = {};
+    h.sse = ["[DONE]"];
+    await startProject("A landing page for the workshop");
+
+    expect(text()).toContain("Choose a brand for new page drafts");
+    expect(h.fetchBodies).toHaveLength(0);
+    expect(h.contextWrites).toHaveLength(0);
+    await act(async () => { host.querySelector<HTMLDetailsElement>(".vs-business-context")!.open = true; });
+    await act(async () => { button("My business")!.click(); });
+    expect(h.contextWrites).toHaveLength(0);
+    await act(async () => { button("Save project context")!.click(); });
+    await flush();
+    expect(h.contextWrites).toEqual([{ tenant: "t-synthetic", session: "s-new", expected: {},
+      context: { target: { kind: "workspace" }, values: {} } }]);
+    expect(h.fetchBodies).toHaveLength(1);
+    expect(h.fetchBodies[0]).toMatchObject({ threadId: "th-1", messages: [{ role: "user", content: "A landing page for the workshop" }] });
+  });
+
   it("a brief opens a project and Paige's first build lands on the stage, with her steps", async () => {
     h.sse = [
       JSON.stringify({ paige_step: { id: "a", label: "Wrote 3 questions" } }),

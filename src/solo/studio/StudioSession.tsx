@@ -8,7 +8,7 @@ import { Logo } from "../_shared";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 import { useMediaJobs } from "../useMediaJobs";
 import { MediaApprovalCard } from "./MediaApprovalCard";
-import { formFromRow, isUnnamed, sessionName, loadBrand, openSession, pageFromRow, plainError, renameSession, setSessionTemplate, type ArtifactRef, type StudioSession as Session, type StudioVersion } from "./studio-data";
+import { formFromRow, isUnnamed, sessionName, loadBrand, loadStudioProjectContext, openSession, pageFromRow, plainError, renameSession, saveStudioProjectContext, setSessionTemplate, type ArtifactRef, type StudioProjectContext, type StudioSession as Session, type StudioVersion } from "./studio-data";
 import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { useStudioChat, type Choices } from "./useStudioChat";
 import { StudioStage } from "./StudioStage";
@@ -16,6 +16,11 @@ import { artifactId, loadArtifact, hasPendingChanges, isLive, type Brand, type D
 import { PublishPanel } from "./PublishPanel";
 import { FormSettings } from "./FormSettings";
 import { Timeline } from "./Timeline";
+import { StudioBusinessContextPanel } from "./StudioBusinessContextPanel";
+import { StudioBusinessSelector } from "./StudioBusinessSelector";
+import { projectStudioBusinessContext, studioProjectValues } from "./business-context";
+import { applyStudioBusinessSelection } from "./studio-business-selection";
+import { useStudioBusinessContext } from "./useStudioBusinessContext";
 
 const KIND_WORD: Record<ArtifactRef["kind"], string> = { form: "Form", page: "Page", funnel: "Funnel", content: "Content" };
 
@@ -63,6 +68,14 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [chatOpen, setChatOpen] = React.useState(false);
+  const [projectContext, setProjectContext] = React.useState<StudioProjectContext | null>(null);
+  const [contextDraft, setContextDraft] = React.useState<StudioProjectContext | null>(null);
+  const [contextMissing, setContextMissing] = React.useState(false);
+  const [contextError, setContextError] = React.useState<string | null>(null);
+  const [contextRead, setContextRead] = React.useState(0);
+  const [contextSaving, setContextSaving] = React.useState(false);
+  const contextWrite = React.useRef<AbortController | null>(null);
+  const contextProjection = useStudioBusinessContext(tenantId, tenantSlug, contextDraft?.target, contextDraft?.values ?? {});
   const [briefOpen, setBriefOpen] = React.useState(true);
   const [templating, setTemplating] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
@@ -112,7 +125,51 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   }, [sessionId]);
 
   React.useEffect(() => { void reloadSession(); }, [reloadSession]);
-  React.useEffect(() => { void loadBrand(tenantSlug).then(setBrand); }, [tenantSlug]);
+  React.useEffect(() => {
+    let current = true;
+    setProjectContext(null);
+    setContextDraft(null);
+    setContextMissing(false);
+    setContextError(null);
+    setContextSaving(false);
+    void loadStudioProjectContext(tenantId, sessionId).then(raw => {
+      if (!current) return;
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("Project context unavailable");
+      if (Object.keys(raw).length === 0) {
+        setContextMissing(true);
+        setChatOpen(true);
+        return;
+      }
+      const context = raw as StudioProjectContext;
+      if (!projectStudioBusinessContext({ expectedTenantId: tenantId, target: context.target, readStatus: "unavailable", context: null }).target) throw new Error("Project context unavailable");
+      setProjectContext(context);
+      setContextDraft({ ...context, values: context.values ?? {} });
+    }).catch(() => { if (current) setContextError("Project context couldn't be loaded."); });
+    return () => { current = false; contextWrite.current?.abort(); contextWrite.current = null; };
+  }, [tenantId, sessionId, contextRead]);
+
+  React.useEffect(() => {
+    let current = true;
+    const values = projectContext ? studioProjectValues(projectContext.values, projectContext.business_name) : {};
+    const edited = (key: keyof typeof values) => Boolean(projectContext?.values && Object.prototype.hasOwnProperty.call(projectContext.values, key));
+    const floor = buildGrowthBrandFloor(null);
+    const brandForProject = (workspace: Brand): Brand => ({
+      ...workspace,
+      floor: { ...workspace.floor,
+        primary: values.primaryColor ?? (edited("primaryColor") ? floor.primary : workspace.floor.primary),
+        accent: values.accentColor ?? (edited("accentColor") ? floor.accent : workspace.floor.accent),
+      },
+      name: values.publicName ?? (edited("publicName") ? null : workspace.name),
+      logoUrl: values.logoUrl ?? (edited("logoUrl") ? null : workspace.logoUrl),
+      primaryColor: values.primaryColor ?? (edited("primaryColor") ? null : workspace.primaryColor),
+    });
+    if (projectContext?.target.kind === "workspace") {
+      void loadBrand(tenantSlug).then(value => { if (current) setBrand(brandForProject(value)); });
+    } else {
+      setBrand(brandForProject({ floor, name: null, logoUrl: null }));
+    }
+    return () => { current = false; };
+  }, [tenantSlug, projectContext]);
 
   // EXP07 row 6 — flag this project as a workspace template (or bring it back to drafts). The
   // governed setter answers; the returned row is what changed. A refusal (not owner/admin) is a
@@ -147,13 +204,46 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
 
   const chat = useStudioChat({
     sessionId,
-    seedBrief,
+    seedBrief: projectContext ? seedBrief : null,
     canvas: activeRef ? { kind: activeRef.kind, id: activeRef.id } : null,
     onArtifact: (a) => { void reloadSession(a.id); },
     // A turn can link pieces without a produced-artifact frame (a page's form, a document), so the
     // manifest is re-read after every turn as well as the stage.
     onTurnDone: () => { setRefreshKey((k) => k + 1); void reloadSession(); },
   });
+
+  const saveProjectContext = async () => {
+    if (!contextDraft || (!contextMissing && !projectContext) || chat.sending || contextWrite.current) return;
+    if (contextProjection.issues.some(issue => issue.source === "project" && issue.field && contextDraft.values[issue.field]?.trim())) {
+      setContextError("Review the highlighted project values before saving.");
+      return;
+    }
+    const target = contextDraft.target;
+    if ((target.kind === "client" || target.kind === "prospect") && !contextDraft.business_source) {
+      setContextError("Select the business you want to use for this project.");
+      return;
+    }
+    const values = Object.fromEntries(Object.keys(contextDraft.values).map(key => [key, contextProjection.projectValues[key as keyof typeof contextDraft.values] ?? ""]));
+    const controller = new AbortController();
+    contextWrite.current = controller;
+    setContextSaving(true);
+    setContextError(null);
+    try {
+      const saved = await saveStudioProjectContext(tenantId, sessionId, { ...contextDraft, values }, projectContext ?? {});
+      if (controller.signal.aborted) return;
+      if (!saved || typeof saved !== "object" || !("target" in saved)) throw new Error("Project context unavailable");
+      setProjectContext(saved as StudioProjectContext);
+      setContextDraft(saved as StudioProjectContext);
+      setContextMissing(false);
+    } catch (e) {
+      if (!controller.signal.aborted) setContextError(plainError(e, "The context save couldn't be verified. Reopen the project to check its saved context."));
+    } finally {
+      if (contextWrite.current === controller) {
+        contextWrite.current = null;
+        setContextSaving(false);
+      }
+    }
+  };
 
   // Images Paige starts in this project run as media jobs: approvals land here, and a finished image
   // is filed onto the project by the server, so a completed job means the manifest changed.
@@ -200,7 +290,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
 
   const submit = () => {
     const text = input.trim();
-    if (!text || chat.sending || !chat.ready) return;
+    if (!text || chat.sending || !chat.ready || contextSaving) return;
     setInput("");
     void chat.send(text);
   };
@@ -217,7 +307,8 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const live = artifact ? isLive(artifact) : false;
   const pending = artifact ? hasPendingChanges(artifact) : false;
   const saveState = chat.sending ? { tone: "busy", text: chat.status ?? "Paige is building" }
-    : !artifact ? (chat.preview ? { tone: "idle", text: chat.confirms.some((c) => !c.state) ? "Designed · waiting for your approval" : "Designed · not saved" } : { tone: "idle", text: "Nothing built yet" })
+    : chat.preview && !previewing ? { tone: "idle", text: chat.confirms.some((c) => !c.state) ? "Designed · waiting for your approval" : "Designed · not saved" }
+    : !artifact ? { tone: "idle", text: "Nothing built yet" }
     : live ? (pending ? { tone: "good", text: "Saved · changes not live yet" } : { tone: "good", text: "Live" })
     : { tone: "good", text: "Saved · draft" };
   const publishLabel = live ? (pending ? "Publish changes" : "Live · Manage") : "Publish";
@@ -301,6 +392,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
 
       <div className="vs-body">
         <section className="vs-chat" aria-label="Chat with Paige" data-open={chatOpen}>
+          <div className="vs-chat-context">
           {/* The brief the project started from, pinned above the conversation so it survives reopen
               (EXP07 row 1): the chat's first message already carries it, but nothing showed it after
               that. Open when the project opens; the owner's own toggle always wins. */}
@@ -310,15 +402,29 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
               <MarkdownMessage content={session.seedBrief} className="vs-md" />
             </details>
           )}
-          {/* The brand this project's pages actually use (EXP06 row 2): the same anon-safe portal
-              read the published pages theme from, shown with its honest missing states so the owner
-              knows what visitors will see. Read-only — brand facts are set in Setup, not here. */}
-          {session && (
+          {(contextDraft || contextMissing || contextError) && <div className="vs-project-context-editor">
+            {(contextDraft || contextMissing) && <StudioBusinessContextPanel projection={contextProjection}
+              projectValues={contextDraft?.values ?? {}} selectedBusinessName={contextDraft?.business_name}
+              disabled={contextSaving || chat.sending}
+              businessSelection={contextDraft && <StudioBusinessSelector tenantId={tenantId} target={contextDraft.target}
+                selected={contextDraft.business_source} disabled={contextSaving || chat.sending}
+                onSelect={business => setContextDraft(value => value ? applyStudioBusinessSelection(value, business, crypto.randomUUID()) : value)} />}
+              onChange={values => setContextDraft(value => value ? { ...value, values } : null)}
+              onTargetChange={kind => setContextDraft(value => value?.target.kind === kind ? value : {
+                target: kind === "workspace" ? { kind } : { kind, reference: crypto.randomUUID() }, values: {},
+              })} />}
+            {contextMissing && <p className="vs-inspector-note">Choose a brand for new page drafts. You can still open saved work.</p>}
+            {contextDraft && (contextMissing || JSON.stringify(contextDraft) !== JSON.stringify(projectContext)) &&
+              <button type="button" className="vs-btn" onClick={() => void saveProjectContext()} disabled={contextSaving || chat.sending}>{contextSaving ? "Saving context…" : "Save project context"}</button>}
+            {contextError && <p className="vs-inspector-note" role="status">{contextError} {!contextDraft && !contextMissing &&
+              <button type="button" className="vs-link" onClick={() => setContextRead(value => value + 1)}>Retry</button>}</p>}
+          </div>}
+          {session && projectContext && (
             <p className="vs-brand-line">
-              <b>Working from your brand</b>
+              <b>{projectContext.target.kind === "workspace" ? "Working from your brand" : "Selected project brand"}</b>
               {brand.logoUrl && <img className="vs-brand-logo" src={brand.logoUrl} alt="" loading="lazy" />}
               <span>
-                {brand.name ? brand.name : "No business name yet — add it in Setup"}
+                {brand.name || (projectContext.target.kind === "workspace" ? "No business name yet — add it in Setup" : "Business name not provided")}
                 {" · "}
                 {brand.primaryColor
                   ? <><i className="vs-brand-swatch" style={{ background: brand.primaryColor }} aria-hidden="true" />your page color</>
@@ -327,6 +433,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
               </span>
             </p>
           )}
+          </div>
           <div className="vs-chat-log" ref={logRef}>
             {chat.loadError && <p className="vs-alert" role="alert">{chat.loadError}</p>}
             {!chat.ready && !chat.loadError && <p className="vs-inspector-note" role="status">Opening the conversation…</p>}

@@ -31,6 +31,8 @@ const DEAL_ACTIONS = new Set([
 const CLIENT_REFERENCE = /^CLT-[0-9A-F]{1,12}$/;
 const METADATA_KEYS = new Set(["action", "outcome", "receipt_recorded", "external_effect", "record_reference"]);
 const RECEIPT_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const crmResultSupportsReceipt = (action: unknown): action is "deal.update" | "task.update" =>
+  action === "deal.update" || action === "task.update";
 const object = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 
@@ -89,9 +91,8 @@ export function crmResultReferenceMetadata(value: unknown): Pick<CrmResultMetada
   const reference = crmResultRecordReference(value);
   if (!reference) return {};
   const result = object(value);
-  // Only this selected native update adopts receipt recovery. Older rows and
-  // other action families retain their original reduced reference contract.
-  const correlation = result?.action === "deal.update" ? result.correlation_id : null;
+  // Surface-only history can reopen Work but cannot identify an exact receipt.
+  const correlation = reference.record_id && result && crmResultSupportsReceipt(result.action) ? result.correlation_id : null;
   return { record_reference: reference,
     ...(typeof correlation === "string" && correlation.length === 36 && RECEIPT_UUID.test(correlation)
       ? { correlation_id: correlation.toLowerCase() } : {}) };
@@ -108,6 +109,6 @@ export function readCrmResultMetadata(value: unknown): CrmResultMetadata[] {
       // Historical raw payloads are never evidence for a new reference. Only the
       // separately projected field may hydrate; injected old payload fields fail closed.
       ...(Object.keys(row).some(key => !METADATA_KEYS.has(key)
-        && !(key === "correlation_id" && row.action === "deal.update")) ? {} : crmResultReferenceMetadata(row)) }];
+        && !(key === "correlation_id" && crmResultSupportsReceipt(row.action))) ? {} : crmResultReferenceMetadata(row)) }];
   });
 }

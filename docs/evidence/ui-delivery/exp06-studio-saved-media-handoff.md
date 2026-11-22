@@ -18,14 +18,14 @@ REDUCED_MOTION: UNVERIFIED: This path adds no motion. Verify the complete compos
 STATE_COVERAGE: PASS: Local tests cover original PNG and MP4, unsupported file type, invalid bytes, stale revision, foreign and denied workspace, original preview refusal and return control.
 TRUTHFUL_STATE_LABELS: PASS: A verified original opens a compose view. A refused or unreadable file returns an actionable message. Opening alone creates no approval, asset, post, receipt or schedule.
 SOLO_UI: YES: Marketing Content to the existing Vibe Studio modal in the shared Solo shell.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: Composed browser evidence is pending.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Composed browser evidence is pending.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: Composed browser evidence is pending.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: Composed browser evidence is pending.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Composed browser evidence is pending.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Composed browser evidence is pending.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Composed browser evidence is pending.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Composed browser evidence is pending.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: The receiver-only DOM harness has no browser viewport or Solo shell geometry.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Verify the Studio modal and its return over the composed Content and Chat shell.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: Verify the original media and composer side by side in the composed browser.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: Verify the PAIGE-open chrome does not cover the Studio controls and return target.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Verify both preview and composer are reachable in the Studio scroll owner.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Verify focus and scroll ownership with the adjacent PAIGE panel open.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Verify the Studio preview and composer fit in the narrower composed shell.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Verify the narrower shell can still return to the original Content drawer with PAIGE open.
 UNVERIFIED: Exact production Edge and web identity, signed-in original asset selection and return, and browser layout, focus and media playback.
 
 OWNER_INTENT: Open the original saved image or video from Content in Vibe Studio to start a social post.
@@ -35,9 +35,9 @@ ACCEPTANCE_CRITERIA: In an eligible signed-in Solo workspace, open one real save
 MOTION_PURPOSE: NONE: The receiver uses the current Studio modal and adds no animation.
 PROTECTED_SEAMS: Active tenant and actor, protected source reader, Storage origin and byte identity, focus, exact revision, and unchanged approval and publication paths. No changes to authentication, billing, enrollment, or provider credentials.
 
-INTERNAL_BUILD_IDENTITY: Exact PR head and canonical base recorded in the Linear handoff; deployment=local receiver candidate; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(social-publish-command official source receipt); evidence=focused local Vitest command and composed sender readback
+INTERNAL_BUILD_IDENTITY: 175a13122140f4cdf7d1608c7a695ef6b11c925c; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(social-publish-command official source receipt); evidence=ANT-162 and the focused local Vitest command
 RELEASE_CHANNEL: development: Scoped receiver candidate for the approved sender release.
-RELEASE_CLASSIFICATION: feature: Bounded read-only ingress into the existing Studio post composer.
+RELEASE_CLASSIFICATION: internal-only: Bounded read-only ingress into the existing Studio post composer.
 CUSTOMER_RELEASE_IDENTITY: none: Receiver and sender require integrated signed-in proof.
 RELEASE_NOTE_REQUIRED: no: This is an internal delivery increment.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: Edge and app deploy, original image and video readback, browser focus return and composed Solo acceptance.

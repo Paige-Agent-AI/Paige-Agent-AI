@@ -30,12 +30,12 @@ const validOffer = (
   ...overrides,
 });
 
-Deno.test("Solo Beta offer accepts the exact approved test-mode monthly offer", () => {
+Deno.test("Solo Beta v1 accepts the exact approved live monthly offer", () => {
   assertEquals(validateSoloBetaOffer(validOffer()), {
     ok: true,
     offer: {
       code: "paige-solo-beta-monthly-v1",
-      providerMode: "test",
+      providerMode: "live",
       productId: "prod_solo_beta",
       priceId: "price_solo_beta_monthly",
       unitAmountCents: 7_450,
@@ -48,7 +48,7 @@ Deno.test("Solo Beta offer accepts the exact approved test-mode monthly offer", 
   });
 });
 
-Deno.test("Solo Beta offer rejects live-mode evidence", () => {
+Deno.test("Solo Beta v1 rejects test-mode evidence", () => {
   assertEquals(validateSoloBetaOffer(validOffer({ livemode: false })), {
     ok: false,
     code: "provider_mode_not_live",

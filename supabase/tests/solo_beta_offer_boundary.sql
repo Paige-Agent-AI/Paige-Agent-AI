@@ -12,7 +12,7 @@ SELECT is((SELECT stripe_account FROM public.platform_subscription_offers WHERE 
 SELECT is((SELECT p.slug FROM public.platform_subscription_offers o JOIN public.platform_subscription_plans p ON p.id=o.plan_id WHERE o.offer_code='paige-solo-beta-monthly-v1'),'solo','offer is bound only to the canonical Solo plan');
 SELECT is((SELECT status FROM public.platform_subscription_offers WHERE offer_code='paige-solo-beta-monthly-v1'),'live_ready','offer is ready only after live provider identifiers are configured');
 SELECT ok((SELECT stripe_product_id IS NOT NULL AND stripe_price_id IS NOT NULL FROM public.platform_subscription_offers WHERE offer_code='paige-solo-beta-monthly-v1'),'canonical server configuration binds the verified live provider objects');
-SELECT is((SELECT count(*)::integer FROM public.platform_subscription_offers WHERE status<>'retired'),1,'Solo Beta is the only non-retired public enrollment offer');
+SELECT is((SELECT count(*)::integer FROM public.platform_subscription_offers WHERE status='live_ready'),1,'The original Solo Beta offer is the only live enrollment offer during rollout');
 SELECT ok(NOT has_table_privilege('authenticated','public.platform_subscription_offers','SELECT'),'browser cannot read provider offer identifiers');
 SELECT ok(NOT has_table_privilege('authenticated','public.solo_beta_enrollments','SELECT'),'browser cannot read enrollment authority rows');
 SELECT ok(NOT has_table_privilege('authenticated','public.solo_beta_fulfillment_receipts','SELECT'),'browser cannot read fulfillment receipts directly');

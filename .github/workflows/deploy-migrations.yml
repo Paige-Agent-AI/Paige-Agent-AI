@@ -59,16 +59,6 @@ name: deploy-migrations
 
 on:
   workflow_dispatch:
-    inputs:
-      original34_exception:
-        description: 'One-time original 34 catch-up for the exact approved release; empty means newer-only'
-        type: choice
-        options: ['', '20271133000034']
-        default: ''
-      reviewed_sha:
-        description: 'Exact independently reviewed head with passing required checks'
-        type: string
-        default: ''
   push:
     branches: [main]
     paths:
@@ -149,8 +139,6 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-          ORIGINAL34_EXCEPTION: ${{ inputs.original34_exception }}
-          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
         run: |
           set -euo pipefail
           if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
@@ -169,46 +157,10 @@ jobs:
             ref="$(sed -n 's/^project_id = "\(.*\)"/\1/p' supabase/config.toml | head -1)"
           fi
           if [ -z "$ref" ]; then echo "::error::could not resolve prod project ref"; exit 1; fi
-          if [ -n "${ORIGINAL34_EXCEPTION:-}" ]; then
-            test "$GITHUB_EVENT_NAME" = workflow_dispatch
-            test "$GITHUB_REF" = refs/heads/codex/exp07-original34-release-preparation-20261121
-            test "$GITHUB_SHA" = "$REVIEWED_SHA"
-            test "$ORIGINAL34_EXCEPTION" = 20271133000034
-            test "$ref" = xygzykjyynhzqytbqnzu
-            test "$(supabase --version)" = 2.116.0
-          fi
           echo "Linking prod project $ref"
           # `link` reads SUPABASE_ACCESS_TOKEN + SUPABASE_DB_PASSWORD from the env.
           supabase link --project-ref "$ref"
           supabase migration list --linked
-          if [ -n "${ORIGINAL34_EXCEPTION:-}" ]; then
-            # Original 34 only. The specific owner decision is required before dispatch.
-            # This temporary control is removed before the final main merge.
-            test "$(cat supabase/.temp/project-ref)" = "$ref"
-            command -v psql >/dev/null
-            pooler="$(cat supabase/.temp/pooler-url)"
-            test -n "$pooler"
-            catalog() {
-              PGPASSWORD="$SUPABASE_DB_PASSWORD" PGSSLMODE=require PGCONNECT_TIMEOUT=10 \
-                PGOPTIONS='-c default_transaction_read_only=on -c statement_timeout=10000' \
-                psql "$pooler" -X -A -t -v ON_ERROR_STOP=1 \
-                -f scripts/ci/exp07-original34-release.sql > "$1"
-            }
-            node --test scripts/ci/exp07-original34-release.test.mjs
-            supabase migration list --linked > original34-ledger-before.txt
-            node scripts/ci/exp07-original34-release.mjs versions before original34-ledger-before.txt
-            catalog original34-before.json
-            node scripts/ci/exp07-original34-release.mjs catalog before original34-before.json
-            supabase db push --dry-run --include-all --skip-vault 2>&1 | tee original34-dry-run.txt
-            node scripts/ci/exp07-original34-release.mjs dry-run before original34-dry-run.txt
-            # Same canonical official applier. Never repair/rename or record unapplied SQL.
-            supabase db push --include-all --skip-vault --yes
-            catalog original34-after.json
-            node scripts/ci/exp07-original34-release.mjs catalog after original34-after.json
-            supabase migration list --linked > original34-ledger-after.txt
-            node scripts/ci/exp07-original34-release.mjs versions after original34-ledger-after.txt
-            exit 0
-          fi
           echo "::group::supabase db push (idempotent — already-recorded migrations are skipped)"
           # `db push` queries supabase_migrations.schema_migrations and applies ONLY
           # versions not yet recorded AND newer than production's newest, in order;
@@ -256,26 +208,13 @@ jobs:
           fi
 
       - name: Record applied commit
-        if: success() && inputs.original34_exception == ''
+        if: success()
         run: |
           # `db-live` points at the last commit whose migrations are applied+persisted
           # in prod — the sibling of `edge-live`. A cheap `db-live..HEAD` git diff
           # (mirror of /edge-drift) shows any migration ahead of prod.
           git tag -f db-live "${{ github.sha }}"
           git push -f origin db-live
-
-      - name: Preserve one-time original34 readback
-        if: always() && inputs.original34_exception == '20271133000034'
-        uses: actions/upload-artifact@v4
-        with:
-          name: original34-release-${{ github.sha }}
-          path: |
-            original34-ledger-before.txt
-            original34-before.json
-            original34-dry-run.txt
-            original34-after.json
-            original34-ledger-after.txt
-          if-no-files-found: error
 
       - name: Alert on failed prod apply (never let drift go silent — §13/§32)
         if: failure()

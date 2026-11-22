@@ -893,6 +893,13 @@ jobs:
       - run: supabase test db supabase/tests/solo_beta_authz_hardening.sql
       - run: supabase test db supabase/tests/solo_beta_offer_boundary.sql
       - run: supabase test db supabase/tests/solo_beta_protected_offer.sql
+      - run: supabase test db supabase/tests/solo_beta_protected_trial_attempt.sql
+      - run: supabase test db supabase/tests/solo_beta_protected_signup_intake.sql
+      - run: supabase test db supabase/tests/solo_beta_protected_signup_owner.sql
+      - run: supabase test db supabase/tests/solo_beta_protected_checkout_event.sql
+      - run: supabase test db supabase/tests/solo_beta_protected_workspace.sql
+      - run: supabase test db supabase/tests/solo_beta_protected_meet_live.sql
+      - run: supabase test db supabase/tests/solo_beta_protected_workspace_lifecycle.sql
       - run: supabase test db supabase/tests/solo_beta_welcome_lifecycle.sql
       # EXP00 live-incident regression: the REAL claim→fulfill sequence must
       # complete end-to-end (the ambiguous reference_id broke the first-ever

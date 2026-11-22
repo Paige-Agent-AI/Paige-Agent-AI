@@ -547,6 +547,15 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   else if(tab==="social") body=<Social/>;
   else if(tab==="audience") body=<MarketingAudience tenantId={data.tenantId} onOpenClients={()=>params.account&&navigate(subtabPath("solo",params.account,"clients","people"))}/>;
   else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenAudience={()=>setTab("audience")} onOpenConnections={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`):null} onOpenSettings={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=registration`):null}/>;
-  else if(tab==="content") body=<MarketingContent tenantId={data.tenantId} published={{phase:data.phase,pages:data.artifacts.filter((a)=>a.type==="page").length,funnels:data.artifacts.filter((a)=>a.type==="funnel").length,forms:data.artifacts.filter((a)=>a.type==="form").length,unpublished:(data.drafts||[]).length}} onOpenCapture={()=>goTo("capture")} onRetryPublished={()=>data.retry?.()} studioLauncher={<StudioLauncher/>} kind={contentKindOf(query.get("kind"))} onKind={(kind)=>setOverviewQuery({kind:kind==="all"?null:kind})} piece={query.get("piece")} onPiece={(id)=>setOverviewQuery({piece:id})}/>;
+  else if(tab==="content") {
+    const kind=contentKindOf(query.get("kind"));
+    const piece=query.get("piece");
+    const view=query.get("content_view")==="media"||kind!=="all"||piece?"media":"published";
+    body=<MarketingContent tenantId={data.tenantId} artifacts={data.artifacts} publishedPhase={data.phase}
+      onRetryPublished={()=>data.retry?.()} view={view}
+      onView={(next)=>setOverviewQuery(next==="media"?{content_view:"media"}:{content_view:null,kind:null,piece:null},{replace:false})}
+      kind={kind} onKind={(next)=>setOverviewQuery({content_view:"media",kind:next==="all"?null:next})}
+      piece={piece} onPiece={(id)=>setOverviewQuery({content_view:"media",piece:id})}/>;
+  }
   return <div className="solo-campaigns" data-campaigns-view={tab}><h1 className="campaigns-sr-only">Marketing</h1><CampaignTabs tabs={tabs} current={tab==="capture"?"overview":tab} setCurrent={setTab}/><div id="campaigns-tabpanel" role="tabpanel" aria-labelledby={`campaigns-tab-${tab==="capture"?"overview":tab}`} className="campaigns-scroll">{tab==="catalog" && query.get("origin")==="sales" && !workspaceChanged && data.tenantId && data.phase!=="resolving" && <div className="so-source-return"><button type="button" className="btn btn-s btn-p" onClick={()=>navigate(`${subtabPath("solo",params.account,"growth","sales")}${query.get("resume")==="terms" ? "?resume=terms" : ""}`)}>{query.get("resume")==="terms" ? "Return to commercial terms" : "Return to Sales"}</button><span>Finish offer setup here in Offers, then return when ready.</span></div>}{body}</div><DetailDrawer detail={detail||formDetail} onClose={detail?closeDetail:closeForm}/></div>;
 };

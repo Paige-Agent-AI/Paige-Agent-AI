@@ -35,6 +35,24 @@ export const LIBRARY_READ_LIMIT = 60;
 export const PIECE_COLUMNS = "id,kind,channel,status,title,body,image_url,size,brief,meta,updated_at";
 const COLUMNS = PIECE_COLUMNS;
 const NO_PIECES: ContentPiece[] = [];
+const MEDIA_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const REUSABLE_MEDIA_STATES = new Set(["draft", "ready", "published"]);
+
+function savedMediaReference(piece: ContentPiece, tenantId: string | null) {
+  if (!tenantId || !MEDIA_ID.test(tenantId) || !MEDIA_ID.test(piece.id) || !REUSABLE_MEDIA_STATES.has(piece.status) ||
+      (piece.kind !== "image" && piece.kind !== "video") || !piece.image_url) return null;
+  try {
+    const url = new URL(piece.image_url);
+    const storage = new URL(import.meta.env.VITE_SUPABASE_URL);
+    const prefix = `/storage/v1/object/public/paige-generated/${tenantId}/`;
+    if (url.protocol !== "https:" || url.origin !== storage.origin || url.username || url.password || url.search || url.hash ||
+        !url.pathname.startsWith(prefix) || url.pathname.length === prefix.length) return null;
+  } catch {
+    return null;
+  }
+  // Studio resolves the original row and verifies its bytes and permissions before using the media.
+  return { source: "marketing_content" as const, id: piece.id, kind: piece.kind, expectedTenantId: tenantId };
+}
 
 /** The newest saved pieces, or only one kind's, filtered on the server so the cap never hides a kind. */
 const readPieces = (kind: ContentKindFilter) => async (tenantId: string): Promise<ContentPiece[]> => {
@@ -248,7 +266,7 @@ function PiecePreview({ tenantId, id, known, listPhase, onClose }: { tenantId: s
       : parts && (parts.lead || parts.rest ? <div className="mct-copy">{parts.lead && <b>{parts.lead}</b>}{parts.rest}</div> : <p className="mct-note">No words were saved with this piece.</p>)}
     {asked && (kind === "image" || kind === "video") && <div className="mct-asked"><span>What PAIGE was asked</span><p>{asked}</p></div>}
   </div>;
-  return <DetailDrawer detail={{ key: piece.id, eyebrow: "Content", wide: true, title: title.text, rows: [], body, actions: <PieceActions piece={piece} hasDoc={Boolean(doc)}/> }} onClose={onClose}/>;
+  return <DetailDrawer detail={{ key: piece.id, eyebrow: "Content", wide: true, title: title.text, rows: [], body, actions: <PieceActions piece={piece} tenantId={tenantId} hasDoc={Boolean(doc)}/> }} onClose={onClose}/>;
 }
 
 function FullMedia({ kind, url, alt }: { kind: "image" | "video"; url: string; alt: string }) {
@@ -257,8 +275,9 @@ function FullMedia({ kind, url, alt }: { kind: "image" | "video"; url: string; a
   return <figure className="mct-full">{kind === "image" ? <img src={url} alt={alt} onError={() => setBroken(true)}/> : <video src={url} controls playsInline preload="metadata" aria-label={alt} onError={() => setBroken(true)}/>}</figure>;
 }
 
-function PieceActions({ piece, hasDoc }: { piece: ContentPiece; hasDoc: boolean }) {
+function PieceActions({ piece, tenantId, hasDoc }: { piece: ContentPiece; tenantId: string | null; hasDoc: boolean }) {
   const kind = pieceKind(piece);
+  const asset = savedMediaReference(piece, tenantId);
   const [note, setNote] = React.useState("");
   const url = kind === "image" || kind === "video" ? safeMediaUrl(piece.image_url) : null;
   const [busy, setBusy] = React.useState(false);
@@ -286,6 +305,8 @@ function PieceActions({ piece, hasDoc }: { piece: ContentPiece; hasDoc: boolean 
     catch (error) { console.error("[marketing] copy failed", error); setNote("Couldn’t copy. Select the words and copy them yourself."); }
   };
   return <>
+    {asset && <button type="button" className="btn btn-s btn-p" data-solo-vibe-studio-launcher
+      onClick={event => window.dispatchEvent(new CustomEvent("paige-studio", { detail: { returnFocus: event.currentTarget, asset } }))}>Use in social post</button>}
     {url && <><button type="button" className="btn btn-s" disabled={busy} onClick={() => void download()}>Download</button><a className="btn btn-s" href={url} target="_blank" rel="noreferrer">Open full size</a></>}
     {kind === "document" && hasDoc && <button type="button" className="btn btn-s" onClick={printStudioDocument}>Print / Save as PDF</button>}
     {kind === "copy" && plainCopy(piece.body) && <button type="button" className="btn btn-s" onClick={() => void copy()}>Copy text</button>}

@@ -98,9 +98,59 @@ beforeEach(() => {
   document.body.appendChild(host);
   root = createRoot(host);
 });
-afterEach(() => { act(() => root.unmount()); host.remove(); vi.restoreAllMocks(); });
+afterEach(() => { act(() => root.unmount()); host.remove(); vi.restoreAllMocks(); vi.unstubAllEnvs(); });
 
 describe("Marketing › Content", () => {
+  const mediaTenant = "9561c2f4-9de7-478e-84fa-d9d16f929c9e";
+  const mediaId = "b5e24aed-91ab-4450-873a-d262218aab3c";
+  const storage = "https://storage.example.test";
+  const originalUrl = (tenant: string, file: string) => `${storage}/storage/v1/object/public/paige-generated/${tenant}/${file}`;
+
+  it.each([["image", "graphic.png"], ["video", "clip.mp4"]])("opens the original saved %s in Studio and keeps the preview mounted", async (kind, file) => {
+    vi.stubEnv("VITE_SUPABASE_URL", storage);
+    db.tables.marketing_content = { data: [{ ...ROWS[0], id: mediaId, kind, image_url: originalUrl(mediaTenant, file) }], error: null };
+    const onPiece = vi.fn();
+    await renderContent({ tenantId: mediaTenant, piece: mediaId, onPiece });
+    const launch = button("Use in social post", dialog()!)!;
+    const received = vi.fn();
+    window.addEventListener("paige-studio", received, { once: true });
+    expect(launch.hasAttribute("data-solo-vibe-studio-launcher")).toBe(true);
+    act(() => launch.click());
+    expect(received).toHaveBeenCalledOnce();
+    expect(received.mock.calls[0][0].detail).toEqual({
+      returnFocus: launch,
+      asset: { source: "marketing_content", id: mediaId, kind, expectedTenantId: mediaTenant },
+    });
+    expect(dialog()?.contains(launch)).toBe(true);
+    expect(onPiece).not.toHaveBeenCalled();
+
+    host.setAttribute("inert", "");
+    const escape = () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", cancelable: true }));
+    act(() => { escape(); });
+    expect(onPiece).not.toHaveBeenCalled();
+    host.removeAttribute("inert");
+    act(() => { escape(); });
+    expect(onPiece).toHaveBeenCalledWith(null);
+  });
+
+  it("keeps foreign, external, pending and non-media records in preview", async () => {
+    vi.stubEnv("VITE_SUPABASE_URL", storage);
+    const otherTenant = "f6eecba0-0811-4d62-a0a0-ab15c7f3a737";
+    for (const variant of [
+      { image_url: originalUrl(otherTenant, "graphic.png") },
+      { image_url: originalUrl(mediaTenant, "graphic.png").replace(storage, "https://elsewhere.example.test") },
+      { image_url: originalUrl(mediaTenant, "clip.mp4"), kind: "video", status: "processing" },
+      { image_url: originalUrl(mediaTenant, "document.pdf"), kind: "document" },
+    ]) {
+      db.tables.marketing_content = { data: [], error: null };
+      db.single = { data: { ...ROWS[0], ...variant, id: mediaId }, error: null };
+      await renderContent({ tenantId: mediaTenant });
+      await renderContent({ tenantId: mediaTenant, piece: mediaId });
+      expect(dialog()).not.toBeNull();
+      expect(button("Use in social post", dialog()!)).toBeUndefined();
+    }
+  });
+
   it("leads with the gallery and shows each piece as what it is", async () => {
     db.tables.marketing_content = { data: ROWS, error: null };
     await renderContent();

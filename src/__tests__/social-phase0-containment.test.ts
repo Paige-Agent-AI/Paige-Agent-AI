@@ -7,7 +7,9 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 describe("Social Operations Phase 0 containment", () => {
   it("mounts the approved truth-oriented Social Command, not the local-only Studio", () => {
     const growth = read("src/solo/growth2.tsx");
-    expect(growth).toContain('if(tab==="social") body=<Social data={data}');
+    expect(growth).toContain('if(tab==="social") body=<Social/>;');
+    expect(growth).toContain('return <SocialCommand onOpenStudio={openStudio} onAskPaige={askPaige} />;');
+    expect(read("src/solo/social-command.tsx")).toContain("<SocialPublishingDesk");
     expect(growth).not.toContain('if(tab==="social") body=<SocialStudio');
     expect(growth).not.toContain('import { SocialStudio } from "./social-studio"');
   });

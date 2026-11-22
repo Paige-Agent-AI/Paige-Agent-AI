@@ -37,7 +37,7 @@ const result = (kind: StudioSavedMediaHandoff["kind"]) => ({ error: null, data: 
 
 let host: HTMLDivElement;
 let root: Root;
-let back: ReturnType<typeof vi.fn>;
+let back: ReturnType<typeof vi.fn<() => void>>;
 function render(asset: StudioSavedMediaHandoff = expected) {
   act(() => { root.render(<VibeStudio onBack={back} savedMedia={asset} />); });
 }
@@ -48,7 +48,7 @@ beforeEach(() => {
   testState.invoke.mockReset();
   testState.listSessions.mockReset();
   testState.scope.activeTenantId = tenant;
-  back = vi.fn();
+  back = vi.fn<() => void>();
   vi.stubGlobal("fetch", vi.fn(async () => new Response(bytes)));
   vi.stubGlobal("crypto", { subtle: { digest: async (_algorithm: string, input: Uint8Array) =>
     new Uint8Array(createHash("sha256").update(input).digest()).buffer } });

@@ -2,6 +2,8 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LiveConversationCard } from "@/lib/paigeLiveConversation/contract";
+import { MEET_PAIGE_FIRST_QUESTION, MEET_PAIGE_WELCOME } from "@/lib/paigeLiveConversation/meetGreeting";
+import { messageTts } from "@/lib/voice/messageTts";
 
 const control = vi.hoisted(() => ({
   start: vi.fn(),
@@ -17,6 +19,8 @@ const relay = vi.hoisted(() => ({
   runtimeProof: vi.fn(),
   runtimeFailed: vi.fn(),
 }));
+const fetchGreeting = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/voice/fetchMessageAudio", () => ({ fetchMessageAudio: fetchGreeting }));
 vi.mock("@/lib/paigeLiveConversation/client", () => ({
   startPaigeLiveConversation: control.start,
   transitionPaigeLiveConversation: control.transition,
@@ -42,6 +46,18 @@ const clickText = (text: string) => {
   return button;
 };
 
+function mockOpeningMedia() {
+  const audio = messageTts.getAudioElement() ?? document.createElement("audio");
+  vi.stubGlobal("Audio", function () { return audio; });
+  vi.spyOn(audio, "play").mockResolvedValue(undefined);
+  vi.spyOn(audio, "pause").mockImplementation(() => undefined);
+  vi.spyOn(audio, "load").mockImplementation(() => undefined);
+  vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:meet-paige-test");
+  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+  fetchGreeting.mockResolvedValue(new Blob(["fixture audio"]));
+  return audio;
+}
+
 describe("Paige Live Conversation owner surface", () => {
   let host: HTMLDivElement;
   let root: Root;
@@ -58,6 +74,8 @@ describe("Paige Live Conversation owner surface", () => {
     document.body.appendChild(host);
     root = createRoot(host);
     control.start.mockReset();
+    fetchGreeting.mockReset();
+    fetchGreeting.mockRejectedValue(new DOMException("Play was blocked", "NotAllowedError"));
     control.transition.mockClear();
     control.transition.mockImplementation(async () => undefined);
     control.renew.mockReset();
@@ -90,14 +108,18 @@ describe("Paige Live Conversation owner surface", () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
     document.body.querySelectorAll(".plc-stage").forEach((node) => node.remove());
   });
 
-  const render = async (card: LiveConversationCard | null = null, epoch = "tenant-a||", working = false, threadId: string | null = null, disabled = false, voiceTurn = onVoiceTurn) => {
+  const render = async (card: LiveConversationCard | null = null, epoch = "tenant-a||", working = false, threadId: string | null = null, disabled = false, voiceTurn = onVoiceTurn, onMeetBypass?: () => void) => {
     await act(async () => root.render(
       <PaigeLiveConversation
         contextEpoch={epoch}
+        meetPaige={Boolean(onMeetBypass)}
+        onMeetBypass={onMeetBypass}
         threadId={threadId}
         ensureThread={ensureThread}
         transcript={[{ id: "m1", role: "assistant", content: "We are still in the same thread." }]}
@@ -113,6 +135,110 @@ describe("Paige Live Conversation owner surface", () => {
       />,
     ));
   };
+
+  it("requests the greeting without showing unspoken captions, and skips without capture", async () => {
+    const bypass = vi.fn();
+    await render(null, "meet-first", false, null, false, onVoiceTurn, bypass);
+    await act(async () => clickText("Talk live with Paige"));
+    const film = document.querySelector('[data-layout="conversation-film"]');
+    expect(film?.textContent).not.toContain(MEET_PAIGE_WELCOME);
+    expect(film?.textContent).not.toContain(MEET_PAIGE_FIRST_QUESTION);
+    expect(fetchGreeting).toHaveBeenCalledWith(
+      MEET_PAIGE_WELCOME,
+      expect.any(String),
+      expect.any(AbortSignal),
+    );
+    expect(film?.textContent).toContain("Sound couldn’t start");
+    expect(control.start).not.toHaveBeenCalled();
+    expect(getUserMedia).not.toHaveBeenCalled();
+    await act(async () => clickText("Skip to workspace"));
+    expect(bypass).toHaveBeenCalledOnce();
+    expect(document.querySelector(".plc-stage")).toBeNull();
+  });
+
+  it("waits for Start live conversation and exposes the existing setup refusal", async () => {
+    await render(null, "meet-start", false, null, false, onVoiceTurn, vi.fn());
+    await act(async () => clickText("Talk live with Paige"));
+    expect(control.start).not.toHaveBeenCalled();
+    await act(async () => clickText("Start live conversation"));
+    expect(control.start).toHaveBeenCalledOnce();
+    expect(document.querySelector(".plc-notice")?.textContent).toContain("retention is approved");
+    expect(getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it("plays the cinematic intro before audio and cancels its pending greeting when bypassed", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+    const bypass = vi.fn();
+    await render(null, "cinematic-bypass", false, null, false, onVoiceTurn, bypass);
+    await act(async () => clickText("Talk live with Paige"));
+    expect(document.querySelector("[data-film-intro]")).not.toBeNull();
+    expect(fetchGreeting).not.toHaveBeenCalled();
+    await act(async () => clickText("Skip to workspace"));
+    await act(async () => vi.advanceTimersByTimeAsync(5000));
+    expect(bypass).toHaveBeenCalledOnce();
+    expect(fetchGreeting).not.toHaveBeenCalled();
+    expect(control.start).not.toHaveBeenCalled();
+    expect(getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it("reveals the audio panel after the intro and keeps the microphone opt-in", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+    await render(null, "cinematic-play", false, null, false, onVoiceTurn, vi.fn());
+    await act(async () => clickText("Talk live with Paige"));
+    expect(document.querySelector(".plc-film-audio")?.getAttribute("data-playing")).toBe("false");
+    expect(fetchGreeting).not.toHaveBeenCalled();
+    const skip = [...document.querySelectorAll("button")].find(button => button.textContent === "Skip intro");
+    skip?.focus();
+    await act(async () => vi.advanceTimersByTimeAsync(4350));
+    expect(document.querySelector("[data-film-intro]")).toBeNull();
+    expect(document.activeElement).toBe(document.querySelector(".plc-stage"));
+    expect(document.querySelector(".plc-film-audio")?.getAttribute("data-playing")).toBe("false");
+    expect(fetchGreeting).toHaveBeenCalledOnce();
+    expect(control.start).not.toHaveBeenCalled();
+    expect(getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it("cancels the intro greeting if the page goes offline", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+    await render(null, "cinematic-offline", false, null, false, onVoiceTurn, vi.fn());
+    await act(async () => clickText("Talk live with Paige"));
+    await act(async () => window.dispatchEvent(new Event("offline")));
+    await act(async () => vi.advanceTimersByTimeAsync(5000));
+    expect(document.querySelector("[data-film-intro]")).toBeNull();
+    expect(fetchGreeting).not.toHaveBeenCalled();
+    expect(control.start).not.toHaveBeenCalled();
+  });
+
+  it("lets an explicit Live request wait for the greeting and opening question", async () => {
+    const audio = mockOpeningMedia();
+    await render(null, "cinematic-after-opening", false, null, false, onVoiceTurn, vi.fn());
+    await act(async () => clickText("Talk live with Paige"));
+    await act(async () => clickText("Start live conversation"));
+    expect(control.start).not.toHaveBeenCalled();
+    await act(async () => audio.dispatchEvent(new Event("ended")));
+    expect(fetchGreeting.mock.calls.map(([text]) => text)).toEqual([MEET_PAIGE_WELCOME, MEET_PAIGE_FIRST_QUESTION]);
+    expect(control.start).not.toHaveBeenCalled();
+    await act(async () => audio.dispatchEvent(new Event("ended")));
+    expect(control.start).toHaveBeenCalledOnce();
+    expect(getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it("clears queued Live intent on native media error before replaying the greeting", async () => {
+    const audio = mockOpeningMedia();
+    await render(null, "cinematic-decode-failure", false, null, false, onVoiceTurn, vi.fn());
+    await act(async () => clickText("Talk live with Paige"));
+    await act(async () => clickText("Start live conversation"));
+    await act(async () => audio.dispatchEvent(new Event("error")));
+    expect(document.querySelector(".plc-film-feedback")?.textContent).toContain("Sound couldn’t start");
+    await act(async () => clickText("Play greeting"));
+    await act(async () => audio.dispatchEvent(new Event("ended")));
+    await act(async () => audio.dispatchEvent(new Event("ended")));
+    expect(control.start).not.toHaveBeenCalled();
+    expect(getUserMedia).not.toHaveBeenCalled();
+  });
 
   it("uses the latest chat callback after lazy thread creation and later renders", async () => {
     control.start.mockResolvedValueOnce({ ok: true, sessionId: "session", ticket: "ticket", availability: "PROOF OWED", code: "relay_ticket_issued" });

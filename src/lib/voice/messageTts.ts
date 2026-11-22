@@ -57,6 +57,8 @@ class MessageTtsController {
   private playToken = 0;
   private held = false;
   private request: AbortController | null = null;
+  private completion: (() => void) | undefined;
+  private playbackError: ((error: TtsFetchError) => void) | undefined;
   private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   // Ephemeral output timing only. Native Performance entries contain no business,
   // thread, message or voice identity; there is no network reporter or second store.
@@ -112,8 +114,18 @@ class MessageTtsController {
   private ensureAudio(): HTMLAudioElement {
     const a = this.audio ?? new Audio();
     const owner = this.token;
-    a.onended = () => { if (owner === this.token) this.stop(); };
-    a.onerror = () => { if (owner === this.token) this.stop(); };
+    a.onended = () => {
+      if (owner !== this.token) return;
+      const complete = this.completion;
+      this.stop();
+      complete?.();
+    };
+    a.onerror = () => {
+      if (owner !== this.token) return;
+      const notify = this.playbackError;
+      this.stop();
+      notify?.({ needsConfig: false, message: "Voice playback could not be decoded." });
+    };
     a.onwaiting = () => { if (owner === this.token && this.snapshot.activeId && !this.held) this.emit({ status: "loading" }); };
     a.onplaying = () => { if (owner === this.token && this.snapshot.activeId && !this.held) { this.recordTiming("first_playback"); this.emit({ status: "playing" }); } };
     this.audio = a;
@@ -135,6 +147,8 @@ class MessageTtsController {
   /** Stop any current playback/loading and clear state. */
   stop = () => {
     this.token++; this.playToken++; this.held = false;
+    this.completion = undefined;
+    this.playbackError = undefined;
     this.timing = null;
     this.request?.abort(); this.request = null;
     void this.reader?.cancel().catch(() => undefined); this.reader = null;
@@ -230,6 +244,7 @@ class MessageTtsController {
     id: string,
     fetchAudio: (signal: AbortSignal) => Promise<MessageAudio>,
     onError?: (e: TtsFetchError) => void,
+    onEnded?: () => void,
   ): Promise<void> => {
     if (this.snapshot.activeId === id && this.snapshot.status === "paused") { await this.resume(); return; }
     if (this.snapshot.activeId === id && this.snapshot.status !== "idle") { this.stop(); return; }
@@ -240,6 +255,8 @@ class MessageTtsController {
     if (started !== null) this.timing = { start: started, transport: "pending", held: false, phases: new Set(), serverTiming: {} };
     this.recordTiming("request_start");
     const request = new AbortController(); this.request = request;
+    this.completion = onEnded;
+    this.playbackError = onError;
     this.emit({ activeId: id, status: "loading" });
     try {
       const audio = await fetchAudio(request.signal);

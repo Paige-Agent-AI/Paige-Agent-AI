@@ -1,0 +1,347 @@
+@font-face {
+  font-family: "Meet Paige Spectral";
+  src: url("/fonts/brand/spectral/spectral-latin-normal-400.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+.plc-stage[data-layout="conversation-film"] {
+  --background: 276 20% 10%;
+  --foreground: 35 43% 94%;
+  --card: 277 19% 14%;
+  --muted: 278 17% 20%;
+  --muted-foreground: 287 15% 77%;
+  --border: 274 15% 37%;
+  --input: 274 15% 49%;
+  --primary: 282 45% 79%;
+  --primary-foreground: 278 26% 15%;
+  --accent: 35 65% 74%;
+  --accent-foreground: 274 25% 13%;
+  --ring: 35 65% 74%;
+  --gold-dark: 35 75% 82%;
+  --film-gutter: clamp(1.15rem, 6vw, 7rem);
+  --film-arrival: cubic-bezier(.23, 1, .32, 1);
+  color-scheme: dark;
+  background: radial-gradient(ellipse at 50% -17%, #193b4b, #141e2b 31%, #100d18 68%);
+}
+
+.plc-stage[data-layout="conversation-film"]::before,
+.plc-stage[data-layout="conversation-film"]::after {
+  content: none;
+}
+
+[data-layout="conversation-film"] [hidden] {
+  display: none;
+}
+
+[data-layout="conversation-film"] .plc-stage__header,
+[data-layout="conversation-film"] .plc-controls {
+  z-index: 2;
+  background: hsl(var(--background) / .93);
+  padding-inline: var(--film-gutter);
+  padding-block: .75rem;
+}
+
+[data-layout="conversation-film"] .plc-controls {
+  justify-content: flex-start;
+  padding-bottom: max(.75rem, env(safe-area-inset-bottom));
+}
+
+[data-layout="conversation-film"] .plc-stage__main {
+  isolation: isolate;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: clamp(.85rem, 3vh, 1.65rem) var(--film-gutter);
+  row-gap: 1rem;
+}
+
+.plc-film-presence {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+}
+
+.plc-film-galaxy { display: block; width: 100%; height: 100%; }
+
+[data-film-intro] :is(.plc-film-caption__cue, .plc-film-audio) {
+  visibility: hidden;
+}
+
+.plc-film-mark-flight {
+  position: absolute;
+  inset: 0;
+  animation: plc-film-mark-flight var(--film-arrival) both;
+}
+
+.plc-film-mark {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  width: min(159vw, 129vh);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  transform-style: preserve-3d;
+  animation: plc-film-mark-turn var(--film-arrival) both;
+  animation-duration: inherit;
+}
+
+.plc-film-mark > .pcm {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+}
+
+.plc-film-mark__depth {
+  transform: translate3d(.84%, 1.42%, -.6rem);
+  opacity: .62;
+  filter: brightness(.43) saturate(1.45);
+}
+
+.plc-film-mark__face {
+  transform: translateZ(.14rem);
+  filter: brightness(1.26) drop-shadow(0 0 .62rem hsl(var(--accent) / .32));
+}
+
+@keyframes plc-film-mark-flight {
+  0%, 26% { transform: translate(0, 0); }
+  38% { transform: translate(-27%, -20%); }
+  50% { transform: translate(23%, -23%); }
+  61% { transform: translate(21%, 12%); }
+  72% { transform: translate(0, -2%); }
+  90% { opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--film-gutter) + 1.5rem), calc(55% - 7.5rem)); opacity: 0; }
+}
+
+@keyframes plc-film-mark-turn {
+  0% { transform: translate(-50%, -50%) perspective(1200px) rotateY(-9deg); }
+  17% { transform: translate(-50%, -50%) perspective(1200px) rotateY(18deg) scale(1.09); }
+  26% { transform: translate(-50%, -50%) perspective(1200px) rotateY(27deg) scale(.16); }
+  38% { transform: translate(-50%, -50%) rotate(-13deg) scale(.16); }
+  50% { transform: translate(-50%, -50%) rotate(14deg) scale(.16); }
+  61% { transform: translate(-50%, -50%) rotate(-10deg) scale(.16); }
+  72% { transform: translate(-50%, -50%) scale(.16); }
+  100% { transform: translate(-50%, -50%) scale(.065); }
+}
+
+.plc-film-command {
+  --post-time: 1640ms;
+  position: absolute;
+  top: 25%;
+  left: 26%;
+  color: #efdbc1;
+  font: 600 .72rem / 1.45 system-ui, sans-serif;
+  letter-spacing: .18em;
+  padding-bottom: .22rem;
+  border-bottom: 1px solid #dcb17f79;
+  opacity: 0;
+  animation: plc-film-post calc(3380ms - var(--post-time)) var(--post-time) both;
+}
+
+.plc-film-command:nth-of-type(2) { --post-time: 2170ms; left: 76%; top: 22%; }
+.plc-film-command:nth-of-type(3) { --post-time: 2640ms; left: 74%; top: 57%; }
+
+@keyframes plc-film-post {
+  0%, 100% { opacity: 0; }
+  13%, 70% { opacity: 1; }
+}
+
+.plc-film-caption {
+  max-width: 25ch;
+  font: 400 clamp(1.55rem, 3.4vw, 3.25rem) / 1.13 "Meet Paige Spectral", Georgia, serif;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.plc-film-caption__opening {
+  font-size: clamp(1.6rem, 2.8vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -.037em;
+}
+
+@media (min-width: 721px) {
+  .plc-film-caption {
+    max-width: min(100%, 43rem);
+    font-size: clamp(1.55rem, 2.6vw, 2.35rem);
+  }
+}
+
+.plc-film-caption__cue { display: flex; align-items: flex-end; gap: .48rem; min-height: 2.7rem; }
+.plc-film-caption__cue .plc-film-caption__mark { flex: none; width: 3rem; height: 3rem; }
+.plc-film-caption__cue > p { animation: plc-film-caption-write .18s var(--film-arrival) both; }
+@keyframes plc-film-caption-write {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0); }
+}
+
+.plc-film-caption__line {
+  max-height: min(29vh, 14rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  white-space: pre-wrap;
+}
+
+.plc-film-feedback {
+  color: hsl(var(--muted-foreground));
+  font: 400 .85rem / 1.5 system-ui, sans-serif;
+}
+
+.plc-film-audio {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  justify-self: center;
+  width: min(29rem, 100%);
+  min-width: 0;
+  display: grid;
+  padding: .42rem .9rem .52rem;
+  border: 1px solid #77809485;
+  border-top-left-radius: .75rem;
+  border-bottom-right-radius: .75rem;
+  background: linear-gradient(160deg, #262936, #151724 56%, #191725);
+}
+
+.plc-film-audio > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #e0d3c3;
+  font: 600 .62rem / 1.25 system-ui, sans-serif;
+  text-transform: uppercase;
+}
+
+.plc-film-audio > span::after {
+  content: "";
+  width: .27rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #82798f;
+}
+
+.plc-film-audio[data-playing="true"] > span::after { background: #f6cf97; }
+.plc-film-audio canvas { display: block; width: 100%; height: 2rem; }
+
+.plc-film-name {
+  width: min(100%, 29rem);
+  display: grid;
+  gap: .38rem;
+  padding: .62rem .8rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: .7rem;
+  background: hsl(var(--card) / .96);
+  font-size: .88rem;
+}
+
+.plc-film-name__actions { display: flex; align-items: center; gap: .65rem; }
+
+[data-layout="conversation-film"] .plc-presence {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-direction: column;
+  gap: .75rem;
+  overflow: visible;
+  text-align: left;
+  animation: none;
+  background: none;
+}
+
+[data-layout="conversation-film"] .plc-presence::before {
+  content: "";
+  position: absolute;
+  inset: 28% 24% -10% -14%;
+  z-index: -1;
+  background: radial-gradient(ellipse at 25% 86%, #1a131e 25%, #1a131eeb 44%, transparent 73%);
+  pointer-events: none;
+}
+
+[data-layout="conversation-film"] .plc-presence:has(+ .plc-workspace[hidden]) {
+  grid-column: 1 / -1;
+}
+
+[data-layout="conversation-film"] .plc-state {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  background: none;
+  backdrop-filter: none;
+  font-size: .85rem;
+}
+
+[data-layout="conversation-film"] .plc-state span {
+  animation: none;
+}
+
+[data-layout="conversation-film"] .plc-presence > :is(.plc-working, .plc-notice) {
+  width: min(100%, 32rem);
+  max-height: min(34vh, 17rem);
+  margin: 0;
+  background: hsl(var(--card) / .95);
+}
+
+[data-layout="conversation-film"] .plc-working {
+  box-shadow: none;
+}
+
+[data-layout="conversation-film"] .plc-workspace {
+  align-content: end;
+  grid-template-rows: minmax(0, auto) minmax(0, auto);
+}
+
+[data-layout="conversation-film"] :is(.plc-transcript, .plc-card-layer) {
+  max-height: 33vh;
+  background: hsl(var(--card) / .96);
+}
+
+@media (max-width: 720px) {
+  .plc-film-mark { width: min(159vw, 123vh); }
+  .plc-film-command:nth-of-type(2) { left: auto; right: 29%; }
+  .plc-film-command:nth-of-type(3) { left: auto; right: 31%; }
+
+  [data-layout="conversation-film"] .plc-stage__header-actions button {
+    white-space: normal;
+  }
+
+  [data-layout="conversation-film"] .plc-stage__main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(18rem, 1fr) auto;
+    overflow-y: auto;
+  }
+
+  [data-layout="conversation-film"]:not([data-film-welcome]) .plc-stage__main:has(.plc-workspace:not([hidden])) {
+    grid-template-rows: minmax(16rem, auto) auto auto;
+  }
+
+  [data-layout="conversation-film"] .plc-stage__main:has(.plc-workspace:not([hidden])) .plc-film-audio { grid-row: 3; }
+
+  [data-layout="conversation-film"] .plc-presence::before {
+    inset: 32% 0 -12%;
+    background: linear-gradient(transparent 10%, #1a131eee 62%);
+  }
+
+  [data-layout="conversation-film"] .plc-controls button {
+    min-height: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plc-film-mark-flight { animation: none; }
+  [data-layout="conversation-film"] .plc-film-mark {
+    animation: none;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .plc-film-command { display: none; }
+  .plc-film-caption__cue > p { animation: none; }
+}
+
+@media (forced-colors: active) {
+  .plc-film-mark__depth,
+  .plc-film-galaxy,
+  [data-layout="conversation-film"] .plc-presence::before {
+    display: none;
+  }
+}

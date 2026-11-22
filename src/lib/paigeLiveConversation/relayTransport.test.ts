@@ -61,6 +61,40 @@ describe("first-party Live relay transport", () => {
     expect(socket.readyState).toBe(3);
   });
 
+  it("shows only the caption for audio at the output clock and clears it on interrupt", async () => {
+    vi.useFakeTimers();
+    let clock = 0;
+    vi.stubGlobal("AudioContext", class {
+      state = "running"; get currentTime() { return clock; } destination = {};
+      close = vi.fn(async () => undefined);
+      createBuffer(_n: number, length: number) {
+        return { duration: length / 16000, getChannelData: () => new Float32Array(length) };
+      }
+      createBufferSource() { return { buffer: null, onended: null, connect() {}, start() {}, stop() {} }; }
+    });
+    const transport = connectPaigeLiveRelay({ sessionId: "captions", ticket: "opaque", onState() {} });
+    const socket = FakeSocket.instances[0];
+    const caption = (text: string) => socket.receive(JSON.stringify({ type: "output.caption", turn_id: "turn-1", text }));
+    const pcm = () => socket.receive(new Int16Array(16_000).buffer);
+    caption("First question");
+    expect(transport.outputCaption()).toBeNull();
+    pcm();
+    expect(transport.outputCaption()).toBe("First question");
+    caption("Second question");
+    pcm();
+    expect(transport.outputCaption()).toBe("First question");
+    clock = 1.1;
+    await vi.advanceTimersByTimeAsync(25);
+    expect(transport.outputCaption()).toBe("Second question");
+    transport.interrupt();
+    expect(transport.outputCaption()).toBeNull();
+    caption("Stale question");
+    pcm();
+    expect(transport.outputCaption()).toBeNull();
+    transport.stop();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("routes a finalized voice turn through the existing runtime and fences it on interruption", () => {
     const turns: Array<{ text: string; turnId: string }> = [];
     const cancelled: string[] = [];

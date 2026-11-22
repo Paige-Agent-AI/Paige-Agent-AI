@@ -24,4 +24,22 @@ describe("shared output pause/resume", () => {
     expect(fetchAudio).toHaveBeenCalledTimes(1);
     messageTts.stop();
   });
+
+  it("advances a spoken sequence only when the current audio ends naturally", async () => {
+    vi.resetModules();
+    const audio = { onended: () => {}, pause() {}, play: vi.fn(async () => {}) };
+    vi.stubGlobal("Audio", function () { return audio; });
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:local-test");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const { messageTts } = await import("./messageTts");
+    const done = vi.fn();
+    const clip = async () => new Blob(["test"]);
+    await messageTts.toggle("greeting", clip, undefined, done);
+    audio.onended();
+    expect(done).toHaveBeenCalledOnce();
+    await messageTts.toggle("question", clip, undefined, done);
+    messageTts.stop();
+    audio.onended();
+    expect(done).toHaveBeenCalledOnce();
+  });
 });

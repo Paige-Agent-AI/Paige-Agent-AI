@@ -1824,10 +1824,14 @@ class SocialPublicationDeployFixtures(unittest.TestCase):
         self.addCleanup(self.fixture.doCleanups)
         self.before_binding = self.fixture.commit
         binding = 'supabase/migrations/20271133000021_exp07_account_scoped_publication.sql'
-        self.privacy = 'supabase/migrations/20271133000022_exp07_publication_receipt_privacy.sql'
+        legacy_privacy = 'supabase/migrations/20271133000022_exp07_publication_receipt_privacy.sql'
+        self.privacy = 'supabase/migrations/20271133000034_exp07_media_snapshot_receipt_compatibility.sql'
         self.fixture.files[binding] = (ROOT / binding).read_text(encoding='utf-8')
         self.fixture.recommit()
         self.binding_only = self.fixture.commit
+        self.fixture.files[legacy_privacy] = (ROOT / legacy_privacy).read_text(encoding='utf-8')
+        self.fixture.recommit()
+        self.legacy_privacy_only = self.fixture.commit
         self.fixture.files[self.privacy] = (ROOT / self.privacy).read_text(encoding='utf-8')
         self.fixture.files['supabase/functions/social-publish-command/index.ts'] = (
             'export const publication = "protected fixture";\n')
@@ -1860,6 +1864,7 @@ class SocialPublicationDeployFixtures(unittest.TestCase):
         for stage, commit, admitted in [
                 ('before binding', self.before_binding, False),
                 ('binding without privacy', self.binding_only, False),
+                ('text privacy without media/schedule protection', self.legacy_privacy_only, False),
                 ('privacy persisted', self.target, True)]:
             with self.subTest(stage=stage):
                 self.fixture.git('tag', '-f', 'db-live', commit)

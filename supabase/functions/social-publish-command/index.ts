@@ -33,5 +33,5 @@ Deno.serve((req) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  return handleSocialPublishCommand(req, { caller, admin, adapter: zernioSocialAdapter });
+  return handleSocialPublishCommand(req, { caller, admin, adapter: zernioSocialAdapter, storageOrigin: url });
 });

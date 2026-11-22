@@ -44,13 +44,14 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { ORIGINAL33, permitsOriginal33 } from "./exp05-original33-release.mjs";
+import { ORIGINAL34, permitsOriginal34 } from "./exp07-original34-release.mjs";
 
 const SELF_TEST = process.argv.includes("--self-test");
 const git = (...a) => execFileSync("git", a, { encoding: "utf8" });
 const versionOf = (p) => (p.split("/").pop() ?? "").split("_")[0];
 
 /** Pure, so the self-test grades the real decision rather than a re-implementation of it. */
-export function collisions({ treeFiles, baseFiles, addedFiles, original33Hash = null }) {
+export function collisions({ treeFiles, baseFiles, addedFiles, original33Hash = null, original34Hash = null }) {
   const out = [];
   const byVersion = new Map();
   for (const f of treeFiles) {
@@ -83,6 +84,8 @@ export function collisions({ treeFiles, baseFiles, addedFiles, original33Hash = 
       // Explicit Nov21 owner exception for this already-published immutable file.
       // Does not exempt duplicate/reused versions, any other addition, hash or frontier.
       if (permitsOriginal33({file:f,baseNewest,addedFiles,sha256:original33Hash})) continue;
+      // This exact historical carrier is an exception only at its reviewed frontier.
+      if (permitsOriginal34({ file: f, baseNewest, addedFiles, sha256: original34Hash })) continue;
       out.push(`${f.split("/").pop()} has version ${v}, which sorts before the base branch's newest ` +
         `migration ${baseByVersion.get(baseNewest)}. Production has applied that one, so \`supabase db push\` ` +
         `refuses to insert this file before it and the deploy fails after merge. Rename it to a version ` +
@@ -131,6 +134,17 @@ if (SELF_TEST) {
   ok(collisions({...historical,baseFiles:[...historical.baseFiles,ORIGINAL33.file]}).length===1,"exception never hides reused33");
   ok(collisions({...historical,addedFiles:[...historical.addedFiles,M('20271133000034','other')]}).length===2,"another lower addition refuses both");
   ok(collisions({...historical,baseFiles:[M('20271133000037','later')]}).length===1,"different frontier still refuses");
+  const original34 = {
+    treeFiles: [ORIGINAL34.file, M(ORIGINAL34.frontier, "existing")],
+    baseFiles: [M(ORIGINAL34.frontier, "existing")],
+    addedFiles: [ORIGINAL34.file],
+    original34Hash: ORIGINAL34.sha256,
+  };
+  ok(collisions(original34).length === 0, "exact immutable34 at the reviewed frontier");
+  ok(collisions({ ...original34, original34Hash: "0".repeat(64) }).length === 1, "changed34 refuses");
+  ok(collisions({ ...original34, baseFiles: [M("20271133000039", "later")] }).length === 1, "different frontier refuses");
+  ok(collisions({ ...original34, treeFiles: [...original34.treeFiles, M(ORIGINAL34.version, "duplicate")] }).length === 1,
+    "exception never hides duplicate34");
   console.log(fail === 0 ? "✓ migration-version-collision-lint self-test passed." : `✗ ${fail} self-test failure(s).`);
   if(fail===0) execFileSync(process.execPath,['--test','scripts/ci/exp05-original33-release.test.mjs'],{stdio:'inherit'});
   process.exit(fail === 0 ? 0 : 1);
@@ -157,7 +171,9 @@ if (baseFiles) {
 
 const original33Hash=addedFiles.includes(ORIGINAL33.file)
   ? createHash('sha256').update(readFileSync(ORIGINAL33.file)).digest('hex') : null;
-const found = collisions({ treeFiles, baseFiles: baseFiles ?? [], addedFiles, original33Hash });
+const original34Hash = addedFiles.includes(ORIGINAL34.file)
+  ? createHash("sha256").update(readFileSync(ORIGINAL34.file)).digest("hex") : null;
+const found = collisions({ treeFiles, baseFiles: baseFiles ?? [], addedFiles, original33Hash, original34Hash });
 if (found.length) {
   console.log(`✗ migration-version-collision-lint: ${found.length} problem(s).\n`);
   for (const f of found) console.log(`  • ${f}`);

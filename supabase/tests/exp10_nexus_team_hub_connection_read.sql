@@ -4,7 +4,8 @@
 --   (A) the nexus platform row's capability_scope.tools now carries "integrations_list", appended
 --       AFTER the seven seeded names; original v1/read or reviewed EXP08 v2/card with
 --       growth_page_publish, optionally followed by comms_send_email for explicit unsent Save.
---       Only these three exact ordered compositions are accepted; this grants no provider send;
+--       Original Social 34 then appends its exact read/publish pair to that email-card scope.
+--       Only these four complete ordered compositions are accepted; this test grants no provider action;
 --   (B) every OTHER agent's platform row is untouched by the read registration (no
 --       integrations_list anywhere else);
 --   (C) replay-safety: the migration's own predicate (absent-guard) matches ZERO rows now, so a
@@ -19,7 +20,7 @@
 BEGIN;
 \set ON_ERROR_STOP on
 
--- (A) + (D) all three exact published compositions retain the original eight-name read prefix.
+-- (A) + (D) all exact published compositions retain the original eight-name read prefix.
 -- Test-only receiving compatibility for EXP08; no provider/credential/writer grant.
 CREATE FUNCTION pg_temp.exp10_assert_nexus_scope(got jsonb) RETURNS void LANGUAGE plpgsql AS $$
 DECLARE
@@ -31,7 +32,9 @@ BEGIN
     expected:=expected||'["growth_page_publish"]'::jsonb;
     -- The optional extension is the ENTIRE exact reviewed composition. Unknown,
     -- missing, duplicate or reordered names still fail the original checks.
-    IF got->'tools'=expected||'["comms_send_email"]'::jsonb THEN
+    IF got->'tools'=expected||'["comms_send_email","read_social_publication","social_post_publish"]'::jsonb THEN
+      expected:=expected||'["comms_send_email","read_social_publication","social_post_publish"]'::jsonb;
+    ELSIF got->'tools'=expected||'["comms_send_email"]'::jsonb THEN
       expected:=expected||'["comms_send_email"]'::jsonb;
     END IF;
   ELSIF got->'version' IS DISTINCT FROM '1'::jsonb OR got->>'access' IS DISTINCT FROM 'read' THEN
@@ -50,13 +53,15 @@ DO $$ BEGIN
 END $$;
 
 -- The new compatibility branch must not accept an arbitrary card scope or lose any read guard.
-DO $$ DECLARE base jsonb; card jsonb; email_card jsonb; candidate jsonb; refused boolean; BEGIN
+DO $$ DECLARE base jsonb; card jsonb; email_card jsonb; social_card jsonb; candidate jsonb; refused boolean; BEGIN
  base:='{"version":1,"mode":"allowlist","access":"read","tools":["ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","growth_list","campaign_brief_list","read_campaign_leads","integrations_list"]}'::jsonb;
  card:=jsonb_set(jsonb_set(jsonb_set(base,'{version}','2'),'{access}','"card"'),'{tools}',(base->'tools')||'["growth_page_publish"]'::jsonb);
  PERFORM pg_temp.exp10_assert_nexus_scope(base);
  PERFORM pg_temp.exp10_assert_nexus_scope(card);
  email_card:=jsonb_set(card,'{tools}',(card->'tools')||'["comms_send_email"]'::jsonb);
  PERFORM pg_temp.exp10_assert_nexus_scope(email_card);
+ social_card:=jsonb_set(email_card,'{tools}',(email_card->'tools')||'["read_social_publication","social_post_publish"]'::jsonb);
+ PERFORM pg_temp.exp10_assert_nexus_scope(social_card);
  FOR candidate IN SELECT value FROM jsonb_array_elements(jsonb_build_array(
   NULL,jsonb_set(base,'{mode}','"all"'),jsonb_set(base,'{access}','"auto"'),
   jsonb_set(base,'{access}','"card"'),jsonb_set(card,'{access}','"read"'),
@@ -71,7 +76,13 @@ DO $$ DECLARE base jsonb; card jsonb; email_card jsonb; candidate jsonb; refused
   jsonb_set(email_card,'{tools}',(base->'tools')||'["comms_send_email","growth_page_publish"]'::jsonb),
   jsonb_set(email_card,'{version}','1'),jsonb_set(email_card,'{access}','"read"'),
   jsonb_set(card,'{tools}','["integrations_list","ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","growth_list","campaign_brief_list","read_campaign_leads","growth_page_publish"]'),
-  jsonb_set(card,'{tools}','null'))) LOOP
+  jsonb_set(card,'{tools}','null'),
+  jsonb_set(social_card,'{tools}',(social_card->'tools')-'read_social_publication'),
+  jsonb_set(social_card,'{tools}',(social_card->'tools')-'social_post_publish'),
+  jsonb_set(social_card,'{tools}',(social_card->'tools')-'comms_send_email'),
+  jsonb_set(social_card,'{tools}',(email_card->'tools')||'["social_post_publish","read_social_publication"]'::jsonb),
+  jsonb_set(social_card,'{tools}',(social_card->'tools')||'["social_post_publish"]'::jsonb),
+  jsonb_set(social_card,'{tools}',(social_card->'tools')||'["unregistered_team_hub_action"]'::jsonb))) LOOP
   refused:=false;
   BEGIN PERFORM pg_temp.exp10_assert_nexus_scope(candidate); EXCEPTION WHEN OTHERS THEN refused:=true; END;
   IF NOT refused THEN RAISE EXCEPTION 'A/D negative control accepted an unsupported scope: %',candidate; END IF;

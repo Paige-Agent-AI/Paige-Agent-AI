@@ -143,6 +143,41 @@ async function resolveMedia(deps: SocialPublishDeps, tenantId: string, contentId
   } });
 }
 
+/** Open the original saved file in Studio before any destination or approval is chosen. */
+async function previewSavedMedia(deps: SocialPublishDeps, tenantId: string, body: Record<string, unknown>): Promise<Response> {
+  const { content_id: id, kind } = body;
+  if (body.expected_tenant_id !== tenantId || typeof id !== "string" || !UUID.test(id)
+    || (kind !== "image" && kind !== "video")) return respond(400, { ok: false, code: "MEDIA_PREVIEW_INVALID" });
+
+  const resolved = await resolveMedia(deps, tenantId, id, { kind });
+  if (resolved.status === "refused") return respond(409, { ok: false, code: resolved.code });
+  const asset = resolved.assets[0];
+  if (!asset || asset.type !== kind) return respond(409, { ok: false, code: "MEDIA_NOT_AVAILABLE" });
+  if (SOCIAL_POST_PLATFORMS.every((platform) => socialPostMediaIssue(platform, "", [asset]) !== null)) {
+    return respond(409, { ok: false, code: "MEDIA_FORMAT_UNSUPPORTED" });
+  }
+  const bytes = await readResolvedPublicationAsset({ tenantId, storageOrigin: deps.storageOrigin ?? "", asset });
+  if (!bytes) return respond(409, { ok: false, code: "MEDIA_SOURCE_UNVERIFIED" });
+
+  const fresh = await resolveStudioCaller(deps.caller, tenantId);
+  if (!fresh.ok) return respond(403, { ok: false, code: "SOCIAL_SOURCE_SCOPE_CHANGED" });
+  const { data, error } = await deps.caller.from("marketing_content")
+    .select("id,tenant_id,kind,status,title,body,updated_at,image_path,image_url")
+    .eq("tenant_id", tenantId).eq("id", id).maybeSingle();
+  const piece = object(data);
+  if (error || !piece || piece.tenant_id !== tenantId || piece.id !== id || piece.kind !== kind
+    || (piece.status !== "draft" && piece.status !== "published" && piece.status !== "ready")
+    || piece.updated_at !== asset.contentRevision || piece.image_path !== asset.storagePath || piece.image_url !== asset.sourceUrl) {
+    return respond(409, { ok: false, code: "MEDIA_SOURCE_CHANGED" });
+  }
+
+  return respond(200, { ok: true, tenant_id: tenantId, piece: {
+    id, kind, status: piece.status, updated_at: asset.contentRevision, image_url: asset.sourceUrl,
+    title: typeof piece.title === "string" ? piece.title.slice(0, 180) : null,
+    body: typeof piece.body === "string" ? piece.body.slice(0, 2200) : null,
+  } });
+}
+
 export async function handleSocialPublishCommand(req: Request, deps: SocialPublishDeps): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: HEADERS });
   if (req.method !== "POST") return respond(405, { ok: false, code: "METHOD_NOT_ALLOWED", error: NOTHING_CHANGED });
@@ -165,6 +200,7 @@ export async function handleSocialPublishCommand(req: Request, deps: SocialPubli
   }
   const tenantId = (caller as unknown as { tenantId: string }).tenantId;
 
+  if (action === "preview_media") return await previewSavedMedia(deps, tenantId, body);
   if (action === "inspect") {
     const source = await readSocialSource(deps.caller, tenantId, body);
     const fresh = await resolveStudioCaller(deps.caller, tenantId);

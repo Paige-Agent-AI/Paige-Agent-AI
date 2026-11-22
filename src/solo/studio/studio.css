@@ -36,6 +36,25 @@
 }
 .vs-studio *:focus-visible { outline: 2px solid #9C86FF; outline-offset: 2px; }
 .vs-studio button { font: inherit; color: inherit; }
+
+.vs-saved-media {
+  height: 100%;
+  box-sizing: border-box;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+.vs-saved-media > * { width: min(100%, 1080px); margin-inline: auto; }
+.vs-saved-media-header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-block-end: 24px; }
+.vs-saved-media-header button { min-height: 44px; }
+.vs-saved-media-header h1 { font-size: clamp(20px, 2vw, 24px); line-height: 1.2; margin: 0; }
+.vs-saved-media-post { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 20px; }
+.vs-saved-media-post figure { display: grid; gap: 10px; margin: 0; min-width: 0; }
+.vs-saved-media-post :is(img, video) { display: block; width: 100%; max-height: 65vh; object-fit: contain; background: var(--vs-panel); }
+.vs-saved-media-post figcaption { color: var(--vs-dim); overflow-wrap: anywhere; }
+.vs-saved-media-post .mct-pubdoor { margin: 0; min-width: 0; color: var(--ink); }
+@media (max-width: 760px) { .vs-saved-media-post { grid-template-columns: minmax(0, 1fr); } }
 /* The Solo shell resets headings to its own ink (.paige-solo h1–h4); inside the Studio they take the
    surface they sit on. The form sheet sets its own dark ink below. */
 .vs-studio.vs-studio :is(h1, h2, h3, h4) { color: inherit; }

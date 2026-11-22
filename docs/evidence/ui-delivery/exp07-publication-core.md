@@ -34,14 +34,14 @@ MUST_PRESERVE: Original saved data, exact tenant/actor/connection authority, app
 MUST_NOT_HAPPEN: Media may not publish against an older text-only approval; an unknown result or consumed text-post consent must never replay. No new queue, publisher, executor, approval channel or receipt store.
 ACCEPTANCE_CRITERIA: After genuine ordered release/current-account checks and fresh exact media/caption/destination/time consent, one authorized result returns its original receipt and remains recoverable without duplicate effect. Final visual desk and Chat/private NEXUS reopen follow the core.
 MOTION_PURPOSE: NONE: No added motion in this original post-panel increment.
-PROTECTED_SEAMS: Existing social-publish-command gate, Zernio adapter, Storage byte identity and content_publications writer. Original E05 test-only custody695ada6a covers the two wrapper composition hunks and owning helper; it does not authorize a private runtime-policy change. The measured history incompatibility requires original-owner disposition912c34e7; published/applied34 and all original assertions remain unchanged.
+PROTECTED_SEAMS: Existing social-publish-command gate, Zernio adapter, Storage byte identity and content_publications writer. The core preserves the Planning wrappers, original published migration bytes, and all existing native assertions. The Social-specific Edge prerequisite and risk check retain their original shared release paths.
 
 INTERNAL_BUILD_IDENTITY: ae229606b743a21d2cf23103dc8c4b7e08edfdfa canonical catch-up candidate base; deployment=NOT_DEPLOYED; environment=development; migrations=APPLIED(20271133000034_exp07_media_snapshot_receipt_compatibility); edge=PROOF_OWED(new-candidate-source-readback); evidence=production run 44965648882 and artifact 14731313100
 RELEASE_CHANNEL: development: Internal source increment, production core not released.
 RELEASE_CLASSIFICATION: internal-only: Original publication core before the dependent visual desk/Chat increment.
 CUSTOMER_RELEASE_IDENTITY: none: No customer release or completion claimed.
 RELEASE_NOTE_REQUIRED: no: Incomplete original prelaunch outcome.
-RELEASE_TRUTH_BOUNDARY: PARTIAL: Development source only. Native history compatibility is NOT CLEAR; collision lint is FAIL. No current native, Edge, Cloud deployment, authenticated media effect, result/reopen or owner acceptance is claimed.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: Production migrations 38 and 34 are independently verified. This Social publishing core remains development source pending exact-head CI, Edge and app deployment, authenticated result/reopen and owner acceptance.
 RELEASE_RECOVERY: position=forward-fix; reference=original publication UUID and reconciliation/receipt doors; preserve applied history and unknown operations, never replay consumed consent.
 
 ## Scope and original source conservation

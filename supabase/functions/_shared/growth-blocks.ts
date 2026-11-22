@@ -1,6 +1,6 @@
 // _shared/growth-blocks.ts — the ONE GrowthBlock contract for the Growth OS edge functions.
 //
-// Why this file exists (§12/§13 — extract, never fork): the 19-type block union is enforced
+// Why this file exists (§12/§13 — extract, never fork): the 20-type block union is enforced
 // in three places that must never drift apart:
 //   1. SQL  — public.growth_validate_blocks(jsonb)  (migration 20260714091000), which BOTH
 //             growth_page_upsert and growth_page_edit_blocks call. This is the hard gate: a
@@ -10,16 +10,14 @@
 //             so TS-valid ⊆ SQL-valid — anything this returns is guaranteed to survive the
 //             upsert. A revision we hand back that the save would reject is worse than no
 //             revision at all.
-//   3. PROMPT — GROWTH_BLOCK_SPEC below: the exact same 19 variants, in the shape the model
-//             must emit. Shared so a new block type is added in ONE place, not three.
+//   3. PROMPT — GROWTH_BLOCK_SPEC below: the variants models can draft. The server
+//             preserves a selected conversion from the saved page source.
 //
-// Callers: growth-block-edit (today). FOLLOW-UP: growth-page-draft/index.ts still carries a
-// verbatim private copy of validateBlock + the block spec; it should be migrated to import
-// from here so the two can never diverge. (It was owned by another agent when this was
-// extracted, so it was left untouched rather than edited concurrently.)
+// Callers: growth-block-edit and growth-page-draft share validateBlock and the prompt.
 //
 // Doctrine: §2 (no finance/credit in platform defaults) · §13 (tenant-safe, structured,
 // no swallowed generics) · §15 (never fabricate a URL, a date, or a fact).
+import { normalizeConversionDestination } from "./growth/conversion-destination.ts";
 
 // ── Primitives ───────────────────────────────────────────────────────────────
 export const str = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -50,13 +48,13 @@ export function extractJson(text: string): any {
   return JSON.parse(raw.slice(start, end + 1));
 }
 
-// ── The 19-type union ────────────────────────────────────────────────────────
+// ── The 20-type union ────────────────────────────────────────────────────────
 // Kept in lockstep with src/lib/growth.ts (the renderer) and the SQL type list in
 // public.growth_validate_blocks. Adding a type means touching all three, deliberately.
 export const GROWTH_BLOCK_TYPES = [
   "hero", "hero_scene", "phase_cards", "feature_grid", "cta", "rich_text", "embedded_form",
   "social_proof", "testimonial", "pricing", "faq", "media", "stats", "countdown",
-  "two_column", "image", "gallery", "steps", "chatbot",
+  "two_column", "image", "gallery", "steps", "chatbot", "conversion",
 ] as const;
 
 export type GrowthBlockType = (typeof GROWTH_BLOCK_TYPES)[number];
@@ -71,10 +69,7 @@ export function isGrowthBlockType(t: unknown): t is GrowthBlockType {
  * carried through when present & non-empty (keeps the payload tight and stops an empty-string
  * CTA rendering as a dead button).
  *
- * NOTE — rich_text is capped at 20000 chars, matching the hard SQL limit in
- * growth_validate_blocks and the documented block spec. (growth-page-draft's private copy caps
- * at 6000, which silently truncates legitimate long-form copy well under the real ceiling; the
- * limit here is the contract-correct one and should carry over when that file is migrated.)
+ * Rich text uses the 20000-character limit from growth_validate_blocks.
  */
 export function validateBlock(b: any): any | null {
   if (!b || typeof b !== "object") return null;
@@ -145,6 +140,15 @@ export function validateBlock(b: any): any | null {
       const formSlug = slugify(b.form_slug, "");
       if (!formSlug) return null;
       return { type: "embedded_form", form_slug: formSlug };
+    }
+    case "conversion": {
+      const normalized = normalizeConversionDestination(b.destination);
+      if (normalized.ok === false) return null;
+      const block: Record<string, unknown> = { type: "conversion", destination: normalized.destination };
+      const title = trimStr(b.title, 160); if (title) block.title = title;
+      const description = trimStr(b.description, 400); if (description) block.description = description;
+      const label = trimStr(b.label, 60); if (label) block.label = label;
+      return block;
     }
     case "social_proof": {
       const logos = Array.isArray(b.logos) ? b.logos.map((l: any) => {
@@ -313,6 +317,7 @@ export const BLOCK_REQUIREMENTS: Record<string, string> = {
   cta: "a title, a cta_label and a cta_href",
   rich_text: "non-empty html (max 20000 chars)",
   embedded_form: "a non-empty form_slug",
+  conversion: "a normalized native_form/native_booking/external_form/external_booking destination; native identity and publication are checked by the original server contract",
   social_proof: "at least one logo with a name",
   testimonial: "at least one item with a quote",
   pricing: "at least one tier with a name, a price and at least one feature",

@@ -23,8 +23,21 @@ describe("Studio edge contract", () => {
     // Suppressed only by a saved page or funnel; a form or image linked the same turn does not hide it.
     expect(emit).toContain('if (studioPreview && !studioLinked.some((l) => l.kind === "page" || l.kind === "funnel"))');
     expect(emit).toContain("paige_preview: studioPreview");
-    // Only inside a Studio project: the preview is set behind studioSessionId.
-    expect(chat).toMatch(/if \(studioSessionId && Array\.isArray\(\(gd as any\)\?\.blocks\)/);
+    // The canvas uses the same admitted payload as the private save proposal.
+    expect(chat).toContain("studioGeneratedSource ? bindStudioGeneratedPage(gd, studioGeneratedSource) : null");
+    expect(chat).toContain('studioPreview = { kind: "page", title: studioGeneratedPage.title, blocks: studioGeneratedPage.blocks, theme: studioGeneratedPage.theme }');
+  });
+
+  it("binds the approved Studio save to the validated preview before fingerprinting", () => {
+    const prepared = chat.indexOf("gateArgs = generated.proposal");
+    const fingerprint = chat.indexOf("const fp = await confirmFingerprint(tc.function.name, confirmationArgs(gateArgs))", prepared);
+    const claimed = chat.indexOf("tc.function.arguments = JSON.stringify(approvedArgs)", fingerprint);
+    expect(prepared).toBeGreaterThan(0);
+    expect(fingerprint).toBeGreaterThan(prepared);
+    expect(claimed).toBeGreaterThan(fingerprint);
+    expect(chat).toContain('if (studioPageClaim) q = q.not("studio_page_save_source", "is", null)');
+    expect(chat).toContain("sameStudioPageJson(storedArgs, generated?.proposal)");
+    expect(chat).toContain("studioPageSavedCalls.has(tc)");
   });
 
   it("never lets a new page take a slug another page already has (the upsert would overwrite it)", () => {

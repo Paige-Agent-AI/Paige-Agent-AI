@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Approved original 34 is the only pending migration in the o
 MOTION_PURPOSE: NONE: No motion changes.
 PROTECTED_SEAMS: Existing canonical workflow and collision guard. The temporary branch, exact reviewed head, pinned CLI, resolved production project, complete prior ledger and original catalogue all bind the decision. Finite preparation handoff is recorded in [ANT-6](https://linear.app/paigeagentai/issue/ANT-6#comment-457789f4-23fc-4830-b702-4d3f93d4e802).
 
-INTERNAL_BUILD_IDENTITY: e91cfe0a2c2b3898410e4bb0e33e52807a40ea14 applied branch; deployment=44965648882; environment=production; migrations=LIVE(20271133000034); edge=NOT_APPLICABLE; evidence=artifact 14731313100 and independent production catalogue query
+INTERNAL_BUILD_IDENTITY: e91cfe0a2c2b3898410e4bb0e33e52807a40ea14 applied branch; deployment=44965648882; environment=production; migrations=APPLIED(20271133000034_exp07_media_snapshot_receipt_compatibility); edge=NOT_APPLICABLE; evidence=artifact 14731313100 and independent production catalogue query
 RELEASE_CHANNEL: production: The native prerequisite is live. Canonical catch-up restores the ordinary migration workflow byte for byte.
 RELEASE_CLASSIFICATION: internal-only: Database prerequisite for the approved Visual Desk, separate from the released customer outcome.
 CUSTOMER_RELEASE_IDENTITY: none: No customer release has been earned.

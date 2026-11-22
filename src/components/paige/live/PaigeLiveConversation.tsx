@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { Check, CirclePause, ExternalLink, Hand, Mic, MicOff, Minimize2, PhoneOff, RefreshCw, ShieldCheck, Square, Volume2, X } from "lucide-react";
 import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
@@ -7,11 +7,18 @@ import { cn } from "@/lib/utils";
 import { PAIGE_LIVE_CONVERSATION_ENABLED, type LiveConversationCard } from "@/lib/paigeLiveConversation/contract";
 import { acceptPaigeLiveTerms, renewPaigeLiveRelayTicket, startPaigeLiveConversation, transitionPaigeLiveConversation, type PaigeLiveEntryMode, type PaigeLiveStartResult } from "@/lib/paigeLiveConversation/client";
 import { connectPaigeLiveRelay, type RelayTransport } from "@/lib/paigeLiveConversation/relayTransport";
+import { fetchMessageAudio } from "@/lib/voice/fetchMessageAudio";
+import { messageTts } from "@/lib/voice/messageTts";
+import { MEET_PAIGE_FIRST_QUESTION, MEET_PAIGE_WELCOME } from "@/lib/paigeLiveConversation/meetGreeting";
+import { MeetPaigeOwnerName } from "@/solo/MeetPaigeOwnerName";
+import { PaigeFilmAudioStream, PaigeFilmPresence } from "./PaigeFilmPresence";
+import { MEET_PAIGE_INTRO_MS } from "./meetPaigeGalaxy";
 import { PaigePresence3D } from "./PaigePresence3D";
 import { usePaigeOutput } from "./usePaigeOutput";
 import { resolvePresenceState } from "@/lib/paigeLiveConversation/presence";
 import { createAnchoredTranscriptScroll, messageScrollAnchorKey } from "@/components/chat/anchoredTranscriptScroll";
 import "./paige-live-conversation.css";
+import "./paige-conversation-film.css";
 
 export type PaigeLiveTranscriptTurn = Readonly<{ id: string; role: "user" | "assistant"; content: string }>;
 export type LiveVoiceSink = Readonly<{
@@ -20,6 +27,19 @@ export type LiveVoiceSink = Readonly<{
   done(): void;
   failed(): void;
 }>;
+export type PaigeLiveControls = Readonly<{
+  start: typeof startPaigeLiveConversation;
+  renew: typeof renewPaigeLiveRelayTicket;
+  transition: typeof transitionPaigeLiveConversation;
+  acceptTerms: typeof acceptPaigeLiveTerms;
+  openingAudio?: (cue: "welcome" | "question", signal: AbortSignal) => Promise<Response>;
+}>;
+const signedInControls: PaigeLiveControls = {
+  start: startPaigeLiveConversation,
+  renew: renewPaigeLiveRelayTicket,
+  transition: transitionPaigeLiveConversation,
+  acceptTerms: acceptPaigeLiveTerms,
+};
 type LiveSurfaceState = "checking" | "unavailable" | "permission-denied" | "listening" | "thinking" | "waiting" | "speaking" | "interrupted" | "held" | "reconnecting";
 
 const STATE_LABEL: Record<LiveSurfaceState, string> = {
@@ -34,6 +54,7 @@ const STATE_LABEL: Record<LiveSurfaceState, string> = {
   held: "On hold",
   reconnecting: "Reconnecting",
 };
+const FILM_OPENING = [MEET_PAIGE_WELCOME, MEET_PAIGE_FIRST_QUESTION] as const;
 
 function ConversationCard({ card, disabled, canConfirm, onAnswer, onApprove, onDecline }: {
   card: LiveConversationCard;
@@ -95,8 +116,13 @@ function ConversationCard({ card, disabled, canConfirm, onAnswer, onApprove, onD
   );
 }
 
-export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensureThread, transcript, activeCard, workingLabel, working, confirmationFingerprints = [], onAnswer, onApprove, onDecline, onVoiceTurn, onVoiceInterrupt }: {
+export function PaigeLiveConversation({ disabled, meetPaige = false, onMeetBypass, autoOpen = false, controls = signedInControls, openingAcknowledged = false, contextEpoch, threadId, ensureThread, transcript, activeCard, workingLabel, working, confirmationFingerprints = [], onAnswer, onApprove, onDecline, onVoiceTurn, onVoiceInterrupt }: {
   disabled?: boolean;
+  meetPaige?: boolean;
+  onMeetBypass?: () => void;
+  autoOpen?: boolean;
+  controls?: PaigeLiveControls;
+  openingAcknowledged?: boolean;
   contextEpoch: string;
   threadId: string | null;
   ensureThread: () => Promise<string>;
@@ -112,6 +138,7 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
   onVoiceInterrupt: () => void;
 }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const skipIntroRef = useRef<HTMLButtonElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const stageWindowRef = useRef<Window | null>(null);
   const sessionIdRef = useRef<string | null>(null);
@@ -138,6 +165,29 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
   const requestGeneration = useRef(0);
   const mounted = useRef(true);
   const [open, setOpen] = useState(false);
+  const [filmWelcome, setFilmWelcome] = useState(false);
+  const [filmIntro, setFilmIntro] = useState(false);
+  const [waitingForOpening, setWaitingForOpening] = useState(false);
+  const pendingLiveEntry = useRef(false);
+  const greetingGeneration = useRef(0);
+  const enterLive = useRef<() => void>(() => undefined);
+  const [filmTranscript, setFilmTranscript] = useState(false);
+  const [greetingError, setGreetingError] = useState(false);
+  const openingConsent = useRef(openingAcknowledged);
+  const greetedEpoch = useRef<string | null>(null);
+  const greetingId = useId();
+  const questionId = `${greetingId}-question`;
+  const cancelGreeting = useCallback(() => {
+    greetingGeneration.current++;
+    pendingLiveEntry.current = false;
+    const active = messageTts.getSnapshot().activeId;
+    if (active === greetingId || active === questionId) messageTts.stop();
+  }, [greetingId, questionId]);
+  const stopGreeting = useCallback(() => {
+    cancelGreeting();
+    setWaitingForOpening(false);
+  }, [cancelGreeting]);
+  const filmTranscriptId = useId();
   const [state, setState] = useState<LiveSurfaceState>("checking");
   const [muted, setMuted] = useState(false);
   // Ticket renewal is asynchronous. Capture must follow the most recent control
@@ -159,7 +209,9 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
   const [pinned, setPinned] = useState(true);
   const [scrollController] = useState(() => createAnchoredTranscriptScroll({ storagePrefix: "paige-live-reading", onPinnedChange: setPinned }));
   const scrollContext = `${contextEpoch}:${threadId ?? "new"}`;
-  const output = usePaigeOutput(open && state !== "held", transcript.map((turn) => turn.id));
+  const outputIds = transcript.map((turn) => turn.id);
+  if (meetPaige) outputIds.push(greetingId, questionId);
+  const output = usePaigeOutput(open && state !== "held", outputIds);
   const attachOutputRef = useRef(output.attachRelay);
   attachOutputRef.current = output.attachRelay;
   const stopPlayback = useRef(output.stop);
@@ -179,27 +231,29 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
     let scrollElement: HTMLDivElement | null = null;
     const bind = () => {
       scrollElement?.removeEventListener("scroll", scrollController.handleScroll);
-      scrollElement = stageRef.current?.querySelector<HTMLDivElement>(media?.matches ? ".plc-stage__main" : ".plc-transcript") ?? null;
+      const selector = !meetPaige && media?.matches ? ".plc-stage__main" : ".plc-transcript";
+      scrollElement = meetPaige && !filmTranscript ? null : stageRef.current?.querySelector<HTMLDivElement>(selector) ?? null;
       scrollController.attach(scrollElement);
       scrollElement?.addEventListener("scroll", scrollController.handleScroll, { passive: true });
     };
     bind();
     media?.addEventListener("change", bind);
     return () => { media?.removeEventListener("change", bind); scrollElement?.removeEventListener("scroll", scrollController.handleScroll); scrollController.detach(); };
-  }, [open, portalDocument, scrollController]);
+  }, [filmTranscript, meetPaige, open, portalDocument, scrollController]);
 
   const transitionQueueRef = useRef<Promise<void>>(Promise.resolve());
   const transitionCurrent = useCallback((transition: "hold" | "resume" | "minimize" | "restore" | "retry" | "end"): Promise<void> => {
     const scope = sessionScopeRef.current;
     const id = sessionIdRef.current;
     if (!id || !scope) return transitionQueueRef.current;
-    const next = transitionQueueRef.current.then(() => transitionPaigeLiveConversation(id, transition, scope)).catch(() => undefined);
+    const next = transitionQueueRef.current.then(() => controls.transition(id, transition, scope)).catch(() => undefined);
     transitionQueueRef.current = next;
     return next;
-  }, []);
+  }, [controls]);
 
   const closeStage = useCallback((kind: "minimize" | "end") => {
     requestGeneration.current++;
+    stopGreeting();
     stopPlayback.current();
     stopRelay();
     transitionCurrent(kind);
@@ -208,11 +262,14 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
     stageWindowRef.current = null;
     if (child && !child.closed) child.close();
     setOpen(false);
+    setFilmWelcome(false);
+    setFilmIntro(false);
+    setFilmTranscript(false);
     setState("unavailable");
     setPortalDocument(null);
     setAnnouncement(kind === "end" ? "Live Conversation ended. The Paige chat is unchanged." : "Live Conversation minimized. Returned to the same Paige conversation.");
     requestAnimationFrame(() => triggerRef.current?.focus({ preventScroll: true }));
-  }, [transitionCurrent, stopRelay]);
+  }, [stopGreeting, transitionCurrent, stopRelay]);
 
   useEffect(() => {
     if (!open) return;
@@ -246,6 +303,7 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
     return () => {
       mounted.current = false;
       invalidatePending();
+      cancelGreeting();
       stopPlayback.current();
       stopRelay();
       transitionCurrent("end");
@@ -253,7 +311,7 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
       stageWindowRef.current = null;
       if (child && !child.closed) child.close();
     };
-  }, [transitionCurrent, invalidatePending, stopRelay]);
+  }, [cancelGreeting, transitionCurrent, invalidatePending, stopRelay]);
 
   useEffect(() => {
     if (previousEpochRef.current === contextEpoch) return;
@@ -264,28 +322,31 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
   useEffect(() => {
     const previous = previousThreadRef.current;
     previousThreadRef.current = threadId;
-    if (sessionScopeRef.current && ((threadId && sessionScopeRef.current.threadId !== threadId) || (previous && threadId === null))) closeStage("end");
-  }, [threadId, closeStage]);
+    const welcomeChangedThreads = open && filmWelcome && previous !== threadId;
+    const sessionChangedThreads = sessionScopeRef.current &&
+      ((threadId && sessionScopeRef.current.threadId !== threadId) || (previous && threadId === null));
+    if (welcomeChangedThreads || sessionChangedThreads) closeStage("end");
+  }, [closeStage, filmWelcome, open, threadId]);
 
   useEffect(() => {
     if (!open || !portalDocument) return;
+    const stopUnavailable = (explanation: string) => {
+      invalidatePending();
+      setFilmIntro(false);
+      stopGreeting();
+      stopPlayback.current();
+      stopRelay();
+      setState("reconnecting");
+      setExplanation(explanation);
+    };
     const stopHidden = () => {
-      if (!portalDocument.hidden) return;
-      stopPlayback.current();
-      stopRelay();
-      setState("reconnecting");
-      setExplanation("Live audio stopped when this window was hidden. Try again or continue in chat.");
+      if (portalDocument.hidden) stopUnavailable("Live audio stopped when this window was hidden. Try again or continue in chat.");
     };
-    const disconnected = () => {
-      stopPlayback.current();
-      stopRelay();
-      setState("reconnecting");
-      setExplanation("The connection was interrupted. Try again or continue in chat.");
-    };
+    const disconnected = () => stopUnavailable("The connection was interrupted. Try again or continue in chat.");
     portalDocument.addEventListener("visibilitychange", stopHidden);
     portalDocument.defaultView?.addEventListener("offline", disconnected);
     return () => { portalDocument.removeEventListener("visibilitychange", stopHidden); portalDocument.defaultView?.removeEventListener("offline", disconnected); };
-  }, [open, portalDocument, stopRelay]);
+  }, [invalidatePending, open, portalDocument, stopGreeting, stopRelay]);
 
   const begin = async () => {
     if (!PAIGE_LIVE_CONVERSATION_ENABLED || disabled) return;
@@ -296,7 +357,7 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
       if (!mounted.current || generation !== requestGeneration.current) return;
       const scope = sessionScopeRef.current;
       try {
-        const renewed = await renewPaigeLiveRelayTicket({
+        const renewed = await controls.renew({
           sessionId: sessionIdRef.current, threadId: scope.threadId, contextEpoch: scope.contextEpoch,
           entryMode: "embedded",
         });
@@ -324,9 +385,9 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
       sessionScopeRef.current = { threadId: resolvedThread, contextEpoch };
       const ownerWindow = triggerRef.current?.ownerDocument.defaultView;
       const entryMode: PaigeLiveEntryMode = ownerWindow && ownerWindow !== window ? "existing-popout" : "embedded";
-      const result = await startPaigeLiveConversation({ threadId: resolvedThread, contextEpoch, entryMode });
+      const result = await controls.start({ threadId: resolvedThread, contextEpoch, entryMode });
       if (!mounted.current || generation !== requestGeneration.current) {
-        if (result.sessionId) void transitionPaigeLiveConversation(result.sessionId, "end", { threadId: resolvedThread, contextEpoch }).catch(() => undefined);
+        if (result.sessionId) void controls.transition(result.sessionId, "end", { threadId: resolvedThread, contextEpoch }).catch(() => undefined);
         return;
       }
       sessionIdRef.current = result.sessionId;
@@ -440,8 +501,99 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
   // blocked is ANSWERED, never silently dropped (review #2611 P2-2): the composer's
   // blocked states (response loading, dictation active, authority pending) are not
   // visible from the onboarding stage, so the person hears why nothing opened.
-  const beginRef = useRef(begin);
-  beginRef.current = begin;
+  const speakGreeting = useCallback(() => {
+    if (controls.openingAudio && !openingConsent.current) return;
+    const playing = messageTts.getSnapshot().activeId;
+    if (playing === greetingId || playing === questionId) return;
+    const generation = ++greetingGeneration.current;
+    pendingLiveEntry.current = false;
+    setWaitingForOpening(false);
+    setGreetingError(false);
+    const current = () => mounted.current && generation === greetingGeneration.current;
+    const playCue = (index: 0 | 1) => {
+      if (!current()) return;
+      const requestId = crypto.randomUUID();
+      void messageTts.toggle(
+        index === 0 ? greetingId : questionId,
+        (signal) => controls.openingAudio
+          ? controls.openingAudio(index === 0 ? "welcome" : "question", signal)
+          : fetchMessageAudio(FILM_OPENING[index], requestId, signal),
+        () => {
+          if (!current()) return;
+          pendingLiveEntry.current = false;
+          setWaitingForOpening(false);
+          setGreetingError(true);
+        },
+        index === 0 ? () => playCue(1) : () => {
+          if (current() && pendingLiveEntry.current) enterLive.current();
+        },
+      );
+    };
+    playCue(0);
+  }, [controls, greetingId, questionId]);
+  const finishIntro = useCallback(() => {
+    const stage = stageRef.current;
+    if (stage && stage.ownerDocument.activeElement === skipIntroRef.current) stage.focus({ preventScroll: true });
+    setFilmIntro(false);
+    speakGreeting();
+  }, [speakGreeting]);
+  useEffect(() => {
+    if (!filmIntro || !open || !portalDocument) return;
+    const view = portalDocument.defaultView;
+    if (!view) return;
+    const reduced = view.matchMedia?.("(prefers-reduced-motion: reduce)");
+    const generation = requestGeneration.current;
+    const complete = () => {
+      if (!mounted.current || generation !== requestGeneration.current) return;
+      if (portalDocument.hidden) { setFilmIntro(false); return; }
+      finishIntro();
+    };
+    const preferenceChanged = () => { if (reduced?.matches) complete(); };
+    const timer = view.setTimeout(complete, MEET_PAIGE_INTRO_MS);
+    reduced?.addEventListener("change", preferenceChanged);
+    return () => {
+      view.clearTimeout(timer);
+      reduced?.removeEventListener("change", preferenceChanged);
+    };
+  }, [filmIntro, finishIntro, open, portalDocument]);
+  const openConversation = () => {
+    if (!PAIGE_LIVE_CONVERSATION_ENABLED || disabled) return;
+    if (meetPaige && !sessionIdRef.current && !transcript.some((turn) => turn.role === "user")) {
+      setFilmWelcome(true);
+      setOpen(true);
+      if (greetedEpoch.current !== contextEpoch) {
+        greetedEpoch.current = contextEpoch;
+        const view = triggerRef.current?.ownerDocument.defaultView;
+        if (view?.matchMedia?.("(prefers-reduced-motion: reduce)").matches === false) setFilmIntro(true);
+        else speakGreeting();
+      }
+    } else void begin();
+  };
+  enterLive.current = () => {
+    stopGreeting();
+    if (disabled || !PAIGE_LIVE_CONVERSATION_ENABLED) return;
+    setFilmWelcome(false);
+    stageRef.current?.focus({ preventScroll: true });
+    void begin();
+  };
+  const startLiveAfterOpening = () => {
+    const active = messageTts.getSnapshot().activeId;
+    if (active !== greetingId && active !== questionId) { enterLive.current(); return; }
+    pendingLiveEntry.current = true;
+    setWaitingForOpening(true);
+  };
+  const bypassMeet = () => {
+    closeStage("end");
+    onMeetBypass?.();
+  };
+  const beginRef = useRef(openConversation);
+  beginRef.current = openConversation;
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (!autoOpen || autoOpened.current || disabled) return;
+    autoOpened.current = true;
+    beginRef.current();
+  }, [autoOpen, disabled]);
   useEffect(() => {
     const requestOpen = () => {
       if (!PAIGE_LIVE_CONVERSATION_ENABLED) return;
@@ -483,11 +635,13 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
    */
   const acceptTerms = async () => {
     if (disabled || acceptingTerms) return;
+    const generation = requestGeneration.current;
+    const isCurrent = () => mounted.current && generation === requestGeneration.current;
     setAcceptingTerms(true);
     setAnnouncement("Turning on Live Conversation.");
     try {
-      const outcome = await acceptPaigeLiveTerms();
-      if (!mounted.current) return;
+      const outcome = await controls.acceptTerms();
+      if (!isCurrent()) return;
       if (!outcome.accepted) {
         // THE BUG THIS REPLACES. The old branch set the explanation to the byte-for-byte sentence
         // already on screen and left the consent panel and its button exactly as they were, so a
@@ -502,6 +656,12 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
       }
       setConsentRefused(false);
       setReason(null);
+      if (controls.openingAudio && !openingConsent.current && !sessionIdRef.current) {
+        openingConsent.current = true;
+        setFilmWelcome(true);
+        speakGreeting();
+        return;
+      }
       await retry();
     } catch {
       // A press that does nothing and says nothing is the failure this whole control exists to
@@ -509,7 +669,7 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
       // acceptPaigeLiveTerms dynamically imports the Supabase client, and a hashed chunk goes stale
       // the moment a deploy lands under an open tab — which, shipping straight to main, is the
       // common case rather than the exotic one.
-      if (!mounted.current) return;
+      if (!isCurrent()) return;
       setExplanation("Paige could not turn Live on just now. Nothing was recorded, sent, or saved. Reload the page and try again, or keep working in this conversation.");
       setAnnouncement("Paige could not turn Live on. Nothing was recorded or sent.");
     } finally {
@@ -575,6 +735,14 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
   };
 
   const lastTurns = useMemo(() => transcript.filter((turn) => turn.content.trim()), [transcript]);
+  const firstOwnerTurn = meetPaige ? lastTurns.findIndex((turn) => turn.role === "user") : -1;
+  const initialExchangeComplete = firstOwnerTurn >= 0 && lastTurns.slice(firstOwnerTurn + 1).some((turn) => turn.role === "assistant");
+  const greetingActive = output.activeMessage === greetingId || output.activeMessage === questionId;
+  const filmCue = filmWelcome
+    ? output.messagePlaying === greetingId ? MEET_PAIGE_WELCOME : output.messagePlaying === questionId ? MEET_PAIGE_FIRST_QUESTION : null
+    : output.relayCaption;
+  const voiceLabel = output.playing ? "Speaking" : state === "listening" && muted ? "Muted"
+    : meetPaige && state === "speaking" ? "Waiting" : STATE_LABEL[state];
   const controlsDisabled = state === "unavailable" || state === "checking" || state === "permission-denied" || state === "reconnecting" || state === "interrupted";
   const presenceState = resolvePresenceState({
     phase: output.playing ? "speaking" : state === "held" || state === "interrupted" ? state
@@ -585,22 +753,33 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
     working: working && !output.playing,
   });
   const stage = open && portalDocument ? createPortal(
-    <div className="plc-stage" role="dialog" aria-modal="true" aria-labelledby="plc-title" aria-describedby="plc-description" ref={stageRef} tabIndex={-1} onKeyDown={trapFocus}>
+    <div className="plc-stage" data-layout={meetPaige ? "conversation-film" : undefined} data-film-welcome={meetPaige && filmWelcome ? "" : undefined} data-film-intro={filmIntro ? "" : undefined} role="dialog" aria-modal="true" aria-labelledby="plc-title" aria-describedby="plc-description" ref={stageRef} tabIndex={-1} onKeyDown={trapFocus}>
       <header className="plc-stage__header">
-        <div className="plc-stage__identity"><PaigeCommandMark plated={false} label={null} className="h-8 w-8" /><div><strong id="plc-title">Live Conversation with Paige</strong><span>Same workspace · same conversation</span></div></div>
+        <div className="plc-stage__identity">{!meetPaige && <PaigeCommandMark plated={false} label={null} className="h-8 w-8" />}<div><strong id="plc-title">{meetPaige ? "Meet Paige" : "Live Conversation with Paige"}</strong>{!meetPaige && <span>Same workspace · same conversation</span>}</div></div>
         <div className="plc-stage__header-actions">
-          {portalDocument === document && <Button variant="ghost" size="sm" onClick={openInWindow}><ExternalLink aria-hidden />Open in window</Button>}
-          <Button variant="ghost" size="sm" onClick={() => closeStage("minimize")}><Minimize2 aria-hidden />Minimize</Button>
+          {!filmWelcome && portalDocument === document && <Button variant="ghost" size="sm" onClick={openInWindow}><ExternalLink aria-hidden />Open in window</Button>}
+          {!filmWelcome && <Button variant="ghost" size="sm" onClick={() => closeStage("minimize")}><Minimize2 aria-hidden />Minimize</Button>}
           <Button variant="ghost" size="icon" aria-label="End Live Conversation" onClick={() => closeStage("end")}><X aria-hidden /></Button>
         </div>
       </header>
       <main className="plc-stage__main">
+        {meetPaige && <PaigeFilmPresence intro={filmIntro} held={state === "held"} />}
         <section className="plc-presence" aria-label="Paige Presence and live audio status" data-live-state={state}>
-          <PaigePresence3D state={presenceState} visible={open} readEnergy={output.readEnergy} />
-          <p className="plc-state"><span />{output.playing ? "Speaking" : state === "listening" && muted ? "Muted" : STATE_LABEL[state]}</p>
-          <p id="plc-description" className="plc-context">Working in this exact Paige thread. Nothing here creates a second assistant or a separate memory.</p>
-          <div className="plc-working" aria-live="polite"><span>Paige is working on</span><strong>{working ? (workingLabel || "your current request") : "No active work"}</strong></div>
-          {(state !== "checking" && availability !== "LIVE") && (
+          {!meetPaige && <PaigePresence3D state={presenceState} visible={open} readEnergy={output.readEnergy} />}
+          {(output.playing || !filmWelcome) && <p className="plc-state"><span />{voiceLabel}</p>}
+          {meetPaige ? (
+            <div className="plc-film-caption">
+              <p id="plc-description" className="sr-only">An optional conversation with Paige about your business.</p>
+              <div className="plc-film-caption__cue">
+                <PaigeCommandMark plated={false} label={null} className="plc-film-caption__mark" />
+                {!filmIntro && filmCue && <p className={filmCue === MEET_PAIGE_WELCOME ? "plc-film-caption__opening" : "plc-film-caption__line"}>{filmCue}</p>}
+              </div>
+              {filmWelcome && greetingError && <p className="plc-film-feedback" role="status">Sound couldn’t start. Play the greeting or type instead.</p>}
+            </div>
+          ) : <p id="plc-description" className="plc-context">Working in this exact Paige thread. Nothing here creates a second assistant or a separate memory.</p>}
+          {(!meetPaige || working) && <div className="plc-working" aria-live="polite"><span>Paige is working on</span><strong>{working ? (workingLabel || "your current request") : "No active work"}</strong></div>}
+          {meetPaige && controls === signedInControls && !filmWelcome && initialExchangeComplete && <MeetPaigeOwnerName key={contextEpoch} />}
+          {(!filmWelcome && state !== "checking" && availability !== "LIVE") && (
             <div className="plc-notice">
               {/* The disclosure SCROLLS; the actions never do. The notice used to cap its whole
                   content at 34vh with hidden scrollbars, so the gold acceptance button sat below
@@ -654,27 +833,43 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
             </div>
           )}
         </section>
-        <section className="plc-workspace" aria-label="Live conversation workspace">
-          <div className="plc-transcript" aria-label="Conversation transcript">
-            <div className="plc-section-title"><span>Transcript</span><small>Same Paige conversation</small></div>
+        <section className="plc-workspace" aria-label="Live conversation workspace" hidden={filmWelcome || (meetPaige && !activeCard && !filmTranscript)}>
+          <div className="plc-transcript" id={filmTranscriptId} aria-label="Conversation transcript" hidden={meetPaige && !filmTranscript}>
+            <div className="plc-section-title"><span>Transcript</span>{!meetPaige && <small>Same Paige conversation</small>}</div>
             {lastTurns.length ? lastTurns.map((turn) => <div key={turn.id} data-paige-message-id={turn.id} data-paige-message-anchor-key={messageScrollAnchorKey(turn.role, turn.content)} className={cn("plc-turn", turn.role === "user" && "plc-turn--owner")}><span>{turn.role === "user" ? "You" : "Paige"}</span><p>{turn.content}</p></div>) : <p className="plc-empty">Your conversation will remain here. Audio has not started.</p>}
           </div>
-          <div className="plc-card-layer" aria-label="Current conversation card">
+          <div className="plc-card-layer" aria-label="Current conversation card" hidden={meetPaige && !activeCard}>
             <div className="plc-section-title"><span>On screen</span><small>One current object at a time</small></div>
             {activeCard ? <ConversationCard card={activeCard} disabled={working || Boolean(disabled)} canConfirm={confirmationFingerprints.length > 0} onAnswer={onAnswer} onApprove={() => onApprove(confirmationFingerprints)} onDecline={() => onDecline(confirmationFingerprints)} /> : <div className="plc-empty-card"><PaigeCommandMark plated={false} label={null} className="h-7 w-7" /><p>No card is needed right now.</p><span>Paige will put a real question, choice, plan, evidence, action, or recap here when it helps the conversation.</span></div>}
           </div>
         </section>
+        {meetPaige && <PaigeFilmAudioStream playing={!filmIntro && output.playing} readEnergy={output.readEnergy} />}
       </main>
       <footer className="plc-controls" aria-label="Live Conversation controls">
-        {!pinned && <Button variant="outline" onClick={() => scrollController.jumpToBottom("auto")}>Jump to latest</Button>}
+        {filmWelcome ? <>
+          {filmIntro ? <Button ref={skipIntroRef} variant="outline" onClick={finishIntro}>Skip intro</Button> : <>
+          <Button variant="gold" disabled={disabled || (greetingActive && waitingForOpening)} onClick={startLiveAfterOpening}>
+            <Mic aria-hidden />{greetingActive && waitingForOpening ? "Starting after the greeting…" : "Start live conversation"}
+          </Button>
+          {(!controls.openingAudio || openingConsent.current) && <Button variant="outline" onClick={greetingActive ? stopGreeting : speakGreeting}>
+            {greetingActive ? <Square aria-hidden /> : <Volume2 aria-hidden />}{greetingActive ? "Stop audio" : "Play greeting"}
+          </Button>}
+          </>}
+          <Button variant="ghost" onClick={() => closeStage("minimize")}>Type instead</Button>
+          {onMeetBypass && <Button variant="ghost" onClick={bypassMeet}>Skip to workspace</Button>}
+        </> : <>
+        {meetPaige && <Button variant="ghost" aria-expanded={filmTranscript} aria-controls={filmTranscriptId} onClick={() => setFilmTranscript((shown) => !shown)}>Transcript</Button>}
+        {!pinned && (!meetPaige || filmTranscript) && <Button variant="outline" onClick={() => scrollController.jumpToBottom("auto")}>Jump to latest</Button>}
         <Button variant="outline" disabled={controlsDisabled && !output.playing && !muted} aria-pressed={muted} onClick={() => { relayRef.current?.setMuted(state === "held" || !muted); setMuted((value) => !value); }}>{muted ? <MicOff aria-hidden /> : <Mic aria-hidden />}{muted ? "Unmute" : "Mute"}</Button>
         <Button variant="outline" disabled={controlsDisabled && !output.playing} aria-pressed={state === "held"} onClick={toggleHold}><CirclePause aria-hidden />{state === "held" ? "Resume" : "Hold"}</Button>
         <Button variant="outline" data-act={state === "speaking" ? "available" : undefined} disabled={controlsDisabled && !output.playing} onClick={() => { stopPlayback.current(); relayRef.current?.interrupt(); relayRef.current?.setMuted(mutedRef.current); if (activeVoiceTurnRef.current) { activeVoiceTurnRef.current = null; voiceCallbacksRef.current.onVoiceInterrupt(); } setState(relayReadyRef.current ? "listening" : "interrupted"); setAnnouncement("Paige stopped speaking. You can continue in this conversation."); }}><Hand aria-hidden />Interrupt</Button>
-        <Button variant="outline" onClick={() => closeStage("minimize")}><Minimize2 aria-hidden />Minimize</Button>
+        <Button variant="outline" onClick={() => closeStage("minimize")}>{meetPaige ? "Type instead" : <><Minimize2 aria-hidden />Minimize</>}</Button>
+        {meetPaige && onMeetBypass && <Button variant="ghost" onClick={bypassMeet}>Go to workspace</Button>}
         <Button variant="destructive" onClick={() => closeStage("end")}><PhoneOff aria-hidden />End</Button>
+        </>}
       </footer>
       <p className="sr-only" aria-live="polite">{announcement}</p>
     </div>, portalDocument.body) : null;
 
-  return <><Button ref={triggerRef} type="button" variant="outline" size="sm" className="plc-trigger" disabled={disabled || !PAIGE_LIVE_CONVERSATION_ENABLED} onClick={() => void begin()} aria-haspopup="dialog" aria-expanded={open}><Volume2 aria-hidden />Talk live with Paige</Button>{stage}<span className="sr-only" aria-live="polite">{open ? "" : announcement}</span></>;
+  return <><Button ref={triggerRef} type="button" variant="outline" size="sm" className="plc-trigger" disabled={disabled || !PAIGE_LIVE_CONVERSATION_ENABLED} onClick={openConversation} aria-haspopup="dialog" aria-expanded={open}><Volume2 aria-hidden />Talk live with Paige</Button>{stage}<span className="sr-only" aria-live="polite">{open ? "" : announcement}</span></>;
 }

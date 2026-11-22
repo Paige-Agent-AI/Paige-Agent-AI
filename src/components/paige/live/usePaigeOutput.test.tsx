@@ -1,11 +1,16 @@
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
-const store = vi.hoisted(() => ({ snapshot: { activeId: "old-message" as string | null, status: "loading", needsConfig: false }, stop: vi.fn(), pause: vi.fn(), resume: vi.fn() }));
+const store = vi.hoisted(() => ({
+  snapshot: { activeId: "old-message" as string | null, status: "loading", needsConfig: false },
+  audio: null as HTMLAudioElement | null, observer: vi.fn(),
+  stop: vi.fn(), pause: vi.fn(), resume: vi.fn(),
+}));
 vi.mock("@/lib/voice/messageTts", () => ({ messageTts: {
   subscribe: () => () => undefined, getSnapshot: () => store.snapshot,
-  getAudioElement: () => null, stop: store.stop, pause: store.pause, resume: store.resume,
+  getAudioElement: () => store.audio, stop: store.stop, pause: store.pause, resume: store.resume,
 } }));
+vi.mock("@/lib/paigeLiveConversation/outputAnalysis", () => ({ observePlayedAudio: store.observer }));
 import { usePaigeOutput } from "./usePaigeOutput";
 import type { RelayTransport } from "@/lib/paigeLiveConversation/relayTransport";
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -51,5 +56,40 @@ describe("same-thread output ownership", () => {
     output.stop();
     expect(store.stop).not.toHaveBeenCalled();
     await act(async () => root.unmount());
+  });
+
+  it("waits for the next cue's actual playback after a preceding cue ends", async () => {
+    const host = document.createElement("div"), root = createRoot(host);
+    const captions: (string | null)[] = [];
+    let playback!: (playing: boolean) => void;
+    store.audio = document.createElement("audio");
+    store.observer.mockImplementation((_audio, callback: (playing: boolean) => void) => {
+      playback = callback;
+      return { dispose: () => callback(false), readEnergy: () => ({ amplitude: .4, brightness: 0 }) };
+    });
+    function Harness() {
+      captions.push(usePaigeOutput(true, ["opening", "question"]).messagePlaying);
+      return null;
+    }
+    try {
+      store.snapshot = { ...store.snapshot, activeId: "opening", status: "playing" };
+      await act(async () => root.render(<Harness />));
+      await act(async () => playback(true));
+      expect(captions.at(-1)).toBe("opening");
+      const change = captions.length;
+      store.snapshot = { ...store.snapshot, activeId: "question", status: "loading" };
+      await act(async () => root.render(<Harness />));
+      expect(captions.slice(change)).not.toContain("question");
+      store.snapshot = { ...store.snapshot, status: "playing" };
+      await act(async () => root.render(<Harness />));
+      expect(captions.at(-1)).toBeNull();
+      await act(async () => playback(true));
+      expect(captions.at(-1)).toBe("question");
+    } finally {
+      await act(async () => root.unmount());
+      store.audio = null;
+      store.snapshot = { activeId: "old-message", status: "loading", needsConfig: false };
+      store.observer.mockReset();
+    }
   });
 });

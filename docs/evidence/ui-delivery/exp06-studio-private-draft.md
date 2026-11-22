@@ -35,12 +35,12 @@ ACCEPTANCE_CRITERIA: Generate a private landing page, approve the preview, read 
 MOTION_PURPOSE: NONE: Existing Studio motion continues.
 PROTECTED_SEAMS: Studio workspace isolation, project context, approval, draft persistence, original manifest, version, stage, and mobile chat layout are in scope. Authentication, signup, billing, Live audio, Vault, and external provider actions retain their existing paths.
 
-INTERNAL_BUILD_IDENTITY: Candidate identity is recorded by the PR and its checks.
-RELEASE_CHANNEL: internal: Existing PAIGE Cloud and Supabase release paths.
-RELEASE_CLASSIFICATION: repair: Studio preview and private draft persistence.
+INTERNAL_BUILD_IDENTITY: 5894054007a8ef208b88b35b61c5a8f35ba8e4bf; deployment=local source candidate; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(official Edge deployment and source receipt); evidence=ANT-162 Studio private draft handoff and focused Vitest suites
+RELEASE_CHANNEL: development: Local candidate against the released #3358 database foundation.
+RELEASE_CLASSIFICATION: patch: Studio preview and private draft persistence.
 CUSTOMER_RELEASE_IDENTITY: none: Internal Studio repair awaiting authenticated use.
 RELEASE_NOTE_REQUIRED: no: This increment has no customer announcement.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED
-RELEASE_RECOVERY: Use the existing PAIGE Cloud rollback target and corresponding certified Edge source. Reopen the original Studio project to resolve an unconfirmed save.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: Redeployed Edge and app with signed-in private approval, original page save, and reopen.
+RELEASE_RECOVERY: position=Restore the prior verified PAIGE Cloud image and corresponding certified Edge source if release recovery is required. Reopen the original project to check an unconfirmed save.; reference=https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3358#issuecomment-7073157836
 
 The existing App and Edge handlers use the immutable [#3358 database foundation](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3358#issuecomment-7073157836). The [EXP01 handoff](https://linear.app/paigeagentai/issue/ANT-147#comment-5e54cd31-eceb-401f-9065-e417fbcca877) identifies the exact protected Chat changes. The [owning Linear record](https://linear.app/paigeagentai/issue/ANT-162#comment-147a1b7c-a878-41ed-916e-370556814a19) carries release and private live proof.

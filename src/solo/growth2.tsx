@@ -3,7 +3,7 @@ import React from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { legacySalesRoute } from "./sales/legacySalesRoute";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
-import { branchPath, subtabPath } from "@/lib/routing/tierBranches";
+import { subtabPath } from "@/lib/routing/tierBranches";
 import { Ic, PageHead } from "./_shared";
 import { DetailDrawer } from "./detail-drawer";
 
@@ -23,10 +23,7 @@ import { DEFAULT_RANGE, rangeOf } from "./marketing-analytics-model";
 import { FormIntakePanel } from "./form-intake";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { MarketingContent } from "./marketing-content";
-import { ContentCalendar } from "./content-calendar";
-// EXP07 row 8 — the Calendar tab's strip icon, in the strip's own stroke style (kept local: the
-// shared icon table is not this lane's file, and a changed shared file re-opens unrelated scans).
-const CalendarTabIcon=({size=14})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>;
+import { legacySocialPlansTarget } from "./social-publication-reference";
 import { contentKindOf } from "./marketing-content-model";
 import { legacyAdsRoute } from "./ads-routing";
 import { CAPTURE_FILTERS, MarketingOverview } from "./marketing-overview";
@@ -265,23 +262,13 @@ export function PipelineSurface({ data, setDetail, focusDealId, onClearFocus, cr
   return <section className="campaigns-surface pipeline-surface"><StateFrame phase={data.phase} retry={data.retry}><PipelineCommandDesk data={data} selectedId={selectedId} setSelectedId={setSelectedId} folderFilter={folderFilter} setFolderFilter={setFolderFilter} onCreatePipeline={(event)=>openConfig("config-create",event)} onManage={(event)=>openConfig("config-edit",event)} onFolders={()=>setFoldersOpen(true)} focusDealId={focusDealId} onClearFocus={onClearFocus} createRequested={createRequested} dealFilter={dealFilter}/></StateFrame>{data.phase==="ready"&&foldersOpen&&<PipelineFolderOrganizer workspace={workspace} run={data.pipelineAction} onClose={()=>setFoldersOpen(false)}/>}</section>;
 }
 
-// Social is now its own surface (./social-command.tsx) rather than a fixed panel here.
-//
-// WHAT CHANGED AND WHY (§58 — recorded, not silently dropped). The panel this replaces was one
-// UNAVAILABLE state making five explicit non-inferences: no accounts, followers, publishing queue,
-// schedules, or placements. Every one of those is still made, now attached to the specific tile
-// that would otherwise imply it, and the surface gained the thing the old panel could not do — an
-// owner can RECORD the accounts the business posts from. That write is the first one
-// `tenants.features->social_handles` has ever had, and Systems Check #3 has pointed at this page
-// since it shipped while admitting the page could not finish the job.
-//
-// Kept verbatim in the new surface: the placements precondition (published work appears as a
-// placement only once a supported provider records it) and the Vibe Studio redirect for creative
-// work. Marketing › Analytics lists social reach as not measured; neither surface claims a
-// provider figure.
-function Social({ data, onOpenCompass, onOpenPipeline }) {
-  const askPaige = React.useCallback(() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: "Using only the social accounts on record for this workspace, tell me which are recorded and which are not. Do not report followers, reach, engagement, a publishing queue, a schedule, or where anything went live — none of those exist here. If nothing is recorded, say so." } })), []);
-  return <SocialCommand campaigns={data} onOpenStudio={openStudio} onAskPaige={askPaige} onOpenCompass={onOpenCompass} onOpenPipeline={onOpenPipeline}/>;
+function Social() {
+  const askPaige = React.useCallback(() => {
+    window.dispatchEvent(new CustomEvent("paige:open", { detail: {
+      prompt: "Help me draft a social post. Ask what I want to achieve and who I’m writing for. Use my saved content if I choose it, then ask me to review the draft in Social. Do not publish or schedule anything.",
+    } }));
+  }, []);
+  return <SocialCommand onOpenStudio={openStudio} onAskPaige={askPaige} />;
 }
 
 // ── Marketing department views (owner ruling 2026-10-03; docs/product/solo-marketing-ia-proposal.md) ──
@@ -380,7 +367,7 @@ export const GrowthHub=({ salesInShell = false } = {})=>{
   const segment=(params["*"]||"").split("/")[1]||"";
   // Sales and Ads each left Marketing for their own department; their old addresses replace there
   // before any Marketing reader mounts.
-  const target=legacySalesRoute(params.account ?? null,segment,location.search,location.hash)??legacyAdsRoute(params.account ?? null,segment,location.search,location.hash);
+  const target=legacySalesRoute(params.account ?? null,segment,location.search,location.hash)??legacyAdsRoute(params.account ?? null,segment,location.search,location.hash)??legacySocialPlansTarget(params.account,segment);
   return target ? <Navigate to={target} replace/> : <MarketingWorkspace salesInShell={salesInShell}/>;
 };
 
@@ -388,7 +375,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   const[tab,setTab]=useSubtabRoute("solo","growth","overview");
   // Commercial addresses resolve to Sales before Marketing readers mount.
   // The owner's order (2026-10-04). Ads left for its own department (owner, 2026-10-10).
-  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>],['content','Content',()=><Ic.grid size={14}/>],['calendar','Calendar',()=><CalendarTabIcon/>],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
+  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>],['content','Content',()=><Ic.grid size={14}/>],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
   const data=useSoloCampaigns();
   const params=useParams();
   const location=useLocation();
@@ -400,9 +387,6 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   // Lead capture now, so nothing here forces a `?type=`.
   const openCatalogOffers=React.useCallback((resumeTerms=false)=>{
     navigate(`${subtabPath("solo",params.account,"growth","catalog")}?origin=sales${resumeTerms === true ? "&resume=terms" : ""}`);
-  },[navigate,params.account]);
-  const openCompass=React.useCallback(()=>{
-    navigate(branchPath("solo",params.account,"trust-compass"));
   },[navigate,params.account]);
   const openPipeline=React.useCallback(()=>{
     navigate(subtabPath("solo",params.account,"growth","pipeline"));
@@ -560,8 +544,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   else if(tab==="catalog") body=<Catalog setDetail={setDetail}/>;
   else if(tab==="sales") body=<Sales data={data} setDetail={setDetail} onOpenCatalog={openCatalogOffers} onOpenClients={openClients} onOpenPipeline={openPipeline}/>;
   else if(tab==="pipeline") body=<PipelineSurface key={data.tenantId} data={data} setDetail={setDetail} focusDealId={query.get("deal")} onClearFocus={()=>{const next=new URLSearchParams(location.search);next.delete("deal");navigate({pathname:location.pathname,search:next.toString()},{replace:true});}}/>;
-  else if(tab==="calendar") body=<ContentCalendar tenantId={data.tenantId} onOpenPiece={(id)=>{setOverviewQuery({piece:id});goTo("content");}}/>;
-  else if(tab==="social") body=<Social data={data} onOpenCompass={openCompass} onOpenPipeline={openPipeline}/>;
+  else if(tab==="social") body=<Social/>;
   else if(tab==="audience") body=<MarketingAudience tenantId={data.tenantId} onOpenClients={()=>params.account&&navigate(subtabPath("solo",params.account,"clients","people"))}/>;
   else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenAudience={()=>setTab("audience")} onOpenConnections={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`):null} onOpenSettings={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=registration`):null}/>;
   else if(tab==="content") body=<MarketingContent tenantId={data.tenantId} published={{phase:data.phase,pages:data.artifacts.filter((a)=>a.type==="page").length,funnels:data.artifacts.filter((a)=>a.type==="funnel").length,forms:data.artifacts.filter((a)=>a.type==="form").length,unpublished:(data.drafts||[]).length}} onOpenCapture={()=>goTo("capture")} onRetryPublished={()=>data.retry?.()} studioLauncher={<StudioLauncher/>} kind={contentKindOf(query.get("kind"))} onKind={(kind)=>setOverviewQuery({kind:kind==="all"?null:kind})} piece={query.get("piece")} onPiece={(id)=>setOverviewQuery({piece:id})}/>;

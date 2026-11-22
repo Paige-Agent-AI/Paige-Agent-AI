@@ -9,6 +9,7 @@ const HARNESS_TENANT = { id: "t-northfield", account_number: "1971670", name: "N
 export function useTenantContext() {
   return {
     activeTenantId: HARNESS_TENANT.id,
+    activeUserId: "harness-user",
     loading: false,
     accountContextLoading: false,
     activeTenant: HARNESS_TENANT,

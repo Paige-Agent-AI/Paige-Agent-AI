@@ -1,62 +1,14 @@
-/* Campaigns › Social — Social Command.
- *
- * Its OWN stylesheet, deliberately. `solo-campaigns.css` carries two APPROVED-FROZEN (§28) blocks
- * and ten assertions in `growth2.contract.test.tsx` that match its bytes — including two that
- * depend on the whitespace difference between `overflow-x: clip` and `overflow-x:clip`. Nothing
- * here needs to touch it, so nothing here does.
- *
- * THE REDESIGN (owner-commissioned 2026-09-05): "executive mission control meets luxury AI
- * operating system." The premium is built from DEPTH, not darkness (§22/§23) — a layered surface
- * stack, a hairline grid ground with soft corner glows, a command-header lockup with one gold
- * accent, signal cards, a connected pipeline flow, and a token-built eclipse for the empty/loading/
- * error centrepieces. It is a RESKIN of the honest surface: every value still comes from
- * `social-truth.ts`, and every capability the platform does not hold still renders its absence.
- *
- * TOKENS ONLY. Every colour is a `.paige-solo` token or a `color-mix()` of one — so the light
- * theme (Mineral) is authored the moment the dark one (Obsidian) is (§23) and no surface is pinned
- * to one theme. `--danger`/`--success` do NOT exist in this shell — `--bad`/`--ok` are the
- * semantics. The one place a literal colour is allowed is inside a `mask` (a mask is a shape, not a
- * paint), which is where the `#000` below lives.
- *
- * SCROLL. `.campaigns-scroll` is the one scroll owner for this tab and `.paige-solo main` is
- * clipped `!important`. Nothing here may grow the host: every grid child carries `min-width:0`,
- * which the design-system note records as the defect that hit the v3 pack six times.
- */
-
+/* The Visual Desk owns the publishing layout. This sheet supports account records and broadcast. */
 .social-page {
-  max-width: 1240px;
-  margin: 0 auto;
   min-width: 0;
-  /* THE BREAKPOINTS BELOW MEASURE THIS BOX, NOT THE WINDOW — and the first version of this file
-     measured the window while its own comment claimed otherwise. Solo's docked PAIGE column makes a
-     1366 session give this tab ~685px and ~439px with PAIGE expanded, so at a 1366 viewport NONE of
-     the @media rules ever fired: the two-column grid ran at 352px / 275px and the KPI strip at
-     111px a tile, which is where the truth pill overflowed. `solo-campaigns.css:26-34` records the
-     identical defect in the sibling file and the identical fix. */
-  container-type: inline-size;
-  container-name: social;
-  position: relative;
-  isolation: isolate;
   display: grid;
-  gap: 14px;
+  gap: 16px;
   align-content: start;
-  /* Local desk vocabulary — every value derived from a base `.paige-solo` token so both themes are
-     authored at once. These are the extra elevation/glow steps the base scale does not name. */
   --sd-line-strong: color-mix(in srgb, var(--line), var(--ink) 15%);
-  --sd-panel: linear-gradient(180deg, var(--surface-2), var(--surface));
-  --sd-raise: color-mix(in srgb, var(--surface-2), var(--ink) 4%);
-  --sd-glow-violet: color-mix(in srgb, var(--violet) 15%, transparent);
-  --sd-glow-gold: color-mix(in srgb, var(--gold) 9%, transparent);
-  --sd-grid-line: color-mix(in srgb, var(--ink) 4%, transparent);
-  /* Soft corner glows over the shell canvas — the "operating environment" ground. Kept faint so
-     dense content never fights it (§11: dense, not cluttered). */
-  background:
-    radial-gradient(132% 104% at 86% -10%, var(--sd-glow-violet), transparent 46%),
-    radial-gradient(92% 72% at 3% -6%, var(--sd-glow-gold), transparent 42%);
 }
-/* The hairline grid, faded with a mask so it reads as texture near the top and vanishes below. It
-   sits behind everything via z-index within the page's own isolated stacking context. */
 .social-page > * { min-width: 0; }
+.social-state { margin: 0; padding: 16px; color: var(--ink-2); }
+.social-state .btn { margin-top: 8px; }
 
 .social-eyebrow {
   display: block;
@@ -65,241 +17,6 @@
   text-transform: uppercase;
   color: var(--ink-3);
 }
-
-/* ── truth labels ─────────────────────────────────────────────────────────── */
-/* Same four-label vocabulary and the same accent mapping as `.campaigns-truth`, restated here so
-   this sheet stands alone rather than depending on a frozen file's selector order. */
-.social-truth {
-  display: inline-flex; align-items: center; flex: none;
-  height: 19px; padding: 0 8px;
-  border: 1px solid var(--line); border-radius: 999px;
-  background: var(--surface-sunk); color: var(--ink-3);
-  font: 650 8.5px/1 var(--mono); letter-spacing: .1em;
-}
-.social-truth--live { color: var(--ok); border-color: var(--ok-tint); }
-.social-truth--partial { color: var(--violet); border-color: var(--violet-line); }
-.social-truth--proposed { color: var(--warn); border-color: var(--warn-tint); }
-.social-truth--unavailable { color: var(--ink-3); }
-
-/* A figure and its absence are the same size and weight on purpose: an em-dash that shrinks reads
-   as a missing element rather than a stated absence. */
-.social-figure {
-  font: 650 26px/1 var(--font);
-  letter-spacing: -.03em;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-.social-figure--absent { color: var(--ink-3); font-weight: 400; }
-
-/* ── command header ───────────────────────────────────────────────────────── */
-/* NOT a masthead (§11) and NOT a `pg-hd` banner — a compact command bar. The work leads: the brief
-   answers "where do I stand", the actions sit inline, and the one gold act is the record write. */
-
-.social-hero {
-  min-width: 0;
-  position: relative;
-  display: grid;
-  gap: 11px;
-  padding: 13px 18px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-l);
-  background: var(--sd-panel);
-  box-shadow: var(--sh-2);
-  overflow: hidden;
-}
-/* The single gold accent — a hairline sweep along the top edge, the desk's one warm signal. */
-.social-hero::after {
-  content: "";
-  position: absolute; left: 20px; right: 20px; top: 0; height: 2px;
-  background: linear-gradient(90deg, var(--gold-line), transparent 46%);
-}
-.social-cmd-bar {
-  min-width: 0;
-  display: flex; align-items: center; justify-content: space-between; gap: 14px;
-  flex-wrap: wrap;
-}
-.social-cmd-brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
-/* The page command mark — the platform's CURRENT mark (the CD command-mark slash-and-orb geometry,
-   exact), in the Solo surface's own contrasting colour variation with the glyph BULGING out of the
-   plate. Owner-ruled 2026-09-06 (green light: a contrasting colour plus a bulging glyph for this
-   page). The shared CommandMark is operator-pack-locked and its operator tokens (the cm and pg
-   families) do not resolve here, so the geometry is rendered natively and coloured from Solo tokens
-   via --cmk-slash and --cmk-orb; the plate is never gold-filled (gold rides the glyph, never a
-   resting background — §11). NB: keep operator token names out of this comment as bare globs, since
-   a star-slash sequence would close the comment early and drop this whole rule. */
-.social-cmd-mark {
-  --cmk-slash: var(--gold-bright);
-  --cmk-orb: var(--gold);
-  position: relative; flex: none;
-  width: 30px; height: 30px;
-  display: grid; place-items: center;
-  border-radius: 9px;
-  overflow: visible;
-  box-shadow: var(--sh-1);
-}
-/* Contrasting colour variations — the owner picks one; the header ships `indigo` by default. Each
-   sets its own --cmk pair so the glyph is never left uncoloured if the base rule is edited. */
-.social-cmd-mark[data-cmk="indigo"] {
-  --cmk-slash: var(--gold-bright);
-  --cmk-orb: var(--gold);
-  background: radial-gradient(circle at 32% 26%, var(--violet-2), var(--violet) 68%, var(--violet-tint));
-  border: 1px solid var(--violet-line);
-}
-.social-cmd-mark[data-cmk="slate"] {
-  --cmk-slash: var(--gold-bright);
-  --cmk-orb: var(--gold);
-  background: radial-gradient(circle at 34% 28%, var(--surface-2), var(--surface-sunk) 66%, var(--canvas));
-  border: 1px solid var(--sd-line-strong);
-}
-.social-cmd-mark[data-cmk="bicolor"] {
-  --cmk-slash: var(--violet-2);
-  --cmk-orb: var(--gold-bright);
-  background: radial-gradient(circle at 34% 28%, var(--surface-sunk), var(--canvas));
-  border: 1px solid var(--sd-line-strong);
-}
-/* The glyph BULGES out of the plate: an explicit px size a touch LARGER than the 30px plate, lifted,
-   with a raised drop-shadow so it reads as protruding. overflow:visible on the plate lets it break the
-   edge. Explicit px, never a percentage — a %-sized SVG in a content-sized grid cell sizes circularly
-   off the SVG's 300px intrinsic default and blows the plate out. */
-.social-cmd-glyph {
-  position: relative; z-index: 1;
-  width: 34px; height: 34px;
-  transform: translateY(-1px);
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .38)) drop-shadow(0 1px 0 rgba(255, 255, 255, .10));
-}
-.social-cmd-wm { font: 700 12.5px/1 var(--font); letter-spacing: .2em; color: var(--ink); }
-.social-cmd-div { width: 1px; height: 15px; background: var(--sd-line-strong); flex: none; }
-.social-cmd-brief { min-width: 0; }
-
-.social-hero-top {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
-  gap: 18px 24px;
-  align-items: end;
-}
-.social-hero-top > * { min-width: 0; }
-
-/* Compact by owner ruling (2026-09-06): the brief must not eat the fold restating why you are on
-   the tab. A modest bold line, not a display headline; the body carries the real status beneath it. */
-.social-headline {
-  font-size: 15.5px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -.01em;
-  text-wrap: balance;
-}
-.social-hero-body {
-  margin-top: 4px;
-  max-width: 78ch;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--ink-2);
-}
-
-.social-hero-act { display: grid; align-content: end; gap: 8px; justify-items: end; }
-.social-hero-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.social-hero-permission { max-width: 40ch; font-size: 11.5px; line-height: 1.45; color: var(--ink-3); text-align: right; }
-
-/* ── the mark (eclipse) ───────────────────────────────────────────────────── */
-/* Reserved now for the SURFACE STATES, where there is nothing else to show and the wait itself is
-   the subject. A token-built eclipse: a planet, a travelling gold corona, the command mark at
-   centre. The corona sweeps rather than pulses — a pulse on a surface with nothing running reads as
-   live traffic, which here would be a lie. */
-
-.social-orb { position: relative; width: 128px; aspect-ratio: 1; display: grid; place-items: center; }
-.social-orb-halo,
-.social-orb-body,
-.social-orb-ring { position: absolute; inset: 0; border-radius: 50%; }
-.social-orb-halo {
-  inset: 6%;
-  background: radial-gradient(circle at 50% 50%, var(--gold-tint), transparent 66%);
-  opacity: .9;
-}
-.social-orb-body {
-  inset: 12%;
-  background: radial-gradient(circle at 36% 28%, var(--surface-2), var(--surface-sunk) 60%, var(--canvas));
-  border: 1px solid var(--line);
-  box-shadow: var(--sh-2);
-}
-.social-orb-ring {
-  inset: 8%;
-  background: conic-gradient(from 208deg, transparent 0deg, var(--gold) 46deg, var(--gold-bright) 74deg, transparent 128deg, transparent 360deg);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
-  filter: drop-shadow(0 0 7px var(--gold-tint));
-  animation: social-orb-turn 22s linear infinite;
-}
-/* The command glyph at the heart of the eclipse — gold, cohesive with the gold corona, BULGING off
-   the orb body with a raised drop-shadow. The orb body is its plate; no inner plate is drawn. */
-.social-orb-mark {
-  --cmk-slash: var(--gold-bright);
-  --cmk-orb: var(--gold);
-  position: relative; z-index: 1;
-  width: 54px; height: 54px;
-  transform: translateY(-1px);
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .45)) drop-shadow(0 1px 0 rgba(255, 255, 255, .10));
-}
-@keyframes social-orb-turn { to { transform: rotate(360deg); } }
-
-/* ── signal strip ─────────────────────────────────────────────────────────── */
-/* The four/five questions, answered from the real model. Every tile carries the sentence that says
-   where its figure came from or why there is none — that sentence is the point of the tile. */
-
-.social-kpis {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-}
-.social-kpi {
-  min-width: 0;
-  position: relative;
-  display: grid; align-content: start; gap: 6px;
-  padding: 13px 13px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-m);
-  background: var(--surface);
-  box-shadow: var(--sh-1);
-}
-.social-kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.social-kpi-glyph {
-  display: grid; place-items: center; flex: none;
-  width: 26px; height: 26px; border-radius: 8px;
-  background: var(--violet-tint); color: var(--violet);
-}
-.social-kpi h3 { font-size: 12px; font-weight: 600; letter-spacing: -.01em; }
-.social-kpi p { font-size: 11px; line-height: 1.45; color: var(--ink-3); text-wrap: pretty; }
-.social-kpi .social-truth { justify-self: start; }
-
-/* ── the next move ────────────────────────────────────────────────────────── */
-/* Sits between the brief and the panels, and is the only element on the page besides the record act
-   that carries gold — because it is the only other thing here that is an act. */
-
-.social-next {
-  min-width: 0;
-  display: flex; align-items: center; gap: 14px;
-  padding: 15px 18px;
-  border: 1px solid var(--gold-line);
-  border-radius: var(--r-l);
-  background: linear-gradient(118deg, var(--gold-tint), var(--surface) 60%);
-  box-shadow: var(--sh-1);
-}
-.social-next-glyph {
-  display: grid; place-items: center; flex: none;
-  width: 34px; height: 34px; border-radius: var(--r-s);
-  background: var(--surface); border: 1px solid var(--gold-line); color: var(--gold);
-  box-shadow: var(--sh-1);
-}
-.social-next-body { min-width: 0; flex: 1; }
-.social-next-body h2 { margin-top: 4px; font-size: 15.5px; letter-spacing: -.02em; }
-.social-next-body p { margin-top: 4px; font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
-.social-next-act { flex: none; }
-
-/* ── Go live (EXP07 broadcast slice) ─────────────────────────────────────────
-   The tab's standing act — the same hero-card language as Do-this-next, above the
-   standing panels. Every color is a token; the LIVE accent is --ok, the same green
-   the truth badge already speaks, never a new semantic. */
 
 .social-golive {
   min-width: 0;
@@ -353,156 +70,29 @@
 .social-golive-note { margin: 0; font-size: 12px; line-height: 1.5; color: var(--ink-2); }
 .social-golive-note:empty { display: none; }
 
-/* ── panels ───────────────────────────────────────────────────────────────── */
-
-.social-grid {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1.42fr) minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
-}
-.social-grid > * { min-width: 0; }
-/* The two columns each stack their own panels. */
-.social-col { min-width: 0; display: grid; gap: 14px; align-content: start; }
-.social-col > * { min-width: 0; }
-
 .social-panel {
   min-width: 0;
-  display: flex; flex-direction: column;
   border: 1px solid var(--line);
   border-radius: var(--r-l);
-  background: var(--sd-panel);
-  box-shadow: var(--sh-1);
-  overflow: hidden;
-}
-.social-panel-head {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--line-soft);
-  background: color-mix(in srgb, var(--surface-2), transparent 30%);
-}
-.social-panel-head > div { min-width: 0; }
-.social-panel-head .social-panel-lhs { display: flex; align-items: center; gap: 11px; min-width: 0; }
-/* The plate the reference gives every section header. Chrome: it names the section, it claims
-   nothing. */
-.social-panel-glyph {
-  display: grid; place-items: center; flex: none;
-  width: 30px; height: 30px; border-radius: 9px;
-  background: var(--violet-tint); color: var(--violet);
-}
-.social-panel-head h3 { font-size: 13.5px; letter-spacing: -.02em; }
-.social-panel-head p { margin-top: 3px; font-size: 11px; line-height: 1.45; color: var(--ink-3); }
-/* EXP07 row 9 — the per-channel readiness line (what the connection lifecycle proves). */
-.social-channels .social-channel-readiness { grid-column: 1 / -1; margin: 2px 0 0; font-size: 11.6px; line-height: 1.5; color: var(--ink-3); }
-.social-channels .social-channel-readiness[data-state="connected"] { color: var(--ok); }
-.social-channels .social-channel-readiness[data-state="needs_reauth"],
-.social-channels .social-channel-readiness[data-state="error"] { color: var(--bad); }
-
-.social-panel-foot {
-  padding: 11px 16px 14px;
-  border-top: 1px solid var(--line-soft);
-  font-size: 11px; line-height: 1.5; color: var(--ink-3);
-}
-
-.social-empty {
-  display: grid; place-items: center; align-content: center; justify-items: center;
-  gap: 9px; padding: 28px 22px; text-align: center; flex: 1;
-}
-.social-empty-glyph {
-  display: grid; place-items: center;
-  width: 42px; height: 42px; border-radius: 13px;
-  background: var(--surface-sunk); color: var(--ink-3);
-  border: 1px solid var(--line);
-}
-.social-empty h4 { font-size: 13.5px; }
-.social-empty p { max-width: 48ch; font-size: 12px; line-height: 1.55; color: var(--ink-3); }
-
-/* ── PAIGE sees ───────────────────────────────────────────────────────────── */
-
-.social-feed { display: grid; margin: 0; padding: 0; list-style: none; }
-.social-feed li {
-  display: flex; gap: 11px; align-items: flex-start;
-  padding: 13px 16px;
-  border-bottom: 1px solid var(--line-soft);
-}
-.social-feed li:last-child { border-bottom: 0; }
-.social-feed li > div { min-width: 0; }
-.social-feed-glyph {
-  display: grid; place-items: center; flex: none;
-  width: 30px; height: 30px; border-radius: 9px;
-  background: var(--violet-tint); color: var(--violet);
-}
-.social-feed-line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
-.social-feed-age { flex: none; font-size: 10.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.social-feed h4 { font-size: 12.8px; min-width: 0; }
-.social-feed-why { color: var(--ink-3); opacity: .82; }
-.social-feed p { margin-top: 3px; font-size: 12px; line-height: 1.5; color: var(--ink-2); overflow-wrap: anywhere; }
-.social-feed small { display: block; margin-top: 5px; font-size: 11px; color: var(--ink-3); }
-
-/* ── pipeline ─────────────────────────────────────────────────────────────── */
-/* Source → live, read as one flow. A hairline connector with a small arrowhead joins DOM-adjacent
-   stages; a stage takes its semantic accent (amber for work held for you, green for work published)
-   only when it genuinely carries a sourced figure — never gold, which is spent on the act alone. */
-
-.social-pipeline {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 18px;
-  margin: 0; padding: 15px 16px; list-style: none;
-}
-.social-stage {
-  min-width: 0;
-  position: relative;
-  display: grid; align-content: start; gap: 5px;
-  padding: 12px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-m);
-  background: var(--surface-sunk);
-}
-.social-stage-glyph { color: var(--ink-3); display: inline-flex; }
-.social-stage + .social-stage::before {
-  content: ""; position: absolute; left: -13px; top: 50%;
-  width: 9px; height: 1px; background: var(--sd-line-strong);
-}
-.social-stage + .social-stage::after {
-  content: ""; position: absolute; left: -6px; top: 50%; transform: translateY(-50%);
-  border: 3px solid transparent; border-left-color: var(--sd-line-strong);
-}
-.social-stage h4 { font-size: 11.5px; font-weight: 600; }
-.social-stage p { font-size: 10.5px; line-height: 1.4; color: var(--ink-3); text-wrap: pretty; }
-.social-stage .social-figure { font-size: 21px; }
-/* Semantic, never decorative: attention marks work genuinely held for a person, positive marks work
-   this workspace has actually produced. A stage with no source gets neither. */
-.social-stage--attention:has(.social-figure:not(.social-figure--absent)) {
-  border-color: var(--warn); background: linear-gradient(180deg, var(--warn-tint), var(--surface-sunk));
-}
-.social-stage--attention:has(.social-figure:not(.social-figure--absent)) .social-figure { color: var(--warn); }
-.social-stage--failing:has(.social-figure:not(.social-figure--absent)) { border-color: var(--bad); }
-.social-stage--failing:has(.social-figure:not(.social-figure--absent)) .social-figure { color: var(--bad); }
-.social-stage--positive:has(.social-figure:not(.social-figure--absent)) { border-color: var(--ok-tint); }
-.social-stage--positive:has(.social-figure:not(.social-figure--absent)) .social-figure { color: var(--ok); }
-
-/* ── channels (dock) ──────────────────────────────────────────────────────── */
-/* A card per account on record. Networks are infrastructure beneath this surface, so no brand
-   fills — one neutral tokenised dot, and the honest absence where a telemetry number would be. */
-
-.social-channels {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px; margin: 0; padding: 14px 16px; list-style: none;
-}
-.social-channels li {
-  min-width: 0;
-  display: grid; gap: 8px;
-  padding: 11px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-m);
   background: var(--surface);
 }
-.social-channel-id { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.social-channel-id > div { min-width: 0; }
-.social-channel-id h4 { font-size: 12.5px; }
-.social-channel-id small { display: block; margin-top: 2px; font-size: 10.5px; color: var(--ink-3); overflow-wrap: anywhere; }
+.social-accounts-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 14px 16px;
+}
+.social-accounts-head h3 { margin: 0; font-size: 15px; }
+.social-accounts-note { padding: 0 16px 14px; margin: 0; color: var(--ink-2); }
+.social-declared-accounts { padding: 12px 16px; border-top: 1px solid var(--line); }
+.social-declared-accounts summary { cursor: pointer; font-weight: 600; }
+.social-declared-accounts ul { padding-inline-start: 22px; overflow-wrap: anywhere; }
+.social-declared-accounts li span { color: var(--ink-2); }
+.social-declared-accounts p { color: var(--ink-2); }
+.social-record-stamp { font-size: 12px; }
+
 .social-channel-dot {
   flex: none; width: 22px; height: 22px; border-radius: var(--r-s);
   display: grid; place-items: center;
@@ -512,71 +102,6 @@
   content: ""; width: 7px; height: 7px; border-radius: 50%;
   background: var(--violet); opacity: .9;
 }
-.social-channel-metric { min-width: 0; }
-.social-channel-metric .social-figure { font-size: 14px; }
-.social-channel-metric small { display: block; margin-top: 2px; max-width: 40ch; font-size: 10.5px; line-height: 1.4; color: var(--ink-3); }
-
-/* ── governance (Trust Compass, reflected) ────────────────────────────────── */
-
-.social-governance {
-  min-width: 0;
-  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; align-items: center;
-  padding: 14px 17px 15px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-l);
-  background: var(--surface-sunk);
-}
-.social-governance-head { display: flex; align-items: center; gap: 8px; color: var(--ink-2); }
-.social-governance-head h3 { font-size: 12.5px; font-weight: 600; }
-.social-governance ul {
-  display: flex; flex-wrap: wrap; gap: 8px 16px;
-  margin: 0; padding: 0; list-style: none;
-}
-.social-governance li { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.social-governance > p { grid-column: 1 / -1; margin-top: 2px; font-size: 11px; line-height: 1.5; color: var(--ink-3); }
-.social-lane {
-  display: inline-flex; align-items: center; flex: none;
-  height: 19px; padding: 0 8px; border-radius: 999px;
-  font: 600 10.5px/1 var(--font);
-}
-.social-lane--auto { background: var(--ok-tint); color: var(--ok); }
-.social-lane--confirm { background: var(--warn-tint); color: var(--warn); }
-.social-lane--off { background: var(--bad-tint); color: var(--bad); }
-.social-lane-label { font-size: 11.5px; color: var(--ink-2); overflow-wrap: anywhere; }
-
-.social-record-stamp { font-size: 11px; line-height: 1.5; color: var(--ink-3); }
-
-/* ── whole-surface states ─────────────────────────────────────────────────── */
-
-.social-state {
-  min-height: 300px;
-  display: grid; place-items: center; align-content: center; justify-items: center;
-  gap: 12px; padding: 46px 24px; text-align: center;
-  border: 1px solid var(--line); border-radius: var(--r-l);
-  background: var(--sd-panel); box-shadow: var(--sh-2);
-}
-.social-state h2 { font-size: 18px; letter-spacing: -.02em; }
-.social-state p { max-width: 54ch; font-size: 12.8px; line-height: 1.55; color: var(--ink-2); }
-.social-spinner {
-  width: 24px; height: 24px; border: 2px solid var(--line);
-  border-top-color: var(--gold); border-radius: 50%;
-  animation: social-spin .8s linear infinite;
-}
-@keyframes social-spin { to { transform: rotate(360deg); } }
-.social-skeleton { display: grid; gap: 12px; padding: 4px; }
-.social-skeleton span {
-  border-radius: var(--r-l);
-  background: linear-gradient(90deg, var(--surface-sunk), var(--surface-2), var(--surface-sunk));
-  background-size: 200% 100%;
-  animation: social-shimmer 1.3s linear infinite;
-  border: 1px solid var(--line-soft);
-}
-.social-skeleton .social-sk-h { height: 108px; }
-.social-skeleton .social-sk-s { height: 92px; }
-.social-skeleton .social-sk-r { height: 168px; }
-@keyframes social-shimmer { to { background-position: -200% 0; } }
-
-/* ── the record form (popout) ─────────────────────────────────────────────── */
 
 .social-scrim {
   position: fixed; inset: 0; z-index: 88;
@@ -616,80 +141,21 @@
 }
 .social-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
-/* ── focus ────────────────────────────────────────────────────────────────── */
-/* Indigo, never gold: gold is spent on the act and a focus ring is not one (§11). */
 .social-page button:focus-visible,
 .social-dialog button:focus-visible {
   outline: 2px solid var(--violet); outline-offset: 2px; border-radius: var(--r-s);
 }
 
-/* ── responsive ───────────────────────────────────────────────────────────── */
-/* @container, keyed to `.social-page` — see the note on that rule for why @media was wrong here
-   and never fired at the widths this tab actually gets. The thresholds are the COLUMN's width:
-   ~641px is a docked 1366 session and ~395px is one with PAIGE expanded, so both now resolve to a
-   single-column grid instead of two columns at 352px and 275px. */
-
-@container social (max-width: 960px) {
-  .social-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-@container social (max-width: 900px) {
-  .social-pipeline { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  /* The connector joins DOM-adjacent siblings, so once the row wraps it would join the wrong pair. */
-  .social-stage + .social-stage::before,
-  .social-stage + .social-stage::after { display: none; }
-}
-@container social (max-width: 760px) {
-  .social-hero-top { grid-template-columns: minmax(0, 1fr); align-items: start; }
-  .social-hero-act { justify-items: start; }
-  .social-hero-actions { justify-content: flex-start; }
-  .social-hero-permission { text-align: left; }
-  .social-grid { grid-template-columns: minmax(0, 1fr); }
-  .social-next { align-items: flex-start; flex-wrap: wrap; }
-  .social-governance { grid-template-columns: minmax(0, 1fr); }
-}
-@container social (max-width: 520px) {
-  .social-hero { padding: 12px 14px; }
-  .social-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .social-pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .social-channels { grid-template-columns: minmax(0, 1fr); }
-  .social-feed-line { flex-wrap: wrap; }
-}
-
-/* The record dialog stays on @media, and the exception is not an oversight.
-   `.social-dialog` is `position: fixed` and `width: min(560px, 100vw - 32px)` — sized by the
-   VIEWPORT, not by the page column it happens to be a DOM descendant of. Converting its rule to
-   `@container social` along with everything else measured the wrong box: with PAIGE expanded the
-   column is ~395px, so a dialog that is actually 560px wide would have collapsed its six fields
-   into one column with room to spare for two. The container query is right for the page and wrong
-   for the one element that escapes it. */
 @media (max-width: 720px) {
   .social-dialog-fields { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* ── motion + forced colors ───────────────────────────────────────────────── */
-/* Every effect writes its own reduced-motion fallback; these libraries ship none. The ring stops
-   rather than disappearing — the mark still has to read as the mark when it is still. */
-@media (prefers-reduced-motion: reduce) {
-  .social-orb-ring { animation: none; }
-  .social-spinner,
-  .social-skeleton span { animation-duration: .01ms; animation-iteration-count: 1; }
-  .social-page *, .social-dialog * { transition-duration: .01ms !important; }
-}
+.social-declared-accounts summary:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
 @media (forced-colors: active) {
-  .social-hero, .social-panel, .social-kpi, .social-stage, .social-governance,
-  .social-state, .social-dialog, .social-truth, .social-next, .social-panel-glyph,
-  .social-channels li { border: 1px solid CanvasText; }
-  .social-page { background: Canvas; }
-  .social-page::before, .social-orb-halo, .social-orb-ring { display: none; }
+  .social-panel, .social-dialog, .social-connections-list li, .social-golive { border-color: CanvasText; }
   .social-scrim { background: Canvas; }
 }
 
-/* ── connected accounts (EXP07 owner directive 2026-11-04) ──────────────────
-   Live-connected social accounts show up on this tab. The list borrows the
-   Channels anatomy exactly — same two-column grid, same card, same dot — so a
-   connection row reads as a first-class channel state, not a new widget. The
-   state colors follow the readiness line's own convention: connected is the
-   surface's ok ink, attention states the bad ink, everything else ink-3. */
 .social-connections-list {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px; margin: 0; padding: 14px 16px; list-style: none;

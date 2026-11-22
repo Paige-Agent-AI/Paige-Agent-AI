@@ -141,6 +141,30 @@ it("checks the original unknown receipt even when the editable source is archive
 it("focuses the reachable reopen control when a deep-linked workspace is minimized",async()=>{
   await render(`/solo/123/growth/social?social_piece=${P}`);await click("Minimize workspace");expect(document.activeElement).toBe(button("Reopen Original post"));
 });
+it("shows the gallery after minimizing or closing an expanded post", async () => {
+  await render();
+  await click("Original post");
+  await click("Expand workspace");
+  expect(host.querySelector(".sdesk-body--expanded")).not.toBeNull();
+
+  await click("Minimize workspace");
+  expect(host.querySelector(".sdesk-body--expanded")).toBeNull();
+  expect(host.querySelector(".sdesk-gallery article")).not.toBeNull();
+  expect(document.activeElement).toBe(button("Reopen Original post"));
+
+  await click("Reopen Original post");
+  expect(host.querySelector(".sdesk-body--expanded")).not.toBeNull();
+  expect(host.querySelector(".sdesk-workspace h3")?.textContent).toBe("Original post");
+
+  await click("Close workspace");
+  expect(host.querySelector(".sdesk-body--expanded")).toBeNull();
+  expect(host.querySelector(".sdesk-workspace")).toBeNull();
+  expect(document.activeElement).toBe(host.querySelector("#sdesk-title"));
+
+  await click("Original post");
+  expect(button("Expand workspace")).toBeTruthy();
+  expect(h.save).not.toHaveBeenCalled();
+});
 it("history Back retains the dirty original caption when discard is refused",async()=>{
   const second="44444444-4444-4444-8444-444444444444";
   h.read.mockResolvedValue({pieces:[piece,{...piece,id:second,title:"Second post",body:"Second saved caption"}],posts:[post,{...post,key:`content:${second}`,pieceId:second,title:"Second post",caption:"Second saved caption"}]});

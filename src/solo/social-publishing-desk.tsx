@@ -170,14 +170,21 @@ function SocialPublishingDeskWorkspace({ tenantId, canManage, onOpenStudio, onAs
   };
   const open = (post: SocialDeskPost, button: HTMLButtonElement) => {
     if (!leave()) return;
-    opener.current = button; setDirty(false); setMessage(""); setMinimized(false); setTab("post"); navigate(post.pieceId, post.receiptId);
+    opener.current = button; setDirty(false); setMessage(""); setMinimized(false); setExpanded(false); setTab("post"); navigate(post.pieceId, post.receiptId);
   };
   const newPost = (button: HTMLButtonElement) => {
     if (!canManage || !leave()) return;
     if (pendingSocialDraft(tenantId)) { setMessage("A previous draft save is unconfirmed. Check the same save below."); return; }
-    opener.current = button; navigate("new"); setDraft(EMPTY); setDraftOwner("new"); setDirty(false); setMinimized(false); setTab("post"); setMessage("");
+    opener.current = button; navigate("new"); setDraft(EMPTY); setDraftOwner("new"); setDirty(false); setMinimized(false); setExpanded(false); setTab("post"); setMessage("");
   };
-  const close = () => { if (!busy && leave()) { navigate(null); setDirty(false); if (opener.current?.isConnected) opener.current.focus(); else deskHeading.current?.focus(); } };
+  const close = () => {
+    if (busy || !leave()) return;
+    navigate(null);
+    setDirty(false);
+    setExpanded(false);
+    const focusTarget = !expanded && opener.current?.isConnected ? opener.current : deskHeading.current;
+    focusTarget?.focus({ preventScroll: true });
+  };
   const recorded = (publicationId: string) => { if(tenantRef.current!==tenantId)return; if(selectionEpoch.current!==renderSelectionEpoch){refresh();return;} if (!pieceId || !UUID.test(publicationId)) { refresh(); return; } setDirty(false); navigate(pieceId,publicationId); setTab("result"); refresh(); };
   const edit = (patch: Partial<SocialDraft>) => { setDraft(d => ({ ...d, ...patch })); setDirty(true); setMessage(""); };
   const save = async () => {
@@ -218,6 +225,7 @@ function SocialPublishingDeskWorkspace({ tenantId, canManage, onOpenStudio, onAs
     && (!search || `${p.title} ${p.caption} ${p.destination ?? ""}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())));
   if (sort === "oldest") shown.reverse();
   const workspaceOpen = Boolean(pieceId || creating);
+  const workspaceVisible = workspaceOpen && !minimized;
   const current = read.tenant === tenantId && read.phase === "ready";
   return <section className="sdesk" aria-labelledby="sdesk-title">
     <header className="sdesk-head">
@@ -243,7 +251,7 @@ function SocialPublishingDeskWorkspace({ tenantId, canManage, onOpenStudio, onAs
     {canManage && pendingSocialDraft(tenantId) && <p className="sdesk-message">A draft save is unconfirmed. <button className="btn btn-s" disabled={busy} onClick={() => void recover()}>Check the same save</button></p>}
     {read.phase === "error" ? <div className="sdesk-empty"><h3>Your posts could not be read</h3><p>Check this workspace again before making another post.</p><button className="btn btn-s" onClick={refresh}>Try again</button></div>
     : !current ? <p role="status" className="sdesk-empty">Reading saved posts and their publication results…</p>
-    : <div className={`sdesk-body${workspaceOpen && !minimized ? " sdesk-body--open" : ""}${expanded ? " sdesk-body--expanded" : ""}`}>
+    : <div className={`sdesk-body${workspaceVisible ? " sdesk-body--open" : ""}${workspaceVisible && expanded ? " sdesk-body--expanded" : ""}`}>
       <div className={`sdesk-gallery sdesk-gallery--${view}`}>
         {shown.map(post => <article key={post.key} className="sdesk-card" data-selected={selected?.key === post.key}>
           <header><div><strong>{post.destination || post.platform || "Destination not selected"}</strong><small>{time(post.updatedAt)}</small></div><span className="sdesk-status" data-state={post.status}>{status(post)}</span></header>
@@ -254,7 +262,7 @@ function SocialPublishingDeskWorkspace({ tenantId, canManage, onOpenStudio, onAs
         </article>)}
         {!shown.length && <div className="sdesk-empty"><Image size={28}/><h3>{posts.length ? "No posts match these filters" : "Your next post starts here"}</h3><p>{posts.length ? "Change the filters or search to find a saved post." : canManage ? "Create a draft with your saved images, video or words. Review the exact connected account before publishing." : "No Social publication is visible to your workspace role. Saved drafts are visible to owners and admins."}</p></div>}
       </div>
-      {workspaceOpen && !minimized && <section className="sdesk-workspace" aria-labelledby="sdesk-workspace-title">
+      {workspaceVisible && <section className="sdesk-workspace" aria-labelledby="sdesk-workspace-title">
         <header><div><h3 id="sdesk-workspace-title" tabIndex={-1} ref={heading}>{creating ? "Create a post" : selected?.title ?? "Original post unavailable"}</h3><p>{dirty ? "Unsaved changes" : selected ? `${status(selected)} · ${time(selected.updatedAt)}` : "Draft"}</p></div>
           <div className="sdesk-window-actions"><button type="button" aria-label={expanded ? "Reduce workspace" : "Expand workspace"} onClick={() => setExpanded(v => !v)}>{expanded ? <Minimize2 size={16}/> : <Expand size={16}/>}</button><button type="button" aria-label="Minimize workspace" onClick={() => { setMinimized(true); opener.current?.focus(); }}><span aria-hidden="true">−</span></button><button type="button" aria-label="Close workspace" disabled={busy} onClick={close}><X size={17}/></button></div></header>
         <div className="sdesk-tabs" role="tablist" aria-label="Post workspace">
@@ -306,7 +314,7 @@ function SocialPublishingDeskWorkspace({ tenantId, canManage, onOpenStudio, onAs
           else setMessage("Open the original saved piece from this account’s Content library.");
           return;
         }
-        setDirty(false);setMessage("");setMinimized(false);setTab("post");navigate(id);
+        setDirty(false);setMessage("");setMinimized(false);setExpanded(false);setTab("post");navigate(id);
       }}/>}
     </details>
     <p className="sdesk-note">Connections belong to this workspace. A matching handle in another workspace does not grant access here.</p>

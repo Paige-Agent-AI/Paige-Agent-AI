@@ -32,7 +32,7 @@ import { MediaLibrary } from "./media-library";
 const DocumentPreview = React.lazy(() => import("@/components/admin/studio/DocumentPreview").then((module) => ({ default: module.DocumentPreview })));
 
 export const LIBRARY_READ_LIMIT = 60;
-export const PIECE_COLUMNS = "id,kind,channel,status,title,body,image_url,size,brief,meta,updated_at";
+export const PIECE_COLUMNS = "id,kind,channel,status,title,body,image_path,image_url,size,brief,meta,updated_at";
 const COLUMNS = PIECE_COLUMNS;
 const NO_PIECES: ContentPiece[] = [];
 const MEDIA_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -40,13 +40,14 @@ const REUSABLE_MEDIA_STATES = new Set(["draft", "ready", "published"]);
 
 function savedMediaReference(piece: ContentPiece, tenantId: string | null) {
   if (!tenantId || !MEDIA_ID.test(tenantId) || !MEDIA_ID.test(piece.id) || !REUSABLE_MEDIA_STATES.has(piece.status) ||
-      (piece.kind !== "image" && piece.kind !== "video") || !piece.image_url) return null;
+      (piece.kind !== "image" && piece.kind !== "video") || !piece.image_url ||
+      !piece.image_path?.startsWith(`${tenantId}/`) || piece.image_path.length <= tenantId.length + 1) return null;
   try {
     const url = new URL(piece.image_url);
     const storage = new URL(import.meta.env.VITE_SUPABASE_URL);
-    const prefix = `/storage/v1/object/public/paige-generated/${tenantId}/`;
+    const path = `/storage/v1/object/public/paige-generated/${piece.image_path.split("/").map(encodeURIComponent).join("/")}`;
     if (url.protocol !== "https:" || url.origin !== storage.origin || url.username || url.password || url.search || url.hash ||
-        !url.pathname.startsWith(prefix) || url.pathname.length === prefix.length) return null;
+        url.pathname !== path) return null;
   } catch {
     return null;
   }

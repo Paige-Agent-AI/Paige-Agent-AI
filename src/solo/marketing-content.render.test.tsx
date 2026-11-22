@@ -108,7 +108,7 @@ describe("Marketing › Content", () => {
 
   it.each([["image", "graphic.png"], ["video", "clip.mp4"]])("opens the original saved %s in Studio and keeps the preview mounted", async (kind, file) => {
     vi.stubEnv("VITE_SUPABASE_URL", storage);
-    db.tables.marketing_content = { data: [{ ...ROWS[0], id: mediaId, kind, image_url: originalUrl(mediaTenant, file) }], error: null };
+    db.tables.marketing_content = { data: [{ ...ROWS[0], id: mediaId, kind, image_path: `${mediaTenant}/${file}`, image_url: originalUrl(mediaTenant, file) }], error: null };
     const onPiece = vi.fn();
     await renderContent({ tenantId: mediaTenant, piece: mediaId, onPiece });
     const launch = button("Use in social post", dialog()!)!;
@@ -139,11 +139,13 @@ describe("Marketing › Content", () => {
     for (const variant of [
       { image_url: originalUrl(otherTenant, "graphic.png") },
       { image_url: originalUrl(mediaTenant, "graphic.png").replace(storage, "https://elsewhere.example.test") },
-      { image_url: originalUrl(mediaTenant, "clip.mp4"), kind: "video", status: "processing" },
-      { image_url: originalUrl(mediaTenant, "document.pdf"), kind: "document" },
+      { image_path: null },
+      { image_path: `${mediaTenant}/replaced.png` },
+      { image_path: `${mediaTenant}/clip.mp4`, image_url: originalUrl(mediaTenant, "clip.mp4"), kind: "video", status: "processing" },
+      { image_path: `${mediaTenant}/document.pdf`, image_url: originalUrl(mediaTenant, "document.pdf"), kind: "document" },
     ]) {
       db.tables.marketing_content = { data: [], error: null };
-      db.single = { data: { ...ROWS[0], ...variant, id: mediaId }, error: null };
+      db.single = { data: { ...ROWS[0], image_path: `${mediaTenant}/graphic.png`, image_url: originalUrl(mediaTenant, "graphic.png"), ...variant, id: mediaId }, error: null };
       await renderContent({ tenantId: mediaTenant });
       await renderContent({ tenantId: mediaTenant, piece: mediaId });
       expect(dialog()).not.toBeNull();

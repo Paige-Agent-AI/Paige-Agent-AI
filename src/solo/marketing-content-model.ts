@@ -14,6 +14,7 @@ export type ContentPiece = {
   status: string;
   title: string | null;
   body: string | null;
+  image_path?: string | null;
   image_url: string | null;
   size: string | null;
   brief: string | null;

@@ -7,6 +7,7 @@ import {
 
 export const PROTECTED_SOLO_BETA_OFFER_CODE = "paige-solo-beta-monthly-v2" as const;
 export const PROTECTED_SOLO_BETA_UNIT_AMOUNT_CENTS = 9_700 as const;
+export const PROTECTED_SOLO_RENEWAL_GUARD = "attach_on_verified_consent";
 export const SOLO_BETA_VERIFICATION_SECONDS = 72 * 60 * 60;
 const TRIAL_SECONDS = SOLO_BETA_TRIAL_DAYS * 24 * 60 * 60;
 
@@ -59,6 +60,8 @@ export type ProtectedSoloTrialReadback = {
   cancel_at: number | null;
   cancel_at_period_end: boolean;
   default_payment_method: StripeRef;
+  default_source?: StripeRef;
+  trial_settings?: { end_behavior: { missing_payment_method: string } } | null;
   metadata: Record<string, string>;
   items: {
     has_more: boolean;
@@ -86,6 +89,15 @@ function matchesOffer(enrollment: ProtectedSoloTrialEnrollment, price: SoloTrial
     objectId(price.product) === enrollment.stripeProductId &&
     price.currency === SOLO_BETA_CURRENCY && price.unit_amount === PROTECTED_SOLO_BETA_UNIT_AMOUNT_CENTS &&
     price.recurring?.interval === SOLO_BETA_INTERVAL && price.recurring.interval_count === SOLO_BETA_INTERVAL_COUNT;
+}
+
+export function hasProtectedSoloRenewalHold(subscription: Pick<ProtectedSoloTrialReadback,
+  "status" | "metadata" | "trial_settings" | "default_payment_method" | "default_source"
+>): boolean {
+  return subscription.status === "trialing" &&
+    subscription.metadata.paige_renewal_guard === PROTECTED_SOLO_RENEWAL_GUARD &&
+    subscription.trial_settings?.end_behavior.missing_payment_method === "cancel" &&
+    !subscription.default_payment_method && !subscription.default_source;
 }
 
 /** The caller owns the durable enrollment claim and supplies fresh Stripe reads. */
@@ -122,11 +134,14 @@ export function buildProtectedSoloTrial(
       customer: enrollment.stripeCustomerId,
       items: [{ price: enrollment.stripePriceId, quantity: 1 }],
       trial_period_days: SOLO_BETA_TRIAL_DAYS,
-      // Set this at creation so missing webhooks cannot leave renewal enabled.
-      cancel_at_period_end: true,
+      // Stripe ends the trial if the dedicated customer still has no default method.
+      // Changing that method later leaves a separate customer cancellation intact.
+      trial_settings: { end_behavior: { missing_payment_method: "cancel" as const } },
       collection_method: "charge_automatically" as const,
-      default_payment_method: paymentMethodId,
-      metadata: { paige_enrollment: enrollment.referenceId, offer_code: PROTECTED_SOLO_BETA_OFFER_CODE },
+      metadata: {
+        paige_enrollment: enrollment.referenceId, offer_code: PROTECTED_SOLO_BETA_OFFER_CODE,
+        paige_renewal_guard: PROTECTED_SOLO_RENEWAL_GUARD,
+      },
       expand: ["latest_invoice"],
     },
     options: { idempotencyKey: `solo-beta-protected-trial-${enrollment.referenceId}` },
@@ -145,7 +160,7 @@ export function checkProtectedSoloTrial(
     objectId(subscription.customer) !== enrollment.stripeCustomerId ||
     subscription.metadata.paige_enrollment !== enrollment.referenceId ||
     subscription.metadata.offer_code !== PROTECTED_SOLO_BETA_OFFER_CODE ||
-    !paymentMethodId || objectId(subscription.default_payment_method) !== paymentMethodId
+    !paymentMethodId
   ) return { ok: false, code: "subscription_binding_mismatch" } as const;
 
   const item = subscription.items.data[0];
@@ -156,10 +171,13 @@ export function checkProtectedSoloTrial(
 
   const start = subscription.trial_start;
   const end = subscription.trial_end;
+  const heldByLegacyCancellation = !subscription.metadata.paige_renewal_guard &&
+    subscription.cancel_at_period_end && subscription.cancel_at === end &&
+    objectId(subscription.default_payment_method) === paymentMethodId;
   if (
     start === null || end === null || !Number.isSafeInteger(start) || !Number.isSafeInteger(end) ||
     start <= 0 || end - start !== TRIAL_SECONDS || item.current_period_end !== end ||
-    !subscription.cancel_at_period_end || subscription.cancel_at !== end
+    !(hasProtectedSoloRenewalHold(subscription) || heldByLegacyCancellation)
   ) return { ok: false, code: "renewal_guard_unverified" } as const;
 
   const invoice = subscription.latest_invoice;

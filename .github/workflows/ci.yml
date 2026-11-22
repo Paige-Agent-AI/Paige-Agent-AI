@@ -930,6 +930,11 @@ jobs:
           supabase/functions/_shared/solo-beta-stripe-shapes.test.ts
           supabase/functions/_shared/solo-beta-offer.test.ts
           supabase/functions/_shared/solo-beta-protected-trial.test.ts
+          supabase/functions/_shared/solo-beta-issue-protected-checkout.test.ts
+          supabase/functions/_shared/solo-beta-prepare-protected-owner.test.ts
+          supabase/functions/_shared/solo-beta-protected-meet-live.test.ts
+          supabase/functions/_shared/solo-beta-protected-renewal.test.ts
+          supabase/functions/_shared/solo-beta-protected-sandbox.test.ts
       - name: SendGrid webhook-admin broker (mocked provider IO)
         run: deno test --allow-sys --no-lock supabase/functions/_shared/comms-email/sendgrid-webhook-admin.test.ts
       - name: MCP gateway connect-consent auto-approve (real runApprove stack)

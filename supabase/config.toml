@@ -649,6 +649,9 @@ entrypoint = "./functions/business-mission-action/index.ts"
 [functions.solo-beta-offer-status]
 verify_jwt = false
 
+[functions.solo-beta-protected-signup]
+verify_jwt = false
+
 [functions.solo-beta-subscription-checkout]
 verify_jwt = true
 

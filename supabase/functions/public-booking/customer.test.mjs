@@ -103,6 +103,8 @@ function fixture({type='personal',allowed=true}={}){
   lifecycleEmailHtml:()=>'',sendSms:async()=>{effects.push({kind:'external-sms'});return true;},
   sendPlatformEmail:async(args)=>{effects.push({kind:'external-email',args});return {ok:true};},createZoomMeeting:async()=>{effects.push({kind:'external-zoom'});return null;},
  });
+ const slots = fs.readFileSync(new URL('../_shared/slotRules.ts', import.meta.url), 'utf8').replace(/\bexport /g, '');
+ context.parseAvailability = vm.runInContext(`(() => { ${stripTypeScriptTypes(slots)}; return parseCalendarAvailability; })()`, context);
  const raw=fs.readFileSync(new URL('./index.ts',import.meta.url),'utf8').replace(/^import[\s\S]*?from\s+["'][^"']+["'];\s*/gm,'');
  vm.runInContext(stripTypeScriptTypes(raw,{mode:'transform'}),context);
  const date=new Date(Date.now()+2*86400000);date.setUTCHours(12,0,0,0);

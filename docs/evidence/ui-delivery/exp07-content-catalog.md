@@ -7,27 +7,27 @@ MATERIAL_FLOW_CHANGE: YES: Published records become the default starting point. 
 FLOW_PROTOTYPE: PASS: Owner reviewed the interactive Content-only concept in ANT-162 and approved implementation in chat on Nov 22.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Eligible Solo workspaces can review what they published and find the original saved creative.
 VISUAL_DIRECTION: PASS: The catalog leads with a featured item and a recent shelf. The detail reveal moves the selected artwork between views. The light or dark shell still uses Solo chrome.
-AUTOMATED_EVIDENCE: PASS: 100 cases passed across Marketing Content, GrowthHub routing and the Social receipt model. Tests cover draft exclusion, original result links, focus return, tenant switching and existing saved-piece URLs.
-STATIC_EVIDENCE: PASS: The visible path reads the existing tenant campaign artifacts, protected saved media and Social publication receipt projection. Content uses the existing publication list RPC and its server permissions.
-RENDERED_EVIDENCE: UNVERIFIED: Exact implementation viewport capture in progress.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: Exact implementation browser pass in progress.
+AUTOMATED_EVIDENCE: PASS: 101 cases passed across Marketing Content, GrowthHub routing and the Social receipt model. Tests cover draft exclusion, original result links, focus return, tenant switching, rejection of a mismatched video list and existing saved-piece URLs.
+STATIC_EVIDENCE: PASS: Content uses the existing tenant reads and server permissions. Video listing and playback now carry the selected tenant explicitly, and the library rejects mismatched video rows. Publication provenance is limited to the evidence held by the original record.
+RENDERED_EVIDENCE: PASS: Chromium captured the actual ContentCatalog component with synthetic records at 1536×770, 1366×768, 1024×768, 900×1000 and 390×844. Desktop widths were checked both full and with a simulated 440 px dock. Artifacts are under outputs/exp07-content-catalog.
+BEHAVIORAL_EVIDENCE: PASS: In the focused Chromium fixture, search, pointer and keyboard open and close, filter restoration, focus restoration and no horizontal overflow all passed at each tested width.
 AUTHENTICATED_RUNTIME: UNVERIFIED: This source candidate has not been deployed or exercised with an ordinary eligible Solo session.
-KEYBOARD_FOCUS: UNVERIFIED: Exact implementation browser pass in progress.
-ZOOM_REFLOW: UNVERIFIED: Full Solo shell and real browser zoom remain pending.
-REDUCED_MOTION: UNVERIFIED: Exact implementation browser pass in progress.
+KEYBOARD_FOCUS: PASS: Enter focused the detail heading. Escape restored focus to the same tile and preserved search in Chromium.
+ZOOM_REFLOW: UNVERIFIED: Focused Chromium had no overflow at the tested widths with and without a simulated dock. The authentic Solo shell and actual browser zoom still await verification.
+REDUCED_MOTION: PASS: Chromium invoked a ready View Transition in both pointer directions at normal preference. At 390×844, reduced motion skipped the API and still opened and closed the detail.
 STATE_COVERAGE: PASS: Published resolves loading, empty, retryable and filtered states. The existing saved library holds missing, malformed, loading, empty and permission states.
 TRUTHFUL_STATE_LABELS: PASS: Actual publications appear from original source records. The catalog provides public result links where recorded. Analytics and authoring remain with Studio.
 SOLO_UI: YES: The shared Marketing Content route serves eligible current and future Solo workspaces.
 UNVERIFIED: Exact hosted readback, ordinary Solo acceptance and the EXP06 Studio original-asset receiver.
 
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: Exact full Solo browser check pending.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Exact full Solo browser check pending.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: Exact full Solo browser check pending.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: Exact full Solo browser check pending.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Exact full Solo browser check pending.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Exact full Solo browser check pending.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Exact full Solo browser check pending.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Exact full Solo browser check pending.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: Focused catalog fixture passed 1536X770 at full width. The full Solo shell and actual PAIGE panel at this size remain unverified.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Focused catalog fixture passed 1536X770 with a simulated 440 px dock. The full Solo shell and actual PAIGE panel at this size remain unverified.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: Focused catalog fixture passed 1366X768 at full width. The full Solo shell and actual PAIGE panel at this size remain unverified.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: Focused catalog fixture passed 1366X768 with a simulated 440 px dock. The full Solo shell and actual PAIGE panel at this size remain unverified.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Focused catalog fixture passed 1024X768 at full width. The full Solo shell and actual PAIGE panel at this size remain unverified.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Focused catalog fixture passed 1024X768 with a simulated 440 px dock. The full Solo shell and actual PAIGE panel at this size remain unverified.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Focused catalog fixture passed 900X1000 at full width. The full Solo shell and actual PAIGE panel at this size remain unverified.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Focused catalog fixture passed 900X1000 with a simulated 440 px dock. The full Solo shell and actual PAIGE panel at this size remain unverified.
 
 OWNER_INTENT: Redesign Content as the tenant's published work and media library. EXP06 owns creation in Vibe Studio for PAIGE and NEXUS.
 MUST_PRESERVE: Saved piece IDs, authorized reads, original Social receipts, published URLs, saved-piece deep links, downloads, video playback and document previews.
@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: Open an actual recorded publication and return to the same 
 MOTION_PURPOSE: Carry artwork from its tile into the detail view. Keep keyboard navigation and reduced motion immediate.
 PROTECTED_SEAMS: Current tenant binding in the shared campaign, saved-library and Social reads. EXP06 retains Vibe Studio source and the creation engine.
 
-INTERNAL_BUILD_IDENTITY: Catalog source candidate on the existing Solo route; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=ANT-162
+INTERNAL_BUILD_IDENTITY: 351080a51cc11690f016617728816a736c0423d5; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=ANT-162
 RELEASE_CHANNEL: development: Source candidate and local proof.
 RELEASE_CLASSIFICATION: internal-only: Preparation of the owner-approved catalog change.
 CUSTOMER_RELEASE_IDENTITY: none: Hosted application verification remains open.
@@ -52,3 +52,7 @@ RELEASE_RECOVERY: position=revert or correct the client change through the norma
 ## User job and state map
 
 Published → search or choose a type → open the original item → view its recorded link → return with focus, current filter and scroll. Media library → filter or follow a saved direct link → preview, play or download when available → close the preview. Marketing uses the existing campaigns scroll region.
+
+## Review and limitations
+
+The first independent review identified an implicit workspace video read and a source label stronger than the record supported. The revised source supplies the selected tenant to both video reads and limits source labels to evidence from the original record. The full Solo fixture did not finish loading in Chromium, so the browser evidence here is from the focused component fixture. EXP06 confirmed that the existing Studio launcher has no asset receiver. [Receiver confirmation](https://linear.app/paigeagentai/issue/ANT-162#comment-eaf93796-2ebd-48b5-998d-4d597492f5de)

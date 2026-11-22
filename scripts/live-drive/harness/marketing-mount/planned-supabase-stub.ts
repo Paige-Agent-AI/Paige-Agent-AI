@@ -75,7 +75,8 @@ const socialRows = new URLSearchParams(window.location.search).get("social") ===
 ];
 
 const identity = [{ default_email_sender: "hello@northfield.example", default_email_domain: "northfield.example", default_email_status: "verified" }];
-const visualDeskFixture = new URLSearchParams(window.location.search).get("tab") === "social";
+const tab = new URLSearchParams(window.location.search).get("tab");
+const visualDeskFixture = tab === "social";
 const deskPieceId = "10000000-0000-4000-8000-000000000007";
 const deskPiece = {
   id: deskPieceId, kind: "text", channel: "social_post", status: "draft",
@@ -144,7 +145,7 @@ export const supabase = {
       ]);
     }
     if (fn === "content_publication_list") {
-      if (visualDeskFixture) return answer(!args.p_content_id || args.p_content_id === deskPieceId ? [deskReceipt] : []);
+      if (visualDeskFixture || tab === "content") return answer(!args.p_content_id || args.p_content_id === deskPieceId ? [deskReceipt] : []);
       // EXP07 row 10 — the receipts a piece already carries: one published (with its link) and
       // one outcome_unknown (the state that blocks a retry). Only rows for the asked piece.
       const asked = args.p_content_id as string | null;

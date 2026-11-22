@@ -45,7 +45,7 @@ const formatDuration = (seconds: number | null) => {
   return `${m}:${String(s).padStart(2, "0")}`;
 };
 
-export function MediaLibrary({ tenantId }: { tenantId: string | null }) {
+export function MediaLibrary({ tenantId, allowUpload = true }: { tenantId: string | null; allowUpload?: boolean }) {
   const [assets, setAssets] = React.useState<MediaAsset[]>([]);
   const [phase, setPhase] = React.useState<"loading" | "ready" | "error">("loading");
   const [upload, setUpload] = React.useState<Upload>({ face: "idle" });
@@ -131,10 +131,10 @@ export function MediaLibrary({ tenantId }: { tenantId: string | null }) {
       <div><h2 id="mct-media-h">Videos</h2><p>Your uploaded videos live here, ready to play and reuse.</p></div>
     </header>
     <div className="mct-pubdoor" style={{ marginTop: 0 }}>
-      <div className="mct-pubdoor-acts">
+      {allowUpload && <div className="mct-pubdoor-acts">
         <button type="button" className="btn btn-s" disabled={busy || upload.face === "slot"} onClick={() => void register("Untitled video")}>Add a video</button>
-      </div>
-      {upload.face === "slot" && (
+      </div>}
+      {allowUpload && upload.face === "slot" && (
         <label className="mct-media-drop">
           <input type="file" accept="video/*" disabled={busy} onChange={(event) => {
             const file = event.target.files?.[0];
@@ -147,7 +147,7 @@ export function MediaLibrary({ tenantId }: { tenantId: string | null }) {
       {live.length === 0
         ? (phase === "loading" ? <p className="mct-pubdoor-state">Reading your videos…</p>
           : phase === "error" ? <p className="mct-pubdoor-state">Your videos couldn't be read. Nothing changed.</p>
-          : <p className="mct-pubdoor-state">No videos yet. Add one and it stays in your library.</p>)
+          : <p className="mct-pubdoor-state">No videos yet.</p>)
         : <ul className="mct-media-list">
             {live.map((asset) => <li key={asset.id}>
               <VideoCard asset={asset} busy={busy} onRefresh={() => void refresh(asset.id)} onRemove={() => void revoke(asset.id)} />

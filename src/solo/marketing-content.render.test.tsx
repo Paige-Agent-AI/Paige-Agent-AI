@@ -9,7 +9,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type Answer = { data: unknown; error: unknown };
-const db: { tables: Record<string, Answer>; single: Answer; calls: { table: string; filters: [string, unknown][]; single: boolean }[] } = { tables: {}, single: { data: null, error: null }, calls: [] };
+const db: { tables: Record<string, Answer>; single: Answer; receipts: Answer; calls: { table: string; filters: [string, unknown][]; single: boolean }[] } = { tables: {}, single: { data: null, error: null }, receipts: { data: [], error: null }, calls: [] };
 
 vi.mock("@/integrations/supabase/client", () => {
   const from = (table: string) => {
@@ -26,7 +26,7 @@ vi.mock("@/integrations/supabase/client", () => {
     chain.then = (resolve: (value: Answer) => unknown, reject: (reason: unknown) => unknown) => Promise.resolve(answer).then(resolve, reject);
     return chain;
   };
-  return { supabase: { from, rpc: () => Promise.resolve({ data: null, error: null }) } };
+  return { supabase: { from, rpc: (name: string) => Promise.resolve(name === "content_publication_list" ? db.receipts : { data: null, error: null }) } };
 });
 const access = { phase: "ready", canManage: true };
 vi.mock("./useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => access }));
@@ -68,17 +68,22 @@ const ROWS = [
 ];
 
 type Props = Partial<React.ComponentProps<typeof MarketingContent>>;
-const published = { phase: "ready", pages: 2, funnels: 0, forms: 1, unpublished: 4 };
+const publishedPage: React.ComponentProps<typeof MarketingContent>["artifacts"][number] = {
+  id: "page-1", type: "page", name: "Registration page", slug: "registration", status: "published",
+  updatedAt: "2026-10-01T10:00:00Z", publicHref: "https://example.com/registration", recentSubmissions: 0,
+  routingConfigured: false, routingState: "No route", routingTargets: [],
+  recentDispatches: { succeeded: 0, failed: 0, other: 0 }, dispatchStatuses: {},
+};
 // The hub's frame: the drawer marks .campaigns-scroll inert, so the view must portal its preview out of it.
 const renderContent = async (props: Props = {}) => {
   workspace.tenantId = props.tenantId ?? "t-1";
-  act(() => root.render(<div className="solo-campaigns"><nav className="campaigns-nav"/><div className="campaigns-scroll"><MarketingContent tenantId="t-1" published={published} onOpenCapture={vi.fn()} onRetryPublished={vi.fn()} studioLauncher={<button>Open Vibe Studio</button>} kind="all" onKind={vi.fn()} piece={null} onPiece={vi.fn()} {...props}/></div></div>));
+  act(() => root.render(<div className="solo-campaigns"><nav className="campaigns-nav"/><div className="campaigns-scroll"><MarketingContent tenantId="t-1" view="media" onView={vi.fn()} artifacts={[]} publishedPhase="ready" onRetryPublished={vi.fn()} kind="all" onKind={vi.fn()} piece={null} onPiece={vi.fn()} {...props}/></div></div>));
   await flush();
 };
 
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  db.tables = {}; db.single = { data: null, error: null }; db.calls = [];
+  db.tables = {}; db.single = { data: null, error: null }; db.receipts = { data: [], error: null }; db.calls = [];
   access.phase = "ready"; access.canManage = true;
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -89,13 +94,11 @@ afterEach(() => { act(() => root.unmount()); host.remove(); vi.restoreAllMocks()
 describe("Marketing › Content", () => {
   it("leads with the gallery and shows each piece as what it is", async () => {
     db.tables.marketing_content = { data: ROWS, error: null };
-    const onOpenCapture = vi.fn();
-    await renderContent({ onOpenCapture });
+    await renderContent();
     expect(db.calls.find((c) => c.table === "marketing_content")?.filters).toEqual([["tenant_id", "t-1"], ["not status", "archived"]]);
-    expect(summary()).toBe("6 pieces in your library: 2 images, 1 document and 3 pieces of copy. 1 is in your Catalog. Nothing here posts or sends.");
-    // The library comes before published work.
+    expect(summary()).toBe("6 pieces in your library: 2 images, 1 document and 3 pieces of copy. 1 is in your Catalog.");
     const sections = [...host.querySelectorAll(".mct > section")].map((s) => s.querySelector("h2")?.textContent);
-    expect(sections).toEqual(["Your library", "Published from Vibe Studio", "Videos"]);
+    expect(sections).toEqual(["Your library", "Videos"]);
     const cards = [...host.querySelectorAll(".mct-card")];
     expect(cards).toHaveLength(6);
     expect(cards[0].querySelector("img")?.getAttribute("src")).toBe(ROWS[0].image_url);
@@ -109,12 +112,8 @@ describe("Marketing › Content", () => {
     expect(cards[2].querySelector(".mct-words")?.textContent).toBe("Big newsWe’re open for spring.\nBook a call");
     expect(cards[4].querySelector(".mct-ad")?.textContent).toBe("Plan your quarterBook a free session.Book now");
     expect(cards[5].querySelector(".mct-words b")?.textContent).toBe("Two days to go");
-    // The mix ring sits with the filter; published work is one row with its link.
     expect(host.querySelector(".mct-ring")?.getAttribute("aria-label")).toBe("Your library by kind: Images 2, Documents 1, Copy 3");
-    expect([...host.querySelectorAll(".mct-pub dd")].map((d) => d.textContent)).toEqual(["2", "0", "1"]);
-    expect(host.querySelector(".mct-pub-h p")?.textContent).toBe("4 more built and not published yet, so collecting nothing.");
-    act(() => button("Published work")!.click());
-    expect(onOpenCapture).toHaveBeenCalled();
+    expect(button("Add a video")).toBeUndefined();
     expect(host.querySelector(".btn-gold, .btn-p")).toBeNull();
   });
 
@@ -181,10 +180,9 @@ describe("Marketing › Content", () => {
     expect(facts).not.toContain("×");
   });
 
-  it("downloads an image, says when a download fails, and hands PAIGE the exact piece to revise", async () => {
+  it("downloads an image and says when a download fails", async () => {
     db.tables.marketing_content = { data: ROWS, error: null };
-    const onPiece = vi.fn();
-    await renderContent({ piece: "c1", onPiece });
+    await renderContent({ piece: "c1" });
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: true, status: 200, blob: () => Promise.resolve(new Blob(["x"], { type: "image/webp" })) } as Response);
     Object.assign(URL, { createObjectURL: vi.fn(() => "blob:hero"), revokeObjectURL: vi.fn() });
     const clicked: string[] = [];
@@ -201,13 +199,8 @@ describe("Marketing › Content", () => {
     await flush();
     expect(dialog()!.querySelector(".mct-act-note")?.textContent).toBe("The download didn’t start. Use Open full size and save it from there.");
 
-    const asked: string[] = [];
-    window.addEventListener("paige:open", ((event: CustomEvent) => asked.push(event.detail.prompt)) as EventListener);
-    act(() => button("Revise with PAIGE", dialog()!)!.click());
-    expect(onPiece).toHaveBeenLastCalledWith(null);
-    await act(async () => { await new Promise((r) => setTimeout(r, 60)); });
-    expect(asked.at(-1)).toMatch(/^Revise my saved image “A clean minimal hero.*” \(library piece c1\)\./);
-    expect(asked.at(-1)).toContain("Save the new version as a draft; do not post, send or publish anything.");
+    expect(button("Revise with PAIGE", dialog()!)).toBeUndefined();
+    expect(dialog()!.querySelector(".mct-pubdoor")).toBeNull();
   });
 
   it("never uses a stored address that isn't https or this site", async () => {
@@ -273,7 +266,7 @@ describe("Marketing › Content", () => {
     expect(host.querySelectorAll(".mct-card .mct-kind")[1]?.textContent).toBe("Document");
   });
 
-  it("says each state once: a failed read with one retry, and an empty library with starters", async () => {
+  it("shows a failed read with one retry, and an empty library without authoring controls", async () => {
     db.tables.marketing_content = { data: null, error: { message: "boom" } };
     vi.spyOn(console, "error").mockImplementation(() => {});
     await renderContent();
@@ -283,35 +276,47 @@ describe("Marketing › Content", () => {
     db.tables.marketing_content = { data: [], error: null };
     act(() => button("Try again")!.click());
     await flush();
-    expect(summary()).toBe("Your library is empty. Everything PAIGE makes for you is kept here.");
-    expect([...host.querySelectorAll(".mct-starters button")].map((b) => b.textContent)).toEqual(["A launch image", "A one-page offer", "A welcome email", "Something else"]);
+    expect(summary()).toBe("Your library is empty.");
     expect(button("Ask PAIGE for content")).toBeUndefined();
     expect(host.querySelector(".campaigns-segmented")).toBeNull();
   });
 
-  it("never says everything is published when nothing was built", async () => {
-    db.tables.marketing_content = { data: [], error: null };
-    await renderContent({ published: { phase: "ready", pages: 0, funnels: 0, forms: 0, unpublished: 0 } });
-    expect(host.querySelector(".mct-pub-h p")?.textContent).toBe("Nothing built in Vibe Studio yet.");
-    await renderContent({ published: { phase: "ready", pages: 1, funnels: 0, forms: 0, unpublished: 0 } });
-    expect(host.querySelector(".mct-pub-h p")?.textContent).toBe("Everything you built is published.");
+  it("shows original published work and receipts, and returns focus to the original card", async () => {
+    db.receipts.data = [
+      { id: "1b8e4f0c-de01-4905-b6d1-b56421805342", content_id: "3375ae19-d509-4b35-8489-88efb398e8db", tenant_id: "t-1",
+        platform: "threads", status: "published", request_args: { caption: "Finished post", channel_label: "Threads" },
+        provider_post_url: "https://example.com/post" },
+      { id: "2b8e4f0c-de01-4905-b6d1-b56421805342", content_id: "3375ae19-d509-4b35-8489-88efb398e8db", tenant_id: "t-1",
+        platform: "threads", status: "scheduled", request_args: { caption: "Future post" } },
+    ];
+    await renderContent({ view: "published", artifacts: [publishedPage, { ...publishedPage, id: "draft-page", name: "Private draft", status: "draft" }] });
+    const cards = host.querySelectorAll<HTMLButtonElement>(".content-catalog-item");
+    expect(cards).toHaveLength(2);
+    expect(host.textContent).not.toContain("Private draft");
+    expect(host.textContent).not.toContain("Future post");
+    const post = Array.from(cards).find(card => card.textContent?.includes("Finished post"))!;
+    act(() => post.click());
+    expect(document.activeElement?.textContent).toBe("Finished post");
+    expect(host.querySelector('a[href="https://example.com/post"]')).not.toBeNull();
+    act(() => document.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+    expect(document.activeElement?.textContent).toBe(post.textContent);
   });
 
-  it("never shows a zero for published work it has not read", async () => {
-    db.tables.marketing_content = { data: [], error: null };
-    await renderContent({ published: { phase: "loading", pages: 0, funnels: 0, forms: 0, unpublished: 0 } });
-    expect([...host.querySelectorAll(".mct-pub dd")].map((d) => d.textContent)).toEqual(["…", "…", "…"]);
+  it("shows the published loading, empty and retryable states", async () => {
+    await renderContent({ view: "published", publishedPhase: "loading" });
+    expect(host.textContent).toContain("Reading published content…");
+    await renderContent({ view: "published" });
+    expect(host.textContent).toContain("No published work yet.");
     const onRetryPublished = vi.fn();
-    await renderContent({ published: { phase: "error", pages: 0, funnels: 0, forms: 0, unpublished: 0 }, onRetryPublished });
-    expect([...host.querySelectorAll(".mct-pub dd")].map((d) => d.textContent)).toEqual(["—", "—", "—"]);
-    act(() => button("Try again", host.querySelector(".mct-pubrow")!)!.click());
+    await renderContent({ view: "published", publishedPhase: "error", onRetryPublished });
+    act(() => button("Retry Studio work")!.click());
     expect(onRetryPublished).toHaveBeenCalled();
   });
 
   it("marks a full library read as the newest pieces, never a total", async () => {
     db.tables.marketing_content = { data: Array.from({ length: 60 }, (_, n) => ({ ...ROWS[3], id: `c${n}`, title: `Piece ${n}`, status: n < 2 ? "published" : "draft" })), error: null };
     await renderContent();
-    expect(summary()).toBe("60+ pieces in your library: images, the newest 60 shown. 2 of the newest 60 are in your Catalog. Nothing here posts or sends.");
+    expect(summary()).toBe("60+ pieces in your library: images, the newest 60 shown. 2 of the newest 60 are in your Catalog.");
     expect([...host.querySelectorAll(".campaigns-segmented button")].map((b) => b.textContent)).toEqual(["All", "Images"]);
     expect(host.textContent).toContain("The newest 60 are shown.");
   });
@@ -325,7 +330,6 @@ describe("Marketing › Content", () => {
     expect(host.querySelector(".mct-lib")).toBeNull();
     expect(button("Ask PAIGE for content")).toBeUndefined();
     expect(dialog()).toBeNull();
-    expect([...host.querySelectorAll(".mct-pub dd")].map((d) => d.textContent)).toEqual(["2", "0", "1"]);
   });
 
   it("drops an answer for a workspace the page has left", async () => {

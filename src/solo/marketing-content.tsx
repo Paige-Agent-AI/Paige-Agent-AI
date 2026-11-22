@@ -3,8 +3,7 @@
 // The saved library as a gallery of the work itself, leading the page. Each piece shows what it really is
 // (model: marketing-content-model.ts) and opens in a preview: an image full size and a video playing, each
 // with Download; a document drawn by the Studio's own renderer (DocumentPreview) with Print / Save as PDF;
-// ad copy laid out as an ad; other copy as its words with Copy text. Revising is draft-first through PAIGE;
-// nothing here posts, sends or publishes.
+// ad copy laid out as an ad; other copy as its words with Copy text. Authoring belongs to Vibe Studio.
 // Reads (tenant-scoped, read-only, nothing new on the server):
 //   marketing_content  not archived, newest first. RLS: admins of the business or the platform owner, the
 //                      same test the briefs read reports as can_manage, so a member is told the library is
@@ -16,7 +15,7 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { printStudioDocument } from "@/components/admin/studio/studio-document";
-import { AskPaigeButton, LIBRARY_DENIED, useLibraryAccess, useTenantRead, type Phase, type PublishedWork } from "./marketing-planned";
+import { LIBRARY_DENIED, useLibraryAccess, useTenantRead, type Phase } from "./marketing-planned";
 import { ChartBoundary } from "./marketing-ui";
 import { parseAdCopy } from "./marketing-ads";
 import { DetailDrawer } from "./detail-drawer";
@@ -26,7 +25,8 @@ import {
 } from "./marketing-content-model";
 import "./marketing-overview.css";
 import "./marketing-content.css";
-import { PublishPiece } from "./publish-piece";
+import { ContentCatalog } from "./content-catalog";
+import type { CampaignArtifact } from "./useSoloCampaigns";
 import { MediaLibrary } from "./media-library";
 
 const DocumentPreview = React.lazy(() => import("@/components/admin/studio/DocumentPreview").then((module) => ({ default: module.DocumentPreview })));
@@ -59,32 +59,34 @@ const IN_CATALOG = "In your Catalog";
 const KIND_TITLE: Record<PieceKind, string> = { image: "Images", document: "Documents", copy: "Copy", video: "Video" };
 const KIND_COLOR: Record<PieceKind, string> = { image: "--chart-1", document: "--chart-2", copy: "--chart-3", video: "--chart-4" };
 
-const ASK_PROMPT = "Help me make a piece of marketing content for my business. Ask me what it is for and who it is for before you draft it. Save it as a draft; do not post or send anything.";
-// First use proposes something concrete rather than a blank ask (§15/§36).
-const STARTERS = [
-  { label: "A launch image", prompt: "Make an image announcing something new in my business. Ask me what it announces and where it will be posted before you make it. Save it as a draft; do not post anything." },
-  { label: "A one-page offer", prompt: "Write a one-page offer document for my main service. Ask me who it is for and what it costs before you draft it. Save it as a draft; do not send anything." },
-  { label: "A welcome email", prompt: "Write a welcome email for new people on my list. Ask me what they signed up for before you draft it. Save it as a draft; do not send anything." },
-];
-const reviseNoun: Record<PieceKind, string> = { image: "image", video: "video", document: "document", copy: "copy" };
-const revisePrompt = (piece: ContentPiece) =>
-  `Revise my saved ${reviseNoun[pieceKind(piece)]} “${shortTitle(piece.title, 120).text}” (library piece ${piece.id}). Ask me what to change before you start. Save the new version as a draft; do not post, send or publish anything.`;
-// The drawer returns focus to the card as it closes; PAIGE opens after that, so her composer keeps focus.
-const reviseAfterClose = (prompt: string) => window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt } }))));
-
 export type MarketingContentProps = {
   tenantId: string | null;
-  published: PublishedWork;
-  onOpenCapture: () => void;
+  artifacts: CampaignArtifact[];
+  publishedPhase: string;
   onRetryPublished: () => void;
-  studioLauncher: React.ReactNode;
+  view: "published" | "media";
+  onView: (view: "published" | "media") => void;
   kind: ContentKindFilter;
   onKind: (kind: ContentKindFilter) => void;
   piece: string | null;
   onPiece: (id: string | null) => void;
 };
 
-export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPublished, studioLauncher, kind, onKind, piece, onPiece }: MarketingContentProps) {
+export function MarketingContent({ artifacts, publishedPhase, onRetryPublished, view, onView, ...library }: MarketingContentProps) {
+  return <div className="content-catalog-shell" data-view={view}>
+    <header className="content-catalog-title">
+      <h1>Content</h1>
+      <div className="content-catalog-mode" role="group" aria-label="Content view">
+        <button type="button" aria-pressed={view === "published"} onClick={() => { if (view !== "published") onView("published"); }}>Published</button>
+        <button type="button" aria-pressed={view === "media"} onClick={() => { if (view !== "media") onView("media"); }}>Media library</button>
+      </div>
+    </header>
+    {view === "published" ? <ContentCatalog key={library.tenantId} tenantId={library.tenantId} artifacts={artifacts} phase={publishedPhase} onRetry={onRetryPublished}/>
+      : <SavedLibrary key={library.tenantId} {...library}/>}
+  </div>;
+}
+
+function SavedLibrary({ tenantId, kind, onKind, piece, onPiece }: Pick<MarketingContentProps, "tenantId" | "kind" | "onKind" | "piece" | "onPiece">) {
   const access = useLibraryAccess();
   const all = useTenantRead(tenantId, NO_PIECES, access === "allowed" ? READERS.all : null);
   const phase: Phase = access === "denied" ? "ready" : access === "checking" ? "loading" : all.phase;
@@ -99,8 +101,8 @@ export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPu
   const summary = access === "denied" ? <>{LIBRARY_DENIED}</>
     : phase === "loading" ? <>Reading your library…</>
     : phase === "error" ? <>Your library could not load.</>
-    : !pieces.length ? <>Your library is empty. Everything PAIGE makes for you is kept here.</>
-    : <><b>{total} {pieces.length === 1 && !capped ? "piece" : "pieces"}</b> in your library{mix.length ? `: ${joinWords(mix)}` : ""}{capped ? `, the newest ${LIBRARY_READ_LIMIT} shown` : ""}.{inCatalog ? <> {inCatalog}{capped ? ` of the newest ${LIBRARY_READ_LIMIT}` : ""} {inCatalog === 1 ? "is" : "are"} in your Catalog.</> : null} Nothing here posts or sends.</>;
+    : !pieces.length ? <>Your library is empty.</>
+    : <><b>{total} {pieces.length === 1 && !capped ? "piece" : "pieces"}</b> in your library{mix.length ? `: ${joinWords(mix)}` : ""}{capped ? `, the newest ${LIBRARY_READ_LIMIT} shown` : ""}.{inCatalog ? <> {inCatalog}{capped ? ` of the newest ${LIBRARY_READ_LIMIT}` : ""} {inCatalog === 1 ? "is" : "are"} in your Catalog.</> : null}</>;
 
   // The filter offers the kinds the library holds, plus whichever one the address names.
   const offered = CONTENT_KINDS.filter((option) => option.key === "all" || option.key === kind || counts.some((row) => row.key === option.key));
@@ -115,11 +117,10 @@ export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPu
   return <div className="mov mct" ref={rootRef}>
     <div className="mov-top">
       <p className="mov-sum" tabIndex={-1}>{summary}</p>
-      <div className="mov-acts">{filled && <AskPaigeButton label="Ask PAIGE for content" prompt={ASK_PROMPT}/>}{studioLauncher}</div>
     </div>
     {access !== "denied" && <section className="mov-card mct-lib" aria-labelledby="mct-lib-h">
       <header className="mov-head">
-        <div><h2 id="mct-lib-h">Your library</h2>{filled && <p>Newest first. Open a piece to preview it, download it or ask PAIGE to revise it.</p>}</div>
+        <h2 id="mct-lib-h">Your library</h2>
         {filled && <div className="mct-filter">
           <MiniRing counts={counts}/>
           <div className="campaigns-segmented" role="group" aria-label="Show">
@@ -133,9 +134,7 @@ export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPu
         ? <Gallery phase={phase} pieces={pieces} retry={all.retry} capped={capped} onOpen={onPiece}/>
         : <FilteredGallery key={`${tenantId}:${kind}`} tenantId={tenantId} kind={kind} onOpen={onPiece} onAll={() => onKind("all")}/>}
     </section>}
-    <Published published={published} onOpenCapture={onOpenCapture} onRetry={onRetryPublished}/>
-    {access === "allowed" && <MediaLibrary tenantId={tenantId}/>}
-    <p className="mct-foot">Publishing is connected: open a piece to publish it to a connected channel — you approve the exact post before it goes out, and nothing is scheduled. Scheduling stays with your Calendar plan.</p>
+    {access === "allowed" && <MediaLibrary tenantId={tenantId} allowUpload={false}/>}
     {host && piece && access === "allowed" && createPortal(<PiecePreview key={`${tenantId}:${piece}`} tenantId={tenantId} id={piece} known={pieces.find((p) => p.id === piece) ?? null} listPhase={phase} onClose={() => onPiece(null)}/>, host)}
   </div>;
 }
@@ -150,22 +149,6 @@ function MiniRing({ counts }: { counts: { key: PieceKind; count: number }[] }) {
   let at = 0;
   const stops = counts.map((row) => { const from = at; at += (row.count / whole) * 100; return `var(${KIND_COLOR[row.key]}) ${from}% ${at}%`; });
   return <span className="mct-ring" role="img" aria-label={`Your library by kind: ${counts.map((row) => `${KIND_TITLE[row.key]} ${row.count}`).join(", ")}`} style={{ background: `conic-gradient(${stops.join(", ")})` }}/>;
-}
-
-function Published({ published, onOpenCapture, onRetry }: { published: PublishedWork; onOpenCapture: () => void; onRetry: () => void }) {
-  const ready = published.phase === "ready";
-  const failed = published.phase === "error" || published.phase === "unavailable";
-  const value = (n: number) => (ready ? String(n) : failed ? "—" : "…");
-  return <section className="mov-card mct-pubrow" aria-labelledby="mct-pub-h">
-    <div className="mct-pub-h"><h2 id="mct-pub-h">Published from Vibe Studio</h2>
-      <p>{failed ? <>Could not load. <button type="button" className="mov-lnk" onClick={onRetry}>Try again</button></> : !ready ? "Loading" : published.unpublished ? `${published.unpublished} more built and not published yet, so collecting nothing.` : published.pages + published.funnels + published.forms ? "Everything you built is published." : "Nothing built in Vibe Studio yet."}</p></div>
-    <dl className="mct-pub">
-      <div><dt>Pages</dt><dd>{value(published.pages)}</dd></div>
-      <div><dt>Funnels</dt><dd>{value(published.funnels)}</dd></div>
-      <div><dt>Forms</dt><dd>{value(published.forms)}</dd></div>
-    </dl>
-    <button type="button" className="mov-lnk" onClick={onOpenCapture}>Published work</button>
-  </section>;
 }
 
 function FilteredGallery({ tenantId, kind, onOpen, onAll }: { tenantId: string | null; kind: ContentKindFilter; onOpen: (id: string) => void; onAll: () => void }) {
@@ -185,8 +168,7 @@ function FilteredGallery({ tenantId, kind, onOpen, onAll }: { tenantId: string |
 function Gallery({ phase, pieces, retry, capped, onOpen }: { phase: Phase; pieces: ContentPiece[]; retry: () => void; capped: boolean; onOpen: (id: string) => void }) {
   if (phase === "loading") return <div className="campaigns-skeleton mct-grid-skel" role="status" aria-busy="true" aria-label="Loading your library">{[0, 1, 2, 3].map((i) => <span key={i}/>)}</div>;
   if (phase === "error") return <div className="mct-state"><p>Nothing was changed.</p><button type="button" className="btn btn-s" onClick={retry}>Try again</button></div>;
-  if (!pieces.length) return <div className="mct-empty"><p>Ask PAIGE for something to start with. She drafts it and keeps it here; nothing is posted or sent.</p>
-    <div className="mct-starters">{STARTERS.map((starter) => <AskPaigeButton key={starter.label} label={starter.label} prompt={starter.prompt}/>)}<AskPaigeButton label="Something else" prompt={ASK_PROMPT}/></div></div>;
+  if (!pieces.length) return <div className="mct-empty"><p>Saved pieces will appear here.</p></div>;
   return <>
     <ul className="mct-grid">{pieces.map((piece) => <li key={piece.id}><PieceCard piece={piece} onOpen={() => onOpen(piece.id)}/></li>)}</ul>
     {capped && <p className="mct-note mct-capnote">The newest {LIBRARY_READ_LIMIT} are shown.</p>}
@@ -260,14 +242,13 @@ function PiecePreview({ tenantId, id, known, listPhase, onClose }: { tenantId: s
     {(kind === "image" || kind === "video") && (safeMediaUrl(piece.image_url) ? <FullMedia kind={kind} url={safeMediaUrl(piece.image_url)!} alt={title.text}/> : <p className="mct-note">No file was saved with this {kind}.</p>)}
     {kind === "document" && (doc
       ? <div className="mct-doc"><ChartBoundary className="mct-doc-skel" failed="This document couldn’t be shown. Reload the page to try again; nothing was changed."><DocumentPreview document={doc} toolbar={false}/></ChartBoundary></div>
-      : <p className="mct-note">This document couldn’t be read. Ask PAIGE to make it again.</p>)}
+      : <p className="mct-note">This document couldn’t be read.</p>)}
     {ad && (ad.headline || ad.cta)
       ? <div className="mct-adfull">{ad.headline && <b>{ad.headline}</b>}{ad.primary && <p>{plainCopy(ad.primary)}</p>}{ad.cta ? <i>{ad.cta}</i> : <small>No call to action written</small>}</div>
       : parts && (parts.lead || parts.rest ? <div className="mct-copy">{parts.lead && <b>{parts.lead}</b>}{parts.rest}</div> : <p className="mct-note">No words were saved with this piece.</p>)}
     {asked && (kind === "image" || kind === "video") && <div className="mct-asked"><span>What PAIGE was asked</span><p>{asked}</p></div>}
-    <PublishPiece piece={piece} tenantId={tenantId}/>
   </div>;
-  return <DetailDrawer detail={{ key: piece.id, eyebrow: "Content", wide: true, title: title.text, rows: [], body, actions: <PieceActions piece={piece} hasDoc={Boolean(doc)} onClose={onClose}/> }} onClose={onClose}/>;
+  return <DetailDrawer detail={{ key: piece.id, eyebrow: "Content", wide: true, title: title.text, rows: [], body, actions: <PieceActions piece={piece} hasDoc={Boolean(doc)}/> }} onClose={onClose}/>;
 }
 
 function FullMedia({ kind, url, alt }: { kind: "image" | "video"; url: string; alt: string }) {
@@ -276,7 +257,7 @@ function FullMedia({ kind, url, alt }: { kind: "image" | "video"; url: string; a
   return <figure className="mct-full">{kind === "image" ? <img src={url} alt={alt} onError={() => setBroken(true)}/> : <video src={url} controls playsInline preload="metadata" aria-label={alt} onError={() => setBroken(true)}/>}</figure>;
 }
 
-function PieceActions({ piece, hasDoc, onClose }: { piece: ContentPiece; hasDoc: boolean; onClose: () => void }) {
+function PieceActions({ piece, hasDoc }: { piece: ContentPiece; hasDoc: boolean }) {
   const kind = pieceKind(piece);
   const [note, setNote] = React.useState("");
   const url = kind === "image" || kind === "video" ? safeMediaUrl(piece.image_url) : null;
@@ -308,7 +289,6 @@ function PieceActions({ piece, hasDoc, onClose }: { piece: ContentPiece; hasDoc:
     {url && <><button type="button" className="btn btn-s" disabled={busy} onClick={() => void download()}>Download</button><a className="btn btn-s" href={url} target="_blank" rel="noreferrer">Open full size</a></>}
     {kind === "document" && hasDoc && <button type="button" className="btn btn-s" onClick={printStudioDocument}>Print / Save as PDF</button>}
     {kind === "copy" && plainCopy(piece.body) && <button type="button" className="btn btn-s" onClick={() => void copy()}>Copy text</button>}
-    <button type="button" className="btn btn-s" onClick={() => { onClose(); reviseAfterClose(revisePrompt(piece)); }}>Revise with PAIGE</button>
     <span className="mct-act-note" role="status" aria-live="polite">{note}</span>
   </>;
 }

@@ -107,8 +107,10 @@ export function buildStudioLandingTheme(context: StudioBusinessContext, rawValue
 type DraftBlocks = { ok: true; blocks: StudioLandingBlock[] } | { ok: false; code: "NO_VALID_BLOCKS" | "MISSING_STUDIO_OPENING" | "INVALID_STUDIO_CONVERSION"; message: string };
 /** Keep genuine validated sections; never synthesize a hero, form or model-selected CTA. */
 export function normalizeStudioLandingBlocks(candidates: unknown, originalConversion: NexusLandingTemplateRecipe["conversion"] = null, actualSavedSource?: unknown): DraftBlocks {
-  const saved = actualSavedSource === undefined ? undefined : actualSavedSource === null ? null : savedConversionBlock(actualSavedSource);
-  if (actualSavedSource !== undefined && actualSavedSource !== null && !saved) return { ok: false, code: "INVALID_STUDIO_CONVERSION", message: "The saved page conversion is unavailable. Reopen the page before refining it." };
+  if (actualSavedSource != null && !savedConversionBlock(actualSavedSource)) return { ok: false, code: "INVALID_STUDIO_CONVERSION", message: "The saved page conversion is unavailable. Reopen the page before refining it." };
+  // The cleaner admits the protected original. Retain its exact JSON for the
+  // preview and native comparison, including an older embedded form's title.
+  const saved = actualSavedSource as StudioSavedConversionBlock | null | undefined;
   const blocks: StudioLandingBlock[] = [];
   for (const candidate of (Array.isArray(candidates) ? candidates : []).slice(0, 12)) {
     const clean = validateBlock(candidate) as StudioLandingBlock | null;

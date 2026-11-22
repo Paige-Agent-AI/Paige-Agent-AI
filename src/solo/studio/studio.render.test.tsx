@@ -213,6 +213,19 @@ describe("Vibe Studio project workspace", () => {
     expect(h.fetchBodies[0]).toMatchObject({ threadId: "th-1", messages: [{ role: "user", content: "A landing page for the workshop" }] });
   });
 
+  it("saves authored client project context without making a directory selection mandatory", async () => {
+    h.projectContext = {};
+    h.sse = ["[DONE]"];
+    await startProject("A landing page for a client workshop");
+    await act(async () => { host.querySelector<HTMLDetailsElement>(".vs-business-context")!.open = true; });
+    await act(async () => { button("Client")!.click(); });
+    await act(async () => { button("Save project context")!.click(); });
+    await flush();
+    expect(h.contextWrites).toHaveLength(1);
+    expect(h.contextWrites[0].context).toEqual({ target: { kind: "client", reference: expect.any(String) }, values: {} });
+    expect(h.fetchBodies).toHaveLength(1);
+  });
+
   it("a brief opens a project and Paige's first build lands on the stage, with her steps", async () => {
     h.sse = [
       JSON.stringify({ paige_step: { id: "a", label: "Wrote 3 questions" } }),

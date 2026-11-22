@@ -335,7 +335,7 @@ import { loadN8nReadinessForChat, renderN8nReadinessForChat } from "../_shared/p
 import { loadIntegrationsMindEvidence, renderIntegrationsMindEvidence } from "../_shared/paige-spine/domains/integrationsMindEvidence.ts";
 import { loadResearchHistoryContext, renderResearchHistoryContext } from "../_shared/research-history-context.ts";
 import { parseStudioPageSaveSource, sameStudioPageJson, sameStudioPageSaveSource, type StudioPageSaveSource } from "../_shared/growth/studio-page-source.ts";
-import { bindStudioGeneratedPage, createStudioPageSave, type StudioGeneratedPage } from "../_shared/growth/studio-page-save.ts";
+import { bindStudioGeneratedPage, createStudioPageSave, studioPageTargetMatches, type StudioGeneratedPage } from "../_shared/growth/studio-page-save.ts";
 // #292 / #343 U1 — the Studio design-agent system-prompt WRAPPER (identity + operating core + the
 // generative-UI choice-card rule), externalized so it lives in one editable home (§9/§12/§18).
 import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
@@ -8222,7 +8222,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 type: "object",
                 properties: {
                   brief: { type: "string", description: "What the page is for — the offer, the audience, and the action you want visitors to take." },
-                  tone: { type: "string", description: "Optional tone, e.g. bold, warm, professional, playful." }
+                  tone: { type: "string", description: "Optional tone, e.g. bold, warm, professional, playful." },
+                  ...(studioSessionId ? { page_intent: { type: "string", enum: ["new", "refine"],
+                    description: "Use new for a separate page, even if another page is open. Use refine only when the user asks to change the open page. Carry the generated page_id to save for a refinement. Omit page_id when saving a new page." } } : {}),
                 },
                 required: ["brief"]
               }
@@ -13387,6 +13389,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (tc.function.name === "growth_page_save" && studioSessionId && !resumePin.has(tc.id)) {
               const generated = studioPageSaves.get(canvasArtifact?.kind === "page" ? canvasArtifact.id : "new");
               if (generated && studioPageSaveCurrent()) {
+                if (!studioPageTargetMatches(generated.proposal.page_id, gateArgs?.page_id)) {
+                  toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+                    success: false, not_applied: true, error: "This save targets a different page than the preview. Generate for the intended new or open page before asking to approve.",
+                  }) });
+                  continue;
+                }
                 gateArgs = generated.proposal;
                 tc.function.arguments = JSON.stringify(gateArgs);
               } else if (approvedConfirmations.size === 0) {
@@ -16806,10 +16814,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // Draft-only preview: designs the page blocks, writes nothing (§13). The
               // edge fn resolves the tenant brand and enforces §2 coaching-generic defaults.
               const studioGeneratedSessionId = studioSessionId;
-              const studioGeneratedPageId = canvasArtifact?.kind === "page" ? canvasArtifact.id : null;
-              const studioGeneratedKey = studioGeneratedPageId ?? "new";
+              const studioCanvasPageId = canvasArtifact?.kind === "page" ? canvasArtifact.id : null;
+              const studioGeneratedPageId = studioGeneratedSessionId && args.page_intent === "new" ? null : studioCanvasPageId;
+              const studioGeneratedKey = studioCanvasPageId ?? "new";
               if (studioGeneratedSessionId && studioPageApprovalOffered) {
                 result = { success: false, not_applied: true, error: "Review the page already shown with its pending approval before asking for a different draft." };
+              } else if (studioGeneratedSessionId && args.page_intent === "refine" && !studioCanvasPageId) {
+                result = { success: false, not_applied: true, error: "Open the page you want to refine, or generate a new page." };
               } else {
                 if (studioGeneratedSessionId) {
                   studioPageSaves.delete(studioGeneratedKey);
@@ -16835,7 +16846,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       ? "Open Project context and save the brand for this page. Reopen the page if its saved version changed, then ask to design it again."
                       : "Studio couldn't generate a usable page this time. Your saved work is still available." };
                   } else if (!studioGeneratedSource || !studioGeneratedPage || !studioPageSaveCurrent()
-                      || studioSessionId !== studioGeneratedSessionId || (canvasArtifact?.kind === "page" ? canvasArtifact.id : null) !== studioGeneratedPageId
+                      || studioSessionId !== studioGeneratedSessionId || (canvasArtifact?.kind === "page" ? canvasArtifact.id : null) !== studioCanvasPageId
                       || !(await revalidateProposalScope()) || !studioPageSaveCurrent()) {
                     result = { success: false, code: "STUDIO_PAGE_SOURCE_UNAVAILABLE", not_applied: true,
                       error: "The current project source could not be confirmed. Reopen this project and generate from its current saved context before saving. Nothing was saved." };
@@ -16845,7 +16856,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     });
                     studioPageSaves.set(studioGeneratedKey, { source: studioGeneratedSource, proposal: studioGeneratedPage, save: writer.save });
                     studioPreview = { kind: "page", title: studioGeneratedPage.title, blocks: studioGeneratedPage.blocks, theme: studioGeneratedPage.theme };
-                    result = { success: true, blocks: studioGeneratedPage.blocks, theme_json: studioGeneratedPage.theme, seo_json: studioGeneratedPage.seo };
+                    result = { success: true, page_id: studioGeneratedPage.page_id, blocks: studioGeneratedPage.blocks, theme_json: studioGeneratedPage.theme, seo_json: studioGeneratedPage.seo };
                   }
                 } else {
                   if (error) throw error;
@@ -16867,7 +16878,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 if (!studioSave || !pageArgs || !studioPageSaveCurrent()) {
                   result = { success: false, code: "STUDIO_PAGE_SOURCE_REQUIRED", not_applied: true,
                     error: "Generate this page from the current saved project context before saving. No page was changed by this call." };
-                } else if (pageArgs.page_id !== studioSave.source.page_id) {
+                } else if (!studioPageTargetMatches(studioSave.source.page_id, args.page_id)) {
                   result = { success: false, code: "STUDIO_PAGE_TARGET_CHANGED", not_applied: true,
                     error: "That page is not the original generated target. Reopen the intended page and generate from its current saved context." };
                 } else {

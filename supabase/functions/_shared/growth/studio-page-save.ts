@@ -8,6 +8,10 @@ const object = (value: unknown): Row | null => value && typeof value === "object
 export type StudioPageSaveInput = { pageId?: unknown; slug: unknown; title: unknown; blocks: unknown; theme: unknown; seo: unknown };
 export type StudioGeneratedPage = { page_id: string | null; slug: string; title: string; blocks: unknown[]; theme: Row | null; seo: Row };
 
+export function studioPageTargetMatches(expected: string | null, requested: unknown): boolean {
+  return (requested ?? null) === expected || typeof requested === "string" && requested.toLowerCase() === expected;
+}
+
 /** Use the same document for the stage and the approval. The tool call's own
  * copy, slug and target have no authority to replace generator output. */
 export function bindStudioGeneratedPage(value: unknown, source: StudioPageSaveSource): StudioGeneratedPage | null {

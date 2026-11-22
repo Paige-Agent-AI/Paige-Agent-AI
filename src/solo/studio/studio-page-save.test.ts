@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { bindStudioGeneratedPage, createStudioPageSave } from "../../../supabase/functions/_shared/growth/studio-page-save";
+import { bindStudioGeneratedPage, createStudioPageSave, studioPageTargetMatches } from "../../../supabase/functions/_shared/growth/studio-page-save";
+import { normalizeStudioLandingBlocks } from "../../../supabase/functions/_shared/growth/studio-landing-draft";
 import type { StudioPageSaveSource } from "../../../supabase/functions/_shared/growth/studio-page-source";
 
 const TENANT = "10000000-0000-4000-8000-000000000001", SESSION = "10000000-0000-4000-8000-000000000002";
@@ -14,6 +15,14 @@ const nativeSaved = (extra = {}) => ({ ok: true, page: { id: PAGE, tenant_id: TE
 const ok = (data: unknown) => ({ data, error: null });
 
 describe("Studio save proposal from the generated preview", () => {
+  it("distinguishes a separate new page from an update to the open page", () => {
+    expect(studioPageTargetMatches(null, undefined)).toBe(true);
+    expect(studioPageTargetMatches(null, PAGE)).toBe(false);
+    expect(studioPageTargetMatches(PAGE, undefined)).toBe(false);
+    expect(studioPageTargetMatches(PAGE, OTHER)).toBe(false);
+    expect(studioPageTargetMatches(PAGE, PAGE)).toBe(true);
+  });
+
   it("copies only the validated generated payload and binds the original page", () => {
     const draft = {
       blocks: [{ type: "hero", title: "A practical next step" }],
@@ -48,6 +57,12 @@ describe("Studio save proposal from the generated preview", () => {
     expect(bindStudioGeneratedPage(preview, { ...source(), conversion: form })?.blocks).toEqual(preview.blocks);
     expect(bindStudioGeneratedPage(preview, source())).toBeNull();
     expect(bindStudioGeneratedPage({ ...preview, blocks: input().blocks }, { ...source(), conversion: form })).toBeNull();
+    const normalized = normalizeStudioLandingBlocks(input().blocks, null, form);
+    expect(normalized.ok).toBe(true);
+    if (normalized.ok) {
+      expect(normalized.blocks[1]).toBe(form);
+      expect(bindStudioGeneratedPage({ ...preview, blocks: normalized.blocks }, { ...source(), conversion: form })?.blocks).toEqual(preview.blocks);
+    }
   });
 });
 

@@ -218,11 +218,6 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
       setContextError("Review the highlighted project values before saving.");
       return;
     }
-    const target = contextDraft.target;
-    if ((target.kind === "client" || target.kind === "prospect") && !contextDraft.business_source) {
-      setContextError("Select the business you want to use for this project.");
-      return;
-    }
     const values = Object.fromEntries(Object.keys(contextDraft.values).map(key => [key, contextProjection.projectValues[key as keyof typeof contextDraft.values] ?? ""]));
     const controller = new AbortController();
     contextWrite.current = controller;

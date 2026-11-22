@@ -75,6 +75,21 @@ const socialRows = new URLSearchParams(window.location.search).get("social") ===
 ];
 
 const identity = [{ default_email_sender: "hello@northfield.example", default_email_domain: "northfield.example", default_email_status: "verified" }];
+const visualDeskFixture = new URLSearchParams(window.location.search).get("tab") === "social";
+const deskPieceId = "10000000-0000-4000-8000-000000000007";
+const deskPiece = {
+  id: deskPieceId, kind: "text", channel: "social_post", status: "draft",
+  title: "Questions to ask before hiring", updated_at: "2026-11-21T16:00:00Z",
+  body: "What would you want to be different in ninety days?",
+  image_url: null, size: null, brief: null, meta: {},
+};
+const deskReceipt = {
+  id: "10000000-0000-4000-8000-000000000008", tenant_id: "t-northfield", content_id: deskPieceId,
+  platform: "instagram", status: "published",
+  provider_post_url: "https://example.com/recorded-result", updated_at: "2026-11-20T16:00:00Z",
+  request_args: { caption: deskPiece.body, channel_label: "Review account", content_revision: "2026-11-20T15:00:00Z" },
+  provider_response: { analytics: { state: "available", metrics: { views: 120, comments: 3 }, measured_at: "2026-11-21T11:00:00Z" } },
+};
 
 function answer(rows: unknown): Promise<Answer> {
   if (mode === "loading") return new Promise(() => {});
@@ -85,6 +100,8 @@ function answer(rows: unknown): Promise<Answer> {
 
 function from(table: string) {
   let rows: Record<string, unknown>[] = table === "clients" ? clients : table === "marketing_content" ? content : table === "client_contact_methods" ? methods : [];
+  if (visualDeskFixture && table === "marketing_content") rows = [deskPiece];
+  if (visualDeskFixture && table === "tenant_members") rows = [{ user_id: "harness-user", role: "owner", status: "active" }];
   const chain: Record<string, unknown> = {};
   for (const method of ["select", "order", "limit"]) chain[method] = () => chain;
   // Filters behave like the server's, so each tab shows only what its own query would return.
@@ -127,6 +144,7 @@ export const supabase = {
       ]);
     }
     if (fn === "content_publication_list") {
+      if (visualDeskFixture) return answer(!args.p_content_id || args.p_content_id === deskPieceId ? [deskReceipt] : []);
       // EXP07 row 10 — the receipts a piece already carries: one published (with its link) and
       // one outcome_unknown (the state that blocks a retry). Only rows for the asked piece.
       const asked = args.p_content_id as string | null;
@@ -146,6 +164,7 @@ export const supabase = {
     const scenario = new URLSearchParams(window.location.search).get("door") ?? "published";
     const invoke = async (_name: string, { body }: { body: Record<string, unknown> }) => {
       const ok = (data: Record<string, unknown>) => ({ data, error: null });
+      if (_name === "broadcast-command") return ok({ ok: false, state: "unavailable" });
       const refused = (status: number, data: Record<string, unknown>) => ({
         data: null,
         error: { message: "Edge Function returned a non-2xx status code", context: new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } }) },

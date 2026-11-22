@@ -492,9 +492,12 @@ describe("§13 fabrication guard — the shapes this surface must never grow", (
     expect(strip(growth)).toContain("A customer-facing social provider connection is still not ready");
   });
 
-  it("keeps the Vibe Studio redirect and the placement precondition", () => {
-    expect(strip(surface)).toContain("data-solo-vibe-studio-launcher");
-    expect(strip(surface)).toMatch(/only once a supported provider records/i);
+  it("keeps the Studio launcher and binds result links to recorded provider URLs", () => {
+    const desk = strip(read("src/solo/social-publishing-desk.tsx"));
+    const model = strip(read("src/solo/social-publishing-model.ts"));
+    expect(desk).toContain("data-solo-vibe-studio-launcher");
+    expect(desk).toContain("href={selected.url}");
+    expect(model).toContain("safeSocialUrl(row.provider_post_url)");
   });
 });
 
@@ -646,11 +649,11 @@ describe("shell contract — this tab may not break the five beside it", () => {
   it("writes its own reduced-motion and forced-colors fallbacks", () => {
     expect(css).toContain("prefers-reduced-motion");
     expect(css).toContain("forced-colors");
-    expect(css).toMatch(/prefers-reduced-motion[\s\S]{0,200}social-orb-ring \{ animation: none/);
+    expect(css).toMatch(/prefers-reduced-motion[\s\S]{0,100}social-golive-live-dot \{ animation: none/);
   });
 
   it("gives every grid child a min-width so one long handle cannot blow out the column", () => {
-    for (const selector of [".social-page > *", ".social-hero-top > *", ".social-grid > *"]) {
+    for (const selector of [".social-page > *", ".social-connections-list li", ".social-connection-main"]) {
       expect(css, `${selector} needs min-width:0`).toContain(selector);
     }
     expect((css.match(/min-width: 0/g) ?? []).length).toBeGreaterThan(6);

@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: the Animate refinement adjusts the approved motion, ca
 FLOW_PROTOTYPE: NOT_REQUIRED: the owner approved the existing Conversation Film prototype and its entry, recovery and skip paths. The motion refinement adds no step.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a first-time Solo owner can meet Paige, type instead or proceed into the workspace.
 VISUAL_DIRECTION: PASS: the original Command Logo fills the stage, crosses the three commands and settles at the caption position. The galaxy stays clear, with only the bottom panel representing playback energy.
-AUTOMATED_EVIDENCE: PASS: 75 targeted tests across PaigeLiveConversation, usePaigeOutput, relayTransport and ProtectedSoloSignup.
+AUTOMATED_EVIDENCE: PASS: 79 targeted tests across PaigeLiveConversation, usePaigeOutput, relayTransport, messageTts, MeetPaigeOwnerName and ProtectedSoloSignup. Delayed protected consent cannot start audio after closing Meet PAIGE.
 STATIC_EVIDENCE: PASS: Vite component-fixture build, diff whitespace check and Impeccable detector with zero blocking findings. Palette and fluid sizing advisories concern the scoped Conversation Film.
 RENDERED_EVIDENCE: PASS: Chrome component fixture at 1536×770, 1366×768, 1024×768, 900×1000 and 390×844, plus reduced motion at 390×844. The greeting fits two lines at desktop. Non-silent fixture PCM drives the actual waveform canvas on desktop and phone.
 BEHAVIORAL_EVIDENCE: PASS: keyboard skip skips the intro, playback reveals a cue, Stop audio clears the cue and active waveform, and Skip to workspace reaches the fixture handoff. Reduced motion bypasses the flight and retains playback feedback.

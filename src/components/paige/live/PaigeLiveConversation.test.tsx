@@ -35,7 +35,7 @@ vi.mock("@/lib/paigeLiveConversation/relayTransport", () => ({
   connectPaigeLiveRelay: relay.connect,
 }));
 
-import { PaigeLiveConversation } from "./PaigeLiveConversation";
+import { PaigeLiveConversation, type PaigeLiveControls } from "./PaigeLiveConversation";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const flush = async () => act(async () => { await Promise.resolve(); await Promise.resolve(); });
@@ -114,12 +114,13 @@ describe("Paige Live Conversation owner surface", () => {
     document.body.querySelectorAll(".plc-stage").forEach((node) => node.remove());
   });
 
-  const render = async (card: LiveConversationCard | null = null, epoch = "tenant-a||", working = false, threadId: string | null = null, disabled = false, voiceTurn = onVoiceTurn, onMeetBypass?: () => void) => {
+  const render = async (card: LiveConversationCard | null = null, epoch = "tenant-a||", working = false, threadId: string | null = null, disabled = false, voiceTurn = onVoiceTurn, onMeetBypass?: () => void, controls?: PaigeLiveControls) => {
     await act(async () => root.render(
       <PaigeLiveConversation
         contextEpoch={epoch}
         meetPaige={Boolean(onMeetBypass)}
         onMeetBypass={onMeetBypass}
+        controls={controls}
         threadId={threadId}
         ensureThread={ensureThread}
         transcript={[{ id: "m1", role: "assistant", content: "We are still in the same thread." }]}
@@ -328,6 +329,27 @@ describe("Paige Live Conversation owner surface", () => {
     expect(scroll!.contains(accept!), "acceptance is NOT inside the scroll region").toBe(false);
     expect(scroll!.textContent).toContain("default retention");
     expect(scroll!.textContent).toContain("one speaker");
+  });
+
+  it("does not speak when protected consent completes after closing Meet Paige", async () => {
+    let resolveConsent!: (value: { accepted: true }) => void;
+    const openingAudio = vi.fn(async () => new Response());
+    control.acceptTerms.mockImplementation(() => new Promise(resolve => { resolveConsent = resolve; }));
+    control.start.mockResolvedValueOnce({
+      ok: false, sessionId: null, availability: "PROOF OWED", code: "live_audio_not_enabled",
+      explanation: "Live audio needs your one-time acknowledgement first.",
+    });
+    await render(null, "protected-late-consent", false, null, false, onVoiceTurn, vi.fn(), {
+      start: control.start, renew: control.renew, transition: control.transition,
+      acceptTerms: control.acceptTerms, openingAudio,
+    });
+    await act(async () => clickText("Talk live with Paige"));
+    await act(async () => clickText("Start live conversation"));
+    await act(async () => clickText("I understand"));
+    await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="End Live Conversation"]')?.click());
+    await act(async () => resolveConsent({ accepted: true }));
+    expect(openingAudio).not.toHaveBeenCalled();
+    expect(getUserMedia).not.toHaveBeenCalled();
   });
 
   it("uses the one-use ticket only for the first-party relay and keeps capture off until ready", async () => {

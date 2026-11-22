@@ -635,11 +635,13 @@ export function PaigeLiveConversation({ disabled, meetPaige = false, onMeetBypas
    */
   const acceptTerms = async () => {
     if (disabled || acceptingTerms) return;
+    const generation = requestGeneration.current;
+    const isCurrent = () => mounted.current && generation === requestGeneration.current;
     setAcceptingTerms(true);
     setAnnouncement("Turning on Live Conversation.");
     try {
       const outcome = await controls.acceptTerms();
-      if (!mounted.current) return;
+      if (!isCurrent()) return;
       if (!outcome.accepted) {
         // THE BUG THIS REPLACES. The old branch set the explanation to the byte-for-byte sentence
         // already on screen and left the consent panel and its button exactly as they were, so a
@@ -667,7 +669,7 @@ export function PaigeLiveConversation({ disabled, meetPaige = false, onMeetBypas
       // acceptPaigeLiveTerms dynamically imports the Supabase client, and a hashed chunk goes stale
       // the moment a deploy lands under an open tab — which, shipping straight to main, is the
       // common case rather than the exotic one.
-      if (!mounted.current) return;
+      if (!isCurrent()) return;
       setExplanation("Paige could not turn Live on just now. Nothing was recorded, sent, or saved. Reload the page and try again, or keep working in this conversation.");
       setAnnouncement("Paige could not turn Live on. Nothing was recorded or sent.");
     } finally {

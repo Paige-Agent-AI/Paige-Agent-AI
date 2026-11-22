@@ -12,13 +12,23 @@
  * handler in CI by scripts/client-memory-authz (checks 18.ID1–ID8).
  */
 import { readFileSync, readdirSync } from "node:fs";
+import ts from "typescript";
 import { describe, it, expect } from "vitest";
 
 const HANDLER = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
-// The confirm gate (autoMode === "confirm") through the end of its !approvedArgs handling. The block
-// runs ~8346–8560; slice generously by characters so every assertion lands inside it.
-const gateStart = HANDLER.indexOf('if (autoMode === "confirm") {');
-const gate = HANDLER.slice(gateStart, gateStart + 26000);
+// Select the whole original gate as it grows, never truncate its stored-argument
+// restoration. Ambiguous or missing gates are extraction errors, not weak passes.
+const handlerAst = ts.createSourceFile("paige-ai-chat.ts", HANDLER, ts.ScriptTarget.Latest, true);
+const confirmBlocks: ts.Block[] = [];
+function findConfirmGate(node: ts.Node) {
+  if (ts.isIfStatement(node) && node.expression.getText(handlerAst) === 'autoMode === "confirm"'
+      && ts.isBlock(node.thenStatement)) confirmBlocks.push(node.thenStatement);
+  ts.forEachChild(node, findConfirmGate);
+}
+findConfirmGate(handlerAst);
+if (confirmBlocks.length !== 1) throw new Error(`Original confirmation gate missing/ambiguous: ${confirmBlocks.length}`);
+const gateStart = confirmBlocks[0].parent.getStart(handlerAst);
+const gate = confirmBlocks[0].getText(handlerAst);
 
 // Equivalent to the original recursive *.ts scan, without a POSIX-shell/GNU
 // grep dependency in the Windows engineering environment. Keep repo-relative

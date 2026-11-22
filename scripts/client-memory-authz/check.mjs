@@ -4942,6 +4942,30 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
 // canonical `resolve_tool_autonomy_detail.ceiling_allows_auto`. D2: the funnel tools fell through to
 // "Unknown tool"; they are reachable, and a build that fails after an earlier write is PARTIAL.
 // Each check names the mutation it kills.
+// Studio draft tests exercise the real Chat binding with a synthetic generator
+// response and the original native writer's return contract.
+const studioDraftFixture = (sessionId) => {
+  const blocks = [{ type: "hero", title: "Spring offer" }];
+  const seo = { title: "Spring offer", description: "A spring workshop." };
+  const source = { ok: true, tenant_id: CALLER_TENANT, session_id: sessionId, artifact_refs: [],
+    project_context: { target: { kind: "workspace" }, values: {} }, page_id: null, updated_at: null, conversion: null };
+  const save = { name: "growth_page_save", args: { title: "Model echo to ignore", blocks: [{ type: "unknown_section" }] } };
+  const calls = [{ name: "growth_page_generate", args: { brief: "A page for the spring offer", page_intent: "new" } }, save];
+  const page = { id: "5e550000-0000-4000-8000-000000000090", tenant_id: CALLER_TENANT, slug: "spring-offer", title: seo.title, status: "draft" };
+  const saved = { ok: true, page, version_id: "5e550000-0000-4000-8000-000000000091", forms: [], changed: true, reconciled: false };
+  const rpcs = {
+    studio_save_page: (args) => {
+      const bound = args.p_expected_tenant === CALLER_TENANT && args.p_session_id === sessionId && args.p_page_id === null
+        && args.p_title === seo.title && args.p_slug === page.slug
+        && JSON.stringify(args.p_blocks_json) === JSON.stringify(blocks)
+        && JSON.stringify(args.p_seo_json) === JSON.stringify(seo)
+        && JSON.stringify(args.p_expected_project_context) === JSON.stringify(source.project_context);
+      return bound ? { data: saved, error: null } : { data: null, error: { code: "22023", message: "Unbound Studio fixture payload" } };
+    },
+  };
+  return { save, calls, blocks, source, saved, rpcs,
+    functions: { "growth-page-draft": { data: { blocks, theme_json: null, seo_json: seo, studio_source: source }, error: null } } };
+};
 {
   const THREAD = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
   const SESSION = "5e550000-0000-4000-8000-000000000001";
@@ -4968,13 +4992,15 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   ) ? [row] : [];
   const SCOPE_ROW = { paige_subagents: platformRowOnly({ config: { capability_scope: { version: 1, mode: "allowlist", tools: STUDIO_TOOLS } } }) };
   const PAGE_ROW = { growth_page_upsert: { data: { id: "page-1", slug: "spring-offer", status: "draft", tenant_id: null }, error: null } };
-  const studioSave = async (ceilingAllowsAuto, { detailError = null } = {}) => {
+  const draft32 = studioDraftFixture(SESSION);
+  const studioSave = async (ceilingAllowsAuto, { detailError = null, generate = true } = {}) => {
     const st = makeConfirmStore();
     return drive({
       stream: true, extraBody: { threadId: THREAD },
-      toolCall: { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } },
+      toolCall: generate ? draft32.calls : draft32.save,
+      functionsExtra: draft32.functions,
       rpcOverrides: {
-        ...AS_TENANT, ...WS, ...PAGE_ROW,
+        ...AS_TENANT, ...WS, ...PAGE_ROW, ...draft32.rpcs,
         resolve_tool_autonomy: { data: "confirm", error: null },
         resolve_tool_autonomy_detail: detailError
           ? { data: null, error: detailError }
@@ -4990,7 +5016,7 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   // Kills: deleting `&& (await ceilingAllowsAuto(...))` from the Studio lift.
   const held = await studioSave(false);
   assert("32.1 rung 1: a Studio page save does not write — the ceiling's confirm stands",
-    called(held, "growth_page_upsert") === 0, JSON.stringify(held.rec.rpc.map((c) => c.name)));
+    called(held, "growth_page_upsert") === 0 && called(held, "studio_save_page") === 0, JSON.stringify(held.rec.rpc.map((c) => c.name)));
   assert("32.1b …it is offered for approval instead (a held proposal, not a silent drop)",
     /"needs_confirm":true/.test(wire(held)), wire(held).slice(0, 400));
   assert("32.1c …and the lift asked the ceiling fact, not only the mode",
@@ -5000,13 +5026,18 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   // Kills: removing the lift altogether (the #292 stall returns).
   const lifted = await studioSave(true);
   assert("32.2 rung 2+: a Studio page save runs without a card",
-    called(lifted, "growth_page_upsert") === 1 && !/"needs_confirm":true/.test(wire(lifted)),
-    JSON.stringify({ upserts: called(lifted, "growth_page_upsert") }));
+    called(lifted, "studio_save_page") === 1 && called(lifted, "growth_page_upsert") === 0
+      && wire(lifted).includes(draft32.saved.version_id) && !/"needs_confirm":true/.test(wire(lifted)),
+    JSON.stringify({ saves: called(lifted, "studio_save_page"), upserts: called(lifted, "growth_page_upsert") }));
 
   // ── 32.3 An unclear ceiling answer lifts nothing. Kills: treating an errored detail read as allow.
   const unclear = await studioSave(true, { detailError: { message: "function does not exist" } });
   assert("32.3 an errored ceiling read fails closed: no write",
-    called(unclear, "growth_page_upsert") === 0, JSON.stringify(unclear.rec.rpc.map((c) => c.name)));
+    called(unclear, "growth_page_upsert") === 0 && called(unclear, "studio_save_page") === 0, JSON.stringify(unclear.rec.rpc.map((c) => c.name)));
+  const ungenerated = await studioSave(true, { generate: false });
+  assert("32.3b a direct Studio save without a generated preview refuses before either writer",
+    called(ungenerated, "studio_save_page") === 0 && called(ungenerated, "growth_page_upsert") === 0
+      && wire(ungenerated).includes("STUDIO_PAGE_SOURCE_REQUIRED"), wire(ungenerated).slice(0, 600));
 
   // ── 32.4 Main PAIGE is untouched: outside a Studio thread the same save at `confirm` is held, and
   // the ceiling fact is never consulted. Kills: making the lift (or the detail read) global.
@@ -6063,37 +6094,51 @@ console.log("\nC4a — an approval resumes the same objective on the server");
   // proposal. (b) If the Studio scope stops offering the tool before the approval arrives, it is not run
   // and the approval is left unspent — the capability fingerprint, not just the dispatch scope guard.
   const SESSION20 = "5e550000-0000-4000-8000-000000000020";
-  const STUDIO_TOOLS20 = ["ask_choices", "capability_status", "growth_page_save", "growth_list", "web_search"];
+  const draft20 = studioDraftFixture(SESSION20);
+  const STUDIO_TOOLS20 = ["ask_choices", "capability_status", "growth_page_generate", "growth_page_save", "growth_list", "web_search"];
   const studioScope = (tools) => ({ paige_subagents: (filters) => (
     filters.some((f) => f[0] === "eq" && f[1] === "slug" && f[2] === "design-studio") && filters.some((f) => f[0] === "is" && f[1] === "tenant_id" && f[2] === null)
   ) ? [{ config: { capability_scope: { version: 1, mode: "allowlist", tools } } }] : [] });
   const studioThread = { paige_chat_threads: () => [{ studio_session_id: SESSION20, summary: null, last_image_content_id: null, last_image_anchor_at: null }],
     studio_sessions: () => [{ id: SESSION20, artifact_refs: [], title: "Spring launch" }] };
   const studioDrive = (st, tools, body, toolCall) => drive({
-    stream: true, extraBody: { threadId: THREAD, ...body }, toolCall,
-    rpcOverrides: { get_actor_access: { data: { tier: "tenant" }, error: null }, studio_role_ok: { data: true, error: null }, ...PAGE,
+    stream: true, extraBody: { threadId: THREAD, ...body }, toolCall, functionsExtra: draft20.functions,
+    rpcOverrides: { get_actor_access: { data: { tier: "tenant" }, error: null }, studio_role_ok: { data: true, error: null }, ...PAGE, ...draft20.rpcs,
       resolve_tool_autonomy: { data: "confirm", error: null }, resolve_tool_autonomy_detail: { data: { mode: "confirm", ceiling_allows_auto: false }, error: null } },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...studioScope(tools) },
     tablesExtra: { ...studioThread, paige_pending_confirmations: st.table },
-    onInsert: mirrorConfirms(st),
+    onInsert: (table, row) => mirrorConfirms(st)(table, table === "paige_pending_confirmations" ? { id: crypto.randomUUID(), ...row } : row),
   });
   const st20 = makeConfirmStore();
-  const held20 = await studioDrive(st20, STUDIO_TOOLS20, {}, { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } });
+  const held20 = await studioDrive(st20, STUDIO_TOOLS20, {}, draft20.calls);
   const token20 = framesOf(held20.bodyText).find((f) => f.paige_confirm)?.paige_confirm?.fingerprint ?? null;
   const studioRan = await studioDrive(st20, STUDIO_TOOLS20, { approvedConfirmations: [token20] });
   assert("39.20 Studio: an approved held save is carried forward once from its stored proposal",
-    !!token20 && studioRan.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 1 && st20.rows[0].consumed === true
-      && resumedFrames(studioRan.bodyText).length === 1,
-    JSON.stringify({ token20, upserts: studioRan.rec.rpc.filter((c) => c.name === "growth_page_upsert").length }));
+    !!token20 && studioRan.rec.rpc.filter((c) => c.name === "studio_save_page").length === 1
+      && studioRan.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 0
+      && st20.rows[0]?.consumed === true && resumedFrames(studioRan.bodyText).length === 1,
+    JSON.stringify({ token20, saves: studioRan.rec.rpc.filter((c) => c.name === "studio_save_page").length }));
+  const studioAgain = await studioDrive(st20, STUDIO_TOOLS20, { approvedConfirmations: [token20] });
+  assert("39.20a the same Studio approval executes no second write and preserves the exact generation payload",
+    studioAgain.rec.rpc.every((c) => !["studio_save_page", "growth_page_upsert"].includes(c.name))
+      && JSON.stringify(st20.rows[0]?.args?.blocks) === JSON.stringify(draft20.blocks)
+      && st20.rows[0]?.studio_page_save_source?.session_id === SESSION20 && !toldModel(studioRan).includes("studio_page_save_source"),
+    JSON.stringify({ replayWrites: studioAgain.rec.rpc.filter((c) => c.name === "studio_save_page").length, storedBlocks: st20.rows[0]?.args?.blocks }));
   const st20b = makeConfirmStore();
-  const held20b = await studioDrive(st20b, STUDIO_TOOLS20, {}, { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } });
+  const held20b = await studioDrive(st20b, STUDIO_TOOLS20, {}, draft20.calls);
   const token20b = framesOf(held20b.bodyText).find((f) => f.paige_confirm)?.paige_confirm?.fingerprint ?? null;
   const narrowed = await studioDrive(st20b, STUDIO_TOOLS20.filter((t) => t !== "growth_page_save"), { approvedConfirmations: [token20b] });
   const outcome20b = outcomeOf(narrowed.bodyText);
   assert("39.20b Studio scope narrowed after the card: not run, approval unspent, the card says it no longer matches",
-    !!token20b && narrowed.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 0 && !st20b.rows[0].consumed
+    !!token20b && narrowed.rec.rpc.every((c) => !["studio_save_page", "growth_page_upsert"].includes(c.name)) && st20b.rows[0]?.consumed === false
       && resumedFrames(narrowed.bodyText).length === 0 && /no longer matches anything Paige can run/.test(outcome20b?.note ?? ""),
-    JSON.stringify({ outcome20b, consumed: st20b.rows[0].consumed }));
+    JSON.stringify({ outcome20b, consumed: st20b.rows[0]?.consumed }));
+  if (st20b.rows[0]) st20b.rows[0].studio_page_save_source = null;
+  const legacy20 = await studioDrive(st20b, STUDIO_TOOLS20, { approvedConfirmations: [token20b] });
+  assert("39.20c a pre-source Studio approval stays unspent and never writes a page",
+    !!token20b && st20b.rows[0]?.consumed === false && st20b.rows[0]?.studio_page_save_source === null
+      && legacy20.rec.rpc.every((c) => !["studio_save_page", "growth_page_upsert"].includes(c.name)),
+    JSON.stringify({ consumed: st20b.rows[0]?.consumed }));
 
   // ── 39.21 A DOOR TOOL'S ROW is never carried forward here, even one that (unlike real door rows)
   // carries a thread. Kills: letting door tools through `isResumableTool` (MV15) — on real rows the

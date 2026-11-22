@@ -14,6 +14,7 @@ import { describe, expect, it } from "vitest";
 import * as growthBlocks from "../../supabase/functions/_shared/growth-blocks.ts";
 import * as growthForms from "../../supabase/functions/_shared/growth-forms.ts";
 import * as studioCaller from "../../supabase/functions/_shared/studio-caller.ts";
+import { admitStudioDraftSession, admitStudioDraftPage } from "../../supabase/functions/_shared/growth/studio-landing-draft.ts";
 import { CHEESY_TELLS_AVOID } from "../../supabase/functions/_shared/cheesy-tells.ts";
 
 const MINE = "11111111-1111-4111-8111-111111111111";
@@ -71,7 +72,7 @@ function world(w: World) {
   };
   const adapters: Record<string, unknown> = {
     createClient: (_url: string, key: string) => (key === "service" ? service : authed),
-    ...growthBlocks, ...growthForms, ...studioCaller, CHEESY_TELLS_AVOID,
+    ...growthBlocks, ...growthForms, ...studioCaller, CHEESY_TELLS_AVOID, admitStudioDraftSession, admitStudioDraftPage,
     routedChatCompletion: async () => ({ choices: [{ message: { content: '{"artifact":"form","reasoning":"a standalone intake"}' } }] }),
     chatCompletionCompat: async () => { throw new Error("model down"); },
     callModel: async () => { throw new Error("model down"); },

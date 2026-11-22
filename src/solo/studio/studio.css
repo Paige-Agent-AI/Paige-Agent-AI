@@ -166,8 +166,10 @@
 .vs-studio .vs-crumbs option { background: #141028; }
 .vs-studio .vs-top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .vs-studio .vs-body { display: grid; grid-template-columns: 352px minmax(0, 1fr); min-height: 0; }
-.vs-studio .vs-chat { border-right: 1px solid var(--vs-line-soft); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; background: var(--vs-ink); }
-.vs-studio .vs-chat-log { overflow: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 14px; }
+.vs-studio .vs-chat { border-right: 1px solid var(--vs-line-soft); display: flex; flex-direction: column; min-height: 0; background: var(--vs-ink); }
+.vs-studio .vs-chat-context { flex: 0 1 auto; min-height: 0; max-height: 45%; overflow: auto; }
+.vs-studio .vs-project-context-editor { padding: 0 12px 8px; }
+.vs-studio .vs-chat-log { flex: 1 1 64px; min-height: 64px; overflow: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 14px; }
 .vs-studio .vs-msg-you { align-self: flex-end; max-width: 88%; background: var(--vs-panel-2); border: 1px solid var(--vs-line-soft); border-radius: 12px; padding: 9px 12px; font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
 .vs-studio .vs-msg-paige { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; font-size: 13px; line-height: 1.6; }
 .vs-studio .vs-msg-paige p { margin: 0; white-space: pre-wrap; }

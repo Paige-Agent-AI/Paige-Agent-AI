@@ -40,6 +40,8 @@ export interface ProviderFailureEvidence {
   errorCode?: string | null;
   /** The provider's message — read here, never kept. */
   message?: string | null;
+  /** OpenRouter's limit_source from error.metadata (closed code: openrouter_credits, openrouter_key_limit, openrouter_in_flight_budget). */
+  limitSource?: string | null;
   /** The request never got a response: a timeout, an abort or a reset connection. */
   transport?: "timeout" | "network" | null;
 }
@@ -69,12 +71,16 @@ export function classifyProviderFailure(e: ProviderFailureEvidence): ProviderFai
   }
   if (status === 402) {
     // OpenRouter 402 subtypes — sanitized closed codes, never the raw message.
+    // Use limit_source from OpenRouter's error metadata as the primary signal when available.
+    const ls = (e.limitSource ?? "").toLowerCase();
+    if (ls === "openrouter_key_limit") return "billing_key_limit";
+    if (ls === "openrouter_in_flight_budget") return "rate_limit";
     // Per-request cost limit (checked first: "requires more credits, or fewer max_tokens" means the request
     // is too expensive for available capacity, not account-level exhaustion).
     if (/\brequest (?:too expensive|cost exceeds|exceeds (?:max|limit))\b|\btoo expensive\b|\bmax cost per request\b|\bfewer max_tokens\b|\brequires more credits\b/i.test(msg)) return "billing_per_request";
-    // Account-level credit exhaustion (only when no per-request signal).
-    if (/\bcredit balance\b|\binsufficient (?:credits?|funds|balance)\b|\bbilling not active\b|\bno credits\b|\bout of credits\b|\baccount (?:credit|balance)\b|\bmore credits\b/i.test(msg)) return "billing_account";
-    // Key-level spending/usage limit.
+    // Account-level credit exhaustion (only when no per-request signal, or limit_source is openrouter_credits).
+    if (ls === "openrouter_credits" || /\bcredit balance\b|\binsufficient (?:credits?|funds|balance)\b|\bbilling not active\b|\bno credits\b|\bout of credits\b|\baccount (?:credit|balance)\b|\bmore credits\b/i.test(msg)) return "billing_account";
+    // Key-level spending/usage limit (fallback when limit_source is absent).
     if (/\b(?:spend(?:ing)?|usage) (?:limit|cap)\b|\breached your\b|\bexceeded your\b|\bkey (?:limit|cap)\b/i.test(msg)) return "billing_key_limit";
     // Generic billing (message null or unclassified) — preserves backward compat.
     return "billing";

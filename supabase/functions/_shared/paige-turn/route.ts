@@ -297,22 +297,17 @@ export interface RouteCandidate { provider: FabricProvider; model: string | null
  * governed gate. A provider chosen here grants no authority (owner's binding rule).
  */
 export const CLASS_POLICY: Readonly<Record<Exclude<CognitiveClass, "deterministic">, readonly RouteCandidate[]>> = {
+  // PO-EXP25 (2026-11-23): All classes route through OpenRouter Auto only.
+  // No dedicated OpenAI, Anthropic, Featherless, or Groq models. OpenRouter Auto
+  // selects the best model per request. GPT models excluded from Auto selection.
   cheap: [
     { provider: "openrouter", model: OPENROUTER_CHEAP },
-    { provider: "openai", model: OPENAI_CHEAP },
-    { provider: "featherless", model: null },
-    { provider: "groq", model: null },
-    { provider: "anthropic", model: CLAUDE_CLASSIFICATION },
   ],
   operational: [
     { provider: "openrouter", model: OPENROUTER_OPERATIONAL },
-    { provider: "openai", model: OPENAI_OPERATIONAL },
-    { provider: "anthropic", model: CLAUDE_REASONING },
   ],
   frontier: [
     { provider: "openrouter", model: OPENROUTER_FRONTIER },
-    { provider: "openai", model: OPENAI_FRONTIER },
-    { provider: "anthropic", model: CLAUDE_REASONING },
   ],
 };
 

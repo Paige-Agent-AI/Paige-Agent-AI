@@ -1586,7 +1586,8 @@ const SOURCES = {
   "supabase/functions/_shared/claude.ts": "cfbb18ce156d2259bf1904d6f6eaed8262e007c70929958c7261f185e20747ff",
   "supabase/functions/_shared/router-budget/mod.ts": "9b12ac32282e4223238688feef1d3e384406e9d9e1378fc94c9d937d7d6a20c4",
   "supabase/functions/_shared/model-router-gates.ts": "551cf84756d3a5b56a82c645c96ce51f0318f065b5969d19885ba591a506a566",
-  "supabase/functions/_shared/model-allowlist.ts": "d6b31c5c492d49a1872080a92bc1be5d086f1b68d0319cabf101d0a3a0b7d80e",
+  // ANT-166 OpenRouter Auto routing (2026-11-23): model-allowlist.ts adds openrouter/auto.
+  "supabase/functions/_shared/model-allowlist.ts": "bf2c961ef72952e551137b5f27c42e392af587bc43be2ff561218374eecc2573",
   "supabase/functions/_shared/env-key.ts": "796414f8b20785e10903af3794a6e31f9d8e7ca43de0404846def1fd11e3679e",
   "supabase/functions/_shared/provider-types.ts": "8d79766668fcee619bb09f8281f68face325e60182235535c90c42a26410c05b",
   "supabase/functions/_shared/openai.ts": "8b3b1f2c880e6517d5b7fffd56be603ab0e772ba3668d1992c60aa82c08368c9",
@@ -1634,7 +1635,7 @@ const SOURCES = {
   // 89d72496. Renewed 942ee7ce… via the guard's own canonicalization.
   // ANT-166 import fix (2026-11-22): scrubSecrets added to the llm-trace import in openai-responses.ts.
   // Old 39c311d8… reproduced from origin/main 074db1fa. Renewed cb4bcb2a… via the guard's own canonicalization.
-  "supabase/functions/_shared/openai-responses.ts": "cb4bcb2a77caedc1c1423122f37399baf68e3b10dfd019291f0d73d30b44ba67",
+  "supabase/functions/_shared/openai-responses.ts": "0052cf280fcdb0ee0ad20f9b2fd176ffae6785b6492c39b93ea83aea3916abc5",
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): provider-failure.ts gains billing_account,
   // billing_key_limit, billing_per_request subtypes for sanitized 402 classification.
   // Old eef5a704… reproduced from origin/main 89d72496. Renewed dea94f3f… via the guard's own canonicalization.
@@ -1642,7 +1643,10 @@ const SOURCES = {
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): route.ts FALLBACK_ON gains billing_account,
   // billing_key_limit, billing_per_request subtypes. Old b361efab… reproduced from origin/main 89d72496.
   // Renewed 36e3f4fa… via the guard's own canonicalization.
-  "supabase/functions/_shared/paige-turn/route.ts": "36e3f4fa43b2ce408117723f4f5c07d40dd0120b9061ddc444a6b5c8874e8477",
+  // ANT-166 OpenRouter Auto routing (2026-11-23): CLASS_POLICY now routes all classes through
+  // OpenRouter Auto only. Removed OpenAI, Anthropic, Featherless, Groq from all fallback chains.
+  // Old 36e3f4fa… reproduced from origin/main. Renewed 610211db… via the guard's own canonicalization.
+  "supabase/functions/_shared/paige-turn/route.ts": "610211db8331ef5916764ea619dcfaebe93b8d98e53a61ef92011ae54a5552f1",
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",
   "supabase/functions/_shared/cheesy-tells.ts": "7710d88a2999f0ab23870ff22f9ce46999d35d598982ce7f517a7fea0f4fab9a",
   "supabase/functions/_shared/claude-models.ts": "026a3b83753bd302319a1f671cfb560bb788c96b4f27bc44222cd6650fcc34fd",

@@ -64,7 +64,49 @@
   pointer-events: none;
 }
 
-.plc-film-galaxy { display: block; width: 100%; height: 100%; }
+.plc-film-galaxy-scene {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 0;
+  aspect-ratio: 1;
+  overflow: clip;
+  transform: translate(-50%, -50%);
+}
+
+.plc-film-galaxy-reveal,
+.plc-film-galaxy,
+.plc-film-orbits {
+  position: absolute;
+  inset: 0;
+}
+
+.plc-film-galaxy,
+.plc-film-orbits {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: plc-film-galaxy-spin 20.3s linear infinite;
+}
+
+.plc-film-orbits { animation: plc-film-galaxy-spin 31s linear infinite reverse; }
+
+.plc-film-galaxy-scene[data-arriving="true"] .plc-film-galaxy-reveal {
+  animation: plc-film-galaxy-arrive 1.36s var(--film-arrival) 2.5s both;
+}
+
+.plc-film-presence:is([data-held="true"], [data-hidden="true"]) :is(.plc-film-galaxy, .plc-film-orbits) {
+  animation-play-state: paused;
+}
+
+@keyframes plc-film-galaxy-spin {
+  to { transform: rotate(1turn); }
+}
+
+@keyframes plc-film-galaxy-arrive {
+  from { opacity: 0; transform: perspective(900px) rotateX(25deg) scale(.06); }
+  to { opacity: 1; transform: perspective(900px) rotateX(0) scale(1); }
+}
 
 [data-film-intro] :is(.plc-film-caption__cue, .plc-film-audio) {
   visibility: hidden;
@@ -329,6 +371,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .plc-film-galaxy,
+  .plc-film-orbits,
+  .plc-film-galaxy-scene[data-arriving="true"] .plc-film-galaxy-reveal { animation: none; }
   .plc-film-mark-flight { animation: none; }
   [data-layout="conversation-film"] .plc-film-mark {
     animation: none;
@@ -343,6 +388,7 @@
 @media (forced-colors: active) {
   .plc-film-mark__depth,
   .plc-film-galaxy,
+  .plc-film-orbits,
   [data-layout="conversation-film"] .plc-presence::before {
     display: none;
   }

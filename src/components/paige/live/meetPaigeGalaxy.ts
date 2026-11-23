@@ -1,14 +1,10 @@
 export const MEET_PAIGE_INTRO_MS = 4350;
 const TAU = 2 * Math.PI;
-const clamp = (value: number) => Math.min(1, Math.max(0, value));
-const mix = (a: number, b: number, amount: number) => a + (b - a) * amount;
-const smooth = (value: number) => clamp(value) ** 2 * (3 - 2 * clamp(value));
-const ease = (value: number) => 1 - (1 - clamp(value)) ** 3;
 
 const colors = [
   "#7fbccc40", "#98aeef7a", "#b6dee2bb", "#d39fea5e", "#ffd099a5", "#fff4dae8",
 ];
-type Dust = Readonly<{ distance: number; angle: number; depth: number; size: number; color: number }>;
+type Dust = Readonly<{ across: number; rise: number; depth: number; size: number; color: number }>;
 
 function makeField(count: number, clouds: boolean): Dust[] {
   let seed = clouds ? 0x19359eaf : 0x7520182e;
@@ -24,7 +20,10 @@ function makeField(count: number, clouds: boolean): Dust[] {
     const level = random();
     const color = clouds ? Math.floor(level * 3)
       : distance < .21 ? 3 + Math.floor(level * 3) : level > .96 ? 5 : Math.floor(level * 4);
-    return { distance, angle, depth, color, size: clouds ? .09 + random() * .27 : .48 + random() ** 4 * 1.8 };
+    return {
+      across: Math.cos(angle) * distance, rise: Math.sin(angle) * distance,
+      depth, color, size: clouds ? .09 + random() * .27 : .48 + random() ** 4 * 1.8,
+    };
   }).sort((first, second) => first.color - second.color);
 }
 
@@ -77,7 +76,7 @@ function drawOrbits(ink: CanvasRenderingContext2D, x: number, y: number, radius:
   ink.restore();
 }
 
-export function createMeetPaigeGalaxy(ink: CanvasRenderingContext2D) {
+export function createMeetPaigeGalaxy(ink: CanvasRenderingContext2D, orbits: CanvasRenderingContext2D) {
   const document = ink.canvas.ownerDocument;
   const mist = [
     makeGlow(document, [[0, "#b790ec53"], [.43, "#8062b327"], [1, "#48317c00"]]),
@@ -90,49 +89,51 @@ export function createMeetPaigeGalaxy(ink: CanvasRenderingContext2D) {
     if (image) ink.drawImage(image, x - width / 2, y - height / 2, width, height);
   };
 
-  return (width: number, height: number, elapsed: number, intro: boolean, reduced: boolean) => {
-    ink.clearRect(0, 0, width, height);
-    const light = intro ? smooth((elapsed - 2500) / 1360) : 1;
-    if (light < .005) return;
-    const reveal = intro ? ease((elapsed - 2720) / 1550) : 1;
-    const turn = reduced ? .32 : elapsed * .00031 + reveal * 1.04;
-    const compact = width < 650;
-    const x = width * .5, y = height * (compact ? .36 : .4);
-    const radius = Math.min(width * .32, height * .335) * mix(.06, 1, ease(light));
-    const tilt = mix(1.02, .47, reveal);
+  return (size: number, compact: boolean) => {
+    ink.clearRect(0, 0, size, size);
+    orbits.clearRect(0, 0, size, size);
+    const x = size * .5, y = size * .5;
+    const radius = size / 3.08;
+    const turn = .32;
+    const tilt = .47;
     const outline = -.19;
     const cos = Math.cos(outline), sin = Math.sin(outline);
     const ct = Math.cos(tilt), st = Math.sin(tilt);
+    const cosTurn = Math.cos(turn), sinTurn = Math.sin(turn);
+    let px = 0, py = 0;
     const project = (point: Dust) => {
-      const across = Math.cos(point.angle + turn) * point.distance;
-      const rise = Math.sin(point.angle + turn) * point.distance;
+      const across = point.across * cosTurn - point.rise * sinTurn;
+      const rise = point.across * sinTurn + point.rise * cosTurn;
       const up = rise * ct - point.depth * st;
       const projection = radius * 3.8 / (3.8 - rise * st - point.depth * ct);
-      return [x + (across * cos - up * sin) * projection, y + (across * sin + up * cos) * projection];
+      px = x + (across * cos - up * sin) * projection;
+      py = y + (across * sin + up * cos) * projection;
     };
 
     ink.save();
     ink.globalCompositeOperation = "screen";
-    ink.globalAlpha = light * .64;
+    ink.globalAlpha = .64;
     glow(corona, x, y, radius * 3.04, radius * 2.69);
-    drawOrbits(ink, x, y, radius, turn, light, false);
-    ink.globalAlpha = light * .83;
+    ink.globalAlpha = .83;
     for (const cloud of clouds) {
-      const [px, py] = project(cloud);
+      project(cloud);
       glow(mist[cloud.color], px, py, radius * cloud.size, radius * cloud.size * .87);
     }
-    ink.globalAlpha = light;
+    ink.globalAlpha = 1;
     let color = -1;
     for (let index = 0; index < dust.length; index += compact ? 2 : 1) {
       const point = dust[index];
       if (color !== point.color) { color = point.color; ink.fillStyle = colors[color]; }
-      const [px, py] = project(point);
+      project(point);
       const size = point.size * (compact ? .84 : 1);
       ink.fillRect(px, py, size, size);
     }
-    ink.globalAlpha = light * .72;
+    ink.globalAlpha = .72;
     glow(flare, x, y, radius * .72, radius * .66);
-    drawOrbits(ink, x, y, radius, turn, light, true);
     ink.restore();
+    orbits.globalCompositeOperation = "screen";
+    drawOrbits(orbits, x, y, radius, turn, 1, false);
+    drawOrbits(orbits, x, y, radius, turn, 1, true);
+    orbits.globalCompositeOperation = "source-over";
   };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectStudioWorkflow, readStudioWorkflow, signStudioWorkflow, startsStudioPlanning, STUDIO_PLANNING_START, studioPlanBuildAllowsTool, studioPlanningAllowsTool, verifyStudioWorkflow } from "../../../supabase/functions/_shared/growth/studio-planning";
+import { projectStudioWorkflow, readStudioWorkflow, signStudioWorkflow, startsStudioPlanning, STUDIO_PLANNING_START, studioBuildOutcomeUnconfirmed, studioPlanBuildAllowsTool, studioPlanningAllowsTool, verifyStudioWorkflow } from "../../../supabase/functions/_shared/growth/studio-planning";
 
 const askId = "19fb714e-60d4-4c7b-adaf-1089dc8c3a60";
 const olderAskId = "829115a0-7ad1-4f01-8339-1e94c21569f9";
@@ -71,5 +71,13 @@ describe("Studio planning phase", () => {
     for (const tool of ["growth_page_publish", "growth_funnel_publish", "growth_form_publish", "social_publish", "crm_create_contact"]) {
       expect(studioPlanBuildAllowsTool(tool)).toBe(false);
     }
+  });
+
+  it("keeps an unknown native build result distinct from completed, refused or pending approval", () => {
+    expect(studioBuildOutcomeUnconfirmed(JSON.stringify({ success: false, outcome_unknown: true }))).toBe(true);
+    expect(studioBuildOutcomeUnconfirmed(JSON.stringify({ outcome: "capability_outcome_unknown" }))).toBe(true);
+    expect(studioBuildOutcomeUnconfirmed(JSON.stringify({ success: true, content_id: "original" }))).toBe(false);
+    expect(studioBuildOutcomeUnconfirmed(JSON.stringify({ success: false, needs_confirm: true }))).toBe(false);
+    expect(studioBuildOutcomeUnconfirmed(JSON.stringify({ success: false, error: "invalid_arguments" }))).toBe(false);
   });
 });

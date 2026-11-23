@@ -339,7 +339,7 @@ import { bindStudioGeneratedPage, createStudioPageSave, studioPageTargetMatches,
 // #292 / #343 U1 — the Studio design-agent system-prompt WRAPPER (identity + operating core + the
 // generative-UI choice-card rule), externalized so it lives in one editable home (§9/§12/§18).
 import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
-import { readStudioWorkflow, signStudioWorkflow, startsStudioPlanning, STUDIO_PLAN_APPROVAL, STUDIO_PLANNING_CORE, studioPlanBuildAllowsTool, studioPlanningAllowsTool, type StudioProofScope, verifyStudioWorkflow } from "../_shared/growth/studio-planning.ts";
+import { readStudioWorkflow, signStudioWorkflow, startsStudioPlanning, STUDIO_PLAN_APPROVAL, STUDIO_PLANNING_CORE, studioBuildOutcomeUnconfirmed, studioPlanBuildAllowsTool, studioPlanningAllowsTool, type StudioProofScope, verifyStudioWorkflow } from "../_shared/growth/studio-planning.ts";
 // Tier Rail Spine (Phase D): the SAME declared-rail tier resolver + client-seat
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
@@ -12270,8 +12270,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         callerOwnTenantMemo = null;
         const resultsBeforeThisCall = toolResults.length;
         try {
-        if (MUTATING_TOOLS.has(tc.function.name) && (requestExecutionState.needsReview || interactive &&
-            (interactiveReceiptScanSaturated || interactiveUnresolvedEffects.some((effect) => MUTATING_TOOLS.has(effect.tool))))) {
+        const studioBuildHeld = studioPlanBuild && requestExecutionState.needsReview;
+        if (studioBuildHeld || (MUTATING_TOOLS.has(tc.function.name) && (requestExecutionState.needsReview || interactive &&
+            (interactiveReceiptScanSaturated || interactiveUnresolvedEffects.some((effect) => MUTATING_TOOLS.has(effect.tool)))))) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, not_applied: true, refused_before_run: true,
             error: "prior_effect_reconciliation_required",
             message: "An earlier consequential action has an unknown outcome. Read back and reconcile its authoritative receipt before any further write. It has not been declared failed or retried." }) });
@@ -19842,7 +19843,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // refusal (`continue`), or a throw. Its one result is the entry this call pushed (the
           // loop's one-result-per-executed-tc invariant), found by position rather than by `tc.id`,
           // which a provider may omit. The hook never throws.
-          stepHooks?.finish(tc, toolIndex, toolResults.length > resultsBeforeThisCall ? toolResults[resultsBeforeThisCall] : undefined);
+          const result = toolResults.length > resultsBeforeThisCall ? toolResults[resultsBeforeThisCall] : undefined;
+          if (studioPlanBuild && studioBuildOutcomeUnconfirmed(result?.content)) requestExecutionState.needsReview = true;
+          stepHooks?.finish(tc, toolIndex, result);
         }
       }
       return { toolResults, executed, scopeInvalidated: false, interactiveError: null };
@@ -21120,6 +21123,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             convo.push(...toolResults);
             // Observe/audit/persist prior tool truth before terminating a partial batch.
             if (interactiveError) throw interactiveError;
+            if (studioPlanBuild && requestExecutionState.needsReview) {
+              turnTracker.interrupted();
+              forcedTermination = true;
+              finalAssistantText = "I couldn’t confirm this build. Check the original project and its saved versions before making further changes.";
+              finalChunks = [enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
+                enc.encode("data: [DONE]\n\n")];
+              break;
+            }
             if (interactive && originalResearchAccepted) {
               // Native begin already saved this exact accepted terminal. End this
               // objective here, without another model/tool round or another receipt.

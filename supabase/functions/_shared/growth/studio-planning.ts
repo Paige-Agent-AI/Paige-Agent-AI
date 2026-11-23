@@ -92,6 +92,18 @@ export function studioPlanBuildAllowsTool(name: string) {
   return PRIVATE_STUDIO_BUILD_TOOLS.has(name);
 }
 
+export function studioBuildOutcomeUnconfirmed(content: unknown): boolean {
+  if (typeof content !== "string") return false;
+  try {
+    const result = JSON.parse(content);
+    return result?.outcome_unknown === true || result?.outcome === "outcome_unknown"
+      || result?.outcome === "capability_outcome_unknown" || result?.reason === "outcome_unknown"
+      || result?.error === "outcome_unknown";
+  } catch {
+    return false;
+  }
+}
+
 export function projectStudioWorkflow(
   turns: readonly { studioWorkflow?: StudioWorkflow | null }[],
   newProject: boolean,

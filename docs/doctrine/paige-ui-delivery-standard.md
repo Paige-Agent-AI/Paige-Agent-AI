@@ -46,6 +46,14 @@ Every UI PR adds a `docs/evidence/ui-delivery/*.md` record based on the template
 
 The workflow runs for pull requests and direct pushes to `main`. It blocks before merge only when repository rules require the `Validate UI delivery evidence` check; that external ruleset status must be verified rather than inferred from this file.
 
+## Motion performance
+
+For changes that add or materially alter user-visible motion, exercise the actual component in representative desktop and phone geometries, including high pixel density where supported. Measure an active state that exercises the work, such as speaking, scrolling, or a sustained animation. Compare baseline and candidate on the same setup when a baseline exists. In the existing UI evidence record, capture frame intervals and actual draw or repaint frequency where measurable. Record the browser and version, OS, viewport, pixel density, device or emulation, and fixture or production scope.
+
+Use compositor transforms and opacity for continuous movement where they preserve the design. Bound canvas or raster dimensions, pixel density, and steady-state redraw work. Check the actual scroll owner and verify that motion causes no overflow or layout instability. Pause work while hidden or held. Under reduced motion, keep meaningful state and progress feedback visible.
+
+Measure branded Chrome and Edge and native macOS Safari when those browsers are in the supported scope. Report Windows Playwright WebKit as engine evidence. Track native Safari, physical phone performance, authenticated production behavior, and owner acceptance at their actual evidence levels. Use the existing independent review and UI evidence workflow. Any unavailable browser or device measurement stays `UNVERIFIED` under the existing prelaunch release policy.
+
 ## Solo requirements
 
 After safe release, verify 1536x770, 1366x768, 1024x768, and 900x1000 with PAIGE closed and open. Test the affected tenant/context and one different known-good Solo tenant/context. Inspect the actual scroll owner, clipping, reachability, keyboard path, focus handling, zoom/reflow, reduced motion, and relevant loading/empty/error/retry/permission/success/cancellation/workspace-switch states. Unrun checks remain `UNVERIFIED`; they cannot supply a customer readiness or acceptance claim.

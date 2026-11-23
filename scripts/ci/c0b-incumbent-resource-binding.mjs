@@ -1632,11 +1632,11 @@ const SOURCES = {
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): openai-responses.ts gains provider_failure_class
   // in emitTrace metadata (sanitized closed-code billing subtype). Old a50cc17f… reproduced from origin/main
   // 89d72496. Renewed 942ee7ce… via the guard's own canonicalization.
-  "supabase/functions/_shared/openai-responses.ts": "afad4ac2388ba97aa5d6c3869005bc30cf36ca93a48615d7289ce7683c1024e0",
+  "supabase/functions/_shared/openai-responses.ts": "39c311d8800b58a31eaff4cdbe257680fda37f90d5a0025bcc5780f74039f27f",
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): provider-failure.ts gains billing_account,
   // billing_key_limit, billing_per_request subtypes for sanitized 402 classification.
   // Old eef5a704… reproduced from origin/main 89d72496. Renewed dea94f3f… via the guard's own canonicalization.
-  "supabase/functions/_shared/provider-failure.ts": "01a2acadaaeca1d7de6730b31d352693a1c922a8a7c7b09bc77c3e9d977ed1c3",
+  "supabase/functions/_shared/provider-failure.ts": "358011da8972677e4c5e3a760feefc96fe3fc7d58341f16696eb07d10c69d8da",
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): route.ts FALLBACK_ON gains billing_account,
   // billing_key_limit, billing_per_request subtypes. Old b361efab… reproduced from origin/main 89d72496.
   // Renewed 36e3f4fa… via the guard's own canonicalization.

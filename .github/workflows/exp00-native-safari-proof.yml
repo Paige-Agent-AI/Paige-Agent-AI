@@ -1,0 +1,49 @@
+name: EXP00 native Safari motion proof
+on:
+  push:
+    branches: [codex/exp00-native-safari-proof]
+
+permissions:
+  contents: read
+
+jobs:
+  native-safari:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Establish the exact source and native browser
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "8eeb632c69c79b35c391cc59679eab26a6f43e0d"
+          git diff --exit-code HEAD^ HEAD -- src public package.json package-lock.json
+          sw_vers
+          /usr/bin/safaridriver --version
+          /usr/bin/safaridriver --enable || sudo -n /usr/bin/safaridriver --enable
+          swift .github/safari-proof/display.swift
+          git worktree add --detach "$RUNNER_TEMP/paige-safari-baseline" fbea61da6b27334e47896e8d262f987656a1c520
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build baseline and candidate with an isolated relay fixture
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/paige-safari-baseline/node_modules"
+          node .github/safari-proof/safari.mjs build "$RUNNER_TEMP/paige-safari-baseline" "$RUNNER_TEMP/safari-build/baseline"
+          node .github/safari-proof/safari.mjs build "$GITHUB_WORKSPACE" "$RUNNER_TEMP/safari-build/candidate"
+      - name: Compare native foreground Safari motion
+        run: |
+          set -euo pipefail
+          node .github/safari-proof/safari.mjs drive "$RUNNER_TEMP/safari-build" "$RUNNER_TEMP/safari-proof"
+      - name: Retain sanitized fixture results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exp00-native-safari
+          path: ${{ runner.temp }}/safari-proof
+          if-no-files-found: ignore
+          retention-days: 7

@@ -26,7 +26,7 @@ import { NeedsConfigError } from "./provider-types.ts";
 import { classifyProviderFailure, type ProviderFailureClass } from "./provider-failure.ts";
 import { envKey } from "./env-key.ts";
 import { OPENROUTER_KEY_ENV_NAMES } from "./openrouter-models.ts";
-import { traceLLMCall, type TraceCtx } from "./llm-trace.ts";
+import { traceLLMCall, scrubSecrets, type TraceCtx } from "./llm-trace.ts";
 import { assertModelAllowed } from "./model-allowlist.ts";
 import { estimateOpenAIProviderUsageCost } from "./token-pricing.ts";
 import {
@@ -420,6 +420,8 @@ function emitTrace(trace: TraceCtx | undefined, row: {
   cache_signature?: string;
   /** Sanitized closed-code provider failure class (never the raw message). Stored even for metadata_only traces. */
   provider_failure_class?: string | null;
+  /** Sanitized truncated error detail (provider error type:code:message). Stored even for metadata_only traces. */
+  provider_error_detail?: string | null;
 }) {
   if (!trace) return;
   // Cost is priced once, in traceLLMCall (token-pricing.ts), so this path cannot drift from the meter.
@@ -443,6 +445,10 @@ function emitTrace(trace: TraceCtx | undefined, row: {
       caller_function: trace.agent_id, ...(row.stop_reason ? { stop_reason: row.stop_reason } : {}),
       ...(row.cache_signature ? { provider_cache_signature: row.cache_signature } : {}),
       ...(row.provider_failure_class ? { provider_failure_class: row.provider_failure_class } : {}),
+      // provider_error_detail is free-form provider text and MUST NOT be persisted for
+      // metadata_only traces (privacy: provider messages can echo request material).
+      ...(trace?.content_policy !== "metadata_only" && row.provider_error_detail
+        ? { provider_error_detail: scrubSecrets(row.provider_error_detail).slice(0, 200) } : {}),
       ...(row.usage ? {
         provider_total_input_tokens: row.usage.total_input,
         provider_cache_write_30m_tokens: row.usage.write30m,
@@ -490,7 +496,7 @@ export async function responsesCompletion(body: ChatShapeBody, opts: ResponsesCa
   if (!resp.ok) {
     // failureOf reads the body ONCE: the trace's short detail and the fabric's closed class.
     const f = await failureOf(resp, profile.provider);
-    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass });
+    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass, provider_error_detail: f.detail.slice(0, 200) });
     // INT-334 — carry the closed failure class (and the status) ON the throw, so the fabric's
     // consumer seam can classify a failed non-stream leg without parsing the message text.
     throw Object.assign(new Error(`${profile.provider} ${resp.status}: ${f.detail}`), { status: resp.status, failureClass: f.failureClass });
@@ -562,7 +568,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesStream
   }
   if (!resp.ok || !resp.body) {
     const f = resp.ok ? { detail: "missing_body", failureClass: "provider_outage" as ProviderFailureClass } : await failureOf(resp, profile.provider);
-    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: resp.ok ? "missing_body" : `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass });
+    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: resp.ok ? "missing_body" : `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass, provider_error_detail: f.detail.slice(0, 200) });
     return { ok: false, status: resp.status, error: f.detail, failureClass: f.failureClass };
   }
 

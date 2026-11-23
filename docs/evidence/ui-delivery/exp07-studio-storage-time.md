@@ -37,5 +37,5 @@ RELEASE_CHANNEL: development: Local regression and original-file metadata readba
 RELEASE_CLASSIFICATION: internal-only: Compatibility correction for the existing saved-media preview.
 CUSTOMER_RELEASE_IDENTITY: none: Signed-in readback remains open.
 RELEASE_NOTE_REQUIRED: no: Existing media handoff.
-RELEASE_TRUTH_BOUNDARY: Even though the Catalog and heading are live, the corrected image preview remains proof owed until deployment and signed-in verification.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: The corrected image preview awaits the exact Edge deployment and signed-in verification.
 RELEASE_RECOVERY: position=revert or forward-fix the timestamp comparison through the existing Edge release path; reference=ANT-162

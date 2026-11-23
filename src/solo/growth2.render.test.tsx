@@ -136,15 +136,9 @@ vi.mock("./useCampaignLeads", async (importOriginal) => ({
   }),
 }));
 
-// Content reads its library through Supabase; its own proof is marketing-content.render.test.tsx. Here it
-// shows only what the hub hands it, so the address wiring (?kind=, ?piece=) can be driven.
+// Content's published-record reader is covered separately. This stub proves the hub route.
 vi.mock("./marketing-content", () => ({
-  MarketingContent: ({ kind, onKind, piece, onPiece, view, onView }: React.ComponentProps<typeof import("./marketing-content").MarketingContent>) =>
-    <div data-content-stub data-kind={kind} data-piece={piece ?? ""} data-view={view}>
-      <button onClick={() => onKind("document")}>Stub documents</button><button onClick={() => onKind("all")}>Stub all</button>
-      <button onClick={() => onPiece("mc-9")}>Stub open</button><button onClick={() => onPiece(null)}>Stub close</button>
-      <button onClick={() => onView("published")}>Stub published</button>
-    </div>,
+  MarketingContent: () => <div data-content-stub>Published Content</div>,
 }));
 
 // Slice 2A — Catalog now opens on Offers, which reads through its own tenant-scoped adapter
@@ -1147,28 +1141,11 @@ describe("Solo Marketing department views", () => {
     expect(analyticsSummary()).toContain("in the last 30 days");
   });
 
-  it("Content's filter and open preview live in the address, and an unknown kind falls back to everything", () => {
+  it("opens the published catalog even from an old draft library link", () => {
     useWorkspace();
-    renderAt("/solo/42/growth/content");
-    const stub = () => host.querySelector("[data-content-stub]")!;
-    expect(stub().getAttribute("data-kind")).toBe("all");
-    expect(stub().getAttribute("data-view")).toBe("published");
-    act(() => button("Stub documents")!.click());
-    expect(location()).toBe("/solo/42/growth/content?content_view=media&kind=document");
-    expect(stub().getAttribute("data-kind")).toBe("document");
-    act(() => button("Stub open")!.click());
-    expect(location()).toBe("/solo/42/growth/content?content_view=media&kind=document&piece=mc-9");
-    expect(stub().getAttribute("data-piece")).toBe("mc-9");
-    act(() => button("Stub close")!.click());
-    act(() => button("Stub all")!.click());
-    expect(location()).toBe("/solo/42/growth/content?content_view=media");
-    act(() => button("Stub published")!.click());
+    renderAt("/solo/42/growth/content?content_view=media&kind=document&piece=mc-9");
+    expect(host.querySelector("[data-content-stub]")?.textContent).toBe("Published Content");
     expect(location()).toBe("/solo/42/growth/content");
-    act(() => root.unmount()); host.remove();
-    renderAt("/solo/42/growth/content?kind=spreadsheets&piece=mc-3");
-    expect(stub().getAttribute("data-kind")).toBe("all");
-    expect(stub().getAttribute("data-piece")).toBe("mc-3");
-    expect(stub().getAttribute("data-view")).toBe("media");
   });
 
   it("a capture point opens that form's panel on Overview, and Sales performance opens Sales › Performance", () => {

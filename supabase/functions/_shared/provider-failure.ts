@@ -70,9 +70,9 @@ export function classifyProviderFailure(e: ProviderFailureEvidence): ProviderFai
   if (status === 402) {
     // OpenRouter 402 subtypes — sanitized closed codes, never the raw message.
     // Account-level credit exhaustion.
-    if (/\bcredit balance\b|\binsufficient (?:credits?|funds|balance)\b|\bbilling not active\b|\bno credits\b|\bout of credits\b|\baccount (?:credit|balance)\b/i.test(msg)) return "billing_account";
+    if (/\bcredit balance\b|\binsufficient (?:credits?|funds|balance)\b|\bbilling not active\b|\bno credits\b|\bout of credits\b|\baccount (?:credit|balance)\b|\brequires more credits\b|\bmore credits\b/i.test(msg)) return "billing_account";
     // Per-request cost limit (check before key-level, since "max cost per request" contains "request").
-    if (/\brequest (?:too expensive|cost exceeds|exceeds (?:max|limit))\b|\btoo expensive\b|\bmax cost per request\b/i.test(msg)) return "billing_per_request";
+    if (/\brequest (?:too expensive|cost exceeds|exceeds (?:max|limit))\b|\btoo expensive\b|\bmax cost per request\b|\bfewer max_tokens\b/i.test(msg)) return "billing_per_request";
     // Key-level spending/usage limit.
     if (/\b(?:spend(?:ing)?|usage) (?:limit|cap)\b|\breached your\b|\bexceeded your\b|\bkey (?:limit|cap)\b/i.test(msg)) return "billing_key_limit";
     // Generic billing (message null or unclassified) — preserves backward compat.

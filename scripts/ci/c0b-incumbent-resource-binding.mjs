@@ -1580,7 +1580,7 @@ const SOURCES = {
   // `provider_failure_class` so the sanitized closed-code billing subtype is persisted even for
   // metadata_only traces. `safeMetadata` exported for regression testing. Old 588857f4… reproduced
   // from origin/main 89d72496. Renewed e87ad6af… via the guard's own canonicalization.
-  "supabase/functions/_shared/llm-trace.ts": "e87ad6af6e9a7dddaaa2e9349de98c731c8ff87aec0eb99b4a314e32336f46a7",
+  "supabase/functions/_shared/llm-trace.ts": "f0afc91bc87f967b5a49e55463fbafb3e3667e9b6a9c475d07fbd8960613bf3a",
   "supabase/functions/_shared/prompt-forge.ts": "0abdeb7a887ac7b566dd8f21c11140122985d2acf0b5b6020596974ffd3e11ee",
   "supabase/functions/_shared/voyage.ts": "4eb1a516b2ce4679e83bfa62bb908a4b2e3be4d48dcdc89df75bb160bd6569b2",
   "supabase/functions/_shared/claude.ts": "cfbb18ce156d2259bf1904d6f6eaed8262e007c70929958c7261f185e20747ff",
@@ -1632,11 +1632,11 @@ const SOURCES = {
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): openai-responses.ts gains provider_failure_class
   // in emitTrace metadata (sanitized closed-code billing subtype). Old a50cc17f… reproduced from origin/main
   // 89d72496. Renewed 942ee7ce… via the guard's own canonicalization.
-  "supabase/functions/_shared/openai-responses.ts": "942ee7ce0b29eeb6000ec80c02f20aa50064b9449a13979d65391e566b126bda",
+  "supabase/functions/_shared/openai-responses.ts": "afad4ac2388ba97aa5d6c3869005bc30cf36ca93a48615d7289ce7683c1024e0",
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): provider-failure.ts gains billing_account,
   // billing_key_limit, billing_per_request subtypes for sanitized 402 classification.
   // Old eef5a704… reproduced from origin/main 89d72496. Renewed dea94f3f… via the guard's own canonicalization.
-  "supabase/functions/_shared/provider-failure.ts": "dea94f3fbb0e1ba037b4e2546b2bafca043b25e0c341e42729bc85e91202eb89",
+  "supabase/functions/_shared/provider-failure.ts": "01a2acadaaeca1d7de6730b31d352693a1c922a8a7c7b09bc77c3e9d977ed1c3",
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): route.ts FALLBACK_ON gains billing_account,
   // billing_key_limit, billing_per_request subtypes. Old b361efab… reproduced from origin/main 89d72496.
   // Renewed 36e3f4fa… via the guard's own canonicalization.

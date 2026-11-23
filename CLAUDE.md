@@ -1,5 +1,16 @@
 # Paige Agent AI — Working Doctrine
 
+## MANDATORY OWNER ROLE MAP — EXP00 MEET PAIGE; EXP06 VIBE STUDIO; EXP07 MARKETING — November 23, 2026
+
+This owner decision supersedes contrary *current/future* role descriptions without rewriting historical evidence or restarting work. The canonical controlling records are the Coordinator Bootstrap, Owner North Star, ANT-161, ANT-158, ANT-50, ANT-162 and original Outcomes.
+
+- **EXP00 OWNS MEET PAIGE** as the named first-meeting/onboarding experience in the authenticated SOLO Signup→Welcome→First Value journey. First-use visual/voice introduction, new-user presentation, entry and relevant original 23 authenticated cases sit with EXP00. **EXP01 owns the shared Chat/Live/conversational loop and Setup interview/confirmation/readback**, consumed by EXP00 under exact source leases and receiving acknowledgment. Moving the product Experience does not give EXP00 duplicate Chat/Live engines or other agents' private source.
+- **EXP06 OWNS VIBE STUDIO** as the one original creative workplace for creating, drafting, editing, versioning, recovering, reviewing and publishing authorized assets/media/websites/pages/funnels/forms. Existing unlinked draft retrieval must be protected. **EXP07 OWNS MARKETING** including marketing strategies/campaign work, performance, channel coordination, and a published-only Marketing Content catalog referencing original verified published Studio images/videos/pages/sites/funnels/forms/social receipts; it does not independently originate/edit Studio drafts, replace Studio publication, or run a second web/form/funnel/creative engine. EXP07's existing approved published-only catalog is STILL the current selected outcome; its original source, review and deployment sequence continue in coordination with EXP06 Studio draft restoration.
+- EXP03 retains CRM/opportunities, Conversations/replies, lead and sales attribution; EXP10 provider/Vault custody; EXP05 original Work/Harness/orchestration and Rail; EXP08 Team Hub; PO-EXP25 only Model Fabric. Handoffs must identify the original writer and receiving ACK, preserve tenant/role/permission checks, real source/version/readback and effect approvals.
+- **MVP vs program:** Initial SOLO MVP means the original three approved cross-functional acceptance journeys (lead/revenue/delivery; owner goal/Work/COO Briefing; authorized connected-tool result) with the necessary first-value/security/reliability/quality proofs. It is NOT the cancellation of original EXP00–19 and PO-EXP assignments; held portfolio features remain queued or held, not falsely activated or automatically imposed on the initial release. Commercial launch/price/provider activation still requires owner authority.
+- Apply EAS-01 and task-appropriate UI skills within each existing ONE authorized outcome. Preserve nonauthor review/CI/safe merge+deployment, legitimate live proof and final owner acceptance; no blanket new implementation, staffing, gate, timer or duplicate infrastructure is authorized.
+
+
 ## MANDATORY UI/UX SPECIALIST SKILLS — November 22 Owner Decision in ANT-147; Clarified November 23
 
 For **every authorized UI/UX task**, retain the mandatory **Flow by Flow → Impeccable** sequence AND select, read, and apply **at least the one most relevant** specialist skill from this owner-approved trio:

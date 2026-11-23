@@ -26,7 +26,7 @@ import { NeedsConfigError } from "./provider-types.ts";
 import { classifyProviderFailure, type ProviderFailureClass } from "./provider-failure.ts";
 import { envKey } from "./env-key.ts";
 import { OPENROUTER_KEY_ENV_NAMES } from "./openrouter-models.ts";
-import { traceLLMCall, type TraceCtx } from "./llm-trace.ts";
+import { traceLLMCall, scrubSecrets, type TraceCtx } from "./llm-trace.ts";
 import { assertModelAllowed } from "./model-allowlist.ts";
 import { estimateOpenAIProviderUsageCost } from "./token-pricing.ts";
 import {

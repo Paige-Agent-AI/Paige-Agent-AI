@@ -1632,7 +1632,9 @@ const SOURCES = {
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): openai-responses.ts gains provider_failure_class
   // in emitTrace metadata (sanitized closed-code billing subtype). Old a50cc17f… reproduced from origin/main
   // 89d72496. Renewed 942ee7ce… via the guard's own canonicalization.
-  "supabase/functions/_shared/openai-responses.ts": "39c311d8800b58a31eaff4cdbe257680fda37f90d5a0025bcc5780f74039f27f",
+  // ANT-166 import fix (2026-11-22): scrubSecrets added to the llm-trace import in openai-responses.ts.
+  // Old 39c311d8… reproduced from origin/main 074db1fa. Renewed cb4bcb2a… via the guard's own canonicalization.
+  "supabase/functions/_shared/openai-responses.ts": "cb4bcb2a77caedc1c1423122f37399baf68e3b10dfd019291f0d73d30b44ba67",
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): provider-failure.ts gains billing_account,
   // billing_key_limit, billing_per_request subtypes for sanitized 402 classification.
   // Old eef5a704… reproduced from origin/main 89d72496. Renewed dea94f3f… via the guard's own canonicalization.

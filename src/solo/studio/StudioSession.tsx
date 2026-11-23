@@ -219,6 +219,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const planning = refs.length === 0 && (chat.workflow.phase === "planning" || (!chat.ready && startsWithPlanning));
   const resolvingPhase = !chat.ready && !chat.loadError && !seedBrief;
   const projectWorkspace = !planning && !resolvingPhase;
+  const buildReadbackPending = Boolean(chat.workflow.pendingBuild && refs.length === 0);
 
   React.useLayoutEffect(() => {
     const panel = chatRef.current;
@@ -310,13 +311,14 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const approvePlan = () => {
     if (!chat.workflow.proposal || chat.sending || contextSaving || !projectContext) return;
     previousChatRect.current = chatRef.current?.getBoundingClientRect() ?? null;
+    setChatOpen(true);
     setInput("");
     void chat.approvePlan();
   };
 
   const submit = () => {
     const text = input.trim();
-    if (!text || chat.sending || !chat.ready || contextSaving) return;
+    if (!text || chat.sending || !chat.ready || contextSaving || buildReadbackPending) return;
     if (planning && chat.workflow.proposal && /^(?:please\s+)?approve(?: this| the)? (?:plan|design)[.!]?$/i.test(text)) {
       approvePlan();
       return;
@@ -476,7 +478,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
             {planning && chat.ready && !chat.sending && chat.turns.length === 0 && session?.seedBrief && projectContext && (
               <button type="button" className="vs-btn vs-btn-violet" onClick={() => void chat.send(session.seedBrief ?? "")}>Start planning</button>
             )}
-            {chat.workflow.pendingBuild && <div className="vs-confirm">
+            {buildReadbackPending && !chat.sending && <div className="vs-confirm">
               <b>Plan approved. Build result pending.</b>
               <button type="button" className="vs-btn" onClick={() => void chat.checkBuild()}>Check build status</button>
             </div>}
@@ -518,8 +520,8 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
                 <span>{c.summary}</span>
                 {!c.state ? (
                   <div className="vs-confirm-actions">
-                    <button type="button" className="vs-btn vs-btn-violet" disabled={chat.sending} onClick={() => void chat.decide(c.fingerprint, true)}>Approve</button>
-                    <button type="button" className="vs-btn vs-btn-quiet" disabled={chat.sending} onClick={() => void chat.decide(c.fingerprint, false)}>Not this</button>
+                    <button type="button" className="vs-btn vs-btn-violet" disabled={chat.sending || buildReadbackPending} onClick={() => void chat.decide(c.fingerprint, true)}>Approve</button>
+                    <button type="button" className="vs-btn vs-btn-quiet" disabled={chat.sending || buildReadbackPending} onClick={() => void chat.decide(c.fingerprint, false)}>Not this</button>
                   </div>
                 ) : c.state === "sent" ? (
                   <small role="status">Paige is running it…</small>
@@ -537,11 +539,12 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
                 id="vs-chat-input"
                 ref={inputRef}
                 value={input}
+                disabled={buildReadbackPending && !chat.sending}
                 placeholder={chat.choices ? "Answer above, or type here" : planning ? "Discuss the plan with NEXUS" : artifact ? "Tell NEXUS what to change" : "Tell NEXUS what to build"}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
               />
-              <button type="button" className="vs-send" aria-label="Send" disabled={!input.trim() || chat.sending || !chat.ready} onClick={submit}><ArrowUp size={16} /></button>
+              <button type="button" className="vs-send" aria-label="Send" disabled={!input.trim() || chat.sending || !chat.ready || buildReadbackPending} onClick={submit}><ArrowUp size={16} /></button>
             </div>
             {planning && chat.workflow.proposal && <div className="vs-plan-approval">
               <button type="button" className="vs-btn vs-btn-violet" onClick={approvePlan} disabled={chat.sending || contextSaving || !projectContext}>Approve plan &amp; start build</button>

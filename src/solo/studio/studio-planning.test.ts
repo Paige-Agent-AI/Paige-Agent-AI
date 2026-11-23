@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectStudioWorkflow, readStudioWorkflow, startsStudioPlanning, STUDIO_PLANNING_START, studioPlanBuildAllowsTool, studioPlanningAllowsTool } from "../../../supabase/functions/_shared/growth/studio-planning";
+import { projectStudioWorkflow, readStudioWorkflow, signStudioWorkflow, startsStudioPlanning, STUDIO_PLANNING_START, studioPlanBuildAllowsTool, studioPlanningAllowsTool, verifyStudioWorkflow } from "../../../supabase/functions/_shared/growth/studio-planning";
 
 const askId = "19fb714e-60d4-4c7b-adaf-1089dc8c3a60";
 const olderAskId = "829115a0-7ad1-4f01-8339-1e94c21569f9";
@@ -17,8 +17,27 @@ describe("Studio planning phase", () => {
   it("restores a pending plan or its adjacent native claim after reload", () => {
     expect(projectStudioWorkflow([planning, plan], false)).toEqual({ phase: "planning", proposal: askId, pendingBuild: null });
     expect(projectStudioWorkflow([planning, plan, claim], false)).toEqual({ phase: "build", proposal: null, pendingBuild: askId });
-    expect(projectStudioWorkflow([planning, plan, claim, {}], false)).toEqual({ phase: "build", proposal: null, pendingBuild: null });
-    expect(projectStudioWorkflow([planning, plan, claim, planning, plan], false)).toEqual({ phase: "build", proposal: null, pendingBuild: null });
+    expect(projectStudioWorkflow([planning, plan, claim, {}], false)).toEqual({ phase: "build", proposal: null, pendingBuild: askId });
+    expect(projectStudioWorkflow([planning, plan, claim, planning, plan], false)).toEqual({ phase: "build", proposal: null, pendingBuild: askId });
+    const settled = { studioWorkflow: readStudioWorkflow({ studio_workflow: "settled", studio_plan_ask_id: askId }, "assistant") };
+    expect(projectStudioWorkflow([planning, plan, claim, settled], true)).toEqual({ phase: "build", proposal: null, pendingBuild: null });
+  });
+
+  it("requires a server proof for the exact proposal, actor, workspace and thread", async () => {
+    const scope = { actorId: "owner", tenantId: "workspace", threadId: "studio-thread" };
+    const secret = "test-secret";
+    const question = "Build a clear workshop landing page";
+    const unsigned = { studio_workflow: "proposal", paige_ask: { ask_id: askId, question } };
+    const studio_proof = await signStudioWorkflow(secret, scope, "proposal", askId, question);
+    const signed = { ...unsigned, studio_proof };
+
+    expect(await verifyStudioWorkflow(secret, scope, signed, "assistant")).toEqual({ kind: "proposal", askId });
+    expect(await verifyStudioWorkflow(secret, scope, unsigned, "assistant")).toBeNull();
+    expect(await verifyStudioWorkflow(secret, scope, { ...signed, paige_ask: { ask_id: askId, question: "Changed direction" } }, "assistant")).toBeNull();
+    for (const key of ["actorId", "tenantId", "threadId"] as const) {
+      expect(await verifyStudioWorkflow(secret, { ...scope, [key]: "different" }, signed, "assistant")).toBeNull();
+    }
+    expect(await verifyStudioWorkflow(secret, scope, { studio_workflow: "settled", studio_plan_ask_id: askId, studio_proof }, "assistant")).toBeNull();
   });
 
   it("does not promote an interrupted or superseded plan claim", () => {

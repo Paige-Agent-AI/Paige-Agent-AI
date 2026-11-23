@@ -257,7 +257,14 @@ describe("Vibe Studio project workspace", () => {
     const fetch = globalThis.fetch;
     vi.stubGlobal("fetch", vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const result = await fetch(url, init);
-      if (h.fetchBodies.at(-1)?.surfaceContext && h.fetchBodies.length === 1) h.history = planRead();
+      const surface = h.fetchBodies.at(-1)?.surfaceContext as { action?: { kind?: string } } | undefined;
+      const studioAction = surface?.action?.kind;
+      if (studioAction === "planning") h.history = planRead();
+      if (studioAction === "approve") h.history = [
+        ...planRead(),
+        { role: "user", content: "Approve this plan and start the private build.", studioWorkflow: { kind: "build", askId } },
+        { role: "assistant", content: "Your intake form is ready. Want a pipeline stage for it?", studioWorkflow: { kind: "settled", askId } },
+      ];
       return result;
     }));
     await startProject(brief);
@@ -283,6 +290,7 @@ describe("Vibe Studio project workspace", () => {
       messages: [{ role: "user", content: brief }, { role: "assistant", content: plan }, { role: "user", content: expect.any(String) }] });
     expect(h.fetchBodies[1]).not.toHaveProperty("approvedConfirmations");
     expect(host.querySelector(".vs-chat")).toBe(chat);
+    expect(chat?.getAttribute("data-open")).toBe("true");
     expect(text()).toContain(plan);
     expect(text()).toContain("Wrote 3 questions");
     expect(text()).toContain("Saved the form");
@@ -327,6 +335,7 @@ describe("Vibe Studio project workspace", () => {
     await act(async () => { host.querySelector<HTMLButtonElement>(".vs-card")!.click(); });
     await flush();
     expect(text()).toContain("Build result pending");
+    expect(host.querySelector<HTMLTextAreaElement>("#vs-chat-input")?.disabled).toBe(true);
     await act(async () => { button("Check build status")!.click(); });
     await flush();
     expect(text()).toContain("no confirmed reply yet");

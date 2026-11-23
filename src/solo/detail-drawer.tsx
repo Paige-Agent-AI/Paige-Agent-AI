@@ -21,6 +21,7 @@ export function DetailDrawer({ detail, onClose }) {
     background.forEach((node) => node.setAttribute("inert", ""));
     closeRef.current?.focus({ preventScroll: true });
     const onKeyDown = (event) => {
+      if (drawerRef.current?.closest("[inert]")) return;
       if (event.key === "Escape") { event.preventDefault(); onClose(); return; }
       if (event.key !== "Tab") return;
       // Only what Tab can actually reach: controls inside a collapsed <details> are not focusable,

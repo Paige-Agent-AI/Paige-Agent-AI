@@ -45,6 +45,8 @@ Deno.test("OpenRouter 402 subtypes: sanitized closed codes, never the raw messag
   assertEquals(c({ provider: "openrouter", status: 402, message: "Billing not active for this account." }), "billing_account");
   assertEquals(c({ provider: "openrouter", status: 402, message: "No credits remaining." }), "billing_account");
   assertEquals(c({ provider: "openrouter", status: 402, message: "Out of credits." }), "billing_account");
+  // Combined OpenRouter message: "requires more credits, or fewer max_tokens" → per_request (not account).
+  assertEquals(c({ provider: "openrouter", status: 402, message: "This request requires more credits, or fewer max_tokens. You requested up to 123950 tokens." }), "billing_per_request");
   // Key-level spending/usage limit.
   assertEquals(c({ provider: "openrouter", status: 402, message: "You have reached your specified API usage limits." }), "billing_key_limit");
   assertEquals(c({ provider: "openrouter", status: 402, message: "Spend limit exceeded for this key." }), "billing_key_limit");

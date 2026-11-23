@@ -20,8 +20,8 @@
 
 .content-catalog-shell .content-catalog-title h1,
 .content-catalog-shell .content-catalog h2 { color: var(--catalog-ink); }
-.content-catalog-title { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
-.content-catalog-title h1 { font-size: clamp(2rem, 4vw, 3.5rem); letter-spacing: -.04em; line-height: 1; margin: 0; }
+.content-catalog-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.content-catalog-title h1 { font-size: clamp(1.375rem, 1.8vw, 1.75rem); letter-spacing: -.025em; line-height: 1.15; margin: 0; }
 .content-catalog-mode { display: flex; gap: 4px; align-items: center; border: 1px solid var(--catalog-line); background: var(--catalog-raised); border-radius: 8px; padding: 3px; }
 .content-catalog-mode button { min-height: 36px; padding: 6px 12px; color: var(--catalog-ink); background: transparent; border: 0; border-radius: 5px; cursor: pointer; }
 .content-catalog-mode button[aria-pressed="true"] { color: #231839; background: #e4d6ff; }

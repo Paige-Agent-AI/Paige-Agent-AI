@@ -32,7 +32,7 @@ import { VoiceDeviceProvider } from "@/lib/voice/VoiceDeviceProvider";
 import { DialPadSurface } from "@/components/admin/voice/DialPadSurface";
 import { IncomingCallOverlay } from "@/components/admin/voice/IncomingCallOverlay";
 import { LiveTranscriptPanel } from "@/components/admin/voice/LiveTranscriptPanel";
-import { parseStudioSavedMediaHandoff } from "./studio/saved-media-handoff";
+import { lockStudioMediaBackground, parseStudioSavedMediaHandoff } from "./studio/saved-media-handoff";
 
 // Route-level code split (EXP01 outcome 1): the chat-first Solo entry previously
 // compiled EVERY screen into its first download — 2.6 MB raw / 739 kB gzip — because
@@ -433,10 +433,7 @@ const studioScopeChanged=Boolean(studio?.asset&&(studio.asset.expectedTenantId!=
 const studioMediaOpen=Boolean(studio?.asset&&!studioScopeChanged&&route==='growth');
 React.useLayoutEffect(()=>{
   if(!studioMediaOpen)return;
-  const host=studioReturnFocus.current?.closest('[data-solo-screen-host]');
-  if(!host||host.hasAttribute('inert'))return;
-  host.setAttribute('inert','');
-  return()=>host.removeAttribute('inert');
+  return lockStudioMediaBackground(studioReturnFocus.current);
 },[studioMediaOpen]);
 React.useLayoutEffect(()=>{
   if(studio||!studioFocusPending.current)return;

@@ -20,3 +20,11 @@ export function parseStudioSavedMediaHandoff(input: unknown): StudioSavedMediaHa
     || typeof asset.expectedTenantId !== "string" || !UUID.test(asset.expectedTenantId)) return null;
   return { source: asset.source, id: asset.id, kind: asset.kind, expectedTenantId: asset.expectedTenantId };
 }
+
+/** Lock the launcher's screen until Studio closes, leaving pre-existing locks owned by their callers. */
+export function lockStudioMediaBackground(launcher: HTMLButtonElement | null): (() => void) | undefined {
+  const screen = launcher?.closest("[data-solo-screen-host]");
+  if (!screen || screen.hasAttribute("inert")) return;
+  screen.setAttribute("inert", "");
+  return () => screen.removeAttribute("inert");
+}

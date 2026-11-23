@@ -2,12 +2,13 @@
 // openai-models.ts. Pure data: no imports, no I/O, no env, so the allow-list and the Responses
 // adapter read identical constants.
 //
-// OpenRouter serves the SAME GPT-6 family PAIGE already routes by cognitive class, under its
-// `openai/` provider namespace. Verified against GET https://openrouter.ai/api/v1/models (2026-11-17)
-// and a live POST /api/v1/responses with `openai/gpt-6.1-sol`, which returned the completed Responses
-// shape the Fabric adapter already parses. Keeping the SAME class→model mapping means adding
-// OpenRouter changes WHICH TRANSPORT serves a class, never WHAT the class thinks with — the owner's
-// 2026-10-06 class policy (Luna / Sol / Astra) stays intact.
+// PO-EXP25 (2026-11-23): All classes route through OpenRouter Auto (`openrouter/auto`).
+// OpenRouter Auto selects the best model for each request based on task difficulty, benchmark
+// performance, live prices, and prompt caching. No dedicated GPT models, no Featherless, no
+// Anthropic, no Groq — OpenRouter Auto only. GPT models are excluded from Auto selection.
+//
+// This is a temporary routing decision until model comparison (OpenRouter Auto vs direct
+// model selection vs hybrid) is completed and the right model for each route is chosen.
 export const OPENROUTER_PROVIDER_PREFIX = "openai/";
 
 /**
@@ -20,9 +21,10 @@ export const OPENROUTER_PROVIDER_PREFIX = "openai/";
  */
 export const OPENROUTER_KEY_ENV_NAMES = ["OPEN_ROUTER_AI_API", "OPENROUTER_API_KEY"];
 
-export const OPENROUTER_CHEAP = `${OPENROUTER_PROVIDER_PREFIX}gpt-6-luna`;
-export const OPENROUTER_OPERATIONAL = `${OPENROUTER_PROVIDER_PREFIX}gpt-6.1-sol`;
-export const OPENROUTER_FRONTIER = `${OPENROUTER_PROVIDER_PREFIX}gpt-6-astra`;
+// All classes route through OpenRouter Auto. Auto selects the model per request.
+export const OPENROUTER_CHEAP = "openrouter/auto";
+export const OPENROUTER_OPERATIONAL = "openrouter/auto";
+export const OPENROUTER_FRONTIER = "openrouter/auto";
 
 export type OpenRouterReasoningClass = "cheap" | "operational" | "frontier";
 
@@ -32,9 +34,10 @@ export const OPENROUTER_MODEL_BY_CLASS: Readonly<Record<OpenRouterReasoningClass
   frontier: OPENROUTER_FRONTIER,
 };
 
-/** Reverse map for trace/readback: an OpenRouter served id names its class without parsing strings. */
+/** Reverse map for trace/readback: Auto doesn't map to a single class. */
 export const OPENROUTER_CLASS_BY_MODEL: Readonly<Record<string, OpenRouterReasoningClass>> = {
   [OPENROUTER_CHEAP]: "cheap",
-  [OPENROUTER_OPERATIONAL]: "operational",
-  [OPENROUTER_FRONTIER]: "frontier",
 };
+
+/** OpenRouter Auto excludes GPT models from selection. */
+export const OPENROUTER_EXCLUDED_MODELS = ["openai/*"];

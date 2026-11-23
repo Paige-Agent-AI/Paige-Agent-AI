@@ -48,13 +48,14 @@ export const MODEL_ALLOWLIST: Record<string, string[]> = {
     "gpt-image-1",
   ],
 
-  // OpenRouter — the SAME GPT-6 class models PAIGE already routes, under OpenRouter's `openai/`
-  // namespace (openrouter-models.ts). Ids are exact and verified against GET /api/v1/models
-  // (2026-11-17); the adapter sends them verbatim. No open-source or unvetted id is admitted.
+  // OpenRouter — routes through OpenRouter Auto (openrouter/auto). Auto selects the best model
+  // per request based on task difficulty, benchmark performance, live prices, and prompt caching.
+  // GPT models are excluded from Auto selection (excluded_models: ["openai/*"]).
   openrouter: [
     OPENROUTER_CHEAP,
     OPENROUTER_OPERATIONAL,
     OPENROUTER_FRONTIER,
+    "openrouter/auto",
   ],
 
   // Groq — open-fast text (OpenAI-compatible). Llama 3.3 70B is the workhorse.

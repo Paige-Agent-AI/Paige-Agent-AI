@@ -82,6 +82,8 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [previewing, setPreviewing] = React.useState<StudioVersion | null>(null);
   const [input, setInput] = React.useState("");
+  const chatRef = React.useRef<HTMLElement | null>(null);
+  const previousChatRect = React.useRef<DOMRect | null>(null);
   const logRef = React.useRef<HTMLDivElement | null>(null);
   const inputRef = React.useRef<HTMLTextAreaElement | null>(null);
   const publishBtnRef = React.useRef<HTMLButtonElement | null>(null);
@@ -202,15 +204,37 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
     return () => { live = false; };
   }, [activeRef?.id, activeRef?.kind, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const startsWithPlanning = Boolean(seedBrief || (session?.startsInPlanning && refs.length === 0));
   const chat = useStudioChat({
-    sessionId,
+    sessionId: session ? sessionId : null,
     seedBrief: projectContext ? seedBrief : null,
+    startInPlanning: startsWithPlanning,
+    hasArtifacts: refs.length > 0,
     canvas: activeRef ? { kind: activeRef.kind, id: activeRef.id } : null,
     onArtifact: (a) => { void reloadSession(a.id); },
     // A turn can link pieces without a produced-artifact frame (a page's form, a document), so the
     // manifest is re-read after every turn as well as the stage.
     onTurnDone: () => { setRefreshKey((k) => k + 1); void reloadSession(); },
   });
+  const planning = refs.length === 0 && (chat.workflow.phase === "planning" || (!chat.ready && startsWithPlanning));
+  const resolvingPhase = !chat.ready && !chat.loadError && !seedBrief;
+  const projectWorkspace = !planning && !resolvingPhase;
+
+  React.useLayoutEffect(() => {
+    const panel = chatRef.current;
+    const before = previousChatRect.current;
+    if (planning || !before) return;
+    previousChatRect.current = null;
+    inputRef.current?.focus({ preventScroll: true });
+    if (!panel || typeof panel.animate !== "function" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const after = panel.getBoundingClientRect();
+    if (!after.width) return;
+    const move = panel.animate([
+      { transform: `translateX(${before.left - after.left}px)`, opacity: 0.8 },
+      { transform: "translateX(0)", opacity: 1 },
+    ], { duration: 220, easing: "cubic-bezier(.2,.8,.2,1)" });
+    return () => move.cancel();
+  }, [planning]);
 
   const saveProjectContext = async () => {
     if (!contextDraft || (!contextMissing && !projectContext) || chat.sending || contextWrite.current) return;
@@ -283,9 +307,20 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
     return () => window.removeEventListener("keydown", k);
   }, [onBack, publishOpen, settingsOpen, chatOpen]);
 
+  const approvePlan = () => {
+    if (!chat.workflow.proposal || chat.sending || contextSaving || !projectContext) return;
+    previousChatRect.current = chatRef.current?.getBoundingClientRect() ?? null;
+    setInput("");
+    void chat.approvePlan();
+  };
+
   const submit = () => {
     const text = input.trim();
     if (!text || chat.sending || !chat.ready || contextSaving) return;
+    if (planning && chat.workflow.proposal && /^(?:please\s+)?approve(?: this| the)? (?:plan|design)[.!]?$/i.test(text)) {
+      approvePlan();
+      return;
+    }
     setInput("");
     void chat.send(text);
   };
@@ -320,10 +355,10 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   }
 
   return (
-    <div className="vs-session">
+    <div className="vs-session" data-studio-phase={planning ? "planning" : projectWorkspace ? "project" : "opening"}>
       <header className="vs-top">
         <button type="button" className="vs-icon-btn" aria-label="Back to Studio" onClick={onBack}><ArrowLeft size={17} /></button>
-        <button type="button" className="vs-btn vs-chat-toggle" aria-expanded={chatOpen} onClick={() => setChatOpen((o) => !o)}><MessageSquare size={15} aria-hidden="true" />{chatOpen ? "Hide chat" : "Chat"}</button>
+        {projectWorkspace && <button type="button" className="vs-btn vs-chat-toggle" aria-expanded={chatOpen} onClick={() => setChatOpen((o) => !o)}><MessageSquare size={15} aria-hidden="true" />{chatOpen ? "Hide chat" : "Chat"}</button>}
         <nav className="vs-crumbs" aria-label="Project">
           <span className="vs-crumb-studio">Studio /</span>
           <b className="vs-trunc" style={{ maxWidth: 260 }} title={displayTitle}>{displayTitle}</b>
@@ -335,9 +370,11 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
               </select>
             </>
           ) : activeRef && activeRef.title !== session?.title ? <><span aria-hidden="true">/</span><span className="vs-trunc" style={{ maxWidth: 220, color: "var(--vs-text)" }}>{activeRef.title}</span></> : null}
-          <span className="vs-status" data-tone={saveState.tone} role="status" aria-live="polite" style={{ marginLeft: 8 }}>{saveState.text}</span>
+          <span className="vs-status" data-tone={planning ? chat.sending ? "busy" : "idle" : saveState.tone} role="status" aria-live="polite" style={{ marginLeft: 8 }}>
+            {planning ? chat.sending ? "NEXUS is planning" : "In Progress" : projectWorkspace ? saveState.text : "Opening project"}
+          </span>
         </nav>
-        <div className="vs-top-actions">
+        {projectWorkspace && <div className="vs-top-actions">
           {session && (
             <button
               type="button"
@@ -368,7 +405,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           >
             {live && !pending && <Check size={14} />}{publishLabel}
           </button>
-        </div>
+        </div>}
         {publishOpen && artifact && (
           <PublishPanel
             // A different piece is a different door preparation: never carry a fingerprint across.
@@ -386,7 +423,11 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
       </header>
 
       <div className="vs-body">
-        <section className="vs-chat" aria-label="Chat with Paige" data-open={chatOpen}>
+        <section ref={chatRef} className="vs-chat" aria-label="NEXUS conversation" data-open={chatOpen}>
+          {planning && <header className="vs-planning-heading">
+            <h1>In Progress</h1>
+            <p>NEXUS planning conversation</p>
+          </header>}
           <div className="vs-chat-context">
           {/* The brief the project started from, pinned above the conversation so it survives reopen
               (EXP07 row 1): the chat's first message already carries it, but nothing showed it after
@@ -432,6 +473,13 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           <div className="vs-chat-log" ref={logRef}>
             {chat.loadError && <p className="vs-alert" role="alert">{chat.loadError}</p>}
             {!chat.ready && !chat.loadError && <p className="vs-inspector-note" role="status">Opening the conversation…</p>}
+            {planning && chat.ready && !chat.sending && chat.turns.length === 0 && session?.seedBrief && projectContext && (
+              <button type="button" className="vs-btn vs-btn-violet" onClick={() => void chat.send(session.seedBrief ?? "")}>Start planning</button>
+            )}
+            {chat.workflow.pendingBuild && <div className="vs-confirm">
+              <b>Plan approved. Build result pending.</b>
+              <button type="button" className="vs-btn" onClick={() => void chat.checkBuild()}>Check build status</button>
+            </div>}
             {chat.turns.map((t, i) => t.role === "user" ? (
               <div key={i} className="vs-msg-you">{t.content}</div>
             ) : (
@@ -463,8 +511,8 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
                 )}
               </div>
             ))}
-            {chat.choices && <AskCard choices={chat.choices} disabled={chat.sending} onAnswer={(v, d) => void chat.send(v, { display: d })} />}
-            {chat.confirms.map((c) => (
+            {chat.choices && chat.choices.options.length > 0 && <AskCard choices={chat.choices} disabled={chat.sending} onAnswer={(v, d) => void chat.send(v, { display: d })} />}
+            {!planning && chat.confirms.map((c) => (
               <div key={c.fingerprint} className="vs-confirm" data-state={c.state ?? "waiting"} role="group" aria-label={c.state ? "Your decision" : "Paige is waiting for your approval"}>
                 <b>{!c.state ? "Waiting for your approval" : c.state === "declined" ? "Skipped" : c.state === "sent" ? "Approved" : c.state === "ran" ? "Done" : c.state === "not_run" ? "Didn't run" : "Not confirmed"}</b>
                 <span>{c.summary}</span>
@@ -478,27 +526,30 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
                 ) : c.note ? <small role="status">{c.note}</small> : null}
               </div>
             ))}
-            {pendingApprovals.map((job) => <MediaApprovalCard key={job.id} job={job} media={media} />)}
+            {!planning && pendingApprovals.map((job) => <MediaApprovalCard key={job.id} job={job} media={media} />)}
             {chat.sendError && <p className="vs-alert" role="alert">{chat.sendError}</p>}
             {media.actionError && pendingApprovals.length > 0 && <p className="vs-alert" role="alert">{media.actionError}</p>}
           </div>
           <div className="vs-chat-input">
             <div className="vs-chat-box">
-              <label className="vs-sr" htmlFor="vs-chat-input">Tell Paige what to change</label>
+              <label className="vs-sr" htmlFor="vs-chat-input">{planning ? "Message NEXUS about the plan" : "Tell NEXUS what to change"}</label>
               <textarea
                 id="vs-chat-input"
                 ref={inputRef}
                 value={input}
-                placeholder={chat.choices ? "Answer above, or type here" : artifact ? "Tell Paige what to change" : "Tell Paige what to build"}
+                placeholder={chat.choices ? "Answer above, or type here" : planning ? "Discuss the plan with NEXUS" : artifact ? "Tell NEXUS what to change" : "Tell NEXUS what to build"}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
               />
               <button type="button" className="vs-send" aria-label="Send" disabled={!input.trim() || chat.sending || !chat.ready} onClick={submit}><ArrowUp size={16} /></button>
             </div>
+            {planning && chat.workflow.proposal && <div className="vs-plan-approval">
+              <button type="button" className="vs-btn vs-btn-violet" onClick={approvePlan} disabled={chat.sending || contextSaving || !projectContext}>Approve plan &amp; start build</button>
+            </div>}
           </div>
         </section>
 
-        <div className="vs-stage-wrap">
+        {projectWorkspace && <div className="vs-stage-wrap">
           <div className="vs-stage" role="region" aria-label="Stage">
             {notice && !publishOpen && (
               <p role="status" className="vs-notice">{notice} <button type="button" className="vs-link" onClick={() => setNotice(null)}>Dismiss</button></p>
@@ -521,17 +572,17 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           {settingsOpen && artifact?.kind === "form" && (
             <FormSettings tenantId={tenantId} formId={artifact.form.id} onClose={() => setSettingsOpen(false)} onSaved={() => setRefreshKey((k) => k + 1)} />
           )}
-        </div>
+        </div>}
       </div>
 
-      <Timeline
+      {projectWorkspace && <Timeline
         sessionId={sessionId}
         target={activeRef ? { kind: activeRef.kind, id: activeRef.id } : null}
         refreshKey={refreshKey}
         building={chat.sending ? (chat.status ?? "Working on it") : null}
         onRestored={(m) => { setPreviewing(null); setNotice(m); setRefreshKey((k) => k + 1); }}
         onPreview={setPreviewing}
-      />
+      />}
     </div>
   );
 }

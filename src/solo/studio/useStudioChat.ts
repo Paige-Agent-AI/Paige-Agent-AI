@@ -5,6 +5,7 @@ import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeStepStatus, readPaigeStream, settleOpenSteps } from "@/lib/paige-stream";
 import { ensureThread, loadHeldConfirms, loadTurns, plainError, Said, type ArtifactKind, type ChatTurn } from "./studio-data";
+import { projectStudioWorkflow, STUDIO_PLAN_APPROVAL } from "../../../supabase/functions/_shared/growth/studio-planning";
 
 /** One thing Paige did this turn. "running" while it is under way; it closes on the same id. */
 export interface BuildStep { id: string; label: string; detail?: string; status: "running" | "done" | "error"; at: number }
@@ -42,6 +43,9 @@ export interface StudioChatState {
   confirms: PendingConfirm[];
   preview: DraftPreview | null;
   sendError: string | null;
+  workflow: ReturnType<typeof projectStudioWorkflow>;
+  approvePlan: () => Promise<void>;
+  checkBuild: () => Promise<void>;
   send: (text: string, opts?: { display?: string; approved?: string[]; declined?: string[] }) => Promise<void>;
   /** Approve or decline one held action; the server runs only the exact call it fingerprinted. */
   decide: (fingerprint: string, approve: boolean) => Promise<void>;
@@ -50,6 +54,8 @@ export interface StudioChatState {
 export function useStudioChat(opts: {
   sessionId: string | null;
   seedBrief: string | null;
+  startInPlanning?: boolean;
+  hasArtifacts?: boolean;
   canvas: { kind: ArtifactKind; id: string } | null;
   onArtifact: (a: ProducedArtifact) => void;
   onTurnDone: () => void;
@@ -66,6 +72,7 @@ export function useStudioChat(opts: {
   const [confirms, setConfirms] = React.useState<PendingConfirm[]>([]);
   const [preview, setPreview] = React.useState<DraftPreview | null>(null);
   const [sendError, setSendError] = React.useState<string | null>(null);
+  const [workflow, setWorkflow] = React.useState(() => projectStudioWorkflow([], Boolean(opts.startInPlanning)));
   const cb = React.useRef(opts);
   cb.current = opts;
   const seeded = React.useRef<string | null>(null);
@@ -77,6 +84,7 @@ export function useStudioChat(opts: {
   React.useEffect(() => {
     let live = true;
     setThreadId(null); setReady(false); setTurns([]); setSteps([]); setChoices(null); setConfirms([]); setPreview(null); setLoadError(null); setSendError(null);
+    setWorkflow(projectStudioWorkflow([], Boolean(cb.current.startInPlanning)));
     if (!sessionId) return;
     (async () => {
       try {
@@ -84,6 +92,7 @@ export function useStudioChat(opts: {
         const [history, held] = await Promise.all([loadTurns(id), loadHeldConfirms(id)]);
         if (!live) return;
         setThreadId(id); setTurns(history); setConfirms(held); setReady(true);
+        setWorkflow(projectStudioWorkflow(history, Boolean(cb.current.startInPlanning)));
       } catch (e) {
         if (live) setLoadError(plainError(e, "This project's chat couldn't be opened. Try again in a moment."));
       }
@@ -91,9 +100,12 @@ export function useStudioChat(opts: {
     return () => { live = false; };
   }, [sessionId]);
 
-  const send = React.useCallback(async (text: string, sendOpts?: { display?: string; approved?: string[]; declined?: string[] }) => {
+  const send = React.useCallback(async (text: string, sendOpts?: { display?: string; approved?: string[]; declined?: string[]; planId?: string }) => {
     const trimmed = text.trim();
-    if (!trimmed || sending || !threadId) return;
+    if (!trimmed || sending || abort.current || !threadId) return;
+    const planningRequest = workflow.phase === "planning" && !cb.current.hasArtifacts && !sendOpts?.planId;
+    const studioWorkflow = sendOpts?.planId ? { kind: "approve", askId: sendOpts.planId }
+      : planningRequest ? { kind: "planning" } : undefined;
     setSendError(null); setChoices(null); setStatus(null); setSteps([]);
     // A decision keeps its card on screen as "sent" until the server says what happened; any other
     // message clears the cards it passes over. Either way the snapshot comes back if the send fails.
@@ -105,7 +117,7 @@ export function useStudioChat(opts: {
     const requestIntentId = failedIntent.current?.text === trimmed ? failedIntent.current.id : crypto.randomUUID();
     const before = turns;
     const shown = [...before, { role: "user" as const, content: sendOpts?.display ?? trimmed }];
-    const modelMessages = [...before, { role: "user" as const, content: trimmed }];
+    const modelMessages = [...before.map(({ role, content }) => ({ role, content })), { role: "user" as const, content: trimmed }];
     setTurns([...shown, { role: "assistant", content: "" }]);
     setSending(true);
     let produced: ProducedArtifact | null = null;
@@ -122,12 +134,18 @@ export function useStudioChat(opts: {
           messages: modelMessages,
           threadId,
           requestIntentId,
-          canvasArtifact: cb.current.canvas ? { id: cb.current.canvas.id, kind: cb.current.canvas.kind } : undefined,
+          canvasArtifact: !studioWorkflow && cb.current.canvas ? { id: cb.current.canvas.id, kind: cb.current.canvas.kind } : undefined,
+          surfaceContext: studioWorkflow ? { kind: "studio_workflow", action: studioWorkflow } : undefined,
           ...(sendOpts?.approved?.length ? { approvedConfirmations: sendOpts.approved } : {}),
           ...(sendOpts?.declined?.length ? { declinedConfirmations: sendOpts.declined } : {}),
         }),
       });
-      if (!resp.ok) throw new Said(resp.status === 429 ? "Give it a moment — too many requests." : "Paige couldn't take that just now. Try again.");
+      if (!resp.ok) throw new Said(resp.status === 429 ? "Give it a moment — too many requests."
+        : studioWorkflow ? "NEXUS couldn’t confirm this turn. Check the conversation before trying again." : "Paige couldn't take that just now. Try again.");
+      if (studioWorkflow && resp.headers.get("X-Paige-Studio-Workflow") !== (planningRequest ? "planning" : "build")) {
+        throw new Said("The planning service couldn’t be verified. Reopen this project to check its conversation.");
+      }
+      if (sendOpts?.planId) setWorkflow({ phase: "build", proposal: null, pendingBuild: null });
       let reply = "";
       let gotChoices = false;
       // This turn's steps, owned by the read: a later frame for an id replaces the earlier one in
@@ -139,7 +157,7 @@ export function useStudioChat(opts: {
       let sawConfirm = false;
       // The shared reader (src/lib/paige-stream) owns the framing. As this loop always did, [DONE]
       // ends the read and a line that is not JSON is skipped; a frame it does not name is dropped.
-      for await (const frame of readPaigeStream(resp.body, { stopAtDone: true, malformed: "skip" })) {
+      for await (const frame of readPaigeStream(resp.body, { stopAtDone: !planningRequest, malformed: "skip" })) {
         if (frame.type === "step") {
           if (typeof frame.step !== "object") continue;
           const ps = frame.step as Record<string, unknown>;
@@ -217,26 +235,46 @@ export function useStudioChat(opts: {
       const sawStep = built.length > 0;
       if (!reply.trim() && !gotChoices && !produced && !sawStep && !sawConfirm) setTurns([...shown, { role: "assistant", content: "I didn't catch that. Try saying it another way?" }]);
       failedIntent.current = null;
+      if (planningRequest) {
+        const history = await loadTurns(threadId);
+        if (controller.signal.aborted) return;
+        if (!reply.trim() || history.at(-1)?.role !== "assistant" || history.at(-1)?.content !== reply) {
+          throw new Said("NEXUS couldn’t confirm the planning reply was saved. Reopen the project to check the conversation.");
+        }
+        setTurns(history);
+        setWorkflow(projectStudioWorkflow(history, true));
+      }
       // A saved piece replaces any unsaved preview: the stage now shows the real thing.
       if (produced) { setPreview(null); cb.current.onArtifact(produced); }
     } catch (e) {
-      if (abort.current?.signal.aborted) return;
+      if (controller.signal.aborted) return;
       setTurns(before);
       setSteps([]);
+      if (studioWorkflow) setChoices(null);
       setConfirms(confirmsBefore);
       failedIntent.current = { text: trimmed, id: requestIntentId };
       setSendError(plainError(e, "Paige couldn't take that just now. Check your connection and try again."));
+      if (studioWorkflow) {
+        try {
+          const history = await loadTurns(threadId);
+          if (controller.signal.aborted) return;
+          setTurns(history);
+          setWorkflow(projectStudioWorkflow(history, true));
+        } catch {
+          setWorkflow(current => ({ ...current, proposal: null }));
+        }
+      }
     } finally {
+      if (abort.current === controller) abort.current = null;
       if (!controller.signal.aborted) {
         setSending(false);
         setStatus(null);
         cb.current.onTurnDone();
       }
     }
-  }, [sending, threadId, turns, confirms]);
+  }, [sending, threadId, turns, confirms, workflow.phase]);
 
-  // A brand-new project's first build: the brief from Studio home, sent once, the moment the
-  // thread is ready and empty.
+  // Start the new project's planning conversation once its original thread is ready and empty.
   React.useEffect(() => {
     if (!sessionId || !ready || sending || turns.length > 0) return;
     const brief = seedBrief?.trim();
@@ -250,6 +288,26 @@ export function useStudioChat(opts: {
     // only a call whose fingerprint is in approvedConfirmations, and a decline cancels the proposal.
     await send(approve ? "Approved — run it." : "Hold off — skip that one.", approve ? { approved: [fingerprint] } : { declined: [fingerprint] });
   }, [send]);
+  const approvePlan = React.useCallback(async () => {
+    if (workflow.phase === "planning" && workflow.proposal) {
+      await send(STUDIO_PLAN_APPROVAL, { planId: workflow.proposal });
+    }
+  }, [send, workflow]);
 
-  return { ready, loadError, turns, sending, steps, status, choices, confirms, preview, sendError, send, decide };
+  const checkBuild = React.useCallback(async () => {
+    if (!threadId || !workflow.pendingBuild || sending) return;
+    try {
+      const [history, held] = await Promise.all([loadTurns(threadId), loadHeldConfirms(threadId)]);
+      setTurns(history);
+      setConfirms(held);
+      const current = projectStudioWorkflow(history, Boolean(cb.current.startInPlanning));
+      setWorkflow(current);
+      setSendError(current.pendingBuild ? "The build has no confirmed reply yet. Check the canvas and saved versions before asking NEXUS to continue." : null);
+      cb.current.onTurnDone();
+    } catch {
+      setSendError("The build could not be checked. Try checking again.");
+    }
+  }, [sending, threadId, workflow.pendingBuild]);
+
+  return { ready, loadError, turns, sending, steps, status, choices, confirms, preview, sendError, workflow, approvePlan, checkBuild, send, decide };
 }

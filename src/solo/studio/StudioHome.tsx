@@ -170,9 +170,9 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
       <div className="vs-hero">
         <VsStars n={160} />
         <div className="vs-hero-inner">
-          <h1>What should Paige build?</h1>
+          <h1>What should NEXUS build?</h1>
           <div className="vs-composer">
-            <label className="vs-sr" htmlFor="vs-brief">Describe what you want Paige to build</label>
+            <label className="vs-sr" htmlFor="vs-brief">Describe what you want NEXUS to build</label>
             <textarea
               id="vs-brief"
               ref={ref}
@@ -196,16 +196,16 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
                     />
                   </div>
                 ))}
-                <p className="vs-brief-note">Optional. Whatever you add here is saved with the brief and Paige works from it — you can add the rest in chat.</p>
+                <p className="vs-brief-note">These details are saved with your brief. You can add to them in the planning conversation.</p>
               </div>
             )}
             <div className="vs-composer-foot">
-              <span>Paige works from <b>your brand</b> and your business details.</span>
+              <span>NEXUS works from <b>your brand</b> and your business details.</span>
               <button type="button" className="vs-link vs-brief-toggle" aria-expanded={detailsOpen} disabled={creating} onClick={() => setDetailsOpen((o) => !o)}>
                 {detailsOpen ? "Hide details" : hasBriefDetails(details) ? "Details · added" : "Add details"}
               </button>
               <button type="button" className="vs-btn vs-btn-violet" style={{ marginLeft: "auto" }} disabled={brief.trim().length < 4 || creating} onClick={() => void start(brief)}>
-                {creating ? "Starting…" : "Build it"} <ArrowUp size={14} aria-hidden="true" />
+                {creating ? "Starting…" : "Send to NEXUS"} <ArrowUp size={14} aria-hidden="true" />
               </button>
             </div>
           </div>

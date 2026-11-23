@@ -339,6 +339,7 @@ import { bindStudioGeneratedPage, createStudioPageSave, studioPageTargetMatches,
 // #292 / #343 U1 — the Studio design-agent system-prompt WRAPPER (identity + operating core + the
 // generative-UI choice-card rule), externalized so it lives in one editable home (§9/§12/§18).
 import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
+import { readStudioWorkflow, startsStudioPlanning, STUDIO_PLAN_APPROVAL, STUDIO_PLANNING_CORE, studioPlanBuildAllowsTool, studioPlanningAllowsTool } from "../_shared/growth/studio-planning.ts";
 // Tier Rail Spine (Phase D): the SAME declared-rail tier resolver + client-seat
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
@@ -975,7 +976,14 @@ const messageSchema = z.object({
     step: z.enum(["confirm_facts", "verify_website", "connect_venues", "compare_facts", "set_authority", "maintain_presence"]),
     intendedAction: z.enum(["review", "plan", "prepare_connection", "resolve_mismatch"]),
   }), z.object({ kind: z.literal("solo_business_interview") }).strict(),
-  z.object({ kind: z.literal("customer_portal") }).strict()]).optional(),
+  z.object({ kind: z.literal("customer_portal") }).strict(),
+  z.object({
+    kind: z.literal("studio_workflow"),
+    action: z.discriminatedUnion("kind", [
+      z.object({ kind: z.literal("planning") }).strict(),
+      z.object({ kind: z.literal("approve"), askId: z.string().uuid() }).strict(),
+    ]),
+  }).strict()]).optional(),
   businessMissionId: z.string().uuid().nullable().optional(),
   // Owner "Your Paige" multi-chat: the persisted conversation this turn belongs to.
   // When set, paige-ai-chat persists both turns + rehydrates recall server-side (#94).
@@ -1520,6 +1528,20 @@ serve(async (req) => {
     // The surface narrows the audience; only the native customer frame proves it.
     // It cannot supply a tenant/client identity or inherit a global owner role.
     const customerPortal = validatedData.surfaceContext?.kind === "customer_portal";
+    const studioWorkflow = validatedData.surfaceContext?.kind === "studio_workflow" ? validatedData.surfaceContext.action : undefined;
+    const studioPlanning = studioWorkflow?.kind === "planning";
+    const studioPlanBuild = studioWorkflow?.kind === "approve";
+    const refuseStudioWorkflow = (status: number, code: string) =>
+      new Response(JSON.stringify({ code, message_accepted: false }), {
+        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    if (studioWorkflow && (!validatedData.threadId || validatedData.interactive
+      || validatedData.liveRuntimeChallenge || validatedData.researchResume || validatedData.clientId || validatedData.businessMissionId
+      || validatedData.surface || validatedData.resume || validatedData.canvasArtifact || validatedData.document
+      || validatedData.attachments?.length || validatedData.sessionDocumentContext?.length || validatedData.generateSessionSummary
+      || validatedData.sessionMessages?.length || validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length)) {
+      return refuseStudioWorkflow(400, "STUDIO_WORKFLOW_INPUT_UNAVAILABLE");
+    }
     const customerFileIds = validatedData.customerFileIds;
     const customerPublicLink = validatedData.customerPublicLink === undefined ? null : customerPublicLinkUrl(validatedData.customerPublicLink);
     if (validatedData.customerPublicLink !== undefined && (!customerPublicLink || !customerPortal || validatedData.interactive?.kind !== "message" || validatedData.resume))
@@ -3660,9 +3682,11 @@ JSON:`;
     //   · NO ROW → unchanged. RLS hid it or it does not exist; every later thread read uses this same
     //     caller client and so returns nothing, the append RPC carries its own workspace predicate
     //     (20261020100000), and the service-role writes are already pinned to the active tenant.
+    let workflowSessionId: string | null = null;
     if (payloadThreadId) {
       const { data: turnThread, error: turnThreadErr } = await supabaseClient
-        .from("paige_chat_threads").select("tenant_id,audience").eq("id", payloadThreadId).maybeSingle();
+        .from("paige_chat_threads").select("tenant_id,audience,studio_session_id").eq("id", payloadThreadId).maybeSingle();
+      workflowSessionId = turnThread?.studio_session_id ?? null;
       if (turnThread?.audience === "customer_private" && !customerPortal)
         return new Response(JSON.stringify({code:"CHAT_AUDIENCE_MISMATCH"}),{status:403,headers:corsHeaders});
       const threadTenantId = (turnThread as { tenant_id?: string | null } | null)?.tenant_id ?? null;
@@ -7011,6 +7035,67 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         return null;
       }
     };
+    if (studioWorkflow || workflowSessionId) {
+      const boundStudio = payloadThreadId ? await readSummaryThread(payloadThreadId) : null;
+      if (!boundStudio?.studio_session_id || !boundStudio.tenant_id)
+        return refuseStudioWorkflow(403, "STUDIO_WORKFLOW_SCOPE_UNAVAILABLE");
+      const [registration, { data: marker, error: markerError }] = await Promise.all([
+        supabaseClient.from("studio_sessions").select("plan_first,artifact_refs,transcript")
+          .eq("id", boundStudio.studio_session_id).eq("tenant_id", boundStudio.tenant_id).maybeSingle(),
+        supabaseClient.from("paige_chat_turns").select("role,seq,bundle_ref").eq("thread_id", payloadThreadId!)
+          .not("bundle_ref->>studio_workflow", "is", null).order("seq", { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      // Edge and the native migration can roll forward independently. Existing projects can
+      // still run on the old schema; a new planning request waits for the native enrollment bit.
+      const olderSchema = registration.error?.code === "42703";
+      const legacyRegistration = olderSchema && !studioWorkflow
+        ? await supabaseClient.from("studio_sessions").select("artifact_refs,transcript")
+          .eq("id", boundStudio.studio_session_id).eq("tenant_id", boundStudio.tenant_id).maybeSingle()
+        : null;
+      const enrolled = legacyRegistration?.data ?? registration.data;
+      if (!enrolled || markerError || (legacyRegistration ? legacyRegistration.error : registration.error))
+        return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+      let claimRow = marker?.role === "user" && readStudioWorkflow(marker.bundle_ref, "user")?.kind === "build" ? marker : null;
+      if (marker && !claimRow) {
+        const { data: savedClaim, error } = await supabaseClient.from("paige_chat_turns")
+          .select("role,seq,bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "user")
+          .eq("bundle_ref->>studio_workflow", "build").order("seq", { ascending: false }).limit(1).maybeSingle();
+        if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+        claimRow = savedClaim;
+      }
+      let approvedStage = false;
+      const claimPhase = claimRow?.role === "user" ? readStudioWorkflow(claimRow.bundle_ref, "user") : null;
+      if (claimRow && claimPhase?.kind === "build") {
+        const { data: previous, error } = await supabaseClient.from("paige_chat_turns")
+          .select("role,bundle_ref").eq("thread_id", payloadThreadId!).lt("seq", claimRow.seq)
+          .order("seq", { ascending: false }).limit(1).maybeSingle();
+        if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+        const proposed = previous?.role === "assistant" ? readStudioWorkflow(previous.bundle_ref, "assistant") : null;
+        approvedStage = proposed?.kind === "proposal" && proposed.askId === claimPhase.askId;
+      }
+      const alreadyHasArtifact = Array.isArray(enrolled.artifact_refs) && enrolled.artifact_refs.length > 0;
+      const enrolledInPlanning = ("plan_first" in enrolled && enrolled.plan_first === true) || startsStudioPlanning(enrolled.transcript) || Boolean(marker);
+      if ((enrolledInPlanning || studioWorkflow) && callerTier !== "tenant")
+        return refuseStudioWorkflow(403, "STUDIO_WORKFLOW_SCOPE_UNAVAILABLE");
+      if (!studioWorkflow && enrolledInPlanning && !approvedStage && !alreadyHasArtifact) return refuseStudioWorkflow(409, "STUDIO_PLAN_REQUIRED");
+      if (studioWorkflow && alreadyHasArtifact) return refuseStudioWorkflow(409, "STUDIO_WORKSPACE_ALREADY_OPEN");
+      if (studioPlanning && approvedStage) return refuseStudioWorkflow(409, "STUDIO_WORKSPACE_ALREADY_OPEN");
+      const ownerText = studioWorkflow ? [...messages].reverse().find(message => message.role === "user")?.content : null;
+      if (studioWorkflow && (typeof ownerText !== "string" || !ownerText.trim() || (studioPlanBuild && ownerText !== STUDIO_PLAN_APPROVAL)))
+        return refuseStudioWorkflow(400, "STUDIO_WORKFLOW_INPUT_UNAVAILABLE");
+      if (studioWorkflow?.kind === "approve") {
+        const { data: last, error } = await supabaseClient.from("paige_chat_turns")
+          .select("role,bundle_ref").eq("thread_id", payloadThreadId!).order("seq", { ascending: false }).limit(1).maybeSingle();
+        if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+        const proposal = last?.role === "assistant" || last?.role === "user" ? readStudioWorkflow(last.bundle_ref, last.role) : null;
+        const openPlan = !approvedStage && proposal?.kind === "proposal" && proposal.askId === studioWorkflow.askId;
+        const pendingClaim = approvedStage && proposal?.kind === "build" && proposal.askId === studioWorkflow.askId;
+        if (!openPlan && !pendingClaim)
+          return refuseStudioWorkflow(409, "STUDIO_PLAN_NOT_CURRENT");
+        // A native adjacent question claim binds the current plan to this owner and thread.
+        validatedData.resume = { kind: "answer", ask_id: studioWorkflow.askId };
+      }
+    }
     if (validatedData.resume) {
       // One resume per request, through the thread that holds the question; never a Live turn, a
       // document turn, or a decision on an approval card riding beside it.
@@ -7039,6 +7124,9 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       if (live.state === "answered") return refuseAnswer(409, "ASK_ALREADY_ANSWERED", ANSWER_REASON.ASK_ALREADY_ANSWERED, "already_answered");
       if (live.state === "reopened") return refuseAnswer(409, "ASK_REOPENED", ANSWER_REASON.ASK_REOPENED, "already_reopened", { ask_reopened: askFrame(live.ask) });
       if (live.state === "pending") {
+        // Studio verifies the existing result in the workspace. A second plan would invite
+        // duplicate creation if the first build reached a native writer before interruption.
+        if (studioPlanBuild) return refuseStudioWorkflow(409, "STUDIO_BUILD_UNCONFIRMED");
         // The claim is the thread's newest turn: nothing has come back from PAIGE. Younger than any
         // request can run, it may still be in flight — say exactly that. Older, the request that
         // claimed it is gone: ask the same question again so it can be answered and the work continue.
@@ -7061,12 +7149,16 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // Its effectful controller is null by design, not an invitation to append twice.
       if (!interactive && !interactiveConversational && !answerBinding && typeof latestUserText === "string" && latestUserText.trim()) {
         try {
-          await supabaseClient.rpc("paige_chat_turn_append", {
+          const result = await supabaseClient.rpc("paige_chat_turn_append", {
             p_thread_id: payloadThreadId, p_role: "user", p_content: latestUserText,
             p_surfaces_used: null, p_load_id: null, p_model: null,
-            p_tokens_used: null, p_latency_ms: null, p_bundle_ref: null, p_tool_calls: null,
+            p_tokens_used: null, p_latency_ms: null, p_bundle_ref: studioPlanning ? { studio_workflow: "planning" } : null, p_tool_calls: null,
           });
-        } catch (e) { console.error("[paige] persist user turn failed:", (e as Error)?.message); }
+          if (studioPlanning && (result.error || !result.data)) return refuseStudioWorkflow(503, "STUDIO_PLAN_WRITE_UNAVAILABLE");
+        } catch (e) {
+          if (studioPlanning) return refuseStudioWorkflow(503, "STUDIO_PLAN_WRITE_UNAVAILABLE");
+          console.error("[paige] persist user turn failed:", (e as Error)?.message);
+        }
       }
 
       // #12 — PRE-FLIGHT COMPACTION (the sequencing change). The user turn is now appended, so the
@@ -7135,7 +7227,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
               aiMessages[0] = {
                 role: "system",
                 content: buildStudioAgentPersonaBlock(
-                  agent.system_prompt, agent.name,
+                  agent.system_prompt, "NEXUS",
                   personaCtx.tenant_name || "your practice", personaCtx.brand,
                 ),
               };
@@ -7151,11 +7243,13 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
               if (clientCoreIdx !== -1) {
                 aiMessages[clientCoreIdx] = {
                   role: "system",
-                  content: STUDIO_OPERATING_CORE,
+                  content: studioPlanning ? STUDIO_PLANNING_CORE : STUDIO_OPERATING_CORE,
                 };
               }
             }
           } catch (e) { console.warn("[paige] studio persona swap failed:", (e as Error)?.message); }
+          if (studioPlanning && !aiMessages.some(message => message.content === STUDIO_PLANNING_CORE))
+            aiMessages.splice(2, 0, { role: "system", content: STUDIO_PLANNING_CORE });
           // #292 — tell the design agent what's already on the canvas so a REFINE turn updates that
           // same artifact (keeping its version history) instead of minting a new sibling. Only images
           // (content) and documents need the hint — pages/funnels already reuse by their own id via
@@ -7262,6 +7356,9 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // Persist Paige's reply after the stream (via EdgeRuntime.waitUntil so a closed
     // tab still saves it), then auto-title a new thread and refresh the summary.
     // bundle_ref stores the queued/confirm cards so the UI reconstructs them on reload.
+    if (studioWorkflow && (!studioSessionId || (studioPlanBuild && !studioScope?.valid)))
+      return refuseStudioWorkflow(503, "STUDIO_WORKFLOW_SCOPE_UNAVAILABLE");
+
     const persistAssistantTurn = async (finalText: string, meta: { surfaces?: string[] | null; bundleRef?: unknown; model?: string }, receiptOnly = false) => {
       // A receipt-only interrupted turn has real cards but no spoken prose.
       // The canonical turn RPC accepts empty content; never invent an answer.
@@ -7276,7 +7373,11 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
             interactive: { ...(((meta.bundleRef as any)?.interactive ?? {}) as Record<string, unknown>), request_intent_id: payloadRequestIntentId } }
             : (meta.bundleRef ?? null)) as any, p_tool_calls: null,
         });
-        if (interactiveSettlement) await interactiveSettlement.persist(writeAssistant); else await writeAssistant();
+        if (interactiveSettlement) await interactiveSettlement.persist(writeAssistant);
+        else {
+          const result = await writeAssistant();
+          if (studioPlanning && (result.error || !result.data)) throw new Error("STUDIO_PLAN_WRITE_UNAVAILABLE");
+        }
         // A governed approval pause must hand off after its receipt, before
         // optional title/summary work can spend another provider/runtime budget.
         if (receiptOnly || await refreshRecoveryHold()) return;
@@ -10757,7 +10858,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // ONE definition of the question tool, worded for the surface that offers it (Studio and the main
     // chat never both apply: the main chat requires no Studio session). One tool, one handler, one
     // declaration site.
-    const askChoicesSpec = studioSessionId ? {
+    const askChoicesSpec = studioPlanning ? {
+      description: "Ask for one missing design detail, or present the plan for approval when ready. This ends the planning turn.",
+      parameters: {
+        type: "object",
+        required: ["prompt"],
+        properties: {
+          prompt: { type: "string", description: "A specific question or a concise design plan with its rationale, up to 300 characters." },
+          studio_plan_ready: { type: "boolean", description: "True only for a complete plan the owner can approve. Omit for a question." },
+        },
+      },
+    } : studioSessionId ? {
       // #292 — inside a Studio session, the design agent's clickable-decision tool (its own wording).
       description: "Ask the customer ONE decision as tappable choice CARDS instead of prose. Use ONLY when there are 2-4 genuinely distinct paths and you truly need them to pick. Give each option a short label AND a one-line description of what it means; when you have a REAL absolute https image URL that previews the option, include it as `preview` (never invent one). One decision per call; at most one clarify round, then build. Every option must map to something you will actually build once they pick — no dead-end or coming-soon choices.",
       parameters: {
@@ -10821,7 +10932,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // already carries (it never adds a tool); dispatch enforces the same scope again below, so a
       // tool the model names anyway is still refused. (document_generate, which has no Studio
       // execution path, is outside the scope and so no longer offered here.)
-      const offScope = narrowToolDefs(toolDefs as unknown[], (studioScope ?? resolveRoleToolScope(null)).allowed);
+      const originalScope = (studioScope ?? resolveRoleToolScope(null)).allowed;
+      const allowed = studioWorkflow
+        ? new Set([...originalScope].filter(studioPlanning ? studioPlanningAllowsTool : studioPlanBuildAllowsTool))
+        : originalScope;
+      const offScope = narrowToolDefs(toolDefs as unknown[], allowed);
       if (offScope.length) console.log(`[paige] design-studio scope: ${toolDefs.length} tools offered, ${offScope.length} withheld`);
     }
 
@@ -11553,6 +11668,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         p_surfaces_used: null, p_load_id: null, p_model: null,
         p_tokens_used: null, p_latency_ms: null,
         p_bundle_ref: { paige_resume: answerClaim(askId, binding.turnId, binding.skipped),
+          ...(studioPlanBuild ? { studio_workflow: "build" } : {}),
           ...((interactive || interactiveConversational) ? { interactive: { request_intent_id: payloadRequestIntentId,
             supersedes_intent_id: validatedData.interactive?.supersedesIntentId ?? null } } : {}),
         } as any,
@@ -11570,6 +11686,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // From here until the stream is handed back, every exit saves the question again (one at most).
       let askedAgain = false;
       afterAnswerClaimFailure = async (resp: Response) => {
+        if (studioPlanBuild) return resp;
         if (askedAgain) return resp;
         askedAgain = true;
         const again = await saveQuestionAgain(binding.ask);
@@ -11602,7 +11719,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         return refuseAnswer(409, "ASK_NOT_OPEN", ANSWER_REASON.ASK_ANSWER_SUPERSEDED, "superseded_at_claim", { answer_kept: true });
       }
       answerResume = { askId, turnId: binding.turnId, ask: binding.ask, skipped: binding.skipped };
-      aiMessages.push({ role: "system", content: answerTurnNote(answerResume.ask, { skipped: answerResume.skipped }) });
+      aiMessages.push({ role: "system", content: studioPlanBuild
+        ? [
+            "The owner approved the current creative plan in this Studio conversation. Begin the private build using the original Studio tools and keep native save and publish approvals separate.",
+            ...(answerResume.ask.reopens ? ["Check for existing work or pending approval before taking an action from the interrupted build."] : []),
+            "Use this saved plan as design context. " + JSON.stringify(answerResume.ask.question),
+          ].join("\n")
+        : answerTurnNote(answerResume.ask, { skipped: answerResume.skipped }) });
     }
     // Held = an accepted act or unknown step on a turn that is not resuming an approval or an answer.
     const heldAccept = acceptedKind !== null && acceptedKind !== "prose" && resumeCalls.length === 0 && !answerResume;
@@ -12173,6 +12296,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // A Studio turn may dispatch only its role's scope, whatever the model names — the list it
         // was offered is already narrowed, and this is the second, independent enforcement. Checked
         // before every door (the CRM door included), so a refused tool reaches no executor.
+        if (studioWorkflow && !(studioPlanning ? studioPlanningAllowsTool : studioPlanBuildAllowsTool)(tc.function.name)) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+            success: false, error: "outside_studio_phase", message: "This tool is unavailable in the current Studio phase. Nothing ran.",
+          }) });
+          continue;
+        }
         if (studioSessionId && !(studioScope?.allowed ?? new Set(STUDIO_SCOPE_FAIL_CLOSED)).has(tc.function.name)) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(outsideStudioScope(tc.function.name)) });
           continue;
@@ -20363,6 +20492,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       let finalAssistantText = "";
       // C4c — the question this turn ended on (the record saved as `bundle_ref.paige_ask`), if any.
       let askedThisTurn: AskRecord | null = null;
+      let studioPlanProposed = false;
       let turnSavedSomething = false;
 
       // The agentic loop now runs INSIDE the response stream (#152) so Paige's
@@ -20523,7 +20653,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // this turn); an answer turn names the question it carried forward. Neither carries
         // authority: the claim is the person's own turn, held unique by the database.
         if (askedThisTurn && turnTracker.state === "ASK_USER") {
-          meta = { ...meta, bundleRef: { ...(meta.bundleRef as Record<string, unknown>), paige_ask: askedThisTurn } };
+          meta = { ...meta, bundleRef: { ...(meta.bundleRef as Record<string, unknown>), paige_ask: askedThisTurn,
+            ...(studioPlanProposed ? { studio_workflow: "proposal" } : {}) } };
         }
         if (resumeCalls.length === 0 && answerResume) {
           try {
@@ -20753,7 +20884,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // bounded it (label 60, value 300, description 160; a preview only when it is a real
               // absolute http(s) URL — §13 never fabricate), with a server-minted id. In the main chat a
               // question with no options is a free-form question; in Studio two to four are required.
-              const askRecord = buildAskRecord(a, { askId: crypto.randomUUID(), freeForm: mainChatAsks });
+              const askRecord = buildAskRecord(a, { askId: crypto.randomUUID(), freeForm: mainChatAsks || studioPlanning });
               if (askRecord) {
                 const frame = askFrame(askRecord);
                 // PROTECTED. `prompt` and every option's label/description are the model's own
@@ -20766,6 +20897,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // ordinary turn; a protected turn holds both and says so at release.
                 turnTracker.choicesAsked();
                 askedThisTurn = askRecord;
+                studioPlanProposed = studioPlanning && a.studio_plan_ready === true;
                 emitTurnTerminalBeforeAnswer(controller);
                 emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_choices: frame })}\n\n`));
                 finalAssistantText = frame.prompt;
@@ -21724,9 +21856,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the check holds.
           if (!durableApprovalPause && !(interactive && durableResearchPause) && payloadThreadId && finalAssistantText.trim()) {
             try {
-              const p = persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()));
+              const p = persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()), studioPlanning);
               // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
-              if (interactive || interactiveConversational) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+              if (interactive || interactiveConversational || studioPlanning) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
             } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
           }
          } catch (e) {
@@ -21799,7 +21931,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
          }
         },
       });
-      return new Response(liveOutput(finalStream), { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+      return new Response(liveOutput(finalStream), { headers: { ...corsHeaders, "Content-Type": "text/event-stream",
+        ...(studioWorkflow ? { "X-Paige-Studio-Workflow": studioPlanning ? "planning" : "build",
+          "Access-Control-Expose-Headers": "Retry-After, X-Paige-Studio-Workflow" } : {}),
+      } });
     }
 
     // With document: intercept stream to accumulate response, then trigger background sync

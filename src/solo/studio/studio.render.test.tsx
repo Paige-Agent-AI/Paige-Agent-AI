@@ -15,6 +15,7 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ChatTurn } from "./studio-data";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -46,6 +47,8 @@ const h = vi.hoisted(() => ({
   brand: null as Rec | null,
   projectContext: {} as Rec,
   contextWrites: [] as Array<{ tenant: string; session: string; context: Rec; expected: Rec }>,
+  history: [] as ChatTurn[],
+  enrolled: false,
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -78,7 +81,7 @@ vi.mock("./studio-data", async (orig) => {
     ...real,
     listSessions: async () => h.sessions,
     createSession: async (brief: string) => { h.created.push(brief); return session("s-new", brief, brief); },
-    openSession: async (id: string) => session(id, h.openTitle, h.openBrief),
+    openSession: async (id: string) => session(id, h.openTitle, h.openBrief, { startsInPlanning: h.enrolled }),
     loadStudioProjectContext: async () => h.projectContext,
     saveStudioProjectContext: async (tenant: string, sessionId: string, context: Rec, expected: Rec) => {
       h.contextWrites.push({ tenant, session: sessionId, context, expected });
@@ -89,7 +92,7 @@ vi.mock("./studio-data", async (orig) => {
     loadHeldConfirms: async () => h.held,
     renameSession: async (id: string, title: string) => { h.renamed.push([id, title]); h.openTitle = title; },
     ensureThread: async () => "th-1",
-    loadTurns: async () => [],
+    loadTurns: async () => h.history,
     // loadBrand honors the hoisted brand double: null keeps the honest-missing path (the real
     // loader's catch shape); a row produces exactly what the portal read returns.
     loadBrand: async () => h.brand
@@ -161,14 +164,19 @@ beforeEach(() => {
   Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients", templates: [], templateCalls: [], brand: null });
   h.projectContext = { target: { kind: "workspace" }, values: {} };
   h.contextWrites = [];
+  h.history = [];
+  h.enrolled = false;
   backs = 0;
   host = document.createElement("div");
   document.body.appendChild(host);
   vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
-    h.fetchBodies.push(JSON.parse(String(init.body)));
+    const request = JSON.parse(String(init.body));
+    h.fetchBodies.push(request);
     // The build lands as the stream reports it: the manifest and the form exist once Paige says so.
     if (h.sse.some((f) => f.includes("paige_artifact"))) { h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }]; h.form = FORM; }
-    return new Response(h.status === 200 ? sseBody(h.sse) : null, { status: h.status });
+    return new Response(h.status === 200 ? sseBody(h.sse) : null, { status: h.status,
+      headers: request.surfaceContext?.kind === "studio_workflow" ? { "X-Paige-Studio-Workflow": request.surfaceContext.action.kind === "planning" ? "planning" : "build" } : {},
+    });
   }));
   Element.prototype.scrollTo = function () {} as typeof Element.prototype.scrollTo;
 });
@@ -188,8 +196,19 @@ async function mount() {
 async function startProject(brief: string) {
   await mount();
   type(host.querySelector<HTMLTextAreaElement>("#vs-brief")!, brief);
-  const build = [...host.querySelectorAll("button")].find((b) => b.textContent?.startsWith("Build it"))!;
+  const build = button("Send to NEXUS")!;
   await act(async () => { build.click(); });
+  await flush();
+}
+
+async function sendFromProject(brief: string) {
+  h.openBrief = brief;
+  h.sessions = [{ id: "s-new", title: h.openTitle, seedBrief: brief, artifacts: [], updatedAt: "2026-10-03T12:00:00Z" }];
+  await mount();
+  await act(async () => { host.querySelector<HTMLButtonElement>(".vs-card")!.click(); });
+  await flush();
+  type(host.querySelector<HTMLTextAreaElement>("#vs-chat-input")!, brief);
+  await act(async () => { host.querySelector<HTMLButtonElement>(".vs-send")!.click(); });
   await flush();
 }
 
@@ -226,7 +245,28 @@ describe("Vibe Studio project workspace", () => {
     expect(h.fetchBodies).toHaveLength(1);
   });
 
-  it("a brief opens a project and Paige's first build lands on the stage, with her steps", async () => {
+  it("approves a saved NEXUS plan in the same conversation before the first build appears", async () => {
+    const brief = "An intake form for new clients";
+    const plan = "A short intake form for new clients. Lead with the goal, then ask how to follow up.";
+    const askId = "f3d1cecc-ea46-48c6-bb34-f08273cebd80";
+    h.sse = [JSON.stringify({ paige_choices: { prompt: plan, options: [], ask_id: askId } }), "[DONE]"];
+    const planRead = () => [
+      { role: "user" as const, content: brief, studioWorkflow: { kind: "planning" as const } },
+      { role: "assistant" as const, content: plan, studioWorkflow: { kind: "proposal" as const, askId } },
+    ];
+    const fetch = globalThis.fetch;
+    vi.stubGlobal("fetch", vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const result = await fetch(url, init);
+      if (h.fetchBodies.at(-1)?.surfaceContext && h.fetchBodies.length === 1) h.history = planRead();
+      return result;
+    }));
+    await startProject(brief);
+    const chat = host.querySelector(".vs-chat");
+    expect(text()).toContain("In Progress");
+    expect(text()).toContain(plan);
+    expect(host.querySelector(".vs-stage")).toBeNull();
+    expect(h.fetchBodies[0]).toMatchObject({ threadId: "th-1", surfaceContext: { kind: "studio_workflow", action: { kind: "planning" } } });
+
     h.sse = [
       JSON.stringify({ paige_step: { id: "a", label: "Wrote 3 questions" } }),
       JSON.stringify({ paige_step: { id: "b", label: "Saved the form" } }),
@@ -234,11 +274,16 @@ describe("Vibe Studio project workspace", () => {
       JSON.stringify({ choices: [{ delta: { content: "Your intake form is ready. Want a pipeline stage for it?" } }] }),
       "[DONE]",
     ];
-    await startProject("An intake form for new clients");
+    await act(async () => { button("Approve plan & start build")!.click(); });
+    await flush();
 
-    expect(h.created).toEqual(["An intake form for new clients"]);
-    expect(h.fetchBodies).toHaveLength(1);
-    expect(h.fetchBodies[0]).toMatchObject({ threadId: "th-1", messages: [{ role: "user", content: "An intake form for new clients" }] });
+    expect(h.created).toEqual([brief]);
+    expect(h.fetchBodies).toHaveLength(2);
+    expect(h.fetchBodies[1]).toMatchObject({ threadId: "th-1", surfaceContext: { kind: "studio_workflow", action: { kind: "approve", askId } },
+      messages: [{ role: "user", content: brief }, { role: "assistant", content: plan }, { role: "user", content: expect.any(String) }] });
+    expect(h.fetchBodies[1]).not.toHaveProperty("approvedConfirmations");
+    expect(host.querySelector(".vs-chat")).toBe(chat);
+    expect(text()).toContain(plan);
     expect(text()).toContain("Wrote 3 questions");
     expect(text()).toContain("Saved the form");
     expect(text()).toContain("Your intake form is ready");
@@ -248,6 +293,44 @@ describe("Vibe Studio project workspace", () => {
     expect(text()).toContain("Saved · draft");
     // No artifact-type tabs anywhere in the session (§21).
     for (const t of ["Page", "Form", "Funnel", "Copy", "Image"]) expect(button(t)).toBeUndefined();
+  });
+
+  it("reopens a newly enrolled project before its first turn without exposing the canvas", async () => {
+    h.enrolled = true;
+    h.sessions = [{ id: "s-reopened", title: "Workshop", seedBrief: "A workshop page", artifacts: [], updatedAt: "2026-10-03T12:00:00Z" }];
+    await mount();
+    await act(async () => { host.querySelector<HTMLButtonElement>(".vs-card")!.click(); });
+    await flush();
+    expect(text()).toContain("In Progress");
+    expect(button("Start planning")).toBeDefined();
+    expect(host.querySelector(".vs-stage")).toBeNull();
+    expect(h.fetchBodies).toHaveLength(0);
+  });
+
+  it("withholds plan approval when a streamed plan is missing from the saved conversation", async () => {
+    h.sse = [JSON.stringify({ paige_choices: { prompt: "A focused landing page", options: [] } }), "[DONE]"];
+    await startProject("A landing page for my workshop");
+    expect(text()).toContain("couldn’t confirm the planning reply was saved");
+    expect(button("Approve plan & start build")).toBeUndefined();
+    expect(host.querySelector(".vs-stage")).toBeNull();
+  });
+
+  it("checks a reopened pending build through reads and sends no second build", async () => {
+    const askId = "f3d1cecc-ea46-48c6-bb34-f08273cebd80";
+    h.enrolled = true;
+    h.history = [
+      { role: "assistant", content: "A focused landing page", studioWorkflow: { kind: "proposal", askId } },
+      { role: "user", content: "Approve this plan and start the private build.", studioWorkflow: { kind: "build", askId } },
+    ];
+    h.sessions = [{ id: "s-pending", title: "Workshop", seedBrief: "A workshop page", artifacts: [], updatedAt: "2026-10-03T12:00:00Z" }];
+    await mount();
+    await act(async () => { host.querySelector<HTMLButtonElement>(".vs-card")!.click(); });
+    await flush();
+    expect(text()).toContain("Build result pending");
+    await act(async () => { button("Check build status")!.click(); });
+    await flush();
+    expect(text()).toContain("no confirmed reply yet");
+    expect(h.fetchBodies).toHaveLength(0);
   });
 
   it("brief details compose into the saved brief and Paige's first message (EXP07 row 1)", async () => {
@@ -265,7 +348,7 @@ describe("Vibe Studio project workspace", () => {
     set("audience", "Solo consultants");
     set("outcome", "Bookings for the April session");
     set("channel", "   "); // whitespace-only fields are skipped, not composed
-    const build = [...host.querySelectorAll("button")].find((b) => b.textContent?.startsWith("Build it"))!;
+    const build = button("Send to NEXUS")!;
     await act(async () => { build.click(); });
     await flush();
 
@@ -335,6 +418,14 @@ describe("Vibe Studio project workspace", () => {
     await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
     await flush();
   }
+
+  it("opens an enrolled project with saved work even when this caller has an empty thread", async () => {
+    h.enrolled = true;
+    await openPiece();
+    expect(host.querySelector(".vs-sheet")).toBeTruthy();
+    expect(button("Start planning")).toBeUndefined();
+    expect(h.fetchBodies).toHaveLength(0);
+  });
   async function openPanel() { await act(async () => { button("Publish")!.click(); }); await flush(); }
   async function press(label: string) { await act(async () => { button(label)!.click(); }); await flush(); }
 
@@ -646,7 +737,7 @@ describe("Vibe Studio project workspace", () => {
 
   it("Paige's one grouped question renders as choices, and the answer is sent as the next turn", async () => {
     h.sse = [JSON.stringify({ paige_choices: { prompt: "Who is this form for?", options: [{ label: "New clients", value: "new clients" }, { label: "Existing clients", value: "existing clients" }] } }), "[DONE]"];
-    await startProject("A form for my clients");
+    await sendFromProject("A form for my clients");
     expect(text()).toContain("Who is this form for?");
     h.sse = [JSON.stringify({ choices: [{ delta: { content: "Got it." } }] }), "[DONE]"];
     await act(async () => { button("New clients")!.click(); });
@@ -660,8 +751,8 @@ describe("Vibe Studio project workspace", () => {
   it("a failed turn says so and leaves the conversation as it was", async () => {
     h.status = 500;
     await startProject("A landing page for my workshop");
-    expect(text()).toContain("Paige couldn't take that just now");
-    expect(text()).toContain("Nothing on the stage yet");
+    expect(text()).toContain("NEXUS couldn’t confirm this turn");
+    expect(host.querySelector(".vs-stage")).toBeNull();
   });
 
   it("Esc in a project steps back to Studio home, and Esc there closes the Studio", async () => {
@@ -675,7 +766,7 @@ describe("Vibe Studio project workspace", () => {
     await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
     await flush();
     expect(host.querySelector(".vs-session")).toBeNull();
-    expect(text()).toContain("What should Paige build?");
+    expect(text()).toContain("What should NEXUS build?");
     expect(backs).toBe(0);
     await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
     expect(backs).toBe(1);
@@ -696,7 +787,7 @@ describe("Vibe Studio project workspace", () => {
 
   it("a malformed line in the stream is skipped and the rest of the turn still arrives", async () => {
     h.sse = ["{not json", JSON.stringify({ paige_step: { id: "a", label: "Saved the form" } }), JSON.stringify({ choices: [{ delta: { content: "Done — it's on the stage." } }] }), "[DONE]"];
-    await startProject("An intake form for new clients");
+    await sendFromProject("An intake form for new clients");
     expect(text()).toContain("Saved the form");
     expect(text()).toContain("Done — it's on the stage.");
   });
@@ -753,7 +844,7 @@ describe("Vibe Studio project workspace", () => {
 
   it("a failed turn clears its steps instead of hanging them under the previous reply", async () => {
     h.sse = [JSON.stringify({ paige_step: { id: "a", label: "Wrote 3 questions" } }), JSON.stringify({ choices: [{ delta: { content: "First reply." } }] }), "[DONE]"];
-    await startProject("An intake form for new clients");
+    await sendFromProject("An intake form for new clients");
     expect(text()).toContain("Wrote 3 questions");
     // The next turn streams a step, then the connection drops.
     h.sse = [JSON.stringify({ paige_step: { id: "b", label: "Started the budget question" } }), "__BREAK__"];
@@ -780,7 +871,7 @@ describe("Vibe Studio project workspace", () => {
         },
       }), { status: 200 });
     }));
-    await startProject("A landing page for my workshop");
+    await sendFromProject("A landing page for my workshop");
     const build = host.querySelector(".vs-build");
     expect(build?.getAttribute("data-shape")).toBe("page");
     expect(host.querySelector(".vs-build-now")?.textContent).toBe("Designing your landing page");
@@ -806,7 +897,7 @@ describe("Vibe Studio project workspace", () => {
         },
       }), { status: 200 });
     }));
-    await startProject("A landing page for my workshop");
+    await sendFromProject("A landing page for my workshop");
     const rows = () => Array.from(host.querySelectorAll<HTMLElement>('ol[aria-label="What Paige did"] li'));
     const glyph = (li: HTMLElement) => li.firstElementChild?.getAttribute("aria-label");
     expect(rows().map((li) => [li.dataset.status, glyph(li)])).toEqual([["done", "Done"], ["running", "Working on it"]]);
@@ -838,7 +929,7 @@ describe("Vibe Studio project workspace", () => {
         },
       }), { status: 200 });
     }));
-    await startProject("A landing page for my workshop");
+    await sendFromProject("A landing page for my workshop");
     const done = Array.from(host.querySelectorAll(".vs-build-done li")).map((li) => li.textContent);
     expect(done).toEqual(["Read the brief"]);
     await act(async () => { release(); });
@@ -852,7 +943,7 @@ describe("Vibe Studio project workspace", () => {
       JSON.stringify({ choices: [{ delta: { content: "Here it is." } }] }),
       "[DONE]",
     ];
-    await startProject("A landing page for my workshop");
+    await sendFromProject("A landing page for my workshop");
     expect(text()).toContain("Designed, not saved yet.");
     expect(host.querySelector("[data-testid='live-preview']")).toBeTruthy();
     expect(text()).not.toContain("Nothing on the stage yet");
@@ -864,7 +955,7 @@ describe("Vibe Studio project workspace", () => {
       JSON.stringify({ choices: [{ delta: { content: "It's waiting on your approval." } }] }),
       "[DONE]",
     ];
-    await startProject("A landing page for my workshop");
+    await sendFromProject("A landing page for my workshop");
     expect(text()).toContain("Waiting for your approval");
     expect(text()).toContain("Save the page draft “Workshop”");
     h.sse = [JSON.stringify({ choices: [{ delta: { content: "Saved." } }] }), "[DONE]"];
@@ -877,7 +968,7 @@ describe("Vibe Studio project workspace", () => {
 
   it("Paige's reply is formatted, not shown with raw markdown", async () => {
     h.sse = [JSON.stringify({ choices: [{ delta: { content: "**The structure:**\n\n- A hero\n- A proof block" } }] }), "[DONE]"];
-    await startProject("A landing page for my workshop");
+    await sendFromProject("A landing page for my workshop");
     expect(text()).not.toContain("**");
     expect(host.querySelector(".vs-md strong")?.textContent).toBe("The structure:");
     expect(host.querySelectorAll(".vs-md li")).toHaveLength(2);
@@ -890,14 +981,14 @@ describe("Vibe Studio project workspace", () => {
       JSON.stringify({ choices: [{ delta: { content: "Done." } }] }),
       "[DONE]",
     ];
-    await startProject("An intake form for new clients");
+    await sendFromProject("An intake form for new clients");
     expect(h.renamed).toEqual([["s-new", "New client intake"]]);
     expect(host.querySelector(".vs-crumbs b")?.textContent).toBe("New client intake");
   });
 
   it("declining sends exactly that fingerprint as declined, and the card says it was skipped", async () => {
     h.sse = [JSON.stringify({ paige_confirm: { tool: "growth_page_save", summary: "Save the page draft", fingerprint: "0123456789abcdef" } }), "[DONE]"];
-    await startProject("A landing page for my workshop");
+    await sendFromProject("A landing page for my workshop");
     h.sse = [JSON.stringify({ choices: [{ delta: { content: "Okay, left it." } }] }), "[DONE]"];
     await act(async () => { button("Not this")!.click(); });
     await flush();
@@ -908,7 +999,7 @@ describe("Vibe Studio project workspace", () => {
 
   it("an approval settles on the server's own outcome, not on Paige's words", async () => {
     h.sse = [JSON.stringify({ paige_confirm: { tool: "growth_page_save", summary: "Save the page draft", fingerprint: "0123456789abcdef" } }), "[DONE]"];
-    await startProject("A landing page for my workshop");
+    await sendFromProject("A landing page for my workshop");
     h.sse = [
       JSON.stringify({ paige_approval_outcome: { actions: [{ fingerprint: "0123456789abcdef", outcome: "not_run" }], note: "That approval had expired. Ask Paige again." } }),
       JSON.stringify({ choices: [{ delta: { content: "All saved!" } }] }),
@@ -922,7 +1013,7 @@ describe("Vibe Studio project workspace", () => {
 
   it("a failed Approve puts the card back so it can still be approved", async () => {
     h.sse = [JSON.stringify({ paige_confirm: { tool: "growth_page_save", summary: "Save the page draft", fingerprint: "0123456789abcdef" } }), "[DONE]"];
-    await startProject("A landing page for my workshop");
+    await sendFromProject("A landing page for my workshop");
     h.status = 500;
     await act(async () => { button("Approve")!.click(); });
     await flush();
@@ -942,11 +1033,11 @@ describe("Vibe Studio project workspace", () => {
     expect(button("Approve")).toBeTruthy();
   });
 
-  it("a project started from Studio home (titled with its brief) is renamed to its first piece", async () => {
+  it("a project titled with its brief is renamed to its first piece", async () => {
     h.openTitle = "An intake form for new clients";
     h.openBrief = "An intake form for new clients";
     h.sse = [JSON.stringify({ paige_artifact: { kind: "form", id: "f-1", title: "New client intake" } }), "[DONE]"];
-    await startProject("An intake form for new clients");
+    await sendFromProject("An intake form for new clients");
     expect(h.renamed).toEqual([["s-new", "New client intake"]]);
   });
 

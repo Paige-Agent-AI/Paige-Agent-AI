@@ -2,7 +2,8 @@
 // by an in-memory world (social-publish-door.world.ts). The door's own code decides everything;
 // only the clients, the provider adapter, and the governance seam (which is Deno-runtime and
 // proven separately by paige-social's production use) are doubles.
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
 
 // The governance module (governSocialMutation → decideGovernedExecution) runs in Deno edge
 // functions and has Deno-specific dependencies (paige-spine's governedExecution.ts). It is
@@ -123,6 +124,84 @@ function mediaWorld(over: Parameters<typeof world>[0] = {}) {
     ...over.tables,
   } });
 }
+
+describe("read-only Studio saved media handoff", () => {
+  const origin = "https://test-project.supabase.co";
+  const request = { action: "preview_media", expected_tenant_id: MINE, content_id: MEDIA_ID };
+  const fixture = (kind: "image" | "video", contentType: string) => {
+    const path = `${MINE}/saved/${MEDIA_ID}.${kind === "image" ? "png" : "mp4"}`;
+    const url = `${origin}/storage/v1/object/public/paige-generated/${path}`;
+    const piece = pieceRow({ id: MEDIA_ID, kind, image_path: path, image_url: url, title: "Saved original", body: "Original caption" });
+    return { url, piece, w: world({
+      adapterConfigured: false,
+      storageObjects: { [path]: { ...MEDIA_FACTS, contentType } },
+      tables: { marketing_content: [piece] },
+    }) };
+  };
+  function served(contentType: string, bytes: number[], onRead?: () => void) {
+    vi.stubGlobal("Deno", { resolveDns: vi.fn().mockResolvedValue(["8.8.8.8"]) });
+    const fetchOriginal = vi.fn(async () => {
+      onRead?.();
+      return new Response(new Uint8Array(bytes), { headers: {
+        "Content-Type": contentType, "Content-Length": String(bytes.length),
+        ETag: MEDIA_FACTS.etag, "Last-Modified": new Date(MEDIA_FACTS.lastModified).toUTCString(),
+      } });
+    });
+    vi.stubGlobal("fetch", fetchOriginal);
+    return fetchOriginal;
+  }
+  const png = [137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82];
+  const mp4 = [0, 0, 0, 16, 102, 116, 121, 112, 105, 115, 111, 109, 0, 0, 0, 0];
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it.each([["image", "image/png", png], ["video", "video/mp4", mp4]] as const)(
+    "opens the original %s without touching approval, provider or receipt ports", async (kind, mime, bytes) => {
+      const { url, piece, w } = fixture(kind, mime);
+      const read = served(mime, bytes);
+      const answer = await w.call({ ...request, kind, url: "https://untrusted.example/other" });
+      expect(answer.status).toBe(200);
+      expect(answer.body).toEqual({ ok: true, tenant_id: MINE, media: {
+        size: bytes.length, content_type: mime, sha256: createHash("sha256").update(new Uint8Array(bytes)).digest("hex"),
+      }, piece: {
+        id: MEDIA_ID, kind, status: "draft", updated_at: piece.updated_at, image_url: url,
+        title: "Saved original", body: "Original caption",
+      } });
+      expect(read).toHaveBeenCalledExactlyOnceWith(url, expect.objectContaining({ method: "GET" }));
+      expect(w.seen.reads.map(({ client, table }) => [client, table])).toEqual([["caller", "marketing_content"], ["caller", "marketing_content"]]);
+      expect(w.seen.rpc.every(({ client }) => client === "caller")).toBe(true);
+      expect(w.seen.createPost).toEqual([]);
+      expect(w.seen.destinationReads).toEqual([]);
+      expect(w.seen.receipts).toEqual([]);
+      expect(w.tables.paige_pending_confirmations).toEqual([]);
+      expect(w.tables.content_publications).toEqual([]);
+    },
+  );
+
+  it.each([{ active: THEIRS }, { admin: false }, { callerContentReadDenied: true }])(
+    "refuses a foreign workspace or lost read authority before Storage %j", async (scope) => {
+      const w = mediaWorld(scope);
+      expect((await w.call({ ...request, kind: "image" })).status).toBeGreaterThanOrEqual(400);
+      expect(w.seen.storageReads).toEqual([]);
+    },
+  );
+
+  it("requires the expected workspace and refuses unsupported formats and unverified bytes", async () => {
+    const { w } = fixture("image", "image/webp");
+    expect((await w.call({ ...request, kind: "image", expected_tenant_id: undefined })).body.code).toBe("MEDIA_PREVIEW_INVALID");
+    expect((await w.call({ ...request, kind: "image" })).body.code).toBe("MEDIA_FORMAT_UNSUPPORTED");
+    const valid = fixture("image", "image/png");
+    served("image/png", Array(16).fill(0));
+    expect((await valid.w.call({ ...request, kind: "image" })).body.code).toBe("MEDIA_SOURCE_UNVERIFIED");
+  });
+
+  it("refuses a saved revision replaced while the exact object is being read", async () => {
+    const { w, piece } = fixture("video", "video/mp4");
+    served("video/mp4", mp4, () => { piece.updated_at = "2026-11-14T12:00:00.000Z"; });
+    const answer = await w.call({ ...request, kind: "video" });
+    expect(answer.status).toBe(409);
+    expect(answer.body).toEqual({ ok: false, code: "MEDIA_SOURCE_CHANGED" });
+  });
+});
 
 describe("media on the original governed publication attempt", () => {
   it("previews saved media and dispatches only the exact approved snapshot", async () => {

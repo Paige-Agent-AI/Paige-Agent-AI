@@ -20,6 +20,8 @@ import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { StudioHome, StudioRail } from "./studio/StudioHome";
 import { StudioSession } from "./studio/StudioSession";
 import { MediaTools } from "./studio/MediaTools";
+import { SavedMediaPost } from "./studio/SavedMediaPost";
+import type { StudioSavedMediaHandoff } from "./studio/saved-media-handoff";
 import { listSessions, plainError, type StudioSession as Session } from "./studio/studio-data";
 import "./studio/studio.css";
 
@@ -29,7 +31,11 @@ export { VsStars } from "./studio/VsStars";
 // passes it: threads are per person, so a teammate (or an expired thread) would otherwise rebuild it.
 type View = { name: "home" } | { name: "media" } | { name: "session"; id: string; seedBrief: string | null };
 
-export const VibeStudio = ({ onBack, openPaige }: { onBack: () => void; openPaige?: () => void }) => {
+export const VibeStudio = ({ onBack, openPaige, savedMedia = null }: {
+  onBack: () => void;
+  openPaige?: () => void;
+  savedMedia?: StudioSavedMediaHandoff | null;
+}) => {
   const { activeTenantId, activeTenant } = useTenantContext();
   const [view, setView] = React.useState<View>({ name: "home" });
   const [sessions, setSessions] = React.useState<Session[] | null>(null);
@@ -52,12 +58,12 @@ export const VibeStudio = ({ onBack, openPaige }: { onBack: () => void; openPaig
       .then((s) => { setSessions(s); setSessionsError(null); })
       .catch((e) => { setSessions([]); setSessionsError(plainError(e, "Your drafts couldn't be loaded.")); });
   }, [activeTenantId]);
-  React.useEffect(() => { refresh(); }, [refresh]);
+  React.useEffect(() => { if (!savedMedia) refresh(); }, [refresh, savedMedia]);
 
   // On Studio home and in Images & video, Esc closes the Studio (an open native select keeps its own
   // Esc). Inside a project, the project owns Esc and steps back here first.
   React.useEffect(() => {
-    if (view.name === "session") return;
+    if (savedMedia || view.name === "session") return;
     const k = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       const t = e.target as HTMLElement | null;
@@ -66,15 +72,25 @@ export const VibeStudio = ({ onBack, openPaige }: { onBack: () => void; openPaig
     };
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
-  }, [onBack, view.name]);
+  }, [onBack, savedMedia, view.name]);
 
   // The Studio is a modal surface over the Solo shell: Tab and Shift+Tab wrap inside it instead of
   // walking into the app hidden behind it.
   const rootRef = React.useRef<HTMLDivElement | null>(null);
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
+    const fromContent = Boolean(savedMedia);
+    if (fromContent) rootRef.current?.querySelector<HTMLButtonElement>("[data-studio-handoff-back]")?.focus({ preventScroll: true });
     const k = (e: KeyboardEvent) => {
       const root = rootRef.current;
-      if (e.key !== "Tab" || !root) return;
+      if (!root || (e.key !== "Tab" && (!fromContent || e.key !== "Escape"))) return;
+      // The Content drawer stays mounted behind the Studio for exact focus return.
+      if (fromContent) e.stopImmediatePropagation();
+      if (e.key === "Escape") {
+        if ((e.target as HTMLElement | null)?.tagName === "SELECT") return;
+        e.preventDefault();
+        onBack();
+        return;
+      }
       const focusable = [...root.querySelectorAll<HTMLElement>("a[href], button, input, select, textarea, [tabindex]")]
         .filter((el) => el.tabIndex >= 0 && !(el as HTMLButtonElement).disabled && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden");
       if (focusable.length === 0) return;
@@ -86,13 +102,13 @@ export const VibeStudio = ({ onBack, openPaige }: { onBack: () => void; openPaig
       if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
     };
-    window.addEventListener("keydown", k);
-    return () => window.removeEventListener("keydown", k);
-  }, []);
+    window.addEventListener("keydown", k, fromContent);
+    return () => window.removeEventListener("keydown", k, fromContent);
+  }, [onBack, savedMedia]);
 
   return (
     <div ref={rootRef} className="vs-studio" role="dialog" aria-modal="true" aria-label="Vibe Studio">
-      {view.name === "session" && activeTenantId ? (
+      {savedMedia ? <SavedMediaPost asset={savedMedia} onBack={onBack} /> : view.name === "session" && activeTenantId ? (
         <StudioSession
           key={view.id}
           tenantId={activeTenantId}

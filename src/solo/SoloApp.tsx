@@ -32,6 +32,7 @@ import { VoiceDeviceProvider } from "@/lib/voice/VoiceDeviceProvider";
 import { DialPadSurface } from "@/components/admin/voice/DialPadSurface";
 import { IncomingCallOverlay } from "@/components/admin/voice/IncomingCallOverlay";
 import { LiveTranscriptPanel } from "@/components/admin/voice/LiveTranscriptPanel";
+import { lockStudioMediaBackground, parseStudioSavedMediaHandoff } from "./studio/saved-media-handoff";
 
 // Route-level code split (EXP01 outcome 1): the chat-first Solo entry previously
 // compiled EVERY screen into its first download — 2.6 MB raw / 739 kB gzip — because
@@ -51,9 +52,27 @@ const TeamHubWorkspace=React.lazy(()=>import("./team-hub/TeamHubWorkspace").then
 const TenantCanonicalCalendarWorkspace=React.lazy(()=>import("@/components/tenant-calendar/TenantCanonicalCalendarWorkspace").then(m=>({default:m.TenantCanonicalCalendarWorkspace})));
 const Marketplace=React.lazy(()=>import("./marketplace").then(m=>({default:m.Marketplace})));
 const SoloSettings=React.lazy(()=>import("./settings").then(m=>({default:m.SoloSettings})));
-const VibeStudio=React.lazy(()=>import("./vibe").then(m=>({default:m.VibeStudio})));
+const VibeStudio=React.lazy(()=>import("./vibe").then(m=>({default:m.VibeStudio})).catch(error=>{
+  if (!isChunkLoadFailure(error)) throw error;
+  console.error("[SoloApp] Vibe Studio could not load:", error);
+  return {default:({onBack,savedMedia})=><StudioMediaOpening onBack={onBack} failed fromContent={Boolean(savedMedia)}/>};
+}));
 const SCREEN_LABELS={operations:'Operations',teamhub:'Team Hub',finance:'Finance',cal:'Calendar',clients:'Clients',growth:'Growth',ads:'Ads',sales:'Sales',market:'Marketplace',settings:'Settings'};
 const ScreenOpening=({label})=>(<div role="status" style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'50vh',color:'var(--ink-3)',fontSize:13.5}}>Opening {label}…</div>);
+
+function StudioMediaOpening({onBack,failed=false,fromContent=true}) {
+  const dialog = React.useRef(null);
+  React.useLayoutEffect(() => {
+    const pending = dialog.current;
+    pending?.showModal?.();
+    return () => { if (pending?.open) pending.close(); };
+  }, []);
+  return <dialog ref={dialog} aria-label={failed?"Vibe Studio unavailable":"Opening Vibe Studio"} onCancel={(event)=>{event.preventDefault();onBack()}}
+    style={{background:'var(--surface)',color:'var(--ink)',border:'1px solid var(--line)',borderRadius:'var(--r-m)',padding:24,maxWidth:'calc(100% - 32px)'}}>
+    <p role={failed?"alert":"status"} style={{marginBottom:16}}>{failed?"Vibe Studio couldn’t load. Reload PAIGE before opening it again.":"Opening Vibe Studio…"}</p>
+    <button type="button" className="btn" onClick={onBack}>{fromContent?"Back to Content":"Close Studio"}</button>
+  </dialog>;
+}
 
 // The browser error shapes for a failed dynamic import (Chromium/Firefox/Safari
 // phrasings; vite's preload helper re-wraps some). Anything unrecognized rethrows
@@ -393,20 +412,29 @@ React.useEffect(() => {
     navigate(`/solo/${urlAccount}/settings/${legacySettingsDestination}${location.search}`, { replace: true });
   }
 }, [urlDriven, urlAccount, urlSplat, activeTenant?.account_number, legacySettingsDestination, location.search, navigate]);
-const[studio,setStudio]=React.useState(false);
+const[studio,setStudio]=React.useState(null);
 const studioReturnFocus=React.useRef(null);
 const studioReturnOwner=React.useRef(null);
 const studioFocusPending=React.useRef(false);
 React.useEffect(()=>{const h=(event)=>{
-  const target=event instanceof CustomEvent?event.detail?.returnFocus:null;
+  const detail=event instanceof CustomEvent?event.detail:null;
+  const target=detail?.returnFocus;
   const owner=target instanceof HTMLElement?target.closest('[data-tenant-shell]'):null;
   if(!(target instanceof HTMLButtonElement)||target.disabled||!target.hasAttribute('data-solo-vibe-studio-launcher')||!owner)return;
+  const asset=detail.asset===undefined?null:parseStudioSavedMediaHandoff(detail.asset);
+  if(detail.asset!==undefined&&(!asset||!target.isConnected||target.closest('[inert]')||!activeUserId||asset.expectedTenantId!==activeTenantId||route!=='growth'))return;
   studioReturnFocus.current=target;
   studioReturnOwner.current=owner;
   studioFocusPending.current=false;
-  setStudio(true);
-};window.addEventListener('paige-studio',h);return()=>window.removeEventListener('paige-studio',h)},[]);
-const closeStudio=React.useCallback(()=>{studioFocusPending.current=true;setStudio(false)},[]);
+  setStudio({asset,actorId:activeUserId});
+};window.addEventListener('paige-studio',h);return()=>window.removeEventListener('paige-studio',h)},[activeTenantId,activeUserId,route]);
+const closeStudio=React.useCallback(()=>{studioFocusPending.current=true;setStudio(null)},[]);
+const studioScopeChanged=Boolean(studio?.asset&&(studio.asset.expectedTenantId!==activeTenantId||studio.actorId!==activeUserId));
+const studioMediaOpen=Boolean(studio?.asset&&!studioScopeChanged&&route==='growth');
+React.useLayoutEffect(()=>{
+  if(!studioMediaOpen)return;
+  return lockStudioMediaBackground(studioReturnFocus.current);
+},[studioMediaOpen]);
 React.useLayoutEffect(()=>{
   if(studio||!studioFocusPending.current)return;
   studioFocusPending.current=false;
@@ -418,7 +446,7 @@ React.useLayoutEffect(()=>{
   if(!owner?.isConnected||target.closest('[data-tenant-shell]')!==owner||target.closest('[hidden],[aria-hidden="true"],[inert]'))return;
   target.focus({preventScroll:true});
 },[route,studio]);
-React.useEffect(()=>{if(route==='growth')return;setStudio(false);studioFocusPending.current=false;studioReturnFocus.current=null;studioReturnOwner.current=null},[route]);
+React.useEffect(()=>{if(route==='growth'&&!studioScopeChanged)return;setStudio(null);studioFocusPending.current=false;studioReturnFocus.current=null;studioReturnOwner.current=null},[route,studioScopeChanged]);
 const theme=resolvedTheme==='light'?'light':'dark';
 // Owner directive (2026-08-18) — the slide-in panel pops out from THIS launcher ONLY
 // (the TopBar spark / ⌘K). EVERY rail item, "Paige" included, navigates to its own URL
@@ -499,7 +527,7 @@ onSignOut={()=>void performSignOut({redirectTo:'/'})}>
 <SoloSetupReadinessNotice visible={showSetupReminder} setupHref={soloSetupHref} dismissed={setupReminderDismissed} onDismiss={()=>setSetupReminderDismissed(activeTenantId && activeUserId ? { tenant: activeTenantId, user: activeUserId } : null)}/>
 <div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>
 <main key={screenRoute} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary key={`${activeUserId??'resolving'}:${accountEpochKey}:${screenRoute==='operations'||screenRoute==='finance'?screenRoute:location.pathname}`} resetKey={location.pathname}><ScreenLoadBoundary resetKey={location.pathname}><React.Suspense fallback={<ScreenOpening label={SCREEN_LABELS[screenRoute]||[...NAV,...NAV2].find(n=>n[0]===screenRoute)?.[1]||'this view'}/>}>{screenRoute==='paige'?null:screens[screenRoute]}</React.Suspense></ScreenLoadBoundary></SoloScreenBoundary></main>
-{studio&&<React.Suspense fallback={null}><VibeStudio onBack={closeStudio} openPaige={openPaige}/></React.Suspense>}</div></div>
+{studio&&!studioScopeChanged&&<React.Suspense fallback={studio.asset?<StudioMediaOpening onBack={closeStudio}/>:null}><VibeStudio onBack={closeStudio} openPaige={openPaige} savedMedia={studio.asset}/></React.Suspense>}</div></div>
 </TenantCommandCenterShell>};
 
 const SoloApp=()=> (

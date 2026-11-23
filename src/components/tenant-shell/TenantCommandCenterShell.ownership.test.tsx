@@ -510,7 +510,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(solo).toContain("window.addEventListener('paige-studio',h)");
     // EXP06: the one Studio mount also receives the shell's openPaige (the NEXUS handoff's
     // destination); the ownership fact is unchanged — one VibeStudio, closed by its owner.
-    expect(solo).toContain("<VibeStudio onBack={closeStudio} openPaige={openPaige}/>");
+    expect(solo).toContain("<VibeStudio onBack={closeStudio} openPaige={openPaige} savedMedia={studio.asset}/>");
     expect(solo.match(/<VibeStudio/g)).toHaveLength(1);
     expect(vibe).toContain("<StudioRail");
     expect(vibe).toContain("onBack={onBack}");

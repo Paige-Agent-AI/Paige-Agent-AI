@@ -1,7 +1,7 @@
 import { CheckCircle2, ExternalLink } from "lucide-react";
 import { workspaceLinkTarget, workspaceLinkTier, type WorkspaceLinkTenant } from "@/lib/links/workspaceLinks";
 import { crmResultRecordReference, crmResultReferenceMetadata, type CrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
-import { OpportunityResultReceipt } from "./OpportunityResultReceipt";
+import { CrmUpdateResultReceipt } from "./OpportunityResultReceipt";
 
 export type PaigeCrmResult = CrmResultMetadata & {
   readback?: Record<string, unknown> | null;
@@ -52,8 +52,11 @@ export function PaigeCrmResultCard({ result, account }: { result: PaigeCrmResult
                 : exact ? "Open exact record" : "Open CRM surface"}<ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           )}
-          {correlation && reference?.record_id && account?.account_number != null && <OpportunityResultReceipt
-            dealId={reference.record_id} correlationId={correlation} accountNumber={account.account_number} />}
+          {correlation && reference?.record_id && account?.account_number != null && <CrmUpdateResultReceipt
+            reference={result.action === "task.update"
+              ? { kind: "task_update", taskId: reference.record_id, correlationId: correlation }
+              : { kind: "opportunity", dealId: reference.record_id, correlationId: correlation }}
+            accountNumber={account.account_number} />}
         </div>
       </div>
     </div>

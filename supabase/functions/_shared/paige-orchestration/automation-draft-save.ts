@@ -1,4 +1,4 @@
-import { createWeeklyDraftDeadline } from "./weekly-draft-deadline.ts";
+import { createWeeklyDraftDeadline, WeeklyDraftDeadlineExpired } from "./weekly-draft-deadline.ts";
 
 type Caller = { rpc(name: string, args: Record<string, unknown>): PromiseLike<{ data: unknown; error: unknown }> };
 type Draft = { name: string; category?: string; trigger_key: string;
@@ -70,6 +70,9 @@ export async function saveAutomationDraft(caller: Caller, options: Options): Pro
         return { status: "refused", reason: code === "23505" ? "name_conflict"
           : object(saved.error) && saved.error.message === "AUTOMATION_DRAFT_TRIGGER_UNAVAILABLE" ? "trigger_unavailable" : "not_applied" };
       return await recover();
-    } catch { return await recover(); }
+    } catch (error) {
+      if (error instanceof WeeklyDraftDeadlineExpired) return uncertain();
+      return await recover();
+    }
   } catch { return uncertain(); }
 }

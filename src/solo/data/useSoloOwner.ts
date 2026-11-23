@@ -44,6 +44,8 @@ export interface SoloOwnerData {
   error: string | null;
   saving: boolean;
   owner: SoloOwner;
+  /** Name read from the owner profile row, without the auth metadata fallback. */
+  savedName: string | null;
   /** Every email and phone the owner uses; the editor saves through this. */
   contact: UserContactMethods;
   saveOwner: (patch: SoloOwnerPatch) => Promise<{ ok: boolean; error?: string }>;
@@ -68,7 +70,7 @@ export function useSoloOwner(): SoloOwnerData {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uid, setUid] = useState<string | null>(null);
-  const [profile, setProfile] = useState<SoloOwner>(EMPTY_OWNER);
+  const [profile, setProfile] = useState({ ...EMPTY_OWNER, savedName: null as string | null });
   const contact = useUserContactMethods(uid);
   const refreshContact = contact.refresh;
 
@@ -81,7 +83,7 @@ export function useSoloOwner(): SoloOwnerData {
       const userId = user?.id ?? null;
       setUid(userId);
       if (!userId) {
-        setProfile(EMPTY_OWNER);
+        setProfile({ ...EMPTY_OWNER, savedName: null });
         return;
       }
       const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
@@ -95,8 +97,10 @@ export function useSoloOwner(): SoloOwnerData {
         .maybeSingle();
       if (profErr) throw profErr;
 
+      const savedName = str(data?.full_name);
       setProfile({
-        name: str(data?.full_name) ?? authName,
+        name: savedName ?? authName,
+        savedName,
         email: authEmail,
         phone: null,
         website: str(data?.website_url),
@@ -144,11 +148,12 @@ export function useSoloOwner(): SoloOwnerData {
     void refreshContact();
   }, [load, refreshContact]);
 
+  const { savedName, ...ownerProfile } = profile;
   const owner: SoloOwner = {
-    ...profile,
+    ...ownerProfile,
     email: primaryValue(contact.methods, "email") ?? profile.email,
     phone: primaryValue(contact.methods, "phone"),
   };
 
-  return { loading: loading || contact.loading, error: error ?? contact.error, saving, owner, contact, saveOwner, refresh };
+  return { loading: loading || contact.loading, error: error ?? contact.error, saving, owner, savedName, contact, saveOwner, refresh };
 }

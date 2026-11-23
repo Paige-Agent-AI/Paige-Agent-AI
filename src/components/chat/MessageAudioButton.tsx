@@ -8,10 +8,10 @@ import { Volume2, Loader2, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { messageTts, type TtsFetchError } from "@/lib/voice/messageTts";
 import { classifyTtsFailure } from "@/lib/voice/messageTtsFailure";
+import { fetchMessageAudio } from "@/lib/voice/fetchMessageAudio";
 
 interface MessageAudioButtonProps {
   /** Stable message id — identifies which message owns the current playback. */
@@ -20,48 +20,6 @@ interface MessageAudioButtonProps {
   content: string;
   /** Optional tint override (defaults to the muted-foreground used across MessageMeta). */
   className?: string;
-}
-
-/**
- * Fetch the synthesized mp3 for `content` from paige-tts. Uses a direct authenticated fetch (not
- * supabase.functions.invoke) so the existing controller can consume the raw streaming Response — invoke's binary
- * handling is unreliable. On a non-2xx we read the honest `{ error }` code (the resolveFunctionError
- * philosophy) and mark a `needs_config` for the tts_not_configured / tts_tier_reserved degrades.
- */
-async function fetchMessageAudio(content: string, requestId: string, signal: AbortSignal): Promise<Response> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw { needsConfig: false, message: "Please sign in." } as TtsFetchError;
-
-  const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-tts`, {
-    method: "POST",
-    signal,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-      "Idempotency-Key": requestId,
-    },
-    body: JSON.stringify({ text: content }),
-  });
-
-  if (!resp.ok) {
-    let code: string | null = null;
-    let resetAt: string | null = null;
-    try {
-      const body = await resp.json() as Record<string, unknown>;
-      code = typeof body.error === "string" ? body.error : null;
-      const suppliedReset = body.reset_at ?? body.resets_at ?? body.resetAt;
-      resetAt = typeof suppliedReset === "string" ? suppliedReset : null;
-    } catch { /* non-JSON body */ }
-    const feedback = classifyTtsFailure(code, resp.status, resetAt);
-    throw {
-      needsConfig: feedback.kind === "not_configured",
-      code,
-      status: resp.status,
-      resetAt,
-      message: feedback.message,
-    } as TtsFetchError;
-  }
-  return resp;
 }
 
 export function MessageAudioButton({ messageId, content, className }: MessageAudioButtonProps) {

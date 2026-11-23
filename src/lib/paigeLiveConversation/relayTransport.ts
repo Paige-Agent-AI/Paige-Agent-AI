@@ -11,6 +11,7 @@ export type RelayTransportState =
 export interface RelayTransport {
   subscribeOutput(listener: () => void): () => void;
   outputPlaying(): boolean;
+  outputCaption(): string | null;
   readEnergy(): AudioEnergy;
   pauseOutput(): void;
   resumeOutput(): void;
@@ -73,9 +74,25 @@ export function connectPaigeLiveRelay(input: Readonly<{
   let analyser: AnalyserNode | null = null;
   let samples = new Uint8Array(0);
   let spectrum = new Uint8Array(0);
+  let nextCaption: string | null = null;
+  let shownCaption: string | null = null;
+  let captionTimer: ReturnType<typeof setTimeout> | undefined;
+  const captionWindows: Array<{ text: string; start: number; end: number }> = [];
   const outputListeners = new Set<() => void>();
   const notifyOutput = () => outputListeners.forEach((listener) => listener());
   const outputPlaying = () => speaking && !held && !stopped && !terminal && context?.state === "running";
+  const updateCaption = () => {
+    clearTimeout(captionTimer);
+    const clock = context?.currentTime ?? 0;
+    while (captionWindows.length && captionWindows[0].end <= clock) captionWindows.shift();
+    const current = captionWindows[0];
+    const text = current && !held && context?.state === "running" && current.start <= clock ? current.text : null;
+    if (shownCaption !== text) {
+      shownCaption = text;
+      notifyOutput();
+    }
+    if (!held && current) captionTimer = setTimeout(updateCaption, 25);
+  };
 
   const clearInterrupt = () => {
     clearTimeout(interruptTimer);
@@ -91,6 +108,9 @@ export function connectPaigeLiveRelay(input: Readonly<{
     nextPlayAt = 0;
     runtimeDone = false;
     speaking = false;
+    nextCaption = null;
+    captionWindows.length = 0;
+    updateCaption();
     notifyOutput();
   };
   const stop = () => {
@@ -113,7 +133,7 @@ export function connectPaigeLiveRelay(input: Readonly<{
       input.onState({ kind: "ready" });
     }
   };
-  const playPcm = async (data: ArrayBuffer) => {
+  const playPcm = async (data: ArrayBuffer, caption: string | null) => {
     if (stopped || terminal || data.byteLength < 2 || data.byteLength % 2) return;
     const epoch = playbackEpoch;
     pendingPlayback++;
@@ -146,6 +166,13 @@ export function connectPaigeLiveRelay(input: Readonly<{
       };
       nextPlayAt = Math.max(playbackContext.currentTime, nextPlayAt);
       source.start(nextPlayAt);
+      if (caption) {
+        const end = nextPlayAt + buffer.duration;
+        const previous = captionWindows[captionWindows.length - 1];
+        if (previous?.text === caption && previous.end === nextPlayAt) previous.end = end;
+        else captionWindows.push({ text: caption, start: nextPlayAt, end });
+        updateCaption();
+      }
       if (!speaking) { speaking = true; notifyOutput(); if (!held) input.onState({ kind: "speaking" }); }
       nextPlayAt += buffer.duration;
     } catch {
@@ -165,7 +192,7 @@ export function connectPaigeLiveRelay(input: Readonly<{
     if (stopped || terminal) return;
     // Old PCM already in flight must not restart playback after a local interrupt.
     // The matching server acknowledgement is an ordered cancellation barrier.
-    if (event.data instanceof ArrayBuffer) { if (pendingInterrupt === null) void playPcm(event.data); return; }
+    if (event.data instanceof ArrayBuffer) { if (pendingInterrupt === null) void playPcm(event.data, nextCaption); return; }
     if (typeof event.data !== "string") return;
     let frame: Record<string, unknown>;
     try { frame = JSON.parse(event.data) as Record<string, unknown>; } catch { return; }
@@ -200,8 +227,12 @@ export function connectPaigeLiveRelay(input: Readonly<{
     } else if (frame.type === "transcript" && typeof frame.text === "string" &&
       typeof frame.turn_id === "string") {
       input.onTranscript?.(frame.text, frame.is_final === true, frame.turn_id);
+    } else if (frame.type === "output.caption" && pendingInterrupt === null &&
+      typeof frame.text === "string" && typeof frame.turn_id === "string") {
+      nextCaption = frame.text.trim().slice(0, 2_000) || null;
     } else if (frame.type === "runtime.dispatch" && typeof frame.text === "string" &&
       typeof frame.turn_id === "string" && typeof frame.challenge === "string") {
+      nextCaption = null;
       input.onVoiceTurn?.(frame.text, frame.turn_id, frame.challenge);
     } else if (frame.type === "runtime.cancel" && typeof frame.turn_id === "string") {
       input.onRuntimeCancel?.(frame.turn_id);
@@ -228,6 +259,7 @@ export function connectPaigeLiveRelay(input: Readonly<{
   return {
     subscribeOutput(listener) { outputListeners.add(listener); return () => { outputListeners.delete(listener); }; },
     outputPlaying,
+    outputCaption: () => shownCaption,
     readEnergy() {
       if (!outputPlaying() || context?.state !== "running" || !analyser) return SILENT_ENERGY;
       analyser.getByteTimeDomainData(samples);
@@ -237,8 +269,8 @@ export function connectPaigeLiveRelay(input: Readonly<{
       for (let i = spectrum.length / 2; i < spectrum.length; i++) high += spectrum[i];
       return { amplitude: Math.min(1, Math.sqrt(sum / samples.length) * 3), brightness: Math.min(1, high / (spectrum.length / 2 * 255)) };
     },
-    pauseOutput() { held = true; notifyOutput(); void context?.suspend().catch(() => { stop(); input.onState({ kind: "disconnected" }); }); },
-    resumeOutput() { held = false; maybePlaybackDone(); void context?.resume().then(notifyOutput).catch(() => { stop(); input.onState({ kind: "disconnected" }); }); },
+    pauseOutput() { held = true; updateCaption(); notifyOutput(); void context?.suspend().catch(() => { stop(); input.onState({ kind: "disconnected" }); }); },
+    resumeOutput() { held = false; maybePlaybackDone(); void context?.resume().then(() => { updateCaption(); notifyOutput(); }).catch(() => { stop(); input.onState({ kind: "disconnected" }); }); },
     clearOutput: clearPlayback,
     setMuted(value) { muted = value; },
     runtimeProof(turnId, proof) {

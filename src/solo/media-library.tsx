@@ -45,7 +45,7 @@ const formatDuration = (seconds: number | null) => {
   return `${m}:${String(s).padStart(2, "0")}`;
 };
 
-export function MediaLibrary({ tenantId }: { tenantId: string | null }) {
+export function MediaLibrary({ tenantId, allowUpload = true }: { tenantId: string | null; allowUpload?: boolean }) {
   const [assets, setAssets] = React.useState<MediaAsset[]>([]);
   const [phase, setPhase] = React.useState<"loading" | "ready" | "error">("loading");
   const [upload, setUpload] = React.useState<Upload>({ face: "idle" });
@@ -54,9 +54,14 @@ export function MediaLibrary({ tenantId }: { tenantId: string | null }) {
 
   const readAll = React.useCallback(async () => {
     if (!tenantId) return;
-    const { data, error } = await supabase.rpc("tenant_media_asset_list" as never, {} as never);
-    if (error) { setPhase("error"); return; }
-    setAssets(((data ?? []) as unknown as Array<Record<string, unknown>>).map((row) => ({
+    const { data, error } = await supabase.rpc("tenant_media_asset_list" as never, { p_tenant_id: tenantId } as never);
+    const rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
+    if (error || !Array.isArray(rows) || rows.some(row => row?.tenant_id !== tenantId)) {
+      setAssets([]);
+      setPhase("error");
+      return;
+    }
+    setAssets(rows.map((row) => ({
       id: String(row.id),
       title: typeof row.title === "string" ? row.title : "Untitled video",
       kind: typeof row.kind === "string" ? row.kind : "video",
@@ -131,10 +136,10 @@ export function MediaLibrary({ tenantId }: { tenantId: string | null }) {
       <div><h2 id="mct-media-h">Videos</h2><p>Your uploaded videos live here, ready to play and reuse.</p></div>
     </header>
     <div className="mct-pubdoor" style={{ marginTop: 0 }}>
-      <div className="mct-pubdoor-acts">
+      {allowUpload && <div className="mct-pubdoor-acts">
         <button type="button" className="btn btn-s" disabled={busy || upload.face === "slot"} onClick={() => void register("Untitled video")}>Add a video</button>
-      </div>
-      {upload.face === "slot" && (
+      </div>}
+      {allowUpload && upload.face === "slot" && (
         <label className="mct-media-drop">
           <input type="file" accept="video/*" disabled={busy} onChange={(event) => {
             const file = event.target.files?.[0];
@@ -144,27 +149,27 @@ export function MediaLibrary({ tenantId }: { tenantId: string | null }) {
         </label>
       )}
       <p className="mct-act-note" role="status" aria-live="polite">{note}</p>
-      {live.length === 0
+      {live.length === 0 || !tenantId
         ? (phase === "loading" ? <p className="mct-pubdoor-state">Reading your videos…</p>
           : phase === "error" ? <p className="mct-pubdoor-state">Your videos couldn't be read. Nothing changed.</p>
-          : <p className="mct-pubdoor-state">No videos yet. Add one and it stays in your library.</p>)
+          : <p className="mct-pubdoor-state">No videos yet.</p>)
         : <ul className="mct-media-list">
             {live.map((asset) => <li key={asset.id}>
-              <VideoCard asset={asset} busy={busy} onRefresh={() => void refresh(asset.id)} onRemove={() => void revoke(asset.id)} />
+              <VideoCard asset={asset} tenantId={tenantId} busy={busy} onRefresh={() => void refresh(asset.id)} onRemove={() => void revoke(asset.id)} />
             </li>)}
           </ul>}
     </div>
   </section>;
 }
 
-function VideoCard({ asset, busy, onRefresh, onRemove }: { asset: MediaAsset; busy: boolean; onRefresh: () => void; onRemove: () => void }) {
+function VideoCard({ asset, tenantId, busy, onRefresh, onRemove }: { asset: MediaAsset; tenantId: string; busy: boolean; onRefresh: () => void; onRemove: () => void }) {
   const [playback, setPlayback] = React.useState<{ hls: string | null } | null>(null);
   const [looking, setLooking] = React.useState(false);
 
   const play = async () => {
     if (asset.status !== "ready" || looking) return;
     setLooking(true);
-    const invoked = await supabase.functions.invoke("stream-media-read", { body: { action: "video", uid: asset.stream_uid, expected_tenant_id: null } });
+    const invoked = await supabase.functions.invoke("stream-media-read", { body: { action: "video", uid: asset.stream_uid, expected_tenant_id: tenantId } });
     const video = (invoked.data as { video?: { playback?: { hls?: string | null } } } | null)?.video;
     setPlayback({ hls: video?.playback?.hls ?? null });
     setLooking(false);

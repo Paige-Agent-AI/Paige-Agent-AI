@@ -3,9 +3,10 @@
 // public.check_public_rate_limit RPC (an INSERT ... ON CONFLICT counter over
 // public.public_rate_limits), which complements the user-uuid-keyed
 // public.check_rate_limit primitive — same idea, different key type.
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-type Admin = SupabaseClient;
+type Admin = {
+  rpc(name: "check_public_rate_limit", params: { _bucket: string; _max: number; _window_seconds: number }):
+    PromiseLike<{ data: unknown; error: unknown }>;
+};
 
 /** Best-guess client IP from the standard forwarded headers: Cloudflare's
  *  cf-connecting-ip first, then the LEFT-MOST X-Forwarded-For hop (the original
@@ -50,7 +51,7 @@ export async function overRateLimit(
       _window_seconds: windowSeconds,
     });
     if (error) return failClosed; // default fail-OPEN; cost-protection backstops pass failClosed=true
-    return data === false; // the RPC returns false ONLY when the ceiling is exceeded
+    return failClosed ? data !== true : data === false;
   } catch {
     return failClosed; // same posture on a thrown limiter error
   }

@@ -41,6 +41,10 @@ typography:
     fontSize: "11px"
   data:
     fontFamily: "JetBrains Mono, ui-monospace, SFMono-Regular, Consolas, monospace"
+  meet-paige-caption:
+    fontFamily: "Meet Paige Spectral, Georgia, serif"
+    fontWeight: 400
+    lineHeight: 1.13
   weekly-heading:
     fontSize: "20px"
     fontWeight: 650
@@ -91,7 +95,7 @@ components:
 
 **Creative North Star: "The existing SOLO workspace"**
 
-This is an extraction of the incumbent Obsidian and Mineral workspace, not a new visual identity. Its boundary is the sampled native Chat, Calendar, Operations and weekly responsibility UI. It supplies no design authority for unseen product areas, the public site, Studio or other shells.
+This is an extraction of the incumbent Obsidian and Mineral workspace, not a new visual identity. Its boundary is the sampled native Chat, Calendar, Operations and weekly responsibility UI, with a separate caption style for the Meet PAIGE Conversation Film. It supplies no design authority for unseen product areas, the public site, Studio or other shells.
 
 Schibsted Grotesk, warm ink, quiet tonal layers and compact controls keep the working surface readable. The weekly extension fits this language with plain divided rows, a familiar right sheet and explicit status text. The existing direction contract supplies the identity; no new metaphor or branding has been chosen.
 

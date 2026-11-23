@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import ts from "typescript";
 import { readRecordLinks } from "../../supabase/functions/_shared/paige-turn/record-links";
-import { crmResultReferenceMetadata, crmResultRecordReference, readCrmResultMetadata } from "../../supabase/functions/_shared/paige-turn/crm-result-reference";
+import { crmResultReferenceMetadata, crmResultRecordReference, crmResultSupportsReceipt, readCrmResultMetadata } from "../../supabase/functions/_shared/paige-turn/crm-result-reference";
 
 const ID = "e4000000-0000-4000-8000-0000000c0001";
 const code = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
@@ -148,7 +148,7 @@ describe("original Opportunity update receipt continuity", () => {
     expect(readCrmResultMetadata([saved])).toEqual([saved]);
     expect(JSON.stringify(saved)).not.toMatch(/Private|metadata|readback|locator|999|foreign/);
   });
-  it("carries the original door correlation through the actual successful CRM trace entry", () => {
+  it.each(["deal", "task"] as const)("carries the original %s correlation through the actual successful CRM trace and reload", family => {
     let entry = "";
     const walk = (node: ts.Node) => {
       if (ts.isCallExpression(node) && node.expression.getText(source) === "crmResultTrace.push") {
@@ -158,13 +158,18 @@ describe("original Opportunity update receipt continuity", () => {
     };
     walk(source);
     expect(entry).toBeTruthy();
-    const native = { ...update(), success: true };
+    const native = { ...nativeFamily(family), correlation_id: RECEIPT, success: true,
+      record_locator: { record_id: ID, deep_link_status: "exact" } };
+    const name = `crm_update_${family}`;
     const js = ts.transpileModule(`return (${entry});`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
-    const traced = new Function("parsed", "tc", "CRM_TOOL_TO_ACTION", js)(
-      native, { function: { name: "crm_update_deal" } }, { crm_update_deal: "deal.update" });
+    const traced = new Function("parsed", "tc", "CRM_TOOL_TO_ACTION", "crmResultSupportsReceipt", js)(
+      native, { function: { name } }, { [name]: native.action }, crmResultSupportsReceipt);
     expect(traced.correlation_id).toBe(RECEIPT);
     const saved = JSON.parse(JSON.stringify(metadata(traced))).bundleRef.paige_crm_result[0];
     expect(saved.correlation_id).toBe(RECEIPT);
+    expect(saved.record_reference).toEqual({ destination: family === "task" ? "operations_work" : "pipeline", record_id: ID });
+    expect(readCrmResultMetadata([saved])).toEqual([saved]);
+    expect(JSON.stringify(saved)).not.toMatch(/Private|readback|locator|999|foreign/);
   });
   it("normalizes only the opaque native correlation, never a route or private payload", () => {
     expect(crmResultReferenceMetadata({ ...update(), correlation_id: RECEIPT.toUpperCase() }).correlation_id).toBe(RECEIPT);
@@ -179,8 +184,15 @@ describe("original Opportunity update receipt continuity", () => {
       expect(crmResultReferenceMetadata({ ...update(), ...patch }).correlation_id).toBeUndefined();
     }
   });
-  it.each(["deal.create", "deal.move", "deal.delete", "contact.update", "task.update"])("does not widen receipt recovery to %s", action => {
+  it.each(["deal.create", "deal.move", "deal.delete", "contact.update", "task.create", "task.assign", "task.cancel"])("does not widen receipt recovery to %s", action => {
     expect(crmResultReferenceMetadata({ ...update(), action }).correlation_id).toBeUndefined();
+  });
+  it("keeps task.update receipt-free for surface-only and injected history", () => {
+    const surface = { ...nativeFamily("task"), correlation_id: RECEIPT };
+    expect(crmResultReferenceMetadata(surface)).toEqual({ record_reference: familyReference("task") });
+    const row = { action: "task.update", outcome: "succeeded", receipt_recorded: true };
+    const saved = { ...row, record_reference: { destination: "operations_work", record_id: ID }, correlation_id: RECEIPT };
+    expect(readCrmResultMetadata([{ ...saved, readback: { id: ID } }])).toEqual([row]);
   });
   it("does not recover receipt identity from legacy or injected raw history", () => {
     const row = { action: "deal.update", outcome: "succeeded", receipt_recorded: true };

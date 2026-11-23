@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 const router = readFileSync("supabase/functions/_shared/model-router.ts", "utf8");
 const tts = readFileSync("supabase/functions/paige-tts/index.ts", "utf8");
 const messageAudioButton = readFileSync("src/components/chat/MessageAudioButton.tsx", "utf8");
+const messageAudioRequest = readFileSync("src/lib/voice/fetchMessageAudio.ts", "utf8");
 const session = readFileSync("supabase/functions/paige-live-session/index.ts", "utf8");
 const operator = readFileSync("supabase/functions/paige-voice-profile-admin/index.ts", "utf8");
 
@@ -73,7 +74,8 @@ describe("Paige voice provider boundary", () => {
 
   it("keeps request identity client-owned while allowing the per-tap key through CORS", () => {
     expect(messageAudioButton).toContain("const requestId = crypto.randomUUID()");
-    expect(messageAudioButton).toContain(`"Idempotency-Key": requestId`);
+    expect(messageAudioButton).toContain("fetchMessageAudio(trimmed, requestId, signal)");
+    expect(messageAudioRequest).toContain(`"Idempotency-Key": requestId`);
     expect(tts).toContain(
       `"Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, Idempotency-Key"`,
     );

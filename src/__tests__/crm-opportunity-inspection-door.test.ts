@@ -27,15 +27,16 @@ function world(authorized = true) {
   const caller = { auth: { getUser: vi.fn(async () => ({ data: { user: authorized ? { id: ACTOR } : null }, error: null })) } };
   const admin = {};
   const inspect = vi.fn(async () => ({ status: 200, body: { ok: true, outcome: "recorded" } }));
+  const inspectTask = vi.fn(async () => ({ status: 200, body: { ok: true, outcome: "recorded" } }));
   let clients = 0;
-  const run = new Function("createClient", "Deno", "response", "cors", "inspectOpportunityResult", `${code};return run;`)(
+  const run = new Function("createClient", "Deno", "response", "cors", "inspectOpportunityResult", "inspectTaskUpdateReceipt", `${code};return run;`)(
     () => clients++ === 0 ? caller : admin, { env: { get: () => "fixture" } },
-    (status: number, body: unknown) => ({ status, body }), {}, inspect,
+    (status: number, body: unknown) => ({ status, body }), {}, inspect, inspectTask,
   );
   const request = (body: unknown, auth = true) => new Request("https://fixture.invalid/crm-command", {
     method: "POST", headers: { ...(auth ? { Authorization: "Bearer fixture" } : {}), "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
-  return { caller, admin, inspect, run, request };
+  return { caller, admin, inspect, inspectTask, run, request };
 }
 describe("original CRM authenticated inspection entry", () => {
   it("passes only the verified server actor and original clients to the reader", async () => {
@@ -47,6 +48,9 @@ describe("original CRM authenticated inspection entry", () => {
   it.each([false, true])("requires actual authentication before inspection (header %s)", async header => {
     const w = world(false), answer = await w.run(w.request({ inspect_opportunity_result: {} }, header));
     expect(answer.status).toBe(401); expect(w.inspect).not.toHaveBeenCalled();
+    const task = world(false);
+    expect(await task.run(task.request({ inspect_task_update_result: {} }, header))).toMatchObject({ status: 401 });
+    expect(task.inspectTask).not.toHaveBeenCalled();
   });
   it.each([null, false, {}, { command: { action: "deal.update" }, idempotency_key: "original" }])(
     "does not consume or alter the ordinary command body %j", async raw => {
@@ -57,5 +61,13 @@ describe("original CRM authenticated inspection entry", () => {
     const w = world(); w.inspect.mockResolvedValueOnce({ status: 400, body: { ok: false, outcome: "refused" } });
     expect(await w.run(w.request({ inspect_opportunity_result: null, command: { action: "deal.update" } }))).toEqual({ status: 400, body: { ok: false, outcome: "refused" } });
     expect(w.inspect).toHaveBeenCalledTimes(1);
+  });
+  it("routes Task receipt inspection through the original authenticated door and never executes a command", async () => {
+    const w = world(), raw = { expected_tenant_id: "fixture", inspect_task_update_result: { task_id: "fixture" },
+      command: { action: "task.update" } };
+    w.inspectTask.mockResolvedValueOnce({ status: 400, body: { ok: false, outcome: "refused" } });
+    expect(await w.run(w.request(raw))).toEqual({ status: 400, body: { ok: false, outcome: "refused" } });
+    expect(w.inspectTask).toHaveBeenCalledWith({ raw, actorId: ACTOR, caller: w.caller, admin: w.admin });
+    expect(w.inspect).not.toHaveBeenCalled();
   });
 });

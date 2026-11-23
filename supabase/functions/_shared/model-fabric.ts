@@ -17,10 +17,9 @@
 // round gate's business. A provider being chosen grants nothing: tools, approvals and authority are decided
 // downstream, unchanged.
 //
-// OPENROUTER IS THE OWNER-DIRECTED PRIMARY (2026-11-17): it serves the SAME class models through the
-// Responses wire, with OpenAI (the 2026-10-08 primary, flag below) and Anthropic preserved behind it
-// as the fallback chain. Both transports are key-gated and cohort-gated; the key is an extra master
-// switch for OpenRouter so an unconfigured deployment silently keeps the recorded chain.
+// OPENROUTER AUTO IS THE ONLY TRANSPORT (2026-11-23): all classes route through OpenRouter Auto.
+// No OpenAI, Anthropic, Featherless, or Groq fallbacks. OpenRouter Auto selects the best non-GPT
+// model per request. If OpenRouter Auto fails, the turn is interrupted (truthful, not fabricated).
 
 import { chatCompletionCompat, gatewayCompat, messagesCarryDocument, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
 import { NeedsConfigError } from "./provider-types.ts";

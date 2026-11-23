@@ -284,13 +284,11 @@ export type FabricProvider = "openrouter" | "openai" | "anthropic" | "featherles
 export interface RouteCandidate { provider: FabricProvider; model: string | null }
 
 /**
- * The owner's policy. OpenRouter is the PRIMARY transport (owner directive 2026-11-17) for all three
- * classes; it serves the SAME class models through its Responses endpoint, so this is a transport
- * change, not a change to what a class thinks with (Luna / Sol / Astra remain the class models).
- * The recorded 2026-10-06 order is preserved intact BEHIND it as the fallback chain: Sol then
- * Sonnet 5.5 (operational/frontier), Luna then the open pool then Haiku (cheap). Order is preference;
- * the fabric moves to the next candidate only on a fallback-eligible failure (below). An unconfigured
- * OpenRouter key is `auth_config` and simply falls through to that chain — chat keeps working.
+ * The owner's policy (2026-11-23): ALL classes route through OpenRouter Auto only. No dedicated
+ * OpenAI, Anthropic, Featherless, or Groq models. OpenRouter Auto selects the best non-GPT model
+ * per request. There is NO fallback chain — if OpenRouter Auto fails, the turn is interrupted
+ * (truthful, not fabricated). This is a temporary routing decision until model comparison
+ * (OpenRouter Auto vs direct model selection) is completed.
  *
  * Sensitive/final/send/approval work is NOT decided here: the pinned judge carve-out stays Anthropic,
  * an approved card executes deterministically with no model, and every tool call still passes the

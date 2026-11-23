@@ -219,7 +219,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const planning = refs.length === 0 && (chat.workflow.phase === "planning" || (!chat.ready && startsWithPlanning));
   const resolvingPhase = !chat.ready && !chat.loadError && !seedBrief;
   const projectWorkspace = !planning && !resolvingPhase;
-  const buildReadbackPending = Boolean(chat.workflow.pendingBuild && refs.length === 0);
+  const buildReadbackPending = Boolean(chat.workflow.pendingBuild);
 
   React.useLayoutEffect(() => {
     const panel = chatRef.current;

@@ -7015,18 +7015,21 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // turn through the caller's session (the same append, the same ownership and workspace checks),
     // waiting on a reply exactly like the first; its words are the saved question's, not regenerated.
     // Null when it could not be saved (the workspace changed, the store refused) — logged, never thrown.
-    const saveQuestionAgain = async (ask: AskRecord): Promise<AskRecord | null> => {
+    const saveQuestionAgain = async (ask: AskRecord, studio?: StudioProofScope): Promise<AskRecord | null> => {
       if (!payloadThreadId) return null;
       try {
         const again = reopenAsk(ask, crypto.randomUUID());
-        const { error } = await appendAssistant({
-          p_thread_id: payloadThreadId, p_role: "assistant", p_content: again.content,
+        const proof = studio ? await signStudioWorkflow(supabaseServiceKey, studio, "proposal", again.record.ask_id, again.record.question, ask.ask_id) : null;
+        const { data, error } = await appendAssistant({
+          p_thread_id: payloadThreadId, p_role: "assistant",
+          p_content: proof ? `The build did not start. Your plan is ready to approve again.\n\n${again.record.question}` : again.content,
           p_surfaces_used: null, p_load_id: null, p_model: null,
           p_tokens_used: null, p_latency_ms: null,
-          p_bundle_ref: { turn_state: again.turnState, paige_ask: again.record } as any,
+          p_bundle_ref: { turn_state: again.turnState, paige_ask: again.record,
+            ...(proof ? { studio_workflow: "proposal", studio_proof: proof } : {}) } as any,
           p_tool_calls: null,
         });
-        if (error) {
+        if (error || (studio && !data)) {
           console.error("[paige] the question could not be asked again", JSON.stringify({ code: (error as { code?: string }).code ?? null, correlation: payloadRequestIntentId ?? null }));
           return null;
         }
@@ -7076,13 +7079,22 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
         const proposed = previous?.role === "assistant" ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, previous.bundle_ref, "assistant") : null;
         approvedStage = proposed?.kind === "proposal" && proposed.askId === claimPhase.askId;
+        if (approvedStage) {
+          const { data: retry, error: retryError } = await supabaseClient.from("paige_chat_turns")
+            .select("bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "assistant")
+            .eq("bundle_ref->>studio_workflow", "proposal").eq("bundle_ref->paige_ask->>reopens", claimPhase.askId).gt("seq", claimRow.seq)
+            .order("seq", { ascending: false }).limit(1).maybeSingle();
+          if (retryError) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+          const reopened = retry ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, retry.bundle_ref, "assistant") : null;
+          if (reopened?.kind === "proposal" && reopened.reopens === claimPhase.askId) approvedStage = false;
+        }
       }
       const alreadyHasArtifact = Array.isArray(enrolled.artifact_refs) && enrolled.artifact_refs.length > 0;
       const enrolledInPlanning = ("plan_first" in enrolled && enrolled.plan_first === true) || startsStudioPlanning(enrolled.transcript) || Boolean(marker);
       if ((enrolledInPlanning || studioWorkflow) && callerTier !== "tenant")
         return refuseStudioWorkflow(403, "STUDIO_WORKFLOW_SCOPE_UNAVAILABLE");
       if (!studioWorkflow && enrolledInPlanning && !approvedStage && !alreadyHasArtifact) return refuseStudioWorkflow(409, "STUDIO_PLAN_REQUIRED");
-      if (!studioWorkflow && !alreadyHasArtifact && approvedStage && claimRow && claimPhase?.kind === "build") {
+      if (!studioWorkflow && approvedStage && claimRow && claimPhase?.kind === "build") {
         const { data: finished, error } = await supabaseClient.from("paige_chat_turns")
           .select("role,bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "assistant")
           .eq("bundle_ref->>studio_workflow", "settled").gt("seq", claimRow.seq)
@@ -11703,10 +11715,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // From here until the stream is handed back, every exit saves the question again (one at most).
       let askedAgain = false;
       afterAnswerClaimFailure = async (resp: Response) => {
-        if (studioPlanBuild) return resp;
         if (askedAgain) return resp;
         askedAgain = true;
-        const again = await saveQuestionAgain(binding.ask);
+        if (studioPlanBuild && !studioProofScope) return resp;
+        const again = await saveQuestionAgain(binding.ask, studioPlanBuild ? studioProofScope ?? undefined : undefined);
         if (!again) return resp;
         let original: Record<string, unknown> = {};
         try { original = await resp.clone().json(); } catch { /* keep the status, say what happened */ }
@@ -20777,6 +20789,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       interactiveLifetime?.transferToStream();
       const finalStream = new ReadableStream({
         async start(controller) {
+         // Once the build stream begins, an outer error cannot prove that no Studio tool ran.
+         if (studioPlanBuild) afterAnswerClaimFailure = null;
          // paige-turn — the first frame of the stream, ahead of the compaction card and everything else.
          controller.enqueue(enc.encode(turnFrameLine(turnTracker.frame("started"))));
          // §13/§36 — a client was named but could NOT be authorized, so this turn ran with no
@@ -21874,12 +21888,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the check holds.
           if (!durableApprovalPause && !(interactive && durableResearchPause) && payloadThreadId && finalAssistantText.trim()) {
             try {
-              let meta = withTurnRecord(finalAssistantText, assistantTurnMetadata());
-              if (studioWorkflow?.kind === "approve" && studioProofScope) {
+              let meta: Parameters<typeof persistAssistantTurn>[1] = withTurnRecord(finalAssistantText, assistantTurnMetadata());
+              const buildSettled = (turnTracker.state === "FINAL" || turnTracker.state === "ASK_USER" || turnTracker.state === "WAIT_APPROVAL")
+                && !requestExecutionState.needsReview && !interactiveEffects.some(effect => effect.outcome === "outcome_unknown");
+              if (studioWorkflow?.kind === "approve" && studioProofScope && buildSettled) {
                 const askId = studioWorkflow.askId;
                 const proof = await signStudioWorkflow(supabaseServiceKey, studioProofScope, "settled", askId);
                 meta = { ...meta, bundleRef: { ...(meta.bundleRef as Record<string, unknown>),
-                  studio_workflow: "settled", studio_plan_ask_id: askId, studio_proof: proof } } as typeof meta;
+                  studio_workflow: "settled", studio_plan_ask_id: askId, studio_proof: proof } };
               }
               const p = persistAssistantTurn(finalAssistantText, meta, Boolean(studioWorkflow));
               // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime

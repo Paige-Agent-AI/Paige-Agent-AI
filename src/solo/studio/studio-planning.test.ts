@@ -23,6 +23,15 @@ describe("Studio planning phase", () => {
     expect(projectStudioWorkflow([planning, plan, claim, settled], true)).toEqual({ phase: "build", proposal: null, pendingBuild: null });
   });
 
+  it("only returns to planning when the original build is explicitly reopened", () => {
+    const reopen = { studioWorkflow: readStudioWorkflow({ studio_workflow: "proposal", paige_ask: { ask_id: olderAskId, reopens: askId } }, "assistant") };
+    expect(projectStudioWorkflow([planning, plan, claim, reopen], true))
+      .toEqual({ phase: "planning", proposal: olderAskId, pendingBuild: null });
+    const different = { studioWorkflow: readStudioWorkflow({ studio_workflow: "proposal", paige_ask: { ask_id: olderAskId, reopens: olderAskId } }, "assistant") };
+    expect(projectStudioWorkflow([planning, plan, claim, different], true))
+      .toEqual({ phase: "build", proposal: null, pendingBuild: askId });
+  });
+
   it("requires a server proof for the exact proposal, actor, workspace and thread", async () => {
     const scope = { actorId: "owner", tenantId: "workspace", threadId: "studio-thread" };
     const secret = "test-secret";
@@ -38,6 +47,11 @@ describe("Studio planning phase", () => {
       expect(await verifyStudioWorkflow(secret, { ...scope, [key]: "different" }, signed, "assistant")).toBeNull();
     }
     expect(await verifyStudioWorkflow(secret, scope, { studio_workflow: "settled", studio_plan_ask_id: askId, studio_proof }, "assistant")).toBeNull();
+    const reopened = { ...unsigned, paige_ask: { ...unsigned.paige_ask, reopens: olderAskId } };
+    expect(await verifyStudioWorkflow(secret, scope, { ...reopened, studio_proof }, "assistant")).toBeNull();
+    const reopenedProof = await signStudioWorkflow(secret, scope, "proposal", askId, question, olderAskId);
+    expect(await verifyStudioWorkflow(secret, scope, { ...reopened, studio_proof: reopenedProof }, "assistant"))
+      .toEqual({ kind: "proposal", askId, reopens: olderAskId });
   });
 
   it("does not promote an interrupted or superseded plan claim", () => {

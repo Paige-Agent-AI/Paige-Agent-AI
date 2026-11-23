@@ -340,6 +340,16 @@ describe("Vibe Studio project workspace", () => {
     await flush();
     expect(text()).toContain("no confirmed reply yet");
     expect(h.fetchBodies).toHaveLength(0);
+
+    h.history.push({
+      role: "assistant", content: "The build did not start. Your plan is ready to approve again.",
+      studioWorkflow: { kind: "proposal", askId: "a5a3790f-8a70-4b4a-ae5f-cfcae4acab7c", reopens: askId },
+    });
+    await act(async () => { button("Check build status")!.click(); });
+    await flush();
+    expect(text()).toContain("In Progress");
+    expect(button("Approve plan & start build")).toBeDefined();
+    expect(h.fetchBodies).toHaveLength(0);
   });
 
   it("brief details compose into the saved brief and Paige's first message (EXP07 row 1)", async () => {

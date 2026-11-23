@@ -103,7 +103,7 @@ export function useStudioChat(opts: {
   const send = React.useCallback(async (text: string, sendOpts?: { display?: string; approved?: string[]; declined?: string[]; planId?: string }) => {
     const trimmed = text.trim();
     if (!trimmed || sending || abort.current || !threadId) return;
-    if (workflow.pendingBuild && !cb.current.hasArtifacts) return;
+    if (workflow.pendingBuild) return;
     const planningRequest = workflow.phase === "planning" && !cb.current.hasArtifacts && !sendOpts?.planId;
     const studioWorkflow = sendOpts?.planId ? { kind: "approve", askId: sendOpts.planId }
       : planningRequest ? { kind: "planning" } : undefined;
@@ -316,8 +316,8 @@ export function useStudioChat(opts: {
       setTurns(history);
       setConfirms(held);
       const current = projectStudioWorkflow(history, Boolean(cb.current.startInPlanning));
-      if (current.phase === "build") setWorkflow(current);
-      setSendError(current.pendingBuild || current.phase !== "build"
+      if (current.phase === "build" || current.proposal) setWorkflow(current);
+      setSendError(current.pendingBuild || (current.phase !== "build" && !current.proposal)
         ? "The build has no confirmed reply yet. Check the canvas and saved versions for its result." : null);
       cb.current.onTurnDone();
     } catch {

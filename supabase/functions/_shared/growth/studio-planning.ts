@@ -18,7 +18,7 @@ export const STUDIO_PLANNING_CORE = [
 
 export type StudioWorkflow =
   | { kind: "planning" }
-  | { kind: "proposal"; askId: string }
+  | { kind: "proposal"; askId: string; reopens?: string }
   | { kind: "build"; askId: string }
   | { kind: "settled"; askId: string };
 
@@ -38,7 +38,8 @@ export function readStudioWorkflow(bundle: unknown, role: "user" | "assistant"):
   if (state === "settled" && typeof settled === "string" && UUID.test(settled)) return { kind: "settled", askId: settled };
   if (state !== "proposal" || !ask || typeof ask !== "object" || !("ask_id" in ask)
     || typeof ask.ask_id !== "string" || !UUID.test(ask.ask_id)) return null;
-  return { kind: "proposal", askId: ask.ask_id };
+  const reopens = "reopens" in ask && typeof ask.reopens === "string" && UUID.test(ask.reopens) ? ask.reopens : undefined;
+  return { kind: "proposal", askId: ask.ask_id, ...(reopens ? { reopens } : {}) };
 }
 
 type StudioProofKind = "proposal" | "build" | "settled";
@@ -49,12 +50,12 @@ async function studioProofKey(secret: string) {
   return await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
 
-function studioProofInput(scope: StudioProofScope, kind: StudioProofKind, askId: string, question: string) {
-  return encoder.encode(JSON.stringify(["paige-studio-workflow-v1", scope.actorId, scope.tenantId, scope.threadId, kind, askId, question]));
+function studioProofInput(scope: StudioProofScope, kind: StudioProofKind, askId: string, question: string, reopens: string) {
+  return encoder.encode(JSON.stringify(["paige-studio-workflow-v1", scope.actorId, scope.tenantId, scope.threadId, kind, askId, question, reopens]));
 }
 
-export async function signStudioWorkflow(secret: string, scope: StudioProofScope, kind: StudioProofKind, askId: string, question = "") {
-  const proof = await crypto.subtle.sign("HMAC", await studioProofKey(secret), studioProofInput(scope, kind, askId, question));
+export async function signStudioWorkflow(secret: string, scope: StudioProofScope, kind: StudioProofKind, askId: string, question = "", reopens = "") {
+  const proof = await crypto.subtle.sign("HMAC", await studioProofKey(secret), studioProofInput(scope, kind, askId, question, reopens));
   return Array.from(new Uint8Array(proof), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
@@ -70,8 +71,9 @@ export async function verifyStudioWorkflow(
   const question = workflow.kind === "proposal" ? record.paige_ask?.question : "";
   if (typeof question !== "string") return null;
   const signature = Uint8Array.from(record.studio_proof.match(/../g)!, pair => Number.parseInt(pair, 16));
+  const reopens = workflow.kind === "proposal" ? workflow.reopens ?? "" : "";
   const valid = await crypto.subtle.verify("HMAC", await studioProofKey(secret), signature,
-    studioProofInput(scope, workflow.kind, workflow.askId, question));
+    studioProofInput(scope, workflow.kind, workflow.askId, question, reopens));
   return valid ? workflow : null;
 }
 
@@ -109,6 +111,11 @@ export function projectStudioWorkflow(
       }
     }
     if (marker?.kind === "settled" && pendingBuild === marker.askId) pendingBuild = null;
+    if (marker?.kind === "proposal" && marker.reopens && marker.reopens === pendingBuild) {
+      phase = "planning";
+      claimed = false;
+      pendingBuild = null;
+    }
   }
   const last = turns.at(-1)?.studioWorkflow;
   return { phase, proposal: phase === "planning" && last?.kind === "proposal" ? last.askId : null, pendingBuild };

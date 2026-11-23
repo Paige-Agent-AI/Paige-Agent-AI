@@ -175,12 +175,16 @@ export async function readResolvedPublicationAsset(input: {
     const response = await safeFetchBytes(source, {
       method: "GET", headers: { "If-Match": etag },
     }, { timeoutMs: 15_000, maxBytes: asset.size });
+    // Storage info has millisecond precision. The object endpoint's HTTP date
+    // can report either surrounding whole second for the same strong ETag.
+    const infoSeconds = Date.parse(asset.lastModified) / 1000;
+    const responseSecond = Date.parse(response.headers.get("Last-Modified") ?? "") / 1000;
+    const sameModifiedTime = responseSecond === Math.floor(infoSeconds) || responseSecond === Math.ceil(infoSeconds);
     if (response.status !== 200 || response.truncated
       || strongEtag(response.headers.get("ETag")) !== etag
       || response.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase() !== asset.contentType
       || response.headers.get("Content-Length") !== String(asset.size)
-      || Math.floor(Date.parse(response.headers.get("Last-Modified") ?? "") / 1000)
-        !== Math.floor(Date.parse(asset.lastModified) / 1000)) return null;
+      || !sameModifiedTime) return null;
     const bytes = response.body;
     if (bytes.byteLength !== asset.size) return null;
     return matchesMediaSignature(bytes, asset.contentType) ? bytes : null;

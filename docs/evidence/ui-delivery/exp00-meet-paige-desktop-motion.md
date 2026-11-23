@@ -14,7 +14,7 @@ BEHAVIORAL_EVIDENCE: PASS: the final retry passed nine browser fixtures covering
 AUTHENTICATED_RUNTIME: UNVERIFIED: source is verified using isolated mock relay input. Production authentication, real speech and commercial signup are outside these performance measurements.
 KEYBOARD_FOCUS: PASS: the user can focus and activate Skip intro with Enter at the tested Chrome and Edge sizes.
 ZOOM_REFLOW: UNVERIFIED: responsive CSS geometry and multiple pixel densities were exercised. Actual browser zoom, text resize and a physical display switch remain unverified.
-REDUCED_MOTION: PASS: large motion is bypassed and voice feedback stays visible at a measured lower cadence. Both layer animations respect the browser preference.
+REDUCED_MOTION: PASS: large motion is bypassed and voice feedback stays visible with the configured lower redraw cadence. Both layer animations respect the browser preference.
 STATE_COVERAGE: PASS: intro, listening, active audio, hold, resume, interrupt, reduced motion and End exercised using synthetic playback. Source review inspected visibility, renderer resize and cleanup.
 TRUTHFUL_STATE_LABELS: PASS: the waveform takes its amplitude from the existing playback input and captions follow playback.
 SOLO_UI: YES: the shared signed-in Live Conversation and Meet PAIGE stage.

@@ -78,7 +78,7 @@ function inspect(chatText,sources){
  const legacyImages=walk(image,n=>call(n,'supabaseClient.functions.invoke')&&str(n.arguments[0])==='generate-image');
  require(legacyImages.length===2&&legacyImages.every(n=>print(prop(prop(n.arguments[1],'body'),'tenant_id'))==='personaCtx?.tenant_id??null'),'both legacy image caller routes and server tenants');
  require(walk(image,n=>ts.isCallExpression(n)&&print(n.expression).endsWith('.functions.invoke')).length===3,'image routes have no additional unbound invocation');
- require(walk(chat,n=>call(n,'buildAskRecord')&&print(prop(n.arguments[1],'askId'))==='crypto.randomUUID()'&&print(prop(n.arguments[1],'freeForm'))==='mainChatAsks').length===1&&walk(chat,n=>call(n,'turnTracker.choicesAsked')).length===1,'choices server-id and canonical ASK_USER state');
+ require(walk(chat,n=>call(n,'buildAskRecord')&&print(prop(n.arguments[1],'askId'))==='crypto.randomUUID()'&&print(prop(n.arguments[1],'freeForm'))==='mainChatAsks||studioPlanning').length===1&&walk(chat,n=>call(n,'turnTracker.choicesAsked')).length===1,'choices server-id and canonical ASK_USER state');
  for(const name of ['contentDraft','pageDraft','funnelDraft']){
   const source=adapters[name];require(walk(source,n=>call(n,'resolveStudioCaller')&&print(n.arguments[0])==='authed'&&print(n.arguments[1])==='body?.tenant_id').length===1,`${name}: shared current-workspace authority`);
   require(walk(source,n=>call(n,'authed.auth.getUser')).length===1,`${name}: fresh caller authentication`);

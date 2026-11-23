@@ -18,13 +18,14 @@ const deploymentId = /^[a-z0-9]{20,32}$/;
 const terminalStatuses = ["finished", "failed", "cancelled-by-user", "skipped"];
 
 function makeCoolifyClient(token, fetchFrom) {
-  return async (path, { method = "GET", body, allowDenied = false } = {}) => {
+  return async (path, { method = "GET", body, allowDenied = false, signal } = {}) => {
+    const requestTimeout = AbortSignal.timeout(20_000);
     const response = await fetchFrom(`https://app.coolify.io/api/v1${path}`, {
       method,
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
       redirect: "error",
-      signal: AbortSignal.timeout(20000),
+      signal: signal ? AbortSignal.any([signal, requestTimeout]) : requestTimeout,
     });
     if (allowDenied && [403, 404].includes(response.status)) return;
     assert.ok(!allowDenied, `Credential scope check failed at ${path} (HTTP ${response.status})`);
@@ -85,13 +86,17 @@ async function liveRelease(fetchFrom, expected) {
   return releaseIds[0];
 }
 
-async function waitForDeployment(coolify, pause, uuid) {
-  for (let attempt = 0; attempt < 90; attempt++) {
-    const { status, deployment_uuid } = await coolify(`/deployments/${uuid}`);
+async function waitForDeployment(coolify, pause, now, uuid) {
+  const deadline = now() + 16 * 60_000;
+  for (let remaining = deadline - now(); remaining > 0; remaining = deadline - now()) {
+    const { status, deployment_uuid } = await coolify(`/deployments/${uuid}`, {
+      signal: AbortSignal.timeout(Math.ceil(remaining)),
+    });
     assert.equal(deployment_uuid, uuid);
     if (terminalStatuses.includes(status)) return status;
     assert.ok(["queued", "in_progress"].includes(status), `Unknown deployment status ${status}`);
-    await pause(5000);
+    const delay = Math.min(5000, deadline - now());
+    if (delay > 0) await pause(delay);
   }
   throw new Error(`Deployment ${uuid} is unconfirmed. Reconcile in Coolify before retrying.`);
 }
@@ -125,23 +130,31 @@ async function assertAppliedDeployment(coolify, app, deployment) {
   return { deployment, image: `${app.docker_registry_image_name}@${digest}` };
 }
 
-async function verifyServingDeployment(coolify, fetchFrom, pause, deployment, tag, expected) {
-  for (let attempt = 0; attempt < 12; attempt++) {
+async function verifyServingDeployment(coolify, fetchFrom, pause, now, deployment, tag, expected) {
+  const budget = 90_000;
+  const deadline = now() + budget;
+  const signal = AbortSignal.timeout(budget);
+  const readCoolify = (path) => coolify(path, { signal });
+  const readDomain = (url, options) => fetchFrom(url, { ...options, signal: AbortSignal.any([options.signal, signal]) });
+  let cause;
+  for (let attempt = 0; attempt < 12 && now() < deadline; attempt++) {
     try {
-      const app = await assertHealthyReleaseTag(coolify, tag);
-      const history = await noActiveDeployment(coolify);
+      const app = await assertHealthyReleaseTag(readCoolify, tag);
+      const history = await noActiveDeployment(readCoolify);
       assert.equal(history[0]?.deployment_uuid, deployment, "A different deployment has taken precedence");
-      await assertAppliedDeployment(coolify, app, deployment);
-      await liveRelease(fetchFrom, expected);
+      await assertAppliedDeployment(readCoolify, app, deployment);
+      await liveRelease(readDomain, expected);
       return;
     } catch (error) {
-      if (attempt === 11) throw new Error(`Deployment ${deployment} finished but live verification failed. Reconcile in Coolify.`, { cause: error });
-      await pause(5000);
+      cause = error;
+      const delay = Math.min(5000, deadline - now());
+      if (attempt < 11 && delay > 0) await pause(delay);
     }
   }
+  throw new Error(`Deployment ${deployment} finished but live verification failed. Reconcile in Coolify.`, { cause });
 }
 
-export async function deploy(options, { fetchFrom = fetch, verify = verifyRelease, pause = setTimeout, save } = {}) {
+export async function deploy(options, { fetchFrom = fetch, verify = verifyRelease, pause = setTimeout, now = () => performance.now(), save } = {}) {
   const { mode, token, frontendCommit, digest, ciRun, runId, runAttempt, actorId, planPath, planArtifactId } = options;
   assert.ok(["--check", "--prepare", "--promote"].includes(mode));
   const promote = mode === "--promote";
@@ -242,13 +255,13 @@ export async function deploy(options, { fetchFrom = fetch, verify = verifyReleas
     mutationStarted = true;
     receipt.deployment = await deployTag(coolify, digest.replace(":", "-"), checkpoint);
     checkpoint("deployment-queued");
-    receipt.providerStatus = await waitForDeployment(coolify, pause, receipt.deployment);
+    receipt.providerStatus = await waitForDeployment(coolify, pause, now, receipt.deployment);
     if (receipt.providerStatus !== "finished") {
       finish("failed");
       throw new Error("The deployment did not finish. Reconcile Coolify before retrying.");
     }
     checkpoint("live-verification");
-    await verifyServingDeployment(coolify, fetchFrom, pause, receipt.deployment, digest.replace(":", "-"),
+    await verifyServingDeployment(coolify, fetchFrom, pause, now, receipt.deployment, digest.replace(":", "-"),
       { frontendCommit, cloudCommit: frontendCommit });
     return finish("verified");
   } catch (error) {

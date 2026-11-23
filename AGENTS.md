@@ -139,6 +139,8 @@ Design around the user's actual job, real data contracts, permissions, and compl
 
 **Owner UI principle — performance and interaction quality over wording.** Cut redundant banner and intro copy; do not repeat context the user already has from where they are. Prefer usable space for the real work over decorative headers. Motion must be purposeful and performant — animate `transform`/`opacity` only, and be reduced-motion safe (honor `prefers-reduced-motion`).
 
+For work that adds or changes visible motion, follow the [motion performance standard](docs/doctrine/paige-ui-delivery-standard.md#motion-performance). Record measurements and any unverified browser or device coverage in the existing UI delivery evidence.
+
 Interface authority is `CLAUDE.md` §00: Claude Code owns the interface, executed as Flow-by-Flow first, then Impeccable; the owner directs intended function and retains final acceptance of the live experience. Claude Design is out of the loop; a prior design pack is reference material, not an authority that outranks Impeccable's craft floor. (The earlier pack-first direction was removed by the 2026-09-22 owner ruling.)
 
 All states must be honest:

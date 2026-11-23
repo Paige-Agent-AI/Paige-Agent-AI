@@ -47,3 +47,14 @@ Deno.test("safeMetadata: unknown keys are dropped", () => {
   assertEquals(meta.foo, undefined);
   assertEquals(meta.authorization, undefined);
 });
+
+Deno.test("safeMetadata: limit_source accepts only recognized OpenRouter codes", () => {
+  assertEquals(safeMetadata({ limit_source: "openrouter_credits" }).limit_source, "openrouter_credits");
+  assertEquals(safeMetadata({ limit_source: "openrouter_key_limit" }).limit_source, "openrouter_key_limit");
+  assertEquals(safeMetadata({ limit_source: "openrouter_in_flight_budget" }).limit_source, "openrouter_in_flight_budget");
+  // Arbitrary values are dropped.
+  assertEquals(safeMetadata({ limit_source: "arbitrary_string" }).limit_source, undefined);
+  assertEquals(safeMetadata({ limit_source: "customer wrote: private details" }).limit_source, undefined);
+  assertEquals(safeMetadata({ limit_source: "openrouter_unknown" }).limit_source, undefined);
+  assertEquals(safeMetadata({ limit_source: "" }).limit_source, undefined);
+});

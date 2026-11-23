@@ -178,6 +178,9 @@ export function safeMetadata(meta: Record<string, unknown> | undefined): Record<
     if (v === undefined || v === null) continue;
     if (k === "provider_cache_signature" && (typeof v !== "string"
       || !/^v1(?:\|[a-f0-9]{8}(?:-[a-f0-9]{8}){7}){4}$/.test(v))) continue;
+    // limit_source: only accept recognized OpenRouter closed codes, never arbitrary strings.
+    if (k === "limit_source" && (typeof v !== "string"
+      || !["openrouter_credits", "openrouter_key_limit", "openrouter_in_flight_budget"].includes(v))) continue;
     // scalars only — an object/array could smuggle a secret past the allowlist
     if (typeof v === "string") out[k] = scrubSecrets(v).slice(0, 512);
     else if (typeof v === "number" || typeof v === "boolean") out[k] = v;

@@ -451,7 +451,7 @@ function emitTrace(trace: TraceCtx | undefined, row: {
       // metadata_only traces (privacy: provider messages can echo request material).
       ...(trace?.content_policy !== "metadata_only" && row.provider_error_detail
         ? { provider_error_detail: scrubSecrets(row.provider_error_detail).slice(0, 200) } : {}),
-       ...(row.limit_source ? { limit_source: row.limit_source } : {}),
+       ...(row.limit_source && ["openrouter_credits", "openrouter_key_limit", "openrouter_in_flight_budget"].includes(row.limit_source) ? { limit_source: row.limit_source } : {}),
       ...(row.usage ? {
         provider_total_input_tokens: row.usage.total_input,
         provider_cache_write_30m_tokens: row.usage.write30m,
@@ -470,7 +470,10 @@ async function failureOf(resp: Response, provider: ResponsesProvider = "openai")
   try { e = (await resp.json())?.error ?? null; } catch { /* not JSON */ }
   const detail = e ? [e.type, e.code, e.message].filter((x) => typeof x === "string").join(": ").slice(0, 500) || `http_${resp.status}` : `http_${resp.status}`;
   // OpenRouter's structured limit source (closed code: openrouter_credits, openrouter_key_limit, openrouter_in_flight_budget).
-  const limitSource = typeof e?.metadata?.limit_source === "string" ? e.metadata.limit_source : null;
+  // Only honored for OpenRouter responses; other providers' values are ignored.
+  const RECOGNIZED_LIMIT_SOURCES = new Set(["openrouter_credits", "openrouter_key_limit", "openrouter_in_flight_budget"]);
+  const rawLimitSource = typeof e?.metadata?.limit_source === "string" ? e.metadata.limit_source : null;
+  const limitSource = provider === "openrouter" && rawLimitSource && RECOGNIZED_LIMIT_SOURCES.has(rawLimitSource) ? rawLimitSource : null;
   const failureClass = classifyProviderFailure({
     provider, status: resp.status,
     errorType: typeof e?.type === "string" ? e.type : null, errorCode: typeof e?.code === "string" ? e.code : null,

@@ -40,7 +40,7 @@ export interface ProviderFailureEvidence {
   errorCode?: string | null;
   /** The provider's message — read here, never kept. */
   message?: string | null;
-  /** OpenRouter's limit_source from error.metadata (closed code: openrouter_credits, openrouter_key_limit, openrouter_in_flight_budget). */
+  /** OpenRouter's limit_source from error.metadata (closed code: openrouter_credits, openrouter_key_limit, openrouter_in_flight_budget). Only honored for OpenRouter. */
   limitSource?: string | null;
   /** The request never got a response: a timeout, an abort or a reset connection. */
   transport?: "timeout" | "network" | null;
@@ -72,6 +72,7 @@ export function classifyProviderFailure(e: ProviderFailureEvidence): ProviderFai
   if (status === 402) {
     // OpenRouter 402 subtypes — sanitized closed codes, never the raw message.
     // Use limit_source from OpenRouter's error metadata as the primary signal when available.
+    // Only recognized OpenRouter values are accepted; unknown values are treated as absent.
     const ls = (e.limitSource ?? "").toLowerCase();
     if (ls === "openrouter_key_limit") return "billing_key_limit";
     if (ls === "openrouter_in_flight_budget") return "rate_limit";

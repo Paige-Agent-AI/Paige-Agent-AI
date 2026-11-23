@@ -1580,7 +1580,7 @@ const SOURCES = {
   // `provider_failure_class` so the sanitized closed-code billing subtype is persisted even for
   // metadata_only traces. `safeMetadata` exported for regression testing. Old 588857f4… reproduced
   // from origin/main 89d72496. Renewed e87ad6af… via the guard's own canonicalization.
-  "supabase/functions/_shared/llm-trace.ts": "aeb36777220e1141d9c6913fbd5e4ab2c5ed601328f36fe3e55fa59706310689",
+  "supabase/functions/_shared/llm-trace.ts": "291c2db2f69d9f3464347360d510dd25fae2a92525b2c50ff92be1a08ada3444",
   "supabase/functions/_shared/prompt-forge.ts": "0abdeb7a887ac7b566dd8f21c11140122985d2acf0b5b6020596974ffd3e11ee",
   "supabase/functions/_shared/voyage.ts": "4eb1a516b2ce4679e83bfa62bb908a4b2e3be4d48dcdc89df75bb160bd6569b2",
   "supabase/functions/_shared/claude.ts": "cfbb18ce156d2259bf1904d6f6eaed8262e007c70929958c7261f185e20747ff",

@@ -323,7 +323,7 @@ describe("useStudioChat reads the stream (characterization)", () => {
     ]);
     expect(api.turns).toEqual([]);
     expect(api.steps).toEqual([]);
-    expect(api.sendError).toBe("Paige couldn't take that just now. Check your connection and try again.");
+    expect(api.sendError).toBe("NEXUS couldn’t take that just now. Check your connection and try again.");
     expect(api.sending).toBe(false);
   });
 

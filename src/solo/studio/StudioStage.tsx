@@ -63,7 +63,7 @@ export function FormSheet({ form, brand, device }: { form: StudioForm; brand: Br
       <h1>{form.name}</h1>
       {form.intro && <p className="vs-sheet-intro">{form.intro}</p>}
       {form.fields.length === 0 ? (
-        <p className="vs-sheet-intro">This form has no questions yet. Tell Paige what to ask.</p>
+        <p className="vs-sheet-intro">This form has no questions yet. Tell NEXUS what to ask.</p>
       ) : form.fields.map((f) => <Question key={f.key} field={f} />)}
       <button type="button" className="vs-sheet-submit" style={{ background: brand.floor.primary ?? "var(--vs-violet)" }} tabIndex={-1} aria-hidden="true">{form.submitLabel}</button>
       {form.thankYou && <p className="vs-sheet-thanks">After sending: “{form.thankYou}”</p>}
@@ -72,7 +72,7 @@ export function FormSheet({ form, brand, device }: { form: StudioForm; brand: Br
 }
 
 function PageView({ page, brand, device, tenantId }: { page: StudioPage; brand: Brand; device: Device; tenantId: string }) {
-  if (page.blocks.length === 0) return <div className="vs-stage-empty"><b>This page is empty</b>Tell Paige what it should say.</div>;
+  if (page.blocks.length === 0) return <div className="vs-stage-empty"><b>This page is empty</b>Tell NEXUS what it should say.</div>;
   return (
     <div className="vs-page-frame" style={device === "phone" ? { width: 390 } : undefined}>
       <LivePreview blocks={page.blocks} theme={page.theme ?? undefined} brandFloor={brand.floor} tenantId={tenantId} device={device === "phone" ? "mobile" : "desktop"} />
@@ -125,7 +125,7 @@ function DocumentView({ id, tenantId }: { id: string; tenantId: string }) {
     return () => { live = false; };
   }, [id, tenantId]);
   if (doc === undefined) return <Building />;
-  if (doc === null) return <div className="vs-stage-empty"><b>This document is empty</b>Tell Paige what it should cover.</div>;
+  if (doc === null) return <div className="vs-stage-empty"><b>This document is empty</b>Tell NEXUS what it should cover.</div>;
   return <div className="vs-doc-frame"><DocumentPreview document={doc} /></div>;
 }
 
@@ -139,8 +139,8 @@ export function Building() {
 // one it is a neutral sheet; once she is designing a page it becomes a page, and so on. Nothing here
 // plays a script the stream did not report.
 const SHAPE_WORD: Record<BuildShape, string> = {
-  sheet: "Paige is getting started", page: "Paige is building your page", form: "Paige is building your form",
-  funnel: "Paige is building your funnel", image: "Paige is making your image",
+  sheet: "NEXUS is getting started", page: "NEXUS is building your page", form: "NEXUS is building your form",
+  funnel: "NEXUS is building your funnel", image: "NEXUS is making your image",
 };
 
 function Wire({ shape, brand }: { shape: BuildShape; brand: Brand }) {
@@ -211,7 +211,7 @@ function PreviewView({ preview, waiting, brand, device, tenantId }: { preview: D
     <>
       <p className="vs-unsaved" role="status">
         <b>Designed, not saved yet.</b>
-        {waiting ? " Approve the save in the chat to keep it." : " Tell Paige to save it if you want to keep it in this project."}
+        {waiting ? " Approve the save in the chat to keep it." : " Tell NEXUS to save it if you want to keep it in this project."}
       </p>
       <div className="vs-page-frame" style={device === "phone" ? { width: 390 } : undefined}>
         <LivePreview blocks={preview.blocks as GrowthBlock[]} theme={(preview.theme as GrowthPageTheme | null) ?? undefined} brandFloor={brand.floor} tenantId={tenantId} device={device === "phone" ? "mobile" : "desktop"} />
@@ -232,14 +232,14 @@ export function StudioStage({ artifact, brand, device, tenantId, building, steps
       {reworking && (
         <p className="vs-working" role="status" aria-live="polite">
           <span className="vs-build-orb" aria-hidden="true" />
-          <span key={steps[steps.length - 1]?.label ?? ""}>Paige is working: {steps[steps.length - 1]?.label}</span>
+          <span key={steps[steps.length - 1]?.label ?? ""}>NEXUS is working: {steps[steps.length - 1]?.label}</span>
         </p>
       )}
       {preview && !building ? (
         <PreviewView preview={preview} waiting={waitingApproval} brand={brand} device={device} tenantId={tenantId} />
       ) : !artifact ? (
         building ? <BuildView steps={steps} status={status} brand={brand} />
-        : <div className="vs-stage-empty"><b>Nothing on the stage yet</b>Tell Paige what to build, and it appears here as she makes it.</div>
+        : <div className="vs-stage-empty"><b>Nothing on the stage yet</b>Tell NEXUS what to build and watch it take shape here.</div>
       ) : artifact.kind === "form" ? (
         <FormSheet form={artifact.form} brand={brand} device={device} />
       ) : artifact.kind === "page" ? (

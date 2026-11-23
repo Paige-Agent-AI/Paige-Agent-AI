@@ -870,7 +870,7 @@ describe("Vibe Studio project workspace", () => {
     type(host.querySelector<HTMLTextAreaElement>("#vs-chat-input")!, "Add a budget question");
     await act(async () => { host.querySelector<HTMLButtonElement>("button[aria-label='Send']")!.click(); });
     await flush();
-    expect(text()).toContain("Paige couldn't take that just now. Check your connection and try again.");
+    expect(text()).toContain("NEXUS couldn’t take that just now. Check your connection and try again.");
     expect(text()).not.toContain("network connection was lost");
     expect(text()).not.toContain("Started the budget question");
   });
@@ -1036,7 +1036,7 @@ describe("Vibe Studio project workspace", () => {
     h.status = 500;
     await act(async () => { button("Approve")!.click(); });
     await flush();
-    expect(text()).toContain("Paige couldn't take that just now");
+    expect(text()).toContain("NEXUS couldn’t take that just now");
     expect(button("Approve")).toBeTruthy();
     expect(text()).toContain("Waiting for your approval");
   });

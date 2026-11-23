@@ -1,5 +1,14 @@
 # Paige Agent AI — Working Doctrine
 
+## MANDATORY UI/UX SPECIALIST SKILLS — November 22 Owner Decision in ANT-147; Clarified November 23
+
+For **every authorized UI/UX task**, retain the mandatory **Flow by Flow → Impeccable** sequence AND select, read, and apply **at least the one most relevant** specialist skill from this owner-approved trio:
+- **Game UI/UX** ([skill](https://www.skills.sh/gamedev-skills/awesome-gamedev-agent-skills/game-ui-ux)): screen hierarchy, responsive fit, focus and navigation.
+- **Level Design** ([skill](https://www.skills.sh/gamedev-skills/awesome-gamedev-agent-skills/level-design)): multi-step journeys, landmarks, wayfinding, reversible paths and routes back.
+- **Animate** ([skill](https://www.skills.sh/emilkowalski/skills/animate)): timing, transitions, interaction feedback and reduced-motion.
+
+Choose by the actual task; do **not** mechanically require all three for every UI change. Existing author reports the selection and how it was applied in original PR/outcome evidence; existing author-spawned independent NON-AUTHOR reviewer verifies the relevant checks. Discover installed skills and qualify/install only under SD-01; reference links are not installation authority. An unmet skill prerequisite is explicitly reported, not silently skipped. These specialist skills complement, never replace, Flow by Flow and Impeccable. Prior active descriptions of these three as optional on applicable UI work, or universally all-three-required regardless of relevance, are superseded; preserve dated historical evidence. No new agent, review gate, timer, source author or outcome is authorized. Source: [ANT-147 owner comment, November 22](https://linear.app/paigeagentai/issue/ANT-147).
+
 ## MANDATORY OWNER STANDARD EAS-01 — AI COO ENGINEERING ASSURANCE — November 23, 2026
 
 **Status: owner-approved, governing; apply within the single currently authorized outcome.** This is an applicability and evidence standard, NOT a third development methodology, new review gate, new engineering project, source-owner change, recurring audit, provider activation, or authorization to work on held items. Preserve Flow by Flow then Impeccable for UI work, SD-01 relevant skills, one lead/one outcome, independent author-spawned NON-AUTHOR review, existing exact-head checks, release evidence and final OWNER acceptance.

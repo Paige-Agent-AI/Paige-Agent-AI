@@ -30,7 +30,7 @@ function AskCard({ choices, disabled, onAnswer }: { choices: Choices; disabled: 
   const toggle = (v: string) => setPicked((p) => (choices.multi ? (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]) : [v]));
   const chosen = choices.options.filter((o) => picked.includes(o.value));
   return (
-    <div className="vs-ask" role="group" aria-label={choices.prompt || "Paige has a question"}>
+    <div className="vs-ask" role="group" aria-label={choices.prompt || "NEXUS has a question"}>
       {choices.prompt && <b>{choices.prompt}</b>}
       <div className="vs-ask-options">
         {choices.options.map((o) => (
@@ -338,7 +338,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
 
   const live = artifact ? isLive(artifact) : false;
   const pending = artifact ? hasPendingChanges(artifact) : false;
-  const saveState = chat.sending ? { tone: "busy", text: chat.status ?? "Paige is building" }
+  const saveState = chat.sending ? { tone: "busy", text: chat.status ?? "NEXUS is building" }
     : chat.preview && !previewing ? { tone: "idle", text: chat.confirms.some((c) => !c.state) ? "Designed · waiting for your approval" : "Designed · not saved" }
     : !artifact ? { tone: "idle", text: "Nothing built yet" }
     : live ? (pending ? { tone: "good", text: "Saved · changes not live yet" } : { tone: "good", text: "Live" })
@@ -466,7 +466,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
                 {" · "}
                 {brand.primaryColor
                   ? <><i className="vs-brand-swatch" style={{ background: brand.primaryColor }} aria-hidden="true" />your page color</>
-                  : "Paige's default page color"}
+                  : "Studio’s default page color"}
                 {!brand.logoUrl && " · no logo yet — pages use your name and color"}
               </span>
             </p>
@@ -493,7 +493,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
                   </div>
                 )}
                 {i === lastAssistant && chat.steps.length > 0 && (
-                  <ol className="vs-steps" aria-label="What Paige did">
+                  <ol className="vs-steps" aria-label="What NEXUS did">
                     {chat.steps.map((s) => (
                       <li key={s.id} data-status={s.status}>
                         {s.status === "error" ? <AlertCircle size={14} color="var(--vs-bad)" aria-label="Didn't work" />
@@ -515,7 +515,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
             ))}
             {chat.choices && chat.choices.options.length > 0 && <AskCard choices={chat.choices} disabled={chat.sending} onAnswer={(v, d) => void chat.send(v, { display: d })} />}
             {!planning && chat.confirms.map((c) => (
-              <div key={c.fingerprint} className="vs-confirm" data-state={c.state ?? "waiting"} role="group" aria-label={c.state ? "Your decision" : "Paige is waiting for your approval"}>
+              <div key={c.fingerprint} className="vs-confirm" data-state={c.state ?? "waiting"} role="group" aria-label={c.state ? "Your decision" : "NEXUS is waiting for your approval"}>
                 <b>{!c.state ? "Waiting for your approval" : c.state === "declined" ? "Skipped" : c.state === "sent" ? "Approved" : c.state === "ran" ? "Done" : c.state === "not_run" ? "Didn't run" : "Not confirmed"}</b>
                 <span>{c.summary}</span>
                 {!c.state ? (
@@ -524,7 +524,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
                     <button type="button" className="vs-btn vs-btn-quiet" disabled={chat.sending || buildReadbackPending} onClick={() => void chat.decide(c.fingerprint, false)}>Not this</button>
                   </div>
                 ) : c.state === "sent" ? (
-                  <small role="status">Paige is running it…</small>
+                  <small role="status">NEXUS is working…</small>
                 ) : c.note ? <small role="status">{c.note}</small> : null}
               </div>
             ))}

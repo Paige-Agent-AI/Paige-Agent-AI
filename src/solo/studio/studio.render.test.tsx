@@ -900,7 +900,7 @@ describe("Vibe Studio project workspace", () => {
     expect(host.querySelector(".vs-build")).toBeNull();
   });
 
-  it("C2: a step under way shows a working glyph in What Paige did, then closes to Done on the same row", async () => {
+  it("C2: a step under way shows a working glyph in What NEXUS did, then closes to Done on the same row", async () => {
     let release: () => void = () => {};
     const gate = new Promise<void>((r) => { release = r; });
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
@@ -917,7 +917,7 @@ describe("Vibe Studio project workspace", () => {
       }), { status: 200 });
     }));
     await sendFromProject("A landing page for my workshop");
-    const rows = () => Array.from(host.querySelectorAll<HTMLElement>('ol[aria-label="What Paige did"] li'));
+    const rows = () => Array.from(host.querySelectorAll<HTMLElement>('ol[aria-label="What NEXUS did"] li'));
     const glyph = (li: HTMLElement) => li.firstElementChild?.getAttribute("aria-label");
     expect(rows().map((li) => [li.dataset.status, glyph(li)])).toEqual([["done", "Done"], ["running", "Working on it"]]);
     // Both glyphs are drawn; studio.css shows the spinner, or the still ring under reduced motion.
@@ -1145,7 +1145,7 @@ describe("Vibe Studio project workspace", () => {
       expect(t).toContain("Working from your brand");
       expect(t).toContain("Northwind Studio");
       expect(t).toContain("your page color");
-      expect(t).not.toContain("Paige's default page color");
+      expect(t).not.toContain("Studio’s default page color");
       expect(t).toContain("no logo yet");
       expect(line!.querySelector(".vs-brand-swatch")?.getAttribute("style")).toContain("rgb(47, 107, 85)");
       expect(line!.querySelector("img.vs-brand-logo")).toBeNull();
@@ -1164,7 +1164,7 @@ describe("Vibe Studio project workspace", () => {
       await openProject();
       const t = host.querySelector(".vs-brand-line")!.textContent ?? "";
       expect(t).toContain("No business name yet — add it in Setup");
-      expect(t).toContain("Paige's default page color");
+      expect(t).toContain("Studio’s default page color");
       expect(t).toContain("no logo yet");
     });
 

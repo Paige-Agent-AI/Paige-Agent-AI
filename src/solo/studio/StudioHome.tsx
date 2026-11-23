@@ -101,7 +101,7 @@ export function StudioRail({ view, sessions, onBack, onHome, onMedia, onOpen }: 
         <span style={{ transform: "rotate(180deg)", display: "flex" }}><Ic.chev size={14} style={{}} /></span>Back to Marketing<kbd>Esc</kbd>
       </button>
       <div className="vs-rail-brand"><Logo size={20} />Vibe Studio</div>
-      <button type="button" className="vs-rail-item" aria-current={view === "home" ? "page" : undefined} onClick={onHome}><Sparkles size={15} aria-hidden="true" />Build with Paige</button>
+      <button type="button" className="vs-rail-item" aria-current={view === "home" ? "page" : undefined} onClick={onHome}><Sparkles size={15} aria-hidden="true" />Build with NEXUS</button>
       <button type="button" className="vs-rail-item" aria-current={view === "media" ? "page" : undefined} onClick={onMedia}><Images size={15} aria-hidden="true" />Images &amp; video</button>
       <div className="vs-rail-label">Drafts</div>
       {sessions === null ? <span className="vs-rail-skel" role="status" aria-label="Loading your drafts"><i /><i /><i /></span>

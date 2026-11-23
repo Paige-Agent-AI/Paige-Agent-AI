@@ -143,7 +143,7 @@ export function useStudioChat(opts: {
         }),
       });
       if (!resp.ok) throw new Said(resp.status === 429 ? "Give it a moment — too many requests."
-        : studioWorkflow ? "NEXUS couldn’t confirm this turn. Check the conversation before trying again." : "Paige couldn't take that just now. Try again.");
+        : studioWorkflow ? "NEXUS couldn’t confirm this turn. Check the conversation before trying again." : "NEXUS couldn’t take that just now. Try again.");
       if (studioWorkflow && resp.headers.get("X-Paige-Studio-Workflow") !== (planningRequest ? "planning" : "build")) {
         throw new Said("The planning service couldn’t be verified. Reopen this project to check its conversation.");
       }
@@ -266,7 +266,7 @@ export function useStudioChat(opts: {
       if (studioWorkflow) setChoices(null);
       setConfirms(confirmsBefore);
       failedIntent.current = { text: trimmed, id: requestIntentId };
-      setSendError(plainError(e, "Paige couldn't take that just now. Check your connection and try again."));
+      setSendError(plainError(e, "NEXUS couldn’t take that just now. Check your connection and try again."));
       if (studioWorkflow) {
         try {
           const history = await loadTurns(threadId);

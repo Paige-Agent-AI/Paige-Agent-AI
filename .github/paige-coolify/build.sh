@@ -3,8 +3,17 @@ frontend="${1:?frontend commit required}"
 [[ "$frontend" =~ ^[a-f0-9]{40}$ ]]
 test "$(git rev-parse HEAD)" = "$frontend"
 image="${2:?image tag required}"
-git archive HEAD | docker build --platform linux/amd64 -f .github/paige-coolify/Dockerfile \
-  --build-arg "FRONTEND_COMMIT=$frontend" --tag "$image" -
+case "${3:-}" in
+  "") git archive HEAD | docker build --platform linux/amd64 -f .github/paige-coolify/Dockerfile \
+    --build-arg "FRONTEND_COMMIT=$frontend" --tag "$image" - ;;
+  --verify-existing)
+    [[ "$image" =~ ^ghcr\.io/paige-agent-ai/paige-agent-ai-web@sha256:[a-f0-9]{64}$ ]]
+    test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.source"}}' "$image")" = "https://github.com/Paige-Agent-AI/Paige-Agent-AI"
+    test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image")" = "$frontend"
+    test "$(docker image inspect --format '{{index .Config.Labels "ai.paige.frontend.revision"}}' "$image")" = "$frontend"
+    ;;
+  *) printf 'Invalid image verification mode.\n' >&2; exit 1 ;;
+esac
 work=$(mktemp -d)
 container=$(docker run -d -p 127.0.0.1::8080 "$image")
 trap 'docker logs "$container"; docker rm -f "$container"; rm -f "$work/route.html" "$work/entry.html"; rmdir "$work"' EXIT

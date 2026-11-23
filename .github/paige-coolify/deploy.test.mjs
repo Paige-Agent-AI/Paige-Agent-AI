@@ -21,15 +21,17 @@ const domainNames = ["app.paigeagent.ai", "paigeagent.ai", "www.paigeagent.ai"];
 
 function fixture({
   broadToken = false, staleApproval = false, previousProof = true, candidateProof = true,
-  providerStatus = "finished", loseQueueResponse = false, readOnly = false,
+  providerStatus = "finished", loseQueueResponse = false, readOnly = false, rolloutDelayMs = 0,
 } = {}) {
   const changes = [];
   const receipts = [];
   let checkedApproval = 0;
   let queued = false;
+  let elapsed = 0;
   let tag = previousDigest.replace(":", "-");
   const sendJSON = (value) => Response.json(value);
-  const finished = () => queued && providerStatus === "finished";
+  const status = () => providerStatus === "finished" && elapsed < rolloutDelayMs ? "in_progress" : providerStatus;
+  const finished = () => queued && status() === "finished";
   return {
     changes,
     receipts,
@@ -40,7 +42,8 @@ function fixture({
         if (++checkedApproval === 2 && staleApproval) throw new Error("Superseded by main");
         return 12;
       },
-      pause: async () => {},
+      now: () => elapsed,
+      pause: async (ms) => { elapsed += ms; },
       save: (value) => receipts.push(structuredClone(value)),
       fetchFrom: async (url, init = {}) => {
         const { origin, hostname, pathname, search } = new URL(url);
@@ -78,7 +81,7 @@ function fixture({
         if (pathname === "/api/v1/applications") return sendJSON([{ uuid: appId }]);
         if (pathname === `/api/v1/deployments/applications/${appId}`) {
           const deployments = [{ status: "finished", deployment_uuid: previousId }];
-          if (queued) deployments.unshift({ status: providerStatus, deployment_uuid: candidateId });
+          if (queued) deployments.unshift({ status: status(), deployment_uuid: candidateId });
           return sendJSON({ deployments });
         }
         if (pathname === "/api/v1/deploy") {
@@ -93,7 +96,7 @@ function fixture({
           const isPrevious = id === previousId;
           const digest = isPrevious ? previousDigest : options.digest;
           return sendJSON({
-            deployment_uuid: id, status: isPrevious ? "finished" : providerStatus, configuration_hash: digest.replace(":", "-"),
+            deployment_uuid: id, status: isPrevious ? "finished" : status(), configuration_hash: digest.replace(":", "-"),
             logs: JSON.stringify([{ output: (isPrevious ? previousProof : candidateProof)
               ? `Other output\n Image ${packageName}@${digest} Pulled` : "Digest pull unavailable" }]),
           });
@@ -183,6 +186,20 @@ test("a failed, ambiguous, or unverifiable deployment writes an honest receipt a
     assert.equal(receipt.previous.image, `${packageName}@${previousDigest}`);
     assert.equal(changes.length, 2);
   }
+});
+
+test("a twelve-minute rollout is confirmed and an over-budget rollout stays unconfirmed", async (t) => {
+  const input = await prepared(t);
+  const slow = fixture({ rolloutDelayMs: 12 * 60_000 });
+  assert.equal((await deploy(input, slow.dependencies)).result, "verified");
+  assert.equal(slow.changes.filter(([method]) => method === "POST").length, 1);
+
+  const stalled = fixture({ rolloutDelayMs: 17 * 60_000 });
+  await assert.rejects(deploy(input, stalled.dependencies), /is unconfirmed/);
+  assert.equal(stalled.dependencies.now(), 16 * 60_000);
+  assert.equal(stalled.receipts.at(-1).result, "unconfirmed");
+  assert.equal(stalled.receipts.at(-1).deployment, candidateId);
+  assert.equal(stalled.changes.filter(([method]) => method === "POST").length, 1);
 });
 
 test("a receipt writer failure blocks promotion before changing the production image", async (t) => {

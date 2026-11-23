@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded November 23, 2026 UTC. EXP00 Meet PAIGE desktop animation.**
+
+| Increment | Reviewed source and production release | Verified result and boundary |
+| --- | --- | --- |
+| [#3394](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3394) | Reviewed `8eeb632c69c79b35c391cc59679eab26a6f43e0d` passed [required CI](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/45105114240) and independent review. Main merge `d7fa65afa27969f171b61fa692b6004f0518c7d6`. [PAIGE Cloud promotion and readback](https://linear.app/paigeagentai/issue/ANT-158#comment-10d3ebb8-a673-4f80-9f9d-5e9f85c81c51). | The Command Logo, galaxy and lower speaking waveform stay in the existing Live flow. Frame pacing improved in the scoped Chrome, Edge and desktop Safari fixture runs. [Native Safari proof](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/45107118450), [UI evidence](evidence/ui-delivery/exp00-meet-paige-desktop-motion.md) and [original EXP00 record](https://linear.app/paigeagentai/issue/ANT-158). Physical Retina, iPhone and authenticated production voice performance remain unverified. Internal patch with no separate customer version or announcement. |
+
 **Recorded November 21, 2026 UTC - EXP05 original automation draft save and receipt recovery.**
 
 | Increment | Exact reviewed source and production release | Verified result and remaining boundary |

@@ -128,23 +128,23 @@ function mediaWorld(over: Parameters<typeof world>[0] = {}) {
 describe("read-only Studio saved media handoff", () => {
   const origin = "https://test-project.supabase.co";
   const request = { action: "preview_media", expected_tenant_id: MINE, content_id: MEDIA_ID };
-  const fixture = (kind: "image" | "video", contentType: string) => {
+  const fixture = (kind: "image" | "video", contentType: string, lastModified = MEDIA_FACTS.lastModified) => {
     const path = `${MINE}/saved/${MEDIA_ID}.${kind === "image" ? "png" : "mp4"}`;
     const url = `${origin}/storage/v1/object/public/paige-generated/${path}`;
     const piece = pieceRow({ id: MEDIA_ID, kind, image_path: path, image_url: url, title: "Saved original", body: "Original caption" });
     return { url, piece, w: world({
       adapterConfigured: false,
-      storageObjects: { [path]: { ...MEDIA_FACTS, contentType } },
+      storageObjects: { [path]: { ...MEDIA_FACTS, contentType, lastModified } },
       tables: { marketing_content: [piece] },
     }) };
   };
-  function served(contentType: string, bytes: number[], onRead?: () => void) {
+  function served(contentType: string, bytes: number[], onRead?: () => void, lastModified = MEDIA_FACTS.lastModified) {
     vi.stubGlobal("Deno", { resolveDns: vi.fn().mockResolvedValue(["8.8.8.8"]) });
     const fetchOriginal = vi.fn(async () => {
       onRead?.();
       return new Response(new Uint8Array(bytes), { headers: {
         "Content-Type": contentType, "Content-Length": String(bytes.length),
-        ETag: MEDIA_FACTS.etag, "Last-Modified": new Date(MEDIA_FACTS.lastModified).toUTCString(),
+        ETag: MEDIA_FACTS.etag, "Last-Modified": new Date(lastModified).toUTCString(),
       } });
     });
     vi.stubGlobal("fetch", fetchOriginal);
@@ -153,6 +153,18 @@ describe("read-only Studio saved media handoff", () => {
   const png = [137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82];
   const mp4 = [0, 0, 0, 16, 102, 116, 121, 112, 105, 115, 111, 109, 0, 0, 0, 0];
   afterEach(() => { vi.unstubAllGlobals(); });
+
+  it.each([
+    ["2026-10-03T17:15:09.000Z", 200],
+    ["2026-10-03T17:15:10.000Z", 200],
+    ["2026-10-03T17:15:11.000Z", 409],
+  ])("handles HTTP second precision for the original object (%s)", async (httpModified, expectedStatus) => {
+    const { w } = fixture("image", "image/png", "2026-10-03T17:15:09.752Z");
+    served("image/png", png, undefined, httpModified);
+    const answer = await w.call({ ...request, kind: "image" });
+    expect(answer.status).toBe(expectedStatus);
+    expect(w.seen.createPost).toEqual([]);
+  });
 
   it.each([["image", "image/png", png], ["video", "video/mp4", mp4]] as const)(
     "opens the original %s without touching approval, provider or receipt ports", async (kind, mime, bytes) => {

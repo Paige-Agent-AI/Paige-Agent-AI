@@ -14,13 +14,21 @@ const db = vi.hoisted(() => ({
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { from: (table: string) => {
     expect(table).toBe("marketing_content");
+    let originalId: unknown;
     const query = {
       select: () => query,
-      eq: (key: string, value: unknown) => { db.filters.push([key, value]); return query; },
+      eq: (key: string, value: unknown) => {
+        db.filters.push([key, value]);
+        if (key === "id") originalId = value;
+        return query;
+      },
       in: (key: string, value: unknown) => { db.filters.push([key, value]); return query; },
       not: (key: string, op: string, value: unknown) => { db.filters.push([`not ${key} ${op}`, value]); return query; },
       order: () => query,
-      limit: () => Promise.resolve({ data: db.rows, error: db.error }),
+      limit: (size: number) => Promise.resolve({
+        data: (originalId ? db.rows.filter(row => row.id === originalId) : db.rows).slice(0, size),
+        error: db.error,
+      }),
     };
     return query;
   } },
@@ -151,6 +159,28 @@ describe("the published Solo Content catalog", () => {
     db.rows = [{ ...image, status: "draft" }];
     await render();
     expect(host.querySelector('[role="status"]')?.textContent).toBe("No published work yet.");
+  });
+
+  it("opens an exact published bookmark even beyond the scoped recent list", async () => {
+    db.rows = [...Array.from({ length: 61 }, (_, i) => ({ ...image, id: `recent-${i}` })), image];
+    const clear = vi.fn();
+    await render({ linkedPieceId: id, onClearLinkedPiece: clear });
+    expect(db.filters).toContainEqual(["id", id]);
+    expect(host.querySelector(".content-catalog-detail h2")?.textContent).toBe(image.title);
+    act(() => host.querySelector<HTMLButtonElement>(".content-catalog-back")!.click());
+    expect(clear).toHaveBeenCalledOnce();
+  });
+
+  it("declines legacy draft bookmarks and explains the published media search scope", async () => {
+    db.rows = [
+      ...Array.from({ length: 61 }, (_, i) => ({ ...image, id: `recent-${i}` })),
+      { ...image, status: "draft", title: "Linked draft" },
+    ];
+    await render({ linkedPieceId: id });
+    expect(host.querySelector(".content-catalog-detail")).toBeNull();
+    expect(host.textContent).toContain("This original is unavailable in published Content.");
+    expect(host.textContent).toContain("Showing the latest 60 published images and videos.");
+    expect(host.textContent).not.toContain("Linked draft");
   });
 
   it("keeps the existing media read authority and shows the other published work", async () => {

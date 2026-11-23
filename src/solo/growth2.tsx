@@ -495,11 +495,15 @@ const MarketingWorkspace=({ salesInShell = false })=>{
     Object.entries(patch).forEach(([key,value])=>{ if(value==null||value==="") next.delete(key); else next.set(key,value); });
     navigate({pathname:location.pathname,search:next.toString()},{replace});
   },[location.pathname,location.search,navigate]);
+  const requestedContentPiece = tab === "content" ? query.get("piece") : null;
+  const linkedContentPiece = requestedContentPiece && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(requestedContentPiece)
+    ? requestedContentPiece.toLowerCase() : null;
+  const legacyContentView = tab === "content" && (query.has("content_view") || query.has("kind") || (query.has("piece") && !linkedContentPiece));
   React.useEffect(() => {
-    if (tab === "content" && ["content_view", "kind", "piece"].some(key => query.has(key))) {
-      setOverviewQuery({ content_view: null, kind: null, piece: null });
+    if (legacyContentView) {
+      setOverviewQuery({ content_view: null, kind: null, piece: linkedContentPiece });
     }
-  }, [query, setOverviewQuery, tab]);
+  }, [legacyContentView, linkedContentPiece, setOverviewQuery]);
   // Overview owns the briefs read (no other tab pays for it); it reports whether this account may
   // edit, so the form panel offers "Edit in Vibe Studio" only to someone who can.
   const [overviewCanManage,setOverviewCanManage]=React.useState(false);
@@ -552,6 +556,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   else if(tab==="audience") body=<MarketingAudience tenantId={data.tenantId} onOpenClients={()=>params.account&&navigate(subtabPath("solo",params.account,"clients","people"))}/>;
   else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenAudience={()=>setTab("audience")} onOpenConnections={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`):null} onOpenSettings={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=registration`):null}/>;
   else if(tab==="content") body=<MarketingContent tenantId={data.tenantId} artifacts={data.artifacts}
-    publishedPhase={data.phase} onRetryPublished={()=>data.retry?.()}/>;
+    publishedPhase={data.phase} onRetryPublished={()=>data.retry?.()} linkedPieceId={linkedContentPiece}
+    onClearLinkedPiece={()=>setOverviewQuery({piece:null})}/>;
   return <div className="solo-campaigns" data-campaigns-view={tab}><h1 className="campaigns-sr-only">Marketing</h1><CampaignTabs tabs={tabs} current={tab==="capture"?"overview":tab} setCurrent={setTab}/><div id="campaigns-tabpanel" role="tabpanel" aria-labelledby={`campaigns-tab-${tab==="capture"?"overview":tab}`} className="campaigns-scroll">{tab==="catalog" && query.get("origin")==="sales" && !workspaceChanged && data.tenantId && data.phase!=="resolving" && <div className="so-source-return"><button type="button" className="btn btn-s btn-p" onClick={()=>navigate(`${subtabPath("solo",params.account,"growth","sales")}${query.get("resume")==="terms" ? "?resume=terms" : ""}`)}>{query.get("resume")==="terms" ? "Return to commercial terms" : "Return to Sales"}</button><span>Finish offer setup here in Offers, then return when ready.</span></div>}{body}</div><DetailDrawer detail={detail||formDetail} onClose={detail?closeDetail:closeForm}/></div>;
 };

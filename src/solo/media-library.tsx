@@ -13,6 +13,7 @@ import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { readFunctionErrorBody } from "@/lib/integrations/connectError";
 import "./marketing-overview.css";
+import "./marketing-content.css";
 
 export type MediaAsset = {
   id: string;

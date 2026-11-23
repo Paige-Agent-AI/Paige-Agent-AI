@@ -138,7 +138,8 @@ vi.mock("./useCampaignLeads", async (importOriginal) => ({
 
 // Content's published-record reader is covered separately. This stub proves the hub route.
 vi.mock("./marketing-content", () => ({
-  MarketingContent: () => <div data-content-stub>Published Content</div>,
+  MarketingContent: ({ linkedPieceId }: React.ComponentProps<typeof import("./marketing-content").MarketingContent>) =>
+    <div data-content-stub data-linked-piece={linkedPieceId ?? undefined}>Published Content</div>,
 }));
 
 // Slice 2A — Catalog now opens on Offers, which reads through its own tenant-scoped adapter
@@ -1146,6 +1147,14 @@ describe("Solo Marketing department views", () => {
     renderAt("/solo/42/growth/content?content_view=media&kind=document&piece=mc-9");
     expect(host.querySelector("[data-content-stub]")?.textContent).toBe("Published Content");
     expect(location()).toBe("/solo/42/growth/content");
+  });
+
+  it("carries an original UUID into the published catalog after removing legacy view filters", () => {
+    useWorkspace();
+    const id = "22222222-2222-4222-8222-222222222222";
+    renderAt(`/solo/42/growth/content?content_view=media&kind=image&piece=${id}`);
+    expect(host.querySelector("[data-content-stub]")?.getAttribute("data-linked-piece")).toBe(id);
+    expect(location()).toBe(`/solo/42/growth/content?piece=${id}`);
   });
 
   it("a capture point opens that form's panel on Overview, and Sales performance opens Sales › Performance", () => {

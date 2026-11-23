@@ -9,11 +9,14 @@ export type MarketingContentProps = {
   artifacts: CampaignArtifact[];
   publishedPhase: string;
   onRetryPublished: () => void;
+  linkedPieceId?: string | null;
+  onClearLinkedPiece?: () => void;
 };
 
-export function MarketingContent({ tenantId, artifacts, publishedPhase, onRetryPublished }: MarketingContentProps) {
+export function MarketingContent({ tenantId, artifacts, publishedPhase, onRetryPublished, linkedPieceId, onClearLinkedPiece }: MarketingContentProps) {
   return <div className="content-catalog-shell">
     <header className="content-catalog-title"><h1>Content</h1></header>
-    <ContentCatalog key={tenantId} tenantId={tenantId} artifacts={artifacts} phase={publishedPhase} onRetry={onRetryPublished}/>
+    <ContentCatalog key={`${tenantId}:${linkedPieceId ?? ""}`} tenantId={tenantId} artifacts={artifacts} phase={publishedPhase} onRetry={onRetryPublished}
+      linkedPieceId={linkedPieceId} onClearLinkedPiece={onClearLinkedPiece}/>
   </div>;
 }

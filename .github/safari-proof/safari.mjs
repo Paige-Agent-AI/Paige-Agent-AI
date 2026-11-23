@@ -126,7 +126,7 @@ function measureWindow(duration, done) {
   }, duration);
 }
 
-async function exercise(sessionId, version, width, height, article, reduced) {
+async function exercise(sessionId, version, width, height, article, reduced, destination) {
   const endpoint = "/session/" + sessionId;
   const sync = (fn, ...args) => driver("POST", endpoint + "/execute/sync", { script: "return (" + fn.toString() + ")(...arguments)", args });
   const asyncScript = (fn, ...args) => driver("POST", endpoint + "/execute/async", { script: "return (" + fn.toString() + ")(...arguments)", args });
@@ -172,10 +172,10 @@ async function exercise(sessionId, version, width, height, article, reduced) {
 
   await until(() => sync(() => {
     const canvas = document.querySelector(".plc-film-galaxy");
-    if (!canvas || canvas.width < 32 || canvas.height < 32) return false;
-    return canvas.getContext("2d").getImageData(Math.floor(canvas.width / 2) - 6, Math.floor(canvas.height * (.5)) - 6, 12, 12).data.some((value, i) => i % 4 === 3 && value > 0)
-      || canvas.getContext("2d").getImageData(Math.floor(canvas.width / 2) - 6, Math.floor(canvas.height * .4) - 6, 12, 12).data.some((value, i) => i % 4 === 3 && value > 0);
-  }), "visible galaxy pixels");
+    if (!canvas || canvas.width < 32 || canvas.height < 32 || !window.motionLog.galaxy.length) return false;
+    const rect = canvas.getBoundingClientRect();
+    return rect.width > 32 && rect.height > 32 && getComputedStyle(canvas).visibility === "visible";
+  }), "a visible, painted galaxy canvas");
   const timing = await sync(() => {
     const dock = document.querySelector(".plc-film-audio").getBoundingClientRect();
     const controls = document.querySelector(".plc-controls").getBoundingClientRect();
@@ -189,6 +189,11 @@ async function exercise(sessionId, version, width, height, article, reduced) {
   await until(() => sync(() => document.querySelector(".plc-film-caption__cue p")?.textContent.includes("next step you agreed on") === true &&
     document.querySelector(".plc-film-audio").dataset.playing === "true"), "caption and playback waveform");
   await wait(450);
+  // Use the driver's native screenshot rather than reading the accelerated canvas surface in-page.
+  const capture = Buffer.from(await driver("GET", endpoint + "/screenshot"), "base64");
+  assert.equal(capture.subarray(1, 4).toString("ascii"), "PNG");
+  await writeFile(path.join(destination, article + (reduced ? "-reduced" : "-speaking") + ".png"), capture);
+  await wait(250);
   const samples = [];
   for (let index = 0; index < (reduced ? 1 : 3); index++) {
     samples.push(await asyncScript(measureWindow, 1500));
@@ -241,7 +246,7 @@ async function runNative(root, destination) {
         assert.equal(session.capabilities.browserName.toLowerCase(), "safari");
         assert(session.capabilities.platformName.toLowerCase().includes("mac"));
         for (const article of reduced ? ["candidate"] : ["baseline", "candidate"]) {
-          summary.push(await exercise(session.sessionId, version, 1450, 980, article, reduced));
+          summary.push(await exercise(session.sessionId, version, 1450, 980, article, reduced, destination));
           console.log("NATIVE_SAFARI_SAMPLE=" + JSON.stringify(summary.at(-1)));
           await writeFile(deployFile, JSON.stringify({ status: "IN_PROGRESS", summary }, null, 2));
         }

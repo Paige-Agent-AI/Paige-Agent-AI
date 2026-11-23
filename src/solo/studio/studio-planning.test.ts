@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectStudioWorkflow, readStudioWorkflow, signStudioWorkflow, startsStudioPlanning, STUDIO_PLANNING_START, studioBuildOutcomeUnconfirmed, studioPlanBuildAllowsTool, studioPlanningAllowsTool, verifyStudioWorkflow } from "../../../supabase/functions/_shared/growth/studio-planning";
+import { projectStudioWorkflow, readStudioWorkflow, resolveStudioBuildClaim, signStudioWorkflow, startsStudioPlanning, STUDIO_PLANNING_START, studioBuildOutcomeUnconfirmed, studioPlanBuildAllowsTool, studioPlanningAllowsTool, verifyStudioWorkflow } from "../../../supabase/functions/_shared/growth/studio-planning";
 
 const askId = "19fb714e-60d4-4c7b-adaf-1089dc8c3a60";
 const olderAskId = "829115a0-7ad1-4f01-8339-1e94c21569f9";
@@ -60,6 +60,28 @@ describe("Studio planning phase", () => {
     expect(projectStudioWorkflow([planning, plan, old], false)).toEqual({ phase: "planning", proposal: null, pendingBuild: null });
     expect(readStudioWorkflow({ studio_workflow: "build" }, "user")).toBeNull();
     expect(readStudioWorkflow({ studio_workflow: "proposal", paige_ask: { ask_id: askId } }, "user")).toBeNull();
+  });
+
+  it("retains the original claim past unsigned rows and signed replies that lost adjacency", async () => {
+    const scope = { actorId: "owner", tenantId: "workspace", threadId: "studio-thread" };
+    const secret = "test-secret";
+    const buildRow = async (seq: number, id: string) => ({
+      seq, bundle_ref: { studio_workflow: "build", paige_resume: { key: `answer:${id}` },
+        studio_proof: await signStudioWorkflow(secret, scope, "build", id) },
+    });
+    const original = await buildRow(3, olderAskId);
+    const superseded = await buildRow(6, askId);
+    const unsigned = { seq: 8, bundle_ref: { ...superseded.bundle_ref, studio_proof: undefined } };
+    const question = "Build the workshop page";
+    const previous = {
+      role: "assistant", bundle_ref: { studio_workflow: "proposal", paige_ask: { ask_id: olderAskId, question },
+        studio_proof: await signStudioWorkflow(secret, scope, "proposal", olderAskId, question) },
+    };
+    const readPrevious = async (seq: number) => seq === original.seq ? previous : { role: "user", bundle_ref: null };
+
+    expect(await resolveStudioBuildClaim(secret, scope, [unsigned, superseded, original], readPrevious))
+      .toEqual({ seq: original.seq, askId: olderAskId });
+    expect(await resolveStudioBuildClaim(secret, scope, [unsigned, superseded], readPrevious)).toBeNull();
   });
 
   it("plans with questions only and starts a private build without offering publication", () => {

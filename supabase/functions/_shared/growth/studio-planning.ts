@@ -77,6 +77,24 @@ export async function verifyStudioWorkflow(
   return valid ? workflow : null;
 }
 
+export async function resolveStudioBuildClaim(
+  secret: string,
+  scope: StudioProofScope,
+  candidates: readonly { seq: number; bundle_ref: unknown }[],
+  readPrevious: (seq: number) => Promise<{ role: string; bundle_ref: unknown } | null>,
+) {
+  for (const candidate of candidates) {
+    const claim = await verifyStudioWorkflow(secret, scope, candidate.bundle_ref, "user");
+    if (claim?.kind !== "build") continue;
+    const previous = await readPrevious(candidate.seq);
+    const plan = previous?.role === "assistant"
+      ? await verifyStudioWorkflow(secret, scope, previous.bundle_ref, "assistant") : null;
+    // Native admission never dispatches a claim that lost adjacency to a newer message.
+    if (plan?.kind === "proposal" && plan.askId === claim.askId) return { seq: candidate.seq, askId: claim.askId };
+  }
+  return null;
+}
+
 export function studioPlanningAllowsTool(name: string) {
   return name === "ask_choices";
 }

@@ -339,7 +339,7 @@ import { bindStudioGeneratedPage, createStudioPageSave, studioPageTargetMatches,
 // #292 / #343 U1 — the Studio design-agent system-prompt WRAPPER (identity + operating core + the
 // generative-UI choice-card rule), externalized so it lives in one editable home (§9/§12/§18).
 import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
-import { readStudioWorkflow, signStudioWorkflow, startsStudioPlanning, STUDIO_PLAN_APPROVAL, STUDIO_PLANNING_CORE, studioBuildOutcomeUnconfirmed, studioPlanBuildAllowsTool, studioPlanningAllowsTool, type StudioProofScope, verifyStudioWorkflow } from "../_shared/growth/studio-planning.ts";
+import { resolveStudioBuildClaim, signStudioWorkflow, startsStudioPlanning, STUDIO_PLAN_APPROVAL, STUDIO_PLANNING_CORE, studioBuildOutcomeUnconfirmed, studioPlanBuildAllowsTool, studioPlanningAllowsTool, type StudioProofScope, verifyStudioWorkflow } from "../_shared/growth/studio-planning.ts";
 // Tier Rail Spine (Phase D): the SAME declared-rail tier resolver + client-seat
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
@@ -7067,50 +7067,45 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         studioThreadForPreflight = boundStudio;
         const proofScope = { actorId: user.id, tenantId: studioTenantId, threadId: payloadThreadId };
         studioProofScope = proofScope;
-        const { data: marker, error: markerError } = await supabaseClient.from("paige_chat_turns")
-          .select("role,seq,bundle_ref").eq("thread_id", payloadThreadId).not("bundle_ref->>studio_workflow", "is", null)
-          .order("seq", { ascending: false }).limit(1).maybeSingle();
-        if (markerError) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
-        let claimRow = marker?.role === "user" && readStudioWorkflow(marker.bundle_ref, "user")?.kind === "build" ? marker : null;
-        if (marker && !claimRow) {
-          const { data: savedClaim, error } = await supabaseClient.from("paige_chat_turns")
-            .select("role,seq,bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "user")
-            .eq("bundle_ref->>studio_workflow", "build").order("seq", { ascending: false }).limit(1).maybeSingle();
-          if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
-          claimRow = savedClaim;
+        const studioClaimScanLimit = 16;
+        const { data: claimCandidates, error: claimReadError } = await supabaseClient.from("paige_chat_turns")
+          .select("seq,bundle_ref").eq("thread_id", payloadThreadId).eq("role", "user")
+          .eq("bundle_ref->>studio_workflow", "build").order("seq", { ascending: false }).limit(studioClaimScanLimit);
+        if (claimReadError || !claimCandidates) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+        let verifiedClaim: Awaited<ReturnType<typeof resolveStudioBuildClaim>>;
+        try {
+          verifiedClaim = await resolveStudioBuildClaim(supabaseServiceKey, proofScope, claimCandidates, async seq => {
+            const { data, error } = await supabaseClient.from("paige_chat_turns")
+              .select("role,bundle_ref").eq("thread_id", payloadThreadId).lt("seq", seq)
+              .order("seq", { ascending: false }).limit(1).maybeSingle();
+            if (error) throw error;
+            return data;
+          });
+        } catch {
+          return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
         }
-        let approvedStage = false;
-        const claimPhase = claimRow?.role === "user" ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, claimRow.bundle_ref, "user") : null;
-        // A caller-writable marker cannot hide an unresolved signed build or let a
-        // partial artifact stand in for the outcome of that build.
-        if (claimRow && claimPhase?.kind !== "build")
+        if (!verifiedClaim && claimCandidates.length >= studioClaimScanLimit)
           return refuseStudioWorkflow(409, "STUDIO_BUILD_UNCONFIRMED");
-        if (claimRow && claimPhase?.kind === "build") {
-          const { data: previous, error } = await supabaseClient.from("paige_chat_turns")
-            .select("role,bundle_ref").eq("thread_id", payloadThreadId!).lt("seq", claimRow.seq)
-            .order("seq", { ascending: false }).limit(1).maybeSingle();
-          if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
-          const proposed = previous?.role === "assistant" ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, previous.bundle_ref, "assistant") : null;
-          if (proposed?.kind !== "proposal" || proposed.askId !== claimPhase.askId)
-            return refuseStudioWorkflow(409, "STUDIO_BUILD_UNCONFIRMED");
+        let approvedStage = false;
+        if (verifiedClaim) {
           const { data: retry, error: retryError } = await supabaseClient.from("paige_chat_turns")
-            .select("bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "assistant")
-            .eq("bundle_ref->>studio_workflow", "proposal").eq("bundle_ref->paige_ask->>reopens", claimPhase.askId).gt("seq", claimRow.seq)
+            .select("bundle_ref").eq("thread_id", payloadThreadId).eq("role", "assistant")
+            .eq("bundle_ref->>studio_workflow", "proposal").eq("bundle_ref->paige_ask->>reopens", verifiedClaim.askId).gt("seq", verifiedClaim.seq)
             .order("seq", { ascending: false }).limit(1).maybeSingle();
           if (retryError) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
           const reopened = retry ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, retry.bundle_ref, "assistant") : null;
-          approvedStage = reopened?.kind !== "proposal" || reopened.reopens !== claimPhase.askId;
+          approvedStage = reopened?.kind !== "proposal" || reopened.reopens !== verifiedClaim.askId;
         }
         const alreadyHasArtifact = Array.isArray(enrolled.artifact_refs) && enrolled.artifact_refs.length > 0;
         if (!studioWorkflow && !approvedStage && !alreadyHasArtifact) return refuseStudioWorkflow(409, "STUDIO_PLAN_REQUIRED");
-        if (!studioWorkflow && approvedStage && claimRow && claimPhase?.kind === "build") {
+        if (!studioWorkflow && approvedStage && verifiedClaim) {
           const { data: finished, error } = await supabaseClient.from("paige_chat_turns")
-            .select("role,bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "assistant")
-            .eq("bundle_ref->>studio_workflow", "settled").gt("seq", claimRow.seq)
+            .select("role,bundle_ref").eq("thread_id", payloadThreadId).eq("role", "assistant")
+            .eq("bundle_ref->>studio_workflow", "settled").gt("seq", verifiedClaim.seq)
             .order("seq", { ascending: false }).limit(1).maybeSingle();
           if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
           const settled = finished ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, finished.bundle_ref, "assistant") : null;
-          if (settled?.kind !== "settled" || settled.askId !== claimPhase.askId)
+          if (settled?.kind !== "settled" || settled.askId !== verifiedClaim.askId)
             return refuseStudioWorkflow(409, "STUDIO_BUILD_UNCONFIRMED");
         }
         if (studioWorkflow && alreadyHasArtifact) return refuseStudioWorkflow(409, "STUDIO_WORKSPACE_ALREADY_OPEN");

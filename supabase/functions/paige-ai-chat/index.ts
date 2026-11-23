@@ -7081,22 +7081,25 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         }
         let approvedStage = false;
         const claimPhase = claimRow?.role === "user" ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, claimRow.bundle_ref, "user") : null;
+        // A caller-writable marker cannot hide an unresolved signed build or let a
+        // partial artifact stand in for the outcome of that build.
+        if (claimRow && claimPhase?.kind !== "build")
+          return refuseStudioWorkflow(409, "STUDIO_BUILD_UNCONFIRMED");
         if (claimRow && claimPhase?.kind === "build") {
           const { data: previous, error } = await supabaseClient.from("paige_chat_turns")
             .select("role,bundle_ref").eq("thread_id", payloadThreadId!).lt("seq", claimRow.seq)
             .order("seq", { ascending: false }).limit(1).maybeSingle();
           if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
           const proposed = previous?.role === "assistant" ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, previous.bundle_ref, "assistant") : null;
-          approvedStage = proposed?.kind === "proposal" && proposed.askId === claimPhase.askId;
-          if (approvedStage) {
-            const { data: retry, error: retryError } = await supabaseClient.from("paige_chat_turns")
-              .select("bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "assistant")
-              .eq("bundle_ref->>studio_workflow", "proposal").eq("bundle_ref->paige_ask->>reopens", claimPhase.askId).gt("seq", claimRow.seq)
-              .order("seq", { ascending: false }).limit(1).maybeSingle();
-            if (retryError) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
-            const reopened = retry ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, retry.bundle_ref, "assistant") : null;
-            if (reopened?.kind === "proposal" && reopened.reopens === claimPhase.askId) approvedStage = false;
-          }
+          if (proposed?.kind !== "proposal" || proposed.askId !== claimPhase.askId)
+            return refuseStudioWorkflow(409, "STUDIO_BUILD_UNCONFIRMED");
+          const { data: retry, error: retryError } = await supabaseClient.from("paige_chat_turns")
+            .select("bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "assistant")
+            .eq("bundle_ref->>studio_workflow", "proposal").eq("bundle_ref->paige_ask->>reopens", claimPhase.askId).gt("seq", claimRow.seq)
+            .order("seq", { ascending: false }).limit(1).maybeSingle();
+          if (retryError) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+          const reopened = retry ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, retry.bundle_ref, "assistant") : null;
+          approvedStage = reopened?.kind !== "proposal" || reopened.reopens !== claimPhase.askId;
         }
         const alreadyHasArtifact = Array.isArray(enrolled.artifact_refs) && enrolled.artifact_refs.length > 0;
         if (!studioWorkflow && !approvedStage && !alreadyHasArtifact) return refuseStudioWorkflow(409, "STUDIO_PLAN_REQUIRED");

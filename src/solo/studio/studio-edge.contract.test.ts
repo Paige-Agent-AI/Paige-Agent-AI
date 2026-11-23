@@ -10,6 +10,16 @@ import { STUDIO_OPERATING_CORE } from "../../../supabase/functions/_shared/desig
 const chat = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 
 describe("Studio edge contract", () => {
+  it("holds an unverified build claim before considering an existing artifact", () => {
+    const start = chat.indexOf("if (enrolledInPlanning) {");
+    const artifacts = chat.indexOf("const alreadyHasArtifact", start);
+    expect(start).toBeGreaterThan(0);
+    expect(artifacts).toBeGreaterThan(start);
+    const checks = chat.slice(start, artifacts);
+    expect(checks).toMatch(/if \(claimRow && claimPhase\?\.kind !== "build"\)\s+return refuseStudioWorkflow\(409, "STUDIO_BUILD_UNCONFIRMED"\)/);
+    expect(checks).toMatch(/if \(proposed\?\.kind !== "proposal" \|\| proposed\.askId !== claimPhase\.askId\)\s+return refuseStudioWorkflow\(409, "STUDIO_BUILD_UNCONFIRMED"\)/);
+  });
+
   it("tells the Studio designer to save a designed page or funnel in the same turn, never to ask", () => {
     expect(STUDIO_OPERATING_CORE).toContain("SAVE WHAT YOU BUILD, IN THE SAME TURN");
     expect(STUDIO_OPERATING_CORE).toContain("after growth_page_generate, call growth_page_save");

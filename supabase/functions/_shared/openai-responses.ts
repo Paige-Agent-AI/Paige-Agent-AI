@@ -445,7 +445,10 @@ function emitTrace(trace: TraceCtx | undefined, row: {
       caller_function: trace.agent_id, ...(row.stop_reason ? { stop_reason: row.stop_reason } : {}),
       ...(row.cache_signature ? { provider_cache_signature: row.cache_signature } : {}),
       ...(row.provider_failure_class ? { provider_failure_class: row.provider_failure_class } : {}),
-      ...(row.provider_error_detail ? { provider_error_detail: scrubSecrets(row.provider_error_detail).slice(0, 200) } : {}),
+      // provider_error_detail is free-form provider text and MUST NOT be persisted for
+      // metadata_only traces (privacy: provider messages can echo request material).
+      ...(trace?.content_policy !== "metadata_only" && row.provider_error_detail
+        ? { provider_error_detail: scrubSecrets(row.provider_error_detail).slice(0, 200) } : {}),
       ...(row.usage ? {
         provider_total_input_tokens: row.usage.total_input,
         provider_cache_write_30m_tokens: row.usage.write30m,

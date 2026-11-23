@@ -12,8 +12,18 @@ Deno.test("safeMetadata: provider_failure_class survives the allowlist", () => {
   assertEquals(meta.caller_function, "paige-ai-chat");
 });
 
+Deno.test("safeMetadata: provider_error_detail survives the allowlist (non-metadata_only path)", () => {
+  // provider_error_detail is a sanitized closed-code diagnostic. It survives safeMetadata
+  // so it can be persisted for non-metadata_only traces.
+  const meta = safeMetadata({ provider_error_detail: "http_402: billing: insufficient credits", caller_function: "paige-ai-chat" });
+  assertEquals(meta.provider_error_detail, "http_402: billing: insufficient credits");
+  assertEquals(meta.caller_function, "paige-ai-chat");
+});
+
 Deno.test("safeMetadata: provider_failure_class survives for metadata_only-shaped input", () => {
   // Simulate what emitTrace passes: the classified class is in metadata, content is scrubbed.
+  // provider_error_detail is conditionally excluded by emitTrace when content_policy === "metadata_only",
+  // so it never reaches safeMetadata for those traces. Here we verify the class survives.
   const meta = safeMetadata({
     provider_failure_class: "billing_account",
     caller_function: "paige-ai-chat",

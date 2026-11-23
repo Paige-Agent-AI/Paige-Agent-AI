@@ -7040,87 +7040,94 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       }
     };
     let studioProofScope: StudioProofScope | null = null;
+    let studioThreadForPreflight: Awaited<ReturnType<typeof readSummaryThread>> = null;
     if (studioWorkflow || workflowSessionId) {
-      const boundStudio = payloadThreadId ? await readSummaryThread(payloadThreadId) : null;
-      if (!boundStudio?.studio_session_id || !boundStudio.tenant_id)
+      const studioTenantId = personaCtx.tenant_id;
+      if (!payloadThreadId || !workflowSessionId || !studioTenantId)
         return refuseStudioWorkflow(403, "STUDIO_WORKFLOW_SCOPE_UNAVAILABLE");
-      const proofScope = { actorId: user.id, tenantId: boundStudio.tenant_id, threadId: payloadThreadId! };
-      studioProofScope = proofScope;
-      const [registration, { data: marker, error: markerError }] = await Promise.all([
-        supabaseClient.from("studio_sessions").select("plan_first,artifact_refs,transcript")
-          .eq("id", boundStudio.studio_session_id).eq("tenant_id", boundStudio.tenant_id).maybeSingle(),
-        supabaseClient.from("paige_chat_turns").select("role,seq,bundle_ref").eq("thread_id", payloadThreadId!)
-          .not("bundle_ref->>studio_workflow", "is", null).order("seq", { ascending: false }).limit(1).maybeSingle(),
-      ]);
+      const registration = await supabaseClient.from("studio_sessions").select("plan_first,artifact_refs,transcript")
+        .eq("id", workflowSessionId).eq("tenant_id", studioTenantId).maybeSingle();
       // Edge and the native migration can roll forward independently. Existing projects can
       // still run on the old schema; a new planning request waits for the native enrollment bit.
       const olderSchema = registration.error?.code === "42703";
       const legacyRegistration = olderSchema && !studioWorkflow
         ? await supabaseClient.from("studio_sessions").select("artifact_refs,transcript")
-          .eq("id", boundStudio.studio_session_id).eq("tenant_id", boundStudio.tenant_id).maybeSingle()
+          .eq("id", workflowSessionId).eq("tenant_id", studioTenantId).maybeSingle()
         : null;
       const enrolled = legacyRegistration?.data ?? registration.data;
-      if (!enrolled || markerError || (legacyRegistration ? legacyRegistration.error : registration.error))
+      if (!enrolled || (legacyRegistration ? legacyRegistration.error : registration.error))
         return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
-      let claimRow = marker?.role === "user" && readStudioWorkflow(marker.bundle_ref, "user")?.kind === "build" ? marker : null;
-      if (marker && !claimRow) {
-        const { data: savedClaim, error } = await supabaseClient.from("paige_chat_turns")
-          .select("role,seq,bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "user")
-          .eq("bundle_ref->>studio_workflow", "build").order("seq", { ascending: false }).limit(1).maybeSingle();
-        if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
-        claimRow = savedClaim;
-      }
-      let approvedStage = false;
-      const claimPhase = claimRow?.role === "user" ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, claimRow.bundle_ref, "user") : null;
-      if (claimRow && claimPhase?.kind === "build") {
-        const { data: previous, error } = await supabaseClient.from("paige_chat_turns")
-          .select("role,bundle_ref").eq("thread_id", payloadThreadId!).lt("seq", claimRow.seq)
+      const enrolledInPlanning = ("plan_first" in enrolled && enrolled.plan_first === true) || startsStudioPlanning(enrolled.transcript);
+      if (studioWorkflow && !enrolledInPlanning) return refuseStudioWorkflow(409, "STUDIO_PLAN_REQUIRED");
+      if (enrolledInPlanning) {
+        if (callerTier !== "tenant") return refuseStudioWorkflow(403, "STUDIO_WORKFLOW_SCOPE_UNAVAILABLE");
+        const boundStudio = await readSummaryThread(payloadThreadId);
+        if (boundStudio?.studio_session_id !== workflowSessionId || boundStudio.tenant_id !== studioTenantId)
+          return refuseStudioWorkflow(403, "STUDIO_WORKFLOW_SCOPE_UNAVAILABLE");
+        studioThreadForPreflight = boundStudio;
+        const proofScope = { actorId: user.id, tenantId: studioTenantId, threadId: payloadThreadId };
+        studioProofScope = proofScope;
+        const { data: marker, error: markerError } = await supabaseClient.from("paige_chat_turns")
+          .select("role,seq,bundle_ref").eq("thread_id", payloadThreadId).not("bundle_ref->>studio_workflow", "is", null)
           .order("seq", { ascending: false }).limit(1).maybeSingle();
-        if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
-        const proposed = previous?.role === "assistant" ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, previous.bundle_ref, "assistant") : null;
-        approvedStage = proposed?.kind === "proposal" && proposed.askId === claimPhase.askId;
-        if (approvedStage) {
-          const { data: retry, error: retryError } = await supabaseClient.from("paige_chat_turns")
-            .select("bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "assistant")
-            .eq("bundle_ref->>studio_workflow", "proposal").eq("bundle_ref->paige_ask->>reopens", claimPhase.askId).gt("seq", claimRow.seq)
-            .order("seq", { ascending: false }).limit(1).maybeSingle();
-          if (retryError) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
-          const reopened = retry ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, retry.bundle_ref, "assistant") : null;
-          if (reopened?.kind === "proposal" && reopened.reopens === claimPhase.askId) approvedStage = false;
+        if (markerError) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+        let claimRow = marker?.role === "user" && readStudioWorkflow(marker.bundle_ref, "user")?.kind === "build" ? marker : null;
+        if (marker && !claimRow) {
+          const { data: savedClaim, error } = await supabaseClient.from("paige_chat_turns")
+            .select("role,seq,bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "user")
+            .eq("bundle_ref->>studio_workflow", "build").order("seq", { ascending: false }).limit(1).maybeSingle();
+          if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+          claimRow = savedClaim;
         }
-      }
-      const alreadyHasArtifact = Array.isArray(enrolled.artifact_refs) && enrolled.artifact_refs.length > 0;
-      const enrolledInPlanning = ("plan_first" in enrolled && enrolled.plan_first === true) || startsStudioPlanning(enrolled.transcript) || Boolean(marker);
-      if ((enrolledInPlanning || studioWorkflow) && callerTier !== "tenant")
-        return refuseStudioWorkflow(403, "STUDIO_WORKFLOW_SCOPE_UNAVAILABLE");
-      if (!studioWorkflow && enrolledInPlanning && !approvedStage && !alreadyHasArtifact) return refuseStudioWorkflow(409, "STUDIO_PLAN_REQUIRED");
-      if (!studioWorkflow && approvedStage && claimRow && claimPhase?.kind === "build") {
-        const { data: finished, error } = await supabaseClient.from("paige_chat_turns")
-          .select("role,bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "assistant")
-          .eq("bundle_ref->>studio_workflow", "settled").gt("seq", claimRow.seq)
-          .order("seq", { ascending: false }).limit(1).maybeSingle();
-        if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
-        const settled = finished ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, finished.bundle_ref, "assistant") : null;
-        if (settled?.kind !== "settled" || settled.askId !== claimPhase.askId)
-          return refuseStudioWorkflow(409, "STUDIO_BUILD_UNCONFIRMED");
-      }
-      if (studioWorkflow && alreadyHasArtifact) return refuseStudioWorkflow(409, "STUDIO_WORKSPACE_ALREADY_OPEN");
-      if (studioPlanning && approvedStage) return refuseStudioWorkflow(409, "STUDIO_WORKSPACE_ALREADY_OPEN");
-      const ownerText = studioWorkflow ? [...messages].reverse().find(message => message.role === "user")?.content : null;
-      if (studioWorkflow && (typeof ownerText !== "string" || !ownerText.trim() || (studioPlanBuild && ownerText !== STUDIO_PLAN_APPROVAL)))
-        return refuseStudioWorkflow(400, "STUDIO_WORKFLOW_INPUT_UNAVAILABLE");
-      if (studioWorkflow?.kind === "approve") {
-        const { data: last, error } = await supabaseClient.from("paige_chat_turns")
-          .select("role,bundle_ref").eq("thread_id", payloadThreadId!).order("seq", { ascending: false }).limit(1).maybeSingle();
-        if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
-        const proposal = last?.role === "assistant" || last?.role === "user"
-          ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, last.bundle_ref, last.role) : null;
-        const openPlan = !approvedStage && proposal?.kind === "proposal" && proposal.askId === studioWorkflow.askId;
-        const pendingClaim = approvedStage && proposal?.kind === "build" && proposal.askId === studioWorkflow.askId;
-        if (!openPlan && !pendingClaim)
-          return refuseStudioWorkflow(409, "STUDIO_PLAN_NOT_CURRENT");
-        // A native adjacent question claim binds the current plan to this owner and thread.
-        validatedData.resume = { kind: "answer", ask_id: studioWorkflow.askId };
+        let approvedStage = false;
+        const claimPhase = claimRow?.role === "user" ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, claimRow.bundle_ref, "user") : null;
+        if (claimRow && claimPhase?.kind === "build") {
+          const { data: previous, error } = await supabaseClient.from("paige_chat_turns")
+            .select("role,bundle_ref").eq("thread_id", payloadThreadId!).lt("seq", claimRow.seq)
+            .order("seq", { ascending: false }).limit(1).maybeSingle();
+          if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+          const proposed = previous?.role === "assistant" ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, previous.bundle_ref, "assistant") : null;
+          approvedStage = proposed?.kind === "proposal" && proposed.askId === claimPhase.askId;
+          if (approvedStage) {
+            const { data: retry, error: retryError } = await supabaseClient.from("paige_chat_turns")
+              .select("bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "assistant")
+              .eq("bundle_ref->>studio_workflow", "proposal").eq("bundle_ref->paige_ask->>reopens", claimPhase.askId).gt("seq", claimRow.seq)
+              .order("seq", { ascending: false }).limit(1).maybeSingle();
+            if (retryError) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+            const reopened = retry ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, retry.bundle_ref, "assistant") : null;
+            if (reopened?.kind === "proposal" && reopened.reopens === claimPhase.askId) approvedStage = false;
+          }
+        }
+        const alreadyHasArtifact = Array.isArray(enrolled.artifact_refs) && enrolled.artifact_refs.length > 0;
+        if (!studioWorkflow && !approvedStage && !alreadyHasArtifact) return refuseStudioWorkflow(409, "STUDIO_PLAN_REQUIRED");
+        if (!studioWorkflow && approvedStage && claimRow && claimPhase?.kind === "build") {
+          const { data: finished, error } = await supabaseClient.from("paige_chat_turns")
+            .select("role,bundle_ref").eq("thread_id", payloadThreadId!).eq("role", "assistant")
+            .eq("bundle_ref->>studio_workflow", "settled").gt("seq", claimRow.seq)
+            .order("seq", { ascending: false }).limit(1).maybeSingle();
+          if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+          const settled = finished ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, finished.bundle_ref, "assistant") : null;
+          if (settled?.kind !== "settled" || settled.askId !== claimPhase.askId)
+            return refuseStudioWorkflow(409, "STUDIO_BUILD_UNCONFIRMED");
+        }
+        if (studioWorkflow && alreadyHasArtifact) return refuseStudioWorkflow(409, "STUDIO_WORKSPACE_ALREADY_OPEN");
+        if (studioPlanning && approvedStage) return refuseStudioWorkflow(409, "STUDIO_WORKSPACE_ALREADY_OPEN");
+        const ownerText = studioWorkflow ? [...messages].reverse().find(message => message.role === "user")?.content : null;
+        if (studioWorkflow && (typeof ownerText !== "string" || !ownerText.trim() || (studioPlanBuild && ownerText !== STUDIO_PLAN_APPROVAL)))
+          return refuseStudioWorkflow(400, "STUDIO_WORKFLOW_INPUT_UNAVAILABLE");
+        if (studioWorkflow?.kind === "approve") {
+          const { data: last, error } = await supabaseClient.from("paige_chat_turns")
+            .select("role,bundle_ref").eq("thread_id", payloadThreadId!).order("seq", { ascending: false }).limit(1).maybeSingle();
+          if (error) return refuseStudioWorkflow(503, "STUDIO_PLAN_READ_UNAVAILABLE");
+          const proposal = last?.role === "assistant" || last?.role === "user"
+            ? await verifyStudioWorkflow(supabaseServiceKey, proofScope, last.bundle_ref, last.role) : null;
+          const openPlan = !approvedStage && proposal?.kind === "proposal" && proposal.askId === studioWorkflow.askId;
+          const pendingClaim = approvedStage && proposal?.kind === "build" && proposal.askId === studioWorkflow.askId;
+          if (!openPlan && !pendingClaim)
+            return refuseStudioWorkflow(409, "STUDIO_PLAN_NOT_CURRENT");
+          // A native adjacent question claim binds the current plan to this owner and thread.
+          validatedData.resume = { kind: "answer", ask_id: studioWorkflow.askId };
+        }
       }
     }
     if (validatedData.resume) {
@@ -7204,7 +7211,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // `thread-summary-fold` rows under two different agent ids, contradicting the very comment
       // that says to keep them in step. Found by an independent reviewer driving a Studio turn.
       {
-        const pre = await readSummaryThread(payloadThreadId);
+        const pre = studioThreadForPreflight ?? await readSummaryThread(payloadThreadId);
         if (pre?.studio_session_id) traceCtx.agent_id = "studio-design-agent";
         preStudioSessionId = pre?.studio_session_id ? String(pre.studio_session_id) : null;
       }
@@ -7401,10 +7408,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
             : (meta.bundleRef ?? null)) as any, p_tool_calls: null,
         });
         if (interactiveSettlement) await interactiveSettlement.persist(writeAssistant);
-        else {
-          const result = await writeAssistant();
-          if (studioWorkflow && (result.error || !result.data)) throw new Error("STUDIO_WORKFLOW_WRITE_UNAVAILABLE");
-        }
+        else await writeAssistant();
         // A governed approval pause must hand off after its receipt, before
         // optional title/summary work can spend another provider/runtime budget.
         if (receiptOnly || await refreshRecoveryHold()) return;
@@ -12270,9 +12274,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         callerOwnTenantMemo = null;
         const resultsBeforeThisCall = toolResults.length;
         try {
-        const studioBuildHeld = studioPlanBuild && requestExecutionState.needsReview;
-        if (studioBuildHeld || (MUTATING_TOOLS.has(tc.function.name) && (requestExecutionState.needsReview || interactive &&
-            (interactiveReceiptScanSaturated || interactiveUnresolvedEffects.some((effect) => MUTATING_TOOLS.has(effect.tool)))))) {
+        if (studioPlanBuild && requestExecutionState.needsReview) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+            success: false, not_applied: true, refused_before_run: true, error: "studio_build_unconfirmed",
+          }) });
+          continue;
+        }
+        if (MUTATING_TOOLS.has(tc.function.name) && (requestExecutionState.needsReview || interactive &&
+            (interactiveReceiptScanSaturated || interactiveUnresolvedEffects.some((effect) => MUTATING_TOOLS.has(effect.tool))))) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, not_applied: true, refused_before_run: true,
             error: "prior_effect_reconciliation_required",
             message: "An earlier consequential action has an unknown outcome. Read back and reconcile its authoritative receipt before any further write. It has not been declared failed or retried." }) });
@@ -21897,20 +21906,24 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the asymmetry that used to justify persisting an already-streamed reply on a lapsed
           // scope: the transcript and the wire now always agree, because neither happens unless
           // the check holds.
-          if (!durableApprovalPause && !(interactive && durableResearchPause) && payloadThreadId && finalAssistantText.trim()) {
+          if (studioWorkflow && payloadThreadId && finalAssistantText.trim()) {
             try {
               let meta: Parameters<typeof persistAssistantTurn>[1] = withTurnRecord(finalAssistantText, assistantTurnMetadata());
               const buildSettled = (turnTracker.state === "FINAL" || turnTracker.state === "ASK_USER" || turnTracker.state === "WAIT_APPROVAL")
                 && !requestExecutionState.needsReview && !interactiveEffects.some(effect => effect.outcome === "outcome_unknown");
-              if (studioWorkflow?.kind === "approve" && studioProofScope && buildSettled) {
+              if (studioWorkflow.kind === "approve" && studioProofScope && buildSettled) {
                 const askId = studioWorkflow.askId;
                 const proof = await signStudioWorkflow(supabaseServiceKey, studioProofScope, "settled", askId);
                 meta = { ...meta, bundleRef: { ...(meta.bundleRef as Record<string, unknown>),
                   studio_workflow: "settled", studio_plan_ask_id: askId, studio_proof: proof } };
               }
-              const p = persistAssistantTurn(finalAssistantText, meta, Boolean(studioWorkflow));
+              await persistAssistantTurn(finalAssistantText, meta, true);
+            } catch (e) { console.error("[paige] persist Studio turn failed:", (e as Error)?.message); }
+          } else if (!durableApprovalPause && !(interactive && durableResearchPause) && payloadThreadId && finalAssistantText.trim()) {
+            try {
+              const p = persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()));
               // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
-              if (interactive || interactiveConversational || studioWorkflow) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+              if (interactive || interactiveConversational) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
             } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
           }
          } catch (e) {

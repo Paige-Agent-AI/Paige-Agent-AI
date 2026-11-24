@@ -1,3 +1,26 @@
+## PO-EXP25 November24 — OpenRouter Auto interim routing, GPT excluded (MF-OWNER-2026-11-23)
+
+Owner ruling: OpenRouter is the exclusive external model gateway; GPT models excluded from all
+PAIGE inference; direct OpenAI/Anthropic/Google/DeepSeek inference and OmniRoute-in-hosted are
+prohibited. PR #3404 (head `d32993297`, NOT merged) implements the interim posture: every class
+routes through `openrouter/auto` with the GPT exclusion on the **`auto-router` plugin** (a
+top-level `excluded_models` field is silently ignored by OpenRouter — the #3402 form would have
+left the exclusion unenforced); a routing failure interrupts the turn truthfully (the direct
+fallback chain is retired); unknown budget costs stay null, never $0; document turns are refused
+truthfully pending a qualified document-capable OpenRouter model; the pinned rubric judge stays
+direct-Anthropic as an explicit owner decision point. Local exact-tree receipts all green
+(fabric-check 206/0, openai-responses 167/0, c0b binding 87/87, EXP01 fixture 24/0 — which also
+repairs two pre-existing main failures caused by #3399's missing `scrubSecrets` fixture port,
+lesson recorded). [Routing decision record](../model-routing/AUTO-VS-EXPLICIT-CANDIDATES.md) is
+the owner-requested broad catalog research (non-GPT candidates, published router benchmarks with
+honest caveats) feeding the pending Auto-vs-explicit-vs-hybrid comparison, which PAIGE
+Intelligence decides on real workloads. Decision log carries the dated ruling. PROOF OWED:
+hosted CI + independent non-author review are in flight; merge, Edge deploy/readback, the
+authenticated Solo tool-bearing conversation on Auto, the document-bearing restoration and the
+model comparison remain open — Supabase was down at authoring time; live verification resumes on
+the owner's confirmation. [Evidence](../evidence/ui-delivery/2026-11-24-openrouter-auto-gpt-exclusion.md).
+Development only; not a completed outcome.
+
 ## EXP01 November13 — original Chat model/cache candidate
 
 Existing Model Fabric only: transient server-derived actor/context cache partition,

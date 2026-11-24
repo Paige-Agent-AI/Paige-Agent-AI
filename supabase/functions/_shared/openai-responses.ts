@@ -111,7 +111,9 @@ export interface ChatShapeBody {
   max_tokens?: number;
   response_format?: { type: string; json_schema?: { name?: string; schema?: unknown; strict?: boolean } };
   stream?: boolean;
-  /** OpenRouter Auto: models to exclude from the auto-router's selection (e.g., ["openai/*"] to exclude GPT models). Sent on the `auto-router` plugin. */
+  /** OpenRouter Auto: EXTRA models a caller may add to the auto-router's exclusion list. The owner's
+   *  "openai/*" GPT exclusion (MF-OWNER-2026-11-23) is always present and can never be removed or
+   *  overridden from here — an absent, empty or non-list value never disables it. */
   excluded_models?: string[];
   /** Sampling is ignored: reasoning models reject it while reasoning is on. */
   temperature?: number;

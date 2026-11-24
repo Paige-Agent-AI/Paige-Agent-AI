@@ -9,6 +9,11 @@ type ResearchModule = { researchCompletion: (...args: unknown[]) => Promise<{ re
 type StrategyModule = { strategizeBeforeReasoning: (...args: unknown[]) => Promise<Row> };
 // Execute complete incumbent modules. Only IO/budget reads/trace sinks are ports;
 // candidate order, fallback classification and both provider translators are real.
+// MF-OWNER-2026-11-23 (2026-11-24): the routed policy is OpenRouter Auto ONLY — the direct
+// OpenAI/Anthropic candidates are retired from CLASS_POLICY, so the recording transport labels
+// the openrouter.ai leg and the fixture admits it with a controlled key. The Anthropic
+// translator's cache accounting stays pinned by scripts/model-fabric (C5 pinned judge) and
+// npm run test:reasoning-tier 6b; the legacy router keeps its own lane.
 function moduleAt<T = Row>(path: string, ports: Row = {}, flag?: boolean): T {
   let text = readFileSync(`supabase/functions/${path}`, 'utf8');
   if (flag !== undefined) text = text.replace('export const RESEARCH_FABRIC_ENABLED: boolean = false;', `export const RESEARCH_FABRIC_ENABLED: boolean = ${flag};`);
@@ -31,28 +36,34 @@ function fixture(options: { primaryStatus?: number; budget?: () => Promise<numbe
   const calls: Row[] = []; const traces: Row[] = [];
   const traceLLMCall = (row: Row) => { traces.push(row); };
   const fetchPort = vi.fn(async (url: string, init: RequestInit) => {
-    const provider = url.includes('anthropic') ? 'anthropic' : 'openai';
+    const provider = url.includes('anthropic') ? 'anthropic' : url.includes('openrouter') ? 'openrouter' : 'openai';
     const requestBody = JSON.parse(String(init.body));
     calls.push({ provider, body: requestBody, signal: init.signal });
     if (options.transport) return options.transport(init.signal as AbortSignal);
-    if (provider === 'openai' && options.primaryStatus) return Response.json({ error: { type: 'fixture', message: 'Controlled rejection' } }, { status: options.primaryStatus });
-    return provider === 'openai' ? Response.json({ status: 'completed', model: `${requestBody.model}-fixture`, output: [{ type: 'message', content: [{ type: 'output_text', text: strategyText }] }], usage: { input_tokens: 13, output_tokens: 4, input_tokens_details: { cached_tokens: 5 } } })
+    if (provider === 'openrouter' && options.primaryStatus) return Response.json({ error: { type: 'fixture', message: 'Controlled rejection' } }, { status: options.primaryStatus });
+    return provider === 'openrouter' ? Response.json({ status: 'completed', model: `${requestBody.model}-fixture`, output: [{ type: 'message', content: [{ type: 'output_text', text: strategyText }] }], usage: { input_tokens: 13, output_tokens: 4, input_tokens_details: { cached_tokens: 5 } } })
+      : provider === 'openai' ? Response.json({ status: 'completed', model: `${requestBody.model}-fixture`, output: [{ type: 'message', content: [{ type: 'output_text', text: strategyText }] }], usage: { input_tokens: 13, output_tokens: 4, input_tokens_details: { cached_tokens: 5 } } })
       : Response.json({ model: 'claude-sonnet-5-5-fixture', content: [{ type: 'text', text: strategyText }], stop_reason: 'end_turn', usage: { input_tokens: 8, output_tokens: 4, cache_read_input_tokens: 5, cache_creation_input_tokens: 2 } });
   });
   const constants = { ...moduleAt('_shared/openai-models.ts'), ...moduleAt('_shared/claude-models.ts') };
   const failures = moduleAt('_shared/provider-failure.ts'); const types = moduleAt('_shared/provider-types.ts');
   // moduleAt strips imports: the OpenRouter Model Fabric change made openrouter-models.ts a
-  // dependency of these modules. Supply the real canonical constants; with no key resolved here
-  // the OpenRouter candidate stays skipped and the original recorded chain is unchanged.
+  // dependency of these modules. Supply the real canonical constants; the fabric's envKey port
+  // below returns a controlled key so the OpenRouter Auto candidate is ADMITTED (the routed
+  // policy is Auto-only — MF-OWNER-2026-11-23).
   const openrouter = moduleAt('_shared/openrouter-models.ts');
+  // The #3399/#3395 diagnostics made openai-responses import scrubSecrets from llm-trace.ts;
+  // moduleAt strips that import, so the REAL pure helper is supplied here (tracing stays the
+  // recording port below — only scrubSecrets is taken, never the real traceLLMCall writer).
+  const llmTrace = moduleAt('_shared/llm-trace.ts', { estimateTokenCostUsd: moduleAt('_shared/token-pricing.ts').estimateTokenCostUsd, traceLLMCall, createClient: () => ({}), Deno: { env: { get: () => undefined } } });
   const budget = { traceAdmin: () => ({}), resolveCeiling: async () => 10, accruedSpendToday: options.budget ?? (async () => 0), BudgetExceeded, enforceBudget };
   const ports = { ...constants, ...failures, ...types, ...budget, Deno: { env: { get: (key: string) => key.endsWith('API_KEY') ? 'controlled-not-a-secret' : undefined } }, fetch: fetchPort, traceLLMCall };
   const claude = moduleAt('_shared/claude.ts', ports);
   // moduleAt strips imports: supply the REAL new canonical pricing dependency,
   // preserving actual provider translation rather than stubbing its arithmetic.
-  const openai = moduleAt('_shared/openai-responses.ts', { ...ports, ...openrouter, ...moduleAt('_shared/token-pricing.ts'), envKey: () => 'controlled-not-a-secret', assertModelAllowed: () => {} });
+  const openai = moduleAt('_shared/openai-responses.ts', { ...ports, ...openrouter, ...moduleAt('_shared/token-pricing.ts'), scrubSecrets: llmTrace.scrubSecrets, envKey: () => 'controlled-not-a-secret', assertModelAllowed: () => {} });
   const policy = moduleAt('_shared/paige-turn/route.ts', { ...constants, ...openrouter });
-  const fabric = moduleAt('_shared/model-fabric.ts', { ...ports, ...claude, ...openai, ...policy, ...openrouter, envKey: () => undefined });
+  const fabric = moduleAt('_shared/model-fabric.ts', { ...ports, ...claude, ...openai, ...policy, ...openrouter, envKey: () => 'controlled-not-a-secret' });
   const legacy = vi.fn(async (_job?: unknown, _body?: unknown, _trace?: unknown) => ({ model: 'controlled-legacy', choices: [{ message: { content: strategyText } }] }));
   const adapter = (flag: boolean) => moduleAt<ResearchModule>('paige-deep-research/fabric.ts', { routedChatCompletion: legacy, fabricCompletion: fabric.fabricCompletion }, flag);
   const recall = vi.fn(options.recall ?? (async () => []));
@@ -72,9 +83,12 @@ describe('Research prepared Fabric uses actual shared attempts and recording tra
   it('primary success retains exact JSON/output limit, actual served route and cache trace', async () => {
     const test = fixture(); const signal = new AbortController().signal; const gate = vi.fn(async () => true);
     const result = await test.adapter(true).researchCompletion('unit_synthesis', 'operational', body, { tenantId: tenant, runId: run, signal, beforeProviderAttempt: gate });
-    expect(test.calls.map(c => c.provider)).toEqual(['openai']); expect(test.calls[0].signal).toBe(signal);
-    expect(test.calls[0].body).toMatchObject({ store: false, max_output_tokens: 700, text: { format: { type: 'json_object' } } });
-    expect(result.route).toMatchObject({ served_provider: 'openai', served_model: 'gpt-6.1-sol-fixture', fallback: false });
+    expect(test.calls.map(c => c.provider)).toEqual(['openrouter']); expect(test.calls[0].signal).toBe(signal);
+    const autoReq = test.calls[0].body as { plugins: Array<Record<string, unknown>>; store?: unknown };
+    expect(test.calls[0].body).toMatchObject({ max_output_tokens: 700, text: { format: { type: 'json_object' } } });
+    expect(autoReq.plugins[0]).toMatchObject({ id: 'auto-router', excluded_models: ['openai/*'] });
+    expect(autoReq.store).toBeUndefined();
+    expect(result.route).toMatchObject({ served_provider: 'openrouter', served_model: 'openrouter/auto-fixture', fallback: false });
     expect(test.traces).toHaveLength(1); expect(test.traces[0]).toMatchObject({ tenant_id: tenant, task_id: run, job_kind: 'research_unit_synthesis', cache_read_input_tokens: 5, tokens_in: 8 });
   });
   it('revocation during the actual Fabric budget wait prevents first provider', async () => {
@@ -93,23 +107,24 @@ describe('Research prepared Fabric uses actual shared attempts and recording tra
     wait.resolve(0); await outcome;
     expect(settled).toBe('stopped'); expect(test.calls).toHaveLength(0);
   });
-  it('fresh authority blocks fallback after primary health failure', async () => {
+  it('fresh authority gates the one Auto leg and its health failure is named, never retried elsewhere', async () => {
     const test = fixture({ primaryStatus: 503 }); let checks = 0;
     await expect(test.adapter(true).researchCompletion('unit_synthesis', 'operational', body, { tenantId: tenant, runId: run, beforeProviderAttempt: async () => ++checks === 1 })).rejects.toThrow('research_fabric_route_failed');
-    expect(checks).toBe(2); expect(test.calls.map(c => c.provider)).toEqual(['openai']);
+    expect(checks).toBe(1); expect(test.calls.map(c => c.provider)).toEqual(['openrouter']);
   });
-  it('allowed fallback uses actual Anthropic cache accounting without a second router trace', async () => {
+  it('a health failure interrupts the turn with one attributed trace; NO second transport exists (MF-OWNER-2026-11-23)', async () => {
     const test = fixture({ primaryStatus: 503 });
-    const result = await test.adapter(true).researchCompletion('unit_synthesis', 'operational', body, { tenantId: tenant, runId: run, beforeProviderAttempt: async () => true });
-    expect(test.calls.map(c => c.provider)).toEqual(['openai', 'anthropic']);
-    expect((test.calls[1].body as Row).cache_control).toEqual({ type: 'ephemeral' });
-    expect(result.route).toMatchObject({ served_provider: 'anthropic', fallback: true });
-    expect(test.traces).toHaveLength(2); expect(test.traces[1]).toMatchObject({ cache_read_input_tokens: 5, cache_creation_input_tokens: 2 });
+    await expect(test.adapter(true).researchCompletion('unit_synthesis', 'operational', body, { tenantId: tenant, runId: run, beforeProviderAttempt: async () => true })).rejects.toThrow('research_fabric_route_failed');
+    expect(test.calls.map(c => c.provider)).toEqual(['openrouter']);
+    await vi.waitFor(() => expect(test.traces).toHaveLength(1));
+    expect(test.traces[0]).toMatchObject({ provider: 'openrouter', status: 'error' });
+    // The Anthropic translator's cache accounting is still pinned by scripts/model-fabric
+    // (C5 pinned judge) and npm run test:reasoning-tier 6b — its lane is the pinned judge, not a fallback.
   });
   it.each([400, 422])('invalid/unknown primary %s is not retried elsewhere', async primaryStatus => {
     const test = fixture({ primaryStatus });
     await expect(test.adapter(true).researchCompletion('unit_synthesis', 'operational', body, { tenantId: tenant, runId: run, beforeProviderAttempt: async () => true })).rejects.toThrow();
-    expect(test.calls.map(c => c.provider)).toEqual(['openai']);
+    expect(test.calls.map(c => c.provider)).toEqual(['openrouter']);
   });
   it('real abort signal reaches pending provider and prevents fallback', async () => {
     const abort = new AbortController();
@@ -117,7 +132,7 @@ describe('Research prepared Fabric uses actual shared attempts and recording tra
     const task = test.adapter(true).researchCompletion('unit_synthesis', 'operational', body, { tenantId: tenant, runId: run, signal: abort.signal, beforeProviderAttempt: async () => true });
     const rejected = expect(task).rejects.toThrow();
     await vi.waitFor(() => expect(test.calls).toHaveLength(1)); expect(test.calls[0].signal).toBe(abort.signal); abort.abort(); await rejected;
-    expect(test.calls.map(c => c.provider)).toEqual(['openai']);
+    expect(test.calls.map(c => c.provider)).toEqual(['openrouter']);
   });
   it('legacy false gate keeps original exact job/body/trace and never claims transport cancellation', async () => {
     const test = fixture(); const signal = AbortSignal.abort(); const gate = vi.fn(async () => false);
@@ -128,7 +143,7 @@ describe('Research prepared Fabric uses actual shared attempts and recording tra
   it('usage above the informational threshold retains primary routing and one tenant-attributed trace', async () => {
     const test = fixture({ budget: async () => 10 });
     await test.adapter(true).researchCompletion('unit_synthesis', 'operational', body, { tenantId: tenant, runId: run, beforeProviderAttempt: async () => true });
-    expect(test.calls.map(call => call.provider)).toEqual(['openai']);
+    expect(test.calls.map(call => call.provider)).toEqual(['openrouter']);
     expect(test.traces).toHaveLength(1);
     expect(test.traces[0]).toMatchObject({ tenant_id: tenant, task_id: run,
       doctrine_gate_hits: { budget: { level: 'hard', band: 'reasoning' } } });
@@ -146,9 +161,12 @@ describe('Research prepared Fabric uses actual shared attempts and recording tra
       expect(test.calls).toHaveLength(0);
     }
   });
-  it('cheap planner request inherits actual Luna class policy rather than a Research model override', async () => {
+  it('cheap planner request inherits the actual Auto class policy rather than a Research model override', async () => {
     const test = fixture(); await test.adapter(true).researchCompletion('hop_query_planner', 'cheap', body, { tenantId: tenant, runId: run, beforeProviderAttempt: async () => true });
-    expect(test.calls[0].body).toMatchObject({ model: 'gpt-6-luna', max_output_tokens: 700, reasoning: { effort: 'none' } });
+    const cheapReq = test.calls[0].body as { plugins: Array<Record<string, unknown>>; reasoning?: unknown };
+    expect(test.calls[0].body).toMatchObject({ model: 'openrouter/auto', max_output_tokens: 700 });
+    expect(cheapReq.plugins[0]).toMatchObject({ id: 'auto-router', excluded_models: ['openai/*'] });
+    expect(cheapReq.reasoning).toBeUndefined();
   });
 });
 
@@ -156,7 +174,7 @@ describe('shared strategist remains behind the original Research release flag', 
   it('enabled existing consumer uses operational Fabric with original strategy trace', async () => {
     const test = fixture(); const signal = new AbortController().signal;
     const result = await test.strategist.strategizeBeforeReasoning({ task: 'Controlled public research', tenantId: tenant, taskId: run, fabricEnabled: true, signal, beforeProviderAttempt: async () => true });
-    expect(result.degraded).toBe(false); expect(test.legacy).not.toHaveBeenCalled(); expect(test.calls.map(c => c.provider)).toEqual(['openai']);
+    expect(result.degraded).toBe(false); expect(test.legacy).not.toHaveBeenCalled(); expect(test.calls.map(c => c.provider)).toEqual(['openrouter']);
     expect(test.calls[0].signal).toBe(signal); expect(test.traces[0]).toMatchObject({ agent_id: 'paige-strategist', job_kind: 'reason:strategize', task_id: run });
   });
   it('false/default consumer retains legacy route and conservative parsing', async () => {

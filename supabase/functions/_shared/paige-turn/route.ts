@@ -36,8 +36,6 @@
 //
 // Pure TypeScript; imports only pure data modules, so Deno and Node load it.
 
-import { OPENAI_CHEAP, OPENAI_FRONTIER, OPENAI_OPERATIONAL } from "../openai-models.ts";
-import { CLAUDE_CLASSIFICATION, CLAUDE_REASONING } from "../claude-models.ts";
 import { OPENROUTER_CHEAP, OPENROUTER_FRONTIER, OPENROUTER_OPERATIONAL } from "../openrouter-models.ts";
 import type { Foreground, OfferKind } from "./continuity.ts";
 
@@ -284,13 +282,15 @@ export type FabricProvider = "openrouter" | "openai" | "anthropic" | "featherles
 export interface RouteCandidate { provider: FabricProvider; model: string | null }
 
 /**
- * The owner's policy. OpenRouter is the PRIMARY transport (owner directive 2026-11-17) for all three
- * classes; it serves the SAME class models through its Responses endpoint, so this is a transport
- * change, not a change to what a class thinks with (Luna / Sol / Astra remain the class models).
- * The recorded 2026-10-06 order is preserved intact BEHIND it as the fallback chain: Sol then
- * Sonnet 5.5 (operational/frontier), Luna then the open pool then Haiku (cheap). Order is preference;
- * the fabric moves to the next candidate only on a fallback-eligible failure (below). An unconfigured
- * OpenRouter key is `auth_config` and simply falls through to that chain — chat keeps working.
+ * The owner's policy (owner ruling MF-OWNER-2026-11-23, 2026-11-23; PO-EXP25 interim). ALL classes
+ * route through OpenRouter Auto (`openrouter/auto`) — the exclusive external gateway. OpenRouter
+ * Auto selects the best NON-GPT model per request based on task difficulty, benchmark performance,
+ * live prices, and prompt caching. GPT models are excluded via `excluded_models: ["openai/*"]`.
+ * There is NO fallback chain to a direct provider: OpenAI, Anthropic, Featherless, Groq and the
+ * recorded OpenAI → Anthropic order are retired as inference routes (historical evidence only).
+ * If OpenRouter Auto fails, the turn is interrupted truthfully — no fabricated answer, never a
+ * prohibited direct-provider fallback. Interim posture pending the model comparison
+ * (OpenRouter Auto vs explicit selection vs hybrid), which PAIGE Intelligence is running.
  *
  * Sensitive/final/send/approval work is NOT decided here: the pinned judge carve-out stays Anthropic,
  * an approved card executes deterministically with no model, and every tool call still passes the
@@ -299,20 +299,12 @@ export interface RouteCandidate { provider: FabricProvider; model: string | null
 export const CLASS_POLICY: Readonly<Record<Exclude<CognitiveClass, "deterministic">, readonly RouteCandidate[]>> = {
   cheap: [
     { provider: "openrouter", model: OPENROUTER_CHEAP },
-    { provider: "openai", model: OPENAI_CHEAP },
-    { provider: "featherless", model: null },
-    { provider: "groq", model: null },
-    { provider: "anthropic", model: CLAUDE_CLASSIFICATION },
   ],
   operational: [
     { provider: "openrouter", model: OPENROUTER_OPERATIONAL },
-    { provider: "openai", model: OPENAI_OPERATIONAL },
-    { provider: "anthropic", model: CLAUDE_REASONING },
   ],
   frontier: [
     { provider: "openrouter", model: OPENROUTER_FRONTIER },
-    { provider: "openai", model: OPENAI_FRONTIER },
-    { provider: "anthropic", model: CLAUDE_REASONING },
   ],
 };
 

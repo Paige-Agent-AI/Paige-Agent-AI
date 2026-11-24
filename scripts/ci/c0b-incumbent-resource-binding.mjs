@@ -1584,9 +1584,17 @@ const SOURCES = {
   "supabase/functions/_shared/prompt-forge.ts": "0abdeb7a887ac7b566dd8f21c11140122985d2acf0b5b6020596974ffd3e11ee",
   "supabase/functions/_shared/voyage.ts": "4eb1a516b2ce4679e83bfa62bb908a4b2e3be4d48dcdc89df75bb160bd6569b2",
   "supabase/functions/_shared/claude.ts": "cfbb18ce156d2259bf1904d6f6eaed8262e007c70929958c7261f185e20747ff",
-  "supabase/functions/_shared/router-budget/mod.ts": "9b12ac32282e4223238688feef1d3e384406e9d9e1378fc94c9d937d7d6a20c4",
+  // ANT-166 P1 budget accounting (2026-11-24, MF-OWNER-2026-11-23): accruedSpendToday returns null
+  // when any row's cost_estimate_usd is unknown — an unknown total is recorded as unknown, never as $0.
+  // Old 9b12ac32… reproduced from origin/main 79e2f303. Renewed de896df9… via the guard's own
+  // canonicalization (TS printer {removeComments:true} + SHA-256), never raw bytes.
+  "supabase/functions/_shared/router-budget/mod.ts": "de896df998baf2fda3a7b5eaa5e4df046afbf33847ed1485f95a7aab19947c2d",
   "supabase/functions/_shared/model-router-gates.ts": "551cf84756d3a5b56a82c645c96ce51f0318f065b5969d19885ba591a506a566",
-  "supabase/functions/_shared/model-allowlist.ts": "d6b31c5c492d49a1872080a92bc1be5d086f1b68d0319cabf101d0a3a0b7d80e",
+  // ANT-166 OpenRouter Auto routing (2026-11-24, MF-OWNER-2026-11-23): the openrouter allow-list
+  // admits openrouter/auto; the GPT-6 namespaced ids remain listed only as historical explicit
+  // overrides pending the model comparison's retirement decision. Old d6b31c5c… reproduced from
+  // origin/main 79e2f303. Renewed bf2c961e… via the guard's own canonicalization.
+  "supabase/functions/_shared/model-allowlist.ts": "bf2c961ef72952e551137b5f27c42e392af587bc43be2ff561218374eecc2573",
   "supabase/functions/_shared/env-key.ts": "796414f8b20785e10903af3794a6e31f9d8e7ca43de0404846def1fd11e3679e",
   "supabase/functions/_shared/provider-types.ts": "8d79766668fcee619bb09f8281f68face325e60182235535c90c42a26410c05b",
   "supabase/functions/_shared/openai.ts": "8b3b1f2c880e6517d5b7fffd56be603ab0e772ba3668d1992c60aa82c08368c9",
@@ -1635,7 +1643,12 @@ const SOURCES = {
   // ANT-166 import fix + limit_source diagnostic (2026-11-22): scrubSecrets added to the llm-trace import,
   // limit_source extraction and conditional inclusion in openai-responses.ts.
   // Renewed 7a3acf7f… via the guard's own canonicalization.
-  "supabase/functions/_shared/openai-responses.ts": "7a3acf7ff9cf35bd6b0eb55d8300694fcfac71dae10a26c8f85176794b160f92",
+  // ANT-166 OpenRouter Auto adapter (2026-11-24, MF-OWNER-2026-11-23): the openrouter/auto leg sends
+  // GPT exclusion on the auto-router PLUGIN (a top-level field would be silently ignored per
+  // OpenRouter docs) and never overrides Auto's reasoning effort. The limit_source diagnostic and
+  // scrubSecrets import from #3399/#3400 are preserved. Old 7a3acf7f… reproduced from origin/main
+  // 79e2f303. Renewed d6118393… via the guard's own canonicalization.
+  "supabase/functions/_shared/openai-responses.ts": "d6118393ffa93474211cff9575389ef071ed6ad8f758d14b9b08fdb52e819fec",
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): provider-failure.ts gains billing_account,
   // billing_key_limit, billing_per_request subtypes for sanitized 402 classification.
   // Old eef5a704… reproduced from origin/main 89d72496. Renewed dea94f3f… via the guard's own canonicalization.
@@ -1643,7 +1656,12 @@ const SOURCES = {
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): route.ts FALLBACK_ON gains billing_account,
   // billing_key_limit, billing_per_request subtypes. Old b361efab… reproduced from origin/main 89d72496.
   // Renewed 36e3f4fa… via the guard's own canonicalization.
-  "supabase/functions/_shared/paige-turn/route.ts": "36e3f4fa43b2ce408117723f4f5c07d40dd0120b9061ddc444a6b5c8874e8477",
+  // ANT-166 OpenRouter Auto routing (2026-11-24, MF-OWNER-2026-11-23): CLASS_POLICY routes every
+  // class through openrouter/auto only — the direct OpenAI/Anthropic/Featherless/Groq candidates
+  // are retired (historical evidence only); mayFallback and NOT_FALLBACK protections unchanged.
+  // Old 36e3f4fa… reproduced from origin/main 79e2f303. Renewed 73d28925… via the guard's own
+  // canonicalization.
+  "supabase/functions/_shared/paige-turn/route.ts": "73d28925d142a81ae338e11b9b1a5ebac7bb1c21300d7a5e90283154c86cae8f",
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",
   "supabase/functions/_shared/cheesy-tells.ts": "7710d88a2999f0ab23870ff22f9ce46999d35d598982ce7f517a7fea0f4fab9a",
   "supabase/functions/_shared/claude-models.ts": "026a3b83753bd302319a1f671cfb560bb788c96b4f27bc44222cd6650fcc34fd",

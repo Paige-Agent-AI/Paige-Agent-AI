@@ -22,6 +22,10 @@
 // frontier-model provider inference. GPT models are excluded. OmniRoute belongs exclusively to
 // PAIGE Desktop, not hosted PAIGE. Qualified non-GPT frontier models may compete and be selected
 // through OpenRouter. No fallback chain to direct providers.
+// PO-EXP25 (2026-11-23): the interim routing posture is OpenRouter Auto (`openrouter/auto`) for all
+// classes, with `excluded_models: ["openai/*"]` on the Auto leg. No dedicated OpenAI/Anthropic/
+// Featherless/Groq candidates. If Auto fails, the turn is interrupted truthfully (no fabricated
+// answer, no prohibited direct-provider fallback). Interim pending the model comparison.
 
 import { chatCompletionCompat, gatewayCompat, messagesCarryDocument, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
 import { NeedsConfigError } from "./provider-types.ts";
@@ -125,8 +129,10 @@ export function openAiAdmitted(tenantId: string | null | undefined, cls: Cogniti
   return OPENAI_CHAT_ENABLED && openAiCohortAdmits(tenantId, cls);
 }
 
-// ── OPENROUTER (owner directive 2026-11-17): the PRIMARY Responses transport ──────────────────────
-// Same class models, same budget/trace/fallback doctrine. Admission mirrors the OpenAI staged gate:
+// ── OPENROUTER (owner directive 2026-11-17, interim posture 2026-11-23): the Responses transport ──────
+// OpenRouter Auto (`openrouter/auto`) is the interim routing posture for all classes; GPT models
+// are excluded from Auto selection via `excluded_models: ["openai/*"]`. Same budget/trace/fallback
+// doctrine. Admission mirrors the OpenAI staged gate:
 // production-wide for attributed tenants unless an explicit tenant list restricts it, an explicitly
 // SET EMPTY env is the kill switch, and `OPENROUTER_CANARY_CLASSES` scopes the classes. The API KEY is
 // an additional master switch: with no key configured the candidate is skipped and the recorded

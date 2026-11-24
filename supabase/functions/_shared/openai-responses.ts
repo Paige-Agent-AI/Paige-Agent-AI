@@ -111,6 +111,8 @@ export interface ChatShapeBody {
   max_tokens?: number;
   response_format?: { type: string; json_schema?: { name?: string; schema?: unknown; strict?: boolean } };
   stream?: boolean;
+  /** OpenRouter Auto: models to exclude from the auto-router's selection (e.g., ["openai/*"] to exclude GPT models). Sent on the `auto-router` plugin. */
+  excluded_models?: string[];
   /** Sampling is ignored: reasoning models reject it while reasoning is on. */
   temperature?: number;
   top_p?: number;
@@ -247,6 +249,13 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
     input,
     max_output_tokens: body.max_tokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
   };
+  // OpenRouter Auto: GPT models are excluded from selection (owner ruling MF-OWNER-2026-11-23).
+  // Per OpenRouter's Auto Router documentation, per-request settings MUST ride the `auto-router`
+  // PLUGIN — a top-level `excluded_models` field is accepted but silently ignored, which would
+  // leave the GPT exclusion unenforced. The exclusion never moves off the plugin.
+  if (provider === "openrouter" && opts.model === "openrouter/auto") {
+    req.plugins = [{ id: "auto-router", excluded_models: body.excluded_models ?? ["openai/*"] }];
+  }
   // OpenAI-only request fields. OpenRouter's documented Responses API accepts
   // model, input, tools, tool_choice and stream; it does not accept OpenAI's
   // `store`, `include`, prompt-cache or `store` parameters. Sending them to
@@ -274,7 +283,8 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
   else if (instructions.length) req.instructions = instructions.join("\n\n");
   // Explicit-only with no breakpoints performs neither cache reads nor writes.
   if ((opts.disablePromptCache || opts.promptCacheKey !== undefined && !validCacheKey) && provider !== "openrouter") req.prompt_cache_options = { mode: "explicit" };
-  if (opts.effort) req.reasoning = { effort: opts.effort === "none" && SOL_ASTRA_NO_NONE(opts.model) ? "low" : opts.effort };
+  // OpenRouter Auto selects reasoning effort per request; don't override it.
+  if (opts.effort && opts.model !== "openrouter/auto") req.reasoning = { effort: opts.effort === "none" && SOL_ASTRA_NO_NONE(opts.model) ? "low" : opts.effort };
   if (body.tools?.length) {
     req.tools = body.tools.map(toolDef);
     // PAIGE never forces a tool through the provider: "none" is honoured, anything else is "auto".

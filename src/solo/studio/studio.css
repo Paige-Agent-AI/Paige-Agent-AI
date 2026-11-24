@@ -186,6 +186,22 @@
 .vs-studio .vs-top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .vs-studio .vs-body { display: grid; grid-template-columns: 352px minmax(0, 1fr); min-height: 0; }
 .vs-studio .vs-chat { border-right: 1px solid var(--vs-line-soft); display: flex; flex-direction: column; min-height: 0; background: var(--vs-ink); }
+.vs-studio .vs-session[data-studio-phase="planning"] .vs-body,
+.vs-studio .vs-session[data-studio-phase="opening"] .vs-body { grid-template-columns: minmax(0, 1fr); }
+.vs-studio .vs-session[data-studio-phase="planning"] .vs-chat,
+.vs-studio .vs-session[data-studio-phase="opening"] .vs-chat {
+  position: static; inset: auto; transform: none; visibility: visible; box-shadow: none;
+  width: min(100%, 800px); margin-inline: auto; border-inline: 1px solid var(--vs-line-soft);
+}
+.vs-studio .vs-planning-heading { padding: clamp(12px, 3vh, 28px) 16px 12px; }
+.vs-studio .vs-planning-heading h1 { margin: 0; font-size: clamp(27px, 4vw, 44px); line-height: 1.08; letter-spacing: -.035em; }
+.vs-studio .vs-planning-heading p { margin: 6px 0 0; color: var(--vs-dim); }
+.vs-studio .vs-plan-approval { display: flex; justify-content: flex-end; margin-top: 9px; }
+.vs-studio .vs-plan-approval .vs-btn { min-height: 44px; text-align: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .vs-studio .vs-session[data-studio-phase="planning"] .vs-chat { animation: vs-planning-enter .2s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes vs-planning-enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+}
 .vs-studio .vs-chat-context { flex: 0 1 auto; min-height: 0; max-height: 45%; overflow: auto; }
 .vs-studio .vs-project-context-editor { padding: 0 12px 8px; }
 .vs-studio .vs-chat-log { flex: 1 1 64px; min-height: 64px; overflow: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 14px; }

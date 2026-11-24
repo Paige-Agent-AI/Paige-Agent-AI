@@ -22,6 +22,7 @@ for(const [label,mutate] of [
  ['content draft caller client substituted',s=>s.replace('supabaseClient.functions.invoke("content-draft"','supabase.functions.invoke("content-draft"')],
  ['image request correlation removed',s=>s.replace('request_id: await stableRunId(["studio-chat-image", payloadThreadId ?? "", tc.id])','request_id: args.request_id')],
  ['choice uses model supplied id',s=>s.replace('askId: crypto.randomUUID(), freeForm: mainChatAsks','askId: a.askId, freeForm: mainChatAsks')],
+ ['choice bypasses the Studio planning boundary',s=>s.replace('freeForm: mainChatAsks || studioPlanning','freeForm: true')],
  ['funding placeholder claims ready',s=>s.replaceAll('status: "coming_soon"','status: "ready"')],
  ['marketplace current actor profile replaced',s=>s.replace('.select("active_tenant_id")\n          .eq("user_id", user.id)','.select("active_tenant_id")\n          .eq("user_id", a.actorId)')],
  ['legacy regeneration tenant replaced',s=>{const p=s.indexOf('supabaseClient.functions.invoke("generate-image"',s.indexOf('supabaseClient.functions.invoke("generate-image"')+1);return s.slice(0,p)+s.slice(p).replace('tenant_id: personaCtx?.tenant_id ?? null','tenant_id: a.tenant_id');}],

@@ -2455,7 +2455,10 @@ group("safety-first streaming: the sources the first enumeration missed");
     provider: ["ask-choices"],
     bodyExtras: { threadId: STUDIO_THREAD, requestIntentId: "66666666-6666-4666-8666-666666666666" },
     // `ask_choices` is Studio-gated, and studioSessionId is read off the thread row.
-    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }] },
+    tableExtras: {
+      paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }],
+      studio_sessions: [{ id: "studio-sess-1", plan_first: false, artifact_refs: [], transcript: [] }],
+    },
   };
   const choiceClean = await drive({
     personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], ...choiceOpts,
@@ -2561,6 +2564,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     tableExtras: {
       user_roles: () => [{ role: "admin" }],
       paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }],
+      studio_sessions: [{ id: "studio-sess-1", plan_first: false, artifact_refs: [], transcript: [] }],
     },
   };
   const studioClean = await drive({
@@ -3972,7 +3976,10 @@ group("the turn frame on every stream this harness drove (paige-turn)");
     personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], provider: ["ask-choices"],
     rpcExtras: { match_tenant_knowledge: { data: [], error: null } },
     bodyExtras: { threadId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", requestIntentId: "77777777-7777-4777-8777-777777777777" },
-    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }] },
+    tableExtras: {
+      paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }],
+      studio_sessions: [{ id: "studio-sess-1", plan_first: false, artifact_refs: [], transcript: [] }],
+    },
   });
   const plainTurns = plainChoice.responseText.split("\n").filter((l) => l.startsWith("data: ") && l.includes("paige_turn"));
   assert("29.0 an ordinary Studio question ends waiting ASK_USER, ahead of its chips",
@@ -4127,7 +4134,10 @@ group("the turn frame on every stream this harness drove (paige-turn)");
     provider: ["action-file", "action-file", "empty-end"],
     rpcExtras: { match_tenant_knowledge: { data: [], error: null } },
     bodyExtras: { threadId: BREAK_THREAD },
-    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }] },
+    tableExtras: {
+      paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }],
+      studio_sessions: [{ id: "studio-sess-1", plan_first: false, artifact_refs: [], transcript: [] }],
+    },
   });
   assert("29.12 a turn stopped at a limit keeps LIMIT_REACHED over an empty closing round, never INTERRUPTED",
     studioRepeat.status === 200 && terminalIn(studioRepeat.responseText).length === 1

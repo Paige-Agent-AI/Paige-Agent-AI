@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 import type { StudioBusinessContext, StudioBusinessSource, StudioContextTarget } from "./business-context";
+import { readStudioWorkflow, startsStudioPlanning, STUDIO_PLANNING_START, type StudioWorkflow } from "../../../supabase/functions/_shared/growth/studio-planning";
 
 const STUDIO_SESSION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -22,6 +23,7 @@ export interface StudioSession {
   id: string;
   title: string;
   seedBrief: string | null;
+  startsInPlanning?: boolean;
   artifacts: ArtifactRef[];
   /** A real image of the work, when one exists (a page's share image or a made image). */
   thumbnailUrl: string | null;
@@ -134,6 +136,7 @@ function toSession(row: Record<string, unknown>): StudioSession {
     id: String(row.id),
     title: typeof row.title === "string" && row.title ? row.title : "Untitled project",
     seedBrief: typeof row.seed_brief === "string" ? row.seed_brief : null,
+    ...(row.plan_first === true || startsStudioPlanning(row.transcript) ? { startsInPlanning: true } : {}),
     artifacts: parseRefs(row.artifact_refs),
     thumbnailUrl: typeof row.thumbnail_url === "string" && row.thumbnail_url ? row.thumbnail_url : null,
     updatedAt: String(row.updated_at ?? row.created_at ?? ""),
@@ -168,7 +171,7 @@ export async function setSessionTemplate(id: string, isTemplate: boolean): Promi
 export async function createSession(brief: string): Promise<StudioSession> {
   const title = brief.trim().replace(/\s+/g, " ").slice(0, 60);
   const { data, error } = await rpc("create_studio_session", {
-    p_title: title || null, p_seed_brief: brief.trim() || null, p_transcript: [], p_is_template: false,
+    p_title: title || null, p_seed_brief: brief.trim() || null, p_transcript: [STUDIO_PLANNING_START], p_is_template: false,
     p_tenant_id: null, p_owner_user_id: null,
   });
   if (error) throw error;
@@ -206,7 +209,7 @@ export function isUnnamed(title: string | null | undefined): boolean {
 }
 
 // ── Chat thread ────────────────────────────────────────────────────────────────
-export interface ChatTurn { role: "user" | "assistant"; content: string }
+export interface ChatTurn { role: "user" | "assistant"; content: string; studioWorkflow?: StudioWorkflow | null }
 
 export async function ensureThread(sessionId: string): Promise<string> {
   const { data, error } = await rpc("paige_studio_thread_ensure", { p_session_id: sessionId });
@@ -218,12 +221,14 @@ export async function ensureThread(sessionId: string): Promise<string> {
 export async function loadTurns(threadId: string): Promise<ChatTurn[]> {
   const { data, error } = await supabase
     .from("paige_chat_turns")
-    .select("role, content, seq")
+    .select("role, content, seq, bundle_ref")
     .eq("thread_id", threadId)
     .in("role", ["user", "assistant"])
     .order("seq", { ascending: true });
   if (error) throw error;
-  return ((data ?? []) as { role: "user" | "assistant"; content: string }[]).map((t) => ({ role: t.role, content: t.content }));
+  return ((data ?? []) as { role: "user" | "assistant"; content: string; bundle_ref: unknown }[]).map(
+    t => ({ role: t.role, content: t.content, studioWorkflow: readStudioWorkflow(t.bundle_ref, t.role) }),
+  );
 }
 
 /** Approval cards the latest reply left waiting (its stored paige_confirm list), so a reload keeps

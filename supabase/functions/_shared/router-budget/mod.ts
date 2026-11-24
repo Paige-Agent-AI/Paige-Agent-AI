@@ -180,7 +180,10 @@ export async function accruedSpendToday(db: BudgetDb, tenantId: string, now: Dat
       return null;
     }
     const rows = (data ?? []) as Array<{ cost_estimate_usd?: number | null }>;
-    return rows.reduce((sum, r) => sum + (Number(r?.cost_estimate_usd) || 0), 0);
+    // Unknown costs must not be recorded as zero (owner directive 2026-11-23).
+    // If any row has a null cost estimate, the total is unknown (null), not $0.
+    if (rows.some((r) => r?.cost_estimate_usd == null)) return null;
+    return rows.reduce((sum, r) => sum + (Number(r.cost_estimate_usd) || 0), 0);
   } catch (e) {
     console.error("[router-budget] accrual read threw:", e instanceof Error ? e.message : "unknown");
     return null;

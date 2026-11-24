@@ -422,6 +422,8 @@ function emitTrace(trace: TraceCtx | undefined, row: {
   provider_failure_class?: string | null;
   /** Sanitized truncated error detail (provider error type:code:message). Stored even for metadata_only traces. */
   provider_error_detail?: string | null;
+  /** OpenRouter's structured limit source (closed code). Stored even for metadata_only traces. */
+  limit_source?: string | null;
 }) {
   if (!trace) return;
   // Cost is priced once, in traceLLMCall (token-pricing.ts), so this path cannot drift from the meter.
@@ -449,6 +451,7 @@ function emitTrace(trace: TraceCtx | undefined, row: {
       // metadata_only traces (privacy: provider messages can echo request material).
       ...(trace?.content_policy !== "metadata_only" && row.provider_error_detail
         ? { provider_error_detail: scrubSecrets(row.provider_error_detail).slice(0, 200) } : {}),
+       ...(row.limit_source && ["openrouter_credits", "openrouter_key_limit", "openrouter_in_flight_budget"].includes(row.limit_source) ? { limit_source: row.limit_source } : {}),
       ...(row.usage ? {
         provider_total_input_tokens: row.usage.total_input,
         provider_cache_write_30m_tokens: row.usage.write30m,
@@ -462,16 +465,22 @@ function emitTrace(trace: TraceCtx | undefined, row: {
 }
 
 /** The failure, read once: a short detail for the trace, and the class the provider's response proves. */
-async function failureOf(resp: Response, provider: ResponsesProvider = "openai"): Promise<{ detail: string; failureClass: ProviderFailureClass }> {
+async function failureOf(resp: Response, provider: ResponsesProvider = "openai"): Promise<{ detail: string; failureClass: ProviderFailureClass; limitSource: string | null }> {
   let e: any = null;
   try { e = (await resp.json())?.error ?? null; } catch { /* not JSON */ }
   const detail = e ? [e.type, e.code, e.message].filter((x) => typeof x === "string").join(": ").slice(0, 500) || `http_${resp.status}` : `http_${resp.status}`;
+  // OpenRouter's structured limit source (closed code: openrouter_credits, openrouter_key_limit, openrouter_in_flight_budget).
+  // Only honored for OpenRouter responses; other providers' values are ignored.
+  const RECOGNIZED_LIMIT_SOURCES = new Set(["openrouter_credits", "openrouter_key_limit", "openrouter_in_flight_budget"]);
+  const rawLimitSource = typeof e?.metadata?.limit_source === "string" ? e.metadata.limit_source : null;
+  const limitSource = provider === "openrouter" && rawLimitSource && RECOGNIZED_LIMIT_SOURCES.has(rawLimitSource) ? rawLimitSource : null;
   const failureClass = classifyProviderFailure({
     provider, status: resp.status,
     errorType: typeof e?.type === "string" ? e.type : null, errorCode: typeof e?.code === "string" ? e.code : null,
     message: typeof e?.message === "string" ? e.message : null,
+    limitSource,
   });
-  return { detail, failureClass };
+  return { detail, failureClass, limitSource };
 }
 
 /** Non-streaming Responses call, returned in chat-completion shape. Throws on any failure. */
@@ -496,7 +505,7 @@ export async function responsesCompletion(body: ChatShapeBody, opts: ResponsesCa
   if (!resp.ok) {
     // failureOf reads the body ONCE: the trace's short detail and the fabric's closed class.
     const f = await failureOf(resp, profile.provider);
-    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass, provider_error_detail: f.detail.slice(0, 200) });
+    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass, provider_error_detail: f.detail.slice(0, 200), limit_source: f.limitSource });
     // INT-334 — carry the closed failure class (and the status) ON the throw, so the fabric's
     // consumer seam can classify a failed non-stream leg without parsing the message text.
     throw Object.assign(new Error(`${profile.provider} ${resp.status}: ${f.detail}`), { status: resp.status, failureClass: f.failureClass });
@@ -567,8 +576,8 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesStream
     return { ok: false, status: 0, error: m, failureClass: opts.signal?.aborted ? "unknown" : classifyProviderFailure({ provider: profile.provider, status: 0, transport: (e as Error)?.name === "TimeoutError" ? "timeout" : "network" }) };
   }
   if (!resp.ok || !resp.body) {
-    const f = resp.ok ? { detail: "missing_body", failureClass: "provider_outage" as ProviderFailureClass } : await failureOf(resp, profile.provider);
-    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: resp.ok ? "missing_body" : `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass, provider_error_detail: f.detail.slice(0, 200) });
+    const f = resp.ok ? { detail: "missing_body", failureClass: "provider_outage" as ProviderFailureClass, limitSource: null } : await failureOf(resp, profile.provider);
+    emitTrace(trace, { provider: profile.provider, model: opts.model, status: "error", started, input: body.messages, error_class: resp.ok ? "missing_body" : `http_${resp.status}`, error_message: f.detail, provider_failure_class: f.failureClass, provider_error_detail: f.detail.slice(0, 200), limit_source: f.limitSource });
     return { ok: false, status: resp.status, error: f.detail, failureClass: f.failureClass };
   }
 

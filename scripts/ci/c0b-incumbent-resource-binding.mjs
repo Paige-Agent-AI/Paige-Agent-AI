@@ -1580,7 +1580,7 @@ const SOURCES = {
   // `provider_failure_class` so the sanitized closed-code billing subtype is persisted even for
   // metadata_only traces. `safeMetadata` exported for regression testing. Old 588857f4… reproduced
   // from origin/main 89d72496. Renewed e87ad6af… via the guard's own canonicalization.
-  "supabase/functions/_shared/llm-trace.ts": "f0afc91bc87f967b5a49e55463fbafb3e3667e9b6a9c475d07fbd8960613bf3a",
+  "supabase/functions/_shared/llm-trace.ts": "291c2db2f69d9f3464347360d510dd25fae2a92525b2c50ff92be1a08ada3444",
   "supabase/functions/_shared/prompt-forge.ts": "0abdeb7a887ac7b566dd8f21c11140122985d2acf0b5b6020596974ffd3e11ee",
   "supabase/functions/_shared/voyage.ts": "4eb1a516b2ce4679e83bfa62bb908a4b2e3be4d48dcdc89df75bb160bd6569b2",
   "supabase/functions/_shared/claude.ts": "cfbb18ce156d2259bf1904d6f6eaed8262e007c70929958c7261f185e20747ff",
@@ -1632,13 +1632,14 @@ const SOURCES = {
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): openai-responses.ts gains provider_failure_class
   // in emitTrace metadata (sanitized closed-code billing subtype). Old a50cc17f… reproduced from origin/main
   // 89d72496. Renewed 942ee7ce… via the guard's own canonicalization.
-  // ANT-166 import fix (2026-11-22): scrubSecrets added to the llm-trace import in openai-responses.ts.
-  // Old 39c311d8… reproduced from origin/main 074db1fa. Renewed cb4bcb2a… via the guard's own canonicalization.
-  "supabase/functions/_shared/openai-responses.ts": "cb4bcb2a77caedc1c1423122f37399baf68e3b10dfd019291f0d73d30b44ba67",
+  // ANT-166 import fix + limit_source diagnostic (2026-11-22): scrubSecrets added to the llm-trace import,
+  // limit_source extraction and conditional inclusion in openai-responses.ts.
+  // Renewed 7a3acf7f… via the guard's own canonicalization.
+  "supabase/functions/_shared/openai-responses.ts": "7a3acf7ff9cf35bd6b0eb55d8300694fcfac71dae10a26c8f85176794b160f92",
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): provider-failure.ts gains billing_account,
   // billing_key_limit, billing_per_request subtypes for sanitized 402 classification.
   // Old eef5a704… reproduced from origin/main 89d72496. Renewed dea94f3f… via the guard's own canonicalization.
-  "supabase/functions/_shared/provider-failure.ts": "358011da8972677e4c5e3a760feefc96fe3fc7d58341f16696eb07d10c69d8da",
+  "supabase/functions/_shared/provider-failure.ts": "1fef4c3b25abba5d54a0caad78ba57527647d82a3ef648251da9d857c43e4d6a",
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): route.ts FALLBACK_ON gains billing_account,
   // billing_key_limit, billing_per_request subtypes. Old b361efab… reproduced from origin/main 89d72496.
   // Renewed 36e3f4fa… via the guard's own canonicalization.

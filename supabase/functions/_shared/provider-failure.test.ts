@@ -64,6 +64,21 @@ Deno.test("OpenRouter 402 subtypes: sanitized closed codes, never the raw messag
   assertEquals(String(c({ provider: "openrouter", status: 402, message: `credit balance ${secret}` })).includes(secret), false);
 });
 
+Deno.test("OpenRouter limit_source: recognized codes drive classification; arbitrary values are ignored", () => {
+  // Recognized limit sources drive classification.
+  assertEquals(c({ provider: "openrouter", status: 402, limitSource: "openrouter_key_limit" }), "billing_key_limit");
+  assertEquals(c({ provider: "openrouter", status: 402, limitSource: "openrouter_in_flight_budget" }), "rate_limit");
+  assertEquals(c({ provider: "openrouter", status: 402, limitSource: "openrouter_credits" }), "billing_account");
+  // Unknown/arbitrary limit_source is treated as absent → falls through to message patterns.
+  assertEquals(c({ provider: "openrouter", status: 402, limitSource: "arbitrary_string", message: "credit balance too low" }), "billing_account");
+  assertEquals(c({ provider: "openrouter", status: 402, limitSource: "openrouter_unknown", message: "Something unexpected" }), "billing");
+  // Null limit_source falls through to message patterns.
+  assertEquals(c({ provider: "openrouter", status: 402, limitSource: null, message: "credit balance too low" }), "billing_account");
+  assertEquals(c({ provider: "openrouter", status: 402, limitSource: null, message: null }), "billing");
+  // Combined message with limit_source: per-request takes precedence when message matches.
+  assertEquals(c({ provider: "openrouter", status: 402, limitSource: "openrouter_credits", message: "This request requires more credits, or fewer max_tokens." }), "billing_per_request");
+});
+
 Deno.test("transport failures are outages; unknown stays unknown", () => {
   assertEquals(c({ provider: "openai", status: 0, transport: "timeout" }), "provider_outage");
   assertEquals(c({ provider: "anthropic", status: 0, transport: "network" }), "provider_outage");

@@ -689,6 +689,11 @@ console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry"
      "11.3b OpenRouter Auto selects reasoning effort per request; PAIGE never overrides it");
   ok(Array.isArray(req.plugins) && req.plugins[0]?.id === "auto-router" && Array.isArray(req.plugins[0]?.excluded_models) && req.plugins[0].excluded_models.includes("openai/*"),
      "11.3c OpenRouter Auto excludes GPT models ON THE auto-router PLUGIN (a top-level field would be ignored)");
+  const emptied = ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }], excluded_models: [] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter" });
+  const removed = ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }], excluded_models: ["anthropic/*"] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter" });
+  ok(emptied.plugins?.[0]?.excluded_models?.includes("openai/*") && removed.plugins?.[0]?.excluded_models?.includes("openai/*")
+    && removed.plugins[0].excluded_models.includes("anthropic/*"),
+     "11.3d the owner GPT exclusion is STRUCTURAL: an empty/overriding caller list can never remove it; callers may only add exclusions");
   let threw = null;
   try { ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", provider: "openrouter" }); }
   catch (e) { threw = e; }

@@ -1591,9 +1591,9 @@ const SOURCES = {
   "supabase/functions/_shared/router-budget/mod.ts": "de896df998baf2fda3a7b5eaa5e4df046afbf33847ed1485f95a7aab19947c2d",
   "supabase/functions/_shared/model-router-gates.ts": "551cf84756d3a5b56a82c645c96ce51f0318f065b5969d19885ba591a506a566",
   // ANT-166 OpenRouter Auto routing (2026-11-24, MF-OWNER-2026-11-23): the openrouter allow-list
-  // admits openrouter/auto; the GPT-6 namespaced ids remain listed only as historical explicit
-  // overrides pending the model comparison's retirement decision. Old d6b31c5c… reproduced from
-  // origin/main 79e2f303. Renewed bf2c961e… via the guard's own canonicalization.
+  // admits openrouter/auto (the class constants themselves now resolve to openrouter/auto, so the
+  // listed entries are the Auto id). Old d6b31c5c… reproduced from origin/main 79e2f303. Renewed
+  // bf2c961e… via the guard's own canonicalization.
   "supabase/functions/_shared/model-allowlist.ts": "bf2c961ef72952e551137b5f27c42e392af587bc43be2ff561218374eecc2573",
   "supabase/functions/_shared/env-key.ts": "796414f8b20785e10903af3794a6e31f9d8e7ca43de0404846def1fd11e3679e",
   "supabase/functions/_shared/provider-types.ts": "8d79766668fcee619bb09f8281f68face325e60182235535c90c42a26410c05b",
@@ -1645,10 +1645,13 @@ const SOURCES = {
   // Renewed 7a3acf7f… via the guard's own canonicalization.
   // ANT-166 OpenRouter Auto adapter (2026-11-24, MF-OWNER-2026-11-23): the openrouter/auto leg sends
   // GPT exclusion on the auto-router PLUGIN (a top-level field would be silently ignored per
-  // OpenRouter docs) and never overrides Auto's reasoning effort. The limit_source diagnostic and
-  // scrubSecrets import from #3399/#3400 are preserved. Old 7a3acf7f… reproduced from origin/main
-  // 79e2f303. Renewed d6118393… via the guard's own canonicalization.
-  "supabase/functions/_shared/openai-responses.ts": "d6118393ffa93474211cff9575389ef071ed6ad8f758d14b9b08fdb52e819fec",
+  // OpenRouter docs) and never overrides Auto's reasoning effort. NON-AUTHOR review round 1 finding:
+  // the owner "openai/*" exclusion is now STRUCTURAL — a caller's excluded_models may only ADD
+  // exclusions; an absent/empty/non-list value can never remove the GPT exclusion (pinned 11.3d).
+  // The limit_source diagnostic and scrubSecrets import from #3399/#3400 are preserved.
+  // Old d6118393… reproduced from this branch's d32993297. Renewed 73425433… via the guard's own
+  // canonicalization.
+  "supabase/functions/_shared/openai-responses.ts": "7342543347cf0c821a63f56d2e4fe37be802c41c18e2462e105b6750caf608eb",
   // ANT-166 OpenRouter 402 subtype diagnostic (2026-11-18): provider-failure.ts gains billing_account,
   // billing_key_limit, billing_per_request subtypes for sanitized 402 classification.
   // Old eef5a704… reproduced from origin/main 89d72496. Renewed dea94f3f… via the guard's own canonicalization.

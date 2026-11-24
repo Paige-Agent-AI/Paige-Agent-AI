@@ -253,8 +253,14 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
   // Per OpenRouter's Auto Router documentation, per-request settings MUST ride the `auto-router`
   // PLUGIN — a top-level `excluded_models` field is accepted but silently ignored, which would
   // leave the GPT exclusion unenforced. The exclusion never moves off the plugin.
+  // STRUCTURAL, not overridable: the owner's "openai/*" exclusion is always present. A caller's
+  // `excluded_models` (every server-constructed body today) may only ADD exclusions — an absent,
+  // empty, or non-list value can never disable the GPT exclusion (the ruling is not a preference).
   if (provider === "openrouter" && opts.model === "openrouter/auto") {
-    req.plugins = [{ id: "auto-router", excluded_models: body.excluded_models ?? ["openai/*"] }];
+    const extra = Array.isArray(body.excluded_models)
+      ? body.excluded_models.filter((x): x is string => typeof x === "string" && x.trim() !== "")
+      : [];
+    req.plugins = [{ id: "auto-router", excluded_models: [...new Set(["openai/*", ...extra])] }];
   }
   // OpenAI-only request fields. OpenRouter's documented Responses API accepts
   // model, input, tools, tool_choice and stream; it does not accept OpenAI's

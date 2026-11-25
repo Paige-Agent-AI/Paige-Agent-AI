@@ -4029,7 +4029,7 @@
     "providers": [
       "Supabase (Postgres/RLS/edge/auth)",
       "Vercel (deploy)",
-      "LLM providers via _shared/model-router.ts (Anthropic/OpenAI/Gemini/Groq/Featherless/Replicate/Ideogram/Meshy) and the streaming _shared/model-fabric.ts / _shared/openai-responses.ts Responses seam (OpenRouter, added 2026-11-17 as the class-model primary transport; key-gated, cohort-gated, fail-closed fallback to the recorded OpenAI -> Anthropic chain). Governed in docs/brain/config-registry.md (names only) and docs/model-routing/int-334/EVIDENCE.md — NOT a tenant capability with an authority lane.",
+      "LLM providers via _shared/model-router.ts (legacy, being retired) and the streaming _shared/model-fabric.ts / _shared/openai-responses.ts Responses seam (OpenRouter, exclusive external language-model gateway per owner ruling MF-OWNER-2026-11-23; GPT models excluded; no direct OpenAI/Anthropic/Google/DeepSeek inference; no OmniRoute in hosted PAIGE). Governed in docs/brain/config-registry.md (names only) and docs/model-routing/int-334/EVIDENCE.md — NOT a tenant capability with an authority lane.",
       "Voyage (embeddings)",
       "GitHub (CI/repo)"
     ]

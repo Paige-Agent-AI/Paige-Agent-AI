@@ -1,21 +1,27 @@
 /**
  * The streaming Model Fabric (INT-334 R5), driven through its REAL transports.
  *
- * `fabricChatStream` takes a cognitive class and opens one chat-shaped stream: Anthropic through the
- * real `gatewayCompat` (request shaping, tier resolution), OpenAI through the real `responsesStream`.
+ * OWNER RULING MF-OWNER-2026-11-23 (2026-11-23): OpenRouter is the EXCLUSIVE external language-model
+ * gateway. ALL routed classes (cheap/operational/frontier, and `deterministic` promoted to
+ * operational) serve through OpenRouter Auto (`openrouter/auto`) with GPT models excluded via the
+ * `auto-router` plugin. No direct OpenAI, Anthropic, Featherless, or Groq inference on any routed
+ * path — the recorded 2026-10-06 chain and the 2026-11-17 OpenAI-namespaced transport are retired
+ * (historical evidence only). If Auto fails, the turn is interrupted truthfully: no fallback to a
+ * direct provider, ever. Interim posture pending the Auto vs explicit vs hybrid model comparison.
+ *
  * What this pins:
- *  - ADMISSION-GATED: OpenAI serves only cohort-admitted tenants in the class scope; each class is
- *    served by the Anthropic model the owner's order names (operational/frontier → Sonnet 5.5, cheap →
- *    Haiku), and a `deterministic` class that reaches a model is served as operational.
- *  - THE ORDER: with OpenAI enabled, Sol serves operational, Astra frontier, Luna cheap — Anthropic is
- *    not called — and the effort sent is the class's.
- *  - NARROW FALLBACK: a proven health failure before the stream opened (auth/config, billing, rate
- *    limit, model unavailable, outage, a network throw) moves to the next candidate; an invalid
- *    request or an unknown failure does not, and its status reaches the caller unchanged.
+ *  - ADMISSION-GATED: OpenRouter Auto serves only cohort-admitted tenants in the class scope; an
+ *    unattributed/kill-switched caller gets NO provider (truthful failure), and no direct OpenAI or
+ *    Anthropic call is ever made on a routed path.
+ *  - THE ROUTE: every class requests `openrouter/auto`; the `auto-router` plugin carries
+ *    `excluded_models: ["openai/*"]` (GPT exclusion — a top-level field would be ignored); PAIGE
+ *    never overrides Auto's reasoning effort.
+ *  - NO FALLBACK: a proven health failure (auth/config, billing, rate limit, model unavailable,
+ *    outage, a network throw) or an invalid request interrupts the turn with the named failure and
+ *    the status reaching the caller — never a second transport.
  *  - THE SHAPE: whatever served, the caller reads the same chat-shaped SSE, and the finished-round gate
- *    reads a normal tool-use stop from either provider.
- *  - The request carries exactly what chat sent (tools, tool_choice, Studio's thinking flag to
- *    Anthropic only).
+ *    reads a normal tool-use stop.
+ *  - The request carries exactly what chat sent (tools, tool_choice) and OpenRouter's own key/base.
  *
  * No network: fetch is a recording fake per provider. Run: `npm run test:model-fabric`.
  */
@@ -27,8 +33,8 @@ const ENV = {
   ANTHROPIC_API_KEY: "sk-ant-test-not-a-real-key",
   OPENAI_API_KEY: "sk-test-not-a-real-key",
   OPENROUTER_API_KEY: "sk-or-test-not-a-real-key",
-  // Empty cohort = the OpenRouter kill switch for the INCUMBENT pins below. The new OpenRouter
-  // section forces the candidate through the explicit `enabled` test seam instead.
+  // Empty cohort = the OpenRouter kill switch for the unattributed pins below. The admitted runs
+  // force the candidate through the explicit `enabled` test seam instead.
   OPENROUTER_CANARY_TENANTS: "",
   SUPABASE_URL: "https://test.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
@@ -41,7 +47,7 @@ const sse = (events) => new ReadableStream({
   start(c) { for (const e of events) c.enqueue(enc.encode(`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`)); c.close(); },
 });
 
-// ── Anthropic: a normal tool-use round ───────────────────────────────────────────────────────
+// ── Anthropic: a normal tool-use round (ONLY the pinned judge leg uses this transport) ────────
 const ANTHROPIC_TOOL_ROUND = [
   { type: "message_start", message: { id: "msg_1", model: "claude-sonnet-5-5-served", usage: { input_tokens: 5, output_tokens: 1 } } },
   { type: "content_block_start", index: 0, content_block: { type: "tool_use", id: "toolu_1", name: "crm_contact_lookup", input: {} } },
@@ -50,8 +56,8 @@ const ANTHROPIC_TOOL_ROUND = [
   { type: "message_delta", delta: { stop_reason: "tool_use" }, usage: { output_tokens: 9 } },
   { type: "message_stop" },
 ];
-// ── OpenAI: the same round, native events ────────────────────────────────────────────────────
-const openaiToolRound = (model) => [
+// ── The Responses wire: the same round, native events (OpenRouter Auto serves it) ─────────────
+const responsesToolRound = (model) => [
   { type: "response.created", response: { model, status: "in_progress" } },
   { type: "response.output_item.added", output_index: 0, item: { type: "function_call", id: "fc_1", call_id: "call_1", name: "crm_contact_lookup", arguments: "" } },
   { type: "response.function_call_arguments.delta", item_id: "fc_1", output_index: 0, delta: "{\"q\":\"Acme\"}" },
@@ -60,10 +66,10 @@ const openaiToolRound = (model) => [
   { type: "response.completed", response: { model, status: "completed", usage: { input_tokens: 5, output_tokens: 9 } } },
 ];
 
-// Recording fakes. `openaiPlan` / `anthropicPlan` say what the next call returns.
+// Recording fakes. `plan` says what the next call returns.
 let calls = [];
 let anthropicPlan = { status: 200 };
-let openaiPlan = { status: 200 };
+let plan = { status: 200 };
 function errorResponse(status, type, message) {
   return new Response(JSON.stringify({ type: "error", error: { type, message } }), { status, headers: { "content-type": "application/json" } });
 }
@@ -83,34 +89,17 @@ globalThis.fetch = async (url, init) => {
     }
     return new Response(sse(ANTHROPIC_TOOL_ROUND), { status: 200, headers: { "content-type": "text/event-stream" } });
   }
-  if (u.startsWith("https://api.openai.com/")) return openaiFetch(url, init);
+  if (u.startsWith("https://api.openai.com/")) throw new Error(`fabric-check: DIRECT OpenAI call is prohibited by MF-OWNER-2026-11-23 (${u})`);
   if (u.startsWith("https://openrouter.ai/")) return openrouterFetch(url, init);
   throw new Error(`fabric-check: unexpected network call to ${u}`);
 };
-const openaiFetch = async (url, init) => {
-  const req = JSON.parse(init.body);
-  calls.push({ provider: "openai", req });
-  if (openaiPlan.throws) throw Object.assign(new Error("connection reset"), { name: "TypeError" });
-  if (openaiPlan.status !== 200) {
-    return new Response(JSON.stringify({ error: { type: openaiPlan.type, code: openaiPlan.code ?? null, message: "redacted" } }), { status: openaiPlan.status, headers: { "content-type": "application/json" } });
-  }
-  if (req.stream !== true) {
-    const isClassifier = typeof req.instructions === "string" && req.instructions.includes("You label one message sent to PAIGE");
-    const text = isClassifier
-      ? JSON.stringify({ intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 })
-      : "synthesis";
-    return new Response(JSON.stringify({ id: "resp_ns", model: req.model, status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text }] }], usage: { input_tokens: 9, output_tokens: 7 } }), { status: 200, headers: { "content-type": "application/json" } });
-  }
-  return new Response(sse(openaiToolRound(`${req.model}-2026-09-30`)), { status: 200, headers: { "content-type": "text/event-stream" } });
-};
-// OpenRouter: the SAME Responses wire at its own base URL with its OWN key. Shares the plan knobs so
-// failure/replay cases are exercised identically on both transports.
+// OpenRouter: the SAME Responses wire at its own base URL with its OWN key.
 const openrouterFetch = async (url, init) => {
   const req = JSON.parse(init.body);
   calls.push({ provider: "openrouter", req, headers: init.headers });
-  if (openaiPlan.throws) throw Object.assign(new Error("connection reset"), { name: "TypeError" });
-  if (openaiPlan.status !== 200) {
-    return new Response(JSON.stringify({ error: { type: openaiPlan.type, code: openaiPlan.code ?? null, message: "redacted" } }), { status: openaiPlan.status, headers: { "content-type": "application/json" } });
+  if (plan.throws) throw Object.assign(new Error("connection reset"), { name: "TypeError" });
+  if (plan.status !== 200) {
+    return new Response(JSON.stringify({ error: { type: plan.type, code: plan.code ?? null, message: "redacted" } }), { status: plan.status, headers: { "content-type": "application/json" } });
   }
   if (req.stream !== true) {
     const isClassifier = typeof req.instructions === "string" && req.instructions.includes("You label one message sent to PAIGE");
@@ -119,12 +108,14 @@ const openrouterFetch = async (url, init) => {
       : "synthesis";
     return new Response(JSON.stringify({ id: "resp_or", model: req.model, status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text }] }], usage: { input_tokens: 9, output_tokens: 7 } }), { status: 200, headers: { "content-type": "application/json" } });
   }
-  return new Response(sse(openaiToolRound(`${req.model}-2026-11-17`)), { status: 200, headers: { "content-type": "text/event-stream" } });
+  return new Response(sse(responsesToolRound(`${req.model}-served-by-auto`)), { status: 200, headers: { "content-type": "text/event-stream" } });
 };
 
 const fabric = await import("../../supabase/functions/_shared/model-fabric.ts");
 const { CLAUDE_REASONING, CLAUDE_CLASSIFICATION } = await import("../../supabase/functions/_shared/claude.ts");
 const { readModelRound, executableToolCalls } = await import("../../supabase/functions/_shared/paige-turn/round.ts");
+const { CLASS_POLICY } = await import("../../supabase/functions/_shared/paige-turn/route.ts");
+const { OPENROUTER_EXCLUDED_MODELS } = await import("../../supabase/functions/_shared/openrouter-models.ts");
 
 let pass = 0, fail = 0;
 const ok = (cond, name) => { if (cond) pass++; else { fail++; console.log(`  FAIL  ${name}`); } };
@@ -141,83 +132,82 @@ async function payloadsOf(stream) {
 }
 async function run(cls, opts = {}, body = BODY) {
   calls = [];
-  const s = await fabric.fabricChatStream(cls, body, { openaiFetch, openrouterFetch, ...opts });
+  const s = await fabric.fabricChatStream(cls, body, { openrouterFetch, ...opts });
   const runnable = s.ok && s.body ? executableToolCalls(readModelRound(await payloadsOf(s.body))) : [];
   return { s, runnable, calls: [...calls] };
 }
 const served = (r) => r.s.served ? `${r.s.served.provider}:${r.s.served.model}` : "none";
-// OpenRouter is now the first CLASS_POLICY candidate, so an unconfigured/skipped candidate may occupy
-// attempts[0]. Assertions about a real provider failure must inspect the first NON-skipped attempt.
 const realAttempt = (attempts) => attempts.find((a) => a.failure && a.failure !== "skipped_disabled") ?? attempts[0];
+const autoLegGuards = (r) => {
+  const p = r.calls[0]?.req?.plugins ?? [];
+  return Array.isArray(p) && p[0]?.id === "auto-router" && Array.isArray(p[0]?.excluded_models) && p[0].excluded_models.includes("openai/*");
+};
 
-// ── 1. OWNER-DIRECTED FLAG, ATTRIBUTION-REQUIRED ADMISSION ────────────────────────────────────
-// The master flag is ON per the 2026-10-08 owner directive (OpenAI is the preferred primary).
-// Admission still requires a well-formed tenant in the cohort AND the class scope — these drives
-// carry NO tenant (unattributed), so every class serves from Anthropic exactly as before.
-ok(fabric.OPENAI_CHAT_ENABLED === true, "the owner-directed master flag is ON (2026-10-08 directive)");
-anthropicPlan = { status: 200 }; openaiPlan = { status: 200 };
-for (const [cls, model] of [["operational", CLAUDE_REASONING], ["frontier", CLAUDE_REASONING], ["deterministic", CLAUDE_REASONING], ["cheap", CLAUDE_CLASSIFICATION]]) {
+// ── 0. THE POLICY ITSELF (MF-OWNER-2026-11-23) ────────────────────────────────────────────────
+// The routed policy is OpenRouter Auto ONLY, for every class, with GPT excluded. No direct
+// OpenAI/Anthropic/Featherless/Groq candidate may exist on any routed class list.
+{
+  for (const cls of ["cheap", "operational", "frontier"]) {
+    ok(CLASS_POLICY[cls].length === 1 && CLASS_POLICY[cls][0].provider === "openrouter" && CLASS_POLICY[cls][0].model === "openrouter/auto",
+      `0.1 ${cls}: the one candidate is OpenRouter Auto`);
+    ok(!CLASS_POLICY[cls].some((c) => c.provider !== "openrouter"),
+      `0.2 ${cls}: NO direct OpenAI/Anthropic/Featherless/Groq candidate exists (MF-OWNER-2026-11-23)`);
+  }
+  ok(Array.isArray(OPENROUTER_EXCLUDED_MODELS) && OPENROUTER_EXCLUDED_MODELS.includes("openai/*"),
+    "0.3 the GPT exclusion constant is the owner-ruled one");
+}
+
+// ── 1. ADMISSION: attributed traffic only; unattributed is refused truthfully ─────────────────
+// These drives carry NO tenant (unattributed) and the cohort is the explicit kill switch, so NO
+// candidate is admitted: the turn is interrupted, and no direct provider is EVER contacted.
+ok(fabric.OPENROUTER_CHAT_ENABLED === true, "the OpenRouter master flag is ON");
+anthropicPlan = { status: 200 }; plan = { status: 200 };
+for (const cls of ["operational", "frontier", "deterministic", "cheap"]) {
   const r = await run(cls);
-  ok(r.s.ok && r.s.served?.provider === "anthropic", `${cls}: unattributed traffic serves from Anthropic (never admitted) (${served(r)})`);
-  ok(r.calls.length === 1 && r.calls[0].provider === "anthropic", `${cls}: OpenAI is never called for unattributed traffic`);
-  ok(r.calls[0]?.req.model === model, `${cls}: Anthropic receives ${model} (got ${r.calls[0]?.req.model})`);
-  ok(r.s.attempts.some((a) => a.provider === "openai" && a.failure === "skipped_disabled"), `${cls}: the not-admitted OpenAI candidate is recorded`);
-  ok(r.runnable.length === 1 && r.runnable[0].name === "crm_contact_lookup", `${cls}: the chat-shaped round reaches the gate whole`);
+  ok(!r.s.ok && r.s.served === null && r.calls.length === 0,
+    `${cls}: unattributed traffic gets NO provider — the turn is interrupted truthfully (${served(r)})`);
+  ok(r.s.attempts.some((a) => a.provider === "openrouter" && a.failure === "skipped_disabled"),
+    `${cls}: the not-admitted OpenRouter candidate is recorded`);
+  ok(!r.calls.some((c) => c.provider === "anthropic" || c.provider === "openai"),
+    `${cls}: no direct OpenAI or Anthropic call exists for unattributed traffic`);
 }
 {
   const r = await run("operational");
-  ok(Array.isArray(r.calls[0].req.tools) && r.calls[0].req.tools[0]?.name === "crm_contact_lookup" && r.calls[0].req.stream === true, "operational: tools and streaming reach Anthropic");
-  ok(!("thinking" in r.calls[0].req), "no thinking block unless Studio asked");
-  const t = await run("operational", { anthropicExtras: { paige_thinking: true } });
-  ok(t.calls[0].req.thinking?.type === "enabled", "Studio's thinking flag reaches Anthropic");
-  const close = await run("operational", {}, { messages: BODY.messages });
-  ok(!("tools" in close.calls[0].req) && !("tool_choice" in close.calls[0].req), "a tools-free closing round sends no tools");
+  ok(r.runnable.length === 0, "an interrupted round never reaches the tool gate");
 }
 
-// ── 2. THE ORDER (OpenAI enabled) ─────────────────────────────────────────────────────────────
-const ON = { enabled: { openai: true } };
-for (const [cls, model, effort] of [["operational", "gpt-6.1-sol"], ["frontier", "gpt-6-astra"], ["cheap", "gpt-6-luna"], ["deterministic", "gpt-6.1-sol"]]) {
+// ── 2. THE ROUTE (admitted through the test seam): Auto serves every class ───────────────────
+const ON = { enabled: { openrouter: true } };
+for (const cls of ["operational", "frontier", "cheap", "deterministic"]) {
   const r = await run(cls, ON);
-  ok(served(r) === `openai:${model}`, `${cls}: ${model} serves first (${served(r)})`);
-  ok(r.calls.length === 1 && r.calls[0].provider === "openai" && r.calls[0].req.model === model, `${cls}: Anthropic is not called when ${model} answers`);
-  ok(r.calls[0].req.store === false, `${cls}: store:false`);
-  ok(typeof r.calls[0].req.reasoning?.effort === "string", `${cls}: the class's effort is sent (${r.calls[0].req.reasoning?.effort})`);
-  ok(r.runnable.length === 1 && r.runnable[0].arguments === "{\"q\":\"Acme\"}", `${cls}: the same chat shape reaches the gate from OpenAI`);
-  void effort;
+  ok(served(r) === "openrouter:openrouter/auto", `${cls}: OpenRouter Auto serves (${served(r)})`);
+  ok(r.calls.length === 1 && r.calls[0].provider === "openrouter" && r.calls[0].req.model === "openrouter/auto",
+    `${cls}: one call to the Auto leg, no other transport`);
+  ok(autoLegGuards(r), `${cls}: the auto-router plugin carries the GPT exclusion on every leg`);
+  ok(!("reasoning" in r.calls[0].req), `${cls}: PAIGE never overrides Auto's reasoning effort`);
+  ok(!("store" in r.calls[0].req) && !("include" in r.calls[0].req) && !("prompt_cache_key" in r.calls[0].req),
+    `${cls}: OpenRouter omits OpenAI-only fields (store, include, prompt_cache_key)`);
+  ok(r.runnable.length === 1 && r.runnable[0].arguments === "{\"q\":\"Acme\"}",
+    `${cls}: the chat-shaped round reaches the gate whole from the Auto leg`);
 }
 {
-  const op = await run("operational", ON), fr = await run("frontier", ON), ch = await run("cheap", ON);
-  const e = (r) => r.calls[0].req.reasoning?.effort;
-  ok(new Set([e(op), e(fr), e(ch)]).size >= 2, `effort differs by class (cheap ${e(ch)}, operational ${e(op)}, frontier ${e(fr)})`);
-  const t = await run("operational", { ...ON, anthropicExtras: { paige_thinking: true } });
-  ok(!("paige_thinking" in t.calls[0].req) && !("thinking" in t.calls[0].req), "the Anthropic-only thinking flag never reaches OpenAI");
+  const r = await run("operational", ON);
+  ok(Array.isArray(r.calls[0].req.tools) && r.calls[0].req.tools[0]?.name === "crm_contact_lookup" && r.calls[0].req.stream === true,
+    "operational: tools and streaming reach the Auto leg");
+  ok(r.calls[0].headers.authorization === "Bearer sk-or-test-not-a-real-key",
+    "OpenRouter uses its OWN key, never the OpenAI key");
+  const close = await run("operational", ON, { messages: BODY.messages });
+  ok(!("tools" in close.calls[0].req) && !("tool_choice" in close.calls[0].req),
+    "a tools-free closing round sends no tools");
+  const cacheScoped = await run("operational", { ...ON, trace: { tenant_id: "7e5a0000-0000-4000-8000-0000000000c9", agent_id: "fabric-check",
+    prompt_cache_scope: { actor_id: "00000000-0000-4000-8000-000000000011", tenant_id: "7e5a0000-0000-4000-8000-0000000000c9", working_context_tenant_id: "7e5a0000-0000-4000-8000-0000000000c9" } } });
+  ok(cacheScoped.s.ok && !cacheScoped.calls.some((c) => "prompt_cache_key" in c.req),
+    "a trusted cache partition never leaks a prompt_cache_key onto the OpenRouter wire (OpenRouter owns session stickiness)");
 }
 
-// ── 2b. OPENROUTER PRIMARY (owner directive 2026-11-17) ───────────────────────────────────────
-// The transport changes; the class→model policy does not. OpenRouter serves the SAME ids the Fabric
-// already chose, with its own key/base URL, and Claude remains the fallback authority.
-const OR_ON = { enabled: { openrouter: true } };
-ok(fabric.OPENROUTER_CHAT_ENABLED === true, "OpenRouter master flag is ON (2026-11-17 directive)");
-for (const [cls, model] of [["operational", "openai/gpt-6.1-sol"], ["frontier", "openai/gpt-6-astra"], ["cheap", "openai/gpt-6-luna"], ["deterministic", "openai/gpt-6.1-sol"]]) {
-  const r = await run(cls, OR_ON);
-  ok(served(r) === `openrouter:${model}`, `${cls}: OpenRouter serves the SAME class model first (${served(r)})`);
-  ok(r.calls.length === 1 && r.calls[0].provider === "openrouter" && r.calls[0].req.model === model,
-    `${cls}: no other transport is called when OpenRouter answers`);
-  // OpenRouter's documented Responses API accepts model, input, tools, tool_choice and stream.
-  // OpenAI-only fields (store, include, prompt_cache_key, prompt_cache_options) are omitted.
-  ok(!("store" in r.calls[0].req) && !("include" in r.calls[0].req) && !("prompt_cache_key" in r.calls[0].req),
-     `${cls}: OpenRouter omits OpenAI-only fields (store, include, prompt_cache_key)`);
-  ok(typeof r.calls[0].req.reasoning?.effort === "string", `${cls}: the class's effort is sent (${r.calls[0].req.reasoning?.effort})`);
-  ok(r.runnable.length === 1 && r.runnable[0].arguments === '{"q":"Acme"}',
-    `${cls}: the chat-shaped round reaches the gate unchanged from OpenRouter`);
-}
+// ── 2b. THE FABRIC'S OWN ADMISSION CONTRACT (env-staged, fail closed) ──────────────────────────
 {
-  const op = await run("operational", OR_ON);
-  ok(op.calls[0].headers.authorization === "Bearer sk-or-test-not-a-real-key",
-    "OpenRouter uses its OWN key, never the OpenAI key");
   ok(fabric.openRouterAdmitted(null, "operational") === false, "unattributed traffic is never admitted to OpenRouter");
-  // The incumbent pins above run under an explicit empty cohort. Lift it ONLY for this assertion,
-  // then restore it so every later pin keeps its original transport.
   delete ENV.OPENROUTER_CANARY_TENANTS;
   ok(fabric.openRouterAdmitted("7e5a0000-0000-4000-8000-0000000000f1", "operational") === true,
     "an attributed tenant is admitted by default when the key is configured");
@@ -225,8 +215,6 @@ for (const [cls, model] of [["operational", "openai/gpt-6.1-sol"], ["frontier", 
   delete ENV.OPEN_ROUTER_AI_API;
   ok(fabric.openRouterAdmitted("7e5a0000-0000-4000-8000-0000000000f1", "operational") === false,
     "no configured key under either name means no admission — fail closed, never a hard failure");
-  // The configured Edge Function Secret name is OPEN_ROUTER_AI_API. Admission must resolve it
-  // through the SAME case-insensitive helper the Responses adapter uses, not the legacy alias only.
   ENV.OPEN_ROUTER_AI_API = "sk-or-production-name-test";
   ok(fabric.openRouterAdmitted("7e5a0000-0000-4000-8000-0000000000f1", "operational") === true,
     "the configured OPEN_ROUTER_AI_API Edge secret admits OpenRouter on its own");
@@ -235,20 +223,16 @@ for (const [cls, model] of [["operational", "openai/gpt-6.1-sol"], ["frontier", 
   ENV.OPENROUTER_CANARY_TENANTS = "";
   ok(fabric.openRouterAdmitted("7e5a0000-0000-4000-8000-0000000000f1", "operational") === false,
     "an explicitly empty tenant cohort is the kill switch");
-}
-{
-  openaiPlan = { status: 401, type: "invalid_request_error", code: "invalid_api_key" };
-  const r = await run("operational", OR_ON);
-  ok(served(r) === `anthropic:${CLAUDE_REASONING}` && r.calls.map((c) => c.provider).join(",") === "openrouter,anthropic"
-    && realAttempt(r.s.attempts)?.failure === "auth_config",
-    `OpenRouter 401 falls back to Claude, never to an open model (${fabric.describeAttempts(r.s)})`);
-  openaiPlan = { status: 200 };
+  const noKey = await run("operational");
+  ok(!noKey.s.ok && noKey.s.calls === undefined && noKey.calls.length === 0
+    && noKey.s.attempts.some((a) => a.failure === "skipped_disabled"),
+    "a missing OpenRouter key skips the candidate — the turn is interrupted, no fallback");
 }
 {
   const trace = { tenant_id: "7e5a0000-0000-4000-8000-0000000000a1", agent_id: "fabric-check" };
   const rec = recorder();
   const before = rec.inserts.filter((i) => i.table === "paige_llm_trace").length;
-  const r = await fabric.fabricCompletion({ cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] }, { ...OR_ON, openrouterFetch, trace });
+  const r = await fabric.fabricCompletion({ cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] }, { ...ON, openrouterFetch, trace });
   for (let i = 0; i < 30 && rec.inserts.filter((x) => x.table === "paige_llm_trace").length <= before; i++)
     await new Promise((resolve) => setTimeout(resolve, 0));
   const row = rec.inserts.filter((x) => x.table === "paige_llm_trace").slice(before).at(-1)?.row;
@@ -257,85 +241,65 @@ for (const [cls, model] of [["operational", "openai/gpt-6.1-sol"], ["frontier", 
     "the completion seam traces OpenRouter as the REAL serving provider, never a borrowed 'openai'");
 }
 
-// ── 3. NARROW FALLBACK ────────────────────────────────────────────────────────────────────────
+// ── 3. NO FALLBACK: a failure interrupts the turn; the status reaches the caller ──────────────
 const MOVES = [
-  ["auth/config (401)", { status: 401, type: "invalid_request_error", code: "invalid_api_key" }],
-  ["rate limit (429)", { status: 429, type: "rate_limit_error", code: "rate_limit_exceeded" }],
-  ["billing (429 insufficient_quota)", { status: 429, type: "insufficient_quota", code: "insufficient_quota" }],
-  ["outage (503)", { status: 503, type: "server_error" }],
-  ["network throw", { throws: true }],
+  ["auth/config (401)", { status: 401, type: "invalid_request_error", code: "invalid_api_key" }, "auth_config"],
+  ["rate limit (429)", { status: 429, type: "rate_limit_error", code: "rate_limit_exceeded" }, "rate_limit"],
+  ["billing (429 insufficient_quota)", { status: 429, type: "insufficient_quota", code: "insufficient_quota" }, "billing"],
+  ["outage (503)", { status: 503, type: "server_error" }, "provider_outage"],
+  ["network throw", { throws: true }, "provider_outage"],
 ];
-for (const [name, plan] of MOVES) {
-  openaiPlan = plan; anthropicPlan = { status: 200 };
+for (const [name, failure, expected] of MOVES) {
+  plan = failure; anthropicPlan = { status: 200 };
   const r = await run("operational", ON);
-  ok(served(r) === `anthropic:${CLAUDE_REASONING}`, `${name}: falls back to Sonnet 5.5 (${served(r)}; ${fabric.describeAttempts(r.s)})`);
-  ok(r.calls.map((c) => c.provider).join(",") === "openai,anthropic", `${name}: tried Sol, then Sonnet — once each`);
-  ok(r.s.attempts[0].failure && r.s.attempts[0].failure !== "unknown", `${name}: the failure is named (${r.s.attempts[0].failure})`);
-  ok(r.runnable.length === 1, `${name}: the fallback round reaches the gate whole`);
+  const expectedStatus = failure.throws ? 0 : failure.status;
+  ok(!r.s.ok && r.s.served === null && r.s.status === expectedStatus,
+    `${name}: the turn is interrupted; the status reaches the caller (${r.s.status})`);
+  ok(r.calls.length === 1 && r.calls[0].provider === "openrouter",
+    `${name}: exactly one transport was tried — OpenRouter only`);
+  ok(realAttempt(r.s.attempts)?.failure === expected,
+    `${name}: the failure is named (${realAttempt(r.s.attempts)?.failure})`);
+  ok(r.runnable.length === 0, `${name}: nothing reaches the tool gate`);
 }
 const STAYS = [
   ["invalid request (400)", { status: 400, type: "invalid_request_error", code: "invalid_value" }, 400],
   ["unknown (418)", { status: 418, type: "weird" }, 418],
 ];
-for (const [name, plan, status] of STAYS) {
-  openaiPlan = plan; anthropicPlan = { status: 200 };
+for (const [name, failure, status] of STAYS) {
+  plan = failure; anthropicPlan = { status: 200 };
   const r = await run("operational", ON);
-  ok(!r.s.ok && r.s.served === null && r.s.status === status, `${name}: no fallback; the status reaches the caller (${r.s.status})`);
-  ok(r.calls.length === 1 && r.calls[0].provider === "openai", `${name}: Anthropic is never called`);
+  ok(!r.s.ok && r.s.served === null && r.s.status === status, `${name}: no other transport is contacted (${r.s.status})`);
+  ok(r.calls.length === 1 && r.calls[0].provider === "openrouter", `${name}: the Auto leg was the only call`);
 }
-{
-  // Every candidate down: the last failure is returned, nothing served, nothing runs.
-  openaiPlan = { status: 503, type: "server_error" }; anthropicPlan = { status: 529, type: "overloaded_error", message: "Overloaded" };
-  const r = await run("operational", ON);
-  ok(!r.s.ok && r.s.served === null && r.calls.length === 2, `every candidate down: nothing served (${fabric.describeAttempts(r.s)})`);
-  // Anthropic alone (OpenAI off): its own failure status reaches chat's existing error handling unchanged.
-  anthropicPlan = { status: 429, type: "rate_limit_error", message: "slow down" };
-  const a = await run("operational");
-  ok(!a.s.ok && a.s.status === 429 && a.calls.length === 1, `OpenAI off, Anthropic 429: chat sees 429 as before (${a.s.status})`);
-  anthropicPlan = { status: 400, type: "invalid_request_error", message: "Your credit balance is too low to access the Anthropic API." };
-  const b = await run("operational");
-  ok(!b.s.ok && b.s.status === 400 && b.s.attempts.at(-1).failure === "billing", `Anthropic credit-balance 400 is named billing, status unchanged (${b.s.attempts.at(-1).failure})`);
-}
-openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
+plan = { status: 200 };
 
-// ── 3b. WHAT A THROW PROVES (R5a review S1/S4) ───────────────────────────────────────────────
+// ── 3b. WHAT A THROW PROVES (R5a review S1/S4, single-candidate form) ────────────────────────
 {
-  // A budget stop is a decision: rethrown, never retried on another provider, never an {ok:false}.
-  const budget = Object.assign(new Error("daily ceiling reached"), { code: "budget_exceeded" });
-  const stop = async () => { throw budget; };
-  let thrown = null; calls = [];
-  try { await fabric.fabricChatStream("operational", BODY, { openaiFetch, anthropicGateway: stop }); } catch (e) { thrown = e; }
-  ok(thrown === budget, "a budget stop on the only candidate is rethrown, never returned as a failure");
-  openaiPlan = { status: 503, type: "server_error" }; thrown = null; calls = [];
-  try { await fabric.fabricChatStream("operational", BODY, { ...ON, openaiFetch, anthropicGateway: stop }); } catch (e) { thrown = e; }
-  ok(thrown === budget, "after a health fallback, a budget stop on the next candidate is still rethrown");
-  openaiPlan = { status: 200 };
+  // NOTE (MF-OWNER-2026-11-23 posture): the old budget-rethrow pin drove the Anthropic gateway seam
+  // on a routed Anthropic candidate — that candidate no longer exists, and the owner billing policy
+  // (October27) makes enforceBudget informational (never block), so no live routed path can throw
+  // budget_exceeded. The rethrow handlers remain in the fabric for compatibility; the gates that DO
+  // run on every leg (budget read + authority revalidation) are pinned by E1-E3, H, I, K5 and E5.
 
-  // A missing key is configuration, proven by its own error type.
-  delete ENV.OPENAI_API_KEY;
-  const noKey = await run("operational", ON);
-  ok(realAttempt(noKey.s.attempts)?.failure === "auth_config" && served(noKey) === `anthropic:${CLAUDE_REASONING}`,
-    `a missing OpenAI key is auth_config and falls back (${fabric.describeAttempts(noKey.s)})`);
-  ENV.OPENAI_API_KEY = "sk-test-not-a-real-key";
-  delete ENV.ANTHROPIC_API_KEY;
-  const noAnthropic = await run("operational");
-  ok(!noAnthropic.s.ok && noAnthropic.s.attempts.at(-1)?.failure === "auth_config",
-    `a missing Anthropic key is auth_config, not an outage (${fabric.describeAttempts(noAnthropic.s)})`);
-  ENV.ANTHROPIC_API_KEY = "sk-ant-test-not-a-real-key";
+  // A missing key is configuration, proven by its own error type — the candidate is skipped.
+  delete ENV.OPENROUTER_API_KEY;
+  const noKey = await run("operational");
+  ok(!noKey.s.ok && noKey.calls.length === 0 && noKey.s.attempts.some((a) => a.failure === "skipped_disabled"),
+    "no configured OpenRouter key: the turn is interrupted truthfully (skipped candidate recorded)");
+  ENV.OPENROUTER_API_KEY = "sk-or-test-not-a-real-key";
 
   // A throw that proves no provider-health failure (the adapter refused the request shape before any
-  // fetch) is `unknown`: no fallback, and the provider is never contacted.
+  // fetch) is `unknown`: the turn is interrupted and the provider is never contacted.
   const hosted = await run("operational", ON, { ...BODY, tools: [{ type: "web_search" }] });
-  ok(!hosted.s.ok && hosted.s.attempts.at(-1)?.failure === "unknown" && hosted.calls.length === 0,
+  ok(!hosted.s.ok && realAttempt(hosted.s.attempts)?.failure === "unknown" && hosted.calls.length === 0,
     `a pre-fetch refusal is unknown, never an outage, and nothing is called (${fabric.describeAttempts(hosted.s)})`);
 }
 
 // ── 4. The cheap class never receives tools from chat (route contract), but the fabric does not add any.
 {
-  const r = await run("cheap", {}, { messages: BODY.messages });
+  const r = await run("cheap", ON, { messages: BODY.messages });
   ok(!("tools" in r.calls[0].req), "the fabric adds no tools to a tools-free body");
 }
-
 
 // ── C. THE CLASS-BEARING CONSUMER SEAM (fabricCompletion) — R6A-RETURN D, non-streaming ───────
 // A consumer names a cognitive class and its OWN job identity; the fabric alone picks the provider
@@ -343,49 +307,38 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 // are untouched (nothing in production calls this yet — Deep Research adopts it in its own lane).
 {
   anthropicPlan = { status: 200 };
-  openaiPlan = { status: 200 };
+  plan = { status: 200 };
   const seamRun = async (request, opts = {}) => {
     calls.length = 0;
-    const r = await fabric.fabricCompletion(request, { openaiFetch, ...opts });
+    const r = await fabric.fabricCompletion(request, { openrouterFetch, ...opts });
     return { r, calls };
   };
   const REQ = (cls, job) => ({ cognitive_class: cls, job, messages: [{ role: "system", content: "consumer" }, { role: "user", content: "synthesize the evidence" }] });
 
-  // C1 — with OpenAI off, every class is served by Anthropic's own tier for it, exactly like the
-  // routed path's tiers, and the response is chat-shaped with the route attached.
-  const cheap = await seamRun(REQ("cheap", "research_hop_planner"));
-  ok(cheap.r.ok && cheap.r.route.served?.provider === "anthropic" && String(cheap.r.route.served?.model).includes("haiku")
+  // C1 — every class serves OpenRouter Auto; the response is chat-shaped with the route attached.
+  const cheap = await seamRun(REQ("cheap", "research_hop_planner"), ON);
+  ok(cheap.r.ok && cheap.r.route.served?.provider === "openrouter" && cheap.r.route.served?.model === "openrouter/auto"
     && cheap.r.route.reason === "served_primary" && cheap.r.route.fallback === false,
-    `C1 cheap class serves Anthropic's cheap tier (${cheap.r.route.served?.model})`);
+    `C1 cheap class serves OpenRouter Auto (${cheap.r.route.served?.model})`);
   ok(cheap.r.response?.choices?.[0]?.message?.content === "synthesis" && typeof cheap.r.response?.usage?.prompt_tokens === "number",
     "C1 the result is chat-shaped with usage");
-  const op = await seamRun(REQ("operational", "research_unit_synthesis"));
-  ok(op.r.ok && op.r.route.served?.provider === "anthropic" && String(op.r.route.served?.model).includes("sonnet")
+  const op = await seamRun(REQ("operational", "research_unit_synthesis"), ON);
+  ok(op.r.ok && op.r.route.served?.provider === "openrouter" && op.r.route.served?.model === "openrouter/auto"
     && op.r.route.job === "research_unit_synthesis" && op.r.route.requested_class === "operational",
-    `C1 operational class serves the reasoning tier (${op.r.route.served?.model}) — the consumer named no provider`);
-  const fr = await seamRun(REQ("frontier", "research_difficult_reconciliation"));
-  ok(fr.r.ok && String(fr.r.route.served?.model).includes("sonnet"), "C1 frontier class serves the reasoning tier while OpenAI is off");
+    "C1 operational class serves the Auto leg — the consumer named no provider");
+  const fr = await seamRun(REQ("frontier", "research_difficult_reconciliation"), ON);
+  ok(fr.r.ok && fr.r.route.served?.model === "openrouter/auto", "C1 frontier class serves the Auto leg");
 
-  // C2 — with OpenAI enabled (test seam), the class's first candidate serves with its effort.
-  const sol = await seamRun(REQ("operational", "research_unit_synthesis"), ON);
-  ok(sol.r.ok && sol.r.route.served?.provider === "openai" && sol.r.route.served?.model === "gpt-6.1-sol"
-    && sol.calls.length === 1 && sol.calls[0].req.model === "gpt-6.1-sol" && sol.calls[0].req.store === false
-    && sol.calls[0].req.reasoning?.effort === "medium",
-    "C2 operational serves Sol with the class effort, store:false, and no Anthropic call");
-  const luna = await seamRun(REQ("cheap", "research_hop_planner"), ON);
-  ok(luna.r.route.served?.model === "gpt-6-luna" && luna.calls[0].req.reasoning?.effort === "none", "C2 cheap serves Luna");
-
-  // C3 — narrow fallback: a proven health failure moves once; invalid_request never moves.
-  openaiPlan = { status: 401, type: "authentication_error" };
+  // C3 — no fallback: a proven health failure interrupts; invalid_request never moves either.
+  plan = { status: 401, type: "authentication_error" };
   const fb = await seamRun(REQ("operational", "research_unit_synthesis"), ON);
-  ok(fb.r.ok && fb.r.route.served?.provider === "anthropic" && fb.r.route.reason === "served_fallback" && fb.r.route.fallback === true
-    && realAttempt(fb.r.route.attempts)?.failure === "auth_config",
-    "C3 a 401 falls back to Sonnet and the route records why");
-  openaiPlan = { status: 400, type: "invalid_request_error" };
+  ok(!fb.r.ok && fb.r.route.reason === "failed" && realAttempt(fb.r.route.attempts)?.failure === "auth_config" && fb.calls.length === 1,
+    "C3 a 401 interrupts the turn — no other transport is contacted");
+  plan = { status: 400, type: "invalid_request_error" };
   const bad = await seamRun(REQ("operational", "research_unit_synthesis"), ON);
   ok(!bad.r.ok && bad.r.error?.failure === "invalid_request" && bad.calls.length === 1,
-    "C3 an invalid request never moves — the other provider would get the same broken request");
-  openaiPlan = { status: 200 };
+    "C3 an invalid request never moves — the same broken request would fail anywhere");
+  plan = { status: 200 };
 
   // C4 — October27 owner policy: the old allowance is informational. Preserve the
   // original route and tenant-attributed usage, without an invented billing stop.
@@ -396,21 +349,25 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const traceSeam = { tenant_id: "6e5a0000-0000-4000-8000-0000000000c4", agent_id: "fabric-check-seam" };
   const recC4 = recorder();
   calls.length = 0;
-  const aboveMarker = await fabric.fabricCompletion(REQ("operational", "research_unit_synthesis"), { ...ON, openaiFetch, trace: traceSeam });
+  const aboveMarker = await fabric.fabricCompletion(REQ("operational", "research_unit_synthesis"), { ...ON, openrouterFetch, trace: traceSeam });
   ok(aboveMarker.ok && aboveMarker.response?.choices?.[0]?.message?.content === "synthesis"
-    && aboveMarker.route.served?.provider === "openai" && calls.length === 1,
-    "C4 usage above the old marker preserves the original successful route without fallback");
+    && aboveMarker.route.served?.provider === "openrouter" && calls.length === 1,
+    "C4 usage above the old marker preserves the original successful route");
   const c4rows = recC4.inserts.filter(i => i.table === "paige_llm_trace");
   ok(c4rows.length === 1 && c4rows[0].row?.tenant_id === traceSeam.tenant_id
-    && c4rows[0].row?.provider === "openai" && c4rows[0].row?.doctrine_gate_hits?.budget?.level === "hard",
+    && c4rows[0].row?.provider === "openrouter" && c4rows[0].row?.doctrine_gate_hits?.budget?.level === "hard",
     "C4 the original provider usage row retains tenant attribution and the informational marker");
   setScenario({});
 
   // C5 — the judge carve-out: a pinned route ignores the class policy and never falls back.
+  // OWNER DECISION POINT (flagged to the owner, preserved here): the pinned rubric judge still runs
+  // on the direct Anthropic tier. MF-OWNER-2026-11-23 makes OpenRouter the exclusive gateway for
+  // language-model inference; whether the pinned judge migrates to an OpenRouter-served model is a
+  // material instrument decision for the owner and PO-EXP27 — NOT changed unilaterally here.
   const pinOk = await seamRun(REQ("cheap", "rubric_judge_v3"), { ...ON, pinned: { tier: "reasoning" } });
   ok(pinOk.r.ok && pinOk.r.route.served?.provider === "anthropic" && String(pinOk.r.route.served?.model).includes("sonnet")
     && pinOk.r.route.reason === "pinned_served" && pinOk.calls.length === 1 && pinOk.calls[0].provider === "anthropic",
-    "C5 a pinned route serves Anthropic whatever the class or the enabled set says");
+    "C5 a pinned route serves Anthropic whatever the class or the enabled set says (preserved carve-out, owner decision pending)");
   anthropicPlan = { status: 503, type: "overloaded_error" };
   const pinFail = await seamRun(REQ("operational", "rubric_judge_v3"), { ...ON, pinned: { tier: "reasoning" } });
   ok(!pinFail.r.ok && pinFail.r.route.reason === "pinned_failed" && pinFail.r.error?.failure === "provider_outage"
@@ -420,56 +377,56 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 
   // C6 — the request contract: no provider or model field exists to set, and the job identity is validated.
   let badJob = null;
-  try { await fabric.fabricCompletion({ ...REQ("operational", "Not A Job") }, { openaiFetch }); } catch (e) { badJob = e; }
+  try { await fabric.fabricCompletion({ ...REQ("operational", "Not A Job") }, { openrouterFetch }); } catch (e) { badJob = e; }
   ok(badJob instanceof Error && /job/.test(badJob.message), "C6 a malformed job identity is refused");
   ok(!("provider" in REQ("operational", "x")) && !("model" in REQ("operational", "x")),
     "C6 the request carries no provider or model field to hardcode");
 
-  // C8 — the OPENAI leg's trace row carries the consumer's job identity too (never the adapter's "chat").
+  // C8 — the OPENROUTER leg's trace row carries the consumer's job identity too (never the adapter's "chat").
   {
     const rec8 = recorder();
     const before8 = rec8.inserts.filter((i) => i.table === "paige_llm_trace").length;
     await seamRun(REQ("operational", "research_unit_synthesis"), { ...ON, trace: { tenant_id: "tenant-seam8", agent_id: "fabric-check-seam" } });
     const rows8 = rec8.inserts.filter((i) => i.table === "paige_llm_trace").slice(before8);
-    ok(rows8.length === 1 && rows8[0].row?.job_kind === "research_unit_synthesis" && rows8[0].row?.provider === "openai",
-      `C8 the OpenAI-served leg traces the consumer's job identity (${rows8[0]?.row?.job_kind})`);
+    ok(rows8.length === 1 && rows8[0].row?.job_kind === "research_unit_synthesis" && rows8[0].row?.provider === "openrouter",
+      `C8 the Auto-served leg traces the consumer's job identity (${rows8[0]?.row?.job_kind})`);
   }
 
-  // C9 — a FAILED Anthropic leg leaves the same evidence a successful one does.
+  // C9 — a FAILED Auto leg leaves the same evidence a successful one does.
   {
     const rec9 = recorder();
     const before9 = rec9.inserts.filter((i) => i.table === "paige_llm_trace").length;
-    anthropicPlan = { status: 503, type: "overloaded_error" };
-    await seamRun(REQ("operational", "research_unit_synthesis"), { trace: { tenant_id: "tenant-seam9", agent_id: "fabric-check-seam" } });
-    anthropicPlan = { status: 200 };
+    plan = { status: 503, type: "server_error" };
+    await seamRun(REQ("operational", "research_unit_synthesis"), { ...ON, trace: { tenant_id: "tenant-seam9", agent_id: "fabric-check-seam" } });
+    plan = { status: 200 };
     const rows9 = rec9.inserts.filter((i) => i.table === "paige_llm_trace").slice(before9);
     ok(rows9.length === 1 && rows9[0].row?.status === "error" && rows9[0].row?.job_kind === "research_unit_synthesis"
-      && rows9[0].row?.error_class === "provider_outage" && rows9[0].row?.error_message === "Error",
-      `C9 a failed Anthropic leg writes one attributed error trace row, name-only message (${rows9[0]?.row?.error_class}/${rows9[0]?.row?.error_message})`);
+      && rows9[0].row?.provider === "openrouter",
+      `C9 a failed Auto leg writes one attributed error trace row (${rows9[0]?.row?.provider})`);
   }
 
-  // C10 — transport failures are the streaming fabric's provider_outage: fallback-eligible.
+  // C10 — transport failures are the streaming fabric's provider_outage.
   {
     const realFetch = globalThis.fetch;
-    anthropicPlan = { status: 200 };
-    let anthropicThrew = false;
+    plan = { status: 200 };
+    let orThrew = false;
     globalThis.fetch = async (url, init) => {
-      if (String(url).startsWith("https://api.anthropic.com/")) { anthropicThrew = true; throw Object.assign(new Error("connection reset"), { name: "TypeError" }); }
+      if (String(url).startsWith("https://openrouter.ai/")) { orThrew = true; throw Object.assign(new Error("connection reset"), { name: "TypeError" }); }
       return realFetch(url, init);
     };
     calls.length = 0;
-    const t = await fabric.fabricCompletion(REQ("operational", "research_unit_synthesis"), { openaiFetch });
+    const t = await fabric.fabricCompletion(REQ("operational", "research_unit_synthesis"), { ...ON, openrouterFetch: globalThis.fetch });
     globalThis.fetch = realFetch;
-    ok(t.route.attempts.some((a) => a.failure === "provider_outage") && anthropicThrew,
-      `C10 a transport throw on the Anthropic leg classifies provider_outage (${t.route.attempts.map((a) => a.failure).join(",")})`);
+    ok(t.route.attempts.some((a) => a.failure === "provider_outage") && orThrew,
+      `C10 a transport throw on the Auto leg classifies provider_outage (${t.route.attempts.map((a) => a.failure).join(",")})`);
   }
 
-  // C7 — telemetry: the anthropic leg writes exactly one trace row carrying the consumer's job kind.
+  // C7 — telemetry: the Auto leg writes exactly one trace row carrying the consumer's job kind.
   const rec0 = recorder();
   const before = rec0.inserts.filter((i) => i.table === "paige_llm_trace").length;
-  await seamRun(REQ("operational", "research_unit_synthesis"), { trace: { tenant_id: "tenant-seam2", agent_id: "fabric-check-seam" } });
+  await seamRun(REQ("operational", "research_unit_synthesis"), { ...ON, trace: { tenant_id: "tenant-seam2", agent_id: "fabric-check-seam" } });
   const rows = rec0.inserts.filter((i) => i.table === "paige_llm_trace").slice(before);
-  ok(rows.length === 1 && rows[0].row?.job_kind === "research_unit_synthesis" && rows[0].row?.provider === "anthropic",
+  ok(rows.length === 1 && rows[0].row?.job_kind === "research_unit_synthesis" && rows[0].row?.provider === "openrouter",
     `C7 one attributed trace row carries the consumer's job identity (${rows.length} rows)`);
 }
 
@@ -481,6 +438,9 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 {
   const { classifyTurn, TURN_CLASSIFY_DEADLINE_MS } = await import("../../supabase/functions/_shared/paige-turn/classify-call.ts");
   const CLASSIFY_TRACE = { tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a1", agent_id: "paige-ai-chat", job_kind: "turn-classify" };
+  // The classifier drives REAL admission (no enabled seam): lift the pinned kill switch for this
+  // section only, and restore it after so the unattributed pins keep their posture.
+  delete ENV.OPENROUTER_CANARY_TENANTS;
 
   // D0 — the RECALIBRATED deadline (EXP01, 2026-11-13): the value is pinned because changing it is
   // a reviewed decision, and it stays above the incumbent p90 the parameter was first calibrated on.
@@ -492,11 +452,11 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   ok(TURN_CLASSIFY_DEADLINE_MS > 1460,
     "D0 the deadline stays above the incumbent classifier p90 it was first calibrated on (Haiku 1460 ms)");
 
-  // D1 — routing parity: under the completed policy the cheap class serves LUNA first. The
-  // classifier's shape rides the Responses wire (instructions, 120 output tokens); its temperature-0
-  // knob is deliberately DROPPED here — the adapter's pinned rule sends no sampling to a GPT-6
-  // reasoning model (openai-responses-check 2.4). Determinism rests on the closed-enum parse, the
-  // conservative null, and the deadline. The TRACE keeps the caller's tag.
+  // D1 — routing parity under MF-OWNER-2026-11-23: the cheap class serves the OpenRouter Auto leg.
+  // The classifier's shape rides the Responses wire (instructions, 120 output tokens); its temperature-0
+  // knob is deliberately DROPPED — the adapter's pinned rule sends no sampling to a reasoning model
+  // (openai-responses-check 2.4). Determinism rests on the closed-enum parse, the conservative null,
+  // and the deadline. The TRACE keeps the caller's tag.
   setScenario({});
   calls.length = 0;
   const recD = recorder();
@@ -505,11 +465,13 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const d1row = recD.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeD).at(-1)?.row;
   ok(cls !== null && typeof cls.confidence === "number",
     `D1 the classifier answers through the fabric (intent ${cls?.intent})`);
-  ok(calls.length === 1 && calls[0].provider === "openai" && String(calls[0].req.model).includes("gpt-6-luna"),
-    `D1 the cheap class serves Luna first — provider parity (${calls[0]?.req?.model})`);
+  ok(calls.length === 1 && calls[0].provider === "openrouter" && calls[0].req.model === "openrouter/auto",
+    `D1 the cheap class serves the Auto leg first — provider parity (${calls[0]?.req?.model})`);
+  ok(calls[0].req.plugins?.[0]?.id === "auto-router" && calls[0].req.plugins?.[0]?.excluded_models?.includes("openai/*"),
+    "D1 the classifier's Auto leg carries the GPT exclusion plugin");
   ok(String(calls[0].req.instructions).includes("You label one message sent to PAIGE") && calls[0].req.max_output_tokens === 120 && !("temperature" in calls[0].req),
     "D1 the classifier's shape rides the wire; sampling is never sent to a reasoning model (2.4 rule)");
-  ok(d1row?.job_kind === "turn-classify" && d1row?.provider === "openai",
+  ok(d1row?.job_kind === "turn-classify" && d1row?.provider === "openrouter",
     `D1 the trace keeps the caller's job_kind tag (${d1row?.job_kind}) — no trace-history break`);
 
   // D1-tail — drive the REAL classifier/Fabric/adapter with a response in the
@@ -521,7 +483,7 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const tailDispatches = [];
   globalThis.fetch = async (url, init) => {
     tailDispatches.push(String(url));
-    if (String(url).startsWith("https://api.openai.com/")) {
+    if (String(url).startsWith("https://openrouter.ai/")) {
       await new Promise((resolve, reject) => {
         const abort = () => { tailAborted = true; clearTimeout(timer); reject(init.signal.reason); };
         const timer = setTimeout(() => { init.signal?.removeEventListener("abort", abort); resolve(); }, 3000);
@@ -535,16 +497,14 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   try { tailClassification = await classifyTurn("thanks so much", null, CLASSIFY_TRACE); }
   finally { globalThis.fetch = tailFetch; }
   ok(tailClassification?.intent === "converse" && tailClassification.needs_workspace_data === false && !tailAborted,
-    "D1-tail a valid 3000ms Luna classification survives without taking unclassified_default");
-  ok(tailDispatches.length === 1 && tailDispatches[0].startsWith("https://api.openai.com/"),
+    "D1-tail a valid 3000ms Auto classification survives without taking unclassified_default");
+  ok(tailDispatches.length === 1 && tailDispatches[0].startsWith("https://openrouter.ai/"),
     "D1-tail one original primary request, no retry or second-provider dispatch");
 
   // D2 — the known ceiling, under the ESTABLISHED contract: the classifier is a CHEAP-band call,
   // and the budget contract deliberately allows gated continuation for the cheap band at the hard
   // ceiling (the R5a review's S3 disposition, unchanged by order of the owner). The pin: the call
   // proceeds, the gate hit is RECORDED on the attributed row, and nothing throws into the turn.
-  // (A hard stop at the ceiling for the classifier would be a material budget-failure change —
-  // owner determination, not this slice. The reasoning-band stop itself is pinned at C4.)
   setScenario({ tables: {
     admin_app_settings: [{ key: "llm_budget_daily_usd__t_5a4a3a2a-0000-4000-8000-00000000c1a2", value: 1 }],
     paige_llm_trace: [{ tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a2", cost_estimate_usd: 99, created_at: new Date().toISOString() }],
@@ -554,8 +514,8 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const beforeD2 = recD2.inserts.filter((i) => i.table === "paige_llm_trace").length;
   const overCeiling = await classifyTurn("thanks so much", null, { tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a2", agent_id: "paige-ai-chat", job_kind: "turn-classify" });
   const gateRows = recD2.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeD2);
-  ok(overCeiling !== null && calls.length === 1 && calls[0].provider === "openai",
-    `D2 over a known ceiling the cheap-band classifier continues UNDER the established contract, on the Luna leg (answered=${overCeiling !== null})`);
+  ok(overCeiling !== null && calls.length === 1 && calls[0].provider === "openrouter",
+    `D2 over a known ceiling the cheap-band classifier continues UNDER the established contract, on the Auto leg (answered=${overCeiling !== null})`);
   ok(gateRows.length === 1 && gateRows[0].row?.doctrine_gate_hits?.budget != null && gateRows[0].row?.job_kind === "turn-classify",
     `D2 the gate hit is recorded on the attributed row (rows=${gateRows.length}, hit=${JSON.stringify(gateRows[0]?.row?.doctrine_gate_hits)})`);
 
@@ -571,18 +531,18 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 
   // D4 — the deadline: a transport slower than the bound is abandoned and the conservative
   // null returns (the fetch is aborted through the seam's signal). The slow fake sits on the
-  // OPENAI leg — under the completed policy that is the classifier's primary (Luna).
+  // OPENROUTER leg — under MF-OWNER-2026-11-23 that is the classifier's only transport.
   setScenario({});
   const realFetchD = globalThis.fetch;
   let observedSignal = null;
   globalThis.fetch = async (url, init) => {
-    if (String(url).startsWith("https://api.openai.com/")) {
+    if (String(url).startsWith("https://openrouter.ai/")) {
       observedSignal = init?.signal ?? null;
       await new Promise((resolve, reject) => {
         const t = setTimeout(resolve, TURN_CLASSIFY_DEADLINE_MS + 1500);
         observedSignal?.addEventListener("abort", () => { clearTimeout(t); const e = new Error("aborted"); e.name = "AbortError"; reject(e); }, { once: true });
       });
-      return new Response(JSON.stringify({ id: "r", model: "gpt-6-luna", status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: "{}" }] }], usage: { input_tokens: 1, output_tokens: 1 } }), { status: 200, headers: { "content-type": "application/json" } });
+      return new Response(JSON.stringify({ id: "r", model: "openrouter/auto", status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: "{}" }] }], usage: { input_tokens: 1, output_tokens: 1 } }), { status: 200, headers: { "content-type": "application/json" } });
     }
     return realFetchD(url, init);
   };
@@ -598,7 +558,7 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   // D5 — the seam's caller-tag rule (generic): a caller's trace.job_kind beats the request job.
   const tagRun = await fabric.fabricCompletion(
     { cognitive_class: "cheap", job: "turn_classify", messages: [{ role: "user", content: "x" }] },
-    { openaiFetch, trace: { tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a5", agent_id: "a", job_kind: "my_own_tag" } },
+    { ...ON, openrouterFetch, trace: { tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a5", agent_id: "a", job_kind: "my_own_tag" } },
   );
   void tagRun;
   const tagRows = recorder().inserts.filter((i) => i.table === "paige_llm_trace" && i.row?.tenant_id === "5a4a3a2a-0000-4000-8000-00000000c1a5");
@@ -606,6 +566,8 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     `D5 a caller's own trace job_kind wins over the request's (rows=${tagRows.length}, kind=${tagRows[0]?.row?.job_kind}, ok=${tagRun.ok}, err=${tagRun.error?.failure})`);
 
   setScenario({});
+  // Restore the kill switch for the classifier/Anthropic-incumbent pins after this section.
+  ENV.OPENROUTER_CANARY_TENANTS = "";
 }
 
 
@@ -615,15 +577,14 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const streamRun = async (cls, opts = {}, body = STREAM_BODY) => {
     calls.length = 0;
     anthropicPlan = { status: 200 };
-    openaiPlan = { status: 200 };
-    const stream = await fabric.fabricChatStream(cls, body, { openaiFetch, ...opts });
+    plan = { status: 200 };
+    const stream = await fabric.fabricChatStream(cls, body, { openrouterFetch, ...opts });
     const reader = stream.body?.getReader();
     while (reader && !(await reader.read()).done) { /* drain */ }
     return { stream, calls };
   };
 
   // E1 — usage above the former marker does not stop the original streaming leg.
-  // Trace its actual provider usage, rather than recording a fictional refusal.
   setScenario({ tables: {
     admin_app_settings: [{ key: "llm_budget_daily_usd__t_6e5a0000-0000-4000-8000-0000000000e1", value: 1 }],
     paige_llm_trace: [{ tenant_id: "6e5a0000-0000-4000-8000-0000000000e1", cost_estimate_usd: 99, created_at: new Date().toISOString() }],
@@ -633,9 +594,9 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   calls.length = 0;
   const aboveMarkerE1 = await streamRun("operational", { ...ON, trace: { tenant_id: "6e5a0000-0000-4000-8000-0000000000e1", agent_id: "fabric-check" } });
   const e1rows = recE1.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeE1);
-  ok(aboveMarkerE1.stream.ok && aboveMarkerE1.calls.length === 1 && aboveMarkerE1.calls[0]?.provider === "openai",
-    "E1 usage above the old marker streams on OpenAI primary without fallback");
-  ok(e1rows.length === 1 && e1rows[0].row?.provider === "openai"
+  ok(aboveMarkerE1.stream.ok && aboveMarkerE1.calls.length === 1 && aboveMarkerE1.calls[0]?.provider === "openrouter",
+    "E1 usage above the old marker streams on the Auto leg without interruption");
+  ok(e1rows.length === 1 && e1rows[0].row?.provider === "openrouter"
     && e1rows[0].row?.tenant_id === "6e5a0000-0000-4000-8000-0000000000e1"
     && e1rows[0].row?.doctrine_gate_hits?.budget?.level === "hard" && e1rows[0].row?.error_class !== "budget_exceeded",
     "E1 actual streamed usage retains one tenant-attributed trace and its informational marker");
@@ -649,32 +610,37 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const beforeE2 = recE2.inserts.filter((i) => i.table === "paige_llm_trace").length;
   const soft = await streamRun("operational", { ...ON, trace: { tenant_id: "6e5a0000-0000-4000-8000-0000000000e2", agent_id: "fabric-check", job_kind: "chat" } });
   const softRows = recE2.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeE2);
-  ok(soft.stream.ok && soft.calls[0]?.provider === "openai",
+  ok(soft.stream.ok && soft.calls[0]?.provider === "openrouter",
     "E2 a soft-gate zone streams on the class's candidate");
-  ok(softRows.some((r) => r.row?.provider === "openai" && r.row?.doctrine_gate_hits?.budget?.level === "soft"),
+  ok(softRows.some((r) => r.row?.provider === "openrouter" && r.row?.doctrine_gate_hits?.budget?.level === "soft"),
     `E2 the gate hit rides the drained stream's own trace row (${softRows.map((r) => `${r.row?.provider}:${JSON.stringify(r.row?.doctrine_gate_hits)}`).join(",")})`);
 
   // E3 — unknown accrual: the established ungated-but-loud policy, on the streaming leg too.
   setScenario({ tables: {}, tableErrors: { paige_llm_trace: { message: "read failed", code: "XX001" } } });
   const unknown = await streamRun("operational", { ...ON, trace: { tenant_id: "6e5a0000-0000-4000-8000-0000000000e3", agent_id: "fabric-check" } });
-  ok(unknown.stream.ok && unknown.calls[0]?.provider === "openai",
+  ok(unknown.stream.ok && unknown.calls[0]?.provider === "openrouter",
     "E3 unreadable accrual proceeds ungated on the streaming leg (policy unchanged)");
 
-  // E4 — document turns never reach the OpenAI adapter: the document-capable provider serves.
+  // E4 — DOCUMENT TURNS (P1 finding, honestly pinned): the Responses adapter refuses document parts
+  // by design (never a silent omission). Under MF-OWNER-2026-11-23 the direct-Anthropic
+  // document-capable route is retired, and until a document-capable model through OpenRouter is
+  // qualified (owner's model comparison includes document-bearing requests), a document turn is
+  // refused TRUTHFULLY: the Auto candidate is skipped, no provider is contacted, nothing is
+  // fabricated. This records the capability gap; it does not pretend the capability exists.
   setScenario({});
   const DOC_BODY = { messages: [{ role: "user", content: [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: "JVBERi0" } }, { type: "text", text: "read this" }] }], tools: [TOOL], tool_choice: "auto" };
   const docStream = await streamRun("operational", { ...ON }, DOC_BODY);
-  ok(docStream.stream.ok && docStream.calls.length === 1 && docStream.calls[0].provider === "anthropic"
+  ok(!docStream.stream.ok && docStream.calls.length === 0
     && docStream.stream.attempts.some((a) => a.failure === "unsupported_document"),
-    `E4 a document turn streams from the document-capable provider; the OpenAI candidate is skipped, never asked (${fabric.describeAttempts(docStream.stream)})`);
-  const docCompletion = await fabric.fabricCompletion({ cognitive_class: "operational", job: "research_dossier_synthesis", ...DOC_BODY }, { ...ON, openaiFetch });
-  ok(docCompletion.ok && docCompletion.route.served?.provider === "anthropic"
-    && docCompletion.route.attempts.some((a) => a.failure === "unsupported_document"),
-    "E4 the completion seam skips the OpenAI candidate for a document turn too");
+    `E4 a document turn is refused truthfully (unsupported_document), never silently dropped, never a fabricated answer (${fabric.describeAttempts(docStream.stream)}) — document-capable OpenRouter model PENDING the owner's model comparison`);
+  const docCompletion = await fabric.fabricCompletion({ cognitive_class: "operational", job: "research_dossier_synthesis", ...DOC_BODY }, { ...ON, openrouterFetch });
+  ok(!docCompletion.ok && docCompletion.route.attempts.some((a) => a.failure === "unsupported_document"),
+    "E4 the completion seam skips the Auto candidate for a document turn too");
 
   // E5 — the classifier's whole operation is bounded: a budget read that outlives the deadline
   // dispatches NOTHING after the classifier has timed out.
   const { classifyTurn, TURN_CLASSIFY_DEADLINE_MS } = await import("../../supabase/functions/_shared/paige-turn/classify-call.ts");
+  delete ENV.OPENROUTER_CANARY_TENANTS;
   setScenario({ tables: {
     paige_llm_trace: async () => { await new Promise((r) => setTimeout(r, TURN_CLASSIFY_DEADLINE_MS + 2000)); return []; },
   } });
@@ -687,18 +653,19 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   await new Promise((r) => setTimeout(r, TURN_CLASSIFY_DEADLINE_MS + 1200));
   ok(calls.length === 0,
     `E5 after the delayed read resolves, NO provider was dispatched (calls=${calls.length}) — the timeout cancelled the operation, not just the waiting`);
+  ENV.OPENROUTER_CANARY_TENANTS = "";
 
-  // E6 — real cancellation of the dormant OpenAI transport: the fetch receives the signal, aborts,
-  // and an aborted leg never falls back.
+  // E6 — real cancellation of the OpenRouter transport: the fetch receives the signal, aborts,
+  // and the interrupted leg never becomes a fabricated success.
   setScenario({});
   const realFetchE = globalThis.fetch;
-  let openaiSignalSeen = null;
-  const slowOpenai = async (url, init) => {
-    if (!String(url).includes("openai")) return realFetchE(url, init);
-    openaiSignalSeen = init?.signal ?? null;
+  let orSignalSeen = null;
+  const slowOpenrouter = async (url, init) => {
+    if (!String(url).includes("openrouter")) return realFetchE(url, init);
+    orSignalSeen = init?.signal ?? null;
     await new Promise((resolve, reject) => {
       const t = setTimeout(resolve, 5000);
-      openaiSignalSeen?.addEventListener("abort", () => { clearTimeout(t); const e = new Error("aborted"); e.name = "AbortError"; reject(e); }, { once: true });
+      orSignalSeen?.addEventListener("abort", () => { clearTimeout(t); const e = new Error("aborted"); e.name = "AbortError"; reject(e); }, { once: true });
     });
     throw new Error("unreachable");
   };
@@ -706,11 +673,11 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const sigE6 = AbortSignal.timeout(150);
   const abortedRun = await fabric.fabricCompletion(
     { cognitive_class: "operational", job: "turn_classify", messages: STREAM_BODY.messages },
-    { enabled: { openai: true }, openaiFetch: slowOpenai, signal: sigE6 },
+    { enabled: { openrouter: true }, openrouterFetch: slowOpenrouter, signal: sigE6 },
   );
-  ok(openaiSignalSeen instanceof AbortSignal && abortedRun.error?.failure === "aborted"
-    && !abortedRun.route.served && calls.filter((c) => c.provider === "anthropic").length === 0,
-    `E6 the OpenAI fetch receives the deadline signal, aborts for real, and never falls back (${abortedRun.error?.failure})`);
+  ok(orSignalSeen instanceof AbortSignal && abortedRun.error?.failure === "aborted"
+    && !abortedRun.route.served && calls.length === 0,
+    `E6 the OpenRouter fetch receives the deadline signal and aborts for real (${abortedRun.error?.failure})`);
 
   setScenario({});
   globalThis.fetch = realFetchE;
@@ -726,60 +693,45 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const CLOSED_REASON = /^(served_primary|served_fallback|pinned_served|pinned_failed|failed)$/;
   const CLOSED_CLASS = /^(cheap|operational|frontier|deterministic)$/;
 
-  // F1 — the completion seam's served rows carry the full route, both providers.
-  // (The F-series pins the ANTHROPIC leg's row shapes under the kill switch — the OpenAI leg's
-  // shapes are pinned by the C-series with the enabled seam. Under the cutover default these
-  // operational calls would serve Sol; the empty cohort forces the incumbent for these pins.)
-  ENV.OPENAI_CANARY_TENANTS = "";
   setScenario({});
   anthropicPlan = { status: 200 };
-  openaiPlan = { status: 200 };
+  plan = { status: 200 };
+
+  // F1 — the completion seam's served row carries the full route (Auto leg, admitted seam).
   const recF = recorder();
   const beforeF = recF.inserts.filter((i) => i.table === "paige_llm_trace").length;
   await fabric.fabricCompletion(
     { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
-    { openaiFetch, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f1", agent_id: "fabric-check" } },
+    { ...ON, openrouterFetch, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f1", agent_id: "fabric-check" } },
   );
   const f1 = recF.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF).at(-1)?.row;
   const f1r = routeOf(f1);
   ok(f1r.route_requested_class === "operational" && f1r.route_job === "research_unit_synthesis"
-    && f1r.route_served_provider === "anthropic" && typeof f1r.route_served_model === "string" && f1r.route_served_model.includes("sonnet")
+    && f1r.route_served_provider === "openrouter" && f1r.route_served_model === "openrouter/auto"
     && f1r.route_fallback === false && f1r.route_reason === "served_primary",
-    `F1 the served Anthropic row carries the route (${JSON.stringify(f1r)})`);
+    `F1 the served Auto row carries the route (${JSON.stringify(f1r)})`);
 
-  const recF1b = recorder();
-  const beforeF1b = recF1b.inserts.filter((i) => i.table === "paige_llm_trace").length;
-  await fabric.fabricCompletion(
-    { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
-    { ...ON, openaiFetch, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f1b", agent_id: "fabric-check" } },
-  );
-  const f1b = recF1b.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF1b).at(-1)?.row;
-  const f1br = routeOf(f1b);
-  ok(f1b?.provider === "openai" && f1br.route_served_provider === "openai" && f1br.route_served_model === "gpt-6.1-sol"
-    && f1br.route_requested_class === "operational" && f1br.route_reason === "served_primary",
-    `F1 the served OpenAI row carries the route too (${JSON.stringify(f1br)})`);
-
-  // F2 — a fallback records fallback=true and served_fallback on the row that served.
-  openaiPlan = { status: 401, type: "authentication_error" };
+  // F2 — a failed seam call: the error row carries reason=failed and NO served keys.
+  plan = { status: 503, type: "server_error" };
   const recF2 = recorder();
   const beforeF2 = recF2.inserts.filter((i) => i.table === "paige_llm_trace").length;
-  const fbRun = await fabric.fabricCompletion(
+  await fabric.fabricCompletion(
     { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
-    { ...ON, openaiFetch, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f2", agent_id: "fabric-check" } },
+    { ...ON, openrouterFetch, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f2", agent_id: "fabric-check" } },
   );
-  const f2rows = recF2.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF2);
-  const f2served = f2rows.filter((r) => r.row?.status === "success").at(-1)?.row;
-  ok(fbRun.route.fallback === true && f2served && routeOf(f2served).route_reason === "served_fallback"
-    && routeOf(f2served).route_fallback === true && routeOf(f2served).route_served_provider === "anthropic",
-    `F2 a fallback's served row records served_fallback + fallback=true (${JSON.stringify(routeOf(f2served))})`);
-  openaiPlan = { status: 200 };
+  plan = { status: 200 };
+  const f2 = recF2.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF2).at(-1)?.row;
+  const f2r = routeOf(f2);
+  ok(f2?.status === "error" && f2?.provider === "openrouter" && f2?.error_class === "http_503"
+    && f2r.route_served_provider === "openrouter" && f2r.route_fallback === false,
+    `F2 a failed Auto leg's error row keeps its projected route and the provider's own error class (${JSON.stringify(f2r)})`);
 
-  // F3 — the judge pin records pinned_served.
+  // F3 — the judge pin records pinned_served (preserved carve-out; owner decision pending).
   const recF3 = recorder();
   const beforeF3 = recF3.inserts.filter((i) => i.table === "paige_llm_trace").length;
   await fabric.fabricCompletion(
     { cognitive_class: "cheap", job: "rubric_judge_v3", messages: [{ role: "user", content: "x" }] },
-    { ...ON, openaiFetch, pinned: { tier: "reasoning" }, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f3", agent_id: "fabric-check" } },
+    { ...ON, openrouterFetch, pinned: { tier: "reasoning" }, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f3", agent_id: "fabric-check" } },
   );
   const f3 = recF3.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF3).at(-1)?.row;
   ok(routeOf(f3).route_reason === "pinned_served" && routeOf(f3).route_served_provider === "anthropic",
@@ -792,61 +744,58 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const beforeF3b = recF3b.inserts.filter((i) => i.table === "paige_llm_trace").length;
   await fabric.fabricCompletion(
     { cognitive_class: "cheap", job: "rubric_judge_v3", messages: [{ role: "user", content: "x" }] },
-    { openaiFetch, pinned: { tier: "reasoning" }, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f3b", agent_id: "fabric-check" } },
+    { openrouterFetch, pinned: { tier: "reasoning" }, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f3b", agent_id: "fabric-check" } },
   );
   anthropicPlan = { status: 200 };
   const f3b = recF3b.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF3b).at(-1)?.row;
   ok(f3b?.status === "error" && routeOf(f3b).route_reason === "pinned_failed" && routeOf(f3b).route_served_provider === undefined,
     `F3b a pinned leg's error row records pinned_failed with no served keys (${JSON.stringify(routeOf(f3b))})`);
 
-  // F4 — a failed seam call: the error row carries reason=failed and NO served keys.
-  anthropicPlan = { status: 503, type: "overloaded_error" };
+  // F4 — a failed seam call on the Auto leg (admitted): error row, reason=failed.
+  plan = { status: 529, type: "overloaded_error" };
   const recF4 = recorder();
   const beforeF4 = recF4.inserts.filter((i) => i.table === "paige_llm_trace").length;
   await fabric.fabricCompletion(
     { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
-    { openaiFetch, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f4", agent_id: "fabric-check" } },
+    { ...ON, openrouterFetch, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f4", agent_id: "fabric-check" } },
   );
-  anthropicPlan = { status: 200 };
+  plan = { status: 200 };
   const f4 = recF4.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF4).at(-1)?.row;
   const f4r = routeOf(f4);
-  ok(f4?.status === "error" && f4r.route_reason === "failed" && f4r.route_served_provider === undefined
-    && f4r.route_served_model === undefined && f4r.route_requested_class === "operational",
-    `F4 a failed call's error row records failed with no served keys (${JSON.stringify(f4r)})`);
+  ok(f4?.status === "error" && f4?.provider === "openrouter" && f4r.route_served_provider === "openrouter"
+    && f4r.route_fallback === false && f4r.route_requested_class === "operational",
+    `F4 a failed Auto leg's error row keeps its projected route (${JSON.stringify(f4r)})`);
 
-  // F5 — the STREAMED rows carry the route on both legs (drain rows, via the ctx spread).
+  // F5 — the STREAMED rows carry the route (drain rows, via the ctx spread).
   const STREAM_F5 = { messages: [{ role: "user", content: "stream this" }], tools: [TOOL], tool_choice: "auto" };
   const drain = async (cls, opts, body = STREAM_F5) => {
     const rec = recorder();
     const before = rec.inserts.filter((i) => i.table === "paige_llm_trace").length;
-    const stream = await fabric.fabricChatStream(cls, body, { openaiFetch, ...opts });
+    const stream = await fabric.fabricChatStream(cls, body, { openrouterFetch, ...opts });
     const reader = stream.body?.getReader();
     while (reader && !(await reader.read()).done) { /* drain */ }
     return rec.inserts.filter((i) => i.table === "paige_llm_trace").slice(before).at(-1)?.row;
   };
-  const anthRow = await drain("operational", { trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f5a", agent_id: "fabric-check", job_kind: "chat-tool-loop" } });
-  const ar = routeOf(anthRow);
-  ok(ar.route_served_provider === "anthropic" && ar.route_requested_class === "operational"
-    && ar.route_job === "chat-tool-loop" && ar.route_reason === "served_primary" && ar.route_fallback === false,
-    `F5 the streamed Anthropic drain row carries the route with the caller's job tag (${JSON.stringify(ar)})`);
-  const oaiRow = await drain("operational", { ...ON, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f5b", agent_id: "fabric-check", job_kind: "chat" } });
-  const orr = routeOf(oaiRow);
-  ok(oaiRow?.provider === "openai" && orr.route_served_provider === "openai" && orr.route_served_model === "gpt-6.1-sol"
-    && orr.route_requested_class === "operational" && orr.route_reason === "served_primary",
-    `F5 the streamed OpenAI drain row carries the route too (${JSON.stringify(orr)})`);
+  const orRow = await drain("operational", { ...ON, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f5b", agent_id: "fabric-check", job_kind: "chat-tool-loop" } });
+  const orr = routeOf(orRow);
+  ok(orRow?.provider === "openrouter" && orr.route_served_provider === "openrouter" && orr.route_served_model === "openrouter/auto"
+    && orr.route_requested_class === "operational" && orr.route_job === "chat-tool-loop" && orr.route_reason === "served_primary",
+    `F5 the streamed Auto drain row carries the route with the caller's job tag (${JSON.stringify(orr)})`);
 
   // F6 — the classifier's rows carry the route automatically (cheap, turn_classify).
+  // It drives REAL admission: lift the pinned kill switch for this one call, then restore it.
   const { classifyTurn } = await import("../../supabase/functions/_shared/paige-turn/classify-call.ts");
+  delete ENV.OPENROUTER_CANARY_TENANTS;
   const recF6 = recorder();
   const beforeF6 = recF6.inserts.filter((i) => i.table === "paige_llm_trace").length;
   await classifyTurn("thanks so much", null, { tenant_id: "8f6c0000-0000-4000-8000-0000000000f6", agent_id: "paige-ai-chat", job_kind: "turn-classify" });
   const f6 = recF6.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF6).at(-1)?.row;
   const f6r = routeOf(f6);
   ok(f6r.route_requested_class === "cheap" && f6r.route_job === "turn-classify"
-    && String(f6r.route_served_model).includes("haiku") && f6r.route_reason === "served_primary",
+    && f6r.route_served_provider === "openrouter" && f6r.route_served_model === "openrouter/auto"
+    && f6r.route_reason === "served_primary",
     `F6 the classifier's row carries its route automatically (${JSON.stringify(f6r)})`);
-
-  delete ENV.OPENAI_CANARY_TENANTS;
+  ENV.OPENROUTER_CANARY_TENANTS = "";
 
   // F7 — privacy: every route value is a closed code or an id; nothing free-text.
   const allRouteRows = recorder().inserts.filter((i) => i.table === "paige_llm_trace").map((i) => i.row?.metadata).filter((m) => m && "route_reason" in m);
@@ -859,80 +808,81 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 
 
 // ── G. THE CUTOVER COMPLETED: production-wide admission, all classes, env-staged ────────────────
-// The owner-directed flag is ON and admission is PRODUCTION-WIDE for ALL THREE classes (the
-// 2026-10-09 owner green light "finish end to end"; operational validated live 2026-10-08 — the
-// live readback for cheap and frontier closes this release in EVIDENCE.md). The env is the staged
-// control (a set list restricts tenants or narrows classes; an explicitly EMPTY tenant value is
-// the kill switch). No-spend: the OpenAI legs here run against the harness recording fake.
+// The OpenRouter flag is ON and admission is PRODUCTION-WIDE for ALL THREE classes. The env is the
+// staged control (a set list restricts tenants or narrows classes; an explicitly EMPTY tenant value
+// is the kill switch). No-spend: the Auto legs here run against the harness recording fake.
 {
   const ANY_TENANT = "9a7d0000-0000-4000-8000-0000000000b2";
   const OTHER_TENANT = "8b5c0000-0000-4000-8000-0000000000c3";
 
-  ok(fabric.OPENAI_CHAT_ENABLED === true, "G1 the owner-directed master flag is ON");
-  ok(fabric.openAiCanaryTenants() === null, "G1 with no env cohort, admission is PRODUCTION-WIDE (null = all)");
+  ok(fabric.OPENROUTER_CHAT_ENABLED === true, "G1 the OpenRouter master flag is ON");
+  ok(fabric.openRouterCanaryTenants() !== null && fabric.openRouterCanaryTenants().length === 0,
+    "G1 the pinned empty cohort is the kill switch for these unattributed drives");
 
-  const admits = (t, c) => fabric.openAiCohortAdmits(t, c);
+  const admits = (t, c) => fabric.openRouterCohortAdmits(t, c);
+  ENV.OPENROUTER_CANARY_TENANTS = "";
+  delete ENV.OPENROUTER_CANARY_TENANTS;
   ok(admits(ANY_TENANT, "operational") === true, "G2 ANY well-formed tenant is admitted for operational");
   ok(admits(ANY_TENANT, "cheap") === true && admits(ANY_TENANT, "frontier") === true,
-    "G2 the default scope is the COMPLETED owner policy — all three classes admitted (Luna/Sol/Astra first)");
+    "G2 the default scope is the COMPLETED owner policy — all three classes admitted");
   ok(admits(null, "operational") === false && admits("not-a-uuid", "operational") === false,
     "G2 unattributed and malformed tenants are never admitted");
-  ENV.OPENAI_CANARY_CLASSES = "operational";
+  ENV.OPENROUTER_CANARY_CLASSES = "operational";
   ok(admits(ANY_TENANT, "cheap") === false && admits(ANY_TENANT, "frontier") === false,
     "G2 an explicit class scope can NARROW to a subset (a reviewed decision)");
-  ENV.OPENAI_CANARY_CLASSES = "garbage,frontier";
+  ENV.OPENROUTER_CANARY_CLASSES = "garbage,frontier";
   ok(admits(ANY_TENANT, "operational") === false && admits(ANY_TENANT, "frontier") === true,
     "G2 an explicit scope REPLACES the default (unknown class tokens ignored, never wider)");
-  ENV.OPENAI_CANARY_CLASSES = "garbage,,";
+  ENV.OPENROUTER_CANARY_CLASSES = "garbage,,";
   ok(admits(ANY_TENANT, "operational") === true && admits(ANY_TENANT, "cheap") === true && admits(ANY_TENANT, "frontier") === true,
     "G2 a SET value with ZERO valid tokens falls back to the default (all three)");
-  delete ENV.OPENAI_CANARY_CLASSES;
+  delete ENV.OPENROUTER_CANARY_CLASSES;
 
   setScenario({});
   anthropicPlan = { status: 200 };
-  openaiPlan = { status: 200 };
+  plan = { status: 200 };
   calls.length = 0;
   const anyStream = await fabric.fabricChatStream("operational", { messages: [{ role: "user", content: "x" }], tools: [TOOL], tool_choice: "auto" },
-    { openaiFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check", job_kind: "chat" } });
+    { openrouterFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check", job_kind: "chat" } });
   const readerG = anyStream.body?.getReader();
   while (readerG && !(await readerG.read()).done) { /* drain */ }
-  ok(anyStream.ok && anyStream.served?.provider === "openai" && anyStream.served?.model === "gpt-6.1-sol"
-    && calls.every((c) => c.provider === "openai"),
-    `G3 ANY tenant's operational round serves Sol first (${anyStream.served?.provider}:${anyStream.served?.model})`);
+  ok(anyStream.ok && anyStream.served?.provider === "openrouter" && anyStream.served?.model === "openrouter/auto"
+    && calls.every((c) => c.provider === "openrouter"),
+    `G3 ANY tenant's operational round serves the Auto leg first (${anyStream.served?.provider}:${anyStream.served?.model})`);
   calls.length = 0;
   const unattributed = await fabric.fabricChatStream("operational", { messages: [{ role: "user", content: "x" }], tools: [TOOL], tool_choice: "auto" },
-    { openaiFetch, trace: { agent_id: "fabric-check", job_kind: "chat" } });
+    { openrouterFetch, trace: { agent_id: "fabric-check", job_kind: "chat" } });
   const readerU = unattributed.body?.getReader();
   while (readerU && !(await readerU.read()).done) { /* drain */ }
-  ok(unattributed.ok && unattributed.served?.provider === "anthropic" && calls.every((c) => c.provider === "anthropic"),
-    "G3 unattributed traffic still serves from the incumbent (never admitted)");
+  ok(!unattributed.ok && unattributed.served === null && calls.length === 0,
+    "G3 unattributed traffic is refused truthfully — never admitted, never a direct provider");
   const cheapCompletion = await fabric.fabricCompletion(
     { cognitive_class: "cheap", job: "turn_classify", messages: [{ role: "user", content: "x" }] },
-    { openaiFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check" } });
-  ok(cheapCompletion.route.served?.provider === "openai" && cheapCompletion.route.served?.model === "gpt-6-luna",
-    "G3 the CLASSIFIER serves Luna first — cheap is admitted under the completed policy");
+    { openrouterFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check" } });
+  ok(cheapCompletion.route.served?.provider === "openrouter" && cheapCompletion.route.served?.model === "openrouter/auto",
+    "G3 the CLASSIFIER serves the Auto leg first — cheap is admitted under the completed policy");
   const opCompletion = await fabric.fabricCompletion(
     { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
-    { openaiFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check" } });
-  ok(opCompletion.ok && opCompletion.route.served?.provider === "openai" && opCompletion.route.served?.model === "gpt-6.1-sol",
-    "G3 the completion seam serves Sol first for any tenant's operational job");
+    { openrouterFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check" } });
+  ok(opCompletion.ok && opCompletion.route.served?.provider === "openrouter" && opCompletion.route.served?.model === "openrouter/auto",
+    "G3 the completion seam serves the Auto leg for any tenant's operational job");
   calls.length = 0;
   const frontierStream = await fabric.fabricChatStream("frontier", { messages: [{ role: "user", content: "x" }], tools: [TOOL], tool_choice: "auto" },
-    { openaiFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check", job_kind: "chat" } });
+    { openrouterFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check", job_kind: "chat" } });
   const readerF = frontierStream.body?.getReader();
   while (readerF && !(await readerF.read()).done) { /* drain */ }
-  ok(frontierStream.ok && frontierStream.served?.provider === "openai" && frontierStream.served?.model === "gpt-6-astra"
-    && calls.every((c) => c.provider === "openai"),
-    `G3 ANY tenant's frontier round serves Astra first (${frontierStream.served?.provider}:${frontierStream.served?.model})`);
+  ok(frontierStream.ok && frontierStream.served?.provider === "openrouter" && frontierStream.served?.model === "openrouter/auto"
+    && calls.every((c) => c.provider === "openrouter"),
+    `G3 ANY tenant's frontier round serves the Auto leg first (${frontierStream.served?.provider}:${frontierStream.served?.model})`);
 
-  ENV.OPENAI_CANARY_TENANTS = OTHER_TENANT.toUpperCase();
-  ok(fabric.openAiCanaryTenants() !== null && admits(ANY_TENANT, "operational") === false && admits(OTHER_TENANT, "operational") === true,
+  ENV.OPENROUTER_CANARY_TENANTS = OTHER_TENANT.toUpperCase();
+  ok(fabric.openRouterCanaryTenants() !== null && admits(ANY_TENANT, "operational") === false && admits(OTHER_TENANT, "operational") === true,
     "G4 a set env cohort RESTRICTS to it, case-insensitively (staged rollout)");
-  ENV.OPENAI_CANARY_TENANTS = "";
-  ok(fabric.openAiCanaryTenants() !== null && fabric.openAiCanaryTenants().length === 0 && admits(ANY_TENANT, "operational") === false,
+  ENV.OPENROUTER_CANARY_TENANTS = "";
+  ok(fabric.openRouterCanaryTenants() !== null && fabric.openRouterCanaryTenants().length === 0 && admits(ANY_TENANT, "operational") === false,
     "G4 an explicitly EMPTY cohort admits NOBODY — the kill switch, effective on the next call (no deploy)");
-  delete ENV.OPENAI_CANARY_TENANTS;
-  ok(fabric.openAiCanaryTenants() === null && admits(ANY_TENANT, "operational") === true,
+  delete ENV.OPENROUTER_CANARY_TENANTS;
+  ok(fabric.openRouterCanaryTenants() === null && admits(ANY_TENANT, "operational") === true,
     "G4 clearing the env RESTORES production-wide (unsetting is NOT the kill switch)");
 
   setScenario({});
@@ -940,63 +890,62 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 // Trusted in-process authority must be current after budget reads and before
 // every provider leg. Refusal/throw is not a provider failure or fallback reason.
 {
-  setScenario({}); openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
+  setScenario({}); plan = { status: 200 }; anthropicPlan = { status: 200 };
   const request = { cognitive_class: "operational", job: "thread_summary_fold", max_tokens: 2048, messages: [{ role: "user", content: "fold" }] };
   for (const [name, gate] of [["false", async () => false], ["throw", () => { throw new Error("synthetic authority unavailable"); }], ["rejection", async () => { throw new Error("synthetic rejected authority"); }]]) {
     calls.length = 0;
     const trace = { agent_id: "fabric-scope-check" };
-    const r = await fabric.fabricCompletion(request, { ...ON, openaiFetch, trace, beforeProviderAttempt: gate });
+    const r = await fabric.fabricCompletion(request, { ...ON, openrouterFetch, trace, beforeProviderAttempt: gate });
     ok(!r.ok && r.error?.failure === "caller_refused" && calls.length === 0 && r.route.served === null,
       `H1 authority ${name} prevents every provider leg, never falls back`);
     ok(trace.fabric_route === null && r.route.reason === "failed", `H1 authority ${name} clears stale route projection`);
   }
-  let gates = 0; calls.length = 0; openaiPlan = { status: 429, type: "rate_limit_error" };
-  const refusedFallback = await fabric.fabricCompletion(request, { ...ON, openaiFetch, beforeProviderAttempt: async () => ++gates === 1 });
-  ok(!refusedFallback.ok && refusedFallback.error?.failure === "caller_refused" && gates === 2
-    && calls.length === 1 && calls[0].provider === "openai", "H2 changed authority after primary failure prevents the fallback leg");
-  gates = 0; calls.length = 0;
-  const allowedFallback = await fabric.fabricCompletion(request, { ...ON, openaiFetch, beforeProviderAttempt: async () => { gates++; return true; } });
-  ok(allowedFallback.ok && gates === 2 && calls.length === 2 && allowedFallback.route.served?.provider === "anthropic",
-    "H2 unchanged authority allows existing health fallback with one check per provider leg");
-  openaiPlan = { status: 200 };
+  let gates = 0; calls.length = 0; plan = { status: 429, type: "rate_limit_error" };
+  const refused = await fabric.fabricCompletion(request, { ...ON, openrouterFetch, beforeProviderAttempt: async () => ++gates === 1 });
+  ok(!refused.ok && refused.error?.failure === "rate_limit" && gates === 1
+    && calls.length === 1 && calls[0].provider === "openrouter", "H2 authority admitted the one leg; its provider failure is named, never a second transport");
+  gates = 0; calls.length = 0; plan = { status: 200 };
+  const allowed = await fabric.fabricCompletion(request, { ...ON, openrouterFetch, beforeProviderAttempt: async () => { gates++; return true; } });
+  ok(allowed.ok && gates === 1 && calls.length === 1 && allowed.route.served?.provider === "openrouter",
+    "H2 unchanged authority admits the one Auto leg with one check per provider leg");
 }
-// The streamed seam must revalidate after its OWN OpenAI budget and after the
-// incumbent Anthropic gateway's internal budget, including a health fallback.
+// The streamed seam must revalidate after its OWN budget and internal awaits.
 {
-  setScenario({}); openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
-  for (const primary of ['openai','anthropic']) for (const [name, gate] of [
+  setScenario({}); plan = { status: 200 }; anthropicPlan = { status: 200 };
+  for (const [name, gate] of [
     ['false', async () => false], ['throw', () => { throw new Error('synthetic authority unavailable'); }],
     ['rejection', async () => { throw new Error('synthetic rejected authority'); }],
   ]) {
-    const trace = { agent_id:'stream-authority-check' };
-    const r = await run('operational', { enabled:{openai:primary==='openai'}, trace, beforeProviderAttempt:gate });
-    ok(!r.s.ok && r.s.served===null && r.calls.length===0 && r.s.attempts.at(-1)?.failure==='caller_refused',
-      `I1 ${primary} ${name} refuses before transport and never falls back`);
-    ok(trace.fabric_route===null, `I1 ${primary} ${name} clears projected route without provider fault`);
+    const trace = { agent_id: 'stream-authority-check' };
+    const r = await run('operational', { ...ON, trace, beforeProviderAttempt: gate });
+    ok(!r.s.ok && r.s.served === null && r.calls.length === 0 && r.s.attempts.at(-1)?.failure === 'caller_refused',
+      `I1 ${name} refuses before transport and never falls back`);
+    ok(trace.fabric_route === null, `I1 ${name} clears projected route without provider fault`);
   }
-  let gates=0;
-  let r=await run('operational',{...ON,beforeProviderAttempt:async()=>{gates++;return true;}});
-  ok(r.s.ok && gates===1 && r.calls.length===1 && r.calls[0].provider==='openai', 'I2 unchanged authority admits primary once');
-  openaiPlan={status:429,type:'rate_limit_error'};gates=0;
-  r=await run('operational',{...ON,beforeProviderAttempt:async()=>++gates===1});
-  ok(!r.s.ok && gates===2 && r.calls.length===1 && r.calls[0].provider==='openai' && r.s.attempts.at(-1)?.failure==='caller_refused',
-    'I2 changed fallback authority is terminal caller_refused, not provider failure');
-  gates=0;
-  r=await run('operational',{...ON,beforeProviderAttempt:async()=>{gates++;return true;}});
-  ok(r.s.ok && gates===2 && r.calls.length===2 && r.s.served?.provider==='anthropic', 'I2 unchanged authority preserves proven health fallback');
-  for(const fallback of [false,true]){
-    let current=true;const trace={tenant_id:fallback?'7e5a0000-0000-4000-8000-0000000000f2':'7e5a0000-0000-4000-8000-0000000000f1',agent_id:'stream-budget-authority'};
-    setScenario({serviceTables:{paige_llm_trace:filters=>{if(filters.some(([op,column])=>op==='select'&&column==='cost_estimate_usd')&&(!fallback||calls.some(call=>call.provider==='openai')))current=false;return [];}}});
-    openaiPlan=fallback?{status:429,type:'rate_limit_error'}:{status:200};
-    r=await run('operational',{...ON,trace,beforeProviderAttempt:async()=>current});
-    ok(!r.s.ok && r.s.attempts.at(-1)?.failure==='caller_refused' && trace.fabric_route===null
-      && r.calls.length===(fallback?1:0) && r.calls.every(call=>call.provider==='openai'),
-      `I3 scope flip in ${fallback?'Anthropic fallback internal':'OpenAI primary'} budget refuses next actual transport`);
+  let gates = 0;
+  let r = await run('operational', { ...ON, beforeProviderAttempt: async () => { gates++; return true; } });
+  ok(r.s.ok && gates === 1 && r.calls.length === 1 && r.calls[0].provider === 'openrouter', 'I2 unchanged authority admits the Auto leg once');
+  plan = { status: 429, type: 'rate_limit_error' }; gates = 0;
+  r = await run('operational', { ...ON, beforeProviderAttempt: async () => ++gates === 1 });
+  ok(!r.s.ok && gates === 1 && r.calls.length === 1 && r.calls[0].provider === 'openrouter' && r.s.attempts.at(-1)?.failure === 'rate_limit',
+    'I2 changed authority after the primary failure is terminal — the provider failure is named, never a second transport');
+  gates = 0;
+  plan = { status: 200 };
+  r = await run('operational', { ...ON, beforeProviderAttempt: async () => { gates++; return true; } });
+  ok(r.s.ok && gates === 1 && r.calls.length === 1 && r.s.served?.provider === 'openrouter', 'I2 unchanged authority preserves the proven health admission');
+  for (const [name, gateFlip] of [['primary budget', false]]) {
+    let current = true; const trace = { tenant_id: '7e5a0000-0000-4000-8000-0000000000f1', agent_id: 'stream-budget-authority' };
+    setScenario({ serviceTables: { paige_llm_trace: filters => { if (filters.some(([op, column]) => op === 'select' && column === 'cost_estimate_usd') && (!gateFlip || calls.some(call => call.provider === 'openrouter'))) current = false; return []; } } });
+    plan = gateFlip ? { status: 429, type: 'rate_limit_error' } : { status: 200 };
+    r = await run('operational', { ...ON, trace, beforeProviderAttempt: async () => current });
+    ok(!r.s.ok && r.s.attempts.at(-1)?.failure === 'caller_refused' && trace.fabric_route === null
+      && r.calls.length === (gateFlip ? 1 : 0) && r.calls.every(call => call.provider === 'openrouter'),
+      `I3 scope flip in ${name} refuses the next actual transport`);
   }
-  setScenario({});openaiPlan={status:200};
+  setScenario({}); plan = { status: 200 };
 }
-// A successful HTTP open is not a successful model acquisition. Only a proven
-// provider failure before ANY semantic output may use the existing next leg.
+// A successful HTTP open is not a successful model acquisition. A proven provider
+// failure before ANY semantic output interrupts the turn (no second transport exists).
 {
   setScenario({}); anthropicPlan = { status: 200 };
   const created = { type: 'response.created', response: { status: 'in_progress' } };
@@ -1010,11 +959,11 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     let gates = 0, opens = 0;
     const r = await run('frontier', { ...ON,
       beforeProviderAttempt: async () => { gates++; return true; },
-      openaiFetch: async () => { opens++; return new Response(sse([created, failed(code)])); },
+      openrouterFetch: async () => { opens++; return new Response(sse([created, failed(code)])); },
     });
-    ok(r.s.ok && r.s.served?.provider === 'anthropic' && opens === 1 && gates === 2
-      && realAttempt(r.s.attempts)?.failure === expected && r.runnable.length === 1,
-      `J1 presemantic HTTP200 ${code} uses the canonical fallback, rechecking authority`);
+    ok(!r.s.ok && r.s.served === null && opens === 1 && gates === 1
+      && realAttempt(r.s.attempts)?.failure === expected && r.runnable.length === 0,
+      `J1 presemantic HTTP200 ${code} is named (${expected}) and the turn is interrupted, never replayed`);
   }
   for (const semantic of [
     { type: 'response.output_text.delta', delta: 'Already received.' },
@@ -1026,32 +975,32 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     { type: 'response.failed', response: { status: 'failed', error: { code: 'insufficient_quota' }, output: [{ type: 'function_call', call_id: 'call-hidden' }] } },
   ]) {
     const r = await run('frontier', { ...ON,
-      openaiFetch: async () => new Response(sse([created, semantic, failed('insufficient_quota')])),
+      openrouterFetch: async () => new Response(sse([created, semantic, failed('insufficient_quota')])),
     });
-    ok(r.s.served?.provider === 'openai' && r.calls.length === 0 && r.runnable.length === 0,
-      `J2 ${semantic.type} prevents replay/fallback even after a provider failure`);
+    ok(r.s.served?.provider === 'openrouter' && r.calls.length === 0 && r.runnable.length === 0,
+      `J2 ${semantic.type} prevents replay even after a provider failure`);
   }
   for (const terminal of [failed('unrecognised_code'), failed('credit_balance_exhausted_extra'),
     { type: 'response.failed', response: { status: 'completed', error: { code: 'insufficient_quota' } } },
   ]) {
-    const r = await run('frontier', { ...ON, openaiFetch: async () => new Response(sse([created, terminal])) });
+    const r = await run('frontier', { ...ON, openrouterFetch: async () => new Response(sse([created, terminal])) });
     ok(!r.s.ok && r.s.served === null && r.calls.length === 0
       && r.s.attempts.at(-1)?.failure === 'unknown', 'J3 unknown/contradictory terminal is refused, never replayed');
   }
   let gates = 0;
   const refused = await run('frontier', { ...ON, beforeProviderAttempt: async () => ++gates === 1,
-    openaiFetch: async () => new Response(sse([created, failed('insufficient_quota')])),
+    openrouterFetch: async () => new Response(sse([created, failed('insufficient_quota')])),
   });
-  ok(!refused.s.ok && gates === 2 && refused.calls.length === 0
-    && refused.s.attempts.at(-1)?.failure === 'caller_refused', 'J4 changed authority after stream failure prevents fallback');
+  ok(!refused.s.ok && gates === 1 && refused.calls.length === 0
+    && refused.s.attempts.at(-1)?.failure === 'billing', 'J4 authority was current for the one leg; its failure is named and nothing is replayed');
 
   let creditGates = 0;
   const refusedCredits = await run('frontier', { ...ON, beforeProviderAttempt: async () => ++creditGates === 1,
-    openaiFetch: async () => new Response(sse([created, failed('credit_balance_exhausted')])),
+    openrouterFetch: async () => new Response(sse([created, failed('credit_balance_exhausted')])),
   });
-  ok(!refusedCredits.s.ok && creditGates === 2 && refusedCredits.calls.length === 0
-    && refusedCredits.s.attempts.at(-1)?.failure === 'caller_refused',
-    'J4 credit exhaustion cannot bypass current authority on the existing fallback');
+  ok(!refusedCredits.s.ok && creditGates === 1 && refusedCredits.calls.length === 0
+    && refusedCredits.s.attempts.at(-1)?.failure === 'billing',
+    'J4 credit exhaustion is named on the one leg; authority was current and nothing is replayed');
   for (const semantic of [
     { type: 'response.output_text.delta', delta: 'Already received.' },
     { type: 'response.output_item.added', item: { type: 'function_call', id: 'fc-credit', call_id: 'call-credit', name: 'crm_contact_lookup' } },
@@ -1060,14 +1009,14 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     { type: 'response.future_unknown_event' },
   ]) {
     const r = await run('frontier', { ...ON,
-      openaiFetch: async () => new Response(sse([created, semantic, failed('credit_balance_exhausted')])),
+      openrouterFetch: async () => new Response(sse([created, semantic, failed('credit_balance_exhausted')])),
     });
-    ok(r.s.served?.provider === 'openai' && r.calls.length === 0 && r.runnable.length === 0,
+    ok(r.s.served?.provider === 'openrouter' && r.calls.length === 0 && r.runnable.length === 0,
       `J4 credit exhaustion after ${semantic.type} cannot replay received or uncertain work`);
   }
   const cancelled = new AbortController(); cancelled.abort(); let opens = 0;
   const aborted = await fabric.fabricChatStream('frontier', BODY, { ...ON, signal: cancelled.signal,
-    openaiFetch: async () => { opens++; return new Response(sse([created, failed('insufficient_quota')])); },
+    openrouterFetch: async () => { opens++; return new Response(sse([created, failed('insufficient_quota')])); },
   });
   if (aborted.body) await aborted.body.cancel();
   ok(!aborted.ok && aborted.served === null && opens === 0
@@ -1077,7 +1026,7 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const opened = new Promise(resolve => { entered = resolve; });
   const controller = new AbortController(); calls = [];
   const acquiring = fabric.fabricChatStream('frontier', BODY, { ...ON, signal: controller.signal,
-    openaiFetch: async (_url, init) => {
+    openrouterFetch: async (_url, init) => {
       actualSignal = init.signal; entered();
       return new Response(new ReadableStream({
         start(c) { c.enqueue(enc.encode(`data: ${JSON.stringify(created)}\n\n`)); },
@@ -1091,50 +1040,50 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   controller.abort(); const interrupted = await acquiring;
   ok(!interrupted.ok && interrupted.served === null && actualSignal.aborted
     && upstreamCancelled === 1 && calls.length === 0 && interrupted.attempts.at(-1)?.failure === 'aborted',
-    'J6 caller cancellation during acquisition cancels upstream and starts no fallback');
+    'J6 caller cancellation during acquisition cancels upstream and starts no replay');
 
   const bytes = enc.encode([created, failed('insufficient_quota')]
     .map(e => `data: ${JSON.stringify(e)}\r\n\r\n`).join(''));
-  const fragmented = await run('frontier', { ...ON, openaiFetch: async () => new Response(new ReadableStream({
+  const fragmented = await run('frontier', { ...ON, openrouterFetch: async () => new Response(new ReadableStream({
     start(c) { for (const b of bytes) c.enqueue(Uint8Array.of(b)); c.close(); },
   })) });
-  ok(fragmented.s.served?.provider === 'anthropic' && fragmented.runnable.length === 1,
-    'J7 one-byte fragmented CRLF terminal failure uses the same canonical recovery');
+  ok(!fragmented.s.ok && fragmented.s.served === null && realAttempt(fragmented.s.attempts)?.failure === 'billing',
+    'J7 one-byte fragmented CRLF terminal failure is named, never replayed');
 
   const recoveredError = await run('frontier', { ...ON,
-    openaiFetch: async () => new Response(sse([created, { type: 'error', error: { type: 'api_error' } }])),
+    openrouterFetch: async () => new Response(sse([created, { type: 'error', error: { type: 'api_error' } }])),
   });
-  ok(recoveredError.s.served?.provider === 'anthropic' && realAttempt(recoveredError.s.attempts)?.failure === 'provider_outage',
+  ok(!recoveredError.s.ok && realAttempt(recoveredError.s.attempts)?.failure === 'provider_outage',
     'J8 an explicit presemantic provider error uses the incumbent failure classifier');
 
   setScenario({});
   const trace = { tenant_id: '7e5a0000-0000-4000-8000-0000000000f3', agent_id: 'fabric-check', job_kind: 'chat' };
+  const beforeJ9 = recorder().inserts.filter(r => r.table === 'paige_llm_trace').length;
   const traced = await run('frontier', { ...ON, trace,
-    openaiFetch: async () => new Response(sse([created, failed('insufficient_quota')])),
+    openrouterFetch: async () => new Response(sse([created, failed('insufficient_quota')])),
   });
-  for (let i = 0; i < 30 && recorder().inserts.filter(r => r.table === 'paige_llm_trace').length < 2; i++)
+  for (let i = 0; i < 30 && recorder().inserts.filter(r => r.table === 'paige_llm_trace').length <= beforeJ9; i++)
     await new Promise(resolve => setTimeout(resolve, 0));
-  const rows = recorder().inserts.filter(r => r.table === 'paige_llm_trace').map(r => r.row);
-  const primary = rows.find(r => r.provider === 'openai'), secondary = rows.find(r => r.provider === 'anthropic');
-  ok(traced.s.served?.provider === 'anthropic' && rows.length === 2 && primary?.status === 'error'
-    && primary.metadata?.route_served_provider === 'openai' && primary.metadata?.route_fallback === false
-    && secondary?.status === 'success' && secondary.metadata?.route_served_provider === 'anthropic'
-    && secondary.metadata?.route_fallback === true && trace.fabric_route?.served_provider === 'anthropic',
-    `J9 each original trace retains its own provider/route while the caller observes the actual fallback (${rows.length} rows)`);
+  const rows = recorder().inserts.filter(r => r.table === 'paige_llm_trace').slice(beforeJ9).map(r => r.row);
+  const primary = rows.find(r => r.provider === 'openrouter');
+  ok(!traced.s.ok && rows.length === 1 && primary?.status === 'error'
+    && primary.metadata?.route_served_provider === 'openrouter' && primary.metadata?.route_fallback === false
+    && trace.fabric_route?.reason === 'failed' && trace.fabric_route?.served_provider == null,
+    `J9 the failed leg's trace retains its own provider/route while the caller's ctx carries the served-null failure route (${rows.length} rows)`);
 }
 // Cancellation before HTTP open is the caller's state, never a provider fault.
 {
   setScenario({});
   const ctrl = new AbortController(); let opens = 0;
   const r = await run('frontier', { ...ON, signal: ctrl.signal,
-    openaiFetch: async () => { opens++; ctrl.abort(); throw new DOMException('Synthetic cancellation.', 'AbortError'); },
+    openrouterFetch: async () => { opens++; ctrl.abort(); throw new DOMException('Synthetic cancellation.', 'AbortError'); },
   });
   ok(!r.s.ok && r.s.served === null && opens === 1 && r.calls.length === 0
-    && r.s.attempts.at(-1)?.failure === 'aborted', 'J11 pre-header cancellation is reported as aborted with no fallback');
+    && r.s.attempts.at(-1)?.failure === 'aborted', 'J11 pre-header cancellation is reported as aborted with no replay');
   const atAuthority = new AbortController(); opens = 0;
   const refused = await run('frontier', { ...ON, signal: atAuthority.signal,
     beforeProviderAttempt: async () => { atAuthority.abort(); return false; },
-    openaiFetch: async () => { opens++; throw new Error('CANCELLED_DISPATCH_FORBIDDEN'); },
+    openrouterFetch: async () => { opens++; throw new Error('CANCELLED_DISPATCH_FORBIDDEN'); },
   });
   ok(!refused.s.ok && opens === 0 && refused.calls.length === 0
     && refused.s.attempts.at(-1)?.failure === 'aborted', 'J11 cancellation during authority check is not misreported as an authority refusal');
@@ -1156,32 +1105,30 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     p => ts.isPropertyAssignment(p) && p.name.getText(root) === 'signal' && p.initializer.getText(root) === 'req.signal')),
     'J10 every original Root stream forwards its true request signal');
 }
+// The private cache contract on the OpenRouter wire: PAIGE never sends a prompt_cache_key to
+// OpenRouter (the adapter omits it by design; OpenRouter owns session stickiness server-side),
+// so a trusted partition can never leak onto the wire — but authority, cancellation and hashing
+// semantics around the cache seam are still revalidated before any provider attempt.
 {
-  openaiPlan = { status: 200 };
+  plan = { status: 200 };
   const trace = { tenant_id: '00000000-0000-4000-8000-000000000001', agent_id: 'fabric-cache-check',
     prompt_cache_scope: { actor_id: '00000000-0000-4000-8000-000000000011',
       tenant_id: '00000000-0000-4000-8000-000000000001', working_context_tenant_id: '00000000-0000-4000-8000-000000000001' } };
   let checked = 0;
   const a = await run('operational', { ...ON, trace, beforeProviderAttempt: () => { checked++; return true; } });
-  ok(a.s.ok && a.calls[0].provider === 'openai' && checked === 1
-    && /^[a-f0-9]{64}$/.test(a.calls[0].req.prompt_cache_key), 'K1 real streaming Fabric forwards trusted scoped cache partition after authority check');
+  ok(a.s.ok && a.calls[0].provider === 'openrouter' && checked === 1
+    && !a.calls[0].req.prompt_cache_key, 'K1 the Auto leg never carries a prompt_cache_key (OpenRouter owns session stickiness)');
   const b = await run('operational', { ...ON, trace: { ...trace,
     prompt_cache_scope: { ...trace.prompt_cache_scope, actor_id: '00000000-0000-4000-8000-000000000012' } } });
-  ok(a.calls[0].req.prompt_cache_key !== b.calls[0].req.prompt_cache_key, 'K2 different admitted actor never shares the Chat cache group');
-  const invalid = await run('operational', { ...ON, trace: { ...trace,
-    prompt_cache_scope: { ...trace.prompt_cache_scope, actor_id: 'invalid' } } });
-  ok(invalid.s.ok && !invalid.calls[0].req.prompt_cache_key
-    && invalid.calls[0].req.prompt_cache_options.mode === 'explicit'
-    && !JSON.stringify(invalid.calls[0].req).includes('prompt_cache_breakpoint'),
-    'K2b malformed trusted partition disables all cache reads/writes instead of joining a global group');
+  ok(b.s.ok && !b.calls[0].req.prompt_cache_key, 'K2 a different admitted actor never leaks any cache group onto the wire');
   const refused = await run('operational', { ...ON, trace, beforeProviderAttempt: () => false });
   ok(!refused.s.ok && refused.calls.length === 0 && refused.s.attempts.at(-1)?.failure === 'caller_refused',
-    'K3 cache preparation never bypasses current authority or triggers fallback');
+    'K3 cache-key preparation never bypasses current authority or triggers replay');
   calls = [];
   const r = await fabric.fabricCompletion({ cognitive_class: 'operational', job: 'thread_summary_fold',
-    messages: BODY.messages }, { ...ON, trace, openaiFetch, beforeProviderAttempt: () => true });
-  ok(r.ok && calls.length === 1 && calls[0].req.prompt_cache_key === a.calls[0].req.prompt_cache_key
-    && calls[0].req.input[0].role === 'developer', 'K4 nonstreaming original Fabric uses the same current private cache contract');
+    messages: BODY.messages }, { ...ON, trace, openrouterFetch, beforeProviderAttempt: () => true });
+  ok(r.ok && calls.length === 1 && !calls[0].req.prompt_cache_key,
+    'K4 the nonstreaming Auto leg keeps the same no-cache-key contract');
   const digest = crypto.subtle.digest;
   try {
     let current = true;
@@ -1190,21 +1137,19 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     };
     const revoked = await run('operational', { ...ON, trace, beforeProviderAttempt: () => current });
     ok(!revoked.s.ok && revoked.calls.length === 0 && revoked.s.attempts.at(-1)?.failure === 'caller_refused',
-      'K5 revocation DURING the real hashing await is revalidated before any provider attempt or fallback');
+      'K5 revocation DURING the real hashing await is revalidated before any provider attempt');
     const cancel = new AbortController();
     crypto.subtle.digest = async function(...args) {
       const hash = await digest.apply(this, args); cancel.abort(); return hash;
     };
     calls = [];
-    const aborted = await fabric.fabricCompletion({ cognitive_class: 'operational', job: 'thread_summary_fold', messages: BODY.messages },
-      { ...ON, trace, signal: cancel.signal, openaiFetch });
-    ok(!aborted.ok && calls.length === 0 && aborted.error.failure === 'aborted',
-      'K6 cancellation during hashing with no callback causes zero nonstream provider attempts');
+    const aborted = await run('operational', { ...ON, trace, signal: cancel.signal });
+    ok(!aborted.s.ok && calls.length === 0 && aborted.s.attempts.at(-1)?.failure === 'aborted',
+      'K6 cancellation during hashing with no callback causes zero provider attempts');
     crypto.subtle.digest = async () => { throw new Error('synthetic hash unavailable'); };
     const unavailable = await run('operational', { ...ON, trace });
-    ok(unavailable.s.ok && !unavailable.calls[0].req.prompt_cache_key
-      && unavailable.calls[0].req.prompt_cache_options.mode === 'explicit',
-      'K7 hash failure preserves inference but disables cache reuse instead of joining a global group');
+    ok(unavailable.s.ok && unavailable.calls.length === 1 && unavailable.calls[0].provider === 'openrouter',
+      'K7 hash failure preserves inference on the Auto leg (no cache group could join anyway)');
   } finally { crypto.subtle.digest = digest; }
 }
 console.log(`fabric-check: ${pass} passed, ${fail} failed`);

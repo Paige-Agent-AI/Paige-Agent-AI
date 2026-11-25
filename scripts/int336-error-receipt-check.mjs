@@ -1,16 +1,21 @@
 import assert from 'node:assert/strict';
-globalThis.Deno={env:{get:k=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'anon-key',SUPABASE_SERVICE_ROLE_KEY:'service-role-key',ANTHROPIC_API_KEY:'test-key'})[k]??''}};
+// MF-OWNER-2026-11-23: OpenRouter Auto ONLY - synthetic Auto key + the OpenRouter Responses wire;
+// UNDEFINED for unset names (an explicitly-empty canary value is the admission kill switch).
+globalThis.Deno={env:{get:k=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'anon-key',SUPABASE_SERVICE_ROLE_KEY:'service-role-key',OPENROUTER_API_KEY:'test-key'})[k]}};
 const unknownTool=null; let successor=false, failCloseOnce=false;
 let modelCalls=0;
 globalThis.fetch=async(url,opts)=>{
- if(!String(url).includes('api.anthropic.com')) return new Response('{}',{status:503});
+ if(!String(url).includes('openrouter.ai')) return new Response('{}',{status:503});
  const body=JSON.parse(opts.body);
- if(body.system?.startsWith('You label one message sent to PAIGE'))return Response.json({content:[{type:'text',text:JSON.stringify({intent:'answer',research:'none',difficulty:'routine',image:'none',needs_workspace_data:true,confidence:.9})}],usage:{input_tokens:1,output_tokens:1}});
+ if(body.instructions?.startsWith('You label one message sent to PAIGE'))return Response.json({status:'completed',model:'openrouter/auto',output:[{type:'message',role:'assistant',content:[{type:'output_text',text:JSON.stringify({intent:'answer',research:'none',difficulty:'routine',image:'none',needs_workspace_data:true,confidence:.9})}]}],usage:{input_tokens:1,output_tokens:1}});
  modelCalls++;
- if(modelCalls>1 && !successor)throw new Error('fixture gateway failure after unknown write'); if(modelCalls>1)return new Response('event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Readback is required."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\n');
- const events=[{type:'message_start',message:{usage:{input_tokens:1}}}];
- for(let i=0;i<1;i++)events.push({type:'content_block_start',index:i,content_block:{type:'tool_use',id:`tool-${i}`,name:'plan_create'}},{type:'content_block_delta',index:i,delta:{type:'input_json_delta',partial_json:JSON.stringify({title:`Plan ${i}`,horizon:'week',starts_on:'2026-10-06',ends_on:'2026-10-12'})}});
- events.push({type:'message_delta',delta:{stop_reason:'tool_use'},usage:{output_tokens:1}},{type:'message_stop'});
+ if(modelCalls>1 && !successor)throw new Error('fixture gateway failure after unknown write'); if(modelCalls>1)return new Response('event: response.created\ndata: {"type":"response.created","response":{"status":"in_progress"}}\n\nevent: response.output_text.delta\ndata: {"type":"response.output_text.delta","output_index":0,"delta":"Readback is required."}\n\nevent: response.completed\ndata: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":1,"output_tokens":1}}}\n\n');
+ const events=[{type:'response.created',response:{model:'openrouter/auto',status:'in_progress'}}];
+ for(let i=0;i<1;i++){const args={title:`Plan ${i}`,horizon:'week',starts_on:'2026-10-06',ends_on:'2026-10-12'};events.push({type:'response.output_item.added',output_index:i,item:{type:'function_call',id:`fc-${i}`,call_id:`tool-${i}`,name:'plan_create',arguments:''}},
+  {type:'response.function_call_arguments.delta',item_id:`fc-${i}`,output_index:i,delta:JSON.stringify(args)},
+  {type:'response.function_call_arguments.done',item_id:`fc-${i}`,output_index:i,arguments:JSON.stringify(args)},
+  {type:'response.output_item.done',output_index:i,item:{type:'function_call',id:`fc-${i}`,call_id:`tool-${i}`,name:'plan_create',arguments:JSON.stringify(args)}});}
+ events.push({type:'response.completed',response:{model:'openrouter/auto',status:'completed',usage:{input_tokens:1,output_tokens:1}}});
  return new Response(events.map(e=>`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join(''),{headers:{'Content-Type':'text/event-stream'}});
 };
 const fake=await import('./knowledge-scope/fake-supabase.mjs');

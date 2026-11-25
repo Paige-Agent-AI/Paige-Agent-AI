@@ -2,23 +2,29 @@
 // No real provider/network/customer operation. This proves dispatch/receipt/reference
 // integration, not native PostgREST authentication or customer/Live acceptance.
 import assert from 'node:assert/strict';
-globalThis.Deno = { env: { get: key => ({ SUPABASE_URL: 'https://test.supabase.co', SUPABASE_ANON_KEY: 'anon-key', SUPABASE_SERVICE_ROLE_KEY: 'service-role-key', ANTHROPIC_API_KEY: 'test-key' })[key] ?? '' } };
+// MF-OWNER-2026-11-23: the routed path is OpenRouter Auto ONLY — this harness admits the Auto leg
+// with a synthetic key and fakes the OpenRouter Responses wire. The env stub returns UNDEFINED for
+// unset names (never ""), because an explicitly-empty OPENROUTER_CANARY_TENANTS is the documented
+// admission kill switch. No real provider/network/customer operation.
+globalThis.Deno = { env: { get: key => ({ SUPABASE_URL: 'https://test.supabase.co', SUPABASE_ANON_KEY: 'anon-key', SUPABASE_SERVICE_ROLE_KEY: 'service-role-key', OPENROUTER_API_KEY: 'test-key' })[key] } };
 let modelCalls = 0, readToolUse = null;
 const modelBodies = [];
 globalThis.fetch = async (url, options) => {
-  if (!String(url).includes('api.anthropic.com')) return new Response('{}', { status: 503 });
+  if (!String(url).includes('openrouter.ai')) return new Response('{}', { status: 503 });
   const body = JSON.parse(options.body);
-  if (body.system?.startsWith('You label one message sent to PAIGE')) return Response.json({ content: [{ type: 'text', text: JSON.stringify({ intent: 'act', research: 'none', difficulty: 'routine', image: 'none', needs_workspace_data: true, confidence: .9 }) }], usage: { input_tokens: 1, output_tokens: 1 } });
+  if (body.instructions?.startsWith('You label one message sent to PAIGE')) return Response.json({ status: 'completed', model: 'openrouter/auto', output: [{ type: 'message', role: 'assistant', content: [{ type: 'output_text', text: JSON.stringify({ intent: 'act', research: 'none', difficulty: 'routine', image: 'none', needs_workspace_data: true, confidence: .9 }) }] }], usage: { input_tokens: 1, output_tokens: 1 } });
   modelCalls++; modelBodies.push(body);
   const events = modelCalls === 1 ? [
-    { type: 'message_start', message: { usage: { input_tokens: 1 } } },
-    { type: 'content_block_start', index: 0, content_block: { type: 'tool_use', id: 'tool-read', name: readToolUse.name } },
-    { type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: JSON.stringify(readToolUse.input) } },
-    { type: 'message_delta', delta: { stop_reason: 'tool_use' }, usage: { output_tokens: 1 } }, { type: 'message_stop' },
+    { type: 'response.created', response: { model: 'openrouter/auto', status: 'in_progress' } },
+    { type: 'response.output_item.added', output_index: 0, item: { type: 'function_call', id: 'fc_read', call_id: 'tool-read', name: readToolUse.name, arguments: '' } },
+    { type: 'response.function_call_arguments.delta', item_id: 'fc_read', output_index: 0, delta: JSON.stringify(readToolUse.input) },
+    { type: 'response.function_call_arguments.done', item_id: 'fc_read', output_index: 0, arguments: JSON.stringify(readToolUse.input) },
+    { type: 'response.output_item.done', output_index: 0, item: { type: 'function_call', id: 'fc_read', call_id: 'tool-read', name: readToolUse.name, arguments: JSON.stringify(readToolUse.input) } },
+    { type: 'response.completed', response: { model: 'openrouter/auto', status: 'completed', usage: { input_tokens: 1, output_tokens: 1 } } },
   ] : [
-    { type: 'message_start', message: { usage: { input_tokens: 1 } } },
-    { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'Answered from the verified read.' } },
-    { type: 'message_delta', delta: { stop_reason: 'end_turn' }, usage: { output_tokens: 1 } }, { type: 'message_stop' },
+    { type: 'response.created', response: { model: 'openrouter/auto', status: 'in_progress' } },
+    { type: 'response.output_text.delta', output_index: 0, delta: 'Answered from the verified read.' },
+    { type: 'response.completed', response: { model: 'openrouter/auto', status: 'completed', usage: { input_tokens: 1, output_tokens: 1 } } },
   ];
   return new Response(events.map(event => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join(''), { headers: { 'Content-Type': 'text/event-stream' } });
 };
@@ -129,10 +135,9 @@ async function execute({ role = 'owner', tier = 'tenant', args = { approval_id: 
   } });
   const response = await capturedHandler()(req({ messages: [{ role: 'user', content: automation ? 'Inspect my saved processes. Do not change or run anything.' : 'Read the original saved task outcome for approval ' + approvalId }] }, id(100 + requestSequence++)));
   const wire = await response.text();
-  const results = modelBodies.flatMap(body => body.messages ?? []).filter(message => message.role === 'user')
-    .flatMap(message => Array.isArray(message.content) ? message.content : []).filter(part => part.type === 'tool_result');
+  const results = modelBodies.flatMap(body => Array.isArray(body.input) ? body.input : []).filter(item => item?.type === 'function_call_output');
   let value = null;
-  for (const part of results) { try { const parsed = JSON.parse(part.content); if (parsed?.status || automation && typeof parsed?.success === 'boolean') value = parsed; } catch {} }
+  for (const part of results) { try { const parsed = JSON.parse(part.output); if (parsed?.status || automation && typeof parsed?.success === 'boolean') value = parsed; } catch {} }
   assert.equal(rec.functions.length, 0, 'no domain/provider function invocation');
   assert.ok(!rec.rpc.some(c => /execute_owner_task|approve_act|reconcile_act|claim|commit_weekly|create_task/.test(c.name)), 'no execution or decision RPC');
   assert.ok(!rec.inserts.some(c => /crm_tasks|paige_act_executions|paige_pending_approvals/.test(c.table)), 'no task, ledger or approval write');

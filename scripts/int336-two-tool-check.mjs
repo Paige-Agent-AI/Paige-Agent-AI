@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-globalThis.Deno={env:{get:k=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'anon-key',SUPABASE_SERVICE_ROLE_KEY:'service-role-key',ANTHROPIC_API_KEY:'test-key'})[k]??''}};
+// MF-OWNER-2026-11-23: the routed path is OpenRouter Auto ONLY - synthetic Auto key + the OpenRouter
+// Responses wire. UNDEFINED for unset names (an explicitly-empty canary value is the kill switch).
+globalThis.Deno={env:{get:k=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'anon-key',SUPABASE_SERVICE_ROLE_KEY:'service-role-key',OPENROUTER_API_KEY:'test-key'})[k]}};
 const unknownTool=process.env.INT336_UNKNOWN_TOOL;
 const recoveryMode=process.env.PLANNING_RECOVERY;
 if(recoveryMode)assert.ok(['lost','gateway','missing-readback','refused'].includes(recoveryMode));
@@ -43,9 +45,9 @@ globalThis.fetch=async(url,opts)=>{
     ...(knowledgeMode==='unrecorded'?{tenant_id:tenant,verified:true,railRecorded:false,outcome:'capability_completed_unrecorded',run_id:'00000000-0000-4000-8000-000000000010'}:{})},
    {status:knowledgeMode==='uncertain'?400:knowledgeMode==='refused'?403:200});
  }
- if(!String(url).includes('api.anthropic.com')) return new Response('{}',{status:503});
+ if(!String(url).includes('openrouter.ai')) return new Response('{}',{status:503});
  const body=JSON.parse(opts.body);
- if(body.system?.startsWith('You label one message sent to PAIGE'))return Response.json({content:[{type:'text',text:JSON.stringify({intent:crmPauseMode?'act':'answer',research:'none',difficulty:'routine',image:'none',needs_workspace_data:true,confidence:.9})}],usage:{input_tokens:1,output_tokens:1}});
+ if(body.instructions?.startsWith('You label one message sent to PAIGE'))return Response.json({status:'completed',model:'openrouter/auto',output:[{type:'message',role:'assistant',content:[{type:'output_text',text:JSON.stringify({intent:crmPauseMode?'act':'answer',research:'none',difficulty:'routine',image:'none',needs_workspace_data:true,confidence:.9})}]}],usage:{input_tokens:1,output_tokens:1}});
  modelCalls++;
  if(crmPauseMode==='kill'&&modelCalls>1){
   console.error(JSON.stringify({boundary:'native proposal -> next provider',pending:pauseRows.length,canonicalTerminals:receipts.length,executorHeld:executor===intent}));
@@ -54,8 +56,8 @@ globalThis.fetch=async(url,opts)=>{
   process.exit(86);
  }
  if(crmScopeMode)crmScopeModelBodies.push(body);
- if(modelCalls>1||crmScopePinned)return new Response('event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Readback is required."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\n');
- const events=[{type:'message_start',message:{usage:{input_tokens:1}}}];
+ if(modelCalls>1||crmScopePinned)return new Response('event: response.created\ndata: {"type":"response.created","response":{"status":"in_progress"}}\n\nevent: response.output_text.delta\ndata: {"type":"response.output_text.delta","output_index":0,"delta":"Readback is required."}\n\nevent: response.completed\ndata: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":1,"output_tokens":1}}}\n\n');
+ const events=[{type:'response.created',response:{model:'openrouter/auto',status:'in_progress'}}];
  for(let i=0;i<(crmPauseMode?(['prior-success','following-unknown'].includes(crmPauseMode)?2:1):crmScopeMode||bookingMode&&bookingMode!=='no-approval'?1:2);i++){
   const name=crmPauseMode?(crmPauseMode==='prior-success'&&i===0||crmPauseMode==='following-unknown'&&i===1?'plan_create':'crm_create_task'):i===0&&bookingMode==='no-approval'?'calendar_book_meeting':i===0&&(crmMode||crmScopeMode)?'crm_create_task':i===0&&researchMode?'deep_research':i===0&&automationMode?'automation_draft':i===0&&knowledgeMode?'save_to_knowledge_base':'plan_create';
   const args=name==='calendar_book_meeting'?bookingArgs
@@ -63,9 +65,12 @@ globalThis.fetch=async(url,opts)=>{
    :name==='automation_draft'?{...draftArgs,...(automationMode==='refused'?{steps:Array.from({length:21},()=>draftArgs.steps[0])}:{})}
    :name==='save_to_knowledge_base'?{title:'Fixture reference',content:'Private fixture content'}
    :{title:`Plan ${knowledgeMode||automationMode||researchMode||crmMode||bookingMode?0:i}`,horizon:'week',starts_on:'2026-10-06',ends_on:'2026-10-12'};
-  events.push({type:'content_block_start',index:i,content_block:{type:'tool_use',id:`tool-${i}`,name}},{type:'content_block_delta',index:i,delta:{type:'input_json_delta',partial_json:JSON.stringify(args)}});
+  events.push({type:'response.output_item.added',output_index:i,item:{type:'function_call',id:`fc-${i}`,call_id:`tool-${i}`,name,arguments:''}},
+   {type:'response.function_call_arguments.delta',item_id:`fc-${i}`,output_index:i,delta:JSON.stringify(args)},
+   {type:'response.function_call_arguments.done',item_id:`fc-${i}`,output_index:i,arguments:JSON.stringify(args)},
+   {type:'response.output_item.done',output_index:i,item:{type:'function_call',id:`fc-${i}`,call_id:`tool-${i}`,name,arguments:JSON.stringify(args)}});
  }
- events.push({type:'message_delta',delta:{stop_reason:'tool_use'},usage:{output_tokens:1}},{type:'message_stop'});
+ events.push({type:'response.completed',response:{model:'openrouter/auto',status:'completed',usage:{input_tokens:1,output_tokens:1}}});
  return new Response(events.map(e=>`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join(''),{headers:{'Content-Type':'text/event-stream'}});
 };
 const fake=await import('./knowledge-scope/fake-supabase.mjs');

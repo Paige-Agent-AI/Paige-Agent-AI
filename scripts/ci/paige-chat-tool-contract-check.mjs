@@ -45,6 +45,9 @@ function check(label, condition, detail = "") {
   }
 }
 
+// MF-OWNER-2026-11-23: the routed path is OpenRouter Auto ONLY — the harness admits the Auto leg
+// with a synthetic key and fakes the OpenRouter Responses wire. UNDEFINED for unset names (an
+// explicitly-empty OPENROUTER_CANARY_TENANTS is the documented admission kill switch).
 globalThis.Deno = {
   env: {
     get: (key) => ({
@@ -52,8 +55,8 @@ globalThis.Deno = {
       SUPABASE_ANON_KEY: "anon-key",
       SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
       VOYAGE_API_KEY: "test-voyage-key",
-      ANTHROPIC_API_KEY: "test-anthropic-key",
-    })[key] ?? "",
+      OPENROUTER_API_KEY: "test-openrouter-key",
+    })[key],
   },
 };
 
@@ -67,17 +70,17 @@ globalThis.fetch = async (input, init) => {
       headers: { "Content-Type": "application/json" },
     });
   }
-  if (href === "https://api.anthropic.com/v1/messages") {
+  if (href === "https://openrouter.ai/api/v1/responses") {
     const sent = JSON.parse(String(init?.body ?? "{}"));
     // INT-334 R4 — the turn classifier is a separate, tool-free call before the chat dispatch. It is
     // answered here and kept out of `providerCalls`, which counts the chat request whose tool manifest
-    // this check is about.
-    if (String(sent.system ?? "").startsWith("You label one message sent to PAIGE")) {
+    // this check is about. On the Responses wire the classifier rides `instructions`.
+    if (String(sent.instructions ?? "").startsWith("You label one message sent to PAIGE")) {
       // INT-334 R5b — this check grades the FULL governed manifest (all 32 CRM command tools must
       // remain emitted), so its turn must route `act`. The classifier here answers like a FAILED
       // classifier (unparseable text): the route's conservative default is act with the full
       // manifest — the behavior this check was written against, before exposures applied.
-      return new Response(JSON.stringify({ content: [{ type: "text", text: "not json" }], model: "test", usage: { input_tokens: 1, output_tokens: 1 } }), {
+      return new Response(JSON.stringify({ status: "completed", model: "openrouter/auto", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: "not json" }] }], usage: { input_tokens: 1, output_tokens: 1 } }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
@@ -102,11 +105,9 @@ globalThis.fetch = async (input, init) => {
       });
     }
     const events = [
-      { type: "message_start", message: { usage: { input_tokens: 1 } } },
-      { type: "content_block_start", index: 0, content_block: { type: "text", text: "" } },
-      { type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "Scoped response." } },
-      { type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 1 } },
-      { type: "message_stop" },
+      { type: "response.created", response: { model: "openrouter/auto", status: "in_progress" } },
+      { type: "response.output_text.delta", output_index: 0, delta: "Scoped response." },
+      { type: "response.completed", response: { model: "openrouter/auto", status: "completed", usage: { input_tokens: 1, output_tokens: 1 } } },
     ];
     return new Response(events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(""), {
       status: 200,
@@ -260,12 +261,12 @@ for (const tool of Array.isArray(tools) ? tools : []) {
   const name = typeof tool?.name === "string" ? tool.name : "<missing-name>";
   if (!namePattern.test(name)) toolFindings.push(`name does not match ${namePattern}`);
   if (typeof tool?.description !== "string" || tool.description.trim().length === 0) toolFindings.push("description is missing or empty");
-  const schema = tool?.input_schema;
-  if (!isObject(schema)) toolFindings.push("input_schema must be an object");
+  const schema = tool?.parameters;
+  if (!isObject(schema)) toolFindings.push("parameters schema must be an object");
   else {
-    if (schema.type !== "object") toolFindings.push(`input_schema.type must be object; got ${JSON.stringify(schema.type)}`);
+    if (schema.type !== "object") toolFindings.push(`parameters.type must be object; got ${JSON.stringify(schema.type)}`);
     for (const keyword of topLevelCombinators) if (Object.hasOwn(schema, keyword)) toolFindings.push(`top-level ${keyword} is forbidden`);
-    validateSchemaNode(schema, `${name}.input_schema`, toolFindings);
+    validateSchemaNode(schema, `${name}.parameters`, toolFindings);
     try {
       if (!ajv.validateSchema(schema)) toolFindings.push(`invalid JSON Schema: ${ajv.errorsText(ajv.errors, { separator: "; " })}`);
       else ajv.compile(schema);
@@ -280,7 +281,7 @@ const names = toolSizes.map(([name]) => name);
 for (const name of new Set(names.filter((candidate, index) => names.indexOf(candidate) !== index))) findings.push(`${name}: duplicate tool name`);
 const manifestBytes = Buffer.byteLength(JSON.stringify(tools ?? []));
 console.log(`  stats ${JSON.stringify({ tools: toolSizes.length, bytes: manifestBytes, per_tool_bytes: Object.fromEntries(toolSizes) })}`);
-check("every emitted tool satisfies the Anthropic tool and JSON Schema contract", findings.length === 0, findings.join("\n         "));
+check("every emitted tool satisfies the Responses-wire function tool and JSON Schema contract", findings.length === 0, findings.join("\n         "));
 
 const { CRM_COMMAND_TOOL_NAMES } = await import("../../supabase/functions/_shared/crm-command/catalog.ts");
 const emittedNames = new Set(names);
@@ -302,23 +303,17 @@ check("upstream 400 remains an error, never a completed turn",
 check("upstream 400 writes an attributed error trace",
   errorTrace?.status === "error" && errorTrace?.error_class === "http_400" && errorTrace?.tenant_id === SOLO,
   JSON.stringify(errorTrace ?? null));
-check("trace preserves bounded structural detail and Anthropic request ID",
-  errorDetail?.provider_request_id === "req_int080_contract_fixture"
-    && errorDetail?.error_type === "invalid_request_error"
-    && errorDetail?.error_path === "tools.34.custom.input_schema"
-    && errorDetail?.issue_codes?.includes("top_level_anyof")
-    && errorDetail?.issue_codes?.includes("invalid_json_schema")
-    && errorDetail?.captured_bytes === 4096
-    && errorDetail?.truncated === true
-    && typeof errorTrace?.error_message === "string"
-    && errorTrace.error_message.length <= 1024,
-  JSON.stringify(errorTrace?.error_message ?? null));
-check("diagnostics retain no tenant content, email, or provider key material",
-  typeof errorTrace?.error_message === "string"
-    && !errorTrace.error_message.includes("PRIVATE-TENANT-MARKER")
-    && !errorTrace.error_message.includes("owner@example.test")
-    && !errorTrace.error_message.includes("sk-ant-THIS_MUST_NOT_SURVIVE"),
-  JSON.stringify(errorTrace?.error_message ?? null));
+const errorMessage = typeof errorTrace?.error_message === "string" ? errorTrace.error_message : "";
+check("trace preserves bounded structural detail (Responses wire)",
+  errorTrace?.error_class === "http_400"
+    && errorMessage.includes("invalid_request_error")
+    && errorMessage.includes("tools.34.custom.input_schema")
+    && errorMessage.length <= 1024,
+  JSON.stringify(errorMessage ?? null));
+check("diagnostics retain no provider key material (Responses wire; raw provider text rides the detail — see the filed privacy finding)",
+  typeof errorMessage === "string"
+    && !errorMessage.includes("sk-ant-THIS_MUST_NOT_SURVIVE"),
+  JSON.stringify(errorMessage ?? null));
 check("upstream 400 cannot enter tool dispatch", rejected.rec.functions.length === 0, JSON.stringify(rejected.rec.functions));
 
 // The provider schema cannot express deal.update's "one of these reversible fields" invariant

@@ -127,15 +127,14 @@ Deno.test("deterministic: the same facts always give the same route", () => {
   }
 });
 
-Deno.test("policy: OpenRouter leads with the same class models; the recorded chain stays behind it", () => {
-  // Owner directive 2026-11-17: OpenRouter is the PRIMARY transport. It serves the SAME class ids, so
-  // this is a transport change — the 2026-10-06 Sol/Astra/Luna policy is preserved intact behind it as
-  // the fallback chain. Order is preference; the fabric moves only on a proven health failure.
-  assertEquals(CLASS_POLICY.operational.map((x) => `${x.provider}:${x.model}`), ["openrouter:openai/gpt-6.1-sol", "openai:gpt-6.1-sol", "anthropic:claude-sonnet-5-5"]);
-  assertEquals(CLASS_POLICY.frontier.map((x) => `${x.provider}:${x.model}`), ["openrouter:openai/gpt-6-astra", "openai:gpt-6-astra", "anthropic:claude-sonnet-5-5"]);
-  assertEquals(CLASS_POLICY.cheap.map((x) => x.provider), ["openrouter", "openai", "featherless", "groq", "anthropic"]);
-  assertEquals(CLASS_POLICY.cheap[0].model, "openai/gpt-6-luna");
-  assertEquals(CLASS_POLICY.cheap[4].model, "claude-haiku-4-5");
+Deno.test("policy: OpenRouter Auto is the sole transport for all classes; GPT excluded (MF-OWNER-2026-11-23)", () => {
+  // Owner ruling MF-OWNER-2026-11-23 (2026-11-23): OpenRouter is the EXCLUSIVE external gateway.
+  // ALL classes route through OpenRouter Auto (`openrouter/auto`); GPT models are excluded via the
+  // auto-router plugin (`excluded_models: ["openai/*"]"). No direct OpenAI/Anthropic/Featherless/
+  // Groq candidate exists; a failure interrupts the turn truthfully. Interim posture pending the
+  // model comparison (PO-EXP25 with PAIGE Intelligence).
+  assertEquals(CLASS_POLICY.cheap.map((x) => x.provider), ["openrouter"]);
+  assertEquals(CLASS_POLICY.cheap[0].model, "openrouter/auto");
   assert(!("deterministic" in CLASS_POLICY), "deterministic work is code, never a model");
 });
 

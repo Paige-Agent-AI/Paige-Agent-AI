@@ -6,10 +6,13 @@ import { spawnSync } from 'node:child_process';
 // The existing module loader runs the unchanged served Chat handler. Optional native
 // mode substitutes ONLY transcript/admission RPCs with actual applied SQL functions in
 // an empty disposable loopback int336_test* DB. No network/provider/business operation.
+// MF-OWNER-2026-11-23: the routed path is OpenRouter Auto ONLY — the harness admits the Auto leg
+// with a synthetic key and fakes the OpenRouter Responses wire. UNDEFINED for unset names (an
+// explicitly-empty OPENROUTER_CANARY_TENANTS is the documented admission kill switch).
 globalThis.Deno = { env: { get: key => ({
   SUPABASE_URL:'https://test.supabase.co', SUPABASE_ANON_KEY:'anon-key',
-  SUPABASE_SERVICE_ROLE_KEY:'service-role-key', ANTHROPIC_API_KEY:'fixture-key',
-})[key] ?? '' } };
+  SUPABASE_SERVICE_ROLE_KEY:'service-role-key', OPENROUTER_API_KEY:'fixture-key',
+})[key] } };
 const id = n => '00000000-0000-4000-8000-' + String(n).padStart(12,'0');
 const actor=id(1), tenant=id(2), oldIntent=id(4), intent=id(5), askId=id(6);
 const nativeMode = process.argv.includes('--native-db') || process.argv.includes('--native-contract-only');
@@ -119,13 +122,13 @@ if(nativeMode){
 
 let modelCalls=0;
 globalThis.fetch=async(url,options)=>{
- assert.ok(String(url).includes('api.anthropic.com'),'no external network is permitted');
+ assert.ok(String(url).includes('openrouter.ai'),'no external network is permitted');
  const body=JSON.parse(options.body);
- assert.ok(!body.system?.startsWith('You label one message sent to PAIGE'),'bound answers skip advisory classifier');
+ assert.ok(!body.instructions?.startsWith('You label one message sent to PAIGE'),'bound answers skip advisory classifier');
  modelCalls++;
- const events=[{type:'message_start',message:{usage:{input_tokens:1}}},{type:'content_block_start',index:0,content_block:{type:'text',text:''}},
-  {type:'content_block_delta',index:0,delta:{type:'text_delta',text:'I have your choice.'}},{type:'content_block_stop',index:0},
-  {type:'message_delta',delta:{stop_reason:'end_turn'},usage:{output_tokens:1}},{type:'message_stop'}];
+ const events=[{type:'response.created',response:{model:'openrouter/auto',status:'in_progress'}},
+  {type:'response.output_text.delta',output_index:0,delta:'I have your choice.'},
+  {type:'response.completed',response:{model:'openrouter/auto',status:'completed',usage:{input_tokens:1,output_tokens:1}}}];
  return new Response(events.map(event=>'event: '+event.type+'\ndata: '+JSON.stringify(event)+'\n\n').join(''),{headers:{'Content-Type':'text/event-stream'}});
 };
 const fake=await import('./knowledge-scope/fake-supabase.mjs');

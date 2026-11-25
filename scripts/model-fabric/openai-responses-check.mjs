@@ -667,12 +667,14 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
 }
 console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry");
 {
-  ok(or.OPENROUTER_CHEAP === "openai/gpt-6-luna" && or.OPENROUTER_OPERATIONAL === "openai/gpt-6.1-sol"
-    && or.OPENROUTER_FRONTIER === "openai/gpt-6-astra",
-    "11.1 OpenRouter serves the SAME three class ids, under its openai/ namespace");
+  ok(or.OPENROUTER_CHEAP === "openrouter/auto" && or.OPENROUTER_OPERATIONAL === "openrouter/auto"
+    && or.OPENROUTER_FRONTIER === "openrouter/auto",
+    "11.1 all three classes route through OpenRouter Auto (owner ruling MF-OWNER-2026-11-23)");
+  ok(Array.isArray(or.OPENROUTER_EXCLUDED_MODELS) && or.OPENROUTER_EXCLUDED_MODELS.includes("openai/*"),
+    "11.1b OpenRouter Auto excludes GPT models from selection (owner directive: no GPT inference)");
   const orTag = ad.providerTag(or.OPENROUTER_OPERATIONAL, "openrouter");
   const directTag = ad.providerTag(or.OPENROUTER_OPERATIONAL);
-  ok(orTag === "openrouter:openai/gpt-6.1-sol" && directTag === "openai:openai/gpt-6.1-sol" && orTag !== directTag,
+  ok(orTag === "openrouter:openrouter/auto" && directTag === "openai:openrouter/auto" && orTag !== directTag,
     "11.2 replay tags are provider-scoped — an OpenRouter item cannot replay into a direct-OpenAI call");
 }
 {
@@ -681,8 +683,17 @@ console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry"
   // OpenAI-only fields (store, include, prompt_cache_key, prompt_cache_options) are omitted for OpenRouter.
   ok(!("store" in req) && !("include" in req) && !("prompt_cache_key" in req) && !("prompt_cache_options" in req),
      "11.3 OpenRouter requests omit OpenAI-only fields (store, include, prompt_cache_*)");
-  ok(req.reasoning?.effort === "medium" && req.model === or.OPENROUTER_OPERATIONAL,
-     "11.3b OpenRouter still sends reasoning, model and OpenRouter-supported fields");
+  ok(req.model === or.OPENROUTER_OPERATIONAL,
+     "11.3a the Auto leg sends the Auto model id");
+  ok(!("reasoning" in req),
+     "11.3b OpenRouter Auto selects reasoning effort per request; PAIGE never overrides it");
+  ok(Array.isArray(req.plugins) && req.plugins[0]?.id === "auto-router" && Array.isArray(req.plugins[0]?.excluded_models) && req.plugins[0].excluded_models.includes("openai/*"),
+     "11.3c OpenRouter Auto excludes GPT models ON THE auto-router PLUGIN (a top-level field would be ignored)");
+  const emptied = ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }], excluded_models: [] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter" });
+  const removed = ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }], excluded_models: ["anthropic/*"] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter" });
+  ok(emptied.plugins?.[0]?.excluded_models?.includes("openai/*") && removed.plugins?.[0]?.excluded_models?.includes("openai/*")
+    && removed.plugins[0].excluded_models.includes("anthropic/*"),
+     "11.3d the owner GPT exclusion is STRUCTURAL: an empty/overriding caller list can never remove it; callers may only add exclusions");
   let threw = null;
   try { ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", provider: "openrouter" }); }
   catch (e) { threw = e; }
@@ -691,8 +702,8 @@ console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry"
 }
 {
   const item = { type: "reasoning", id: "rs_or", encrypted_content: "opaque" };
-  const own = ad.buildResponsesRequest({ messages: [{ role: "user", content: "a" }, { role: "assistant", content: "b", paige_provider_items: [item], paige_provider: "openrouter:openai/gpt-6.1-sol" }, { role: "user", content: "c" }] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter" });
-  const borrowed = ad.buildResponsesRequest({ messages: [{ role: "user", content: "a" }, { role: "assistant", content: "b", paige_provider_items: [item], paige_provider: "openai:gpt-6.1-sol" }, { role: "user", content: "c" }] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter" });
+  const own = ad.buildResponsesRequest({ messages: [{ role: "user", content: "a" }, { role: "assistant", content: "b", paige_provider_items: [item], paige_provider: "openrouter:openrouter/auto" }, { role: "user", content: "c" }] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter" });
+  const borrowed = ad.buildResponsesRequest({ messages: [{ role: "user", content: "a" }, { role: "assistant", content: "b", paige_provider_items: [item], paige_provider: "openai:openrouter/auto" }, { role: "user", content: "c" }] }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter" });
   ok(own.input.some((x) => x.type === "reasoning" && x.id === "rs_or") && !borrowed.input.some((x) => x.type === "reasoning"),
     "11.5 OpenRouter reasoning replays only when tagged for OpenRouter — no cross-provider item injection");
 }
@@ -714,13 +725,13 @@ console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry"
     "11.7 the configured OPEN_ROUTER_AI_API Edge secret is the key on the wire, never the OpenAI key or the legacy alias");
   ok(t.calls[0].headers["HTTP-Referer"] === "https://paige.ai" && t.calls[0].headers["X-Title"] === "PAIGE-Fabric-Check",
     "11.8 optional attribution headers ride the wire (never a credential)");
-  ok(r.choices[0].message.content === "PONG" && r.choices[0].message.paige_provider === "openrouter:openai/gpt-6.1-sol",
+  ok(r.choices[0].message.content === "PONG" && r.choices[0].message.paige_provider === "openrouter:openrouter/auto",
     "11.9 the completion result tags replay items with the REAL serving provider");
   const [row] = await tracesSince(from);
   ok(row?.provider === "openrouter" && row.model === or.OPENROUTER_OPERATIONAL && row.status === "success",
     "11.10 the trace names OpenRouter as the provider, never a borrowed 'openai'");
-  ok(row?.cost_estimate_usd === estimateTokenCostUsd("openrouter", or.OPENROUTER_OPERATIONAL, 1000, 1000) && row.cost_estimate_usd === 0.012,
-    "11.11 OpenRouter GPT-6 tokens are metered on the SAME row as direct OpenAI");
+  ok(estimateTokenCostUsd("openrouter", or.OPENROUTER_OPERATIONAL, 1000, 1000) === undefined && row?.cost_estimate_usd === null,
+    "11.11 an Auto leg has no known model id, so the estimate stays unknown (null), never a silent zero");
   delete ENV.OPENROUTER_SITE_URL;
   delete ENV.OPENROUTER_APP_NAME;
   delete ENV.OPEN_ROUTER_AI_API;
@@ -734,7 +745,7 @@ console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry"
   catch (e) { threw = e; }
   ENV.OPENROUTER_API_KEY = saved;
   ok(threw instanceof NeedsConfigError && t.calls.length === 0,
-    "11.12 a missing OpenRouter key is NeedsConfigError with no call — the fabric falls back to the recorded chain");
+    "11.12 a missing OpenRouter key is NeedsConfigError with no call — the turn is interrupted truthfully, no fallback");
 }
 {
   ENV.OPENROUTER_BASE_URL = "https://or.internal/v1";
@@ -754,7 +765,7 @@ console.log("11. OpenRouter — same Responses wire, its own key/base/telemetry"
   const res = await ad.responsesStream({ messages: [{ role: "user", content: "x" }], stream: true }, { model: or.OPENROUTER_OPERATIONAL, provider: "openrouter", effort: "medium", fetchImpl: t }, TRACE);
   const parsed = frames(await drain(res.body)).filter((x) => x !== "[DONE]").map((x) => JSON.parse(x));
   const [row] = await tracesSince(from);
-  ok(res.ok && parsed.some((p) => p.choices[0].delta.paige_provider === "openrouter:openai/gpt-6.1-sol")
+  ok(res.ok && parsed.some((p) => p.choices[0].delta.paige_provider === "openrouter:openrouter/auto")
     && row?.provider === "openrouter" && row.status === "success",
     "11.14 a streamed OpenRouter round tags replay and traces the REAL provider throughout");
 }

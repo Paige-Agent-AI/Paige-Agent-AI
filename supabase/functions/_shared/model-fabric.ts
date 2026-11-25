@@ -17,10 +17,15 @@
 // round gate's business. A provider being chosen grants nothing: tools, approvals and authority are decided
 // downstream, unchanged.
 //
-// OPENROUTER IS THE OWNER-DIRECTED PRIMARY (2026-11-17): it serves the SAME class models through the
-// Responses wire, with OpenAI (the 2026-10-08 primary, flag below) and Anthropic preserved behind it
-// as the fallback chain. Both transports are key-gated and cohort-gated; the key is an extra master
-// switch for OpenRouter so an unconfigured deployment silently keeps the recorded chain.
+// OPENROUTER IS THE EXCLUSIVE EXTERNAL GATEWAY (owner ruling MF-OWNER-2026-11-23, 2026-11-23):
+// all classes route through OpenRouter. No direct OpenAI, Anthropic, Google, DeepSeek, or other
+// frontier-model provider inference. GPT models are excluded. OmniRoute belongs exclusively to
+// PAIGE Desktop, not hosted PAIGE. Qualified non-GPT frontier models may compete and be selected
+// through OpenRouter. No fallback chain to direct providers.
+// PO-EXP25 (2026-11-23): the interim routing posture is OpenRouter Auto (`openrouter/auto`) for all
+// classes, with `excluded_models: ["openai/*"]` on the Auto leg. No dedicated OpenAI/Anthropic/
+// Featherless/Groq candidates. If Auto fails, the turn is interrupted truthfully (no fabricated
+// answer, no prohibited direct-provider fallback). Interim pending the model comparison.
 
 import { chatCompletionCompat, gatewayCompat, messagesCarryDocument, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
 import { NeedsConfigError } from "./provider-types.ts";
@@ -124,12 +129,14 @@ export function openAiAdmitted(tenantId: string | null | undefined, cls: Cogniti
   return OPENAI_CHAT_ENABLED && openAiCohortAdmits(tenantId, cls);
 }
 
-// ── OPENROUTER (owner directive 2026-11-17): the PRIMARY Responses transport ──────────────────────
-// Same class models, same budget/trace/fallback doctrine. Admission mirrors the OpenAI staged gate:
+// ── OPENROUTER (owner directive 2026-11-17, interim posture 2026-11-23): the Responses transport ──────
+// OpenRouter Auto (`openrouter/auto`) is the interim routing posture for all classes; GPT models
+// are excluded from Auto selection via `excluded_models: ["openai/*"]`. Same budget/trace/fallback
+// doctrine. Admission mirrors the OpenAI staged gate:
 // production-wide for attributed tenants unless an explicit tenant list restricts it, an explicitly
 // SET EMPTY env is the kill switch, and `OPENROUTER_CANARY_CLASSES` scopes the classes. The API KEY is
 // an additional master switch: with no key configured the candidate is skipped and the recorded
-// OpenAI → Anthropic chain serves exactly as before. Adding the provider can never take chat down.
+// OpenRouter-only chain. No direct OpenAI or Anthropic fallback. Adding OpenRouter can never take chat down.
 const OPENROUTER_CANARY_TENANTS_ENV = "OPENROUTER_CANARY_TENANTS";
 const OPENROUTER_CANARY_CLASSES_ENV = "OPENROUTER_CANARY_CLASSES";
 export const OPENROUTER_CHAT_ENABLED = true;

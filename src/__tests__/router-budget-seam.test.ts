@@ -136,8 +136,12 @@ describe('resolveCeiling — config-as-data precedence', () => {
 });
 
 describe('accruedSpendToday — the one ledger', () => {
-  it('sums today’s cost estimates', async () => {
+  it('unknown cost estimates make the total unknown (null), never a $0 claim', async () => {
     const { db } = mkDb({ paige_llm_trace: { list: [{ cost_estimate_usd: 1.5 }, { cost_estimate_usd: 2 }, { cost_estimate_usd: null }] } });
+    expect(await accruedSpendToday(db, 't1')).toBeNull();
+  });
+  it('sums today’s cost estimates when all are known', async () => {
+    const { db } = mkDb({ paige_llm_trace: { list: [{ cost_estimate_usd: 1.5 }, { cost_estimate_usd: 2 }] } });
     expect(await accruedSpendToday(db, 't1')).toBe(3.5);
   });
 

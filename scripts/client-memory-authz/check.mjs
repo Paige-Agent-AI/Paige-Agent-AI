@@ -48,9 +48,16 @@ globalThis.Deno = {
     : ({
     SUPABASE_URL: "https://test.supabase.co", SUPABASE_ANON_KEY: "anon-key",
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key", VOYAGE_API_KEY: "test-voyage-key",
+    // MF-OWNER-2026-11-23: the routed chat leg is OpenRouter Auto ONLY. UNDEFINED for unset
+    // names - an explicitly-empty canary value is the admission kill switch, and the old ?? ""
+    // idiom silently tripped it. ANTHROPIC_API_KEY stays ONLY for the still-live legacy direct
+    // paths (document read-check + general extraction via model-router/gatewayCompat) - the
+    // pre-existing product behavior this harness must keep drivable until its OpenRouter
+    // migration increment ships (owner directives sections 2-3; findings filed).
+    OPENROUTER_API_KEY: "test-openrouter-key",
     ANTHROPIC_API_KEY: "test-anthropic-key",
     PAIGE_LIVE_STREAM_SIGNING_KEY: LIVE_TEST_SIGNING_KEY,
-  })[k] ?? "" },
+  })[k] },
 };
 
 let embedCount = 0;
@@ -164,65 +171,65 @@ let fetchUrlAnswer = null;
 /** How any other sibling function answers this drive, by URL fragment; unset, a bare success. */
 let otherOutboundAnswers = null;
 /**
- * An Anthropic-native tool_use stream. `gatewayCompat` converts it to OpenAI-compat deltas, so
- * the handler's agentic loop sees a real tool call. Without this the whole tool loop — where
- * Paige acts on the focused client — was unreachable by any check.
+ * MF-OWNER-2026-11-23: an OpenRouter Responses-native tool-call stream. The adapter parses the
+ * Responses wire, so the handler's agentic loop sees a real tool call. Without this the whole
+ * tool loop — where Paige acts on the focused client — was unreachable by any check.
  */
-// `ending` (INT-334 R7): "tool_use" is a finished tool round; "max_tokens" / "refusal" end it on that stop
-// reason instead; "cut" ends the stream with no message_delta or message_stop at all (a broken round).
-const sseToolCallReply = (name, args, text = "", id = "toolu_test", ending = "tool_use") =>
-  new Response(
-    [
-      `event: message_start\ndata: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`,
-      ...(text ? [
-        `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } })}\n\n`,
-        `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text } })}\n\n`,
-        `event: content_block_stop\ndata: ${JSON.stringify({ type: "content_block_stop", index: 0 })}\n\n`,
-      ] : []),
-      `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: text ? 1 : 0, content_block: { type: "tool_use", id, name } })}\n\n`,
-      `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: text ? 1 : 0, delta: { type: "input_json_delta", partial_json: typeof args === "string" ? args : JSON.stringify(args) } })}\n\n`,
-      ...(ending === "cut" ? [] : [
-        `event: message_delta\ndata: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: ending } })}\n\n`,
-        `event: message_stop\ndata: ${JSON.stringify({ type: "message_stop" })}\n\n`,
-      ]),
-    ].join(""),
-    { status: 200, headers: { "Content-Type": "text/event-stream" } },
-  );
+// `ending` (INT-334 R7 semantics preserved): "tool_use" is a finished tool round; "max_tokens" ends
+// it as response.incomplete(max_output_tokens); "refusal" ends it on a refusal content part;
+// "cut" ends the stream with no terminal event at all (a broken round).
+const sseToolCallReply = (name, args, text = "", id = "toolu_test", ending = "tool_use") => {
+  const raw = typeof args === "string" ? args : JSON.stringify(args);
+  const created = `event: response.created\ndata: ${JSON.stringify({ type: "response.created", response: { model: "openrouter/auto", status: "in_progress" } })}\n\n`;
+  const textPart = text
+    ? `event: response.output_text.delta\ndata: ${JSON.stringify({ type: "response.output_text.delta", output_index: 0, delta: text })}\n\n`
+    : "";
+  const callParts = ending === "refusal" ? "" : [
+    `event: response.output_item.added\ndata: ${JSON.stringify({ type: "response.output_item.added", output_index: 0, item: { type: "function_call", id: "fc_test", call_id: id, name, arguments: "" } })}\n\n`,
+    `event: response.function_call_arguments.delta\ndata: ${JSON.stringify({ type: "response.function_call_arguments.delta", item_id: "fc_test", output_index: 0, delta: raw })}\n\n`,
+    `event: response.function_call_arguments.done\ndata: ${JSON.stringify({ type: "response.function_call_arguments.done", item_id: "fc_test", output_index: 0, arguments: raw })}\n\n`,
+    `event: response.output_item.done\ndata: ${JSON.stringify({ type: "response.output_item.done", output_index: 0, item: { type: "function_call", id: "fc_test", call_id: id, name, arguments: raw } })}\n\n`,
+  ].join("");
+  const usage = { input_tokens: 1, output_tokens: 1 };
+  const terminal = ending === "cut" ? ""
+    : ending === "max_tokens"
+      ? `event: response.incomplete\ndata: ${JSON.stringify({ type: "response.incomplete", response: { status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, usage } })}\n\n`
+      : ending === "refusal"
+        ? `event: response.completed\ndata: ${JSON.stringify({ type: "response.completed", response: { status: "completed", usage } })}\n\n`
+        : `event: response.completed\ndata: ${JSON.stringify({ type: "response.completed", response: { status: "completed", usage } })}\n\n`;
+  return new Response(created + textPart + callParts + terminal,
+    { status: 200, headers: { "Content-Type": "text/event-stream" } });
+};
 
 /**
  * SEVERAL tool calls in ONE round (C2b): one tool_use block per spec, in order. A spec may carry its
  * own `id` (an empty string models a provider that omits it); otherwise `<id>_<n>`. A spec's `rawArgs`
  * is sent as the arguments text verbatim, so a drive can model a provider that cut them off mid-JSON.
  */
+// MF-OWNER-2026-11-23: several tools in ONE round on the Responses wire. A spec may carry its own
+// `id` (an empty string models a provider that omits it; the call_id then also comes back empty),
+// and `rawArgs` is sent as the arguments text verbatim, mid-JSON cutoffs included.
 const sseToolCallsReply = (specs, text = "", id = "toolu_test") => {
-  const lead = text ? 1 : 0;
-  return new Response(
-    [
-      `event: message_start\ndata: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`,
-      ...(text ? [
-        `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } })}\n\n`,
-        `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text } })}\n\n`,
-        `event: content_block_stop\ndata: ${JSON.stringify({ type: "content_block_stop", index: 0 })}\n\n`,
-      ] : []),
-      ...specs.flatMap((spec, n) => [
-        `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: lead + n, content_block: { type: "tool_use", id: spec.id ?? `${id}_${n}`, name: spec.name } })}\n\n`,
-        `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: lead + n, delta: { type: "input_json_delta", partial_json: spec.rawArgs ?? JSON.stringify(spec.args ?? {}) } })}\n\n`,
-        `event: content_block_stop\ndata: ${JSON.stringify({ type: "content_block_stop", index: lead + n })}\n\n`,
-      ]),
-      `event: message_delta\ndata: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: "tool_use" } })}\n\n`,
-      `event: message_stop\ndata: ${JSON.stringify({ type: "message_stop" })}\n\n`,
-    ].join(""),
-    { status: 200, headers: { "Content-Type": "text/event-stream" } },
-  );
+  const parts = [`event: response.created\ndata: ${JSON.stringify({ type: "response.created", response: { model: "openrouter/auto", status: "in_progress" } })}\n\n`];
+  if (text) parts.push(`event: response.output_text.delta\ndata: ${JSON.stringify({ type: "response.output_text.delta", output_index: 0, delta: text })}\n\n`);
+  for (const [n, spec] of specs.entries()) {
+    const raw = spec.rawArgs ?? JSON.stringify(spec.args ?? {});
+    const callId = spec.id ?? `${id}_${n}`;
+    parts.push(`event: response.output_item.added\ndata: ${JSON.stringify({ type: "response.output_item.added", output_index: n, item: { type: "function_call", id: `fc_${n}`, call_id: callId, name: spec.name, arguments: "" } })}\n\n`,
+      `event: response.function_call_arguments.delta\ndata: ${JSON.stringify({ type: "response.function_call_arguments.delta", item_id: `fc_${n}`, output_index: n, delta: raw })}\n\n`,
+      `event: response.function_call_arguments.done\ndata: ${JSON.stringify({ type: "response.function_call_arguments.done", item_id: `fc_${n}`, output_index: n, arguments: raw })}\n\n`,
+      `event: response.output_item.done\ndata: ${JSON.stringify({ type: "response.output_item.done", output_index: n, item: { type: "function_call", id: `fc_${n}`, call_id: callId, name: spec.name, arguments: raw } })}\n\n`);
+  }
+  parts.push(`event: response.completed\ndata: ${JSON.stringify({ type: "response.completed", response: { status: "completed", usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`);
+  return new Response(parts.join(""), { status: 200, headers: { "Content-Type": "text/event-stream" } });
 };
 
 const sseModelReply = (text) =>
   new Response(
     [
-      `data: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`,
-      `data: ${JSON.stringify({ type: "content_block_delta", delta: { type: "text_delta", text } })}\n\n`,
-      `data: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: "end_turn" } })}\n\n`,
-      `data: ${JSON.stringify({ type: "message_stop" })}\n\n`,
+      `event: response.created\ndata: ${JSON.stringify({ type: "response.created", response: { model: "openrouter/auto", status: "in_progress" } })}\n\n`,
+      `event: response.output_text.delta\ndata: ${JSON.stringify({ type: "response.output_text.delta", output_index: 0, delta: text })}\n\n`,
+      `event: response.completed\ndata: ${JSON.stringify({ type: "response.completed", response: { status: "completed", usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`,
     ].join(""),
     { status: 200, headers: { "Content-Type": "text/event-stream" } },
   );
@@ -230,8 +237,8 @@ const sseModelReply = (text) =>
 /** A streamed answer that gets `text` out (none when empty) and then the connection resets. Pull-
  *  driven, so its events are read before the error (an error raised in `start` discards them). */
 const sseBreakingReply = (text) => {
-  const events = [`data: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`];
-  if (text) events.push(`data: ${JSON.stringify({ type: "content_block_delta", delta: { type: "text_delta", text } })}\n\n`);
+  const events = [`event: response.created\ndata: ${JSON.stringify({ type: "response.created", response: { model: "openrouter/auto", status: "in_progress" } })}\n\n`];
+  if (text) events.push(`event: response.output_text.delta\ndata: ${JSON.stringify({ type: "response.output_text.delta", output_index: 0, delta: text })}\n\n`);
   const bytes = new TextEncoder().encode(events.join(""));
   let sent = false;
   return new Response(new ReadableStream({
@@ -267,8 +274,26 @@ globalThis.fetch = async (url, init) => {
       : { id: "msg_summary", model: body.model, content: [{ type: "text", text }], stop_reason: "end_turn", usage: { input_tokens: 9, output_tokens: 7 } }),
     { status: 200, headers: { "Content-Type": "application/json" } });
   }
-  if (href.includes("anthropic.com")) modelEgress.push(String(init?.body ?? ""));
-  else if (!href.includes("voyageai.com")) {
+  if (href.includes("openrouter.ai")) modelEgress.push(String(init?.body ?? ""));
+  else if (href.includes("anthropic.com")) {
+    // Legacy direct-Anthropic paths still live in the product (runDocumentReadCheck +
+    // general extraction): served Anthropic-shaped until their OpenRouter migration ships.
+    modelEgress.push(String(init?.body ?? ""));
+    const bodyStr = String(init?.body ?? "");
+    const isReadCheck = bodyStr.includes("verify that you can literally read the PDF");
+    const isExtraction = bodyStr.includes("Extract the structured data into the required JSON format");
+    const text = isReadCheck ? JSON.stringify(readCheckReply)
+      : isExtraction && extractionReplyText !== null ? extractionReplyText : "ok";
+    return new Response(
+      JSON.stringify({
+        id: "msg_legacy", type: "message", role: "assistant", model: "test",
+        content: [{ type: "text", text }],
+        stop_reason: "end_turn",
+        usage: { input_tokens: 1, output_tokens: 1 },
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  } else if (!href.includes("voyageai.com")) {
     outboundCalls.push({ url: href, body: String(init?.body ?? "") });
     const answer = href.includes("paige-write-back") && writeBackAnswer ? writeBackAnswer
       : href.includes("fetch-url-content") && fetchUrlAnswer ? fetchUrlAnswer
@@ -276,7 +301,7 @@ globalThis.fetch = async (url, init) => {
       ?? { status: 200, body: { success: true } };
     return new Response(JSON.stringify(answer.body), { status: answer.status, headers: { "Content-Type": "application/json" } });
   }
-  if (modelStub && href.includes("anthropic.com")) {
+  if (modelStub && href.includes("openrouter.ai")) {
     const wantsStream = (() => {
       try { return JSON.parse(String(init?.body ?? "{}")).stream === true; } catch { return false; }
     })();
@@ -334,9 +359,8 @@ globalThis.fetch = async (url, init) => {
     }
     // Answer the document READ-CHECK with the JSON it expects, so `isCreditReportPdf` can be
     // true and the credit-report upload branch is reachable at all. Match on the outbound body:
-    // `gatewayCompat` reshapes the request to Anthropic-native before it reaches fetch, so the
-    // caller's `response_format` is gone by here and cannot be used to identify the call. The
-    // reply must be Anthropic-shaped too — the gateway converts it back to `choices[0].message`.
+    // on the Responses wire (MF-OWNER-2026-11-23) the prompt text is still the reliable call
+    // identity. The reply must be Responses-shaped for the adapter's non-stream parser.
     // INT-334 R4 — the TURN CLASSIFIER (_shared/paige-turn/classify.ts). Answer it the way a real
     // classifier would for this harness's turns: a short acknowledgement or bare reply is light
     // conversation; anything else is ordinary work on this workspace's records. A scenario can
@@ -354,8 +378,9 @@ globalThis.fetch = async (url, init) => {
           : { intent: "answer", research: "none", difficulty: "routine", image: "none", needs_workspace_data: true, confidence: 0.9 });
       }
       return new Response(JSON.stringify({
-        id: "msg_classify", type: "message", role: "assistant", model: "test",
-        content: [{ type: "text", text: reply }], stop_reason: "end_turn", usage: { input_tokens: 1, output_tokens: 1 },
+        status: "completed", model: "openrouter/auto",
+        output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: reply }] }],
+        usage: { input_tokens: 1, output_tokens: 1 },
       }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
     const isReadCheck = String(init?.body ?? "").includes("verify that you can literally read the PDF");
@@ -363,9 +388,8 @@ globalThis.fetch = async (url, init) => {
     const text = isReadCheck ? JSON.stringify(readCheckReply) : isExtraction && extractionReplyText !== null ? extractionReplyText : "ok";
     return new Response(
       JSON.stringify({
-        id: "msg_test", type: "message", role: "assistant", model: "test",
-        content: [{ type: "text", text }],
-        stop_reason: "end_turn",
+        status: "completed", model: "openrouter/auto",
+        output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text }] }],
         usage: { input_tokens: 1, output_tokens: 1 },
       }),
       { status: 200, headers: { "Content-Type": "application/json" } },
@@ -475,7 +499,11 @@ async function drive({
   })();
   const personaFixture = rpcOverrides.get_paige_persona_context;
   const fixturePersona = personaFixture === undefined
-    ? { data: [{ tenant_id: seatedAdmin ? CALLER_TENANT : null }] }
+    // MF-OWNER-2026-11-23: a production turn is always tenant-attributed - the fabric's admission
+    // refuses unattributed traffic truthfully. The old null default only ever worked because the
+    // retired direct-Anthropic leg had no admission gate. Unscripted drives model the caller's
+    // workspace; scenarios keep overriding get_paige_persona_context as before.
+    ? { data: [{ tenant_id: CALLER_TENANT }] }
     : typeof personaFixture === "function" ? null : personaFixture;
   const fixtureOwnTenant = typeof fixturePersona?.data?.[0]?.tenant_id === "string" ? fixturePersona.data[0].tenant_id : null;
   const logged = [];
@@ -531,7 +559,7 @@ async function drive({
       current_user_tenant_id: { data: CALLER_TENANT, error: null },
       is_platform_operator: { data: false, error: null },
       is_platform_owner: ownerRpc,
-      get_paige_persona_context: { data: [{ tenant_id: seatedAdmin ? CALLER_TENANT : null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+      get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
       match_paige_memory: { data: [{ source: "memory", memory_type: "user_preference", content: MEMORY_TEXT, similarity: 0.95 }], error: null },
       ...rpcOverrides,
     },

@@ -42,14 +42,25 @@ export function McpSessionsPanel() {
 
   async function revoke(id: string) {
     setRevoking(id);
-    const { error } = await supabase
-      .from("paige_mcp_oauth_tokens")
-      .update({ revoked_at: new Date().toISOString() })
-      .eq("id", id);
-    setRevoking(null);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Session revoked");
-    load();
+    try {
+      // Release this consumer before migration 41. Only an absent RPC may use
+      // the incumbent writer during that finite rollout; a refusal never does.
+      const result = await supabase.rpc("revoke_paige_mcp_oauth_session" as never, { p_id: id } as never);
+      let revoked = result.data === true;
+      if (result.error?.code === "PGRST202") {
+        const legacy = await supabase.from("paige_mcp_oauth_tokens")
+          .update({ revoked_at: new Date().toISOString() }).eq("id", id).select("id").maybeSingle();
+        if (legacy.error) throw legacy.error;
+        revoked = legacy.data?.id === id;
+      } else if (result.error) throw result.error;
+      if (!revoked) throw new Error("This session could not be revoked. Refresh and try again.");
+      toast.success("Session revoked");
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "This session could not be revoked. Refresh and try again.");
+    } finally {
+      setRevoking(null);
+    }
   }
 
   function copy(text: string, label: string) {

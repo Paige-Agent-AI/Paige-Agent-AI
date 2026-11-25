@@ -20,6 +20,7 @@
 // Reads are the existing governed ones only: get_social_presence_evidence (readiness) and
 // content_publication_list (the receipts). The single write path is the door itself.
 import React from "react";
+import "./marketing-content.css";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { readFunctionErrorBody } from "@/lib/integrations/connectError";

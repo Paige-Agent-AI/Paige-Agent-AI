@@ -1,414 +1,194 @@
 // @vitest-environment jsdom
-// Marketing › Content (INT-342 S1e): the saved library as a gallery of the work itself, and the preview
-// each piece opens in. Network reads are stubbed at the Supabase client; the Studio's document renderer is
-// stubbed to its title (its own tests cover the drawing); everything else is the real view, mounted inside
-// the hub's own frame (.solo-campaigns > .campaigns-scroll) so the drawer's inert handling is real.
-import React from "react";
-import { act } from "react";
+import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MarketingContent, type MarketingContentProps } from "./marketing-content";
 
-type Answer = { data: unknown; error: unknown };
-const db: { tables: Record<string, Answer>; single: Answer; receipts: Answer; calls: { table: string; filters: [string, unknown][]; single: boolean }[] } = { tables: {}, single: { data: null, error: null }, receipts: { data: [], error: null }, calls: [] };
-let videoRows: unknown[] = [];
-let requestedVideoTenant: string | undefined;
-
-vi.mock("@/integrations/supabase/client", () => {
-  const from = (table: string) => {
-    const call = { table, filters: [] as [string, unknown][], single: false };
-    db.calls.push(call);
-    const chain: Record<string, unknown> = {};
-    for (const method of ["select", "order", "limit"]) chain[method] = () => chain;
-    chain.eq = (column: string, value: unknown) => { call.filters.push([column, value]); return chain; };
-    chain.neq = (column: string, value: unknown) => { call.filters.push([`not ${column}`, value]); return chain; };
-    chain.not = (column: string, op: string, value: unknown) => { call.filters.push([`not ${column} ${op}`, value]); return chain; };
-    chain.maybeSingle = () => { call.single = true; return Promise.resolve(db.single); };
-    // The answer is fixed when the query is built, so a test can hold one read while another lands.
-    const answer = db.tables[table] ?? { data: [], error: null };
-    chain.then = (resolve: (value: Answer) => unknown, reject: (reason: unknown) => unknown) => Promise.resolve(answer).then(resolve, reject);
-    return chain;
-  };
-  return { supabase: { from, rpc: (name: string, args?: { p_tenant_id?: string }) => {
-    if (name === "tenant_media_asset_list") {
-      requestedVideoTenant = args?.p_tenant_id;
-      return Promise.resolve({ data: videoRows, error: null });
-    }
-    return Promise.resolve(name === "content_publication_list" ? db.receipts : { data: null, error: null });
-  } } };
-});
-const access = { phase: "ready", canManage: true };
-vi.mock("./useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => access }));
-const workspace = { tenantId: "t-1" };
-vi.mock("@/hooks/useTenantContext", () => ({
-  useTenantContext: () => ({
-    activeUserId: "content-preview-test-user",
-    activeTenantId: workspace.tenantId,
-    activeTenant: { account_number: "1234567" },
-    loading: false,
-    accountContextLoading: false,
-  }),
+const db = vi.hoisted(() => ({
+  rows: [] as Record<string, unknown>[],
+  error: null as Error | null,
+  filters: [] as [string, unknown][],
+  access: true,
+  posts: [] as Record<string, unknown>[],
 }));
-vi.mock("@/components/admin/studio/DocumentPreview", () => ({ DocumentPreview: ({ document, toolbar }: { document: { title: string; blocks: unknown[] }; toolbar?: boolean }) => <div data-doc-preview data-toolbar={String(toolbar)}>{`${document.title} (${document.blocks.length} blocks)`}</div> }));
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: { from: (table: string) => {
+    expect(table).toBe("marketing_content");
+    let originalId: unknown;
+    const query = {
+      select: () => query,
+      eq: (key: string, value: unknown) => {
+        db.filters.push([key, value]);
+        if (key === "id") originalId = value;
+        return query;
+      },
+      in: (key: string, value: unknown) => { db.filters.push([key, value]); return query; },
+      not: (key: string, op: string, value: unknown) => { db.filters.push([`not ${key} ${op}`, value]); return query; },
+      order: () => query,
+      limit: (size: number) => Promise.resolve({
+        data: (originalId ? db.rows.filter(row => row.id === originalId) : db.rows).slice(0, size),
+        error: db.error,
+      }),
+    };
+    return query;
+  } },
+}));
+vi.mock("./useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => ({ phase: "ready", canManage: db.access }) }));
+vi.mock("./social-publishing-data", () => ({ readSocialDesk: async () => ({ posts: db.posts }) }));
 
-import { MarketingContent } from "./marketing-content";
-
-let host: HTMLDivElement;
-let root: Root;
-const flush = async () => { await act(async () => { for (let i = 0; i < 6; i++) await Promise.resolve(); await new Promise((r) => setTimeout(r, 0)); }); };
-const button = (label: string, scope: ParentNode = document) => [...scope.querySelectorAll("button")].find((b) => b.textContent?.trim() === label) as HTMLButtonElement | undefined;
-const dialog = () => document.querySelector('[role="dialog"]') as HTMLElement | null;
-const summary = () => host.querySelector(".mov-sum")?.textContent ?? "";
-
-const DOC_BODY = JSON.stringify({ docType: "sales_offer", title: "Spring offer", blocks: [
-  { type: "cover", eyebrow: "A personal offer", title: "Your spring advisory plan", subhead: "Three months to a clear quarter" },
-  { type: "section-header", title: "What you get" }, { type: "prose", markdown: "Weekly sessions." },
-  { type: "section-header", title: "Investment" },
-] });
-const LONG_PROMPT = "A clean minimal hero illustration of a rising arrow over a city skyline at dawn, soft light, wide composition with room for a headline on the left side and the brand colours";
-const ROWS = [
-  { id: "c1", kind: "image", channel: null, status: "published", title: LONG_PROMPT, body: null, image_url: "https://cdn.example/paige-generated/hero.webp", size: "3:2", brief: null,
-    meta: { mime_type: "image/webp", width: 1440, height: 960, model: "fal-ai/flux-pro", license_class: "provider_and_model_terms" }, updated_at: "2026-10-01T10:00:00Z" },
-  { id: "c2", kind: "document", channel: null, status: "draft", title: "Spring offer", body: DOC_BODY, image_url: null, size: null, brief: "Offer for a new client", updated_at: "2026-09-30T10:00:00Z" },
-  { id: "c3", kind: "text", channel: "social_post", status: "draft", title: "Launch post", body: "## Big news\n**We’re open** for spring.\n- Book a call", image_url: null, size: null, brief: null, updated_at: "2026-09-29T10:00:00Z" },
-  { id: "c4", kind: "image", channel: null, status: "draft", title: "Testimonial card", body: null, image_url: "https://cdn.example/paige-generated/card.png", size: "square", brief: null, updated_at: "2026-09-28T10:00:00Z" },
-  { id: "c5", kind: "text", channel: "ad_copy", status: "draft", title: "Planning session", body: "**Headline:** Plan your quarter\n**Primary text:** Book a free session.\n**CTA:** Book now", image_url: null, size: null, brief: null, updated_at: "2026-09-27T10:00:00Z" },
-  { id: "c6", kind: "text", channel: "email_campaign", status: "draft", title: "Reminder", body: "Subject: Two days to go\n\nSee you Thursday.", image_url: null, size: null, brief: null, updated_at: "2026-09-26T10:00:00Z" },
-];
-
-type Props = Partial<React.ComponentProps<typeof MarketingContent>>;
-const publishedPage: React.ComponentProps<typeof MarketingContent>["artifacts"][number] = {
+const tenant = "9561c2f4-9de7-478e-84fa-d9d16f929c9e";
+const foreign = "f6eecba0-0811-4d62-a0a0-ab15c7f3a737";
+const id = "b5e24aed-91ab-4450-873a-d262218aab3c";
+const origin = "https://storage.example.test";
+const image = {
+  id, tenant_id: tenant, kind: "image", status: "published", title: "Published brand image",
+  published_at: "2026-10-03T10:00:00Z", image_path: `${tenant}/hero.jpg`,
+  image_url: `${origin}/storage/v1/object/public/paige-generated/${tenant}/hero.jpg`,
+};
+const page: MarketingContentProps["artifacts"][number] = {
   id: "page-1", type: "page", name: "Registration page", slug: "registration", status: "published",
   updatedAt: "2026-10-01T10:00:00Z", publicHref: "https://example.com/registration", recentSubmissions: 0,
   routingConfigured: false, routingState: "No route", routingTargets: [],
   recentDispatches: { succeeded: 0, failed: 0, other: 0 }, dispatchStatuses: {},
 };
-// The hub's frame: the drawer marks .campaigns-scroll inert, so the view must portal its preview out of it.
-const renderContent = async (props: Props = {}) => {
-  workspace.tenantId = props.tenantId ?? "t-1";
-  act(() => root.render(<div className="solo-campaigns"><nav className="campaigns-nav"/><div className="campaigns-scroll"><MarketingContent tenantId="t-1" view="media" onView={vi.fn()} artifacts={[]} publishedPhase="ready" onRetryPublished={vi.fn()} kind="all" onKind={vi.fn()} piece={null} onPiece={vi.fn()} {...props}/></div></div>));
+
+let host: HTMLDivElement;
+let root: Root;
+const flush = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+const render = async (props: Partial<MarketingContentProps> = {}) => {
+  act(() => root.render(<MarketingContent tenantId={tenant} artifacts={[]} publishedPhase="ready" onRetryPublished={vi.fn()} {...props}/>));
   await flush();
 };
+const card = (title: string) => Array.from(host.querySelectorAll<HTMLButtonElement>(".content-catalog-item"))
+  .find(button => button.querySelector("strong")?.textContent === title);
 
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  db.tables = {}; db.single = { data: null, error: null }; db.receipts = { data: [], error: null }; db.calls = [];
-  videoRows = []; requestedVideoTenant = undefined;
-  access.phase = "ready"; access.canManage = true;
+  db.filters = [];
+  db.rows = [];
+  db.error = null;
+  db.access = true;
+  db.posts = [];
+  vi.stubEnv("VITE_SUPABASE_URL", origin);
   host = document.createElement("div");
   document.body.appendChild(host);
   root = createRoot(host);
 });
-afterEach(() => { act(() => root.unmount()); host.remove(); vi.restoreAllMocks(); vi.unstubAllEnvs(); });
+afterEach(() => { act(() => root.unmount()); host.remove(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 
-describe("Marketing › Content", () => {
-  const mediaTenant = "9561c2f4-9de7-478e-84fa-d9d16f929c9e";
-  const mediaId = "b5e24aed-91ab-4450-873a-d262218aab3c";
-  const storage = "https://storage.example.test";
-  const originalUrl = (tenant: string, file: string) => `${storage}/storage/v1/object/public/paige-generated/${tenant}/${file}`;
+describe("the published Solo Content catalog", () => {
+  it("requests only actual published media and mixes it with existing live work", async () => {
+    db.rows = [
+      image,
+      { ...image, id: "draft", status: "draft", title: "Private draft" },
+      { ...image, id: "ready", status: "ready", title: "Private ready file" },
+      { ...image, id: "unproven", published_at: null, title: "No publication proof" },
+      { ...image, id: "foreign", tenant_id: foreign, title: "Other workspace image" },
+    ];
+    db.posts = [
+      { key: "receipt-1", receiptId: "receipt-1", status: "published", caption: "Original published post",
+        updatedAt: "2026-10-04T10:00:00Z", media: [], url: "https://www.threads.com/@fixture/post/1" },
+      { key: "draft-1", receiptId: null, status: "draft", caption: "Private social draft", media: [] },
+    ];
+    await render({ artifacts: [page, { ...page, id: "draft-page", status: "draft", name: "Private page draft" }] });
+    expect(db.filters).toEqual([["tenant_id", tenant], ["status", "published"], ["kind", ["image", "video"]], ["not published_at is", null]]);
+    expect(host.querySelector("h1")?.textContent).toBe("Content");
+    expect(host.querySelector('[aria-label="Content view"]')).toBeNull();
+    expect(host.textContent).not.toMatch(/Media library|Private |Other workspace|No publication proof/);
+    expect(card("Published brand image")).toBeTruthy();
+    expect(card("Registration page")).toBeTruthy();
+    expect(card("Original published post")).toBeTruthy();
+  });
 
-  it.each([["image", "graphic.png"], ["video", "clip.mp4"]])("opens the original saved %s in Studio and keeps the preview mounted", async (kind, file) => {
-    vi.stubEnv("VITE_SUPABASE_URL", storage);
-    db.tables.marketing_content = { data: [{ ...ROWS[0], id: mediaId, kind, image_path: `${mediaTenant}/${file}`, image_url: originalUrl(mediaTenant, file) }], error: null };
-    const onPiece = vi.fn();
-    await renderContent({ tenantId: mediaTenant, piece: mediaId, onPiece });
-    const launch = button("Use in social post", dialog()!)!;
+  it("opens the eligible published original in Studio and returns from the same catalog detail", async () => {
+    db.rows = [image];
+    await render();
+    const opener = card(image.title)!;
+    act(() => opener.click());
+    expect(host.querySelector(".content-catalog-detail h2")?.textContent).toBe(image.title);
+    const launcher = host.querySelector<HTMLButtonElement>("[data-solo-vibe-studio-launcher]")!;
     const received = vi.fn();
     window.addEventListener("paige-studio", received, { once: true });
-    expect(launch.hasAttribute("data-solo-vibe-studio-launcher")).toBe(true);
-    act(() => launch.click());
-    expect(received).toHaveBeenCalledOnce();
+    act(() => launcher.click());
     expect(received.mock.calls[0][0].detail).toEqual({
-      returnFocus: launch,
-      asset: { source: "marketing_content", id: mediaId, kind, expectedTenantId: mediaTenant },
+      returnFocus: launcher, asset: { source: "marketing_content", id, kind: "image", expectedTenantId: tenant },
     });
-    expect(dialog()?.contains(launch)).toBe(true);
-    expect(onPiece).not.toHaveBeenCalled();
-
-    host.setAttribute("inert", "");
-    const escape = () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", cancelable: true }));
-    act(() => { escape(); });
-    expect(onPiece).not.toHaveBeenCalled();
-    host.removeAttribute("inert");
-    act(() => { escape(); });
-    expect(onPiece).toHaveBeenCalledWith(null);
+    act(() => host.querySelector<HTMLButtonElement>(".content-catalog-back")!.click());
+    expect(document.activeElement).toBe(card(image.title));
   });
 
-  it("keeps foreign, external, pending and non-media records in preview", async () => {
-    vi.stubEnv("VITE_SUPABASE_URL", storage);
-    const otherTenant = "f6eecba0-0811-4d62-a0a0-ab15c7f3a737";
-    for (const variant of [
-      { image_url: originalUrl(otherTenant, "graphic.png") },
-      { image_url: originalUrl(mediaTenant, "graphic.png").replace(storage, "https://elsewhere.example.test") },
-      { image_path: null },
-      { image_path: `${mediaTenant}/replaced.png` },
-      { image_path: `${mediaTenant}/clip.mp4`, image_url: originalUrl(mediaTenant, "clip.mp4"), kind: "video", status: "processing" },
-      { image_path: `${mediaTenant}/document.pdf`, image_url: originalUrl(mediaTenant, "document.pdf"), kind: "document" },
-    ]) {
-      db.tables.marketing_content = { data: [], error: null };
-      db.single = { data: { ...ROWS[0], image_path: `${mediaTenant}/graphic.png`, image_url: originalUrl(mediaTenant, "graphic.png"), ...variant, id: mediaId }, error: null };
-      await renderContent({ tenantId: mediaTenant });
-      await renderContent({ tenantId: mediaTenant, piece: mediaId });
-      expect(dialog()).not.toBeNull();
-      expect(button("Use in social post", dialog()!)).toBeUndefined();
-    }
+  it("never loads an unscoped media URL from a published row", async () => {
+    db.rows = [{ ...image, image_url: "https://example.test/unknown.jpg" }];
+    await render();
+    act(() => card(image.title)!.click());
+    expect(host.querySelector("img")).toBeNull();
+    expect(host.querySelector("[data-solo-vibe-studio-launcher]")).toBeNull();
   });
 
-  it("leads with the gallery and shows each piece as what it is", async () => {
-    db.tables.marketing_content = { data: ROWS, error: null };
-    await renderContent();
-    expect(db.calls.find((c) => c.table === "marketing_content")?.filters).toEqual([["tenant_id", "t-1"], ["not status", "archived"]]);
-    expect(summary()).toBe("6 pieces in your library: 2 images, 1 document and 3 pieces of copy. 1 is in your Catalog.");
-    const sections = [...host.querySelectorAll(".mct > section")].map((s) => s.querySelector("h2")?.textContent);
-    expect(sections).toEqual(["Your library", "Videos"]);
-    const cards = [...host.querySelectorAll(".mct-card")];
-    expect(cards).toHaveLength(6);
-    expect(cards[0].querySelector("img")?.getAttribute("src")).toBe(ROWS[0].image_url);
-    expect(cards[0].querySelector(".mct-kind")?.textContent).toBe("Image");
-    expect(cards[0].querySelector("strong")?.textContent).toMatch(/…$/);
-    expect(cards[0].querySelector("small")?.textContent).toMatch(/^In your Catalog · saved/);
-    expect(cards[3].querySelector("small")?.textContent).toMatch(/^saved/);
-    expect(cards[3].querySelector(".mct-frame")?.classList.contains("mct-whole")).toBe(true);
-    expect(cards[1].querySelector(".mct-kind")?.textContent).toBe("Document · Sales offer");
-    expect(cards[1].querySelector(".mct-cover")?.textContent).toBe("A personal offerYour spring advisory planThree months to a clear quarter2 sections");
-    expect(cards[2].querySelector(".mct-words")?.textContent).toBe("Big newsWe’re open for spring.\nBook a call");
-    expect(cards[4].querySelector(".mct-ad")?.textContent).toBe("Plan your quarterBook a free session.Book now");
-    expect(cards[5].querySelector(".mct-words b")?.textContent).toBe("Two days to go");
-    expect(host.querySelector(".mct-ring")?.getAttribute("aria-label")).toBe("Your library by kind: Images 2, Documents 1, Copy 3");
-    expect(button("Add a video")).toBeUndefined();
-    expect(host.querySelector(".btn-gold, .btn-p")).toBeNull();
+  it("shows a published Studio upload from its original tenant-scoped bucket", async () => {
+    const url = image.image_url.replace("paige-generated", "growth-assets");
+    db.rows = [{ ...image, image_url: url }];
+    await render();
+    act(() => card(image.title)!.click());
+    expect(host.querySelector("img")?.getAttribute("src")).toBe(url);
+    expect(host.querySelector("[data-solo-vibe-studio-launcher]")).toBeNull();
   });
 
-  it("filters by kind on the server, keeps the copy channels, and clears the filter from its own chip", async () => {
-    db.tables.marketing_content = { data: ROWS, error: null };
-    const onKind = vi.fn();
-    await renderContent({ onKind });
-    expect([...host.querySelectorAll(".campaigns-segmented button")].map((b) => b.textContent)).toEqual(["All6", "Images2", "Documents1", "Copy3"]);
-    act(() => button("Documents1")!.click());
-    expect(onKind).toHaveBeenCalledWith("document");
-
-    db.calls = [];
-    db.tables.marketing_content = { data: [ROWS[1]], error: null };
-    await renderContent({ kind: "document", onKind });
-    expect(db.calls.filter((c) => c.table === "marketing_content").map((c) => c.filters)).toContainEqual([["tenant_id", "t-1"], ["not status", "archived"], ["kind", "document"]]);
-    // Pressing the active chip again goes back to everything.
-    act(() => [...host.querySelectorAll(".campaigns-segmented button")].find((b) => b.getAttribute("aria-pressed") === "true")!.dispatchEvent(new MouseEvent("click", { bubbles: true })));
-    expect(onKind).toHaveBeenLastCalledWith("all");
-
-    db.calls = [];
-    db.tables.marketing_content = { data: ROWS.filter((r) => r.kind === "text"), error: null };
-    await renderContent({ kind: "copy" });
-    expect(db.calls.filter((c) => c.table === "marketing_content").map((c) => c.filters)).toContainEqual([["tenant_id", "t-1"], ["not status", "archived"], ["not kind in", "(image,video,document)"]]);
-    expect(host.querySelector(".mct-channels")?.textContent).toBe("1 ad copy · 1 email · 1 social post");
-  });
-
-  it("opens a preview outside the inert scroll region, with every control live", async () => {
-    db.tables.marketing_content = { data: ROWS, error: null };
-    const onPiece = vi.fn();
-    await renderContent({ onPiece });
-    act(() => (host.querySelectorAll(".mct-card")[0] as HTMLButtonElement).click());
-    expect(onPiece).toHaveBeenCalledWith("c1");
-
-    await renderContent({ piece: "c1", onPiece });
-    const panel = dialog()!;
-    expect(host.querySelector(".campaigns-scroll")!.hasAttribute("inert")).toBe(true);
-    expect(panel.closest("[inert]")).toBeNull();
-    expect(panel.parentElement?.classList.contains("solo-campaigns")).toBe(true);
-    expect(document.activeElement?.getAttribute("aria-label")).toBe("Close details");
-    expect(panel.querySelector(".mct-full img")?.getAttribute("src")).toBe(ROWS[0].image_url);
-    // EXP07 row 3: the facts line carries what the completion actually recorded — format,
-    // real dimensions, the model, the license class — between the shape and the status.
-    expect(panel.querySelector(".mct-facts")?.textContent).toMatch(/^Image · Landscape · WEBP · 1440×960 · made by fal-ai\/flux-pro · provider & model terms · In your Catalog · saved/);
-    expect(panel.querySelector(".mct-asked p")?.textContent).toBe(LONG_PROMPT);
-  });
-
-  it("shows no invented facts for an image whose record holds none (EXP07 row 3)", async () => {
-    db.tables.marketing_content = { data: ROWS, error: null };
-    await renderContent({ piece: "c4" });
-    const facts = dialog()!.querySelector(".mct-facts")?.textContent ?? "";
-    expect(facts).toMatch(/^Image · Square · Draft · saved/);
-    expect(facts).not.toContain("made by");
-    expect(facts).not.toContain("×");
-  });
-
-  it("ignores malformed metadata values rather than rendering them (EXP07 row 3)", async () => {
-    db.tables.marketing_content = { data: [
-      { ...ROWS[3], meta: { mime_type: 42, width: "lots", height: null, model: "", license_class: { rogue: true } } },
-    ], error: null };
-    await renderContent({ piece: "c4" });
-    const facts = dialog()!.querySelector(".mct-facts")?.textContent ?? "";
-    expect(facts).toMatch(/^Image · Square · Draft · saved/);
-    expect(facts).not.toContain("made by");
-    expect(facts).not.toContain("×");
-  });
-
-  it("downloads an image and says when a download fails", async () => {
-    db.tables.marketing_content = { data: ROWS, error: null };
-    await renderContent({ piece: "c1" });
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: true, status: 200, blob: () => Promise.resolve(new Blob(["x"], { type: "image/webp" })) } as Response);
-    Object.assign(URL, { createObjectURL: vi.fn(() => "blob:hero"), revokeObjectURL: vi.fn() });
-    const clicked: string[] = [];
-    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) { clicked.push(this.download); });
-    await act(async () => { button("Download", dialog()!)!.click(); });
-    await flush();
-    expect(fetchSpy).toHaveBeenCalledWith(ROWS[0].image_url);
-    expect(clicked[0]).toMatch(/^a-clean-minimal-hero-illustration.*\.webp$/);
-    expect(dialog()!.querySelector(".mct-act-note")?.textContent).toBe("Download started.");
-
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    fetchSpy.mockResolvedValue({ ok: false, status: 403, blob: () => Promise.resolve(new Blob(["denied"])) } as Response);
-    await act(async () => { button("Download", dialog()!)!.click(); });
-    await flush();
-    expect(dialog()!.querySelector(".mct-act-note")?.textContent).toBe("The download didn’t start. Use Open full size and save it from there.");
-
-    expect(button("Revise with PAIGE", dialog()!)).toBeUndefined();
-    expect(dialog()!.querySelector(".mct-pubdoor")).toBeNull();
-  });
-
-  it("never uses a stored address that isn't https or this site", async () => {
-    db.tables.marketing_content = { data: [{ ...ROWS[0], id: "x1", image_url: "javascript:alert(1)" }], error: null };
-    await renderContent({ piece: "x1" });
-    expect(host.querySelector(".mct-card img")).toBeNull();
-    expect(host.querySelector(".mct-missing")?.textContent).toBe("No file saved with this image");
-    // The publish panel's own static Settings link is expected; what must NEVER appear is an
-    // anchor built from the stored address — every anchor outside the publish panel is absent.
-    expect(dialog()!.querySelectorAll("a").length).toBe(dialog()!.querySelectorAll(".mct-pubdoor a").length);
-    expect(button("Download", dialog()!)).toBeUndefined();
-  });
-
-  it("prints a document from the actions row, lays out ad copy as an ad, and copies plain words", async () => {
-    db.tables.marketing_content = { data: ROWS, error: null };
-    await renderContent({ piece: "c2" });
-    await flush();
-    expect(dialog()!.querySelector("[data-doc-preview]")?.textContent).toBe("Spring offer (4 blocks)");
-    expect(dialog()!.querySelector("[data-doc-preview]")?.getAttribute("data-toolbar")).toBe("false");
-    const print = vi.spyOn(window, "print").mockImplementation(() => {});
-    act(() => button("Print / Save as PDF", dialog()!)!.click());
-    expect(print).toHaveBeenCalled();
-    expect(document.documentElement.classList.contains("paige-doc-printing")).toBe(true);
-    window.dispatchEvent(new Event("afterprint"));
-    expect(document.documentElement.classList.contains("paige-doc-printing")).toBe(false);
-
-    await renderContent({ piece: "c5" });
-    expect(dialog()!.querySelector(".mct-adfull")?.textContent).toBe("Plan your quarterBook a free session.Book now");
-
-    const write = vi.fn(() => Promise.resolve());
-    Object.assign(navigator, { clipboard: { writeText: write } });
-    await renderContent({ piece: "c3" });
-    expect(dialog()!.querySelector(".mct-copy")?.textContent).toBe("Big newsWe’re open for spring.\nBook a call");
-    await act(async () => { button("Copy text", dialog()!)!.click(); });
-    expect(write).toHaveBeenCalledWith("Big news\nWe’re open for spring.\nBook a call");
-    expect(dialog()!.querySelector(".mct-act-note")?.textContent).toBe("Copied.");
-  });
-
-  it("plays a video and offers its file", async () => {
-    db.tables.marketing_content = { data: [{ ...ROWS[0], id: "v1", kind: "video", title: "Promo", image_url: "https://cdn.example/paige-generated/promo.mp4", size: null }], error: null };
-    await renderContent({ piece: "v1" });
-    expect(host.querySelector(".mct-card video")?.getAttribute("src")).toBe("https://cdn.example/paige-generated/promo.mp4");
-    expect(dialog()!.querySelector(".mct-full video")?.hasAttribute("controls")).toBe(true);
-    expect(button("Download", dialog()!)).toBeDefined();
-  });
-
-  it("reads a linked piece on its own when the newest read doesn't hold it, and says when it is gone", async () => {
-    db.tables.marketing_content = { data: ROWS, error: null };
-    db.single = { data: { ...ROWS[3], id: "old-1", title: "An older card" }, error: null };
-    await renderContent({ piece: "old-1" });
-    expect(db.calls.find((c) => c.single)?.filters).toEqual([["tenant_id", "t-1"], ["id", "old-1"], ["not status", "archived"]]);
-    expect(dialog()!.textContent).toContain("An older card");
-    db.single = { data: null, error: null };
-    await renderContent({ piece: "gone-1" });
-    expect(dialog()!.textContent).toContain("This piece isn’t in your library");
-  });
-
-  it("keeps a broken picture or unreadable document honest", async () => {
-    db.tables.marketing_content = { data: [{ ...ROWS[0], id: "b1" }, { ...ROWS[1], id: "b2", body: "{not json" }], error: null };
-    await renderContent();
-    act(() => { host.querySelector(".mct-card img")!.dispatchEvent(new Event("error")); });
-    expect([...host.querySelectorAll(".mct-missing")].map((el) => el.textContent)).toEqual(["This image couldn’t load", "This document couldn’t be read"]);
-    expect(host.querySelectorAll(".mct-card .mct-kind")[1]?.textContent).toBe("Document");
-  });
-
-  it("shows a failed read with one retry, and an empty library without authoring controls", async () => {
-    db.tables.marketing_content = { data: null, error: { message: "boom" } };
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    await renderContent();
-    expect(summary()).toBe("Your library could not load.");
-    expect([...host.querySelectorAll("button")].filter((b) => b.textContent === "Try again")).toHaveLength(1);
-    expect(host.querySelector(".mct-ring")).toBeNull();
-    db.tables.marketing_content = { data: [], error: null };
-    act(() => button("Try again")!.click());
-    await flush();
-    expect(summary()).toBe("Your library is empty.");
-    expect(button("Ask PAIGE for content")).toBeUndefined();
-    expect(host.querySelector(".campaigns-segmented")).toBeNull();
-  });
-
-  it("shows original published work and receipts, and returns focus to the original card", async () => {
-    db.receipts.data = [
-      { id: "1b8e4f0c-de01-4905-b6d1-b56421805342", content_id: "3375ae19-d509-4b35-8489-88efb398e8db", tenant_id: "t-1",
-        platform: "threads", status: "published", request_args: { caption: "Finished post", channel_label: "Threads" },
-        provider_post_url: "https://example.com/post" },
-      { id: "2b8e4f0c-de01-4905-b6d1-b56421805342", content_id: "3375ae19-d509-4b35-8489-88efb398e8db", tenant_id: "t-1",
-        platform: "threads", status: "scheduled", request_args: { caption: "Future post" } },
+  it("plays a published video in its detail and keeps unpublished video out", async () => {
+    db.rows = [
+      { ...image, kind: "video", title: "Published video", image_path: `${tenant}/replay.mp4`,
+        image_url: `${origin}/storage/v1/object/public/paige-generated/${tenant}/replay.mp4` },
+      { ...image, kind: "video", title: "Draft video", status: "draft" },
     ];
-    await renderContent({ view: "published", artifacts: [publishedPage, { ...publishedPage, id: "draft-page", name: "Private draft", status: "draft" }] });
-    const cards = host.querySelectorAll<HTMLButtonElement>(".content-catalog-item");
-    expect(cards).toHaveLength(2);
-    expect(host.textContent).not.toContain("Private draft");
-    expect(host.textContent).not.toContain("Future post");
-    const post = Array.from(cards).find(card => card.textContent?.includes("Finished post"))!;
-    act(() => post.click());
-    expect(document.activeElement?.textContent).toBe("Finished post");
-    expect(host.querySelector('a[href="https://example.com/post"]')).not.toBeNull();
-    act(() => document.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
-    expect(document.activeElement?.textContent).toBe(post.textContent);
+    await render();
+    expect(card("Draft video")).toBeUndefined();
+    act(() => card("Published video")!.click());
+    expect(host.querySelector("video[controls]")?.getAttribute("aria-label")).toBe("Published video");
   });
 
-  it("shows the published loading, empty and retryable states", async () => {
-    await renderContent({ view: "published", publishedPhase: "loading" });
-    expect(host.textContent).toContain("Reading published content…");
-    await renderContent({ view: "published" });
-    expect(host.textContent).toContain("No published work yet.");
-    const onRetryPublished = vi.fn();
-    await renderContent({ view: "published", publishedPhase: "error", onRetryPublished });
-    act(() => button("Retry published work")!.click());
-    expect(onRetryPublished).toHaveBeenCalled();
+  it("keeps live pages visible if published media cannot be read", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    db.error = new Error("sample unavailable");
+    await render({ artifacts: [page] });
+    expect(card(page.name)).toBeTruthy();
+    expect(host.querySelector('[role="status"]')?.textContent).toContain("Published images and videos couldn’t load");
+    expect(log).toHaveBeenCalled();
   });
 
-  it("refuses video list results from a different workspace", async () => {
-    videoRows = [{ id: "video-1", tenant_id: "t-2", title: "Other workspace recording", status: "ready" }];
-    await renderContent();
-    expect(requestedVideoTenant).toBe("t-1");
-    expect(host.textContent).not.toContain("Other workspace recording");
-    expect(host.textContent).toContain("Your videos couldn't be read.");
+  it("shows an explicit published-only empty state when every saved record is a draft", async () => {
+    db.rows = [{ ...image, status: "draft" }];
+    await render();
+    expect(host.querySelector('[role="status"]')?.textContent).toBe("No published work yet.");
   });
 
-  it("marks a full library read as the newest pieces, never a total", async () => {
-    db.tables.marketing_content = { data: Array.from({ length: 60 }, (_, n) => ({ ...ROWS[3], id: `c${n}`, title: `Piece ${n}`, status: n < 2 ? "published" : "draft" })), error: null };
-    await renderContent();
-    expect(summary()).toBe("60+ pieces in your library: images, the newest 60 shown. 2 of the newest 60 are in your Catalog.");
-    expect([...host.querySelectorAll(".campaigns-segmented button")].map((b) => b.textContent)).toEqual(["All", "Images"]);
-    expect(host.textContent).toContain("The newest 60 are shown.");
+  it("opens an exact published bookmark even beyond the scoped recent list", async () => {
+    db.rows = [...Array.from({ length: 61 }, (_, i) => ({ ...image, id: `recent-${i}` })), image];
+    const clear = vi.fn();
+    await render({ linkedPieceId: id, onClearLinkedPiece: clear });
+    expect(db.filters).toContainEqual(["id", id]);
+    expect(host.querySelector(".content-catalog-detail h2")?.textContent).toBe(image.title);
+    act(() => host.querySelector<HTMLButtonElement>(".content-catalog-back")!.click());
+    expect(clear).toHaveBeenCalledOnce();
   });
 
-  it("tells a member once that the library is for owners and admins, and never reads it", async () => {
-    access.canManage = false;
-    await renderContent({ piece: "c1" });
-    expect(db.calls.some((c) => c.table === "marketing_content")).toBe(false);
-    expect(summary()).toBe("Your workspace's saved library is visible to its owners and admins.");
-    expect(host.textContent!.match(/visible to its owners and admins/g)).toHaveLength(1);
-    expect(host.querySelector(".mct-lib")).toBeNull();
-    expect(button("Ask PAIGE for content")).toBeUndefined();
-    expect(dialog()).toBeNull();
+  it("declines legacy draft bookmarks and explains the published media search scope", async () => {
+    db.rows = [
+      ...Array.from({ length: 61 }, (_, i) => ({ ...image, id: `recent-${i}` })),
+      { ...image, status: "draft", title: "Linked draft" },
+    ];
+    await render({ linkedPieceId: id });
+    expect(host.querySelector(".content-catalog-detail")).toBeNull();
+    expect(host.textContent).toContain("This original is unavailable in published Content.");
+    expect(host.textContent).toContain("Showing the latest 60 published images and videos.");
+    expect(host.textContent).not.toContain("Linked draft");
   });
 
-  it("drops an answer for a workspace the page has left", async () => {
-    let release: (value: Answer) => void = () => {};
-    db.tables.marketing_content = new Promise<Answer>((resolve) => { release = resolve; }) as unknown as Answer;
-    await renderContent({ tenantId: "t-1" });
-    db.tables.marketing_content = { data: [ROWS[3]], error: null };
-    await renderContent({ tenantId: "t-2" });
-    await act(async () => { release({ data: ROWS, error: null }); });
-    await flush();
-    expect(host.querySelectorAll(".mct-card")).toHaveLength(1);
+  it("keeps the existing media read authority and shows the other published work", async () => {
+    db.access = false;
+    db.rows = [image];
+    await render({ artifacts: [page] });
+    expect(db.filters).toEqual([]);
+    expect(card(image.title)).toBeUndefined();
+    expect(card(page.name)).toBeTruthy();
   });
 });

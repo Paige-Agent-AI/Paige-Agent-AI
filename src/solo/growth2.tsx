@@ -24,7 +24,6 @@ import { FormIntakePanel } from "./form-intake";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { MarketingContent } from "./marketing-content";
 import { legacySocialPlansTarget } from "./social-publication-reference";
-import { contentKindOf } from "./marketing-content-model";
 import { legacyAdsRoute } from "./ads-routing";
 import { CAPTURE_FILTERS, MarketingOverview } from "./marketing-overview";
 import { MarketingEmail } from "./marketing-email";
@@ -496,6 +495,15 @@ const MarketingWorkspace=({ salesInShell = false })=>{
     Object.entries(patch).forEach(([key,value])=>{ if(value==null||value==="") next.delete(key); else next.set(key,value); });
     navigate({pathname:location.pathname,search:next.toString()},{replace});
   },[location.pathname,location.search,navigate]);
+  const requestedContentPiece = tab === "content" ? query.get("piece") : null;
+  const linkedContentPiece = requestedContentPiece && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(requestedContentPiece)
+    ? requestedContentPiece.toLowerCase() : null;
+  const legacyContentView = tab === "content" && (query.has("content_view") || query.has("kind") || (query.has("piece") && !linkedContentPiece));
+  React.useEffect(() => {
+    if (legacyContentView) {
+      setOverviewQuery({ content_view: null, kind: null, piece: linkedContentPiece });
+    }
+  }, [legacyContentView, linkedContentPiece, setOverviewQuery]);
   // Overview owns the briefs read (no other tab pays for it); it reports whether this account may
   // edit, so the form panel offers "Edit in Vibe Studio" only to someone who can.
   const [overviewCanManage,setOverviewCanManage]=React.useState(false);
@@ -547,15 +555,8 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   else if(tab==="social") body=<Social/>;
   else if(tab==="audience") body=<MarketingAudience tenantId={data.tenantId} onOpenClients={()=>params.account&&navigate(subtabPath("solo",params.account,"clients","people"))}/>;
   else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenAudience={()=>setTab("audience")} onOpenConnections={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`):null} onOpenSettings={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=registration`):null}/>;
-  else if(tab==="content") {
-    const kind=contentKindOf(query.get("kind"));
-    const piece=query.get("piece");
-    const view=query.get("content_view")==="media"||kind!=="all"||piece?"media":"published";
-    body=<MarketingContent tenantId={data.tenantId} artifacts={data.artifacts} publishedPhase={data.phase}
-      onRetryPublished={()=>data.retry?.()} view={view}
-      onView={(next)=>setOverviewQuery(next==="media"?{content_view:"media"}:{content_view:null,kind:null,piece:null},{replace:false})}
-      kind={kind} onKind={(next)=>setOverviewQuery({content_view:"media",kind:next==="all"?null:next})}
-      piece={piece} onPiece={(id)=>setOverviewQuery({content_view:"media",piece:id})}/>;
-  }
+  else if(tab==="content") body=<MarketingContent tenantId={data.tenantId} artifacts={data.artifacts}
+    publishedPhase={data.phase} onRetryPublished={()=>data.retry?.()} linkedPieceId={linkedContentPiece}
+    onClearLinkedPiece={()=>setOverviewQuery({piece:null})}/>;
   return <div className="solo-campaigns" data-campaigns-view={tab}><h1 className="campaigns-sr-only">Marketing</h1><CampaignTabs tabs={tabs} current={tab==="capture"?"overview":tab} setCurrent={setTab}/><div id="campaigns-tabpanel" role="tabpanel" aria-labelledby={`campaigns-tab-${tab==="capture"?"overview":tab}`} className="campaigns-scroll">{tab==="catalog" && query.get("origin")==="sales" && !workspaceChanged && data.tenantId && data.phase!=="resolving" && <div className="so-source-return"><button type="button" className="btn btn-s btn-p" onClick={()=>navigate(`${subtabPath("solo",params.account,"growth","sales")}${query.get("resume")==="terms" ? "?resume=terms" : ""}`)}>{query.get("resume")==="terms" ? "Return to commercial terms" : "Return to Sales"}</button><span>Finish offer setup here in Offers, then return when ready.</span></div>}{body}</div><DetailDrawer detail={detail||formDetail} onClose={detail?closeDetail:closeForm}/></div>;
 };

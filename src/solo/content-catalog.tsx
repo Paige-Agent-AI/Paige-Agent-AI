@@ -1,18 +1,30 @@
 import React from "react";
-import { ArrowLeft, ArrowRight, ExternalLink, FileText, Layers, LayoutTemplate, Search, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, FileText, Film, Image as ImageIcon, Layers, LayoutTemplate, Search, Send } from "lucide-react";
 import { flushSync } from "react-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { readSocialDesk } from "./social-publishing-data";
 import type { SocialDeskPost } from "./social-publishing-model";
 import { safeMediaUrl, shortTitle } from "./marketing-content-model";
-import { useTenantRead } from "./marketing-planned";
+import { useLibraryAccess, useTenantRead } from "./marketing-planned";
+import { parseStudioSavedMediaHandoff, type StudioSavedMediaHandoff } from "./studio/saved-media-handoff";
 import type { CampaignArtifact } from "./useSoloCampaigns";
 import "./content-catalog.css";
 
 const EMPTY_POSTS: SocialDeskPost[] = [];
 const readPublishedPosts = async (tenantId: string) =>
   (await readSocialDesk(tenantId, false, null)).posts.filter(post => post.status === "published" && post.receiptId);
-const TYPES = { page: "Page", form: "Form", funnel: "Funnel", social: "Social post" } as const;
+const TYPES = { page: "Page", form: "Form", funnel: "Funnel", social: "Social post", image: "Image", video: "Video" } as const;
 type Kind = keyof typeof TYPES;
+type PublishedMedia = {
+  id: string;
+  tenant_id: string;
+  kind: "image" | "video";
+  status: "published";
+  title: string | null;
+  published_at: string;
+  image_path: string | null;
+  image_url: string | null;
+};
 type Entry = {
   id: string;
   kind: Kind;
@@ -21,16 +33,64 @@ type Entry = {
   origin?: string;
   href: string | null;
   updatedAt: string;
-  media?: SocialDeskPost["media"][number];
+  media?: Pick<SocialDeskPost["media"][number], "type" | "url">;
+  asset?: StudioSavedMediaHandoff | null;
+  pieceId?: string;
 };
-const icons = { page: LayoutTemplate, form: FileText, funnel: Layers, social: Send };
+const icons = { page: LayoutTemplate, form: FileText, funnel: Layers, social: Send, image: ImageIcon, video: Film };
+const EMPTY_MEDIA: PublishedMedia[] = [];
+const MEDIA_PAGE_SIZE = 60;
+const EMPTY_MEDIA_READ = { rows: EMPTY_MEDIA, capped: false };
+
+function publishedMediaQuery(tenantId: string) {
+  return supabase.from("marketing_content" as never)
+    .select("id,tenant_id,kind,status,title,published_at,image_path,image_url")
+    .eq("tenant_id", tenantId).eq("status", "published").in("kind", ["image", "video"])
+    .not("published_at", "is", null);
+}
+
+function publishedMediaRows(data: unknown, tenantId: string) {
+  return (Array.isArray(data) ? data as PublishedMedia[] : []).filter(row =>
+    row.tenant_id === tenantId && row.status === "published" && (row.kind === "image" || row.kind === "video")
+    && typeof row.published_at === "string" && Number.isFinite(Date.parse(row.published_at)));
+}
+
+async function readPublishedMedia(tenantId: string, linkedPieceId?: string | null): Promise<typeof EMPTY_MEDIA_READ> {
+  const result = await publishedMediaQuery(tenantId).order("published_at", { ascending: false }).limit(MEDIA_PAGE_SIZE + 1);
+  if (result.error) throw result.error;
+  const matches = publishedMediaRows(result.data, tenantId);
+  const rows = matches.slice(0, MEDIA_PAGE_SIZE);
+  if (linkedPieceId && !rows.some(item => item.id === linkedPieceId)) {
+    const linked = await publishedMediaQuery(tenantId).eq("id", linkedPieceId).limit(1);
+    if (linked.error) throw linked.error;
+    const exact = publishedMediaRows(linked.data, tenantId).find(item => item.id === linkedPieceId);
+    if (exact) rows.push(exact);
+  }
+  return { rows, capped: matches.length > MEDIA_PAGE_SIZE };
+}
+
+function publishedMediaSource(item: PublishedMedia) {
+  if (!item.image_path?.startsWith(`${item.tenant_id}/`) || !item.image_url) return null;
+  const path = item.image_path.split("/");
+  if (path.length < 2 || !path.every(segment => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(segment))) return null;
+  try {
+    const storage = new URL(import.meta.env.VITE_SUPABASE_URL);
+    if (storage.protocol !== "https:") return null;
+    const encodedPath = path.map(encodeURIComponent).join("/");
+    for (const bucket of ["paige-generated", "growth-assets"] as const) {
+      const url = `${storage.origin}/storage/v1/object/public/${bucket}/${encodedPath}`;
+      if (item.image_url === url) return { url, bucket };
+    }
+  } catch { return null; }
+  return null;
+}
 
 function dateOf(value: string) {
   const date = new Date(value);
   return Number.isFinite(date.getTime()) ? date.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
 }
 
-function entriesFor(artifacts: CampaignArtifact[], posts: SocialDeskPost[]) {
+function entriesFor(artifacts: CampaignArtifact[], posts: SocialDeskPost[], media: PublishedMedia[]) {
   const studio: Entry[] = artifacts
     .filter(({ type, status }) => type === "page" ? status === "published" : status === "active")
     .map(item => ({
@@ -40,32 +100,49 @@ function entriesFor(artifacts: CampaignArtifact[], posts: SocialDeskPost[]) {
   const social: Entry[] = posts.map(post => ({
     id: post.key, kind: "social", title: shortTitle(post.caption || post.title, 80).text,
     text: post.caption, origin: post.destination ? `Published by PAIGE · ${post.destination}` : "Published by PAIGE",
-    href: safeMediaUrl(post.url), updatedAt: post.updatedAt, media: post.media[0],
+    href: safeMediaUrl(post.url), updatedAt: post.updatedAt, media: post.media[0], pieceId: post.pieceId,
   }));
-  return [...studio, ...social].sort((a, b) => (Date.parse(b.updatedAt) || 0) - (Date.parse(a.updatedAt) || 0) || a.id.localeCompare(b.id));
+  const originals: Entry[] = media.map(item => {
+    const source = publishedMediaSource(item);
+    const url = source?.url ?? null;
+    const reusable = source?.bucket === "paige-generated" && (item.kind === "image" ? /\.(png|jpe?g)$/i.test(source.url) : /\.mp4$/i.test(source.url));
+    return {
+      id: `media:${item.id}`, pieceId: item.id, kind: item.kind, title: item.title?.trim() || `Untitled ${item.kind}`,
+      href: url, updatedAt: item.published_at, ...(url ? { media: { type: item.kind, url } } : {}),
+      asset: reusable ? parseStudioSavedMediaHandoff({ source: "marketing_content", id: item.id, kind: item.kind, expectedTenantId: item.tenant_id }) : null,
+    };
+  });
+  return [...studio, ...social, ...originals].sort((a, b) => (Date.parse(b.updatedAt) || 0) - (Date.parse(a.updatedAt) || 0) || a.id.localeCompare(b.id));
 }
 
 function entryLabel(entry: Entry) {
   return [TYPES[entry.kind], entry.origin].filter(Boolean).join(" · ");
 }
 
-function CatalogArt({ entry, motion = false }: { entry: Entry; motion?: boolean }) {
+function CatalogArt({ entry, motion = false, detail = false }: { entry: Entry; motion?: boolean; detail?: boolean }) {
   const Icon = icons[entry.kind];
   const url = safeMediaUrl(entry.media?.url);
-  return <span className={`content-catalog-art content-catalog-art--${entry.kind}${motion ? " content-catalog-motion" : ""}`} aria-hidden="true">
-    {entry.media?.type === "image" && url ? <img src={url} alt="" loading="lazy"/> :
-      entry.media?.type === "video" && url ? <video src={url} muted playsInline preload="metadata" tabIndex={-1}/> : <Icon size={42} strokeWidth={1.2}/>}
+  return <span className={`content-catalog-art content-catalog-art--${entry.kind}${motion ? " content-catalog-motion" : ""}`} aria-hidden={!detail || !url}>
+    {entry.media?.type === "image" && url ? <img src={url} alt={detail ? entry.title : ""} loading="lazy"/> :
+      entry.media?.type === "video" && url ? <video src={url} controls={detail} muted={!detail} playsInline preload="metadata"
+        aria-label={detail ? entry.title : undefined} tabIndex={detail ? undefined : -1}/> : <Icon size={42} strokeWidth={1.2}/>}
   </span>;
 }
 
-export function ContentCatalog({ tenantId, artifacts, phase, onRetry }: {
+export function ContentCatalog({ tenantId, artifacts, phase, onRetry, linkedPieceId, onClearLinkedPiece }: {
   tenantId: string | null;
   artifacts: CampaignArtifact[];
   phase: string;
   onRetry: () => void;
+  linkedPieceId?: string | null;
+  onClearLinkedPiece?: () => void;
 }) {
   const social = useTenantRead(tenantId, EMPTY_POSTS, readPublishedPosts);
-  const entries = React.useMemo(() => entriesFor(artifacts, social.rows), [artifacts, social.rows]);
+  const access = useLibraryAccess();
+  const media = useTenantRead(tenantId, EMPTY_MEDIA_READ, access === "allowed" ? id => readPublishedMedia(id, linkedPieceId) : null);
+  const mediaRows = access === "allowed" ? media.rows.rows : EMPTY_MEDIA;
+  const mediaCapped = access === "allowed" && media.rows.capped;
+  const entries = React.useMemo(() => entriesFor(artifacts, social.rows, mediaRows), [artifacts, social.rows, mediaRows]);
   const [feature, setFeature] = React.useState<string | null>(null);
   const [selected, setSelected] = React.useState<string | null>(null);
   const [kind, setKind] = React.useState("");
@@ -75,7 +152,8 @@ export function ContentCatalog({ tenantId, artifacts, phase, onRetry }: {
   const heading = React.useRef<HTMLHeadingElement>(null);
   const root = React.useRef<HTMLElement>(null);
   const transition = React.useRef<Pick<ViewTransition, "skipTransition"> | null>(null);
-  const entry = entries.find(item => item.id === selected);
+  const linkedEntry = linkedPieceId ? entries.find(item => item.pieceId === linkedPieceId) : undefined;
+  const entry = entries.find(item => item.id === selected) ?? linkedEntry;
   const featured = entries.find(item => item.id === feature) ?? entries[0];
   const recent = entries.slice(0, 5);
   const query = search.trim().toLowerCase();
@@ -115,6 +193,7 @@ export function ContentCatalog({ tenantId, artifacts, phase, onRetry }: {
     reveal(() => {
       returning.current = true;
       setSelected(null);
+      if (linkedEntry) onClearLinkedPiece?.();
     }, animate);
   }
 
@@ -139,17 +218,28 @@ export function ContentCatalog({ tenantId, artifacts, phase, onRetry }: {
     onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); close(false); } }}>
     <button className="content-catalog-back" type="button" onClick={event => close(event.detail > 0)}><ArrowLeft size={17}/> Back to published</button>
     <div className="content-catalog-detail-stage">
-      <CatalogArt entry={entry} motion/>
+      <CatalogArt entry={entry} motion detail/>
       <div>
         <h2 tabIndex={-1} ref={heading}>{entry.title}</h2>
         <p className="content-catalog-meta">{entryLabel(entry)}</p>
         {entry.text && <p className="content-catalog-caption">{entry.text}</p>}
-        {entry.href && <a className="content-catalog-primary" href={entry.href} target="_blank" rel="noreferrer">View published {entry.kind === "social" ? "post" : "work"} <ExternalLink size={15}/></a>}
+        <div className="content-catalog-detail-actions">
+          {entry.asset && <button type="button" className="content-catalog-primary" data-solo-vibe-studio-launcher
+            onClick={event => window.dispatchEvent(new CustomEvent("paige-studio", {
+              detail: { returnFocus: event.currentTarget, asset: entry.asset },
+            }))}>Use in social post</button>}
+          {entry.href && <a className={entry.asset ? "content-catalog-back" : "content-catalog-primary"} href={entry.href} target="_blank" rel="noreferrer">
+            {entry.kind === "image" || entry.kind === "video" ? "Open full size" : `View published ${entry.kind === "social" ? "post" : "work"}`} <ExternalLink size={15}/>
+          </a>}
+        </div>
       </div>
     </div>
   </section>;
 
   const failed = phase === "error" || phase === "unavailable";
+  const mediaFailed = access === "allowed" && media.phase === "error";
+  const loading = phase !== "ready" || social.phase === "loading" || access === "checking"
+    || (access === "allowed" && media.phase === "loading");
   return <section className="content-catalog" ref={root} tabIndex={-1} aria-label="Published content">
     {featured && <div className="content-catalog-feature">
       <article className="content-catalog-stage content-catalog-frame">
@@ -184,15 +274,19 @@ export function ContentCatalog({ tenantId, artifacts, phase, onRetry }: {
         </select>
       </div>
     </header>
-    {(failed || social.phase === "error") && <p className="content-catalog-notice" role="status">
+    {(failed || social.phase === "error" || mediaFailed) && <p className="content-catalog-notice" role="status">
       {failed && <>Published pages, forms and funnels couldn’t load. <button type="button" onClick={onRetry}>Retry published work</button> </>}
       {social.phase === "error" && <>Published social posts couldn’t load. <button type="button" onClick={social.retry}>Retry social posts</button></>}
+      {mediaFailed && <>Published images and videos couldn’t load. <button type="button" onClick={media.retry}>Retry published media</button></>}
     </p>}
-    {!entries.length && !failed && social.phase !== "error" && <p role="status">{phase !== "ready" || social.phase === "loading" ? "Reading published content…" : "No published work yet."}</p>}
-    {entries.length > 0 && !visible.length && <p role="status">No published items match these filters.</p>}
+    {!entries.length && !failed && social.phase !== "error" && !mediaFailed && <p role="status">{loading ? "Reading published content…" : "No published work yet."}</p>}
+    {linkedPieceId && !loading && !failed && !mediaFailed && social.phase !== "error" &&
+      <p className="content-catalog-notice" role="status">This original is unavailable in published Content.</p>}
+    {mediaCapped && <p className="content-catalog-notice">Showing the latest {MEDIA_PAGE_SIZE} published images and videos.</p>}
+    {entries.length > 0 && !visible.length && <p role="status">{mediaCapped ? "No matches in the published items shown." : "No published items match these filters."}</p>}
     <div className="content-catalog-grid">{visible.map(item => <div key={item.id} className="content-catalog-frame">
       <button type="button" className="content-catalog-item" data-content-opener={item.id} onClick={event => open(item, event)}>
-        <CatalogArt entry={item}/><span><strong>{item.title}</strong><small>{TYPES[item.kind]} · {item.origin}</small></span>
+        <CatalogArt entry={item}/><span><strong>{item.title}</strong><small>{entryLabel(item)}</small></span>
       </button>
     </div>)}</div>
   </section>;

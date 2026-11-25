@@ -3,8 +3,12 @@ import { setScenario } from "./client-memory-authz/fake-supabase.mjs";
 import { capturedHandler } from "./client-memory-authz/stub-serve.mjs";
 
 // Existing real Chat handler and recording SDK boundary. No provider/network or live records.
+// MF-OWNER-2026-11-23: the routed path is OpenRouter Auto ONLY — the harness admits the Auto leg
+// with a synthetic key and fakes the OpenRouter Responses wire (the retired direct Anthropic leg
+// no longer exists to fall through to). The env stub returns UNDEFINED for unset names (never ""),
+// because an explicitly-empty OPENROUTER_CANARY_TENANTS is the documented admission kill switch.
 globalThis.Deno = { env: { get: key => ({ SUPABASE_URL: "https://test.supabase.co",
-  SUPABASE_ANON_KEY: "test-anon", SUPABASE_SERVICE_ROLE_KEY: "test-service", ANTHROPIC_API_KEY: "test-model" })[key] ?? "" } };
+  SUPABASE_ANON_KEY: "test-anon", SUPABASE_SERVICE_ROLE_KEY: "test-service", OPENROUTER_API_KEY: "test-model" })[key] } };
 await import("../supabase/functions/paige-ai-chat/index.ts");
 const handler = capturedHandler();
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -48,20 +52,26 @@ function selected(rows, filters, bypass = false) {
     .slice(0, limited).map(row => project(row, selection));
 }
 function toolResponse() {
-  const events = [{ type: "message_start", message: { usage: { input_tokens: 1 } } },
-    { type: "content_block_start", index: 0, content_block: { type: "tool_use", id: "read-contact", name: "crm_get_contact_summary" } },
-    { type: "content_block_delta", index: 0, delta: { type: "input_json_delta", partial_json: JSON.stringify({ client_ref: "TEST-CONTACT" }) } },
-    { type: "message_delta", delta: { stop_reason: "tool_use" }, usage: { output_tokens: 1 } }, { type: "message_stop" }];
+  // OpenRouter Responses wire (the Auto leg): a one-tool round in native Responses SSE.
+  const events = [
+    { type: "response.created", response: { model: "openrouter/auto", status: "in_progress" } },
+    { type: "response.output_item.added", output_index: 0, item: { type: "function_call", id: "fc_read", call_id: "read-contact", name: "crm_get_contact_summary", arguments: "" } },
+    { type: "response.function_call_arguments.delta", item_id: "fc_read", output_index: 0, delta: JSON.stringify({ client_ref: "TEST-CONTACT" }) },
+    { type: "response.function_call_arguments.done", item_id: "fc_read", output_index: 0, arguments: JSON.stringify({ client_ref: "TEST-CONTACT" }) },
+    { type: "response.output_item.done", output_index: 0, item: { type: "function_call", id: "fc_read", call_id: "read-contact", name: "crm_get_contact_summary", arguments: JSON.stringify({ client_ref: "TEST-CONTACT" }) } },
+    { type: "response.completed", response: { model: "openrouter/auto", status: "completed", usage: { input_tokens: 1, output_tokens: 1 } } },
+  ];
   return new Response(events.map(event => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join(""));
 }
 globalThis.fetch = async (url, options) => {
-  assert.ok(String(url).startsWith("https://api.anthropic.com/"), "non-model egress is refused");
+  assert.ok(String(url).startsWith("https://openrouter.ai/"), "non-model egress is refused");
   const body = JSON.parse(options.body);
-  if (body.system?.startsWith("You label one message sent to PAIGE")) return Response.json({ content: [{ type: "text", text: JSON.stringify({
-    intent: "answer", research: "none", difficulty: "routine", image: "none", needs_workspace_data: true, confidence: .9 }) }], usage: { input_tokens: 1, output_tokens: 1 } });
+  if (body.instructions?.startsWith("You label one message sent to PAIGE")) return Response.json({ status: "completed", model: "openrouter/auto",
+    output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: JSON.stringify({
+    intent: "answer", research: "none", difficulty: "routine", image: "none", needs_workspace_data: true, confidence: .9 }) }] }], usage: { input_tokens: 1, output_tokens: 1 } });
   modelBodies.push(body);
   if (modelBodies.length === 1) return toolResponse();
-  return new Response('event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"The actual contact read is available."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\n');
+  return new Response('event: response.created\ndata: {"type":"response.created","response":{"status":"in_progress"}}\n\nevent: response.output_text.delta\ndata: {"type":"response.output_text.delta","output_index":0,"delta":"The actual contact read is available."}\n\nevent: response.completed\ndata: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":1,"output_tokens":1}}}\n\n');
 };
 async function run(options = {}) {
   config = options; modelBodies = [];
@@ -127,8 +137,8 @@ async function run(options = {}) {
   }));
   const wire = await response.text();
   assert.equal(response.status, 200, wire.slice(0, 300));
-  const results = modelBodies.flatMap(body => body.messages.flatMap(message => Array.isArray(message.content) ? message.content : []))
-    .filter(part => part.type === "tool_result").flatMap(part => { try { return [JSON.parse(part.content)]; } catch { return []; } });
+  const results = modelBodies.flatMap(body => (Array.isArray(body.input) ? body.input : []).filter(item => item?.type === "function_call_output"))
+    .flatMap(item => { try { return [JSON.parse(item.output)]; } catch { return []; } });
   const result = results.at(-1);
   assert.ok(result, "the actual handler must return a tool result");
   assert.equal(rec.functions.length, 0, "summary reading must not dispatch a business action");

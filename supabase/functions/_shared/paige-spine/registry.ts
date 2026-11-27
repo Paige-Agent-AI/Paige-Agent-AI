@@ -86,6 +86,7 @@ import { TEAM_HUB_CAPABILITIES } from "./domains/team_hub.ts";
 import { TEAM_LIFECYCLE_CAPABILITIES } from "./domains/team_lifecycle.ts";
 
 import { isReadinessResolverId } from "../paige-capability-status/readiness.ts";
+import { classifyAction } from "../action-risk.ts";
 
 // Preserve the incumbent tenant/member Chat gate; the metric issuer still enforces its narrower permission.
 const BUSINESS_METRIC_CHAT_CAPABILITY = { ...BUSINESS_METRIC_SPINE, action: { ...BUSINESS_METRIC_SPINE.action!, seatAuthority: "member" as const } } satisfies SpineCapability;
@@ -103,7 +104,55 @@ const MUTATING = new Set(["mutate", "external_effect"]);
 // risk policy, and approval authority must match the declaration; CI also proves the actual binding.
 const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES, ...AUTOMATION_READ_CAPABILITIES, ...DOCUMENT_REVIEW_READ_CAPABILITIES, ...CRM_CLIENT_READ_CAPABILITIES.filter(cap => cap.action.executor === "edge.paige-ai-chat"), ...PLATFORM_META_READ_CAPABILITIES, ...CRM_OPERATOR_READ_CAPABILITIES] as const;
 
-export function validateSpineRegistry(capabilities: readonly SpineCapability[]): string[] {
+/** A declaration for an independently governed product entry point. The canonical
+ * gate still needs a server-resolved grant and a redeemed approval at execution. */
+export type SpineProductMutation = Readonly<{
+  version: 1;
+  entryPoint: string;
+  actionId: string;
+  effect: "mutate";
+  riskPolicyKey: "high";
+  availability: "planned";
+  authority: "canonical-trust";
+  scope: "organization-project-application-environment";
+  approval: "canonical-redeemed-claim";
+  dispatch: "paige_claim_act_dispatch";
+  outcomeChannel: "rail";
+  verification: "independent-readback";
+}>;
+
+type SpineRegistryCapability = SpineCapability & { readonly productMutation?: SpineProductMutation };
+
+const CLOUD_WORKLOAD_ROLLBACK = Object.freeze({
+  key: "cloud.workload_rollback",
+  domain: "cloud",
+  owner: "paige-cloud",
+  humanSurface: "Private Cloud workload recovery",
+  selfDescribe: false,
+  chatBinding: "UNAVAILABLE",
+  mindBinding: "UNAVAILABLE",
+  sharedPrimitiveChange: "NONE",
+  maturity: "UNAVAILABLE",
+  productMutation: Object.freeze({
+    version: 1,
+    entryPoint: "cloud.private-recovery",
+    actionId: "cloud_workload_rollback",
+    effect: "mutate",
+    riskPolicyKey: "high",
+    availability: "planned",
+    authority: "canonical-trust",
+    scope: "organization-project-application-environment",
+    approval: "canonical-redeemed-claim",
+    dispatch: "paige_claim_act_dispatch",
+    outcomeChannel: "rail",
+    verification: "independent-readback",
+  }),
+} satisfies SpineRegistryCapability);
+
+// Keep the exported SaaS catalogue intact for existing Chat and Mind consumers.
+const SPINE_REGISTRY: readonly SpineRegistryCapability[] = [...PAIGE_SPINE_CAPABILITIES, CLOUD_WORKLOAD_ROLLBACK];
+
+export function validateSpineRegistry(capabilities: readonly SpineRegistryCapability[]): string[] {
   const findings: string[] = [];
   const seen = new Set<string>();
   for (const capability of capabilities) {
@@ -112,6 +161,29 @@ export function validateSpineRegistry(capabilities: readonly SpineCapability[]):
     if (!KEY_PATTERN.test(capability.key)) findings.push(`${capability.key}: capability key must be stable domain.capability snake case`);
     if (capability.key.split(".", 1)[0] !== capability.domain) findings.push(`${capability.key}: capability key namespace must match domain ${capability.domain}`);
     if (!capability.domain || !capability.owner || !capability.humanSurface) findings.push(`${capability.key}: domain, owner, and human surface are required`);
+    if (capability.productMutation !== undefined || capability.key === CLOUD_WORKLOAD_ROLLBACK.key) {
+      const binding = capability.productMutation;
+      const approved = CLOUD_WORKLOAD_ROLLBACK.productMutation;
+      if (capability.key !== CLOUD_WORKLOAD_ROLLBACK.key || !binding ||
+          Object.keys(binding).length !== Object.keys(approved).length ||
+          !Object.entries(approved).every(([key, value]) =>
+            Object.hasOwn(binding, key) && binding[key as keyof SpineProductMutation] === value)) {
+        findings.push(`${capability.key}: product mutation requires an exact reviewed entry-point binding`);
+      }
+      if (capability.owner !== CLOUD_WORKLOAD_ROLLBACK.owner || capability.action ||
+          capability.selfDescribe !== false || capability.chatBinding !== "UNAVAILABLE" ||
+          capability.mindBinding !== "UNAVAILABLE" || capability.maturity !== "UNAVAILABLE") {
+        findings.push(`${capability.key}: planned product mutation cannot be mounted or advertised`);
+      }
+      if (binding) {
+        // A planned declaration states the required class. The actual policy entry
+        // only lands with the independently qualified canonical execution binding.
+        const classified = classifyAction(binding.actionId);
+        if (classified !== "unclassified" && classified !== binding.riskPolicyKey) {
+          findings.push(`${capability.key}: product mutation risk must match the canonical policy`);
+        }
+      }
+    }
     if (capability.readiness !== undefined && !isReadinessResolverId(capability.readiness)) findings.push(`${capability.key}: unknown readiness resolver ${String(capability.readiness)}`);
     if (capability.evidence) {
       const evidence = capability.evidence;
@@ -173,9 +245,14 @@ export function validateSpineRegistry(capabilities: readonly SpineCapability[]):
   return findings;
 }
 
-const REGISTRY_FINDINGS = validateSpineRegistry(PAIGE_SPINE_CAPABILITIES);
+const REGISTRY_FINDINGS = validateSpineRegistry(SPINE_REGISTRY);
 if (REGISTRY_FINDINGS.length) throw new Error(`Invalid PAIGE Spine registry: ${REGISTRY_FINDINGS.join("; ")}`);
 
-export function getSpineCapability(key: string): SpineCapability | undefined {
-  return PAIGE_SPINE_CAPABILITIES.find((capability) => capability.key === key);
+export function getSpineCapability(key: string): SpineRegistryCapability | undefined {
+  return SPINE_REGISTRY.find((capability) => capability.key === key);
+}
+
+export function getSpineProductMutation(key: string, entryPoint: string): SpineProductMutation | undefined {
+  const binding = getSpineCapability(key)?.productMutation;
+  return binding?.entryPoint === entryPoint ? binding : undefined;
 }

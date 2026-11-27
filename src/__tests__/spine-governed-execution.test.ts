@@ -22,6 +22,7 @@ import {
   type GovernedDecision,
 } from "../../supabase/functions/_shared/paige-spine/governedExecution.ts";
 import { classifyAction } from "../../supabase/functions/_shared/action-risk.ts";
+import { getSpineProductMutation } from "../../supabase/functions/_shared/paige-spine/registry.ts";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -82,6 +83,22 @@ describe("the policy this file asserts against is the real one", () => {
     expect(classifyAction("automation_set_grant")).toBe("owner_only");
     // If this ever becomes classified, the "unclassified mutation" cases below go vacuous.
     expect(classifyAction("crm_delete_everything")).toBe("unclassified");
+  });
+});
+
+describe("the private product mutation uses the original governed decision", () => {
+  it.each(DOORS)("keeps the planned rollback unavailable through %s even with a claim shape", (door) => {
+    const binding = getSpineProductMutation("cloud.workload_rollback", "cloud.private-recovery")!;
+    expect(binding.riskPolicyKey).toBe("high");
+    expect(classifyAction(binding.actionId)).toBe("unclassified");
+    const result = decide({
+      caller: caller({ door }),
+      capability: { id: binding.actionId, effect: binding.effect, availability: binding.availability,
+        outcomeChannel: binding.outcomeChannel },
+      approval: { autonomyLane: "auto", claimedFor: binding.actionId, claimedArgs: { version: "1" } },
+      requestArgs: { version: "2" },
+    });
+    expect(result).toMatchObject({ kind: "refuse", code: "capability_planned" });
   });
 });
 

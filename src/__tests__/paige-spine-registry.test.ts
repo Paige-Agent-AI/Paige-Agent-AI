@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SPINE_ACTION_CLASSIFICATIONS, type SpineCapability, type SpineSignal } from "@/../supabase/functions/_shared/paige-spine/contracts.ts";
-import { PAIGE_SPINE_CAPABILITIES, validateSpineRegistry } from "@/../supabase/functions/_shared/paige-spine/registry.ts";
+import { getSpineCapability, getSpineProductMutation, PAIGE_SPINE_CAPABILITIES, validateSpineRegistry } from "@/../supabase/functions/_shared/paige-spine/registry.ts";
 import { resolveSpineEvidence } from "@/../supabase/functions/_shared/paige-spine/resolveEvidence.ts";
 
 const currentScope = () => ({ isCurrent: () => true });
@@ -48,6 +48,43 @@ describe("PAIGE Spine registry", () => {
 
   it("rejects duplicate capability keys", () => {
     expect(validateSpineRegistry([PAIGE_SPINE_CAPABILITIES[0], PAIGE_SPINE_CAPABILITIES[0]])).toContain("duplicate capability key: pipeline.deal_stage_evidence");
+  });
+
+  it("resolves exactly one planned private product mutation outside Chat discovery", () => {
+    const key = "cloud.workload_rollback";
+    const capability = getSpineCapability(key)!;
+    expect(capability).toMatchObject({ selfDescribe: false, chatBinding: "UNAVAILABLE",
+      mindBinding: "UNAVAILABLE", maturity: "UNAVAILABLE" });
+    expect(capability.action).toBeUndefined();
+    expect(validateSpineRegistry([capability])).toEqual([]);
+    expect(getSpineProductMutation(key, "cloud.private-recovery")).toMatchObject({
+      entryPoint: "cloud.private-recovery", actionId: "cloud_workload_rollback", riskPolicyKey: "high",
+      availability: "planned", authority: "canonical-trust", scope: "organization-project-application-environment",
+      approval: "canonical-redeemed-claim", dispatch: "paige_claim_act_dispatch", outcomeChannel: "rail",
+      verification: "independent-readback",
+    });
+    expect(getSpineProductMutation(key, "chat")).toBeUndefined();
+    expect(getSpineProductMutation("cloud.delete_workload", "cloud.private-recovery")).toBeUndefined();
+    expect(PAIGE_SPINE_CAPABILITIES.map(entry => entry.key)).not.toContain(key);
+  });
+
+  it("rejects fabricated product bindings and attempts to mark the candidate executable", () => {
+    const candidate = getSpineCapability("cloud.workload_rollback")!;
+    const binding = candidate.productMutation!;
+    for (const change of [{ entryPoint: "chat" }, { actionId: "crm_create_contact" },
+      { availability: "live" }, { approval: "none" }, { scope: "global" },
+      { dispatch: "direct" }, { outcomeChannel: "none" }, { verification: "none" }]) {
+      const corrupted = { ...candidate, productMutation: { ...binding, ...change } } as typeof candidate;
+      expect(validateSpineRegistry([corrupted]).join("\n")).toMatch(/exact reviewed entry-point binding/);
+    }
+    expect(validateSpineRegistry([{ ...candidate, key: "cloud.delete_workload" }]).join("\n"))
+      .toMatch(/exact reviewed entry-point binding/);
+    expect(validateSpineRegistry([{ ...candidate, productMutation: undefined }]).join("\n"))
+      .toMatch(/exact reviewed entry-point binding/);
+    for (const publication of [{ chatBinding: "LIVE" }, { mindBinding: "LIVE" }, { maturity: "LIVE" }, { selfDescribe: true }]) {
+      expect(validateSpineRegistry([{ ...candidate, ...publication } as typeof candidate]).join("\n"))
+        .toMatch(/cannot be mounted or advertised/);
+    }
   });
 });
 
